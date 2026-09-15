@@ -1,6 +1,7 @@
-import { access, copyFile, mkdir, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { publishPipelineBundle } from "../lib/local-pipeline-publisher.js";
+import { tmpdir } from "node:os";
+import { submitPipelineBundle } from "../lib/dashboard-client.js";
 import { loadPocPipelineConfig } from "../lib/poc-pipeline-config.js";
 
 const dashboardRoot = resolve(import.meta.dirname, "..");
@@ -10,9 +11,7 @@ const toolsRoot = process.env.POC_VALLY_SOURCE_ROOT
 const configPath = process.env.POC_PIPELINE_CONFIG
   ? resolve(process.env.POC_PIPELINE_CONFIG)
   : join(dashboardRoot, "poc-pipelines.json");
-const blobRoot = join(dashboardRoot, "poc-blob");
-const dataRoot = join(dashboardRoot, "poc-data");
-const pipelineWorkspace = join(dataRoot, "pipeline-work");
+const dashboardUrl = process.env.POC_DASHBOARD_URL || "http://127.0.0.1:3201";
 const { pipelines } = await loadPocPipelineConfig(configPath);
 
 async function createPipelineOutput(outputDirectory, resultsPath, label) {
@@ -39,40 +38,45 @@ for (const pipelineConfig of pipelines) {
   }
 }
 
-await rm(blobRoot, { recursive: true, force: true });
-await rm(dataRoot, { recursive: true, force: true });
+const pipelineWorkspace = await mkdtemp(join(tmpdir(), "vally-demo-submit-"));
+let buildId = Date.now();
+let accepted = 0;
+try {
+  for (const pipelineConfig of pipelines) {
+    const { adoProject, repository, pipeline, pipelineDefinitionId, resultSources } = pipelineConfig;
+    for (const resultSource of resultSources) {
+      buildId++;
+      const runId = `${repository}-${pipeline}-${buildId}`;
+      const outputDirectory = join(pipelineWorkspace, runId);
+      const manifest = {
+        schemaVersion: 1,
+        adoOrganization: process.env.POC_ADO_ORGANIZATION || "azure-sdk",
+        adoProject,
+        repo: repository,
+        pipeline,
+        pipelineDefinitionId,
+        buildId: String(buildId),
+        summaryAttempt: 1,
+        branch: "refs/heads/main",
+        sourceVersion: String(buildId).padStart(40, "0"),
+        runTimestamp: new Date().toISOString(),
+      };
 
-let buildId = 10000;
-for (const pipelineConfig of pipelines) {
-  const { adoProject, repository, pipeline, pipelineDefinitionId, resultSources } = pipelineConfig;
-  for (const resultSource of resultSources) {
-    buildId++;
-    const runId = `${repository}-${pipeline}-${buildId}`;
-    const outputDirectory = join(pipelineWorkspace, runId);
-    const manifest = {
-      schemaVersion: 1,
-      adoProject,
-      repo: repository,
-      pipeline,
-      pipelineDefinitionId,
-      buildId: String(buildId),
-      summaryAttempt: 1,
-      runId,
-      branch: "refs/heads/main",
-      sourceVersion: String(buildId).padStart(40, "0"),
-      buildUrl: `https://dev.azure.com/azure-sdk/${encodeURIComponent(adoProject)}/_build/results?buildId=${buildId}`,
-      runTimestamp: new Date(Date.UTC(2026, 8, 1, buildId % 24)).toISOString(),
-    };
-
-    await createPipelineOutput(
-      outputDirectory,
-      join(toolsRoot, resultSource),
-      `${repository} / ${pipeline} / build ${buildId}`
-    );
-    await publishPipelineBundle({ blobRoot, inputDirectory: outputDirectory, manifest });
-    await rm(outputDirectory, { recursive: true, force: true });
+      await createPipelineOutput(
+        outputDirectory,
+        join(toolsRoot, resultSource),
+        `${repository} / ${pipeline} / build ${buildId}`
+      );
+      const receipt = await submitPipelineBundle({
+        dashboardUrl, inputDirectory: outputDirectory, manifest,
+        accessToken: process.env.DASHBOARD_ACCESS_TOKEN,
+      });
+      accepted++;
+      console.log(`Accepted ${repository}/${pipeline}: ${receipt.statusUrl}`);
+      await rm(outputDirectory, { recursive: true, force: true });
+    }
   }
+} finally {
+  await rm(pipelineWorkspace, { recursive: true, force: true });
 }
-
-await rm(pipelineWorkspace, { recursive: true, force: true });
-console.log(`Published ${buildId - 10000} immutable bundles to fake Blob root ${blobRoot}`);
+console.log(`Submitted ${accepted} bundles to ${dashboardUrl}; refresh the dashboard after ingestion completes.`);

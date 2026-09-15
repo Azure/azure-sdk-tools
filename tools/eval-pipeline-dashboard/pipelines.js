@@ -22,7 +22,7 @@ export function mountPipelines(app, vallyApp, db) {
       headers: { host: "localhost" },
     });
     const title = `${repository} / ${pipeline}`;
-    return context.html(injectBanner(injectPipelineRuns(await response.text(), runs), title));
+    return context.html(injectBanner(injectPipelineRuns(await response.text(), repository, pipeline), title));
   });
 
   app.get("/api/dashboard/pipelines/:repository/:pipeline/runs", (context) => {
@@ -38,39 +38,24 @@ export function mountPipelines(app, vallyApp, db) {
   });
 }
 
-function injectPipelineRuns(htmlText, runs) {
-  const runIds = JSON.stringify(runs.map((run) => run.id));
+function scriptValue(value) {
+  return JSON.stringify(value).replaceAll("<", "\\u003c");
+}
+
+function injectPipelineRuns(htmlText, repository, pipeline) {
+  const endpoint = `/api/dashboard/pipelines/${encodeURIComponent(repository)}/${encodeURIComponent(pipeline)}/runs`;
   const script = `<script>
   (function () {
-    var allowedRunIds = new Set(${runIds});
     var originalFetch = window.fetch.bind(window);
     window.fetch = function (input, init) {
       var url = typeof input === "string" ? input : (input && input.url) || "";
       var pathname;
       try { pathname = new URL(url, window.location.origin).pathname; }
       catch (error) { pathname = url; }
-      var response = originalFetch(input, init);
       if (pathname === "/api/runs") {
-        return response.then(function (value) {
-          return value.clone().json().then(function (data) {
-            if (data && Array.isArray(data.items)) {
-              data.items = data.items.filter(function (run) {
-                return run && allowedRunIds.has(run.id);
-              });
-              if (data.page) {
-                data.page.total = data.items.length;
-                data.page.hasMore = false;
-                delete data.page.nextCursor;
-              }
-            }
-            return new Response(JSON.stringify(data), {
-              status: value.status,
-              headers: { "Content-Type": "application/json" },
-            });
-          });
-        });
+        return originalFetch(${scriptValue(endpoint)}, init);
       }
-      return response;
+      return originalFetch(input, init);
     };
   })();
   </script>`;
@@ -94,10 +79,14 @@ function injectBanner(htmlText, title) {
   </style>`;
   const script = `<script>
   document.addEventListener("DOMContentLoaded", function () {
-    document.title = ${JSON.stringify(`${title} | vally eval dashboard`)};
+    document.title = ${scriptValue(`${title} | vally eval dashboard`)};
     var banner = document.createElement("div");
     banner.className = "dashboard-breadcrumb";
-    banner.innerHTML = '<a href="/">Pipelines</a>' + '<span class="divider">/</span>' + '<span class="current">' + ${JSON.stringify(title)} + '</span>';
+    banner.innerHTML = '<a href="/">Pipelines</a><span class="divider">/</span>';
+    var current = document.createElement("span");
+    current.className = "current";
+    current.textContent = ${scriptValue(title)};
+    banner.appendChild(current);
     document.body.insertBefore(banner, document.body.firstChild);
   });
   </script>`;
@@ -124,7 +113,7 @@ function landingHtml(summaries) {
     0
   );
   const groups = repositoryEntries.map(([repository, pipelines]) => `
-    <section class="repository">
+    <section class="repository" data-repository="${escapeHtml(repository)}">
       <div class="repository-header">
         <h2>${escapeHtml(repository)}</h2>
         <span>${pipelines.length} ${pipelines.length === 1 ? "pipeline" : "pipelines"}</span>
@@ -135,7 +124,7 @@ function landingHtml(summaries) {
     </section>`).join("");
 
   const empty = summaries.length === 0
-    ? '<p class="empty">No pipeline artifacts have been ingested yet. Start the local POC source or add a manifest-backed result run.</p>'
+    ? '<p class="empty">No submissions have finished ingestion yet. Submit a pipeline bundle to this dashboard to create its first pipeline card.</p>'
     : groups;
 
   return `<!doctype html>
@@ -167,6 +156,11 @@ function landingHtml(summaries) {
       h1 { font-size:1.1rem; font-weight:600; color:var(--text); }
       h1 span { color:var(--accent); }
       .sub { margin-top:0.35rem; color:var(--text-muted); font-size:0.78rem; }
+      .filter-row { display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem; margin-bottom:1.2rem; }
+      .filter-row label { color:var(--text-muted); font-size:0.75rem; }
+      .filter-row input { flex:1; min-width:160px; max-width:480px; padding:0.6rem 0.75rem; border:1px solid var(--border); border-radius:6px; background:var(--bg-surface); color:var(--text); font:inherit; font-size:0.8rem; }
+      .service-status { color:var(--text-faint); font-size:0.72rem; margin-bottom:1rem; }
+      [hidden] { display:none !important; }
       .stats-row { display:flex; gap:1.5rem; align-items:baseline; margin-bottom:2rem; padding:0.8rem 0; flex-wrap:wrap; border-bottom:1px solid var(--border); }
       .stat-inline { display:flex; align-items:baseline; gap:0.35rem; }
       .stat-inline .value { font-size:1.1rem; font-weight:700; }
@@ -216,9 +210,44 @@ function landingHtml(summaries) {
         <span class="stat-sep" aria-hidden="true"></span>
         <div class="stat-inline"><span class="value">${runCount}</span><span class="label">runs</span></div>
       </div>
+      <div class="filter-row"><label for="pipeline-filter">Filter pipelines</label><input id="pipeline-filter" type="search" placeholder="Repository or pipeline name" /></div>
+      <p id="service-status" class="service-status" aria-live="polite"></p>
       ${empty}
+      <p id="no-matches" class="empty" hidden>No repositories or pipelines match this filter.</p>
       <p class="footer">Or browse <a href="/all">all runs, unfiltered</a>.</p>
     </main>
+    <script>
+      const filter = document.getElementById('pipeline-filter');
+      const currentUrl = new URL(location.href);
+      filter.value = currentUrl.searchParams.get('filter') || '';
+      function filterPipelines() {
+        const query = filter.value.trim().toLowerCase();
+        let matches = 0;
+        document.querySelectorAll('.repository').forEach(repository => {
+          let visible = 0;
+          repository.querySelectorAll('.pipeline').forEach(pipeline => {
+            const text = (repository.dataset.repository + ' ' + pipeline.querySelector('h3').textContent).toLowerCase();
+            pipeline.hidden = !text.includes(query);
+            if (!pipeline.hidden) visible++;
+          });
+          repository.hidden = visible === 0;
+          matches += visible;
+        });
+        document.getElementById('no-matches').hidden = !query || matches > 0;
+        if (query) currentUrl.searchParams.set('filter', filter.value); else currentUrl.searchParams.delete('filter');
+        history.replaceState(null, '', currentUrl);
+      }
+      filter.addEventListener('input', filterPipelines);
+      filterPipelines();
+      fetch('/api/dashboard/status').then(response => {
+        if (!response.ok) throw new Error('Status unavailable');
+        return response.json();
+      }).then(status => {
+        const pending = status.queue.pendingApproximate ?? status.queue.pending ?? 0;
+        document.getElementById('service-status').textContent = 'Storage: ' + status.storage + ' · Pending work: ' + pending +
+          (status.lastSuccessAt ? ' · Last ingestion this process: ' + new Date(status.lastSuccessAt).toLocaleString() : '');
+      }).catch(() => { document.getElementById('service-status').textContent = 'Ingestion status unavailable; previously ingested results remain browsable.'; });
+    </script>
   </body>
 </html>`;
 }

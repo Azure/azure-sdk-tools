@@ -1,6 +1,7 @@
-import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { publishPipelineBundle } from "../lib/local-pipeline-publisher.js";
+import { tmpdir } from "node:os";
+import { submitPipelineBundle } from "../lib/dashboard-client.js";
 
 const dashboardRoot = resolve(import.meta.dirname, "..");
 const toolsRoot = process.env.POC_VALLY_SOURCE_ROOT
@@ -11,13 +12,14 @@ const repo = process.argv[2] ?? "azure-sdk-tools";
 const pipeline = process.argv[3] ?? "skill-eval";
 const definitionId = process.argv[4] ?? "8178";
 const runId = `${repo}-${pipeline}-${buildId}`;
-const outputDirectory = join(dashboardRoot, "poc-data", "pipeline-work", runId);
+const outputDirectory = await mkdtemp(join(tmpdir(), "vally-demo-publish-"));
 const sourcePath = resolve(
   toolsRoot,
   "artifacts/vally-local/markdown-token-optimizer/2026-07-17T18-39-00-974Z/results.jsonl"
 );
 const manifest = {
   schemaVersion: 1,
+  adoOrganization: process.env.POC_ADO_ORGANIZATION || "azure-sdk",
   adoProject: "internal",
   repo,
   pipeline,
@@ -42,12 +44,13 @@ try {
     join(outputDirectory, "junit", "eval-results.junit.xml"),
     '<testsuites><testsuite name="poc-live"><testcase name="continuous publish" /></testsuite></testsuites>\n'
   );
-  const blob = await publishPipelineBundle({
-    blobRoot: join(dashboardRoot, "poc-blob"),
+  const receipt = await submitPipelineBundle({
+    dashboardUrl: process.env.POC_DASHBOARD_URL || "http://127.0.0.1:3201",
+    accessToken: process.env.DASHBOARD_ACCESS_TOKEN,
     inputDirectory: outputDirectory,
     manifest,
   });
-  console.log(`Published ${blob.name}`);
+  console.log(JSON.stringify(receipt, null, 2));
 } finally {
   await rm(outputDirectory, { recursive: true, force: true });
 }

@@ -171,16 +171,17 @@
   <div class="hero-inner">
     <p class="eyebrow">Technical design and implementation plan</p>
     <h1>Multi-repository, multi-pipeline Vally evaluation dashboard</h1>
-    <p class="hero-copy">A production plan for continuously collecting new eval results from Azure DevOps pipelines, preserving them durably in Azure Blob Storage, building history from go-live forward, and expanding the existing TypeSpec author dashboard across Azure SDK repositories.</p>
+    <p class="hero-copy">Revised 14 September 2026: pipelines push completed evaluation bundles to the dashboard API. The dashboard archives each submission, durably queues processing, and reuses Vally to display results. There is no normal ADO or Blob-discovery polling. All approved VPN users can view the dashboard without application login.</p>
     <p>The implementation lives alongside this document in <code>Azure/azure-sdk-tools/tools/eval-pipeline-dashboard</code>. See <a href="README.md">the README</a> for local setup, the fake Blob workflow, tests, and current POC limitations. Production defaults below are design targets, not claims that Azure resources or CI uploads have been deployed.</p>
     <dl class="metadata">
-      <div><dt>Status</dt><dd>Draft for engineering review</dd></div>
-      <div><dt>Dashboard runtime</dt><dd>Azure App Service + Vally 0.15</dd></div>
-      <div><dt>Durable data</dt><dd>Azure Blob Storage</dd></div>
-      <div><dt>Query cache</dt><dd>SQLite on App Service /home</dd></div>
-      <div><dt>Retrieval cadence</dt><dd>Startup + every 5 minutes</dd></div>
-      <div><dt>Freshness SLO</dt><dd>95% visible within 10 minutes</dd></div>
-      <div><dt>Retention</dt><dd>731 days from go-live</dd></div>
+      <div><dt>Status</dt><dd>Local + Azure adapters implemented; URLs pending</dd></div>
+      <div><dt>Runtime</dt><dd>Node 22 + Vally 0.15; App Service target</dd></div>
+      <div><dt>Archive and receipts</dt><dd>Local disk/SQLite or Azure Blob + Storage Queue</dd></div>
+      <div><dt>Query cache</dt><dd>SQLite on a validated local filesystem</dd></div>
+      <div><dt>Delivery</dt><dd>POST /api/ingestions after Summary</dd></div>
+      <div><dt>Processing</dt><dd>On acceptance and pending-work recovery</dd></div>
+      <div><dt>Retention target</dt><dd>731 days; explicit dry-run/apply command</dd></div>
+      <div><dt>Viewer access</dt><dd>VPN-only; no dashboard login</dd></div>
     </dl>
   </div>
 </div>
@@ -191,12 +192,13 @@
     <a href="#summary">1. Executive summary</a>
     <a href="#decision-summary">2. Technical decisions</a>
     <a href="#state">3. What exists today</a>
+    <a href="#release-plan-reference">Release Plan design reference</a>
     <a href="#goals">4. Goals and non-goals</a>
     <a href="#architecture">5. Target architecture</a>
     <a href="#storage">6. Storage and query model</a>
-    <a href="#contract">7. Artifact contract</a>
-    <a href="#pipeline">8. Pipeline work</a>
-    <a href="#service">9. Dashboard service work</a>
+    <a href="#contract">7. Upload and artifact contract</a>
+    <a href="#pipeline">8. Pipeline work (next phase)</a>
+    <a href="#service">9. Dashboard work (first)</a>
     <a href="#history-policy">10. History boundary</a>
     <a href="#security">11. Security and reliability</a>
     <a href="#capacity">12. Capacity and retention</a>
@@ -210,42 +212,55 @@
 
 <section id="summary">
   <h2><span class="n">1</span>Executive summary</h2>
-  <p>The dashboard will remain a hosted Vally application. Eval pipelines in multiple repositories will publish one immutable, build-level result bundle to Azure Blob Storage. The dashboard service will discover new bundles, ingest them into Vally's SQLite schema, and expose repository/pipeline drill-down pages that reuse Vally's existing charts, history, comparisons, and trajectory data.</p>
+  <p>Each onboarded pipeline will submit its consolidated result ZIP to an authenticated dashboard endpoint after its evaluation jobs finish. The dashboard owns archive storage and asynchronous processing. Its response is a durable receipt, not a claim that the charts have finished loading. A successful ingestion registers the repository and pipeline automatically from the manifest.</p>
   <div class="status-strip">
-    <div><strong>7</strong><span>target repositories</span></div>
+    <div><strong>10+</strong><span>pipelines through one publishing contract</span></div>
     <div><strong>Blob</strong><span>durable source of truth</span></div>
     <div><strong>SQLite</strong><span>rebuildable query cache</span></div>
     <div><strong>1</strong><span>App Service instance initially</span></div>
   </div>
-  <div class="callout"><strong>Key boundary</strong>Azure Blob Storage stores immutable result bundles. SQLite does not run inside Blob Storage; it is created by Vally on the App Service persistent filesystem at <code>/home/data/eval.db</code>.</div>
+  <div class="callout"><strong>Implementation status</strong>Local and Azure Blob/Storage Queue adapters, replay/prune/reconcile commands, upload helpers, readiness/status APIs, and opt-in staged deployment are implemented. Azure behavior is tested with real SDK clients against local Azurite, not a live Azure account. Container/queue/App Service URLs, RBAC, VPN/DNS, real pipeline onboarding, and scheduled operations remain pending. No deployment or pre-launch backfill has been performed.</div>
 </section>
 
 <section id="decision-summary">
   <h2><span class="n">2</span>Technical decision summary</h2>
-  <p>This table is the authoritative set of defaults for the first production release. Detailed sections below explain implementation and tradeoffs.</p>
+  <p>The push direction is the requested design change. Production operational numbers remain proposed targets until validated in Azure; the local implementation is not a production deployment.</p>
   <div class="table-wrap"><table><thead><tr><th>Topic</th><th>Decision</th><th>Why</th><th>Operational result</th></tr></thead><tbody>
-    <tr><td>Durable storage</td><td>One private Azure Blob container stores one immutable <code>dashboard-bundle.zip</code> per completed pipeline build.</td><td>Blob is inexpensive, durable, lifecycle-managed, and independent of ADO artifact expiry.</td><td>Blob is the recoverable source of truth; no raw result folders remain on App Service.</td></tr>
-    <tr><td>Result producer</td><td>The shared eval Summary template pushes each new bundle directly to Blob after validation.</td><td>One shared implementation covers 10+ pipelines and avoids central ADO artifact polling.</td><td>History begins at go-live. No historical backfill and no daily ADO download job.</td></tr>
-    <tr><td>Blob retrieval</td><td>The App Service worker performs a full metadata listing on startup and every <strong>5 minutes</strong>, then downloads only unknown Blob names.</td><td>The expected two-year volume is small enough for simple polling; startup scanning also provides recovery.</td><td>Default <code>VALLY_BLOB_POLL_MS=300000</code>; one sync at a time; two concurrent downloads maximum.</td></tr>
-    <tr><td>Freshness target</td><td>A valid pipeline bundle should appear in the dashboard within <strong>10 minutes</strong> of Summary completion.</td><td>Five-minute polling plus bounded download/ingestion leaves operational headroom without extra event infrastructure.</td><td>Target: upload under 2 minutes, discovery under 5 minutes, ingestion under 3 minutes.</td></tr>
-    <tr><td>Retention</td><td>Keep published bundles hot for 30 days, cool from day 31, and delete after <strong>731 days</strong>.</td><td>Two years supports trend analysis while limiting durable storage growth.</td><td>A daily SQLite prune removes rows older than the same 731-day boundary.</td></tr>
-    <tr><td>Hosted runtime</td><td>One Linux Node 22 Azure App Service instance hosts the wrapper and <code>@microsoft/vally-server 0.15.0</code>.</td><td>Vally is a dynamic Hono API/UI application with a native SQLite dependency, not a static HTML site.</td><td>Single writer avoids SQLite coordination. Entra authentication protects the website.</td></tr>
-    <tr><td>Query store</td><td>Vally SQLite at <code>/home/data/eval.db</code> is a disposable, indexed query cache.</td><td>Blob ZIP/JSONL objects cannot efficiently answer cross-run filters, pagination, aggregates, or comparisons.</td><td>Each bundle is parsed once. Browser requests query SQLite only; the database can be rebuilt from Blob.</td></tr>
-    <tr><td>Presentation</td><td>The wrapper supplies repository/pipeline navigation; Vally supplies charts, tables, rankings, graders, tools, and comparisons.</td><td>Reusing Vally avoids a second analytics implementation and keeps report semantics consistent.</td><td>Index data is fresh on page load; drill-down data is fresh on navigation or browser refresh.</td></tr>
-    <tr><td>Failure behavior</td><td>Do not record a Blob as ingested until Vally commits successfully; retry transient failures on the next poll.</td><td>At-least-once discovery plus idempotent Blob identity prevents silent data loss and duplicates.</td><td>Corrupt bundles remain unrecorded, are logged with build URL, and require a corrected new attempt path.</td></tr>
-    <tr><td>Scale boundary</td><td>Use full-container polling for v1; reconsider Event Grid + Queue when retained objects exceed 100,000 or listing takes over 30 seconds.</td><td>Polling is simpler and sufficient for the expected 10-20 daily pipelines.</td><td>No Event Grid, queue, or separate ingestion service is required for the first release.</td></tr>
+    <tr><td>Producer</td><td>An opt-in publishing template sends the saved ZIP to <code>POST /api/ingestions</code>; preparation validates the explicit expected-shard index.</td><td>The publisher knows when a result is ready; the dashboard needs no pipeline discovery list.</td><td>Commands/template implemented. Existing shared shard/Summary jobs are not yet wired to retain raw results, emit the index, or call publication.</td></tr>
+    <tr><td>Archive owner</td><td>The dashboard saves the uploaded bytes, not the pipeline. Local POC uses <code>poc-blob</code>; production targets private Azure Blob.</td><td>Storage permissions and retention remain centralized.</td><td>Pipelines need an API publisher role, not direct Blob Contributor access.</td></tr>
+    <tr><td>Acceptance</td><td>Return <code>202 Accepted</code> only after the immutable archive and queued receipt are persisted.</td><td>An acknowledged upload must survive a process restart.</td><td>Storage failure returns 503. A lost response can be retried with the same bytes.</td></tr>
+    <tr><td>Pending work</td><td>Local: separate SQLite journal. Azure: JSON receipts under <code>_receipts/v1/</code> plus Storage Queue messages containing receipt IDs.</td><td>The Vally cache must not be the only record of accepted but unprocessed work.</td><td>Azure accepts only after archive, receipt, and enqueue succeed. No Service Bus or external SQL server is needed.</td></tr>
+    <tr><td>Processing cadence</td><td>Wake on acceptance/startup. Local timers target retries; Azure additionally receives Queue messages every five seconds when idle. Transient delays are 1/5/30 seconds.</td><td>Queue delivery handles redelivery and interrupted work without listing artifacts.</td><td>One ingestion at a time; two uploads. Azure uses 60-second receipt leases and 120-second message visibility, renewed while processing.</td></tr>
+    <tr><td>Idempotency</td><td>Identity is organization + project + definition ID + build ID + Summary attempt; SHA-256 binds that identity to ZIP content.</td><td>Retries and pipeline display-name changes must not create duplicate runs.</td><td>Same identity/content returns its receipt; different content or owner returns 409. Retry the original ZIP, not a repackaged one.</td></tr>
+    <tr><td>Display</td><td>Publish validated results and <code>run_metadata</code> together; reuse Vally charts. Successful newer attempts supersede earlier ones in pipeline views.</td><td>Invalid or partial data should not pollute results or hide the last usable attempt.</td><td>New pipeline card appears after ingestion succeeds; page refresh reads SQLite only.</td></tr>
+    <tr><td>Service</td><td>One Node 22 process hosts the API, local worker, and Vally 0.15 UI. Production targets one App Service instance initially.</td><td>No separate chart service or external relational DB is needed for the local POC.</td><td>Verify SQLite filesystem/locking support before choosing a production cache location; a single instance alone is not proof of safe network-filesystem WAL.</td></tr>
+    <tr><td>Viewer access</td><td>No dashboard login. Everyone with access through the approved Azure VPN can view all results.</td><td>The approved private network, not a viewer account or app role, is the access boundary.</td><td>App Service private endpoint + private DNS/VPN routes; explicitly disable public network access. Upload tokens remain non-interactive and separate.</td></tr>
+    <tr><td>Retention and freshness</td><td>Pruning is explicit and dry-run-first, using accepted-at age with proposed 731-day default. Tombstones precede archive deletion. Proposed visibility SLO remains 95% within 10 minutes.</td><td>Pending work must not be deleted by an independent Blob-expiration policy.</td><td>Replay/prune/reconcile and status endpoints implemented. Scheduling, cool-tier rules, Azure alerts, tombstone compaction, and measured SLOs remain operational setup.</td></tr>
+    <tr><td>History</td><td>Collect newly submitted runs only. No daily ADO downloader and no pre-launch backfill.</td><td>Simple onboarding and no historical schema-conversion project.</td><td>Explicit post-launch archive replay is a recovery operation, not routine discovery.</td></tr>
   </tbody></table></div>
 </section>
 
 <section id="state">
   <h2><span class="n">3</span>What exists today</h2>
   <div class="grid-3">
-    <article class="card"><span class="label existing">Existing</span><h3>Example dashboard</h3><p>The repository hosts <code>@microsoft/vally-server</code> on Linux App Service. <code>add-result.ps1</code> manually uploads run folders through Kudu into <code>/home/site/results</code>.</p></article>
-    <article class="card"><span class="label existing">Existing</span><h3>Vally persistence</h3><p><code>server.js</code> calls Vally's <code>initializeDatabase()</code>. SQLite is stored at <code>/home/data/eval.db</code>; <code>results/</code> is treated as source data and SQLite as a derived cache.</p></article>
-    <article class="card"><span class="label poc">POC proven</span><h3>Multi-repo index</h3><p>The local POC groups runs by repository and pipeline, uses Vally 0.15, and reuses its charts through scoped routes such as <code>/p/azure-sdk-tools/skill-eval</code>.</p></article>
+    <article class="card"><span class="label existing">Original reference</span><h3>Example dashboard</h3><p>The original application hosts <code>@microsoft/vally-server</code> on Linux App Service. Its <code>add-result.ps1</code> manually uploads run folders through Kudu. Those hosting scripts are retained as background, not a deployment of the new push service.</p></article>
+    <article class="card"><span class="label existing">Reused</span><h3>Vally persistence</h3><p>The wrapper still calls Vally's <code>initializeDatabase()</code> and <code>ingestDirectory()</code>. The POC query cache is <code>poc-data/eval.db</code>; the new receipt journal is separate. No automatic folder watcher runs.</p></article>
+    <article class="card"><span class="label poc">Implementation</span><h3>Local and Azure providers</h3><p>The push receiver, local/Azure receipt stores, queue recovery, maintenance commands, pipeline helpers, and guarded deployment stages are implemented. Local and Azurite tests pass; real Azure configuration and actual pipeline onboarding remain pending.</p></article>
   </div>
-  <h3>Current pipeline limitation</h3>
+  <h3>Current pipeline limitation (not changed in this phase)</h3>
   <p>The shared eval pipeline publishes JUnit on every shard, but raw Vally output is currently retained only in failure-debug artifacts. The Summary job downloads only JUnit. That means current successful builds generally lack the full trajectories required for tokens, tool usage, grader detail, and rich historical charts.</p>
+  <h3 id="release-plan-reference">Reference design: Azure SDK Release Plan Dashboard</h3>
+  <p>The <a href="https://aka.ms/azsdk/releaseplan-dashboard">Release Plan Dashboard</a> is a concrete reference for App Service hosting, backend identities, staged delivery, and navigation patterns. It is not a reference implementation of Vally ingestion. Source checked on 14 September 2026; the links below pin the inspected revision <code>cb004413af29302fb4c45f3506e0ee8015fbc253</code>, not a claim about the currently deployed revision.</p>
+  <div class="table-wrap"><table><thead><tr><th>Area</th><th>Verified reference</th><th>Reuse or intentional difference</th></tr></thead><tbody>
+    <tr><td>Single application</td><td><a href="https://github.com/Azure/azure-sdk-tools/blob/cb004413af29302fb4c45f3506e0ee8015fbc253/tools/release-plan-dashboard/server.js">Node/Express service</a> serves APIs and its browser application.</td><td>Keep one Node service. Retain Hono and Vally rather than copy Express or build another chart application.</td></tr>
+    <tr><td>Build and promotion</td><td><a href="https://github.com/Azure/azure-sdk-tools/blob/cb004413af29302fb4c45f3506e0ee8015fbc253/tools/release-plan-dashboard/ci.yml">1ES pipeline</a>: Node 22, tests/lint/format, ZIP artifact, pre-production, then production. Publishing is internal/main-only; production uses an environment.</td><td>Opt-in staged artifact deployment is now prepared. Resource names are blank and deployment is disabled by default. Its target preflight checks private ingress, HTTPS, no viewer Easy Auth, managed identity, and required settings.</td></tr>
+    <tr><td>Service identity</td><td><a href="https://github.com/Azure/azure-sdk-tools/blob/cb004413af29302fb4c45f3506e0ee8015fbc253/tools/release-plan-dashboard/lib/devops-api.js#L98">DefaultAzureCredential for ADO</a> and <a href="https://github.com/Azure/azure-sdk-tools/blob/cb004413af29302fb4c45f3506e0ee8015fbc253/tools/release-plan-dashboard/lib/auth.js#L23">Key Vault GitHub App signing</a>.</td><td>Reuse managed-identity access for Blob/queue services. Do not add GitHub App signing or ADO-read permissions to a push receiver that does not need them.</td></tr>
+    <tr><td>Navigation</td><td><a href="https://github.com/Azure/azure-sdk-tools/blob/cb004413af29302fb4c45f3506e0ee8015fbc253/tools/release-plan-dashboard/README.md#L7">Grouped cards, filters, shareable links, and last-refreshed status</a>.</td><td>Repository/pipeline grouping, tools first, shareable filters, and ingestion-status summary are implemented while retaining Vally drill-downs.</td></tr>
+    <tr><td>Viewer access</td><td><a href="https://github.com/Azure/azure-sdk-tools/blob/cb004413af29302fb4c45f3506e0ee8015fbc253/tools/release-plan-dashboard/server.js#L69-L80">requireAuth()</a> requires an Easy Auth user principal and returns 401 if absent.</td><td>Do not copy: this dashboard has no viewer sign-in or per-user roles. All approved VPN users can view; publishing still uses non-interactive machine tokens.</td></tr>
+    <tr><td>Cache and history</td><td><a href="https://github.com/Azure/azure-sdk-tools/blob/cb004413af29302fb4c45f3506e0ee8015fbc253/tools/release-plan-dashboard/lib/cache.js#L1">One-hour in-memory plan cache; 15-minute PR-detail cache</a>. The <a href="https://github.com/Azure/azure-sdk-tools/blob/cb004413af29302fb4c45f3506e0ee8015fbc253/tools/release-plan-dashboard/server.js#L165">server refreshes plans periodically</a> from ADO.</td><td>Do not copy polling or memory-only pending work. Preserve submitted archive bytes, durable receipt/work state, targeted processing, and Vally SQLite history.</td></tr>
+    <tr><td>Network configuration</td><td>The inspected deployment targets existing App Services; it does not declare their VPN routes, private endpoints, DNS, or public-access policy.</td><td>Actual deployment networking is unverified. Confirm it with the reference service owners; absence of network configuration in source proves neither public access nor VPN-only access.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><strong>SSO is not anonymous access</strong>A release dashboard session can appear login-free when an existing Entra session satisfies Easy Auth. Its server still requires a user identity. This reference does not change the approved requirement here: no dashboard login, with the approved VPN/private network as the viewer boundary.</div>
 </section>
 
 <section id="goals">
@@ -260,35 +275,42 @@
   <h2><span class="n">5</span>Target architecture</h2>
   <div class="architecture">
     <div class="arch-row">
-      <div class="arch-box" style="--box:var(--blue)"><strong>ADO eval pipelines</strong><span>Run Vally shards, merge results, create manifest and immutable bundle.</span></div>
+      <div class="arch-box" style="--box:var(--blue)"><strong>Shared pipeline step</strong><span>Consolidate results. Submit ZIP and app token via HTTPS.</span></div>
       <div class="arrow">&rarr;</div>
-      <div class="arch-box" style="--box:var(--accent)"><strong>Azure Blob Storage</strong><span>Durable bundles organized by project, repository, pipeline definition, and build.</span></div>
+      <div class="arch-box" style="--box:var(--accent)"><strong>Dashboard upload API</strong><span>Authenticate; bound upload; validate archive and manifest.</span></div>
       <div class="arrow">&rarr;</div>
-      <div class="arch-box" style="--box:var(--green)"><strong>Dashboard sync worker</strong><span>Lists metadata, downloads unseen bundles, verifies and ingests them.</span></div>
+      <div class="arch-box" style="--box:var(--green)"><strong>Archive + work receipt</strong><span>Persist immutable bytes and pending work before acknowledging.</span></div>
       <div class="arrow">&rarr;</div>
-      <div class="arch-box" style="--box:var(--red)"><strong>App Service</strong><span>SQLite query cache + Vally API/UI + multi-repo pipeline index.</span></div>
+      <div class="arch-box" style="--box:var(--red)"><strong>202 + status URL</strong><span>Pipeline receives a durable receipt; processing is asynchronous.</span></div>
+    </div>
+    <div class="arch-row" style="margin-top:16px">
+      <div class="arch-box" style="--box:var(--green)"><strong>Pending receipt</strong><span>Wake on submission or restart; retry interrupted processing.</span></div><div class="arrow">&rarr;</div>
+      <div class="arch-box" style="--box:var(--accent)"><strong>Single worker</strong><span>Read only the referenced object; validate through temporary Vally DB.</span></div><div class="arrow">&rarr;</div>
+      <div class="arch-box" style="--box:var(--blue)"><strong>Live Vally cache</strong><span>Commit run, outcomes, graders, tools, and pipeline metadata atomically.</span></div><div class="arrow">&rarr;</div>
+      <div class="arch-box" style="--box:var(--red)"><strong>Dashboard pages</strong><span>Automatic pipeline cards; existing Vally charts and comparisons.</span></div>
     </div>
     <p class="arch-caption">Browser requests query the dashboard API and SQLite only. Browsers never enumerate ADO builds or download Blob bundles.</p>
   </div>
-  <h3>Retrieval cadence and freshness</h3>
+  <p><strong>Private ingress:</strong> viewer on approved VPN &rarr; VPN-connected VNet and private DNS &rarr; App Service private endpoint &rarr; dashboard, with no application sign-in. Publishing agents also need private network reachability; an access token alone does not provide a route.</p>
+  <h3>Delivery cadence and failure behavior</h3>
   <div class="table-wrap"><table><thead><tr><th>Activity</th><th>Cadence</th><th>Behavior</th><th>Failure handling</th></tr></thead><tbody>
-    <tr><td>Pipeline publication</td><td>Immediately after each Summary job validates its bundle.</td><td>Upload one new immutable path. Retry the upload task up to three times.</td><td>Publication failure is reported separately from the eval verdict. Re-run the Summary/publication job while its ADO artifact exists.</td></tr>
-    <tr><td>Startup discovery</td><td>Once before the web service is considered ready.</td><td>List all retained Blob metadata, compare names/ETags with SQLite, and enqueue unseen objects.</td><td>If listing fails, health reports degraded and the worker retries with exponential backoff capped at five minutes.</td></tr>
-    <tr><td>Steady-state discovery</td><td>Every 5 minutes.</td><td>List metadata only. Do not download known immutable objects. Allow only one listing/sync cycle at a time.</td><td>A failed cycle leaves the ingestion ledger unchanged and retries on the next cycle.</td></tr>
-    <tr><td>Bundle download</td><td>Immediately after discovery, maximum two downloads concurrently.</td><td>Download to a unique temporary directory, validate size/hash/path/manifest, ingest, then delete the ZIP and extracted files.</td><td>Transient download errors retry on the next poll. Invalid bundles are logged with Blob name and source build URL.</td></tr>
-    <tr><td>SQLite retention prune</td><td>Daily at 02:00 UTC and once at startup.</td><td>Delete cache rows older than the 731-day retention boundary in one transaction, then checkpoint WAL.</td><td>Prune failure does not block reads; emit an alert and retry the next day.</td></tr>
-    <tr><td>Browser data refresh</td><td>On page load, navigation, or explicit browser refresh.</td><td>The browser calls dashboard APIs backed by SQLite. It never polls Blob or opens ZIPs.</td><td>No WebSocket or push refresh in v1. Show last successful sync time so users can judge freshness.</td></tr>
+    <tr><td>Pipeline upload (helper ready)</td><td>After Summary, including eval failures with valid output.</td><td>POST the saved ZIP; retain ADO artifact and saved receipt for debugging/retry.</td><td>Client retries transient network/HTTP failures up to four attempts with Retry-After. No retry of conflicts or malformed 4xx.</td></tr>
+    <tr><td>Dashboard acceptance</td><td>Each POST; two uploads maximum concurrently.</td><td>Bounded streaming, hash, archive validation, immutable save, queued receipt.</td><td>No 202 on failed storage/journal write. Identical retry repairs a saved-object/missing-receipt gap.</td></tr>
+    <tr><td>Worker</td><td>Immediately when work arrives; one processing job at a time.</td><td>Validate outside the live DB; then commit complete results and metadata together.</td><td>Local transient retry delays 1/5/30 seconds; four attempts total. Permanent failures become terminal receipts.</td></tr>
+    <tr><td>Restart</td><td>Startup and queue redelivery.</td><td>Local recovers queued processing rows. Azure redelivers messages after visibility/receipt-lease expiry.</td><td>Already committed results are detected; terminal receipts make lost acknowledgements harmless. No startup Blob enumeration.</td></tr>
+    <tr><td>Retention (command ready)</td><td>Explicit dry-run/apply; scheduling not configured.</td><td>Expire only terminal receipts older than cutoff, remove dependent cache rows and matching archive bytes, keep tombstones.</td><td>Never expire pending work. Do not independently lifecycle-delete receipt blobs or pending archives. Stop the service before pruning its cache.</td></tr>
+    <tr><td>Browser</td><td>Page navigation or refresh.</td><td>Read SQLite-backed APIs; use Vally's diagrams without artifact downloads.</td><td>202 is not chart readiness. GET the receipt until succeeded/failed if the publishing client needs confirmation.</td></tr>
   </tbody></table></div>
-  <div class="callout"><strong>Freshness SLO</strong>For 95% of valid builds, data should be queryable within 10 minutes after the pipeline Summary completes. The five-minute poll is a maximum normal discovery delay, not a daily batch.</div>
-  <h3>Why polling is sufficient for v1</h3>
-  <p>With 10-20 pipelines running approximately daily, two years of retained history produces roughly 7,300-14,600 bundle objects. Metadata listing at five-minute intervals is operationally simple and small enough for the pilot. Move to Blob Event Grid events delivered through a Storage Queue only when the retained object count exceeds 100,000, a full listing takes more than 30 seconds, or the 10-minute freshness SLO cannot be met.</p>
+  <div class="callout"><strong>No artifact polling</strong>The Azure worker receives known work from Storage Queue; it never lists ADO builds or the archive to discover new runs. Receipt listing exists only in explicitly invoked recovery/retention commands.</div>
+  <h3>Tradeoff</h3>
+  <p>The dashboard API must be reachable at publish time. Retrying the exact saved ADO artifact is the outage recovery path. Keep work asynchronous so pipeline uploads do not wait for Vally parsing or charts. If bundle sizes exceed the HTTP contract later, consider an upload-session design; it is not part of this change.</p>
   <h3>Data flow for one completed build</h3>
   <ol class="step-list">
     <li><strong>Shard execution</strong><p>Every shard writes Vally <code>results.jsonl</code> and JUnit, regardless of pass/fail.</p></li>
     <li><strong>Summary consolidation</strong><p>Select the highest job attempt per shard and produce one canonical build-level result.</p></li>
-    <li><strong>Bundle publication</strong><p>Create <code>manifest.json</code>, package the merged results, and upload using a workload-identity service connection.</p></li>
-    <li><strong>Discovery</strong><p>The service lists Blob names and ETags, comparing them with <code>run_metadata</code> in local SQLite.</p></li>
-    <li><strong>Ingestion</strong><p>Download a new bundle to a temporary directory, call Vally <code>ingestDirectory()</code>, persist repository/pipeline metadata, then delete temporary extracted files.</p></li>
+    <li><strong>Submission</strong><p>Create the bundle once and POST it with an authorized workload-identity access token for the dashboard audience.</p></li>
+    <li><strong>Durable acceptance</strong><p>The dashboard saves the ZIP and queued receipt. Return 202 with an ingestion ID and status URL.</p></li>
+    <li><strong>Ingestion</strong><p>The worker reads that specific archive object. Vally validates a temporary DB; live results and metadata commit together; temporary files are deleted.</p></li>
     <li><strong>Presentation</strong><p>The index shows repository/pipeline cards; drill-down routes reuse Vally's current and historical diagrams.</p></li>
   </ol>
 </section>
@@ -296,9 +318,23 @@
 <section id="storage">
   <h2><span class="n">6</span>Storage and query model</h2>
   <div class="grid-2">
-    <article class="card"><span class="label proposed">Durable</span><h3>Azure Blob Storage</h3><p>Immutable build-level bundles are the recoverable source of truth. Lifecycle policies move older bundles to cool storage and eventually delete them according to policy.</p></article>
-    <article class="card"><span class="label existing">Derived</span><h3>App Service SQLite</h3><p>Vally creates <code>/home/data/eval.db</code>. It holds <code>runs</code>, <code>outcomes</code>, graders, tool calls, and dashboard-owned <code>run_metadata</code>. It can be deleted and rebuilt from Blob.</p></article>
+    <article class="card"><span class="label proposed">Durable</span><h3>Azure Blob Storage</h3><p>Immutable bundles plus receipt state are the recoverable source. Cool-tier lifecycle rules may target archive objects; deletion must be coordinated with terminal-receipt pruning and must not remove pending work or receipt tombstones.</p></article>
+    <article class="card"><span class="label existing">Derived</span><h3>Vally SQLite</h3><p>The configured cache holds <code>runs</code>, <code>outcomes</code>, graders, tool calls, and <code>run_metadata</code>. The explicit replay command restores succeeded retained receipts into a replacement cache; normal startup does not rebuild completed history automatically.</p></article>
   </div>
+  <h3>New: accepted work is not the query cache</h3>
+  <p>The local push implementation adds <code>ingestions.db</code>, a separate SQLite receipt/work journal owned by this dashboard, not Vally. It stores submission ID, publisher ID, content hash, immutable object reference, status, attempt count, and retry due time. Archive bytes are saved first, then the queued receipt. Only then is 202 allowed. The journal survives process restarts; it is not a substitute for a managed cloud queue or backups.</p>
+  <pre>Local POC:
+  poc-blob/v1/.../dashboard-bundle.zip    immutable accepted bytes
+  poc-data/ingestions.db                 durable receipts and pending work
+  poc-data/eval.db                       Vally query cache + run_metadata
+  poc-data/staging/                      bounded uploads and validation; cleaned
+
+Azure mode (implemented, endpoints pending):
+  Blob v1/.../dashboard-bundle.zip       immutable accepted bundles
+  Blob _receipts/v1/&lt;id&gt;.json           receipt status and retained tombstones
+  Azure Storage Queue                   non-expiring receipt-ID messages
+  SQLite on a supported local filesystem Vally query cache</pre>
+  <p>Do not delete receipts when rebuilding only the query cache. Replay and pending reconciliation are explicit commands. Azure mode uses managed identity and requires pre-created container/queue URLs; it does not create resources. Each environment must have one instance/cache writer and its own container and queue. Separate web instances with separate SQLite caches cannot share one queue and still show complete history.</p>
   <h3>What the hosted Vally service is</h3>
   <p><code>@microsoft/vally-server</code> is a Node.js package, not a generated static report. It exports the database initializer, JSONL ingestion logic, SQLite-backed data source, Hono REST API, and browser dashboard. The wrapper application deploys those pieces together in one Linux App Service:</p>
   <pre>start.js
@@ -306,16 +342,18 @@
   - loads server.js
 
 server.js
-  - initializeDatabase("/home/data/eval.db")
-  - starts the Blob synchronization worker
+  - initializeDatabase(configured cache path)
+  - opens durable receipt/work storage
+  - mounts authenticated POST /api/ingestions and GET /api/ingestions/:id
+  - starts the targeted worker and resumes pending receipts
   - createApp(new DatabaseStore(db))
   - mounts the multi-repository index before the Vally routes
   - listens on the App Service PORT</pre>
-  <p>The deployment is self-contained in the sense that one App Service owns the ingestion worker, SQLite cache, REST API, and web UI. It still depends on Azure Blob Storage for durable data and Entra ID for authentication. Vally currently loads Chart.js from a public CDN in the browser; production must either allow that endpoint through the network policy or vendor the Chart.js asset into the application package.</p>
+  <p>One Node process owns the upload API, worker, query cache, and web UI in the local implementation. Production additionally needs Blob, durable queue/status services, private VPN ingress, and machine identities for publishing/storage, but no viewer login. Vally loads Chart.js and fonts from public CDNs; approve those browser connections or package equivalent local assets. Reusing Vally does not mean the application is offline or dependency-free.</p>
   <h3>How a page is rendered</h3>
   <ol class="step-list">
     <li><strong>Repository index</strong><p>The wrapper queries <code>run_metadata</code> and renders repository/pipeline cards with run count and newest ingestion time.</p></li>
-    <li><strong>Pipeline route</strong><p><code>/p/:repository/:pipeline</code> resolves the exact Vally run IDs owned by that pipeline.</p></li>
+    <li><strong>Pipeline route</strong><p><code>/p/:repository/:pipeline</code> reuses the Vally page with its run-list requests directed to a pipeline-scoped API. It does not filter only the first global page of runs.</p></li>
     <li><strong>Vally browser UI</strong><p>The existing Vally page calls its REST endpoints for runs, outcomes, rankings, graders, tools, metrics, and comparisons.</p></li>
     <li><strong>SQLite queries</strong><p><code>DatabaseStore</code> executes indexed queries and returns compact JSON. Chart.js renders the diagrams in the browser.</p></li>
   </ol>
@@ -326,25 +364,30 @@ server.js
     <tr><td>Kusto</td><td>Rejected for this phase</td><td>It adds ingestion mappings, operational ownership, and a second analytics implementation when Vally already provides the required query model and UI.</td></tr>
     <tr><td>Azure SQL/PostgreSQL</td><td>Deferred</td><td>An external relational database becomes useful only when the service requires multiple App Service instances, stronger high availability, or data volume beyond a single-node SQLite cache.</td></tr>
   </tbody></table></div>
-  <div class="callout"><strong>Cache semantics</strong>SQLite is not the durable source and is not uploaded on every change. If it is lost or incompatible after a Vally upgrade, delete it and replay every retained Blob bundle. This is why Blob retention and SQLite retention must use the same 731-day boundary.</div>
+  <div class="callout"><strong>Cache semantics</strong>Vally SQLite is not an acceptance queue. Rebuilding it must preserve receipts and accepted bundles. Local ingestion validates in a temporary Vally database, then copies the complete run and metadata in one live transaction. Receipt completion is a subsequent idempotent write; a crash between those writes is safe to retry.</div>
   <h3>Blob path</h3>
   <pre>vally-results/v1/
-  &lt;ado-project&gt;/
-    &lt;repository&gt;/
+  &lt;ado-organization&gt;/
+    &lt;ado-project&gt;/
       &lt;pipeline-definition-id&gt;/
         &lt;build-id&gt;/
           &lt;summary-attempt&gt;/
             dashboard-bundle.zip</pre>
-  <p>Use the immutable pipeline definition ID in the storage path. Put the friendly pipeline name in the manifest because names can change.</p>
+  <p>Path components are encoded. The organization/project/definition/build/attempt tuple is authoritative; mutable repository/pipeline display names are manifest metadata, not the deduplication key.</p>
   <h3>Ingestion ledger</h3>
-  <p>Do not add a separate <code>ingested_blobs</code> table for v1. Extend <code>run_metadata</code> with <code>blob_name</code> and <code>blob_etag</code>. A unique index on <code>blob_name</code> prevents duplicate ingestion; the ETag detects unexpected replacement.</p>
-  <pre>ALTER TABLE run_metadata ADD COLUMN blob_name TEXT;
-ALTER TABLE run_metadata ADD COLUMN blob_etag TEXT;
-CREATE UNIQUE INDEX idx_run_metadata_blob ON run_metadata(blob_name);</pre>
+  <p><code>run_metadata</code> still maps successfully ingested runs to their source object and content hash. The new receipt journal tracks accepted work before this row exists. No <code>ingested_blobs</code> table is added. Local SHA-256 values are content hashes; Azure Blob ETags must not be treated as interchangeable cryptographic checksums.</p>
 </section>
 
 <section id="contract">
-  <h2><span class="n">7</span>Artifact and manifest contract</h2>
+  <h2><span class="n">7</span>Upload API and artifact contract</h2>
+  <div class="table-wrap"><table><thead><tr><th>Request</th><th>Result</th><th>Meaning</th></tr></thead><tbody>
+    <tr><td><code>POST /api/ingestions</code></td><td>202 + receipt ID + Location/statusUrl</td><td>ZIP and pending work are durable. Content-Type is application/zip; optional X-Content-SHA256 verifies uploaded bytes.</td></tr>
+    <tr><td>Identical retry</td><td>202 while pending; 200 after terminal status</td><td>Return the original receipt without another archive object or visible run.</td></tr>
+    <tr><td>Identity reused with different bytes or publisher</td><td>409</td><td>Conflict; use a new Summary attempt for corrected results.</td></tr>
+    <tr><td><code>GET /api/ingestions/:id</code></td><td>200 with queued/processing/succeeded/failed/expired</td><td>Same publisher authorization as upload; another publisher sees 404. Retention tombstones remain queryable; re-upload to an expired identity returns 410.</td></tr>
+    <tr><td>Invalid request</td><td>400 / 401 / 403 / 413 / 415 / 422</td><td>Bad checksum, credentials, host, size, media type, archive, or manifest. No accepted receipt.</td></tr>
+    <tr><td>Backpressure or persistence unavailable</td><td>429 / 503 + Retry-After</td><td>Publisher should retry the same saved ZIP. No promise of acceptance until a receipt is returned.</td></tr>
+  </tbody></table></div>
   <h3>Bundle contents</h3>
   <pre>dashboard-bundle.zip
   manifest.json
@@ -355,23 +398,22 @@ CREATE UNIQUE INDEX idx_run_metadata_blob ON run_metadata(blob_name);</pre>
   <h3>Manifest v1</h3>
   <pre>{
   "schemaVersion": 1,
+  "adoOrganization": "azure-sdk",
   "adoProject": "internal",
-  "repository": "azure-rest-api-specs",
-  "pipelineDefinitionId": 1234,
-  "pipelineName": "skill-eval",
-  "buildId": 678901,
-  "buildNumber": "20260903.4",
-  "buildUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=678901",
+  "repo": "azure-rest-api-specs",
+  "pipelineDefinitionId": "1234",
+  "pipeline": "skill-eval",
+  "buildId": "678901",
+  "summaryAttempt": 1,
   "branch": "refs/heads/main",
-  "commitSha": "...",
-  "reason": "Schedule",
-  "startedAt": "2026-09-03T08:00:00Z",
-  "completedAt": "2026-09-03T08:17:42Z",
-  "vallyVersion": "0.15.0"
+  "sourceVersion": "0123456789abcdef0123456789abcdef01234567",
+  "runTimestamp": "2026-09-14T08:17:42Z"
 }</pre>
+  <p>The server derives the ADO build URL from validated identity fields. Organization, project, repo, pipeline, numeric definition/build IDs, positive attempt, and UTC runTimestamp are required. Branch and commit SHA are optional. Body limits: 32 MiB compressed, 128 MiB declared expanded data, and 10,000 ZIP entries. Path traversal, Windows aliases, duplicate/case-colliding entries, and unexpected files are rejected before decompression.</p>
+  <p><strong>Initial format scope:</strong> one merged plain-eval results stream per bundle, with at least one valid trial. Legacy plain-eval records remain usable for local demos. Experiment/multi-variant streams are rejected by processing rather than silently mapped to a single run; define and test that extension before onboarding such pipelines.</p>
   <div class="table-wrap"><table><thead><tr><th>Rule</th><th>Requirement</th></tr></thead><tbody>
-    <tr><td>Immutability</td><td>One Blob path is written once. Retries publish under a new summary-attempt path.</td></tr>
-    <tr><td>Identity</td><td>Dashboard run ID derives from project + repository + definition ID + build ID + attempt.</td></tr>
+    <tr><td>Immutability</td><td>One object path is written once. Transport retries reuse the exact ZIP and identity; corrected output or a new Summary execution uses a higher summaryAttempt.</td></tr>
+    <tr><td>Identity</td><td>Dashboard run ID derives from organization + project + definition ID + build ID + attempt, never a file/display name.</td></tr>
     <tr><td>Completeness</td><td>Bundle is uploaded only after all selected highest-attempt shard outputs are present.</td></tr>
     <tr><td>Compatibility</td><td>Manifest is versioned independently of Vally's JSONL format.</td></tr>
     <tr><td>History boundary</td><td>Only bundles published after the continuous path goes live are included. No pre-launch runs are imported.</td></tr>
@@ -379,12 +421,14 @@ CREATE UNIQUE INDEX idx_run_metadata_blob ON run_metadata(blob_name);</pre>
 </section>
 
 <section id="pipeline">
-  <h2><span class="n">8</span>Pipeline implementation work</h2>
+  <h2><span class="n">8</span>Pipeline helpers ready; onboarding pending</h2>
+  <p><code>bundle:prepare</code>, <code>bundle:publish</code>, and the opt-in <code>pipelines/publish-results.yml</code> template are implemented. The preparation command consumes an explicit expected-shard/attempt index rather than guessing completeness. Existing shared eval pipelines have not been modified to retain all raw results, generate that index, or invoke the new helper; connect those once the receiver and publishing identity/pool are configured.</p>
+  <p><strong>Network prerequisite:</strong> run the publishing job on an approved pool with private DNS and routes to the dashboard endpoint. Standard Microsoft-hosted agents cannot connect through VPN; use a network-connected pool or a dedicated trusted publishing job rather than reopening public dashboard access.</p>
   <ol class="step-list">
     <li><strong>Always publish raw Vally output</strong><p>Update shared <code>eval-shard.yml</code> so every attempt publishes <code>results.jsonl</code> alongside JUnit. Keep heavy session logs and workspaces failure-only.</p><ul><li>Artifact name includes shard and <code>System.JobAttempt</code>.</li><li>Publish condition is <code>always()</code>.</li><li>Never expose secrets from executor environment.</li></ul></li>
     <li><strong>Merge shard results in Summary</strong><p>Update <code>eval-summarize.yml</code> to download raw shard outputs, select the highest attempt, and call a shared merge/postprocessing script.</p><ul><li>Reject missing expected shards as incomplete.</li><li>Preserve each trial record exactly once.</li><li>Emit a canonical build-level <code>results.jsonl</code>.</li></ul></li>
-    <li><strong>Generate manifest</strong><p>Capture repository, definition/build IDs, branch, commit, reason, timestamps, Vally version, build URL, and fidelity.</p></li>
-    <li><strong>Upload immutable bundle to Blob</strong><p>Add a shared pipeline template executed after Summary under <code>condition: always()</code>, but upload only if the bundle validates.</p><ul><li>Use Azure workload identity federation.</li><li>Grant <code>Storage Blob Data Contributor</code> only to the upload identity.</li><li>Set content hash and metadata on upload.</li><li>Retry transient upload failures three times.</li><li>Report publication failure separately from the eval test verdict.</li></ul></li>
+    <li><strong>Generate manifest</strong><p>Use the API schema in section 7 and standard ADO variables. Save the exact bundle bytes before sending them.</p></li>
+    <li><strong>Submit to dashboard</strong><p>Add one shared publishing step after Summary. Use workload identity to obtain a v2 application token for the dashboard API, not an ARM/storage token.</p><ul><li>Grant the approved application the Dashboard.Ingest app role.</li><li>POST the ZIP and checksum; capture the receipt/status URL in the build summary.</li><li>Retry the same bytes on network errors, 429 and 503; do not recreate the ZIP on a transport retry.</li><li>Keep publication status separate from the eval verdict.</li><li>Publish valid failed-eval results too; canceled/agent-lost jobs cannot guarantee a final upload and must not be treated as passes.</li></ul></li>
     <li><strong>Keep short-term ADO artifacts</strong><p>Publish the same bundle as an ADO pipeline artifact for build-level debugging. Retain it for 30 days (or the repository's longer existing policy); dashboard history never depends on ADO retention.</p></li>
   </ol>
   <h3>Repository rollout order</h3>
@@ -397,17 +441,19 @@ CREATE UNIQUE INDEX idx_run_metadata_blob ON run_metadata(blob_name);</pre>
 </section>
 
 <section id="service">
-  <h2><span class="n">9</span>Dashboard service implementation work</h2>
-  <ol class="step-list">
-    <li><strong>Upgrade and pin Vally</strong><p>Use <code>@microsoft/vally-server 0.15.0</code> from the configured Azure feed and Node <code>&gt;=22.12</code>. Keep lockfile deterministic.</p></li>
-    <li><strong>Add Blob source adapter</strong><p>Use <code>@azure/storage-blob</code> with <code>DefaultAzureCredential</code>. Run a complete metadata listing at startup and every five minutes.</p><ul><li>Set production <code>VALLY_BLOB_POLL_MS=300000</code>.</li><li>List Blob names, ETags, sizes, and modified timestamps without downloading content.</li><li>Skip known immutable names before download.</li><li>Allow one sync cycle and at most two downloads concurrently.</li><li>Use atomic temporary extraction.</li><li>Escalate to Event Grid + Queue only at the documented scale threshold.</li></ul></li>
-    <li><strong>Extend run metadata</strong><p>Store repository, pipeline definition/name, ADO build URL, branch, commit, blob name, and ETag.</p></li>
-    <li><strong>Ingest and clean temporary files</strong><p>Call Vally's existing <code>ingestDirectory()</code>. Delete downloaded ZIPs and extracted directories after successful ingestion; retain only SQLite and diagnostic failure files.</p></li>
-    <li><strong>Serve multi-repo index</strong><p>Generate repository and pipeline cards from metadata. Place tools first, then alphabetically. Route to <code>/p/:repository/:pipeline</code>.</p></li>
-    <li><strong>Reuse Vally pages</strong><p>Filter the Vally run list by exact dashboard run IDs. Preserve its charts, tables, ranking, graders, tools, and comparisons.</p></li>
-    <li><strong>Enforce cache retention</strong><p>At startup and daily at 02:00 UTC, remove SQLite runs and related outcome/grader/tool metadata older than 731 days, then checkpoint WAL.</p></li>
-    <li><strong>Add observability</strong><p>Emit structured logs and metrics for last successful sync, next scheduled sync, listed/downloaded/skipped/failed bundles, ingest duration, newest build age, DB size, and disk usage. Surface last successful sync in the index UI.</p></li>
-  </ol>
+  <h2><span class="n">9</span>Dashboard service action items - first</h2>
+  <div class="table-wrap"><table><thead><tr><th>ID / status</th><th>Action and owning code</th><th>Acceptance check</th></tr></thead><tbody>
+    <tr><td>D1 - Local implemented</td><td><code>ingestion-routes.js</code>: POST/GET receipts, streamed size limits, checksum, concurrency limit.</td><td>No writes on unauthorized request; 202 only after durable acceptance.</td></tr>
+    <tr><td>D2 - Local implemented</td><td><code>publisher-auth.js</code>: JOSE signature/issuer/audience/expiry checks, app role/client allowlist, fail-closed configuration.</td><td>Reject missing, expired, wrong-audience, delegated, or unapproved publisher token. Anonymous bypass only explicit loopback POC.</td></tr>
+    <tr><td>D3 - Local implemented</td><td><code>submission-store.js</code> + <code>ingestion-journal.js</code>: immutable local bytes and durable pending receipt.</td><td>Concurrent exact retries share one receipt; conflict is 409; failed journal write is 503 and retry can repair it.</td></tr>
+    <tr><td>D4 - Local implemented</td><td><code>ingestion-service.js</code> + <code>ingest-submission.js</code>: targeted single worker, isolated validation, atomic live publication, bounded retries.</td><td>Restart interrupted work, retry after commit without duplicates, reject malformed data without partial live rows, continue past a bad submission.</td></tr>
+    <tr><td>D5 - Local implemented</td><td><code>run-metadata.js</code> + <code>pipelines.js</code>: automatic grouping, stable IDs, newest successful attempt, safe text injection.</td><td>New repository/pipeline appears without code changes; charts use its scoped run list, not a filtered first global page.</td></tr>
+    <tr><td>D6 - Local implemented</td><td><code>dashboard-client.js</code> and POC scripts: submit over HTTP; starting the service no longer seeds or erases history.</td><td>Publish while server is running; inspect receipt; reload dashboard to see the run.</td></tr>
+    <tr><td>D7 - Implemented; Azurite tested</td><td>Azure Blob archives and JSON receipts, Storage Queue delivery, conditional writes, lease renewal, queue-send repair and redelivery.</td><td>Real SDK tests exercise restart, duplicate/conflict, opaque ETags, queue failure, and lost acknowledgements. Live Azure identity/RBAC/network verification remains pending.</td></tr>
+    <tr><td>D8a - Implemented; local tests</td><td>Readiness/status APIs, cache process lock, replay/prune/reconcile commands, deployment allowlist, and private/no-login preflight with opt-in 1ES stages.</td><td>Dry run changes no retained data; replay preserves receipt history; tombstones block expired retries; deployment defaults off and refuses unsafe targets.</td></tr>
+    <tr><td>D8b - Pending Azure details</td><td>Container/queue URLs per environment, App Service targets, private endpoint/DNS, public access disabled, publishing/deployment connections, RBAC, maintenance schedule and alerts.</td><td>VPN viewing without sign-in; off-network access denied; end-to-end real pipeline publication and measured load/restart checks.</td></tr>
+    <tr><td>D9 - Before experiment onboarding</td><td>Define merged multi-variant bundle-to-run mapping and receipt completion semantics.</td><td>No experiment-ID collision, skipped shards, or partial publication.</td></tr>
+  </tbody></table></div>
 </section>
 
 <section id="history-policy">
@@ -417,25 +463,35 @@ CREATE UNIQUE INDEX idx_run_metadata_blob ON run_metadata(blob_name);</pre>
   <ol class="step-list">
     <li><strong>No backfill utility</strong><p>Do not build ADO build enumeration, artifact download, old-format conversion, or historical gap reporting.</p></li>
     <li><strong>One continuous producer</strong><p>Every onboarded eval pipeline uses the shared Summary template to create and upload one immutable bundle for each new completed run.</p></li>
-    <li><strong>Define go-live per pipeline</strong><p>A pipeline's history begins when its first valid bundle reaches Blob. Until then, the repository/pipeline card is absent or shows no runs.</p></li>
-    <li><strong>Recover missed current uploads</strong><p>If a new run's Blob upload fails, retry the publishing job while its ADO artifact is still available. This is operational retry, not historical backfill.</p></li>
+    <li><strong>Define go-live per pipeline</strong><p>History begins with its first accepted submission; the card appears after successful ingestion. An unsubmitted or failed ingestion is not a passing eval.</p></li>
+    <li><strong>Recover missed current uploads</strong><p>If submission fails, retry the publishing job with the saved ZIP while its ADO artifact remains available. This is operational retry, not historical backfill.</p></li>
     <li><strong>Use future accumulated history</strong><p>Vally's history and comparison diagrams operate over all continuously published bundles retained in Blob.</p></li>
   </ol>
 </section>
 
 <section id="security">
   <h2><span class="n">11</span>Security and reliability</h2>
+  <div class="callout"><strong>Viewer policy - decided</strong>No application sign-in, viewer account list, or per-user role checks. Everyone on the approved VPN has access to all dashboard results. Azure network isolation must be deployed before exposing the hosted service; the current local POC does not configure a VPN.</div>
   <div class="grid-2">
-    <article class="card"><h3>Pipeline identity</h3><ul><li>Workload identity federation.</li><li><code>Storage Blob Data Contributor</code>.</li><li>Scope to one container.</li><li>No account keys or long-lived SAS tokens.</li></ul></article>
-    <article class="card"><h3>Dashboard identity</h3><ul><li>App Service managed identity.</li><li><code>Storage Blob Data Reader</code>.</li><li>Entra authentication on the website.</li><li>Preserve Vally host-header protection.</li></ul></article>
+    <article class="card"><h3>Pipeline identity</h3><ul><li>Workload identity federation for a v2 dashboard access token.</li><li><code>Dashboard.Ingest</code> application role and approved client ID.</li><li>No direct Blob access needed.</li><li>No account keys or long-lived upload secrets.</li></ul></article>
+    <article class="card"><h3>Dashboard identity</h3><ul><li>Production managed identity writes and reads the private archive and pending-work store.</li><li>Scope Blob Contributor and queue/receipt permissions narrowly.</li><li>Publisher tokens protect upload/receipt endpoints, not viewer pages; no interactive login is involved.</li><li>Keep Host protection across wrapper routes as well as Vally routes; it is not a VPN firewall.</li></ul></article>
     <article class="card"><h3>Data safety</h3><ul><li>Private container.</li><li>HTTPS only.</li><li>Validate ZIP paths and maximum uncompressed size.</li><li>Never render raw HTML from trajectories.</li></ul></article>
-    <article class="card"><h3>Reliability</h3><ul><li>One App Service instance for v1.</li><li>Atomic ingestion transaction.</li><li>Idempotent Blob-to-run identity.</li><li>Database rebuild runbook.</li></ul></article>
+    <article class="card"><h3>Reliability</h3><ul><li>One cache writer/process in the local implementation.</li><li>Durable queue is independent of the query cache.</li><li>Atomic result + metadata publication; idempotent receipt completion.</li><li>Never accept raw caller-selected download URLs; worker reads its own stored object reference.</li></ul></article>
   </div>
+  <h3>Private-network deployment action items</h3>
+  <ol>
+    <li>Select the approved VPN-connected VNet/subnet and create an App Service private endpoint. VNet integration alone handles outbound traffic; it does not restrict incoming website access.</li>
+    <li>Configure private DNS, VPN routes and DNS forwarding so the normal HTTPS hostname resolves to the private endpoint for permitted clients. Include the private SCM DNS record for deployment access.</li>
+    <li>Explicitly set <code>publicNetworkAccess=Disabled</code>; keep every slot and SCM endpoint private. Do not enable App Service Authentication/Easy Auth or application sign-in for viewers.</li>
+    <li>Verify private connectivity from the publishing/deployment agent pool. Keep non-interactive publisher token verification; do not enable the loopback-only POC bypass on the hosted service.</li>
+    <li>Verify VPN users receive pages and result APIs without login redirects, off-network/public requests cannot access them, and the authorized publishing job can POST its bundle.</li>
+  </ol>
+  <p>References: <a href="https://learn.microsoft.com/en-us/azure/app-service/overview-private-endpoint">App Service private endpoints and DNS</a>; <a href="https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops#networking">Microsoft-hosted agent networking limitations</a>. The retained legacy deployment scripts do not establish this private boundary and must not be used unchanged for production.</p>
 </section>
 
 <section id="capacity">
   <h2><span class="n">12</span>Capacity and retention</h2>
-  <p>The current POC provides a baseline, not a production upper bound:</p>
+  <p>The earlier folder-based POC provided this sample baseline, not a current push-path benchmark or production upper bound. The configurable demo catalog is no longer a fixed 18-run seed.</p>
   <div class="table-wrap"><table class="metric-table"><thead><tr><th>Measured POC data</th><th>Size</th></tr></thead><tbody>
     <tr><td>18 raw run folders</td><td>5.94 MB</td></tr>
     <tr><td>SQLite database</td><td>6.52 MB</td></tr>
@@ -444,63 +500,70 @@ CREATE UNIQUE INDEX idx_run_metadata_blob ON run_metadata(blob_name);</pre>
   </tbody></table></div>
   <p>At the measured average, 9 daily pipelines over two years would consume roughly 4.5 GB if both extracted raw data and SQLite were retained. Production should avoid that duplication by deleting temporary downloads after ingestion.</p>
   <div class="grid-2">
-    <article class="card"><h3>Blob policy</h3><ul><li>Hot: upload through day 30.</li><li>Cool: day 31 through day 731.</li><li>Delete: after day 731.</li><li>All continuously published run types use the same policy in v1.</li></ul></article>
-    <article class="card"><h3>App Service policy</h3><ul><li>B1 is sufficient for pilot.</li><li>Prune SQLite to the same 731-day horizon daily.</li><li>Alert at 70% and 80% disk use.</li><li>Checkpoint WAL daily and after bulk rebuild.</li><li>Upgrade tier before sustained multi-year growth requires it.</li></ul></article>
+    <article class="card"><h3>Blob policy - proposed</h3><ul><li>Hot: upload through day 30; cool afterward for archive prefix <code>v1/</code>.</li><li>Explicit pruning removes terminal bundles older than 731 days by accepted-at time.</li><li>Pending submissions are excluded; receipt tombstones remain.</li><li>No automatic delete lifecycle is provisioned. Do not target <code>_receipts/</code> with archive expiry.</li></ul></article>
+    <article class="card"><h3>App Service policy - proposed</h3><ul><li>B1 is a pilot candidate, not a capacity guarantee; sample sizes are not representative of every pipeline.</li><li>Include receipt journal, WAL, temporary validation DB, dependencies, and archive staging in sizing.</li><li>Verify the selected filesystem supports SQLite locking/WAL; use instance-local rebuildable cache if the shared home mount does not.</li><li>Alert at 70% and 80% disk use; prune only terminal expired data.</li></ul></article>
   </div>
-  <h3>Retention by storage layer</h3>
+  <h3>Proposed retention by storage layer</h3>
   <div class="table-wrap"><table><thead><tr><th>Layer</th><th>Retention</th><th>Reason</th></tr></thead><tbody>
     <tr><td>Blob bundles</td><td>731 days</td><td>Authoritative two-year trend and recovery history.</td></tr>
     <tr><td>SQLite cache</td><td>731 days</td><td>Matches Blob so displayed data never outlives recoverable source data.</td></tr>
+    <tr><td>Receipts and queue</td><td>Non-expiring work messages; receipt tombstones retained after archive pruning</td><td>Keep deduplication/ownership evidence after expiry. Receipt compaction and backup policy remain operator decisions.</td></tr>
     <tr><td>Temporary ZIP/extraction</td><td>Delete immediately after each attempt</td><td>Avoids doubling App Service disk usage.</td></tr>
-    <tr><td>ADO pipeline artifact</td><td>30 days or existing longer repository policy</td><td>Short-term build debugging only; not used by the dashboard.</td></tr>
+    <tr><td>ADO pipeline artifact</td><td>30 days or existing longer repository policy</td><td>Build debugging and exact-byte submission retry; never polled by the dashboard.</td></tr>
   </tbody></table></div>
 </section>
 
 <section id="rollout">
   <h2><span class="n">13</span>Delivery plan and action items</h2>
-  <article class="phase" style="--phase:var(--blue)"><div class="phase-title"><strong>Phase 0</strong><span>Azure ownership and resources</span></div><div class="phase-body"><ul><li>Choose subscription, resource group, storage account, container, region, and owners.</li><li>Configure the approved 30-day hot / 731-day delete lifecycle.</li><li>Create service identities and RBAC assignments.</li><li>Confirm the initial pipelines that will begin publishing at go-live.</li></ul></div></article>
-  <article class="phase" style="--phase:var(--green)"><div class="phase-title"><strong>Phase 1</strong><span>Canonical producer</span></div><div class="phase-body"><ul><li>Always publish shard JSONL.</li><li>Implement highest-attempt merge.</li><li>Generate manifest v1 and dashboard bundle.</li><li>Add unit/contract fixtures for retries, missing shards, and malformed records.</li></ul></div></article>
-  <article class="phase" style="--phase:var(--accent)"><div class="phase-title"><strong>Phase 2</strong><span>Blob publishing pilot</span></div><div class="phase-body"><ul><li>Add workload-identity upload template.</li><li>Enable tools and specs pipelines.</li><li>Verify paths, metadata, immutability, and lifecycle policy.</li><li>Continue publishing ADO artifacts for debugging.</li></ul></div></article>
-  <article class="phase" style="--phase:var(--red)"><div class="phase-title"><strong>Phase 3</strong><span>Hosted dashboard ingestion</span></div><div class="phase-body"><ul><li>Productionize POC metadata/index.</li><li>Add Blob adapter and temporary-file cleanup.</li><li>Enable managed identity and Entra auth.</li><li>Deploy one-instance App Service and validate recovery.</li></ul></div></article>
-  <article class="phase" style="--phase:var(--amber)"><div class="phase-title"><strong>Phase 4</strong><span>Language rollout and hardening</span></div><div class="phase-body"><ul><li>Onboard remaining repositories through the shared publishing template.</li><li>Verify the first continuously published run for each pipeline.</li><li>Monitor disk, ingestion lag, and failed bundles.</li><li>Publish support/runbook documentation.</li></ul></div></article>
-  <article class="phase" style="--phase:#57534e"><div class="phase-title"><strong>Phase 5</strong><span>Trend reports</span></div><div class="phase-body"><ul><li>Add deterministic regression/recovery queries.</li><li>Generate daily/weekly reports with build links.</li><li>Keep AI recommendations review-only.</li></ul></div></article>
+  <h3>D8 deployment-reference checklist</h3>
+  <ol><li>Confirm the Release Plan Dashboard's actual App Service access settings, private endpoint/DNS arrangements, and agent-pool reachability with its owners. Reuse approved infrastructure conventions only after verification.</li><li>Adapt its build &rarr; ZIP &rarr; pre-production &rarr; production promotion pattern, keeping separate app resources, workload identities, and private SCM connectivity. Validate Vally's native dependency on the deployment platform.</li><li>Keep the deliberate differences: no viewer Easy Auth, no ADO/Blob-discovery polling, no memory-only acceptance queue, and no replacement for the existing Vally charts.</li></ol>
+  <article class="phase" style="--phase:var(--green)"><div class="phase-title"><strong>Phase 1 - done locally</strong><span>Dashboard implementation</span></div><div class="phase-body"><ul><li>D1-D6: upload/status API, auth verifier, durable local journal, targeted worker, atomic publication, and POC client.</li><li>Vally charts/history preserved; repository search and service-status summary added.</li><li>Tests cover durable acceptance, restart, exact duplicates, isolated bad data, and no viewer login.</li></ul></div></article>
+  <article class="phase" style="--phase:var(--blue)"><div class="phase-title"><strong>Phase 2 - code ready</strong><span>Azure details and live checks pending</span></div><div class="phase-body"><ul><li>D7/D8a: Blob archives/receipts + Storage Queue, maintenance commands, and guarded deployment stages implemented and locally tested.</li><li>Provide separate staging/production container and queue URLs, App Service names/resource group, and deployment connection.</li><li>Configure VPN/private DNS, public access disabled, HTTPS, no viewer Easy Auth, publisher app-role grants and managed identity RBAC.</li><li>Run target preflight and private-network smoke tests before opting into deployment. Validate actual Linux SQLite filesystem behavior and load.</li></ul></div></article>
+  <article class="phase" style="--phase:var(--accent)"><div class="phase-title"><strong>Phase 3 - helpers ready</strong><span>Eval framework onboarding pending</span></div><div class="phase-body"><ul><li>Wire shared shard/Summary jobs to always retain raw JSONL/JUnit and emit an expected-shard index.</li><li>Invoke the prepared highest-attempt merge and authenticated POST template with endpoint/audience/service-connection values.</li><li>Publish saved ZIP and receipt as ADO artifacts; keep transport status separate from the eval verdict.</li><li>Exit: one real tools pipeline and one specs pipeline submit without direct storage credentials or dashboard catalog changes.</li></ul></div></article>
+  <article class="phase" style="--phase:var(--amber)"><div class="phase-title"><strong>Phase 4</strong><span>Operations + repo owners / rollout</span></div><div class="phase-body"><ul><li>Onboard remaining pipelines through the opt-in publishing template and publisher grants.</li><li>Connect status/queue signals to durable monitoring, validate latency and rate limits, and define receipt backup/compaction.</li><li>Schedule the implemented dry-run/apply retention command and exercise explicit replay of retained post-launch history.</li><li>Test experiments only after D9 multi-variant support; do not silently onboard unsupported result shapes.</li></ul></div></article>
+  <article class="phase" style="--phase:#57534e"><div class="phase-title"><strong>Phase 5</strong><span>Optional analysis / later</span></div><div class="phase-body"><ul><li>Keep deterministic regression/recovery queries separate from upload correctness.</li><li>Generate evidence-linked daily/weekly summaries.</li><li>AI recommendations remain human-review-only.</li></ul></div></article>
 </section>
 
 <section id="testing">
   <h2><span class="n">14</span>Test and acceptance plan</h2>
+  <p>Tests cover the API/client, local journal and Azure SDK adapters against Azurite, queue failure/redelivery, leases, immutable content checks, replay, retention, shard selection, deployment packaging, and YAML syntax. Live ADO template expansion/deployment, managed identity grants, VPN/DNS, real Azure failover and load measurements remain release gates; emulator success is not live-cloud validation.</p>
   <div class="table-wrap"><table><thead><tr><th>Layer</th><th>Required checks</th></tr></thead><tbody>
     <tr><td>Contract</td><td>Manifest schema, stable identity, invalid fields, unknown schema version, and go-live history boundary.</td></tr>
     <tr><td>Shard merge</td><td>Highest attempt wins, no duplicate trials, missing shard fails, deterministic ordering.</td></tr>
-    <tr><td>Blob sync</td><td>New/known/replaced blobs, transient failures, corrupt ZIP, path traversal, maximum size, retry.</td></tr>
-    <tr><td>Scheduling</td><td>Immediate startup sync, five-minute recurring sync with fake timers, no overlapping cycles, and maximum two concurrent downloads.</td></tr>
-    <tr><td>Database</td><td>Atomic ingest, metadata upsert, duplicate Blob name, DB rebuild from empty state.</td></tr>
+    <tr><td>Acceptance</td><td>202 after archive and receipt persistence; 503 if either fails; concurrent duplicates; 409 on content/owner conflict; optional checksum.</td></tr>
+    <tr><td>Scheduling</td><td>Wake on accepted work, restart pending/interrupted receipts, bounded transient retries, terminal failure does not block later work; no Blob scan called.</td></tr>
+    <tr><td>Database</td><td>Stage malformed results outside the live cache; atomic import with metadata; crash between result commit and receipt completion does not duplicate outcomes.</td></tr>
+    <tr><td>Security</td><td>Signature, issuer, audience, expiry, role and client-ID checks; fail closed; Host/browser-origin checks; 32/128 MiB limits; ZIP path/case duplicates.</td></tr>
+    <tr><td>Viewer and network access</td><td>Local: dashboard pages/read APIs require no viewer credentials even with publisher auth enabled. Hosted: VPN users can view without redirects, off-network requests cannot reach dashboard data, and publishing agents have private DNS/routes.</td></tr>
     <tr><td>Retention</td><td>Rows at 730 days remain, rows older than 731 days are removed with dependent outcomes/graders/tools, WAL checkpoint succeeds.</td></tr>
     <tr><td>Vally runtime</td><td>Vally API/UI starts on Node 22, host validation remains active, SQLite schema is compatible, and Chart.js loads under the selected network policy.</td></tr>
     <tr><td>UI</td><td>Repository/pipeline ordering, exact filtering, latest/history charts, desktop/mobile overflow, build links.</td></tr>
     <tr><td>End to end</td><td>Completed ADO build appears automatically in the dashboard within the ingestion SLO.</td></tr>
-    <tr><td>Recovery</td><td>Delete local DB and staging; rebuild complete history from Blob and compare counts/hashes.</td></tr>
+    <tr><td>Recovery</td><td>Local restart, cloud queue redelivery, queue-send repair, lost acknowledgement, and completed-history replay are locally/emulator tested. Verify the real hosted runtime with configured storage and networking.</td></tr>
   </tbody></table></div>
   <h3>Release acceptance criteria</h3>
-  <ul><li>Tools and specs pipelines publish valid immutable bundles.</li><li>A new build appears without manual upload and 95% appear within 10 minutes of Summary completion.</li><li>Dashboard restarts do not re-download known immutable bundles.</li><li>Deleting SQLite and replaying post-launch Blob history reproduces run/outcome counts.</li><li>SQLite and Blob both enforce the 731-day history boundary.</li><li>Repository/pipeline pages show only their own runs.</li><li>No pre-launch runs are expected or imported.</li><li>No credentials are stored in repository or App Service settings as long-lived secrets.</li></ul>
+  <ul><li>Dashboard-first exit: local POST, durable receipt, queued processing, restart, duplicate/conflict, automatic grouping, cleanup, and auth tests pass.</li><li>Production exit: real tools and specs pipelines submit valid bundles through the shared authenticated step over private networking.</li><li>Accepted means recoverable; succeeded means queryable. Failed receipts never become partially visible runs.</li><li>Measure the proposed 10-minute end-to-end SLO under real bundle sizes and concurrent build completion.</li><li>Validate archive/queue/cache retention and explicit recovery before production release.</li><li>All approved VPN users can view without sign-in; public network access is disabled and tested. Only approved publishing applications can submit.</li><li>No pre-launch history is expected or imported.</li></ul>
 </section>
 
 <section id="operations">
   <h2><span class="n">15</span>Operations and runbooks</h2>
   <div class="grid-2">
-    <article class="card"><h3>Health signals</h3><ul><li>HTTP health endpoint.</li><li>Last successful Blob listing.</li><li>Newest ingested build age.</li><li>Failed bundle count and reason.</li><li>SQLite and disk byte size.</li></ul></article>
-    <article class="card"><h3>Recovery runbook</h3><ul><li>Stop the app.</li><li>Move/delete <code>eval.db</code>, WAL, and SHM.</li><li>Start in rebuild mode.</li><li>Replay all retained Blob bundles.</li><li>Compare manifest, run, and outcome counts.</li></ul></article>
-    <article class="card"><h3>Corrupt bundle</h3><ul><li>Do not record successful ingestion.</li><li>Move diagnostic copy to quarantine prefix or log exact blob.</li><li>Alert owner with source build URL.</li><li>Allow retry after corrected immutable attempt is published.</li></ul></article>
+    <article class="card"><h3>Health signals</h3><ul><li><code>/api/health</code> is liveness; <code>/api/readiness</code> checks storage availability without promising that a future write will succeed.</li><li><code>/api/dashboard/status</code> exposes process counters and queue size; local mode includes oldest pending time.</li><li>Receipt GET reports terminal/expired status and attempts; index status loads on page refresh.</li><li>Configure durable logs, Azure alerts, latency measurements and disk monitoring before rollout.</li></ul></article>
+    <article class="card"><h3>Recovery commands</h3><ul><li><code>maintenance replay --output &lt;replacement.db&gt;</code>: restore succeeded retained receipts into a separate cache.</li><li><code>maintenance reconcile [--apply]</code>: explicitly re-enqueue pending receipts after a partial acceptance; dry-run by default.</li><li><code>maintenance prune --retention-days 731 [--apply]</code>: tombstone terminal receipts, prune cache and matching archives; stop the server first.</li><li>A cache lock prevents concurrent local maintenance/writes. Receipt-store loss itself requires backup restoration, not reconstruction of ownership from orphan ZIPs.</li></ul></article>
+    <article class="card"><h3>Rejected or failed submission</h3><ul><li>Invalid archive/manifest: reject before 202.</li><li>Semantically invalid results: terminal failed receipt, no visible partial data.</li><li>Transient worker error: bounded retries; after exhaustion operator investigates.</li><li>Corrected output requires a new Summary attempt; never overwrite an accepted identity.</li></ul></article>
     <article class="card"><h3>Upgrade Vally</h3><ul><li>Pin exact package version.</li><li>Test old/new JSONL fixtures.</li><li>Check SQLite schema compatibility.</li><li>Rebuild cache if Vally has no migration path.</li></ul></article>
   </div>
 </section>
 
 <section id="decisions">
-  <h2><span class="n">16</span>Remaining decisions before implementation</h2>
+  <h2><span class="n">16</span>Remaining decisions before hosted rollout</h2>
   <div class="question"><strong>1. Azure ownership</strong><p>Which subscription, resource group, storage account, App Service plan, and operational team own the production service?</p></div>
   <div class="question"><strong>2. Pipeline scope</strong><p>Confirm the initial definition IDs and whether PR runs are published or only main/scheduled/manual runs.</p></div>
-  <div class="question"><strong>3. Authentication audience</strong><p>Should access be limited to Azure SDK organization users, a broader Microsoft tenant group, or public read access?</p></div>
-  <div class="question"><strong>4. App Service tier</strong><p>Use B1 for pilot; decide the production tier after measuring real ingestion volume and memory usage.</p></div>
-  <div class="question"><strong>5. Browser asset policy</strong><p>Allow Vally's current Chart.js CDN dependency, or vendor the asset so the dashboard can operate with restricted outbound network access?</p></div>
+  <div class="question"><strong>3. Publishing identities and audience</strong><p>Choose API tenant/audience, authorized CI application IDs and app-role assignments for non-interactive submission. Viewer access is already decided: all approved VPN users, no application login. Each approved publisher is trusted for its submitted pipeline metadata.</p></div>
+  <div class="question"><strong>4. Storage endpoints and filesystem</strong><p>Provide Blob container and Storage Queue URLs (separate per environment), grants and receipt backup policy. Prove the selected cache filesystem supports SQLite and plan explicit replay after instance-local cache loss. No shared multi-instance cache is implemented.</p></div>
+  <div class="question"><strong>5. Limits and retention</strong><p>Confirm 32 MiB compressed/128 MiB expanded fits real bundles, whether 731-day retention is required for each run type, and terminal receipt/tombstone lifetime.</p></div>
+  <div class="question"><strong>6. Browser asset policy</strong><p>Allow Vally's Chart.js/font CDN dependencies or package approved local assets.</p></div>
+  <div class="question"><strong>7. VPN network details</strong><p>Identify the VPN-connected VNet/subnet, private DNS resolver/forwarding, application hostname, and network-connected publishing/deployment agent pool before provisioning. Public dashboard access must remain disabled.</p></div>
 </section>
 
 </main>

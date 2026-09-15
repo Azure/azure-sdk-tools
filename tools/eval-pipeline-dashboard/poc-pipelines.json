@@ -28,24 +28,6 @@
       "resultSources": ["authoring", "markdown"]
     },
     {
-      "repository": "azure-sdk-for-java",
-      "pipeline": "skill-eval",
-      "pipelineDefinitionId": "9102",
-      "resultSources": ["sensei", "config"]
-    },
-    {
-      "repository": "azure-sdk-for-js",
-      "pipeline": "skill-eval",
-      "pipelineDefinitionId": "9103",
-      "resultSources": ["release2", "release3"]
-    },
-    {
-      "repository": "azure-sdk-for-net",
-      "pipeline": "skill-eval",
-      "pipelineDefinitionId": "9104",
-      "resultSources": ["markdown", "sensei"]
-    },
-    {
       "repository": "azure-rest-api-specs",
       "pipeline": "skill-eval",
       "pipelineDefinitionId": "9105",
@@ -56,12 +38,6 @@
       "pipeline": "arm-api-review-eval",
       "pipelineDefinitionId": "9106",
       "resultSources": ["markdown", "sensei"]
-    },
-    {
-      "repository": "azure-sdk-for-python",
-      "pipeline": "skill-eval",
-      "pipelineDefinitionId": "9107",
-      "resultSources": ["authoring", "config"]
     }
   ]
 }

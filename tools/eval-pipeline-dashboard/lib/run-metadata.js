@@ -4,6 +4,15 @@ import { basename, join } from "node:path";
 
 const DEFAULT_REPOSITORY = "local";
 const DEFAULT_PIPELINE = "unclassified";
+const LATEST_ATTEMPT = `NOT EXISTS (
+  SELECT 1 FROM run_metadata newer JOIN runs newer_run ON newer_run.id = newer.run_id
+  WHERE metadata.ado_organization IS NOT NULL
+    AND newer.ado_organization = metadata.ado_organization
+    AND newer.ado_project = metadata.ado_project COLLATE NOCASE
+    AND newer.pipeline_definition_id = metadata.pipeline_definition_id
+    AND newer.build_id = metadata.build_id
+    AND newer.summary_attempt > metadata.summary_attempt
+)`;
 
 function asOptionalString(value) {
   if (typeof value !== "string") {
@@ -87,6 +96,7 @@ export function initializeRunMetadata(db) {
       source_run_id TEXT NOT NULL,
       repository TEXT NOT NULL,
       pipeline TEXT NOT NULL,
+      ado_organization TEXT,
       ado_project TEXT,
       pipeline_definition_id TEXT,
       branch TEXT,
@@ -98,6 +108,8 @@ export function initializeRunMetadata(db) {
       source_path TEXT NOT NULL,
       blob_name TEXT,
       blob_etag TEXT,
+      blob_sha256 TEXT,
+      accepted_at TEXT,
       blob_size INTEGER,
       blob_last_modified TEXT,
       ingested_at TEXT NOT NULL
@@ -109,6 +121,7 @@ export function initializeRunMetadata(db) {
 
   const columns = db.prepare("PRAGMA table_info(run_metadata)").all();
   const migrations = [
+    ["ado_organization", "TEXT"],
     ["run_timestamp", "TEXT"],
     ["ado_project", "TEXT"],
     ["pipeline_definition_id", "TEXT"],
@@ -116,6 +129,8 @@ export function initializeRunMetadata(db) {
     ["summary_attempt", "INTEGER"],
     ["blob_name", "TEXT"],
     ["blob_etag", "TEXT"],
+    ["blob_sha256", "TEXT"],
+    ["accepted_at", "TEXT"],
     ["blob_size", "INTEGER"],
     ["blob_last_modified", "TEXT"],
   ];
@@ -142,15 +157,16 @@ export function getBlobIngestion(db, blobName) {
 export function upsertRunMetadata(db, metadata, sourcePath, blob = {}) {
   db.prepare(`
     INSERT INTO run_metadata (
-      run_id, source_run_id, repository, pipeline, ado_project,
+      run_id, source_run_id, repository, pipeline, ado_organization, ado_project,
       pipeline_definition_id, branch, source_version, build_id, build_url,
       summary_attempt, run_timestamp, source_path, blob_name, blob_etag,
-      blob_size, blob_last_modified, ingested_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      blob_size, blob_last_modified, ingested_at, blob_sha256, accepted_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(run_id) DO UPDATE SET
       source_run_id = excluded.source_run_id,
       repository = excluded.repository,
       pipeline = excluded.pipeline,
+      ado_organization = excluded.ado_organization,
       ado_project = excluded.ado_project,
       pipeline_definition_id = excluded.pipeline_definition_id,
       branch = excluded.branch,
@@ -164,12 +180,15 @@ export function upsertRunMetadata(db, metadata, sourcePath, blob = {}) {
       blob_etag = excluded.blob_etag,
       blob_size = excluded.blob_size,
       blob_last_modified = excluded.blob_last_modified,
-      ingested_at = excluded.ingested_at
+      ingested_at = excluded.ingested_at,
+      blob_sha256 = excluded.blob_sha256,
+      accepted_at = excluded.accepted_at
   `).run(
     metadata.dashboardRunId,
     metadata.sourceRunId,
     metadata.repository,
     metadata.pipeline,
+    metadata.adoOrganization ?? null,
     metadata.adoProject,
     metadata.pipelineDefinitionId,
     metadata.branch,
@@ -183,7 +202,9 @@ export function upsertRunMetadata(db, metadata, sourcePath, blob = {}) {
     blob.etag ?? null,
     blob.size ?? null,
     blob.lastModified ?? null,
-    new Date().toISOString()
+    new Date().toISOString(),
+    blob.sha256 ?? null,
+    metadata.acceptedAt ?? null
   );
 }
 
@@ -196,6 +217,7 @@ export function getPipelineSummaries(db) {
       MAX(COALESCE(runs.started_at, metadata.run_timestamp, metadata.ingested_at)) AS last_run_at
     FROM run_metadata AS metadata
     JOIN runs ON runs.id = metadata.run_id
+    WHERE ${LATEST_ATTEMPT}
     GROUP BY metadata.repository, metadata.pipeline
     ORDER BY metadata.repository COLLATE NOCASE, metadata.pipeline COLLATE NOCASE
   `).all();
@@ -219,6 +241,7 @@ export function getPipelineRuns(db, repository, pipeline) {
     FROM run_metadata AS metadata
     JOIN runs ON runs.id = metadata.run_id
     WHERE metadata.repository = ? AND metadata.pipeline = ?
+      AND ${LATEST_ATTEMPT}
     ORDER BY started_at DESC, runs.id DESC
   `).all(repository, pipeline).map((row) => ({
     id: row.id,

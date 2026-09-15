@@ -5,14 +5,16 @@ node_modules/
 !lib/
 !lib/**
 
-# Derived data / regenerable cache (built from the results/ folder at runtime).
-# On Azure these live on persistent storage (/home), not in the code package.
+# Runtime cache, lock and durable local journal; never include in deployment.
 eval.db
 eval.db-wal
 eval.db-shm
+eval.db.lock/
+ingestions.db*
+.ingestion-archive/
 
 # Eval result folders are data, not source — keep them out of version control.
-# (The running app watches this folder; it does not need to be committed.)
+# The current server accepts HTTP submissions; results/ is legacy data only.
 results/
 poc-blob/
 poc-data/
@@ -24,6 +26,9 @@ poc-data/
 # Misc
 *.log
 .DS_Store
+.env
+.env.*
+!.env.example
 
 # Azure CLI `az webapp up` local cache + build/upload artifacts
 .azure/

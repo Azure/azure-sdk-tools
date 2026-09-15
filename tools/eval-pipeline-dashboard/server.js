@@ -1,12 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-//
-// Entry point for hosting the vally eval dashboard on Azure App Service (or
-// locally). Serves the dashboard + API from a SQLite database, and — when a
-// results directory is available — incrementally ingests new run folders so the
-// dashboard updates automatically (after a browser refresh).
-import { resolve, dirname } from "node:path";
-import { existsSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
@@ -15,65 +9,71 @@ import {
   DatabaseStore,
   createApp,
 } from "@microsoft/vally-server";
-import { startIngestWatcher } from "./ingest-watcher.js";
-import { startArtifactSync } from "./lib/artifact-sync.js";
 import { initializeRunMetadata } from "./lib/run-metadata.js";
 import { mountPipelines } from "./pipelines.js";
+import { createPublisherAuthorizer, hostGuard } from "./lib/publisher-auth.js";
+import { createIngestionService } from "./lib/ingestion-service.js";
+import { mountIngestionRoutes } from "./lib/ingestion-routes.js";
+import { openStorage, readStorageConfig } from "./lib/storage-config.js";
+import { mountOperationalRoutes } from "./lib/operational-routes.js";
+import { lockCache } from "./lib/cache-lock.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Azure App Service injects PORT; default to 3200 for local runs.
 const port = Number(process.env.PORT) || 3200;
-// Bind to all interfaces so the platform can route traffic to us.
-const host = process.env.HOST || "0.0.0.0";
+const host = process.env.HOST || "127.0.0.1";
+const allowedHosts = [process.env.WEBSITE_HOSTNAME, ...(process.env.VALLY_ALLOWED_HOSTS ?? "").split(",")]
+  .filter(Boolean).map((value) => value.trim());
+const authorize = createPublisherAuthorizer({
+  anonymousLocal: process.env.VALLY_LOCAL_POC === "true",
+  bindHost: host,
+  tenantId: process.env.VALLY_INGEST_TENANT_ID,
+  audience: process.env.VALLY_INGEST_AUDIENCE,
+  clientIds: (process.env.VALLY_INGEST_CLIENT_IDS ?? "").split(",").map((id) => id.trim()).filter(Boolean),
+});
 
-// Persistent SQLite store. Override with VALLY_DB (e.g. /home/data/eval.db on
-// Azure, which stays writable even with run-from-package).
-const dbPath = resolve(__dirname, process.env.VALLY_DB || "eval.db");
-mkdirSync(dirname(dbPath), { recursive: true });
-
-// Results directory for the legacy local-folder mode.
-const resultsDir = process.env.VALLY_RESULTS
-  ? resolve(process.env.VALLY_RESULTS)
-  : resolve(__dirname, "results");
-const localBlobRoot = process.env.VALLY_LOCAL_BLOB_ROOT
-  ? resolve(process.env.VALLY_LOCAL_BLOB_ROOT)
-  : null;
-const stagingRoot = process.env.VALLY_STAGING_ROOT
-  ? resolve(process.env.VALLY_STAGING_ROOT)
-  : resolve(__dirname, ".blob-staging");
-const blobPollMs = Number(process.env.VALLY_BLOB_POLL_MS) || 30000;
-
-const db = initializeDatabase(dbPath);
-initializeRunMetadata(db);
-
-if (localBlobRoot && existsSync(localBlobRoot)) {
-  mkdirSync(stagingRoot, { recursive: true });
-  startArtifactSync({ db, blobRoot: localBlobRoot, stagingRoot, pollMs: blobPollMs });
-} else if (existsSync(resultsDir)) {
-  startIngestWatcher({ db, resultsDir });
-} else {
-  console.error(
-    `[ingest] no results directory at ${resultsDir} — serving existing database only.\n` +
-      `         Set VALLY_RESULTS to a directory of run folders to enable live updates.`,
-  );
-  const runCount = db.prepare("SELECT COUNT(*) AS c FROM runs").get().c;
-  if (runCount === 0) {
-    console.error(
-      "[ingest] database is empty and no results directory was found; the dashboard will have no data.",
-    );
-  }
+const config = readStorageConfig(process.env, __dirname);
+const unlock = await lockCache(config.dbPath);
+let db, journal, service, httpServer, closing;
+function shutdown() {
+  closing ??= (async () => {
+    if (httpServer) await new Promise((done) => httpServer.close(done));
+    await service?.stop();
+    await journal?.close();
+    db?.close();
+    await unlock();
+  })();
+  return closing;
 }
-
-// Build the vally app (REST API + built-in dashboard at "/"), then wrap it in an
-// outer app that adds a pipeline landing page and per-pipeline scoped reports.
-const vallyApp = createApp(new DatabaseStore(db), { cors: false });
-
-const app = new Hono();
-// Pipeline landing page + scoped dashboards must be registered before the Vally app.
-mountPipelines(app, vallyApp, db);
-app.route("/", vallyApp);
-
-console.error(`vally eval dashboard listening on http://${host}:${port}`);
-console.error(`Dashboard: http://${host}:${port}/`);
-serve({ fetch: app.fetch, port, hostname: host });
+function fatal(error) {
+  console.error(error.message);
+  process.exitCode = 1;
+  void shutdown().catch((failure) => console.error(failure.message));
+}
+try {
+  db = initializeDatabase(config.dbPath);
+  initializeRunMetadata(db);
+  const storage = await openStorage(config);
+  journal = storage.journal;
+  service = createIngestionService({ db, journal, store: storage.store, stagingRoot: config.stagingRoot });
+  const vallyApp = createApp(new DatabaseStore(db), { cors: false, allowedHosts });
+  const app = new Hono();
+  app.use("*", hostGuard(allowedHosts));
+  mountIngestionRoutes(app, { service, authorize, stagingRoot: config.stagingRoot });
+  mountOperationalRoutes(app, { service, provider: config.provider });
+  // No viewer login: hosted access is restricted by Azure's private network boundary.
+  mountPipelines(app, vallyApp, db);
+  app.route("/", vallyApp);
+  httpServer = serve({ fetch: app.fetch, port, hostname: host }, () => {
+    console.error(`Dashboard: http://${host}:${port}/ (storage: ${config.provider}; no artifact scanning)`);
+    void service.start().catch(fatal);
+  });
+  httpServer.requestTimeout = 60_000;
+  httpServer.on("error", fatal);
+  process.once("SIGINT", () => void shutdown().catch(fatal));
+  process.once("SIGTERM", () => void shutdown().catch(fatal));
+} catch (error) {
+  await shutdown();
+  throw error;
+}

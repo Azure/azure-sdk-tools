@@ -1,0 +1,73 @@
+parameters:
+  - name: stageName
+    type: string
+  - name: dependsOn
+    type: string
+  - name: appName
+    type: string
+  - name: resourceGroup
+    type: string
+  - name: azureServiceConnection
+    type: string
+  - name: environmentName
+    type: string
+  - name: isProduction
+    type: boolean
+    default: false
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    dependsOn: ${{ parameters.dependsOn }}
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+    jobs:
+      - deployment: DeployDashboard
+        environment: ${{ parameters.environmentName }}
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        templateContext:
+          type: releaseJob
+          isProduction: ${{ parameters.isProduction }}
+          inputs:
+            - input: pipelineArtifact
+              artifactName: eval-dashboard
+              targetPath: $(Pipeline.Workspace)/eval-dashboard
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: UseNode@1
+                  inputs:
+                    version: 22.x
+                - task: ExtractFiles@1
+                  displayName: Extract target validation code
+                  inputs:
+                    archiveFilePatterns: $(Pipeline.Workspace)/eval-dashboard/eval-dashboard.zip
+                    destinationFolder: $(Agent.TempDirectory)/eval-dashboard-target-check
+                    cleanDestinationFolder: true
+                - task: AzureCLI@2
+                  displayName: Verify private no-login deployment target
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      subscription=$(az account show --query id -o tsv)
+                      node "$TARGET_CHECK/scripts/check-deployment-target.mjs" --subscription "$subscription" --resource-group "$DASHBOARD_RESOURCE_GROUP" --app "$DASHBOARD_APP"
+                  env:
+                    TARGET_CHECK: $(Agent.TempDirectory)/eval-dashboard-target-check
+                    DASHBOARD_RESOURCE_GROUP: ${{ parameters.resourceGroup }}
+                    DASHBOARD_APP: ${{ parameters.appName }}
+                - task: AzureRmWebAppDeployment@4
+                  displayName: Deploy configured private dashboard
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    appType: webAppLinux
+                    WebAppName: ${{ parameters.appName }}
+                    ResourceGroupName: ${{ parameters.resourceGroup }}
+                    packageForLinux: $(Pipeline.Workspace)/eval-dashboard/eval-dashboard.zip
+                    RuntimeStack: NODE|22-lts
+                    StartupCommand: node start.js
+                    enableCustomDeployment: true
+                    DeploymentType: zipDeploy

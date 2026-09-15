@@ -3,15 +3,16 @@ import { dirname, join, posix, relative, resolve, sep } from "node:path";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 
 export const DASHBOARD_BUNDLE_NAME = "dashboard-bundle.zip";
+export const MAX_BUNDLE_BYTES = 32 * 1024 * 1024;
 const MAX_ENTRIES = 10_000;
-const MAX_EXTRACTED_BYTES = 250 * 1024 * 1024;
+const MAX_EXTRACTED_BYTES = 128 * 1024 * 1024;
 
 function normalizeEntryName(name) {
   const normalized = name.replaceAll("\\", "/");
   if (
     normalized.startsWith("/") ||
-    /^[A-Za-z]:/.test(normalized) ||
-    normalized.split("/").includes("..")
+    /[\u0000-\u001f\u007f:]/.test(normalized) ||
+    normalized.split("/").some((part) => part === ".." || /[. ]$/.test(part) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part))
   ) {
     throw new Error(`Unsafe ZIP entry: '${name}'.`);
   }
@@ -50,6 +51,26 @@ async function collectFiles(root, current = root) {
 }
 
 function readArchive(bundleBytes) {
+  if (bundleBytes.byteLength > MAX_BUNDLE_BYTES) throw new Error("Dashboard bundle exceeds upload limits.");
+  const declared = new Map();
+  let declaredBytes = 0;
+  let entryCount = 0;
+  // Inspect every directory entry before allocating decompressed buffers.
+  unzipSync(bundleBytes, { filter(file) {
+    const name = normalizeEntryName(file.name);
+    const key = name.toLowerCase();
+    if (declared.has(key)) throw new Error(`Duplicate ZIP entry: '${name}'.`);
+    if (!Number.isSafeInteger(file.originalSize) || file.originalSize < 0) throw new Error("Invalid ZIP entry size.");
+    declaredBytes += file.originalSize;
+    if (++entryCount > MAX_ENTRIES || declaredBytes > MAX_EXTRACTED_BYTES) {
+      throw new Error("Dashboard bundle exceeds extraction limits.");
+    }
+    if (!["manifest.json", "results.jsonl", "eval-summary.md", "junit/"].includes(name) && !/^junit\/[^/]+\.xml$/.test(name)) {
+      throw new Error(`Unexpected bundle entry: '${name}'.`);
+    }
+    declared.set(key, file.originalSize);
+    return false;
+  } });
   const rawEntries = unzipSync(bundleBytes);
   const entries = new Map();
   let extractedBytes = 0;
@@ -58,6 +79,7 @@ function readArchive(bundleBytes) {
     const name = normalizeEntryName(rawName);
     if (!name || name.endsWith("/")) continue;
     if (entries.has(name)) throw new Error(`Duplicate ZIP entry: '${name}'.`);
+    if (bytes.byteLength !== declared.get(name.toLowerCase())) throw new Error(`ZIP size mismatch: '${name}'.`);
     extractedBytes += bytes.byteLength;
     if (entries.size + 1 > MAX_ENTRIES || extractedBytes > MAX_EXTRACTED_BYTES) {
       throw new Error("Dashboard bundle exceeds extraction limits.");
@@ -100,11 +122,13 @@ export async function createDashboardBundle({ inputDirectory, outputPath, manife
 }
 
 export async function readDashboardBundleManifest(bundlePath) {
+  if ((await stat(bundlePath)).size > MAX_BUNDLE_BYTES) throw new Error("Dashboard bundle exceeds upload limits.");
   const { manifest } = readArchive(new Uint8Array(await readFile(bundlePath)));
   return manifest;
 }
 
 export async function extractDashboardBundle(bundlePath, outputDirectory) {
+  if ((await stat(bundlePath)).size > MAX_BUNDLE_BYTES) throw new Error("Dashboard bundle exceeds upload limits.");
   const { entries, manifest } = readArchive(new Uint8Array(await readFile(bundlePath)));
   const root = resolve(outputDirectory);
   await mkdir(root, { recursive: true });

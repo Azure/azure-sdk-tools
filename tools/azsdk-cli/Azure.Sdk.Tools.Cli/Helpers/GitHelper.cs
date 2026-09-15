@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranch, CancellationToken ct);
         public Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct);
         public Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct);
+        public Task<bool> IsValidCommitAsync(string pathInRepo, string commitSha, CancellationToken ct);
         public Task<List<string>> GetChangedFilesAsync(string repoRoot, string targetCommitish, string? sourceCommitish, string? diffPath, string diffFilterType, CancellationToken ct);
     }
 
@@ -245,6 +246,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             string repoName = segments[^1].Replace(".git", "");
             return repoName;
+        }
+
+        public async Task<bool> IsValidCommitAsync(string pathInRepo, string commitSha, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(commitSha))
+            {
+                return false;
+            }
+
+            var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
+            var options = new GitOptions(["rev-parse", "--verify", $"{commitSha}^{{commit}}"], repoRoot, logOutputStream: false);
+            var result = await gitCommandHelper.Run(options, ct);
+            return result.ExitCode == 0;
         }
 
         /// <summary>

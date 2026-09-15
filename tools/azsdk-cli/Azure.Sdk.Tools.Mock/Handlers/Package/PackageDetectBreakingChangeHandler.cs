@@ -119,7 +119,8 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
             response.BreakingChangeStatus = SdkBreakingChangeStatus.Detected;
             response.Message = "SDK changes detected without classification (mock fixture).";
         }
-        else if (scenario is "mock-classifier-error" or "mock-catalog-error")
+        else if (scenario == "mock-classifier-error" ||
+            (scenario == "mock-catalog-error" && packageInfo.Language == SdkLanguage.DotNet))
         {
             response.ResponseError = scenario == "mock-classifier-error"
                 ? "Failed to classify SDK breaking changes (mock fixture)."
@@ -129,6 +130,10 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
         else
         {
             response.BreakingChangeStatus = SdkBreakingChangeStatus.Classified;
+            if (scenario == "mock-catalog-error")
+            {
+                response.Message = "SDK breaking changes classified without a pattern catalog; accuracy may be reduced (mock fixture).";
+            }
             result.BreakingChanges =
             [
                 new SdkBreakingChange

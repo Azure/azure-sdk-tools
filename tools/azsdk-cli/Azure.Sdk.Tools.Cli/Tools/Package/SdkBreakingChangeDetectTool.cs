@@ -130,7 +130,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     else
                     {
                         // Read and deserialize the local SDK change JSON file
-                        sdkChange = await ReadSdkChangeAsync(localSdkChangeJsonFilePath, ct);
+                        sdkChange = await ReadSdkChangesFromFileAsync(localSdkChangeJsonFilePath, ct);
                     }
                 }
                 // If sdkChange is still null, attempt to retrieve it using the configured script
@@ -212,13 +212,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return response;
         }
 
-        private static async Task<SdkChange> ReadSdkChangeAsync(string path, CancellationToken ct)
+        private static async Task<SdkChange> ReadSdkChangesFromFileAsync(string sdkChangeFilePath, CancellationToken ct)
         {
-            await using var stream = File.OpenRead(path);
+            await using var stream = File.OpenRead(sdkChangeFilePath);
             var change = await JsonSerializer.DeserializeAsync<SdkChange>(stream, cancellationToken: ct);
             if (change == null || string.IsNullOrWhiteSpace(change.SdkChangeMD))
             {
-                throw new JsonException($"SDK change file '{path}' must contain nonempty changes (Markdown) and a Boolean hasBreakingChange.");
+                throw new JsonException($"SDK change file '{sdkChangeFilePath}' must contain nonempty changes (Markdown) and a Boolean hasBreakingChange.");
             }
             return change;
         }
@@ -269,7 +269,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         {
                             return (null, CreateFailure("The SDK change script did not produce its output JSON file.", packageInfo));
                         }
-                        sdkChange = await ReadSdkChangeAsync(sdkChangeFilePath, ct);
+                        sdkChange = await ReadSdkChangesFromFileAsync(sdkChangeFilePath, ct);
                     }
                     finally
                     {
@@ -306,9 +306,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;
             var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
             ct.ThrowIfCancellationRequested();
-            if (string.IsNullOrWhiteSpace(sdkBreakingPattern))
+            var hasPatternCatalog = !string.IsNullOrWhiteSpace(sdkBreakingPattern);
+            if (!hasPatternCatalog && languageService.RequiresBreakingChangePatternCatalog)
             {
-                var failure = CreateFailure("SDK breaking-change classification requires a configured packageOptions.sdkBreakingChangePatternFile catalog.", packageInfo);
+                var failure = CreateFailure(
+                    $"{languageService.Language} SDK breaking-change classification requires an available packageOptions.sdkBreakingChangePatternFile catalog for mitigation guidance. Raw detector evidence is preserved.",
+                    packageInfo);
                 failure.Result = CreateUnclassifiedResult(sdkChange);
                 return failure;
             }
@@ -344,7 +347,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 Result = sdkBreakingChangeResult,
                 BreakingChangeStatus = SdkBreakingChangeStatus.Classified,
-                Message = "SDK breaking changes detected and classified.",
+                Message = hasPatternCatalog
+                    ? "SDK breaking changes detected and classified."
+                    : "SDK breaking changes detected and classified without a pattern catalog; classification accuracy may be reduced.",
                 Language = languageService.Language,
                 PackageName = packageInfo?.PackageName,
             };

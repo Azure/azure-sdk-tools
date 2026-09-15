@@ -7,6 +7,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 public sealed partial class DotnetLanguageService
 {
+    public override bool RequiresBreakingChangePatternCatalog => true;
+
     public override string? ValidateBreakingChangeClassification(SdkBreakingChangeDetectionResult classification)
     {
         var error = base.ValidateBreakingChangeClassification(classification);

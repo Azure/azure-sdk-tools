@@ -152,6 +152,29 @@ public class PackageDetectBreakingChangeHandlerTests
         });
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Handle_JavaCatalogFailureRetainsAgentOnlyClassification(bool changesOnly)
+    {
+        var response = Invoke("azure-resourcemanager-contoso", "mock-catalog-error", changesOnly);
+        var result = GetResult(response);
+
+        Assert.That(response.ExitCode, Is.Zero);
+        Assert.That(response.BreakingChangeStatus,
+            Is.EqualTo(changesOnly ? SdkBreakingChangeStatus.Detected : SdkBreakingChangeStatus.Classified));
+        Assert.That(result.HasBreakingChange, Is.True);
+        Assert.That(result.SdkChangeMD, Does.Contain("### Breaking Changes"));
+        if (!changesOnly)
+        {
+            Assert.That(response.Message, Does.Contain("without a pattern catalog"));
+            Assert.That(result.BreakingChanges.Single().MitigationStrategy, Is.Null);
+        }
+        else
+        {
+            Assert.That(result.BreakingChanges, Is.Empty);
+        }
+    }
+
     [TestCase("mock-classifier-error")]
     [TestCase("mock-catalog-error")]
     public void Handle_ChangesOnlyDoesNotEnterClassificationFailureScenario(string scenario)

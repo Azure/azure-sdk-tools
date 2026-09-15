@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             try
             {
-                if (string.IsNullOrEmpty(sdkBreakingPattern))
+                if (string.IsNullOrWhiteSpace(sdkBreakingPattern))
                 {
                     _logger.LogWarning("SDK breaking pattern is null or empty. The agent will classify breaking changes without using breaking patterns, which may reduce classification accuracy.");
                 }

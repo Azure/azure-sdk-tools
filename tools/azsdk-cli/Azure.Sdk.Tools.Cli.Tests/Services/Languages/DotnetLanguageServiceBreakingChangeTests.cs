@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
@@ -19,6 +18,7 @@ public class DotnetLanguageServiceBreakingChangeTests
     private DotnetLanguageService _service = null!;
     private string _configPath = null!;
     private string _defaultCatalogPath = null!;
+    private TestLogger<DotnetLanguageService> _logger = null!;
 
     [SetUp]
     public void SetUp()
@@ -30,8 +30,9 @@ public class DotnetLanguageServiceBreakingChangeTests
         _defaultCatalogPath = Path.Combine(_directory.DirectoryPath, "doc", "dev", "SDKBreakingChanges.md");
         Directory.CreateDirectory(Path.GetDirectoryName(_defaultCatalogPath)!);
         File.WriteAllText(_defaultCatalogPath, "Default .NET patterns");
+        _logger = new TestLogger<DotnetLanguageService>();
         _service = CreateService(new SpecGenSdkConfigHelper(
-            new TestLogger<SpecGenSdkConfigHelper>(), Mock.Of<IProcessHelper>()));
+            new TestLogger<SpecGenSdkConfigHelper>(), Mock.Of<IProcessHelper>()), _logger);
     }
 
     [TearDown]
@@ -67,50 +68,64 @@ public class DotnetLanguageServiceBreakingChangeTests
     [TestCase("{\"packageOptions\":{\"sdkBreakingChangePatternFile\":\"\"}}")]
     [TestCase("{\"packageOptions\":{\"sdkBreakingChangePatternFile\":\"  \"}}")]
     [TestCase("{\"packageOptions\":{\"sdkBreakingChangePatternFile\":42}}")]
-    public void PatternCatalog_InvalidConfigurationNeverUsesDefault(string config)
+    public async Task PatternCatalog_InvalidConfigurationIsLoggedAndNeverUsesDefault(string config)
     {
         File.WriteAllText(_configPath, config);
 
-        Assert.CatchAsync<JsonException>(() =>
-            _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None));
+        await AssertCatalogReadFailureAsync();
     }
 
     [Test]
-    public void PatternCatalog_MissingConfigurationNeverUsesDefault()
+    public async Task PatternCatalog_MissingConfigurationIsLoggedAndNeverUsesDefault()
     {
         File.Delete(_configPath);
 
-        Assert.ThrowsAsync<FileNotFoundException>(() =>
-            _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None));
+        await AssertCatalogReadFailureAsync();
     }
 
     [Test]
-    public void PatternCatalog_UnreadableConfigurationNeverUsesDefault()
+    public async Task PatternCatalog_UnreadableConfigurationIsLoggedAndNeverUsesDefault()
     {
         File.Delete(_configPath);
         Directory.CreateDirectory(_configPath);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None));
+        await AssertCatalogReadFailureAsync();
     }
 
     [Test]
-    public void PatternCatalog_MissingCatalogIsExplicitFailure()
+    public async Task PatternCatalog_MissingCatalogIsLoggedAndReturnsEmpty()
     {
         File.WriteAllText(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":"missing.md"}}""");
 
-        Assert.ThrowsAsync<FileNotFoundException>(() =>
-            _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None));
+        await AssertCatalogReadFailureAsync();
     }
 
     [Test]
-    public void PatternCatalog_EmptyCatalogIsExplicitFailure()
+    public async Task PatternCatalog_EmptyCatalogIsLoggedAndReturnsEmpty()
     {
         File.WriteAllText(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":"doc/dev/SDKBreakingChanges.md"}}""");
         File.WriteAllText(_defaultCatalogPath, "  \n");
 
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None));
+        Assert.That(await _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None), Is.Empty);
+        Assert.That(_logger.Logs.Any(log => log.ToString()!.Contains("catalog is empty")), Is.True);
+    }
+
+    [Test, Platform("Win")]
+    public async Task PatternCatalog_LockedCatalogIsLoggedAndReturnsEmpty()
+    {
+        File.WriteAllText(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":"doc/dev/SDKBreakingChanges.md"}}""");
+        using var stream = File.Open(_defaultCatalogPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        await AssertCatalogReadFailureAsync();
+    }
+
+    [Test]
+    public async Task PatternCatalog_UnreadableCatalogIsLoggedAndReturnsEmpty()
+    {
+        File.WriteAllText(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":"unreadable"}}""");
+        Directory.CreateDirectory(Path.Combine(_directory.DirectoryPath, "unreadable"));
+
+        await AssertCatalogReadFailureAsync();
     }
 
     [Test]
@@ -121,6 +136,40 @@ public class DotnetLanguageServiceBreakingChangeTests
 
         Assert.CatchAsync<OperationCanceledException>(() =>
             _service.GetSdkBreakingPattern(_directory.DirectoryPath, cts.Token));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void PatternCatalog_CancellationDuringConfigurationReadIsNotAnEmptyCatalog(bool throwsReadError)
+    {
+        using var cts = new CancellationTokenSource();
+        var config = new Mock<ISpecGenSdkConfigHelper>();
+        config.Setup(c => c.GetSdkBreakingChangePatternFileConfigurationAsync(_directory.DirectoryPath, cts.Token))
+            .ReturnsAsync(() =>
+            {
+                cts.Cancel();
+                if (throwsReadError)
+                {
+                    throw new IOException("Read was interrupted.");
+                }
+                return string.Empty;
+            });
+        var service = CreateService(config.Object);
+
+        Assert.CatchAsync<OperationCanceledException>(() =>
+            service.GetSdkBreakingPattern(_directory.DirectoryPath, cts.Token));
+    }
+
+    [Test]
+    public void PatternCatalog_UnexpectedErrorsAreNotSwallowed()
+    {
+        var config = new Mock<ISpecGenSdkConfigHelper>();
+        config.Setup(c => c.GetSdkBreakingChangePatternFileConfigurationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NotImplementedException("Unexpected implementation failure."));
+        var service = CreateService(config.Object);
+
+        Assert.ThrowsAsync<NotImplementedException>(() =>
+            service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None));
     }
 
     [Test]
@@ -180,6 +229,14 @@ public class DotnetLanguageServiceBreakingChangeTests
         var otherLanguage = new Mock<LanguageService> { CallBase = true };
 
         Assert.That(otherLanguage.Object.ValidateBreakingChangeClassification(Classification(null)), Is.Null);
+        Assert.That(otherLanguage.Object.RequiresBreakingChangePatternCatalog, Is.False);
+        Assert.That(_service.RequiresBreakingChangePatternCatalog, Is.True);
+    }
+
+    private async Task AssertCatalogReadFailureAsync()
+    {
+        Assert.That(await _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None), Is.Empty);
+        Assert.That(_logger.Logs.Any(log => log.ToString()!.Contains("Unable to load SDK breaking change patterns")), Is.True);
     }
 
     private static SdkBreakingChangeDetectionResult Classification(SdkBreakingChangeMitigationStrategy? route) => new()
@@ -191,9 +248,9 @@ public class DotnetLanguageServiceBreakingChangeTests
         ],
     };
 
-    internal static DotnetLanguageService CreateService(ISpecGenSdkConfigHelper configHelper) => new(
+    internal static DotnetLanguageService CreateService(ISpecGenSdkConfigHelper configHelper, TestLogger<DotnetLanguageService>? logger = null) => new(
         Mock.Of<IProcessHelper>(), Mock.Of<IPowershellHelper>(), Mock.Of<ICopilotAgentRunner>(),
-        Mock.Of<IGitHelper>(), new TestLogger<DotnetLanguageService>(),
+        Mock.Of<IGitHelper>(), logger ?? new TestLogger<DotnetLanguageService>(),
         Mock.Of<ICommonValidationHelpers>(), Mock.Of<IPackageInfoHelper>(), Mock.Of<IFileHelper>(),
         configHelper, Mock.Of<IChangelogHelper>());
 }

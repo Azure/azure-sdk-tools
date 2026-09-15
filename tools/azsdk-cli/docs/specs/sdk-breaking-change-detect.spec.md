@@ -149,8 +149,10 @@ its verdict. Classification adds `breakingChanges` without replacing the
 detector's evidence.
 
 Each classified entry contains `breakingChange`, `category`, and `originBreaks`
-(the exact original breaking entries). `resolution` is optional actionable
-guidance consumed by `azsdk_customized_code_update`. It is distinct from
+(the exact original breaking entries). `resolution` is an optional one-line
+actionable mitigation instruction, generated using the matched catalog pattern
+and consumed by `azsdk_customized_code_update`. Classification describes the
+customization to apply but does not execute it. It is distinct from
 `mitigationStrategy`, an optional routing enum that is required for classified .NET
 breaks: `generator`, `client customization`, or `manual`. Other languages can
 continue returning entries without `mitigationStrategy`. `category` always
@@ -217,7 +219,7 @@ existing `operation_status`. Other package operations omit this field.
 | `classified` | Breaking changes were classified and passed language-specific validation. |
 | `inconclusive` | A .NET report lacks `details` or a nonblank `details.baselineVersion`. Evidence is preserved, but classification is skipped. |
 | `blocked` | No detector is configured and the language's default detection is unsupported. |
-| `failed` | Configuration, execution, report validation, catalog loading, or classification failed. |
+| `failed` | Detection or classification failed, including invalid reports or an unavailable required catalog. |
 
 An inconclusive report retains `operation_status: Succeeded` and exit code 0
 because report retrieval succeeded; this is not a compatibility pass.
@@ -318,6 +320,11 @@ comparison. A configured detector's failures are returned as failures and never
 trigger an unsupported fallback.
 A captured report can instead be supplied through `--sdk-change-json-file-path`
 when `--changes-only` is not set.
+An existing supplied report that is malformed or unreadable produces an explicit
+failure rather than silently running a detector against potentially different
+artifacts or a different baseline. Correct the report or omit the option to
+request fresh detection. A missing file retains the existing logged
+configured-script fallback; `--changes-only` ignores the local report option.
 
 Like other languages, .NET loads its Markdown pattern catalog through the common
 `LanguageService.GetSdkBreakingPattern` method and the configured
@@ -327,10 +334,17 @@ SDK-change pattern, optional TypeSpec pattern, breaking change, root-cause reaso
 and resolution. The classifier uses that catalog for categories and resolution
 guidance rather than embedding mitigation tool instructions in its prompt.
 
-An absent catalog configuration prevents classification, while preserving the
-raw detector evidence. Malformed configuration, unreadable files, and empty
-catalogs fail explicitly. `--changes-only` bypasses catalog loading and
-classification.
+The common loader logs expected configuration/read failures and returns an empty
+catalog. Cancellation still propagates. Languages that support agent-only
+classification retain that fallback and receive a message noting that accuracy
+may be reduced. Their native breaking verdict and raw evidence are preserved.
+
+.NET requires the catalog for its evidence-backed mitigation routing
+(`RequiresBreakingChangePatternCatalog`). If that catalog is unavailable, the
+tool returns the raw detector evidence and a classification error rather than
+inventing a safe generator/customization strategy. `--changes-only` bypasses
+catalog loading and classification, so native detection remains independently
+available.
 
 Native extraction requires current intermediate assemblies and matching
 portable/embedded PDBs for each evaluated target framework. The PowerShell host

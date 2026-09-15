@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -56,6 +57,9 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;
+
+        /// <summary>Whether classification requires a catalog to produce language-specific mitigation guidance.</summary>
+        public virtual bool RequiresBreakingChangePatternCatalog => false;
 
 #pragma warning disable CS1998
         public async virtual Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken cancellationToken = default)
@@ -510,8 +514,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="sdkRepoRoot">The root directory of the SDK repository.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns>
-        /// The configured pattern file content, or an empty string when no catalog is configured.
-        /// Invalid configuration and unreadable catalogs propagate to the caller as failures.
+        /// The configured pattern file content, or an empty string when the catalog is unavailable.
+        /// Expected configuration and read failures are logged; cancellation still propagates.
         /// </returns>
         /// <remarks>
         /// <para>
@@ -533,20 +537,33 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// </remarks>
         public virtual async Task<string> GetSdkBreakingPattern(string sdkRepoRoot, CancellationToken ct)
         {
-            var configuredPath = await specGenSdkConfigHelper.GetSdkBreakingChangePatternFileConfigurationAsync(sdkRepoRoot, ct);
-            if (string.IsNullOrWhiteSpace(configuredPath))
+            ct.ThrowIfCancellationRequested();
+            try
             {
-                logger.LogWarning("No SDK breaking change pattern catalog is configured for language {Language}.", Language);
+                var configuredPath = await specGenSdkConfigHelper.GetSdkBreakingChangePatternFileConfigurationAsync(sdkRepoRoot, ct);
+                ct.ThrowIfCancellationRequested();
+                if (string.IsNullOrWhiteSpace(configuredPath))
+                {
+                    logger.LogWarning("No SDK breaking change pattern catalog is configured for language {Language}.", Language);
+                    return string.Empty;
+                }
+                var path = Path.Combine(sdkRepoRoot, configuredPath);
+                logger.LogInformation("Loading SDK breaking change patterns from {Path}", path);
+                var patterns = await File.ReadAllTextAsync(path, ct);
+                ct.ThrowIfCancellationRequested();
+                if (string.IsNullOrWhiteSpace(patterns))
+                {
+                    logger.LogWarning("The SDK breaking change pattern catalog is empty: {Path}", path);
+                    return string.Empty;
+                }
+                return patterns;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or ArgumentException)
+            {
+                ct.ThrowIfCancellationRequested();
+                logger.LogError(ex, "Unable to load SDK breaking change patterns for language {Language}.", Language);
                 return string.Empty;
             }
-            var path = Path.Combine(sdkRepoRoot, configuredPath);
-            logger.LogInformation("Loading SDK breaking change patterns from {Path}", path);
-            var patterns = await File.ReadAllTextAsync(path, ct);
-            if (string.IsNullOrWhiteSpace(patterns))
-            {
-                throw new InvalidOperationException($"The SDK breaking change pattern catalog is empty: {path}");
-            }
-            return patterns;
         }
 
         /// <summary>

@@ -41,6 +41,8 @@ public class SdkBreakingChangeDetectToolTests
         _details = null;
         _languageService = new Mock<LanguageService> { CallBase = true };
         _languageService.SetupGet(s => s.Language).Returns(SdkLanguage.DotNet);
+        _languageService.SetupGet(s => s.RequiresBreakingChangePatternCatalog)
+            .Returns(() => _languageService.Object.Language == SdkLanguage.DotNet);
         _languageService.Setup(s => s.GetPackageInfo(_packagePath, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PackageInfo
             {
@@ -341,17 +343,53 @@ public class SdkBreakingChangeDetectToolTests
         Assert.That(details.GetProperty("limitations")[0].GetString(), Is.EqualTo("Behavior changes require review."));
     }
 
-    [Test]
-    public async Task InvalidLocalReport_DoesNotSilentlyReplaceEvidence()
+    [TestCase("azure-sdk-for-net", SdkLanguage.DotNet)]
+    [TestCase("azure-sdk-for-go", SdkLanguage.Go)]
+    public async Task InvalidLocalReport_DoesNotSilentlyReplaceEvidence(string repository, SdkLanguage language)
     {
+        _languageService.SetupGet(s => s.Language).Returns(language);
+        _gitHelper.Setup(g => g.GetRepoNameAsync(_packagePath, It.IsAny<CancellationToken>())).ReturnsAsync(repository);
+        ConfigureDetectorReport(false);
         var path = Path.Combine(_tempDirectory.DirectoryPath, "changes.json");
         await File.WriteAllTextAsync(path, "{}");
 
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath, localSdkChangeJsonFilePath: path);
 
         Assert.That(response.ExitCode, Is.Not.Zero);
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
+        Assert.That(response.ResponseErrors.Single(), Does.Contain("changes"));
         _configHelper.VerifyNoOtherCalls();
         _languageService.Verify(s => s.DetectSdkBreakingChangeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test, Platform("Win")]
+    public async Task UnreadableLocalReport_DoesNotInvokeConfiguredDetector()
+    {
+        ConfigureDetectorReport(false);
+        var path = Path.Combine(_tempDirectory.DirectoryPath, "changes.json");
+        await File.WriteAllTextAsync(path, """{"changes":"Original evidence","hasBreakingChange":true}""");
+        using var stream = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath, localSdkChangeJsonFilePath: path);
+
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
+        Assert.That(response.ResponseErrors.Single(), Does.Contain("changes.json"));
+        _configHelper.VerifyNoOtherCalls();
+        _classifier.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task MissingLocalReport_RetainsLoggedConfiguredDetectorFallback()
+    {
+        ConfigureDetectorReport(false);
+        var path = Path.Combine(_tempDirectory.DirectoryPath, "missing.json");
+
+        var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath, localSdkChangeJsonFilePath: path);
+
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Clean));
+        Assert.That(_logger.Logs.Any(log => log.ToString()!.Contains("Proceeding to retrieve SDK changes")), Is.True);
+        _configHelper.Verify(c => c.ExecuteProcessAsync(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>(),
+            It.IsAny<PackageInfo?>(), It.IsAny<string>(), It.IsAny<string[]?>()), Times.Once);
     }
 
     [Test]
@@ -629,7 +667,7 @@ public class SdkBreakingChangeDetectToolTests
 
     [TestCase("")]
     [TestCase(" \n")]
-    public async Task MissingCatalogConfiguration_PreservesEvidenceWithoutInvokingClassifier(string catalog)
+    public async Task MissingDotnetCatalog_PreservesEvidenceWithoutInvokingClassifier(string catalog)
     {
         ConfigureDetectorReport(true);
         _languageService.Setup(s => s.GetSdkBreakingPattern(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -641,7 +679,96 @@ public class SdkBreakingChangeDetectToolTests
         Assert.That(response.ResponseErrors.Single(), Does.Contain("sdkBreakingChangePatternFile"));
         Assert.That(GetResult(response).HasBreakingChange, Is.True);
         Assert.That(GetResult(response).SdkChangeMD, Is.EqualTo(BreakingChanges));
+        Assert.That(JsonSerializer.Serialize(GetResult(response).Details), Is.EqualTo(JsonSerializer.Serialize(_details)));
         _classifier.VerifyNoOtherCalls();
+    }
+
+    [TestCase(SdkLanguage.Go, "azure-sdk-for-go", "")]
+    [TestCase(SdkLanguage.Java, "azure-sdk-for-java", "")]
+    [TestCase(SdkLanguage.JavaScript, "azure-sdk-for-js", "")]
+    [TestCase(SdkLanguage.Python, "azure-sdk-for-python", "")]
+    [TestCase(SdkLanguage.Go, "azure-sdk-for-go", " \n")]
+    public async Task OptionalCatalog_StillClassifiesAndPreservesNativeEvidence(SdkLanguage language, string repository, string catalog)
+    {
+        _languageService.SetupGet(s => s.Language).Returns(language);
+        _gitHelper.Setup(g => g.GetRepoNameAsync(_packagePath, It.IsAny<CancellationToken>())).ReturnsAsync(repository);
+        _languageService.Setup(s => s.ValidateBreakingChangeClassification(It.IsAny<SdkBreakingChangeDetectionResult>())).CallBase();
+        _languageService.Setup(s => s.GetSdkBreakingPattern(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(catalog);
+        ConfigureDetectorReport(true);
+        ConfigureClassification(null);
+
+        var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
+
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Classified));
+        Assert.That(response.Message, Does.Contain("without a pattern catalog"));
+        Assert.That(GetResult(response).HasBreakingChange, Is.True);
+        Assert.That(GetResult(response).SdkChangeMD, Is.EqualTo(BreakingChanges));
+        Assert.That(JsonSerializer.Serialize(GetResult(response).Details), Is.EqualTo(JsonSerializer.Serialize(_details)));
+        _classifier.Verify(c => c.ClassifySdkBreakingChangesAsync(BreakingChanges, catalog, language.ToString(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task OptionalCatalog_ClassifierFailurePreservesKnownBreaks(bool nullResult)
+    {
+        _languageService.SetupGet(s => s.Language).Returns(SdkLanguage.Go);
+        _gitHelper.Setup(g => g.GetRepoNameAsync(_packagePath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-go");
+        _languageService.Setup(s => s.ValidateBreakingChangeClassification(It.IsAny<SdkBreakingChangeDetectionResult>())).CallBase();
+        _languageService.Setup(s => s.GetSdkBreakingPattern(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("");
+        ConfigureDetectorReport(true);
+        _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), "", It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(nullResult ? null : new SdkBreakingChangeDetectionResult { HasBreakingChange = false });
+
+        var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
+
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
+        Assert.That(GetResult(response).HasBreakingChange, Is.True);
+        Assert.That(GetResult(response).SdkChangeMD, Is.EqualTo(BreakingChanges));
+        _classifier.Verify(c => c.ClassifySdkBreakingChangesAsync(BreakingChanges, "", "Go",
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase(SdkLanguage.Go, "azure-sdk-for-go")]
+    [TestCase(SdkLanguage.DotNet, "azure-sdk-for-net")]
+    public async Task CatalogReadFailure_UsesCommonLoaderAndLanguageFallbackPolicy(SdkLanguage language, string repository)
+    {
+        var catalogHelper = new Mock<ISpecGenSdkConfigHelper>();
+        catalogHelper.Setup(c => c.GetSdkBreakingChangePatternFileConfigurationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("Catalog locked."));
+        var loaderLogger = new TestLogger<LanguageService>();
+        var loader = new Mock<LanguageService>(
+            Mock.Of<IProcessHelper>(), _gitHelper.Object, loaderLogger,
+            Mock.Of<ICommonValidationHelpers>(), Mock.Of<IPackageInfoHelper>(), Mock.Of<IFileHelper>(),
+            catalogHelper.Object, Mock.Of<IChangelogHelper>()) { CallBase = true };
+        _languageService.SetupGet(s => s.Language).Returns(language);
+        _gitHelper.Setup(g => g.GetRepoNameAsync(_packagePath, It.IsAny<CancellationToken>())).ReturnsAsync(repository);
+        _languageService.Setup(s => s.GetSdkBreakingPattern(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns<string, CancellationToken>(loader.Object.GetSdkBreakingPattern);
+        _languageService.Setup(s => s.ValidateBreakingChangeClassification(It.IsAny<SdkBreakingChangeDetectionResult>())).CallBase();
+        ConfigureDetectorReport(true);
+        ConfigureClassification(null);
+
+        var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
+
+        if (language == SdkLanguage.DotNet)
+        {
+            Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
+            Assert.That(response.ResponseErrors.Single(), Does.Contain("sdkBreakingChangePatternFile"));
+            _classifier.VerifyNoOtherCalls();
+        }
+        else
+        {
+            Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Classified));
+            Assert.That(response.Message, Does.Contain("without a pattern catalog"));
+            _classifier.Verify(c => c.ClassifySdkBreakingChangesAsync(BreakingChanges, "", language.ToString(),
+                It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        Assert.That(loaderLogger.Logs.Any(log => log.ToString()!.Contains("Unable to load SDK breaking change patterns")), Is.True);
+        Assert.That(GetResult(response).HasBreakingChange, Is.True);
+        Assert.That(GetResult(response).SdkChangeMD, Is.EqualTo(BreakingChanges));
+        Assert.That(JsonSerializer.Serialize(GetResult(response).Details), Is.EqualTo(JsonSerializer.Serialize(_details)));
     }
 
     [Test]

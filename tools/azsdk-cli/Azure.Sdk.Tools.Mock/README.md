@@ -158,7 +158,8 @@ scenario, for example `C:\mock-catalog-error\Azure.Contoso.Widget`:
 | `mock-no-baseline` | `inconclusive` | Compatibility not evaluated, with an explicit no-GA limitation |
 | `mock-missing-config` | `blocked` | Required detector configuration is absent |
 | `mock-missing-artifacts` / `mock-stale-artifacts` | `failed` | Explicit failure, not a clean comparison |
-| `mock-classifier-error` / `mock-catalog-error` | `failed` | Classification failure retaining raw changes/details; `detected` when `changesOnly: true` |
+| `mock-classifier-error` | `failed` | Classification failure retaining raw changes/details; `detected` when `changesOnly: true` |
+| `mock-catalog-error` | .NET: `failed`; Java: `classified` | .NET retains raw evidence without mitigation; Java uses agent-only classification with an accuracy warning. Both return `detected` when `changesOnly: true`. |
 
 The additive `breaking_change_status` is independent of `operation_status`.
 Inconclusive results preserve a successful operation status but must not be

@@ -4,7 +4,7 @@ BeforeAll {
     . $PSScriptRoot/../../common/scripts/Helpers/AzSdkTool-Helpers.ps1
 }
 
-Describe "Get-GitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helpers" {
+Describe "Get-StandaloneToolGitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helpers" {
     It "prefers GitHub CLI authentication over GITHUB_TOKEN" {
         $originalToken = $env:GITHUB_TOKEN
         $lastExitCodeWasSet = Test-Path variable:global:LASTEXITCODE
@@ -18,7 +18,7 @@ Describe "Get-GitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helpers" {
         }
 
         try {
-            $headers = Get-GitHubApiHeaders
+            $headers = Get-StandaloneToolGitHubApiHeaders
         }
         finally {
             $env:GITHUB_TOKEN = $originalToken
@@ -42,7 +42,7 @@ Describe "Get-GitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helpers" {
         }
 
         try {
-            $headers = Get-GitHubApiHeaders
+            $headers = Get-StandaloneToolGitHubApiHeaders
         }
         finally {
             $env:GITHUB_TOKEN = $originalToken
@@ -60,7 +60,7 @@ Describe "Get-GitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helpers" {
         }
 
         try {
-            $headers = Get-GitHubApiHeaders
+            $headers = Get-StandaloneToolGitHubApiHeaders
         }
         finally {
             $env:GITHUB_TOKEN = $originalToken

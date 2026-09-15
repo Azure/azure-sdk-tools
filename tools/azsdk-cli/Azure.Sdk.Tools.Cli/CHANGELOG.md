@@ -4,12 +4,14 @@
 
 ### Features Added
 
+- Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
 - Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
+- Preserve detected SDK changes when classification or catalog loading fails, and reject invalid detector reports instead of silently falling back.
 - Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
 - Ignored release-table headers and separators so packages without planned release dates remain blocked.
 - Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.

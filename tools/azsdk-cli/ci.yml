@@ -28,7 +28,7 @@ extends:
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
     ToolDirectory: $(ToolDir)
-    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
+    TestDirectory: tools/azsdk-cli
     VerifyChangelog: true
     # Force-create git tags/releases to work around the CFSClean network isolation
     # policy bypass for this pipeline. Tracked by https://github.com/Azure/azure-sdk-tools/issues/16602

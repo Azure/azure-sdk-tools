@@ -27,6 +27,108 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+        [TestCase("January 2020")]
+        [TestCase("Jan 2020")]
+        public async Task ListOverdueReleasePlansAsync_PrivatePreviewWithoutSpecChild_IsMissing(string targetMonth)
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = targetMonth;
+            _connection.AddWorkItemToQuery(plan);
+
+            var result = await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None);
+
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].ApiReleaseType, Is.EqualTo(ApiReleaseType.PrivatePreview));
+            Assert.That(result[0].ActiveSpecPullRequest, Is.Empty);
+        }
+
+        [Test]
+        public void ListOverdueReleasePlansAsync_UnreadablePrivateSpecChild_DoesNotBecomeMissing()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = "January 2020";
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+
+            var error = Assert.ThrowsAsync<Exception>(async () =>
+                await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None));
+
+            Assert.That(error!.GetBaseException().Message, Does.Contain("200"));
+            Assert.That(error.Message, Does.Contain("Work item 200 not found"));
+            Assert.That(error.Message, Does.Not.Contain("{ex}"));
+        }
+
+        [Test]
+        public async Task ListOverdueReleasePlansAsync_MapsPrivateSpecPullRequest()
+        {
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs-pr/pull/42";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Rev = 7;
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = "January 2020";
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, specPr, "New"));
+
+            var result = await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None);
+
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].ActiveSpecPullRequest, Is.EqualTo(specPr));
+            Assert.That(result[0].Revision, Is.EqualTo(7));
+        }
+
+        [Test]
+        public async Task UpdateWorkItemAsync_WithExpectedRevision_TestsRevisionBeforeUpdatingState()
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Rev = 7;
+            _connection.AddWorkItem(plan);
+
+            var result = await _devOpsService.UpdateWorkItemAsync(100,
+                new Dictionary<string, string> { ["System.State"] = "Abandoned" }, 7, CancellationToken.None);
+
+            var patch = _connection.LastCapturedPatchDocument!;
+            Assert.That(patch, Has.Count.EqualTo(2));
+            Assert.That(patch[0].Operation, Is.EqualTo(Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test));
+            Assert.That(patch[0].Path, Is.EqualTo("/rev"));
+            Assert.That(patch[0].Value, Is.EqualTo(7));
+            Assert.That(patch[1].Path, Is.EqualTo("/fields/System.State"));
+            Assert.That(patch[1].Value, Is.EqualTo("Abandoned"));
+            Assert.That(result.Fields["System.State"], Is.EqualTo("Abandoned"));
+        }
+
+        [TestCase("Custom.SDKReleasemonth", "December 2026")]
+        [TestCase("Custom.ReleaseStatusForPython", "Released")]
+        [TestCase("System.State", "Finished")]
+        public void UpdateWorkItemAsync_ChangedRevision_RejectsAbandonmentWithoutRetry(string changedField, string value)
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Fields[changedField] = value;
+            plan.Rev = 8; // The owner or release automation changed the plan after revision 7 was scanned.
+            _connection.AddWorkItem(plan);
+
+            Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await _devOpsService.UpdateWorkItemAsync(100,
+                    new Dictionary<string, string> { ["System.State"] = "Abandoned" }, 7, CancellationToken.None));
+
+            Assert.That(plan.Fields[changedField], Is.EqualTo(value));
+            Assert.That(plan.Fields["System.State"], Is.Not.EqualTo("Abandoned"));
+            Assert.That(_connection.WorkItemUpdateCount, Is.EqualTo(1));
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void UpdateWorkItemAsync_InvalidExpectedRevision_DoesNotSendPatch(int revision)
+        {
+            Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+                await _devOpsService.UpdateWorkItemAsync(100,
+                    new Dictionary<string, string> { ["System.State"] = "Abandoned" }, revision, CancellationToken.None));
+
+            Assert.That(_connection.LastCapturedPatchDocument, Is.Null);
+        }
+
         #region GetReleasePlanAsync(string pullRequestUrl) Tests
 
         [Test]
@@ -1018,6 +1120,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument => _workItemClient.LastCapturedPatchDocument;
 
+            public int WorkItemUpdateCount => _workItemClient.UpdateCount;
+
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
@@ -1076,6 +1180,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public bool CancelQuery { get; set; }
 
             public bool CancelBulkFetch { get; set; }
+
+            public int UpdateCount { get; private set; }
 
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
@@ -1184,8 +1290,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 object? userState = null,
                 CancellationToken cancellationToken = default)
             {
+                UpdateCount++;
                 LastCapturedPatchDocument = document;
                 _workItems.TryGetValue(id, out var workItem);
+                var revisionTest = document.FirstOrDefault(operation => operation.Path == "/rev"
+                    && operation.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test);
+                if (revisionTest != null)
+                {
+                    if (workItem == null || workItem.Rev != (int)revisionTest.Value)
+                    {
+                        throw new InvalidOperationException("Work item revision conflict.");
+                    }
+                    foreach (var operation in document.Where(operation => operation.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add
+                        && operation.Path.StartsWith("/fields/", StringComparison.Ordinal)))
+                    {
+                        workItem.Fields[operation.Path["/fields/".Length..]] = operation.Value;
+                    }
+                    workItem.Rev++;
+                }
                 return Task.FromResult(workItem ?? new WorkItem { Id = id });
             }
 

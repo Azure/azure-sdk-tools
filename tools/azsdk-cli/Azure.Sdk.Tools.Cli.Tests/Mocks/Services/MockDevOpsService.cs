@@ -296,6 +296,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return ((IDevOpsService)this).UpdateWorkItemAsync(workItemId, fields, new Dictionary<string, string>(), ct);
         }
 
+        Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, int expectedRevision, CancellationToken ct)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision);
+            return ((IDevOpsService)this).UpdateWorkItemAsync(workItemId, fields, ct);
+        }
+
         Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct)
         {
             var workItem = new WorkItem

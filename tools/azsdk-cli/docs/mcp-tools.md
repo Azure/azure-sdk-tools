@@ -77,6 +77,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk tsp generate-authoring-plan` | Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service. |
 |  | `azsdk release-plan update-release-status` |  |
 |  | `azsdk release-plan list-overdue` |  |
+|  | `azsdk release-plan abandon-overdue` |  |
 |  | `azsdk quokka` |  |
 |  | `azsdk pkg mark-released` | Mark a package as released in API Review Hub and APIView |
 |  | `azsdk pkg get-approval-status` | Check API review release approval status using APIView and API Review Hub |

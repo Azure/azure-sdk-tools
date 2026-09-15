@@ -22,6 +22,10 @@
 
 - C# customized-code updates now regenerate the SDK after patching customizations and before the final build.
 
+### Features Added
+
+- Added `release-plan abandon-overdue` to abandon inactive Public Preview, GA, and Private Preview release plans after one full overdue calendar month. Public/GA plans with merged or active SDK PRs, or any released SDK, are preserved; Private Preview plans are assessed by spec PR merge status. Overdue reminders provide release-type-specific actions.
+
 ## 0.6.44 (2026-09-08)
 
 ### Breaking Changes

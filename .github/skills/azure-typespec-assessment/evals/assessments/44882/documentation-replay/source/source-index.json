@@ -1,0 +1,460 @@
+{
+  "schemaVersion": 1,
+  "analysis": {
+    "status": "ready",
+    "authority": "typespec-compiler",
+    "compilerVersions": [
+      "1.14.0"
+    ],
+    "operationProjectionStats": [
+      {
+        "revision": "base",
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "operationCount": 88,
+        "changedNameCount": 2,
+        "matchedOperationCount": 0
+      },
+      {
+        "revision": "current",
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "operationCount": 89,
+        "changedNameCount": 5,
+        "matchedOperationCount": 77
+      }
+    ],
+    "blockers": []
+  },
+  "sourceChanges": [
+    {
+      "id": "source-4e6907dd80e7ab37",
+      "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-240110d0efc273cd",
+          "base": {
+            "startLine": 4,
+            "endLine": 10
+          },
+          "current": {
+            "startLine": 4,
+            "endLine": 12
+          },
+          "lines": [
+            " using Azure.ClientGenerator.Core;",
+            " using Azure.ClientGenerator.Core.Legacy;",
+            " using Azure.Core;",
+            "+using Azure.ResourceManager;",
+            " using Azure.ResourceManager.Foundations;",
+            "+using TypeSpec.Http;",
+            " using NewRelic.Observability;",
+            " ",
+            " @@clientName("
+          ]
+        },
+        {
+          "id": "hunk-45e42f7bd561d420",
+          "base": {
+            "startLine": 319,
+            "endLine": 321
+          },
+          "current": {
+            "startLine": 321,
+            "endLine": 354
+          },
+          "lines": [
+            " @@usage(AccountProperties, Usage.input | Usage.output, \"csharp\");",
+            " @@usage(OrganizationProperties, Usage.input | Usage.output, \"csharp\");",
+            " @@usage(PlanDataProperties, Usage.input | Usage.output, \"csharp\");",
+            "+",
+            "+// ===== Go delete parameter reorder =====",
+            "+// Reorder the delete method parameters for the Go SDK to keep backward compatibility.",
+            "+/**",
+            "+ * Deletes an existing New Relic monitor resource from your Azure subscription, removing the integration and stopping the observability of your Azure resources through New Relic",
+            "+ */",
+            "+#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"Override to reorder parameters for the Go SDK\"",
+            "+op newRelicMonitorResourceDelete(",
+            "+  ...ApiVersionParameter,",
+            "+  ...SubscriptionIdParameter,",
+            "+  ...ResourceGroupParameter,",
+            "+  ...Azure.ResourceManager.Legacy.Provider,",
+            "+",
+            "+  /**",
+            "+   * User Email.",
+            "+   */",
+            "+  @query(\"userEmail\")",
+            "+  userEmail: string,",
+            "+",
+            "+  /**",
+            "+   * Name of the Monitors resource.",
+            "+   */",
+            "+  @path",
+            "+  monitorName: string,",
+            "+): void;",
+            "+",
+            "+@@override(",
+            "+  NewRelicMonitorResources.delete,",
+            "+  newRelicMonitorResourceDelete,",
+            "+  \"go\"",
+            "+);",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-c8cb740c4b547ab5",
+          "kind": "operation",
+          "qualifiedName": "newRelicMonitorResourceDelete",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-45e42f7bd561d420"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+            "position": {
+              "start": 10311,
+              "end": 10949
+            },
+            "referencedNames": [
+              "apiVersion",
+              "monitorName",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "userEmail",
+              "uuid",
+              "void"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 327,
+            "endLine": 348
+          }
+        },
+        {
+          "id": "declaration-eae2f0259e77398d",
+          "kind": "property",
+          "qualifiedName": "userEmail",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-45e42f7bd561d420"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+            "position": {
+              "start": 10791,
+              "end": 10859
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 337,
+            "endLine": 341
+          }
+        },
+        {
+          "id": "declaration-16aa53d84a772d98",
+          "kind": "property",
+          "qualifiedName": "monitorName",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-45e42f7bd561d420"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+            "position": {
+              "start": 10864,
+              "end": 10939
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 343,
+            "endLine": 347
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-2fb430ce22fb9702",
+            "sourceChangeId": "source-4e6907dd80e7ab37",
+            "qualifiedName": "newRelicMonitorResourceDelete.userEmail",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "User Email.",
+              "declaration": "/**\n   * User Email.\n   */\n  @query(\"userEmail\")\n  userEmail: string",
+              "source": {
+                "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+                "revision": "current",
+                "startLine": 337,
+                "endLine": 341
+              }
+            },
+            "hunkIds": [
+              "hunk-45e42f7bd561d420"
+            ]
+          },
+          {
+            "id": "document-5e1069f4027479b7",
+            "sourceChangeId": "source-4e6907dd80e7ab37",
+            "qualifiedName": "newRelicMonitorResourceDelete",
+            "kind": "operation",
+            "before": null,
+            "after": {
+              "doc": "Deletes an existing New Relic monitor resource from your Azure subscription, removing the integration and stopping the observability of your Azure resources through New Relic",
+              "declaration": "/**\n * Deletes an existing New Relic monitor resource from your Azure subscription, removing the integration and stopping the observability of your Azure resources through New Relic\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"Override to reorder parameters for the Go SDK\"\nop newRelicMonitorResourceDelete(\n  ...ApiVersionParameter,\n  ...SubscriptionIdParameter,\n  ...ResourceGroupParameter,\n  ...Azure.ResourceManager.Legacy.Provider,\n\n  /**\n   * User Email.\n   */\n  @query(\"userEmail\")\n  userEmail: string,\n\n  /**\n   * Name of the Monitors resource.\n   */\n  @path\n  monitorName: string,\n): void;",
+              "source": {
+                "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+                "revision": "current",
+                "startLine": 327,
+                "endLine": 348
+              }
+            },
+            "hunkIds": [
+              "hunk-45e42f7bd561d420"
+            ]
+          },
+          {
+            "id": "document-6b4707e73b9dfbe2",
+            "sourceChangeId": "source-4e6907dd80e7ab37",
+            "qualifiedName": "newRelicMonitorResourceDelete.monitorName",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Name of the Monitors resource.",
+              "declaration": "/**\n   * Name of the Monitors resource.\n   */\n  @path\n  monitorName: string",
+              "source": {
+                "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+                "revision": "current",
+                "startLine": 343,
+                "endLine": 347
+              }
+            },
+            "hunkIds": [
+              "hunk-45e42f7bd561d420"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-8ba05666e67298cc",
+      "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-cc07b509898c89fe",
+          "base": {
+            "startLine": 40,
+            "endLine": 45
+          },
+          "current": {
+            "startLine": 40,
+            "endLine": 50
+          },
+          "lines": [
+            "    * The 2025-05-01-preview API version.",
+            "    */",
+            "   v2025_05_01_preview: \"2025-05-01-preview\",",
+            "+",
+            "+  /**",
+            "+   * The 2026-06-01 API version.",
+            "+   */",
+            "+  v2026_06_01: \"2026-06-01\",",
+            " }",
+            " ",
+            " interface Operations extends Azure.ResourceManager.Operations {}",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-07da90a3a59e645c",
+          "kind": "enum",
+          "qualifiedName": "Versions",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-cc07b509898c89fe"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Enum",
+            "sourceFile": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+            "position": {
+              "start": 967,
+              "end": 1121
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 35,
+            "endLine": 43
+          }
+        },
+        {
+          "id": "declaration-920bf5e773d8b500",
+          "kind": "enum",
+          "qualifiedName": "Versions",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-cc07b509898c89fe"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Enum",
+            "sourceFile": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+            "position": {
+              "start": 967,
+              "end": 1196
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 35,
+            "endLine": 48
+          }
+        },
+        {
+          "id": "declaration-f809658d36d3a568",
+          "kind": "interface",
+          "qualifiedName": "Operations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-cc07b509898c89fe"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+            "position": {
+              "start": 1123,
+              "end": 1187
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 45,
+            "endLine": 45
+          }
+        },
+        {
+          "id": "declaration-72fa913049f2e6f0",
+          "kind": "interface",
+          "qualifiedName": "Operations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-cc07b509898c89fe"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+            "position": {
+              "start": 1198,
+              "end": 1262
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 50,
+            "endLine": 50
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-ab52b0bc96e17042",
+            "sourceChangeId": "source-8ba05666e67298cc",
+            "qualifiedName": "NewRelic.Observability.Versions.v2026_06_01",
+            "kind": "enum-member",
+            "before": null,
+            "after": {
+              "doc": "The 2026-06-01 API version.",
+              "declaration": "/**\n   * The 2026-06-01 API version.\n   */\n  v2026_06_01: \"2026-06-01\"",
+              "source": {
+                "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                "revision": "current",
+                "startLine": 44,
+                "endLine": 47
+              }
+            },
+            "hunkIds": [
+              "hunk-cc07b509898c89fe"
+            ]
+          },
+          {
+            "id": "document-ea53755874a3e066",
+            "sourceChangeId": "source-8ba05666e67298cc",
+            "qualifiedName": "NewRelic.Observability.Versions",
+            "kind": "enum",
+            "before": {
+              "doc": "The available API versions.",
+              "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2025-05-01-preview API version.\n   */\n  v2025_05_01_preview: \"2025-05-01-preview\",\n}",
+              "source": {
+                "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                "revision": "base",
+                "startLine": 35,
+                "endLine": 43
+              }
+            },
+            "after": {
+              "doc": "The available API versions.",
+              "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2025-05-01-preview API version.\n   */\n  v2025_05_01_preview: \"2025-05-01-preview\",\n\n  /**\n   * The 2026-06-01 API version.\n   */\n  v2026_06_01: \"2026-06-01\",\n}",
+              "source": {
+                "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                "revision": "current",
+                "startLine": 35,
+                "endLine": 48
+              }
+            },
+            "hunkIds": [
+              "hunk-cc07b509898c89fe"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

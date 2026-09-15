@@ -1,0 +1,1256 @@
+{
+  "schemaVersion": 3,
+  "status": "ready",
+  "blockers": [],
+  "reviewUnits": [
+    {
+      "reviewUnitId": "semantic-04c7f68046c190b6",
+      "status": "ready",
+      "sourceChangeIds": [
+        "source-50d62a42da7b568c"
+      ],
+      "hunkIds": [
+        "hunk-b926ce37a948add4"
+      ],
+      "declarationIds": [
+        "declaration-5c453256a4d43163",
+        "declaration-5e32102d56ca757f",
+        "declaration-60e14ba08e9c32ca",
+        "declaration-f2de9808ed873d0d"
+      ],
+      "documents": [
+        {
+          "id": "document-bf7e6e243d910e4a",
+          "sourceChangeId": "source-50d62a42da7b568c",
+          "qualifiedName": "Microsoft.RecoveryServices.RecoveryPoints.update",
+          "kind": "operation",
+          "before": {
+            "doc": "UpdateRecoveryPoint to update recovery point for given RecoveryPointID.",
+            "declaration": "/**\n   * UpdateRecoveryPoint to update recovery point for given RecoveryPointID.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-patch\" \"Recovery point updates use UpdateRecoveryPointRequest model which does not include tags property\"\n  @added(Versions.v2026_01_31_preview)\n  @patch(#{ implicitOptionality: true })\n  update is ArmCustomPatchSync<\n    RecoveryPointResource,\n    PatchModel = UpdateRecoveryPointRequest,\n    Response = ArmResponse<RecoveryPointResource>\n  >",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp",
+              "revision": "base",
+              "startLine": 75,
+              "endLine": 85
+            }
+          },
+          "after": {
+            "doc": "UpdateRecoveryPoint to update recovery point for given RecoveryPointID.",
+            "declaration": "/**\n   * UpdateRecoveryPoint to update recovery point for given RecoveryPointID.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-patch\" \"Recovery point updates use UpdateRecoveryPointRequest model which does not include tags property\"\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  @patch(#{ implicitOptionality: true })\n  update is ArmCustomPatchSync<\n    RecoveryPointResource,\n    PatchModel = UpdateRecoveryPointRequest,\n    Response = ArmResponse<RecoveryPointResource>\n  >",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp",
+              "revision": "current",
+              "startLine": 75,
+              "endLine": 86
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reviewUnitId": "semantic-c0919f0627e34fc7",
+      "status": "not-applicable",
+      "sourceChangeIds": [
+        "source-ad45edd43eabc9f6"
+      ],
+      "hunkIds": [
+        "hunk-72e7fabac23c4145",
+        "hunk-fa8ad8500ba9a540"
+      ],
+      "declarationIds": [],
+      "documents": [],
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope."
+    },
+    {
+      "reviewUnitId": "semantic-cd350080220f105c",
+      "status": "ready",
+      "sourceChangeIds": [
+        "source-036bfc0398caf407",
+        "source-b857001149604b13",
+        "source-c92c208499804897"
+      ],
+      "hunkIds": [
+        "hunk-0e91a7839b7bc66b",
+        "hunk-0f1054ff72b1498c",
+        "hunk-138a1b2176687d4f",
+        "hunk-278dcecd7a1ae280",
+        "hunk-35fb2df82cdc24d4",
+        "hunk-3cdaa8fd9c36e76b",
+        "hunk-5e5426b8fad78493",
+        "hunk-5e79caf91b34108b",
+        "hunk-67ec2d2c0d4ba62f",
+        "hunk-7f408d1bcd7eeccd",
+        "hunk-908f5edb138c1cfb",
+        "hunk-9219560c15ce8725",
+        "hunk-a7fe5be7a2517799",
+        "hunk-ab653b0ac8510587",
+        "hunk-abb6fcc865ba6842",
+        "hunk-aef1256944ffd56b",
+        "hunk-af6a5e04e10b78b3",
+        "hunk-b2633db290d3f877",
+        "hunk-b4ba51254e0958b6",
+        "hunk-c379b4db6aff2e71",
+        "hunk-d492e1815b5e79a3",
+        "hunk-d690e17e49bddbe1",
+        "hunk-d7ed2c26e8d147ab",
+        "hunk-dec7de2a51cf87de",
+        "hunk-ec41b213a947d9d0",
+        "hunk-f320cc936fbb8a77",
+        "hunk-f5a0ad9541fce80b",
+        "hunk-f88d9109f37a662f"
+      ],
+      "declarationIds": [
+        "declaration-0125a2a663fee462",
+        "declaration-0238449e59b9ef56",
+        "declaration-05279d06b394b6ef",
+        "declaration-0907c69147f8a70b",
+        "declaration-0a73ace81a4961ae",
+        "declaration-0ac43ac4ea91f9d3",
+        "declaration-0bff0a1edd67ff85",
+        "declaration-0cfac18804918532",
+        "declaration-0f4db0a546d3a3fd",
+        "declaration-13fe611b10e65b33",
+        "declaration-188fae5c638b6521",
+        "declaration-193e450727ee3d03",
+        "declaration-1a60debc6a20bc63",
+        "declaration-1b20ef081e0b3c11",
+        "declaration-243a41b4c3d2a4f5",
+        "declaration-2c54db0035efb027",
+        "declaration-355ebe34368b455b",
+        "declaration-376adff438c5195e",
+        "declaration-3835f59ea3495be2",
+        "declaration-38deeecd26ccc5e9",
+        "declaration-39cff6b642e0971c",
+        "declaration-4160eb48a39f2cae",
+        "declaration-41d1e79f5ea1fa19",
+        "declaration-45463702d0c8011b",
+        "declaration-46362ab17c0e9a2e",
+        "declaration-4abd8c9197d1f593",
+        "declaration-4e7e1ac432b71bce",
+        "declaration-4fb0a1aea520b58e",
+        "declaration-5ad444f724ff9dcf",
+        "declaration-5ed6e5f9bc2bcd13",
+        "declaration-600f27831794c2aa",
+        "declaration-61032ebe63952b9e",
+        "declaration-63d929cbf3da354c",
+        "declaration-6449803db52995d8",
+        "declaration-64641c5f7996aa10",
+        "declaration-6cb8867d02e95291",
+        "declaration-7082b97e8a58619e",
+        "declaration-70cef6aee063a676",
+        "declaration-748043149181b113",
+        "declaration-766cafb63e8490d3",
+        "declaration-7bdef804636f9ecc",
+        "declaration-82bc2acb74fb654f",
+        "declaration-84aa990476d93d32",
+        "declaration-851dafec88540767",
+        "declaration-859db9d00af43c3f",
+        "declaration-88d115d746b9f002",
+        "declaration-89c4a28d1fe187c4",
+        "declaration-8c0e629710f850b4",
+        "declaration-8c26c538d2cced0e",
+        "declaration-8e02033cedf9cb58",
+        "declaration-8f9bcc6df9fa07a7",
+        "declaration-924b69918108f95a",
+        "declaration-9335f3e05327c100",
+        "declaration-935876dadac2bb87",
+        "declaration-974649881cded459",
+        "declaration-a26bc649986823e9",
+        "declaration-a2b1ffd8100a7895",
+        "declaration-a488397fdfa8f738",
+        "declaration-a9fbb6b8c873fc0f",
+        "declaration-aa1a30163b30a5da",
+        "declaration-aa73911ab6d63955",
+        "declaration-ac9e8c85e0a0a036",
+        "declaration-ace3a0d113034571",
+        "declaration-b25469937b5a7d7e",
+        "declaration-b52b05222a5644f3",
+        "declaration-b5ed45a29f82d0bf",
+        "declaration-b91634939e1553b0",
+        "declaration-c3f7f42ec2d92251",
+        "declaration-c7eb0eef0023e9d5",
+        "declaration-c9d91517297cc3b4",
+        "declaration-cb02b91d4eb18d62",
+        "declaration-cc830ca68e41fb20",
+        "declaration-ce291540fcdeb89b",
+        "declaration-cec5a5f4999a4c1c",
+        "declaration-cf46329f7b702800",
+        "declaration-cfbea1dc0d280352",
+        "declaration-d11ee85d85040db4",
+        "declaration-d16e263edb1139e8",
+        "declaration-d1c27222e6bb9579",
+        "declaration-d5e3c543697fed7e",
+        "declaration-d5f40e13f4363b6b",
+        "declaration-d64e31dc901ead18",
+        "declaration-dc813d28d4f5a9be",
+        "declaration-e23417b2ba30be38",
+        "declaration-e4abf9ac68bba075",
+        "declaration-e4b7ece0abf03042",
+        "declaration-e8446338af185a45",
+        "declaration-eab847f463bd475c",
+        "declaration-ecc0e62153590ec1",
+        "declaration-efc2a2948714f2f3",
+        "declaration-f1aabf6e269a5ff1",
+        "declaration-f2f40946b64329c3",
+        "declaration-f326cce371a0a6c7",
+        "declaration-f443d8df0c9c152b",
+        "declaration-f557ec0704b28832",
+        "declaration-fa93ee2e7c7a6ad8",
+        "declaration-fd7da3c495796a08",
+        "declaration-fd8e42e36d969b2e",
+        "declaration-fedaf248422c0ac8",
+        "declaration-ff21668df4d7d94f"
+      ],
+      "documents": [
+        {
+          "id": "document-1324d43ce23b0400",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ThreatInfo",
+          "kind": "model",
+          "before": {
+            "doc": "Recovery Point Threat information",
+            "declaration": "/**\n * Recovery Point Threat information\n */\n@added(Versions.v2026_01_31_preview)\nmodel ThreatInfo {\n  /**\n   * Threat Subject\n   */\n  @visibility(Lifecycle.Read)\n  threatTitle?: string;\n\n  /**\n   * Threat Description\n   */\n  @visibility(Lifecycle.Read)\n  threatDescription?: string;\n\n  /**\n   * Timestamp when the last (latest)threat information was sent\n   */\n  @visibility(Lifecycle.Read)\n  lastUpdatedTime?: utcDateTime;\n\n  /**\n   * Threat Status Types\n   */\n  threatState?: ThreatState;\n\n  /**\n   * Start timestamp of the threat\n   */\n  @visibility(Lifecycle.Read)\n  threatStartTime?: utcDateTime;\n\n  /**\n   * End timestamp of the threat\n   */\n  @visibility(Lifecycle.Read)\n  threatEndTime?: utcDateTime;\n\n  /**\n   * threat details link\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses threatURI\"\n  @visibility(Lifecycle.Read)\n  threatURI?: url;\n\n  /**\n   * Threat Severity Types\n   */\n  threatSeverity?: ThreatSeverity;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 383,
+              "endLine": 434
+            }
+          },
+          "after": {
+            "doc": "Recovery Point Threat information",
+            "declaration": "/**\n * Recovery Point Threat information\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nmodel ThreatInfo {\n  /**\n   * Threat Subject\n   */\n  @visibility(Lifecycle.Read)\n  threatTitle?: string;\n\n  /**\n   * Threat Description\n   */\n  @visibility(Lifecycle.Read)\n  threatDescription?: string;\n\n  /**\n   * Timestamp when the last (latest)threat information was sent\n   */\n  @visibility(Lifecycle.Read)\n  lastUpdatedTime?: utcDateTime;\n\n  /**\n   * Threat Status Types\n   */\n  threatState?: ThreatState;\n\n  /**\n   * Start timestamp of the threat\n   */\n  @visibility(Lifecycle.Read)\n  threatStartTime?: utcDateTime;\n\n  /**\n   * End timestamp of the threat\n   */\n  @visibility(Lifecycle.Read)\n  threatEndTime?: utcDateTime;\n\n  /**\n   * threat details link\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses threatURI\"\n  @visibility(Lifecycle.Read)\n  threatURI?: url;\n\n  /**\n   * Threat Severity Types\n   */\n  threatSeverity?: ThreatSeverity;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 389,
+              "endLine": 441
+            }
+          }
+        },
+        {
+          "id": "document-162634ae717c72a1",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.RecoveryPoint.threatInfo",
+          "kind": "property",
+          "before": {
+            "doc": "Recovery point threat information.",
+            "declaration": "/**\n   * Recovery point threat information.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @identifiers(#[])\n  threatInfo?: ThreatInfo[]",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 2408,
+              "endLine": 2413
+            }
+          },
+          "after": {
+            "doc": "Recovery point threat information.",
+            "declaration": "/**\n   * Recovery point threat information.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  @identifiers(#[])\n  threatInfo?: ThreatInfo[]",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 2423,
+              "endLine": 2429
+            }
+          }
+        },
+        {
+          "id": "document-18b2121aef1a6087",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ProtectionLevel",
+          "kind": "union",
+          "before": {
+            "doc": "Protection type in case protected as part of a parent.",
+            "declaration": "/**\n * Protection type in case protected as part of a parent.\n */\n@added(Versions.v2026_01_31_preview)\nunion ProtectionLevel {\n  string,\n\n  /** Protected at database level */\n  Database: \"Database\",\n\n  /** Database protected under an instance */\n  DatabaseUnderInstance: \"DatabaseUnderInstance\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 839,
+              "endLine": 851
+            }
+          },
+          "after": {
+            "doc": "Protection type in case protected as part of a parent.",
+            "declaration": "/**\n * Protection type in case protected as part of a parent.\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nunion ProtectionLevel {\n  string,\n\n  /** Protected at database level */\n  Database: \"Database\",\n\n  /** Database protected under an instance */\n  DatabaseUnderInstance: \"DatabaseUnderInstance\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 847,
+              "endLine": 860
+            }
+          }
+        },
+        {
+          "id": "document-2cc0a117e1830931",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.BmsrpQueryObject.getLatestRPOnly",
+          "kind": "property",
+          "before": {
+            "doc": "Flag to indicate whether to get only the latest recovery point.",
+            "declaration": "/**\n   * Flag to indicate whether to get only the latest recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  getLatestRPOnly?: boolean",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 5329,
+              "endLine": 5334
+            }
+          },
+          "after": {
+            "doc": "Flag to indicate whether to get only the latest recovery point.",
+            "declaration": "/**\n   * Flag to indicate whether to get only the latest recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  getLatestRPOnly?: boolean",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 5355,
+              "endLine": 5361
+            }
+          }
+        },
+        {
+          "id": "document-31ae161a387b404e",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.BmsrpQueryObject.baseRPDatasourceId",
+          "kind": "property",
+          "before": {
+            "doc": "Id of the datasource of the base snapshot recovery point.",
+            "declaration": "/**\n   * Id of the datasource of the base snapshot recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  baseRPDatasourceId?: string",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 5322,
+              "endLine": 5327
+            }
+          },
+          "after": {
+            "doc": "Id of the datasource of the base snapshot recovery point.",
+            "declaration": "/**\n   * Id of the datasource of the base snapshot recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  baseRPDatasourceId?: string",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 5347,
+              "endLine": 5353
+            }
+          }
+        },
+        {
+          "id": "document-388d6e3115ff1963",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.UpdateRecoveryPointRequest",
+          "kind": "model",
+          "before": {
+            "doc": "Patch Request content to update recovery point for given RecoveryPointId",
+            "declaration": "/**\n * Patch Request content to update recovery point for given RecoveryPointId\n */\n@added(Versions.v2026_01_31_preview)\nmodel UpdateRecoveryPointRequest {\n  /**\n   * Resource properties.\n   */\n  properties?: PatchRecoveryPointInput;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 3207,
+              "endLine": 3216
+            }
+          },
+          "after": {
+            "doc": "Patch Request content to update recovery point for given RecoveryPointId",
+            "declaration": "/**\n * Patch Request content to update recovery point for given RecoveryPointId\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nmodel UpdateRecoveryPointRequest {\n  /**\n   * Resource properties.\n   */\n  properties?: PatchRecoveryPointInput;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 3223,
+              "endLine": 3233
+            }
+          }
+        },
+        {
+          "id": "document-3bf5b5f3ee01f5cd",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ThreatStatus",
+          "kind": "union",
+          "before": {
+            "doc": "Threat status of the recovery point",
+            "declaration": "/**\n * Threat status of the recovery point\n */\n@added(Versions.v2026_01_31_preview)\nunion ThreatStatus {\n  string,\n\n  /** Threat status is unknown */\n  Unknown: \"Unknown\",\n\n  /** Recovery point is healthy */\n  Healthy: \"Healthy\",\n\n  /** Recovery point is unhealthy */\n  UnHealthy: \"UnHealthy\",\n\n  /** Recovery point has warning-level threats */\n  Warning: \"Warning\",\n\n  /** Threat status is not available */\n  NotAvailable: \"NotAvailable\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 320,
+              "endLine": 341
+            }
+          },
+          "after": {
+            "doc": "Threat status of the recovery point",
+            "declaration": "/**\n * Threat status of the recovery point\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nunion ThreatStatus {\n  string,\n\n  /** Threat status is unknown */\n  Unknown: \"Unknown\",\n\n  /** Recovery point is healthy */\n  Healthy: \"Healthy\",\n\n  /** Recovery point is unhealthy */\n  UnHealthy: \"UnHealthy\",\n\n  /** Recovery point has warning-level threats */\n  Warning: \"Warning\",\n\n  /** Threat status is not available */\n  NotAvailable: \"NotAvailable\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 323,
+              "endLine": 345
+            }
+          }
+        },
+        {
+          "id": "document-3cc4b9868e65053c",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ProtectedItem.sourceSideScanInfo",
+          "kind": "property",
+          "before": {
+            "doc": "Source side threat information",
+            "declaration": "/**\n   * Source side threat information\n   */\n  @added(Versions.v2026_01_31_preview)\n  sourceSideScanInfo?: SourceSideScanInfo",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 2371,
+              "endLine": 2375
+            }
+          },
+          "after": {
+            "doc": "Source side threat information",
+            "declaration": "/**\n   * Source side threat information\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  sourceSideScanInfo?: SourceSideScanInfo",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 2384,
+              "endLine": 2389
+            }
+          }
+        },
+        {
+          "id": "document-3d00d1f31efbf4f4",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureVmWorkloadSQLDatabaseProtectedItem",
+          "kind": "model",
+          "before": {
+            "doc": "Azure VM workload-specific protected item representing SQL Database.",
+            "declaration": "/**\n * Azure VM workload-specific protected item representing SQL Database.\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses SQL acronym in naming\"\nmodel AzureVmWorkloadSQLDatabaseProtectedItem extends ProtectedItem {\n  /**\n   * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.\n   */\n  protectedItemType: \"AzureVmWorkloadSQLDatabase\";\n\n  ...AzureVmWorkloadProtectedItemProperties;\n\n  /**\n   * Name of the parent protected item (e.g., SQL Instance name) when this database is protected as part of a parent.\n   */\n  @added(Versions.v2026_01_31_preview)\n  parentProtectedItem?: string;\n\n  /**\n   * Protection type in case protected as part of a parent.\n   */\n  @added(Versions.v2026_01_31_preview)\n  protectionLevel?: ProtectionLevel;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 4600,
+              "endLine": 4623
+            }
+          },
+          "after": {
+            "doc": "Azure VM workload-specific protected item representing SQL Database.",
+            "declaration": "/**\n * Azure VM workload-specific protected item representing SQL Database.\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses SQL acronym in naming\"\nmodel AzureVmWorkloadSQLDatabaseProtectedItem extends ProtectedItem {\n  /**\n   * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.\n   */\n  protectedItemType: \"AzureVmWorkloadSQLDatabase\";\n\n  ...AzureVmWorkloadProtectedItemProperties;\n\n  /**\n   * Name of the parent protected item (e.g., SQL Instance name) when this database is protected as part of a parent.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  parentProtectedItem?: string;\n\n  /**\n   * Protection type in case protected as part of a parent.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  protectionLevel?: ProtectionLevel;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 4620,
+              "endLine": 4645
+            }
+          }
+        },
+        {
+          "id": "document-3f7e08b1c1ae96e2",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ContainerType",
+          "kind": "union",
+          "before": {
+            "doc": "Type of container for filter",
+            "declaration": "/**\n * Type of container for filter\n */\nunion ContainerType {\n  string,\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Invalid: \"Invalid\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Unknown: \"Unknown\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  IaasVMContainer: \"IaasVMContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  IaasVMServiceContainer: \"IaasVMServiceContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  DPMContainer: \"DPMContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  AzureBackupServerContainer: \"AzureBackupServerContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  MABContainer: \"MABContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Cluster: \"Cluster\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  AzureSqlContainer: \"AzureSqlContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Windows: \"Windows\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  VCenter: \"VCenter\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  VMAppContainer: \"VMAppContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  SQLAGWorkLoadContainer: \"SQLAGWorkLoadContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  StorageContainer: \"StorageContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  GenericContainer: \"GenericContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  HanaHSRContainer: \"HanaHSRContainer\",\n\n  /** HANA scale-out container type */\n  @added(Versions.v2026_01_31_preview)\n  HanaScaleoutContainer: \"HanaScaleoutContainer\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 1250,
+              "endLine": 1291
+            }
+          },
+          "after": {
+            "doc": "Type of container for filter",
+            "declaration": "/**\n * Type of container for filter\n */\nunion ContainerType {\n  string,\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Invalid: \"Invalid\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Unknown: \"Unknown\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  IaasVMContainer: \"IaasVMContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  IaasVMServiceContainer: \"IaasVMServiceContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  DPMContainer: \"DPMContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  AzureBackupServerContainer: \"AzureBackupServerContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  MABContainer: \"MABContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Cluster: \"Cluster\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  AzureSqlContainer: \"AzureSqlContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Windows: \"Windows\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  VCenter: \"VCenter\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  VMAppContainer: \"VMAppContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  SQLAGWorkLoadContainer: \"SQLAGWorkLoadContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  StorageContainer: \"StorageContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  GenericContainer: \"GenericContainer\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  HanaHSRContainer: \"HanaHSRContainer\",\n\n  /** HANA scale-out container type */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  HanaScaleoutContainer: \"HanaScaleoutContainer\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 1262,
+              "endLine": 1304
+            }
+          }
+        },
+        {
+          "id": "document-459c76ecd1442ad8",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureWorkloadSQLRecoveryPointExtendedInfo.includedDatabases",
+          "kind": "property",
+          "before": {
+            "doc": "List of databases included in recovery point.",
+            "declaration": "/**\n   * List of databases included in recovery point.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @identifiers(#[])\n  includedDatabases?: DatabaseInRP[]",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 5149,
+              "endLine": 5154
+            }
+          },
+          "after": {
+            "doc": "List of databases included in recovery point.",
+            "declaration": "/**\n   * List of databases included in recovery point.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  @identifiers(#[])\n  includedDatabases?: DatabaseInRP[]",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 5172,
+              "endLine": 5178
+            }
+          }
+        },
+        {
+          "id": "document-4bf894b1e267c387",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.RestorePointQueryType.Snapshot",
+          "kind": "union-variant",
+          "before": {
+            "doc": "Snapshot restore point type",
+            "declaration": "/** Snapshot restore point type */\n  @added(Versions.v2026_01_31_preview)\n  Snapshot: \"Snapshot\"",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 998,
+              "endLine": 1000
+            }
+          },
+          "after": {
+            "doc": "Snapshot restore point type",
+            "declaration": "/** Snapshot restore point type */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  Snapshot: \"Snapshot\"",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 1008,
+              "endLine": 1011
+            }
+          }
+        },
+        {
+          "id": "document-4e089e63a87f5922",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.BmsrpQueryObject",
+          "kind": "model",
+          "before": {
+            "doc": "Filters to list backup copies.",
+            "declaration": "/**\n * Filters to list backup copies.\n */\nmodel BmsrpQueryObject {\n  /**\n   * Backup copies created after this time.\n   */\n  startDate?: utcDateTime;\n\n  /**\n   * Backup copies created before this time.\n   */\n  endDate?: utcDateTime;\n\n  /**\n   * RestorePoint type\n   */\n  restorePointQueryType?: RestorePointQueryType;\n\n  /**\n   * In Get Recovery Point, it tells whether extended information about recovery point is asked.\n   */\n  extendedInfo?: boolean;\n\n  /**\n   * Whether the RP can be moved to another tier\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  moveReadyRPOnly?: boolean;\n\n  /**\n   * Flag to indicate whether Soft Deleted RPs should be included/excluded from result.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  includeSoftDeletedRP?: boolean;\n\n  /**\n   * Id of the base snapshot recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  baseSnapshotRPId?: string;\n\n  /**\n   * Id of the datasource of the base snapshot recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  baseRPDatasourceId?: string;\n\n  /**\n   * Flag to indicate whether to get only the latest recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  getLatestRPOnly?: boolean;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 5279,
+              "endLine": 5335
+            }
+          },
+          "after": {
+            "doc": "Filters to list backup copies.",
+            "declaration": "/**\n * Filters to list backup copies.\n */\nmodel BmsrpQueryObject {\n  /**\n   * Backup copies created after this time.\n   */\n  startDate?: utcDateTime;\n\n  /**\n   * Backup copies created before this time.\n   */\n  endDate?: utcDateTime;\n\n  /**\n   * RestorePoint type\n   */\n  restorePointQueryType?: RestorePointQueryType;\n\n  /**\n   * In Get Recovery Point, it tells whether extended information about recovery point is asked.\n   */\n  extendedInfo?: boolean;\n\n  /**\n   * Whether the RP can be moved to another tier\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  moveReadyRPOnly?: boolean;\n\n  /**\n   * Flag to indicate whether Soft Deleted RPs should be included/excluded from result.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  includeSoftDeletedRP?: boolean;\n\n  /**\n   * Id of the base snapshot recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  baseSnapshotRPId?: string;\n\n  /**\n   * Id of the datasource of the base snapshot recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  baseRPDatasourceId?: string;\n\n  /**\n   * Flag to indicate whether to get only the latest recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  getLatestRPOnly?: boolean;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 5303,
+              "endLine": 5362
+            }
+          }
+        },
+        {
+          "id": "document-5126a4640f2347de",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ProtectedItem",
+          "kind": "model",
+          "before": {
+            "doc": "Base class for backup items.",
+            "declaration": "/**\n * Base class for backup items.\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n@discriminator(\"protectedItemType\")\nmodel ProtectedItem {\n  /**\n   * backup item type.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/no-string-discriminator\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  protectedItemType: string;\n\n  /**\n   * Type of backup management for the backed up item.\n   */\n  @visibility(Lifecycle.Read)\n  backupManagementType?: BackupManagementType;\n\n  /**\n   * Type of workload this item represents.\n   */\n  @visibility(Lifecycle.Read)\n  workloadType?: DataSourceType;\n\n  /**\n   * Unique name of container\n   */\n  containerName?: string;\n\n  /**\n   * ARM ID of the resource to be backed up.\n   */\n  sourceResourceId?: string;\n\n  /**\n   * ID of the backup policy with which this item is backed up.\n   */\n  policyId?: string;\n\n  /**\n   * Timestamp when the last (latest) backup copy was created for this backup item.\n   */\n  lastRecoveryPoint?: utcDateTime;\n\n  /**\n   * Name of the backup set the backup item belongs to\n   */\n  backupSetName?: string;\n\n  /**\n   * Create mode to indicate recovery of existing soft deleted data source or creation of new data source.\n   */\n  createMode?: CreateMode;\n\n  /**\n   * Time for deferred deletion in UTC\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  deferredDeleteTimeInUTC?: utcDateTime;\n\n  /**\n   * Flag to identify whether the DS is scheduled for deferred delete\n   */\n  isScheduledForDeferredDelete?: boolean;\n\n  /**\n   * Time remaining before the DS marked for deferred delete is permanently deleted\n   */\n  deferredDeleteTimeRemaining?: string;\n\n  /**\n   * Flag to identify whether the deferred deleted DS is to be purged soon\n   */\n  isDeferredDeleteScheduleUpcoming?: boolean;\n\n  /**\n   * Flag to identify that deferred deleted DS is to be moved into Pause state\n   */\n  isRehydrate?: boolean;\n\n  /**\n   * ResourceGuardOperationRequests on which LAC check will be performed\n   */\n  resourceGuardOperationRequests?: string[];\n\n  /**\n   * Flag to identify whether datasource is protected in archive\n   */\n  isArchiveEnabled?: boolean;\n\n  /**\n   * Name of the policy used for protection\n   */\n  policyName?: string;\n\n  /**\n   * Soft delete retention period in days\n   */\n  softDeleteRetentionPeriodInDays?: int32;\n\n  /**\n   * ID of the vault which protects this item\n   */\n  @visibility(Lifecycle.Read)\n  vaultId?: string;\n\n  /**\n   * Source side threat information\n   */\n  @added(Versions.v2026_01_31_preview)\n  sourceSideScanInfo?: SourceSideScanInfo;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 2265,
+              "endLine": 2376
+            }
+          },
+          "after": {
+            "doc": "Base class for backup items.",
+            "declaration": "/**\n * Base class for backup items.\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n@discriminator(\"protectedItemType\")\nmodel ProtectedItem {\n  /**\n   * backup item type.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/no-string-discriminator\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  protectedItemType: string;\n\n  /**\n   * Type of backup management for the backed up item.\n   */\n  @visibility(Lifecycle.Read)\n  backupManagementType?: BackupManagementType;\n\n  /**\n   * Type of workload this item represents.\n   */\n  @visibility(Lifecycle.Read)\n  workloadType?: DataSourceType;\n\n  /**\n   * Unique name of container\n   */\n  containerName?: string;\n\n  /**\n   * ARM ID of the resource to be backed up.\n   */\n  sourceResourceId?: string;\n\n  /**\n   * ID of the backup policy with which this item is backed up.\n   */\n  policyId?: string;\n\n  /**\n   * Timestamp when the last (latest) backup copy was created for this backup item.\n   */\n  lastRecoveryPoint?: utcDateTime;\n\n  /**\n   * Name of the backup set the backup item belongs to\n   */\n  backupSetName?: string;\n\n  /**\n   * Create mode to indicate recovery of existing soft deleted data source or creation of new data source.\n   */\n  createMode?: CreateMode;\n\n  /**\n   * Time for deferred deletion in UTC\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  deferredDeleteTimeInUTC?: utcDateTime;\n\n  /**\n   * Flag to identify whether the DS is scheduled for deferred delete\n   */\n  isScheduledForDeferredDelete?: boolean;\n\n  /**\n   * Time remaining before the DS marked for deferred delete is permanently deleted\n   */\n  deferredDeleteTimeRemaining?: string;\n\n  /**\n   * Flag to identify whether the deferred deleted DS is to be purged soon\n   */\n  isDeferredDeleteScheduleUpcoming?: boolean;\n\n  /**\n   * Flag to identify that deferred deleted DS is to be moved into Pause state\n   */\n  isRehydrate?: boolean;\n\n  /**\n   * ResourceGuardOperationRequests on which LAC check will be performed\n   */\n  resourceGuardOperationRequests?: string[];\n\n  /**\n   * Flag to identify whether datasource is protected in archive\n   */\n  isArchiveEnabled?: boolean;\n\n  /**\n   * Name of the policy used for protection\n   */\n  policyName?: string;\n\n  /**\n   * Soft delete retention period in days\n   */\n  softDeleteRetentionPeriodInDays?: int32;\n\n  /**\n   * ID of the vault which protects this item\n   */\n  @visibility(Lifecycle.Read)\n  vaultId?: string;\n\n  /**\n   * Source side threat information\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  sourceSideScanInfo?: SourceSideScanInfo;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 2278,
+              "endLine": 2390
+            }
+          }
+        },
+        {
+          "id": "document-52753c7d5c7d2377",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.VMWorkloadPolicyType",
+          "kind": "union",
+          "before": {
+            "doc": "Type of the protection policy",
+            "declaration": "/**\n * Type of the protection policy\n */\n@added(Versions.v2026_01_31_preview)\nunion VMWorkloadPolicyType {\n  string,\n\n  /** Invalid policy type */\n  Invalid: \"Invalid\",\n\n  /** Snapshot V1 policy type */\n  SnapshotV1: \"SnapshotV1\",\n\n  /** Snapshot V2 policy type */\n  SnapshotV2: \"SnapshotV2\",\n\n  /** Streaming policy type */\n  Streaming: \"Streaming\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 730,
+              "endLine": 748
+            }
+          },
+          "after": {
+            "doc": "Type of the protection policy",
+            "declaration": "/**\n * Type of the protection policy\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nunion VMWorkloadPolicyType {\n  string,\n\n  /** Invalid policy type */\n  Invalid: \"Invalid\",\n\n  /** Snapshot V1 policy type */\n  SnapshotV1: \"SnapshotV1\",\n\n  /** Snapshot V2 policy type */\n  SnapshotV2: \"SnapshotV2\",\n\n  /** Streaming policy type */\n  Streaming: \"Streaming\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 737,
+              "endLine": 756
+            }
+          }
+        },
+        {
+          "id": "document-52fe6e2585546da8",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.RecoveryPoint",
+          "kind": "model",
+          "before": {
+            "doc": "Base class for backup copies. Workload-specific backup copies are derived from this class.",
+            "declaration": "/**\n * Base class for backup copies. Workload-specific backup copies are derived from this class.\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n@discriminator(\"objectType\")\nmodel RecoveryPoint {\n  /**\n   * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/no-string-discriminator\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  objectType: string;\n\n  /**\n   * Threat status of the recovery point\n   */\n  @added(Versions.v2026_01_31_preview)\n  threatStatus?: ThreatStatus;\n\n  /**\n   * Recovery point threat information.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @identifiers(#[])\n  threatInfo?: ThreatInfo[];\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 2390,
+              "endLine": 2414
+            }
+          },
+          "after": {
+            "doc": "Base class for backup copies. Workload-specific backup copies are derived from this class.",
+            "declaration": "/**\n * Base class for backup copies. Workload-specific backup copies are derived from this class.\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n@discriminator(\"objectType\")\nmodel RecoveryPoint {\n  /**\n   * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/no-string-discriminator\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  objectType: string;\n\n  /**\n   * Threat status of the recovery point\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  threatStatus?: ThreatStatus;\n\n  /**\n   * Recovery point threat information.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  @identifiers(#[])\n  threatInfo?: ThreatInfo[];\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 2404,
+              "endLine": 2430
+            }
+          }
+        },
+        {
+          "id": "document-5f48027a03825190",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.BmsrpQueryObject.baseSnapshotRPId",
+          "kind": "property",
+          "before": {
+            "doc": "Id of the base snapshot recovery point.",
+            "declaration": "/**\n   * Id of the base snapshot recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  baseSnapshotRPId?: string",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 5315,
+              "endLine": 5320
+            }
+          },
+          "after": {
+            "doc": "Id of the base snapshot recovery point.",
+            "declaration": "/**\n   * Id of the base snapshot recovery point.\n   */\n  #suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving existing API naming convention from prior swagger versions\"\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  baseSnapshotRPId?: string",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 5339,
+              "endLine": 5345
+            }
+          }
+        },
+        {
+          "id": "document-63247c01f7086ae4",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.InstanceProtectionReadiness",
+          "kind": "union",
+          "before": {
+            "doc": "The state of instance protection.",
+            "declaration": "/**\n * The state of instance protection.\n */\n@added(Versions.v2026_01_31_preview)\nunion InstanceProtectionReadiness {\n  string,\n\n  /** Instance protection readiness is unknown */\n  Unknown: \"Unknown\",\n\n  /** Instance is ready for protection */\n  Ready: \"Ready\",\n\n  /** Backup schedule is disabled for this instance */\n  ScheduleDisabled: \"ScheduleDisabled\",\n\n  /** Instance is partially protected */\n  PartialProtection: \"PartialProtection\",\n\n  /** Instance protection encountered an error */\n  ProtectionError: \"ProtectionError\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 853,
+              "endLine": 874
+            }
+          },
+          "after": {
+            "doc": "The state of instance protection.",
+            "declaration": "/**\n * The state of instance protection.\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nunion InstanceProtectionReadiness {\n  string,\n\n  /** Instance protection readiness is unknown */\n  Unknown: \"Unknown\",\n\n  /** Instance is ready for protection */\n  Ready: \"Ready\",\n\n  /** Backup schedule is disabled for this instance */\n  ScheduleDisabled: \"ScheduleDisabled\",\n\n  /** Instance is partially protected */\n  PartialProtection: \"PartialProtection\",\n\n  /** Instance protection encountered an error */\n  ProtectionError: \"ProtectionError\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 862,
+              "endLine": 884
+            }
+          }
+        },
+        {
+          "id": "document-73146bb6d31970a6",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ThreatState",
+          "kind": "union",
+          "before": {
+            "doc": "Threat Status Types",
+            "declaration": "/**\n * Threat Status Types\n */\n@added(Versions.v2026_01_31_preview)\nunion ThreatState {\n  string,\n\n  /** Threat is active */\n  Active: \"Active\",\n\n  /** Threat remediation is in progress */\n  InProgress: \"InProgress\",\n\n  /** Threat has been ignored */\n  Ignored: \"Ignored\",\n\n  /** Threat has been resolved */\n  Resolved: \"Resolved\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 343,
+              "endLine": 361
+            }
+          },
+          "after": {
+            "doc": "Threat Status Types",
+            "declaration": "/**\n * Threat Status Types\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nunion ThreatState {\n  string,\n\n  /** Threat is active */\n  Active: \"Active\",\n\n  /** Threat remediation is in progress */\n  InProgress: \"InProgress\",\n\n  /** Threat has been ignored */\n  Ignored: \"Ignored\",\n\n  /** Threat has been resolved */\n  Resolved: \"Resolved\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 347,
+              "endLine": 366
+            }
+          }
+        },
+        {
+          "id": "document-7805a2ab89da677b",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureVmWorkloadSAPHanaScaleoutProtectableItem",
+          "kind": "model",
+          "before": {
+            "doc": "Azure VM workload-specific protectable item representing HANA scale out.",
+            "declaration": "/**\n * Azure VM workload-specific protectable item representing HANA scale out.\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses SAP acronym in naming\"\n@added(Versions.v2026_01_31_preview)\nmodel AzureVmWorkloadSAPHanaScaleoutProtectableItem\n  extends WorkloadProtectableItem {\n  /**\n   * Type of the backup item.\n   */\n  protectableItemType: \"HanaScaleoutContainer\";\n\n  ...AzureVmWorkloadProtectableItemProperties;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 7687,
+              "endLine": 7700
+            }
+          },
+          "after": {
+            "doc": "Azure VM workload-specific protectable item representing HANA scale out.",
+            "declaration": "/**\n * Azure VM workload-specific protectable item representing HANA scale out.\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses SAP acronym in naming\"\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nmodel AzureVmWorkloadSAPHanaScaleoutProtectableItem\n  extends WorkloadProtectableItem {\n  /**\n   * Type of the backup item.\n   */\n  protectableItemType: \"HanaScaleoutContainer\";\n\n  ...AzureVmWorkloadProtectableItemProperties;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 7715,
+              "endLine": 7729
+            }
+          }
+        },
+        {
+          "id": "document-8ba0f6c966baee65",
+          "sourceChangeId": "source-c92c208499804897",
+          "qualifiedName": "Microsoft.RecoveryServices.Versions",
+          "kind": "enum",
+          "before": {
+            "doc": "The available API versions.",
+            "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2025-02-01 API version.\n   */\n  v2025_02_01: \"2025-02-01\",\n\n  /**\n   * The 2025-08-01 API version.\n   */\n  v2025_08_01: \"2025-08-01\",\n\n  /**\n   * The 2026-01-01 API version.\n   */\n  v2026_01_01: \"2026-01-01\",\n\n  /**\n   * The 2026-01-31-preview API version.\n   */\n  v2026_01_31_preview: \"2026-01-31-preview\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+              "revision": "base",
+              "startLine": 43,
+              "endLine": 66
+            }
+          },
+          "after": {
+            "doc": "The available API versions.",
+            "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2025-02-01 API version.\n   */\n  v2025_02_01: \"2025-02-01\",\n\n  /**\n   * The 2025-08-01 API version.\n   */\n  v2025_08_01: \"2025-08-01\",\n\n  /**\n   * The 2026-01-01 API version.\n   */\n  v2026_01_01: \"2026-01-01\",\n\n  /**\n   * The 2026-01-31-preview API version.\n   */\n  v2026_01_31_preview: \"2026-01-31-preview\",\n\n  /**\n   * The 2026-02-01 API version.\n   */\n  v2026_02_01: \"2026-02-01\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+              "revision": "current",
+              "startLine": 43,
+              "endLine": 71
+            }
+          }
+        },
+        {
+          "id": "document-8f70d78b13a77fc9",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.PatchRecoveryPointPropertiesInput",
+          "kind": "model",
+          "before": {
+            "doc": "Recovery Point Properties Contract for Update Recovery Point API.",
+            "declaration": "/**\n * Recovery Point Properties Contract for Update Recovery Point API.\n */\n@added(Versions.v2026_01_31_preview)\nmodel PatchRecoveryPointPropertiesInput {\n  /**\n   * Expiry time of Recovery Point in UTC.\n   */\n  expiryTime?: utcDateTime;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 3229,
+              "endLine": 3238
+            }
+          },
+          "after": {
+            "doc": "Recovery Point Properties Contract for Update Recovery Point API.",
+            "declaration": "/**\n * Recovery Point Properties Contract for Update Recovery Point API.\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nmodel PatchRecoveryPointPropertiesInput {\n  /**\n   * Expiry time of Recovery Point in UTC.\n   */\n  expiryTime?: utcDateTime;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 3247,
+              "endLine": 3257
+            }
+          }
+        },
+        {
+          "id": "document-9f105dac25b818b1",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.RecoveryPoint.threatStatus",
+          "kind": "property",
+          "before": {
+            "doc": "Threat status of the recovery point",
+            "declaration": "/**\n   * Threat status of the recovery point\n   */\n  @added(Versions.v2026_01_31_preview)\n  threatStatus?: ThreatStatus",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 2402,
+              "endLine": 2406
+            }
+          },
+          "after": {
+            "doc": "Threat status of the recovery point",
+            "declaration": "/**\n   * Threat status of the recovery point\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  threatStatus?: ThreatStatus",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 2416,
+              "endLine": 2421
+            }
+          }
+        },
+        {
+          "id": "document-a4f242e96d92437f",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.RestorePointQueryType.FullDifferentialAndSnapshot",
+          "kind": "union-variant",
+          "before": {
+            "doc": "Full, differential, and snapshot restore point types",
+            "declaration": "/** Full, differential, and snapshot restore point types */\n  @added(Versions.v2026_01_31_preview)\n  FullDifferentialAndSnapshot: \"FullDifferentialAndSnapshot\"",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 1002,
+              "endLine": 1004
+            }
+          },
+          "after": {
+            "doc": "Full, differential, and snapshot restore point types",
+            "declaration": "/** Full, differential, and snapshot restore point types */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  FullDifferentialAndSnapshot: \"FullDifferentialAndSnapshot\"",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 1013,
+              "endLine": 1016
+            }
+          }
+        },
+        {
+          "id": "document-aa7901b7dffee6fa",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ThreatSeverity",
+          "kind": "union",
+          "before": {
+            "doc": "Threat Severity Types",
+            "declaration": "/**\n * Threat Severity Types\n */\n@added(Versions.v2026_01_31_preview)\nunion ThreatSeverity {\n  string,\n\n  /** Critical severity level */\n  Critical: \"Critical\",\n\n  /** High severity level */\n  High: \"High\",\n\n  /** Warning severity level */\n  Warning: \"Warning\",\n\n  /** Informational severity level */\n  Informational: \"Informational\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 363,
+              "endLine": 381
+            }
+          },
+          "after": {
+            "doc": "Threat Severity Types",
+            "declaration": "/**\n * Threat Severity Types\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nunion ThreatSeverity {\n  string,\n\n  /** Critical severity level */\n  Critical: \"Critical\",\n\n  /** High severity level */\n  High: \"High\",\n\n  /** Warning severity level */\n  Warning: \"Warning\",\n\n  /** Informational severity level */\n  Informational: \"Informational\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 368,
+              "endLine": 387
+            }
+          }
+        },
+        {
+          "id": "document-aaa5024e91fe7a28",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.SourceSideScanStatus",
+          "kind": "union",
+          "before": {
+            "doc": "Threat status of the container",
+            "declaration": "/**\n * Threat status of the container\n */\n@added(Versions.v2026_01_31_preview)\nunion SourceSideScanStatus {\n  string,\n\n  /** Source side scan is configured */\n  Configured: \"Configured\",\n\n  /** Source side scan is not configured */\n  NotConfigured: \"NotConfigured\",\n\n  /** Source side scan is not applicable */\n  NotApplicable: \"NotApplicable\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 267,
+              "endLine": 282
+            }
+          },
+          "after": {
+            "doc": "Threat status of the container",
+            "declaration": "/**\n * Threat status of the container\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nunion SourceSideScanStatus {\n  string,\n\n  /** Source side scan is configured */\n  Configured: \"Configured\",\n\n  /** Source side scan is not configured */\n  NotConfigured: \"NotConfigured\",\n\n  /** Source side scan is not applicable */\n  NotApplicable: \"NotApplicable\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 267,
+              "endLine": 283
+            }
+          }
+        },
+        {
+          "id": "document-b3daeb29fed694a2",
+          "sourceChangeId": "source-036bfc0398caf407",
+          "qualifiedName": "Microsoft.RecoveryServices.Versions",
+          "kind": "enum",
+          "before": {
+            "doc": "The available API versions.",
+            "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2025-02-01 API version.\n   */\n  v2025_02_01: \"2025-02-01\",\n\n  /**\n   * The 2025-08-01 API version.\n   */\n  v2025_08_01: \"2025-08-01\",\n\n  /**\n   * The 2026-01-01 API version.\n   */\n  v2026_01_01: \"2026-01-01\",\n}",
+            "source": {
+              "path": "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp",
+              "revision": "base",
+              "startLine": 37,
+              "endLine": 55
+            }
+          },
+          "after": {
+            "doc": "The available API versions.",
+            "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2025-02-01 API version.\n   */\n  v2025_02_01: \"2025-02-01\",\n\n  /**\n   * The 2025-08-01 API version.\n   */\n  v2025_08_01: \"2025-08-01\",\n\n  /**\n   * The 2026-01-01 API version.\n   */\n  v2026_01_01: \"2026-01-01\",\n\n  /**\n   * The 2026-02-01 API version.\n   */\n  v2026_02_01: \"2026-02-01\",\n}",
+            "source": {
+              "path": "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp",
+              "revision": "current",
+              "startLine": 37,
+              "endLine": 60
+            }
+          }
+        },
+        {
+          "id": "document-b4d5374e4d9afbb8",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureVmWorkloadSQLDatabaseProtectedItem.protectionLevel",
+          "kind": "property",
+          "before": {
+            "doc": "Protection type in case protected as part of a parent.",
+            "declaration": "/**\n   * Protection type in case protected as part of a parent.\n   */\n  @added(Versions.v2026_01_31_preview)\n  protectionLevel?: ProtectionLevel",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 4618,
+              "endLine": 4622
+            }
+          },
+          "after": {
+            "doc": "Protection type in case protected as part of a parent.",
+            "declaration": "/**\n   * Protection type in case protected as part of a parent.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  protectionLevel?: ProtectionLevel",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 4639,
+              "endLine": 4644
+            }
+          }
+        },
+        {
+          "id": "document-b995d5f1234f86bd",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.DatabaseInRP",
+          "kind": "model",
+          "before": {
+            "doc": "Database included in RP.",
+            "declaration": "/**\n * Database included in RP.\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving original API naming convention\"\n@added(Versions.v2026_01_31_preview)\nmodel DatabaseInRP {\n  /**\n   * Datasource Id for the database.\n   */\n  datasourceId?: string;\n\n  /**\n   * Datasource name for the database.\n   */\n  datasourceName?: string;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 5745,
+              "endLine": 5760
+            }
+          },
+          "after": {
+            "doc": "Database included in RP.",
+            "declaration": "/**\n * Database included in RP.\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Preserving original API naming convention\"\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nmodel DatabaseInRP {\n  /**\n   * Datasource Id for the database.\n   */\n  datasourceId?: string;\n\n  /**\n   * Datasource name for the database.\n   */\n  datasourceName?: string;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 5772,
+              "endLine": 5788
+            }
+          }
+        },
+        {
+          "id": "document-ba5c61ae4dda09b2",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.SourceSideScanInfo",
+          "kind": "model",
+          "before": {
+            "doc": "Source side threat information",
+            "declaration": "/**\n * Source side threat information\n */\n@added(Versions.v2026_01_31_preview)\nmodel SourceSideScanInfo {\n  /**\n   * Threat status of the container\n   */\n  sourceSideScanStatus?: SourceSideScanStatus;\n\n  /**\n   * Threat summary for the container\n   */\n  sourceSideScanSummary?: SourceSideScanSummary;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 304,
+              "endLine": 318
+            }
+          },
+          "after": {
+            "doc": "Source side threat information",
+            "declaration": "/**\n * Source side threat information\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nmodel SourceSideScanInfo {\n  /**\n   * Threat status of the container\n   */\n  sourceSideScanStatus?: SourceSideScanStatus;\n\n  /**\n   * Threat summary for the container\n   */\n  sourceSideScanSummary?: SourceSideScanSummary;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 306,
+              "endLine": 321
+            }
+          }
+        },
+        {
+          "id": "document-bde3e98690c2be46",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureVmWorkloadProtectionPolicy",
+          "kind": "model",
+          "before": {
+            "doc": "Azure VM (Mercury) workload-specific backup policy.",
+            "declaration": "/**\n * Azure VM (Mercury) workload-specific backup policy.\n */\nmodel AzureVmWorkloadProtectionPolicy extends ProtectionPolicy {\n  /**\n   * Type of workload for the backup management\n   */\n  workLoadType?: WorkloadType;\n\n  /**\n   * Type of the protection policy\n   */\n  @added(Versions.v2026_01_31_preview)\n  vmWorkloadPolicyType?: VMWorkloadPolicyType;\n\n  /**\n   * Common settings for the backup management\n   */\n  settings?: Settings;\n\n  /**\n   * List of sub-protection policies which includes schedule and retention\n   */\n  @identifiers(#[])\n  subProtectionPolicy?: SubProtectionPolicy[];\n\n  /**\n   * Fix the policy inconsistency\n   */\n  makePolicyConsistent?: boolean;\n\n  /**\n   * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.\n   */\n  backupManagementType: \"AzureWorkload\";\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 3559,
+              "endLine": 3594
+            }
+          },
+          "after": {
+            "doc": "Azure VM (Mercury) workload-specific backup policy.",
+            "declaration": "/**\n * Azure VM (Mercury) workload-specific backup policy.\n */\nmodel AzureVmWorkloadProtectionPolicy extends ProtectionPolicy {\n  /**\n   * Type of workload for the backup management\n   */\n  workLoadType?: WorkloadType;\n\n  /**\n   * Type of the protection policy\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  vmWorkloadPolicyType?: VMWorkloadPolicyType;\n\n  /**\n   * Common settings for the backup management\n   */\n  settings?: Settings;\n\n  /**\n   * List of sub-protection policies which includes schedule and retention\n   */\n  @identifiers(#[])\n  subProtectionPolicy?: SubProtectionPolicy[];\n\n  /**\n   * Fix the policy inconsistency\n   */\n  makePolicyConsistent?: boolean;\n\n  /**\n   * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.\n   */\n  backupManagementType: \"AzureWorkload\";\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 3578,
+              "endLine": 3614
+            }
+          }
+        },
+        {
+          "id": "document-c6dbbbd29a48a811",
+          "sourceChangeId": "source-036bfc0398caf407",
+          "qualifiedName": "Microsoft.RecoveryServices.Versions.v2026_02_01",
+          "kind": "enum-member",
+          "before": null,
+          "after": {
+            "doc": "The 2026-02-01 API version.",
+            "declaration": "/**\n   * The 2026-02-01 API version.\n   */\n  v2026_02_01: \"2026-02-01\"",
+            "source": {
+              "path": "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp",
+              "revision": "current",
+              "startLine": 56,
+              "endLine": 59
+            }
+          }
+        },
+        {
+          "id": "document-cd5d8c799456022d",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.SourceSideScanSummary",
+          "kind": "union",
+          "before": {
+            "doc": "Threat summary for the container",
+            "declaration": "/**\n * Threat summary for the container\n */\n@added(Versions.v2026_01_31_preview)\nunion SourceSideScanSummary {\n  string,\n\n  /** Scan summary is unknown */\n  Unknown: \"Unknown\",\n\n  /** Scan summary is not applicable */\n  NotApplicable: \"NotApplicable\",\n\n  /** Scan summary is suspicious */\n  Suspicious: \"Suspicious\",\n\n  /** Scan summary indicates healthy state */\n  Healthy: \"Healthy\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 284,
+              "endLine": 302
+            }
+          },
+          "after": {
+            "doc": "Threat summary for the container",
+            "declaration": "/**\n * Threat summary for the container\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nunion SourceSideScanSummary {\n  string,\n\n  /** Scan summary is unknown */\n  Unknown: \"Unknown\",\n\n  /** Scan summary is not applicable */\n  NotApplicable: \"NotApplicable\",\n\n  /** Scan summary is suspicious */\n  Suspicious: \"Suspicious\",\n\n  /** Scan summary indicates healthy state */\n  Healthy: \"Healthy\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 285,
+              "endLine": 304
+            }
+          }
+        },
+        {
+          "id": "document-df477957c0b8b56f",
+          "sourceChangeId": "source-c92c208499804897",
+          "qualifiedName": "Microsoft.RecoveryServices.Versions.v2026_02_01",
+          "kind": "enum-member",
+          "before": null,
+          "after": {
+            "doc": "The 2026-02-01 API version.",
+            "declaration": "/**\n   * The 2026-02-01 API version.\n   */\n  v2026_02_01: \"2026-02-01\"",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+              "revision": "current",
+              "startLine": 67,
+              "endLine": 70
+            }
+          }
+        },
+        {
+          "id": "document-e25ad4895aa3c1e3",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.ContainerType.HanaScaleoutContainer",
+          "kind": "union-variant",
+          "before": {
+            "doc": "HANA scale-out container type",
+            "declaration": "/** HANA scale-out container type */\n  @added(Versions.v2026_01_31_preview)\n  HanaScaleoutContainer: \"HanaScaleoutContainer\"",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 1288,
+              "endLine": 1290
+            }
+          },
+          "after": {
+            "doc": "HANA scale-out container type",
+            "declaration": "/** HANA scale-out container type */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  HanaScaleoutContainer: \"HanaScaleoutContainer\"",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 1300,
+              "endLine": 1303
+            }
+          }
+        },
+        {
+          "id": "document-e6c025679e2fe860",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureWorkloadSQLRecoveryPointExtendedInfo",
+          "kind": "model",
+          "before": {
+            "doc": "Extended info class details",
+            "declaration": "/**\n * Extended info class details\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses SQL acronym in naming\"\nmodel AzureWorkloadSQLRecoveryPointExtendedInfo {\n  /**\n   * UTC time at which data directory info was captured\n   */\n  dataDirectoryTimeInUTC?: utcDateTime;\n\n  /**\n   * List of data directory paths during restore operation.\n   */\n  @identifiers(#[])\n  dataDirectoryPaths?: SQLDataDirectory[];\n\n  /**\n   * List of databases included in recovery point.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @identifiers(#[])\n  includedDatabases?: DatabaseInRP[];\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 5133,
+              "endLine": 5155
+            }
+          },
+          "after": {
+            "doc": "Extended info class details",
+            "declaration": "/**\n * Extended info class details\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses SQL acronym in naming\"\nmodel AzureWorkloadSQLRecoveryPointExtendedInfo {\n  /**\n   * UTC time at which data directory info was captured\n   */\n  dataDirectoryTimeInUTC?: utcDateTime;\n\n  /**\n   * List of data directory paths during restore operation.\n   */\n  @identifiers(#[])\n  dataDirectoryPaths?: SQLDataDirectory[];\n\n  /**\n   * List of databases included in recovery point.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  @identifiers(#[])\n  includedDatabases?: DatabaseInRP[];\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 5156,
+              "endLine": 5179
+            }
+          }
+        },
+        {
+          "id": "document-e7a6bda814ff6cc3",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureVmWorkloadSQLInstanceProtectedItem",
+          "kind": "model",
+          "before": {
+            "doc": "Azure VM workload-specific protected item representing SQL Instance.",
+            "declaration": "/**\n * Azure VM workload-specific protected item representing SQL Instance.\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses SQL acronym in naming\"\n@added(Versions.v2026_01_31_preview)\nmodel AzureVmWorkloadSQLInstanceProtectedItem extends ProtectedItem {\n  /**\n   * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.\n   */\n  protectedItemType: \"AzureVmWorkloadSQLInstance\";\n\n  ...AzureVmWorkloadProtectedItemProperties;\n\n  /**\n   * Name of Child Dbs protected under this parent.\n   */\n  childDBNames?: string[];\n\n  /**\n   * The state of instance protection.\n   */\n  instanceProtectionReadiness?: InstanceProtectionReadiness;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 4625,
+              "endLine": 4647
+            }
+          },
+          "after": {
+            "doc": "Azure VM workload-specific protected item representing SQL Instance.",
+            "declaration": "/**\n * Azure VM workload-specific protected item representing SQL Instance.\n */\n#suppress \"@azure-tools/typespec-azure-core/casing-style\" \"Existing API uses SQL acronym in naming\"\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nmodel AzureVmWorkloadSQLInstanceProtectedItem extends ProtectedItem {\n  /**\n   * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.\n   */\n  protectedItemType: \"AzureVmWorkloadSQLInstance\";\n\n  ...AzureVmWorkloadProtectedItemProperties;\n\n  /**\n   * Name of Child Dbs protected under this parent.\n   */\n  childDBNames?: string[];\n\n  /**\n   * The state of instance protection.\n   */\n  instanceProtectionReadiness?: InstanceProtectionReadiness;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 4647,
+              "endLine": 4670
+            }
+          }
+        },
+        {
+          "id": "document-ea9fb4b1cad3c4d3",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.RestorePointQueryType",
+          "kind": "union",
+          "before": {
+            "doc": "RestorePoint type",
+            "declaration": "/**\n * RestorePoint type\n */\nunion RestorePointQueryType {\n  string,\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Invalid: \"Invalid\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Full: \"Full\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Log: \"Log\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Differential: \"Differential\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  FullAndDifferential: \"FullAndDifferential\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  All: \"All\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Incremental: \"Incremental\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  SnapshotFull: \"SnapshotFull\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  SnapshotCopyOnlyFull: \"SnapshotCopyOnlyFull\",\n\n  /** Snapshot restore point type */\n  @added(Versions.v2026_01_31_preview)\n  Snapshot: \"Snapshot\",\n\n  /** Full, differential, and snapshot restore point types */\n  @added(Versions.v2026_01_31_preview)\n  FullDifferentialAndSnapshot: \"FullDifferentialAndSnapshot\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 974,
+              "endLine": 1005
+            }
+          },
+          "after": {
+            "doc": "RestorePoint type",
+            "declaration": "/**\n * RestorePoint type\n */\nunion RestorePointQueryType {\n  string,\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Invalid: \"Invalid\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Full: \"Full\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Log: \"Log\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Differential: \"Differential\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  FullAndDifferential: \"FullAndDifferential\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  All: \"All\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  Incremental: \"Incremental\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  SnapshotFull: \"SnapshotFull\",\n  #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"\n  SnapshotCopyOnlyFull: \"SnapshotCopyOnlyFull\",\n\n  /** Snapshot restore point type */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  Snapshot: \"Snapshot\",\n\n  /** Full, differential, and snapshot restore point types */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  FullDifferentialAndSnapshot: \"FullDifferentialAndSnapshot\",\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 984,
+              "endLine": 1017
+            }
+          }
+        },
+        {
+          "id": "document-efbc7e1fc1c28295",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.PatchRecoveryPointInput",
+          "kind": "model",
+          "before": {
+            "doc": "Recovery Point Contract for Update Recovery Point API.",
+            "declaration": "/**\n * Recovery Point Contract for Update Recovery Point API.\n */\n@added(Versions.v2026_01_31_preview)\nmodel PatchRecoveryPointInput {\n  /**\n   * Properties of Recovery Point\n   */\n  recoveryPointProperties?: PatchRecoveryPointPropertiesInput;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 3218,
+              "endLine": 3227
+            }
+          },
+          "after": {
+            "doc": "Recovery Point Contract for Update Recovery Point API.",
+            "declaration": "/**\n * Recovery Point Contract for Update Recovery Point API.\n */\n@added(Versions.v2026_01_31_preview)\n@removed(Versions.v2026_02_01)\nmodel PatchRecoveryPointInput {\n  /**\n   * Properties of Recovery Point\n   */\n  recoveryPointProperties?: PatchRecoveryPointPropertiesInput;\n}",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 3235,
+              "endLine": 3245
+            }
+          }
+        },
+        {
+          "id": "document-f5d251b1e7ccd794",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureVmWorkloadProtectionPolicy.vmWorkloadPolicyType",
+          "kind": "property",
+          "before": {
+            "doc": "Type of the protection policy",
+            "declaration": "/**\n   * Type of the protection policy\n   */\n  @added(Versions.v2026_01_31_preview)\n  vmWorkloadPolicyType?: VMWorkloadPolicyType",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 3568,
+              "endLine": 3572
+            }
+          },
+          "after": {
+            "doc": "Type of the protection policy",
+            "declaration": "/**\n   * Type of the protection policy\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  vmWorkloadPolicyType?: VMWorkloadPolicyType",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 3587,
+              "endLine": 3592
+            }
+          }
+        },
+        {
+          "id": "document-fffb325d576b1e7c",
+          "sourceChangeId": "source-b857001149604b13",
+          "qualifiedName": "Microsoft.RecoveryServices.AzureVmWorkloadSQLDatabaseProtectedItem.parentProtectedItem",
+          "kind": "property",
+          "before": {
+            "doc": "Name of the parent protected item (e.g., SQL Instance name) when this database is protected as part of a parent.",
+            "declaration": "/**\n   * Name of the parent protected item (e.g., SQL Instance name) when this database is protected as part of a parent.\n   */\n  @added(Versions.v2026_01_31_preview)\n  parentProtectedItem?: string",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "base",
+              "startLine": 4612,
+              "endLine": 4616
+            }
+          },
+          "after": {
+            "doc": "Name of the parent protected item (e.g., SQL Instance name) when this database is protected as part of a parent.",
+            "declaration": "/**\n   * Name of the parent protected item (e.g., SQL Instance name) when this database is protected as part of a parent.\n   */\n  @added(Versions.v2026_01_31_preview)\n  @removed(Versions.v2026_02_01)\n  parentProtectedItem?: string",
+            "source": {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "current",
+              "startLine": 4632,
+              "endLine": 4637
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

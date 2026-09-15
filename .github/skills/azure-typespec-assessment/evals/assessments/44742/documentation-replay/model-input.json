@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "documentQualityAssessmentVersion": 3,
+  "documentQualityCriterion": "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+  "context": {
+    "mode": "source-documentation-replay",
+    "comparison": {
+      "baseRef": "e75a07cd7ea1b2207190a362305db02b639715ec",
+      "baseCommit": "e75a07cd7ea1b2207190a362305db02b639715ec",
+      "headCommit": "656ca8b0741973760f8a60ee0fd293ba9c31e708",
+      "workingTree": {
+        "staged": false,
+        "unstaged": false,
+        "untracked": false
+      }
+    },
+    "retainedDimensions": [
+      "semantic",
+      "rest",
+      "downstream",
+      "compliance"
+    ]
+  },
+  "artifactReferences": {
+    "sourceIndex": "source/source-index.json",
+    "documentQuality": "dimensions/document-quality-input.json"
+  },
+  "documentQualityReviewUnits": [
+    {
+      "reviewUnitId": "semantic-106722e15dc2d25d",
+      "status": "ready",
+      "documentIds": [
+        "document-4c819471d3e4b790"
+      ],
+      "evidenceSetId": "evidence-document-semantic-106722e15dc2d25d"
+    },
+    {
+      "reviewUnitId": "semantic-259f67bc56ae9c3d",
+      "status": "ready",
+      "documentIds": [
+        "document-5ee05fa0fcd53f46",
+        "document-b445ae21b614188a",
+        "document-cbab6ef9cf3f8bef"
+      ],
+      "evidenceSetId": "evidence-document-semantic-259f67bc56ae9c3d"
+    },
+    {
+      "reviewUnitId": "semantic-bdd43786bf6adae0",
+      "status": "ready",
+      "documentIds": [
+        "document-976014d0b8cb1967"
+      ],
+      "evidenceSetId": "evidence-document-semantic-bdd43786bf6adae0"
+    },
+    {
+      "reviewUnitId": "semantic-eed96d1f60797ccb",
+      "status": "ready",
+      "documentIds": [
+        "document-4f1fce0e9aca00aa"
+      ],
+      "evidenceSetId": "evidence-document-semantic-eed96d1f60797ccb"
+    }
+  ],
+  "evidenceSets": {
+    "evidence-document-semantic-106722e15dc2d25d": {
+      "sourceChangeIds": [
+        "source-59080f734682d35e"
+      ],
+      "hunkIds": [
+        "hunk-4dee08e0e6059404"
+      ],
+      "declarationCount": 38,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-106722e15dc2d25d"
+      }
+    },
+    "evidence-document-semantic-259f67bc56ae9c3d": {
+      "sourceChangeIds": [
+        "source-59080f734682d35e"
+      ],
+      "hunkIds": [
+        "hunk-0f2db41c9cc968ad",
+        "hunk-5bd0f0131086151d",
+        "hunk-a6115c581e6d3790"
+      ],
+      "declarationCount": 20,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-259f67bc56ae9c3d"
+      }
+    },
+    "evidence-document-semantic-bdd43786bf6adae0": {
+      "sourceChangeIds": [
+        "source-59080f734682d35e"
+      ],
+      "hunkIds": [
+        "hunk-e5ff8d8bf05c0d3d"
+      ],
+      "declarationCount": 9,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-bdd43786bf6adae0"
+      }
+    },
+    "evidence-document-semantic-eed96d1f60797ccb": {
+      "sourceChangeIds": [
+        "source-59080f734682d35e"
+      ],
+      "hunkIds": [
+        "hunk-58b9de7d81513824"
+      ],
+      "declarationCount": 10,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-eed96d1f60797ccb"
+      }
+    }
+  }
+}

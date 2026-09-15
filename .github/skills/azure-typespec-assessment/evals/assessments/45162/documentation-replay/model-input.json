@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "documentQualityAssessmentVersion": 3,
+  "documentQualityCriterion": "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+  "context": {
+    "mode": "source-documentation-replay",
+    "comparison": {
+      "baseRef": "5874aa28fcfbbddafa82b52c02f2622ed0862a8b",
+      "baseCommit": "5874aa28fcfbbddafa82b52c02f2622ed0862a8b",
+      "headCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
+      "workingTree": {
+        "staged": false,
+        "unstaged": false,
+        "untracked": false
+      }
+    },
+    "retainedDimensions": [
+      "semantic",
+      "rest",
+      "downstream",
+      "compliance"
+    ]
+  },
+  "artifactReferences": {
+    "sourceIndex": "source/source-index.json",
+    "documentQuality": "dimensions/document-quality-input.json"
+  },
+  "documentQualityReviewUnits": [
+    {
+      "reviewUnitId": "semantic-14845e93054010a4",
+      "status": "ready",
+      "documentIds": [
+        "document-190beeb89494d3e1",
+        "document-2983c460d2a59f04",
+        "document-5866ed2c7fcbd819",
+        "document-6750661af895522b",
+        "document-83ad3cc4e286518e",
+        "document-95b0cb05be05645d",
+        "document-a43bf93f1764ab29",
+        "document-a5e7a1ecedfa1603",
+        "document-e3f29d89fc88a8f0",
+        "document-f30cca12d1d11c1e",
+        "document-f649c807ede2c474"
+      ],
+      "evidenceSetId": "evidence-document-semantic-14845e93054010a4"
+    },
+    {
+      "reviewUnitId": "semantic-f7f018d1d5eec36c",
+      "status": "ready",
+      "documentIds": [
+        "document-1f6e02803ab19701",
+        "document-33eb819607ca740b",
+        "document-78ac2915b0c84620",
+        "document-79b03c167bd61315",
+        "document-88934088fa699914",
+        "document-ef299e8d58482f7f"
+      ],
+      "evidenceSetId": "evidence-document-semantic-f7f018d1d5eec36c"
+    }
+  ],
+  "evidenceSets": {
+    "evidence-document-semantic-14845e93054010a4": {
+      "sourceChangeIds": [
+        "source-2a6a8cd1c1b06810",
+        "source-a1b03decaab4b3df"
+      ],
+      "hunkIds": [
+        "hunk-679b78323c1526ce",
+        "hunk-b41f912614f7bb21",
+        "hunk-dbd2632f5370c750"
+      ],
+      "declarationCount": 17,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-14845e93054010a4"
+      }
+    },
+    "evidence-document-semantic-f7f018d1d5eec36c": {
+      "sourceChangeIds": [
+        "source-6b90b1a5f4c3ae2a"
+      ],
+      "hunkIds": [
+        "hunk-6e7df05713d29f27",
+        "hunk-a09507a339750d2f"
+      ],
+      "declarationCount": 11,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-f7f018d1d5eec36c"
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 3,
+  "status": "ready",
+  "blockers": [],
+  "reviewUnits": [
+    {
+      "reviewUnitId": "semantic-3d8a84ab0984f292",
+      "status": "not-applicable",
+      "sourceChangeIds": [
+        "source-c1e49e3c867c88fb"
+      ],
+      "hunkIds": [
+        "hunk-083033f3d0862b87"
+      ],
+      "declarationIds": [],
+      "documents": [],
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope."
+    },
+    {
+      "reviewUnitId": "semantic-a3ce2a2ef2e5fba3",
+      "status": "not-applicable",
+      "sourceChangeIds": [
+        "source-c1e49e3c867c88fb"
+      ],
+      "hunkIds": [
+        "hunk-9834454183c6cab6"
+      ],
+      "declarationIds": [],
+      "documents": [],
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope."
+    }
+  ]
+}

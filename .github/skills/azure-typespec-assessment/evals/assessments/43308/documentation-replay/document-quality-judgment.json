@@ -1,0 +1,11 @@
+{"schemaVersion":1,"documentQualityDecisions":[
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-03c59cf5a0a7b330","check":"description","decision":"pass","rationale":"Affected-resource ID accurately describes the refined armResourceIdentifier type."},
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-250cb6d0701b146c","check":"description","decision":"pass","rationale":"Created role-assignment resource ID remains accurate after the identifier refinement; the null wording already existed on the nonnullable optional string and is not newly introduced."},
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-39f39ee6ddd0e5f9","check":"description","decision":"pass","rationale":"The workspace identity description matches the new ARM resource identifier."},
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-4b67929fcc7c14fe","check":"description","decision":"pass","rationale":"Permission error describes the resource, missing permissions and required roles model; the ID refinement does not change that meaning."},
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-4d760f764d669270","check":"description","decision":"pass","rationale":"The description identifies the affected resource consistently with armResourceIdentifier."},
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-60238ea4d91f0589","check":"description","decision":"pass","rationale":"Target Azure resource ID clearly describes the refined identifier property."},
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-a98f6a8fc599c2ae","check":"description","decision":"pass","rationale":"Resource state error remains an accurate summary of the resource ID, error code, message and remediation fields."},
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-d6f8b19c0d442fa8","check":"description","decision":"pass","rationale":"Single role-assignment result accurately summarizes the target, identity, role, status and optional error fields after ID refinement."},
+{"reviewUnitId":"semantic-6b421b1ce7dd8d19","documentId":"document-f8e2d65c11d83904","check":"description","decision":"pass","rationale":"Workspace evaluation properties still accurately summarizes the status, times and results model after its workspace ID type changes."}
+]}

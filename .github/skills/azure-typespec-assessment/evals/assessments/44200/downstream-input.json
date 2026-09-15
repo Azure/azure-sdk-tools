@@ -1,0 +1,284 @@
+{
+  "facts": {
+    "sdk-fact-0cad0d97f0d4372b": {
+      "projectId": "project-5a2890a92772",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "b1582b12f39f1d122fce3c7bbb24b812b0c5c487",
+      "apiVersion": "2026-03-01",
+      "factKind": "model",
+      "id": "sdk-fact-0cad0d97f0d4372b",
+      "identity": "Azure.ResourceManager.ResourceListResult",
+      "crossLanguageDefinitionId": "Azure.ResourceManager.ResourceListResult",
+      "name": "PrivateLinkResourceListResult",
+      "access": "public",
+      "usage": 260,
+      "properties": [
+        {
+          "name": "value",
+          "serializedName": "value",
+          "type": {
+            "kind": "array",
+            "valueType": {
+              "kind": "model",
+              "id": "Microsoft.ServiceNetworking.PrivateLinkResource",
+              "name": "PrivateLinkResource"
+            }
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "value"
+            }
+          },
+          "crossLanguageDefinitionId": "Azure.ResourceManager.ResourceListResult.value"
+        },
+        {
+          "name": "nextLink",
+          "serializedName": "nextLink",
+          "type": {
+            "kind": "url"
+          },
+          "optional": true,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "nextLink"
+            }
+          },
+          "crossLanguageDefinitionId": "Azure.ResourceManager.ResourceListResult.nextLink"
+        }
+      ],
+      "discriminatedSubtypes": [],
+      "serialization": {
+        "json": {
+          "name": "ResourceListResult"
+        }
+      },
+      "reachable": true
+    },
+    "sdk-fact-d1225ad5fbac03be": {
+      "projectId": "project-5a2890a92772",
+      "comparisonRole": "baseline",
+      "sourceRevision": "current",
+      "sourceCommit": "b1582b12f39f1d122fce3c7bbb24b812b0c5c487",
+      "apiVersion": "2025-01-01",
+      "factKind": "model",
+      "id": "sdk-fact-d1225ad5fbac03be",
+      "identity": "Azure.ResourceManager.ResourceListResult",
+      "crossLanguageDefinitionId": "Azure.ResourceManager.ResourceListResult",
+      "name": "TrafficControllerListResult",
+      "access": "public",
+      "usage": 260,
+      "properties": [
+        {
+          "name": "value",
+          "serializedName": "value",
+          "type": {
+            "kind": "array",
+            "valueType": {
+              "kind": "model",
+              "id": "Microsoft.ServiceNetworking.TrafficController",
+              "name": "TrafficController"
+            }
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "value"
+            }
+          },
+          "crossLanguageDefinitionId": "Azure.ResourceManager.ResourceListResult.value"
+        },
+        {
+          "name": "nextLink",
+          "serializedName": "nextLink",
+          "type": {
+            "kind": "url"
+          },
+          "optional": true,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "nextLink"
+            }
+          },
+          "crossLanguageDefinitionId": "Azure.ResourceManager.ResourceListResult.nextLink"
+        }
+      ],
+      "discriminatedSubtypes": [],
+      "serialization": {
+        "json": {
+          "name": "ResourceListResult"
+        }
+      },
+      "reachable": true
+    }
+  },
+  "candidates": [
+    {
+      "id": "downstream-bd435682c8e7f9ad",
+      "rule": "model-property-changed",
+      "defaultSeverity": "high",
+      "actual": "Azure.ResourceManager.ResourceListResult.value changed type, optionality, flattening, or access.",
+      "expected": "Azure.ResourceManager.ResourceListResult preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "Azure.ResourceManager.ResourceListResult",
+      "sourceChangeIds": [
+        "source-3fd52476fb442743",
+        "source-9dc5452d38ced6b6",
+        "source-f6ac9734d71248eb"
+      ],
+      "declarationIds": [
+        "declaration-00783d61508a9178",
+        "declaration-009ff87b59827546",
+        "declaration-013a4b69b54a83cc",
+        "declaration-02ea917a6aa60796",
+        "declaration-04b2ea7b475a709f",
+        "declaration-08fb936041bf7e94",
+        "declaration-0f7a922f401e0895",
+        "declaration-114875d335df6049",
+        "declaration-15c57602c818582d",
+        "declaration-178118f203b06955",
+        "declaration-1ff3c6e6fc407d4c",
+        "declaration-24f54caefbb8b341",
+        "declaration-26f1d3fd89ad5ee1",
+        "declaration-28aa0a89570168f1",
+        "declaration-2ba555e36f08038f",
+        "declaration-3039188913989a8b",
+        "declaration-32e8e24f7072e71f",
+        "declaration-330a73bdcd92e175",
+        "declaration-35a54174afe6edce",
+        "declaration-3e9e65e6d1ec5d02",
+        "declaration-3eaac773f95bb747",
+        "declaration-3f9b23cc07cf35c1",
+        "declaration-406ee9d6306e2008",
+        "declaration-4523863e6df51afd",
+        "declaration-50cb1734431598e8",
+        "declaration-52ac58fa929a15b2",
+        "declaration-52b9478e302e204b",
+        "declaration-57cd2609032cf5d4",
+        "declaration-5f9f5c3814b71d4b",
+        "declaration-60c73834c8a1435a",
+        "declaration-60f156024c2ac581",
+        "declaration-61d2142023d23e0f",
+        "declaration-637fa220b45b39e8",
+        "declaration-6a3f56150f1eef19",
+        "declaration-6b184bd30b310e00",
+        "declaration-700a2df8ff92926c",
+        "declaration-7026d5981c1dc1e8",
+        "declaration-703dd2e9ce422324",
+        "declaration-711aef9267701b91",
+        "declaration-71feb91580fcef5a",
+        "declaration-73575a47778521fe",
+        "declaration-765202d3bb7d8d58",
+        "declaration-769125f1c4eb33d5",
+        "declaration-79aa356e0b840df9",
+        "declaration-79c7dba8701aeee6",
+        "declaration-7d0dc273e6fd1267",
+        "declaration-7d70e15b674b941d",
+        "declaration-81352e42e78aab43",
+        "declaration-81549e38ee257d9b",
+        "declaration-8d9aa5d305fa96b8",
+        "declaration-8dd7751ff20f30aa",
+        "declaration-900e6b3d46dd46a6",
+        "declaration-9063470578dc4f20",
+        "declaration-9195d7a95f94b221",
+        "declaration-9333edc167bd8d15",
+        "declaration-95df0e856bf26b0e",
+        "declaration-96abbf81fd4d7e3b",
+        "declaration-99d53859f232645c",
+        "declaration-9bf82021ddd27d97",
+        "declaration-9e3ee7a0ce71f795",
+        "declaration-a2f1dab2603acc26",
+        "declaration-a30774846bdd8741",
+        "declaration-a5ded0668ab9cf30",
+        "declaration-a9ac141e95496a9d",
+        "declaration-a9c22f7363a73223",
+        "declaration-ada6a6049fca7041",
+        "declaration-b14ce823ccab4821",
+        "declaration-bbc4f4997cc2c361",
+        "declaration-bc112b5375149c84",
+        "declaration-c8f1f1613ae97ef4",
+        "declaration-cbf93dd3afcbb103",
+        "declaration-cfb078023a4f72a6",
+        "declaration-d322e2f2b6d54ef9",
+        "declaration-dc5a760c9b72d280",
+        "declaration-df194370630cb6aa",
+        "declaration-e08bac157e648df6",
+        "declaration-e3f98ecdd70d44b9",
+        "declaration-e3fb391b32358239",
+        "declaration-e4f2eafeebefa89c",
+        "declaration-e546cbd2fddf361c",
+        "declaration-e60ace60ce3684ab",
+        "declaration-e881354c0ce17b3d",
+        "declaration-e971369985bea8fb",
+        "declaration-f3c7d267b6d65a52",
+        "declaration-fa89799b73d2a454",
+        "declaration-fbe48e4883a5c521"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-d1225ad5fbac03be",
+        "sdk-fact-0cad0d97f0d4372b"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-89608fe9636ef5f7"
+      ]
+    }
+  ],
+  "rootCauses": [
+    {
+      "id": "downstream-root-cause-89608fe9636ef5f7",
+      "kind": "unresolved",
+      "directCandidateIds": [
+        "downstream-bd435682c8e7f9ad"
+      ],
+      "propagatedCandidateIds": [],
+      "methodFactIds": [],
+      "typeFactIds": [
+        "sdk-fact-0cad0d97f0d4372b",
+        "sdk-fact-d1225ad5fbac03be"
+      ],
+      "referenceEvidence": [],
+      "rootKey": "project-5a2890a92772:Azure.ResourceManager.ResourceListResult"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "analysis": {
+    "status": "ready",
+    "authority": "typespec-compiler",
+    "compilerVersions": [
+      "1.15.0"
+    ],
+    "operationProjectionStats": [
+      {
+        "revision": "base",
+        "project": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+        "operationCount": 53,
+        "changedNameCount": 0,
+        "matchedOperationCount": 0
+      },
+      {
+        "revision": "current",
+        "project": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+        "operationCount": 53,
+        "changedNameCount": 0,
+        "matchedOperationCount": 0
+      }
+    ],
+    "blockers": []
+  },
+  "sourceChanges": [
+    {
+      "id": "source-c1e2c387eea01645",
+      "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-eecc1413cf4aeedb",
+          "base": {
+            "startLine": 532,
+            "endLine": 534
+          },
+          "current": {
+            "startLine": 532,
+            "endLine": 542
+          },
+          "lines": [
+            "   ModernChargeSummary.properties,",
+            "   \"csharp\"",
+            " );",
+            "+",
+            "+// Preserve Java enum value names from the released SDK.",
+            "+@@clientName(Metrictype.ActualCostMetricType, \"ACTUALCOST\", \"java\");",
+            "+@@clientName(Metrictype.AmortizedCostMetricType, \"AMORTIZEDCOST\", \"java\");",
+            "+@@clientName(Metrictype.UsageMetricType, \"USAGE\", \"java\");",
+            "+@@clientName(Datagrain.DailyGrain, \"DAILY\", \"java\");",
+            "+@@clientName(Datagrain.MonthlyGrain, \"MONTHLY\", \"java\");",
+            "+@@clientName(LookBackPeriod.Last07Days, \"LAST7DAYS\", \"java\");",
+            ""
+          ]
+        }
+      ],
+      "declarations": [],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": []
+      }
+    }
+  ]
+}

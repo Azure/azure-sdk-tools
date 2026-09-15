@@ -1,0 +1,479 @@
+{
+  "schemaVersion": 2,
+  "overallConfidence": "high",
+  "pr": 43745,
+  "title": "Updated CloudHsmClusterSkuName from closed enum to extensible enum",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/43745",
+  "state": "merged",
+  "baseline": {
+    "ref": "a6887d2260f26285d4b1f5fba97da370be9200b4",
+    "commit": "a6887d2260f26285d4b1f5fba97da370be9200b4"
+  },
+  "head": {
+    "commit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+    "hasWorkingTreeChanges": false,
+    "changeScope": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "projects": [
+    "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules"
+  ],
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+        "revision": "head",
+        "startLine": 286,
+        "endLine": 293,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__hardwaresecuritymodules__resource-manager__Microsoft.HardwareSecurityModules__HardwareSecurityModules/base/autorest"
+      },
+      {
+        "project": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__hardwaresecuritymodules__resource-manager__Microsoft.HardwareSecurityModules__HardwareSecurityModules/base/tcgc"
+      },
+      {
+        "project": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__hardwaresecuritymodules__resource-manager__Microsoft.HardwareSecurityModules__HardwareSecurityModules/head/autorest"
+      },
+      {
+        "project": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__hardwaresecuritymodules__resource-manager__Microsoft.HardwareSecurityModules__HardwareSecurityModules/head/tcgc"
+      }
+    ]
+  },
+  "artifactEvidence": {
+    "autorest": "Preserved baseline/head artifacts succeeded; the only OpenAPI diff changes CloudHsmClusterSkuName x-ms-enum modelAsString from false to true and adds explicit metadata for the same two wire values.",
+    "tcgc": "Preserved baseline/head artifacts succeeded; CloudHsmClusterSkuName changes from fixed enum metadata to union-as-enum metadata and the Standard B10 member identity changes to StandardB10."
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "replace-cloud-hsm-cluster-sku-enum",
+          "intent": "Make Cloud HSM cluster SKU names forward-compatible with an open string union",
+          "transformationChain": [
+            "CloudHsmClusterSkuName changes from a closed enum to an open string union. The known wire values Standard_B1 and Standard B10 remain unchanged, while the string variant allows future service values without changing the REST shape."
+          ],
+          "changes": [
+            {
+              "kind": "modified",
+              "summary": "Represent Cloud HSM cluster SKU names as a closed string union",
+              "operationIds": [
+                "CloudHsmClusters_ListBySubscription",
+                "CloudHsmClusters_ListByResourceGroup",
+                "CloudHsmClusters_Get",
+                "CloudHsmClusters_CreateOrUpdate",
+                "CloudHsmClusters_Update"
+              ],
+              "apiVersions": [
+                "2025-03-31"
+              ],
+              "aspects": [
+                {
+                  "field": "`sku.name` accepted values",
+                  "before": "The closed enum accepts only Standard_B1 and Standard B10.",
+                  "after": "The open string union preserves both known values and accepts future string values."
+                }
+              ],
+              "effect": "Generated SDKs can represent unknown future SKU values instead of treating the model as a closed enum; the two known serialized values and consuming REST operations remain unchanged.",
+              "typeSpecCause": "Replace the suppressed enum with a union that includes string and preserves both named values.",
+              "sourceReferences": [
+                {
+                  "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                  "revision": "head",
+                  "startLine": 286,
+                  "endLine": 293,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+                },
+                {
+                  "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                  "revision": "head",
+                  "startLine": 286,
+                  "endLine": 293,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+                }
+              ],
+              "typeSpecDiffs": [
+                {
+                  "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                  "oldStart": 283,
+                  "oldCount": 10,
+                  "newStart": 283,
+                  "newCount": 14,
+                  "context": "union IdentityType {",
+                  "lines": [
+                    " /**",
+                    "  * Sku name of the Cloud HSM Cluster",
+                    "  */",
+                    "-#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"",
+                    "-enum CloudHsmClusterSkuName {",
+                    "-  Standard_B1,",
+                    "-  `Standard B10`,",
+                    "+union CloudHsmClusterSkuName {",
+                    "+  string,",
+                    "+",
+                    "+  /** Standard_B1 SKU */",
+                    "+  Standard_B1: \"Standard_B1\",",
+                    "+",
+                    "+  /** Standard B10 SKU */",
+                    "+  StandardB10: \"Standard B10\",",
+                    " }",
+                    " ",
+                    " /**"
+                  ]
+                }
+              ],
+              "linkedFindingIds": [
+                "source-enum-replaced-by-open-union"
+              ]
+            }
+          ],
+          "restRepresentation": {
+            "summary": "CloudHsmClusterSkuName changes from a closed enum to an open string union. The known wire values Standard_B1 and Standard B10 remain unchanged, while the string variant allows future service values without changing the REST shape.",
+            "operations": [
+              {
+                "operationId": "CloudHsmClusters_ListBySubscription",
+                "apiVersions": [
+                  "2025-03-31"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters",
+                "signature": "GET /subscriptions/{subscriptionId}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters",
+                "parameters": [
+                  "path subscriptionId: string, required",
+                  "query api-version: string, required",
+                  "query $skiptoken: string, optional"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: CloudHsmClusterListResult",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists Cloud HSM clusters associated with the subscription, including each cluster's SKU.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "CloudHsmCluster",
+                  "itemsName": "value",
+                  "nextLinkName": "nextLink",
+                  "nextLinkIsOpaqueAbsolute": true,
+                  "continuation": "GET the opaque nextLink URL until nextLink is absent; $skiptoken is the server continuation token."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                    "revision": "head",
+                    "startLine": 286,
+                    "endLine": 293,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+                  }
+                ]
+              },
+              {
+                "operationId": "CloudHsmClusters_ListByResourceGroup",
+                "apiVersions": [
+                  "2025-03-31"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters",
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters",
+                "parameters": [
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "query api-version: string, required",
+                  "query $skiptoken: string, optional"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: CloudHsmClusterListResult",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists Cloud HSM clusters in the resource group, including each cluster's SKU.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "CloudHsmCluster",
+                  "itemsName": "value",
+                  "nextLinkName": "nextLink",
+                  "nextLinkIsOpaqueAbsolute": true,
+                  "continuation": "GET the opaque nextLink URL until nextLink is absent; $skiptoken is the server continuation token."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                    "revision": "head",
+                    "startLine": 286,
+                    "endLine": 293,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+                  }
+                ]
+              },
+              {
+                "operationId": "CloudHsmClusters_Get",
+                "apiVersions": [
+                  "2025-03-31"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+                "parameters": [
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path cloudHsmClusterName: string (3-23 characters, ^[a-zA-Z0-9-]{3,23}$), required",
+                  "query api-version: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: CloudHsmCluster",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Gets a Cloud HSM cluster and its SKU.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                    "revision": "head",
+                    "startLine": 286,
+                    "endLine": 293,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+                  }
+                ]
+              },
+              {
+                "operationId": "CloudHsmClusters_CreateOrUpdate",
+                "apiVersions": [
+                  "2025-03-31"
+                ],
+                "method": "PUT",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+                "signature": "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+                "parameters": [
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path cloudHsmClusterName: string (3-23 characters, ^[a-zA-Z0-9-]{3,23}$), required",
+                  "query api-version: string, required"
+                ],
+                "requestPayload": "application/json payload: CloudHsmCluster, including optional sku.name",
+                "responsePayloads": [
+                  "200 application/json payload: CloudHsmCluster",
+                  "201 application/json payload: CloudHsmCluster; Azure-AsyncOperation and Retry-After headers",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Creates or replaces a Cloud HSM cluster with the requested SKU.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "original-uri",
+                  "polling": "For a 201 response, poll Azure-AsyncOperation after Retry-After until Succeeded, Failed, or Canceled.",
+                  "finalResult": "GET the original resource URI after terminal success."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                    "revision": "head",
+                    "startLine": 286,
+                    "endLine": 293,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+                  }
+                ]
+              },
+              {
+                "operationId": "CloudHsmClusters_Update",
+                "apiVersions": [
+                  "2025-03-31"
+                ],
+                "method": "PATCH",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+                "signature": "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+                "parameters": [
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path cloudHsmClusterName: string (3-23 characters, ^[a-zA-Z0-9-]{3,23}$), required",
+                  "query api-version: string, required"
+                ],
+                "requestPayload": "application/json payload: CloudHsmClusterPatchParameters",
+                "responsePayloads": [
+                  "200 application/json payload: CloudHsmCluster",
+                  "202 no payload; Location and Retry-After headers",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Updates mutable Cloud HSM cluster properties and returns the cluster, including its SKU.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "For a 202 response, poll Location after Retry-After until Succeeded, Failed, or Canceled.",
+                  "finalResult": "Use the terminal Location response as the final result."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                    "revision": "head",
+                    "startLine": 286,
+                    "endLine": 293,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+                  }
+                ]
+              }
+            ]
+          },
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "head",
+              "startLine": 286,
+              "endLine": 293,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+            },
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "head",
+              "startLine": 286,
+              "endLine": 293,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": [
+        {
+          "id": "source-enum-replaced-by-open-union",
+          "title": "Generated SDK enum shape changes",
+          "severity": "high",
+          "confidence": "high",
+          "summary": "CloudHsmClusterSkuName changes from an enum to a named string-literal union. Although its two wire values are unchanged and the union has no open string arm, the declaration-kind change can alter the generated SDK public type shape and enum-member identities, breaking source code that references the prior enum surface without requiring any REST operation change.",
+          "evidence": [
+            "Replacing an enum with a string-backed union can change generated enum shape and member identities while preserving wire values.",
+            "Changed TypeSpec source: specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "head",
+              "startLine": 286,
+              "endLine": 293,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+            },
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "head",
+              "startLine": 286,
+              "endLine": 293,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+            }
+          ]
+        }
+      ]
+    },
+    "azureCompliance": {
+      "status": "passed",
+      "summary": {
+        "patternsAssessed": 1,
+        "findingCount": 0
+      },
+      "documents": [
+        {
+          "title": "Azure.Core no-enum rule",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-enum/",
+          "section": "Models and Enums",
+          "guidanceExcerpt": "no-enum | TypeSpec Azure Skip to content TypeSpec Azure Docs Playground TypeSpec Core Docs Can I Use (Azure Client) Benchmarks Search... Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining c",
+          "applicableGuidance": "The applicable official Azure.Core no-enum guidance identifies enum declarations as the disallowed pattern. The changed TypeSpec directly replaces CloudHsmClusterSkuName's enum declaration with a union and removes the no-enum suppression, so the changed declaration follows that guidance. The other fetched documents describe general data types, TypeSpec enum syntax, or operation interfaces and impose no additional requirement on this declaration.",
+          "evidence": "The applicable official Azure.Core no-enum guidance identifies enum declarations as the disallowed pattern. The changed TypeSpec directly replaces CloudHsmClusterSkuName's enum declaration with a union and removes the no-enum suppression, so the changed declaration follows that guidance. The other fetched documents describe general data types, TypeSpec enum syntax, or operation interfaces and impose no additional requirement on this declaration.",
+          "sourceReferences": [
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "head",
+              "startLine": 286,
+              "endLine": 293,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+            },
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "head",
+              "startLine": 286,
+              "endLine": 293,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+            }
+          ]
+        }
+      ],
+      "findings": []
+    }
+  },
+  "errors": [],
+  "assessmentDuration": {
+    "totalMs": 152377,
+    "note": "Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.",
+    "phases": {
+      "deterministicPreparationMs": 885,
+      "deterministicAssemblyMs": 178,
+      "judgmentMs": 151307,
+      "renderMs": 7
+    },
+    "breakdown": {
+      "semanticUnderstandingMs": 27353,
+      "semanticUnderstandingQuality": "estimated",
+      "restBreakingMs": 44,
+      "restBreakingQuality": "estimated",
+      "downstreamBreakingMs": 9889,
+      "downstreamBreakingQuality": "estimated",
+      "complianceMs": 114801,
+      "complianceQuality": "estimated/measured",
+      "overheadMs": 290,
+      "overheadQuality": "measured",
+      "totalMs": 152377,
+      "totalQuality": "measured",
+      "searchRoute": "bounded official document evidence"
+    }
+  }
+}

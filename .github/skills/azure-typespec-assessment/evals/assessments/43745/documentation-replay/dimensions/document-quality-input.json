@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 3,
+  "status": "ready",
+  "blockers": [],
+  "reviewUnits": [
+    {
+      "reviewUnitId": "semantic-6c953bac4d5ca5b2",
+      "status": "ready",
+      "sourceChangeIds": [
+        "source-9a813171a81d57c2"
+      ],
+      "hunkIds": [
+        "hunk-b45fb303f8a4e2c9"
+      ],
+      "declarationIds": [
+        "declaration-4db70df1e4ae8531",
+        "declaration-6f59f326dfa59a93",
+        "declaration-aa4fa48fc7239de9",
+        "declaration-b248c9fd9eb008fb",
+        "declaration-d7759b7ca4dd59aa",
+        "declaration-ec7b99f0e7bc0b26"
+      ],
+      "documents": [
+        {
+          "id": "document-103a403932241354",
+          "sourceChangeId": "source-9a813171a81d57c2",
+          "qualifiedName": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName.StandardB10",
+          "kind": "union-variant",
+          "before": null,
+          "after": {
+            "doc": "Standard B10 SKU",
+            "declaration": "/** Standard B10 SKU */\n  StandardB10: \"Standard B10\"",
+            "source": {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "current",
+              "startLine": 292,
+              "endLine": 293
+            }
+          }
+        },
+        {
+          "id": "document-430a51ef0fa6982c",
+          "sourceChangeId": "source-9a813171a81d57c2",
+          "qualifiedName": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName.Standard_B1",
+          "kind": "union-variant",
+          "before": null,
+          "after": {
+            "doc": "Standard_B1 SKU",
+            "declaration": "/** Standard_B1 SKU */\n  Standard_B1: \"Standard_B1\"",
+            "source": {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "current",
+              "startLine": 289,
+              "endLine": 290
+            }
+          }
+        },
+        {
+          "id": "document-8a4fcb8604275f81",
+          "sourceChangeId": "source-9a813171a81d57c2",
+          "qualifiedName": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+          "kind": "union",
+          "before": null,
+          "after": {
+            "doc": "Sku name of the Cloud HSM Cluster",
+            "declaration": "/**\n * Sku name of the Cloud HSM Cluster\n */\nunion CloudHsmClusterSkuName {\n  string,\n\n  /** Standard_B1 SKU */\n  Standard_B1: \"Standard_B1\",\n\n  /** Standard B10 SKU */\n  StandardB10: \"Standard B10\",\n}",
+            "source": {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "revision": "current",
+              "startLine": 283,
+              "endLine": 294
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

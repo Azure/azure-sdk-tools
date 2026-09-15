@@ -1,0 +1,6 @@
+# Local dependencies and assessment artifacts
+/node_modules/
+/evals/.workspaces/
+/evals/outputs/
+/evals/results/
+/test-evidence/*

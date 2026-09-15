@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 1,
+  "analysis": {
+    "status": "ready",
+    "authority": "typespec-compiler",
+    "compilerVersions": [
+      "1.12.0"
+    ],
+    "operationProjectionStats": [
+      {
+        "revision": "base",
+        "project": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
+        "operationCount": 72,
+        "changedNameCount": 2,
+        "matchedOperationCount": 10
+      },
+      {
+        "revision": "current",
+        "project": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
+        "operationCount": 72,
+        "changedNameCount": 4,
+        "matchedOperationCount": 10
+      }
+    ],
+    "blockers": []
+  },
+  "sourceChanges": [
+    {
+      "id": "source-9a813171a81d57c2",
+      "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-b45fb303f8a4e2c9",
+          "base": {
+            "startLine": 283,
+            "endLine": 292
+          },
+          "current": {
+            "startLine": 283,
+            "endLine": 296
+          },
+          "lines": [
+            " /**",
+            "  * Sku name of the Cloud HSM Cluster",
+            "  */",
+            "-#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"",
+            "-enum CloudHsmClusterSkuName {",
+            "-  Standard_B1,",
+            "-  `Standard B10`,",
+            "+union CloudHsmClusterSkuName {",
+            "+  string,",
+            "+",
+            "+  /** Standard_B1 SKU */",
+            "+  Standard_B1: \"Standard_B1\",",
+            "+",
+            "+  /** Standard B10 SKU */",
+            "+  StandardB10: \"Standard B10\",",
+            " }",
+            " ",
+            " /**",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-4db70df1e4ae8531",
+          "kind": "enum",
+          "qualifiedName": "CloudHsmClusterSkuName",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b45fb303f8a4e2c9"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Enum",
+            "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+            "position": {
+              "start": 12396,
+              "end": 12634
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 283,
+            "endLine": 290
+          }
+        },
+        {
+          "id": "declaration-6f59f326dfa59a93",
+          "kind": "union",
+          "qualifiedName": "CloudHsmClusterSkuName",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b45fb303f8a4e2c9"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Union",
+            "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+            "position": {
+              "start": 12396,
+              "end": 12597
+            },
+            "referencedNames": [
+              "StandardB10",
+              "Standard_B1",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 283,
+            "endLine": 294
+          }
+        },
+        {
+          "id": "declaration-b248c9fd9eb008fb",
+          "kind": "union-variant",
+          "qualifiedName": "CloudHsmClusterSkuName.Standard_B1",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b45fb303f8a4e2c9"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "UnionVariant",
+            "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+            "position": {
+              "start": 12485,
+              "end": 12536
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 289,
+            "endLine": 290
+          }
+        },
+        {
+          "id": "declaration-aa4fa48fc7239de9",
+          "kind": "model",
+          "qualifiedName": "CloudHsmClusterProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b45fb303f8a4e2c9"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+            "position": {
+              "start": 12636,
+              "end": 13658
+            },
+            "referencedNames": [
+              "ActivationState",
+              "Active",
+              "Array",
+              "AutoGeneratedDomainNameLabelScope",
+              "Canceled",
+              "CloudHsmClusterProperties.activationState",
+              "CloudHsmClusterProperties.autoGeneratedDomainNameLabelScope",
+              "CloudHsmClusterProperties.hsms",
+              "CloudHsmClusterProperties.privateEndpointConnections",
+              "CloudHsmClusterProperties.provisioningState",
+              "CloudHsmClusterProperties.publicNetworkAccess",
+              "CloudHsmClusterProperties.statusMessage",
+              "CloudHsmProperties",
+              "CloudHsmProperties.fqdn",
+              "CloudHsmProperties.state",
+              "CloudHsmProperties.stateMessage",
+              "Deleting",
+              "Disabled",
+              "Failed",
+              "NoReuse",
+              "NotActivated",
+              "NotDefined",
+              "PrivateEndpoint",
+              "PrivateEndpointConnection",
+              "PrivateEndpointConnection.etag",
+              "PrivateEndpointConnection.name",
+              "PrivateEndpointConnection.properties",
+              "PrivateEndpointConnectionProperties",
+              "PrivateEndpointConnectionProperties.groupIds",
+              "PrivateEndpointConnectionProperties.privateEndpoint",
+              "PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
+              "PrivateEndpointConnectionProperties.provisioningState",
+              "PrivateEndpointConnectionProvisioningState",
+              "PrivateLinkServiceConnectionState",
+              "Provisioning",
+              "ProvisioningState",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "PublicNetworkAccess",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "ResourceGroupReuse",
+              "SubscriptionReuse",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "TenantReuse",
+              "Unknown",
+              "Updating",
+              "armResourceIdentifier",
+              "armResourceType",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 292,
+            "endLine": 337
+          }
+        },
+        {
+          "id": "declaration-ec7b99f0e7bc0b26",
+          "kind": "union-variant",
+          "qualifiedName": "CloudHsmClusterSkuName.StandardB10",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b45fb303f8a4e2c9"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "UnionVariant",
+            "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+            "position": {
+              "start": 12541,
+              "end": 12594
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 292,
+            "endLine": 293
+          }
+        },
+        {
+          "id": "declaration-d7759b7ca4dd59aa",
+          "kind": "model",
+          "qualifiedName": "CloudHsmClusterProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b45fb303f8a4e2c9"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+            "position": {
+              "start": 12599,
+              "end": 13621
+            },
+            "referencedNames": [
+              "ActivationState",
+              "Active",
+              "Array",
+              "AutoGeneratedDomainNameLabelScope",
+              "Canceled",
+              "CloudHsmClusterProperties.activationState",
+              "CloudHsmClusterProperties.autoGeneratedDomainNameLabelScope",
+              "CloudHsmClusterProperties.hsms",
+              "CloudHsmClusterProperties.privateEndpointConnections",
+              "CloudHsmClusterProperties.provisioningState",
+              "CloudHsmClusterProperties.publicNetworkAccess",
+              "CloudHsmClusterProperties.statusMessage",
+              "CloudHsmProperties",
+              "CloudHsmProperties.fqdn",
+              "CloudHsmProperties.state",
+              "CloudHsmProperties.stateMessage",
+              "Deleting",
+              "Disabled",
+              "Failed",
+              "NoReuse",
+              "NotActivated",
+              "NotDefined",
+              "PrivateEndpoint",
+              "PrivateEndpointConnection",
+              "PrivateEndpointConnection.etag",
+              "PrivateEndpointConnection.name",
+              "PrivateEndpointConnection.properties",
+              "PrivateEndpointConnectionProperties",
+              "PrivateEndpointConnectionProperties.groupIds",
+              "PrivateEndpointConnectionProperties.privateEndpoint",
+              "PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
+              "PrivateEndpointConnectionProperties.provisioningState",
+              "PrivateEndpointConnectionProvisioningState",
+              "PrivateLinkServiceConnectionState",
+              "Provisioning",
+              "ProvisioningState",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "PublicNetworkAccess",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "ResourceGroupReuse",
+              "SubscriptionReuse",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "TenantReuse",
+              "Unknown",
+              "Updating",
+              "armResourceIdentifier",
+              "armResourceType",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 296,
+            "endLine": 341
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-103a403932241354",
+            "sourceChangeId": "source-9a813171a81d57c2",
+            "qualifiedName": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName.StandardB10",
+            "kind": "union-variant",
+            "before": null,
+            "after": {
+              "doc": "Standard B10 SKU",
+              "declaration": "/** Standard B10 SKU */\n  StandardB10: \"Standard B10\"",
+              "source": {
+                "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                "revision": "current",
+                "startLine": 292,
+                "endLine": 293
+              }
+            },
+            "hunkIds": [
+              "hunk-b45fb303f8a4e2c9"
+            ]
+          },
+          {
+            "id": "document-430a51ef0fa6982c",
+            "sourceChangeId": "source-9a813171a81d57c2",
+            "qualifiedName": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName.Standard_B1",
+            "kind": "union-variant",
+            "before": null,
+            "after": {
+              "doc": "Standard_B1 SKU",
+              "declaration": "/** Standard_B1 SKU */\n  Standard_B1: \"Standard_B1\"",
+              "source": {
+                "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                "revision": "current",
+                "startLine": 289,
+                "endLine": 290
+              }
+            },
+            "hunkIds": [
+              "hunk-b45fb303f8a4e2c9"
+            ]
+          },
+          {
+            "id": "document-8a4fcb8604275f81",
+            "sourceChangeId": "source-9a813171a81d57c2",
+            "qualifiedName": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+            "kind": "union",
+            "before": null,
+            "after": {
+              "doc": "Sku name of the Cloud HSM Cluster",
+              "declaration": "/**\n * Sku name of the Cloud HSM Cluster\n */\nunion CloudHsmClusterSkuName {\n  string,\n\n  /** Standard_B1 SKU */\n  Standard_B1: \"Standard_B1\",\n\n  /** Standard B10 SKU */\n  StandardB10: \"Standard B10\",\n}",
+              "source": {
+                "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+                "revision": "current",
+                "startLine": 283,
+                "endLine": 294
+              }
+            },
+            "hunkIds": [
+              "hunk-b45fb303f8a4e2c9"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

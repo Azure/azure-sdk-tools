@@ -1,0 +1,4493 @@
+{
+  "schemaVersion": 1,
+  "analysis": {
+    "status": "ready",
+    "authority": "typespec-compiler",
+    "compilerVersions": [
+      "1.13.0"
+    ],
+    "operationProjectionStats": [
+      {
+        "revision": "base",
+        "project": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking",
+        "operationCount": 69,
+        "changedNameCount": 20,
+        "matchedOperationCount": 33
+      },
+      {
+        "revision": "current",
+        "project": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking",
+        "operationCount": 87,
+        "changedNameCount": 66,
+        "matchedOperationCount": 45
+      }
+    ],
+    "blockers": []
+  },
+  "sourceChanges": [
+    {
+      "id": "source-3fd52476fb442743",
+      "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-c547e2ee8efcd857",
+          "base": {
+            "startLine": 143,
+            "endLine": 148
+          },
+          "current": {
+            "startLine": 143,
+            "endLine": 185
+          },
+          "lines": [
+            "   Azure.ResourceManager.Models.SubResource[],",
+            "   \"csharp\"",
+            " );",
+            "+@@alternateType(",
+            "+  TrafficControllerProperties.privateEndpointConnections,",
+            "+  Azure.ResourceManager.Models.SubResource[],",
+            "+  \"csharp\"",
+            "+);",
+            "+@@alternateType(",
+            "+  FrontendAssociation.id,",
+            "+  Azure.Core.armResourceIdentifier,",
+            "+  \"csharp\"",
+            "+);",
+            "+@@alternateType(",
+            "+  FrontendAssociationUpdate.id,",
+            "+  Azure.Core.armResourceIdentifier,",
+            "+  \"csharp\"",
+            "+);",
+            "+",
+            "+#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"property flatten for SDK backward compatibility\"",
+            "+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+            "+  PrivateEndpointConnection.properties,",
+            "+  \"csharp\"",
+            "+);",
+            "+#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"property flatten for SDK backward compatibility\"",
+            "+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+            "+  PrivateLinkResource.properties,",
+            "+  \"csharp\"",
+            "+);",
+            "+",
+            "+@@clientName(",
+            "+  PublicNetworkAccess,",
+            "+  \"TrafficControllerPublicNetworkAccess\",",
+            "+  \"csharp\"",
+            "+);",
+            "+@@clientName(",
+            "+  PrivateLinkServiceConnectionStatus,",
+            "+  \"ServiceNetworkingPrivateLinkServiceConnectionStatus\",",
+            "+  \"csharp\"",
+            "+);",
+            " ",
+            " @@clientName(",
+            "   Versions.v2023_11_01,"
+          ]
+        },
+        {
+          "id": "hunk-876f824a2e4f4d22",
+          "base": {
+            "startLine": 154,
+            "endLine": 159
+          },
+          "current": {
+            "startLine": 191,
+            "endLine": 206
+          },
+          "lines": [
+            "   \"$DO_NOT_NORMALIZE$V2025_05_01\",",
+            "   \"javascript\"",
+            " );",
+            "+@@clientName(",
+            "+  Versions.v2025_10_01_preview,",
+            "+  \"$DO_NOT_NORMALIZE$V2025_10_01_preview\",",
+            "+  \"javascript\"",
+            "+);",
+            "+@@clientName(",
+            "+  Versions.v2026_03_01,",
+            "+  \"$DO_NOT_NORMALIZE$V2026_03_01\",",
+            "+  \"javascript\"",
+            "+);",
+            " ",
+            " // we add this model in this namespace in order to replace some models with this model via alternateType decorator",
+            " namespace Azure.ResourceManager.Models {",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-d322e2f2b6d54ef9",
+          "kind": "namespace",
+          "qualifiedName": "Models",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-876f824a2e4f4d22"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Namespace",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+            "position": {
+              "start": 4479,
+              "end": 4590
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 159,
+            "endLine": 163
+          }
+        },
+        {
+          "id": "declaration-178118f203b06955",
+          "kind": "namespace",
+          "qualifiedName": "Models",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-876f824a2e4f4d22"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Namespace",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+            "position": {
+              "start": 5652,
+              "end": 5763
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 206,
+            "endLine": 210
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": []
+      }
+    },
+    {
+      "id": "source-9dc5452d38ced6b6",
+      "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-b605dbbad3368559",
+          "base": {
+            "startLine": 82,
+            "endLine": 88
+          },
+          "current": {
+            "startLine": 122,
+            "endLine": 128
+          },
+          "lines": [
+            " ",
+            "   /** The resource-specific properties for this resource. */",
+            "   #suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\"",
+            "-  @Azure.ClientGenerator.Core.Legacy.flattenProperty",
+            "+  @Azure.ClientGenerator.Core.Legacy.flattenProperty(\"!javascript\")",
+            "   properties?: AssociationUpdateProperties;",
+            " }",
+            " "
+          ]
+        },
+        {
+          "id": "hunk-497a8bdb0c830a39",
+          "base": {
+            "startLine": 27,
+            "endLine": 32
+          },
+          "current": {
+            "startLine": 27,
+            "endLine": 38
+          },
+          "lines": [
+            " ",
+            "   /** 2025-03-01 preview version */",
+            "   v2025_03_01_preview: \"2025-03-01-preview\",",
+            "+",
+            "+  /** 2025-10-01 preview version */",
+            "+  v2025_10_01_preview: \"2025-10-01-preview\",",
+            "+",
+            "+  /** 2026-03-01 stable version */",
+            "+  v2026_03_01: \"2026-03-01\",",
+            " }",
+            " ",
+            " using TypeSpec.Http;"
+          ]
+        },
+        {
+          "id": "hunk-efad1596b4410deb",
+          "base": {
+            "startLine": 54,
+            "endLine": 59
+          },
+          "current": {
+            "startLine": 60,
+            "endLine": 73
+          },
+          "lines": [
+            "   @visibility(Lifecycle.Read)",
+            "   fqdn?: string;",
+            " ",
+            "+  /** Whether public network access is allowed for the frontend. Enabled indicates a public frontend; Disabled indicates a private frontend. */",
+            "+  @added(Versions.v2025_10_01_preview)",
+            "+  publicNetworkAccess?: PublicNetworkAccess;",
+            "+",
+            "+  /** Reference to an Association resource that contains the subnet where the private frontend should be deployed. */",
+            "+  @added(Versions.v2025_10_01_preview)",
+            "+  association?: FrontendAssociation;",
+            "+",
+            "   /** Frontend Security Policy Configuration */",
+            "   @added(Versions.v2025_03_01_preview)",
+            "   securityPolicyConfigurations?: SecurityPolicyConfigurations;"
+          ]
+        },
+        {
+          "id": "hunk-9092eb2047098c0c",
+          "base": {
+            "startLine": 63,
+            "endLine": 68
+          },
+          "current": {
+            "startLine": 77,
+            "endLine": 108
+          },
+          "lines": [
+            "   provisioningState?: ProvisioningState;",
+            " }",
+            " ",
+            "+/** Whether public network access is allowed for the frontend. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+union PublicNetworkAccess {",
+            "+  string,",
+            "+",
+            "+  /** Public network access is enabled (public frontend accessible via a public IP address). */",
+            "+  Enabled: \"Enabled\",",
+            "+",
+            "+  /** Public network access is disabled (private frontend accessible only through a private endpoint). */",
+            "+  Disabled: \"Disabled\",",
+            "+}",
+            "+",
+            "+/** Reference to an Association resource. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+model FrontendAssociation {",
+            "+  /** Resource ID of the Association. */",
+            "+  id: string;",
+            "+}",
+            "+",
+            "+/** Reference to an Association resource. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+model FrontendAssociationUpdate {",
+            "+  /** Resource ID of the Association. */",
+            "+  id?: string;",
+            "+}",
+            "+",
+            " //----------------------- Associations -----------------------",
+            " /** Association Subresource of Traffic Controller */",
+            " @parentResource(TrafficController)"
+          ]
+        },
+        {
+          "id": "hunk-d2e77d6a73b6758a",
+          "base": {
+            "startLine": 267,
+            "endLine": 272
+          },
+          "current": {
+            "startLine": 307,
+            "endLine": 317
+          },
+          "lines": [
+            "   @added(Versions.v2024_05_01_preview)",
+            "   securityPolicies?: ResourceId[];",
+            " ",
+            "+  /** Private Endpoint Connections List */",
+            "+  @visibility(Lifecycle.Read)",
+            "+  @added(Versions.v2025_10_01_preview)",
+            "+  privateEndpointConnections?: ResourceId[];",
+            "+",
+            "   /** Security Policy Configuration */",
+            "   @added(Versions.v2024_05_01_preview)",
+            "   securityPolicyConfigurations?: SecurityPolicyConfigurations;"
+          ]
+        },
+        {
+          "id": "hunk-4d79cd328e677e9f",
+          "base": {
+            "startLine": 309,
+            "endLine": 314
+          },
+          "current": {
+            "startLine": 354,
+            "endLine": 462
+          },
+          "lines": [
+            "   id: string;",
+            " }",
+            " ",
+            "+//----------------------- PrivateEndpointConnection -----------------------",
+            "+/** Private Endpoint Connection resource of Traffic Controller. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+@parentResource(TrafficController)",
+            "+model PrivateEndpointConnection",
+            "+  is ProxyResource<PrivateEndpointConnectionProperties> {",
+            "+  /** Private Endpoint Connection */",
+            "+  @key(\"privateEndpointConnectionName\")",
+            "+  @visibility(Lifecycle.Read)",
+            "+  @path",
+            "+  @segment(\"privateEndpointConnections\")",
+            "+  @pattern(\"^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$\")",
+            "+  name: string;",
+            "+}",
+            "+",
+            "+/** Properties of a Private Endpoint Connection. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+model PrivateEndpointConnectionProperties {",
+            "+  /** The private endpoint resource. */",
+            "+  @visibility(Lifecycle.Read)",
+            "+  privateEndpoint?: PrivateEndpointReference;",
+            "+",
+            "+  /** The connection state of the private endpoint connection. */",
+            "+  privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;",
+            "+",
+            "+  /** Provisioning state of the private endpoint connection. */",
+            "+  @visibility(Lifecycle.Read)",
+            "+  provisioningState?: ProvisioningState;",
+            "+}",
+            "+",
+            "+/** Reference to a private endpoint resource. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+model PrivateEndpointReference {",
+            "+  /** Resource ID of the private endpoint. */",
+            "+  @visibility(Lifecycle.Read)",
+            "+  id?: string;",
+            "+}",
+            "+",
+            "+/** The state of a private link service connection. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+model PrivateLinkServiceConnectionState {",
+            "+  /** Indicates whether the connection has been Approved/Rejected/Removed by the owner of the service. */",
+            "+  status?: PrivateLinkServiceConnectionStatus;",
+            "+",
+            "+  /** The reason for approval/rejection of the connection. */",
+            "+  description?: string;",
+            "+",
+            "+  /** A message indicating if changes on the service provider require any updates on the consumer. */",
+            "+  actionsRequired?: string;",
+            "+}",
+            "+",
+            "+/** The private endpoint connection status. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+union PrivateLinkServiceConnectionStatus {",
+            "+  string,",
+            "+",
+            "+  /** Connection is pending approval. */",
+            "+  Pending: \"Pending\",",
+            "+",
+            "+  /** Connection is approved. */",
+            "+  Approved: \"Approved\",",
+            "+",
+            "+  /** Connection is rejected. */",
+            "+  Rejected: \"Rejected\",",
+            "+",
+            "+  /** Connection is disconnected. */",
+            "+  Disconnected: \"Disconnected\",",
+            "+}",
+            "+",
+            "+//----------------------- PrivateLinkResource -----------------------",
+            "+/** A private link resource. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+@parentResource(TrafficController)",
+            "+model PrivateLinkResource is ProxyResource<PrivateLinkResourceProperties> {",
+            "+  /** Private Link Resource */",
+            "+  @key(\"privateLinkResourceName\")",
+            "+  @visibility(Lifecycle.Read)",
+            "+  @path",
+            "+  @segment(\"privateLinkResources\")",
+            "+  @pattern(\"^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$\")",
+            "+  name: string;",
+            "+}",
+            "+",
+            "+/** Properties of a private link resource. */",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+model PrivateLinkResourceProperties {",
+            "+  /** The private link resource group ID. */",
+            "+  @visibility(Lifecycle.Read)",
+            "+  groupId?: string;",
+            "+",
+            "+  /** The private link resource required member names. */",
+            "+  @visibility(Lifecycle.Read)",
+            "+  requiredMembers?: string[];",
+            "+",
+            "+  /** The private link resource private DNS zone names. */",
+            "+  @visibility(Lifecycle.Read)",
+            "+  requiredZoneNames?: string[];",
+            "+",
+            "+  /** The status of the last operation. */",
+            "+  @visibility(Lifecycle.Read)",
+            "+  provisioningState?: ProvisioningState;",
+            "+}",
+            "+",
+            " //----------------------- Paths -----------------------",
+            " @armResourceOperations",
+            " interface AssociationsInterface {"
+          ]
+        },
+        {
+          "id": "hunk-f0be91f7314a4338",
+          "base": {
+            "startLine": 392,
+            "endLine": 395
+          },
+          "current": {
+            "startLine": 540,
+            "endLine": 559
+          },
+          "lines": [
+            "   listBySubscription is ArmListBySubscription<TrafficController>;",
+            " }",
+            " ",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+@armResourceOperations",
+            "+interface PrivateEndpointConnectionsInterface {",
+            "+  get is ArmResourceRead<PrivateEndpointConnection>;",
+            "+  update is ArmResourceCreateOrReplaceSync<PrivateEndpointConnection>;",
+            "+  delete is ArmResourceDeleteWithoutOkAsync<PrivateEndpointConnection>;",
+            "+  listByTrafficController is ArmResourceListByParent<PrivateEndpointConnection>;",
+            "+}",
+            "+",
+            "+@added(Versions.v2025_10_01_preview)",
+            "+@armResourceOperations",
+            "+interface PrivateLinkResourcesInterface {",
+            "+  get is ArmResourceRead<PrivateLinkResource>;",
+            "+  listByTrafficController is ArmResourceListByParent<PrivateLinkResource>;",
+            "+}",
+            "+",
+            " interface Operations extends Azure.ResourceManager.Operations {}",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-330a73bdcd92e175",
+          "kind": "model",
+          "qualifiedName": "AssociationUpdate",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b605dbbad3368559"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2245,
+              "end": 2613
+            },
+            "referencedNames": [
+              "AssociationSubnetUpdate",
+              "AssociationSubnetUpdate.id",
+              "AssociationType",
+              "AssociationUpdate.properties",
+              "AssociationUpdate.tags",
+              "AssociationUpdateProperties",
+              "AssociationUpdateProperties.associationType",
+              "AssociationUpdateProperties.subnet",
+              "Record",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 79,
+            "endLine": 87
+          }
+        },
+        {
+          "id": "declaration-96abbf81fd4d7e3b",
+          "kind": "property",
+          "qualifiedName": "AssociationUpdate.properties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b605dbbad3368559"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2393,
+              "end": 2610
+            },
+            "referencedNames": [
+              "AssociationSubnetUpdate",
+              "AssociationSubnetUpdate.id",
+              "AssociationType",
+              "AssociationUpdateProperties",
+              "AssociationUpdateProperties.associationType",
+              "AssociationUpdateProperties.subnet",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 83,
+            "endLine": 86
+          }
+        },
+        {
+          "id": "declaration-900e6b3d46dd46a6",
+          "kind": "model",
+          "qualifiedName": "AssociationUpdate",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b605dbbad3368559"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 3553,
+              "end": 3936
+            },
+            "referencedNames": [
+              "AssociationSubnetUpdate",
+              "AssociationSubnetUpdate.id",
+              "AssociationType",
+              "AssociationUpdate.properties",
+              "AssociationUpdate.tags",
+              "AssociationUpdateProperties",
+              "AssociationUpdateProperties.associationType",
+              "AssociationUpdateProperties.subnet",
+              "Record",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 119,
+            "endLine": 127
+          }
+        },
+        {
+          "id": "declaration-e3f98ecdd70d44b9",
+          "kind": "property",
+          "qualifiedName": "AssociationUpdate.properties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-b605dbbad3368559"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 3701,
+              "end": 3933
+            },
+            "referencedNames": [
+              "AssociationSubnetUpdate",
+              "AssociationSubnetUpdate.id",
+              "AssociationType",
+              "AssociationUpdateProperties",
+              "AssociationUpdateProperties.associationType",
+              "AssociationUpdateProperties.subnet",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 123,
+            "endLine": 126
+          }
+        },
+        {
+          "id": "declaration-7d70e15b674b941d",
+          "kind": "enum",
+          "qualifiedName": "Versions",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-497a8bdb0c830a39"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Enum",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 494,
+              "end": 824
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 17,
+            "endLine": 30
+          }
+        },
+        {
+          "id": "declaration-81352e42e78aab43",
+          "kind": "enum",
+          "qualifiedName": "Versions",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-497a8bdb0c830a39"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Enum",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 494,
+              "end": 971
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 17,
+            "endLine": 36
+          }
+        },
+        {
+          "id": "declaration-3039188913989a8b",
+          "kind": "model",
+          "qualifiedName": "FrontendProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb",
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1331,
+              "end": 1829
+            },
+            "referencedNames": [
+              "Accepted",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "FrontendProperties.fqdn",
+              "FrontendProperties.provisioningState",
+              "FrontendProperties.securityPolicyConfigurations",
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "Provisioning",
+              "ProvisioningState",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "Succeeded",
+              "Updating",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 51,
+            "endLine": 64
+          }
+        },
+        {
+          "id": "declaration-7026d5981c1dc1e8",
+          "kind": "property",
+          "qualifiedName": "FrontendProperties.fqdn",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1388,
+              "end": 1535
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 53,
+            "endLine": 55
+          }
+        },
+        {
+          "id": "declaration-28aa0a89570168f1",
+          "kind": "property",
+          "qualifiedName": "FrontendProperties.securityPolicyConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1540,
+              "end": 1686
+            },
+            "referencedNames": [
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 57,
+            "endLine": 59
+          }
+        },
+        {
+          "id": "declaration-5f9f5c3814b71d4b",
+          "kind": "property",
+          "qualifiedName": "ResourceUpdateModelProperties.securityPolicyConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1540,
+              "end": 1686
+            },
+            "referencedNames": [
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 57,
+            "endLine": 59
+          }
+        },
+        {
+          "id": "declaration-009ff87b59827546",
+          "kind": "model",
+          "qualifiedName": "FrontendProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb",
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1478,
+              "end": 2400
+            },
+            "referencedNames": [
+              "Accepted",
+              "Canceled",
+              "Deleting",
+              "Disabled",
+              "Enabled",
+              "Failed",
+              "FrontendAssociation",
+              "FrontendAssociation.id",
+              "FrontendProperties.association",
+              "FrontendProperties.fqdn",
+              "FrontendProperties.provisioningState",
+              "FrontendProperties.publicNetworkAccess",
+              "FrontendProperties.securityPolicyConfigurations",
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "Provisioning",
+              "ProvisioningState",
+              "PublicNetworkAccess",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "Succeeded",
+              "Updating",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 57,
+            "endLine": 78
+          }
+        },
+        {
+          "id": "declaration-02ea917a6aa60796",
+          "kind": "property",
+          "qualifiedName": "FrontendProperties.fqdn",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1535,
+              "end": 1682
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 59,
+            "endLine": 61
+          }
+        },
+        {
+          "id": "declaration-08fb936041bf7e94",
+          "kind": "property",
+          "qualifiedName": "FrontendProperties.provisioningState",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1691,
+              "end": 1826
+            },
+            "referencedNames": [
+              "Accepted",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "Provisioning",
+              "ProvisioningState",
+              "Succeeded",
+              "Updating",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 61,
+            "endLine": 63
+          }
+        },
+        {
+          "id": "declaration-bc112b5375149c84",
+          "kind": "property",
+          "qualifiedName": "FrontendProperties.publicNetworkAccess",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1687,
+              "end": 1911
+            },
+            "referencedNames": [
+              "Disabled",
+              "Enabled",
+              "PublicNetworkAccess",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 63,
+            "endLine": 65
+          }
+        },
+        {
+          "id": "declaration-3e9e65e6d1ec5d02",
+          "kind": "property",
+          "qualifiedName": "ResourceUpdateModelProperties.publicNetworkAccess",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1687,
+              "end": 1911
+            },
+            "referencedNames": [
+              "Disabled",
+              "Enabled",
+              "PublicNetworkAccess",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 63,
+            "endLine": 65
+          }
+        },
+        {
+          "id": "declaration-711aef9267701b91",
+          "kind": "model",
+          "qualifiedName": "Association",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1894,
+              "end": 2243
+            },
+            "referencedNames": [
+              "Accepted",
+              "Application",
+              "Association.name",
+              "Association.properties",
+              "AssociationProperties",
+              "AssociationProperties.associationType",
+              "AssociationProperties.provisioningState",
+              "AssociationProperties.subnet",
+              "AssociationSubnet",
+              "AssociationSubnet.id",
+              "AssociationType",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "Key",
+              "ManagedIdentity",
+              "Provisioning",
+              "ProvisioningState",
+              "Record",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "TrackedResource",
+              "TrackedResource.location",
+              "TrackedResource.properties",
+              "TrackedResource.tags",
+              "Updating",
+              "User",
+              "armResourceIdentifier",
+              "armResourceType",
+              "azureLocation",
+              "createdByType",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 67,
+            "endLine": 77
+          }
+        },
+        {
+          "id": "declaration-9e3ee7a0ce71f795",
+          "kind": "property",
+          "qualifiedName": "FrontendProperties.association",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1916,
+              "end": 2106
+            },
+            "referencedNames": [
+              "FrontendAssociation",
+              "FrontendAssociation.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 67,
+            "endLine": 69
+          }
+        },
+        {
+          "id": "declaration-e881354c0ce17b3d",
+          "kind": "property",
+          "qualifiedName": "ResourceUpdateModelProperties.association",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 1916,
+              "end": 2106
+            },
+            "referencedNames": [
+              "FrontendAssociation",
+              "FrontendAssociation.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 67,
+            "endLine": 69
+          }
+        },
+        {
+          "id": "declaration-60c73834c8a1435a",
+          "kind": "property",
+          "qualifiedName": "FrontendProperties.securityPolicyConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2111,
+              "end": 2257
+            },
+            "referencedNames": [
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 71,
+            "endLine": 73
+          }
+        },
+        {
+          "id": "declaration-9bf82021ddd27d97",
+          "kind": "property",
+          "qualifiedName": "ResourceUpdateModelProperties.securityPolicyConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-efad1596b4410deb"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2111,
+              "end": 2257
+            },
+            "referencedNames": [
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 71,
+            "endLine": 73
+          }
+        },
+        {
+          "id": "declaration-406ee9d6306e2008",
+          "kind": "property",
+          "qualifiedName": "FrontendProperties.provisioningState",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2262,
+              "end": 2397
+            },
+            "referencedNames": [
+              "Accepted",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "Provisioning",
+              "ProvisioningState",
+              "Succeeded",
+              "Updating",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 75,
+            "endLine": 77
+          }
+        },
+        {
+          "id": "declaration-60f156024c2ac581",
+          "kind": "union",
+          "qualifiedName": "PublicNetworkAccess",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Union",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2402,
+              "end": 2794
+            },
+            "referencedNames": [
+              "Disabled",
+              "Enabled",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 80,
+            "endLine": 90
+          }
+        },
+        {
+          "id": "declaration-637fa220b45b39e8",
+          "kind": "union-variant",
+          "qualifiedName": "PublicNetworkAccess.Enabled",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "UnionVariant",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2546,
+              "end": 2660
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 85,
+            "endLine": 86
+          }
+        },
+        {
+          "id": "declaration-703dd2e9ce422324",
+          "kind": "union-variant",
+          "qualifiedName": "PublicNetworkAccess.Disabled",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "UnionVariant",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2665,
+              "end": 2791
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 88,
+            "endLine": 89
+          }
+        },
+        {
+          "id": "declaration-a9c22f7363a73223",
+          "kind": "model",
+          "qualifiedName": "FrontendAssociation",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2796,
+              "end": 2962
+            },
+            "referencedNames": [
+              "FrontendAssociation.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 92,
+            "endLine": 97
+          }
+        },
+        {
+          "id": "declaration-114875d335df6049",
+          "kind": "property",
+          "qualifiedName": "FrontendAssociation.id",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2908,
+              "end": 2959
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 95,
+            "endLine": 96
+          }
+        },
+        {
+          "id": "declaration-04b2ea7b475a709f",
+          "kind": "model",
+          "qualifiedName": "FrontendAssociationUpdate",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 2964,
+              "end": 3137
+            },
+            "referencedNames": [
+              "FrontendAssociationUpdate.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 99,
+            "endLine": 104
+          }
+        },
+        {
+          "id": "declaration-99d53859f232645c",
+          "kind": "property",
+          "qualifiedName": "FrontendAssociationUpdate.id",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 3082,
+              "end": 3134
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 102,
+            "endLine": 103
+          }
+        },
+        {
+          "id": "declaration-52ac58fa929a15b2",
+          "kind": "model",
+          "qualifiedName": "Association",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9092eb2047098c0c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 3202,
+              "end": 3551
+            },
+            "referencedNames": [
+              "Accepted",
+              "Application",
+              "Association.name",
+              "Association.properties",
+              "AssociationProperties",
+              "AssociationProperties.associationType",
+              "AssociationProperties.provisioningState",
+              "AssociationProperties.subnet",
+              "AssociationSubnet",
+              "AssociationSubnet.id",
+              "AssociationType",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "Key",
+              "ManagedIdentity",
+              "Provisioning",
+              "ProvisioningState",
+              "Record",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "TrackedResource",
+              "TrackedResource.location",
+              "TrackedResource.properties",
+              "TrackedResource.tags",
+              "Updating",
+              "User",
+              "armResourceIdentifier",
+              "armResourceType",
+              "azureLocation",
+              "createdByType",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 107,
+            "endLine": 117
+          }
+        },
+        {
+          "id": "declaration-71feb91580fcef5a",
+          "kind": "model",
+          "qualifiedName": "TrafficControllerProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 7048,
+              "end": 7823
+            },
+            "referencedNames": [
+              "Accepted",
+              "Array",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "Provisioning",
+              "ProvisioningState",
+              "ResourceId",
+              "ResourceId.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "Succeeded",
+              "TrafficControllerProperties.associations",
+              "TrafficControllerProperties.configurationEndpoints",
+              "TrafficControllerProperties.frontends",
+              "TrafficControllerProperties.provisioningState",
+              "TrafficControllerProperties.securityPolicies",
+              "TrafficControllerProperties.securityPolicyConfigurations",
+              "Updating",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 251,
+            "endLine": 277
+          }
+        },
+        {
+          "id": "declaration-95df0e856bf26b0e",
+          "kind": "property",
+          "qualifiedName": "TrafficControllerProperties.securityPolicies",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 7420,
+              "end": 7563
+            },
+            "referencedNames": [
+              "Array",
+              "ResourceId",
+              "ResourceId.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 265,
+            "endLine": 268
+          }
+        },
+        {
+          "id": "declaration-3f9b23cc07cf35c1",
+          "kind": "property",
+          "qualifiedName": "TrafficControllerProperties.securityPolicyConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 7568,
+              "end": 7705
+            },
+            "referencedNames": [
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 270,
+            "endLine": 272
+          }
+        },
+        {
+          "id": "declaration-765202d3bb7d8d58",
+          "kind": "property",
+          "qualifiedName": "ResourceUpdateModelProperties.securityPolicyConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 7568,
+              "end": 7705
+            },
+            "referencedNames": [
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 270,
+            "endLine": 272
+          }
+        },
+        {
+          "id": "declaration-50cb1734431598e8",
+          "kind": "model",
+          "qualifiedName": "TrafficControllerProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 8371,
+              "end": 9304
+            },
+            "referencedNames": [
+              "Accepted",
+              "Array",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "Provisioning",
+              "ProvisioningState",
+              "ResourceId",
+              "ResourceId.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "Succeeded",
+              "TrafficControllerProperties.associations",
+              "TrafficControllerProperties.configurationEndpoints",
+              "TrafficControllerProperties.frontends",
+              "TrafficControllerProperties.privateEndpointConnections",
+              "TrafficControllerProperties.provisioningState",
+              "TrafficControllerProperties.securityPolicies",
+              "TrafficControllerProperties.securityPolicyConfigurations",
+              "Updating",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 291,
+            "endLine": 322
+          }
+        },
+        {
+          "id": "declaration-9333edc167bd8d15",
+          "kind": "property",
+          "qualifiedName": "TrafficControllerProperties.securityPolicies",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 8743,
+              "end": 8886
+            },
+            "referencedNames": [
+              "Array",
+              "ResourceId",
+              "ResourceId.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 305,
+            "endLine": 308
+          }
+        },
+        {
+          "id": "declaration-e08bac157e648df6",
+          "kind": "model",
+          "qualifiedName": "ResourceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 8351,
+              "end": 8500
+            },
+            "referencedNames": [
+              "ResourceId.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 306,
+            "endLine": 310
+          }
+        },
+        {
+          "id": "declaration-cbf93dd3afcbb103",
+          "kind": "property",
+          "qualifiedName": "ResourceId.id",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 8447,
+              "end": 8497
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 308,
+            "endLine": 309
+          }
+        },
+        {
+          "id": "declaration-9195d7a95f94b221",
+          "kind": "property",
+          "qualifiedName": "TrafficControllerProperties.privateEndpointConnections",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 8891,
+              "end": 9044
+            },
+            "referencedNames": [
+              "Array",
+              "ResourceId",
+              "ResourceId.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 310,
+            "endLine": 313
+          }
+        },
+        {
+          "id": "declaration-15c57602c818582d",
+          "kind": "interface",
+          "qualifiedName": "AssociationsInterface",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 8558,
+              "end": 9128
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 313,
+            "endLine": 325
+          }
+        },
+        {
+          "id": "declaration-79c7dba8701aeee6",
+          "kind": "property",
+          "qualifiedName": "TrafficControllerProperties.securityPolicyConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 9049,
+              "end": 9186
+            },
+            "referencedNames": [
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 315,
+            "endLine": 317
+          }
+        },
+        {
+          "id": "declaration-fbe48e4883a5c521",
+          "kind": "property",
+          "qualifiedName": "ResourceUpdateModelProperties.securityPolicyConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-d2e77d6a73b6758a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 9049,
+              "end": 9186
+            },
+            "referencedNames": [
+              "IpAccessRulesSecurityPolicy",
+              "IpAccessRulesSecurityPolicy.id",
+              "SecurityPolicyConfigurations",
+              "SecurityPolicyConfigurations.ipAccessRulesSecurityPolicy",
+              "SecurityPolicyConfigurations.wafSecurityPolicy",
+              "WafSecurityPolicy",
+              "WafSecurityPolicy.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 315,
+            "endLine": 317
+          }
+        },
+        {
+          "id": "declaration-bbc4f4997cc2c361",
+          "kind": "model",
+          "qualifiedName": "ResourceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 9832,
+              "end": 9981
+            },
+            "referencedNames": [
+              "ResourceId.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 351,
+            "endLine": 355
+          }
+        },
+        {
+          "id": "declaration-df194370630cb6aa",
+          "kind": "property",
+          "qualifiedName": "ResourceId.id",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 9928,
+              "end": 9978
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 353,
+            "endLine": 354
+          }
+        },
+        {
+          "id": "declaration-57cd2609032cf5d4",
+          "kind": "model",
+          "qualifiedName": "PrivateEndpointConnection",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 10059,
+              "end": 10523
+            },
+            "referencedNames": [
+              "Accepted",
+              "Application",
+              "Approved",
+              "Canceled",
+              "Deleting",
+              "Disconnected",
+              "Failed",
+              "Key",
+              "ManagedIdentity",
+              "Pending",
+              "PrivateEndpointConnection.name",
+              "PrivateEndpointConnection.properties",
+              "PrivateEndpointConnectionProperties",
+              "PrivateEndpointConnectionProperties.privateEndpoint",
+              "PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
+              "PrivateEndpointConnectionProperties.provisioningState",
+              "PrivateEndpointReference",
+              "PrivateEndpointReference.id",
+              "PrivateLinkServiceConnectionState",
+              "PrivateLinkServiceConnectionState.actionsRequired",
+              "PrivateLinkServiceConnectionState.description",
+              "PrivateLinkServiceConnectionState.status",
+              "PrivateLinkServiceConnectionStatus",
+              "Provisioning",
+              "ProvisioningState",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Rejected",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "Updating",
+              "User",
+              "armResourceIdentifier",
+              "armResourceType",
+              "createdByType",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 358,
+            "endLine": 370
+          }
+        },
+        {
+          "id": "declaration-79aa356e0b840df9",
+          "kind": "property",
+          "qualifiedName": "PrivateEndpointConnection.name",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 10290,
+              "end": 10520
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 363,
+            "endLine": 369
+          }
+        },
+        {
+          "id": "declaration-a5ded0668ab9cf30",
+          "kind": "property",
+          "qualifiedName": "privateEndpointConnectionName",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 10290,
+              "end": 10520
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 363,
+            "endLine": 369
+          }
+        },
+        {
+          "id": "declaration-81549e38ee257d9b",
+          "kind": "interface",
+          "qualifiedName": "TrafficControllerInterface",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 10808,
+              "end": 11735
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 372,
+            "endLine": 393
+          }
+        },
+        {
+          "id": "declaration-a30774846bdd8741",
+          "kind": "model",
+          "qualifiedName": "PrivateEndpointConnectionProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 10525,
+              "end": 11051
+            },
+            "referencedNames": [
+              "Accepted",
+              "Approved",
+              "Canceled",
+              "Deleting",
+              "Disconnected",
+              "Failed",
+              "Pending",
+              "PrivateEndpointConnectionProperties.privateEndpoint",
+              "PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
+              "PrivateEndpointConnectionProperties.provisioningState",
+              "PrivateEndpointReference",
+              "PrivateEndpointReference.id",
+              "PrivateLinkServiceConnectionState",
+              "PrivateLinkServiceConnectionState.actionsRequired",
+              "PrivateLinkServiceConnectionState.description",
+              "PrivateLinkServiceConnectionState.status",
+              "PrivateLinkServiceConnectionStatus",
+              "Provisioning",
+              "ProvisioningState",
+              "Rejected",
+              "Succeeded",
+              "Updating",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 372,
+            "endLine": 385
+          }
+        },
+        {
+          "id": "declaration-4523863e6df51afd",
+          "kind": "property",
+          "qualifiedName": "PrivateEndpointConnectionProperties.privateEndpoint",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 10660,
+              "end": 10772
+            },
+            "referencedNames": [
+              "PrivateEndpointReference",
+              "PrivateEndpointReference.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 375,
+            "endLine": 377
+          }
+        },
+        {
+          "id": "declaration-013a4b69b54a83cc",
+          "kind": "property",
+          "qualifiedName": "PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 10777,
+              "end": 10912
+            },
+            "referencedNames": [
+              "Approved",
+              "Disconnected",
+              "Pending",
+              "PrivateLinkServiceConnectionState",
+              "PrivateLinkServiceConnectionState.actionsRequired",
+              "PrivateLinkServiceConnectionState.description",
+              "PrivateLinkServiceConnectionState.status",
+              "PrivateLinkServiceConnectionStatus",
+              "Rejected",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 379,
+            "endLine": 380
+          }
+        },
+        {
+          "id": "declaration-6a3f56150f1eef19",
+          "kind": "property",
+          "qualifiedName": "PrivateEndpointConnectionProperties.provisioningState",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 10917,
+              "end": 11048
+            },
+            "referencedNames": [
+              "Accepted",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "Provisioning",
+              "ProvisioningState",
+              "Succeeded",
+              "Updating",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 382,
+            "endLine": 384
+          }
+        },
+        {
+          "id": "declaration-b14ce823ccab4821",
+          "kind": "model",
+          "qualifiedName": "PrivateEndpointReference",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11053,
+              "end": 11264
+            },
+            "referencedNames": [
+              "PrivateEndpointReference.id",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 387,
+            "endLine": 393
+          }
+        },
+        {
+          "id": "declaration-c8f1f1613ae97ef4",
+          "kind": "property",
+          "qualifiedName": "PrivateEndpointReference.id",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11174,
+              "end": 11261
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 390,
+            "endLine": 392
+          }
+        },
+        {
+          "id": "declaration-e546cbd2fddf361c",
+          "kind": "operation",
+          "qualifiedName": "TrafficControllerInterface.listBySubscription",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11670,
+              "end": 11732
+            },
+            "referencedNames": [
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "Page",
+              "Page.nextLink",
+              "Page.value",
+              "ResourceListResult",
+              "ResourceListResult.nextLink",
+              "ResourceListResult.value",
+              "ResourceLocation",
+              "apiVersion",
+              "provider",
+              "string",
+              "subscriptionId",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 392,
+            "endLine": 392
+          }
+        },
+        {
+          "id": "declaration-1ff3c6e6fc407d4c",
+          "kind": "interface",
+          "qualifiedName": "Operations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11737,
+              "end": 11801
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 395,
+            "endLine": 395
+          }
+        },
+        {
+          "id": "declaration-e971369985bea8fb",
+          "kind": "model",
+          "qualifiedName": "PrivateLinkServiceConnectionState",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11266,
+              "end": 11772
+            },
+            "referencedNames": [
+              "Approved",
+              "Disconnected",
+              "Pending",
+              "PrivateLinkServiceConnectionState.actionsRequired",
+              "PrivateLinkServiceConnectionState.description",
+              "PrivateLinkServiceConnectionState.status",
+              "PrivateLinkServiceConnectionStatus",
+              "Rejected",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 395,
+            "endLine": 406
+          }
+        },
+        {
+          "id": "declaration-e60ace60ce3684ab",
+          "kind": "property",
+          "qualifiedName": "PrivateLinkServiceConnectionState.status",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11402,
+              "end": 11551
+            },
+            "referencedNames": [
+              "Approved",
+              "Disconnected",
+              "Pending",
+              "PrivateLinkServiceConnectionStatus",
+              "Rejected",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 398,
+            "endLine": 399
+          }
+        },
+        {
+          "id": "declaration-0f7a922f401e0895",
+          "kind": "property",
+          "qualifiedName": "PrivateLinkServiceConnectionState.description",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11556,
+              "end": 11638
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 401,
+            "endLine": 402
+          }
+        },
+        {
+          "id": "declaration-8d9aa5d305fa96b8",
+          "kind": "property",
+          "qualifiedName": "PrivateLinkServiceConnectionState.actionsRequired",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11643,
+              "end": 11769
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 404,
+            "endLine": 405
+          }
+        },
+        {
+          "id": "declaration-00783d61508a9178",
+          "kind": "union",
+          "qualifiedName": "PrivateLinkServiceConnectionStatus",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Union",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11774,
+              "end": 12162
+            },
+            "referencedNames": [
+              "Approved",
+              "Disconnected",
+              "Pending",
+              "Rejected",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 408,
+            "endLine": 424
+          }
+        },
+        {
+          "id": "declaration-fa89799b73d2a454",
+          "kind": "union-variant",
+          "qualifiedName": "PrivateLinkServiceConnectionStatus.Pending",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "UnionVariant",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11914,
+              "end": 11973
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 413,
+            "endLine": 414
+          }
+        },
+        {
+          "id": "declaration-3eaac773f95bb747",
+          "kind": "union-variant",
+          "qualifiedName": "PrivateLinkServiceConnectionStatus.Approved",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "UnionVariant",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 11978,
+              "end": 12031
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 416,
+            "endLine": 417
+          }
+        },
+        {
+          "id": "declaration-9063470578dc4f20",
+          "kind": "union-variant",
+          "qualifiedName": "PrivateLinkServiceConnectionStatus.Rejected",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "UnionVariant",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12036,
+              "end": 12089
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 419,
+            "endLine": 420
+          }
+        },
+        {
+          "id": "declaration-61d2142023d23e0f",
+          "kind": "union-variant",
+          "qualifiedName": "PrivateLinkServiceConnectionStatus.Disconnected",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "UnionVariant",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12094,
+              "end": 12159
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 422,
+            "endLine": 423
+          }
+        },
+        {
+          "id": "declaration-6b184bd30b310e00",
+          "kind": "model",
+          "qualifiedName": "PrivateLinkResource",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12234,
+              "end": 12631
+            },
+            "referencedNames": [
+              "Accepted",
+              "Application",
+              "Array",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "Key",
+              "ManagedIdentity",
+              "PrivateLinkResource.name",
+              "PrivateLinkResource.properties",
+              "PrivateLinkResourceProperties",
+              "PrivateLinkResourceProperties.groupId",
+              "PrivateLinkResourceProperties.provisioningState",
+              "PrivateLinkResourceProperties.requiredMembers",
+              "PrivateLinkResourceProperties.requiredZoneNames",
+              "Provisioning",
+              "ProvisioningState",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "Updating",
+              "User",
+              "armResourceIdentifier",
+              "armResourceType",
+              "createdByType",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 427,
+            "endLine": 438
+          }
+        },
+        {
+          "id": "declaration-769125f1c4eb33d5",
+          "kind": "property",
+          "qualifiedName": "PrivateLinkResource.name",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12416,
+              "end": 12628
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 431,
+            "endLine": 437
+          }
+        },
+        {
+          "id": "declaration-2ba555e36f08038f",
+          "kind": "property",
+          "qualifiedName": "privateLinkResourceName",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12416,
+              "end": 12628
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 431,
+            "endLine": 437
+          }
+        },
+        {
+          "id": "declaration-52b9478e302e204b",
+          "kind": "model",
+          "qualifiedName": "PrivateLinkResourceProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12633,
+              "end": 13206
+            },
+            "referencedNames": [
+              "Accepted",
+              "Array",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "PrivateLinkResourceProperties.groupId",
+              "PrivateLinkResourceProperties.provisioningState",
+              "PrivateLinkResourceProperties.requiredMembers",
+              "PrivateLinkResourceProperties.requiredZoneNames",
+              "Provisioning",
+              "ProvisioningState",
+              "Succeeded",
+              "Updating",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 440,
+            "endLine": 458
+          }
+        },
+        {
+          "id": "declaration-cfb078023a4f72a6",
+          "kind": "property",
+          "qualifiedName": "PrivateLinkResourceProperties.groupId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12756,
+              "end": 12847
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 443,
+            "endLine": 445
+          }
+        },
+        {
+          "id": "declaration-73575a47778521fe",
+          "kind": "property",
+          "qualifiedName": "PrivateLinkResourceProperties.requiredMembers",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12852,
+              "end": 12966
+            },
+            "referencedNames": [
+              "Array",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 447,
+            "endLine": 449
+          }
+        },
+        {
+          "id": "declaration-700a2df8ff92926c",
+          "kind": "property",
+          "qualifiedName": "PrivateLinkResourceProperties.requiredZoneNames",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 12971,
+              "end": 13088
+            },
+            "referencedNames": [
+              "Array",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 451,
+            "endLine": 453
+          }
+        },
+        {
+          "id": "declaration-f3c7d267b6d65a52",
+          "kind": "property",
+          "qualifiedName": "PrivateLinkResourceProperties.provisioningState",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 13093,
+              "end": 13203
+            },
+            "referencedNames": [
+              "Accepted",
+              "Canceled",
+              "Deleting",
+              "Failed",
+              "Provisioning",
+              "ProvisioningState",
+              "Succeeded",
+              "Updating",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 455,
+            "endLine": 457
+          }
+        },
+        {
+          "id": "declaration-24f54caefbb8b341",
+          "kind": "interface",
+          "qualifiedName": "AssociationsInterface",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-4d79cd328e677e9f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 13264,
+              "end": 13834
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 461,
+            "endLine": 473
+          }
+        },
+        {
+          "id": "declaration-8dd7751ff20f30aa",
+          "kind": "interface",
+          "qualifiedName": "TrafficControllerInterface",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 15514,
+              "end": 16441
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 520,
+            "endLine": 541
+          }
+        },
+        {
+          "id": "declaration-26f1d3fd89ad5ee1",
+          "kind": "operation",
+          "qualifiedName": "TrafficControllerInterface.listBySubscription",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16376,
+              "end": 16438
+            },
+            "referencedNames": [
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "Page",
+              "Page.nextLink",
+              "Page.value",
+              "ResourceListResult",
+              "ResourceListResult.nextLink",
+              "ResourceListResult.value",
+              "ResourceLocation",
+              "apiVersion",
+              "provider",
+              "string",
+              "subscriptionId",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 540,
+            "endLine": 540
+          }
+        },
+        {
+          "id": "declaration-e3fb391b32358239",
+          "kind": "interface",
+          "qualifiedName": "PrivateEndpointConnectionsInterface",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16443,
+              "end": 16829
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 543,
+            "endLine": 550
+          }
+        },
+        {
+          "id": "declaration-dc5a760c9b72d280",
+          "kind": "operation",
+          "qualifiedName": "PrivateEndpointConnectionsInterface.get",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16553,
+              "end": 16602
+            },
+            "referencedNames": [
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "PrivateEndpointConnection",
+              "PrivateEndpointConnection.name",
+              "PrivateEndpointConnection.properties",
+              "PrivateEndpointConnectionProperties",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "apiVersion",
+              "privateEndpointConnectionName",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "trafficControllerName",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 546,
+            "endLine": 546
+          }
+        },
+        {
+          "id": "declaration-a2f1dab2603acc26",
+          "kind": "operation",
+          "qualifiedName": "PrivateEndpointConnectionsInterface.update",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16606,
+              "end": 16673
+            },
+            "referencedNames": [
+              "ArmResourceCreatedSyncResponse",
+              "ArmResourceCreatedSyncResponse.body",
+              "ArmResourceCreatedSyncResponse.statusCode",
+              "ArmResourceUpdatedResponse",
+              "ArmResourceUpdatedResponse.body",
+              "ArmResourceUpdatedResponse.statusCode",
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "PrivateEndpointConnection",
+              "PrivateEndpointConnection.name",
+              "PrivateEndpointConnection.properties",
+              "PrivateEndpointConnectionProperties",
+              "PrivateEndpointConnectionProperties.privateEndpoint",
+              "PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
+              "PrivateEndpointConnectionProperties.provisioningState",
+              "PrivateEndpointReference",
+              "PrivateLinkServiceConnectionState",
+              "ProvisioningState",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "apiVersion",
+              "armResourceIdentifier",
+              "armResourceType",
+              "privateEndpointConnectionName",
+              "provider",
+              "resource",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "trafficControllerName",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 547,
+            "endLine": 547
+          }
+        },
+        {
+          "id": "declaration-e4f2eafeebefa89c",
+          "kind": "operation",
+          "qualifiedName": "PrivateEndpointConnectionsInterface.delete",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16677,
+              "end": 16745
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "ArmDeleteAcceptedLroResponse",
+              "ArmDeleteAcceptedLroResponse.location",
+              "ArmDeleteAcceptedLroResponse.retryAfter",
+              "ArmDeleteAcceptedLroResponse.statusCode",
+              "ArmDeletedNoContentResponse",
+              "ArmDeletedNoContentResponse.statusCode",
+              "ArmNoContentResponse",
+              "ArmNoContentResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "int32",
+              "privateEndpointConnectionName",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "trafficControllerName",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 548,
+            "endLine": 548
+          }
+        },
+        {
+          "id": "declaration-7d0dc273e6fd1267",
+          "kind": "operation",
+          "qualifiedName": "PrivateEndpointConnectionsInterface.listByTrafficController",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16749,
+              "end": 16826
+            },
+            "referencedNames": [
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "Page",
+              "Page.nextLink",
+              "Page.value",
+              "ResourceListResult",
+              "ResourceListResult.nextLink",
+              "ResourceListResult.value",
+              "ResourceLocation",
+              "apiVersion",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "trafficControllerName",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 549,
+            "endLine": 549
+          }
+        },
+        {
+          "id": "declaration-ada6a6049fca7041",
+          "kind": "interface",
+          "qualifiedName": "PrivateLinkResourcesInterface",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16831,
+              "end": 17056
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 552,
+            "endLine": 557
+          }
+        },
+        {
+          "id": "declaration-a9ac141e95496a9d",
+          "kind": "operation",
+          "qualifiedName": "PrivateLinkResourcesInterface.get",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16935,
+              "end": 16978
+            },
+            "referencedNames": [
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "PrivateLinkResource",
+              "PrivateLinkResource.name",
+              "PrivateLinkResource.properties",
+              "PrivateLinkResourceProperties",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "apiVersion",
+              "privateLinkResourceName",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "trafficControllerName",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 555,
+            "endLine": 555
+          }
+        },
+        {
+          "id": "declaration-32e8e24f7072e71f",
+          "kind": "operation",
+          "qualifiedName": "PrivateLinkResourcesInterface.listByTrafficController",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 16982,
+              "end": 17053
+            },
+            "referencedNames": [
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "Page",
+              "Page.nextLink",
+              "Page.value",
+              "ResourceListResult",
+              "ResourceListResult.nextLink",
+              "ResourceListResult.value",
+              "ResourceLocation",
+              "apiVersion",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "trafficControllerName",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 556,
+            "endLine": 556
+          }
+        },
+        {
+          "id": "declaration-35a54174afe6edce",
+          "kind": "interface",
+          "qualifiedName": "Operations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-f0be91f7314a4338"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "position": {
+              "start": 17058,
+              "end": 17122
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 559,
+            "endLine": 559
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-005e5cf7bb6efabf",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointReference.id",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Resource ID of the private endpoint.",
+              "declaration": "/** Resource ID of the private endpoint. */\n  @visibility(Lifecycle.Read)\n  id?: string",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 390,
+                "endLine": 392
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-03beb12c7647006e",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointReference",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "Reference to a private endpoint resource.",
+              "declaration": "/** Reference to a private endpoint resource. */\n@added(Versions.v2025_10_01_preview)\nmodel PrivateEndpointReference {\n  /** Resource ID of the private endpoint. */\n  @visibility(Lifecycle.Read)\n  id?: string;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 387,
+                "endLine": 393
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-04c3a2db85ff1c91",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.AssociationUpdate",
+            "kind": "model",
+            "before": {
+              "doc": "The type used for update operations of the Association.",
+              "declaration": "/** The type used for update operations of the Association. */\nmodel AssociationUpdate {\n  ...Azure.ResourceManager.Foundations.ArmTagsProperty;\n\n  /** The resource-specific properties for this resource. */\n  #suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\"\n  @Azure.ClientGenerator.Core.Legacy.flattenProperty\n  properties?: AssociationUpdateProperties;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "base",
+                "startLine": 79,
+                "endLine": 87
+              }
+            },
+            "after": {
+              "doc": "The type used for update operations of the Association.",
+              "declaration": "/** The type used for update operations of the Association. */\nmodel AssociationUpdate {\n  ...Azure.ResourceManager.Foundations.ArmTagsProperty;\n\n  /** The resource-specific properties for this resource. */\n  #suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\"\n  @Azure.ClientGenerator.Core.Legacy.flattenProperty(\"!javascript\")\n  properties?: AssociationUpdateProperties;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 119,
+                "endLine": 127
+              }
+            },
+            "hunkIds": [
+              "hunk-b605dbbad3368559"
+            ]
+          },
+          {
+            "id": "document-097007fea224ddef",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnection.name",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Private Endpoint Connection",
+              "declaration": "/** Private Endpoint Connection */\n  @key(\"privateEndpointConnectionName\")\n  @visibility(Lifecycle.Read)\n  @path\n  @segment(\"privateEndpointConnections\")\n  @pattern(\"^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$\")\n  name: string",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 363,
+                "endLine": 369
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-09f1c763c5463e00",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionStatus",
+            "kind": "union",
+            "before": null,
+            "after": {
+              "doc": "The private endpoint connection status.",
+              "declaration": "/** The private endpoint connection status. */\n@added(Versions.v2025_10_01_preview)\nunion PrivateLinkServiceConnectionStatus {\n  string,\n\n  /** Connection is pending approval. */\n  Pending: \"Pending\",\n\n  /** Connection is approved. */\n  Approved: \"Approved\",\n\n  /** Connection is rejected. */\n  Rejected: \"Rejected\",\n\n  /** Connection is disconnected. */\n  Disconnected: \"Disconnected\",\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 408,
+                "endLine": 424
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-0db7e800d1f3b528",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The connection state of the private endpoint connection.",
+              "declaration": "/** The connection state of the private endpoint connection. */\n  privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 379,
+                "endLine": 380
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-0dbb44d0c56bbcaf",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.AssociationUpdate.properties",
+            "kind": "property",
+            "before": {
+              "doc": "The resource-specific properties for this resource.",
+              "declaration": "/** The resource-specific properties for this resource. */\n  #suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\"\n  @Azure.ClientGenerator.Core.Legacy.flattenProperty\n  properties?: AssociationUpdateProperties",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "base",
+                "startLine": 83,
+                "endLine": 86
+              }
+            },
+            "after": {
+              "doc": "The resource-specific properties for this resource.",
+              "declaration": "/** The resource-specific properties for this resource. */\n  #suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\"\n  @Azure.ClientGenerator.Core.Legacy.flattenProperty(\"!javascript\")\n  properties?: AssociationUpdateProperties",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 123,
+                "endLine": 126
+              }
+            },
+            "hunkIds": [
+              "hunk-b605dbbad3368559"
+            ]
+          },
+          {
+            "id": "document-11438a9bf1889161",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.FrontendProperties.publicNetworkAccess",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Whether public network access is allowed for the frontend. Enabled indicates a public frontend; Disabled indicates a private frontend.",
+              "declaration": "/** Whether public network access is allowed for the frontend. Enabled indicates a public frontend; Disabled indicates a private frontend. */\n  @added(Versions.v2025_10_01_preview)\n  publicNetworkAccess?: PublicNetworkAccess",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 63,
+                "endLine": 65
+              }
+            },
+            "hunkIds": [
+              "hunk-efad1596b4410deb"
+            ]
+          },
+          {
+            "id": "document-1726b583d8b43121",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnectionProperties",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "Properties of a Private Endpoint Connection.",
+              "declaration": "/** Properties of a Private Endpoint Connection. */\n@added(Versions.v2025_10_01_preview)\nmodel PrivateEndpointConnectionProperties {\n  /** The private endpoint resource. */\n  @visibility(Lifecycle.Read)\n  privateEndpoint?: PrivateEndpointReference;\n\n  /** The connection state of the private endpoint connection. */\n  privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;\n\n  /** Provisioning state of the private endpoint connection. */\n  @visibility(Lifecycle.Read)\n  provisioningState?: ProvisioningState;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 372,
+                "endLine": 385
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-1c33416a5944418a",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResourcesInterface.get",
+            "kind": "operation",
+            "before": null,
+            "after": {
+              "doc": "Get a PrivateLinkResource",
+              "declaration": "get is ArmResourceRead<PrivateLinkResource>",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 555,
+                "endLine": 555
+              },
+              "documentationOrigin": "inherited"
+            },
+            "hunkIds": [
+              "hunk-f0be91f7314a4338"
+            ]
+          },
+          {
+            "id": "document-1c85585100643939",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionStatus.Pending",
+            "kind": "union-variant",
+            "before": null,
+            "after": {
+              "doc": "Connection is pending approval.",
+              "declaration": "/** Connection is pending approval. */\n  Pending: \"Pending\"",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 413,
+                "endLine": 414
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-1e9aab68624f4d3a",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PublicNetworkAccess.Enabled",
+            "kind": "union-variant",
+            "before": null,
+            "after": {
+              "doc": "Public network access is enabled (public frontend accessible via a public IP address).",
+              "declaration": "/** Public network access is enabled (public frontend accessible via a public IP address). */\n  Enabled: \"Enabled\"",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 85,
+                "endLine": 86
+              }
+            },
+            "hunkIds": [
+              "hunk-9092eb2047098c0c"
+            ]
+          },
+          {
+            "id": "document-201bd14b452aca1d",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PublicNetworkAccess.Disabled",
+            "kind": "union-variant",
+            "before": null,
+            "after": {
+              "doc": "Public network access is disabled (private frontend accessible only through a private endpoint).",
+              "declaration": "/** Public network access is disabled (private frontend accessible only through a private endpoint). */\n  Disabled: \"Disabled\"",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 88,
+                "endLine": 89
+              }
+            },
+            "hunkIds": [
+              "hunk-9092eb2047098c0c"
+            ]
+          },
+          {
+            "id": "document-3393810f00a9cfe0",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionStatus.Approved",
+            "kind": "union-variant",
+            "before": null,
+            "after": {
+              "doc": "Connection is approved.",
+              "declaration": "/** Connection is approved. */\n  Approved: \"Approved\"",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 416,
+                "endLine": 417
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-35295bbb105db264",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionState.description",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The reason for approval/rejection of the connection.",
+              "declaration": "/** The reason for approval/rejection of the connection. */\n  description?: string",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 401,
+                "endLine": 402
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-36be5bf6b2588bd9",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.FrontendProperties.association",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Reference to an Association resource that contains the subnet where the private frontend should be deployed.",
+              "declaration": "/** Reference to an Association resource that contains the subnet where the private frontend should be deployed. */\n  @added(Versions.v2025_10_01_preview)\n  association?: FrontendAssociation",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 67,
+                "endLine": 69
+              }
+            },
+            "hunkIds": [
+              "hunk-efad1596b4410deb"
+            ]
+          },
+          {
+            "id": "document-3dfc883ad24cf7b2",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.FrontendAssociation",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "Reference to an Association resource.",
+              "declaration": "/** Reference to an Association resource. */\n@added(Versions.v2025_10_01_preview)\nmodel FrontendAssociation {\n  /** Resource ID of the Association. */\n  id: string;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 92,
+                "endLine": 97
+              }
+            },
+            "hunkIds": [
+              "hunk-9092eb2047098c0c"
+            ]
+          },
+          {
+            "id": "document-452983dc58bd735d",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.TrafficControllerProperties.privateEndpointConnections",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Private Endpoint Connections List",
+              "declaration": "/** Private Endpoint Connections List */\n  @visibility(Lifecycle.Read)\n  @added(Versions.v2025_10_01_preview)\n  privateEndpointConnections?: ResourceId[]",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 310,
+                "endLine": 313
+              }
+            },
+            "hunkIds": [
+              "hunk-d2e77d6a73b6758a"
+            ]
+          },
+          {
+            "id": "document-4c4a74cf01479554",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.Versions.v2026_03_01",
+            "kind": "enum-member",
+            "before": null,
+            "after": {
+              "doc": "2026-03-01 stable version",
+              "declaration": "/** 2026-03-01 stable version */\n  v2026_03_01: \"2026-03-01\"",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 34,
+                "endLine": 35
+              }
+            },
+            "hunkIds": [
+              "hunk-497a8bdb0c830a39"
+            ]
+          },
+          {
+            "id": "document-4d0b999a8e6480a6",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnection",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "Private Endpoint Connection resource of Traffic Controller.",
+              "declaration": "/** Private Endpoint Connection resource of Traffic Controller. */\n@added(Versions.v2025_10_01_preview)\n@parentResource(TrafficController)\nmodel PrivateEndpointConnection\n  is ProxyResource<PrivateEndpointConnectionProperties> {\n  /** Private Endpoint Connection */\n  @key(\"privateEndpointConnectionName\")\n  @visibility(Lifecycle.Read)\n  @path\n  @segment(\"privateEndpointConnections\")\n  @pattern(\"^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$\")\n  name: string;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 358,
+                "endLine": 370
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-4d4c5ef2fb32948b",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionStatus.Disconnected",
+            "kind": "union-variant",
+            "before": null,
+            "after": {
+              "doc": "Connection is disconnected.",
+              "declaration": "/** Connection is disconnected. */\n  Disconnected: \"Disconnected\"",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 422,
+                "endLine": 423
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-50a5c3cb964bc35f",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.FrontendProperties",
+            "kind": "model",
+            "before": {
+              "doc": "Frontend Properties.",
+              "declaration": "/** Frontend Properties. */\nmodel FrontendProperties {\n  /** The Fully Qualified Domain Name of the DNS record associated to a Traffic Controller frontend. */\n  @visibility(Lifecycle.Read)\n  fqdn?: string;\n\n  /** Frontend Security Policy Configuration */\n  @added(Versions.v2025_03_01_preview)\n  securityPolicyConfigurations?: SecurityPolicyConfigurations;\n\n  /** Provisioning State of Traffic Controller Frontend Resource */\n  @visibility(Lifecycle.Read)\n  provisioningState?: ProvisioningState;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "base",
+                "startLine": 51,
+                "endLine": 64
+              }
+            },
+            "after": {
+              "doc": "Frontend Properties.",
+              "declaration": "/** Frontend Properties. */\nmodel FrontendProperties {\n  /** The Fully Qualified Domain Name of the DNS record associated to a Traffic Controller frontend. */\n  @visibility(Lifecycle.Read)\n  fqdn?: string;\n\n  /** Whether public network access is allowed for the frontend. Enabled indicates a public frontend; Disabled indicates a private frontend. */\n  @added(Versions.v2025_10_01_preview)\n  publicNetworkAccess?: PublicNetworkAccess;\n\n  /** Reference to an Association resource that contains the subnet where the private frontend should be deployed. */\n  @added(Versions.v2025_10_01_preview)\n  association?: FrontendAssociation;\n\n  /** Frontend Security Policy Configuration */\n  @added(Versions.v2025_03_01_preview)\n  securityPolicyConfigurations?: SecurityPolicyConfigurations;\n\n  /** Provisioning State of Traffic Controller Frontend Resource */\n  @visibility(Lifecycle.Read)\n  provisioningState?: ProvisioningState;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 57,
+                "endLine": 78
+              }
+            },
+            "hunkIds": [
+              "hunk-efad1596b4410deb"
+            ]
+          },
+          {
+            "id": "document-53835c6056ce2b13",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.FrontendAssociation.id",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Resource ID of the Association.",
+              "declaration": "/** Resource ID of the Association. */\n  id: string",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 95,
+                "endLine": 96
+              }
+            },
+            "hunkIds": [
+              "hunk-9092eb2047098c0c"
+            ]
+          },
+          {
+            "id": "document-54056ebfa1e48b72",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResource.name",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Private Link Resource",
+              "declaration": "/** Private Link Resource */\n  @key(\"privateLinkResourceName\")\n  @visibility(Lifecycle.Read)\n  @path\n  @segment(\"privateLinkResources\")\n  @pattern(\"^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$\")\n  name: string",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 431,
+                "endLine": 437
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-67e549b8a7f1dacd",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResourceProperties.requiredMembers",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The private link resource required member names.",
+              "declaration": "/** The private link resource required member names. */\n  @visibility(Lifecycle.Read)\n  requiredMembers?: string[]",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 447,
+                "endLine": 449
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-68936369ae8d0245",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionStatus.Rejected",
+            "kind": "union-variant",
+            "before": null,
+            "after": {
+              "doc": "Connection is rejected.",
+              "declaration": "/** Connection is rejected. */\n  Rejected: \"Rejected\"",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 419,
+                "endLine": 420
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-73b15bbdcb5ce988",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.Versions",
+            "kind": "enum",
+            "before": {
+              "doc": "Api versions",
+              "declaration": "/** Api versions */\nenum Versions {\n  /** 2023-11-01 stable version */\n  v2023_11_01: \"2023-11-01\",\n\n  /** 2024-05-01 preview version */\n  v2024_05_01_preview: \"2024-05-01-preview\",\n\n  /** 2025-01-01 stable version */\n  v2025_05_01: \"2025-01-01\",\n\n  /** 2025-03-01 preview version */\n  v2025_03_01_preview: \"2025-03-01-preview\",\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "base",
+                "startLine": 17,
+                "endLine": 30
+              }
+            },
+            "after": {
+              "doc": "Api versions",
+              "declaration": "/** Api versions */\nenum Versions {\n  /** 2023-11-01 stable version */\n  v2023_11_01: \"2023-11-01\",\n\n  /** 2024-05-01 preview version */\n  v2024_05_01_preview: \"2024-05-01-preview\",\n\n  /** 2025-01-01 stable version */\n  v2025_05_01: \"2025-01-01\",\n\n  /** 2025-03-01 preview version */\n  v2025_03_01_preview: \"2025-03-01-preview\",\n\n  /** 2025-10-01 preview version */\n  v2025_10_01_preview: \"2025-10-01-preview\",\n\n  /** 2026-03-01 stable version */\n  v2026_03_01: \"2026-03-01\",\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 17,
+                "endLine": 36
+              }
+            },
+            "hunkIds": [
+              "hunk-497a8bdb0c830a39"
+            ]
+          },
+          {
+            "id": "document-75596f532f29fdfc",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PublicNetworkAccess",
+            "kind": "union",
+            "before": null,
+            "after": {
+              "doc": "Whether public network access is allowed for the frontend.",
+              "declaration": "/** Whether public network access is allowed for the frontend. */\n@added(Versions.v2025_10_01_preview)\nunion PublicNetworkAccess {\n  string,\n\n  /** Public network access is enabled (public frontend accessible via a public IP address). */\n  Enabled: \"Enabled\",\n\n  /** Public network access is disabled (private frontend accessible only through a private endpoint). */\n  Disabled: \"Disabled\",\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 80,
+                "endLine": 90
+              }
+            },
+            "hunkIds": [
+              "hunk-9092eb2047098c0c"
+            ]
+          },
+          {
+            "id": "document-795741119dd94416",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.Versions.v2025_10_01_preview",
+            "kind": "enum-member",
+            "before": null,
+            "after": {
+              "doc": "2025-10-01 preview version",
+              "declaration": "/** 2025-10-01 preview version */\n  v2025_10_01_preview: \"2025-10-01-preview\"",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 31,
+                "endLine": 32
+              }
+            },
+            "hunkIds": [
+              "hunk-497a8bdb0c830a39"
+            ]
+          },
+          {
+            "id": "document-84f57aa28452e17e",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnectionsInterface.delete",
+            "kind": "operation",
+            "before": null,
+            "after": {
+              "doc": "Delete a PrivateEndpointConnection",
+              "declaration": "delete is ArmResourceDeleteWithoutOkAsync<PrivateEndpointConnection>",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 548,
+                "endLine": 548
+              },
+              "documentationOrigin": "inherited"
+            },
+            "hunkIds": [
+              "hunk-f0be91f7314a4338"
+            ]
+          },
+          {
+            "id": "document-86dbb5af80544848",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResource",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "A private link resource.",
+              "declaration": "/** A private link resource. */\n@added(Versions.v2025_10_01_preview)\n@parentResource(TrafficController)\nmodel PrivateLinkResource is ProxyResource<PrivateLinkResourceProperties> {\n  /** Private Link Resource */\n  @key(\"privateLinkResourceName\")\n  @visibility(Lifecycle.Read)\n  @path\n  @segment(\"privateLinkResources\")\n  @pattern(\"^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$\")\n  name: string;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 427,
+                "endLine": 438
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-97c54583b941a347",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.FrontendAssociationUpdate",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "Reference to an Association resource.",
+              "declaration": "/** Reference to an Association resource. */\n@added(Versions.v2025_10_01_preview)\nmodel FrontendAssociationUpdate {\n  /** Resource ID of the Association. */\n  id?: string;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 99,
+                "endLine": 104
+              }
+            },
+            "hunkIds": [
+              "hunk-9092eb2047098c0c"
+            ]
+          },
+          {
+            "id": "document-a73eb9106b8ecb41",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionState.status",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Indicates whether the connection has been Approved/Rejected/Removed by the owner of the service.",
+              "declaration": "/** Indicates whether the connection has been Approved/Rejected/Removed by the owner of the service. */\n  status?: PrivateLinkServiceConnectionStatus",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 398,
+                "endLine": 399
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-ac22c62df49e359d",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResourcesInterface.listByTrafficController",
+            "kind": "operation",
+            "before": null,
+            "after": {
+              "doc": "List PrivateLinkResource resources by TrafficController",
+              "declaration": "listByTrafficController is ArmResourceListByParent<PrivateLinkResource>",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 556,
+                "endLine": 556
+              },
+              "documentationOrigin": "inherited"
+            },
+            "hunkIds": [
+              "hunk-f0be91f7314a4338"
+            ]
+          },
+          {
+            "id": "document-adc346308750a050",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnectionsInterface.update",
+            "kind": "operation",
+            "before": null,
+            "after": {
+              "doc": "Create a PrivateEndpointConnection",
+              "declaration": "update is ArmResourceCreateOrReplaceSync<PrivateEndpointConnection>",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 547,
+                "endLine": 547
+              },
+              "documentationOrigin": "inherited"
+            },
+            "hunkIds": [
+              "hunk-f0be91f7314a4338"
+            ]
+          },
+          {
+            "id": "document-af195e2d9b97c2f6",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResourceProperties.requiredZoneNames",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The private link resource private DNS zone names.",
+              "declaration": "/** The private link resource private DNS zone names. */\n  @visibility(Lifecycle.Read)\n  requiredZoneNames?: string[]",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 451,
+                "endLine": 453
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-b254e963966c2213",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionState",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "The state of a private link service connection.",
+              "declaration": "/** The state of a private link service connection. */\n@added(Versions.v2025_10_01_preview)\nmodel PrivateLinkServiceConnectionState {\n  /** Indicates whether the connection has been Approved/Rejected/Removed by the owner of the service. */\n  status?: PrivateLinkServiceConnectionStatus;\n\n  /** The reason for approval/rejection of the connection. */\n  description?: string;\n\n  /** A message indicating if changes on the service provider require any updates on the consumer. */\n  actionsRequired?: string;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 395,
+                "endLine": 406
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-b7500294872a3356",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnectionsInterface.listByTrafficController",
+            "kind": "operation",
+            "before": null,
+            "after": {
+              "doc": "List PrivateEndpointConnection resources by TrafficController",
+              "declaration": "listByTrafficController is ArmResourceListByParent<PrivateEndpointConnection>",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 549,
+                "endLine": 549
+              },
+              "documentationOrigin": "inherited"
+            },
+            "hunkIds": [
+              "hunk-f0be91f7314a4338"
+            ]
+          },
+          {
+            "id": "document-bd787c8e10427023",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.TrafficControllerProperties",
+            "kind": "model",
+            "before": {
+              "doc": "Traffic Controller Properties.",
+              "declaration": "/** Traffic Controller Properties. */\nmodel TrafficControllerProperties {\n  /** Configuration Endpoints. */\n  @visibility(Lifecycle.Read)\n  configurationEndpoints?: string[];\n\n  /** Frontends References List */\n  @visibility(Lifecycle.Read)\n  frontends?: ResourceId[];\n\n  /** Associations References List */\n  @visibility(Lifecycle.Read)\n  associations?: ResourceId[];\n\n  /** Security Policies References List */\n  @visibility(Lifecycle.Read)\n  @added(Versions.v2024_05_01_preview)\n  securityPolicies?: ResourceId[];\n\n  /** Security Policy Configuration */\n  @added(Versions.v2024_05_01_preview)\n  securityPolicyConfigurations?: SecurityPolicyConfigurations;\n\n  /** The status of the last operation. */\n  @visibility(Lifecycle.Read)\n  provisioningState?: ProvisioningState;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "base",
+                "startLine": 251,
+                "endLine": 277
+              }
+            },
+            "after": {
+              "doc": "Traffic Controller Properties.",
+              "declaration": "/** Traffic Controller Properties. */\nmodel TrafficControllerProperties {\n  /** Configuration Endpoints. */\n  @visibility(Lifecycle.Read)\n  configurationEndpoints?: string[];\n\n  /** Frontends References List */\n  @visibility(Lifecycle.Read)\n  frontends?: ResourceId[];\n\n  /** Associations References List */\n  @visibility(Lifecycle.Read)\n  associations?: ResourceId[];\n\n  /** Security Policies References List */\n  @visibility(Lifecycle.Read)\n  @added(Versions.v2024_05_01_preview)\n  securityPolicies?: ResourceId[];\n\n  /** Private Endpoint Connections List */\n  @visibility(Lifecycle.Read)\n  @added(Versions.v2025_10_01_preview)\n  privateEndpointConnections?: ResourceId[];\n\n  /** Security Policy Configuration */\n  @added(Versions.v2024_05_01_preview)\n  securityPolicyConfigurations?: SecurityPolicyConfigurations;\n\n  /** The status of the last operation. */\n  @visibility(Lifecycle.Read)\n  provisioningState?: ProvisioningState;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 291,
+                "endLine": 322
+              }
+            },
+            "hunkIds": [
+              "hunk-d2e77d6a73b6758a"
+            ]
+          },
+          {
+            "id": "document-bdef5f3528609562",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResourceProperties.provisioningState",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The status of the last operation.",
+              "declaration": "/** The status of the last operation. */\n  @visibility(Lifecycle.Read)\n  provisioningState?: ProvisioningState",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 455,
+                "endLine": 457
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-d3fc1f84930f1d0f",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnectionProperties.provisioningState",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Provisioning state of the private endpoint connection.",
+              "declaration": "/** Provisioning state of the private endpoint connection. */\n  @visibility(Lifecycle.Read)\n  provisioningState?: ProvisioningState",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 382,
+                "endLine": 384
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-de2a3c0ca30f0581",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResourceProperties",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "Properties of a private link resource.",
+              "declaration": "/** Properties of a private link resource. */\n@added(Versions.v2025_10_01_preview)\nmodel PrivateLinkResourceProperties {\n  /** The private link resource group ID. */\n  @visibility(Lifecycle.Read)\n  groupId?: string;\n\n  /** The private link resource required member names. */\n  @visibility(Lifecycle.Read)\n  requiredMembers?: string[];\n\n  /** The private link resource private DNS zone names. */\n  @visibility(Lifecycle.Read)\n  requiredZoneNames?: string[];\n\n  /** The status of the last operation. */\n  @visibility(Lifecycle.Read)\n  provisioningState?: ProvisioningState;\n}",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 440,
+                "endLine": 458
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-e926bf9ab0435a18",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkResourceProperties.groupId",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The private link resource group ID.",
+              "declaration": "/** The private link resource group ID. */\n  @visibility(Lifecycle.Read)\n  groupId?: string",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 443,
+                "endLine": 445
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-f30e7c50c5a111ab",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnectionProperties.privateEndpoint",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The private endpoint resource.",
+              "declaration": "/** The private endpoint resource. */\n  @visibility(Lifecycle.Read)\n  privateEndpoint?: PrivateEndpointReference",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 375,
+                "endLine": 377
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-f479663d464e18e6",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateLinkServiceConnectionState.actionsRequired",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "A message indicating if changes on the service provider require any updates on the consumer.",
+              "declaration": "/** A message indicating if changes on the service provider require any updates on the consumer. */\n  actionsRequired?: string",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 404,
+                "endLine": 405
+              }
+            },
+            "hunkIds": [
+              "hunk-4d79cd328e677e9f"
+            ]
+          },
+          {
+            "id": "document-fb8c5527449ad4c9",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.PrivateEndpointConnectionsInterface.get",
+            "kind": "operation",
+            "before": null,
+            "after": {
+              "doc": "Get a PrivateEndpointConnection",
+              "declaration": "get is ArmResourceRead<PrivateEndpointConnection>",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 546,
+                "endLine": 546
+              },
+              "documentationOrigin": "inherited"
+            },
+            "hunkIds": [
+              "hunk-f0be91f7314a4338"
+            ]
+          },
+          {
+            "id": "document-fdd1bec9d0bccc05",
+            "sourceChangeId": "source-9dc5452d38ced6b6",
+            "qualifiedName": "Microsoft.ServiceNetworking.FrontendAssociationUpdate.id",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "Resource ID of the Association.",
+              "declaration": "/** Resource ID of the Association. */\n  id?: string",
+              "source": {
+                "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+                "revision": "current",
+                "startLine": 102,
+                "endLine": 103
+              }
+            },
+            "hunkIds": [
+              "hunk-9092eb2047098c0c"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-f6ac9734d71248eb",
+      "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-3ffde1b0b84033b7",
+          "base": {
+            "startLine": 27,
+            "endLine": 32
+          },
+          "current": {
+            "startLine": 27,
+            "endLine": 42
+          },
+          "lines": [
+            "   \"autorest\"",
+            " );",
+            " #suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\"",
+            "+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+            "+  Microsoft.ServiceNetworking.PrivateEndpointConnection.properties,",
+            "+  \"autorest\"",
+            "+);",
+            "+#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\"",
+            "+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+            "+  Microsoft.ServiceNetworking.PrivateLinkResource.properties,",
+            "+  \"autorest\"",
+            "+);",
+            "+#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\"",
+            " @@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+            "   Azure.ResourceManager.Foundations.ResourceUpdateModel.properties,",
+            "   \"autorest\"",
+            ""
+          ]
+        }
+      ],
+      "declarations": [],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": []
+      }
+    }
+  ]
+}

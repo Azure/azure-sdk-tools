@@ -415,6 +415,31 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_private_preview_warns_when_merge_check_fails_and_still_sends_notification()
+        {
+            var mockGitHubService = (MockGitHubService)gitHubService;
+            mockGitHubService.ThrowOnGetPullRequest = true;
+
+            var notificationMock = new Mock<INotificationService>();
+            var notified = false;
+            notificationMock
+                .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .Callback(() => notified = true)
+                .Returns(Task.CompletedTask);
+
+            var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await tool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
+
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+            Assert.IsNotNull(releaseplan.Warnings);
+            Assert.That(releaseplan.Warnings, Has.Some.Contains("spec pull request is merged"));
+            Assert.IsTrue(notified, "Notification should still be sent even if the merge check fails.");
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_private_preview_rejects_public_spec_pr()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";

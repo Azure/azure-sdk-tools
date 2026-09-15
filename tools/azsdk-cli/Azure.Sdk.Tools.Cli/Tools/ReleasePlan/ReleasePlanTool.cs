@@ -1344,19 +1344,42 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var message = "Created release plan.";
                     reporter.NextStep(message);
 
-                    // Refresh the release plan and notify the submitter. Both are best-effort and must
+                    // Refresh the release plan to get the latest details. This is best-effort and must
                     // never fail release plan creation, so any error here is logged and swallowed.
                     try
                     {
-                        //Refresh release plan to get latest details
                         releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+                    }
+                    catch (Exception refreshEx)
+                    {
+                        logger.LogWarning(refreshEx, "Failed to refresh release plan {WorkItemId} after creation.", releasePlan.WorkItemId);
+                    }
 
-                        // For private preview release plans, mark as finished if the spec PR is already merged.
-                        if (releasePlan != null)
+                    // For private preview release plans, mark as finished if the spec PR is already merged.
+                    // Unlike notification delivery, a failure here leaves the plan open indefinitely, so surface
+                    // a warning and next step instead of silently swallowing the error.
+                    if (releasePlan != null)
+                    {
+                        try
                         {
                             releasePlan = await MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(releasePlan, specPullRequestUrl, ct);
                         }
+                        catch (OperationCanceledException)
+                        {
+                            throw;
+                        }
+                        catch (Exception markFinishedEx)
+                        {
+                            logger.LogWarning(markFinishedEx, "Failed to check spec PR merge status and mark private preview release plan {WorkItemId} as Finished.", releasePlan.WorkItemId);
+                            warnings.Add("Failed to check whether the spec pull request is merged, so the private preview release plan could not be automatically marked as Finished.");
+                            nextSteps.Add("Verify the spec pull request status and manually mark the release plan as Finished if it has already merged.");
+                        }
+                    }
 
+                    // Notify the submitter. This is best-effort and must never fail release plan creation,
+                    // so any error here is logged and swallowed.
+                    try
+                    {
                         // Recipient routing (To/CC) is owned by the email template.
                         // Silently completes when notifications are disabled.
                         var releasePlanEmail = new NewReleasePlanEmail(releasePlan);
@@ -1364,7 +1387,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                     catch (Exception notifyEx)
                     {
-                        logger.LogWarning(notifyEx, "Failed to refresh release plan, mark it finished, or send release plan notification.");
+                        logger.LogWarning(notifyEx, "Failed to send release plan notification.");
                     }
 
                     var response = new ReleasePlanResponse

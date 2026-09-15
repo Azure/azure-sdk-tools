@@ -9,6 +9,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         // When set, controls whether pull requests returned by GetPullRequestAsync report as merged.
         public bool ConfiguredPullRequestMerged { get; set; }
 
+        // When set, GetPullRequestAsync throws to simulate a GitHub lookup failure.
+        public bool ThrowOnGetPullRequest { get; set; }
+
         public string GetAuthToken() => "mock-github-token";
 
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main", CancellationToken ct = default)
@@ -39,6 +42,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
+            if (ThrowOnGetPullRequest)
+            {
+                throw new InvalidOperationException("Simulated GitHub lookup failure.");
+            }
+
             // Create a minimal pull request mock
             var pr = CreateMockPullRequest(repoOwner, repoName, pullRequestNumber);
             return Task.FromResult(pr);

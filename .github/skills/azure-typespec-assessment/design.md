@@ -28,6 +28,14 @@ All five dimensions are active. Doc Correctness
 assesses source documentation, not runtime agent performance. Overall safety
 continues to cover REST and downstream SDK compatibility only.
 
+### Deferred: HTTP breaking-change tool integration
+
+A future version may consume HTTP diffs from the breaking-change tool and
+interpret them as REST compatibility evidence. This is not implemented in v1:
+REST candidates still come from the existing AutoRest contract comparison.
+Any integration must preserve baseline/API-version provenance, source linkage,
+and the separation of REST compatibility from downstream SDK impact.
+
 ## End-to-end flow
 
 ```text
@@ -1097,6 +1105,11 @@ catalog](references/reference-document-links.md). The copied catalog is
 navigation metadata. Only successfully fetched page content can establish an
 expected Azure Guidelines pattern.
 
+Prefer explanatory guidance with embedded examples. A standalone official
+sample is useful for a distinct pattern, but its incidental choices are not
+normative requirements. Keep experimental agent resource types and the
+Azure.Core resource-operation interface guides out of this catalog.
+
 ### Query profile
 
 Build one query profile per Semantic intent from deterministic evidence:
@@ -1133,18 +1146,17 @@ score and break ties by catalog order. Select the first four retrievable
 documents, recording each score component and a concise selection rationale.
 Do not allow the Agent to add an uncataloged URL.
 
-For PR 44988's `Add address prefix set child resources` intent, the expected
-catalog ranking is:
+Evolving APIs is the primary versioning reference for changes to existing
+versioned APIs, including changes that omit a version decorator. It appears
+first in the catalog for ties; relevance scoring still determines selection.
+Distinguish ARM template-based lists from data-plane low-level paging when
+scoring service-plane and pattern matches.
 
-1. ARM resource types and modeling;
-2. ARM resource operations;
-3. Azure.ResourceManager interface reference;
-4. Evolving APIs.
-
-The first three match the new ARM child-resource and lifecycle-operation
-patterns; the fourth covers introducing that surface in a new API version.
-This is a ranking example, not Azure Guidelines evidence: the fetched sections must
-still prove applicability.
+For an intent that adds an ARM child resource in a new API version, relevant
+guidance includes resource modeling, lifecycle operations, resource decorators,
+and Evolving APIs. Select and order documents from the actual changed constructs
+using the rubric, not a fixed example ranking. Fetched sections must still prove
+applicability.
 
 Fetch the initial four URLs concurrently with `web_fetch`. Cache fetched
 markdown by canonical URL and content hash for the assessment run. When

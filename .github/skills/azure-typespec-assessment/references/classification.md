@@ -35,6 +35,19 @@ operation or source IDs; deterministic assembly restores the complete
 inventory. Describe version propagation explicitly when that is the unit's
 change kind.
 
+For resource-oriented REST APIs, identify the affected resource and lifecycle
+role, not just the HTTP verb and route. Use supplied TypeSpec declarations,
+template applications, and decorator evidence: `TypeSpec.Rest` associates
+resources with create, read, update, delete, list, and action operations; ARM
+templates and `@armResource*` decorators identify ARM lifecycle roles.
+Consult the [resource semantics references](reference-document-links.md#resource-semantics)
+for Azure Guidelines requirements, including resource-kind-specific ARM
+requirements. Do not infer a lifecycle role solely from an operation name or
+HTTP verb, or invent required operations absent from the bounded evidence.
+For non-resource HTTP APIs, the low-level HTTP representation is sufficient.
+When a resource association cannot be established, state the limitation.
+Keep this within the single intent summary; do not add per-operation judgments.
+
 Set `overallConfidence` to the lowest confidence warranted by ready dimensions and evidence quality:
 
 - `high`: complete, direct before/after evidence;

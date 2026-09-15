@@ -8,6 +8,25 @@ import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
 
 const HASH = `sha256:${"a".repeat(64)}`;
 
+test("catalog prioritizes API evolution and separates supported resource and paging guidance", () => {
+  const catalog = readComplianceCatalog();
+  const urls = catalog.map((entry) => entry.canonicalUrl);
+  assert.equal(catalog[0].title, "Evolving APIs");
+  assert.equal(new Set(urls).size, urls.length);
+  for (const excluded of [
+    "/howtos/arm/agent-base-type/",
+    "/getstarted/azure-core/step05/",
+    "/libraries/azure-core/reference/interfaces/",
+  ]) {
+    assert.equal(urls.some((url) => url.endsWith(excluded)), false);
+  }
+  assert.equal(catalog.find((entry) => entry.title === "TypeSpec pagination").category, "Data-Plane Paging");
+  assert.equal(catalog.find((entry) => entry.title === "Azure.ResourceManager data types").category, "ARM Paging");
+  assert.equal(catalog.find((entry) => entry.title === "TypeSpec.Rest decorators").category, "Resource Semantics");
+  assert.equal(catalog.find((entry) => entry.title === "Azure.ResourceManager decorators").category, "Resource Semantics");
+  assert.ok(catalog.some((entry) => entry.title === "Specific extension resource sample"));
+});
+
 function fixture() {
   const source = {
     id: "source-1",

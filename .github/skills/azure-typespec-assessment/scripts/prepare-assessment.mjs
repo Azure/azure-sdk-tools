@@ -7,6 +7,7 @@ import {
   collectChanges,
   createSparseWorktree,
   discoverProjects,
+  normalizeSpecification,
   normalizeSparseRoots,
   resolveComparison,
 } from "./git-evidence.mjs";
@@ -157,14 +158,15 @@ export async function prepareAssessment({
 }) {
   const started = performance.now();
   const repository = path.resolve(repo ?? process.cwd());
+  const scope = normalizeSpecification(repository, specification);
   const work = path.resolve(output);
   fs.mkdirSync(work, { recursive: true });
   const comparison = resolveComparison(repository, base ?? "origin/main");
   const sparseRoots = normalizeSparseRoots(
     requestedSparseRoots ?? sparse_root,
-    specification,
+    scope,
   );
-  const changedFiles = collectChanges(repository, comparison.mergeBaseCommit, specification).filter((file) =>
+  const changedFiles = collectChanges(repository, comparison.mergeBaseCommit, scope).filter((file) =>
     sparseRoots.some(
       (root) => file.path === root || file.path.startsWith(`${root}/`),
     ),
@@ -240,7 +242,7 @@ export async function prepareAssessment({
   if (!projects.length) {
     blockers.push({
       code: "project-not-found",
-      message: `No affected tspconfig.yaml was found under ${specification}.`,
+      message: `No affected tspconfig.yaml was found under ${scope}.`,
     });
   }
   const externalImports = findExternalLocalImports(repository, projects, sparseRoots);

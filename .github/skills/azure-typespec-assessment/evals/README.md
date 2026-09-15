@@ -20,8 +20,9 @@ the current Git diff and normally runs before a PR or API review approval exists
 - `.workspaces/<pr>/` is generated and ignored. Sparse pilot cases contain a
   blob-filtered bare object store plus explicit detached `base` and `head`
   workspaces at the manifest commits.
-- `fixtures/` and the historical finalization scripts preserve lower-level
-  curated evidence used by focused unit tests and report reconstruction.
+- `fixtures/` preserves lower-level curated evidence used by focused unit tests
+  and historical comparisons. Use the current replay runner to render accepted
+  assessments; do not replace them with reconstructed legacy fixtures.
 
 ## Replay all accepted assessments
 
@@ -49,6 +50,8 @@ After an Azure Guidelines renderer rollout, compare all generated reports with t
 accepted reports and preserve both replay and historical full-run timings:
 
 ```powershell
+node .github\skills\azure-typespec-assessment\evals\scripts\run-e2e.mjs `
+  --output $PWD\.github\skills\azure-typespec-assessment\evals\outputs\compliance-rollout
 node .github\skills\azure-typespec-assessment\evals\scripts\compare-compliance-rollout.mjs
 ```
 

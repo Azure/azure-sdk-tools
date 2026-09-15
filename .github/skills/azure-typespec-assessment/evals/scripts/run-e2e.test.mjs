@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -23,6 +23,32 @@ test("replays all 12 historical assessments and retains HTML", () => {
     assert.match(html, /<!doctype html>/i);
     assert.match(html, /TypeSpec assessment/i);
   }
+});
+
+test("rollout comparison recognizes current guidance headings and uses the actual case count", (context) => {
+  const output = mkdtempSync(join(tmpdir(), "typespec-guidance-comparison-"));
+  context.after(() => rmSync(output, { recursive: true, force: true }));
+  const cases = loadCases();
+  for (const { pr } of cases) {
+    const directory = join(output, String(pr));
+    mkdirSync(directory);
+    copyFileSync(new URL(`../assessments/${pr}/assessment.html`, import.meta.url), join(directory, "assessment.html"));
+    writeFileSync(join(directory, "result.json"), JSON.stringify({ elapsedMs: 0 }));
+  }
+  const comparison = compareComplianceRollout({ output });
+  assert.equal(comparison.caseCount, cases.length);
+  assert.equal(comparison.allReportsShowOfficialDocuments, true);
+  assert.ok(comparison.methodology.contractCoverage.includes(`${cases.length}-case replay`));
+  const withGuidance = comparison.results.find(item => item.compliance.documentCount > 0);
+  assert.ok(withGuidance);
+  const reportPath = join(output, String(withGuidance.pr), "assessment.html");
+  const html = readFileSync(reportPath, "utf8");
+  const heading = '<h3 id="compliance-search-evidence">Guidance fetched</h3>';
+  assert.ok(html.includes(heading));
+  writeFileSync(reportPath, html.replace(heading, ""));
+  const missingGuidance = compareComplianceRollout({ output });
+  assert.equal(missingGuidance.allReportsShowOfficialDocuments, false);
+  assert.equal(missingGuidance.results.find(item => item.pr === withGuidance.pr).comparison.currentShowsOfficialDocuments, false);
 });
 
 test("rejects an unknown PR case", () => {

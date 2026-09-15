@@ -22,6 +22,11 @@
    [reference-document-links.md](reference-document-links.md), score every
    document with the rubric in `design.md`, and rank every URL. Break ties by
    catalog order.
+   Obtain canonical titles, URLs, and `catalogOrder` values with the exported
+   `readComplianceCatalog()` in `scripts/compliance-assessment.mjs`; preserve
+   them exactly instead of reconstructing metadata or renumbering entries.
+   This helper only reads catalog metadata; scoring and judgment remain Agent
+   work.
 3. **Fetch** — call `web_fetch` for the four URLs concurrently and extract
    markdown. If one cannot be fetched, record the failure and replace it with
    the next-ranked URL until four documents are retrieved or the catalog is

@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { serveAssessment } from "./serve-assessment.mjs";
 
-void test("serves only the selected assessment report on localhost", async (context) => {
+test("serves only the selected assessment report on localhost", async (context) => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-assessment-server-"));
   context.after(() => fs.rmSync(work, { recursive: true, force: true }));
   const report = path.join(work, "assessment.html");
@@ -23,7 +23,7 @@ void test("serves only the selected assessment report on localhost", async (cont
   assert.equal(missingResponse.status, 404);
 });
 
-void test("rejects a missing assessment report", async () => {
+test("rejects a missing assessment report", async () => {
   await assert.rejects(
     serveAssessment(path.join(os.tmpdir(), "missing-assessment-report.html")),
     /Assessment report does not exist/,

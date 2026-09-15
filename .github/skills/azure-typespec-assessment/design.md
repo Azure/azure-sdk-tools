@@ -36,6 +36,23 @@ REST candidates still come from the existing AutoRest contract comparison.
 Any integration must preserve baseline/API-version provenance, source linkage,
 and the separation of REST compatibility from downstream SDK impact.
 
+### Invocation and performance boundaries
+
+Run the documented CLI directly, including when the installed skill is a
+directory junction or symbolic link. The shared entrypoint guard resolves that
+link; a successful command must produce its documented output, not silently
+skip execution. Specification paths may be absolute or repository-relative;
+normalize them relative to `--repo` before deriving sparse roots.
+
+Separate invocation retries, dependency setup, compilation, analyzer work,
+Agent/tool waits, and finalization when reporting elapsed time. The preparation
+manifest's `totalMs` includes dependency setup, not just compiler work.
+Preparation already reuses the repository's installed toolchain when its
+lockfile hash and required package versions match; otherwise it installs an
+isolated toolchain. Use the repository's required Node version and install its
+locked dependencies once to enable that existing reuse path. Do not skip
+compatibility checks or reuse a mismatched toolchain for speed.
+
 ## End-to-end flow
 
 ```text

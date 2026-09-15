@@ -111,6 +111,22 @@ node (Join-Path $Skill "scripts\render-assessment-html.mjs") `
   (Join-Path $Work "assessment.html")
 ```
 
+After rendering, start the report server with the host's attached background or
+long-lived process mechanism:
+
+```powershell
+node (Join-Path $Skill "scripts\serve-assessment.mjs") `
+  --file (Join-Path $Work "assessment.html")
+```
+
+Do not detach the process at the shell level. Wait for its startup output, then
+give the user the printed `http://127.0.0.1:<port>/assessment.html` URL as the
+clickable **Assessment report** link. Keep the process running while the report
+is being viewed. Also provide the absolute `assessment.json` path for structured
+results. Do not use a relative Markdown link or a `file:` URL for either
+artifact; editor terminals may resolve those links against the wrong working
+directory or fail to launch them.
+
 Rendering accepts an optional, explicitly selected matching graph artifact:
 append `--downstream-input (Join-Path $Work "dimensions\downstream-breaking-input.json")`
 to the renderer command. The JavaScript API is

@@ -1,0 +1,160 @@
+name: azsdk-mcp-release-plan-next-step
+description: |
+  Process-awareness coverage for #15328: given a release plan's current
+  lifecycle stage, does the agent answer an open "what's next?" question with
+  the state-appropriate guidance, rather than guessing or jumping straight to
+  an action tool?
+
+  Each stimulus points at a distinct mock release-plan fixture (workItemId
+  35010-35013 in GetReleasePlanHandler) representing one stage: spec pending
+  review, spec approved with no SDK work started, SDK generated but not
+  released, and fully released. The agent must call azsdk_get_release_plan to
+  read the state before answering — it is never told the stage directly.
+
+  Bound to the mock MCP — no real DevOps writes.
+
+version: "1.0"
+type: capability
+
+tags:
+  area: release-plan
+  feature: process-awareness
+
+environment: azsdk-mcp-mock
+
+defaults:
+  runs: 1
+  timeout: 10m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+scoring:
+  threshold: 1.0
+  weights:
+    skill-invocation: 0.2
+    tool-calls: 0.4
+    prompt: 0.4
+
+stimuli:
+  - name: next-step-spec-not-reviewed
+    # Mount competing skills so routing is not predetermined.
+    environment: &releasePlanSkills
+      skills:
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
+        - ../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../.github/skills/azsdk-common-sdk-release
+    prompt: |
+      What's the next step for release plan work item 35010? My setup has already been
+      verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    rubric:
+      - The response recognizes that IsSpecApproved is false and no SDK generation has started.
+      - The immediate next step is API spec review/approval, not SDK generation or release.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+          disallowed: &readOnlyTools
+            - azsdk_run_generate_sdk
+            - azsdk_package_generate_code
+            - azsdk_release_sdk
+            - azsdk_create_release_plan
+            - azsdk_update_release_plan
+            - azsdk_abandon_release_plan
+            - azsdk_link_sdk_pull_request_to_release_plan
+            - azsdk_link_namespace_approval_issue
+            - azsdk_update_api_spec_pull_request_in_release_plan
+            - azsdk_update_sdk_details_in_release_plan
+            - azsdk_update_language_exclusion_justification
+            - azsdk_update_release_plan_target
+            - azsdk_verify_setup
+      - &nextStepJudge
+        type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Evaluate the final assistant response against the retrieved
+            release-plan state and the rubric. A generic lifecycle checklist
+            that does not identify the immediate next step does not pass.
+            Work item IDs 35010-35013 correspond to Release Plan IDs 50010-50013.
+            Reporting the returned Release Plan ID and dashboard link instead
+            of the input work item ID is correct; they identify the same plan.
+
+  - name: next-step-spec-approved-no-sdk
+    environment: *releasePlanSkills
+    prompt: |
+      What should I do next for release plan work item 35011? My setup has already been
+      verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    rubric:
+      - The response recognizes that IsSpecApproved is true and SDKInfo language entries have empty GenerationStatus, GenerationPipelineUrl, SdkPullRequestUrl and PullRequestStatus fields.
+      - The immediate next step is SDK generation; the response does not claim spec review is still needed.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+          disallowed: *readOnlyTools
+      - *nextStepJudge
+
+  - name: next-step-sdk-pending-release
+    environment: *releasePlanSkills
+    prompt: |
+      What's left to do for release plan work item 35012? My setup has already been
+      verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    rubric:
+      - The response recognizes that the four required data-plane SDKs (.NET, Java, Python and JavaScript) have GenerationStatus Completed, a SdkPullRequestUrl, PullRequestStatus Open and ReleaseStatus Unreleased; Go has an approved exclusion.
+      - The immediate next step is to review/merge the open SDK PRs before checking release readiness and releasing; it neither calls for SDK regeneration nor treats the open PRs as release-ready.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+          disallowed: *readOnlyTools
+      - *nextStepJudge
+
+  - name: next-step-fully-released
+    environment: *releasePlanSkills
+    prompt: |
+      Is there anything left to do for release plan work item 35013? My setup has
+      already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    rubric:
+      - The response recognizes that all four required data-plane languages (.NET, Java, Python and JavaScript) have ReleaseStatus Released and PullRequestStatus Merged; Go has an approved exclusion.
+      - The response confirms completion without recommending further SDK generation or release actions.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+          disallowed: *readOnlyTools
+      - *nextStepJudge

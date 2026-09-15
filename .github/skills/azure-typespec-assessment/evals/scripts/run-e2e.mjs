@@ -66,7 +66,7 @@ function assertMajorReportPoints(html, assessment, description) {
     "Downstream breaking changes",
     "Semantic intents",
     "Azure Guidelines",
-    "Document Quality and Agent Friendliness",
+    "Documentation Correctness",
     "Not assessed",
     "Appendix",
   ];

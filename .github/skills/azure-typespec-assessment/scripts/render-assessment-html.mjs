@@ -85,48 +85,24 @@ function headerSummary(assessment) {
     ).length;
   const downstreamCount = directDownstreamCount;
   const compliance = assessment.dimensions.compliance;
-  const complianceFindingCount = compliance.legacyFindings
-    ? compliance.legacyFindings.length
-    : (compliance.findings?.length ?? 0);
+  const complianceFindingCount = (compliance.legacyFindings?.length ?? 0) +
+    (compliance.findings?.length ?? 0);
   const complianceIssueCount = compliance.legacyFindings
     ? compliance.legacyFindings.length
     : complianceFindingGroups(compliance.findings).length;
   const complianceCoveredCount = compliance.coverage?.assessedIntentCount ?? 0;
   const complianceMaterialCount = compliance.coverage?.semanticIntentCount ?? 0;
-  const documentQuality = assessment.dimensions.documentQuality;
-  const documentQualityActive = documentQuality?.coverage !== undefined;
-  const documentQualityApplicable = documentQualityActive && documentQualitySummary(documentQuality).status !== "not-applicable";
-  const qualityStatuses = [
-    assessment.safety.status, compliance.status,
-    ...(documentQualityApplicable ? [documentQuality.status] : []),
-  ];
-  const codeQuality =
-    qualityStatuses.includes("failed")
-      ? "failed"
-      : qualityStatuses.every((status) => status === "passed")
-        ? "passed"
-        : "not-assessed";
-  const codeQualityTarget =
-    assessment.safety.status === "failed"
-      ? restCount
-        ? "#rest-breaking"
-        : "#downstream-breaking"
-      : compliance.status === "failed"
-        ? "#azure-compliance"
-        : documentQualityActive && documentQuality.status === "failed"
-          ? "#document-quality"
-          : compliance.status !== "passed"
-            ? "#azure-compliance"
-            : documentQualityApplicable && documentQuality.status !== "passed"
-              ? "#document-quality"
-              : "#rest-breaking";
   return {
     semanticItems,
     actionCounts,
     operationCount,
     restCount,
+    restFindingCount: (assessment.dimensions.rest.findings?.length ?? 0) +
+      (assessment.dimensions.rest.legacyFindings?.length ?? 0),
     directDownstreamCount,
     downstreamCount,
+    downstreamFindingCount: (assessment.dimensions.downstream.findings?.length ?? 0) +
+      directLegacyDownstreamFindings(assessment.dimensions.downstream.legacyFindings).length,
     complianceStatus: compliance.status,
     complianceFindingCount,
     complianceIssueCount,
@@ -135,19 +111,6 @@ function headerSummary(assessment) {
     complianceCoverageDetail: compliance.legacyDocuments
       ? `${compliance.legacyDocuments.length} documents assessed`
       : `${complianceCoveredCount}/${complianceMaterialCount} intents assessed`,
-    codeQuality,
-    codeQualityTarget,
-    codeQualityDetail: documentQualityActive
-      ? "REST, downstream, Azure Guidelines, and Document Quality"
-      : "REST, downstream, and Azure Guidelines",
-    codeQualityIcon:
-      codeQuality === "passed" ? "✓" : codeQuality === "failed" ? "×" : "i",
-    codeQualityLabel:
-      codeQuality === "passed"
-        ? "Pass"
-        : codeQuality === "failed"
-          ? "Fail"
-          : "N/A",
   };
 }
 
@@ -155,6 +118,11 @@ function complianceStatus(status) {
   if (status === "passed" || status === "assessed") return { icon: "✓", className: "pass", label: "Pass" };
   if (status === "failed") return { icon: "×", className: "fail", label: "Fail" };
   return { icon: "i", className: "", label: "N/A" };
+}
+
+function summaryHeading(title, status) {
+  const label = status.label === "Pass" ? "Passed" : status.label === "Fail" ? "Failed" : status.label === "N/A" ? "Not assessed" : status.label;
+  return `<div class="summary-heading"><div class="summary-value"><span class="${escapeHtml(status.className)}" aria-label="${escapeHtml(label)}">${escapeHtml(status.icon)}</span></div><div class="summary-label">${escapeHtml(title)}</div></div>`;
 }
 
 function githubRepositoryUrl(remoteUrl) {
@@ -2196,8 +2164,7 @@ function renderCurrent(assessment, options = {}) {
   const restStatus = complianceStatus(dimensions.rest.status ?? (summary.restCount ? "failed" : "not-assessed"));
   const downstreamStatus = complianceStatus(dimensions.downstream.status ?? (summary.downstreamCount ? "failed" : "not-assessed"));
   const documentQuality = documentQualitySummary(dimensions.documentQuality);
-  const documentStatus = complianceStatus(documentQuality.status);
-  const semanticStatus = complianceStatus(dimensions.semantic.status);
+  const documentStatus = complianceStatus(documentQuality.findingStatus);
   const comparisons = new Map(
     (assessment.artifactComparisons ?? []).map((item) => [
       item.projectId,
@@ -2233,19 +2200,18 @@ ${reportStyles}
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>${escapeHtml(headerTitle(assessment))}</h1>
 <p class="hero-meta">TypeSpec source diff: ${comparisonHeader}</p>
 <div class="summary-grid">
-<a class="summary-card" href="${summary.codeQualityTarget}"><div class="summary-value"><span class="${summary.codeQuality === "passed" ? "pass" : summary.codeQuality === "failed" ? "fail" : ""}">${summary.codeQualityIcon}</span> ${escapeHtml(summary.codeQualityLabel)}</div><div class="summary-label">Overall code quality</div><div class="summary-detail">${summary.codeQuality === "not-assessed" ? "Not fully assessed<br>" : ""}${escapeHtml(summary.codeQualityDetail)}</div></a>
-<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="${restStatus.className}">${restStatus.icon}</span> ${restStatus.label}</div><div class="summary-label">REST breaking changes</div><div class="summary-detail">${restStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.restCount} breaking ${summary.restCount === 1 ? "change" : "changes"}</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="${downstreamStatus.className}">${downstreamStatus.icon}</span> ${downstreamStatus.label}</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">${downstreamStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.downstreamCount} generated SDK contract ${summary.downstreamCount === 1 ? "change" : "changes"}</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${complianceStatus(summary.complianceStatus).label}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${complianceStatus(summary.complianceStatus).label === "N/A" ? "Not assessed<br>" : ""}${summary.complianceIssueCount} guideline ${summary.complianceIssueCount === 1 ? "issue" : "issues"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
-<a class="summary-card" href="#document-quality"><div class="summary-value"><span class="${documentStatus.className}">${documentStatus.icon}</span> ${documentStatus.label}</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">${documentStatus.label === "N/A" ? `${escapeHtml(documentQuality.label)}<br>` : ""}${escapeHtml(documentQuality.detail)}</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span class="${semanticStatus.className}">${semanticStatus.icon}</span> ${semanticStatus.label}</div><div class="summary-label">Semantic intents</div><div class="summary-detail">${summary.semanticItems.length} ${summary.semanticItems.length === 1 ? "intent" : "intents"}${semanticStatus.label === "Pass" ? " assessed" : ""} · ${summary.operationCount} operations<br>${semanticStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
+<a class="summary-card" href="#semantic-intents">${summaryHeading("Semantic intents", { icon: "ⓘ", className: "info", label: "Information only" })}<div class="summary-detail">${summary.semanticItems.length} ${summary.semanticItems.length === 1 ? "intent" : "intents"}<br>${summary.operationCount} operations<br>${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
+<a class="summary-card" href="#azure-compliance">${summaryHeading("Azure Guidelines", complianceStatus(summary.complianceStatus))}<div class="summary-detail">${complianceStatus(summary.complianceStatus).label === "N/A" ? "Not assessed<br>" : ""}${summary.complianceFindingCount} ${summary.complianceFindingCount === 1 ? "finding" : "findings"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
+<a class="summary-card" href="#rest-breaking">${summaryHeading("REST breaking changes", restStatus)}<div class="summary-detail">${restStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.restFindingCount} ${summary.restFindingCount === 1 ? "finding" : "findings"}</div></a>
+<a class="summary-card" href="#downstream-breaking">${summaryHeading("Downstream breaking changes", downstreamStatus)}<div class="summary-detail">${downstreamStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.downstreamFindingCount} ${summary.downstreamFindingCount === 1 ? "finding" : "findings"}</div></a>
+<a class="summary-card" href="#document-quality">${summaryHeading("Documentation Correctness", documentStatus)}<div class="summary-detail">${documentQuality.compactDetail.map(escapeHtml).join("<br>")}</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
 <p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p></div></details>
 <main class="container">
 ${report.html}
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel">${report.appendixHtml}<h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
 <p><strong>Pull request:</strong> ${pullRequestLink(assessment)}</p>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
@@ -2545,7 +2511,7 @@ function adaptLegacy(assessment) {
       },
       documentQuality: {
         status: "not-assessed",
-        summary: "Document Quality and Agent Friendliness is not assessed.",
+        summary: "Documentation Correctness is not assessed.",
       },
     },
     blockers: assessment.errors ?? [],

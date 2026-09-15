@@ -24,7 +24,7 @@ Included:
 - validated `assessment.json`;
 - readable `assessment.html`.
 
-All five dimensions are active. Document Quality and Agent Friendliness
+All five dimensions are active. Doc Correctness
 assesses source documentation, not runtime agent performance. Overall safety
 continues to cover REST and downstream SDK compatibility only.
 
@@ -43,8 +43,7 @@ continues to cover REST and downstream SDK compatibility only.
               +-----------------------+-----------------------+-----------------------+-----------------------+
               |                       |                       |                       |                       |
               v                       v                       v                       v                       v
-           Semantic                  REST                 Downstream           Azure Guidelines        Document Quality
-                                                                                                     & Agent Friendliness
+           Semantic                  REST                 Downstream           Azure Guidelines       Doc Correctness
         Deterministic           Deterministic           Deterministic           Deterministic           Deterministic
          review units            candidates              candidates            search requests          review units
                                                                                                      (@doc, declarations,
@@ -1080,8 +1079,8 @@ Validation requires:
 Azure Guidelines is an independent assessment dimension. It consumes Semantic
 intents and their bounded TypeSpec query profiles while retaining links to the
 complete deterministic source evidence. It does not consume or derive
-conclusions from downstream SDK breaking input. Document Quality and Agent
-Friendliness is a separate source-only dimension and does not use this search.
+conclusions from downstream SDK breaking input. Doc Correctness is a separate
+source-only dimension and does not use this search.
 
 ### Goal and evidence boundary
 
@@ -1335,7 +1334,7 @@ The HTML report will show Azure Guidelines by Semantic intent:
 
 File: `dimensions/document-quality-input.json`
 
-Document Quality and Agent Friendliness assesses one question:
+Doc Correctness assesses one question (the historical input rubric is unchanged):
 **Does the @doc description clearly and accurately explain the associated
 TypeSpec code?**
 
@@ -2199,41 +2198,59 @@ The normative report content, ordering, and status requirements are defined in
 [`references/output-contract.md`](references/output-contract.md). This section
 defines the renderer's presentation and evidence-grouping behavior.
 
-### Documentation cards
+### Doc Correctness cards
 
-Use the intent-grouped layout (mockup B): compact intent summaries show
-description/file counts and result badges directly below the section summary.
-Do not add a second coverage heading or repeat the aggregate result counts.
-Passed intents start collapsed; failed and incomplete intents start expanded.
-Within each intent, group declarations by exact source path, using short,
-unambiguous file labels and bounded keyboard-scrollable lists. Files and
-individual passing descriptions start collapsed. Inspect description text,
-then expand TypeSpec and its full source path on demand. Do not show passing
-judgment cards or rationales. Failure cards remain in their owning intent,
-with stable anchors and no repeated source comparison in the file list.
-Keep non-applicable/inherited-only groups neutral, complete judgments in JSON,
-and unresolved reasons visible without repeating identical blockers.
+Keep the main documentation section focused on failed finding cards and compact
+coverage. Do not render Doc Correctness details or navigation links in the appendix.
+Failed intent groups start expanded; finding
+cards use the existing collapsed card typography and colors. Show short object
+identity prominently with its qualified name on hover, recorded issue and check
+label, and no severity. Link the owning intent once per group, not again in
+every finding; retain other affected-intent links and stable finding anchors.
 
-Use the shared collapsed finding-card layout and readable affected-intent
-links. Show the check name and concrete issue without a severity label. On
-expansion, show Expected and Actual: the criterion and rationale, exact `@doc`
-text, and associated baseline/target declaration source where available.
-Use full width when only one snapshot is available. Beside the assessed
-declaration, include related type definitions retained in the same intent,
-matching compiler-recorded references and exact source/revision ownership.
-Do not guess ambiguous short-name references or infer links from rationale
-text. Avoid repeating source already contained in the assessed declaration.
-Escape all text and avoid duplicate comparison tables. Display document/check
-coverage and explicit blocked/no-applicable outcomes rather than interpreting
-zero findings as complete assessment. Show **No applicable documentation**, not
-a green pass, when no descriptions are eligible; label historical two-check
-judgments as legacy. Documentation links remain separate from
-`Impacts (N)`, which counts only REST/downstream findings.
-Active documentation coverage participates in the overall code-quality
-summary, alongside compatibility and Azure Guidelines. Legacy documentation
-placeholders without coverage and no-applicable-documentation outcomes remain
-neutral in that aggregate; the separate
-REST/downstream safety contract never changes.
+The dimension heading and summary/navigation labels use
+**Doc Correctness**; failed impact links use `Doc Correctness: ...`.
+The explanatory subtitle still asks whether descriptions accurately explain
+TypeSpec code and excludes examples, external documentation, and agent execution.
+This is not runtime agent evaluation. Preserve the `documentQuality` data key,
+schema/evidence fields, historical rubric, existing main-section and finding anchors,
+and original recorded source/description evidence.
+
+The summary card and main section show only the finding count and assessed
+description count, for example **0 findings** and **9 descriptions assessed**.
+Do not include unassessed counts or partial-review wording in the overview.
+Doc Correctness displays **Pass** when no findings are recorded and **Fail**
+otherwise. This display status does not imply complete coverage: preserve original
+statuses, incomplete and inapplicable scopes, inherited descriptions, and the full
+coverage ledger in JSON only. Explicitly label unavailable legacy
+assessment counts rather than inventing zero.
+
+Failure bodies are description-first. **Current description** displays the exact
+compiler-resolved target text with whitespace intact and only an exact nonempty
+`docQuote` match highlighted. **Why this needs attention** uses `rationale`;
+**Suggested change** uses `expected` as guidance, not quoted replacement text.
+No generated code summary, replacement description, or new judgment field is
+introduced. Keep missing current evidence explicit rather than substituting
+baseline text. Supporting TypeSpec is collapsed, retaining exact source,
+full paths, baseline/current and inherited-origin context. A single snapshot
+uses full width. Related type definitions require unambiguous compiler references,
+same-intent/revision evidence and exact source ownership. Do not guess from prose
+or repeat source already contained in the assessed declaration. Escape all text,
+including highlight content.
+
+Omit passed, incomplete, and neutral documentation groups, non-finding description
+browsers, recorded summaries, and detailed documentation coverage from the HTML.
+Complete judgments, retained descriptions, limitations, and original audit states
+remain in JSON. The shared renderer returns main `html` and an empty `appendixHtml`
+for compatibility; the general appendix is unchanged. Fragment navigation still
+reveals enclosing details for retained finding and intent links.
+Use **description** in UI labels while preserving the normative criterion and
+literal evidence; label historical two-check judgments as legacy. Failed documentation
+links in Semantic intent summaries use the existing red `.impact` treatment
+and contribute to `Impacts (N)` alongside REST/downstream targets. Preserve their
+stable finding destinations. Only findings contribute to impact counts and the
+overall code-quality result, alongside compatibility and Azure Guidelines.
+The separate REST/downstream safety contract never changes.
 
 ### REST contract cards
 
@@ -2433,34 +2450,42 @@ The header follows a summary-dashboard hierarchy:
 3. the single source/artifact pair or multi-project appendix link on one
    metadata line;
 4. six summary cards: overall code quality, then the five dimensions in this
-   order: REST breaking changes, downstream breaking changes, Azure Guidelines,
-   Document Quality and Agent Friendliness, and Semantic intents.
+   order: Semantic intents, Azure Guidelines, REST breaking changes, downstream
+   breaking changes, and Doc Correctness.
 
-Overall code quality combines REST/downstream safety with Azure Guidelines. It
-is `Failed` when either assessed result fails, `Passed` when both pass, and
-`Not assessed` when neither fails but either result is unavailable. Document
-Quality remains a separate dimension. The Semantic card includes distinct
-affected-operation count and
-add/modify/remove intent counts. The downstream card distinguishes affected
-SDK methods from underlying finding count. The Azure Guidelines card shows the
-distinct visual guideline-issue count as its primary numeric value. Its icon
-and color communicate `passed`, `failed`, or `not-assessed`, while the detail
-shows guideline-issue and covered-intent counts. A zero issue count must not
+Card headings contain only an icon beside the title; counts appear below, not as
+a separate oversized primary value. Quality cards show finding counts rather than
+Pass/Fail/N/A text. Overall sums the REST, downstream, Azure Guidelines, and Doc Correctness
+finding counts, excluding Semantic intents. Its status icon indicates failure
+when findings exist and pass otherwise. It remains non-clickable.
+Coverage limitations and original assessment states remain in JSON, with general
+assessment limits in the appendix; a finding-based pass does not claim complete
+assessment coverage. Doc Correctness audit details are not rendered in the appendix.
+The Semantic card is informational: an information icon sits beside its title,
+with intent, distinct affected-operation, and add/modify/remove counts below. It has no Pass,
+Fail, or N/A status tag, regardless of the recorded semantic review state.
+Quality cards count underlying recorded findings, not grouped operations,
+affected SDK methods, or distinct visual guideline issues. Legacy downstream
+entries that only repeat approved REST findings are excluded. The Azure Guidelines
+card retains covered-intent counts in its detail. Status icons and colors
+communicate `passed`, `failed`, or `not-assessed`. A zero finding count must not
 imply a pass when evidence retrieval or intent coverage is incomplete.
 
-Each summary card is a full-card link to its report section:
+Each dimension summary card is a full-card link to its report section:
 
 - REST breaking changes → `#rest-breaking`;
 - downstream breaking changes → `#downstream-breaking`;
 - Azure Guidelines → `#azure-compliance`;
-- Document Quality and Agent Friendliness → `#document-quality`;
-- Semantic intents → `#semantic-intents`;
-- overall code quality → the failed or incomplete code-quality dimension.
+- Doc Correctness → `#document-quality`;
+- Semantic intents → `#semantic-intents`.
 
-The five main dimension sections follow the same order as their summary cards.
+Main sections with findings precede those without findings. Within each group,
+follow the dimension-card order, not the number of findings. Semantic intents
+are explanations, not findings, and belong in the no-findings group. The appendix
+remains last.
 
-Cards expose visible hover and keyboard-focus states without changing their
-status colors.
+Linked dimension cards expose visible hover and keyboard-focus states without
+changing their status colors; the static Overall card does not behave like a link.
 
 Immediately below the header, render **Preview Notice** as a compact
 default-collapsed disclosure bar. Its collapsed summary is one line and should
@@ -2592,7 +2617,7 @@ The main challenges are:
 
 Goal: repeatable and traceble report
 
-1. correlate semantic intents with downstream breakings, rest breakings, Azure guidelines and agent friendliness.
+1. correlate semantic intents with downstream breakings, rest breakings, Azure guidelines and doc correctness.
 2. model input too large, token cost and performance latency
 3. how to display the info. e.g. downstream breaking can be found from sdk type or from sdk method. how to display it?
 4. so many edge cases

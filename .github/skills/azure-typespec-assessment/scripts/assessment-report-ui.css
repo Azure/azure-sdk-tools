@@ -1,4 +1,9 @@
 .summary-value{white-space:nowrap}
+.summary-heading{display:flex;align-items:flex-start;gap:8px}
+.summary-heading .summary-value{flex:none;font-size:20px;line-height:1.4}
+.summary-heading .summary-label{min-width:0;margin-top:0;line-height:1.4}
+.summary-heading .info{color:#dbeafe}
+@media(min-width:1051px){.summary-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 .report-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin:0 0 14px}
 .report-section-head>div:first-child{min-width:0;flex:1}
 .report-section-head h2{margin:0}
@@ -74,7 +79,13 @@
 .document-quality-document>summary>.report-badge,.document-quality-row>.report-badge{flex:none}
 .document-quality-document-body{padding:12px}
 .document-quality-document-body h4{font-size:13px;margin:0 0 8px}
-.document-quality-document-body blockquote{margin:0 0 15px;padding:10px 14px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 94%,var(--accent));font-size:13px}
+.document-quality-document-body blockquote{margin:0 0 15px;padding:10px 14px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 94%,var(--accent));font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.document-quality-current{padding:0}
+.document-quality-description-heading{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.document-quality-description-heading h3,.document-quality-explanation h3,.document-quality-suggestion h3{margin:0;font-size:15px}
+.document-quality-current mark{background:var(--remove-bg);color:var(--remove-text);padding:1px 3px;border-radius:3px}
+.document-quality-explanation p,.document-quality-suggestion p{margin:8px 0;font-size:13px}
+.document-quality-check .document-quality-source{margin-top:16px}
 .document-quality-source pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace}
 .report-badge.neutral{background:color-mix(in srgb,var(--panel) 85%,var(--muted));color:var(--muted)}
 .document-quality-neutral>summary{padding:12px 18px}

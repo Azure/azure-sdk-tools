@@ -155,7 +155,7 @@ scenario, for example `C:\mock-catalog-error\Azure.Contoso.Widget`:
 | --- | --- | --- |
 | None | `classified` | Classified breaks; `detected` when `changesOnly: true` |
 | `mock-no-breaks` | `clean` | Successful additive-only comparison |
-| `mock-no-baseline` | `inconclusive` | Compatibility not evaluated, with an explicit no-GA limitation |
+| `mock-no-baseline` | .NET: `inconclusive` | Compatibility not evaluated, with an explicit no-GA limitation. Non-.NET fixtures reject this scenario without emitting .NET metadata. |
 | `mock-missing-config` | `blocked` | Required detector configuration is absent |
 | `mock-missing-artifacts` / `mock-stale-artifacts` | `failed` | Explicit failure, not a clean comparison |
 | `mock-classifier-error` | `failed` | Classification failure retaining raw changes/details; `detected` when `changesOnly: true` |

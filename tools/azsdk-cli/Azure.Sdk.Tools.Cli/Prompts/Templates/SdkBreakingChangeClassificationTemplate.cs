@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
     public class SdkBreakingChangeClassificationTemplate : BasePromptTemplate
     {
         public override string TemplateId => "sdk-breaking-change-classification";
-        public override string Version => "1.4.0";
+        public override string Version => "1.4.1";
         public override string Description => "Classify SDK Breaking Changes";
 
         private readonly string _sdkBreakingPatternContent;
@@ -57,6 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             var dotnetInstructions = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet ? """
                 **.NET compatibility and mitigation:**
                 - ApiCompat's forward comparison against the latest GA release is the compatibility authority. Preserve every reported compatibility violation and its diagnostic ID; do not suppress or downgrade it.
+                - Populate originBreaks with each original breaking bullet's exact text without its leading "- ", including diagnostic IDs and target-framework details. Cover every input entry exactly once.
                 - Additions and reverse-comparison diagnostics are supplementary evidence, not additional breaking changes. Keep old and new signatures available when analyzing a possible transformation.
                 - A removed API and an added API are not proof of a rename. A rename can be classified when the TypeSpec source and pattern catalog support that mapping; otherwise retain the original violations without asserting a rename.
                 - Category describes the root cause, independently of rename confidence or mitigation strategy. Preserve a supported emitter, conversion, or spec-change category even when the mapping or safe mitigation is uncertain. Use "unknown" only when the root-cause evidence is insufficient.

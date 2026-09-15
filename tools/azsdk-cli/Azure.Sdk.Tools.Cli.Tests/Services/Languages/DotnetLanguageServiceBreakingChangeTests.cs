@@ -14,6 +14,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 [TestFixture]
 public class DotnetLanguageServiceBreakingChangeTests
 {
+    private const string FirstBreak = "[CP0002] Member 'Azure.Test.Widget.Name' was removed. (target framework: netstandard2.0)";
+    private const string SecondBreak = "[CP0002] Member 'Azure.Test.Widget.Name' was removed. (target framework: net8.0)";
     private TempDirectory _directory = null!;
     private DotnetLanguageService _service = null!;
     private string _configPath = null!;
@@ -223,6 +225,91 @@ public class DotnetLanguageServiceBreakingChangeTests
         Assert.That(_service.ValidateBreakingChangeClassification(result), Is.Not.Null);
     }
 
+    [TestCase(false, "\n")]
+    [TestCase(true, "\n")]
+    [TestCase(false, "\r\n")]
+    [TestCase(true, "\r\n")]
+    public void Classification_AcceptsExactCoverageAcrossFrameworksAndGroups(bool merged, string newline)
+    {
+        var result = Classification(SdkBreakingChangeMitigationStrategy.Manual);
+        result.SdkChangeMD = $"### Breaking Changes\n\n- {FirstBreak}\n- {SecondBreak}\n\n### Features Added\n- Widget added"
+            .Replace("\n", newline);
+        result.BreakingChanges = merged
+            ? [ClassifiedChange(SecondBreak, FirstBreak)]
+            : [ClassifiedChange(SecondBreak), ClassifiedChange(FirstBreak)];
+
+        Assert.That(_service.ValidateBreakingChangeClassification(result), Is.Null);
+    }
+
+    [TestCase("null-list")]
+    [TestCase("empty-list")]
+    [TestCase("null-entry")]
+    [TestCase("blank-entry")]
+    [TestCase("missing")]
+    [TestCase("duplicate")]
+    [TestCase("duplicate-across-groups")]
+    [TestCase("fabricated")]
+    [TestCase("paraphrased")]
+    [TestCase("case-changed")]
+    [TestCase("bullet-marker")]
+    [TestCase("feature-added")]
+    [TestCase("empty-group")]
+    public void Classification_RejectsUnfaithfulOriginCoverage(string scenario)
+    {
+        var result = Classification(SdkBreakingChangeMitigationStrategy.Manual);
+        result.SdkChangeMD = $"### Breaking Changes\n- {FirstBreak}\n- {SecondBreak}\n\n### Features Added\n- Widget added";
+        var change = ClassifiedChange(FirstBreak, SecondBreak);
+        result.BreakingChanges = [change];
+        switch (scenario)
+        {
+            case "null-list": change.OriginBreaks = null; break;
+            case "empty-list": change.OriginBreaks = []; break;
+            case "null-entry": change.OriginBreaks = [null!, SecondBreak]; break;
+            case "blank-entry": change.OriginBreaks = [" ", SecondBreak]; break;
+            case "missing": change.OriginBreaks = [FirstBreak]; break;
+            case "duplicate": change.OriginBreaks = [FirstBreak, FirstBreak]; break;
+            case "duplicate-across-groups": result.BreakingChanges.Add(ClassifiedChange(FirstBreak)); break;
+            case "fabricated": change.OriginBreaks = [FirstBreak, "Another member removed"]; break;
+            case "paraphrased": change.OriginBreaks = [FirstBreak, SecondBreak.Replace("was removed.", "removed.")]; break;
+            case "case-changed": change.OriginBreaks = [FirstBreak, SecondBreak.ToUpperInvariant()]; break;
+            case "bullet-marker": change.OriginBreaks = ["- " + FirstBreak, SecondBreak]; break;
+            case "feature-added": change.OriginBreaks = [FirstBreak, SecondBreak, "Widget added"]; break;
+            case "empty-group": result.BreakingChanges.Add(ClassifiedChange()); break;
+        }
+
+        Assert.That(_service.ValidateBreakingChangeClassification(result), Does.Contain("originBreaks"));
+    }
+
+    [TestCase(1, false)]
+    [TestCase(2, true)]
+    [TestCase(3, false)]
+    public void Classification_RepeatedNativeEntriesRequireTheExactInputCount(int outputCount, bool valid)
+    {
+        var result = Classification(SdkBreakingChangeMitigationStrategy.Manual);
+        result.SdkChangeMD = $"### Breaking Changes\n- {FirstBreak}\n- {FirstBreak}";
+        result.BreakingChanges = [ClassifiedChange(Enumerable.Repeat(FirstBreak, outputCount).ToArray())];
+
+        Assert.That(_service.ValidateBreakingChangeClassification(result), valid ? Is.Null : Is.Not.Null);
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("### Breaking Changes\nNone.")]
+    [TestCase("### Breaking Changes\n- ")]
+    [TestCase("### Breaking Changes\nWidget removed")]
+    [TestCase("### Breaking Changes\n1. Widget removed")]
+    [TestCase("### Breaking Changes\n- Widget removed\n  with more details")]
+    [TestCase("### Breaking Changes\n```\n- Widget removed\n```")]
+    [TestCase("### Features Added\n- Widget removed")]
+    [TestCase("### Breaking Changes\n- Widget removed\n### Breaking Changes\n- Other removed")]
+    public void Classification_RejectsUnverifiableNativeSection(string? markdown)
+    {
+        var result = Classification(SdkBreakingChangeMitigationStrategy.Manual);
+        result.SdkChangeMD = markdown;
+
+        Assert.That(_service.ValidateBreakingChangeClassification(result), Does.Contain("Cannot validate .NET originBreaks"));
+    }
+
     [Test]
     public void BaseLanguageClassification_DoesNotRequireDotnetRoute()
     {
@@ -242,10 +329,25 @@ public class DotnetLanguageServiceBreakingChangeTests
     private static SdkBreakingChangeDetectionResult Classification(SdkBreakingChangeMitigationStrategy? route) => new()
     {
         HasBreakingChange = true,
+        SdkChangeMD = "### Breaking Changes\n- Widget removed",
         BreakingChanges =
         [
-            new SdkBreakingChange { BreakingChange = "Widget removed", Category = SdkBreakingChangeCategory.Unknown, MitigationStrategy = route },
+            new SdkBreakingChange
+            {
+                BreakingChange = "Widget removed",
+                Category = SdkBreakingChangeCategory.Unknown,
+                MitigationStrategy = route,
+                OriginBreaks = ["Widget removed"],
+            },
         ],
+    };
+
+    private static SdkBreakingChange ClassifiedChange(params string[] origins) => new()
+    {
+        BreakingChange = "Widget removed",
+        Category = SdkBreakingChangeCategory.Unknown,
+        MitigationStrategy = SdkBreakingChangeMitigationStrategy.Manual,
+        OriginBreaks = origins.ToList(),
     };
 
     internal static DotnetLanguageService CreateService(ISpecGenSdkConfigHelper configHelper, TestLogger<DotnetLanguageService>? logger = null) => new(

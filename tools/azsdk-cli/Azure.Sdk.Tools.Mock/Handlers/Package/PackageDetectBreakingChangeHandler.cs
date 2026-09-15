@@ -73,6 +73,11 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
             return PackageOperationResponse.CreateFailure("Select only one mock scenario path segment.", packageInfo);
         }
         var scenario = scenarios.SingleOrDefault()?.ToLowerInvariant();
+        if (scenario == "mock-no-baseline" && packageInfo.Language != SdkLanguage.DotNet)
+        {
+            return PackageOperationResponse.CreateFailure(
+                "The mock-no-baseline scenario is supported only for .NET fixtures.", packageInfo);
+        }
         if (scenario == "mock-missing-config")
         {
             var blocked = PackageOperationResponse.CreateFailure(

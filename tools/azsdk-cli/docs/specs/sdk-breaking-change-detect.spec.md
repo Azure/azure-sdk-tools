@@ -411,6 +411,15 @@ independently established root cause (such as an emitter or spec change) still
 determines `category`. An uncertain rename or manual strategy does not by itself
 make the root cause `unknown`.
 
+Before returning `classified`, .NET validates that every original bullet in the
+detector's `### Breaking Changes` section appears exactly once across
+`originBreaks`. Copy each bullet's exact text without its leading `- `, including
+diagnostic IDs and target-framework details. Empty, missing, duplicated, altered,
+or fabricated entries fail classification and preserve the original report.
+The native format has one single-line bullet per violation; a report whose
+breaking section cannot be validated in that format also fails classification.
+Classifier-supplied Markdown cannot replace the detector evidence for this check.
+
 The shared `azsdk-common-sdk-breaking-change` skill and its workflow handoffs
 are deferred to [PR #16634](https://github.com/Azure/azure-sdk-tools/pull/16634).
 This change supplies the CLI contract that such a workflow can consume; it does
@@ -419,7 +428,15 @@ not add a competing shared skill.
 Spec PR integration belongs in the specs repository's `spec-gen-sdk-runner`
 or GitHub workflows, not the deprecated `tools/spec-gen-sdk` tool.
 [Specs PR #46143](https://github.com/Azure/azure-rest-api-specs/pull/46143)
-tracks that integration. The native detector, catalog, SDK configuration, and
+merged an integration behind a disabled feature flag. **Before enabling it for
+this response contract**, the specs adapter must consume `breaking_change_status`:
+only `clean` with `hasBreakingChange: false` may clear a prior breaking-change
+label. `inconclusive`, `blocked`, and `failed` must preserve that label; an
+error-free operation alone does not establish compatibility. The merged adapter
+currently reads only the Boolean, so its status-aware update is a separate
+enablement prerequisite, not supplied by this CLI PR.
+
+The native detector, catalog, SDK configuration, and
 SDK PR reporting are companion work in
 [.NET SDK PR #62729](https://github.com/Azure/azure-sdk-for-net/pull/62729).
 Successful extraction alone is not a compatibility pass. Collected reports can

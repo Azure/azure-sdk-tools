@@ -329,6 +329,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageName = packageInfo?.PackageName,
                 };
             }
+            sdkBreakingChangeResult.SdkChangeMD = sdkChange.SdkChangeMD;
+            sdkBreakingChangeResult.Details = sdkChange.Details;
             var validationError = languageService.ValidateBreakingChangeClassification(sdkBreakingChangeResult);
             if (validationError != null)
             {
@@ -341,8 +343,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageName = packageInfo?.PackageName,
                 };
             }
-            sdkBreakingChangeResult.SdkChangeMD = sdkChange.SdkChangeMD;
-            sdkBreakingChangeResult.Details = sdkChange.Details;
             return new PackageOperationResponse()
             {
                 Result = sdkBreakingChangeResult,

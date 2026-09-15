@@ -236,6 +236,7 @@ public class DotnetBreakingChangeClassificationTests
         Assert.That(document.RootElement.GetProperty("breakingChanges")[0].TryGetProperty("mitigationStrategy", out _),
             Is.EqualTo(requiresRoute));
         var classification = JsonSerializer.Deserialize<SdkBreakingChangeDetectionResult>(example)!;
+        classification.SdkChangeMD = "### Breaking Changes\n- <exact original breaking change #1 from sdk changes ### Breaking Changes>\n- <exact original breaking change #2 from sdk changes ### Breaking Changes>";
         var validator = requiresRoute
             ? Languages.DotnetLanguageServiceBreakingChangeTests.CreateService(Mock.Of<Azure.Sdk.Tools.Cli.Helpers.ISpecGenSdkConfigHelper>())
             : (Azure.Sdk.Tools.Cli.Services.Languages.LanguageService)new Mock<Azure.Sdk.Tools.Cli.Services.Languages.LanguageService> { CallBase = true }.Object;

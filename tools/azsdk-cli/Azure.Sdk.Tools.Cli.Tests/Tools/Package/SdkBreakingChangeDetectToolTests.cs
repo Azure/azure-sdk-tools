@@ -869,6 +869,49 @@ public class SdkBreakingChangeDetectToolTests
         Assert.That(JsonSerializer.SerializeToElement(new PackageOperationResponse()).TryGetProperty("breaking_change_status", out _), Is.False);
     }
 
+    [TestCase("missing")]
+    [TestCase("empty")]
+    [TestCase("duplicate")]
+    [TestCase("fabricated")]
+    public async Task InvalidOriginCoverage_FailsAgainstDetectorEvidenceNotClassifierMarkdown(string scenario)
+    {
+        ConfigureDetectorReport(true);
+        const string original = "CP0002: Member 'Azure.Test.Widget.Name' was removed.";
+        var origins = scenario switch
+        {
+            "missing" => null,
+            "empty" => new List<string>(),
+            "duplicate" => new List<string> { original, original },
+            _ => new List<string> { "Fabricated native entry" },
+        };
+        _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SdkBreakingChangeDetectionResult
+            {
+                HasBreakingChange = true,
+                SdkChangeMD = "### Breaking Changes\n- Fabricated native entry",
+                BreakingChanges =
+                [
+                    new SdkBreakingChange
+                    {
+                        BreakingChange = "Widget removed",
+                        Category = SdkBreakingChangeCategory.Unknown,
+                        MitigationStrategy = SdkBreakingChangeMitigationStrategy.Manual,
+                        OriginBreaks = origins,
+                    },
+                ],
+            });
+
+        var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
+
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
+        Assert.That(response.ResponseError, Does.Contain("originBreaks"));
+        Assert.That(GetResult(response).HasBreakingChange, Is.True);
+        Assert.That(GetResult(response).BreakingChanges, Is.Empty);
+        Assert.That(GetResult(response).SdkChangeMD, Is.EqualTo(BreakingChanges));
+        Assert.That(JsonSerializer.Serialize(GetResult(response).Details), Is.EqualTo(JsonSerializer.Serialize(_details)));
+    }
+
     private void ConfigureClassification(SdkBreakingChangeMitigationStrategy? mitigation)
     {
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), It.IsAny<string>(),
@@ -876,7 +919,16 @@ public class SdkBreakingChangeDetectToolTests
             .ReturnsAsync(new SdkBreakingChangeDetectionResult
             {
                 HasBreakingChange = true,
-                BreakingChanges = [new SdkBreakingChange { BreakingChange = "Widget removed", Category = SdkBreakingChangeCategory.Unknown, MitigationStrategy = mitigation }],
+                BreakingChanges =
+                [
+                    new SdkBreakingChange
+                    {
+                        BreakingChange = "Widget removed",
+                        Category = SdkBreakingChangeCategory.Unknown,
+                        MitigationStrategy = mitigation,
+                        OriginBreaks = ["CP0002: Member 'Azure.Test.Widget.Name' was removed."],
+                    },
+                ],
             });
     }
 

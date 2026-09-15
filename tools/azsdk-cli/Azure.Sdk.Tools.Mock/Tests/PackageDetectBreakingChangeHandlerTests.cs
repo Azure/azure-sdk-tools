@@ -132,6 +132,26 @@ public class PackageDetectBreakingChangeHandlerTests
         });
     }
 
+    [TestCase(false, false)]
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public void Handle_JavaNoBaselineRejectsDotnetOnlyScenario(bool changesOnly, bool useJsonArguments)
+    {
+        var arguments = Arguments("azure-resourcemanager-contoso", "mock-no-baseline");
+        arguments["changesOnly"] = changesOnly;
+
+        var response = Invoke(useJsonArguments ? ToWireArguments(arguments) : arguments);
+
+        Assert.That(response.ExitCode, Is.Not.Zero);
+        Assert.That(response.Language, Is.EqualTo(SdkLanguage.Java));
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
+        Assert.That(response.ResponseErrors.Single(), Does.Contain("only for .NET fixtures"));
+        Assert.That(response.Result, Is.Not.InstanceOf<SdkBreakingChangeDetectionResult>());
+        var json = JsonSerializer.Serialize(response);
+        Assert.That(json, Does.Not.Contain("baselineVersion").And.Not.Contain("apiChanges").And.Not.Contain("limitations"));
+    }
+
     [TestCase("mock-classifier-error")]
     [TestCase("mock-catalog-error")]
     public void Handle_ClassificationFailureRetainsRawDetails(string scenario)

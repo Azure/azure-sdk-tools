@@ -1165,9 +1165,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                if (isValidTypeSpec && !string.IsNullOrEmpty(specProject))
+                if (string.IsNullOrEmpty(apiVersion) && isValidTypeSpec && !string.IsNullOrEmpty(specProject))
                 {
-                    logger.LogInformation("Checking for existing in-progress release plan for TypeSpec project: {specProject} with API release type: {apiReleaseType}", specProject, parsedApiReleaseType.ToDisplayLabel());
+                    // This is required for a few TypeSpec project like comput that supports multiple API versions. API version from the metadata emitter will be empty in this case.
+                    logger.LogInformation("API version is not available for the project. Checking for an existing in-progress release plan for TypeSpec project: {specProject} with API release type: {apiReleaseType}", specProject, parsedApiReleaseType.ToDisplayLabel());
                     var existingReleasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(specProject, apiReleaseType: parsedApiReleaseType, ct: ct);
                     if (existingReleasePlan != null)
                     {

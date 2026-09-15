@@ -1,0 +1,544 @@
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "facts": {
+    "operation-12c3349f359006f8": {
+      "id": "operation-12c3349f359006f8",
+      "projectId": "project-37d12681d7d3",
+      "comparisonRole": "baseline",
+      "sourceRevision": "base",
+      "sourceCommit": "2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904",
+      "apiVersion": "2026-03-01",
+      "operationId": "OutboundRules_Post",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+      "method": "post",
+      "routeSource": "paths",
+      "parameters": [
+        {
+          "name": "accountName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "kind": "scalar",
+            "type": "string"
+          }
+        },
+        {
+          "name": "managedNetworkName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "kind": "scalar",
+            "type": "string"
+          }
+        },
+        {
+          "name": "ApiVersionParameter",
+          "in": "unresolved",
+          "required": false
+        },
+        {
+          "name": "ResourceGroupNameParameter",
+          "in": "unresolved",
+          "required": false
+        },
+        {
+          "name": "SubscriptionIdParameter",
+          "in": "unresolved",
+          "required": false
+        }
+      ],
+      "request": {
+        "kind": "body",
+        "name": "body",
+        "required": true,
+        "schema": {
+          "kind": "intersection",
+          "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkSettingsBasicResource",
+          "references": [
+            "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkSettingsBasicResource"
+          ],
+          "properties": [
+            {
+              "name": "properties",
+              "required": false,
+              "schema": {
+                "kind": "object",
+                "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkSettings",
+                "references": [
+                  "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkSettings"
+                ],
+                "properties": [
+                  {
+                    "name": "firewallPublicIpAddress",
+                    "required": false,
+                    "schema": {
+                      "kind": "scalar",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "name": "firewallSku",
+                    "required": false,
+                    "schema": {
+                      "kind": "enum",
+                      "type": "string",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/FirewallSku",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/FirewallSku"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "isolationMode",
+                    "required": false,
+                    "schema": {
+                      "kind": "enum",
+                      "type": "string",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/IsolationMode",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/IsolationMode"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "managedNetworkKind",
+                    "required": false,
+                    "schema": {
+                      "kind": "enum",
+                      "type": "string",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkKind",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkKind"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "networkId",
+                    "required": false,
+                    "schema": {
+                      "kind": "scalar",
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "name": "outboundRules",
+                    "required": false,
+                    "schema": {
+                      "kind": "object",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "name": "provisioningState",
+                    "required": false,
+                    "schema": {
+                      "kind": "enum",
+                      "type": "string",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkProvisioningState",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkProvisioningState"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "status",
+                    "required": false,
+                    "schema": {
+                      "kind": "object",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkProvisionStatus",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkProvisionStatus"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "status": "200",
+          "schema": {
+            "kind": "object",
+            "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/OutboundRuleListResult",
+            "references": [
+              "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/OutboundRuleListResult"
+            ],
+            "properties": [
+              {
+                "name": "nextLink",
+                "required": false,
+                "schema": {
+                  "kind": "scalar",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "value",
+                "required": false,
+                "schema": {
+                  "kind": "array",
+                  "items": {
+                    "kind": "intersection",
+                    "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/OutboundRuleBasicResource",
+                    "references": [
+                      "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/OutboundRuleBasicResource"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "headers": []
+        },
+        {
+          "status": "202",
+          "headers": [
+            {
+              "name": "location",
+              "schema": {
+                "kind": "scalar",
+                "type": "string"
+              }
+            },
+            {
+              "name": "Retry-After",
+              "schema": {
+                "kind": "scalar",
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          ]
+        },
+        {
+          "status": "default",
+          "schema": {
+            "kind": "reference",
+            "ref": "specification/common-types/resource-management/v3/types.json#/definitions/ErrorResponse",
+            "unresolved": true
+          },
+          "headers": []
+        }
+      ],
+      "consumes": [
+        "application/json"
+      ],
+      "produces": [
+        "application/json"
+      ],
+      "lro": {
+        "enabled": true,
+        "options": {
+          "final-state-via": "location",
+          "final-state-schema": "#/definitions/OutboundRuleListResult"
+        }
+      }
+    },
+    "operation-c57ab5de68c0b82a": {
+      "id": "operation-c57ab5de68c0b82a",
+      "projectId": "project-37d12681d7d3",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "96eae0e7d5c7ede040ee0cc646d397e5d8375912",
+      "apiVersion": "2026-03-01",
+      "operationId": "OutboundRules_Post",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+      "method": "post",
+      "routeSource": "paths",
+      "parameters": [
+        {
+          "name": "accountName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "kind": "scalar",
+            "type": "string"
+          }
+        },
+        {
+          "name": "managedNetworkName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "kind": "scalar",
+            "type": "string"
+          }
+        },
+        {
+          "name": "ApiVersionParameter",
+          "in": "unresolved",
+          "required": false
+        },
+        {
+          "name": "ResourceGroupNameParameter",
+          "in": "unresolved",
+          "required": false
+        },
+        {
+          "name": "SubscriptionIdParameter",
+          "in": "unresolved",
+          "required": false
+        }
+      ],
+      "request": {
+        "kind": "body",
+        "name": "body",
+        "required": true,
+        "schema": {
+          "kind": "intersection",
+          "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkSettingsBasicResource",
+          "references": [
+            "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkSettingsBasicResource"
+          ],
+          "properties": [
+            {
+              "name": "properties",
+              "required": false,
+              "schema": {
+                "kind": "object",
+                "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkSettings",
+                "references": [
+                  "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkSettings"
+                ],
+                "properties": [
+                  {
+                    "name": "firewallPublicIpAddress",
+                    "required": false,
+                    "schema": {
+                      "kind": "scalar",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "name": "firewallSku",
+                    "required": false,
+                    "schema": {
+                      "kind": "enum",
+                      "type": "string",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/FirewallSku",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/FirewallSku"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "isolationMode",
+                    "required": false,
+                    "schema": {
+                      "kind": "enum",
+                      "type": "string",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/IsolationMode",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/IsolationMode"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "managedNetworkKind",
+                    "required": false,
+                    "schema": {
+                      "kind": "enum",
+                      "type": "string",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkKind",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkKind"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "networkId",
+                    "required": false,
+                    "schema": {
+                      "kind": "scalar",
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "name": "outboundRules",
+                    "required": false,
+                    "schema": {
+                      "kind": "object",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "name": "provisioningState",
+                    "required": false,
+                    "schema": {
+                      "kind": "enum",
+                      "type": "string",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkProvisioningState",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkProvisioningState"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "status",
+                    "required": false,
+                    "schema": {
+                      "kind": "object",
+                      "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkProvisionStatus",
+                      "references": [
+                        "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/ManagedNetworkProvisionStatus"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "status": "200",
+          "schema": {
+            "kind": "object",
+            "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/OutboundRuleListResult",
+            "references": [
+              "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/OutboundRuleListResult"
+            ],
+            "properties": [
+              {
+                "name": "nextLink",
+                "required": false,
+                "schema": {
+                  "kind": "scalar",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "value",
+                "required": false,
+                "schema": {
+                  "kind": "array",
+                  "items": {
+                    "kind": "intersection",
+                    "reference": "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/OutboundRuleBasicResource",
+                    "references": [
+                      "resource-manager/Microsoft.CognitiveServices/stable/2026-03-01/cognitiveservices.json#/definitions/OutboundRuleBasicResource"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "headers": []
+        },
+        {
+          "status": "202",
+          "headers": [
+            {
+              "name": "location",
+              "schema": {
+                "kind": "scalar",
+                "type": "string"
+              }
+            },
+            {
+              "name": "Retry-After",
+              "schema": {
+                "kind": "scalar",
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          ]
+        },
+        {
+          "status": "default",
+          "schema": {
+            "kind": "reference",
+            "ref": "specification/common-types/resource-management/v3/types.json#/definitions/ErrorResponse",
+            "unresolved": true
+          },
+          "headers": []
+        }
+      ],
+      "consumes": [
+        "application/json"
+      ],
+      "produces": [
+        "application/json"
+      ],
+      "paging": {
+        "nextLinkName": "nextLink"
+      },
+      "lro": {
+        "enabled": true,
+        "options": {
+          "final-state-via": "location",
+          "final-state-schema": "#/definitions/OutboundRuleListResult"
+        }
+      }
+    }
+  },
+  "reviewUnits": [
+    {
+      "id": "semantic-ddd8c6b20bb269ad",
+      "projectId": "project-37d12681d7d3",
+      "action": "modify",
+      "changeKind": "modify",
+      "sourceChangeIds": [
+        "source-dd5d3368a3071e94"
+      ],
+      "hunkIds": [
+        "hunk-fb0a715dd0f0909b"
+      ],
+      "declarationIds": [
+        "declaration-0219a32726f5ea2e",
+        "declaration-6ab6c44b437678cb",
+        "declaration-d4d7348e90a9bf1c",
+        "declaration-e54c2e2399e5428a"
+      ],
+      "declarationNames": [
+        "ManagedNetworkSettingsPropertiesBasicResources",
+        "ManagedNetworkSettingsPropertiesBasicResources.post"
+      ],
+      "ownedOperationIds": [
+        "OutboundRules_Post"
+      ],
+      "operations": [
+        {
+          "operationId": "OutboundRules_Post",
+          "beforeFactId": "operation-12c3349f359006f8",
+          "afterFactId": "operation-c57ab5de68c0b82a",
+          "restChanged": false,
+          "matchBasis": "operation-identity",
+          "sourceChangeIds": [
+            "source-dd5d3368a3071e94"
+          ],
+          "hunkIds": [
+            "hunk-fb0a715dd0f0909b"
+          ],
+          "declarationIds": [
+            "declaration-0219a32726f5ea2e",
+            "declaration-6ab6c44b437678cb",
+            "declaration-d4d7348e90a9bf1c",
+            "declaration-e54c2e2399e5428a"
+          ]
+        }
+      ],
+      "operationIds": [
+        "operation-c57ab5de68c0b82a"
+      ],
+      "beforeFactIds": [
+        "operation-12c3349f359006f8"
+      ],
+      "afterFactIds": [
+        "operation-c57ab5de68c0b82a"
+      ],
+      "changedAspects": [
+        "paging"
+      ]
+    }
+  ],
+  "blockers": []
+}

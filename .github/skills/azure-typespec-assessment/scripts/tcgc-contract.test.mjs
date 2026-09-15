@@ -1,6 +1,55 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import test from "node:test";
-import { normalizeTcgcPackage, parseTcgcYaml } from "./tcgc-contract.mjs";
+import { indexTcgcOperations, normalizeTcgcContract, normalizeTcgcPackage, parseTcgcYaml } from "./tcgc-contract.mjs";
+
+test("reuses normalized TCGC artifacts while invalidating changed files and parser limits", (context) => {
+  const root = fs.mkdtempSync(path.join(process.cwd(), ".tcgc-contract-cache-"));
+  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const artifact = { format: "tcgc-yaml", files: [{ path: "tcgc.yaml" }] };
+  const file = path.join(root, "tcgc.yaml");
+  const raw = { crossLanguagePackageId: "Example", crossLanguageVersion: "1.0", metadata: {} };
+  fs.writeFileSync(file, JSON.stringify(raw));
+  const read = context.mock.method(fs, "readFileSync");
+  const options = { workRoot: root, artifact };
+  const first = normalizeTcgcContract(options);
+  assert.equal(normalizeTcgcContract(options), first);
+  assert.equal(read.mock.callCount(), 1);
+  assert.throws(() => normalizeTcgcContract({ ...options, maxObjects: 1 }), /resource limit/);
+  raw.crossLanguagePackageId = "ChangedPackage";
+  fs.writeFileSync(file, JSON.stringify(raw));
+  const second = normalizeTcgcContract(options);
+  assert.notEqual(second, first);
+  assert.equal(second.package.crossLanguagePackageId, "ChangedPackage");
+  const other = path.join(root, "other");
+  fs.mkdirSync(other);
+  fs.writeFileSync(path.join(other, "tcgc.yaml"), JSON.stringify(raw));
+  assert.notEqual(normalizeTcgcContract({ ...options, workRoot: other }), second);
+});
+
+test("indexes compiler identities once per normalized contract and selected version", () => {
+  let scans = 0;
+  const method = { crossLanguageDefinitionId: "Service.Owner.post", apiVersions: ["v1"],
+    operation: { verb: "POST", path: "/one" } };
+  const contract = {
+    get methods() {
+      scans += 1;
+      return [method, { ...method, apiVersions: ["v2"], operation: { verb: "post", path: "/two" } }];
+    },
+  };
+  const first = indexTcgcOperations(contract, "v1");
+  assert.deepEqual([...first.get("Owner.post").get("Service.Owner.post")], ["post\0/one"]);
+  assert.equal(first.get("Owner.post").get("Service.Owner.post"), first.get("post").get("Service.Owner.post"));
+  assert.equal(first.get("Owner.post").get("Service.Owner.post"), first.get("Service.Owner.post").get("Service.Owner.post"));
+  for (let count = 0; count < 100; count += 1) {
+    assert.equal(indexTcgcOperations(contract, "v1"), first);
+    assert.equal(first.get("Owner.post").size, 1);
+  }
+  assert.equal(scans, 1);
+  assert.deepEqual([...indexTcgcOperations(contract, "v2").get("Owner.post").get("Service.Owner.post")], ["post\0/two"]);
+  assert.equal(scans, 2);
+});
 
 test("normalizes the TCGC graph with aliases, cycles, all method kinds, and separate bodyParam", () => {
   const root = parseTcgcYaml(`

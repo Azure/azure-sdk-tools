@@ -398,18 +398,23 @@ function operationPresentation(operation, facts) {
     "responses",
     "paging",
     "lro",
+    "consumes",
+    "produces",
   ]);
+  const wireChanges = changed.filter((field) => field !== "paging");
   return {
     ...operation,
     apiVersion: current?.apiVersion,
     method: current?.method,
     path: current?.path,
-    restChanged: changed.length > 0,
+    restChanged: wireChanges.length > 0,
     changedAspects: changed,
     before,
     after,
-    outcome: changed.length
-      ? `REST contract changed: ${changed.join(", ")}.`
+    outcome: wireChanges.length
+      ? `REST contract changed: ${wireChanges.join(", ")}.`
+      : changed.includes("paging")
+        ? "HTTP signature and represented payload contract unchanged; SDK paging metadata changed."
       : "HTTP signature and represented payload contract unchanged.",
   };
 }

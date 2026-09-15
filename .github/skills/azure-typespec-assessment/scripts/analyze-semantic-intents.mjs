@@ -5,6 +5,7 @@ import {
 } from "./autorest-contract.mjs";
 import { parseArgs, isMain, readJson, runMain, writeJson } from "./cli.mjs";
 import { canonicalJson, stableId } from "./stable-id.mjs";
+import { indexTcgcOperations, normalizeTcgcContract } from "./tcgc-contract.mjs";
 
 function loadInputs(options) {
   const manifestPath = typeof options.manifest === "string"
@@ -45,6 +46,12 @@ function changedAspects(before, after) {
   if (!before || !after) return ["operation"];
   const fields = ["method", "path", "parameters", "request", "responses", "paging", "lro"];
   return fields.filter((field) => !same(before[field], after[field]));
+}
+
+function restChanged(before, after) {
+  // x-ms-pageable describes SDK traversal, not a change to the HTTP payload.
+  return changedAspects(before, after).some((field) => field !== "paging") ||
+    !same(before?.consumes, after?.consumes) || !same(before?.produces, after?.produces);
 }
 
 function changedReferenceRoots(before, after, roots = new Set()) {
@@ -283,7 +290,7 @@ function operationReferences(operation, transitive = false) {
   return result;
 }
 
-function operationMatchesDeclarations(pair, declarations, transitive = false) {
+function operationMatchesDeclarations(pair, declarations, transitive = false, resolveOperation) {
   const operation = pair.after ?? pair.before;
   const operationName = comparableName(operation.operationId);
   const specificOperations = declarations.filter((item) => item.kind === "operation");
@@ -293,9 +300,15 @@ function operationMatchesDeclarations(pair, declarations, transitive = false) {
   for (const declaration of candidates) {
     const qualifiedName = declaration.qualifiedName;
     const [owner, member] = qualifiedName.split(".");
-    if (declaration.kind === "operation" &&
-        operationName === comparableName(member ? `${owner}_${member}` : owner)) {
-      return "operation-identity";
+    if (declaration.kind === "operation") {
+      const resolved = resolveOperation?.(declaration);
+      if (resolved !== undefined) {
+        if (resolved.has(pair.before) || resolved.has(pair.after)) {
+          return "operation-identity";
+        }
+      } else if (operationName === comparableName(member ? `${owner}_${member}` : owner)) {
+        return "operation-identity";
+      }
     }
     const modelName = owner && declaration.kind === "property" ? owner : qualifiedName;
     if (["model", "property", "enum", "union", "alias"].includes(declaration.kind) &&
@@ -309,18 +322,21 @@ function operationMatchesDeclarations(pair, declarations, transitive = false) {
   return undefined;
 }
 
-function referencedOperationDeclarations(sourceIndex, declarations) {
+function referencedOperationDeclarations(sourceIndex, declarations, project) {
   const names = new Set(declarations
     .map((item) => item.qualifiedName)
     .filter(Boolean));
   if (!names.size) return [];
   const references = [];
   const candidates = [
-    ...sourceIndex.sourceChanges.flatMap((source) => source.declarations ?? []),
+    ...sourceIndex.sourceChanges
+      .filter((source) => project.sourceChangeIds?.includes(source.id))
+      .flatMap((source) => source.declarations ?? []),
     ...Object.values(sourceIndex.referencedDeclarations ?? {}),
   ];
   for (const declaration of candidates) {
     if (declaration.kind !== "operation") continue;
+    if (declaration.project && ![project.id, project.path].includes(declaration.project)) continue;
     const referencedNames = declaration.compilerEvidence?.referencedNames ?? [];
     if (referencedNames.some((name) => names.has(name))) {
       references.push(declaration);
@@ -639,7 +655,103 @@ function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
   return { id: stableId("semantic", identity), ...merged };
 }
 
-function buildProjectUnits(project, base, current, sourceIndex, facts) {
+function operationResolver(project, base, current, sourceIndex, workRoot, blockers) {
+  const changedOperations = new Set(sourceIndex.sourceChanges
+    .filter((source) => project.sourceChangeIds?.includes(source.id))
+    .flatMap((source) => source.declarations ?? [])
+    .filter((declaration) => declaration.kind === "operation"));
+  const roles = [
+    ["baseline", "base", base], ["target", "current", current],
+  ].map(([role, legacyRole, contract]) => {
+    const artifact = project.artifacts?.[role]?.tcgc ?? project.artifacts?.[legacyRole]?.tcgc;
+    const selection = project.artifactComparison?.[role];
+    const revision = selection?.sourceRevision ?? (role === "baseline" ? "base" : "current");
+    const scope = { projectId: project.id, comparisonRole: role, sourceRevision: revision };
+    return { artifact, selection, revision, scope, contract };
+  });
+  const directOperations = (entry, name) => {
+    if (!entry.names) {
+      entry.names = new Map();
+      for (const operation of entry.contract.operations) {
+        const key = comparableName(operation.operationId);
+        const matches = entry.names.get(key) ?? [];
+        matches.push(operation);
+        entry.names.set(key, matches);
+      }
+    }
+    return entry.names.get(name) ?? [];
+  };
+  const loadBridge = (entry) => {
+    if (entry.loaded) return;
+    entry.loaded = true;
+    const { artifact, selection, scope, contract } = entry;
+    if (!artifactReady(artifact) || !contract.operations.length) return;
+    try {
+      const sdk = normalizeTcgcContract({ workRoot, artifact });
+      const versions = unique(contract.operations.map((operation) => operation.apiVersion));
+      const apiVersion = selection?.apiVersion ?? (versions.length === 1 ? versions[0] : undefined);
+      const sdkVersions = sdk.package.apiVersions.map((value) =>
+        typeof value === "string" ? value : value.version);
+      if (!apiVersion || sdkVersions.length && !sdkVersions.includes(apiVersion)) {
+        blockers.push({ code: "tcgc-operation-version-mismatch", ...scope, apiVersion,
+          message: "TCGC operation mapping requires the selected REST API version." });
+        return;
+      }
+      entry.index = indexTcgcOperations(sdk, apiVersion);
+      entry.routes = new Map();
+      entry.scope = { ...scope, apiVersion };
+      for (const operation of contract.operations) {
+        if (operation.apiVersion !== apiVersion) continue;
+        const key = `${operation.method.toLowerCase()}\0${operation.path}`;
+        const matches = entry.routes.get(key) ?? [];
+        matches.push(operation);
+        entry.routes.set(key, matches);
+      }
+    } catch (error) {
+      // SDK artifacts enrich REST semantics; an unavailable SDK must not block them.
+      blockers.push({ code: "tcgc-operation-mapping-unavailable", ...scope, message: error.message });
+    }
+  };
+  const cache = new WeakMap();
+  return (declaration) => {
+    if (cache.has(declaration)) return cache.get(declaration);
+    const matches = new Set();
+    cache.set(declaration, matches);
+    const revision = declaration.source?.revision ?? declaration.revision;
+    if (declaration.project && ![project.id, project.path].includes(declaration.project)) return matches;
+    const selectedRoles = roles.filter((entry) => !revision || entry.revision === revision);
+    const [owner, member] = declaration.qualifiedName.split(".");
+    const name = comparableName(member ? `${owner}_${member}` : owner);
+    for (const entry of selectedRoles) {
+      for (const operation of directOperations(entry, name)) matches.add(operation);
+    }
+    // SDK projection is optional evidence, not an authority that can erase an
+    // existing REST identity (for example AutoRest-only overload query markers).
+    if (matches.size || !changedOperations.has(declaration)) return matches;
+    for (const entry of selectedRoles) {
+      loadBridge(entry);
+      const identities = entry.index?.get(declaration.qualifiedName);
+      if (!identities) continue;
+      const routes = identities.size === 1 ? [...identities.values()][0] : undefined;
+      const operations = routes?.size === 1 ? entry.routes.get([...routes][0]) ?? [] : [];
+      if (identities.size !== 1 || routes.size !== 1 || operations.length !== 1) {
+        blockers.push({
+          code: identities.size > 1 || routes?.size > 1 || operations.length > 1
+            ? "tcgc-operation-mapping-ambiguous" : "tcgc-operation-route-unresolved",
+          ...entry.scope,
+          declarationId: declaration.id,
+          message: `Cannot uniquely map ${declaration.qualifiedName} by compiler identity and HTTP verb/path.`,
+          identities: [...identities.keys()].sort(),
+        });
+        continue;
+      }
+      matches.add(operations[0]);
+    }
+    return matches;
+  };
+}
+
+function buildProjectUnits(project, base, current, sourceIndex, facts, resolveOperation) {
   const projectSources = sourceIndex.sourceChanges.filter(
     (source) => project.sourceChangeIds?.includes(source.id),
   );
@@ -648,10 +760,17 @@ function buildProjectUnits(project, base, current, sourceIndex, facts) {
     projectSources.length <= 2 &&
     projectSources.reduce((count, source) => count + (source.hunks?.length ?? 0), 0) <= 5;
   const units = [];
+  const resolvedOperations = new WeakMap();
+  const resolvedOperation = (declaration) => resolvedOperations.get(declaration);
   for (const source of projectSources) {
     for (const hunk of source.hunks ?? []) {
       const declarations = declarationsForHunk(source, hunk.id);
-      const referencedOperations = referencedOperationDeclarations(sourceIndex, declarations);
+      const referencedOperations = referencedOperationDeclarations(sourceIndex, declarations, project);
+      for (const declaration of [...declarations, ...referencedOperations]) {
+        if (declaration.kind === "operation" && !resolvedOperations.has(declaration)) {
+          resolvedOperations.set(declaration, resolveOperation(declaration));
+        }
+      }
       const versionGovernance = declarations.some((item) =>
         item.qualifiedName === "Versions" || item.qualifiedName.endsWith(".Versions"));
       const operations = [];
@@ -666,13 +785,13 @@ function buildProjectUnits(project, base, current, sourceIndex, facts) {
           ? smallNewVersion
             ? "direct-version-governance"
             : "version-transition-change"
-          : operationMatchesDeclarations(pair, declarations);
+          : operationMatchesDeclarations(pair, declarations, false, resolvedOperation);
         const matchBasis = directMatch ??
-          (operationMatchesDeclarations(pair, referencedOperations)
+          (operationMatchesDeclarations(pair, referencedOperations, false, resolvedOperation)
             ? "compiler-reference"
             : undefined);
-        if (operationMatchesDeclarations(pair, declarations, true) ||
-            operationMatchesDeclarations(pair, referencedOperations, true)) {
+        if (operationMatchesDeclarations(pair, declarations, true, resolvedOperation) ||
+            operationMatchesDeclarations(pair, referencedOperations, true, resolvedOperation)) {
           ownedOperationIds.push(pair.operationId);
         }
         if (!matchBasis) continue;
@@ -682,7 +801,7 @@ function buildProjectUnits(project, base, current, sourceIndex, facts) {
           operationId: pair.operationId,
           beforeFactId,
           afterFactId,
-          restChanged: changedAspects(pair.before, pair.after).length > 0,
+          restChanged: restChanged(pair.before, pair.after),
           matchBasis,
           sourceChangeIds: [source.id],
           hunkIds: [hunk.id],
@@ -751,9 +870,17 @@ export function analyzeSemanticIntents(options) {
       continue;
     }
     try {
-      const base = normalizeAutorestContract({ workRoot, artifact: baseArtifact });
-      const current = normalizeAutorestContract({ workRoot, artifact: currentArtifact });
-      reviewUnits.push(...buildProjectUnits(project, base, current, sourceIndex, facts));
+      const selectedContract = (artifact, role) => {
+        const contract = normalizeAutorestContract({ workRoot, artifact });
+        const version = project.artifactComparison?.[role]?.apiVersion;
+        return version
+          ? { ...contract, operations: contract.operations.filter((operation) => operation.apiVersion === version) }
+          : contract;
+      };
+      const base = selectedContract(baseArtifact, "baseline");
+      const current = selectedContract(currentArtifact, "target");
+      const resolveOperation = operationResolver(project, base, current, sourceIndex, workRoot, blockers);
+      reviewUnits.push(...buildProjectUnits(project, base, current, sourceIndex, facts, resolveOperation));
       analyzedProjects += 1;
     } catch (error) {
       blockers.push({

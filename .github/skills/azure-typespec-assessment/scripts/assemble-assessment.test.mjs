@@ -10,6 +10,7 @@ import {
 import { readJson, writeJson } from "./cli.mjs";
 import { readComplianceCatalog } from "./compliance-assessment.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
+import { reportSection } from "./report-test-utils.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 import { buildModelInput } from "./run-assessment-analysis.mjs";
 import { buildDocumentQualityInput } from "./document-quality-input.mjs";
@@ -141,6 +142,57 @@ function fixture() {
   });
   return work;
 }
+
+test("assembly retains mapped operations without treating paging metadata as a wire change", () => {
+  for (const wireField of [undefined, "responses", "produces"]) {
+    const work = fixture();
+    try {
+      const before = {
+        id: "before", operationId: "OutboundRules_Post", method: "post",
+        path: "/managedNetworks/{name}/batchOutboundRules", apiVersion: "v1",
+        responses: [{ statusCode: "200", schema: { type: "object" } }],
+        produces: ["application/json"],
+      };
+      const after = { ...structuredClone(before), id: "after", paging: { nextLinkName: "nextLink" } };
+      if (wireField === "responses") after.responses[0].schema.type = "array";
+      if (wireField === "produces") after.produces = ["text/plain"];
+      writeJson(path.join(work, "dimensions", "semantic-intents-input.json"), {
+        status: "ready", blockers: [], facts: { before, after },
+        reviewUnits: [{
+          id: "semantic-1", action: "modify", sourceChangeIds: ["source-1"], hunkIds: ["hunk-1"],
+          ownedOperationIds: ["OutboundRules_Post"], operationIds: ["after"],
+          operations: [{
+            operationId: "OutboundRules_Post", beforeFactId: "before", afterFactId: "after",
+            restChanged: Boolean(wireField), matchBasis: "operation-identity",
+          }],
+        }],
+      });
+      writeJson(path.join(work, "dimensions", "rest-breaking-input.json"), {
+        status: "ready", facts: {}, candidates: [], blockers: [],
+      });
+      const result = assembleAssessment({ work, judgment: {
+        schemaVersion: 1, overallConfidence: "high", blockers: [],
+        semanticIntents: [{ reviewUnitId: "semantic-1", title: "Mark outbound rules as paged", summary: "Add SDK paging metadata." }],
+        restDecisions: [], downstreamDecisions: [], complianceDecisions: [],
+      } });
+      const operations = result.dimensions.semantic.items[0].operations;
+      assert.equal(operations.length, 1);
+      assert.equal(operations[0].operationId, "OutboundRules_Post");
+      assert.equal(operations[0].restChanged, Boolean(wireField));
+      assert.ok(operations[0].changedAspects.includes("paging"));
+      if (wireField) assert.match(operations[0].outcome, /REST contract changed:/);
+      else {
+        assert.match(operations[0].outcome, /HTTP signature and represented payload contract unchanged; SDK paging metadata changed/);
+        const html = renderAssessmentHtml(result);
+        assert.match(html, /Affected operations \(1\)/);
+        assert.match(html, /OutboundRules_Post/);
+        assert.doesNotMatch(html, /No directly affected REST operation/);
+      }
+    } finally {
+      fs.rmSync(work, { recursive: true, force: true });
+    }
+  }
+});
 
 function addComplianceInput(work) {
   const request = {
@@ -837,10 +889,7 @@ test("assembler treats no applicable guidance as assessed and links its intent",
   assert.deepEqual(assessment.dimensions.compliance.blockers, []);
   assert.deepEqual(validateAssessment(assessment), []);
   const html = renderAssessmentHtml(assessment);
-  const complianceHtml = html.slice(
-    html.indexOf('<section id="azure-compliance">'),
-    html.indexOf('<section id="semantic-intents">'),
-  );
+  const complianceHtml = reportSection(html, "azure-compliance");
   assert.match(
     complianceHtml,
     /No applicable guideline was found for: <a class="report-link" href="#intent-semantic-1">Change Widget SDK customization<\/a>\./,

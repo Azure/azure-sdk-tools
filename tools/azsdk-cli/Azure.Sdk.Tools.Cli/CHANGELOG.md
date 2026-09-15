@@ -4,6 +4,7 @@
 
 ### Features Added
 
+- Implemented the three-edit-scope workflow in the `azsdk_customized_code_update` tool.
 - Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
 
 ### Breaking Changes

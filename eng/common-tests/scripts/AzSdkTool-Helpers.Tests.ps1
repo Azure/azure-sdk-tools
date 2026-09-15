@@ -34,29 +34,31 @@ Describe "Get-StandaloneToolGitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helper
         $headers.Authorization | Should -Be ("Bearer " + "cli-token")
     }
 
-    It "uses GITHUB_TOKEN when GitHub CLI authentication fails" {
+    It "uses GITHUB_TOKEN when GitHub CLI is unavailable" {
         $originalToken = $env:GITHUB_TOKEN
         $env:GITHUB_TOKEN = "environment-token"
-        function global:gh {
-            throw "GitHub CLI authentication is unavailable."
-        }
+        Mock Get-Command { $null } -ParameterFilter { $Name -eq "gh" }
 
         try {
             $headers = Get-StandaloneToolGitHubApiHeaders
         }
         finally {
             $env:GITHUB_TOKEN = $originalToken
-            Remove-Item -Path function:global:gh
         }
 
         $headers.Authorization | Should -Be ("Bearer " + "environment-token")
     }
 
-    It "returns null when no authentication token is available" {
+    It "does not use GITHUB_TOKEN when GitHub CLI authentication fails" {
         $originalToken = $env:GITHUB_TOKEN
-        Remove-Item -Path Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
+        $lastExitCodeWasSet = Test-Path variable:global:LASTEXITCODE
+        if ($lastExitCodeWasSet) {
+            $originalLastExitCode = $global:LASTEXITCODE
+        }
+        $env:GITHUB_TOKEN = "environment-token"
         function global:gh {
-            throw "GitHub CLI authentication is unavailable."
+            $global:LASTEXITCODE = 1
+            return "environment-token"
         }
 
         try {
@@ -64,7 +66,28 @@ Describe "Get-StandaloneToolGitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helper
         }
         finally {
             $env:GITHUB_TOKEN = $originalToken
+            if ($lastExitCodeWasSet) {
+                $global:LASTEXITCODE = $originalLastExitCode
+            }
+            else {
+                Remove-Variable -Scope Global -Name LASTEXITCODE -ErrorAction SilentlyContinue
+            }
             Remove-Item -Path function:global:gh
+        }
+
+        $headers | Should -BeNullOrEmpty
+    }
+
+    It "returns null when no authentication token is available" {
+        $originalToken = $env:GITHUB_TOKEN
+        Remove-Item -Path Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
+        Mock Get-Command { $null } -ParameterFilter { $Name -eq "gh" }
+
+        try {
+            $headers = Get-StandaloneToolGitHubApiHeaders
+        }
+        finally {
+            $env:GITHUB_TOKEN = $originalToken
         }
 
         $headers | Should -BeNullOrEmpty
@@ -74,9 +97,7 @@ Describe "Get-StandaloneToolGitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helper
 Describe "Install-Standalone-Tool" -Tag "UnitTest", "AzSdkTool-Helpers" {
     BeforeEach {
         $script:originalGitHubToken = $env:GITHUB_TOKEN
-        function global:gh {
-            throw "GitHub CLI authentication is unavailable."
-        }
+        Mock Get-Command { $null } -ParameterFilter { $Name -eq "gh" }
         Mock Get-Package-Meta {
             @{
                 file_name = "tool.tar.gz"
@@ -88,7 +109,6 @@ Describe "Install-Standalone-Tool" -Tag "UnitTest", "AzSdkTool-Helpers" {
 
     AfterEach {
         $env:GITHUB_TOKEN = $script:originalGitHubToken
-        Remove-Item -Path function:global:gh
     }
 
     It "uses authorization headers for release discovery when a token is available" {

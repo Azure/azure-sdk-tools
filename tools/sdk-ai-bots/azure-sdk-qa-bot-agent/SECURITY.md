@@ -12,7 +12,7 @@ The agents run as Foundry hosted agents (custom containers, Responses protocol),
 
 **Q&A agents** below means the SDK Chat and Azure MCP Server QA agents. Read-only describes their registered tools, not an absence of platform writes such as conversation persistence. It also does not authorize disclosure of retrieved internal data to every caller.
 
-This document describes safeguards present in source code and prompt instructions. **Implemented controls**, **prompt guidance**, and **deployment checks or remaining work** are distinguished below; this is not a deployed-environment security audit. Shared hosting does not establish agent or tenant data isolation. Stateless calls reuse warm sessions, so a fresh container or filesystem per request must not be assumed ([session handling](utils/azure_ai_foundry.py)).
+This document describes safeguards present in source code and prompt instructions. **Implemented controls**, **prompt guidance**, and **deployment checks or remaining work** are distinguished below; this is not a deployed-environment security audit. Shared hosting does not establish agent or tenant data isolation. Stateless calls reuse warm sessions, so a fresh container or filesystem per request must not be assumed ([session handling](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/azure_ai_foundry.py)).
 
 ### Risk catalog
 
@@ -65,11 +65,11 @@ The main risks are prompt injection from user questions or retrieved content (R2
 | C7 — Bounded execution | The agent configures a maximum of 5 tool-loop iterations and 10 tool calls per turn. These are execution bounds, not request-rate limits. |
 | C2, C3, C4, C8 — Shared protections | GitHub authored-body filtering, external MCP spotlighting, SSRF-hardened web fetching, and authentication paths described in [Shared controls](#5-shared-controls-and-deployment-checks). |
 
-Sources: [agent registration](agents/chat_agent/init.py), [GitHub tool configuration](tools/github_mcp_tools.py), [Azure DevOps tool configuration](tools/ado_mcp_tools.py).
+Sources: [agent registration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chat_agent/init.py), [GitHub tool configuration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/github_mcp_tools.py), [Azure DevOps tool configuration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/ado_mcp_tools.py).
 
 ### C6 — SDK Chat prompt guidance
 
-The [SDK Chat instructions](agents/chat_agent/instruction.md) include safety and grounding rules: refuse harmful requests, avoid protected-material reproduction, retrieve evidence rather than inventing facts or links, treat tool output as untrusted reference data, and do not claim unsupported write actions. These instructions guide model behavior; they are not authorization checks or proof that injection cannot succeed.
+The [SDK Chat instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chat_agent/instruction.md) include safety and grounding rules: refuse harmful requests, avoid protected-material reproduction, retrieve evidence rather than inventing facts or links, treat tool output as untrusted reference data, and do not claim unsupported write actions. These instructions guide model behavior; they are not authorization checks or proof that injection cannot succeed.
 
 ### SDK Chat remaining checks
 
@@ -96,11 +96,11 @@ Its main risks are the same read-path and answer-generation risks as the SDK Cha
 | C7 — Bounded execution | The agent configures a maximum of 5 tool-loop iterations and 10 tool calls per turn. |
 | C2, C3, C4, C8 — Shared protections | The same GitHub filtering, external MCP spotlighting, web-fetch restrictions, and authentication utilities apply. Microsoft Learn MCP string results also pass through spotlighting. |
 
-Sources: [agent registration](agents/azure_mcp_server_agent/init.py), [Microsoft Learn tool configuration](tools/mslearn_mcp_tools.py).
+Sources: [agent registration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/azure_mcp_server_agent/init.py), [Microsoft Learn tool configuration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/mslearn_mcp_tools.py).
 
 ### C6 — Azure MCP QA prompt guidance
 
-The [Azure MCP instructions](agents/azure_mcp_server_agent/instruction.md) include safety, evidence-grounding, and untrusted-output guidance. They are agent-specific, not an identical copy of the SDK Chat safety prompt. Azure MCP documentation-path scoping in the Learn tool description is **instructional**, not a code-enforced URL restriction. Quick-first retrieval guidance is an efficiency measure, not a wall-clock timeout or security boundary.
+The [Azure MCP instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/azure_mcp_server_agent/instruction.md) include safety, evidence-grounding, and untrusted-output guidance. They are agent-specific, not an identical copy of the SDK Chat safety prompt. Azure MCP documentation-path scoping in the Learn tool description is **instructional**, not a code-enforced URL restriction. Quick-first retrieval guidance is an efficiency measure, not a wall-clock timeout or security boundary.
 
 ### Azure MCP QA remaining checks
 
@@ -120,7 +120,7 @@ Related PRs:
 
 The evolution agent reads stored conversations, execution traces, knowledge, and external evidence to diagnose poor answers. It can **update the dev (candidate) KB and refresh its search index**, compare candidate and production answers, and **create/update GitHub issues and add comments**. These write capabilities are enabled today.
 
-The team's operating model is an **ADO scheduled feedback job processing internal-channel conversations**, not a public interactive agent. The [feedback pipeline](pipelines/feedback-job.yml) runs daily with CI and PR triggers disabled. Pipeline run permissions and hosted-agent access are deployment-managed; the schedule itself is not an authorization check and does not prevent authorized manual runs.
+The team's operating model is an **ADO scheduled feedback job processing internal-channel conversations**, not a public interactive agent. The [feedback pipeline](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/feedback-job.yml) runs daily with CI and PR triggers disabled. Pipeline run permissions and hosted-agent access are deployment-managed; the schedule itself is not an authorization check and does not prevent authorized manual runs.
 
 **KB edits affect only the dev environment in this deployment, not the production KB.** The team maintains the dev/production configuration separation. Production-agent calls are used to compare answers, not to apply KB changes; this does not mean the workflow makes no production requests.
 
@@ -136,11 +136,11 @@ The remaining risks concern incorrect dev KB edits (R4, R6), stored injection in
 | C7 — Bounded execution | Maximum 20 tool calls and 21 tool-loop iterations per turn. |
 | C2, C3, C4, C8 — Shared protections | Uses the web-fetch restrictions, GitHub filtering, external MCP spotlighting, and credential handling described in [Shared controls](#5-shared-controls-and-deployment-checks). |
 
-Sources: [evolution registration and candidate clients](agents/chatbot_evolution_agent/init.py), [KB validation and update implementation](tools/knowledge_tools.py), [ETag-conditioned storage writes](utils/azure_storage.py), [validation target selection](tools/chatagent_tools.py), [GitHub configuration](tools/github_mcp_tools.py).
+Sources: [evolution registration and candidate clients](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent/init.py), [KB validation and update implementation](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/knowledge_tools.py), [ETag-conditioned storage writes](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/azure_storage.py), [validation target selection](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/chatagent_tools.py), [GitHub configuration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/github_mcp_tools.py).
 
 ### C6 — Evolution prompt guidance already in place
 
-The [evolution instructions](agents/chatbot_evolution_agent/instruction.md) direct the agent to:
+The [evolution instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent/instruction.md) direct the agent to:
 
 - Ground changes in authoritative evidence and treat retrieved content as data, not instructions.
 - Resolve the knowledge source and use the candidate environment to test improvements rather than modifying production knowledge.
@@ -149,14 +149,13 @@ The [evolution instructions](agents/chatbot_evolution_agent/instruction.md) dire
 
 These are implemented **workflow instructions**, not independently enforced write authorization. Evolution does not have an equivalent copy of the Q&A agents' Safety sections; do not assume identical safety-prompt coverage across agents.
 
-
 ## 5. Shared controls and deployment checks
 
 The three agents reuse the controls below where the corresponding tools are registered. C5 is a deployment-dependent control for all three agents, not an assertion of verified blocking. They provide defense in depth, not a guarantee that any single bypass is harmless.
 
 ### C2 — SSRF-hardened web fetch
 
-The [web-fetch implementation](tools/web_tools.py) uses HTTP GET and:
+The [web-fetch implementation](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/web_tools.py) uses HTTP GET and:
 
 - Accepts only `http` and `https` URLs; rejects localhost/loopback and any hostname resolving to a non-global IP address.
 - Pins validated DNS results for the request and bypasses proxy settings.
@@ -167,13 +166,13 @@ These checks mitigate [SSRF (CWE-918)](https://cwe.mitre.org/data/definitions/91
 
 ### C3 — GitHub authored-body filtering
 
-The [GitHub result parser](tools/github_mcp_tools.py) recursively redacts body fields in authored JSON objects unless the author is classified as a repository owner, member, collaborator, or bot. Structural metadata is retained.
+The [GitHub result parser](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/github_mcp_tools.py) recursively redacts body fields in authored JSON objects unless the author is classified as a repository owner, member, collaborator, or bot. Structural metadata is retained.
 
 This reduces exposure to external contributors' free text. It is a heuristic, not proof that retained content is safe: bot authors are trusted, and non-JSON payloads such as file content do not receive authored-body filtering.
 
 ### C4 — External MCP spotlighting
 
-The [tool-output middleware](utils/tool_security.py) wraps nonempty external MCP string results in a labelled, JSON-escaped block:
+The [tool-output middleware](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/tool_security.py) wraps nonempty external MCP string results in a labelled, JSON-escaped block:
 
 ```text
 <untrusted_tool_output>
@@ -185,14 +184,14 @@ This [spotlighting technique](https://arxiv.org/abs/2403.14720) cues the model t
 
 ### C8 — Authentication and secrets
 
-- [Azure credential selection](utils/azure_credential.py) supports managed identity, Azure Pipelines, and Azure CLI paths. Verify the path and least-privilege permissions used by each deployment.
+- [Azure credential selection](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/azure_credential.py) supports managed identity, Azure Pipelines, and Azure CLI paths. Verify the path and least-privilege permissions used by each deployment.
 - In GitHub App mode, a Key Vault signing operation produces the JWT without exporting the signing key, and short-lived installation tokens are refreshed as needed.
-- A configured static `GITHUB_TOKEN` overrides GitHub App mode, so the no-long-lived-token property is conditional ([GitHub token selection](tools/github_mcp_tools.py)).
+- A configured static `GITHUB_TOKEN` overrides GitHub App mode, so the no-long-lived-token property is conditional ([GitHub token selection](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/github_mcp_tools.py)).
 - Separate agent names, configuration endpoints, and routing do not themselves prove separate identities, storage, or audience authorization.
 
 ### C5 — Platform content safety
 
-The [deployment script](scripts/deploy_hosted_agent.py) requires `AI_FOUNDRY_RAI_POLICY_ID` and attaches that existing policy. It does not provision the policy or inspect its classifier settings.
+The [deployment script](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/scripts/deploy_hosted_agent.py) requires `AI_FOUNDRY_RAI_POLICY_ID` and attaches that existing policy. It does not provision the policy or inspect its classifier settings.
 
 Verify the effective deployed classifiers, blocking behavior, and coverage of in-container pre/post-tool traffic. Policy attachment alone does not prove protection against harmful output, jailbreaks, indirect injection, or protected-material reproduction.
 

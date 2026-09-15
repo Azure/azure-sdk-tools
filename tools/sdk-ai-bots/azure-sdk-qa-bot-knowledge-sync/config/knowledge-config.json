@@ -617,6 +617,15 @@
           "metadata": {
             "scope": "branded"
           }
+        },
+        {
+          "description": "JavaScript SDK release tools documentation",
+          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
+          "folder": "azure_sdk_tools_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -699,9 +708,9 @@
       },
       "paths": [
         {
-          "description": "Documentation for Azure SDK Tools",
-          "path": "/tools/js-sdk-release-tools/docs/automation-pipeline.md",
-          "folder": "azure_sdk_tools_docs",
+          "description": "Azure SDK CLI (azsdk) agent documentation: CLI command guidelines, MCP tools reference, design specs (tools/azsdk-cli/docs/specs), and custom-agent and skills authoring guidelines.",
+          "path": "/tools/azsdk-cli/docs",
+          "folder": "azsdk_cli_docs",
           "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"

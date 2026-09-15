@@ -34,6 +34,10 @@
             // By default it's folder name of first entry in path.
             "type": "string"
           },
+          "packageRootPath": {
+            // Relative path from the root of the SDK repository to the root of the package source code.
+            "type": "string"
+          },
           "result": {
             // Status of package. By default it's succeeded.
             "type": "string",
@@ -97,7 +101,7 @@
             "$ref": "InstallInstructionScriptOutput"
           }          
         },
-        "required": ["executionResult", "artifactPaths", "language"]
+        "required": ["executionResult", "artifactPaths", "language", "packageRootPath"]
       }
     }
   }

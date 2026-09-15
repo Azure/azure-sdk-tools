@@ -12,14 +12,16 @@ tags:
   area: pipeline
   priority: p0
 
-config:
+defaults:
   runs: 3
   timeout: "120s"
   executor: copilot-sdk
   model: gpt-5.4
 
-stimuli:
+scoring:
+  threshold: 0.8
 
+stimuli:
   # ==== azsdk_analyze_pipeline triggers ====
   - name: invoke-azsdk-analyze-pipeline-1
     prompt: "Analyze the pipeline run for build 4212345 in the azure-sdk/internal project. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."

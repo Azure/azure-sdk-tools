@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Attributes;
-using Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
@@ -72,7 +72,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
             response.ManagementPlane = status.ManagementPlane;
             response.Submitter = status.Submitter;
 
-            response.NeedsSDK = (response.DataPlane == DataPlaneApplicability.Yes || response.ManagementPlane == ManagementPlaneApplicability.Yes);
             return response;
         }
 

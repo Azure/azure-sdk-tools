@@ -26,32 +26,42 @@ public class CreateReleasePlanHandler : IMockToolHandler
         };
     }
 
-    private static ReleasePlanResponse ContosoReleasePlanResponse(string typespecPath, Dictionary<string, object?>? arguments) => new()
+    private static ReleasePlanResponse ContosoReleasePlanResponse(string typespecPath, Dictionary<string, object?>? arguments)
     {
-        TypeSpecProject = typespecPath,
-        PackageType = SdkType.Dataplane,
-        Message = "Release plan created successfully",
-        ReleasePlanDetails = new ReleasePlanWorkItem
+        var hasSpecPullRequest = !string.IsNullOrWhiteSpace(arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString());
+        return new ReleasePlanResponse
         {
-            WorkItemId = 35000,
-            Title = "Release Plan - Contoso.WidgetManager",
-            Status = "Active",
-            Owner = "testuser@microsoft.com",
-            SDKReleaseMonth = arguments?.GetValueOrDefault("targetReleaseMonthYear")?.ToString() ?? "06/2026",
-            ReleasePlanId = 50001,
-            IsDataPlane = true,
-            SpecType = "TypeSpec",
-            ActiveSpecPullRequest = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()
-                ?? "https://github.com/Azure/azure-rest-api-specs/pull/12345",
-            APISpecProjectPath = typespecPath,
-            SDKReleaseType = "beta",
-            SDKInfo =
-            [
-                new SDKInfo { Language = ".NET", PackageName = "Azure.Template.Contoso" },
-                new SDKInfo { Language = "Python", PackageName = "azure-contoso-widgetmanager" },
-                new SDKInfo { Language = "JavaScript", PackageName = "@azure/contoso-widgetmanager" },
-                new SDKInfo { Language = "Java", PackageName = "azure-contoso-widgetmanager" },
-            ]
-        }
-    };
+            TypeSpecProject = typespecPath,
+            PackageType = SdkType.Dataplane,
+            Message = "Release plan created successfully",
+            Warnings = hasSpecPullRequest
+                ? [$"Release plan 49999 ({ReleasePlanWorkItem.DashboardBaseUrl}49999) is past due. Its target release month was May 2026."]
+                : null,
+            NextSteps = hasSpecPullRequest
+                ? ["Either postpone the past-due plan by updating its target release month, or abandon it and record the reason in the release plan dashboard."]
+                : null,
+            ReleasePlanDetails = new ReleasePlanWorkItem
+            {
+                WorkItemId = 35000,
+                Title = "Release Plan - Contoso.WidgetManager",
+                Status = "Active",
+                Owner = "testuser@microsoft.com",
+                SDKReleaseMonth = arguments?.GetValueOrDefault("targetReleaseMonthYear")?.ToString() ?? "06/2026",
+                ReleasePlanId = 50001,
+                IsDataPlane = true,
+                SpecType = "TypeSpec",
+                ActiveSpecPullRequest = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()
+                    ?? "https://github.com/Azure/azure-rest-api-specs/pull/12345",
+                APISpecProjectPath = typespecPath,
+                SDKReleaseType = "beta",
+                SDKInfo =
+                [
+                    new SDKInfo { Language = ".NET", PackageName = "Azure.Template.Contoso" },
+                    new SDKInfo { Language = "Python", PackageName = "azure-contoso-widgetmanager" },
+                    new SDKInfo { Language = "JavaScript", PackageName = "@azure/contoso-widgetmanager" },
+                    new SDKInfo { Language = "Java", PackageName = "azure-contoso-widgetmanager" },
+                ]
+            }
+        };
+    }
 }

@@ -108,17 +108,9 @@ namespace PipelineGenerator
                     var upLogger = serviceProvider.GetService<ILogger<UnifiedPipelineConvention>>();
                     return new UnifiedPipelineConvention(upLogger, context);
 
-                case "upweekly":
-                    var upWeeklyTestLogger = serviceProvider.GetService<ILogger<WeeklyUnifiedPipelineConvention>>();
-                    return new WeeklyUnifiedPipelineConvention(upWeeklyTestLogger, context);
-
                 case "tests":
                     var testLogger = serviceProvider.GetService<ILogger<IntegrationTestingPipelineConvention>>();
                     return new IntegrationTestingPipelineConvention(testLogger, context);
-
-                case "testsweekly":
-                    var weeklyTestLogger = serviceProvider.GetService<ILogger<WeeklyIntegrationTestingPipelineConvention>>();
-                    return new WeeklyIntegrationTestingPipelineConvention(weeklyTestLogger, context);
 
                 default: throw new ArgumentOutOfRangeException(nameof(convention), "Could not find matching convention.");
             }

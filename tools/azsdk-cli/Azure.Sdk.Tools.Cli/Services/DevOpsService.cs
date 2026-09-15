@@ -172,6 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct);
         public Task<ProductInfo?> GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct);
         public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetActiveReleasePlansByTypeSpecProjectPathAsync(string typeSpecProjectPath, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct = default);
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default);
@@ -205,7 +206,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                    or HttpStatusCode.Found                    // 302 (sign-in redirect)
                    or HttpStatusCode.NonAuthoritativeInformation; // 203 (DevOps anonymous-needs-auth)
 
-        [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
+        // Accept any release-type label, but require a numeric version (optionally v-prefixed)
+        // so the production "Type | Version | Date" header and separator are not releases.
+        // Keep fields within their cells and rows; callers classify preview/stable by version.
+        [GeneratedRegex(@"\|[ \t]+([^\s|]+)[ \t]+\|[ \t]+([vV]?[0-9][^\s|]*)[ \t]+\|[ \t]+([^\s|]+)[ \t]+\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct)
@@ -466,6 +470,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     logger.LogWarning("API spec work item not found for release plan work item {workItemId}", releasePlan.WorkItemId);
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -893,6 +901,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     logger.LogWarning("No work items found.");
                     return [];
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -2052,6 +2064,50 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 logger.LogError(ex, "Failed to get release plan for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
                 throw new Exception($"Failed to get release plan for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<ReleasePlanWorkItem>> GetActiveReleasePlansByTypeSpecProjectPathAsync(string typeSpecProjectPath, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default)
+        {
+            if (string.IsNullOrEmpty(typeSpecProjectPath))
+            {
+                throw new ArgumentException("TypeSpec project path cannot be null or empty.", nameof(typeSpecProjectPath));
+            }
+
+            try
+            {
+                logger.LogInformation("Searching for active release plans with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+
+                var escapedPath = typeSpecProjectPath.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned','Finished')";
+                query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+                if (apiReleaseType != ApiReleaseType.Unknown)
+                {
+                    query += $" AND [Custom.ReleasePlanType] = '{apiReleaseType.ToAdoFieldValue()}'";
+                }
+                query += "  ORDER BY [System.Id] DESC";
+
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No active release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                    return [];
+                }
+
+                var releasePlans = await Task.WhenAll(releasePlanWorkItems.Select(workItem => MapWorkItemToReleasePlanAsync(workItem, ct)));
+                return releasePlans.ToList();
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get active release plans for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                throw new Exception($"Failed to get active release plans for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
             }
         }
 

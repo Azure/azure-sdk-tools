@@ -173,6 +173,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 packageName: "@azure/arm-contoso"
               Go:
                 packageName: sdk/resourcemanager/contoso/armcontoso
+              UnknownEmitter:
+                packageName: unknown-package
             """;
 
             // Set up the metadata output directory and file as the emitter would
@@ -199,6 +201,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.Python && p.PackageName == "azure-mgmt-contoso"));
                 Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.JavaScript && p.PackageName == "@azure/arm-contoso"));
                 Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.Go && p.PackageName == "sdk/resourcemanager/contoso/armcontoso"));
+                Assert.That(result.Packages, Has.None.Matches<PackageInfo>(p => p.Language == SdkLanguage.Unknown));
             }
             finally
             {

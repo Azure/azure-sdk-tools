@@ -1,6 +1,65 @@
 # Release History
 
-## 0.6.39 (Unreleased)
+## 0.6.46 (Unreleased)
+
+### Features Added
+
+- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
+- Ignored release-table headers and separators so packages without planned release dates remain blocked.
+- Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.
+
+### Other Changes
+
+## 0.6.45 (2026-09-08)
+
+### Bugs Fixed
+
+- C# customized-code updates now regenerate the SDK after patching customizations and before the final build.
+
+## 0.6.44 (2026-09-08)
+
+### Breaking Changes
+
+- Product onboarding: removed the `--needs-sdk` option, renamed `N/A` to `I don't know` for `--data-plane` and `--management-plane` options.
+
+## 0.6.43 (2026-09-03)
+
+### Breaking Changes
+
+- Moved `product-onboarding sync` CLI command to become `release-plan onboard-product`.
+
+## 0.6.42 (2026-09-01)
+
+### Bugs Fixed
+
+- `azsdk_run_generate_sdk` now blocks stable SDK generation for preview API versions.
+
+### Other Changes
+
+- Skip SDK generation if an SDK generation pipeline is already in progress for the release plan.
+- Do not run SDK generation if another release plan is in progress for the same package.
+
+## 0.6.41 (2026-08-31)
+
+### Features Added
+
+- Updated the `eng evaluate` CLI command to remove the Copilot SDK judge and add `--until` (an ISO-8601 timestamp) to control the evaluation window end time.
+
+## 0.6.40 (2026-08-31)
+
+### Bugs Fixed
+
+- `azsdk_run_generate_sdk` now blocks SDK generation for a spec pull request until that pull request is merged, so SDK pull requests are no longer created — and surfaced to reviewers — while the release plan is still in the API Spec Review stage.
+- Ignore API version associated with unknown language emitter configuration in metadata output.
+- Ignore unsupported languages when updating the languages in release plan.
+
+## 0.6.39 (2026-08-31)
 
 ### Features Added
 
@@ -9,10 +68,6 @@
 ### Breaking Changes
 
 - Removed the option to force create a release plan to avoid duplicate release plan.
-
-### Bugs Fixed
-
-### Other Changes
 
 ## 0.6.38 (2026-08-26)
 

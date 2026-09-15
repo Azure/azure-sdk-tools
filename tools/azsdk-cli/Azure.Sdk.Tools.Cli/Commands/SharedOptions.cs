@@ -13,7 +13,6 @@ using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Tools.Config;
-using Azure.Sdk.Tools.Cli.Tools.ProductOnboarding;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {

@@ -220,7 +220,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $payload[0].name | Should -Be 'Pkg.A'
         }
 
-        It "updates release plan status to approval pending for releasable artifacts" {
+        It "updates release plan status to release in progress for releasable artifacts" {
             $global:AutoReleaseStubRelease = [pscustomobject]@{
                 PullRequestNumber = 123
                 IsEligible = $true
@@ -244,7 +244,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $callArgs | Should -Contain '--package-name'
             $callArgs | Should -Contain 'Azure.Storage.Blobs'
             $callArgs | Should -Contain '--status'
-            $callArgs | Should -Contain 'Approval Pending'
+            $callArgs | Should -Contain 'Release In Progress'
             $callArgs | Should -Contain '--sdk-pull-request'
             $callArgs | Should -Contain 'https://github.com/Azure/azure-sdk-for-net/pull/123'
             $callArgs | Should -Contain '--release-pipeline'

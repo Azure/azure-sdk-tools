@@ -5,7 +5,7 @@
 ### Features Added
 
 - Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
-- Create release plan should check for a release plan with same API version and return an in progress releaes plan for any version only if api-version is unknown for the project.
+- Create release plan now checks for an existing plan with the same API version and falls back to matching by TypeSpec project and release-plan type only when the API version is unknown.
 
 ### Bugs Fixed
 

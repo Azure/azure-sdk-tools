@@ -1345,7 +1345,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     reporter.NextStep(message);
 
                     // Refresh the release plan to get the latest details. This is best-effort and must
-                    // never fail release plan creation, so any error here is logged and swallowed.
+                    // never fail release plan creation, so any error here is logged and swallowed. If the
+                    // refresh fails, the subsequent steps intentionally continue using the pre-refresh
+                    // release plan details (already populated above) rather than skipping them.
                     try
                     {
                         releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);

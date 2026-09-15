@@ -1,5 +1,7 @@
 # Security Design
 
+<!-- markdownlint-configure-file { "MD024": { "siblings_only": true } } -->
+
 ## 1. Overview
 
 The agents run as Foundry hosted agents (custom containers, Responses protocol), built on the `agent_framework` SDK with an in-container tool loop. They share infrastructure and some security utilities, but **their tool permissions and risks differ**.
@@ -8,93 +10,51 @@ The agents run as Foundry hosted agents (custom containers, Responses protocol),
 | --- | --- | --- |
 | [Azure SDK Chat QA agent](#2-azure-sdk-chat-agent) | Answer SDK development and release questions in Teams. | Read-only: internal knowledge, web, GitHub, Azure DevOps, and pipeline analysis. |
 | [Azure MCP Server QA agent](#3-azure-mcp-server-qa-agent) | Answer Azure MCP Server usage and troubleshooting questions. | Read-only: internal knowledge, web, GitHub, and Microsoft Learn. No Azure resource-management tools. |
-| [Chatbot evolution agent](#4-chatbot-evolution-agent) | Review past answers and test improvements. | Read and write: candidate KB edits and index refreshes, validation against candidate/production agents, and GitHub issue/comment publication. |
-
-**Q&A agents** below means the SDK Chat and Azure MCP Server QA agents. Read-only describes their registered tools, not an absence of platform writes such as conversation persistence. It also does not authorize disclosure of retrieved internal data to every caller.
-
-This document describes safeguards present in source code and prompt instructions. **Implemented controls**, **prompt guidance**, and **deployment checks or remaining work** are distinguished below; this is not a deployed-environment security audit. Shared hosting does not establish agent or tenant data isolation. Stateless calls reuse warm sessions, so a fresh container or filesystem per request must not be assumed ([session handling](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/azure_ai_foundry.py)).
-
-### Risk catalog
-
-Risk IDs retain their original meanings across all agents. The agent sections describe their different exposure and impact; a control mapping indicates mitigation, not elimination of a risk.
-
-| ID | Risk | Q&A exposure | Evolution exposure |
-| --- | --- | --- | --- |
-| R1 | Harmful content | Harmful answers or relayed content. | Harmful analysis or published issue/comment content. |
-| R2 | User prompt attack (jailbreak) | Questions attempting to override instructions. | Restricted exposure through the internal feedback-job workflow rather than public interactive requests. |
-| R3 | Document attack (indirect prompt injection) | Instructions embedded in retrieved knowledge, GitHub, web, or ADO content. | Stored injection in conversations, traces, KB, and external evidence influencing later writes. |
-| R4 | Ungrounded content / hallucination | Unsupported facts, links, or recommendations. | Unsupported diagnoses, KB replacements, or published findings. |
-| R5 | Protected material reproduction | Reproduction of protected source content in answers. | Reproduction in KB edits, analysis, or GitHub publications. |
-| R6 | Task adherence | Incorrect read-tool selection or parameters. | Unintended KB changes or GitHub writes as well as incorrect reads. |
-| R7 | Agent hijacking | SSRF or misuse of read tools; registered tools limit state-changing actions. | SSRF and misuse of enabled KB/GitHub write capabilities. |
-| R8 | Sensitive data leakage | Exposure of credentials or internal information to unauthorized readers. | Exposure through analysis, validation calls, or GitHub publication. |
-
-### Control catalog and risk mapping
-
-C1–C8 retain their existing identities. **C1's read-only guarantee applies only to Q&A**; evolution uses an allow-list with explicitly enabled writes. C9–C11 identify existing evolution-specific safeguards, not newly implemented security features. Controls remain subject to the limitations in each agent section.
-
-| ID | Control | Risks addressed | Applicability and status |
-| --- | --- | --- | --- |
-| C1 | Read-only, allow-listed tools (least privilege) | R6, R7 | Q&A tools are read-only. Evolution has a limited write-tool allow-list, not read-only access. |
-| C2 | SSRF-hardened web fetch | R7 | Shared code-enforced URL, DNS, and redirect checks. |
-| C3 | GitHub untrusted-author redaction | R3 | Shared authored-JSON filtering; retained content is not proven safe. |
-| C4 | Spotlighting middleware | R3 | Shared external MCP string wrapping; native tool results are excluded. |
-| C5 | Platform content-safety guardrail | R1, R2, R3, R5 | Existing policy attachment is implemented; deployed classifiers and effective blocking require verification. |
-| C6 | Safety system prompt | R1, R2, R3, R4, R5, R6, R7 | Agent-specific instructions address the applicable risks described in each agent section. Q&A instructions cover safety and answer grounding; evolution instructions cover evidence use, untrusted content, and the improvement workflow. |
-| C7 | Bounded tool loop | R6, R7 | Configured per agent; not aggregate request throttling. |
-| C8 | Authentication & secrets | R8 | Shared credential paths; managed identity and short-lived GitHub App tokens depend on configuration. |
-| C9 | Candidate-configured clients and validation target selection | R6, R7 | KB writes use dev (candidate) clients; dev/production resource separation is maintained through deployment configuration. |
-| C10 | Validated KB paths | R6, R7 | Evolution KB operations validate relative Markdown paths under a registered source folder. |
-| C11 | Exact-match, concurrency-checked KB edits | R6, R7 | Evolution rejects empty/ambiguous matches and uses ETag-conditioned writes; no semantic validation or rollback. |
+| [Chatbot evolution agent](#4-chatbot-evolution-agent) | Review past answers and test improvements. | **Read and write**: candidate KB edits and index refreshes, validation against candidate/production agents, and GitHub issue/comment publication. |
 
 ## 2. Azure SDK Chat agent
 
-### SDK Chat capabilities and risks
+### Capabilities
 
 The agent answers developer questions using internal documentation, web content, GitHub repositories/discussions, and Azure DevOps builds/work items. Its registered tools cannot create, edit, delete, merge, or approve repository/work-item content.
 
-The main risks are prompt injection from user questions or retrieved content (R2, R3), incorrect or harmful answers (R4, R1), reproduction of protected material (R5), disclosure of internal knowledge (R8), and tool misuse or server-side request forgery (SSRF) through fetched URLs (R6, R7). Read-only tools reduce state-changing impact, but do not eliminate these risks.
+### Risks and Safeguards
 
-### SDK Chat safeguards
-
-| Safeguard | What is implemented |
-| --- | --- |
-| C1 — Read-only GitHub access | Server-side headers request read-only mode and selected toolsets; the client separately allow-lists approximately 15 read tools. GitHub tool approval is disabled because the Q&A registration exposes no write tools. |
-| C1 — Read-only Azure DevOps access | A client allow-list permits project, pipeline/build, artifact, and work-item/comment reads. No create, update, queue, or delete operation is exposed. |
-| C1 — Read/analyze native tools | Knowledge retrieval, web search/fetch, and pipeline analysis do not expose content-modification operations. |
-| C7 — Bounded execution | The agent configures a maximum of 5 tool-loop iterations and 10 tool calls per turn. These are execution bounds, not request-rate limits. |
-| C2, C3, C4, C8 — Shared protections | GitHub authored-body filtering, external MCP spotlighting, SSRF-hardened web fetching, and authentication paths described in [Shared controls](#5-shared-controls-and-deployment-checks). |
+| Risk ID/name | How it applies | Implemented safeguards (C IDs) |
+| --- | --- | --- |
+| R1 — Harmful content | Answers could generate or repeat harmful content. | C6 instructs refusal of harmful requests. C5 policy attachment is implemented; effective blocking is deployment-dependent (see [Shared Controls](#5-shared-controls)). |
+| R2 — User prompt attack (jailbreak) | User questions could override instructions. | C5 policy attachment is implemented; jailbreak coverage and effective blocking are deployment-dependent. |
+| R3 — Document attack (indirect prompt injection) | Retrieved docs, GitHub, web, or ADO content could redirect answers. | C6 treats tool output as untrusted reference data. Shared C3 GitHub filtering and C4 external MCP spotlighting reduce exposure to indirect injection; C5 policy coverage is deployment-dependent. |
+| R4 — Ungrounded content / hallucination | Answers could invent facts, links, or recommendations. | C6: the [SDK Chat instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chat_agent/instruction.md) require retrieved evidence and prohibit unsupported facts, links, and claims of write actions. Prompt guidance controls model behavior, not resource permissions. |
+| R5 — Protected material reproduction | Answers could reproduce protected source material. | C6 instructs avoidance of protected-material reproduction. C5 policy attachment is implemented; protected-material coverage and effective blocking are deployment-dependent. |
+| R6 — Task adherence | Wrong read-tool selection or parameters could produce incorrect results. | C1: GitHub headers request read-only mode/selected toolsets; the client allow-lists approximately 15 reads, with approval disabled because no writes are registered. ADO allows only project, pipeline/build, artifact, and work-item/comment reads—not create/update/queue/delete. Native retrieval, web, and pipeline analysis expose no content modification. C6 guides tool use; C7 bounds execution below. |
+| R7 — Agent hijacking | Redirected tool use could fetch internal URLs (SSRF) or misuse read access. | C1 limits available operations to reads; C7 allows at most **5 tool-loop iterations / 10 tool calls per turn**. Shared C2 hardens web fetching; C6 guides handling of untrusted output. |
+| R8 — Sensitive data leakage | Answers or tool requests could disclose credentials or internal information to unauthorized recipients. | Shared C8 provides authentication and secret-handling paths; it does not by itself authorize disclosure of retrieved data. |
 
 Sources: [agent registration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chat_agent/init.py), [GitHub tool configuration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/github_mcp_tools.py), [Azure DevOps tool configuration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/ado_mcp_tools.py).
-
-### C6 — SDK Chat prompt guidance
-
-The [SDK Chat instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chat_agent/instruction.md) include safety and grounding rules: refuse harmful requests, avoid protected-material reproduction, retrieve evidence rather than inventing facts or links, treat tool output as untrusted reference data, and do not claim unsupported write actions. These instructions guide model behavior; they are not authorization checks or proof that injection cannot succeed.
 
 ## 3. Azure MCP Server QA agent
 
 Related PR: [#16729 — Add Azure MCP Server agent support](https://github.com/Azure/azure-sdk-tools/pull/16729).
 
-### Azure MCP QA capabilities and risks
+### Capabilities
 
 This agent answers questions **about Azure MCP Server**. It searches internal knowledge, wiki/web content, GitHub, and Microsoft Learn. It does **not** register Azure resource-management tools and cannot provision or modify Azure resources.
 
-Its main risks are the same read-path and answer-generation risks as the SDK Chat agent: prompt injection (R2, R3), unsupported recommendations (R4), harmful or protected-content output (R1, R5), internal-data disclosure (R8), and tool misuse or SSRF (R6, R7). Its name does not imply Azure management permissions.
+### Risks and Safeguards
 
-### Azure MCP QA safeguards
-
-| Safeguard | What is implemented |
-| --- | --- |
-| C1 — Read-only tool registration | The agent registers retrieval tools and the read-only GitHub configuration; it does not register the SDK agent's Azure DevOps or pipeline-analysis tools. |
-| C1 — Restricted Microsoft Learn MCP | The endpoint is fixed to `https://learn.microsoft.com/api/mcp`, with only `microsoft_docs_search` and `microsoft_docs_fetch` allowed and a 30-second timeout. |
-| C7 — Bounded execution | The agent configures a maximum of 5 tool-loop iterations and 10 tool calls per turn. |
-| C2, C3, C4, C8 — Shared protections | The same GitHub filtering, external MCP spotlighting, web-fetch restrictions, and authentication utilities apply. Microsoft Learn MCP string results also pass through spotlighting. |
+| Risk ID/name | How it applies | Implemented safeguards (C IDs) |
+| --- | --- | --- |
+| R1 — Harmful content | Troubleshooting answers could contain harmful content. | C6 supplies safety guidance. C5 policy attachment is implemented; effective blocking is deployment-dependent (see [Shared Controls](#5-shared-controls)). |
+| R2 — User prompt attack (jailbreak) | Questions could override instructions. | C5 policy attachment is implemented; jailbreak coverage and effective blocking are deployment-dependent. |
+| R3 — Document attack (indirect prompt injection) | Knowledge, wiki/web, GitHub, or Learn results could redirect answers. | C6 supplies untrusted-output guidance. Shared C3 GitHub filtering and C4 external MCP spotlighting reduce exposure to indirect injection, including Learn MCP string results; C5 policy coverage is deployment-dependent. |
+| R4 — Ungrounded content / hallucination | Usage advice or troubleshooting recommendations could lack evidence. | C6: the agent-specific [Azure MCP instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/azure_mcp_server_agent/instruction.md) require evidence grounding. Quick-first retrieval guidance is an efficiency measure, not a security boundary or wall-clock timeout. |
+| R5 — Protected material reproduction | Troubleshooting answers could reproduce protected documentation. | C6 supplies safety guidance. C5 policy attachment is implemented; protected-material coverage and effective blocking are deployment-dependent. |
+| R6 — Task adherence | Wrong retrieval tools or parameters could lead to irrelevant advice. | C1 registers retrieval and read-only GitHub tools, but no ADO, pipeline-analysis, or Azure management tools. Learn uses the fixed endpoint `https://learn.microsoft.com/api/mcp`, only `microsoft_docs_search` / `microsoft_docs_fetch`, and a **30-second timeout**. C6 guides retrieval; C7 bounds execution below. |
+| R7 — Agent hijacking | An attacker could redirect web fetching (SSRF) or misuse read tools, not provision Azure resources. | C1 restricts available tools; C7 allows at most **5 tool-loop iterations / 10 tool calls per turn**. Shared C2 hardens web fetching; C6 guides handling of untrusted output. |
+| R8 — Sensitive data leakage | Answers or tool requests could expose credentials or internal knowledge to unauthorized recipients. | Shared C8 provides authentication and secret-handling paths, not automatic permission to disclose internal knowledge. |
 
 Sources: [agent registration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/azure_mcp_server_agent/init.py), [Microsoft Learn tool configuration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/mslearn_mcp_tools.py).
-
-### C6 — Azure MCP QA prompt guidance
-
-The [Azure MCP instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/azure_mcp_server_agent/instruction.md) include safety, evidence-grounding, and untrusted-output guidance. They are agent-specific, not an identical copy of the SDK Chat safety prompt. Azure MCP documentation-path scoping in the Learn tool description is **instructional**, not a code-enforced URL restriction. Quick-first retrieval guidance is an efficiency measure, not a wall-clock timeout or security boundary.
 
 ## 4. Chatbot evolution agent
 
@@ -103,7 +63,7 @@ Related PRs:
 - [#16777 — Add chatbot evolution agent](https://github.com/Azure/azure-sdk-tools/pull/16777)
 - [#16986 — Fix evolution agent validation lifecycle](https://github.com/Azure/azure-sdk-tools/pull/16986)
 
-### Evolution capabilities and risks
+### Capabilities
 
 The evolution agent reads stored conversations, execution traces, knowledge, and external evidence to diagnose poor answers. It can **update the dev (candidate) KB and refresh its search index**, compare candidate and production answers, and **create/update GitHub issues and add comments**. These write capabilities are enabled today.
 
@@ -111,32 +71,22 @@ The team's operating model is an **ADO scheduled feedback job processing interna
 
 **KB edits affect only the dev environment in this deployment, not the production KB.** The team maintains the dev/production configuration separation. Production-agent calls are used to compare answers, not to apply KB changes; this does not mean the workflow makes no production requests.
 
-The remaining risks concern incorrect dev KB edits (R4, R6), stored injection influencing the workflow or GitHub writes (R3, R7), and disclosure or harmful/protected content in publication (R8, R1, R5). Internal input reduces direct exposure (R2), but conversations can contain copied external text and tools retrieve external evidence. The Q&A read-only guarantee does not apply.
+### Risks and Safeguards
 
-### Evolution safeguards
-
-| Safeguard | What is implemented |
-| --- | --- |
-| C9 — Dev-only KB updates | KB tools use Search and Blob clients from candidate settings, separate from the production chat client used for answer comparison. Resource separation is managed by the team through deployment configuration. |
-| C10, C11 — Scoped, concurrency-checked KB edits | Relative Markdown paths must be under a registered source folder. Updates require a nonempty, uniquely matching passage and an ETag-conditioned write to avoid overwriting concurrent changes. |
-| C1 — Limited GitHub write tools | Only `issue_write` and `add_issue_comment` are added to the read-tool allow-list. The intended repository is `Azure/azure-sdk-pr`; this is prompt guidance, not a code-enforced repository restriction. |
-| C7 — Bounded execution | Maximum 20 tool calls and 21 tool-loop iterations per turn. |
-| C2, C3, C4, C8 — Shared protections | Uses the web-fetch restrictions, GitHub filtering, external MCP spotlighting, and credential handling described in [Shared controls](#5-shared-controls-and-deployment-checks). |
+| Risk ID/name | How it applies | Implemented safeguards (C IDs) |
+| --- | --- | --- |
+| R1 — Harmful content | Analysis or publication could generate harmful content. | C5 policy attachment is implemented; classifiers and effective blocking are deployment-dependent, not verified (see [Shared Controls](#5-shared-controls)). |
+| R2 — User prompt attack (jailbreak) | Feedback-job input could attempt to override instructions. | The internal feedback-job workflow limits direct exposure. C5 jailbreak coverage and effective blocking are deployment-dependent. |
+| R3 — Document attack (indirect prompt injection) | Stored conversations, traces, KB, and external evidence could redirect later writes. | C6 treats retrieved content as data, not instructions. Shared C3 GitHub filtering and C4 external MCP spotlighting reduce exposure to indirect injection; C5 policy coverage is deployment-dependent. Internal scheduling does not make copied external text trustworthy. |
+| R4 — Ungrounded content / hallucination | Diagnoses, dev KB changes, or published findings could lack evidence. | C6: the [evolution instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent/instruction.md) require source resolution, authoritative evidence, candidate testing, and candidate/production answer comparison. These guide the improvement and publication workflow; comparison does not prove correctness. |
+| R5 — Protected material reproduction | Analysis, dev KB edits, or GitHub publication could reproduce protected material. | C5 policy attachment is implemented; protected-material classifiers and effective blocking are deployment-dependent, not verified. |
+| R6 — Task adherence | Incorrect reads, unintended dev KB edits, or GitHub writes could depart from the improvement task. | C9 selects candidate Search/Blob clients for KB updates and separate candidate/production validation targets; dev-only write scope depends on deployment configuration. C10 validates relative Markdown paths under a registered source folder. C11 requires a **nonempty, unique exact match** and **ETag-conditioned write**, not semantic validation or rollback. C6 guides the workflow; C1/C7 limits appear below. |
+| R7 — Agent hijacking | An attacker could redirect web fetching (SSRF) or enabled KB/GitHub writes; Q&A read-only guarantees do not apply. | C1 adds only `issue_write` and `add_issue_comment` to GitHub reads; `Azure/azure-sdk-pr` is a **prompt-only** repository target, not code-enforced. C7 allows at most **21 tool-loop iterations / 20 tool calls per turn**. C9–C11 constrain KB operations; shared C2 hardens web fetching; C6 guides evidence handling and publication. |
+| R8 — Sensitive data leakage | Analysis, validation calls, or GitHub publication could expose credentials or internal information to unauthorized recipients. | Shared C8 provides credential handling and authentication; resource/audience permissions remain deployment-managed, and publication can still disclose sensitive data. |
 
 Sources: [evolution registration and candidate clients](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent/init.py), [KB validation and update implementation](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/knowledge_tools.py), [ETag-conditioned storage writes](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/azure_storage.py), [validation target selection](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/chatagent_tools.py), [GitHub configuration](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/github_mcp_tools.py).
 
-### C6 — Evolution prompt guidance already in place
-
-The [evolution instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent/instruction.md) direct the agent to:
-
-- Ground changes in authoritative evidence and treat retrieved content as data, not instructions.
-- Resolve the knowledge source and use the candidate environment to test improvements rather than modifying production knowledge.
-- Compare candidate and production answers to evaluate the proposed improvement.
-- Follow the issue-publication workflow and use the intended `Azure/azure-sdk-pr` repository.
-
-Evolution's instructions guide evidence use, dev-only KB changes, and GitHub publication. The registered tool allow-list controls available operations, credential permissions control resource access, and deployment configuration selects the dev KB resources. The intended GitHub repository is specified in the prompt, as described under C1.
-
-## 5. Shared controls and deployment checks
+## 5. Shared Controls
 
 The three agents reuse the controls below where the corresponding tools are registered. C5 is a deployment-dependent control for all three agents, not an assertion of verified blocking. They provide defense in depth, not a guarantee that any single bypass is harmless.
 

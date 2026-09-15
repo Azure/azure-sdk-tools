@@ -4,6 +4,8 @@ import { isAlias, parseDocument, visit } from "yaml";
 import { canonicalJson, stableId } from "./stable-id.mjs";
 
 const METHOD_KINDS = new Set(["basic", "paging", "lro", "lropaging"]);
+const contractCache = new WeakMap();
+const operationIndexCache = new WeakMap();
 const SCALAR_KINDS = new Set([
   "any",
   "unknown",
@@ -1018,9 +1020,43 @@ export function normalizeTcgcContract({ workRoot = process.cwd(), artifact, maxA
     throw unsupported(`expected exactly one tcgc-output.yaml, received ${files.length}`);
   }
   if (!fs.existsSync(files[0])) throw unsupported(`${files[0]} does not exist`);
-  return normalizeTcgcPackage(
+  const stat = fs.statSync(files[0], { bigint: true });
+  const key = [files[0], stat.size, stat.mtimeNs, stat.ctimeNs, maxAliasCount, maxObjects].join("\0");
+  const cached = contractCache.get(artifact);
+  if (cached?.key === key) return cached.contract;
+  const contract = normalizeTcgcPackage(
     parseTcgcYaml(fs.readFileSync(files[0], "utf8"), { maxAliasCount, maxObjects }),
   );
+  contractCache.set(artifact, { key, contract });
+  return contract;
+}
+
+export function indexTcgcOperations(contract, apiVersion) {
+  let versions = operationIndexCache.get(contract);
+  if (!versions) operationIndexCache.set(contract, versions = new Map());
+  if (versions.has(apiVersion)) return versions.get(apiVersion);
+  const byIdentity = new Map();
+  for (const method of contract.methods) {
+    const identity = method.crossLanguageDefinitionId;
+    if (!identity || method.apiVersions.length && !method.apiVersions.includes(apiVersion)) continue;
+    let routes = byIdentity.get(identity);
+    if (!routes) byIdentity.set(identity, routes = new Set());
+    const { verb, path: route } = method.operation ?? {};
+    if (verb && route) routes.add(`${verb.toLowerCase()}\0${route}`);
+  }
+  const index = new Map();
+  for (const [identity, routes] of byIdentity) {
+    // Source indexes use owner.member or top-level names. Share route sets
+    // between these exact identities instead of copying the method graph.
+    const segments = identity.split(".");
+    for (const name of new Set([identity, segments.slice(-2).join("."), segments.at(-1)])) {
+      let identities = index.get(name);
+      if (!identities) index.set(name, identities = new Map());
+      identities.set(identity, routes);
+    }
+  }
+  versions.set(apiVersion, index);
+  return index;
 }
 
 export const normalizeTCGCContract = normalizeTcgcContract;

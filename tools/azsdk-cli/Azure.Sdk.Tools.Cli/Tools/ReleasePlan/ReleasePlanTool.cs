@@ -221,6 +221,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = false,
         };
 
+        private readonly Option<string> optionalApiVersionOpt = new("--api-version")
+        {
+            Description = "API version. Requires --typespec-path and selects the release plan whose child API Spec work item has this version.",
+            Required = false,
+        };
+
         private readonly Option<string> kpiProductIdOpt = new("--product")
         {
             Description = "Product service tree ID",
@@ -292,7 +298,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", GetReleasePlanToolName) { releasePlanNumberOpt, workItemIdOpt, optionalPullRequestOpt, optionalTypeSpecProjectPathOpt, optionalApiReleaseTypeOpt },
+            new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", GetReleasePlanToolName) { releasePlanNumberOpt, workItemIdOpt, optionalPullRequestOpt, optionalTypeSpecProjectPathOpt, optionalApiReleaseTypeOpt, optionalApiVersionOpt },
             new McpCommand(createReleasePlanCommandName, "Create a release plan", CreateReleasePlanToolName)
             {
                 typeSpecProjectPathOpt,
@@ -336,7 +342,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var getPullRequest = commandParser.GetValue(optionalPullRequestOpt);
                     var getTypeSpecPath = commandParser.GetValue(optionalTypeSpecProjectPathOpt);
                     var getApiReleaseType = commandParser.GetValue(optionalApiReleaseTypeOpt);
-                    return await GetReleasePlan(releasePlanNumber, workItemId, specPullRequestUrl: getPullRequest, typeSpecProjectPath: getTypeSpecPath, apiReleaseType: getApiReleaseType, ct: ct);
+                    var getApiVersion = commandParser.GetValue(optionalApiVersionOpt);
+                    return await GetReleasePlan(releasePlanNumber, workItemId, specPullRequestUrl: getPullRequest, typeSpecProjectPath: getTypeSpecPath, apiReleaseType: getApiReleaseType, apiVersion: getApiVersion, ct: ct);
 
                 case createReleasePlanCommandName:
                     var typeSpecProjectPath = commandParser.GetValue(typeSpecProjectPathOpt);
@@ -407,12 +414,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
 
-        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA).")]
-        public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, string? apiReleaseType = null, CancellationToken ct = default)
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA) or API version. TypeSpec project path is required when API version is provided.")]
+        public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, string? apiReleaseType = null, string? apiVersion = null, CancellationToken ct = default)
         {
             try
             {
                 ReleasePlanWorkItem? releasePlan = null;
+
+                if (!string.IsNullOrWhiteSpace(apiVersion) && string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                {
+                    return new ReleasePlanResponse { ResponseError = "TypeSpec project path is required when API version is provided." };
+                }
 
                 // Parse API release type if provided
                 ApiReleaseType parsedApiReleaseType = ApiReleaseType.Unknown;
@@ -441,17 +453,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 else if (!string.IsNullOrWhiteSpace(specPullRequestUrl))
                 {
                     ValidatePullRequestUrl(specPullRequestUrl);
-                    releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
+                    releasePlan = !string.IsNullOrWhiteSpace(apiVersion)
+                        ? await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath!, apiVersion, ct)
+                        : await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
 
-                    // Fall back to TypeSpec project path if spec PR lookup failed
-                    if (releasePlan == null && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                    if (releasePlan == null && string.IsNullOrWhiteSpace(apiVersion) && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
                     {
                         releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, apiReleaseType: parsedApiReleaseType, ct: ct);
                     }
                 }
                 else if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
                 {
-                    releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, apiReleaseType: parsedApiReleaseType, ct: ct);
+                    releasePlan = !string.IsNullOrWhiteSpace(apiVersion)
+                        ? await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ct)
+                        : await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, apiReleaseType: parsedApiReleaseType, ct: ct);
                 }
                 else
                 {

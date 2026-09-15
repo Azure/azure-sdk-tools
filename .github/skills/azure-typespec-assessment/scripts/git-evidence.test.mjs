@@ -8,6 +8,7 @@ import {
   collectChanges,
   createSparseWorktree,
   deriveServiceRoot,
+  normalizeSpecification,
   normalizeSparseRoots,
   resolveComparison,
 } from "./git-evidence.mjs";
@@ -38,6 +39,14 @@ test("collectChanges combines committed, staged, unstaged, and untracked TypeSpe
   const comparison = resolveComparison(repo, base);
   const changes = collectChanges(repo, comparison.mergeBaseCommit, "specification/widget");
   assert.deepEqual(
+    collectChanges(
+      repo,
+      comparison.mergeBaseCommit,
+      normalizeSpecification(repo, path.join(repo, "specification", "widget")),
+    ),
+    changes,
+  );
+  assert.deepEqual(
     changes.map((item) => [item.path, item.origins]),
     [
       ["specification/widget/main.tsp", ["unstaged"]],
@@ -54,6 +63,23 @@ test("deriveServiceRoot rejects paths outside specification", () => {
     "specification/widget",
   );
   assert.throws(() => deriveServiceRoot("tools/widget"), /specification/);
+});
+
+test("normalizes absolute and relative specification paths within the repository", () => {
+  const repo = path.join(os.tmpdir(), "typespec-scope");
+  const relative = "specification/widget/resource-manager/Widget";
+  assert.equal(normalizeSpecification(repo, path.join(repo, relative)), relative);
+  assert.equal(normalizeSpecification(repo, relative), relative);
+  assert.equal(normalizeSpecification(repo, `.\\${relative.replaceAll("/", "\\")}\\`), relative);
+  assert.equal(normalizeSpecification(repo, "specification"), "specification");
+  for (const scope of [
+    "../specification/widget",
+    path.join(repo, "..", "other", relative),
+    "tools/widget",
+    "specification/widget/../../tools",
+  ]) {
+    assert.throws(() => normalizeSpecification(repo, scope), /Specification must be under/);
+  }
 });
 
 test("normalizes explicit sparse roots without collapsing them", () => {

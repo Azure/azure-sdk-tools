@@ -91,6 +91,15 @@ export function deriveServiceRoot(specification) {
   return match[1];
 }
 
+export function normalizeSpecification(repo, specification) {
+  const relative = path.relative(
+    path.resolve(repo),
+    path.resolve(repo, specification.replaceAll("\\", "/")),
+  ).replaceAll("\\", "/");
+  deriveServiceRoot(relative);
+  return relative;
+}
+
 export function normalizeSparseRoots(sparseRoots, specification) {
   const roots = sparseRoots?.length ? sparseRoots : [deriveServiceRoot(specification)];
   const normalized = [

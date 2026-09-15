@@ -39,8 +39,10 @@ Use azure-typespec-assessment to assess the TypeSpec changes for PR https://gith
 
 ## Results
 
-Open the generated `assessment.html` to view the findings. Structured results
-are available in `assessment.json`.
+The agent starts a local-only report server after rendering and returns a
+clickable `http://127.0.0.1:<port>/assessment.html` link. Keep the assessment
+session running while viewing the report. Structured results remain available
+at the absolute `assessment.json` path returned by the agent.
 
 [Browse reports for 12 existing PRs](https://wonderful-coast-0b5cc5a00.3.azurestaticapps.net)
 or read the [high-level design spec](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/typespec-assessment.spec.md)

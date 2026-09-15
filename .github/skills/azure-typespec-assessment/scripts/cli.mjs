@@ -2,6 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+let resolvedEntryPath;
+let resolvedEntryUrl;
+
 export function parseArgs(argv, options = {}) {
   const result = { ...options.defaults };
   for (let index = 0; index < argv.length; index += 1) {
@@ -44,7 +47,17 @@ export function writeJson(file, value) {
 }
 
 export function isMain(metaUrl) {
-  return process.argv[1] && metaUrl === pathToFileURL(path.resolve(process.argv[1])).href;
+  if (!process.argv[1]) return false;
+  const entryPath = path.resolve(process.argv[1]);
+  if (metaUrl === pathToFileURL(entryPath).href) return true;
+  // Node resolves linked entrypoints, while argv retains the junction/symlink path.
+  if (resolvedEntryPath !== entryPath) {
+    resolvedEntryPath = entryPath;
+    resolvedEntryUrl = fs.existsSync(entryPath)
+      ? pathToFileURL(fs.realpathSync(entryPath)).href
+      : undefined;
+  }
+  return metaUrl === resolvedEntryUrl;
 }
 
 export async function runMain(action) {

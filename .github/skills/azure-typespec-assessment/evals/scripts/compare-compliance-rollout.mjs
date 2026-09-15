@@ -95,6 +95,7 @@ export function compareComplianceRollout(options = {}) {
           ? "planned"
           : "active",
         currentShowsOfficialDocuments:
+          currentHtml.includes('<h3 id="compliance-search-evidence">Guidance fetched</h3>') ||
           currentHtml.includes("Official documents") ||
           currentHtml.includes("Ranked official documents"),
         currentShowsFindings: compliance.findings?.length
@@ -127,9 +128,9 @@ export function compareComplianceRollout(options = {}) {
       previousFastTiming:
         "Previous impact-only end-to-end and documentation-evidence timings from fast-assessment-execution-times.json.",
       comparisonScope:
-        "The source assessment data is unchanged; the current renderer activates the preserved Azure Guidelines evidence.",
+        "The source assessment data is unchanged; reports use the current Azure Guidelines presentation.",
       contractCoverage:
-        "The 11-PR replay covers validation/rendering compatibility. Active four-document-per-intent search, tuple coverage, assembly, and rejection paths are covered by focused tests.",
+        `The ${results.length}-case replay covers validation/rendering compatibility. Active four-document-per-intent search, tuple coverage, assembly, and rejection paths are covered by focused tests.`,
     },
     caseCount: results.length,
     statusCounts,

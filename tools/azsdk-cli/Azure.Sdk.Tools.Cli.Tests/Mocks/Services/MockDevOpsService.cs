@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
     internal class MockDevOpsService : IDevOpsService
     {
         // Configurable properties for testing
+        public bool IsReleasePlanAdmin { get; set; }
         public Build? ConfiguredPipelineRun { get; set; }
         public ReleasePlanWorkItem? ConfiguredReleasePlanForWorkItem { get; set; }
         public ReleasePlanWorkItem? ConfiguredReleasePlanForSpecPrUrl { get; set; }
@@ -34,6 +35,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         // Captures the release plan passed to CreateReleasePlanWorkItemAsync so that a subsequent
         // GetReleasePlanForWorkItemAsync (used to refresh the plan) returns the same details.
         private ReleasePlanWorkItem? createdReleasePlan;
+
+        public Task<bool> IsReleasePlanAdminAsync(CancellationToken ct) => Task.FromResult(IsReleasePlanAdmin);
 
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct)
         {

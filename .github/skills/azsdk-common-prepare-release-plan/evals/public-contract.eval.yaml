@@ -1,0 +1,116 @@
+name: azsdk-common-prepare-release-plan-public-contract-eval
+description: Public dashboard identity and administrator-only abandonment without direct ADO workarounds
+type: capability
+environment: azsdk-mcp-mock
+tags:
+  area: azsdk-common-prepare-release-plan
+  type: ci-gate
+defaults:
+  runs: 1
+  timeout: "120s"
+  model: gpt-5.4
+  executor: copilot-sdk
+scoring:
+  threshold: 1.0
+
+stimuli:
+  - name: plan-status-shows-only-public-dashboard-identity
+    environment:
+      skills: [..]
+    prompt: "Get release plan 50003 and show its current status and the link where I can access it. Use the Azure SDK MCP tools."
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azsdk-common-prepare-release-plan]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_get_release_plan$"
+              pattern: '"releasePlanId"\s*:\s*50003\s*[,}]'
+          disallowed:
+            - name: "^azure-sdk-mcp-azsdk_(?:abandon_release_plan|create_release_plan|update_.*release_plan.*)$"
+      - type: output-matches
+        config:
+          pattern: "(?is)(?=.*50003)(?=.*In Progress)(?=.*releaseplan=50003)"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(?:35003|_workitems|_apis/wit|notification-only@example\\.com)"
+
+  - name: nonadmin-capability-prevents-abandonment
+    environment:
+      skills: [..]
+    prompt: "Can I abandon release plan 50003? Check my permissions and, if allowed, abandon it. I confirm that I want to abandon this plan. Use the Azure SDK MCP tools."
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azsdk-common-prepare-release-plan]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_get_release_plan$"
+              pattern: '"releasePlanId"\s*:\s*50003\s*[,}]'
+          disallowed:
+            - name: "^azure-sdk-mcp-azsdk_(?:abandon_release_plan|create_release_plan|update_.*release_plan.*)$"
+            - name: "^(?:bash|powershell|shell|run_in_terminal)$"
+      - type: output-matches
+        config:
+          pattern: "(?is)(?=.*admin)(?=.*(?:cannot|can't|not.*(?:allow|permi)|only.*admin))"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(?:successfully abandoned|has been abandoned|was abandoned|_workitems|_apis/wit)"
+
+  - name: submitter-consent-does-not-bypass-admin-denial
+    environment:
+      skills: [..]
+    prompt: "I created and own release plan 50003. Abandon it now; this is my explicit confirmation. Use the Azure SDK MCP tools."
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azsdk-common-prepare-release-plan]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_(?:get|abandon)_release_plan$"
+              pattern: '"releasePlanId"\s*:\s*50003\s*[,}]'
+              result: "Only release-plan administrators"
+          disallowed:
+            - name: "^azure-sdk-mcp-azsdk_(?:create_release_plan|update_.*release_plan.*)$"
+            - name: "^(?:bash|powershell|shell|run_in_terminal)$"
+      - type: tool-call-count
+        config:
+          tools: ["^azure-sdk-mcp-azsdk_abandon_release_plan$"]
+          max: 1
+      - type: output-matches
+        config:
+          pattern: "(?is)(?=.*admin)(?=.*(?:cannot|can't|only|denied|not.*(?:allow|permi)))"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(?:successfully abandoned|has been abandoned|was abandoned|_workitems|_apis/wit)"
+
+  - name: confirmed-admin-abandonment-uses-public-id
+    environment:
+      skills: [..]
+    prompt: "Check whether I can abandon release plan 50004 and, if permitted, abandon it. I explicitly confirm abandonment of release plan 50004. Use the Azure SDK MCP tools."
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azsdk-common-prepare-release-plan]
+      - type: tool-calls
+        config:
+          sequence:
+            - name: "^azure-sdk-mcp-azsdk_get_release_plan$"
+              pattern: '"releasePlanId"\s*:\s*50004\s*[,}]'
+            - name: "^azure-sdk-mcp-azsdk_abandon_release_plan$"
+              pattern: '"releasePlanId"\s*:\s*50004\s*[,}]'
+          disallowed:
+            - name: "^azure-sdk-mcp-azsdk_(?:create_release_plan|update_.*release_plan.*)$"
+      - type: tool-call-count
+        config:
+          tools: ["^azure-sdk-mcp-azsdk_abandon_release_plan$"]
+          max: 1
+      - type: output-matches
+        config:
+          pattern: "(?is)(?=.*50004)(?=.*abandoned)(?=.*releaseplan=50004)"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(?:35004|_workitems|_apis/wit)"

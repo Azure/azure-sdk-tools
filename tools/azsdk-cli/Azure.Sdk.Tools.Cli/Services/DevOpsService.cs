@@ -22,9 +22,11 @@ using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.Identity.Client;
 using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
+using AdoIdentity = Microsoft.VisualStudio.Services.Identity.Identity;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -34,6 +36,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public BuildHttpClient GetAnonymousBuildClient();
         public WorkItemTrackingHttpClient GetWorkItemClient(CancellationToken ct);
         public ProjectHttpClient GetProjectClient(CancellationToken ct);
+        public IdentityHttpClient GetIdentityClient(CancellationToken ct);
+        public Task<AdoIdentity> GetAuthenticatedIdentityAsync(CancellationToken ct);
 
         public AccessToken GetToken(CancellationToken ct);
     }
@@ -44,6 +48,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         private BuildHttpClient _anonymousBuildClient;
         private WorkItemTrackingHttpClient _workItemClient;
         private ProjectHttpClient _projectClient;
+        private IdentityHttpClient _identityClient = null!;
+        private VssConnection _connection = null!;
         private AccessToken? _token;
 
         private static readonly TimeSpan InteractiveLoginTimeout = TimeSpan.FromMinutes(3);
@@ -89,10 +95,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception(GetAuthenticationFailureMessage());
             }
 
-            var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), new VssOAuthAccessTokenCredential(_token?.Token));
-            _buildClient = connection.GetClient<BuildHttpClient>();
-            _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
-            _projectClient = connection.GetClient<ProjectHttpClient>();
+            _connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), new VssOAuthAccessTokenCredential(_token?.Token));
+            _buildClient = _connection.GetClient<BuildHttpClient>();
+            _workItemClient = _connection.GetClient<WorkItemTrackingHttpClient>();
+            _projectClient = _connection.GetClient<ProjectHttpClient>();
+            _identityClient = _connection.GetClient<IdentityHttpClient>();
         }
 
         private static string GetAuthenticationFailureMessage()
@@ -136,10 +143,24 @@ namespace Azure.Sdk.Tools.Cli.Services
             RefreshConnection(ct);
             return _token!.Value;
         }
+
+        public IdentityHttpClient GetIdentityClient(CancellationToken ct)
+        {
+            RefreshConnection(ct);
+            return _identityClient;
+        }
+
+        public async Task<AdoIdentity> GetAuthenticatedIdentityAsync(CancellationToken ct)
+        {
+            RefreshConnection(ct);
+            await _connection.ConnectAsync(ct);
+            return _connection.AuthenticatedIdentity;
+        }
     }
 
     public interface IDevOpsService
     {
+        public Task<bool> IsReleasePlanAdminAsync(CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync(CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);

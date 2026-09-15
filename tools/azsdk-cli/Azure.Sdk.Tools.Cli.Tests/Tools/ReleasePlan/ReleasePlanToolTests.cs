@@ -763,7 +763,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 SDKReleaseMonth = "August 2026"
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            mockDevOps.Setup(x => x.GetReleasePlanAsync(releasePlan.ReleasePlanId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(releasePlan.ReleasePlanId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync([releasePlan]);
             var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, 24, 0, 0, 0, TimeSpan.Zero));
@@ -1668,6 +1668,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Abandon_ReleasePlan_With_WorkItemId_Success()
         {
+            ((MockDevOpsService)devOpsService).IsReleasePlanAdmin = true;
             // Act
             var result = await releasePlanTool.AbandonReleasePlan(workItemId: 100, releasePlanId: 0);
 
@@ -1681,6 +1682,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Abandon_ReleasePlan_With_ReleasePlanId_Success()
         {
+            ((MockDevOpsService)devOpsService).IsReleasePlanAdmin = true;
             // Act
             var result = await releasePlanTool.AbandonReleasePlan(workItemId: 0, releasePlanId: 123);
 
@@ -1705,6 +1707,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Abandon_ReleasePlan_With_Both_Ids_Success()
         {
+            ((MockDevOpsService)devOpsService).IsReleasePlanAdmin = true;
             // Act - when both are provided, workItemId takes precedence
             var result = await releasePlanTool.AbandonReleasePlan(workItemId: 100, releasePlanId: 123);
 
@@ -1714,6 +1717,117 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details.Count, Is.GreaterThan(0));
             Assert.That(result.Details[0], Does.Contain("abandoned"));
         }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task Test_Abandon_RequiresAdminEvenWhenCallerIsSubmitter(bool callerIsSubmitter)
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+            mockDevOps.Setup(s => s.GetReleasePlanForWorkItemAsync(35000, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ReleasePlanWorkItem
+                {
+                    WorkItemId = 35000,
+                    ReleasePlanId = 50001,
+                    ReleasePlanSubmittedByEmail = callerIsSubmitter ? "test@example.com" : "someone-else@example.com"
+                });
+            var tool = CreateAbandonTestTool(mockDevOps.Object);
+
+            var response = await tool.AbandonReleasePlan(workItemId: 35000);
+
+            Assert.That(response.ResponseError, Does.Contain("Only release-plan administrators"));
+            mockDevOps.Verify(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.VerifyNoOtherCalls();
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public async Task Test_Abandon_AdminWritesBackingIdButReturnsPublicId(bool useWorkItemId)
+        {
+            var plan = new ReleasePlanWorkItem { WorkItemId = 35000, ReleasePlanId = 50001 };
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(s => s.GetReleasePlanForWorkItemAsync(35000, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            mockDevOps.Setup(s => s.ResolveReleasePlanByIdAsync(50001, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            mockDevOps.Setup(s => s.UpdateWorkItemAsync(35000, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 35000 });
+            var tool = CreateAbandonTestTool(mockDevOps.Object);
+
+            var response = await tool.AbandonReleasePlan(workItemId: useWorkItemId ? 35000 : 0, releasePlanId: useWorkItemId ? 0 : 50001);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(string.Join(" ", response.Details), Does.Contain("50001").And.Contain("releaseplan=50001").And.Not.Contain("35000"));
+            mockDevOps.Verify(s => s.UpdateWorkItemAsync(35000,
+                It.Is<Dictionary<string, string>>(fields => fields.Count == 1 && fields["System.State"] == "Abandoned"),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task Test_Abandon_AuthorizationFailureDoesNotWriteOrExposeInternalError()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new HttpRequestException("Internal work item https://dev.azure.com/test/_workitems/edit/35000"));
+
+            var response = await CreateAbandonTestTool(mockDevOps.Object).AbandonReleasePlan(workItemId: 35000);
+
+            Assert.That(response.ResponseError, Is.Not.Empty.And.Not.Contains("35000").And.Not.Contains("_workitems"));
+            mockDevOps.Verify(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public void Test_Abandon_CancellationIsPreservedWithoutWrite()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new OperationCanceledException());
+
+            Assert.ThrowsAsync<OperationCanceledException>(() => CreateAbandonTestTool(mockDevOps.Object).AbandonReleasePlan(workItemId: 35000));
+            mockDevOps.Verify(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task Test_Get_CapabilitiesAreNotTrustedByAbandon()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.SetupSequence(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true).ReturnsAsync(false);
+            mockDevOps.Setup(s => s.GetReleasePlanForWorkItemAsync(35000, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ReleasePlanWorkItem { WorkItemId = 35000, ReleasePlanId = 50001 });
+            var tool = CreateAbandonTestTool(mockDevOps.Object);
+
+            var getResponse = await tool.GetReleasePlan(workItemId: 35000);
+            var abandonResponse = await tool.AbandonReleasePlan(workItemId: 35000);
+
+            Assert.That(getResponse.Capabilities?.CanAbandon, Is.True);
+            Assert.That(abandonResponse.ResponseError, Does.Contain("Only release-plan administrators"));
+            mockDevOps.Verify(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOps.Verify(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        [Test]
+        public async Task Test_Get_PermissionLookupFailurePreservesPlan()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(s => s.IsReleasePlanAdminAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new HttpRequestException("Cannot read memberships"));
+            mockDevOps.Setup(s => s.GetReleasePlanForWorkItemAsync(35000, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ReleasePlanWorkItem { WorkItemId = 35000, ReleasePlanId = 50001 });
+
+            var response = await CreateAbandonTestTool(mockDevOps.Object).GetReleasePlan(workItemId: 35000);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails?.ReleasePlanId, Is.EqualTo(50001));
+            Assert.That(response.Capabilities?.CanAbandon, Is.False);
+            Assert.That(response.Capabilities?.Reason, Does.Contain("could not be verified"));
+        }
+
+        private ReleasePlanTool CreateAbandonTestTool(IDevOpsService service) => new(
+            service, gitHelper, typeSpecHelper, logger, userHelper, gitHubService,
+            environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+            Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
         // ======================== UpdateReleasePlan Tests ========================
 
@@ -2044,7 +2158,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 workItemId: 0);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
-            Assert.That(result.Message, Does.Contain("Successfully updated release plan 500"));
+            Assert.That(result.Message, Is.EqualTo("Successfully updated release plan 50."));
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Management));
 
             mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);

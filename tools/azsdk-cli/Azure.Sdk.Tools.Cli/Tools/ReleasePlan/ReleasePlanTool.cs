@@ -436,7 +436,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 else if (releasePlanId != 0)
                 {
-                    releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, ct);
+                    releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(releasePlanId, ct);
                 }
                 else if (!string.IsNullOrWhiteSpace(specPullRequestUrl))
                 {
@@ -498,6 +498,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 await AddReleasePlanScheduleRiskGuidanceAsync(response, ct);
+                await AddReleasePlanCapabilitiesAsync(response, ct);
                 return response;
             }
             catch (OperationCanceledException)
@@ -508,6 +509,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Failed to get release plan details");
                 return new ReleasePlanResponse { ResponseError = $"Failed to get release plan details: {ex.Message}" };
+            }
+        }
+
+        private async Task AddReleasePlanCapabilitiesAsync(ReleasePlanResponse response, CancellationToken ct)
+        {
+            try
+            {
+                var canAbandon = await devOpsService.IsReleasePlanAdminAsync(ct);
+                response.Capabilities = new ReleasePlanCapabilities
+                {
+                    CanAbandon = canAbandon,
+                    Reason = canAbandon
+                        ? "You can abandon this release plan after confirming the action. Permissions are checked again when abandoning."
+                        : "Only release-plan administrators can abandon a release plan. Ask an administrator to review an abandonment request."
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Could not verify release-plan administrator permissions");
+                response.Capabilities = new ReleasePlanCapabilities
+                {
+                    CanAbandon = false,
+                    Reason = "Administrator permissions could not be verified. Check your Azure sign-in or contact a release-plan administrator."
+                };
             }
         }
 
@@ -557,7 +586,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (hasPastDuePlan)
                 {
-                    (response.NextSteps ??= []).Add("For each past-due release plan, either postpone it using azsdk agent and azsdk_update_release_plan_target tool with a future target month, or abandon it after confirming it is no longer needed.");
+                    (response.NextSteps ??= []).Add("For each past-due release plan, either postpone it using azsdk agent and azsdk_update_release_plan_target tool with a future target month, or ask a release-plan administrator to abandon it after confirming it is no longer needed.");
                 }
                 if (hasDueSoonPlan)
                 {
@@ -593,7 +622,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// <remarks>
         /// Either workItemId or releasePlanId must be provided. If both are provided, workItemId takes precedence.
         /// </remarks>
-        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'.")]
+        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan after user confirmation. Only Release project administrators can perform this action; permissions are verified using the authenticated work-item connection. Accepts a release plan ID or a legacy work item ID. Updates the release plan status to 'Abandoned'.")]
         public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default)
         {
             try
@@ -603,10 +632,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleaseWorkflowResponse { ResponseError = "Either work item ID or release plan ID must be provided." };
                 }
 
+                if (!await devOpsService.IsReleasePlanAdminAsync(ct))
+                {
+                    return new ReleaseWorkflowResponse
+                    {
+                        ResponseError = "Only release-plan administrators can abandon a release plan.",
+                        NextSteps = ["Ask a release-plan administrator to review this request. Do not bypass this restriction using another tool or a direct work-item update."]
+                    };
+                }
+
                 // Get the release plan to verify it exists
                 var releasePlan = workItemId != 0
                     ? await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct)
-                    : await devOpsService.GetReleasePlanAsync(releasePlanId, ct);
+                    : await devOpsService.ResolveReleasePlanByIdAsync(releasePlanId, ct);
 
                 if (releasePlan == null)
                 {
@@ -626,7 +664,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogError("Failed to abandon release plan {WorkItemId}: work item update returned null", releasePlan.WorkItemId);
                     return new ReleaseWorkflowResponse
                     {
-                        ResponseError = $"Failed to abandon release plan {releasePlan.WorkItemId}: work item update failed."
+                        ResponseError = $"Failed to abandon release plan {releasePlan.DisplayId}: status update failed."
                     };
                 }
                 logger.LogInformation("Successfully abandoned release plan {WorkItemId}", releasePlan.WorkItemId);
@@ -634,13 +672,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return new ReleaseWorkflowResponse
                 {
                     Status = "Success",
-                    Details = [$"Release plan {releasePlan.WorkItemId} has been successfully abandoned."]
+                    Details = [$"Release plan {releasePlan.DisplayId} has been successfully abandoned.", $"Release plan link: {releasePlan.ReleasePlanLink}"]
                 };
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to abandon release plan");
-                return new ReleaseWorkflowResponse { ResponseError = $"Failed to abandon release plan: {ex.Message}" };
+                return new ReleaseWorkflowResponse
+                {
+                    ResponseError = "Failed to abandon the release plan. Check your Azure sign-in and contact a release-plan administrator if the problem persists."
+                };
             }
         }
 
@@ -895,7 +940,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 return new ReleasePlanResponse
                 {
-                    Message = $"Successfully updated release plan {releasePlan.WorkItemId}.",
+                    Message = $"Successfully updated release plan {releasePlan.DisplayId}.",
                     ReleasePlanDetails = releasePlan,
                     TypeSpecProject = specProject,
                     PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane
@@ -1876,7 +1921,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     response.PackageType = SdkType.Dataplane;
                 }
-                response.Details.Add($"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.");
+                response.Details.Add($"Successfully linked pull request to release plan {releasePlan.DisplayId} ({releasePlan.ReleasePlanLink}) and updated PR description.");
                 return response;
             }
             catch (Exception ex)
@@ -1909,7 +1954,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             var linksBuilder = new StringBuilder(header);
             linksBuilder.AppendLine();
             linksBuilder.AppendLine($"- Release Plan: {releasePlan.ReleasePlanLink}");
-            linksBuilder.AppendLine($"- Work Item Link: {releasePlan.WorkItemHtmlUrl}");
             linksBuilder.AppendLine($"- Spec Pull Request: {releasePlan.ActiveSpecPullRequest}");
             linksBuilder.Append($"- Spec API version: {releasePlan.SpecAPIVersion}");
 
@@ -2150,7 +2194,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return new ReleasePlanResponse
                 {
                     ReleasePlanDetails = releasePlan,
-                    Message = $"Successfully updated SDK release target month to {targetReleaseMonthYear} for release plan {releasePlan?.WorkItemId}."
+                    Message = $"Successfully updated SDK release target month to {targetReleaseMonthYear} for release plan {releasePlan?.DisplayId}."
                 };
             }
             catch (Exception ex)

@@ -8,6 +8,9 @@
 
 ### Breaking Changes
 
+- Release-plan JSON responses expose an explicit public plan summary instead of the backing work-item model. Internal work-item IDs/URLs, parent/API-spec work-item IDs, and notification-recipient metadata are no longer returned. Existing public plan fields and legacy input parameters are preserved.
+- Manual release-plan abandonment now requires membership in the Azure DevOps Release project's Project Administrators group. Being the plan's creator or notification recipient does not grant abandonment permissions.
+
 ### Bugs Fixed
 
 - Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
@@ -15,6 +18,8 @@
 - Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.
 
 ### Other Changes
+
+- Release-plan get responses include advisory abandonment capabilities; the abandon operation rechecks permissions and fails closed when identity or membership cannot be verified.
 
 ## 0.6.45 (2026-09-08)
 

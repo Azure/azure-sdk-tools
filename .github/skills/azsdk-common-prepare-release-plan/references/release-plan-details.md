@@ -2,9 +2,9 @@
 
 > **CRITICAL**: Do not mention or display Azure DevOps work item links/URLs. Only provide Release Plan Link and Release Plan ID to the user. All manual updates must be made through the Release Planner Tool (https://aka.ms/sdk-release-planner).
 
-## Release Plan ID vs Work Item ID
+## Release Plan Identity
 
-A release plan has two distinct identifiers:
+Present only the returned Release Plan ID and dashboard link. A backing work item is an implementation detail, not something users need to look up or access.
 
 - **Release Plan ID**: the value users typically refer to (e.g. in a prompt), shown in the Release Planner.
 - **Work Item ID**: the Azure DevOps work item backing the release plan.
@@ -14,6 +14,12 @@ generation, link SDK PR) accept **either** value — pass whichever the user giv
 you. Each tool resolves the supplied number automatically, trying it as a
 Release Plan ID first and then as a work item ID, so you do **not** need to run
 `azsdk_get_release_plan` first just to translate one ID into the other.
+
+## Abandonment Permissions
+
+Only release-plan administrators may abandon a plan. The tool checks the same authenticated Azure DevOps identity used for work-item operations against the Release project's built-in Project Administrators group, including expanded membership. The stored submitter email is for notifications, not authorization.
+
+Get responses may include `capabilities.can_abandon` and `capabilities.reason`. Explain a denial and ask a release-plan administrator to handle the request; do not suggest an ADO workaround. Capability information is advisory: abandonment always rechecks permissions. User confirmation is still required, but confirmation does not grant permissions.
 
 ## Required Information
 

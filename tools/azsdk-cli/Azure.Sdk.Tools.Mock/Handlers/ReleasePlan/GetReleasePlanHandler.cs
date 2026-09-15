@@ -24,6 +24,11 @@ public class GetReleasePlanHandler : IMockToolHandler
             ?? arguments?.GetValueOrDefault("workItem")?.ToString()
             ?? "0";
         var releasePlanId = arguments?.GetValueOrDefault("releasePlanId")?.ToString() ?? "0";
+        if (ReleasePlanAuthorizationFixture.Matches(releasePlanId, workItemId))
+        {
+            return ReleasePlanAuthorizationFixture.GetResponse(ReleasePlanAuthorizationFixture.IsAdmin(releasePlanId, workItemId));
+        }
+
         var specPullRequestUrl = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString() ?? "";
         var typeSpecProjectPath = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "";
         var apiReleaseType = arguments?.GetValueOrDefault("apiReleaseType")?.ToString() ?? "";
@@ -53,7 +58,7 @@ public class GetReleasePlanHandler : IMockToolHandler
         ],
         NextSteps =
         [
-            "Either postpone the past-due plan by updating its target release month, or abandon it and record the reason in the release plan dashboard."
+            "Either postpone the past-due plan by updating its target release month, or ask a release-plan administrator to abandon it if it is no longer needed."
         ],
         ReleasePlanDetails = new ReleasePlanWorkItem
         {

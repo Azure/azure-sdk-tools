@@ -9,9 +9,17 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
     /// </summary>
     public class ReleasePlanResponse : ReleasePlanBaseResponse
     {
+        [JsonIgnore]
+        public ReleasePlanWorkItem? ReleasePlanDetails { get; set; }
+
         [JsonPropertyName("release_plan_details")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ReleasePlanWorkItem? ReleasePlanDetails { get; set; }
+        public ReleasePlanDetails? PublicReleasePlanDetails => ReleasePlanDetails == null ? null : new(ReleasePlanDetails);
+
+        [JsonPropertyName("capabilities")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ReleasePlanCapabilities? Capabilities { get; set; }
+
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
         [JsonPropertyName("warnings")]
@@ -24,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
             var result = new StringBuilder();
             if (ReleasePlanDetails != null)
             {
-                result.AppendLine($"Release Plan ID: {ReleasePlanDetails.ReleasePlanId}");
+                result.AppendLine($"Release Plan ID: {ReleasePlanDetails.DisplayId}");
                 result.AppendLine($"Title: {ReleasePlanDetails.Title}");
                 result.AppendLine($"Status: {ReleasePlanDetails.Status}");
                 result.AppendLine($"Owner: {ReleasePlanDetails.Owner}");
@@ -35,6 +43,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
             else
             {
                 result.AppendLine("No release plan details available.");
+            }
+            if (Capabilities != null)
+            {
+                result.AppendLine($"Can abandon: {Capabilities.CanAbandon}");
+                result.AppendLine(Capabilities.Reason);
             }
             if (Warnings?.Count > 0)
             {

@@ -4,6 +4,12 @@ Use `azure-typespec-assessment` with your coding agent to review TypeSpec
 changes and generate an assessment report without modifying your source.
 Make sure the skill is available to your agent.
 
+Install the assessment scripts' dependencies from this skill directory:
+
+```sh
+npm ci
+```
+
 ## 1. Assess local code
 
 Open your TypeSpec repository and ask:

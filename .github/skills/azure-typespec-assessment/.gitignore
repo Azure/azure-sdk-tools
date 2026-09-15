@@ -1,6 +1,5 @@
 # Local dependencies and assessment artifacts
 /node_modules/
-/.dependency-install.lock
 /evals/.workspaces/
 /evals/outputs/
 /evals/results/

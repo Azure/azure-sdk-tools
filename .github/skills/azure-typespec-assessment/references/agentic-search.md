@@ -14,6 +14,10 @@
    semantic intent. Keep symbols such as decorators, templates, base resource
    types, operation interfaces, paging/LRO constructs, and versioning
    decorators.
+   For changes to an existing versioned API, consider **Evolving APIs** first
+   for versioning implications, even when no version decorator changed.
+   Distinguish ARM list templates from data-plane paging decorators; do not
+   transfer template requirements between service planes.
 2. **Score catalog** — read
    [reference-document-links.md](reference-document-links.md), score every
    document with the rubric in `design.md`, and rank every URL. Break ties by
@@ -47,3 +51,14 @@
    Every `applicable-fail` also supplies a concise finding title and `high`,
    `medium`, or `low` severity.
    Never synthesize a requirement or recommended code example.
+
+## Suppressions
+
+For a changed construct with `#suppress` in the supplied source evidence,
+retain the diagnostic code and justification as context. A suppression only
+silences a diagnostic; it neither proves compliance nor automatically creates
+a finding. Compare the construct with fetched guidance, including any
+documented exception and its conditions. Cite an unmet requirement for a
+failure; do not treat a justification alone as an exemption. If the relevant
+source or guidance is unavailable, record that limitation rather than infer
+approval. Do not run lint or search unrelated source to judge suppressions.

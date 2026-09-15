@@ -551,6 +551,37 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_creates_new_plan_when_project_plan_has_different_api_version()
+        {
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var existingReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 999,
+                ReleasePlanId = 50001,
+                APISpecProjectPath = "specification/testcontoso/Contoso.Management",
+                SpecAPIVersion = "2025-01-01",
+                ApiReleaseType = ApiReleaseType.GA,
+                Status = "In Progress"
+            };
+            var mockDevOpsService = (MockDevOpsService)devOpsService;
+            mockDevOpsService.ConfiguredReleasePlanForTypeSpecPath = existingReleasePlan;
+            mockDevOpsService.ConfiguredReleasePlanForTypeSpecPathKey = existingReleasePlan.APISpecProjectPath;
+
+            var releaseplan = await releasePlanTool.CreateReleasePlan(
+                null,
+                testCodeFilePath,
+                "July 2025",
+                "GA",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                isTestReleasePlan: true);
+
+            Assert.That(releaseplan.ResponseError, Is.Null);
+            Assert.That(releaseplan.ReleasePlanDetails, Is.Not.Null);
+            Assert.That(releaseplan.ReleasePlanDetails?.WorkItemId, Is.EqualTo(1), "A new release plan should be created.");
+            Assert.That(releaseplan.ReleasePlanDetails?.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_without_spec_pr_sets_empty_spec_pull_requests()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";

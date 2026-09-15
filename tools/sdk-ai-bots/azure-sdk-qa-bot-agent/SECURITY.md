@@ -40,7 +40,7 @@ C1–C8 retain their existing identities. **C1's read-only guarantee applies onl
 | C3 | GitHub untrusted-author redaction | R3 | Shared authored-JSON filtering; retained content is not proven safe. |
 | C4 | Spotlighting middleware | R3 | Shared external MCP string wrapping; native tool results are excluded. |
 | C5 | Platform content-safety guardrail | R1, R2, R3, R5 | Existing policy attachment is implemented; deployed classifiers and effective blocking require verification. |
-| C6 | Safety system prompt | R1, R2, R3, R4, R5, R6, R7 | Agent-specific prompt guidance, not code enforcement. Evolution has grounding/untrusted-output/workflow guidance but lacks equivalent Q&A safety-prompt coverage. |
+| C6 | Safety system prompt | R1, R2, R3, R4, R5, R6, R7 | Agent-specific instructions address the applicable risks described in each agent section. Q&A instructions cover safety and answer grounding; evolution instructions cover evidence use, untrusted content, and the improvement workflow. |
 | C7 | Bounded tool loop | R6, R7 | Configured per agent; not aggregate request throttling. |
 | C8 | Authentication & secrets | R8 | Shared credential paths; managed identity and short-lived GitHub App tokens depend on configuration. |
 | C9 | Candidate-configured clients and validation target selection | R6, R7 | KB writes use dev (candidate) clients; dev/production resource separation is maintained through deployment configuration. |
@@ -71,12 +71,6 @@ Sources: [agent registration](https://github.com/Azure/azure-sdk-tools/blob/main
 
 The [SDK Chat instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chat_agent/instruction.md) include safety and grounding rules: refuse harmful requests, avoid protected-material reproduction, retrieve evidence rather than inventing facts or links, treat tool output as untrusted reference data, and do not claim unsupported write actions. These instructions guide model behavior; they are not authorization checks or proof that injection cannot succeed.
 
-### SDK Chat remaining checks
-
-- Verify the receiving Teams audience is authorized to see the internal documentation and work items available to the service identity.
-- Test prompt injection through retrieved content, including native tool results that bypass spotlighting.
-- Verify effective deployed content-safety settings and resource permissions as described in [Shared controls](#5-shared-controls-and-deployment-checks).
-
 ## 3. Azure MCP Server QA agent
 
 Related PR: [#16729 — Add Azure MCP Server agent support](https://github.com/Azure/azure-sdk-tools/pull/16729).
@@ -101,13 +95,6 @@ Sources: [agent registration](https://github.com/Azure/azure-sdk-tools/blob/main
 ### C6 — Azure MCP QA prompt guidance
 
 The [Azure MCP instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/azure_mcp_server_agent/instruction.md) include safety, evidence-grounding, and untrusted-output guidance. They are agent-specific, not an identical copy of the SDK Chat safety prompt. Azure MCP documentation-path scoping in the Learn tool description is **instructional**, not a code-enforced URL restriction. Quick-first retrieval guidance is an efficiency measure, not a wall-clock timeout or security boundary.
-
-### Azure MCP QA remaining checks
-
-- Verify the caller/Teams audience is authorized for internal sources; separate agent names and tenant routing do not establish authorization or data isolation.
-- Test injection and disclosure risks across internal knowledge, GitHub, web, and Learn results.
-- If strict Learn URL/path restrictions are required, enforce them in code rather than relying on the tool description.
-- Verify deployed permissions and content-safety settings.
 
 ## 4. Chatbot evolution agent
 
@@ -147,7 +134,7 @@ The [evolution instructions](https://github.com/Azure/azure-sdk-tools/blob/main/
 - Compare candidate and production answers to evaluate the proposed improvement.
 - Follow the issue-publication workflow and use the intended `Azure/azure-sdk-pr` repository.
 
-These are implemented **workflow instructions**, not independently enforced write authorization. Evolution does not have an equivalent copy of the Q&A agents' Safety sections; do not assume identical safety-prompt coverage across agents.
+Evolution's instructions guide evidence use, dev-only KB changes, and GitHub publication. The registered tool allow-list controls available operations, credential permissions control resource access, and deployment configuration selects the dev KB resources. The intended GitHub repository is specified in the prompt, as described under C1.
 
 ## 5. Shared controls and deployment checks
 

@@ -1192,9 +1192,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                if (isValidTypeSpec && !string.IsNullOrEmpty(specProject))
+                if (string.IsNullOrEmpty(apiVersion) && isValidTypeSpec && !string.IsNullOrEmpty(specProject))
                 {
-                    logger.LogInformation("Checking for existing in-progress release plan for TypeSpec project: {specProject} with API release type: {apiReleaseType}", specProject, parsedApiReleaseType.ToDisplayLabel());
+                    // This fallback is required for TypeSpec projects such as Compute that support multiple API versions. The metadata emitter does not provide an API version for these projects.
+                    logger.LogInformation("API version is not available for the project. Checking for an existing in-progress release plan for TypeSpec project: {specProject} with API release type: {apiReleaseType}", specProject, parsedApiReleaseType.ToDisplayLabel());
                     var existingReleasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(specProject, apiReleaseType: parsedApiReleaseType, ct: ct);
                     if (existingReleasePlan != null)
                     {
@@ -2439,4 +2440,3 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
     }
 }
-

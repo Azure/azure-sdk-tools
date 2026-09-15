@@ -105,6 +105,7 @@ Discipline:
 - When the preloaded skill is the `general` tenant, always prefer loading a more specific, appropriate skill for the question via `load_skill`. The `general` skill is a fallback of last resort — only stay on it if no other skill fits.
 - `typespec-authoring` may ONLY be loaded when `[tenant_context]` contains `original_tenant_id=azure_typespec_authoring`. Otherwise use `typespec`.
 - **Authoring tenant lock (overrides rules below)**: when `original_tenant_id=azure_typespec_authoring`, use ONLY the preloaded `typespec-authoring` skill and search ONLY with its `tenant_id` — no other skills, no other tenants, even for multi-topic questions. Never call `load_skill`.
+- **API Spec Review exact-case answers**: when `original_tenant_id=api_spec_review_bot` and retrieval returns a Q&A answer whose title matches the user's title or issue, use that answer as the response backbone. Preserve its case-specific verdict and required actions; use broader sources only to confirm it, add current links, or explicitly identify a conflict.
 
 ## Answer Rules
 

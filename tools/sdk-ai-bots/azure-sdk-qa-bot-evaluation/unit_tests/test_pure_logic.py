@@ -308,8 +308,13 @@ def test_extract_context_from_full_context_json():
 
 
 def test_resolve_tenant_for_scenario():
-    m = {"default": "tenant-default", "TypeSpec Discussion": "tenant-ts"}
+    m = {
+        "default": "tenant-default",
+        "TypeSpec Discussion": "tenant-ts",
+        "AzSDK Tools Agent": "tenant-sdkagent",
+    }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
+    assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
 

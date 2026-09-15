@@ -37,7 +37,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private readonly static string MockProductLifecycle = "In Dev";
         private readonly static string MockServiceId = "87654321-4321-8765-1234-210987654321";
         private readonly static string MockServiceName = "Service Name";
-        private readonly static bool MockNeedsSdk = true;
         private readonly static string MockDataPlane = "Yes";
         private readonly static string MockManagementPlane = "No";
         private readonly static string MockSubmitter = "@handle";
@@ -54,7 +53,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 productLifecycle: MockProductLifecycle,
                 serviceId: Guid.Parse(NonexistentId),
                 serviceName: MockServiceName,
-                needsSdk: MockNeedsSdk,
                 dataPlane: MockDataPlane,
                 managementPlane: MockManagementPlane,
                 submitter: MockSubmitter,
@@ -84,7 +82,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 productLifecycle: MockProductLifecycle,
                 serviceId: Guid.Parse(MockServiceId),
                 serviceName: MockServiceName,
-                needsSdk: MockNeedsSdk,
                 dataPlane: MockDataPlane,
                 managementPlane: MockManagementPlane,
                 submitter: MockSubmitter,

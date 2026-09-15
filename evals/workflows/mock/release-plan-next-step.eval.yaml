@@ -5,7 +5,7 @@ description: |
   the state-appropriate guidance, rather than guessing or jumping straight to
   an action tool?
 
-  Each stimulus points at a distinct mock release-plan fixture (workItem
+  Each stimulus points at a distinct mock release-plan fixture (workItemId
   35010-35013 in GetReleasePlanHandler) representing one stage: spec pending
   review, spec approved with no SDK work started, SDK generated but not
   released, and fully released. The agent must call azsdk_get_release_plan to
@@ -28,23 +28,31 @@ defaults:
   model: gpt-5.4
   executor: copilot-sdk
 
+scoring:
+  threshold: 1.0
+  weights:
+    skill-invocation: 0.2
+    tool-calls: 0.4
+    prompt: 0.4
+
 stimuli:
   - name: next-step-spec-not-reviewed
+    # Mount competing skills so routing is not predetermined.
     environment: &releasePlanSkills
-      # All four release-related skills, so routing is a genuine choice, not
-      # forced by only one being loaded. Paths are relative to this eval file
-      # (3 levels up = repo root).
       skills:
         - ../../../.github/skills/azsdk-common-prepare-release-plan
         - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
         - ../../../.github/skills/azsdk-common-generate-sdk-locally
         - ../../../.github/skills/azsdk-common-sdk-release
     prompt: |
-      What's the next step for release plan 35010? My setup has already been
+      What's the next step for release plan work item 35010? My setup has already been
       verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
       max_tokens: 8000
+    rubric:
+      - The response recognizes that IsSpecApproved is false and no SDK generation has started.
+      - The immediate next step is API spec review/approval, not SDK generation or release.
     graders:
       - type: skill-invocation
         config:
@@ -54,32 +62,45 @@ stimuli:
         config:
           required:
             - azsdk_get_release_plan
-          disallowed:
+          disallowed: &readOnlyTools
             - azsdk_run_generate_sdk
+            - azsdk_package_generate_code
             - azsdk_release_sdk
             - azsdk_create_release_plan
+            - azsdk_update_release_plan
+            - azsdk_abandon_release_plan
             - azsdk_link_sdk_pull_request_to_release_plan
+            - azsdk_link_namespace_approval_issue
+            - azsdk_update_api_spec_pull_request_in_release_plan
+            - azsdk_update_sdk_details_in_release_plan
+            - azsdk_update_language_exclusion_justification
+            - azsdk_update_release_plan_target
             - azsdk_verify_setup
-      - type: prompt
+      - &nextStepJudge
+        type: prompt
         config:
           model: gpt-5.4
           scoring: binary
           threshold: 1.0
           prompt: |
-            The API spec for this release plan has not been approved yet
-            (IsSpecApproved is false) and no SDK work has started. Does the
-            final assistant message correctly tell the user the next step is
-            to get the API spec reviewed/approved, WITHOUT telling them to
-            generate or release an SDK yet?
+            Evaluate the final assistant response against the retrieved
+            release-plan state and the rubric. A generic lifecycle checklist
+            that does not identify the immediate next step does not pass.
+            Work item IDs 35010-35013 correspond to Release Plan IDs 50010-50013.
+            Reporting the returned Release Plan ID and dashboard link instead
+            of the input work item ID is correct; they identify the same plan.
 
   - name: next-step-spec-approved-no-sdk
     environment: *releasePlanSkills
     prompt: |
-      What should I do next for release plan 35011? My setup has already been
+      What should I do next for release plan work item 35011? My setup has already been
       verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
       max_tokens: 8000
+    rubric:
+      - The response recognizes that IsSpecApproved is true and SDKInfo language entries have empty GenerationStatus, GenerationPipelineUrl, SdkPullRequestUrl and PullRequestStatus fields.
+      - The immediate next step is SDK generation; the response does not claim spec review is still needed.
     graders:
       - type: skill-invocation
         config:
@@ -89,32 +110,20 @@ stimuli:
         config:
           required:
             - azsdk_get_release_plan
-          disallowed:
-            - azsdk_run_generate_sdk
-            - azsdk_release_sdk
-            - azsdk_create_release_plan
-            - azsdk_link_sdk_pull_request_to_release_plan
-            - azsdk_verify_setup
-      - type: prompt
-        config:
-          model: gpt-5.4
-          scoring: binary
-          threshold: 1.0
-          prompt: |
-            The API spec for this release plan is approved (IsSpecApproved is
-            true) and no SDK has been generated yet (SDKInfo is empty). Does
-            the final assistant message correctly tell the user the next step
-            is to generate the SDK(s), WITHOUT claiming the spec still needs
-            review?
+          disallowed: *readOnlyTools
+      - *nextStepJudge
 
   - name: next-step-sdk-pending-release
     environment: *releasePlanSkills
     prompt: |
-      What's left to do for release plan 35012? My setup has already been
+      What's left to do for release plan work item 35012? My setup has already been
       verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
       max_tokens: 8000
+    rubric:
+      - The response recognizes that the four required data-plane SDKs (.NET, Java, Python and JavaScript) have GenerationStatus Completed, a SdkPullRequestUrl, PullRequestStatus Open and ReleaseStatus Unreleased; Go has an approved exclusion.
+      - The immediate next step is to review/merge the open SDK PRs before checking release readiness and releasing; it neither calls for SDK regeneration nor treats the open PRs as release-ready.
     graders:
       - type: skill-invocation
         config:
@@ -124,32 +133,20 @@ stimuli:
         config:
           required:
             - azsdk_get_release_plan
-          disallowed:
-            - azsdk_run_generate_sdk
-            - azsdk_create_release_plan
-            - azsdk_verify_setup
-      - type: prompt
-        config:
-          model: gpt-5.4
-          scoring: binary
-          threshold: 1.0
-          prompt: |
-            The SDKs for this release plan have already been generated (each
-            SDKInfo entry has GenerationStatus "Completed" and a
-            SdkPullRequestUrl) but not released (ReleaseStatus "NotReleased").
-            Does the final assistant message correctly tell the user the
-            next step is to review/merge the open SDK pull requests and
-            release them, WITHOUT claiming SDK generation still needs to
-            happen?
+          disallowed: *readOnlyTools
+      - *nextStepJudge
 
   - name: next-step-fully-released
     environment: *releasePlanSkills
     prompt: |
-      Is there anything left to do for release plan 35013? My setup has
+      Is there anything left to do for release plan work item 35013? My setup has
       already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
       max_tokens: 8000
+    rubric:
+      - The response recognizes that all four required data-plane languages (.NET, Java, Python and JavaScript) have ReleaseStatus Released and PullRequestStatus Merged; Go has an approved exclusion.
+      - The response confirms completion without recommending further SDK generation or release actions.
     graders:
       - type: skill-invocation
         config:
@@ -159,18 +156,5 @@ stimuli:
         config:
           required:
             - azsdk_get_release_plan
-          disallowed:
-            - azsdk_run_generate_sdk
-            - azsdk_release_sdk
-            - azsdk_create_release_plan
-            - azsdk_verify_setup
-      - type: prompt
-        config:
-          model: gpt-5.4
-          scoring: binary
-          threshold: 1.0
-          prompt: |
-            Every SDKInfo entry on this release plan already has ReleaseStatus
-            "Released". Does the final assistant message correctly tell the
-            user the release is complete and there is no further action
-            needed, WITHOUT recommending SDK generation or release steps?
+          disallowed: *readOnlyTools
+      - *nextStepJudge

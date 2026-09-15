@@ -15,6 +15,9 @@ public class CopilotAgentRunner(
     /// <summary>
     /// Ensures the GitHub Copilot CLI is installed and authenticated.
     /// Throws a descriptive exception if not available or not authenticated.
+    /// In MCP mode, the host's Copilot token is typically inherited via environment
+    /// variables (COPILOT_GITHUB_TOKEN, GH_TOKEN, GITHUB_TOKEN) so this check
+    /// should pass without requiring a separate copilot login.
     /// </summary>
     private async Task EnsureAuthenticatedAsync(CancellationToken ct)
     {
@@ -28,14 +31,20 @@ public class CopilotAgentRunner(
             throw new CopilotCliUnavailableException(
                 "The GitHub Copilot CLI could not be found or failed to start. This tool requires the Copilot CLI to be installed. " +
                 "For installation instructions, see: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli. " +
-                "If you already have the Copilot CLI installed elsewhere, set the AZSDK_COPILOT_CLI_PATH environment variable to the path of the Copilot CLI executable (copilot/copilot.exe).",
+                "If you already have the Copilot CLI installed elsewhere, set the AZSDK_COPILOT_CLI_PATH environment variable to the path of the Copilot CLI executable (copilot/copilot.exe). " +
+                "Alternatively, set one of the following environment variables with a valid GitHub token: " +
+                "AZSDK_COPILOT_GITHUB_TOKEN, COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.",
                 ex);
         }
 
         if (!authStatus.IsAuthenticated)
         {
             throw new CopilotCliUnavailableException(
-                "GitHub Copilot is not authenticated. Please authenticate using the GitHub Copilot CLI by running: copilot login");
+                "GitHub Copilot is not authenticated. Please authenticate by one of the following methods: " +
+                "(1) Run 'copilot login' to authenticate the Copilot CLI, or " +
+                "(2) Set one of the following environment variables with a valid GitHub token: " +
+                "AZSDK_COPILOT_GITHUB_TOKEN, COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN. " +
+                "When running in MCP mode (e.g., via VS Code Copilot), the host's token should be inherited automatically.");
         }
 
         logger.LogDebug("Copilot authentication verified");

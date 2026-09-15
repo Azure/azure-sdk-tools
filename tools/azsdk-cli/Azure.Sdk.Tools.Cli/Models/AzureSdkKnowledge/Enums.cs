@@ -2,7 +2,7 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Models.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge
 {
     [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<AzureSdkKnowledgeServiceTenant>))]
     public enum AzureSdkKnowledgeServiceTenant

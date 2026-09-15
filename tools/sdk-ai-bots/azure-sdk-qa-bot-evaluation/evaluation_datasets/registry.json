@@ -23,6 +23,14 @@
     "uploaded_at": "2026-06-22T09:06:10.838708+00:00",
     "version": "python-2026-06-22"
   },
+  "qa-bot-basic-sdkagent": {
+    "cases": 2,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-sdkagent/versions/sdkagent-2026-09-02",
+    "scenario": "sdkagent",
+    "target": "basic",
+    "uploaded_at": "2026-09-02T05:57:04.483984+00:00",
+    "version": "sdkagent-2026-09-02"
+  },
   "qa-bot-basic-typespec": {
     "cases": 25,
     "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-typespec/versions/typespec-2026-06-22",

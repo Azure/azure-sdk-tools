@@ -5,6 +5,7 @@
 ### Features Added
 
 - Release plan CLI commands now support storing and updating the TypeSpec specification commit SHA. SDK generation uses the stored commit when it is valid in the local repository and otherwise falls back to `main`.
+- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
 
 ### Breaking Changes
 

@@ -107,27 +107,28 @@ stimuli:
           required:
             - name: "azsdk_get_release_plan"
 
-  # ==== azsdk_get_release_plan_for_spec_pr triggers ====
-  # NOTE: Commented out — un-passable with the current tools. The agent reliably
-  # calls azsdk_get_release_plan instead, because THAT tool's own description says
-  # it "finds the active release plan by TypeSpec project path or spec PR URL". Given
-  # a spec PR URL the agent reasonably picks the general tool, so the grader's demand
-  # for the more specific azsdk_get_release_plan_for_spec_pr can't be met by prompt
-  # wording alone. Re-add once the tool descriptions disambiguate (or relax the grader).
-  # - name: invoke-azsdk-get-release-plan-for-spec-pr-1
-  #   prompt: "Get the release plan associated with spec pull request https://github.com/Azure/azure-rest-api-specs/pull/38387. I don't have the release plan work item ID — look it up directly from this spec pull request. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
-  #   graders:
-  #     - type: tool-calls
-  #       config:
-  #         required:
-  #           - name: "azsdk_get_release_plan_for_spec_pr"
-  # - name: invoke-azsdk-get-release-plan-for-spec-pr-2
-  #   prompt: "What release plan is associated with spec pull request https://github.com/Azure/azure-rest-api-specs/pull/38387? I don't have the release plan work item ID — look it up directly from this spec pull request. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
-  #   graders:
-  #     - type: tool-calls
-  #       config:
-  #         required:
-  #           - name: "azsdk_get_release_plan_for_spec_pr"
+  - name: invoke-azsdk-get-release-plan-for-spec-pr-1
+    tags:
+      scenario: spec-pr-lookup
+    prompt: "Get the release plan associated with spec pull request https://github.com/Azure/azure-rest-api-specs/pull/38387. I don't have the release plan work item ID. Invoke the appropriate Azure SDK MCP tool directly."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_get_release_plan$"
+          disallowed:
+            - name: "^azure-sdk-mcp-azsdk_create_release_plan$"
+  - name: invoke-azsdk-get-release-plan-for-spec-pr-2
+    tags:
+      scenario: spec-pr-lookup
+    prompt: "What release plan is associated with spec pull request https://github.com/Azure/azure-rest-api-specs/pull/38387? Look it up directly from this spec pull request using the Azure SDK MCP tools."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_get_release_plan$"
+          disallowed:
+            - name: "^azure-sdk-mcp-azsdk_create_release_plan$"
 
   # ==== azsdk_get_sdk_pull_request_link triggers ====
   - name: invoke-azsdk-get-sdk-pull-request-link-1

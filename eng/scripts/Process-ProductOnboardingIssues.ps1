@@ -112,8 +112,9 @@ foreach ($issue_number in $issues) {
     Write-Host "Processing issue #$issue_number."
 
     $sync_success = $false
+    $work_item_id = ""
     try {
-      & (Join-Path $PSScriptRoot "Sync-ProductOnboardingStatus.ps1") `
+      $stdout = & (Join-Path $PSScriptRoot "Sync-ProductOnboardingStatus.ps1") `
         -ProductID        "$product_id" `
         -ProductName      "$product_name" `
         -ProductType      "$product_type" `
@@ -126,6 +127,13 @@ foreach ($issue_number in $issues) {
         -IsTest            $IsTest
 
       $sync_success = $true
+
+      $stdout = $stdout -join "`n"
+      Write-Host "`n$stdout"
+
+      if ($stdout -match "Work Item ID:\s(?<WorkItemID>[\d]+)") {
+        $work_item_id = $matches["WorkItemID"]
+      }
     } catch {
       $error_msg = "Error syncing product onboarding status:`n"
       $error_detail = "$_`n" + $_.Exception.StackTrace
@@ -140,7 +148,12 @@ foreach ($issue_number in $issues) {
     }
 
     if ($sync_success) {
-      gh issue comment $issue_number --body "Product onboarding status synced successfully." --repo "$issues_repo"
+      $details = ""
+      if ($work_item_id -ne "" -and $null -ne $work_item_id) {
+        $details = "`n<details><summary>Details</summary><tt>[Work Item: $work_item_id]</tt></details>"
+      }
+
+      gh issue comment $issue_number --body "Product onboarding status synced successfully.$details" --repo "$issues_repo"
       gh issue close $issue_number --repo "$issues_repo"
     }
   } else {

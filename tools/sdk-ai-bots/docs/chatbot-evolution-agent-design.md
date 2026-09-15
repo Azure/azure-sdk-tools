@@ -44,7 +44,7 @@ Evolution agent completion/correctness gates
     └── chatbot self-issue → issue_write
 
 issue created → feedback.status=pending_validation
-closed agent-created issue → validate original bad case in prod → comment evidence → label and persist passed or failed
+closed agent-created issue → validate original bad case in prod → comment evidence → label and persist validation_passed or validation_failed
 ```
 
 ### 2.2 Agent Design
@@ -181,7 +181,7 @@ The feedback loop is driven by a **daily batch job** over a durable status table
 | Layer | Field | States | Meaning |
 | --- | --- | --- | --- |
 | **1 — QA lifecycle** | `qa_status` | `ongoing` → `finished` \| `failed` | `ongoing` while the thread is still open; `finished` once it concluded with a **correct** bot answer (archived); `failed` once it concluded with an **incorrect/unknown** bot answer (worth a feedback analysis). |
-| **2 — Feedback lifecycle** | `feedback.status` | `created` → `running` → `pending_validation` → `done` \| `failed` | Tracks Agent execution, issue remediation, and post-close validation. |
+| **2 — Feedback lifecycle** | `feedback.status` | `created` → `running` → `done` \| `pending_validation` → `validation_passed` \| `validation_failed`; operational errors → `failed` | Tracks Agent execution, issue remediation, and post-close validation. `done` and both validation outcomes are terminal; `failed` is retryable. |
 
 #### Daily scan (`scripts/run_feedback_jobs.py`, `pipelines/feedback-job.yml`)
 
@@ -192,9 +192,9 @@ The feedback loop is driven by a **daily batch job** over a durable status table
     - finished + problem → set `qa_status=failed`, run diagnosis and the KB candidate-validation loop when applicable, then create the remediation issue and set `feedback.status=pending_validation`.
     - finished + problem + remediation blocker → keep `qa_status=failed`, persist the Agent's failure reason, and set `feedback.status=failed`.
     - processing failure before a verdict → set `qa_status=failed` with an unknown verdict and `feedback.status=failed`; the Dashboard distinguishes this from an incorrect bot answer.
-3. **Closed-issue scan** — read `pending_validation` records and find issues whose stored GitHub issue is closed. Issue closure, not labels, determines validation eligibility.
+3. **Closed-issue scan** — read `pending_validation` records and retryable `failed` records with an issue URL, then find issues whose stored GitHub issue is closed. Issue closure, not labels, determines validation eligibility.
 4. **Restore** — if any analysis session mutated the KB or a closed KB issue needs validation, queue the knowledge-sync pipeline once and wait for successful restoration.
-5. **Validate fixes** — rerun each closed issue's original bad case, comment the evidence, replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, and persist `feedback.status=done` or terminal `failed`.
+5. **Validate fixes** — rerun each closed issue's original bad case, comment the evidence, replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, and persist terminal `feedback.status=validation_passed` or `feedback.status=validation_failed`. Operational failures persist retryable `feedback.status=failed`.
 
 The whole feature is gated by `CHATBOT_EVOLUTION_AGENT_ENABLED` so it can be disabled without a code rollback.
 
@@ -202,7 +202,7 @@ The whole feature is gated by `CHATBOT_EVOLUTION_AGENT_ENABLED` so it can be dis
 
 The production daily batch job (`scripts/run_feedback_jobs.py`) invokes `ChatbotEvolutionAgentService` synchronously in `analysis` or `validation` mode. Analysis starts with the completion and correctness gates. For a confirmed KB issue, the hosted Agent performs the existing bounded loop: it gathers evidence, proposes a candidate, writes it to the dev knowledge source, calls the dev Chat Agent, interprets the result, and revises the candidate when needed. The Agent calls `issue_write` only after the original bad case passes. Chatbot self-issues skip candidate validation and are created after diagnosis. In validation mode, the same Agent calls the production Chat Agent to validate closed agent-created issues without proposing another fix.
 
-The Agent is invoked through the Responses API (`store=True`) with bounded analysis and iteration limits. Its fixed-schema result drives the production Cosmos status transition. The guarded tools own dev-storage writes, indexing, explicitly routed chatbot invocation, and evidence collection. No public issue is created for an unvalidated KB candidate. Interrupted `created` or `running` records and terminal `failed` records are not retried automatically.
+The Agent is invoked through the Responses API (`store=True`) with bounded analysis and iteration limits. Its fixed-schema result drives the production Cosmos status transition. The guarded tools own dev-storage writes, indexing, explicitly routed chatbot invocation, and evidence collection. No public issue is created for an unvalidated KB candidate. Records in `failed` are retried automatically: a record with an issue URL retries validation, while one without an issue URL retries analysis. Records in `done`, `validation_passed`, or `validation_failed` are terminal and are not retried.
 
 The feedback orchestrator runs mutating sessions serially and validates each case immediately after its candidate update. Before `update_knowledge` writes anything, its wrapper sets a run-scoped `restore_required` Azure Pipelines output variable to `true`, ensuring that partial writes or later failures still trigger cleanup without adding fields to `QARecord`. After those sessions finish, the orchestrator queues `sync_knowledge.yml` once through the Azure DevOps Build REST API using `$(System.AccessToken)` when `restore_required` is `true` or a closed KB issue needs validation, waits for completion, and then validates the closed issues. The feedback job is not complete until required restoration and closed-issue validation finish.
 
@@ -237,7 +237,13 @@ union FeedbackStatus {
   @doc("The agent finished and the result was persisted")
   Done: "done",
 
-  @doc("The agent errored, timed out, or was cancelled")
+  @doc("Validation completed and confirmed the remediation")
+  ValidationPassed: "validation_passed",
+
+  @doc("Validation completed but rejected the remediation")
+  ValidationFailed: "validation_failed",
+
+  @doc("The agent errored, timed out, or was cancelled; retry next run")
   Failed: "failed",
 }
 
@@ -343,4 +349,4 @@ evidence.
 
 The daily feedback job reads production `pending_validation` QA records and checks their stored issues for closure; labels do not gate validation eligibility. For a KB issue, it first waits for the configured knowledge-sync or rollout pipeline so the production Chat Agent uses the authoritative fixed content rather than the temporary candidate. The Evolution Agent refetches the production conversation using the coordinates persisted in the QA record, recovers the original question, and calls `validate_agent_response` with `target="prod"`. The issue supplies the concise expected behavior used for comparison.
 
-The Agent comments the returned answer, trace ID, and pass/fail evidence on the closed issue. It replaces the pending label with `fix-validation:passed` when the original case now succeeds or `fix-validation:failed` when it does not; a failed validation does not automatically reopen the issue. The backend also persists `feedback.status=done` for a pass or terminal `feedback.status=failed` for a failure. The historical `qa_status` remains `failed` because the original answer was wrong. The terminal Cosmos status and issue label prevent the same closed issue from being validated again on later daily runs.
+The Agent comments the returned answer, trace ID, and pass/fail evidence on the closed issue. It replaces the pending label with `fix-validation:passed` when the original case now succeeds or `fix-validation:failed` when it does not; a rejected validation does not automatically reopen the issue. The backend persists terminal `feedback.status=validation_passed` for a pass or `feedback.status=validation_failed` for a rejection. Operational failures use retryable `feedback.status=failed`, and the stored issue URL routes the next daily run back to validation. The historical `qa_status` remains `failed` because the original answer was wrong. The terminal validation status and issue label prevent the same closed issue from being validated again on later daily runs.

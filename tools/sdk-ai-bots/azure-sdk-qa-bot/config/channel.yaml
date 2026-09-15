@@ -61,7 +61,7 @@ channels:
 
   - name: Azure MCP
     id: 19:QTW6Ai42VjqkZuS0hEsVWYhyXRtZHQ20MZ5KKzQ7ap81@thread.skype
-    tenant: typespec_channel_qa_bot
+    tenant: azure_mcp_server
     endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
 
   - name: Azure SDK Onboarding

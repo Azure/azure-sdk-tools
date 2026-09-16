@@ -1073,6 +1073,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Update_SDK_Details_accepts_azure_rest_JavaScript_package()
+        {
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var project = TypeSpecProject.ParseTypeSpecConfig(testCodeFilePath);
+            project.Packages =
+            [
+                new PackageInfo { PackageName = "@azure-rest/ai-content-safety", Language = SdkLanguage.JavaScript }
+            ];
+
+            var tool = CreateReleasePlanToolWithMockedTypeSpec(testCodeFilePath, project);
+            var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
+
+            Assert.That(updateStatus.ResponseError, Is.Null);
+            Assert.That(updateStatus.Message, Does.Contain("Language: JavaScript, Package name: @azure-rest/ai-content-safety"));
+        }
+
+        [Test]
         public async Task Test_Update_SDK_Details_Mgmt_language_excl()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -2381,6 +2398,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             [
                 new PackageInfo { Language = SdkLanguage.Python, PackageName = "azure-contoso" },
                 new PackageInfo { Language = SdkLanguage.Go, PackageName = "sdk/contoso" },
+                new PackageInfo { Language = SdkLanguage.JavaScript, PackageName = "@azure-rest/ai-content-safety" },
                 new PackageInfo { Language = SdkLanguage.Rust, PackageName = "azure_contoso" },
                 new PackageInfo { Language = SdkLanguage.Cpp, PackageName = "azure-contoso-cpp" }
             ];
@@ -2395,9 +2413,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(
                     700,
                     It.Is<List<SDKInfo>>(sdkInfos =>
-                        sdkInfos.Count == 2 &&
+                        sdkInfos.Count == 3 &&
                         sdkInfos.Any(sdk => sdk.Language == "Python" && sdk.PackageName == "azure-contoso") &&
                         sdkInfos.Any(sdk => sdk.Language == "Go" && sdk.PackageName == "sdk/contoso") &&
+                        sdkInfos.Any(sdk => sdk.Language == "JavaScript" && sdk.PackageName == "@azure-rest/ai-content-safety") &&
                         sdkInfos.All(sdk => sdk.Language != "Rust" && sdk.Language != "C++")),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);

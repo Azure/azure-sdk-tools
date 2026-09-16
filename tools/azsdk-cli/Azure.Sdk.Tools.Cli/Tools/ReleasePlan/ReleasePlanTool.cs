@@ -258,6 +258,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private static readonly string PRIVATE_SPECS_REPO = "azure-rest-api-specs-pr";
         private static readonly string NAMESPACE_APPROVAL_REPO = "azure-sdk";
         private static readonly string REPO_OWNER = "Azure";
+        private static readonly Dictionary<string, string[]> _packageNamePrefixes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "JavaScript", ["@azure/", "@azure-rest/"] },
+            { "Go", ["sdk/"] },
+        };
         public static readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
         public static readonly string DATA_PLANE_REVIEW_SIGNOFF = "data-plane-review-signoff";
         public static readonly HashSet<string> SUPPORTED_LANGUAGES = new()
@@ -864,6 +869,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                     var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
                     sdkInfos = [.. sdkInfos.Where(sdk => supportedLanguages.Contains(sdk.Language))];
+                    var packageValidationError = ValidateSdkPackageNames(sdkInfos);
+                    if (packageValidationError != null)
+                    {
+                        return new ReleasePlanResponse
+                        {
+                            ResponseError = packageValidationError,
+                            NextSteps = ["Update the package name to match a supported prefix for its language."]
+                        };
+                    }
+
                     var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlan.WorkItemId, sdkInfos, ct);
                     if (!updated)
                     {
@@ -937,6 +952,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 throw new Exception(error);
             }
+        }
+
+        private static string? ValidateSdkPackageNames(IEnumerable<SDKInfo> sdkInfos)
+        {
+            var invalidSdks = sdkInfos.Where(sdk =>
+                _packageNamePrefixes.TryGetValue(sdk.Language, out var prefixes) &&
+                !prefixes.Any(prefix => sdk.PackageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            if (invalidSdks.Count == 0)
+            {
+                return null;
+            }
+
+            var errorDetails = string.Join("; ", invalidSdks.Select(sdk => $"{sdk.Language} -> {sdk.PackageName}"));
+            var prefixRules = string.Join(", ", _packageNamePrefixes.Select(kvp => $"{kvp.Key}: starts with {string.Join(" or ", kvp.Value)}"));
+            return $"Unsupported package name(s) detected: {errorDetails}. Package names must follow these rules: {prefixRules}";
         }
 
         /// <summary>
@@ -1519,23 +1551,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     .Where(sdk => supportedLanguages.Contains(sdk.Language))
                     .ToList();
 
-                // Validate SDK Package names
-                var languagePrefixMap = new Dictionary<string, string>
-                (StringComparer.OrdinalIgnoreCase)
+                var packageValidationError = ValidateSdkPackageNames(SdkInfos);
+                if (packageValidationError != null)
                 {
-                    { "JavaScript", "@azure/" },
-                    { "Go", "sdk/" },
-                };
-
-                var invalidSdks = SdkInfos.Where(sdk => languagePrefixMap.TryGetValue(sdk.Language, out var prefix) && !sdk.PackageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
-                if (invalidSdks.Any())
-                {
-                    var errorDetails = string.Join("; ", invalidSdks.Select(sdk => $"{sdk.Language} -> {sdk.PackageName}"));
-                    var prefixRules = string.Join(", ", languagePrefixMap.Select(kvp => $"{kvp.Key}: starts with {kvp.Value}"));
                     return new DefaultCommandResponse
                     {
-                        ResponseError = $"Unsupported package name(s) detected: {errorDetails}. Package names must follow these rules: {prefixRules}",
-                        NextSteps = ["Prompt the user to update the package name to match the required prefix for its language."]
+                        ResponseError = packageValidationError,
+                        NextSteps = ["Prompt the user to update the package name to match a supported prefix for its language."]
                     };
                 }
 

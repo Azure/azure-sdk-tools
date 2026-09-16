@@ -769,6 +769,76 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Get_Release_Plan_by_typespec_project_path_and_api_version()
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            const string apiVersion = "2024-01-01";
+            var mockDevOps = new Mock<IDevOpsService>();
+            var expectedReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 778,
+                ReleasePlanId = 78,
+                SpecAPIVersion = apiVersion
+            };
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expectedReleasePlan);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath, apiVersion: apiVersion);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails?.WorkItemId, Is.EqualTo(778));
+            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_by_spec_pull_request_and_api_version_uses_typespec_version_lookup()
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            const string specPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            const string apiVersion = "2024-01-01-preview";
+            var mockDevOps = new Mock<IDevOpsService>();
+            var expectedReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 779,
+                ReleasePlanId = 79,
+                SpecAPIVersion = apiVersion
+            };
+            string? capturedTypeSpecProjectPath = null;
+            string? capturedApiVersion = null;
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Callback((string path, string version, CancellationToken _) =>
+                {
+                    capturedTypeSpecProjectPath = path;
+                    capturedApiVersion = version;
+                })
+                .ReturnsAsync(expectedReleasePlan);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.GetReleasePlan(specPullRequestUrl: specPullRequestUrl, typeSpecProjectPath: typeSpecProjectPath, apiVersion: apiVersion);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails?.WorkItemId, Is.EqualTo(779));
+            Assert.That(capturedTypeSpecProjectPath, Is.EqualTo(typeSpecProjectPath));
+            Assert.That(capturedApiVersion, Is.EqualTo(apiVersion));
+            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.GetReleasePlanAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_with_api_version_requires_typespec_project_path()
+        {
+            var response = await releasePlanTool.GetReleasePlan(
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                apiVersion: "2024-01-01");
+
+            Assert.That(response.ResponseError, Does.Contain("TypeSpec project path is required"));
+        }
+
+        [Test]
         public async Task Test_Get_Release_Plan_warns_about_project_schedule_risks()
         {
             const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";

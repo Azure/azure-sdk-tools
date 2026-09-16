@@ -4,6 +4,7 @@
 
 ### Features Added
 
+- `azsdk release-plan get` and `azsdk_get_release_plan` now accept an optional `--api-version`/`apiVersion` selector with a required TypeSpec project path, matching the version stored on the release plan's child API Spec work item.
 - Implemented the three-edit-scope workflow in the `azsdk_customized_code_update` tool.
 - Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
 - Create release plan now checks for an existing plan with the same API version and falls back to matching by TypeSpec project and release-plan type only when the API version is unknown.

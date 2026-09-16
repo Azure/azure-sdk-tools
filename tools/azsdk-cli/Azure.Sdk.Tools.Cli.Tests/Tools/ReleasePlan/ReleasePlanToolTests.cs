@@ -589,6 +589,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(releaseplan.Message, "Response should contain a message about existing plan");
             Assert.That(releaseplan.Message, Does.Contain("existing release plan"), "Message should indicate plan already exists");
             Assert.That(releaseplan.Warnings, Has.Some.Contains("Release plan 50001").And.Contains("past due"));
+            Assert.That(((MockDevOpsService)devOpsService).LastApiReleaseTypeForTypeSpecPathAndApiVersion, Is.EqualTo(ApiReleaseType.GA));
         }
 
         [Test]
@@ -780,16 +781,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 ReleasePlanId = 78,
                 SpecAPIVersion = apiVersion
             };
-            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ApiReleaseType.GA, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedReleasePlan);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
-            var response = await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath, apiVersion: apiVersion);
+            var response = await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath, apiReleaseType: "GA", apiVersion: apiVersion);
 
             Assert.That(response.ResponseError, Is.Null);
             Assert.That(response.ReleasePlanDetails?.WorkItemId, Is.EqualTo(778));
-            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ApiReleaseType.GA, It.IsAny<CancellationToken>()), Times.Once);
             mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
@@ -808,23 +809,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
             string? capturedTypeSpecProjectPath = null;
             string? capturedApiVersion = null;
-            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Callback((string path, string version, CancellationToken _) =>
+            ApiReleaseType capturedApiReleaseType = ApiReleaseType.Unknown;
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .Callback((string path, string version, ApiReleaseType releaseType, CancellationToken _) =>
                 {
                     capturedTypeSpecProjectPath = path;
                     capturedApiVersion = version;
+                    capturedApiReleaseType = releaseType;
                 })
                 .ReturnsAsync(expectedReleasePlan);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
-            var response = await tool.GetReleasePlan(specPullRequestUrl: specPullRequestUrl, typeSpecProjectPath: typeSpecProjectPath, apiVersion: apiVersion);
+            var response = await tool.GetReleasePlan(specPullRequestUrl: specPullRequestUrl, typeSpecProjectPath: typeSpecProjectPath, apiReleaseType: "Public Preview", apiVersion: apiVersion);
 
             Assert.That(response.ResponseError, Is.Null);
             Assert.That(response.ReleasePlanDetails?.WorkItemId, Is.EqualTo(779));
             Assert.That(capturedTypeSpecProjectPath, Is.EqualTo(typeSpecProjectPath));
             Assert.That(capturedApiVersion, Is.EqualTo(apiVersion));
-            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(capturedApiReleaseType, Is.EqualTo(ApiReleaseType.PublicPreview));
+            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>()), Times.Once);
             mockDevOps.Verify(x => x.GetReleasePlanAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
@@ -836,6 +840,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 apiVersion: "2024-01-01");
 
             Assert.That(response.ResponseError, Does.Contain("TypeSpec project path is required"));
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_with_api_version_requires_api_release_type()
+        {
+            var response = await releasePlanTool.GetReleasePlan(
+                typeSpecProjectPath: "specification/testcontoso/Contoso.Management",
+                apiVersion: "2024-01-01");
+
+            Assert.That(response.ResponseError, Does.Contain("API release type is required"));
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_with_api_version_rejects_invalid_api_release_type()
+        {
+            var response = await releasePlanTool.GetReleasePlan(
+                typeSpecProjectPath: "specification/testcontoso/Contoso.Management",
+                apiReleaseType: "invalid",
+                apiVersion: "2024-01-01");
+
+            Assert.That(response.ResponseError, Does.Contain("Invalid API release type"));
         }
 
         [Test]

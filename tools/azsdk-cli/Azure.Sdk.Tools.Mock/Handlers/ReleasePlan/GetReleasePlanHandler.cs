@@ -29,6 +29,17 @@ public class GetReleasePlanHandler : IMockToolHandler
         var typeSpecProjectPath = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "";
         var apiReleaseType = arguments?.GetValueOrDefault("apiReleaseType")?.ToString() ?? "";
         var apiVersion = arguments?.GetValueOrDefault("apiVersion")?.ToString() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(apiVersion) && string.IsNullOrWhiteSpace(typeSpecProjectPath))
+        {
+            return new ReleasePlanResponse { ResponseError = "TypeSpec project path is required when API version is provided." };
+        }
+
+        if (!string.IsNullOrWhiteSpace(apiVersion) && string.IsNullOrWhiteSpace(apiReleaseType))
+        {
+            return new ReleasePlanResponse { ResponseError = "API release type is required when API version is provided. Allowed values: Private Preview, Public Preview, GA" };
+        }
+
         var isKnownSpecPullRequest = string.Equals(
             specPullRequestUrl,
             "https://github.com/Azure/azure-rest-api-specs/pull/38387",

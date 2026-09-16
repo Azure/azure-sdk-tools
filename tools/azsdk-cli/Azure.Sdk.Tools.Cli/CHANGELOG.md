@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.47 (Unreleased)
-
-### Features Added
+## 0.6.47 (2026-09-16)
 
 ### Breaking Changes
 
-### Bugs Fixed
-
-### Other Changes
+- Release-plan lookup by TypeSpec project path and API version now also requires and matches the API release type.
 
 ## 0.6.46 (2026-09-15)
 

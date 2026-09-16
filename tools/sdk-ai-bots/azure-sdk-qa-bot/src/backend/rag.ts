@@ -128,6 +128,8 @@ export interface RagApiError {
 export interface FeedbackRequestPayload {
   channel_id?: string;
   tenant_id: string;
+  conversation_id?: string;
+  conversation_type?: 'teams_channel';
   reaction: Reaction;
   comment?: string;
   reasons?: string[];

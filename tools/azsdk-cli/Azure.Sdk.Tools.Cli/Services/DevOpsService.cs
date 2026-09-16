@@ -2203,14 +2203,14 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <param name="apiVersion">The exact API version to match</param>
         /// <param name="apiReleaseType">The API release type to match</param>
         /// <param name="ct">Cancellation token</param>
-        /// <returns>A matching release plan if found, or null otherwise</returns>
+        /// <returns>A matching release plan if found, or null for invalid inputs or when no match exists</returns>
         public async Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, ApiReleaseType apiReleaseType, CancellationToken ct = default)
         {
             try
             {
                 if (string.IsNullOrEmpty(typeSpecProjectPath) || string.IsNullOrEmpty(apiVersion) || apiReleaseType == ApiReleaseType.Unknown)
                 {
-                    logger.LogInformation("TypeSpec project path or API version is empty, or API release type is unknown. Skipping search for existing release plan.");
+                    logger.LogWarning("TypeSpec project path or API version is empty, or API release type is unknown. Skipping search for existing release plan.");
                     return null;
                 }
 
@@ -2243,7 +2243,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     // Map the work item to ReleasePlanWorkItem to populate SpecAPIVersion from child API Spec work item
                     var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
 
-                    // Check if the API version and release type match
+                    // Verify mapped values as well as the WIQL filters before returning a match.
                     if (!string.IsNullOrEmpty(releasePlan.SpecAPIVersion)
                         && releasePlan.SpecAPIVersion.Equals(apiVersion, StringComparison.OrdinalIgnoreCase)
                         && releasePlan.ApiReleaseType == apiReleaseType)

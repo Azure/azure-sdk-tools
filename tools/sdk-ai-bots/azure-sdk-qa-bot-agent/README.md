@@ -102,23 +102,6 @@ Ensure your Azure identity has:
    az login  # select the Azure SDK Engineering System subscription
    ```
 
-### User Feedback Storage
-
-New submissions to `/feedback` (or `/agent/feedback`) are saved as individual
-documents in Cosmos DB, rather than monthly Excel blobs. Before deploying this
-change, provision the `feedback-records` container in the existing
-`azure-sdk-qa-bot` database with partition key `/tenant_id`. The server validates
-that the container exists; it does not create it. Use the existing
-`AZURE_COSMOSDB_ENDPOINT` setting and grant the server identity Cosmos DB data
-contributor access to this container.
-
-Each document contains a generated `id`, a UTC `created_at` timestamp, and all
-feedback request fields. Reactions are strings and reasons are stored as an
-array. The request/response contract and negative-feedback workflow are unchanged.
-`STORAGE_FEEDBACK_CONTAINER` is no longer required by this service. Existing Excel
-blobs are left untouched; historical migration is not included. These user
-feedback documents are separate from the evolution lifecycle in `qa-records`.
-
 ## Running and Debugging Locally
 
 ### Debugging the Chat Agent

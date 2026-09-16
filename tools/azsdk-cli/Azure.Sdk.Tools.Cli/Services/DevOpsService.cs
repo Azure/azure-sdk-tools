@@ -173,7 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ProductInfo?> GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct);
         public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetActiveReleasePlansByTypeSpecProjectPathAsync(string typeSpecProjectPath, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
-        public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct = default);
+        public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, ApiReleaseType apiReleaseType, CancellationToken ct = default);
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
@@ -2195,15 +2195,16 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         /// <summary>
-        /// Get an existing release plan by TypeSpec project path and exact API version match.
+        /// Get an existing release plan by TypeSpec project path, exact API version, and API release type match.
         /// Searches for both in-progress and finished release plans.
         /// The API version is retrieved from the child API Spec work item.
         /// </summary>
         /// <param name="typeSpecProjectPath">The TypeSpec project path to search for</param>
         /// <param name="apiVersion">The exact API version to match</param>
+        /// <param name="apiReleaseType">The API release type to match</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>A matching release plan if found, or null otherwise</returns>
-        public async Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct = default)
+        public async Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, ApiReleaseType apiReleaseType, CancellationToken ct = default)
         {
             try
             {
@@ -2220,6 +2221,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
                 query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += $" AND [Custom.ReleasePlanType] = '{apiReleaseType.ToAdoFieldValue()}'";
                 // Include both in-progress and finished states
                 query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
                 query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
@@ -2241,8 +2243,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     // Map the work item to ReleasePlanWorkItem to populate SpecAPIVersion from child API Spec work item
                     var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
 
-                    // Check if the API version matches
-                    if (!string.IsNullOrEmpty(releasePlan.SpecAPIVersion) && releasePlan.SpecAPIVersion.Equals(apiVersion, StringComparison.OrdinalIgnoreCase))
+                    // Check if the API version and release type match
+                    if (!string.IsNullOrEmpty(releasePlan.SpecAPIVersion)
+                        && releasePlan.SpecAPIVersion.Equals(apiVersion, StringComparison.OrdinalIgnoreCase)
+                        && releasePlan.ApiReleaseType == apiReleaseType)
                     {
                         logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) for TypeSpec project path: {typeSpecProjectPath} with API version: {apiVersion}",
                             releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, apiVersion);

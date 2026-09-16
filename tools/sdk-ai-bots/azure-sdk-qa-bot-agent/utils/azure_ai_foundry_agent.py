@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from json import JSONDecodeError
 from typing import Any
 
 from openai import (
@@ -182,7 +183,7 @@ class HostedAgentClient:
                     return None, _build_content_safety_response()
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
-                    set_stateless_session_id(None)
+                    set_stateless_session_id(agent_ref["name"], None)
                     agent_session_id = None
                     continue
                 logger.warning(
@@ -194,7 +195,7 @@ class HostedAgentClient:
                     ex,
                     exc_info=True,
                 )
-            except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
+            except (APIConnectionError, APITimeoutError, APIStatusError, JSONDecodeError) as ex:
                 last_error = ex
                 await self.close_stream(stream)
                 logger.warning(

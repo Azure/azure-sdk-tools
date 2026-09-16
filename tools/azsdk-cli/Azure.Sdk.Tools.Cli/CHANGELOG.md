@@ -1,22 +1,37 @@
 # Release History
 
-## 0.6.46 (Unreleased)
+## 0.6.48 (Unreleased)
 
 ### Features Added
 
 - Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
-- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
-
-### Breaking Changes
 
 ### Bugs Fixed
 
 - Preserve detected SDK changes when classification or catalog loading fails, and reject invalid detector reports instead of silently falling back.
+
+## 0.6.47 (2026-09-16)
+
+### Breaking Changes
+
+- Release-plan lookup by TypeSpec project path and API version now also requires and matches the API release type.
+
+## 0.6.46 (2026-09-15)
+
+### Features Added
+
+- `azsdk release-plan get` and `azsdk_get_release_plan` now accept an optional `--api-version`/`apiVersion` selector with a required TypeSpec project path, matching the version stored on the release plan's child API Spec work item.
+- Implemented the three-edit-scope workflow in the `azsdk_customized_code_update` tool.
+- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
+- Create release plan now checks for an existing plan with the same API version and falls back to matching by TypeSpec project and release-plan type only when the API version is unknown.
+- Create and update release plan tools now automatically mark a private preview release plan as `Finished` when its spec pull request has been merged.
+
+### Bugs Fixed
+
+- Skip SDK generation when the requested language is already marked `Released` in the release plan.
 - Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
 - Ignored release-table headers and separators so packages without planned release dates remain blocked.
 - Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.
-
-### Other Changes
 
 ## 0.6.45 (2026-09-08)
 

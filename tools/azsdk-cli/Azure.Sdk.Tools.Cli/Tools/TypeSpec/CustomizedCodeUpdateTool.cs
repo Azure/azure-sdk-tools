@@ -50,6 +50,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="tspClientHelper">The TypeSpec client helper for regeneration operations.</param>
     /// <param name="feedbackService">The feedback service for extracting feedback from various sources.</param>
     /// <param name="classifierService">The feedback classifier service for LLM-powered classification.</param>
+    /// <param name="typeSpecCustomizationService">The TypeSpec customization service for applying patches and regenerating code.</param>
+    /// <param name="typeSpecHelper">The TypeSpec helper for project and path validations.</param>
+    /// <param name="npxHelper">The NPX helper for running Node.js commands.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="tspClientHelper"/> is null.</exception>
     public CustomizedCodeUpdateTool(
         ILogger<CustomizedCodeUpdateTool> logger,
@@ -80,6 +83,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         Required = true
     };
 
+    public static readonly Option<string> PackagePathOpt = new("--package-path", "-p")
+    {
+        Description = "Absolute path to the SDK package directory. Required for `CustomCode` and `All`; not required for `SpecInputs`",
+        Required = false,
+    };
+
     private readonly Option<string> typespecProjectPath = new("--tsp-project-path")
     {
         Description = "Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where " +
@@ -107,7 +116,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     protected override Command GetCommand() =>
         new McpCommand("customized-update", "Apply TypeSpec and SDK code customizations with AI-assisted analysis.", CustomizedCodeUpdateToolName)
         {
-            SharedOptions.PackagePath,
+            PackagePathOpt,
             typespecProjectPath,
             customizationRequestOption,
             editScopeOption,
@@ -116,8 +125,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <inheritdoc />
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(packagePath, nameof(packagePath));
+        var packagePath = parseResult.GetValue(PackagePathOpt);
 
         var tspProjectPath = parseResult.GetValue(typespecProjectPath);
 
@@ -148,18 +156,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// MCP tool entry point — applies patches to customization files based on build errors,
     /// regenerates code if needed (C# and Java), builds, and returns success/failure with build result.
     /// </summary>
-    /// <param name="packagePath">Absolute path to the SDK package directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
+    /// <param name="packagePath">Absolute path to the SDK package directory. Required for `CustomCode` and `All`; not required for `SpecInputs`</param>
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory. Optional for custom-code-only scope.</param>
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (C# and Java), builds, and returns success/failure with build result.")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(
-        [Description("Absolute path to the SDK package directory. REQUIRED. Example: 'path/to/azure-sdk-for-java/sdk/healthdataaiservices/azure-health-deidentification'.")]
-        string packagePath,
         [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
         string customizationRequest,
+        [Description("Absolute path to the SDK package directory. Required for `CustomCode` and `All`; not required for `SpecInputs`. Example: 'path/to/azure-sdk-for-java/sdk/healthdataaiservices/azure-health-deidentification'.")]
+        string packagePath = null,
         [Description("Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied. REQUIRED when editScope includes spec inputs (SpecInputs/All). OPTIONAL for custom-code-only repair (editScope CustomCode): when omitted, regeneration resolves the spec from the pinned commit in the package's tsp-location.yaml, so no local spec checkout is required. Example: 'path/to/azure-rest-api-specs/specification/healthdataaiservices/HealthDataAIServices.DeidServices'.")]
         string? tspProjectPath = null,
         [Description("Which source categories the tool may edit (flags: CustomCode, SpecInputs, or All). All (default): both custom code and spec inputs may be edited, regenerate, and patch custom code. CustomCode: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ from the unchanged pinned commit is always allowed.")]
@@ -176,7 +184,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string? packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
     {
         // editScope is a non-nullable [Flags] enum bound from a named option (default All), so the
         // empty/whitespace validation used for the string inputs does not apply. Guard only against an
@@ -196,16 +204,83 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         var specInputsInScope = editScope.HasFlag(EditScope.SpecInputs);
         var customCodeInScope = editScope.HasFlag(EditScope.CustomCode);
-        // Validate input
-        if (!Directory.Exists(packagePath))
+        string? repoRoot = null;
+        
+        var validSdkRepoPackagePath = true;
+
+        LanguageService? languageService = null;
+
+        PackageInfo? packageInfo = null;
+
+        var hasPackagePath = !string.IsNullOrWhiteSpace(packagePath);
+        if (customCodeInScope && !hasPackagePath)
         {
+            const string message = "Package path is required when editScope includes CustomCode (editScope includes CustomCode/All), because the tool must edit customization code in the package. Provide --package-path.";
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                ResponseError = $"Package path does not exist: {packagePath}",
-                Message = $"Package path does not exist: {packagePath}",
+                ResponseError = message,
+                Message = message,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = $"Package path does not exist: {packagePath}"
+                BuildResult = message
+            };
+        }
+
+        if (hasPackagePath)
+        {
+            if (!Directory.Exists(packagePath))
+            {
+                logger.LogError("Package path does not exist: {PackagePath}", packagePath);
+                validSdkRepoPackagePath = false;
+                if (customCodeInScope)
+                {
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Success = false,
+                        ResponseError = $"Package path does not exist: {packagePath}",
+                        Message = $"Package path does not exist: {packagePath}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                        BuildResult = $"Package path does not exist: {packagePath}"
+                    };
+                }
+            }
+            else
+            {
+                // Discover the Git repository root for the package path, and validate that the package path is within a Git repository, if not, it is not a valid package path.
+                try
+                {
+                    repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+                    if (string.IsNullOrWhiteSpace(repoRoot))
+                    {
+                        logger.LogError("Package path is not within a Git repository: {PackagePath}", packagePath);
+                        validSdkRepoPackagePath = false;
+                    }
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to discover Git repository root for package path: {PackagePath}", packagePath);
+                    validSdkRepoPackagePath = false;
+                }
+            }
+        }
+
+        // Validate input
+        if (customCodeInScope && !validSdkRepoPackagePath)
+        {
+            const string packagePathMessage = "A valid package path which is a local cloned SDK repo is required when custom code is in scope " +
+                "(editScope includes CustomCode/All), because the tool must edit SDK source code locally. " +
+                "Provide --package-path, or use editScope specInputs to repair typespec only.";
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = packagePathMessage,
+                Message = packagePathMessage,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = packagePathMessage
             };
         }
 
@@ -261,12 +336,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Detect if customizationRequest is an APIView URL (prod or staging)
         string? apiViewUrl = IsApiViewUrl(customizationRequest) ? customizationRequest : null;
 
-        var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
-        PackageInfo? packageInfo = null;
-
         try
         {
-            packageInfo = await languageService.GetPackageInfo(packagePath, ct);
+            languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -274,7 +346,24 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
+            logger.LogWarning(ex, "Failed to resolve language service for {PackagePath}", packagePath);
+        }
+
+        if (languageService != null)
+        {
+            logger.LogInformation("Resolved package info for package path {PackagePath}: {Language}", packagePath, languageService.Language);
+            try
+            {
+                packageInfo = await languageService.GetPackageInfo(packagePath, ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
+            }
         }
 
         // When spec inputs are out of scope: items that can only be fixed by a spec change
@@ -285,10 +374,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Reported, not applied, when EditScope.CustomCode is not set.
         List<string> customCodeChangeRequired = new();
 
+        List<string> changesMade = new();
+
         CustomizedCodeUpdateResponse CreateResponse(CustomizedCodeUpdateResponse response)
         {
-            response.PackageName ??= packageInfo?.PackageName;
-            response.Language = packageInfo?.Language ?? languageService.Language;
+            response.PackageName ??= packageInfo?.PackageName; 
+            response.Language = packageInfo?.Language ?? languageService?.Language ?? SdkLanguage.Unknown;
             response.PackageType = packageInfo?.SdkType ?? SdkType.Unknown;
             response.TypeSpecProject ??= packageInfo?.SpecProjectPath ?? tspProjectPath;
             if (specChangeRequired.Count > 0)
@@ -298,6 +389,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (customCodeChangeRequired.Count > 0)
             {
                 response.CustomCodeChangeRequired ??= customCodeChangeRequired;
+            }
+            if (changesMade.Count > 0)
+            {
+                response.TypeSpecChangesSummary ??= changesMade;
             }
             return response;
         }
@@ -314,7 +409,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 tspProjectPath: tspProjectPath,
                 apiViewUrl: apiViewUrl,
                 plainTextFeedback: customizationRequest,
-                language: languageService.Language.ToString(),
+                language: languageService != null ? languageService.Language.ToString() : null,
                 editScope: editScope,
                 ct: ct);
         }
@@ -356,7 +451,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
-        List<string> changesMade = new();
         List<string> manualInterventions = new();
         StringBuilder codeCustomizationLog = new();
         StringBuilder tspFixFailedReasons = new();
@@ -408,7 +502,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
 
                 logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
-                var languageTaggedRequest = $"For {languageService.Language}: {itemDetails.Text}";
+                var languageTaggedRequest = languageService != null ? $"For {languageService.Language}: {itemDetails.Text}" : itemDetails.Text;
                 var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);
 
                 if (tspCustomizationResult.Success)
@@ -426,6 +520,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     tspFixFailedReasons.Append(tspCustomizationResult.FailureReason);
                     tspFixFailedReasons.Append("; ");
                     tspFixFailed++;
+                }
+
+                //custom code out of scope: remove TSP_APPLICABLE items from feedback dictionary so they are not re-classified in the second pass
+                if (!customCodeInScope)
+                {
+                    feedbackDictionary.Remove(itemDetails.ItemId);
                 }
             }
             else if (itemDetails.Classification == ClassificationCodeCustomization)
@@ -477,7 +577,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
-        if (tspApplicable == 0 && codeCustomizations == 0 && manualChanges > 0)
+        if (tspApplicable == 0 && codeCustomizations == 0 && customCodeChangeRequired.Count == 0 && manualChanges > 0)
         {
             return CreateResponse(new CustomizedCodeUpdateResponse
             {
@@ -487,9 +587,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
             });
         }
-
         // Everything was classified as success
-        if (tspApplicable == 0 && codeCustomizations == 0 && noChanges > 0)
+        if (tspApplicable == 0 && codeCustomizations == 0 && customCodeChangeRequired.Count == 0 && noChanges > 0)
         {
             return CreateResponse(new CustomizedCodeUpdateResponse
             {
@@ -497,9 +596,59 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Message = "No changes needed — the requested customizations are already in place."
             });
         }
+        
+        //CustomCode out of scope, there is no futher code customization to apply, exit the tool with response
+        if (!customCodeInScope)
+        {
+            var message = "";
+            if (tspFixFailed > 0 || customCodeChangeRequired.Count > 0)
+            {
+                //CustomCode out of scope and some items require a custom-code change (CODE_CUSTOMIZATION) or TSP_APPLICABLE items failed to apply. Report as out of scope.
+                message = "Out of scope:";
+                if (tspFixFailed > 0)
+                {
+                    message += $" Some TSP_APPLICABLE items failed to apply and cannot be fixed in the current scope.";
+                }
+                if (customCodeChangeRequired.Count > 0)
+                {
+                    message += $" One or more items require a custom-code change, which is not allowed in the current edit scope.";
+                }
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = message,
+                    CustomCodeChangeRequired = customCodeChangeRequired,
+                    NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
+                });
+            }
+            else
+            {
+                //CustomCode out of scope and there is no more feedback in SpecInput scope to process, return success
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = true,
+                    Message = "No additional changes are required for the specInput-only scope; however, custom code modifications may still be necessary.",
+                    TypeSpecChangesSummary = changesMade.Count > 0 ? changesMade : null,
+                    NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                });
+            }
+        }
 
-        // ── Regen + Build if TSP fixes were applied ──
-        if (tspFixSucceeded > 0)
+        // If custom code is in scope, a language service must be available for the package path to apply custom code changes.
+        if (languageService == null)
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = $"No language service available for package path: {packagePath}",
+                Message = $"No language service available for package path: {packagePath}. CustomCode is in scope, language service must be available for the package path to apply custom code changes.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
+                BuildResult = $"No language service available for package path: {packagePath}"
+            };
+        }
+        // ── Regen + Build if TSP fixes were applied and custom code is in scope and packagePath is valid sdk repo path ──
+        if (tspFixSucceeded > 0 && customCodeInScope && validSdkRepoPackagePath)
         {
             logger.LogDebug("Regenerating {packagePath}", packagePath);
 
@@ -509,9 +658,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
 
             logger.LogDebug("Using local spec project for regeneration: {localSpecProjectPath}", localSpecProjectPath);
-
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
-            await languageService.PreGenerateAsync(repoRoot, ct);
+            if (repoRoot != null)
+            {
+                await languageService.PreGenerateAsync(repoRoot, ct);
+            }
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
@@ -563,6 +713,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // The classifier can now reclassify them as CODE_CUSTOMIZATION or REQUIRES_MANUAL_INTERVENTION.
         if (feedbackDictionary.Count > 0)
         {
+
             var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath: tspProjectPath, language: languageService.Language.ToString(), editScope: editScope, ct: ct);
 
             if (secondResponse.Classifications != null)
@@ -593,7 +744,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         feedbackDictionary.Remove(itemDetails.ItemId);
                     }
-                    else if (!specInputsInScope && itemDetails.Classification == ClassificationTspApplicable)
+                    else if (itemDetails.Classification == ClassificationTspApplicable)
                     {
                         // Spec inputs out of scope — surface as out of scope instead of applying.
                         logger.LogInformation("Spec inputs out of scope: item '{ItemId}' reclassified as TSP_APPLICABLE on second pass; reporting.", itemDetails.ItemId);
@@ -727,9 +878,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
             logger.LogDebug("Regeneration local spec source: {localSpecProjectPath}",
                 localSpecProjectPath ?? "(pinned commit from tsp-location.yaml)");
-
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
-            await languageService.PreGenerateAsync(repoRoot, ct);
+            if (repoRoot != null)
+            {
+                await languageService.PreGenerateAsync(repoRoot, ct);
+            }
+            
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {

@@ -221,6 +221,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = false,
         };
 
+        private readonly Option<string> optionalApiVersionOpt = new("--api-version")
+        {
+            Description = "API version. Requires --typespec-path and --api-release-type, and selects the release plan whose child API Spec work item has this version and release type.",
+            Required = false,
+        };
+
         private readonly Option<string> kpiProductIdOpt = new("--product")
         {
             Description = "Product service tree ID",
@@ -292,7 +298,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", GetReleasePlanToolName) { releasePlanNumberOpt, workItemIdOpt, optionalPullRequestOpt, optionalTypeSpecProjectPathOpt, optionalApiReleaseTypeOpt },
+            new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", GetReleasePlanToolName) { releasePlanNumberOpt, workItemIdOpt, optionalPullRequestOpt, optionalTypeSpecProjectPathOpt, optionalApiReleaseTypeOpt, optionalApiVersionOpt },
             new McpCommand(createReleasePlanCommandName, "Create a release plan", CreateReleasePlanToolName)
             {
                 typeSpecProjectPathOpt,
@@ -336,7 +342,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var getPullRequest = commandParser.GetValue(optionalPullRequestOpt);
                     var getTypeSpecPath = commandParser.GetValue(optionalTypeSpecProjectPathOpt);
                     var getApiReleaseType = commandParser.GetValue(optionalApiReleaseTypeOpt);
-                    return await GetReleasePlan(releasePlanNumber, workItemId, specPullRequestUrl: getPullRequest, typeSpecProjectPath: getTypeSpecPath, apiReleaseType: getApiReleaseType, ct: ct);
+                    var getApiVersion = commandParser.GetValue(optionalApiVersionOpt);
+                    return await GetReleasePlan(releasePlanNumber, workItemId, specPullRequestUrl: getPullRequest, typeSpecProjectPath: getTypeSpecPath, apiReleaseType: getApiReleaseType, apiVersion: getApiVersion, ct: ct);
 
                 case createReleasePlanCommandName:
                     var typeSpecProjectPath = commandParser.GetValue(typeSpecProjectPathOpt);
@@ -407,12 +414,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
 
-        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA).")]
-        public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, string? apiReleaseType = null, CancellationToken ct = default)
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type.")]
+        public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, string? apiReleaseType = null, string? apiVersion = null, CancellationToken ct = default)
         {
             try
             {
                 ReleasePlanWorkItem? releasePlan = null;
+
+                if (!string.IsNullOrWhiteSpace(apiVersion) && string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                {
+                    return new ReleasePlanResponse { ResponseError = "TypeSpec project path is required when API version is provided." };
+                }
+
+                if (!string.IsNullOrWhiteSpace(apiVersion) && string.IsNullOrWhiteSpace(apiReleaseType))
+                {
+                    return new ReleasePlanResponse { ResponseError = "API release type is required when API version is provided. Allowed values: Private Preview, Public Preview, GA" };
+                }
 
                 // Parse API release type if provided
                 ApiReleaseType parsedApiReleaseType = ApiReleaseType.Unknown;
@@ -441,17 +458,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 else if (!string.IsNullOrWhiteSpace(specPullRequestUrl))
                 {
                     ValidatePullRequestUrl(specPullRequestUrl);
-                    releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
+                    releasePlan = !string.IsNullOrWhiteSpace(apiVersion)
+                        ? await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath!, apiVersion, parsedApiReleaseType, ct)
+                        : await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
 
-                    // Fall back to TypeSpec project path if spec PR lookup failed
-                    if (releasePlan == null && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                    if (releasePlan == null && string.IsNullOrWhiteSpace(apiVersion) && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
                     {
                         releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, apiReleaseType: parsedApiReleaseType, ct: ct);
                     }
                 }
                 else if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
                 {
-                    releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, apiReleaseType: parsedApiReleaseType, ct: ct);
+                    releasePlan = !string.IsNullOrWhiteSpace(apiVersion)
+                        ? await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, parsedApiReleaseType, ct)
+                        : await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, apiReleaseType: parsedApiReleaseType, ct: ct);
                 }
                 else
                 {
@@ -876,20 +896,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         }
 
                         // For private preview release plans, mark as finished if spec PR is merged
-                        if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
-                        {
-                            var isPrivateSpec = activeSpecPr.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase);
-                            var specRepoName = isPrivateSpec ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
-                            var specPr = await githubService.GetPullRequestAsync(REPO_OWNER, specRepoName, prNumber, ct);
-                            if (specPr?.Merged == true)
-                            {
-                                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
-                                    {
-                                        { "System.State", "Finished" }
-                                    }, ct);
-                                logger.LogInformation("Private preview release plan {WorkItemId} marked as Finished because spec PR is merged", releasePlan.WorkItemId);
-                            }
-                        }
+                        releasePlan = await MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(releasePlan, specPullRequestUrl, ct);
                     }
                 }
 
@@ -944,6 +951,46 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             var match = Regex.Match(pullRequestUrl, @"/pull/(\d+)");
             return match.Success ? int.Parse(match.Groups[1].Value) : 0;
+        }
+
+        /// <summary>
+        /// For private preview release plans, checks whether the associated spec pull request has been merged
+        /// and, if so, marks the release plan work item as Finished. This only applies to private preview
+        /// release plans with an available spec PR.
+        /// </summary>
+        private async Task<ReleasePlanWorkItem> MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(ReleasePlanWorkItem releasePlan, string specPullRequestUrl, CancellationToken ct)
+        {
+            if (releasePlan.ApiReleaseType != ApiReleaseType.PrivatePreview)
+            {
+                return releasePlan;
+            }
+
+            var activeSpecPr = !string.IsNullOrEmpty(releasePlan.ActiveSpecPullRequest) ? releasePlan.ActiveSpecPullRequest : specPullRequestUrl;
+            if (string.IsNullOrEmpty(activeSpecPr))
+            {
+                return releasePlan;
+            }
+
+            var prNumber = ParsePullRequestNumberFromUrl(activeSpecPr);
+            if (prNumber <= 0)
+            {
+                return releasePlan;
+            }
+
+            var isPrivateSpec = activeSpecPr.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase);
+            var specRepoName = isPrivateSpec ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
+            var specPr = await githubService.GetPullRequestAsync(REPO_OWNER, specRepoName, prNumber, ct);
+            if (specPr?.Merged == true)
+            {
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                    {
+                        { "System.State", "Finished" }
+                    }, ct);
+                logger.LogInformation("Private preview release plan {WorkItemId} marked as Finished because spec PR is merged", releasePlan.WorkItemId);
+                releasePlan.Status = "Finished";
+            }
+
+            return releasePlan;
         }
 
         /// <summary>
@@ -1116,7 +1163,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (!string.IsNullOrEmpty(apiVersion))
                 {
                     logger.LogInformation("Checking for existing release plan with TypeSpec project '{SpecProject}' and API version '{ApiVersion}'.", specProject, apiVersion);
-                    var existingReleasePlanWithSameVersion = await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(specProject, apiVersion, ct);
+                    var existingReleasePlanWithSameVersion = await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(specProject, apiVersion, parsedApiReleaseType, ct);
                     if (existingReleasePlanWithSameVersion != null)
                     {
                         logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) with the same TypeSpec project path and API version. Returning existing plan instead of creating a new one.",
@@ -1165,9 +1212,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                if (isValidTypeSpec && !string.IsNullOrEmpty(specProject))
+                if (string.IsNullOrEmpty(apiVersion) && isValidTypeSpec && !string.IsNullOrEmpty(specProject))
                 {
-                    logger.LogInformation("Checking for existing in-progress release plan for TypeSpec project: {specProject} with API release type: {apiReleaseType}", specProject, parsedApiReleaseType.ToDisplayLabel());
+                    // This fallback is required for TypeSpec projects such as Compute that support multiple API versions. The metadata emitter does not provide an API version for these projects.
+                    logger.LogInformation("API version is not available for the project. Checking for an existing in-progress release plan for TypeSpec project: {specProject} with API release type: {apiReleaseType}", specProject, parsedApiReleaseType.ToDisplayLabel());
                     var existingReleasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(specProject, apiReleaseType: parsedApiReleaseType, ct: ct);
                     if (existingReleasePlan != null)
                     {
@@ -1317,13 +1365,44 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var message = "Created release plan.";
                     reporter.NextStep(message);
 
-                    // Refresh the release plan and notify the submitter. Both are best-effort and must
-                    // never fail release plan creation, so any error here is logged and swallowed.
+                    // Refresh the release plan to get the latest details. This is best-effort and must
+                    // never fail release plan creation, so any error here is logged and swallowed. If the
+                    // refresh fails, the subsequent steps intentionally continue using the pre-refresh
+                    // release plan details (already populated above) rather than skipping them.
                     try
                     {
-                        //Refresh release plan to get latest details
                         releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+                    }
+                    catch (Exception refreshEx)
+                    {
+                        logger.LogWarning(refreshEx, "Failed to refresh release plan {WorkItemId} after creation.", releasePlan.WorkItemId);
+                    }
 
+                    // For private preview release plans, mark as finished if the spec PR is already merged.
+                    // Unlike notification delivery, a failure here leaves the plan open indefinitely, so surface
+                    // a warning and next step instead of silently swallowing the error.
+                    if (releasePlan != null)
+                    {
+                        try
+                        {
+                            releasePlan = await MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(releasePlan, specPullRequestUrl, ct);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            throw;
+                        }
+                        catch (Exception markFinishedEx)
+                        {
+                            logger.LogWarning(markFinishedEx, "Failed to check spec PR merge status and mark private preview release plan {WorkItemId} as Finished.", releasePlan.WorkItemId);
+                            warnings.Add("Failed to check whether the spec pull request is merged, so the private preview release plan could not be automatically marked as Finished.");
+                            nextSteps.Add("Verify the spec pull request status and manually mark the release plan as Finished if it has already merged.");
+                        }
+                    }
+
+                    // Notify the submitter. This is best-effort and must never fail release plan creation,
+                    // so any error here is logged and swallowed.
+                    try
+                    {
                         // Recipient routing (To/CC) is owned by the email template.
                         // Silently completes when notifications are disabled.
                         var releasePlanEmail = new NewReleasePlanEmail(releasePlan);
@@ -1331,7 +1410,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                     catch (Exception notifyEx)
                     {
-                        logger.LogWarning(notifyEx, "Failed to refresh release plan or send release plan notification.");
+                        logger.LogWarning(notifyEx, "Failed to send release plan notification.");
                     }
 
                     var response = new ReleasePlanResponse
@@ -2381,4 +2460,3 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
     }
 }
-

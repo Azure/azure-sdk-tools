@@ -214,8 +214,20 @@ class QADashboardService:
             conditions.append(
                 "(NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback))"
             )
+            conditions.append("c.qa_status = @not_started_qa_status")
+            parameters.append(
+                {"name": "@not_started_qa_status", "value": QAStatus.ongoing.value}
+            )
         elif feedback_status:
-            conditions.append("c.feedback.status = @feedback_status")
+            if feedback_status == FeedbackStatusFilter.validation_passed:
+                # Match older documents before their next normalized write.
+                conditions.append(
+                    "(c.feedback.status = @feedback_status OR "
+                    "(c.feedback.status = 'done' AND "
+                    "IS_STRING(c.feedback.issue_url) AND c.feedback.issue_url != ''))"
+                )
+            else:
+                conditions.append("c.feedback.status = @feedback_status")
             parameters.append(
                 {"name": "@feedback_status", "value": feedback_status.value}
             )

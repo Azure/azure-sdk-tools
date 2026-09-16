@@ -428,7 +428,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (!string.IsNullOrWhiteSpace(apiVersion) && string.IsNullOrWhiteSpace(apiReleaseType))
                 {
-                    return new ReleasePlanResponse { ResponseError = "API release type is required when API version is provided." };
+                    return new ReleasePlanResponse { ResponseError = "API release type is required when API version is provided. Allowed values: Private Preview, Public Preview, GA" };
                 }
 
                 // Parse API release type if provided

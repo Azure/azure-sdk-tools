@@ -200,6 +200,109 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
+        [TestCase("Java", "Java", "Released", false, "Completed")]
+        [TestCase("Java", "Java", "Released", true, "Completed")]
+        [TestCase("java", "java", "RELEASED", false, "Completed")]
+        [TestCase("Python", "Python", "released", false, "Completed")]
+        [TestCase("typescript", "JavaScript", "Released", false, "Completed")]
+        [TestCase("dotnet", ".NET", "Released", false, "Completed")]
+        [TestCase("csharp", ".net", "Released", false, "Completed")]
+        [TestCase("Go", "Go", "Released", false, "")]
+        [TestCase("Java", "Java", "Released", true, "In progress")]
+        [TestCase("Java", "Java", "Released", true, "Pending")]
+        public async Task GenerateSDK_WhenRequestedSdkAlreadyReleased_SkipsNewRun(
+            string language, string releasePlanLanguage, string releaseStatus, bool hasSdkPullRequest, string generationStatus)
+        {
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                ReleasePlanId = 1234,
+                SDKInfo =
+                [
+                    new SDKInfo
+                    {
+                        Language = releasePlanLanguage,
+                        PackageName = "azure-test",
+                        ReleaseStatus = releaseStatus,
+                        GenerationStatus = generationStatus,
+                        SdkPullRequestUrl = hasSdkPullRequest ? "https://github.com/Azure/azure-sdk-for-java/pull/456" : ""
+                    }
+                ]
+            };
+            var devOpsService = SetupSdkGenerationTool(releasePlan);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: language,
+                pullRequestNumber: hasSdkPullRequest ? 123 : 0,
+                workItemId: 1234
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Status, Is.EqualTo("Success"));
+                Assert.That(result.ExitCode, Is.Zero);
+                Assert.That(result.ResponseErrors, Is.Empty);
+                Assert.That(result.Language, Is.EqualTo(SdkLanguageHelpers.GetSdkLanguage(language)));
+                Assert.That(result.Details, Has.Some.Contains("has already been released for release plan work item 456"));
+                Assert.That(result.Details, Has.Some.Contains("A new SDK generation run was not triggered"));
+            });
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            devOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("Not started")]
+        [TestCase("In progress")]
+        [TestCase("Pending")]
+        [TestCase("Failed")]
+        public async Task GenerateSDK_WhenOnlyAnotherLanguageIsReleased_AllowsGeneration(string? releaseStatus)
+        {
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo =
+                [
+                    new SDKInfo
+                    {
+                        Language = "Python",
+                        PackageName = "azure-test-python",
+                        ReleaseStatus = "Released"
+                    },
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test",
+                        ReleaseStatus = releaseStatus!,
+                        GenerationStatus = "Completed"
+                    }
+                ]
+            };
+            var devOpsService = SetupSdkGenerationTool(releasePlan);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
         [TestCase("In progress")]
         [TestCase("Pending")]
         [TestCase("PENDING")]
@@ -728,6 +831,31 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.TypeSpecProject, Is.EqualTo(""));
             Assert.That(result.Language, Is.EqualTo(SdkLanguage.Java));
             Assert.That(result.ResponseErrors, Does.Contain("Invalid TypeSpec project root path [InvalidPath/specification/testcontoso/Contoso.Management]."));
+        }
+
+        private Mock<IDevOpsService> SetupSdkGenerationTool(ReleasePlanWorkItem releasePlan)
+        {
+            var devOpsService = new Mock<IDevOpsService>();
+            devOpsService.Setup(x => x.ResolveReleasePlanByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(releasePlan);
+            devOpsService.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem>());
+            devOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Build { Id = 100, Status = BuildStatus.InProgress });
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+
+            specWorkflowTool = new SpecWorkflowTool(
+                mockGitHubService.Object,
+                devOpsService.Object,
+                mockTypeSpecHelper.Object,
+                logger,
+                inputSanitizer
+            );
+            return devOpsService;
         }
     }
 }

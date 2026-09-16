@@ -223,7 +223,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string> optionalApiVersionOpt = new("--api-version")
         {
-            Description = "API version. Requires --typespec-path and selects the release plan whose child API Spec work item has this version.",
+            Description = "API version. Requires --typespec-path and --api-release-type, and selects the release plan whose child API Spec work item has this version and release type.",
             Required = false,
         };
 
@@ -414,7 +414,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
 
-        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA) or API version. TypeSpec project path is required when API version is provided.")]
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type.")]
         public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, string? apiReleaseType = null, string? apiVersion = null, CancellationToken ct = default)
         {
             try

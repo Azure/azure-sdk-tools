@@ -575,8 +575,8 @@ test("document issues use doc-first collapsed cards and nonduplicated intent lin
   assert.doesNotMatch(quality, /Recorded @doc text/);
   assert.doesNotMatch(quality, /<table|class="severity|>high<|>medium<|>low<|document-quality-check"[^>]* open/);
   const semantic = reportSection(html, "semantic-intents");
-  assert.match(semantic, /aria-label="Documentation Correctness findings"/);
-  assert.match(semantic, /Documentation Correctness: Widget count documentation/);
+  assert.match(semantic, /aria-label="Documentation Completeness findings"/);
+  assert.match(semantic, /Documentation Completeness: Widget count documentation/);
   assert.match(semantic, /Impacts \(1\)/);
   assert.match(semantic, /class="report-link impact" href="#document-quality-document-finding-widget"/);
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
@@ -616,6 +616,26 @@ test("document summary API keeps coverage detail while HTML omits removed append
   assert.doesNotMatch(legacyQuality, /checks assessed|Not reviewed/);
   assertNoDocumentAppendixUi(legacy);
   assert.equal(documentQualitySummary().label, "Not assessed");
+});
+
+test("documentation completeness summarizes compiler declaration presence", () => {
+  const dimension = {
+    assessmentVersion: 4,
+    status: "failed",
+    coverage: {
+      semanticIntentCount: 2,
+      assessedIntentCount: 2,
+      declarationCount: 5,
+      documentedDeclarationCount: 3,
+      missingDeclarationCount: 2,
+      unassessedIntentIds: [],
+      notApplicableIntentIds: [],
+    },
+    findings: [{}, {}],
+  };
+  const summary = documentQualitySummary(dimension);
+  assert.deepEqual(summary.compactDetail, ["2 findings", "5 declarations checked"]);
+  assert.match(summary.detail, /3\/5 declarations documented/);
 });
 
 test("41 passing descriptions stay out of HTML while summary data remains intact", () => {
@@ -853,7 +873,7 @@ test("failed documentation links use the failure-impact style and contribute to 
   assert.match(header, /Impacts \(4\)/);
   assert.equal((header.match(/class="report-link impact"/g) ?? []).length, 4);
   assert.equal((header.match(/class="report-link impact"[^>]*>Downstream:/g) ?? []).length, 2);
-  assert.match(header, /aria-label="Documentation Correctness findings"/);
+  assert.match(header, /aria-label="Documentation Completeness findings"/);
   for (const finding of documentation.findings) {
     assert.ok(header.includes(`class="report-link impact" href="#document-quality-${finding.id}"`));
     assert.ok(html.includes(`id="document-quality-${finding.id}"`));
@@ -870,7 +890,7 @@ test("passing and incomplete documentation do not create failed semantic impact 
     const header = semantic.match(/<details class="report-card intent"[^>]*>(<summary>[\s\S]*?<\/summary>)/)[1];
     assert.match(header, /Impacts \(2\)/);
     assert.equal((header.match(/class="report-link impact"/g) ?? []).length, 2);
-    assert.doesNotMatch(header, /Documentation Correctness:|href="#document-quality-/);
+    assert.doesNotMatch(header, /Documentation Completeness:|href="#document-quality-/);
     assertNoDocumentAppendixUi(html);
     const documentationOnly = presentationWithDocuments(documentDimension(decision));
     const documentationOnlyHeader = reportSection(documentationOnly, "semantic-intents")
@@ -1034,7 +1054,7 @@ test("empty compiler descriptions remain exact rather than turning into missing 
   assert.doesNotMatch(main, /Current description evidence unavailable|<mark>/);
 });
 
-test("Documentation Correctness naming changes labels but not recorded descriptions, judgments or legacy summaries", () => {
+test("Documentation Completeness naming changes labels but not recorded legacy evidence", () => {
   const dimension = documentDimension();
   const evidence = "Document Quality and Agent Friendliness <literal evidence>.";
   dimension.findings[0].document.after.doc = evidence;
@@ -1042,17 +1062,17 @@ test("Documentation Correctness naming changes labels but not recorded descripti
   dimension.findings[0].expected = evidence;
   const original = structuredClone(dimension);
   const { main, appendix } = documentationSections(presentationWithDocuments(dimension));
-  assert.match(main, /<h2>Documentation Correctness<\/h2>/);
+  assert.match(main, /<h2>Documentation Completeness<\/h2>/);
   const description = main.match(/<blockquote>([\s\S]*?)<\/blockquote>/)[1];
   assert.equal(description.replaceAll("<mark>", "").replaceAll("</mark>", ""), escapeHtml(evidence));
   assert.ok(main.includes(`<h3>Suggested change</h3><p>${escapeHtml(evidence)}</p>`));
   assertNoDocumentAppendixUi(appendix);
   assert.deepEqual(dimension, original);
 
-  assert.equal(documentQualitySummary().detail, "Documentation Correctness is not assessed.");
+  assert.equal(documentQualitySummary().detail, "Documentation Completeness is not assessed.");
   for (const name of ["Document Quality and Agent Friendliness", "Agent Friendliness", "Doc Correctness"]) {
     const legacy = { status: "not-assessed", summary: `${name} is not assessed.` };
-    assert.equal(documentQualitySummary(legacy).detail, "Documentation Correctness is not assessed.");
+    assert.equal(documentQualitySummary(legacy).detail, "Documentation Completeness is not assessed.");
     assert.equal(legacy.summary, `${name} is not assessed.`);
     assert.doesNotMatch(presentationWithDocuments(legacy), new RegExp(escapeHtml(legacy.summary)));
   }
@@ -1083,29 +1103,24 @@ test("PR44988 keeps failed findings, compact counts and stable fragments without
   const original = structuredClone(input);
   const html = renderAssessmentHtml(input);
   const { main, appendix } = documentationSections(html);
-  assert.equal((main.match(/class="report-card document-quality-check"/g) ?? []).length, 2);
-  assert.match(main, /2 findings · 102 descriptions assessed/);
-  assert.match(documentQualitySummary(input.dimensions.documentQuality).detail, /100 descriptions passed/);
-  assert.match(documentQualitySummary(input.dimensions.documentQuality).detail, /223 retained descriptions not reviewed/);
-  assert.match(documentQualitySummary(input.dimensions.documentQuality).detail, /7 intent scopes incomplete/);
-  assert.match(documentQualitySummary(input.dimensions.documentQuality).detail, /3 inherited descriptions not reviewed/);
-  assert.match(documentQualitySummary(input.dimensions.documentQuality).detail, /4\/11 intent scopes resolved/);
+  const findings = input.dimensions.documentQuality.findings;
+  assert.equal((main.match(/class="report-card document-quality-check"/g) ?? []).length, findings.length);
+  assert.match(main, /20 findings · 881 declarations checked/);
+  assert.match(documentQualitySummary(input.dimensions.documentQuality).detail, /861\/881 declarations documented/);
+  assert.match(documentQualitySummary(input.dimensions.documentQuality).detail, /1 intent scopes incomplete/);
+  assert.match(documentQualitySummary(input.dimensions.documentQuality).detail, /10\/11 intent scopes resolved/);
   assert.doesNotMatch(main, /document-quality-file|document-quality-passed-group|document-quality-not-assessed-group/);
-  assert.doesNotMatch(appendix, /323|Passed descriptions|Not assessed intents|retained descriptions not reviewed|inherited descriptions not reviewed/);
+  assert.doesNotMatch(appendix, /861\/881|Passed descriptions|Not assessed intents|retained descriptions not reviewed|inherited descriptions not reviewed/);
   assertNoDocumentAppendixUi(html);
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
   assert.equal(ids.length, new Set(ids).size);
   for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(id), `Missing fragment ${id}`);
-  for (const finding of input.dimensions.documentQuality.findings) {
+  for (const finding of findings) {
     assert.ok(main.includes(`id="document-quality-${finding.id}"`));
     assert.ok(main.includes(escapeHtml(finding.expected)));
-    assert.ok(main.includes(escapeHtml(finding.rationale)));
-  }
-  const intentId = input.dimensions.documentQuality.findings[0].reviewUnitId;
-  const intentHeader = html.match(new RegExp(`<details class="report-card intent" id="intent-${intentId}">(<summary>[\\s\\S]*?<\\/summary>)`))[1];
-  assert.match(intentHeader, /Impacts \(4\)/);
-  assert.equal((intentHeader.match(/class="report-link impact"/g) ?? []).length, 4);
-  for (const finding of input.dimensions.documentQuality.findings) {
+    const intentHeader = html.match(new RegExp(
+      `<details class="report-card intent" id="intent-${finding.reviewUnitId}">(<summary>[\\s\\S]*?<\\/summary>)`,
+    ))[1];
     assert.ok(intentHeader.includes(`class="report-link impact" href="#document-quality-${finding.id}"`));
   }
   assert.deepEqual(input, original);

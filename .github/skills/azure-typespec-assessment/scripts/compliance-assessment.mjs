@@ -268,8 +268,8 @@ export function assembleCompliance({
 }) {
   if (
     !evidence ||
-    evidence.schemaVersion !== 1 ||
-    !Array.isArray(evidence.intents)
+    ![1, 2].includes(evidence.schemaVersion) ||
+    (evidence.schemaVersion === 1 && !Array.isArray(evidence.intents))
   ) {
     throw new Error(
       "Azure Guidelines search evidence is missing or has an unsupported schema.",
@@ -283,11 +283,6 @@ export function assembleCompliance({
     catalog.map((item) => [item.canonicalUrl, item]),
   );
   const requestMap = new Map(requests.map((item) => [item.reviewUnitId, item]));
-  exactCoverage(
-    requests.map((item) => item.reviewUnitId),
-    evidence.intents.map((item) => item.reviewUnitId),
-    "Azure Guidelines intent",
-  );
 
   const sourceMap = new Map(sourceChanges.map((item) => [item.id, item]));
   const documentsByIntent = new Map();
@@ -299,7 +294,188 @@ export function assembleCompliance({
   const retrievalFailures = [];
   let guidanceExcerptCount = 0;
 
-  for (const intent of evidence.intents) {
+  if (evidence.schemaVersion === 2) {
+    assertKeys(
+      evidence,
+      [
+        "schemaVersion",
+        "queryProfiles",
+        "catalogRanking",
+        "rankedDocuments",
+        "retrievalAttempts",
+        "blockers",
+        "inputAccounting",
+      ],
+      "Azure Guidelines search evidence",
+    );
+    for (const field of [
+      "queryProfiles",
+      "catalogRanking",
+      "rankedDocuments",
+      "retrievalAttempts",
+      "blockers",
+    ]) {
+      if (!Array.isArray(evidence[field])) {
+        throw new Error(`Azure Guidelines ${field} must be an array.`);
+      }
+    }
+    exactCoverage(
+      requests.map((item) => item.reviewUnitId),
+      evidence.queryProfiles.map((item) => item.reviewUnitId),
+      "Azure Guidelines query profile",
+    );
+    for (const profile of evidence.queryProfiles) {
+      assertKeys(
+        profile,
+        ["reviewUnitId", "queryProfile"],
+        `Azure Guidelines query profile ${profile.reviewUnitId}`,
+      );
+      const request = requestMap.get(profile.reviewUnitId);
+      if (
+        canonicalJson(profile.queryProfile) !==
+        canonicalJson(request.queryProfile)
+      ) {
+        throw new Error(
+          `Azure Guidelines intent ${profile.reviewUnitId} changed its query profile.`,
+        );
+      }
+    }
+    const hasCatalogExhaustion = evidence.blockers.some((item) =>
+      item.startsWith("catalog-exhausted:"),
+    );
+    if (evidence.rankedDocuments.length !== 4 && !hasCatalogExhaustion) {
+      throw new Error(
+        "Azure Guidelines shared search requires four documents or catalog exhaustion.",
+      );
+    }
+    const selectedUrls = evidence.rankedDocuments.map(
+      (item) => item.canonicalUrl,
+    );
+    const selectedRanks = evidence.rankedDocuments.map((item) => item.rank);
+    if (duplicates(selectedUrls).length) {
+      throw new Error(
+        "Azure Guidelines shared search selected duplicate documents.",
+      );
+    }
+    if (selectedUrls.some((url) => !catalogByUrl.has(url))) {
+      throw new Error(
+        "Azure Guidelines shared search uses an uncataloged URL.",
+      );
+    }
+    if (duplicates(selectedRanks).length) {
+      throw new Error(
+        "Azure Guidelines shared search selected duplicate ranks.",
+      );
+    }
+    exactCoverage(
+      catalog.map((item) => item.canonicalUrl),
+      evidence.catalogRanking.map((item) => item.canonicalUrl),
+      "Azure Guidelines shared catalog ranking",
+    );
+    evidence.catalogRanking.forEach((entry, index) =>
+      validateRankingEntry(
+        entry,
+        catalogByUrl,
+        index + 1,
+        `Azure Guidelines shared ranking[${index}]`,
+      ),
+    );
+    const orderedRanking = [...evidence.catalogRanking].sort(
+      (left, right) =>
+        right.score.total - left.score.total ||
+        left.catalogOrder - right.catalogOrder,
+    );
+    if (
+      canonicalJson(orderedRanking.map((item) => item.canonicalUrl)) !==
+      canonicalJson(evidence.catalogRanking.map((item) => item.canonicalUrl))
+    ) {
+      throw new Error(
+        "Azure Guidelines shared catalog is not score ordered.",
+      );
+    }
+    for (const attempt of evidence.retrievalAttempts) {
+      if (
+        !catalogByUrl.has(attempt.canonicalUrl) ||
+        attempt.status !== "failed" ||
+        !attempt.error?.trim()
+      ) {
+        throw new Error(
+          "Azure Guidelines shared search has an invalid retrieval attempt.",
+        );
+      }
+      retrievalFailures.push(attempt);
+    }
+    const failedUrls = new Set(
+      evidence.retrievalAttempts.map((item) => item.canonicalUrl),
+    );
+    const expectedDocuments = evidence.catalogRanking
+      .filter((item) => !failedUrls.has(item.canonicalUrl))
+      .slice(0, 4);
+    if (
+      canonicalJson(expectedDocuments.map((item) => item.canonicalUrl)) !==
+      canonicalJson(
+        evidence.rankedDocuments.map((item) => item.canonicalUrl),
+      )
+    ) {
+      throw new Error(
+        "Azure Guidelines shared search did not select the first four retrievable documents.",
+      );
+    }
+    const declarationIds = [
+      ...new Set(requests.flatMap((request) => request.declarationIds)),
+    ];
+    evidence.rankedDocuments.forEach((document, index) => {
+      validateDocument(
+        document,
+        catalogByUrl,
+        declarationIds,
+        `Azure Guidelines shared document[${index}]`,
+      );
+      const ranking = expectedDocuments[index];
+      for (const field of [
+        "rank",
+        "catalogOrder",
+        "title",
+        "canonicalUrl",
+        "score",
+        "selectionRationale",
+      ]) {
+        if (canonicalJson(document[field]) !== canonicalJson(ranking[field])) {
+          throw new Error(
+            `Azure Guidelines shared document[${index}] differs from its ranking.`,
+          );
+        }
+      }
+    });
+    const finalDocuments = evidence.rankedDocuments.map(
+      ({ retrieval, ...document }) => ({
+        ...document,
+        retrievedAt: retrieval.retrievedAt,
+        contentHash: retrieval.contentHash,
+      }),
+    );
+    guidanceExcerptCount = finalDocuments.reduce(
+      (total, document) => total + document.guidance.length,
+      0,
+    );
+    for (const request of requests) {
+      documentsByIntent.set(request.reviewUnitId, finalDocuments);
+      catalogRankingByIntent.set(
+        request.reviewUnitId,
+        evidence.catalogRanking,
+      );
+      blockersByIntent.set(request.reviewUnitId, [...evidence.blockers]);
+    }
+    blockers.push(
+      ...evidence.blockers.map((message) => ({ message })),
+    );
+  } else {
+    exactCoverage(
+      requests.map((item) => item.reviewUnitId),
+      evidence.intents.map((item) => item.reviewUnitId),
+      "Azure Guidelines intent",
+    );
+    for (const intent of evidence.intents) {
     const request = requestMap.get(intent.reviewUnitId);
     assertKeys(
       intent,
@@ -451,6 +627,7 @@ export function assembleCompliance({
       0,
     );
     documentsByIntent.set(intent.reviewUnitId, finalDocuments);
+    }
   }
 
   exactCoverage(
@@ -458,14 +635,18 @@ export function assembleCompliance({
     decisions.map((item) => item.reviewUnitId),
     "Azure Guidelines decision",
   );
-  const selectedDocumentCount = [...documentsByIntent.values()].reduce(
-    (total, documents) => total + documents.length,
-    0,
-  );
+  const selectedDocumentCount =
+    evidence.schemaVersion === 2
+      ? evidence.rankedDocuments.length
+      : [...documentsByIntent.values()].reduce(
+          (total, documents) => total + documents.length,
+          0,
+        );
   const accounting = evidence.inputAccounting;
   if (
     !accounting ||
-    accounting.catalogEntriesScored !== catalog.length * requests.length ||
+    accounting.catalogEntriesScored !==
+      catalog.length * (evidence.schemaVersion === 2 ? 1 : requests.length) ||
     accounting.documentsFetched !== selectedDocumentCount ||
     accounting.guidanceExcerptsRetained !== guidanceExcerptCount ||
     !Number.isInteger(accounting.documentBytesFetched) ||
@@ -626,8 +807,12 @@ export function assembleCompliance({
     sourceChangeIds: request.sourceChangeIds,
     hunkIds: request.hunkIds,
     declarationIds: request.declarationIds,
-    catalogRanking: catalogRankingByIntent.get(request.reviewUnitId),
-    documents: documentsByIntent.get(request.reviewUnitId),
+    ...(evidence.schemaVersion === 1
+      ? {
+          catalogRanking: catalogRankingByIntent.get(request.reviewUnitId),
+          documents: documentsByIntent.get(request.reviewUnitId),
+        }
+      : {}),
     blockers: blockersByIntent.get(request.reviewUnitId),
   }));
   const assessedIntentIds = decisions
@@ -662,6 +847,14 @@ export function assembleCompliance({
       selectedDocumentCount,
       unassessedIntentIds,
     },
+    ...(evidence.schemaVersion === 2
+      ? {
+          sharedSearch: {
+            catalogRanking: evidence.catalogRanking,
+            documents: documentsByIntent.get(requests[0]?.reviewUnitId) ?? [],
+          },
+        }
+      : {}),
     intentAssessments,
     findings,
     retrievalFailures,

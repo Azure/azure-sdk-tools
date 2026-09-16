@@ -73,7 +73,6 @@ function validateJudgment(answer) {
       "restDecisions",
       "downstreamDecisions",
       "complianceDecisions",
-      "documentQualityDecisions",
       "overallConfidence",
       "blockers",
     ],
@@ -1217,7 +1216,7 @@ export function assembleAssessment({ work, judgment }) {
     blockers: [...manifest.blockers, ...answer.blockers, ...inferenceBlockers],
     provenance: {
       modelInput: "model-input.json",
-      ...(modelInput.artifactReferences?.documentQuality
+      ...(fs.existsSync(documentQualityPath)
         ? { documentQuality: DOCUMENT_QUALITY_ARTIFACT }
         : {}),
       ...(inference ? { inference: "inference.json" } : {}),

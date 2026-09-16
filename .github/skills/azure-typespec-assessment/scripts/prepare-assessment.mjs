@@ -151,32 +151,60 @@ function findExternalLocalImports(repo, projects, sparseRoots) {
 export async function prepareAssessment({
   repo,
   base,
+  head,
+  mergeBaseCommit,
+  includeWorkingTree = head === undefined,
   specification,
   output,
   sparse_root,
   sparseRoots: requestedSparseRoots,
+  invocation,
 }) {
   const started = performance.now();
   const repository = path.resolve(repo ?? process.cwd());
+  if (!specification) {
+    throw new Error("--specification is required when no TypeSpec scope can be derived.");
+  }
   const scope = normalizeSpecification(repository, specification);
   const work = path.resolve(output);
   fs.mkdirSync(work, { recursive: true });
-  const comparison = resolveComparison(repository, base ?? "origin/main");
+  const comparisonStarted = performance.now();
+  const comparison = resolveComparison(
+    repository,
+    base ?? "origin/main",
+    head ?? "HEAD",
+    mergeBaseCommit,
+  );
+  const comparisonMs = Math.round(performance.now() - comparisonStarted);
   const sparseRoots = normalizeSparseRoots(
     requestedSparseRoots ?? sparse_root,
     scope,
   );
-  const changedFiles = collectChanges(repository, comparison.mergeBaseCommit, scope).filter((file) =>
+  const changeDiscoveryStarted = performance.now();
+  const changedFiles = collectChanges(
+    repository,
+    comparison.mergeBaseCommit,
+    scope,
+    {
+      headRef: comparison.headCommit,
+      includeWorkingTree,
+    },
+  ).filter((file) =>
     sparseRoots.some(
       (root) => file.path === root || file.path.startsWith(`${root}/`),
     ),
+  );
+  const changeDiscoveryMs = Math.round(
+    performance.now() - changeDiscoveryStarted,
   );
   const blockers = [];
   const manifest = {
     schemaVersion: 1,
     repository: { root: repository, remoteUrl: comparison.remoteUrl },
+    ...(invocation ? { invocation } : {}),
     comparison: {
       baseRef: comparison.baseRef,
+      headRef: comparison.headRef,
       mergeBaseCommit: comparison.mergeBaseCommit,
       headCommit: comparison.headCommit,
       workingTree: {
@@ -189,8 +217,16 @@ export async function prepareAssessment({
     changedFiles,
     projects: [],
     blockers,
-    timings: {},
+    timings: {
+      ...(invocation?.timings ?? {}),
+      comparisonMs,
+      changeDiscoveryMs,
+    },
   };
+  manifest.timings.setupExcludingFetchMs =
+    (manifest.timings.setupExcludingFetchMs ?? 0) +
+    comparisonMs +
+    changeDiscoveryMs;
   if (!changedFiles.length) {
     manifest.status = "no-changes";
     manifest.timings.totalMs = Math.round(performance.now() - started);
@@ -204,6 +240,7 @@ export async function prepareAssessment({
     headCommit: comparison.headCommit,
     changedFiles,
     remoteUrl: comparison.remoteUrl,
+    currentRevision: includeWorkingTree ? "working" : comparison.headCommit,
   });
   writeJson(path.join(work, "source", "changed-files.json"), changedFiles);
   writeJson(path.join(work, "source", "source-index.json"), sourceIndex);
@@ -214,20 +251,27 @@ export async function prepareAssessment({
 
   const baseWorktree = path.join(work, "worktrees", "base");
   const currentWorktree = path.join(work, "worktrees", "current");
+  const workspaceStarted = performance.now();
   try {
     createSparseWorktree(repository, comparison.mergeBaseCommit, sparseRoots, baseWorktree);
     createSparseWorktree(repository, comparison.headCommit, sparseRoots, currentWorktree);
     manifest.sparseCheckout.verified = true;
-    copyOverlay(repository, currentWorktree, changedFiles);
+    if (includeWorkingTree) {
+      copyOverlay(repository, currentWorktree, changedFiles);
+    }
   } catch (error) {
     blockers.push({ code: "workspace-preparation-failed", message: error.message });
   }
+  manifest.timings.workspacePreparationMs = Math.round(
+    performance.now() - workspaceStarted,
+  );
 
+  const projectDiscoveryStarted = performance.now();
   const discoveredProjects = [
     ...new Set(
       sparseRoots.flatMap((root) =>
         discoverProjects(
-          repository,
+          currentWorktree,
           changedFiles.filter(
             (file) => file.path === root || file.path.startsWith(`${root}/`),
           ),
@@ -245,7 +289,11 @@ export async function prepareAssessment({
       message: `No affected tspconfig.yaml was found under ${scope}.`,
     });
   }
-  const externalImports = findExternalLocalImports(repository, projects, sparseRoots);
+  const externalImports = findExternalLocalImports(
+    currentWorktree,
+    projects,
+    sparseRoots,
+  );
   if (externalImports.length) {
     blockers.push({
       code: "unsupported-import-outside-service",
@@ -254,6 +302,13 @@ export async function prepareAssessment({
         .join(", ")}`,
     });
   }
+  manifest.timings.projectDiscoveryMs = Math.round(
+    performance.now() - projectDiscoveryStarted,
+  );
+  manifest.timings.setupExcludingFetchMs =
+    (manifest.timings.setupExcludingFetchMs ?? 0) +
+    manifest.timings.workspacePreparationMs +
+    manifest.timings.projectDiscoveryMs;
   try {
     if (!blockers.length) {
       ensureDependencies(baseWorktree, work, repository);

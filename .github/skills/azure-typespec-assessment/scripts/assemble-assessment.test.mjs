@@ -12,9 +12,6 @@ import { readComplianceCatalog } from "./compliance-assessment.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { reportSection } from "./report-test-utils.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
-import { buildModelInput } from "./run-assessment-analysis.mjs";
-import { buildDocumentQualityInput } from "./document-quality-input.mjs";
-import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
 
 test("validator rejects passed dimensions with blockers", () => {
   const errors = validateAssessment({
@@ -263,17 +260,17 @@ function addComplianceInput(work) {
     noRelevantGuidance: index !== 0,
   }));
   writeJson(path.join(work, "compliance-search-evidence.json"), {
-    schemaVersion: 1,
-    intents: [
+    schemaVersion: 2,
+    queryProfiles: [
       {
         reviewUnitId: "semantic-1",
         queryProfile: request.queryProfile,
-        catalogRanking,
-        rankedDocuments: documents,
-        retrievalAttempts: [],
-        blockers: [],
       },
     ],
+    catalogRanking,
+    rankedDocuments: documents,
+    retrievalAttempts: [],
+    blockers: [],
     inputAccounting: {
       catalogEntriesScored: readComplianceCatalog().length,
       documentsFetched: 4,
@@ -402,70 +399,63 @@ function documentJudgment() {
     }],
     downstreamDecisions: [],
     complianceDecisions: [],
-    documentQualityDecisions: ["correctness", "meaning"].map((check) => ({
-      reviewUnitId: "semantic-1", documentId: "document-1", check,
-      decision: "pass", rationale: "The @doc accurately describes the Widget model.",
-    })),
     overallConfidence: "high",
     blockers: [],
   };
 }
 
-function addDocumentInput(work) {
+function addDocumentInput(work, documentationPresent) {
   const semanticPath = path.join(work, "dimensions", "semantic-intents-input.json");
   const semantic = readJson(semanticPath);
   semantic.reviewUnits[0].declarationIds = ["declaration-1"];
   writeJson(semanticPath, semantic);
-  const document = {
-    id: "document-1", sourceChangeId: "source-1", qualifiedName: "Contoso.Widget", kind: "model",
-    before: null,
-    after: {
-      doc: "A widget.",
-      declaration: '@doc("A widget.")\nmodel Widget {}',
-      source: { path: "specification/a/main.tsp", revision: "current", startLine: 1, endLine: 2 },
-    },
+  const declaration = {
+    declarationId: "declaration-1",
+    sourceChangeId: "source-1",
+    qualifiedName: "Contoso.Widget",
+    kind: "model",
+    documentationPresent,
+    source: { revision: "current", startLine: 1, endLine: 2 },
   };
   const sourceIndexPath = path.join(work, "source", "source-index.json");
   const sourceIndex = readJson(sourceIndexPath);
+  sourceIndex.sourceChanges[0].declarations = [{
+    id: "declaration-1",
+    qualifiedName: "Contoso.Widget",
+    kind: "model",
+    documentationPresent,
+    hunkIds: ["hunk-1"],
+    source: declaration.source,
+  }];
   sourceIndex.sourceChanges[0].documentEvidence = {
-    status: "ready", blockers: [],
-    documents: [{ ...document, hunkIds: ["hunk-1"] }],
+    schemaVersion: 4,
+    status: "ready",
+    blockers: [],
+    declarations: [{ ...declaration, sourceChangeId: undefined }].map(
+      ({ sourceChangeId: _sourceChangeId, ...item }) => item,
+    ),
   };
   writeJson(sourceIndexPath, sourceIndex);
   writeJson(path.join(work, "dimensions", "document-quality-input.json"), {
-    schemaVersion: 1, status: "ready", blockers: [],
+    schemaVersion: 4, status: "ready", blockers: [],
     reviewUnits: [{
       reviewUnitId: "semantic-1", status: "ready",
       sourceChangeIds: ["source-1"], hunkIds: ["hunk-1"], declarationIds: ["declaration-1"],
-      documents: [document],
-    }],
-  });
-  writeJson(path.join(work, "model-input.json"), {
-    artifactReferences: { documentQuality: "dimensions/document-quality-input.json" },
-    evidenceSets: {
-      "evidence-1": {
-        sourceChangeIds: ["source-1"], hunkIds: ["hunk-1"], declarationCount: 1,
-        evidenceFactIds: [],
-        evidenceRef: { artifact: "dimensions/document-quality-input.json", id: "semantic-1" },
-      },
-    },
-    documentQualityReviewUnits: [{
-      reviewUnitId: "semantic-1", status: "ready", documentIds: ["document-1"], evidenceSetId: "evidence-1",
+      declarations: [declaration],
     }],
   });
 }
 
-test("assembler assesses both doc checks without changing REST/downstream safety", () => {
+test("assembler derives missing documentation without changing REST/downstream safety", () => {
   const work = fixture();
   try {
-    addDocumentInput(work);
+    addDocumentInput(work, false);
     const judgment = documentJudgment();
-    Object.assign(judgment.documentQualityDecisions[1], {
-      decision: "fail", title: "Clarify the widget meaning",
-      expected: "Explain what this model represents.", docQuote: "A widget.",
-    });
     const assessment = assembleAssessment({ work, judgment });
     assert.equal(assessment.dimensions.documentQuality.status, "failed");
+    assert.equal(assessment.dimensions.documentQuality.assessmentVersion, 4);
+    assert.equal(assessment.dimensions.documentQuality.coverage.missingDeclarationCount, 1);
+    assert.match(assessment.dimensions.documentQuality.findings[0].title, /Missing documentation/);
     assert.equal(assessment.safety.status, "passed");
     assert.equal(assessment.provenance.documentQuality, "dimensions/document-quality-input.json");
     assert.deepEqual(validateAssessment(assessment), []);
@@ -478,37 +468,22 @@ test("assembler assesses both doc checks without changing REST/downstream safety
   }
 });
 
-test("assembler requires doc decisions for new canonical input, but retains legacy support", () => {
+test("assembler rejects Agent-authored documentation decisions", () => {
   const work = fixture();
   try {
     const judgment = documentJudgment();
-    delete judgment.documentQualityDecisions;
     assert.equal(assembleAssessment({ work, judgment }).dimensions.documentQuality.status, "not-assessed");
     judgment.documentQualityDecisions = [];
-    assert.equal(assembleAssessment({ work, judgment }).dimensions.documentQuality.status, "not-assessed");
-    addDocumentInput(work);
-    assert.throws(() => assembleAssessment({ work, judgment }), /decision coverage mismatch/);
-    delete judgment.documentQualityDecisions;
-    assert.throws(() => assembleAssessment({ work, judgment }), /decisions must be an array/);
+    assert.throws(() => assembleAssessment({ work, judgment }), /unknown fields: documentQualityDecisions/);
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
 });
 
-test("assembler rejects doc model summaries without a declared canonical artifact", () => {
+test("compiler documentation presence flows through assembly, validation, and HTML", () => {
   const work = fixture();
   try {
-    writeJson(path.join(work, "model-input.json"), { documentQualityReviewUnits: [] });
-    assert.throws(() => assembleAssessment({ work, judgment: documentJudgment() }), /declared canonical artifact/);
-  } finally {
-    fs.rmSync(work, { recursive: true, force: true });
-  }
-});
-
-test("canonical doc input flows through coordinator, assembly, validation, and HTML", () => {
-  const work = fixture();
-  try {
-    addDocumentInput(work);
+    addDocumentInput(work, false);
     const judgment = documentJudgment();
     judgment.complianceDecisions = addComplianceInput(work).map((decision) => {
       const { title: _title, severity: _severity, ...pass } = decision;
@@ -518,36 +493,8 @@ test("canonical doc input flows through coordinator, assembly, validation, and H
         rationale: "The applicable model guidance is satisfied.",
       };
     });
-    Object.assign(judgment.documentQualityDecisions[1], {
-      decision: "fail", title: "Clarify the widget meaning",
-      expected: "Explain what this model represents.", docQuote: "A widget.",
-    });
-    const manifest = readJson(path.join(work, "preparation-manifest.json"));
-    const sourceIndex = readJson(path.join(work, "source", "source-index.json"));
-    const semantic = readJson(path.join(work, "dimensions", "semantic-intents-input.json"));
-    sourceIndex.sourceChanges[0].documentEvidence.schemaVersion = 3;
-    writeJson(path.join(work, "source", "source-index.json"), sourceIndex);
-    judgment.documentQualityDecisions = [{ ...judgment.documentQualityDecisions[1], check: "description" }];
-    semantic.reviewUnits[0].declarationIds = ["declaration-1"];
-    writeJson(path.join(work, "dimensions", "semantic-intents-input.json"), semantic);
-    const rest = readJson(path.join(work, "dimensions", "rest-breaking-input.json"));
-    const downstream = readJson(path.join(work, "dimensions", "downstream-breaking-input.json"));
-    const documentQuality = buildDocumentQualityInput({ sourceIndex, semantic });
-    writeJson(path.join(work, "dimensions", "document-quality-input.json"), documentQuality);
-    const modelInput = buildModelInput({
-      manifest, sourceIndex, semantic, rest, downstream, documentQuality,
-    });
-    writeJson(path.join(work, "model-input.json"), modelInput);
-    const requests = buildComplianceSearchRequests({
-      semanticReviewUnits: semantic.reviewUnits,
-      sourceChanges: Object.fromEntries(sourceIndex.sourceChanges.map((source) => [source.id, source])),
-    });
-    writeJson(path.join(work, "dimensions", "compliance-search-requests.json"), { schemaVersion: 1, requests });
-    const evidencePath = path.join(work, "compliance-search-evidence.json");
-    const evidence = readJson(evidencePath);
-    evidence.intents[0].queryProfile = requests[0].queryProfile;
-    writeJson(evidencePath, evidence);
-    if (modelInput.inferenceRequests.length) {
+    const modelInput = readJson(path.join(work, "model-input.json"));
+    if (modelInput.inferenceRequests?.length) {
       writeJson(path.join(work, "inference.json"), {
         schemaVersion: 1,
         results: modelInput.inferenceRequests.map((request) => ({
@@ -557,41 +504,27 @@ test("canonical doc input flows through coordinator, assembly, validation, and H
         })),
       });
     }
-    const summary = modelInput.documentQualityReviewUnits[0];
-    assert.deepEqual(summary.documentIds, ["document-1"]);
-    assert.deepEqual(modelInput.evidenceSets[summary.evidenceSetId].evidenceRef, {
-      artifact: "dimensions/document-quality-input.json", id: "semantic-1",
-    });
+    assert.equal(modelInput.documentQualityReviewUnits, undefined);
+    assert.equal(modelInput.documentQualityCriterion, undefined);
     const assessment = assembleAssessment({ work, judgment });
     assert.deepEqual(validateAssessment(assessment), []);
     assert.equal(assessment.dimensions.documentQuality.status, "failed");
-    assert.equal(assessment.dimensions.documentQuality.assessmentVersion, 3);
-    assert.equal(assessment.dimensions.documentQuality.coverage.checkCount, 1);
+    assert.equal(assessment.dimensions.documentQuality.assessmentVersion, 4);
+    assert.equal(assessment.dimensions.documentQuality.coverage.declarationCount, 1);
     assert.equal(assessment.dimensions.rest.status, "passed");
     assert.equal(assessment.dimensions.downstream.status, "passed");
     assert.equal(assessment.dimensions.compliance.status, "passed");
     assert.equal(assessment.safety.status, "passed");
     const finding = assessment.dimensions.documentQuality.findings[0];
-    assert.equal(finding.docQuote, "A widget.");
-    assert.equal(finding.actual, documentQuality.reviewUnits[0].documents[0].after.doc);
-    assert.deepEqual(finding.sources[0].hunks.map((hunk) => hunk.id), ["hunk-1"]);
+    assert.equal(finding.declarationId, "declaration-1");
+    assert.match(finding.actual, /returned no nonempty documentation/);
+    assert.equal(finding.sources[0].id, "source-1");
     assert.equal(finding.sources[0].path, "specification/a/main.tsp");
+    assert.equal(finding.sources[0].hunks, undefined);
     const html = renderAssessmentHtml(assessment);
-    assert.match(html, /Clarify the widget meaning/);
-    assert.match(html, /A widget\./);
-    assert.match(html, /specification\/a\/main\.tsp/);
-    assert.match(html, /Explain what this model represents\./);
-    const incomplete = structuredClone(judgment);
-    incomplete.documentQualityDecisions.pop();
-    assert.throws(() => assembleAssessment({ work, judgment: incomplete }), /decision coverage mismatch/);
+    assert.match(html, /Documentation Completeness/);
+    assert.match(html, /Missing documentation for Contoso\.Widget/);
     fs.rmSync(path.join(work, "dimensions", "document-quality-input.json"));
-    const legacyInput = structuredClone(modelInput);
-    delete legacyInput.artifactReferences.documentQuality;
-    delete legacyInput.documentQualityReviewUnits;
-    delete legacyInput.documentQualityAssessmentVersion;
-    delete legacyInput.documentQualityCriterion;
-    writeJson(path.join(work, "model-input.json"), legacyInput);
-    delete judgment.documentQualityDecisions;
     const legacy = assembleAssessment({ work, judgment });
     assert.deepEqual(validateAssessment(legacy), []);
     assert.equal(legacy.dimensions.documentQuality.status, "not-assessed");
@@ -820,7 +753,7 @@ test("assembler requires and joins active Azure Guidelines evidence", () => {
   assert.equal(assessment.dimensions.compliance.status, "failed");
   assert.equal(assessment.dimensions.compliance.findings.length, 1);
   assert.equal(
-    assessment.dimensions.compliance.intentAssessments[0].documents.length,
+    assessment.dimensions.compliance.sharedSearch.documents.length,
     4,
   );
   assert.equal(
@@ -835,7 +768,7 @@ test("assembler treats no applicable guidance as assessed and links its intent",
   const complianceDecisions = addComplianceInput(work);
   const evidencePath = path.join(work, "compliance-search-evidence.json");
   const evidence = readJson(evidencePath);
-  for (const document of evidence.intents[0].rankedDocuments) {
+  for (const document of evidence.rankedDocuments) {
     document.guidance = [];
     document.noRelevantGuidance = true;
   }

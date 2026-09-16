@@ -88,6 +88,62 @@ stimuli:
         config:
           required: ["azure-typespec-assessment"]
 
+  - name: invoke-pr-coordinator-first
+    tags:
+      behavior: direct-coordinator
+    prompt: |
+      Use azure-typespec-assessment to assess PR
+      https://github.com/Azure/azure-rest-api-specs/pull/43718.
+    environment:
+      skills:
+        - ..
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-assessment"]
+      - type: prompt
+        config:
+          prompt: |
+            Inspect the ordered transcript and tool arguments. The first
+            operational command after loading the skill must invoke
+            scripts/run-assessment-analysis.mjs with --pr and --output.
+            Fail if the agent first runs separate gh pr, gh api, git status,
+            git diff, git fetch, git worktree, dependency, glob, or project
+            discovery commands. A failed direct coordinator invocation still
+            passes the ordering requirement.
+    constraints:
+      max_turns: 3
+      max_tokens: 100000
+
+  - name: invoke-local-coordinator-first
+    tags:
+      behavior: direct-coordinator
+    prompt: |
+      Use azure-typespec-assessment to assess the local
+      Microsoft.ServiceNetworking/ServiceNetworking TypeSpec changes against
+      commit 6e058a0a22c828ca0ebfd5a4826a72addc44f909.
+    environment:
+      skills:
+        - ..
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-assessment"]
+      - type: prompt
+        config:
+          prompt: |
+            Inspect the ordered transcript and tool arguments. Because the
+            baseline and specification are supplied, the first operational
+            command after loading the skill must invoke
+            scripts/run-assessment-analysis.mjs with --base, --specification,
+            and --output. Fail if the agent first runs git status, git diff,
+            git fetch, git worktree, dependency, glob, or project discovery
+            commands. A failed direct coordinator invocation still passes the
+            ordering requirement.
+    constraints:
+      max_turns: 3
+      max_tokens: 100000
+
   - name: anti-trigger-add-typespec-api-version
     tags:
       boundary: authoring

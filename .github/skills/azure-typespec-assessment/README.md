@@ -37,6 +37,30 @@ Provide the PR URL:
 Use azure-typespec-assessment to assess the TypeSpec changes for PR https://github.com/Azure/azure-rest-api-specs/pull/44988.
 ```
 
+The skill invokes the coordinator directly; it does not require a separate PR
+checkout or manual project lookup. The equivalent CLI is:
+
+```powershell
+node <skill>\scripts\run-assessment-analysis.mjs `
+  --repo $PWD `
+  --pr https://github.com/Azure/azure-rest-api-specs/pull/44988 `
+  --output <work-directory>
+```
+
+The PR mode requires authenticated `gh` and `git` commands. You may instead
+assess locally available immutable commits without GitHub metadata:
+
+```powershell
+node <skill>\scripts\run-assessment-analysis.mjs `
+  --repo $PWD `
+  --base <base-commit> `
+  --head <head-commit> `
+  --output <work-directory>
+```
+
+For PR and explicit-head modes, the coordinator derives the changed TypeSpec
+scope when `--specification` is omitted.
+
 ## Results
 
 The agent starts a local-only report server after rendering and returns a
@@ -46,4 +70,4 @@ at the absolute `assessment.json` path returned by the agent.
 
 [Browse reports for 12 existing PRs](https://wonderful-coast-0b5cc5a00.3.azurestaticapps.net)
 or read the [high-level design spec](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/typespec-assessment.spec.md)
-and [detailed design](design.md).
+and [detailed design](docs/design.md).

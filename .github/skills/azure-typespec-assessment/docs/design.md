@@ -58,23 +58,14 @@ mode excludes them.
 Production behavior lives under `scripts/`. Code under `evals/` and test files
 is not imported or used by the runtime.
 
-The coordinator bootstraps the skill's own locked dependencies before loading
-the assessment implementation. When the installed `yaml` version is missing or
-does not match `package-lock.json`, it runs lifecycle-script-free `npm ci` in
-the skill directory under an installation lock. Normal downstream commands
-reuse that installation because the coordinator is always the first command.
-
 Separate invocation retries, dependency setup, compilation, analyzer work,
 Agent/tool waits, and finalization when reporting elapsed time. The preparation
 manifest's `totalMs` includes dependency setup, not just compiler work.
-Preparation detects npm or pnpm from `package.json` and the repository
-lockfile. npm retains the shared cached `node_modules` path; pnpm requires an
-exact `packageManager` version, installs once per sparse worktree with a frozen
-lockfile, and reuses a shared content-addressed store. Both modes disable
-lifecycle scripts and verify required TypeSpec package versions against the
-selected revision's lockfile. The dependency fingerprint includes package
-metadata, lockfile and workspace configuration, platform, and architecture.
-Do not skip compatibility checks or reuse a mismatched toolchain for speed.
+Preparation already reuses the repository's installed toolchain when its
+lockfile hash and required package versions match; otherwise it installs an
+isolated toolchain. Use the repository's required Node version and install its
+locked dependencies once to enable that existing reuse path. Do not skip
+compatibility checks or reuse a mismatched toolchain for speed.
 
 ## End-to-end flow
 
@@ -97,10 +88,10 @@ Do not skip compatibility checks or reuse a mismatched toolchain for speed.
                                                                                                      (compiler declarations
                                                                                                       and presence)
               |                       |                       |                       |                       |
-              +-----------------------+-----------------------+-----------------------+                       +--> Retain for guarded finalization
+              +-----------------------+-----------------------+-----------------------+-----------------------+
                                                               |
                                                               v
-                                              Collect bounded Agent inputs
+                                                  Collect all five inputs
                                           (canonical artifacts + bounded references)
                                                               |
                                                               v
@@ -114,66 +105,49 @@ Do not skip compatibility checks or reuse a mismatched toolchain for speed.
                                                all classified    unknown hunks
                                                        |             |
                                                        |             v
-                                                       |      Add bounded inference
-                                                       |      requests to Agent input
+                                                       |      Bounded AI inference
+                                                       |      for unknown hunks only
+                                                       |             |
+                                                       |       inference.json
                                                        |             |
                                                        +------+------+
                                                               |
                                                               v
                                                   One bounded Agent judgment
-              +-----------------------+-----------------------+-----------------------+
-              |                       |                       |                       |
-              v                       v                       v                       v
-         Summarize each          Classify each           Classify each          Rank and fetch
-         semantic intent         deterministic or        deterministic or       official guidance,
-         once                    inferred REST           inferred SDK           then assess each
+              +-----------------------+-----------------------+-----------------------+-----------------------+
+              |                       |                       |                       |                       |
+              v                       v                       v                       v                       v
+         Summarize each          Classify each           Classify each          Rank and fetch         Assess each eligible
+         semantic intent         deterministic or        deterministic or       official guidance,     description against
+         once                    inferred REST           inferred SDK           then assess each       its code, once
                                  candidate               candidate              intent once
-              |                       |                       |                       |
-              +-----------------------+-----------------------+-----------------------+
-                                                              |
-                                                              v
-                                            agent-workspace/agent-decisions.json
-                                                              |
-                                                              v
-                                              Deterministic materialization
-                                       (canonical joins + ordering + validation)
-                                                              |
-                          +-----------------------------------+-----------------------------------+
-                          |                                   |                                   |
-                          v                                   v                                   v
-               inference.json (when needed)      assessment-judgment.json      compliance-search-evidence.json
-                                                                                 (Azure Guidelines evidence only)
-                          |                                   |                                   |
-                          +-----------------------------------+-----------------------------------+
-                                                              |
-                                                              v
-                                          Materialized Agent artifacts       Documentation Completeness input
-                                                       |                                      |
-                                                       +------------------+-------------------+
+              |                       |                       |                       |                       |
+              +-----------------------+-----------------------+-----------------------+-----------------------+
+                                                              |                       |
+                                                              v                       v
+                                                  assessment-judgment.json    compliance-search-evidence.json
+                                                              |              (Azure Guidelines evidence only)
+                                                              |                       |
+                                                              +-----------+-----------+
                                                                           |
                                                                           v
-                                                               Guarded finalization
-                                                         (assemble, validate, and render)
-                                                              |
-                                                              v
-                                            assessment.json + assessment.html
+                                                                Assemble and validate
+                                                                          |
+                                                                          v
+                                                          assessment.json + assessment.html
 ```
 
-Preparation, dimension analysis, materialization, and coverage accounting are
-deterministic. No Node.js script calls an LLM or performs Agentic Search. The
-Agent writes one compact decision artifact from bounded input. Deterministic
-materialization validates it, joins canonical evidence, and atomically writes
-`inference.json` when needed, `compliance-search-evidence.json`, and
-`assessment-judgment.json`. Guarded finalization validates and assembles those
-artifacts into the report.
+Preparation, dimension analysis, and coverage accounting are deterministic.
+No Node.js script calls an LLM or produces `inference.json` or
+`compliance-search-evidence.json`. The Agent writes those optional evidence
+artifacts and `assessment-judgment.json` from bounded input; deterministic
+assembly validates them and joins complete canonical evidence.
 
 Azure Guidelines and documentation assessment branch from Semantic review
-units rather than REST or downstream candidates. Documentation Completeness is
-deterministic, bypasses Agent input and materialization, and joins the
-materialized artifacts during guarded finalization. Documentation checks still
-run when a hunk has no compatibility impact. Inference runs only for hunks
-whose deterministic coverage status is `unknown`; the Agent records the compact
-decision and the materializer writes `inference.json`.
+units rather than REST or downstream candidates. Documentation collection is
+deterministic; description-versus-code assessment is an Agent judgment, not regex quality
+scores. Documentation checks still run when a hunk has no compatibility impact.
+Inference runs only for hunks whose deterministic coverage status is `unknown`.
 
 ## 1. Preparation manifest
 
@@ -200,24 +174,6 @@ File: `preparation-manifest.json`
     "mode": "cone",
     "roots": ["specification/<service>"],
     "verified": true
-  },
-  "dependencySetup": {
-    "baseline": {
-      "manager": "npm|pnpm",
-      "managerVersion": "11.8.0|null",
-      "lockFile": "package-lock.json|pnpm-lock.yaml",
-      "fingerprint": "<sha256>",
-      "reused": false,
-      "durationMs": 1000
-    },
-    "target": {
-      "manager": "npm|pnpm",
-      "managerVersion": "11.8.0|null",
-      "lockFile": "package-lock.json|pnpm-lock.yaml",
-      "fingerprint": "<sha256>",
-      "reused": true,
-      "durationMs": 100
-    }
   },
   "changedFiles": [
     {
@@ -323,29 +279,11 @@ Preparation rules:
 4. Create detached service-scoped sparse base/current worktrees for source
    analysis. Artifact roles may both use the current worktree.
 5. Apply dirty overlays only to the temporary current worktree.
-6. Detect and prepare the locked npm or pnpm toolchain for each worktree.
-7. Select one source revision and API version for each artifact-comparison
+6. Select one source revision and API version for each artifact-comparison
    role.
-8. Compile AutoRest and TCGC with the same source revision and API version for
+7. Compile AutoRest and TCGC with the same source revision and API version for
    each role.
-9. Preserve commands, logs, exit codes, timings, and hashes.
-
-Dependency setup rules:
-
-1. Select npm when `package-lock.json` is the sole lockfile and no package
-   manager is declared. An exact npm declaration may also select it.
-2. Select pnpm only when `packageManager` declares an exact pnpm version and
-   `pnpm-lock.yaml` is present. Reject missing, ambiguous, or unsupported
-   package-manager inputs.
-3. Run npm with `npm ci`; cache the resulting `node_modules` by dependency
-   fingerprint and junction it into matching sparse worktrees.
-4. Run the declared pnpm version through `npx`, with `--frozen-lockfile`,
-   `--ignore-scripts`, and a shared store. Install separately in each sparse
-   worktree so workspace links resolve in that revision.
-5. Preflight the required TypeSpec packages against the applicable npm or pnpm
-   lockfile before compilation. Multi-document pnpm lockfiles are supported.
-6. On Windows, invoke npm, pnpm, and TypeSpec JavaScript CLIs directly through
-   Node rather than passing `.cmd` arguments through a shell.
+8. Preserve commands, logs, exit codes, timings, and hashes.
 
 API-version policy:
 
@@ -494,7 +432,11 @@ File: `source/source-index.json`
             "startLine": 10,
             "endLine": 15
           },
-          "lines": [" model Widget {", "-  name: string;", "+  name: WidgetName;"],
+          "lines": [
+            " model Widget {",
+            "-  name: string;",
+            "+  name: WidgetName;"
+          ],
           "declarationOccurrenceIds": ["declaration-occurrence-<hash>"],
           "normalizedChanges": [
             {
@@ -1336,31 +1278,8 @@ Azure Guidelines decision per Semantic intent, and deterministic assembly reject
 unknown, duplicate, or missing intent decisions.
 
 The same Agent phase records one shared retrieval and extracted evidence set
-with its per-intent choices in
-`agent-workspace/agent-decisions.json`. The compact versioned contract keeps
-only Agent-authored summaries, decisions, score signals and rationale keyed by
-stable catalog ID, supplied `web_fetch` provenance and byte counts, extracted
-guidance, failed retrievals, confidence, and blockers. It does not repeat
-canonical catalog metadata, query profiles, source/hunk IDs, calculated
-totals/ranks, accounting, or final output wrappers.
-
-`materialize-assessment-results.mjs` then verifies canonical artifact hashes
-and exact ID coverage/ownership. It joins canonical metadata, calculates score
-totals and stable ordering, verifies the first four retrievable documents and
-fallback sequence, derives accounting, and atomically writes `inference.json`
-when required, `compliance-search-evidence.json`, and
-`assessment-judgment.json`. It preserves Agent-supplied retrieval provenance
-and derives each retained guidance excerpt's declaration applicability as the
-stable union of canonical IDs resolved from intent-owned qualified declaration
-names in judgments citing that catalog ID and section. Each name must resolve
-exactly once within its owning request; unknown, duplicate, ambiguous, and
-cross-intent names fail. Uncited excerpts are dropped. Legacy compact excerpt
-applicability is ignored. The materializer performs no network fetch,
-suppression analysis, or semantic judgment.
-Guarded finalization remains authoritative for final assembly, validation, and
-rendering.
-
-The materialized shared evidence has this existing authoritative shape:
+separately from its per-intent decisions in
+`compliance-search-evidence.json`:
 
 ```json
 {
@@ -1460,36 +1379,31 @@ File: `dimensions/document-quality-input.json`
 
 Documentation Completeness asks one deterministic question:
 **Does the TypeSpec compiler return a nonempty effective document for each
-newly added operation, model, enum, or interface declaration?**
+changed declaration?**
 
-The source index records `documentationPresent` and `newDeclaration` facts for
-changed compiler declarations in Semantic scope. Version 5 checks only newly
-added operations, models, enums, and interfaces. Modified existing
-declarations, properties, namespaces, and other declaration kinds are outside
-scope. The compiler's effective document is authoritative for presence, so
-inherited documentation counts as present. Empty or whitespace-only
-documentation counts as missing.
+The source index records one boolean `documentationPresent` fact for every
+changed compiler declaration in Semantic scope. The compiler's effective
+document is authoritative for presence, so inherited documentation counts as
+present. Empty or whitespace-only documentation counts as missing.
 
 The completeness artifact groups these declaration facts by Semantic intent.
 It contains declaration identity, kind, source location, and the presence
-boolean. It does not contain documentation text, a prose-quality rubric, or
-Agent instructions. Missing-document findings retain a bounded exact TypeSpec
-declaration snippet for report presentation.
+boolean. It does not contain documentation text, declaration snapshots, a
+prose-quality rubric, or Agent instructions.
 
 Assembly creates one finding for every declaration whose presence value is
 false. If compiler evidence or declaration scope is unavailable, the affected
 intent is `not-assessed`; missing evidence never becomes a missing-document
-finding. An intent with no eligible newly added declaration is
-`not-applicable`.
+finding. An intent with no changed compiler declaration is `not-applicable`.
 
 The bounded Agent input and `assessment-judgment.json` contain no documentation
 review units, criterion, or decisions. Documentation Completeness is assembled
 independently after the Agent judges Semantic summaries, REST/downstream
 candidates, and Azure Guidelines compliance.
 
-Final data uses `assessmentVersion: 5` and records Semantic intent count,
-eligible declaration count, documented declaration count, missing declaration
-count, intent assessments, findings, and blockers. Historical v1-v4
+Final data uses `assessmentVersion: 4` and records Semantic intent count,
+changed declaration count, documented declaration count, missing declaration
+count, intent assessments, findings, and blockers. Historical v1-v3
 documentation-quality data remains valid legacy report data. Documentation
 never changes scoped REST/downstream safety.
 
@@ -1748,15 +1662,9 @@ that candidate lists every covered request hunk and is deduplicated by ID.
 Assembly rejects missing, conflicting, unknown, or out-of-scope inference
 results. The Agent never modifies `model-input.json`.
 
-## 8. Materialized Agent judgment
+## 8. Agent judgment
 
 File: `assessment-judgment.json`
-
-The Agent authors these choices in the compact decision file using prefilled
-intent-scoped qualified declaration names rather than opaque IDs. The
-deterministic materializer resolves those names within the owning request and
-emits the existing judgment contract below; it does not choose decisions,
-severities, evidence, or prose.
 
 ```json
 {
@@ -1814,11 +1722,10 @@ deterministic or inferred REST/downstream candidate. Root causes are
 deterministic aggregation evidence and are not Agent decision units.
 
 Every Semantic intent must have exactly one Azure Guidelines decision. Every
-applicable guidance catalog ID in the compact input must identify a
-successfully fetched `rankedDocuments` entry, and all source, hunk, and
-declaration IDs must already exist in canonical requests. Decisions may quote
-only guidance recorded in compact fetched-document evidence; the Agent cannot
-add URLs, evidence,
+applicable guidance URL must identify a successfully fetched
+`rankedDocuments` entry, and all source, hunk, and declaration IDs must already
+exist in `model-input.json`. Decisions may quote only guidance recorded in
+`compliance-search-evidence.json`; the Agent cannot add URLs, evidence,
 declarations, operations, or assessment units during judgment.
 `applicable-pass` and `applicable-fail` require non-empty expected and actual
 evidence. `applicable-fail` also requires a concise finding title and severity
@@ -2535,14 +2442,13 @@ Never label a head-source artifact as a base-commit artifact.
 | Azure Guidelines retrieval       | `references/agentic-search.md`, `references/reference-document-links.md`                                          |
 | Source-only documentation checks | `references/document-quality.md`, `scripts/document-quality-input.mjs`, `scripts/document-quality-assessment.mjs` |
 | Output contract                  | `references/output-contract.md`, `scripts/*.schema.json`                                                          |
-| Skill dependency bootstrap       | `scripts/skill-dependencies.mjs`, `scripts/npm-command.mjs`                                                       |
-| Deterministic preparation        | `scripts/prepare-assessment.mjs`, `scripts/package-manager.mjs`, `scripts/run-assessment-analysis.mjs`            |
+| Deterministic preparation        | `scripts/prepare-assessment.mjs`, `scripts/run-assessment-analysis.mjs`                                           |
 | Dimension analyzers              | `scripts/analyze-*.mjs`                                                                                           |
 | Assembly and validation          | `scripts/assemble-assessment.mjs`, `scripts/validate-assessment.mjs`                                              |
 | HTML presentation                | `scripts/assessment-display.mjs`, `scripts/render-assessment-html.mjs`                                            |
 | Regression coverage              | `scripts/*.test.mjs`, `evals/`                                                                                    |
 
-Preserve local assessment reports and user-owned eval changes.
+Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
 
 ## 13. Completion criteria
 
@@ -2569,9 +2475,8 @@ Preserve local assessment reports and user-owned eval changes.
 - Agent judgment has one concise Semantic result and one Azure Guidelines decision
   per intent, plus exact deterministic and inferred REST/downstream candidate
   coverage.
-- Every eligible newly added operation, model, enum, and interface records
-  compiler-resolved effective-document presence exactly once; documentation
-  text is never compared with code.
+- Every eligible target description receives exactly one `description`
+  decision, with canonical source-only evidence and explicit coverage.
 - Documentation findings do not introduce guessed severity or change scoped
   REST/downstream safety.
 - Final JSON rejects unsupported or incomplete results.

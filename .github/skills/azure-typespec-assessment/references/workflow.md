@@ -2,7 +2,15 @@
 
 ## Inputs
 
-Resolve the baseline ref and specification/project root once. Default the repository to the current Git root. Use a work directory that is not assessed source.
+Use a work directory that is not assessed source. The deterministic coordinator
+owns repository inspection, comparison resolution, changed-file and project
+discovery, dependency preflight, and sparse workspace creation.
+
+For every fresh assessment, invoking the coordinator is the first operational
+command. Do not first run `git status`, `git diff`, `git fetch`, `git worktree`,
+`gh pr`, `gh api`, recursive file searches, dependency checks, or manual
+project discovery. If the coordinator returns a blocker, run only diagnostics
+needed to resolve that blocker.
 
 For local assessment, use an explicitly supplied baseline ref or commit ID
 without asking again. If none is supplied, ask the user to confirm `origin/main`
@@ -14,19 +22,23 @@ that accompanies starting the run. Approval to perform a read-only assessment
 does not confirm its baseline. If the selected baseline cannot be
 resolved, ask for a valid ref. If confirmation cannot be obtained, stop with a
 clear blocker; never silently substitute a different baseline.
-For PR assessment, resolve the PR's actual target baseline rather than applying
-the local `origin/main` recommendation.
+The baseline question is the only action allowed before the coordinator. Once
+the user answers, invoke the coordinator next.
 
-The coordinator captures committed, staged, unstaged, and relevant untracked TypeSpec changes; creates service-scoped sparse base/current worktrees; selects one API version per side; compiles each affected project independently with AutoRest and TCGC using that same version pair; runs the analyzers; collects source-only documentation evidence; calculates deterministic hunk coverage; and writes the bounded `model-input.json` once.
+For PR assessment, pass the PR URL or number directly to the coordinator. It
+resolves the PR's actual base/head commits, fetches only missing refs, derives
+the TypeSpec scope, and performs the sparse checkout internally.
+
+The coordinator captures committed, staged, unstaged, and relevant untracked TypeSpec changes; creates service-scoped sparse base/current worktrees; selects one API version per side; compiles each affected project independently with AutoRest and TCGC using that same version pair; runs the analyzers; records compiler-derived documentation presence; calculates deterministic hunk coverage; and writes the bounded `model-input.json` once.
 
 For the head, select the newest newly added API version when one exists; otherwise select its latest API version. When the PR adds no version and that head version exists in base, compile both sides with that same version. When head adds a version, select base's latest stable version, or its latest preview when no stable version exists. Record the pair and selection reasons in the manifest and report.
 
 ## Deterministic analysis
 
-Set concrete values using the baseline resolved above, then run:
+For local code, set concrete values using the baseline resolved above, then run:
 
 ```powershell
-$Repo = (git rev-parse --show-toplevel)
+$Repo = $PWD
 $Base = "<resolved-baseline-ref-or-commit>"
 $Specification = "<project-or-spec-root>"
 $Work = "<work-directory>"
@@ -38,6 +50,32 @@ node (Join-Path $Skill "scripts\run-assessment-analysis.mjs") `
   --specification $Specification `
   --output $Work
 ```
+
+For a PR, run directly without separate metadata or checkout commands:
+
+```powershell
+$Repo = $PWD
+$Work = "<work-directory>"
+$Skill = "<azure-typespec-assessment-skill-directory>"
+
+node (Join-Path $Skill "scripts\run-assessment-analysis.mjs") `
+  --repo $Repo `
+  --pr "<pull-request-url-or-number>" `
+  --output $Work
+```
+
+For an immutable comparison that is not identified by a PR, pass both commits:
+
+```powershell
+node (Join-Path $Skill "scripts\run-assessment-analysis.mjs") `
+  --repo $Repo `
+  --base "<base-ref-or-commit>" `
+  --head "<head-ref-or-commit>" `
+  --output $Work
+```
+
+`--specification` remains optional for PR and explicit-head modes; the
+coordinator derives all changed TypeSpec service roots when it is omitted.
 
 Do not replace this with a full checkout or run the dimension analyzers against different inputs. If there is no changed TypeSpec in scope, stop with the coordinator's no-change result. If every active dimension is blocked, skip Agent judgment and preserve the blocked, `not-assessed` result. If only some dimensions are blocked, judge only the ready items and retain all blocker reasons.
 
@@ -65,35 +103,28 @@ to `<work-directory>\inference.json`. Each result is `candidates`,
 source, hunk, operations, facts, and allowed dimensions. Never modify
 `model-input.json`.
 
-For every `complianceSearchRequests` entry, resolve its full request through
-the referenced `dimensions/compliance-search-requests.json`, score the complete catalog, fetch
-the four highest-ranked retrievable documents with `web_fetch`, and write
+Resolve all `complianceSearchRequests` through the referenced
+`dimensions/compliance-search-requests.json`, combine their query profiles,
+score the complete catalog once, fetch the four highest-ranked retrievable
+documents once with `web_fetch`, and write
 `<work-directory>\compliance-search-evidence.json`. Preserve failed retrievals
 and use the next-ranked catalog entry as specified by the search procedure.
 The main Agent writes this file directly; no Node.js script produces it.
 `compliance-search-request.mjs` only creates the requests in `model-input.json`,
 and `compliance-assessment.mjs` later consumes and validates the evidence.
 
-For every `documentQualityReviewUnits` entry, resolve its canonical unit in
-`dimensions/document-quality-input.json` through the declared evidence set.
-For each document in a `ready` unit, make one `description` judgment: does its
-description clearly and accurately explain the associated TypeSpec code?
-Use canonical local `@doc` or main documentation-comment text and
-baseline/target declaration source. Inherited descriptions alone count as
-documented; local overrides win, but tag-only comments do not mask inheritance.
-No additional searches, fabricated descriptions, or generated SDK/OpenAPI prose.
-Retain blocked reasons and
-do not assess absent/empty/deleted documentation. These checks run even when
-the hunk has no REST/downstream impact and inference is unnecessary.
-
 Then write `<work-directory>\assessment-judgment.json` with one concise result
 per supplied Semantic review unit, exact deterministic and inferred
 REST/downstream candidate coverage, and one Azure Guidelines decision per Semantic
-intent, plus the required `documentQualityDecisions`. Do not read raw
+intent. Do not read raw
 AutoRest/TCGC output, compiler logs, unrelated unchanged source, prior answers, or use
 catalog descriptions as guidance. Candidate and review-unit evidence omitted
 from the bounded file remains available only through the declared canonical
 artifact references; do not scan unrelated artifact entries.
+
+Documentation Completeness is assembled deterministically from
+`dimensions/document-quality-input.json`. The Agent does not read that artifact
+or author documentation decisions.
 
 ## Assemble, validate, and render
 

@@ -75,6 +75,7 @@
               ]
             },
             "intentAssessments": { "type": "array" },
+            "sharedSearch": { "type": "object" },
             "findings": { "type": "array" },
             "retrievalFailures": { "type": "array" },
             "blockers": { "type": "array" }
@@ -91,7 +92,8 @@
                 "summary": { "$ref": "#/$defs/nonemptyString" }
               }
             },
-            { "$ref": "#/$defs/documentQuality" }
+            { "$ref": "#/$defs/documentQuality" },
+            { "$ref": "#/$defs/documentCompleteness" }
           ]
         }
       }
@@ -183,6 +185,129 @@
         "semanticIntentIds": { "$ref": "#/$defs/ids", "minItems": 1, "maxItems": 1 },
         "sources": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "type": "object" } },
         "document": { "$ref": "#/$defs/document" }
+      }
+    },
+    "documentationDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "declarationId",
+        "qualifiedName",
+        "kind",
+        "documentationPresent",
+        "source",
+        "sourceChangeId"
+      ],
+      "properties": {
+        "declarationId": { "type": "string", "pattern": "^declaration-" },
+        "qualifiedName": { "$ref": "#/$defs/nonemptyString" },
+        "kind": { "$ref": "#/$defs/nonemptyString" },
+        "documentationPresent": { "type": "boolean" },
+        "sourceChangeId": { "type": "string", "pattern": "^source-" },
+        "source": { "type": "object" }
+      }
+    },
+    "documentCompletenessFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "reviewUnitId",
+        "declarationId",
+        "title",
+        "expected",
+        "actual",
+        "rationale",
+        "semanticIntentIds",
+        "sources",
+        "declaration"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^document-finding-" },
+        "reviewUnitId": { "type": "string", "pattern": "^semantic-" },
+        "declarationId": { "type": "string", "pattern": "^declaration-" },
+        "title": { "$ref": "#/$defs/nonemptyString" },
+        "expected": { "$ref": "#/$defs/nonemptyString" },
+        "actual": { "$ref": "#/$defs/nonemptyString" },
+        "rationale": { "$ref": "#/$defs/nonemptyString" },
+        "semanticIntentIds": {
+          "$ref": "#/$defs/ids",
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": { "type": "object" }
+        },
+        "declaration": { "$ref": "#/$defs/documentationDeclaration" }
+      }
+    },
+    "documentCompleteness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessmentVersion",
+        "status",
+        "summary",
+        "coverage",
+        "intentAssessments",
+        "findings",
+        "blockers"
+      ],
+      "properties": {
+        "assessmentVersion": { "const": 4 },
+        "status": {
+          "enum": ["passed", "failed", "not-assessed", "not-applicable"]
+        },
+        "summary": { "$ref": "#/$defs/nonemptyString" },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semanticIntentCount",
+            "assessedIntentCount",
+            "declarationCount",
+            "documentedDeclarationCount",
+            "missingDeclarationCount",
+            "unassessedIntentIds",
+            "notApplicableIntentIds"
+          ],
+          "properties": {
+            "semanticIntentCount": { "type": "integer", "minimum": 0 },
+            "assessedIntentCount": { "type": "integer", "minimum": 0 },
+            "declarationCount": { "type": "integer", "minimum": 0 },
+            "documentedDeclarationCount": { "type": "integer", "minimum": 0 },
+            "missingDeclarationCount": { "type": "integer", "minimum": 0 },
+            "unassessedIntentIds": { "$ref": "#/$defs/ids" },
+            "notApplicableIntentIds": { "$ref": "#/$defs/ids" }
+          }
+        },
+        "intentAssessments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["reviewUnitId", "status", "declarations"],
+            "properties": {
+              "reviewUnitId": { "type": "string", "pattern": "^semantic-" },
+              "status": {
+                "enum": ["passed", "failed", "not-assessed", "not-applicable"]
+              },
+              "reason": { "$ref": "#/$defs/nonemptyString" },
+              "declarations": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/documentationDeclaration" }
+              }
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/documentCompletenessFinding" }
+        },
+        "blockers": { "type": "array" }
       }
     },
     "documentQuality": {

@@ -71,9 +71,8 @@ test("model input references canonical evidence without embedding sources", () =
     restCandidates: "dimensions/rest-breaking-input.json",
     downstreamCandidates: "dimensions/downstream-breaking-input.json",
     complianceSearchRequests: "dimensions/compliance-search-requests.json",
-    documentQuality: "dimensions/document-quality-input.json",
   });
-  assert.equal(Object.keys(input.evidenceSets).length, 2);
+  assert.equal(Object.keys(input.evidenceSets).length, 1);
   assert.deepEqual(Object.keys(input.facts), []);
   assert.equal(input.semanticReviewUnits[0].affectedOperationCount, 1);
   assert.deepEqual(input.semanticReviewUnits[0].representativeOperationIds, [
@@ -106,8 +105,8 @@ test("model input references canonical evidence without embedding sources", () =
   assert.equal(input.semanticReviewUnits[0].inferenceRequired, false);
   assert.deepEqual(input.inferenceRequests, []);
   assert.equal(input.deferredDimensions, undefined);
-  assert.equal(input.documentQualityReviewUnits.length, 1);
-  assert.equal(input.documentQualityReviewUnits[0].reviewUnitId, "semantic-1");
+  assert.equal(input.documentQualityReviewUnits, undefined);
+  assert.equal(input.documentQualityCriterion, undefined);
   assert.equal(input.inputAccounting.budgetTier, "small");
   assert.equal(
     input.inputAccounting.omittedRedundant.rawEmitterArtifacts,
@@ -116,7 +115,7 @@ test("model input references canonical evidence without embedding sources", () =
   assert.equal(input.inputAccounting.omittedRedundant.sourceChanges, true);
 });
 
-test("documentation input retains exact document IDs with dedicated canonical evidence", () => {
+test("documentation completeness is omitted from bounded Agent input", () => {
   const longDoc = "The amount of time, in seconds, to wait. ".repeat(10000);
   const unit = {
     reviewUnitId: "semantic-doc",
@@ -183,46 +182,14 @@ test("documentation input retains exact document IDs with dedicated canonical ev
     },
   };
   const input = buildModelInput(options);
-  const summary = input.documentQualityReviewUnits[0];
-  assert.equal(input.documentQualityAssessmentVersion, 3);
-  assert.equal(input.documentQualityCriterion, "Does the @doc description clearly and accurately explain the associated TypeSpec code?");
-  assert.deepEqual(summary.documentIds, ["document-timeout"]);
-  assert.deepEqual(summary.qualifiedNames, ["Options.timeout"]);
-  assert.equal(summary.status, "ready");
-  assert.equal(summary.documents, undefined);
+  assert.equal(input.documentQualityAssessmentVersion, undefined);
+  assert.equal(input.documentQualityCriterion, undefined);
+  assert.equal(input.documentQualityReviewUnits, undefined);
   assert.equal(JSON.stringify(input).includes(longDoc), false);
-  assert.deepEqual(input.evidenceSets[summary.evidenceSetId].evidenceRef, {
-    artifact: "dimensions/document-quality-input.json",
-    id: "semantic-doc",
-  });
-  assert.notEqual(summary.evidenceSetId, input.semanticReviewUnits[0].evidenceSetId);
-  assert.equal(input.inputAccounting.retained.documentQualityReviewUnits, 1);
-  assert.equal(input.inputAccounting.retained.documentQualityDocuments, 1);
+  assert.equal(input.artifactReferences.documentQuality, undefined);
+  assert.equal(input.inputAccounting.retained.documentQualityReviewUnits, undefined);
+  assert.equal(input.inputAccounting.retained.documentQualityDocuments, undefined);
   assert.deepEqual(input.inferenceRequests, []);
-
-  for (const schemaVersion of [1, 2]) {
-    const legacy = buildModelInput({ ...options, documentQuality: { ...options.documentQuality, schemaVersion } });
-    assert.equal(legacy.documentQualityAssessmentVersion, schemaVersion === 2 ? 2 : undefined);
-    assert.equal(legacy.documentQualityCriterion, schemaVersion === 2 ? input.documentQualityCriterion : undefined);
-  }
-  const defaultInput = buildModelInput({ ...options, documentQuality: undefined });
-  assert.equal(defaultInput.documentQualityAssessmentVersion, 3);
-
-  const reason = "The associated declaration could not be resolved.";
-  const blocked = buildModelInput({
-    ...options,
-    documentQuality: {
-      schemaVersion: 3,
-      status: "blocked",
-      blockers: [{ message: reason }],
-      reviewUnits: [{ ...unit, status: "blocked", reason, documents: [] }],
-    },
-  });
-  assert.equal(blocked.documentQualityReviewUnits[0].status, "blocked");
-  assert.equal(blocked.documentQualityReviewUnits[0].reason, reason);
-  assert.equal(blocked.inputAccounting.retained.documentQualityDocuments, 0);
-  assert.ok(blocked.blockers.some((blocker) => blocker.message === reason));
-  assert.deepEqual(blocked.inferenceRequests, []);
 });
 
 test("model input requests inference only for unknown hunks", () => {

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import path from "node:path";
 import test from "node:test";
 import { addCompilerEvidence, buildSourceIndex, parseUnifiedHunks } from "./source-index.mjs";
 
@@ -81,7 +82,7 @@ test("does not classify inline operation response fields as interface properties
   ));
 });
 
-test("raw revision sources are not serialized and unavailable compilers block @doc context", async () => {
+test("raw revision sources are not serialized and unavailable compilers block documentation presence", async () => {
   const sourceIndex = buildSourceIndex({
     repo: "repo", mergeBase: "base", headCommit: "head",
     changedFiles: [{ path: "main.tsp", status: "modified", origins: ["working"] }],
@@ -95,9 +96,9 @@ test("raw revision sources are not serialized and unavailable compilers block @d
   });
   assert.equal(sourceIndex.analysis.status, "blocked");
   assert.equal(sourceIndex.sourceChanges[0].documentEvidence.status, "blocked");
-  assert.equal(sourceIndex.sourceChanges[0].documentEvidence.schemaVersion, 3);
-  assert.equal(sourceIndex.sourceChanges[0].documentEvidence.blockers.length, 2);
-  assert.deepEqual(sourceIndex.sourceChanges[0].documentEvidence.documents, []);
+  assert.equal(sourceIndex.sourceChanges[0].documentEvidence.schemaVersion, 4);
+  assert.equal(sourceIndex.sourceChanges[0].documentEvidence.blockers.length, 1);
+  assert.deepEqual(sourceIndex.sourceChanges[0].documentEvidence.declarations, []);
 });
 
 test("failed compiler programs never report @doc evidence ready", async () => {
@@ -116,4 +117,175 @@ test("failed compiler programs never report @doc evidence ready", async () => {
   });
   assert.equal(sourceIndex.analysis.status, "blocked");
   assert.equal(sourceIndex.sourceChanges[0].documentEvidence.status, "blocked");
+});
+
+test("compiler evidence records only documentation presence on changed declarations", async () => {
+  const sourceText = "model Widget { value: string; }";
+  const sourceIndex = buildSourceIndex({
+    repo: "repo", mergeBase: "base", headCommit: "head",
+    changedFiles: [{ path: "main.tsp", status: "modified" }],
+    readFile: () => sourceText,
+    diffFile: () => "@@ -1 +1 @@\n-model Widget {}\n+model Widget { value: string; }",
+  });
+  const filePath = path.resolve("main.tsp");
+  let revision = 0;
+  await addCompilerEvidence({
+    sourceIndex,
+    baseWorktree: ".",
+    currentWorktree: ".",
+    projects: ["main.tsp"],
+    loadCompiler: async () => {
+      const documentation = revision++ ? "A widget." : "";
+      const file = {
+        path: filePath,
+        text: sourceText,
+        getLineAndCharacterOfPosition: () => ({ line: 0, character: 0 }),
+      };
+      const type = { kind: "Model", name: "Widget" };
+      return {
+        compilerVersion: "test",
+        NodeHost: {},
+        compile: async () => ({
+          diagnostics: [],
+          sourceFiles: new Map([["main.tsp", { file }]]),
+        }),
+        navigateProgram: (_program, listeners) => listeners.model(type),
+        getSourceLocation: () => ({ file, pos: 0, end: sourceText.length }),
+        getDoc: () => documentation,
+      };
+    },
+  });
+  const source = sourceIndex.sourceChanges[0];
+  assert.equal(source.documentEvidence.schemaVersion, 4);
+  assert.equal(source.documentEvidence.status, "ready");
+  assert.deepEqual(source.documentEvidence.declarations.map((item) => ({
+    qualifiedName: item.qualifiedName,
+    documentationPresent: item.documentationPresent,
+  })), [{ qualifiedName: "Widget", documentationPresent: true }]);
+  assert.equal(JSON.stringify(source.documentEvidence).includes("A widget."), false);
+});
+
+test("compiler evidence excludes unchanged declarations that are only diff context", async () => {
+  const baseText = "interface Unchanged {}\ninterface Changed {}\n";
+  const currentText =
+    "interface Unchanged {}\ninterface Changed {\n  added(): void;\n}\n";
+  const sourceIndex = buildSourceIndex({
+    repo: "repo",
+    mergeBase: "base",
+    headCommit: "head",
+    changedFiles: [{ path: "main.tsp", status: "modified" }],
+    readFile: (revision) => (revision === "base" ? baseText : currentText),
+    diffFile: () => `@@ -1,2 +1,4 @@
+ interface Unchanged {}
+-interface Changed {}
++interface Changed {
++  added(): void;
++}`,
+  });
+  const filePath = path.resolve("main.tsp");
+  let revision = 0;
+  await addCompilerEvidence({
+    sourceIndex,
+    baseWorktree: ".",
+    currentWorktree: ".",
+    projects: ["main.tsp"],
+    loadCompiler: async () => {
+      const text = revision++ ? currentText : baseText;
+      const file = {
+        path: filePath,
+        text,
+        getLineAndCharacterOfPosition: (position) => ({
+          line: text.slice(0, position).split("\n").length - 1,
+          character: 0,
+        }),
+      };
+      const unchanged = { kind: "Interface", name: "Unchanged" };
+      const changed = { kind: "Interface", name: "Changed" };
+      return {
+        compilerVersion: "test",
+        NodeHost: {},
+        compile: async () => ({
+          diagnostics: [],
+          sourceFiles: new Map([["main.tsp", { file }]]),
+        }),
+        navigateProgram: (_program, listeners) => {
+          listeners.interface(unchanged);
+          listeners.interface(changed);
+        },
+        getSourceLocation: (type) => {
+          const marker = `interface ${type.name}`;
+          const pos = text.indexOf(marker);
+          const end =
+            type === changed && text.includes("added")
+              ? text.length - 1
+              : pos + text.slice(pos).split("\n")[0].length;
+          return { file, pos, end };
+        },
+        getDoc: () => "",
+      };
+    },
+  });
+  assert.deepEqual(
+    sourceIndex.sourceChanges[0].documentEvidence.declarations.map(
+      (item) => item.qualifiedName,
+    ),
+    ["Changed"],
+  );
+});
+
+test("compiler evidence includes a declaration when only its documentation prefix changes", async () => {
+  const baseText = "model Widget {}\n";
+  const currentText = "/** A widget. */\nmodel Widget {}\n";
+  const sourceIndex = buildSourceIndex({
+    repo: "repo",
+    mergeBase: "base",
+    headCommit: "head",
+    changedFiles: [{ path: "main.tsp", status: "modified" }],
+    readFile: (revision) => (revision === "base" ? baseText : currentText),
+    diffFile: () => `@@ -1 +1,2 @@
++/** A widget. */
+ model Widget {}`,
+  });
+  const filePath = path.resolve("main.tsp");
+  let revision = 0;
+  await addCompilerEvidence({
+    sourceIndex,
+    baseWorktree: ".",
+    currentWorktree: ".",
+    projects: ["main.tsp"],
+    loadCompiler: async () => {
+      const current = revision++ === 1;
+      const text = current ? currentText : baseText;
+      const file = {
+        path: filePath,
+        text,
+        getLineAndCharacterOfPosition: (position) => ({
+          line: text.slice(0, position).split("\n").length - 1,
+          character: 0,
+        }),
+      };
+      const type = { kind: "Model", name: "Widget" };
+      return {
+        compilerVersion: "test",
+        NodeHost: {},
+        compile: async () => ({
+          diagnostics: [],
+          sourceFiles: new Map([["main.tsp", { file }]]),
+        }),
+        navigateProgram: (_program, listeners) => listeners.model(type),
+        getSourceLocation: () => {
+          const pos = text.indexOf("model Widget");
+          return { file, pos, end: pos + "model Widget {}".length };
+        },
+        getDoc: () => (current ? "A widget." : ""),
+      };
+    },
+  });
+  assert.deepEqual(
+    sourceIndex.sourceChanges[0].documentEvidence.declarations.map((item) => ({
+      qualifiedName: item.qualifiedName,
+      documentationPresent: item.documentationPresent,
+    })),
+    [{ qualifiedName: "Widget", documentationPresent: true }],
+  );
 });

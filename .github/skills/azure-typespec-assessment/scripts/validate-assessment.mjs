@@ -125,44 +125,33 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     errors.push("Azure Guidelines intent coverage does not match Semantic intents.");
   }
 
-  let selectedDocumentCount = 0;
-  const assessedIntentIds = [];
-  const failedIntentIds = [];
-  let incompleteEvidence = (compliance.blockers ?? []).length > 0;
-  for (const item of assessments) {
-    if (!semanticMap.has(item.semanticIntentId)) {
-      errors.push(
-        `Azure Guidelines references unknown semantic intent ${item.semanticIntentId}.`,
-      );
-      continue;
-    }
-    const documents = item.documents ?? [];
-    const ranking = item.catalogRanking ?? [];
-    selectedDocumentCount += documents.length;
-    const hasExhaustion = (item.blockers ?? []).some((value) =>
-      value.startsWith("catalog-exhausted:"),
+  const sharedSearch = compliance.sharedSearch;
+  const sharedDocuments = sharedSearch?.documents ?? [];
+  const sharedRanking = sharedSearch?.catalogRanking ?? [];
+  const allDeclarationIds = new Set(
+    assessments.flatMap((item) => item.declarationIds ?? []),
+  );
+  let selectedDocumentCount = sharedSearch ? sharedDocuments.length : 0;
+  if (sharedSearch) {
+    const hasExhaustion = (compliance.blockers ?? []).some((item) =>
+      String(item?.message ?? item).startsWith("catalog-exhausted:"),
     );
-    if (documents.length !== 4 && !hasExhaustion) {
-      errors.push(
-        `Azure Guidelines intent ${item.semanticIntentId} requires four documents.`,
-      );
-      incompleteEvidence = true;
+    if (sharedDocuments.length !== 4 && !hasExhaustion) {
+      errors.push("Azure Guidelines shared search requires four documents.");
     }
     if (
-      ranking.length !== catalog.length ||
-      duplicateValues(ranking.map((entry) => entry.canonicalUrl)).length
+      sharedRanking.length !== catalog.length ||
+      duplicateValues(sharedRanking.map((entry) => entry.canonicalUrl)).length
     ) {
-      errors.push(
-        `Azure Guidelines intent ${item.semanticIntentId} has incomplete catalog ranking.`,
-      );
+      errors.push("Azure Guidelines shared search has incomplete catalog ranking.");
     }
-    const sortedRanking = [...ranking].sort(
+    const sortedRanking = [...sharedRanking].sort(
       (left, right) =>
         right.score.total - left.score.total ||
         left.catalogOrder - right.catalogOrder,
     );
     if (
-      ranking.some((entry, index) => {
+      sharedRanking.some((entry, index) => {
         const catalogEntry = catalogByUrl.get(entry.canonicalUrl);
         const score = entry.score ?? {};
         return (
@@ -182,7 +171,86 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
         );
       }) ||
       JSON.stringify(sortedRanking.map((entry) => entry.canonicalUrl)) !==
-        JSON.stringify(ranking.map((entry) => entry.canonicalUrl))
+        JSON.stringify(sharedRanking.map((entry) => entry.canonicalUrl))
+    ) {
+      errors.push("Azure Guidelines shared search has invalid catalog ranking.");
+    }
+    const failedUrls = new Set(
+      (compliance.retrievalFailures ?? []).map(
+        (failure) => failure.canonicalUrl,
+      ),
+    );
+    const expectedUrls = sharedRanking
+      .filter((entry) => !failedUrls.has(entry.canonicalUrl))
+      .slice(0, 4)
+      .map((entry) => entry.canonicalUrl);
+    const urls = sharedDocuments.map((document) => document.canonicalUrl);
+    if (
+      duplicateValues(urls).length ||
+      JSON.stringify(expectedUrls) !== JSON.stringify(urls)
+    ) {
+      errors.push("Azure Guidelines shared search selected invalid documents.");
+    }
+  }
+  const assessedIntentIds = [];
+  const failedIntentIds = [];
+  let incompleteEvidence = (compliance.blockers ?? []).length > 0;
+  for (const item of assessments) {
+    if (!semanticMap.has(item.semanticIntentId)) {
+      errors.push(
+        `Azure Guidelines references unknown semantic intent ${item.semanticIntentId}.`,
+      );
+      continue;
+    }
+    const documents = sharedSearch ? sharedDocuments : item.documents ?? [];
+    const ranking = sharedSearch ? sharedRanking : item.catalogRanking ?? [];
+    if (!sharedSearch) selectedDocumentCount += documents.length;
+    const hasExhaustion = (item.blockers ?? []).some((value) =>
+      value.startsWith("catalog-exhausted:"),
+    );
+    if (!sharedSearch && documents.length !== 4 && !hasExhaustion) {
+      errors.push(
+        `Azure Guidelines intent ${item.semanticIntentId} requires four documents.`,
+      );
+      incompleteEvidence = true;
+    }
+    if (
+      !sharedSearch &&
+      (ranking.length !== catalog.length ||
+        duplicateValues(ranking.map((entry) => entry.canonicalUrl)).length)
+    ) {
+      errors.push(
+        `Azure Guidelines intent ${item.semanticIntentId} has incomplete catalog ranking.`,
+      );
+    }
+    const sortedRanking = [...ranking].sort(
+      (left, right) =>
+        right.score.total - left.score.total ||
+        left.catalogOrder - right.catalogOrder,
+    );
+    if (
+      !sharedSearch &&
+      (ranking.some((entry, index) => {
+          const catalogEntry = catalogByUrl.get(entry.canonicalUrl);
+          const score = entry.score ?? {};
+          return (
+            entry.rank !== index + 1 ||
+            !catalogEntry ||
+            entry.catalogOrder !== catalogEntry.catalogOrder ||
+            entry.title !== catalogEntry.title ||
+            ![0, 4].includes(score.exactSymbol) ||
+            ![0, 3].includes(score.patternCategory) ||
+            ![0, 2].includes(score.servicePlane) ||
+            ![0, 1].includes(score.changeContext) ||
+            score.total !==
+              score.exactSymbol +
+                score.patternCategory +
+                score.servicePlane +
+                score.changeContext
+          );
+        }) ||
+        JSON.stringify(sortedRanking.map((entry) => entry.canonicalUrl)) !==
+          JSON.stringify(ranking.map((entry) => entry.canonicalUrl)))
     ) {
       errors.push(
         `Azure Guidelines intent ${item.semanticIntentId} has invalid catalog ranking.`,
@@ -190,7 +258,11 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     }
     const failedUrls = new Set(
       (compliance.retrievalFailures ?? [])
-        .filter((failure) => failure.reviewUnitId === item.semanticIntentId)
+        .filter(
+          (failure) =>
+            sharedSearch ||
+            failure.reviewUnitId === item.semanticIntentId,
+        )
         .map((failure) => failure.canonicalUrl),
     );
     const expectedUrls = ranking
@@ -199,8 +271,9 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       .map((entry) => entry.canonicalUrl);
     const urls = documents.map((document) => document.canonicalUrl);
     if (
-      duplicateValues(urls).length ||
-      JSON.stringify(expectedUrls) !== JSON.stringify(urls)
+      !sharedSearch &&
+      (duplicateValues(urls).length ||
+        JSON.stringify(expectedUrls) !== JSON.stringify(urls))
     ) {
       errors.push(
         `Azure Guidelines intent ${item.semanticIntentId} selected invalid documents.`,
@@ -223,8 +296,10 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
           !Array.isArray(guidance.queryTerms) ||
           !Array.isArray(guidance.applicableDeclarationIds) ||
           !guidance.applicableDeclarationIds.length ||
-          guidance.applicableDeclarationIds.some(
-            (id) => !(item.declarationIds ?? []).includes(id),
+          guidance.applicableDeclarationIds.some((id) =>
+            sharedSearch
+              ? !allDeclarationIds.has(id)
+              : !(item.declarationIds ?? []).includes(id),
           )
         ) {
           errors.push(
@@ -306,7 +381,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
 
   for (const failure of compliance.retrievalFailures ?? []) {
     if (
-      !semanticMap.has(failure.reviewUnitId) ||
+      (!sharedSearch && !semanticMap.has(failure.reviewUnitId)) ||
       !catalogUrls.has(failure.canonicalUrl) ||
       failure.status !== "failed" ||
       !failure.error?.trim()

@@ -8,8 +8,9 @@ import { analyzeDownstreamBreaking } from "./analyze-downstream-breaking.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
-import { buildDocumentQualityInput, DOCUMENT_QUALITY_CRITERION } from "./document-quality-input.mjs";
+import { buildDocumentQualityInput } from "./document-quality-input.mjs";
 import { stableId } from "./stable-id.mjs";
+import { resolveAssessmentInput } from "./assessment-input.mjs";
 
 const BUDGET_TIERS = [
   ["small", 128 * 1024],
@@ -23,7 +24,6 @@ const ARTIFACT_REFERENCES = {
   restCandidates: "dimensions/rest-breaking-input.json",
   downstreamCandidates: "dimensions/downstream-breaking-input.json",
   complianceSearchRequests: "dimensions/compliance-search-requests.json",
-  documentQuality: "dimensions/document-quality-input.json",
 };
 const QUALIFIED_NAME_LIMIT = 24;
 const CHANGED_CONSTRUCT_LIMIT = 40;
@@ -1136,11 +1136,6 @@ function accountInput(input, maximumBytes) {
         downstreamCandidates: input.downstreamCandidates.length,
         downstreamRootCauses: input.downstreamRootCauses.length,
         complianceSearchRequests: input.complianceSearchRequests.length,
-        documentQualityReviewUnits: input.documentQualityReviewUnits.length,
-        documentQualityDocuments: input.documentQualityReviewUnits.reduce(
-          (count, unit) => count + unit.documentIds.length,
-          0,
-        ),
         inferenceRequests: input.inferenceRequests.length,
       },
       omittedRedundant: {
@@ -1177,11 +1172,8 @@ export function buildModelInput({
   semantic,
   rest,
   downstream,
-  documentQuality,
   maximumBytes,
 }) {
-  const documentation =
-    documentQuality ?? buildDocumentQualityInput({ sourceIndex, semantic });
   const sourceChanges = compactSources(sourceIndex, semantic, rest, downstream);
   const semanticUnits = semantic.status === "ready" ? semantic.reviewUnits : [];
   const fullComplianceSearchRequests = buildComplianceSearchRequests({
@@ -1281,36 +1273,6 @@ export function buildModelInput({
       querySummary: compactQuerySummary(request.queryProfile),
     }),
   );
-  const documentQualityReviewUnits = documentation.reviewUnits.map((unit) => {
-    // Documentation evidence needs its own canonical reference, even when its
-    // source IDs are identical to a semantic or guidelines evidence set.
-    const evidenceSetId = stableId("evidence-set", {
-      artifact: ARTIFACT_REFERENCES.documentQuality,
-      reviewUnitId: unit.reviewUnitId,
-    });
-    evidenceSets[evidenceSetId] = {
-      sourceChangeIds: unit.sourceChangeIds,
-      hunkIds: unit.hunkIds,
-      declarationCount: unit.declarationIds.length,
-      evidenceFactIds: [],
-      evidenceRef: {
-        artifact: ARTIFACT_REFERENCES.documentQuality,
-        id: unit.reviewUnitId,
-      },
-    };
-    return {
-      reviewUnitId: unit.reviewUnitId,
-      status: unit.status,
-      ...(unit.reason ? { reason: unit.reason } : {}),
-      documentIds: unit.documents.map((document) => document.id),
-      ...(unit.inheritedDocumentIds?.length ? { inheritedDocumentCount: unit.inheritedDocumentIds.length } : {}),
-      qualifiedNames: bounded(
-        unit.documents.map((document) => document.qualifiedName),
-        QUALIFIED_NAME_LIMIT,
-      ).values,
-      evidenceSetId,
-    };
-  });
   const input = {
     schemaVersion: 1,
     context: {
@@ -1369,18 +1331,12 @@ export function buildModelInput({
     downstreamRootCauses:
       downstream.status === "ready" ? (downstream.rootCauses ?? []) : [],
     complianceSearchRequests,
-    documentQualityReviewUnits,
-    ...(documentation.schemaVersion >= 2 ? {
-      documentQualityAssessmentVersion: documentation.schemaVersion,
-      documentQualityCriterion: DOCUMENT_QUALITY_CRITERION,
-    } : {}),
     inferenceRequests,
     blockers: [
       ...manifest.blockers,
       ...semantic.blockers,
       ...rest.blockers,
       ...downstream.blockers,
-      ...documentation.blockers,
     ],
     inputAccounting: {},
   };
@@ -1449,7 +1405,7 @@ function blockedAssessment(manifest, semantic, rest, downstream) {
       documentQuality: {
         status: "not-assessed",
         summary:
-          "Documentation checks could not run because deterministic analysis was blocked.",
+          "Documentation Completeness could not run because deterministic analysis was blocked.",
       },
     },
     changedFiles: manifest.changedFiles,
@@ -1466,8 +1422,11 @@ function blockedAssessment(manifest, semantic, rest, downstream) {
 }
 
 export async function runAssessmentAnalysis(options) {
-  const output = path.resolve(options.output);
-  const manifest = await prepareAssessment({ ...options, output });
+  const resolvedOptions = options.invocation
+    ? options
+    : resolveAssessmentInput(options);
+  const output = path.resolve(resolvedOptions.output);
+  const manifest = await prepareAssessment({ ...resolvedOptions, output });
   if (manifest.status === "no-changes") {
     const result = {
       schemaVersion: 1,
@@ -1535,9 +1494,9 @@ export async function runAssessmentAnalysis(options) {
     return { status: "blocked", assessment };
   }
   const configuredMaximum =
-    options.model_input_budget_bytes === undefined
+    resolvedOptions.model_input_budget_bytes === undefined
       ? undefined
-      : Number(options.model_input_budget_bytes);
+      : Number(resolvedOptions.model_input_budget_bytes);
   if (
     configuredMaximum !== undefined &&
     (!Number.isInteger(configuredMaximum) || configuredMaximum <= 0)
@@ -1550,7 +1509,6 @@ export async function runAssessmentAnalysis(options) {
     semantic,
     rest,
     downstream,
-    documentQuality,
     maximumBytes: configuredMaximum,
   });
   writeJson(
@@ -1571,8 +1529,8 @@ export async function runAssessmentAnalysis(options) {
 if (isMain(import.meta.url)) {
   runMain(async () => {
     const args = parseArgs(process.argv.slice(2), {
-      required: ["specification", "output"],
-      defaults: { repo: process.cwd(), base: "origin/main" },
+      required: ["output"],
+      defaults: { repo: process.cwd() },
       arrays: ["sparse-root"],
     });
     const result = await runAssessmentAnalysis(args);

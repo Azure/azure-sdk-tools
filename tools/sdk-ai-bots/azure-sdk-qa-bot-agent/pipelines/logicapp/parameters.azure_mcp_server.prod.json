@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "value": "azuremcpserver-qabot-logicapp"
+    },
+    "teamsGroupId": {
+      "value": "256e3336-e328-4683-a24a-7a36c8a123fc"
+    },
+    "teamsChannelIds": {
+      "value": [
+        "19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2"
+      ]
+    },
+    "serverBaseUrl": {
+      "value": "https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net"
+    },
+    "serverAudience": {
+      "value": "899da762-d510-48f2-911a-db9ea0cc41fd"
+    },
+    "serverIdentityResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity"
+    },
+    "botBaseUrl": {
+      "value": "https://azsdkqabot.azurewebsites.net"
+    },
+    "botAudience": {
+      "value": "ff836b38-c7d8-459a-a504-57b60b50b4eb"
+    },
+    "botIdentityResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azsdkqabot"
+    },
+    "functionAppResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-function"
+    },
+    "teamsConnectionResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/connections/teams"
+    },
+    "integrationAccountResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Logic/integrationAccounts/azuresdkqabot-ia"
+    },
+    "userAssignedIdentities": {
+      "value": {
+        "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azsdkqabot": {},
+        "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity": {}
+      }
+    }
+  }
+}

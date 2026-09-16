@@ -1,20 +1,18 @@
 # Release History
 
-## 0.6.46 (Unreleased)
+## 0.6.46 (2026-09-15)
 
 ### Features Added
 
 - Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
-
-### Breaking Changes
+- Create release plan now checks for an existing plan with the same API version and falls back to matching by TypeSpec project and release-plan type only when the API version is unknown.
+- Create and update release plan tools now automatically mark a private preview release plan as `Finished` when its spec pull request has been merged.
 
 ### Bugs Fixed
 
 - Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
 - Ignored release-table headers and separators so packages without planned release dates remain blocked.
 - Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.
-
-### Other Changes
 
 ## 0.6.45 (2026-09-08)
 

@@ -2,7 +2,7 @@
 
 ## 0.6.47 (2026-09-16)
 
-### Bugs Fixed
+### Breaking Changes
 
 - Release-plan lookup by TypeSpec project path and API version now also requires and matches the API release type.
 

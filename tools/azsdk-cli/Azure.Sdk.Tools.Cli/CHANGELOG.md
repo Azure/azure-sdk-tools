@@ -6,15 +6,23 @@
 
 - Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
 
+### Breaking Changes
+
 ### Bugs Fixed
 
 - Preserve detected SDK changes when classification or catalog loading fails, and reject invalid detector reports instead of silently falling back.
+
+### Other Changes
 
 ## 0.6.47 (2026-09-16)
 
 ### Breaking Changes
 
 - Release-plan lookup by TypeSpec project path and API version now also requires and matches the API release type.
+
+### Bugs Fixed
+
+- Release plan updates now use package names emitted from TypeSpec metadata without applying legacy package-prefix validation.
 
 ## 0.6.46 (2026-09-15)
 

@@ -1519,26 +1519,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     .Where(sdk => supportedLanguages.Contains(sdk.Language))
                     .ToList();
 
-                // Validate SDK Package names
-                var languagePrefixMap = new Dictionary<string, string>
-                (StringComparer.OrdinalIgnoreCase)
-                {
-                    { "JavaScript", "@azure/" },
-                    { "Go", "sdk/" },
-                };
-
-                var invalidSdks = SdkInfos.Where(sdk => languagePrefixMap.TryGetValue(sdk.Language, out var prefix) && !sdk.PackageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
-                if (invalidSdks.Any())
-                {
-                    var errorDetails = string.Join("; ", invalidSdks.Select(sdk => $"{sdk.Language} -> {sdk.PackageName}"));
-                    var prefixRules = string.Join(", ", languagePrefixMap.Select(kvp => $"{kvp.Key}: starts with {kvp.Value}"));
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Unsupported package name(s) detected: {errorDetails}. Package names must follow these rules: {prefixRules}",
-                        NextSteps = ["Prompt the user to update the package name to match the required prefix for its language."]
-                    };
-                }
-
                 StringBuilder sb = new();
                 if (SdkInfos.Count > 0)
                 {

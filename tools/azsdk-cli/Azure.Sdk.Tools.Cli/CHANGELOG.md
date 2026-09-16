@@ -6,6 +6,10 @@
 
 - Release-plan lookup by TypeSpec project path and API version now also requires and matches the API release type.
 
+### Bugs Fixed
+
+- Release plan updates now use package names emitted from TypeSpec metadata without applying legacy package-prefix validation.
+
 ## 0.6.46 (2026-09-15)
 
 ### Features Added

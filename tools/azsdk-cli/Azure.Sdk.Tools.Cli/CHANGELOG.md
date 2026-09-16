@@ -8,7 +8,7 @@
 
 ### Bugs Fixed
 
-- Release plan lookups now refresh linked SDK pull request statuses from GitHub to match the release plan dashboard, warning when only the stored status is available.
+- Release plan lookups now refresh linked SDK pull request statuses from GitHub to match the release plan dashboard, with a shared 30-second refresh deadline and warnings when only the stored status is available.
 
 ### Other Changes
 

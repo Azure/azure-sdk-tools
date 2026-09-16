@@ -978,7 +978,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var mockGitHub = new Mock<IGitHubService>(MockBehavior.Strict);
             // Octokit does not cancel in-flight requests, so the caller must stop waiting itself.
             var pendingRequest = new TaskCompletionSource<Octokit.PullRequest>(TaskCreationOptions.RunContinuationsAsynchronously);
-            mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-net", 1, cancellation.Token))
+            CancellationToken requestToken = default;
+            mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-net", 1, It.IsAny<CancellationToken>()))
+                .Callback<string, string, int, CancellationToken>((_, _, _, token) => requestToken = token)
                 .Returns(() =>
                 {
                     cancellation.Cancel();
@@ -996,18 +998,102 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 pendingRequest.TrySetResult(CreateSdkPullRequest());
             }
 
+            Assert.That(requestToken.IsCancellationRequested, Is.True, "Caller cancellation must reach the linked GitHub request token.");
             mockGitHub.VerifyAll();
             mockGitHub.VerifyNoOtherCalls();
             mockDevOps.Verify(x => x.GetReleasePlanAsync(77, cancellation.Token), Times.Once);
             mockDevOps.VerifyNoOtherCalls();
         }
 
-        private ReleasePlanTool CreateSdkStatusTestTool(List<SDKInfo> sdkInfo, IGitHubService github, out Mock<IDevOpsService> mockDevOps)
+        [TestCase(0)]
+        [TestCase(2)]
+        [TestCase(4)]
+        public async Task Test_Get_Release_Plan_sdk_pr_refresh_has_one_shared_deadline(int completedLookups)
+        {
+            (string Language, string Repository)[] languages =
+            [
+                (".NET", "azure-sdk-for-net"),
+                ("JavaScript", "azure-sdk-for-js"),
+                ("Python", "azure-sdk-for-python"),
+                ("Java", "azure-sdk-for-java"),
+                ("Go", "azure-sdk-for-go")
+            ];
+            var sdkInfo = languages.Select((language, index) => new SDKInfo
+            {
+                Language = language.Language,
+                SdkPullRequestUrl = $"https://github.com/Azure/{language.Repository}/pull/{index + 1}",
+                PullRequestStatus = "Ready for review",
+                GenerationStatus = "Completed",
+                ReleaseStatus = "Pending"
+            }).ToList();
+
+            // Fire the TimeProvider timer manually: no real-time delay or caller cancellation.
+            Action? expireDeadline = null;
+            var timer = new Mock<ITimer>();
+            var clock = new Mock<TimeProvider> { CallBase = true };
+            clock.Setup(x => x.CreateTimer(It.IsAny<TimerCallback>(), It.IsAny<object?>(), TimeSpan.FromSeconds(30), Timeout.InfiniteTimeSpan))
+                .Callback<TimerCallback, object?, TimeSpan, TimeSpan>((callback, state, _, _) => expireDeadline = () => callback(state))
+                .Returns(timer.Object);
+
+            var mockGitHub = new Mock<IGitHubService>(MockBehavior.Strict);
+            for (var index = 0; index < completedLookups; index++)
+            {
+                var repoName = languages[index].Repository;
+                var prNumber = index + 1;
+                mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", repoName, prNumber, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(CreateSdkPullRequest("closed", merged: true));
+            }
+            var stalledRepo = languages[completedLookups].Repository;
+            var stalledPrNumber = completedLookups + 1;
+            var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var pendingRequest = new TaskCompletionSource<Octokit.PullRequest>(TaskCreationOptions.RunContinuationsAsynchronously);
+            mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", stalledRepo, stalledPrNumber, It.IsAny<CancellationToken>()))
+                .Callback(() => requestStarted.TrySetResult())
+                .Returns(pendingRequest.Task);
+            var tool = CreateSdkStatusTestTool(sdkInfo, mockGitHub.Object, out var mockDevOps, clock.Object);
+            var operation = tool.GetReleasePlan(releasePlanId: 77);
+
+            try
+            {
+                await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), CancellationToken.None);
+                Assert.That(expireDeadline, Is.Not.Null, "The SDK PR refresh must schedule an overall deadline.");
+                expireDeadline!();
+                var response = await operation.WaitAsync(TimeSpan.FromSeconds(5), CancellationToken.None);
+
+                Assert.That(response.ResponseError, Is.Null);
+                Assert.That(response.Warnings, Has.Count.EqualTo(languages.Length - completedLookups));
+                Assert.That(response.Warnings, Is.All.Contains("deadline").And.All.Contains("may be stale"));
+                Assert.That(response.ReleasePlanDetails!.SDKInfo.Take(completedLookups).Select(sdk => sdk.PullRequestStatus), Is.All.EqualTo("Merged"));
+                Assert.That(response.ReleasePlanDetails.SDKInfo.Skip(completedLookups).Select(sdk => sdk.PullRequestStatus), Is.All.EqualTo("Ready for review"));
+                Assert.That(response.ReleasePlanDetails.SDKInfo.Select(sdk => sdk.GenerationStatus), Is.All.EqualTo("Completed"));
+                Assert.That(response.ReleasePlanDetails.SDKInfo.Select(sdk => sdk.ReleaseStatus), Is.All.EqualTo("Pending"));
+
+                // The abandoned Octokit call must not update the returned response when it eventually completes.
+                pendingRequest.TrySetResult(CreateSdkPullRequest("closed", merged: true));
+                Assert.That(response.ReleasePlanDetails.SDKInfo[completedLookups].PullRequestStatus, Is.EqualTo("Ready for review"));
+                Assert.That(mockGitHub.Invocations, Has.Count.EqualTo(completedLookups + 1), "Do not start further lookups after the shared deadline.");
+                var requestTokens = mockGitHub.Invocations.Select(invocation => (CancellationToken)invocation.Arguments[3]).ToList();
+                Assert.That(requestTokens.Distinct().Count(), Is.EqualTo(1), "All languages share the same refresh deadline.");
+                Assert.That(requestTokens[0].IsCancellationRequested, Is.True);
+                clock.Verify(x => x.CreateTimer(It.IsAny<TimerCallback>(), It.IsAny<object?>(), TimeSpan.FromSeconds(30), Timeout.InfiniteTimeSpan), Times.Once);
+                timer.Verify(x => x.Dispose(), Times.AtLeastOnce);
+                mockGitHub.VerifyAll();
+                mockDevOps.Verify(x => x.GetReleasePlanAsync(77, CancellationToken.None), Times.Once);
+                mockDevOps.VerifyNoOtherCalls();
+            }
+            finally
+            {
+                pendingRequest.TrySetResult(CreateSdkPullRequest());
+                await operation.WaitAsync(TimeSpan.FromSeconds(5), CancellationToken.None);
+            }
+        }
+
+        private ReleasePlanTool CreateSdkStatusTestTool(List<SDKInfo> sdkInfo, IGitHubService github, out Mock<IDevOpsService> mockDevOps, TimeProvider? timeProvider = null)
         {
             var releasePlan = new ReleasePlanWorkItem { WorkItemId = 777, ReleasePlanId = 77, SDKInfo = sdkInfo };
             mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
             mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            return new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, github, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            return new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, github, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), timeProvider);
         }
 
         private static Octokit.PullRequest CreateSdkPullRequest(string state = "open", bool draft = false, bool merged = false)

@@ -44,6 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     ) : MCPMultiCommandTool
     {
         private const int ScheduleRiskWarningWindowDays = 7;
+        private const int SdkPullRequestRefreshTimeoutSeconds = 30;
         private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -539,6 +540,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return;
             }
 
+            // Bound the entire refresh, not each language, so stalled requests cannot multiply latency.
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(SdkPullRequestRefreshTimeoutSeconds), _timeProvider);
+            using var refreshCancellation = CancellationTokenSource.CreateLinkedTokenSource(ct, deadline.Token);
+            var refreshToken = refreshCancellation.Token;
+
             foreach (var sdk in response.ReleasePlanDetails.SDKInfo)
             {
                 ct.ThrowIfCancellationRequested();
@@ -549,13 +555,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 try
                 {
+                    // After the deadline, keep stored statuses and warn without starting more GitHub calls.
+                    refreshToken.ThrowIfCancellationRequested();
                     var parsedPr = DevOpsService.ParseSDKPullRequestUrl(sdk.SdkPullRequestUrl);
                     if (!parsedPr.IsValid)
                     {
                         throw new ArgumentException("Invalid SDK pull request URL.");
                     }
 
-                    var pullRequest = await githubService.GetPullRequestAsync(parsedPr.RepoOwner, parsedPr.RepoName, parsedPr.PrNumber, ct).WaitAsync(ct);
+                    var pullRequest = await githubService.GetPullRequestAsync(parsedPr.RepoOwner, parsedPr.RepoName, parsedPr.PrNumber, refreshToken).WaitAsync(refreshToken);
                     if (pullRequest == null)
                     {
                         throw new InvalidOperationException("GitHub returned no pull request details.");
@@ -576,7 +584,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 catch (Exception ex)
                 {
                     logger.LogWarning(ex, "Failed to refresh {Language} SDK PR status for {PullRequestUrl}", sdk.Language, sdk.SdkPullRequestUrl);
-                    (response.Warnings ??= []).Add($"Unable to refresh {sdk.Language} SDK PR status from GitHub for {sdk.SdkPullRequestUrl}. The stored release plan status may be stale.");
+                    var deadlineWarning = deadline.IsCancellationRequested
+                        ? $" The shared {SdkPullRequestRefreshTimeoutSeconds}-second SDK PR refresh deadline expired."
+                        : string.Empty;
+                    (response.Warnings ??= []).Add($"Unable to refresh {sdk.Language} SDK PR status from GitHub for {sdk.SdkPullRequestUrl}. The stored release plan status may be stale.{deadlineWarning}");
                 }
             }
         }

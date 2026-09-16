@@ -193,6 +193,35 @@ async def get_feedback_container() -> ContainerProxy:
     return _feedback_container
 
 
+async def query_conversation_feedback(
+    conversation_id: str,
+    conversation_type: str,
+) -> list[dict[str, Any]]:
+    """Return all feedback for an exact conversation id/type, newest first.
+
+    Query across tenant partitions because these coordinates identify the thread.
+    Missing legacy conversation coordinates do not match this query.
+    """
+    if not conversation_id or not conversation_type:
+        raise ValueError("Conversation coordinates are required")
+    container = await get_feedback_container()
+    query = (
+        "SELECT c.user_name, c.created_at, c.reaction, c.comment, c.reasons "
+        "FROM c WHERE c.conversation_id = @conversation_id "
+        "AND c.conversation_type = @conversation_type "
+        "ORDER BY c.created_at DESC"
+    )
+    return [
+        item async for item in container.query_items(
+            query=query,
+            parameters=[
+                {"name": "@conversation_id", "value": conversation_id},
+                {"name": "@conversation_type", "value": conversation_type},
+            ],
+        )
+    ]
+
+
 async def close_cosmos_client() -> None:
     """Close the shared Cosmos client and reset cached proxies."""
     global _client, _mapping_container, _message_container, _episode_container, _qa_records_container, _feedback_container

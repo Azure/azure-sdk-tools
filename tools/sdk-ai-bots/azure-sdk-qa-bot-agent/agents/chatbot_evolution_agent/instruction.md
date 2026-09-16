@@ -30,8 +30,7 @@ You receive one JSON message identifying the **conversation (QA thread)**:
 - `evaluation_time` — the current UTC time used for inactivity calculations.
 - `issue_url` — present only in `validation` mode.
 
-`fetch_conversation` returns the full transcript; each bot message carries its
-own `trace_id`, so you pick the bot turn to analyze and trace it from there.
+`fetch_conversation` returns the full transcript and all thread feedback. Each bot message carries its own `trace_id` for tracing the turn being analyzed.
 
 ## Workflow
 
@@ -62,7 +61,7 @@ Follow these steps in order.
    not complete, return `conversation_ongoing` and stop.
 3. **Pin the question and decide whether the answer has a problem.** Read
    the whole transcript, not just the last
-   message — weight follow-ups, rephrasings, and any expert correction.
+   message — weight follow-ups, rephrasings, feedback, and any expert correction.
    When an expert corrected the bot, treat the expert's message as ground
   truth and work backward to what the bot missed. Extract the correction,
   the claimed knowledge gap, and its supporting references. Verify those

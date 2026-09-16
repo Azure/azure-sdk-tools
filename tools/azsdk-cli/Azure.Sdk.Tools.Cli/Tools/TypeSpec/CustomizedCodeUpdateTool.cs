@@ -83,6 +83,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         Required = true
     };
 
+    public static readonly Option<string> PackagePathOpt = new("--package-path", "-p")
+    {
+        Description = "Absolute path to the SDK package directory. Required for `CustomCode` and `All`; not required for `SpecInputs`",
+        Required = false,
+    };
+
     private readonly Option<string> typespecProjectPath = new("--tsp-project-path")
     {
         Description = "Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where " +
@@ -110,7 +116,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     protected override Command GetCommand() =>
         new McpCommand("customized-update", "Apply TypeSpec and SDK code customizations with AI-assisted analysis.", CustomizedCodeUpdateToolName)
         {
-            SharedOptions.PackagePath,
+            PackagePathOpt,
             typespecProjectPath,
             customizationRequestOption,
             editScopeOption,
@@ -119,8 +125,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <inheritdoc />
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(packagePath, nameof(packagePath));
+        var packagePath = parseResult.GetValue(PackagePathOpt);
 
         var tspProjectPath = parseResult.GetValue(typespecProjectPath);
 
@@ -151,18 +156,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// MCP tool entry point — applies patches to customization files based on build errors,
     /// regenerates code if needed (C# and Java), builds, and returns success/failure with build result.
     /// </summary>
-    /// <param name="packagePath">Absolute path to the SDK package directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
+    /// <param name="packagePath">Absolute path to the SDK package directory. Required for `CustomCode` and `All`; not required for `SpecInputs`</param>
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory. Optional for custom-code-only scope.</param>
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (C# and Java), builds, and returns success/failure with build result.")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(
-        [Description("Absolute path to the SDK package directory. REQUIRED. Example: 'path/to/azure-sdk-for-java/sdk/healthdataaiservices/azure-health-deidentification'.")]
-        string packagePath,
         [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
         string customizationRequest,
+        [Description("Absolute path to the SDK package directory. Required for `CustomCode` and `All`; not required for `SpecInputs`. Example: 'path/to/azure-sdk-for-java/sdk/healthdataaiservices/azure-health-deidentification'.")]
+        string packagePath = null,
         [Description("Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied. REQUIRED when editScope includes spec inputs (SpecInputs/All). OPTIONAL for custom-code-only repair (editScope CustomCode): when omitted, regeneration resolves the spec from the pinned commit in the package's tsp-location.yaml, so no local spec checkout is required. Example: 'path/to/azure-rest-api-specs/specification/healthdataaiservices/HealthDataAIServices.DeidServices'.")]
         string? tspProjectPath = null,
         [Description("Which source categories the tool may edit (flags: CustomCode, SpecInputs, or All). All (default): both custom code and spec inputs may be edited, regenerate, and patch custom code. CustomCode: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ from the unchanged pinned commit is always allowed.")]
@@ -179,7 +184,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string? packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
     {
         // editScope is a non-nullable [Flags] enum bound from a named option (default All), so the
         // empty/whitespace validation used for the string inputs does not apply. Guard only against an
@@ -207,42 +212,59 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         PackageInfo? packageInfo = null;
 
-        if (!Directory.Exists(packagePath))
+        var hasPackagePath = !string.IsNullOrWhiteSpace(packagePath);
+        if (customCodeInScope && !hasPackagePath)
         {
-            logger.LogError("Package path does not exist: {PackagePath}", packagePath);
-            validSdkRepoPackagePath = false;
-            if (customCodeInScope)
+            const string message = "Package path is required when editScope includes CustomCode (editScope includes CustomCode/All), because the tool must edit customization code in the package. Provide --package-path.";
+            return new CustomizedCodeUpdateResponse
             {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Success = false,
-                    ResponseError = $"Package path does not exist: {packagePath}",
-                    Message = $"Package path does not exist: {packagePath}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                    BuildResult = $"Package path does not exist: {packagePath}"
-                };
-            }
+                Success = false,
+                ResponseError = message,
+                Message = message,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = message
+            };
         }
-        else
+
+        if (hasPackagePath)
         {
-            // Discover the Git repository root for the package path, and validate that the package path is within a Git repository, if not, it is not a valid package path.
-            try
+            if (!Directory.Exists(packagePath))
             {
-                repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
-                if (string.IsNullOrWhiteSpace(repoRoot))
+                logger.LogError("Package path does not exist: {PackagePath}", packagePath);
+                validSdkRepoPackagePath = false;
+                if (customCodeInScope)
                 {
-                    logger.LogError("Package path is not within a Git repository: {PackagePath}", packagePath);
-                    validSdkRepoPackagePath = false;
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Success = false,
+                        ResponseError = $"Package path does not exist: {packagePath}",
+                        Message = $"Package path does not exist: {packagePath}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                        BuildResult = $"Package path does not exist: {packagePath}"
+                    };
                 }
             }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            else
             {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to discover Git repository root for package path: {PackagePath}", packagePath);
-                validSdkRepoPackagePath = false;
+                // Discover the Git repository root for the package path, and validate that the package path is within a Git repository, if not, it is not a valid package path.
+                try
+                {
+                    repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+                    if (string.IsNullOrWhiteSpace(repoRoot))
+                    {
+                        logger.LogError("Package path is not within a Git repository: {PackagePath}", packagePath);
+                        validSdkRepoPackagePath = false;
+                    }
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to discover Git repository root for package path: {PackagePath}", packagePath);
+                    validSdkRepoPackagePath = false;
+                }
             }
         }
 

@@ -839,6 +839,12 @@ main {
   padding: 4px 0;
   margin-bottom: 4px;
 }
+.detail-sdk-api-version {
+  background: #fff4ce;
+  border-left: 4px solid #ffb900;
+  padding: 8px 10px;
+  margin: 8px 0;
+}
 
 /* API readiness badges */
 .badge-api-completed {

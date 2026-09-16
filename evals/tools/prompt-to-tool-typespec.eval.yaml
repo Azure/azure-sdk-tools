@@ -7,7 +7,7 @@ type: capability
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 3
   timeout: "120s"
   executor: copilot-sdk
@@ -18,8 +18,10 @@ tags:
   area: typespec
   priority: p0
 
-stimuli:
+scoring:
+  threshold: 0.8
 
+stimuli:
   # ==== azsdk_convert_swagger_to_typespec triggers ====
   - name: invoke-azsdk-convert-swagger-to-typespec-1
     prompt: "Convert the OpenAPI/Swagger spec at specification/contosowidgetmanager/swagger/widgetmanager.json to TypeSpec. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
@@ -232,4 +234,3 @@ stimuli:
             - name: "azsdk_get_modified_typespec_projects"
           disallowed:
             - name: "azsdk_verify_setup"
-

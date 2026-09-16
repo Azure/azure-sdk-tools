@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Attributes;
-using Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {

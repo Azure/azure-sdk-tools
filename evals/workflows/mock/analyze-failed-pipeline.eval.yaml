@@ -8,13 +8,12 @@ description: |
 version: "1.0"
 type: capability
 
-
 tags:
   area: pipeline
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 1
   timeout: 5m
   model: gpt-5.4
@@ -43,7 +42,7 @@ stimuli:
       - type: output-contains
         config:
           substring: QueueClientOptions
-          
+
   - name: analyze-version-parser-bug
     environment:
       skills:
@@ -54,6 +53,9 @@ stimuli:
     constraints:
       max_turns: 6
       max_tokens: 8000
+    rubric:
+      - The response identifies a code bug in QueueClientOptions or ShareClientOptions service-version parsing caused by missing mappings for 2026-10-06 and 2026-12-06.
+      - The response recommends updating TryGetServiceVersion instead of re-recording or retrying the pipeline.
     graders:
       - type: completed
       - type: skill-invocation

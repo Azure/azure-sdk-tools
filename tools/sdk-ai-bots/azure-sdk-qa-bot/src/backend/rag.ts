@@ -180,6 +180,7 @@ export async function sendFeedback(payload: FeedbackRequestPayload, options: RAG
     { meta }
   );
   try {
+    logger.info('Feedback payload:', { payload, meta });
     let headers = {
         'Content-Type': 'application/json; charset=utf-8',
     };

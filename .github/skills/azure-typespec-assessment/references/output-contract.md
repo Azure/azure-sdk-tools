@@ -3,11 +3,10 @@
 ## Azure Guidelines search evidence
 
 Write `compliance-search-evidence.json` conforming to
-`scripts\compliance-search-evidence.schema.json`. There must be one entry per
-`complianceSearchRequests` item. Resolve the complete request from the
-referenced Azure Guidelines request artifact. Each entry preserves its unchanged
-query profile, the complete scored catalog ranking, four fetched catalog documents
-or an explicit catalog-exhaustion blocker, score components, retrieval
+`scripts\compliance-search-evidence.schema.json`. Preserve one unchanged query
+profile per `complianceSearchRequests` item, then store one complete catalog
+ranking and four shared fetched catalog documents, or an explicit
+catalog-exhaustion blocker. The shared search records score components, retrieval
 provenance, declaration applicability, relevant guidance, and failed
 replacement attempts. Catalog descriptions select documents but never serve
 as guidance.
@@ -74,18 +73,6 @@ Write one `assessment-judgment.json` conforming to `scripts\assessment-judgment.
     }
   ],
   "overallConfidence": "high",
-  "documentQualityDecisions": [
-    {
-      "reviewUnitId": "semantic-...",
-      "documentId": "document-...",
-      "check": "description",
-      "decision": "fail",
-      "title": "Response description incorrectly says the body is empty",
-      "expected": "Describe the optional status carried by the response body.",
-      "docQuote": "Empty success response.",
-      "rationale": "The associated response-body model declares a status property."
-    }
-  ],
   "blockers": []
 }
 ```
@@ -101,25 +88,10 @@ All IDs and URLs must come from the bounded inputs or validated inference
 output. Every `applicable-fail` decision must also provide a concise finding
 title and `high`, `medium`, or `low` severity for structured assessment data.
 
-For `documentQualityReviewUnits`, resolve the canonical artifact through its
-dedicated evidence set. For input `schemaVersion: 3` (or historical v2), cover each document in
-every `ready` unit exactly once with `check: "description"`, following the
-[documentation rules](document-quality.md). `fail` requires `title`,
-`expected`, `rationale`, and a nonempty exact target `docQuote`; `pass` and
-`not-assessed` require rationale. Do not include severity. Units that are
-`not-applicable` or `blocked` require no Agent document decisions. Missing
-decisions for new inputs are errors; legacy inputs without the documentation
-field may omit this decision array.
-V3 reviews local descriptions only. Inherited-only descriptions count as
-documented but are excluded from `documents` and Agent decisions. Unit-level
-`inheritedDocumentIds` and coverage `inheritedDocumentCount` preserve this distinction.
-Model summaries include `inheritedDocumentCount` when nonzero, not inherited text.
-An inherited baseline snapshot may accompany a new local override; it adds
-`documentationOrigin: "inherited"` and preserves compiler-resolved text.
-Other origin values or origin markers in v1/v2 are invalid.
-For v2/v3 input, model metadata `documentQualityAssessmentVersion` equals the
-input version and `documentQualityCriterion` retains the same description question.
-The enclosing report's top-level `schemaVersion` remains 1.
+Documentation Completeness is not part of the Agent judgment. The compiler
+evidence records one boolean presence fact per changed declaration. Assembly
+creates a finding for every declaration whose effective compiler document is
+missing or empty. See the [documentation rules](document-quality.md).
 
 ## Final data
 
@@ -148,25 +120,17 @@ Dimension statuses are derived, not authored:
 - REST/downstream: `passed`, `failed`, or `not-assessed`;
 - Azure Guidelines: `passed`, `failed`, or `not-assessed`, derived from
   Semantic intent coverage and applicable fetched guidance;
-- Doc Correctness (`documentQuality`): `passed`, `failed`, `not-assessed`,
-  or `not-applicable`, with `assessmentVersion: 3` for v3 input and separate semantic-unit,
-  document, and check coverage (one check per eligible description);
+- Documentation Completeness (`documentQuality`): `passed`, `failed`,
+  `not-assessed`, or `not-applicable`, with `assessmentVersion: 4` and
+  declaration/documented/missing coverage;
 - safety scope: `rest-and-downstream-only`, never Azure Guidelines or document quality.
 
-A blocked implemented dimension cannot pass. Documentation is `failed` when
-there are confirmed failures, otherwise `not-assessed` when coverage is
-incomplete, otherwise `not-applicable` if no descriptions are eligible,
-otherwise `passed`. Retain partial coverage even when failures are
-confirmed. A documentation unit with no eligible target `@doc` is explicitly
-`not-applicable`; it counts as assessed scope but not as an assessed document.
-Legacy documentation dimensions without input remain `not-assessed`.
-Historical v1 results keep their separate correctness/meaning checks and absent
-assessment version; v2 results retain `assessmentVersion: 2` and their original
-coverage. V2/v3 inputs require matching source evidence versions. Do not relabel
-legacy inputs or silently add inherited coverage; recollect evidence for v3.
-Recorded inherited-only coverage is unreviewed, not passed, failed, blocked,
-or missing; it is not rendered as a separate HTML group. Baseline inherited text, when relevant
-to a local-description finding, remains separate from exact declaration source.
+A blocked implemented dimension cannot pass. Documentation Completeness is
+`failed` when one or more changed declarations lack a nonempty effective
+compiler document, `not-assessed` when compiler evidence is incomplete,
+`not-applicable` when no changed compiler declarations are in scope, and
+`passed` otherwise. Historical v1-v3 documentation-quality results remain
+valid legacy data.
 A completed Azure Guidelines search with no governing guidance is represented by an
 intent-level `no-applicable-guidance` decision. It counts as assessed and does
 not create a blocker. `not-assessed` is reserved for missing evidence,
@@ -178,12 +142,12 @@ the Azure Guidelines assessment.
 `assessment.html` must show comparison identity, overall finding count with a
 finding-based status icon, REST/downstream code-safety findings, semantic
 intents, active Azure Guidelines status
-and coverage, retained document evidence, fetched guidance and changed
-TypeSpec, collapsed finding cards, retrieval blockers, explicit
-Doc Correctness status and coverage, and complete provenance.
+and coverage, fetched guidance and changed TypeSpec, collapsed finding cards,
+retrieval blockers, explicit Documentation Completeness status and coverage,
+and complete provenance.
 Overall code quality is a non-clickable summary card. The five dimension cards
 follow in this order: Semantic intents, Azure Guidelines, REST breaking changes,
-downstream breaking changes, and Doc Correctness. Main sections with findings
+downstream breaking changes, and Documentation Completeness. Main sections with findings
 precede those without findings; within each group, use the dimension-card order.
 Semantic intents are information only, always in the no-findings group. Show an
 information icon beside its title, with intent, operation, and action counts below;
@@ -191,7 +155,7 @@ do not display Pass, Fail, or N/A status tags for Semantic intents. Preserve the
 recorded review state in JSON. The appendix remains last.
 Each card's heading contains only its icon and title on the same line, not a
 number or Pass/Fail/N/A text. Quality cards show the recorded finding count below
-the heading. Overall sums REST, downstream, Azure Guidelines, and Doc Correctness
+the heading. Overall sums REST, downstream, Azure Guidelines, and Documentation Completeness
 findings, excluding intents. Preserve status icons, accessible labels, and colors.
 Count underlying findings, not grouped operations, SDK methods, or guideline issue
 cards. Exclude legacy downstream entries that only repeat approved REST findings.
@@ -276,58 +240,30 @@ anchors. Do not duplicate these sections with a comparison table or a second
 source-evidence block. Preserve pass/fail/not-assessed and no-applicable-guidance
 states without severity labels.
 
-Use **Doc Correctness** for this dimension's heading, summary/navigation labels,
-and failed impact prefix (`Doc Correctness: ...`).
-The subtitle asks whether the description accurately explains its associated
-TypeSpec code and retains exclusions for examples, external documentation, and
-agent execution. This is description quality, not runtime agent evaluation.
-Keep `documentQuality`, schema/evidence fields, the historical rubric, and
-main-section and finding anchors unchanged.
-Retain original recorded source, description, and judgment evidence verbatim.
+Use **Documentation Completeness** for this dimension's heading,
+summary/navigation labels, and failed impact prefix
+(`Documentation Completeness: ...`).
+The subtitle states that the check covers compiler-resolved documentation
+presence only and never compares text with code. Keep the internal
+`documentQuality` key and existing section/finding anchors.
 
-Keep the summary card and main-section coverage to the finding count and assessed
-description count, for example **0 findings** and **9 descriptions assessed**.
+Keep the summary card and main-section coverage to the finding count and checked
+declaration count, for example **0 findings** and **9 declarations checked**.
 Do not include unassessed counts or partial-review wording in the overview.
-Display Doc Correctness as **Pass** when no findings are recorded and **Fail**
+Display Documentation Completeness as **Pass** when no findings are recorded and **Fail**
 otherwise; Overall code quality similarly passes only when no main dimension has
 findings. These display statuses do not imply complete coverage or alter recorded
 assessment statuses. Label unavailable legacy assessment counts explicitly instead
-of inventing zero. Full coverage, original statuses, inherited-description counts,
-exclusions, and documentation blockers remain in `assessment.json`, not the HTML.
+of inventing zero. Full coverage and documentation blockers remain in
+`assessment.json`, not the HTML.
 
-The main documentation section contains only failed finding cards grouped by
-intent and compact coverage. Do not render Doc Correctness details in the appendix
-or links to the removed documentation appendix.
-Failed intent groups open initially; individual findings remain collapsed.
-Their summaries prominently show short object identities with qualified-name
-hover text, the recorded issue and check label, and no severity. Do not repeat
-the owning intent's link inside its finding cards; retain links to other affected
-intents and stable finding anchors.
-
-On expansion, show **Current description** first: the exact compiler-resolved
-target string, with only a nonempty exact `docQuote` match highlighted.
-Preserve whitespace and escape every string, including highlighted text.
-Follow with recorded `rationale` under **Why this needs attention** and recorded
-`expected` under **Suggested change**. The latter is actionable guidance, not
-a literal proposed description. Do not fabricate replacement prose, code
-summaries, or new judgment fields. Missing current text is explicitly unavailable,
-never substituted with a baseline string or legacy `actual` prose.
-
-Collapse supporting TypeSpec and source evidence. Retain baseline/current
-snapshots, exact declarations, full source paths, and inherited-origin labels;
-a single snapshot uses full width. Include related type definitions only through
-unambiguous compiler-recorded references from the same intent and revision,
-with exact source ownership. Do not infer references from prose or duplicate
-declarations already contained in the selected declaration.
-
-Omit passed, incomplete, and neutral documentation groups, detailed coverage,
-recorded summaries, and non-finding description browsers from the entire HTML
-report. Complete judgments and retained evidence remain in `assessment.json`.
-Zero pending decisions does not imply complete scope; no eligible descriptions
-retains its neutral recorded audit state even though the finding-based overview
-passes. Label historical two-check results legacy. Human-facing labels say **description**,
-not `@doc`; the normative criterion, historical artifacts, and literal evidence
-remain unchanged.
+The main documentation section contains only missing-document finding cards and
+compact coverage. Do not render Documentation Completeness details in the
+appendix. Each finding shows declaration identity, missing-document evidence,
+the suggested addition, and the compiler source location.
+Escape every string and do not fabricate replacement prose or new judgment
+fields. Omit documented declarations, incomplete scopes, and detailed coverage
+from HTML; complete presence facts and blockers remain in `assessment.json`.
 
 `renderReportSections` returns main `html` and an empty `appendixHtml` for
 compatibility. The general report appendix remains unchanged. Hash navigation opens

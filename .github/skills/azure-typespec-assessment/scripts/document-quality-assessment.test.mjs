@@ -80,6 +80,148 @@ function fail(decision) {
   });
 }
 
+function completenessFixture(documentationPresent) {
+  const source = {
+    id: "source-1",
+    path: "main.tsp",
+    hunks: [{ id: "hunk-1", lines: ["+model Widget {}"] }],
+    declarations: [{
+      id: "declaration-1",
+      kind: "model",
+      qualifiedName: "Widget",
+      documentationPresent,
+      hunkIds: ["hunk-1"],
+      source: { revision: "current", startLine: 1, endLine: 1 },
+    }],
+  };
+  source.documentEvidence = {
+    schemaVersion: 4,
+    status: "ready",
+    blockers: [],
+    declarations: [{
+      declarationId: "declaration-1",
+      qualifiedName: "Widget",
+      kind: "model",
+      documentationPresent,
+      source: source.declarations[0].source,
+    }],
+  };
+  const semanticUnits = [{
+    id: "semantic-1",
+    sourceChangeIds: ["source-1"],
+    hunkIds: ["hunk-1"],
+    declarationIds: ["declaration-1"],
+  }];
+  return {
+    input: buildDocumentQualityInput({
+      sourceIndex: { sourceChanges: [source] },
+      semantic: { status: "ready", reviewUnits: semanticUnits },
+    }),
+    semanticUnits,
+    sourceChanges: [source],
+  };
+}
+
+test("v4 deterministically reports missing compiler documentation", () => {
+  const args = completenessFixture(false);
+  const dimension = assembleDocumentQuality(args);
+  assert.equal(dimension.assessmentVersion, 4);
+  assert.equal(dimension.status, "failed");
+  assert.equal(dimension.coverage.declarationCount, 1);
+  assert.equal(dimension.coverage.documentedDeclarationCount, 0);
+  assert.equal(dimension.coverage.missingDeclarationCount, 1);
+  assert.equal(dimension.findings[0].declarationId, "declaration-1");
+  assert.deepEqual(dimension.findings[0].sources, [{
+    id: "source-1",
+    path: "main.tsp",
+    status: undefined,
+    origins: undefined,
+  }]);
+  assert.deepEqual(validateDocumentQualityDimension(dimension, semanticItems(args)), []);
+  const forged = structuredClone(dimension);
+  forged.findings[0].sources[0].id = "source-forged";
+  assert.ok(validateDocumentQualityDimension(forged, semanticItems(args)).length > 0);
+});
+
+test("v4 validation ignores intent-scoped source projection differences", () => {
+  const source = {
+    id: "source-1",
+    path: "main.tsp",
+    status: "ready",
+    origins: ["current"],
+    hunks: [
+      { id: "hunk-1", lines: ["+model Widget {}"] },
+      { id: "hunk-2", lines: ["+model Gadget {}"] },
+    ],
+    declarations: [
+      {
+        id: "declaration-1", kind: "model", qualifiedName: "Widget",
+        documentationPresent: false, hunkIds: ["hunk-1"],
+        source: { revision: "current", startLine: 1, endLine: 1 },
+      },
+      {
+        id: "declaration-2", kind: "model", qualifiedName: "Gadget",
+        documentationPresent: false, hunkIds: ["hunk-2"],
+        source: { revision: "current", startLine: 2, endLine: 2 },
+      },
+    ],
+  };
+  source.documentEvidence = {
+    schemaVersion: 4,
+    status: "ready",
+    blockers: [],
+    declarations: source.declarations.map((declaration) => ({
+      declarationId: declaration.id,
+      qualifiedName: declaration.qualifiedName,
+      kind: declaration.kind,
+      documentationPresent: false,
+      source: declaration.source,
+    })),
+  };
+  const semanticUnits = [
+    {
+      id: "semantic-1", sourceChangeIds: ["source-1"],
+      hunkIds: ["hunk-1"], declarationIds: ["declaration-1"],
+    },
+    {
+      id: "semantic-2", sourceChangeIds: ["source-1"],
+      hunkIds: ["hunk-2"], declarationIds: ["declaration-2"],
+    },
+  ];
+  const input = buildDocumentQualityInput({
+    sourceIndex: { sourceChanges: [source] },
+    semantic: { status: "ready", reviewUnits: semanticUnits },
+  });
+  const dimension = assembleDocumentQuality({
+    input,
+    semanticUnits,
+    sourceChanges: [source],
+  });
+  const finalItems = semanticUnits.map((unit) => ({
+    ...unit,
+    sources: [{
+      ...source,
+      hunks: source.hunks.filter((hunk) => unit.hunkIds.includes(hunk.id)),
+      declarations: source.declarations.filter((declaration) =>
+        unit.declarationIds.includes(declaration.id)),
+    }],
+  }));
+  assert.equal(dimension.findings.length, 2);
+  assert.deepEqual(validateDocumentQualityDimension(dimension, finalItems), []);
+});
+
+test("v4 passes documented declarations and rejects Agent decisions", () => {
+  const args = completenessFixture(true);
+  const dimension = assembleDocumentQuality(args);
+  assert.equal(dimension.status, "passed");
+  assert.equal(dimension.coverage.documentedDeclarationCount, 1);
+  assert.deepEqual(dimension.findings, []);
+  assert.throws(
+    () => assembleDocumentQuality({ ...args, decisions: [{ decision: "pass" }] }),
+    /does not accept Agent decisions/,
+  );
+});
+
 test("both @doc checks pass with exact coverage and canonical source context", () => {
   const args = fixture();
   const dimension = assembleDocumentQuality(args);
@@ -371,7 +513,7 @@ test("v2 rejects legacy checks, mismatched model criteria, and unsupported versi
     assert.throws(() => assembleDocumentQuality(args), /mismatch/);
   }
   const args = fixture(2);
-  args.input.schemaVersion = 4;
+  args.input.schemaVersion = 5;
   assert.throws(() => assembleDocumentQuality(args), /unsupported input schemaVersion/);
   const legacy = fixture();
   legacy.decisions[0].check = "description";
@@ -437,6 +579,7 @@ test("v3 counts inherited documentation without sending it for judgment", () => 
   args.sourceChanges[0].documentEvidence.documents[0].after = structuredClone(snapshot);
   const oldDecisions = args.decisions;
   args.input = buildDocumentQualityInput({
+    schemaVersion: 3,
     sourceIndex: { sourceChanges: args.sourceChanges }, semantic: { reviewUnits: args.semanticUnits },
   });
   assert.deepEqual(args.input.reviewUnits[0].documents, []);
@@ -484,6 +627,7 @@ test("v3 mixed scope requests only the local judgment and counts inherited prese
   inherited.after.documentationOrigin = "inherited";
   args.sourceChanges[0].documentEvidence.documents.push(inherited);
   args.input = buildDocumentQualityInput({
+    schemaVersion: 3,
     sourceIndex: { sourceChanges: args.sourceChanges }, semantic: { reviewUnits: args.semanticUnits },
   });
   args.modelInput.documentQualityReviewUnits[0].inheritedDocumentCount = 1;
@@ -529,7 +673,7 @@ test("v2 and v3 cannot relabel evidence, model metadata, or final dimensions", (
 });
 
 test("unsupported documentation versions are rejected rather than coerced", () => {
-  for (const version of [0, 4, "3", null]) {
+  for (const version of [0, 5, "3", null]) {
     const args = fixture(3);
     assert.throws(() => buildDocumentQualityInput({
       schemaVersion: version, sourceIndex: { sourceChanges: args.sourceChanges },

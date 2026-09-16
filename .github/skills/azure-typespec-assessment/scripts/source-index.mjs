@@ -37,6 +37,48 @@ export function parseUnifiedHunks(diff) {
   return hunks;
 }
 
+function changedLines(hunk, revision) {
+  let baseLine = hunk.base.startLine;
+  let currentLine = hunk.current.startLine;
+  const lines = [];
+  for (const line of hunk.lines) {
+    if (line.startsWith("-") && !line.startsWith("---")) {
+      if (revision === "base") lines.push(baseLine);
+      baseLine += 1;
+    } else if (line.startsWith("+") && !line.startsWith("+++")) {
+      if (revision === "current") lines.push(currentLine);
+      currentLine += 1;
+    } else if (!line.startsWith("\\")) {
+      baseLine += 1;
+      currentLine += 1;
+    }
+  }
+  return lines;
+}
+
+function changedHunks(hunks, revision, startLine, endLine) {
+  return hunks.filter((hunk) =>
+    changedLines(hunk, revision).some(
+      (line) => line >= startLine && line <= endLine,
+    ),
+  );
+}
+
+function declarationPrefixStart(content, startLine) {
+  if (!content || startLine <= 1) return startLine;
+  const lines = content.split(/\r?\n/);
+  let prefixStart = startLine;
+  for (
+    let line = startLine - 2;
+    line >= Math.max(0, startLine - 65);
+    line -= 1
+  ) {
+    if (!lines[line].trim()) break;
+    prefixStart = line + 1;
+  }
+  return prefixStart;
+}
+
 function declarations(content, hunks, revision, file, linkFactory) {
   if (!content) return [];
   const lines = content.split(/\r?\n/);
@@ -166,13 +208,20 @@ export function buildSourceIndex({
   headCommit,
   changedFiles,
   remoteUrl,
+  currentRevision = "working",
   readFile = (revision, file) => readRevisionFile(repo, revision, file),
-  diffFile = (file) => unifiedDiff(repo, mergeBase, file),
+  diffFile = (file) =>
+    unifiedDiff(
+      repo,
+      mergeBase,
+      file,
+      currentRevision === "working" ? undefined : currentRevision,
+    ),
 }) {
   const texts = new Map();
   const sourceChanges = changedFiles.map((file) => {
     const base = readFile(mergeBase, file.path);
-    const current = readFile("working", file.path);
+    const current = readFile(currentRevision, file.path);
     const head = readFile(headCommit, file.path);
     texts.set(file.path, { base, current });
     let diff = diffFile(file.path);
@@ -293,7 +342,16 @@ function compilerReferences(type) {
   return [...references].sort();
 }
 
-function compilerDeclaration(type, kind, revision, root, source, compiler) {
+function compilerDeclaration(
+  type,
+  kind,
+  revision,
+  root,
+  source,
+  sourceText,
+  compiler,
+  program,
+) {
   const location = compiler.getSourceLocation(type);
   if (!location?.file?.path || !Number.isInteger(location.pos) || !Number.isInteger(location.end)) {
     return undefined;
@@ -304,15 +362,18 @@ function compilerDeclaration(type, kind, revision, root, source, compiler) {
   const end = location.file.getLineAndCharacterOfPosition(Math.max(location.pos, location.end - 1));
   const startLine = start.line + 1;
   const endLine = end.line + 1;
-  const hunkIds = (source.hunks ?? [])
-    .filter((hunk) => {
-      const range = hunk[revision];
-      return range && range.endLine >= startLine && range.startLine <= endLine;
-    })
+  const hunkIds = changedHunks(
+    source.hunks ?? [],
+    revision,
+    declarationPrefixStart(sourceText, startLine),
+    endLine,
+  )
     .map((hunk) => hunk.id);
-  if (!hunkIds.length) return undefined;
   const qualifiedName = semanticQualifiedName(type, kind);
   if (!qualifiedName) return undefined;
+  const documentation = typeof compiler.getDoc === "function"
+    ? compiler.getDoc(program, type)
+    : undefined;
   return {
     id: id("declaration", `${file}:${revision}:${kind}:${qualifiedName}:${startLine}`),
     kind,
@@ -327,6 +388,8 @@ function compilerDeclaration(type, kind, revision, root, source, compiler) {
       position: { start: location.pos, end: location.end },
       referencedNames: compilerReferences(type),
     },
+    documentationPresent:
+      typeof documentation === "string" && documentation.trim().length > 0,
     source: { revision, startLine, endLine },
   };
 }
@@ -335,191 +398,10 @@ async function compilerModule(worktree) {
   const entry = path.join(worktree, "node_modules", "@typespec", "compiler", "dist", "src", "index.js");
   if (!fs.existsSync(entry)) throw new Error(`TypeSpec compiler not found: ${entry}`);
   const compiler = await import(pathToFileURL(entry).href);
-  // Older compilers may not expose the AST entry point. Preserve semantic analysis
-  // and explicitly block only documentation evidence in that case.
-  const astEntry = path.join(path.dirname(entry), "ast", "index.js");
-  const ast = fs.existsSync(astEntry)
-    ? await import(pathToFileURL(astEntry).href)
-    : undefined;
   const packageJson = JSON.parse(fs.readFileSync(
     path.join(worktree, "node_modules", "@typespec", "compiler", "package.json"), "utf8",
   ));
-  return { ...compiler, ...ast, compilerVersion: packageJson.version };
-}
-
-function documentDeclarations(script, program, compiler, source, revision) {
-  if (!compiler.SyntaxKind || typeof compiler.visitChildren !== "function") {
-    throw new Error("This TypeSpec compiler does not expose the required AST traversal API.");
-  }
-  if (typeof compiler.getDoc !== "function" || typeof compiler.getDocData !== "function") {
-    throw new Error("This TypeSpec compiler does not expose the required documentation resolution API.");
-  }
-  const kinds = {
-    NamespaceStatement: "namespace", ModelStatement: "model", ModelProperty: "property",
-    OperationStatement: "operation", InterfaceStatement: "interface", ScalarStatement: "scalar",
-    EnumStatement: "enum", EnumMember: "enum-member", UnionStatement: "union",
-    UnionVariant: "union-variant", AliasStatement: "alias",
-    ScalarConstructor: "scalar-constructor",
-  };
-  const records = [];
-  const file = script.file;
-  // Hunk context is not a change: only +/- positions establish document ownership.
-  // Pair equality below also excludes untouched siblings when a whole file is diffed.
-  const edits = source.hunks.map((hunk) => {
-    let line = hunk[revision].startLine;
-    const changed = [];
-    for (const text of hunk.lines) {
-      const marker = text[0];
-      if (marker === (revision === "base" ? "-" : "+")) changed.push(line);
-      if (marker === " " || marker === (revision === "base" ? "-" : "+")) line += 1;
-    }
-    return { id: hunk.id, lines: changed };
-  });
-  const visit = (node, owner = "") => {
-    if (node.kind === compiler.SyntaxKind.TypeSpecScript) {
-      let scope = owner;
-      for (const statement of node.statements) {
-        visit(statement, scope);
-        let namespace = statement;
-        const names = [];
-        while (namespace?.kind === compiler.SyntaxKind.NamespaceStatement &&
-          !Array.isArray(namespace.statements)) {
-          names.push(namespace.id.sv);
-          namespace = namespace.statements;
-        }
-        if (!namespace && names.length) scope = [owner, ...names].filter(Boolean).join(".");
-      }
-      return;
-    }
-    const kind = kinds[compiler.SyntaxKind[node.kind]];
-    const name = node.id?.sv;
-    const qualifiedName = kind && name ? [owner, name].filter(Boolean).join(".") : owner;
-    const decorators = node.kind === compiler.SyntaxKind.AugmentDecoratorStatement
-      ? [node]
-      : node.decorators ?? [];
-    const targetName = (target) => target?.sv ??
-      (target?.base && target?.id ? `${targetName(target.base)}.${target.id.sv}` : "");
-    const candidates = decorators.filter((decorator) =>
-      ["doc", "TypeSpec.doc"].includes(targetName(decorator.target)));
-    const comments = node.docs ?? [];
-    // Tag bodies are not local main descriptions and must not hide inherited documentation.
-    const hasDescription = comments.some((comment) =>
-      comment.content.some((content) => content.text?.trim()));
-    const type = kind && name ? program.checker.getTypeForNode(node) : undefined;
-    const data = type ? compiler.getDocData(program, type) : undefined;
-    const resolved = type ? compiler.getDoc(program, type) : undefined;
-    const parentsOf = (value) => [
-      value.sourceOperation, value.sourceModel, value.sourceProperty, value.baseModel,
-      ...(value.sourceModels ?? []).map((source) => source.model),
-    ].filter(Boolean);
-    const ancestors = [];
-    const visited = new Set([type]);
-    const parents = type ? parentsOf(type) : [];
-    const pending = candidates.length || hasDescription ? [...parents] : [];
-    while (pending.length) {
-      const parent = pending.pop();
-      if (visited.has(parent)) continue;
-      visited.add(parent);
-      ancestors.push(parent);
-      pending.push(...parentsOf(parent));
-    }
-    const inherited = !candidates.length && !hasDescription &&
-      typeof resolved === "string" && resolved.trim().length > 0 && parents.length > 0;
-    if (candidates.length || hasDescription || inherited) {
-      const start = Math.min(node.pos, ...comments.map((comment) => comment.pos));
-      const startLine = file.getLineAndCharacterOfPosition(start).line + 1;
-      const endLine = file.getLineAndCharacterOfPosition(Math.max(node.pos, node.end - 1)).line + 1;
-      let doc = null;
-      let blocker;
-      if (!kind || !name) {
-        blocker = "Cannot establish a supported named declaration context for this @doc.";
-      } else if (inherited) {
-        // V1 records compiler-known presence only; inherited quality is not reviewed.
-        doc = resolved;
-      } else {
-        const applications = (type.decorators ?? []).filter((item) => item.decorator === compiler.$doc);
-        const docs = candidates.filter((candidate) =>
-          applications.some((application) => application.node === candidate));
-        const inheritedDocNodes = new Set();
-        for (const parent of ancestors) {
-          for (const application of parent.decorators ?? []) {
-            if (application.decorator === compiler.$doc && application.node) inheritedDocNodes.add(application.node);
-          }
-        }
-        const nonlocalDocs = applications.filter((application) => !candidates.includes(application.node));
-        if (type.node !== node || nonlocalDocs.some((application) => !inheritedDocNodes.has(application.node))) {
-          blocker = "Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported.";
-        } else if (docs.length !== candidates.length) {
-          blocker = "Cannot establish that the documentation decorator resolves to TypeSpec @doc.";
-        } else if (docs.length && (docs.length !== 1 || docs[0].arguments.length !== 1 ||
-          docs[0].arguments[0].kind !== compiler.SyntaxKind.StringLiteral)) {
-          blocker = "Only a single literal TypeSpec @doc argument is supported; dynamic or formatted documentation cannot be evaluated.";
-        } else if (data?.source !== (docs.length ? "decorator" : "comment") || typeof resolved !== "string") {
-          blocker = "Cannot establish that the local description resolves to TypeSpec @doc.";
-        } else {
-          // Template decorators may remain attached after a local description overrides them.
-          const content = comments.flatMap((comment) => comment.content);
-          const localDoc = docs.length ? docs[0].arguments[0].value
-            : content.every((part) => part.kind === compiler.SyntaxKind.DocText && typeof part.text === "string")
-              ? content.map((part) => part.text).join("").trim() : undefined;
-          if (nonlocalDocs.length && resolved !== localDoc) {
-            blocker = "The resolved template documentation does not match the locally attached description.";
-          } else {
-            doc = resolved;
-          }
-        }
-      }
-      records.push({
-        key: kind && name ? `${kind}:${qualifiedName}` : `unsupported:${qualifiedName}:${node.pos}`,
-        qualifiedName: qualifiedName || compiler.SyntaxKind[node.kind],
-        kind: kind ?? "unsupported", doc, blocker,
-        ...(inherited ? { documentationOrigin: "inherited" } : {}),
-        declaration: file.text.slice(start, node.end),
-        source: { path: source.path, revision, startLine, endLine },
-        hunkIds: edits.filter((hunk) =>
-          hunk.lines.some((line) => line >= startLine && line <= endLine)).map((hunk) => hunk.id),
-      });
-    }
-    compiler.visitChildren(node, (child) => { visit(child, qualifiedName); });
-  };
-  visit(script);
-  return records;
-}
-
-function changedDocumentEvidence(source, revisions) {
-  const byRevision = {};
-  for (const revision of ["base", "current"]) {
-    byRevision[revision] = new Map();
-    for (const record of revisions[revision] ?? []) {
-      if (byRevision[revision].has(record.key)) {
-        throw new Error(`Ambiguous documentation declaration: ${record.qualifiedName}`);
-      }
-      byRevision[revision].set(record.key, record);
-    }
-  }
-  const documents = [];
-  for (const [key, after] of byRevision.current) {
-    const before = byRevision.base.get(key);
-    if (after.doc === null && !after.blocker) continue;
-    if (before?.declaration === after.declaration) continue;
-    const hunkIds = [...new Set([...(before?.hunkIds ?? []), ...after.hunkIds])].sort();
-    if (!hunkIds.length) continue;
-    const snapshot = (record) => record?.doc !== null && record?.doc !== undefined ? {
-      doc: record.doc, declaration: record.declaration, source: record.source,
-      ...(record.documentationOrigin ? { documentationOrigin: record.documentationOrigin } : {}),
-    } : null;
-    documents.push({
-      id: id("document", `${source.path}:${key}`),
-      sourceChangeId: source.id,
-      qualifiedName: after.qualifiedName,
-      kind: after.kind,
-      before: snapshot(before),
-      after: snapshot(after),
-      hunkIds,
-      blocker: after.blocker ?? before?.blocker,
-    });
-  }
-  return documents.sort((left, right) => left.id.localeCompare(right.id));
+  return { ...compiler, compilerVersion: packageJson.version };
 }
 
 export async function addCompilerEvidence({
@@ -529,9 +411,9 @@ export async function addCompilerEvidence({
   projects,
   loadCompiler = compilerModule,
 }) {
-  // Only changed @doc/declaration pairs are serialized. All AST siblings are kept
-  // locally for pairing, then discarded; deleted docs are deliberately not coverage findings.
-  const documentRevisions = new Map(sourceIndex.sourceChanges.map((source) => [source.id, {}]));
+  const compiledDocumentSources = new Map(
+    sourceIndex.sourceChanges.map((source) => [source.id, new Set()]),
+  );
   const documentBlockers = new Map(sourceIndex.sourceChanges.map((source) => [source.id, []]));
   const declarations = new Map(sourceIndex.sourceChanges.map((source) => [source.id, []]));
   const referencedDeclarations = {};
@@ -544,6 +426,14 @@ export async function addCompilerEvidence({
     try {
       compiler = await loadCompiler(worktree);
       versions.add(compiler.compilerVersion ?? "unknown");
+      if (typeof compiler.getDoc !== "function") {
+        for (const source of sourceIndex.sourceChanges) {
+          documentBlockers.get(source.id).push({
+            revision,
+            message: "This TypeSpec compiler does not expose the required documentation resolution API.",
+          });
+        }
+      }
     } catch (error) {
       blockers.push({ revision, message: error.message });
       continue;
@@ -576,12 +466,7 @@ export async function addCompilerEvidence({
             });
             continue;
           }
-          try {
-            documentRevisions.get(source.id)[revision] =
-              documentDeclarations(script, program, compiler, source, revision);
-          } catch (error) {
-            documentBlockers.get(source.id).push({ revision, message: error.message });
-          }
+          compiledDocumentSources.get(source.id).add(revision);
         }
         const operationTypes = [];
         const listeners = {};
@@ -633,7 +518,9 @@ export async function addCompilerEvidence({
                 revision,
                 worktree,
                 source,
+                revisionSources.get(sourceIndex)?.get(source.path)?.[revision],
                 compiler,
+                program,
               );
               if (declaration) declarations.get(source.id).push(declaration);
             }
@@ -701,33 +588,59 @@ export async function addCompilerEvidence({
   for (const source of sourceIndex.sourceChanges) {
     const compiled = declarations.get(source.id);
     if (compiled.length) {
-      source.declarations = [...new Map(compiled.map((item) => [item.id, item])).values()]
+      const identities = new Map();
+      for (const declaration of compiled) {
+        const key = `${declaration.kind}:${declaration.qualifiedName}`;
+        if (declaration.hunkIds.length) {
+          identities.set(key, [
+            ...new Set([
+              ...(identities.get(key) ?? []),
+              ...declaration.hunkIds,
+            ]),
+          ]);
+        }
+      }
+      source.declarations = [
+        ...new Map(compiled.map((item) => [item.id, item])).values(),
+      ]
+        .filter((declaration) =>
+          identities.has(`${declaration.kind}:${declaration.qualifiedName}`),
+        )
+        .map((declaration) =>
+          declaration.hunkIds.length
+            ? declaration
+            : {
+                ...declaration,
+                hunkIds: identities.get(
+                  `${declaration.kind}:${declaration.qualifiedName}`,
+                ),
+              },
+        )
         .sort((left, right) => left.source.startLine - right.source.startLine);
     }
-    const revisions = documentRevisions.get(source.id);
     const evidenceBlockers = documentBlockers.get(source.id);
-    for (const revision of ["base", "current"]) {
-      const raw = revisionSources.get(sourceIndex)?.get(source.path)?.[revision];
-      const absent = raw === null || (raw === undefined &&
-        (revision === "base" ? source.status === "added" : source.status === "deleted"));
-      if (absent) revisions[revision] = [];
-      if (!revisions[revision]) evidenceBlockers.push({
-        revision, message: "Changed source was not available in a successfully compiled TypeSpec program.",
+    const currentAbsent = source.status === "deleted";
+    if (!currentAbsent && !compiledDocumentSources.get(source.id).has("current")) {
+      evidenceBlockers.push({
+        revision: "current",
+        message: "Changed source was not available in a successfully compiled TypeSpec program.",
       });
     }
-    let documents = [];
-    if (!evidenceBlockers.length) {
-      try {
-        documents = changedDocumentEvidence(source, revisions);
-      } catch (error) {
-        evidenceBlockers.push({ message: error.message });
-      }
-    }
     source.documentEvidence = {
-      schemaVersion: 3,
+      schemaVersion: 4,
       status: evidenceBlockers.length ? "blocked" : "ready",
       blockers: evidenceBlockers,
-      documents,
+      declarations: currentAbsent
+        ? []
+        : (source.declarations ?? [])
+            .filter((declaration) => declaration.source.revision === "current")
+            .map((declaration) => ({
+              declarationId: declaration.id,
+              qualifiedName: declaration.qualifiedName,
+              kind: declaration.kind,
+              documentationPresent: declaration.documentationPresent,
+              source: declaration.source,
+            })),
     };
   }
   sourceIndex.analysis = {

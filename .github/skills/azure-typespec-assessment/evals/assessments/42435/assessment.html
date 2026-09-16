@@ -142,36 +142,36 @@ body{overflow-wrap:anywhere}
 }
 
 </style></head><body>
-<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Mark the batch outbound-rules action as paged</h1>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Enable paging for the managed-network outbound-rule batch action</h1>
 <p class="hero-meta">TypeSpec source diff: <code>2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904</code> → <code>96eae0e7d5c7ede040ee0cc646d397e5d8375912</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#semantic-intents"><div class="summary-heading"><div class="summary-value"><span class="info" aria-label="Information only">ⓘ</span></div><div class="summary-label">Semantic intents</div></div><div class="summary-detail">1 intent<br>1 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#azure-compliance"><div class="summary-heading"><div class="summary-value"><span class="pass" aria-label="Passed">✓</span></div><div class="summary-label">Azure Guidelines</div></div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-heading"><div class="summary-value"><span class="pass" aria-label="Passed">✓</span></div><div class="summary-label">REST breaking changes</div></div><div class="summary-detail">0 findings</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-heading"><div class="summary-value"><span class="fail" aria-label="Failed">×</span></div><div class="summary-label">Downstream breaking changes</div></div><div class="summary-detail">3 findings</div></a>
-<a class="summary-card" href="#document-quality"><div class="summary-heading"><div class="summary-value"><span class="pass" aria-label="Passed">✓</span></div><div class="summary-label">Documentation Correctness</div></div><div class="summary-detail">0 findings<br>1 description assessed</div></a>
+<a class="summary-card" href="#document-quality"><div class="summary-heading"><div class="summary-value"><span class="fail" aria-label="Failed">×</span></div><div class="summary-label">Documentation Completeness</div></div><div class="summary-detail">1 finding<br>2 declarations checked</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
 <p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p></div></details>
 <main class="container">
-<section id="downstream-breaking"><div class="report-section-head"><div><h2>Downstream breaking changes</h2><p>Method impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge remove">failed</span><span class="report-count">1 mapped methods · 0 changed types</span></div></div><details class="report-card sdk-method-card" id="downstream-method-project-37d12681d7d3-Microsoft-CognitiveServices-ManagedNetworkSettingsPropertiesBasicResources-post"><summary><div class="report-card-title"><strong>OutboundRules.post</strong><small>The normalized SDK method contract changes directly.</small><div class="report-intent-relations"><span class="report-relation-label">Affected intents (1)</span><div class="report-link-row"><a class="report-link" href="#intent-semantic-ddd8c6b20bb269ad">Mark the batch outbound-rules action as paged</a></div></div></div><div class="report-badges"><span class="report-badge direct">Direct method change</span></div></summary><div class="report-card-body"><span id="downstream-downstream-group-2a67076bb3eb0443"></span><span id="downstream-downstream-14526f8120d34ecd"></span><span id="finding-downstream-14526f8120d34ecd"></span><span id="downstream-downstream-7a1abbfd0db76351"></span><span id="finding-downstream-7a1abbfd0db76351"></span><span id="downstream-downstream-ca97936fe9a11510"></span><span id="finding-downstream-ca97936fe9a11510"></span><p class="report-small"><strong>Target normalized SDK method:</strong> <code>Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post</code></p><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><span class="contract-area-kind">SDK method</span><strong>Paging</strong><span class="report-detail">The post method now manages pages and nextLink continuation. Callers that handled continuation themselves must switch to SDK-managed iteration.</span></td><td><pre>none</pre></td><td><pre>{}</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Method kind</strong><span class="report-detail">The post method changes from a long-running operation to a long-running pageable operation. Existing callers must consume a paged result after completion.</span></td><td><pre>lro</pre></td><td><pre>lropaging</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Return type (body output)</strong></td><td><pre>OutboundRuleListResult</pre></td><td><pre>OutboundRuleBasicResource[]</pre></td></tr></tbody></table></div><p class="report-small"><strong>Constant headers (not numbered caller inputs):</strong> Baseline: Content-Type (header): &quot;application/json&quot;; Baseline: Accept (header): &quot;application/json&quot;; Target: Content-Type (header): &quot;application/json&quot;; Target: Accept (header): &quot;application/json&quot;</p><div class="breaking-rationale"><strong>Why this is breaking:</strong> <ul><li>The post method now manages pages and nextLink continuation. Callers that handled continuation themselves must switch to SDK-managed iteration.</li><li>The post result changes from OutboundRuleListResult to OutboundRuleBasicResource[]. Callers must consume items instead of accessing the result&#39;s value or nextLink.</li><li>The post method changes from a long-running operation to a long-running pageable operation. Existing callers must consume a paged result after completion.</li></ul></div><p class="report-small">Language-neutral TCGC evidence is shown; generated language signatures are not fabricated.</p></div></details></section>
-<section id="semantic-intents"><div class="report-section-head"><div><h2>Semantic intents</h2><p>Impact links are visible at a glance; expand for changed TypeSpec source, followed by affected operations.</p></div><div class="report-section-meta"><span class="report-count">1 intents · 0 added · 1 modified · 0 removed</span></div></div><details class="report-card intent" id="intent-semantic-ddd8c6b20bb269ad"><summary><div class="report-card-title"><strong>Mark the batch outbound-rules action as paged</strong><small>Adds `@list` to `ManagedNetworkSettingsPropertiesBasicResources.post`, preserving its HTTP request and response wire shape while identifying the existing `OutboundRuleListResult` value/nextLink response as a paged long-running result for generated SDKs.</small><div class="report-intent-relations"><span class="report-relation-label" title="REST, downstream, and failed Documentation Correctness impacts">Impacts (1)</span><div class="report-link-row" aria-label="Intent impacts"><a class="report-link impact" href="#downstream-method-project-37d12681d7d3-Microsoft-CognitiveServices-ManagedNetworkSettingsPropertiesBasicResources-post">Downstream: OutboundRules.post</a></div></div></div><div class="report-badges"><span class="report-badge modify">modify</span></div></summary><div class="report-card-body"><details class="report-source" open><summary>Changed TypeSpec source (1)</summary><div class="diff"><div class="diff-path">specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</div><pre><span class="context">    */</span>
+<section id="downstream-breaking"><div class="report-section-head"><div><h2>Downstream breaking changes</h2><p>Method impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge remove">failed</span><span class="report-count">1 mapped methods · 0 changed types</span></div></div><details class="report-card sdk-method-card" id="downstream-method-project-37d12681d7d3-Microsoft-CognitiveServices-ManagedNetworkSettingsPropertiesBasicResources-post"><summary><div class="report-card-title"><strong>OutboundRules.post</strong><small>The normalized SDK method contract changes directly.</small><div class="report-intent-relations"><span class="report-relation-label">Affected intents (1)</span><div class="report-link-row"><a class="report-link" href="#intent-semantic-200facaaa7a2fda3">Enable paging for the managed-network outbound-rule batch action</a></div></div></div><div class="report-badges"><span class="report-badge direct">Direct method change</span></div></summary><div class="report-card-body"><span id="downstream-downstream-group-2a67076bb3eb0443"></span><span id="downstream-downstream-11b6071136989ee2"></span><span id="finding-downstream-11b6071136989ee2"></span><span id="downstream-downstream-a94c75de5a80ef92"></span><span id="finding-downstream-a94c75de5a80ef92"></span><span id="downstream-downstream-c8c95c0dcd8ef04f"></span><span id="finding-downstream-c8c95c0dcd8ef04f"></span><p class="report-small"><strong>Target normalized SDK method:</strong> <code>Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post</code></p><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><span class="contract-area-kind">SDK method</span><strong>Method kind</strong><span class="report-detail">OutboundRules.post changes from lro to lropaging. Existing consumers expecting an ordinary long-running operation result must adapt to paged result consumption; unchanged request parameters and polling metadata do not preserve the generated result abstraction.</span></td><td><pre>lro</pre></td><td><pre>lropaging</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Paging</strong><span class="report-detail">OutboundRules.post gains automatic page-item extraction from value and GET continuation through nextLink. Consumers previously handling the single result envelope and continuation themselves must adapt to generated paging behavior, including additional requests when iterating.</span></td><td><pre>none</pre></td><td><pre>{}</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Return type (body output)</strong></td><td><pre>OutboundRuleListResult</pre></td><td><pre>OutboundRuleBasicResource[]</pre></td></tr></tbody></table></div><p class="report-small"><strong>Constant headers (not numbered caller inputs):</strong> Baseline: Content-Type (header): &quot;application/json&quot;; Baseline: Accept (header): &quot;application/json&quot;; Target: Content-Type (header): &quot;application/json&quot;; Target: Accept (header): &quot;application/json&quot;</p><div class="breaking-rationale"><strong>Why this is breaking:</strong> <ul><li>OutboundRules.post changes its SDK response from OutboundRuleListResult to an array of OutboundRuleBasicResource. Existing consumers typed to the envelope or accessing its value and nextLink must instead consume the item-oriented result.</li><li>OutboundRules.post changes from lro to lropaging. Existing consumers expecting an ordinary long-running operation result must adapt to paged result consumption; unchanged request parameters and polling metadata do not preserve the generated result abstraction.</li><li>OutboundRules.post gains automatic page-item extraction from value and GET continuation through nextLink. Consumers previously handling the single result envelope and continuation themselves must adapt to generated paging behavior, including additional requests when iterating.</li></ul></div><p class="report-small">Language-neutral TCGC evidence is shown; generated language signatures are not fabricated.</p></div></details></section>
+<section id="document-quality"><div class="report-section-head"><div><h2>Documentation Completeness</h2><p>Checks only whether each changed compiler declaration has a nonempty effective TypeSpec document. Documentation text is not compared with code.</p></div><div class="report-section-meta"><span class="report-badge remove">failed</span></div></div><p class="report-small">1 finding · 2 declarations checked</p><div class="document-quality-scope"><details class="report-card document-quality-check" id="document-quality-document-finding-3cee7c322f897e98" open><summary><div class="report-card-title"><strong>ManagedNetworkSettingsPropertiesBasicResources</strong><small>Missing documentation for ManagedNetworkSettingsPropertiesBasicResources</small><div class="report-intent-relations"><span class="report-relation-label">Affected intents (1)</span><div class="report-link-row"><a class="report-link" href="#intent-semantic-200facaaa7a2fda3">Enable paging for the managed-network outbound-rule batch action</a></div></div></div><div class="report-badges"><span class="report-badge remove">failed</span></div></summary><div class="report-card-body"><div class="report-guideline-section document-quality-explanation"><h3>Why this needs attention</h3><p>The TypeSpec compiler returned no nonempty documentation for this declaration.</p></div><div class="report-guideline-section document-quality-suggestion"><h3>Suggested change</h3><p>Add a nonempty TypeSpec documentation description.</p></div><details class="report-subdetails document-quality-source"><summary>View supporting TypeSpec location</summary><p class="sources"><code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp:28-104</code></p></details></div></details></div></section>
+<section id="semantic-intents"><div class="report-section-head"><div><h2>Semantic intents</h2><p>Impact links are visible at a glance; expand for changed TypeSpec source, followed by affected operations.</p></div><div class="report-section-meta"><span class="report-count">1 intents · 0 added · 1 modified · 0 removed</span></div></div><details class="report-card intent" id="intent-semantic-200facaaa7a2fda3"><summary><div class="report-card-title"><strong>Enable paging for the managed-network outbound-rule batch action</strong><small>Adds @list to the existing asynchronous batchOutboundRules action on a Cognitive Services account&#39;s managed network. The action still updates outbound rules with the same request and response wire shapes, but now advertises paging over OutboundRuleListResult.value and nextLink. Generated SDK consumption changes from an LRO returning the response envelope to an LRO with paged outbound-rule items. Both sides compile API version 2026-03-01; this is not a new resource-list lifecycle operation or an API-version addition.</small><div class="report-intent-relations"><span class="report-relation-label" title="REST, downstream, and failed Documentation Completeness impacts">Impacts (2)</span><div class="report-link-row" aria-label="Intent impacts"><a class="report-link impact" href="#downstream-method-project-37d12681d7d3-Microsoft-CognitiveServices-ManagedNetworkSettingsPropertiesBasicResources-post">Downstream: OutboundRules.post</a></div><div class="report-link-row" aria-label="Documentation Completeness findings"><a class="report-link impact" href="#document-quality-document-finding-3cee7c322f897e98">Documentation Completeness: Missing documentation for ManagedNetworkSettingsPropertiesBasicResources</a></div></div></div><div class="report-badges"><span class="report-badge modify">modify</span></div></summary><div class="report-card-body"><details class="report-source" open><summary>Changed TypeSpec source (1)</summary><div class="diff"><div class="diff-path">specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</div><pre><span class="context">    */</span>
 <span class="context">   @tag(&quot;ManagedNetwork&quot;)</span>
 <span class="context">   @action(&quot;batchOutboundRules&quot;)</span>
 <span class="add">+  @list</span>
 <span class="context">   post is ArmResourceActionAsync&lt;</span>
 <span class="context">     ManagedNetworkSettingsPropertiesBasicResource,</span>
 <span class="context">     Request = ManagedNetworkSettingsBasicResource,</span>
-<span class="context"></span></pre></div><p class="sources"><code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp:28</code></p></details><details class="report-subdetails" id="intent-semantic-ddd8c6b20bb269ad-operations"><summary>Affected operations (1)</summary><details class="operation"><summary><strong>OutboundRules_Post</strong><span class="report-http">POST</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules</code><span>2026-03-01</span></summary><div class="operation-body"><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><span class="contract-area-kind">Paging</span><strong>nextLinkName</strong></td><td><pre>not present</pre></td><td><pre>nextLink</pre></td></tr></tbody></table></div><p>HTTP signature and represented payload contract unchanged; SDK paging metadata changed.</p></div></details></details></div></details></section>
+<span class="context"></span></pre></div><p class="sources"><code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp:28</code></p></details><details class="report-subdetails" id="intent-semantic-200facaaa7a2fda3-operations"><summary>Affected operations (1)</summary><details class="operation"><summary><strong>OutboundRules_Post</strong><span class="report-http">POST</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules</code><span>2026-03-01</span></summary><div class="operation-body"><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><span class="contract-area-kind">Paging</span><strong>nextLinkName</strong></td><td><pre>not present</pre></td><td><pre>nextLink</pre></td></tr></tbody></table></div><p>HTTP signature and represented payload contract unchanged; SDK paging metadata changed.</p></div></details></details></div></details></section>
 <section id="azure-compliance"><div class="report-section-head"><div><h2>Azure Guidelines</h2><p>Findings and affected intents at a glance; expand for expected guidance and actual changes.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 findings</span></div></div><p class="report-small">1 of 1 semantic intents assessed · 4 documents selected</p><div class="report-empty">No Azure Guidelines findings.</div></section>
 <section id="rest-breaking"><div class="report-section-head"><div><h2>REST breaking changes</h2><p>Operation impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 operations · 0 findings</span></div></div><div class="report-empty">No confirmed REST breaking changes.</div></section>
-<section id="document-quality"><div class="report-section-head"><div><h2>Documentation Correctness</h2><p>Does the description clearly and accurately explain the associated TypeSpec code? Examples, external documentation, and agent execution are not assessed.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span></div></div><p class="report-small">0 findings · 1 description assessed</p></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/cognitiveservices/CognitiveServices.Management</code></td><td>existing-api-version</td><td><code>2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904@2026-03-01</code><br><small>base · affected-existing-version</small></td><td><code>96eae0e7d5c7ede040ee0cc646d397e5d8375912@2026-03-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
-<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/42435">#42435</a></p>
+<p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/">Azure.Core interface reference</a></li><li><a href="https://typespec.io/docs/standard-library/pagination/">TypeSpec pagination</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li></ul><details class="guidance-coverage"><summary>Guidance coverage and retrieval evidence</summary><pre>{
+<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/standard-library/pagination/">TypeSpec pagination</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://typespec.io/docs/libraries/rest/reference/decorators/">TypeSpec.Rest decorators</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li></ul><details class="guidance-coverage"><summary>Guidance coverage and retrieval evidence</summary><pre>{
   &quot;status&quot;: &quot;passed&quot;,
   &quot;coverage&quot;: {
     &quot;semanticIntentCount&quot;: 1,
@@ -179,575 +179,590 @@ body{overflow-wrap:anywhere}
     &quot;selectedDocumentCount&quot;: 4,
     &quot;unassessedIntentIds&quot;: []
   },
+  &quot;sharedSearch&quot;: {
+    &quot;catalogRanking&quot;: [
+      {
+        &quot;rank&quot;: 1,
+        &quot;catalogOrder&quot;: 19,
+        &quot;title&quot;: &quot;TypeSpec pagination&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/pagination/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 4,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 10
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 2,
+        &quot;catalogOrder&quot;: 1,
+        &quot;title&quot;: &quot;Evolving APIs&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 6
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 3,
+        &quot;catalogOrder&quot;: 14,
+        &quot;title&quot;: &quot;TypeSpec.Rest decorators&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/libraries/rest/reference/decorators/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 6
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 4,
+        &quot;catalogOrder&quot;: 24,
+        &quot;title&quot;: &quot;Decorators&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/decorators/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 5
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 5,
+        &quot;catalogOrder&quot;: 25,
+        &quot;title&quot;: &quot;Built-in decorators&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/built-in-decorators/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 5
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 6,
+        &quot;catalogOrder&quot;: 26,
+        &quot;title&quot;: &quot;OpenAPI decorators&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/libraries/openapi/reference/decorators/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 5
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 7,
+        &quot;catalogOrder&quot;: 7,
+        &quot;title&quot;: &quot;ARM resource types and modeling&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 4,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 4
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 8,
+        &quot;catalogOrder&quot;: 12,
+        &quot;title&quot;: &quot;ARM resource operations&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 4
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 9,
+        &quot;catalogOrder&quot;: 16,
+        &quot;title&quot;: &quot;ARM long-running operations&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 4
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 10,
+        &quot;catalogOrder&quot;: 2,
+        &quot;title&quot;: &quot;Versioning overview&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 3
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 11,
+        &quot;catalogOrder&quot;: 13,
+        &quot;title&quot;: &quot;Azure.ResourceManager interface reference&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 3
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 12,
+        &quot;catalogOrder&quot;: 15,
+        &quot;title&quot;: &quot;Azure.ResourceManager decorators&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/decorators/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 3
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 13,
+        &quot;catalogOrder&quot;: 18,
+        &quot;title&quot;: &quot;Azure.ResourceManager data types&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 3
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 14,
+        &quot;catalogOrder&quot;: 3,
+        &quot;title&quot;: &quot;Add preview after preview&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 15,
+        &quot;catalogOrder&quot;: 4,
+        &quot;title&quot;: &quot;Add stable after preview&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 16,
+        &quot;catalogOrder&quot;: 5,
+        &quot;title&quot;: &quot;Add preview after stable&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 17,
+        &quot;catalogOrder&quot;: 6,
+        &quot;title&quot;: &quot;Add stable after stable&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 18,
+        &quot;catalogOrder&quot;: 17,
+        &quot;title&quot;: &quot;Azure.Core long-running operations&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 19,
+        &quot;catalogOrder&quot;: 21,
+        &quot;title&quot;: &quot;Models&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/models/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 20,
+        &quot;catalogOrder&quot;: 22,
+        &quot;title&quot;: &quot;Enums&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/enums/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 21,
+        &quot;catalogOrder&quot;: 23,
+        &quot;title&quot;: &quot;Scalars&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/scalars/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 22,
+        &quot;catalogOrder&quot;: 29,
+        &quot;title&quot;: &quot;Content negotiation&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 23,
+        &quot;catalogOrder&quot;: 30,
+        &quot;title&quot;: &quot;Directives&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/directives/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 24,
+        &quot;catalogOrder&quot;: 31,
+        &quot;title&quot;: &quot;Azure Core `no-openapi` rule&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 2
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 25,
+        &quot;catalogOrder&quot;: 8,
+        &quot;title&quot;: &quot;Specific extension resource sample&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 0
+        },
+        &quot;selectionRationale&quot;: &quot;The document has lower relevance across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 26,
+        &quot;catalogOrder&quot;: 9,
+        &quot;title&quot;: &quot;Private endpoints&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 0
+        },
+        &quot;selectionRationale&quot;: &quot;The document has lower relevance across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 27,
+        &quot;catalogOrder&quot;: 10,
+        &quot;title&quot;: &quot;Private links&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 0
+        },
+        &quot;selectionRationale&quot;: &quot;The document has lower relevance across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 28,
+        &quot;catalogOrder&quot;: 11,
+        &quot;title&quot;: &quot;Network security perimeter&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 0
+        },
+        &quot;selectionRationale&quot;: &quot;The document has lower relevance across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 29,
+        &quot;catalogOrder&quot;: 20,
+        &quot;title&quot;: &quot;ARM common types&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 0
+        },
+        &quot;selectionRationale&quot;: &quot;The document has lower relevance across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 30,
+        &quot;catalogOrder&quot;: 27,
+        &quot;title&quot;: &quot;Change provider namespace&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 0
+        },
+        &quot;selectionRationale&quot;: &quot;The document has lower relevance across the assessment&#39;s Semantic intents.&quot;
+      },
+      {
+        &quot;rank&quot;: 31,
+        &quot;catalogOrder&quot;: 28,
+        &quot;title&quot;: &quot;Azure Portal default experiences&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 0,
+          &quot;servicePlane&quot;: 0,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 0
+        },
+        &quot;selectionRationale&quot;: &quot;The document has lower relevance across the assessment&#39;s Semantic intents.&quot;
+      }
+    ],
+    &quot;documents&quot;: [
+      {
+        &quot;rank&quot;: 1,
+        &quot;catalogOrder&quot;: 19,
+        &quot;title&quot;: &quot;TypeSpec pagination&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/pagination/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 4,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 10
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;,
+        &quot;guidance&quot;: [
+          {
+            &quot;section&quot;: &quot;Basics&quot;,
+            &quot;excerpt&quot;: &quot;To enable pagination for an operation the first step is to decorate it with the &lt;code dir=\&quot;auto\&quot;&gt;@list&lt;/code&gt; decorator and have the return type contain a property decorated with &lt;code dir=\&quot;auto\&quot;&gt;@pageItems&lt;/code&gt;&quot;,
+            &quot;queryTerms&quot;: [
+              &quot;@list&quot;,
+              &quot;paging&quot;
+            ],
+            &quot;examples&quot;: [
+              &quot;@list op listPets(): {  @pageItems pets: Pet[];};&quot;
+            ],
+            &quot;applicableDeclarationIds&quot;: [
+              &quot;declaration-6ab6c44b437678cb&quot;
+            ]
+          },
+          {
+            &quot;section&quot;: &quot;Server driven pagination&quot;,
+            &quot;excerpt&quot;: &quot;For HTTP services, &lt;code dir=\&quot;auto\&quot;&gt;@nextLink&lt;/code&gt; (and other link decorators like &lt;code dir=\&quot;auto\&quot;&gt;@prevLink&lt;/code&gt;, &lt;code dir=\&quot;auto\&quot;&gt;@firstLink&lt;/code&gt;, &lt;code dir=\&quot;auto\&quot;&gt;@lastLink&lt;/code&gt;) should be followed using a GET request by default. The link URIs are expected to be treated as opaque URLs that contain all necessary information to navigate to the respective page.&quot;,
+            &quot;queryTerms&quot;: [
+              &quot;OutboundRuleListResult.nextLink&quot;,
+              &quot;paging&quot;
+            ],
+            &quot;examples&quot;: [],
+            &quot;applicableDeclarationIds&quot;: [
+              &quot;declaration-6ab6c44b437678cb&quot;
+            ]
+          }
+        ],
+        &quot;noRelevantGuidance&quot;: false,
+        &quot;retrievedAt&quot;: &quot;2026-09-16T00:23:34.506Z&quot;,
+        &quot;contentHash&quot;: &quot;sha256:6592a307faadacadb369570f92a3471c45f29c8409fa4aea3d46ac08e78afccf&quot;
+      },
+      {
+        &quot;rank&quot;: 2,
+        &quot;catalogOrder&quot;: 1,
+        &quot;title&quot;: &quot;Evolving APIs&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 6
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;,
+        &quot;guidance&quot;: [
+          {
+            &quot;section&quot;: &quot;Overview&quot;,
+            &quot;excerpt&quot;: &quot;Versioning allows you to evolve your API without breaking existing clients. By using versioning decorators, you can specify when resources, operations, or properties are added, removed, or changed.&quot;,
+            &quot;queryTerms&quot;: [
+              &quot;operations&quot;,
+              &quot;modify&quot;
+            ],
+            &quot;examples&quot;: [],
+            &quot;applicableDeclarationIds&quot;: [
+              &quot;declaration-6ab6c44b437678cb&quot;
+            ]
+          }
+        ],
+        &quot;noRelevantGuidance&quot;: false,
+        &quot;retrievedAt&quot;: &quot;2026-09-16T00:23:33.666Z&quot;,
+        &quot;contentHash&quot;: &quot;sha256:4b96de985b982d96aaf24d17b61b703429e37614e6bd0b186832234219019262&quot;
+      },
+      {
+        &quot;rank&quot;: 3,
+        &quot;catalogOrder&quot;: 14,
+        &quot;title&quot;: &quot;TypeSpec.Rest decorators&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/libraries/rest/reference/decorators/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 1,
+          &quot;total&quot;: 6
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;,
+        &quot;guidance&quot;: [
+          {
+            &quot;section&quot;: &quot;@action&quot;,
+            &quot;excerpt&quot;: &quot;Specify this operation is an action. (Scoped to a resource item /pets/{petId}/my-action)&quot;,
+            &quot;queryTerms&quot;: [
+              &quot;operations&quot;,
+              &quot;ManagedNetworkSettingsPropertiesBasicResources.post&quot;
+            ],
+            &quot;examples&quot;: [
+              &quot;@TypeSpec.Rest.action(name?: valueof string)&quot;
+            ],
+            &quot;applicableDeclarationIds&quot;: [
+              &quot;declaration-6ab6c44b437678cb&quot;
+            ]
+          }
+        ],
+        &quot;noRelevantGuidance&quot;: false,
+        &quot;retrievedAt&quot;: &quot;2026-09-16T00:23:34.260Z&quot;,
+        &quot;contentHash&quot;: &quot;sha256:4e783fdfa1c4cd5d409c1eea6101129aaf9f3225afb29150bb61e97e0c8b83dc&quot;
+      },
+      {
+        &quot;rank&quot;: 4,
+        &quot;catalogOrder&quot;: 24,
+        &quot;title&quot;: &quot;Decorators&quot;,
+        &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/decorators/&quot;,
+        &quot;score&quot;: {
+          &quot;exactSymbol&quot;: 0,
+          &quot;patternCategory&quot;: 3,
+          &quot;servicePlane&quot;: 2,
+          &quot;changeContext&quot;: 0,
+          &quot;total&quot;: 5
+        },
+        &quot;selectionRationale&quot;: &quot;The document matches one or more constructs across the assessment&#39;s Semantic intents.&quot;,
+        &quot;guidance&quot;: [
+          {
+            &quot;section&quot;: &quot;Using decorators&quot;,
+            &quot;excerpt&quot;: &quot;Decorators are referenced using the &lt;code dir=\&quot;auto\&quot;&gt;@&lt;/code&gt; prefix and must be placed before the entity they are decorating.&quot;,
+            &quot;queryTerms&quot;: [
+              &quot;decorators&quot;,
+              &quot;@list&quot;
+            ],
+            &quot;examples&quot;: [],
+            &quot;applicableDeclarationIds&quot;: [
+              &quot;declaration-6ab6c44b437678cb&quot;
+            ]
+          }
+        ],
+        &quot;noRelevantGuidance&quot;: false,
+        &quot;retrievedAt&quot;: &quot;2026-09-16T00:25:59.341Z&quot;,
+        &quot;contentHash&quot;: &quot;sha256:9502edbe473dc2d815267561a63c7f145d680ba063ce79c13d5e5539990eaf0b&quot;
+      }
+    ]
+  },
   &quot;intentAssessments&quot;: [
     {
-      &quot;semanticIntentId&quot;: &quot;semantic-ddd8c6b20bb269ad&quot;,
+      &quot;semanticIntentId&quot;: &quot;semantic-200facaaa7a2fda3&quot;,
       &quot;decision&quot;: &quot;applicable-pass&quot;,
-      &quot;catalogRanking&quot;: [
-        {
-          &quot;rank&quot;: 1,
-          &quot;catalogOrder&quot;: 10,
-          &quot;title&quot;: &quot;Azure.Core interface reference&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 6
-          },
-          &quot;selectionRationale&quot;: &quot;Directly covers data-plane list operation interfaces and matches the modified operation context.&quot;
-        },
-        {
-          &quot;rank&quot;: 2,
-          &quot;catalogOrder&quot;: 19,
-          &quot;title&quot;: &quot;TypeSpec pagination&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/pagination/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 6
-          },
-          &quot;selectionRationale&quot;: &quot;Directly covers paging and the standard pagination decorators used by the change.&quot;
-        },
-        {
-          &quot;rank&quot;: 3,
-          &quot;catalogOrder&quot;: 26,
-          &quot;title&quot;: &quot;Decorators&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/decorators/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 6
-          },
-          &quot;selectionRationale&quot;: &quot;Directly covers applying decorators to operations, matching the added decorator.&quot;
-        },
-        {
-          &quot;rank&quot;: 4,
-          &quot;catalogOrder&quot;: 27,
-          &quot;title&quot;: &quot;Built-in decorators&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/built-in-decorators/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 6
-          },
-          &quot;selectionRationale&quot;: &quot;Directly covers standard built-in decorators, including the changed paging decorator.&quot;
-        },
-        {
-          &quot;rank&quot;: 5,
-          &quot;catalogOrder&quot;: 9,
-          &quot;title&quot;: &quot;Azure.Core operation interfaces&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 5
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: category match, data-plane applicability.&quot;
-        },
-        {
-          &quot;rank&quot;: 6,
-          &quot;catalogOrder&quot;: 7,
-          &quot;title&quot;: &quot;ARM resource operations&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 4
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: category match, modify-context match.&quot;
-        },
-        {
-          &quot;rank&quot;: 7,
-          &quot;catalogOrder&quot;: 8,
-          &quot;title&quot;: &quot;Azure.ResourceManager interface reference&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 4
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: category match, modify-context match.&quot;
-        },
-        {
-          &quot;rank&quot;: 8,
-          &quot;catalogOrder&quot;: 20,
-          &quot;title&quot;: &quot;Azure.ResourceManager data types&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 4
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: category match, modify-context match.&quot;
-        },
-        {
-          &quot;rank&quot;: 9,
-          &quot;catalogOrder&quot;: 16,
-          &quot;title&quot;: &quot;Evolving APIs&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 3
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: data-plane applicability, modify-context match.&quot;
-        },
-        {
-          &quot;rank&quot;: 10,
-          &quot;catalogOrder&quot;: 18,
-          &quot;title&quot;: &quot;Azure.Core long-running operations&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 3
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: data-plane applicability, modify-context match.&quot;
-        },
-        {
-          &quot;rank&quot;: 11,
-          &quot;catalogOrder&quot;: 23,
-          &quot;title&quot;: &quot;Models&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/models/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 2
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: data-plane applicability.&quot;
-        },
-        {
-          &quot;rank&quot;: 12,
-          &quot;catalogOrder&quot;: 24,
-          &quot;title&quot;: &quot;Enums&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/enums/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 2
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: data-plane applicability.&quot;
-        },
-        {
-          &quot;rank&quot;: 13,
-          &quot;catalogOrder&quot;: 25,
-          &quot;title&quot;: &quot;Scalars&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/scalars/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 2
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: data-plane applicability.&quot;
-        },
-        {
-          &quot;rank&quot;: 14,
-          &quot;catalogOrder&quot;: 17,
-          &quot;title&quot;: &quot;ARM long-running operations&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 1
-          },
-          &quot;selectionRationale&quot;: &quot;Partial relevance: modify-context match.&quot;
-        },
-        {
-          &quot;rank&quot;: 15,
-          &quot;catalogOrder&quot;: 1,
-          &quot;title&quot;: &quot;ARM resource types and modeling&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 16,
-          &quot;catalogOrder&quot;: 2,
-          &quot;title&quot;: &quot;Specific extension resource sample&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 17,
-          &quot;catalogOrder&quot;: 3,
-          &quot;title&quot;: &quot;Agent base type&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 18,
-          &quot;catalogOrder&quot;: 4,
-          &quot;title&quot;: &quot;Private endpoints&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 19,
-          &quot;catalogOrder&quot;: 5,
-          &quot;title&quot;: &quot;Private links&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 20,
-          &quot;catalogOrder&quot;: 6,
-          &quot;title&quot;: &quot;Network security perimeter&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 21,
-          &quot;catalogOrder&quot;: 11,
-          &quot;title&quot;: &quot;Versioning overview&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 22,
-          &quot;catalogOrder&quot;: 12,
-          &quot;title&quot;: &quot;Add preview after preview&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 23,
-          &quot;catalogOrder&quot;: 13,
-          &quot;title&quot;: &quot;Add stable after preview&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 24,
-          &quot;catalogOrder&quot;: 14,
-          &quot;title&quot;: &quot;Add preview after stable&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 25,
-          &quot;catalogOrder&quot;: 15,
-          &quot;title&quot;: &quot;Add stable after stable&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 26,
-          &quot;catalogOrder&quot;: 22,
-          &quot;title&quot;: &quot;ARM common types&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 27,
-          &quot;catalogOrder&quot;: 28,
-          &quot;title&quot;: &quot;OpenAPI decorators&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/libraries/openapi/reference/decorators/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 28,
-          &quot;catalogOrder&quot;: 29,
-          &quot;title&quot;: &quot;Change provider namespace&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 29,
-          &quot;catalogOrder&quot;: 30,
-          &quot;title&quot;: &quot;Azure Portal default experiences&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 30,
-          &quot;catalogOrder&quot;: 31,
-          &quot;title&quot;: &quot;Content negotiation&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 31,
-          &quot;catalogOrder&quot;: 32,
-          &quot;title&quot;: &quot;Directives&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/directives/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        },
-        {
-          &quot;rank&quot;: 32,
-          &quot;catalogOrder&quot;: 33,
-          &quot;title&quot;: &quot;Azure Core `no-openapi` rule&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 0,
-            &quot;servicePlane&quot;: 0,
-            &quot;changeContext&quot;: 0,
-            &quot;total&quot;: 0
-          },
-          &quot;selectionRationale&quot;: &quot;No direct match to the changed @list paging behavior.&quot;
-        }
-      ],
-      &quot;documents&quot;: [
-        {
-          &quot;rank&quot;: 1,
-          &quot;catalogOrder&quot;: 10,
-          &quot;title&quot;: &quot;Azure.Core interface reference&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 6
-          },
-          &quot;selectionRationale&quot;: &quot;Directly covers data-plane list operation interfaces and matches the modified operation context.&quot;,
-          &quot;guidance&quot;: [],
-          &quot;noRelevantGuidance&quot;: true,
-          &quot;retrievedAt&quot;: &quot;2026-09-03T08:08:06.562796Z&quot;,
-          &quot;contentHash&quot;: &quot;sha256:a6ea517231ee1e3f1d81f35109f5744f2d49995e81d1d2851051eded05dd765b&quot;
-        },
-        {
-          &quot;rank&quot;: 2,
-          &quot;catalogOrder&quot;: 19,
-          &quot;title&quot;: &quot;TypeSpec pagination&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/pagination/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 6
-          },
-          &quot;selectionRationale&quot;: &quot;Directly covers paging and the standard pagination decorators used by the change.&quot;,
-          &quot;guidance&quot;: [
-            {
-              &quot;section&quot;: &quot;Pagination&quot;,
-              &quot;excerpt&quot;: &quot;To enable pagination for an operation the first step is to decorate it with the `@list` decorator and have the return type contain a property decorated with `@pageItems`.&quot;,
-              &quot;queryTerms&quot;: [
-                &quot;@list&quot;,
-                &quot;pagination&quot;,
-                &quot;@pageItems&quot;
-              ],
-              &quot;examples&quot;: [],
-              &quot;applicableDeclarationIds&quot;: [
-                &quot;declaration-6ab6c44b437678cb&quot;
-              ]
-            }
-          ],
-          &quot;noRelevantGuidance&quot;: false,
-          &quot;retrievedAt&quot;: &quot;2026-09-03T08:08:06.562796Z&quot;,
-          &quot;contentHash&quot;: &quot;sha256:981b9a5f126057108ccea2a82e4c92503a0f42da186132a302747b5856b25f7f&quot;
-        },
-        {
-          &quot;rank&quot;: 3,
-          &quot;catalogOrder&quot;: 26,
-          &quot;title&quot;: &quot;Decorators&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/decorators/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 6
-          },
-          &quot;selectionRationale&quot;: &quot;Directly covers applying decorators to operations, matching the added decorator.&quot;,
-          &quot;guidance&quot;: [
-            {
-              &quot;section&quot;: &quot;Decorators&quot;,
-              &quot;excerpt&quot;: &quot;Decorators are referenced using the `@` prefix and must be placed before the entity they are decorating.&quot;,
-              &quot;queryTerms&quot;: [
-                &quot;decorators&quot;,
-                &quot;@ prefix&quot;,
-                &quot;operations&quot;
-              ],
-              &quot;examples&quot;: [],
-              &quot;applicableDeclarationIds&quot;: [
-                &quot;declaration-6ab6c44b437678cb&quot;
-              ]
-            }
-          ],
-          &quot;noRelevantGuidance&quot;: false,
-          &quot;retrievedAt&quot;: &quot;2026-09-03T08:08:06.562796Z&quot;,
-          &quot;contentHash&quot;: &quot;sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2&quot;
-        },
-        {
-          &quot;rank&quot;: 4,
-          &quot;catalogOrder&quot;: 27,
-          &quot;title&quot;: &quot;Built-in decorators&quot;,
-          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/built-in-decorators/&quot;,
-          &quot;score&quot;: {
-            &quot;exactSymbol&quot;: 0,
-            &quot;patternCategory&quot;: 3,
-            &quot;servicePlane&quot;: 2,
-            &quot;changeContext&quot;: 1,
-            &quot;total&quot;: 6
-          },
-          &quot;selectionRationale&quot;: &quot;Directly covers standard built-in decorators, including the changed paging decorator.&quot;,
-          &quot;guidance&quot;: [
-            {
-              &quot;section&quot;: &quot;@list&quot;,
-              &quot;excerpt&quot;: &quot;Mark this operation as a `list` operation that returns a paginated list of items.&quot;,
-              &quot;queryTerms&quot;: [
-                &quot;@list&quot;,
-                &quot;paginated list&quot;
-              ],
-              &quot;examples&quot;: [],
-              &quot;applicableDeclarationIds&quot;: [
-                &quot;declaration-6ab6c44b437678cb&quot;
-              ]
-            }
-          ],
-          &quot;noRelevantGuidance&quot;: false,
-          &quot;retrievedAt&quot;: &quot;2026-09-03T08:08:06.562796Z&quot;,
-          &quot;contentHash&quot;: &quot;sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad&quot;
-        }
-      ],
       &quot;blockers&quot;: []
     }
   ],
@@ -757,22 +772,31 @@ body{overflow-wrap:anywhere}
 <h3>Changed files</h3><ul><li><code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;downstreamAnalysisMs&quot;: 5975,
-    &quot;buildModelInputMs&quot;: 6
+    &quot;dependencySetupMs&quot;: 1571593,
+    &quot;workspacePreparationMs&quot;: 39694,
+    &quot;sourceEvidenceMs&quot;: 115601,
+    &quot;compilerMs&quot;: 30450429,
+    &quot;totalMs&quot;: 32177319,
+    &quot;semanticAnalysisMs&quot;: 10636,
+    &quot;restAnalysisMs&quot;: 2796,
+    &quot;downstreamAnalysisMs&quot;: 269,
+    &quot;documentQualityAnalysisMs&quot;: 2
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 15043,
-    &quot;estimatedTokens&quot;: 3761,
+    &quot;bytes&quot;: 16303,
+    &quot;estimatedTokens&quot;: 4076,
     &quot;retained&quot;: {
-      &quot;evidenceSets&quot;: 4,
+      &quot;evidenceSets&quot;: 5,
       &quot;facts&quot;: 2,
       &quot;semanticReviewUnits&quot;: 1,
       &quot;restCandidates&quot;: 1,
       &quot;downstreamCandidates&quot;: 3,
       &quot;downstreamRootCauses&quot;: 1,
       &quot;complianceSearchRequests&quot;: 1,
+      &quot;documentQualityReviewUnits&quot;: 1,
+      &quot;documentQualityDocuments&quot;: 1,
       &quot;inferenceRequests&quot;: 0
     },
     &quot;omittedRedundant&quot;: {
@@ -786,15 +810,15 @@ body{overflow-wrap:anywhere}
       &quot;repeatedReviewUnitEvidence&quot;: true
     },
     &quot;compliance&quot;: {
-      &quot;catalogEntriesScored&quot;: 32,
+      &quot;catalogEntriesScored&quot;: 31,
       &quot;documentsFetched&quot;: 4,
-      &quot;documentBytesFetched&quot;: 1857336,
-      &quot;guidanceExcerptsRetained&quot;: 3,
-      &quot;guidanceExcerptBytesRetained&quot;: 355
+      &quot;documentBytesFetched&quot;: 1460907,
+      &quot;guidanceExcerptsRetained&quot;: 5,
+      &quot;guidanceExcerptBytesRetained&quot;: 996
     }
   }
 }</pre>
-<p><strong>Provenance:</strong> model-input.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json, [object Object], [object Object]</p></div></details></section>
+<p><strong>Provenance:</strong> model-input.json, dimensions/document-quality-input.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
 </main>
 <script>
 function revealHashTarget() {

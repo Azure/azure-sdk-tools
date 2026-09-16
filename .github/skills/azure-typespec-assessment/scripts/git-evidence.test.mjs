@@ -56,6 +56,42 @@ test("collectChanges combines committed, staged, unstaged, and untracked TypeSpe
   );
 });
 
+test("collectChanges compares an explicit head without local overlays", () => {
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-head-"));
+  try {
+    git(repo, "init", "-q");
+    git(repo, "config", "user.email", "test@example.com");
+    git(repo, "config", "user.name", "Test");
+    const root = path.join(repo, "specification", "widget");
+    fs.mkdirSync(root, { recursive: true });
+    fs.writeFileSync(path.join(root, "main.tsp"), "model A {}\n");
+    git(repo, "add", ".");
+    git(repo, "commit", "-qm", "base");
+    const base = git(repo, "rev-parse", "HEAD");
+    fs.appendFileSync(path.join(root, "main.tsp"), "model B {}\n");
+    git(repo, "add", ".");
+    git(repo, "commit", "-qm", "head");
+    const head = git(repo, "rev-parse", "HEAD");
+    fs.appendFileSync(path.join(root, "main.tsp"), "model Local {}\n");
+    fs.writeFileSync(path.join(root, "untracked.tsp"), "model Untracked {}\n");
+
+    const comparison = resolveComparison(repo, base, head);
+    const changes = collectChanges(
+      repo,
+      comparison.mergeBaseCommit,
+      "specification/widget",
+      { headRef: head, includeWorkingTree: false },
+    );
+
+    assert.deepEqual(
+      changes.map((item) => [item.path, item.origins]),
+      [["specification/widget/main.tsp", ["committed"]]],
+    );
+  } finally {
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
+});
+
 test("deriveServiceRoot rejects paths outside specification", () => {
   assert.equal(deriveServiceRoot("specification"), "specification");
   assert.equal(

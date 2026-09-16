@@ -7,6 +7,14 @@ import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isMain } from "./cli.mjs";
 
+function git(repo, ...args) {
+  const result = spawnSync("git", ["-C", repo, ...args], {
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
+}
+
 test("resolves the shared entrypoint at most once across imported modules", (t) => {
   const realpath = t.mock.method(fs, "realpathSync");
   assert.equal(isMain(new URL("./cli.mjs", import.meta.url).href), false);
@@ -68,7 +76,7 @@ test("linked assessment CLI accepts absolute scope and writes its no-change arti
   const script = path.join(linked, "scripts", "run-assessment-analysis.mjs");
   const missing = spawnSync(process.execPath, [script], { encoding: "utf8" });
   assert.equal(missing.status, 1);
-  assert.match(missing.stderr, /Missing required argument --specification/);
+  assert.match(missing.stderr, /Missing required argument --output/);
   for (const [name, specification] of [["absolute", scope], ["relative", "specification/widget"]]) {
     const output = path.join(root, name);
     const result = spawnSync(process.execPath, [
@@ -83,4 +91,28 @@ test("linked assessment CLI accepts absolute scope and writes its no-change arti
     const input = JSON.parse(fs.readFileSync(path.join(output, "model-input.json"), "utf8"));
     assert.equal(input.status, "no-changes");
   }
+
+  const commit = git(repo, "rev-parse", "HEAD");
+  const immutableOutput = path.join(root, "immutable");
+  const immutable = spawnSync(process.execPath, [
+    script,
+    "--repo",
+    repo,
+    "--base",
+    commit,
+    "--head",
+    commit,
+    "--output",
+    immutableOutput,
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(immutable.status, 0, immutable.stderr);
+  const immutableManifest = JSON.parse(
+    fs.readFileSync(
+      path.join(immutableOutput, "preparation-manifest.json"),
+      "utf8",
+    ),
+  );
+  assert.equal(immutableManifest.status, "no-changes");
+  assert.equal(immutableManifest.invocation.mode, "commits");
+  assert.equal(immutableManifest.comparison.headCommit, commit);
 });

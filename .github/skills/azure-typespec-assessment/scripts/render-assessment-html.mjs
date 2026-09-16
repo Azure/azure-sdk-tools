@@ -417,6 +417,7 @@ function fetchedComplianceDocument(document) {
 
 function complianceEvidenceAppendix(dimension) {
   const documents = [
+    ...(dimension.sharedSearch?.documents ?? []),
     ...(dimension.intentAssessments ?? []).flatMap(
       (item) => item.documents ?? [],
     ),
@@ -435,6 +436,7 @@ function complianceEvidenceAppendix(dimension) {
   const evidence = {
     status: dimension.status,
     coverage: dimension.coverage,
+    sharedSearch: dimension.sharedSearch,
     intentAssessments: (dimension.intentAssessments ?? []).map((item) => ({
       semanticIntentId: item.semanticIntentId,
       decision: item.decision,
@@ -465,7 +467,11 @@ function renderCompliance(dimension, semanticItems) {
       (item) => item.semanticIntentId === finding.semanticIntentId,
     );
     const applicable = finding.applicableGuidance?.[0];
-    const document = intent?.documents?.find(
+    const document = (
+      dimension.sharedSearch?.documents ??
+      intent?.documents ??
+      []
+    ).find(
       (item) => item.canonicalUrl === applicable?.canonicalDocumentUrl,
     );
     const guidance = document?.guidance?.find(
@@ -2204,7 +2210,7 @@ ${reportStyles}
 <a class="summary-card" href="#azure-compliance">${summaryHeading("Azure Guidelines", complianceStatus(summary.complianceStatus))}<div class="summary-detail">${complianceStatus(summary.complianceStatus).label === "N/A" ? "Not assessed<br>" : ""}${summary.complianceFindingCount} ${summary.complianceFindingCount === 1 ? "finding" : "findings"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
 <a class="summary-card" href="#rest-breaking">${summaryHeading("REST breaking changes", restStatus)}<div class="summary-detail">${restStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.restFindingCount} ${summary.restFindingCount === 1 ? "finding" : "findings"}</div></a>
 <a class="summary-card" href="#downstream-breaking">${summaryHeading("Downstream breaking changes", downstreamStatus)}<div class="summary-detail">${downstreamStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.downstreamFindingCount} ${summary.downstreamFindingCount === 1 ? "finding" : "findings"}</div></a>
-<a class="summary-card" href="#document-quality">${summaryHeading("Documentation Correctness", documentStatus)}<div class="summary-detail">${documentQuality.compactDetail.map(escapeHtml).join("<br>")}</div></a>
+<a class="summary-card" href="#document-quality">${summaryHeading("Documentation Completeness", documentStatus)}<div class="summary-detail">${documentQuality.compactDetail.map(escapeHtml).join("<br>")}</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
@@ -2511,7 +2517,7 @@ function adaptLegacy(assessment) {
       },
       documentQuality: {
         status: "not-assessed",
-        summary: "Documentation Correctness is not assessed.",
+        summary: "Documentation Completeness is not assessed.",
       },
     },
     blockers: assessment.errors ?? [],

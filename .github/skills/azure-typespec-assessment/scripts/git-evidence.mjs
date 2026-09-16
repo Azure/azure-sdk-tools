@@ -14,13 +14,14 @@ function git(repo, args, options = {}) {
   return result;
 }
 
-export function resolveComparison(repo, baseRef) {
-  const mergeBase = git(repo, ["merge-base", "HEAD", baseRef]).stdout.trim();
-  const headCommit = git(repo, ["rev-parse", "HEAD"]).stdout.trim();
+export function resolveComparison(repo, baseRef, headRef = "HEAD", mergeBase) {
+  const mergeBaseCommit =
+    mergeBase ?? git(repo, ["merge-base", headRef, baseRef]).stdout.trim();
+  const headCommit = git(repo, ["rev-parse", headRef]).stdout.trim();
   const remoteUrl = git(repo, ["remote", "get-url", "origin"], {
     allowFailure: true,
   }).stdout.trim();
-  return { baseRef, mergeBaseCommit: mergeBase, headCommit, remoteUrl };
+  return { baseRef, headRef, mergeBaseCommit, headCommit, remoteUrl };
 }
 
 function nameStatus(repo, args, origin) {
@@ -38,27 +39,50 @@ function nameStatus(repo, args, origin) {
   });
 }
 
-export function collectChanges(repo, mergeBase, scope) {
+export function collectChanges(
+  repo,
+  mergeBase,
+  scope,
+  { headRef = "HEAD", includeWorkingTree = true } = {},
+) {
   const scoped = scope ? ["--", scope] : [];
   const entries = [
-    ...nameStatus(repo, ["diff", "--name-status", mergeBase, "HEAD", ...scoped], "committed"),
-    ...nameStatus(repo, ["diff", "--cached", "--name-status", ...scoped], "staged"),
-    ...nameStatus(repo, ["diff", "--name-status", ...scoped], "unstaged"),
+    ...nameStatus(
+      repo,
+      ["diff", "--name-status", mergeBase, headRef, ...scoped],
+      "committed",
+    ),
+    ...(includeWorkingTree
+      ? [
+          ...nameStatus(
+            repo,
+            ["diff", "--cached", "--name-status", ...scoped],
+            "staged",
+          ),
+          ...nameStatus(
+            repo,
+            ["diff", "--name-status", ...scoped],
+            "unstaged",
+          ),
+        ]
+      : []),
   ];
-  const untracked = git(repo, [
-    "ls-files",
-    "--others",
-    "--exclude-standard",
-    ...(scope ? ["--", scope] : []),
-  ]).stdout
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .map((file) => ({
-      path: file.replaceAll("\\", "/"),
-      status: "added",
-      origin: "untracked",
-    }));
+  const untracked = includeWorkingTree
+    ? git(repo, [
+        "ls-files",
+        "--others",
+        "--exclude-standard",
+        ...(scope ? ["--", scope] : []),
+      ]).stdout
+        .trim()
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .map((file) => ({
+          path: file.replaceAll("\\", "/"),
+          status: "added",
+          origin: "untracked",
+        }))
+    : [];
   const merged = new Map();
   for (const entry of [...entries, ...untracked]) {
     if (!entry.path.endsWith(".tsp") && path.basename(entry.path) !== "tspconfig.yaml") continue;
@@ -79,8 +103,16 @@ export function readRevisionFile(repo, revision, file) {
   return result.status === 0 ? result.stdout : null;
 }
 
-export function unifiedDiff(repo, mergeBase, file) {
-  return git(repo, ["diff", "--no-ext-diff", "--unified=3", mergeBase, "--", file]).stdout;
+export function unifiedDiff(repo, mergeBase, file, target) {
+  return git(repo, [
+    "diff",
+    "--no-ext-diff",
+    "--unified=3",
+    mergeBase,
+    ...(target ? [target] : []),
+    "--",
+    file,
+  ]).stdout;
 }
 
 export function deriveServiceRoot(specification) {
@@ -107,7 +139,13 @@ export function normalizeSparseRoots(sparseRoots, specification) {
       roots.map((root) => root.replaceAll("\\", "/").replace(/^\.?\//, "").replace(/\/$/, "")),
     ),
   ].sort();
-  if (normalized.some((root) => !/^specification\/[^/]+(?:\/.*)?$/.test(root))) {
+  if (
+    normalized.some(
+      (root) =>
+        root !== "specification" &&
+        !/^specification\/[^/]+(?:\/.*)?$/.test(root),
+    )
+  ) {
     throw new Error("Sparse roots must be under specification/<service>.");
   }
   return normalized;

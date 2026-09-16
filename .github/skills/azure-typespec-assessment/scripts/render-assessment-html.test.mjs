@@ -557,14 +557,13 @@ test("renderer shows fetched Azure Guidelines guidance and expands failures", ()
           selectedDocumentCount: 4,
           unassessedIntentIds: [],
         },
+        sharedSearch: { catalogRanking, documents },
         intentAssessments: [
           {
             semanticIntentId: "semantic-1",
             sourceChangeIds: ["source-1"],
             hunkIds: ["hunk-1"],
             declarationIds: ["declaration-1"],
-            catalogRanking,
-            documents,
             ...intentAssessment,
             blockers: [],
           },
@@ -738,7 +737,7 @@ test("renderer labels active Azure Guidelines and scoped safety", () => {
     provenance: {},
   });
   assert.match(html, /Azure Guidelines/);
-  assert.match(html, /Documentation Correctness/);
+  assert.match(html, /Documentation Completeness/);
   assert.match(html, /class="eyebrow">TypeSpec Assessment/);
   assert.match(html, /class="summary-grid"/);
   assert.match(html, /<a class="summary-card" href="#rest-breaking">/);
@@ -756,7 +755,7 @@ test("renderer labels active Azure Guidelines and scoped safety", () => {
     "Azure Guidelines",
     "REST breaking changes",
     "Downstream breaking changes",
-    "Documentation Correctness",
+    "Documentation Completeness",
   ]);
   assert.doesNotMatch(html, /Overall code quality/);
   assert.equal(summaryCardValue(html, "Semantic intents"), 0);
@@ -777,7 +776,7 @@ test("renderer labels active Azure Guidelines and scoped safety", () => {
   );
   assert.match(
     html,
-    /<section id="document-quality"><div class="report-section-head"><div><h2>Documentation Correctness<\/h2>[\s\S]*?report-badge add">passed/,
+    /<section id="document-quality"><div class="report-section-head"><div><h2>Documentation Completeness<\/h2>[\s\S]*?report-badge add">passed/,
   );
   assert.match(
     html,
@@ -1981,8 +1980,8 @@ test("document hero stays compact while detailed coverage remains in the summary
     const assessment = documentedAssessment(decision, noDocs);
     const before = structuredClone(assessment);
     const html = renderAssessmentHtml(assessment);
-    const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Documentation Correctness</div>'))[0];
-    assert.equal(summaryCardValue(html, "Documentation Correctness"), Number(count));
+    const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>'))[0];
+    assert.equal(summaryCardValue(html, "Documentation Completeness"), Number(count));
     assert.ok(hero.includes(compact));
     assert.doesNotMatch(hero, /checks assessed|intent scopes|retained descriptions/);
     assert.match(documentQualitySummary(assessment.dimensions.documentQuality).detail, new RegExp(coverage.replace("/", "\\/")));
@@ -2013,19 +2012,19 @@ test("partial document review omits appendix coverage strings but preserves raw 
   assert.deepEqual(assessment, original);
 });
 
-test("failed document hero shows findings and assessed-description count", () => {
+test("failed document hero shows findings and checked-declaration count", () => {
   const assessment = JSON.parse(readFileSync(new URL("../evals/assessments/44988/assessment.json", import.meta.url), "utf8"));
   const html = renderAssessmentHtml(assessment);
   const hero = html.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
-  assert.match(hero, /<div class="summary-detail">2 findings<br>102 descriptions assessed<\/div>/);
-  assert.doesNotMatch(hero, /102\/102|intent|inherited|retained|not reviewed/);
+  assert.match(hero, /<div class="summary-detail">20 findings<br>881 declarations checked<\/div>/);
+  assert.doesNotMatch(hero, /861\/881|intent|inherited|retained|not reviewed/);
 });
 
 test("legacy document hero uses findings status without inventing an assessed count", () => {
   const assessment = documentedAssessment();
   assessment.dimensions.documentQuality = { status: "not-assessed", summary: 'Old artifacts lack <documentation> evidence & "checks".' };
   const html = renderAssessmentHtml(assessment);
-  const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Documentation Correctness</div>'))[0];
+  const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>'))[0];
   assert.match(hero, /0 findings<br>Assessment count unavailable/);
   assert.match(hero, /class="pass" aria-label="Passed">✓<\/span>/);
   assert.doesNotMatch(hero, /&lt;documentation&gt;/);
@@ -2046,9 +2045,9 @@ for (const version of [2, 3]) test(`v${version} renders one description assessme
     const html = renderAssessmentHtml(assessment);
     const quality = reportSection(html, "document-quality");
     const hero = html.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
-    assert.equal(summaryCardValue(html, "Documentation Correctness"), Number(count));
+    assert.equal(summaryCardValue(html, "Documentation Completeness"), Number(count));
     assert.match(quality, /Does the description clearly and accurately explain the associated TypeSpec code\?/);
-    assert.doesNotMatch(quality.replaceAll("Documentation Correctness", ""), /Correctness|Meaning|Legacy assessment|checks assessed/);
+    assert.doesNotMatch(quality.replaceAll("Documentation Completeness", ""), /Correctness|Meaning|Legacy assessment|checks assessed/);
     assert.match(
       documentQualitySummary(assessment.dimensions.documentQuality).detail,
       new RegExp(`${noDocs || decision === "not-assessed" ? 0 : 1}\\/${noDocs ? 0 : 1} descriptions assessed`),
@@ -2086,7 +2085,7 @@ test("removing aggregate quality preserves documentation findings, assessment st
     const before = structuredClone(assessment);
     const html = renderAssessmentHtml(assessment);
     assert.doesNotMatch(html, /Overall code quality/);
-    assert.equal(summaryCardValue(html, "Documentation Correctness"), Number(expectedCount));
+    assert.equal(summaryCardValue(html, "Documentation Completeness"), Number(expectedCount));
     assert.deepEqual(assessment, before);
     assert.equal(assessment.safety.status, "passed");
     assert.equal(assessment.safety.scope, "rest-and-downstream-only");
@@ -2105,7 +2104,7 @@ test("failed documentation with partial checks reports incomplete intent coverag
   assert.match(documentQualitySummary(dimension).detail, /1\/2 checks assessed/);
   assert.match(documentQualitySummary(dimension).detail, /0\/1 intent scopes resolved/);
   assert.doesNotMatch(html, /1\/2 checks assessed|0\/1 intent scopes resolved|Documentation not assessed for:/);
-  assert.equal(summaryCardValue(html, "Documentation Correctness"), 1);
+  assert.equal(summaryCardValue(html, "Documentation Completeness"), 1);
   assert.doesNotMatch(html, /Overall code quality/);
   assert.equal(assessment.safety.status, "passed");
 });
@@ -2148,25 +2147,25 @@ test("unassessed documentation keeps summary coverage while HTML omits removed a
   assertNoDocumentAppendixUi(html);
 });
 
-test("Documentation Correctness labels retain source-only scope, red impacts and historical anchors in every assessment version", () => {
+test("Documentation Completeness labels retain red impacts and historical anchors", () => {
   for (const version of [1, 2, 3]) {
     const assessment = documentedAssessment("fail", false, version);
     const original = structuredClone(assessment);
     const html = renderAssessmentHtml(assessment);
     const main = reportSection(html, "document-quality");
     const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)]
-      .find(([card]) => card.includes('<div class="summary-label">Documentation Correctness</div>'))[0];
-    assert.match(hero, /<div class="summary-label">Documentation Correctness<\/div>/);
+      .find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>'))[0];
+    assert.match(hero, /<div class="summary-label">Documentation Completeness<\/div>/);
     assert.doesNotMatch(hero, /Doc Correctness|Document Quality|Agent Friendliness/);
-    assert.match(main, /<h2>Documentation Correctness<\/h2>/);
+    assert.match(main, /<h2>Documentation Completeness<\/h2>/);
     assert.match(main, /Does the description clearly and accurately explain the associated TypeSpec code\?/);
     assert.match(main, /Examples, external documentation, and agent execution are not assessed/);
     assertNoDocumentAppendixUi(html);
     const semantic = reportSection(html, "semantic-intents");
-    assert.match(semantic, /aria-label="Documentation Correctness findings"/);
+    assert.match(semantic, /aria-label="Documentation Completeness findings"/);
     assert.doesNotMatch(semantic, /Document Quality:|Agent Friendliness:|aria-label="Document quality findings"/);
     for (const finding of assessment.dimensions.documentQuality.findings) {
-      assert.ok(semantic.includes(`class="report-link impact" href="#document-quality-${finding.id}">Documentation Correctness: `));
+      assert.ok(semantic.includes(`class="report-link impact" href="#document-quality-${finding.id}">Documentation Completeness: `));
       assert.ok(main.includes(`id="document-quality-${finding.id}"`));
     }
     assert.deepEqual(assessment, original);

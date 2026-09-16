@@ -136,17 +136,17 @@ function fixture() {
     noRelevantGuidance: index !== 0,
   }));
   const evidence = {
-    schemaVersion: 1,
-    intents: [
+    schemaVersion: 2,
+    queryProfiles: [
       {
         reviewUnitId: "semantic-1",
         queryProfile: requests[0].queryProfile,
-        catalogRanking,
-        rankedDocuments: documents,
-        retrievalAttempts: [],
-        blockers: [],
       },
     ],
+    catalogRanking,
+    rankedDocuments: documents,
+    retrievalAttempts: [],
+    blockers: [],
     inputAccounting: {
       catalogEntriesScored: readComplianceCatalog().length,
       documentsFetched: 4,
@@ -204,6 +204,8 @@ test("assembles one Azure Guidelines finding and coverage per Semantic intent", 
   assert.equal(compliance.coverage.assessedIntentCount, 1);
   assert.equal(compliance.coverage.selectedDocumentCount, 4);
   assert.equal(compliance.intentAssessments[0].decision, "applicable-fail");
+  assert.equal(compliance.intentAssessments[0].documents, undefined);
+  assert.equal(compliance.sharedSearch.documents.length, 4);
   assert.deepEqual(compliance.findings[0].codeSnippets[0].lines, [
     "+@parentResource(Widget)",
     "+model Child is ProxyResource<ChildProperties>;",
@@ -212,7 +214,7 @@ test("assembles one Azure Guidelines finding and coverage per Semantic intent", 
 
 test("rejects uncataloged Azure Guidelines evidence", () => {
   const { source, requests, evidence, decisions } = fixture();
-  evidence.intents[0].rankedDocuments[0].canonicalUrl =
+  evidence.rankedDocuments[0].canonicalUrl =
     "https://example.test/invented";
   assert.throws(
     () =>
@@ -259,7 +261,7 @@ test("rejects incomplete declaration source provenance", () => {
 test("counts completed searches with no governing guidance as assessed", () => {
   const { source, requests, evidence, decisions } = fixture();
   requests[0].declarationIds.push("declaration-2");
-  evidence.intents[0].rankedDocuments[0].guidance[0].applicableDeclarationIds.push(
+  evidence.rankedDocuments[0].guidance[0].applicableDeclarationIds.push(
     "declaration-2",
   );
   decisions[0] = {
@@ -311,4 +313,42 @@ test("does not pass Azure Guidelines when Semantic analysis is blocked", () => {
   });
   assert.equal(compliance.status, "not-assessed");
   assert.equal(compliance.blockers.length, 1);
+});
+
+test("ranks and fetches one shared document set for multiple Semantic intents", () => {
+  const { source, requests, evidence, decisions } = fixture();
+  requests.push({
+    ...structuredClone(requests[0]),
+    reviewUnitId: "semantic-2",
+    requestId: "compliance-search-2",
+  });
+  evidence.queryProfiles.push({
+    reviewUnitId: "semantic-2",
+    queryProfile: structuredClone(requests[1].queryProfile),
+  });
+  decisions.push({
+    reviewUnitId: "semantic-2",
+    applicableGuidance: [],
+    sourceChangeIds: ["source-1"],
+    hunkIds: ["hunk-1"],
+    declarationIds: ["declaration-1"],
+    decision: "no-applicable-guidance",
+    actual: "The second intent changes the same resource area.",
+    rationale: "None of the four shared documents governs this intent.",
+  });
+  const compliance = assembleCompliance({
+    requests,
+    evidence,
+    decisions,
+    sourceChanges: [source],
+  });
+  assert.equal(compliance.coverage.semanticIntentCount, 2);
+  assert.equal(compliance.coverage.selectedDocumentCount, 4);
+  assert.equal(compliance.sharedSearch.documents.length, 4);
+  assert.ok(
+    compliance.intentAssessments.every(
+      (intent) =>
+        intent.catalogRanking === undefined && intent.documents === undefined,
+    ),
+  );
 });

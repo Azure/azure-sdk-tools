@@ -8,7 +8,7 @@
 
 ### Bugs Fixed
 
-- Release plan updates now accept JavaScript packages in both the `@azure/` and `@azure-rest/` scopes.
+- Release plan updates now use package names emitted from TypeSpec metadata without applying legacy package-prefix validation.
 
 ## 0.6.46 (2026-09-15)
 

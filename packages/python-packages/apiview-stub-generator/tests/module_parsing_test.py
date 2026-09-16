@@ -4,18 +4,52 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from collections.abc import Callable
 import importlib
+from types import ModuleType
+from typing import Generic, TypeVar
 
-from apistub.nodes import ModuleNode
+from apistub import ApiView
+from apistub.nodes import ClassNode, ModuleNode
 
 from pytest import fail
 
 from ._test_util import _check, _tokenize, _render_lines, MockApiView, _count_review_line_metadata
 
 
+Input = TypeVar("Input")
+Output = TypeVar("Output")
+
+
+class GenericTask(Generic[Input, Output]):
+    pass
+
+
 class TestModuleParsing:
 
     pkg_namespace = "apiview_stub_generator_test"
+
+    def test_parameterized_callable_alias_is_not_parsed_as_class(self):
+        module = ModuleType(__name__)
+        module.__all__ = ["GenericTask", "GenericTaskFactory"]
+        module.GenericTask = GenericTask
+        module.GenericTaskFactory = Callable[[str], GenericTask[Input, Output]]
+
+        module_node = ModuleNode(
+            namespace=module.__name__,
+            module=module,
+            # Reproduce the empty namespace caused by a multiline package docstring.
+            pkg_root_namespace="",
+            apiview=ApiView(pkg_name="test", namespace=module.__name__),
+        )
+
+        class_names = [
+            node.name
+            for node in module_node.child_nodes
+            if isinstance(node, ClassNode)
+        ]
+        assert class_names == ["GenericTask"]
+        assert module_node.child_nodes[0].base_class_names == ["Generic[Input, Output]"]
 
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
     def _validate_line_ids(self, review_lines):

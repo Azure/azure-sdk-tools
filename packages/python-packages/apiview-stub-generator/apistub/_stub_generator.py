@@ -5,6 +5,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import ast
 import importlib.metadata
 import sys
 import os
@@ -308,22 +309,25 @@ class StubGenerator:
         return sorted(modules)
 
     def _set_root_namespace(self, init_file_path, module_name):
-        with open(init_file_path, "r") as f:
-            in_docstring = False
-            content = []
-            for line in f:
-                stripped_line = line.strip()
-                # If in multi-line docstring, skip following lines until end of docstring.
-                # If single-line docstring, skip the docstring line.
-                if stripped_line.startswith(('"""', "'''")) and not stripped_line.endswith(('"""', "'''")):
-                    in_docstring = not in_docstring
-                # If comment, skip line. Otherwise, add to content.
-                if not in_docstring and not stripped_line.startswith("#"):
-                    content.append(line)
-            if len(content) > 1 or (
-                len(content) == 1 and not INIT_EXTENSION_SUBSTRING in content[0]
+        with open(init_file_path, "r", encoding="utf-8") as f:
+            source = f.read()
+
+        content = []
+        for node in ast.parse(source).body:
+            # String expressions are documentation, not package content.
+            if (
+                isinstance(node, ast.Expr)
+                and isinstance(node.value, ast.Constant)
+                and isinstance(node.value.value, str)
             ):
-                self.namespace = module_name
+                continue
+            node_source = ast.get_source_segment(source, node) or ""
+            if INIT_EXTENSION_SUBSTRING in node_source:
+                continue
+            content.append(node)
+
+        if content:
+            self.namespace = module_name
 
     def _generate_tokens(
         self, pkg_root_path, package_name, package_version, *, source_url

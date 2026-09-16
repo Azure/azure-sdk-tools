@@ -517,6 +517,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                await RefreshSdkPullRequestStatusesAsync(response, ct);
                 await AddReleasePlanScheduleRiskGuidanceAsync(response, ct);
                 return response;
             }
@@ -528,6 +529,55 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Failed to get release plan details");
                 return new ReleasePlanResponse { ResponseError = $"Failed to get release plan details: {ex.Message}" };
+            }
+        }
+
+        private async Task RefreshSdkPullRequestStatusesAsync(ReleasePlanResponse response, CancellationToken ct)
+        {
+            if (response.ReleasePlanDetails == null)
+            {
+                return;
+            }
+
+            foreach (var sdk in response.ReleasePlanDetails.SDKInfo)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var parsedPr = DevOpsService.ParseSDKPullRequestUrl(sdk.SdkPullRequestUrl);
+                    if (!parsedPr.IsValid)
+                    {
+                        throw new ArgumentException("Invalid SDK pull request URL.");
+                    }
+
+                    var pullRequest = await githubService.GetPullRequestAsync(parsedPr.RepoOwner, parsedPr.RepoName, parsedPr.PrNumber, ct).WaitAsync(ct);
+                    if (pullRequest == null)
+                    {
+                        throw new InvalidOperationException("GitHub returned no pull request details.");
+                    }
+
+                    // Match the dashboard: merged > closed > draft > open. A closed draft is closed.
+                    // Refresh only the response's PR status; generation and release statuses remain unchanged.
+                    sdk.PullRequestStatus = pullRequest.Merged ? "Merged"
+                        : pullRequest.State.Value == ItemState.Closed ? "Closed"
+                        : pullRequest.Draft ? "Draft"
+                        : pullRequest.State.Value == ItemState.Open ? "Open"
+                        : "Unknown";
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to refresh {Language} SDK PR status for {PullRequestUrl}", sdk.Language, sdk.SdkPullRequestUrl);
+                    (response.Warnings ??= []).Add($"Unable to refresh {sdk.Language} SDK PR status from GitHub for {sdk.SdkPullRequestUrl}. The stored release plan status may be stale.");
+                }
             }
         }
 

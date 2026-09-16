@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- Release plan lookups now refresh linked SDK pull request statuses from GitHub to match the release plan dashboard, warning when only the stored status is available.
+
 ### Other Changes
 
 ## 0.6.47 (2026-09-16)

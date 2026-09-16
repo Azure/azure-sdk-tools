@@ -2208,13 +2208,13 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             try
             {
-                if (string.IsNullOrEmpty(typeSpecProjectPath) || string.IsNullOrEmpty(apiVersion))
+                if (string.IsNullOrEmpty(typeSpecProjectPath) || string.IsNullOrEmpty(apiVersion) || apiReleaseType == ApiReleaseType.Unknown)
                 {
-                    logger.LogInformation("TypeSpec project path or API version is empty. Skipping search for existing release plan.");
+                    logger.LogInformation("TypeSpec project path or API version is empty, or API release type is unknown. Skipping search for existing release plan.");
                     return null;
                 }
 
-                logger.LogInformation("Searching for existing release plan with TypeSpec project path: {typeSpecProjectPath} and API version: {apiVersion}", typeSpecProjectPath, apiVersion);
+                logger.LogInformation("Searching for existing release plan with TypeSpec project path: {typeSpecProjectPath}, API version: {apiVersion}, and API release type: {apiReleaseType}", typeSpecProjectPath, apiVersion, apiReleaseType);
 
                 // Get all release plans (in-progress and finished) for the TypeSpec project path
                 var escapedPath = typeSpecProjectPath?.Replace("'", "''");
@@ -2248,13 +2248,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                         && releasePlan.SpecAPIVersion.Equals(apiVersion, StringComparison.OrdinalIgnoreCase)
                         && releasePlan.ApiReleaseType == apiReleaseType)
                     {
-                        logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) for TypeSpec project path: {typeSpecProjectPath} with API version: {apiVersion}",
-                            releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, apiVersion);
+                        logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) for TypeSpec project path: {typeSpecProjectPath}, API version: {apiVersion}, and API release type: {apiReleaseType}",
+                            releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, apiVersion, apiReleaseType);
                         return releasePlan;
                     }
                 }
 
-                logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath} with matching API version: {apiVersion}", typeSpecProjectPath, apiVersion);
+                logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath} with matching API version: {apiVersion} and API release type: {apiReleaseType}", typeSpecProjectPath, apiVersion, apiReleaseType);
                 return null;
             }
             catch (Exception ex)

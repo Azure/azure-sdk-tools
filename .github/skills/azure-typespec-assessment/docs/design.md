@@ -123,25 +123,36 @@ compatibility checks or reuse a mismatched toolchain for speed.
                                  candidate               candidate              intent once
               |                       |                       |                       |                       |
               +-----------------------+-----------------------+-----------------------+-----------------------+
-                                                              |                       |
-                                                              v                       v
-                                                  assessment-judgment.json    compliance-search-evidence.json
-                                                              |              (Azure Guidelines evidence only)
-                                                              |                       |
-                                                              +-----------+-----------+
-                                                                          |
-                                                                          v
-                                                                Assemble and validate
-                                                                          |
-                                                                          v
-                                                          assessment.json + assessment.html
+                                                              |
+                                                              v
+                                            agent-workspace/agent-decisions.json
+                                                              |
+                                                              v
+                                              Deterministic materialization
+                                       (canonical joins + ordering + validation)
+                                                              |
+                          +-----------------------------------+-----------------------------------+
+                          |                                   |                                   |
+                          v                                   v                                   v
+               inference.json (when needed)      assessment-judgment.json      compliance-search-evidence.json
+                                                                                 (Azure Guidelines evidence only)
+                          |                                   |                                   |
+                          +-----------------------------------+-----------------------------------+
+                                                              |
+                                                              v
+                                                    Assemble and validate
+                                                              |
+                                                              v
+                                            assessment.json + assessment.html
 ```
 
-Preparation, dimension analysis, and coverage accounting are deterministic.
-No Node.js script calls an LLM or produces `inference.json` or
-`compliance-search-evidence.json`. The Agent writes those optional evidence
-artifacts and `assessment-judgment.json` from bounded input; deterministic
-assembly validates them and joins complete canonical evidence.
+Preparation, dimension analysis, materialization, and coverage accounting are
+deterministic. No Node.js script calls an LLM or performs Agentic Search. The
+Agent writes one compact decision artifact from bounded input. Deterministic
+materialization validates it, joins canonical evidence, and atomically writes
+`inference.json` when needed, `compliance-search-evidence.json`, and
+`assessment-judgment.json`. Guarded finalization validates and assembles those
+artifacts into the report.
 
 Azure Guidelines and documentation assessment branch from Semantic review
 units rather than REST or downstream candidates. Documentation collection is
@@ -1278,8 +1289,31 @@ Azure Guidelines decision per Semantic intent, and deterministic assembly reject
 unknown, duplicate, or missing intent decisions.
 
 The same Agent phase records one shared retrieval and extracted evidence set
-separately from its per-intent decisions in
-`compliance-search-evidence.json`:
+with its per-intent choices in
+`agent-workspace/agent-decisions.json`. The compact versioned contract keeps
+only Agent-authored summaries, decisions, score signals and rationale keyed by
+stable catalog ID, supplied `web_fetch` provenance and byte counts, extracted
+guidance, failed retrievals, confidence, and blockers. It does not repeat
+canonical catalog metadata, query profiles, source/hunk IDs, calculated
+totals/ranks, accounting, or final output wrappers.
+
+`materialize-assessment-results.mjs` then verifies canonical artifact hashes
+and exact ID coverage/ownership. It joins canonical metadata, calculates score
+totals and stable ordering, verifies the first four retrievable documents and
+fallback sequence, derives accounting, and atomically writes `inference.json`
+when required, `compliance-search-evidence.json`, and
+`assessment-judgment.json`. It preserves Agent-supplied retrieval provenance
+and derives each retained guidance excerpt's declaration applicability as the
+stable union of canonical IDs resolved from intent-owned qualified declaration
+names in judgments citing that catalog ID and section. Each name must resolve
+exactly once within its owning request; unknown, duplicate, ambiguous, and
+cross-intent names fail. Uncited excerpts are dropped. Legacy compact excerpt
+applicability is ignored. The materializer performs no network fetch,
+suppression analysis, or semantic judgment.
+Guarded finalization remains authoritative for final assembly, validation, and
+rendering.
+
+The materialized shared evidence has this existing authoritative shape:
 
 ```json
 {
@@ -1667,9 +1701,15 @@ that candidate lists every covered request hunk and is deduplicated by ID.
 Assembly rejects missing, conflicting, unknown, or out-of-scope inference
 results. The Agent never modifies `model-input.json`.
 
-## 8. Agent judgment
+## 8. Materialized Agent judgment
 
 File: `assessment-judgment.json`
+
+The Agent authors these choices in the compact decision file using prefilled
+intent-scoped qualified declaration names rather than opaque IDs. The
+deterministic materializer resolves those names within the owning request and
+emits the existing judgment contract below; it does not choose decisions,
+severities, evidence, or prose.
 
 ```json
 {
@@ -1727,10 +1767,11 @@ deterministic or inferred REST/downstream candidate. Root causes are
 deterministic aggregation evidence and are not Agent decision units.
 
 Every Semantic intent must have exactly one Azure Guidelines decision. Every
-applicable guidance URL must identify a successfully fetched
-`rankedDocuments` entry, and all source, hunk, and declaration IDs must already
-exist in `model-input.json`. Decisions may quote only guidance recorded in
-`compliance-search-evidence.json`; the Agent cannot add URLs, evidence,
+applicable guidance catalog ID in the compact input must identify a
+successfully fetched `rankedDocuments` entry, and all source, hunk, and
+declaration IDs must already exist in canonical requests. Decisions may quote
+only guidance recorded in compact fetched-document evidence; the Agent cannot
+add URLs, evidence,
 declarations, operations, or assessment units during judgment.
 `applicable-pass` and `applicable-fail` require non-empty expected and actual
 evidence. `applicable-fail` also requires a concise finding title and severity

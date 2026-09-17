@@ -8,10 +8,11 @@ import {
   resolveWorkPath,
   transitionWorkflowState,
 } from "./workflow-state.mjs";
+import { readComplianceCatalog } from "./compliance-assessment.mjs";
 
 const INDEX_FILE = "agent-workspace/agent-index.json";
-const INFERENCE_DRAFT = "agent-workspace/inference.draft.json";
-const JUDGMENT_DRAFT = "agent-workspace/assessment-judgment.draft.json";
+const DECISIONS_DRAFT = "agent-workspace/agent-decisions.draft.json";
+const DECISIONS_FILE = "agent-workspace/agent-decisions.json";
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))].sort();
@@ -43,21 +44,63 @@ function validateBoundedEvidence(modelInput) {
   }
 }
 
-function inferenceDraft(requests) {
-  return {
-    schemaVersion: 1,
-    results: requests.map((request) => ({
-      requestId: request.requestId,
-      reviewUnitId: request.reviewUnitId,
-      hunkId: request.hunkId,
-      decision: "__UNRESOLVED__",
-      rationale: "",
-      candidates: [],
-    })),
-  };
+function declarationNamesByIntent(root, modelInput) {
+  if (!modelInput.complianceSearchRequests.length) return new Map();
+  const requests = readJson(
+    resolveWorkPath(
+      root,
+      modelInput.artifactReferences.complianceSearchRequests,
+    ),
+  ).requests;
+  const sourceChanges = readJson(
+    resolveWorkPath(root, modelInput.artifactReferences.sourceIndex),
+  ).sourceChanges;
+  const sourcesById = new Map(
+    sourceChanges.map((source) => [source.id, source]),
+  );
+  return new Map(
+    requests.map((request) => {
+      const declarationIds = new Set(request.declarationIds);
+      const declarations = request.sourceChangeIds.flatMap(
+        (sourceId) => sourcesById.get(sourceId)?.declarations ?? [],
+      );
+      const names = [
+        ...new Set(
+          declarations
+            .filter((declaration) => declarationIds.has(declaration.id))
+            .map((declaration) => declaration.qualifiedName)
+            .filter(Boolean),
+        ),
+      ].sort();
+      const foundIds = new Set(
+        declarations
+          .filter((declaration) => declarationIds.has(declaration.id))
+          .map((declaration) => declaration.id),
+      );
+      const missing = request.declarationIds.filter((id) => !foundIds.has(id));
+      if (missing.length) {
+        throw new Error(
+          `Compliance request ${request.requestId} has declarations missing from its source: ${missing.join(", ")}.`,
+        );
+      }
+      const unnamed = declarations
+        .filter(
+          (declaration) =>
+            declarationIds.has(declaration.id) &&
+            !declaration.qualifiedName?.trim(),
+        )
+        .map((declaration) => declaration.id);
+      if (unnamed.length) {
+        throw new Error(
+          `Compliance request ${request.requestId} has declarations without qualified names: ${unnamed.join(", ")}.`,
+        );
+      }
+      return [request.reviewUnitId, names];
+    }),
+  );
 }
 
-function judgmentDraft(modelInput) {
+function decisionsDraft(modelInput, declarationNames) {
   const decision = (candidate) => ({
     candidateId: candidate.id,
     decision: "__UNRESOLVED__",
@@ -65,26 +108,42 @@ function judgmentDraft(modelInput) {
   });
   return {
     schemaVersion: 1,
-    semanticIntents: modelInput.semanticReviewUnits.map((unit) => ({
+    semanticSummaries: modelInput.semanticReviewUnits.map((unit) => ({
       reviewUnitId: unit.reviewUnitId,
       title: "",
       summary: "",
     })),
     restDecisions: modelInput.restCandidates.map(decision),
     downstreamDecisions: modelInput.downstreamCandidates.map(decision),
-    complianceDecisions: modelInput.complianceSearchRequests.map((request) => {
-      const evidence = evidenceFor(modelInput, request);
-      return {
-        reviewUnitId: request.reviewUnitId,
-        applicableGuidance: [],
-        sourceChangeIds: evidence.sourceChangeIds,
-        hunkIds: evidence.hunkIds,
-        declarationIds: [],
-        decision: "__UNRESOLVED__",
-        actual: "",
-        rationale: "",
-      };
-    }),
+    ...(modelInput.inferenceRequests.length
+      ? {
+          inferenceResults: modelInput.inferenceRequests.map((request) => ({
+            requestId: request.requestId,
+            decision: "__UNRESOLVED__",
+            rationale: "",
+            candidates: [],
+          })),
+        }
+      : {}),
+    catalogScores: readComplianceCatalog().map((entry) => ({
+      catalogId: entry.catalogId,
+      exactSymbol: 0,
+      patternCategory: 0,
+      servicePlane: 0,
+      changeContext: 0,
+      rationale: "",
+    })),
+    fetchedDocuments: [],
+    failedRetrievals: [],
+    searchBlockers: [],
+    complianceJudgments: modelInput.complianceSearchRequests.map((request) => ({
+      reviewUnitId: request.reviewUnitId,
+      applicableGuidance: [],
+      declarationNames: declarationNames.get(request.reviewUnitId) ?? [],
+      decision: "__UNRESOLVED__",
+      actual: "",
+      rationale: "",
+    })),
     overallConfidence: "__UNRESOLVED__",
     blockers: [],
   };
@@ -108,17 +167,16 @@ export function buildAgentWorkspace({ work }) {
   validateBoundedEvidence(modelInput);
 
   fs.mkdirSync(path.join(root, "agent-workspace"), { recursive: true });
-  if (modelInput.inferenceRequests.length) {
-    atomicWriteJson(
-      resolveWorkPath(root, INFERENCE_DRAFT),
-      inferenceDraft(modelInput.inferenceRequests),
-    );
-  } else {
-    fs.rmSync(resolveWorkPath(root, INFERENCE_DRAFT), { force: true });
-  }
+  fs.rmSync(resolveWorkPath(root, "agent-workspace/inference.draft.json"), {
+    force: true,
+  });
+  fs.rmSync(
+    resolveWorkPath(root, "agent-workspace/assessment-judgment.draft.json"),
+    { force: true },
+  );
   atomicWriteJson(
-    resolveWorkPath(root, JUDGMENT_DRAFT),
-    judgmentDraft(modelInput),
+    resolveWorkPath(root, DECISIONS_DRAFT),
+    decisionsDraft(modelInput, declarationNamesByIntent(root, modelInput)),
   );
 
   const artifacts = canonicalPaths(modelInput).filter((relativePath) =>
@@ -144,22 +202,29 @@ export function buildAgentWorkspace({ work }) {
       guidelineRequests: modelInput.complianceSearchRequests.length,
     },
     requiredOutputs: {
-      inference:
-        modelInput.inferenceRequests.length > 0 ? "inference.json" : null,
-      guidelineEvidence: "compliance-search-evidence.json",
-      judgment: "assessment-judgment.json",
+      agentDecisions: DECISIONS_FILE,
+      materialized: {
+        inference:
+          modelInput.inferenceRequests.length > 0 ? "inference.json" : null,
+        guidelineEvidence: "compliance-search-evidence.json",
+        judgment: "assessment-judgment.json",
+      },
       structuredResult: "assessment.json",
       report: "assessment.html",
       schemas: {
+        agentDecisions: "scripts/agent-decisions.schema.json",
         inference: "scripts/inference.schema.json",
         guidelineEvidence: "scripts/compliance-search-evidence.schema.json",
         judgment: "scripts/assessment-judgment.schema.json",
       },
     },
     drafts: {
-      inference:
-        modelInput.inferenceRequests.length > 0 ? INFERENCE_DRAFT : null,
-      judgment: JUDGMENT_DRAFT,
+      agentDecisions: DECISIONS_DRAFT,
+    },
+    materialization: {
+      script: "scripts/materialize-assessment-results.mjs",
+      command:
+        "node <skill-directory>\\scripts\\materialize-assessment-results.mjs --work <work-directory>",
     },
     coverage: {
       semanticIntentIds: modelInput.semanticReviewUnits.map(
@@ -181,10 +246,10 @@ export function buildAgentWorkspace({ work }) {
     completionChecklist: [
       "Read model-input.json exactly once.",
       ...(modelInput.inferenceRequests.length
-        ? ["Resolve every inference request and write inference.json."]
+        ? ["Resolve every inference request in the compact Agent decisions."]
         : []),
-      "Analyze the shared Azure Guidelines documents once and write compliance-search-evidence.json.",
-      "Complete every prefilled judgment entry and write assessment-judgment.json.",
+      "Score the full catalog, fetch the first four retrievable documents with fallback, and complete the compact Agent decisions; use only prefilled intent-scoped declarationNames in complianceJudgments.",
+      "Run materialize-assessment-results.mjs and require all materialized Agent artifacts.",
       "Run finalize-assessment.mjs and require validated assessment.json and assessment.html.",
     ],
     canonicalArtifactHashes: artifactHashes,
@@ -197,9 +262,7 @@ export function buildAgentWorkspace({ work }) {
     artifacts: {
       modelInput: "model-input.json",
       agentIndex: INDEX_FILE,
-      inferenceDraft:
-        modelInput.inferenceRequests.length > 0 ? INFERENCE_DRAFT : null,
-      judgmentDraft: JUDGMENT_DRAFT,
+      agentDecisionsDraft: DECISIONS_DRAFT,
     },
     artifactHashes,
     failure: undefined,

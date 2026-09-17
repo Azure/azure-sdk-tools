@@ -7,13 +7,30 @@ After deterministic analysis, read
 `model-input.json` exactly once. The index must remain compact and provides
 exact assessed Semantic intent, informational Semantic intent, candidate,
 inference-request, and Azure Guidelines request coverage.
-`inference.draft.json` and
-`assessment-judgment.draft.json` are structural templates with intentionally
-invalid unresolved placeholders; they are never valid final outputs.
-Before writing Agent outputs, read each schema listed under
-`agent-index.json.requiredOutputs.schemas` exactly once. Resolve those paths
-relative to the skill directory, not the assessment work directory, and do not
-search for schema files.
+`agent-decisions.draft.json` is the structural template with intentionally
+invalid unresolved placeholders; it is never a valid output. Read its schema
+from `agent-index.json.requiredOutputs.schemas.agentDecisions` exactly once.
+Resolve that path relative to the skill directory and do not search for it.
+
+## Compact Agent decisions
+
+Write `agent-workspace\agent-decisions.json` conforming to
+`scripts\agent-decisions.schema.json`. It contains only Agent-authored
+summaries, REST/downstream choices, optional inference, four score signals and
+rationale keyed by stable `catalogId`, fetched-document provenance and bytes,
+extracted guidance, failed retrievals, compliance judgments, confidence, and
+blockers. Do not repeat catalog metadata, query profiles, source/hunk IDs,
+calculated totals/ranks/accounting, or final output wrappers. Guidance excerpts
+omit declaration IDs. Each compliance judgment selects from its prefilled
+intent-scoped qualified `declarationNames` and cites guidance by `catalogId`
+plus section. The materializer requires every name to resolve to exactly one
+canonical declaration ID within that owning intent.
+
+Run `materialize-assessment-results.mjs --work <work-directory>`. It verifies
+canonical hashes and exact coverage/ownership; derives ranks, canonical
+linkage, guidance applicability, and accounting; drops uncited excerpts; and
+atomically writes the existing inference, evidence, and judgment formats. It
+never fetches documents or invents provenance, evidence, or judgment.
 
 `api-version-publication` and `api-version-wide-change` intents are excluded
 from Agent coverage. The latter is identified by a `Versions` declaration, no
@@ -26,7 +43,7 @@ relationships from other findings.
 
 ## Azure Guidelines search evidence
 
-Write `compliance-search-evidence.json` conforming to
+The materializer writes `compliance-search-evidence.json` conforming to
 `scripts\compliance-search-evidence.schema.json`. Preserve one unchanged query
 profile per `complianceSearchRequests` item, then store one complete catalog
 ranking and four shared fetched catalog documents, or an explicit
@@ -41,7 +58,7 @@ as guidance.
 unit and one `inferenceRequests` item per `unknown` hunk. Do not create
 `inference.json` when the request array is empty.
 
-When requests exist, write `inference.json` conforming to
+When requests exist, the materializer writes `inference.json` conforming to
 `scripts\inference.schema.json`. Cover every request exactly once with
 `candidates`, `no-impact`, or `blocked`. Inferred candidates must remain within
 the request's IDs and allowed REST/downstream dimensions. They require final
@@ -49,7 +66,7 @@ Agent judgment like deterministic candidates.
 
 ## Agent judgment
 
-Write one `assessment-judgment.json` conforming to `scripts\assessment-judgment.schema.json`:
+The materializer writes one `assessment-judgment.json` conforming to `scripts\assessment-judgment.schema.json`:
 
 ```json
 {

@@ -42,22 +42,21 @@
    exhausted.
 4. **Search** — search each fetched document for terms from all query profiles
    and nearby normative guidance. Retain the smallest relevant sections,
-   concise excerpts, directly relevant TypeSpec examples, and the declaration
-   IDs to which each section may apply.
+   concise excerpts and directly relevant TypeSpec examples. Record only
+   prefilled intent-owned qualified declaration names in compliance judgments
+   that cite the section.
 5. **Compare each intent once** — synthesize applicable shared guidance and
    compare it with each Semantic intent as one assessment unit. Do not rerank
    or refetch documents for an intent. Do not assess each affected
    operation or build a document-by-declaration matrix. Catalog descriptions
    select documents; they are not Azure Guidelines evidence.
-6. **Write search evidence** — write
-   `compliance-search-evidence.json` with every unchanged query profile, one
-   complete catalog ranking, four shared fetched documents, failed attempts, score components,
-   selection rationale, canonical URL, section, excerpt, applicable declaration
-   IDs, relevant documented code, content hash, and retrieval timestamp. Set
-   accounting to the number of catalog entries scored once,
-   fetched documents, fetched bytes, retained excerpts, and retained excerpt
-   bytes.
-7. **Judge every intent** — write exactly one `complianceDecisions` entry per
+6. **Record compact evidence** — write score signals and rationale keyed by
+   each catalog entry's stable `catalogId` in `agent-decisions.json`. Record
+   each fetched document's `web_fetch` timestamp, content hash, byte count,
+   extracted guidance, and failed attempts once. Guidance excerpts omit
+   declaration IDs. Do not repeat canonical catalog metadata, calculated
+   totals/ranks, query profiles, source IDs, or hunk IDs.
+7. **Judge every intent** — write exactly one `complianceJudgments` entry per
    Semantic intent. Use `applicable-pass`, `applicable-fail`,
    `no-applicable-guidance`, or `not-assessed`. Cite fetched sections only when
    they contribute to the decision. When the search completes but no fetched
@@ -66,7 +65,16 @@
    an incomplete or blocked Azure Guidelines assessment.
    Every `applicable-fail` also supplies a concise finding title and `high`,
    `medium`, or `low` severity.
+   Select `declarationNames` only from the owning judgment's prefilled eligible
+   names; never reconstruct opaque declaration IDs.
    Never synthesize a requirement or recommended code example.
+8. **Materialize** — run the command advertised in `agent-index.json`. The
+   deterministic materializer verifies canonical hashes and exact ownership,
+   derives stable ranking and accounting, derives each retained excerpt's
+   declaration applicability from the citing judgments, preserves
+   Agent-supplied retrieval provenance, and atomically writes
+   `compliance-search-evidence.json` and `assessment-judgment.json`. It never
+   calls the network or creates evidence.
 
 ## Suppressions
 

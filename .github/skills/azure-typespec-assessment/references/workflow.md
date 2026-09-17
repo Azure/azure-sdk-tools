@@ -104,12 +104,15 @@ Also read only:
 
 Do not recursively list the work directory, search report artifacts broadly,
 inspect raw compiler output, or repeatedly read schemas and canonical inputs.
-Use the prefilled drafts as structural templates; their unresolved placeholders
-are intentionally invalid and must never be copied to final output.
+Use `agent-workspace\agent-decisions.draft.json` as the structural template.
+Its compliance judgments prefill eligible intent-scoped qualified
+`declarationNames`; retain only the names supporting each judgment. Its
+unresolved placeholders are intentionally invalid and must never be copied to
+the completed compact decision file.
 
-If `inferenceRequests` is empty, do not create `inference.json`. Otherwise,
-analyze only the supplied unknown hunks and write one exact result per request
-to `<work-directory>\inference.json`. Each result is `candidates`,
+If `inferenceRequests` is empty, omit `inferenceResults`. Otherwise, analyze
+only the supplied unknown hunks and write one exact compact result per request
+in `agent-workspace\agent-decisions.json`. Each result is `candidates`,
 `no-impact`, or `blocked`. Inferred candidates may use only the request's
 source, hunk, operations, facts, and allowed dimensions. Never modify
 `model-input.json`.
@@ -117,15 +120,18 @@ source, hunk, operations, facts, and allowed dimensions. Never modify
 Resolve all `complianceSearchRequests` through the referenced
 `dimensions/compliance-search-requests.json`, combine their query profiles,
 score the complete catalog once, fetch the four highest-ranked retrievable
-documents once with `web_fetch`, and write
-`<work-directory>\compliance-search-evidence.json`. Preserve failed retrievals
-and use the next-ranked catalog entry as specified by the search procedure.
-The main Agent writes this file directly; no Node.js script produces it.
+documents once with `web_fetch`, and record compact scores, retrieval
+provenance and bytes, failed attempts, and extracted guidance in
+`agent-workspace\agent-decisions.json`. Preserve failed retrievals and use the
+next-ranked catalog entry as specified by the search procedure. Do not put
+declaration IDs on guidance excerpts or reconstruct opaque IDs. Declaration
+linkage uses the prefilled qualified `declarationNames` in the intent-owned
+compliance judgment that cites the catalog ID and section.
 `compliance-search-request.mjs` only creates the requests in `model-input.json`,
 and `compliance-assessment.mjs` later consumes and validates the evidence.
 
-Then write `<work-directory>\assessment-judgment.json` with one concise result
-per supplied Semantic review unit, exact deterministic and inferred
+The same compact file contains one concise result per supplied Semantic review
+unit, exact deterministic and inferred
 REST/downstream candidate coverage, and one Azure Guidelines decision per Semantic
 intent. Do not read raw
 AutoRest/TCGC output, compiler logs, unrelated unchanged source, prior answers, or use
@@ -137,13 +143,28 @@ Documentation Completeness is assembled deterministically from
 `dimensions/document-quality-input.json`. The Agent does not read that artifact
 or author documentation decisions.
 
+Run the indexed deterministic materializer after completing the compact file:
+
+```powershell
+node (Join-Path $Skill "scripts\materialize-assessment-results.mjs") `
+  --work $Work
+```
+
+It verifies all recorded canonical hashes and exact ID ownership, calculates
+score totals/ranks and accounting, derives retained guidance applicability from
+citing judgments after resolving each qualified name uniquely within its
+owning canonical request, drops uncited excerpts, and atomically writes
+`inference.json` when required, `compliance-search-evidence.json`, and
+`assessment-judgment.json`. It preserves supplied `web_fetch` provenance and
+never performs network retrieval or compliance judgment.
+
 ## Guarded finalization
 
 ```powershell
 node (Join-Path $Skill "scripts\finalize-assessment.mjs") --work $Work
 ```
 
-The finalizer verifies canonical artifact hashes, validates inference, shared
+The finalizer re-verifies canonical artifact hashes, validates inference, shared
 guideline evidence, and judgment coverage, assembles and validates the complete
 assessment, and atomically writes `assessment.json` and `assessment.html`.
 It returns failure unless both artifacts are valid. `workflow-state.json`
@@ -189,9 +210,9 @@ judgments, method contracts, grouping, and semantic relationships unchanged.
 Persist both explicitly selected sidecars with a rendered report if
 reproducibility requires them; neither sidecar is discovered automatically.
 
-If assembly rejects schema or coverage, send only its compact errors to the
-same Agent for **one correction turn**. Correct
-`inference.json`, `compliance-search-evidence.json`, and/or
-`assessment-judgment.json`, then rerun guarded finalization; do not rerun
+If materialization or assembly rejects schema or coverage, send only its
+compact errors to the same Agent for **one correction turn**. Correct
+`agent-workspace\agent-decisions.json`, rerun materialization, then rerun
+guarded finalization; do not rerun
 preparation, compilation, analyzers, or create a second independent judgment.
 If correction still fails, stop and report the blocker.

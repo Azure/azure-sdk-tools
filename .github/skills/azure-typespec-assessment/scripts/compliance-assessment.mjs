@@ -77,6 +77,7 @@ export function readComplianceCatalog(file = CATALOG_PATH) {
     if (urls.has(entry[2])) continue;
     urls.add(entry[2]);
     entries.push({
+      catalogId: stableId("catalog-entry", entry[2], 12),
       catalogOrder,
       category,
       title: entry[1],

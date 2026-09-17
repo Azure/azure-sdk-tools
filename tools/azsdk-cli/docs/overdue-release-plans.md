@@ -27,15 +27,25 @@ duplicate, abandoned, or test-tagged plans.
 | Private Preview: spec PR missing or unmerged            | Merge the spec PR, update the target month, or abandon               | Yes                                 |
 | Private Preview: spec PR merged                         | No incomplete-spec reminder                                          | No                                  |
 
-SDK PR status must be explicitly `Closed` before cleanup checks its current
-GitHub state. Reopened or merged PRs prevent abandonment. Unknown release
-types and unknown SDK PR statuses never authorize cleanup. A partial release
-is protected even if every associated PR is closed or no PR URL is recorded.
-Private Preview eligibility uses GitHub's spec merge state, not API approval.
+Both `GA` and the legacy Azure DevOps value `APEX GA` are read as GA; new
+release-type writes still use `GA`.
+
+SDK PR eligibility uses current GitHub state, not cached Azure DevOps PR
+statuses. Every linked SDK PR must be confirmed closed without merging before
+cleanup is allowed, even if its stored status is empty or says it is still
+active. Active, merged, or unrecognized GitHub PR states prevent abandonment.
+Unknown release types never authorize cleanup. A partial release is protected
+even if every associated PR is closed or no PR URL is recorded. Private Preview
+eligibility uses GitHub's spec merge state, not API approval.
 
 GitHub lookup errors (including inaccessible private PRs) are reported and the
-affected plan is skipped. An unreadable Private Preview API-spec work item
-fails the initial scan rather than being treated as a missing spec. Other
+affected plan is skipped for cleanup. When sending overdue reminders, a failed
+activity lookup instead produces a generic reminder to update the target month
+or review the dashboard, without asserting an activity state or recommending
+abandonment. The lookup error remains visible with a nonzero exit code even if
+the generic reminder is sent; email failures are reported separately. Cancellation
+does not trigger a fallback email. An unreadable Private Preview API-spec work
+item fails the initial scan rather than being treated as a missing spec. Other
 per-plan update and reminder failures are reported while the batch continues.
 Each abandonment atomically tests the scanned Azure DevOps work-item revision.
 If an owner or release automation changes the plan during the scan, the update

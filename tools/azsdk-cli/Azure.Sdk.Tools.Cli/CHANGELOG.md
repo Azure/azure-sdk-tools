@@ -11,6 +11,8 @@
 
 ### Bugs Fixed
 
+- Fixed overdue release-plan selection for legacy `APEX GA` values and stale cached SDK PR statuses by checking current GitHub state.
+- Retained generic overdue reminders when release-activity lookups fail, without permitting automatic abandonment.
 - Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
 - Ignored release-table headers and separators so packages without planned release dates remain blocked.
 - Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.

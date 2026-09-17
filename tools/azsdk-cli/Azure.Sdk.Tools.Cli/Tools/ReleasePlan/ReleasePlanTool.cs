@@ -2111,18 +2111,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
 
             var sdkPullRequests = releasePlan.SDKInfo.Where(sdk => !string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl)).ToList();
-            if (sdkPullRequests.Any(sdk => !string.Equals(sdk.PullRequestStatus, "Closed", StringComparison.OrdinalIgnoreCase)))
-            {
-                // Merged PRs still have a path to release. Unknown status must not permit abandonment.
-                return null;
-            }
-
+            // Stored PR statuses can be stale or empty. Only current GitHub state authorizes cleanup.
             foreach (var url in sdkPullRequests.Select(sdk => sdk.SdkPullRequestUrl).Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 var pr = await GetMaintenancePullRequestAsync(url, isSpec: false, ct);
                 if (pr.Merged || pr.State.Value != ItemState.Closed)
                 {
-                    // Do not abandon a reopened or merged PR based on a stale Closed status in ADO.
+                    // Active, merged, or unrecognized PR states must not permit abandonment.
                     return null;
                 }
             }
@@ -2151,8 +2146,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 throw new InvalidOperationException($"Invalid release plan pull request URL: {url}");
             }
-            return await githubService.GetPullRequestAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct)
-                ?? throw new InvalidOperationException($"Could not determine pull request status for {url}");
+            try
+            {
+                return await githubService.GetPullRequestAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct)
+                    ?? throw new InvalidOperationException($"Could not determine pull request status for {url}");
+            }
+            catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                // A request timeout is an unreadable PR, not cancellation of the entire maintenance scan.
+                throw new InvalidOperationException($"Pull request lookup did not complete for {url}: {ex.Message}", ex);
+            }
         }
 
         private async Task<List<string>> NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri, CancellationToken ct)
@@ -2174,8 +2177,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 try
                 {
-                    var hasInactiveWork = await GetInactiveReleaseWorkReasonAsync(releasePlan, ct) != null;
-                    if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview && !hasInactiveWork)
+                    bool? hasInactiveWork = null;
+                    try
+                    {
+                        if (releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
+                        {
+                            hasInactiveWork = await GetInactiveReleaseWorkReasonAsync(releasePlan, ct) != null;
+                        }
+                    }
+                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        logger.LogWarning(ex, "Could not determine release activity for overdue release plan {WorkItemId}; using a generic reminder",
+                            releasePlan.WorkItemId);
+                        errors.Add($"Could not determine release activity for overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                    }
+
+                    ct.ThrowIfCancellationRequested();
+                    if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview && hasInactiveWork == false)
                     {
                         // Private Preview completes at spec merge; do not request SDK publication.
                         continue;
@@ -2183,7 +2206,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var email = new OverdueReleasePlanEmail(releasePlan, hasInactiveWork);
                     await SendEmailNotification(emailerUri, releaseOwnerEmail, sdkApexEmail, email.Subject, email.Body, ct);
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
                     throw;
                 }

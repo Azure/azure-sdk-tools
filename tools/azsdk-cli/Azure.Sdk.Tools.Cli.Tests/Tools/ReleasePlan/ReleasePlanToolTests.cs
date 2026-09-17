@@ -1457,7 +1457,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var mockNotificationService = new Mock<INotificationService>();
             var mockGitHub = new Mock<IGitHubService>();
+            mockGitHub.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMaintenancePullRequest("open", merged: false));
             mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-net", 1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMaintenancePullRequest("closed", merged: false));
+            mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 2, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMaintenancePullRequest("closed", merged: true));
+            mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-net", 6, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMaintenancePullRequest("closed", merged: false));
             var tool = CreateOverdueMaintenanceTool(mockDevOps.Object, mockGitHub.Object, mockNotificationService.Object);
 
@@ -1475,7 +1481,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(updatedWorkItemIds, Is.EqualTo(new[] { 204, 205 }));
             Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { noPullRequest, closedPullRequest }));
             mockNotificationService.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-            mockGitHub.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            mockGitHub.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(14));
+            mockGitHub.Verify(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-java", 8, It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [TestCase(ApiReleaseType.PublicPreview, "September 2026", "2026-10-01", false)]
@@ -1880,6 +1887,379 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             AssertDryRunHasNoSideEffects(service, notification);
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task Test_abandon_overdue_recognizes_legacy_ga_without_weakening_protection(bool dryRun)
+        {
+            var inactive = new ReleasePlanWorkItem { WorkItemId = 360, ReleasePlanType = "APEX GA" };
+            var released = new ReleasePlanWorkItem
+            {
+                WorkItemId = 361, ReleasePlanType = "APEX GA",
+                SDKInfo = [new SDKInfo { Language = ".NET", ReleaseStatus = "Released" }]
+            };
+            var active = new ReleasePlanWorkItem
+            {
+                WorkItemId = 362, ReleasePlanType = "APEX GA",
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/42", PullRequestStatus = "Closed" }]
+            };
+            var closed = new ReleasePlanWorkItem
+            {
+                WorkItemId = 363, ReleasePlanType = "APEX GA",
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/43" }]
+            };
+            var merged = new ReleasePlanWorkItem
+            {
+                WorkItemId = 364, ReleasePlanType = "APEX GA",
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-net/pull/44", PullRequestStatus = "ready for review" }]
+            };
+            var grace = new ReleasePlanWorkItem { WorkItemId = 365, ReleasePlanType = "APEX GA" };
+            List<ReleasePlanWorkItem> plans = [inactive, released, active, closed, merged, grace];
+            foreach (var plan in plans)
+            {
+                plan.Revision = 7;
+                plan.Status = "In Progress";
+                plan.SDKReleaseMonth = "September 2026";
+            }
+            grace.SDKReleaseMonth = "October 2026";
+            var snapshot = JsonSerializer.Serialize(plans);
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync(plans);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            if (!dryRun)
+            {
+                service.Setup(x => x.UpdateWorkItemAsync(It.Is<int>(id => id == 360 || id == 363),
+                        It.Is<Dictionary<string, string>>(fields => fields.Count == 1 && fields["System.State"] == "Abandoned"),
+                        7, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+                notification.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                    .Returns(Task.CompletedTask);
+            }
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMaintenancePullRequest("open", merged: false));
+            github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-java", 43, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMaintenancePullRequest("closed", merged: false));
+            github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-net", 44, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMaintenancePullRequest("closed", merged: true));
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object)
+                .AbandonOverdueReleasePlans(dryRun);
+
+            Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { inactive, closed }));
+            Assert.That(plans.All(plan => plan.ReleasePlanType == "APEX GA"), Is.True);
+            Assert.That(new[] { released, active, merged, grace }.All(plan => plan.Status == "In Progress"), Is.True);
+            github.VerifyAll();
+            if (dryRun)
+            {
+                Assert.That(JsonSerializer.Serialize(plans), Is.EqualTo(snapshot));
+                AssertDryRunHasNoSideEffects(service, notification);
+            }
+            else
+            {
+                service.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), 7,
+                    It.IsAny<CancellationToken>()), Times.Exactly(2));
+                notification.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            }
+        }
+
+        [TestCase("", "closed", false, true)]
+        [TestCase("Open", "closed", false, true)]
+        [TestCase("ready for review", "closed", false, true)]
+        [TestCase("Merged", "closed", false, true)]
+        [TestCase("Failed to generate SDK.", "closed", false, true)]
+        [TestCase("Closed", "open", false, false)]
+        [TestCase("ready for review", "closed", true, false)]
+        [TestCase("", "closed", true, false)]
+        [TestCase("", "open", false, false)]
+        public async Task Test_abandon_overdue_uses_live_pr_state_in_both_modes(
+            string storedState, string liveState, bool merged, bool expectedEligible)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 370, Revision = 7, Status = "In Progress", ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "September 2026",
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/42", PullRequestStatus = storedState }]
+            };
+            var snapshot = JsonSerializer.Serialize(plan);
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            service.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+            var notification = new Mock<INotificationService>();
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMaintenancePullRequest(liveState, merged));
+            var tool = CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object);
+
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ExitCode, Is.Zero);
+            Assert.That(preview.ReleasePlanDetailsList, Has.Count.EqualTo(expectedEligible ? 1 : 0));
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(snapshot));
+            AssertDryRunHasNoSideEffects(service, notification);
+
+            var response = await tool.AbandonOverdueReleasePlans();
+
+            Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.ReleasePlanDetailsList, Has.Count.EqualTo(expectedEligible ? 1 : 0));
+            Assert.That(plan.Status, Is.EqualTo(expectedEligible ? "Abandoned" : "In Progress"));
+            Assert.That(plan.SDKInfo.Single().PullRequestStatus, Is.EqualTo(storedState));
+            service.Verify(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7,
+                It.IsAny<CancellationToken>()), Times.Exactly(expectedEligible ? 1 : 0));
+            notification.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(expectedEligible ? 1 : 0));
+            github.Verify(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        [TestCase("Closed", "error")]
+        [TestCase("ready for review", "null")]
+        [TestCase("", "invalid")]
+        [TestCase("", "timeout")]
+        [TestCase("Merged", "unrecognized")]
+        public async Task Test_abandon_overdue_unverified_sdk_pr_never_authorizes_cleanup(string storedState, string failure)
+        {
+            var blocked = new ReleasePlanWorkItem
+            {
+                WorkItemId = 371, Revision = 7, Status = "In Progress", ApiReleaseType = ApiReleaseType.PublicPreview,
+                SDKReleaseMonth = "September 2026",
+                SDKInfo = [new SDKInfo
+                {
+                    SdkPullRequestUrl = failure == "invalid" ? "not-a-pr-url" : "https://github.com/Azure/azure-sdk-for-python/pull/42",
+                    PullRequestStatus = storedState
+                }]
+            };
+            var eligible = new ReleasePlanWorkItem
+            {
+                WorkItemId = 372, Revision = 7, Status = "In Progress", ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "September 2026"
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([blocked, eligible]);
+            service.Setup(x => x.UpdateWorkItemAsync(eligible.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            var lookup = github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()));
+            if (failure is "error" or "timeout")
+            {
+                lookup.ThrowsAsync(failure == "timeout" ? new TaskCanceledException("GitHub request timed out")
+                    : new HttpRequestException("GitHub unavailable"));
+            }
+            else
+            {
+                lookup.ReturnsAsync(failure == "null" ? null! : CreateMaintenancePullRequest("unrecognized", merged: false));
+            }
+            var notification = new Mock<INotificationService>();
+            var tool = CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object);
+
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ReleasePlanDetailsList, Is.EqualTo(new[] { eligible }));
+            AssertDryRunHasNoSideEffects(service, notification);
+
+            var response = await tool.AbandonOverdueReleasePlans();
+
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { eligible }));
+            Assert.That(blocked.Status, Is.EqualTo("In Progress"));
+            if (failure != "unrecognized")
+            {
+                Assert.That(preview.ExitCode, Is.EqualTo(1));
+                Assert.That(response.ExitCode, Is.EqualTo(1));
+                Assert.That(response.ResponseErrors, Has.Some.Contains("371"));
+            }
+            service.Verify(x => x.UpdateWorkItemAsync(blocked.WorkItemId, It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+            notification.Verify(x => x.SendEmailNotificationAsync(It.Is<EmailPayload>(email => email.Subject.Contains("(372)")),
+                It.IsAny<CancellationToken>()), Times.Once);
+            notification.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase("GA")]
+        [TestCase("APEX GA")]
+        public async Task Test_overdue_notifications_use_ga_policy_for_legacy_alias(string releaseType)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 380, ReleasePlanType = releaseType, SDKReleaseMonth = "September 2026",
+                ReleasePlanSubmittedByEmail = "owner@microsoft.com"
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            var captured = new List<JsonElement>();
+            using var client = CreateMaintenanceEmailClient(captured);
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notification.Object, client: client)
+                .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
+
+            Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(captured, Has.Count.EqualTo(1));
+            Assert.That(captured.Single().GetProperty("Body").GetString(), Does.Contain("Abandon the release plan using the Azure SDK Agent"));
+            AssertDryRunHasNoSideEffects(service, notification);
+        }
+
+        [TestCase(ApiReleaseType.GA, "error", false)]
+        [TestCase(ApiReleaseType.PublicPreview, "error", false)]
+        [TestCase(ApiReleaseType.PrivatePreview, "error", false)]
+        [TestCase(ApiReleaseType.GA, "null", false)]
+        [TestCase(ApiReleaseType.PrivatePreview, "null", false)]
+        [TestCase(ApiReleaseType.PublicPreview, "timeout", false)]
+        [TestCase(ApiReleaseType.PrivatePreview, "timeout", false)]
+        [TestCase(ApiReleaseType.GA, "invalid", false)]
+        [TestCase(ApiReleaseType.PrivatePreview, "invalid", false)]
+        [TestCase(ApiReleaseType.GA, "error", true)]
+        public async Task Test_overdue_notifications_send_generic_reminder_after_lookup_failure(
+            ApiReleaseType releaseType, string failure, bool failFirstSend)
+        {
+            var url = failure == "invalid" ? "not-a-pr-url"
+                : releaseType == ApiReleaseType.PrivatePreview
+                    ? "https://github.com/Azure/azure-rest-api-specs-pr/pull/42"
+                    : "https://github.com/Azure/azure-sdk-for-python/pull/42";
+            var unknown = new ReleasePlanWorkItem
+            {
+                WorkItemId = 381, ReleasePlanId = 38, ApiReleaseType = releaseType,
+                SDKReleaseMonth = "September 2026", ReleasePlanSubmittedByEmail = "owner@microsoft.com",
+                ActiveSpecPullRequest = url,
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = url, PullRequestStatus = "Closed" }]
+            };
+            var next = new ReleasePlanWorkItem
+            {
+                WorkItemId = 382, ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "September 2026", ReleasePlanSubmittedByEmail = "next@microsoft.com"
+            };
+            List<ReleasePlanWorkItem> plans = [unknown, next];
+            var snapshot = JsonSerializer.Serialize(plans);
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync(plans);
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            var lookup = github.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), 42, It.IsAny<CancellationToken>()));
+            if (failure == "null")
+            {
+                lookup.ReturnsAsync((Octokit.PullRequest)null!);
+            }
+            else
+            {
+                lookup.ThrowsAsync(failure == "timeout" ? new TaskCanceledException("GitHub request timed out")
+                    : new HttpRequestException("GitHub unavailable"));
+            }
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            var captured = new List<JsonElement>();
+            using var client = CreateMaintenanceEmailClient(captured, failFirst: failFirstSend);
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object, client: client)
+                .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
+
+            Assert.That(response.ExitCode, Is.EqualTo(1), "The lookup failure must remain visible even when a reminder is sent.");
+            Assert.That(response.ResponseErrors, Has.Count.EqualTo(failFirstSend ? 2 : 1));
+            Assert.That(response.ResponseErrors, Has.Some.Contains("381"));
+            Assert.That(captured, Has.Count.EqualTo(2));
+            var genericBody = captured[0].GetProperty("Body").GetString()!;
+            Assert.That(genericBody, Does.Contain("Current release activity could not be verified"));
+            Assert.That(genericBody, Does.Contain("Update the Target Release Month").And.Contain(unknown.ReleasePlanLink));
+            Assert.That(genericBody, Does.Not.Contain("automatically abandoned").And.Not.Contain("Abandon the release plan"));
+            Assert.That(genericBody, Does.Not.Contain("Merge the spec PR").And.Not.Contain("has not been merged"));
+            Assert.That(genericBody, Does.Not.Contain("Complete remaining SDK release activities").And.Not.Contain("GitHub unavailable"));
+            Assert.That(captured[1].GetProperty("EmailTo").GetString(), Is.EqualTo("next@microsoft.com"));
+            Assert.That(JsonSerializer.Serialize(plans), Is.EqualTo(snapshot));
+            AssertDryRunHasNoSideEffects(service, notification);
+            github.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), 42, It.IsAny<CancellationToken>()),
+                Times.Exactly(failure == "invalid" ? 0 : 1));
+        }
+
+        [TestCase(ApiReleaseType.GA)]
+        [TestCase(ApiReleaseType.PrivatePreview)]
+        public void Test_overdue_notifications_cancellation_during_failed_lookup_does_not_send_fallback(ApiReleaseType releaseType)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 383, ApiReleaseType = releaseType, SDKReleaseMonth = "September 2026",
+                ReleasePlanSubmittedByEmail = "owner@microsoft.com",
+                ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs-pr/pull/42",
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/42" }]
+            };
+            using var cts = new CancellationTokenSource();
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(cts.Token)).ReturnsAsync([plan]);
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            github.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), 42, cts.Token))
+                .Callback(cts.Cancel)
+                .ThrowsAsync(new HttpRequestException("Request stopped"));
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            var captured = new List<JsonElement>();
+            using var client = CreateMaintenanceEmailClient(captured);
+            var tool = CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object, client: client);
+
+            Assert.CatchAsync<OperationCanceledException>(async () => await tool.ListOverdueReleasePlans(
+                notifyOwners: true, emailerUri: "https://notifications.example.com/send", ct: cts.Token));
+
+            Assert.That(captured, Is.Empty);
+            AssertDryRunHasNoSideEffects(service, notification);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task Test_overdue_notifications_fallback_mail_timeout_only_stops_batch_on_caller_cancellation(bool cancelCaller)
+        {
+            var unknown = new ReleasePlanWorkItem
+            {
+                WorkItemId = 384, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026",
+                ReleasePlanSubmittedByEmail = "owner@microsoft.com",
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/42" }]
+            };
+            var next = new ReleasePlanWorkItem
+            {
+                WorkItemId = 385, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026",
+                ReleasePlanSubmittedByEmail = "next@microsoft.com"
+            };
+            using var cts = new CancellationTokenSource();
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(cts.Token)).ReturnsAsync([unknown, next]);
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, cts.Token))
+                .ThrowsAsync(new HttpRequestException("GitHub unavailable"));
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            var captured = new List<JsonElement>();
+            var handler = new Mock<HttpMessageHandler>();
+            handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .Returns(async (HttpRequestMessage request, CancellationToken ct) =>
+                {
+                    using var document = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
+                    captured.Add(document.RootElement.Clone());
+                    if (captured.Count == 1)
+                    {
+                        if (cancelCaller)
+                        {
+                            cts.Cancel();
+                        }
+                        throw new TaskCanceledException("Email request timed out");
+                    }
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+                });
+            using var client = new HttpClient(handler.Object);
+            var tool = CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object, client: client);
+
+            if (cancelCaller)
+            {
+                Assert.CatchAsync<OperationCanceledException>(async () => await tool.ListOverdueReleasePlans(
+                    notifyOwners: true, emailerUri: "https://notifications.example.com/send", ct: cts.Token));
+                Assert.That(captured, Has.Count.EqualTo(1));
+            }
+            else
+            {
+                var response = await tool.ListOverdueReleasePlans(
+                    notifyOwners: true, emailerUri: "https://notifications.example.com/send", ct: cts.Token);
+
+                Assert.That(response.ExitCode, Is.EqualTo(1));
+                Assert.That(response.ResponseErrors, Has.Count.EqualTo(2));
+                Assert.That(response.ResponseErrors, Has.Some.Contains("384").And.Contains("GitHub unavailable"));
+                Assert.That(response.ResponseErrors, Has.Some.Contains("384").And.Contains("Email request timed out"));
+                Assert.That(captured, Has.Count.EqualTo(2));
+                Assert.That(captured[1].GetProperty("EmailTo").GetString(), Is.EqualTo("next@microsoft.com"));
+            }
+            Assert.That(captured[0].GetProperty("Body").GetString(), Does.Contain("Current release activity could not be verified"));
+            AssertDryRunHasNoSideEffects(service, notification);
+        }
+
         private static void AssertDryRunHasNoSideEffects(Mock<IDevOpsService> service, Mock<INotificationService> notification)
         {
             service.Verify(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -2056,6 +2436,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 200,
+                ApiReleaseType = ApiReleaseType.GA,
                 Owner = "Test Owner",
                 ReleasePlanSubmittedByEmail = "valid@example.com",
                 IsManagementPlane = true,
@@ -2103,6 +2484,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 201,
+                ApiReleaseType = ApiReleaseType.GA,
                 Owner = "Test Owner",
                 ReleasePlanSubmittedByEmail = "valid@example.com",
                 IsManagementPlane = true,
@@ -2152,6 +2534,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 203,
+                ApiReleaseType = ApiReleaseType.GA,
                 Owner = "Test Owner",
                 ReleasePlanSubmittedByEmail = "valid@example.com",
                 IsManagementPlane = true,
@@ -2201,6 +2584,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 202,
+                ApiReleaseType = ApiReleaseType.GA,
                 Owner = "Test Owner",
                 ReleasePlanSubmittedByEmail = "valid@example.com",
                 IsDataPlane = true,
@@ -2247,6 +2631,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 203,
+                ApiReleaseType = ApiReleaseType.GA,
                 Owner = "Test Owner",
                 ReleasePlanSubmittedByEmail = "valid@example.com",
                 IsManagementPlane = true,

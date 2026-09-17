@@ -10,9 +10,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
     public class OverdueReleasePlanEmail : EmailPayload
     {
         private readonly ReleasePlanWorkItem _releasePlan;
-        private readonly bool _hasInactiveWork;
+        // Null means activity could not be verified, so the reminder must not assert a work state.
+        private readonly bool? _hasInactiveWork;
 
-        public OverdueReleasePlanEmail(ReleasePlanWorkItem releasePlan, bool hasInactiveWork)
+        public OverdueReleasePlanEmail(ReleasePlanWorkItem releasePlan, bool? hasInactiveWork)
         {
             _releasePlan = releasePlan ?? throw new ArgumentNullException(nameof(releasePlan));
             _hasInactiveWork = hasInactiveWork;
@@ -47,6 +48,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
         {
             get
             {
+                if (_hasInactiveWork == null)
+                {
+                    return "<p>Current release activity could not be verified. Review the linked pull requests and release status in the release plan dashboard.</p>";
+                }
+
                 if (IsPrivatePreview)
                 {
                     return "<p>The spec PR for this Private Preview release plan is missing or has not been merged.</p>";
@@ -65,13 +71,15 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             }
         }
 
-        private string ReleaseWorkAction => IsPrivatePreview
-            ? "<li>Merge the spec PR, or</li><li>Abandon the release plan using the Azure SDK Agent.</li>"
-            : _hasInactiveWork
-                ? "<li>Abandon the release plan using the Azure SDK Agent.</li>"
-                : "<li>Complete remaining SDK release activities.</li>";
+        private string ReleaseWorkAction => _hasInactiveWork == null
+            ? "<li>Review the release plan dashboard and confirm the next release action.</li>"
+            : IsPrivatePreview
+                ? "<li>Merge the spec PR, or</li><li>Abandon the release plan using the Azure SDK Agent.</li>"
+                : _hasInactiveWork == true
+                    ? "<li>Abandon the release plan using the Azure SDK Agent.</li>"
+                    : "<li>Complete remaining SDK release activities.</li>";
 
-        private string AbandonmentNotice => _hasInactiveWork
+        private string AbandonmentNotice => _hasInactiveWork == true
             ? "<p>Inactive release plans are automatically abandoned after one full overdue calendar month unless the target month or release activity is updated.</p>"
             : string.Empty;
 

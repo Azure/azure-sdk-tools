@@ -2,7 +2,8 @@ name: code-review-eval
 description: Routing and boundary tests for the azsdk-cli code-review skill
 type: capability
 
-# Routing reviews need only this skill, not a running release-management server.
+# Reviews need no release-management server. Boundary cases add their real
+# competing skills and require them, rather than only excluding code-review.
 environment:
   skills: [..]
 
@@ -70,8 +71,30 @@ stimuli:
         config:
           disallowed: [code-review]
 
+  - name: anti-trigger-fix-sdk-pipeline
+    prompt: "Which Agent Skill handles fixing failing SDK CI tests for the Python package sdk/storage/azure-storage-blob in azure-sdk-for-python? Select and load the applicable skill, then stop. This is skill routing only: use read-only skill-instruction tools, not shell commands, checkout searches, source inspection, MCP calls, or code changes."
+    environment:
+      skills: [../../azsdk-common-pipeline-fixer]
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azsdk-common-pipeline-fixer]
+          disallowed: [code-review]
+
+  - name: anti-trigger-fix-generated-sdk-analyzers
+    prompt: "Which Agent Skill handles fixing AZC0030 analyzer errors in a locally generated .NET SDK, sdk/storage/Azure.Storage.Blobs in azure-sdk-for-net? Select and load the applicable customization/validation skill, then stop. This is skill routing only: use read-only skill-instruction tools, not shell commands, checkout searches, source inspection, MCP calls, or code changes."
+    environment:
+      skills: [../../azsdk-common-generate-sdk-locally]
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azsdk-common-generate-sdk-locally]
+          disallowed: [code-review]
+
+  # Handwritten CLI implementation/analyzers have no dedicated competing skill
+  # here. These are exclusions, not evidence of SDK pipeline/customization routing.
   - name: anti-trigger-run-azsdk-cli-analyzers
-    prompt: "I need to run the MCP001-MCP007 analyzers and fix their errors. Identify the repository workflow that applies; do not inspect or modify files."
+    prompt: "I need to run the MCP001-MCP007 analyzers on handwritten tools/azsdk-cli code and fix their errors. Identify the repository workflow that applies; do not inspect or modify files."
     graders:
       - type: skill-invocation
         config:

@@ -34,17 +34,26 @@ replies to its review comments.
 The naming pilot applies only to new packages or changed `ServiceName` and
 `DisplayName` values in `_data/releases/latest/*-packages.csv`. Routine version
 bumps, row moves, and pre-existing unknown names receive no naming comments.
-Use the [package naming review guidance](references/package-names.md) to suggest
+Load the [canonical naming policy](references/package-names.md) to suggest
 word spacing and acronym/product casing, or request owner confirmation when
 the name is unknown. Suggestions are not authoritative or auto-applied.
 
 This skill is repository-local: editing it in azure-sdk-tools does not install
-it in Azure/azure-sdk. The companion website change supplies path-specific
-`.github/instructions/release-csv-names.instructions.md` guidance and narrows
-that repository's blanket prohibition on package-index review comments. Keep
-those instructions aligned with this skill's naming guidance. The website's
-existing automatic Copilot review rule requests reviews; this pilot adds no
-second review-request workflow and does not change the azsdk-cli workflow.
+it in Azure/azure-sdk. That repository's deployed
+`.github/instructions/release-csv-names.instructions.md` is the canonical policy;
+the skill's reference is only a loader, not a manually maintained policy copy.
+The companion website change narrows the blanket prohibition on package-index
+review comments. Its existing automatic review rule requests reviews; this pilot
+adds no second review-request workflow and does not change the azsdk-cli workflow.
+
+`evals/package-names.eval.yaml` pins an Azure/azure-sdk commit as its git fixture.
+The same naming scenarios read the real instruction from that checkout, not a
+separately authored snapshot. When changing the website policy, update the
+fixture ref to the candidate commit and rerun the naming suite before rollout.
+Prime the fixture using the repository's existing `init-eval-git-fixtures.ts`
+setup before lint/eval; CI's shard setup already discovers and primes it.
+The agent uses read-only file tools; shell execution is disallowed by the
+evaluation graders, including shell commands disguised as file reads.
 
 Before rollout, verify with repository maintainers that custom instructions
 are enabled, the naming guidance is attributed in an actual generated CSV PR,

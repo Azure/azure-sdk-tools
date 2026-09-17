@@ -1,14 +1,18 @@
 ---
 name: code-review
-description: "Guide GitHub Copilot code review for tools/azsdk-cli behavioral defects and Azure/azure-sdk _data/releases/latest/*-packages.csv ServiceName/DisplayName changes. WHEN: 'CCR review of an azsdk-cli PR', 'review release CSV package names', 'review ServiceName and DisplayName'. DO NOT USE FOR: version-only CSV updates, row reordering, or unrelated files."
+description: "Perform requested pull-request or diff reviews of tools/azsdk-cli behavior and Azure/azure-sdk _data/releases/latest/*-packages.csv ServiceName/DisplayName changes. WHEN: 'CCR review of an azsdk-cli PR', 'review release CSV package names', 'review ServiceName and DisplayName'."
 license: MIT
 metadata:
+  version: "1.1.1"
   author: Microsoft
-  version: "1.1.0"
 compatibility: "GitHub Copilot code review, copilot-chat, @microsoft/vally-cli 0.7.0"
 ---
 
 # Azure SDK Code Review
+
+This skill performs requested PR/diff reviews, not implementation, analyzer
+execution, or build repair. Use the applicable engineering workflow for those
+tasks.
 
 Apply only the guidance for the changed surface. Do not apply CLI architecture
 rules to CSVs or treat friendly product names as code identifiers.
@@ -22,8 +26,8 @@ rules to CSVs or treat friendly product names as code identifiers.
    and applicable specs. Apply the [review rules](references/review-rules.md)
    and enforce the [finding contract](references/finding-contract.md).
 3. For Azure/azure-sdk `_data/releases/latest/*-packages.csv`, compare rows by
-   package identity. Apply [package naming review](references/package-names.md)
-   only to new rows or changed `ServiceName`/`DisplayName` values. Skip
+   package identity. Load the [canonical naming policy](references/package-names.md)
+   and apply it only to new rows or changed `ServiceName`/`DisplayName` fields. Skip
    version-only updates and row reordering. The filename must end in
    `-packages.csv`; for example, `python-packages_other.csv` is outside scope
    even if it has the same columns. Do not leave naming feedback outside scope.

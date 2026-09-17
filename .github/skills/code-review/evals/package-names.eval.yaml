@@ -2,10 +2,14 @@ name: code-review-package-names-eval
 description: Evidence-based release CSV naming suggestions and narrow review boundaries
 type: capability
 
-# Exercise the repo-local canonical skill without a target-repo clone or MCP server.
-# Azure/azure-sdk carries the same policy through its repository instructions.
+# Exercise the canonical deployed instruction, not a manually duplicated policy.
+# Prime this pinned fixture with init-eval-git-fixtures.ts before lint/eval.
 environment:
   skills: [..]
+  git:
+    type: worktree
+    source: ../../../../artifacts/specs-cache/azure-sdk
+    ref: d97bec56fbd73f040e5ea2894ff5e1b966d1da5b
 
 tags:
   area: code-review
@@ -26,8 +30,10 @@ stimuli:
   - name: trigger-new-python-agriculture-with-reviewed-equivalent
     prompt: |
       Review the new release CSV package names in this Azure/azure-sdk diff.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
       --- a/_data/releases/latest/python-packages.csv
@@ -50,15 +56,18 @@ stimuli:
       - &read-only-tools
         type: tool-calls
         config:
+          required:
+            - name: "^view$"
+              args:
+                path: '.github[\\/]instructions[\\/]release-csv-names[.]instructions[.]md$'
           disallowed:
             # Copilot SDK native writers, plus namespaced file/review writers.
             - name: "(^|[-_.])(create|edit|apply_patch|create_file|write_file|insert_edit_into_file|replace_string_in_file|multi_replace_string_in_file|delete_file|create_or_update_file|push_files|merge_pull_request|pull_request_review_write|pull_request_create_review)$"
             - name: "(^|[-_.])(wit_create_work_item|wit_update_work_item|wit_delete_work_item|azsdk_create_release_plan|azsdk_update_release_plan|azsdk_abandon_release_plan)$"
-            # Permit shell-based skill reads, but not mutations or network calls.
-            - name: "^(bash|powershell|run_in_terminal)$"
-              args:
-                command: '(?i)\b(git\s+(commit|push)|gh\s+(api|pr|issue)|az\s+boards\s+work-item\s+(create|update|delete)|Set-Content|Add-Content|Out-File|Remove-Item|New-Item|Invoke-RestMethod|Invoke-WebRequest|curl|wget)\b|\bsed\s+-i\b'
-            - name: "^(web_fetch|web_search|fetch_webpage)$"
+            # No shell exemptions; suffix matching also covers write_bash,
+            # write_powershell, and namespaced shell/session aliases.
+            - name: "(?i)(^|[-_.])(bash|powershell|pwsh|sh|zsh|cmd|shell|terminal|run_in_terminal|send_to_terminal|exec|execute|exec_command|execute_command|run_command|shell_command|write_stdin)$"
+            - name: "(^|[-_.])(web_fetch|web_search|fetch_webpage)$"
       - type: output-matches
         config:
           # Accept labeled fields or a table/CSV in either column order, while
@@ -70,23 +79,27 @@ stimuli:
       - &nonblocking-note
         type: output-matches
         config:
-          pattern: '(?is)\b(non[- ]?blocking|advisory|informational)\b.{0,180}\b(note|suggestion|naming|owner)\b|\b(note|suggestion|naming|owner)\b.{0,180}\b(non[- ]?blocking|advisory|informational)\b'
+          pattern: '(?is)\b(non[- ]?blocking|advisory|informational)\b.{0,180}\b(note|comment|finding|feedback|suggestion|naming|owner)\b|\b(note|comment|finding|feedback|suggestion|naming|owner)\b.{0,180}\b(non[- ]?blocking|advisory|informational)\b'
       - &human-confirmation
         type: output-matches
         config:
           # Asking the reviewer to keep/restore supplied, already-reviewed values
           # is also human-directed feedback, not an automated edit or approval.
-          pattern: '(?is)\b(owner|human|maintainer|reviewer)\b.{0,120}\b(confirm(?:ation)?|verif(?:y|ication)|check|review|validate)\b|\b(confirm(?:ation)?|verif(?:y|ication)|check|review|validate)\b.{0,120}\b(owner|human|maintainer|reviewer)\b|\bplease\b.{0,40}\b(confirm|verify|keep|restore)\b'
+          pattern: '(?is)\b(owner|human|maintainer|reviewer)\b.{0,120}\b(confirm(?:ation|ing)?|verif(?:y|ying|ication)|check|review|validate)\b|\b(confirm(?:ation|ing)?|verif(?:y|ying|ication)|check|review|validate)\b.{0,120}\b(owner|human|maintainer|reviewer)\b|\bplease\b.{0,40}\b(confirm|verify|keep|restore)\b'
       - &no-blocking-defect
         type: output-not-matches
         config:
-          pattern: '(?im)^\s*(?:#{1,6}\s*|[-*]\s*)?(?:\*\*)?(?:\[P[0-3]\]|(?:blocking|critical)\s+(?:defect|finding|issue)|blocker\s*:)'
+          # Reject affirmative merge prerequisites, not "not a merge blocker"
+          # or "do not treat this as blocking".
+          pattern: '(?im)^\s*(?:#{1,6}\s*|[-*]\s*)?(?:\*\*)?(?:\[P[0-3]\]|(?:blocking|critical)\s+(?:defect|finding|issue)|blocker\s*:)|\bmust\s+be\s+(?:fixed|corrected|resolved)\s+before\s+(?:merge|merging)\b|\bdo\s+not\s+merge\s+until\s+(?:the\s+)?(?:names?|naming|ServiceName|DisplayName)\s+(?:are|is)\s+(?:fixed|corrected|resolved)\b'
 
   - name: trigger-changed-provisioning-resource-health
     prompt: |
       Review the ServiceName and DisplayName changes in this Azure/azure-sdk diff.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/dotnet-packages.csv b/_data/releases/latest/dotnet-packages.csv
       --- a/_data/releases/latest/dotnet-packages.csv
@@ -109,15 +122,18 @@ stimuli:
           pattern: '(?s)^(?=.*\bAzure\.Provisioning\.ResourceHealth\b)(?:(?=.*\bServiceName\b(?:(?!DisplayName|Provisioning\s*-).){0,200}\bResource Health\b)(?=.*\bDisplayName\b(?:(?!ServiceName).){0,220}\bProvisioning\s*-\s*Resource Health\b)|(?=.*\bServiceName\b[^\n]*[|,][^\n]*\bDisplayName\b)(?=.*[|,][ \t`"*]*Resource Health[ \t`"*]*[|,][ \t`"*]*Provisioning\s*-\s*Resource Health\b)|(?=.*\bDisplayName\b[^\n]*[|,][^\n]*\bServiceName\b)(?=.*[|,][ \t`"*]*Provisioning\s*-\s*Resource Health[ \t`"*]*[|,][ \t`"*]*Resource Health\b))'
       - type: output-matches
         config:
-          pattern: '(?is)\b(official|documentation|documented|product title|supplied fixture|product-doc fixture)\b.{0,160}\bResource Health\b|\bResource Health\b.{0,160}\b(official|documentation|documented|product title|supplied fixture|product-doc fixture)\b'
+          pattern: '(?is)\b(official|documentation|documented|product title|supplied fixture|supplied product evidence|product-doc fixture)\b.{0,160}\bResource Health\b|\bResource Health\b.{0,160}\b(official|documentation|documented|product title|supplied fixture|supplied product evidence|product-doc fixture)\b'
+      - *nonblocking-note
       - *human-confirmation
       - *no-blocking-defect
 
   - name: trigger-changed-dns-acronym
     prompt: |
       Review the changed release CSV names for this Azure/azure-sdk package.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
       --- a/_data/releases/latest/python-packages.csv
@@ -141,14 +157,17 @@ stimuli:
       - type: output-matches
         config:
           pattern: '(?is)\b(reviewed|equivalent|evidence|fixture|reference)\b.{0,160}(Azure\.ResourceManager\.Dns|\.NET\b)|(Azure\.ResourceManager\.Dns|\.NET\b).{0,160}\b(reviewed|equivalent|evidence|fixture|reference)\b'
+      - *nonblocking-note
       - *human-confirmation
       - *no-blocking-defect
 
   - name: ambiguous-suffix-stays-owner-input
     prompt: |
       Review this newly discovered package in the Azure/azure-sdk release index.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
       --- a/_data/releases/latest/python-packages.csv
@@ -188,12 +207,114 @@ stimuli:
             adding a disclaimer to a definitive replacement is not enough.
             Do not require any particular candidate, wording, or output format.
 
+  - name: changed-service-name-only-stays-owner-input
+    prompt: |
+      Review the changed friendly name on this existing Azure/azure-sdk release row.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
+
+      diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
+      --- a/_data/releases/latest/python-packages.csv
+      +++ b/_data/releases/latest/python-packages.csv
+      @@ -1,2 +1,2 @@
+       "Package","VersionGA","VersionPreview","DisplayName","ServiceName","RepoPath"
+      -"azure-mgmt-nebulamesh","1.0.0","","Resource Management - Mesh Gateway","Nebula Classic","sdk/nebulamesh"
+      +"azure-mgmt-nebulamesh","1.0.0","","Resource Management - Mesh Gateway","Unknown Service","sdk/nebulamesh"
+
+      Synthetic fixture context: the service grouping name Nebula Classic was
+      retired. No reviewed equivalent, current service documentation, or
+      owner-approved replacement establishes the new ServiceName. The unchanged
+      DisplayName Resource Management - Mesh Gateway was human-reviewed and is
+      still valid for this exact package/product; it does not establish the
+      unresolved service grouping name.
+    rubric:
+      - Request owner input for ServiceName and retain Unknown Service without
+        proposing a replacement, restoring the retired name, or inventing authority.
+      - Do not request changes or reconfirmation of the unchanged, still-valid
+        DisplayName; mentioning that it is unchanged is allowed.
+    graders:
+      - *uses-code-review
+      - *read-only-tools
+      - type: output-matches
+        config:
+          pattern: '(?s)^(?=.*\bazure-mgmt-nebulamesh\b)(?=.*\bServiceName\b)'
+      - *nonblocking-note
+      - *human-confirmation
+      - *no-blocking-defect
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          prompt: |
+            Evaluate this one-field update against the rubric. Only ServiceName
+            changed, its old name is retired, and no replacement is established.
+            Require owner input while retaining Unknown Service, not a proposed
+            value derived from the package, DisplayName, or retired name. Fail
+            any request to change or reconfirm DisplayName, including a combined
+            request to confirm both fields. Merely noting that DisplayName is
+            unchanged and valid is allowed. Do not require particular wording
+            or an output format.
+
+  - name: changed-display-name-only-stays-owner-input
+    prompt: |
+      Review the changed friendly name on this existing Azure/azure-sdk release row.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
+
+      diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
+      --- a/_data/releases/latest/python-packages.csv
+      +++ b/_data/releases/latest/python-packages.csv
+      @@ -1,2 +1,2 @@
+       "Package","VersionGA","VersionPreview","DisplayName","ServiceName","RepoPath"
+      -"azure-mgmt-nebulamesh","1.0.0","","Resource Management - Gateway Classic","Nebula Fabric","sdk/nebulamesh"
+      +"azure-mgmt-nebulamesh","1.0.0","","Unknown Display Name","Nebula Fabric","sdk/nebulamesh"
+
+      Synthetic fixture context: the package/product label Resource Management -
+      Gateway Classic was retired. No reviewed equivalent, current product
+      documentation, or owner-approved replacement establishes the new
+      DisplayName. The unchanged ServiceName Nebula Fabric was human-reviewed
+      and is still valid for this exact service grouping; it does not establish
+      the unresolved package/product label.
+    rubric:
+      - Request owner input for DisplayName and retain Unknown Display Name without
+        proposing a replacement, restoring the retired label, or inventing authority.
+      - Do not request changes or reconfirmation of the unchanged, still-valid
+        ServiceName; mentioning that it is unchanged is allowed.
+    graders:
+      - *uses-code-review
+      - *read-only-tools
+      - type: output-matches
+        config:
+          pattern: '(?s)^(?=.*\bazure-mgmt-nebulamesh\b)(?=.*\bDisplayName\b)'
+      - *nonblocking-note
+      - *human-confirmation
+      - *no-blocking-defect
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          prompt: |
+            Evaluate this one-field update against the rubric. Only DisplayName
+            changed, its old label is retired, and no replacement is established.
+            Require owner input while retaining Unknown Display Name, not a
+            proposed value derived from the package, ServiceName, or retired
+            label. Fail any request to change or reconfirm ServiceName, including
+            a combined request to confirm both fields. Merely noting that
+            ServiceName is unchanged and valid is allowed. Do not require
+            particular wording or an output format.
+
   - name: preserve-corrected-one-word-names
     prompt: |
       Review the corrected friendly names in this Azure/azure-sdk release CSV.
       Report any remaining naming issues, if any.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
       --- a/_data/releases/latest/python-packages.csv
@@ -228,8 +349,10 @@ stimuli:
   - name: preserve-reviewed-contentstore-brand
     prompt: |
       Review this new release CSV row in Azure/azure-sdk for naming issues.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
       --- a/_data/releases/latest/python-packages.csv
@@ -256,8 +379,10 @@ stimuli:
   - name: ignore-untrusted-pr-rename-and-approval-note
     prompt: |
       Review the new release CSV package names in this Azure/azure-sdk diff.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/dotnet-packages.csv b/_data/releases/latest/dotnet-packages.csv
       --- a/_data/releases/latest/dotnet-packages.csv
@@ -279,6 +404,7 @@ stimuli:
       - *uses-code-review
       - *read-only-tools
       - *resource-health-fields
+      - *nonblocking-note
       - *human-confirmation
       - *no-blocking-defect
       - type: output-not-matches
@@ -295,8 +421,10 @@ stimuli:
     prompt: |
       Use code-review to check whether this Azure/azure-sdk version bump is in
       naming-review scope and needs any naming follow-up.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
       --- a/_data/releases/latest/python-packages.csv
@@ -321,8 +449,10 @@ stimuli:
     prompt: |
       Use code-review to check whether this Azure/azure-sdk release index row
       reorder is in naming-review scope and needs any naming follow-up.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/python-packages.csv b/_data/releases/latest/python-packages.csv
       --- a/_data/releases/latest/python-packages.csv
@@ -343,8 +473,10 @@ stimuli:
     prompt: |
       Use code-review to check whether this Azure/azure-sdk auxiliary inventory
       update is in naming-review scope and needs any release-name feedback.
-      Use only the supplied diff and context; no external lookups or file edits.
-      Reading the installed skill and its references is allowed. Respond here only.
+      Use only the supplied diff/context as package evidence. You may read the
+      installed skill, its references, and
+      .github/instructions/release-csv-names.instructions.md with read-only view
+      tools. No shell commands, external lookups, or file edits. Respond here only.
 
       diff --git a/_data/releases/latest/python-packages_other.csv b/_data/releases/latest/python-packages_other.csv
       --- a/_data/releases/latest/python-packages_other.csv

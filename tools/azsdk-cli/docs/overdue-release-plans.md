@@ -45,13 +45,36 @@ Cancellation stops processing without waiting for a stalled GitHub read to finis
 Successful abandonment sends a confirmation
 email; the subsequent reminder query excludes the newly abandoned plan.
 
+## Preview eligible plans
+
+Run `azsdk release-plan abandon-overdue --dry-run` before live cleanup to list
+the plans currently eligible for abandonment. It uses the same overdue query,
+calendar-month grace period, release-type rules, live GitHub checks, and valid
+snapshot-revision requirement as an actual run. It does not update work items,
+change plan statuses, or send notifications.
+
+The preview shows each eligible plan's ID, dashboard link, current status,
+target month, and eligibility reason. Add `--output json` for structured output:
+`dry_run` is `true`, `release_plans` contains the eligible plans with their
+unchanged statuses, and `eligibility_reasons` is keyed by work item ID.
+Unlike `list-overdue`, this list excludes plans still in their grace month and
+plans protected by the release-work rules.
+
+Lookup failures are reported with a nonzero exit code. If some plans cannot be
+evaluated, confirmed candidates are still returned, but the output explicitly
+marks the list as incomplete. A successful empty preview means no plans qualify.
+The preview is a point-in-time assessment, not a reservation: a later run
+re-evaluates eligibility and may skip plans that changed or whose updates fail.
+
 ## Operations
 
 - `azsdk release-plan list-overdue` is read-only. Add `--notify-owners true`
   and `--emailer-uri` to send state-specific reminders.
-- `azsdk release-plan abandon-overdue` writes the eligible plans' state to
+- `azsdk release-plan abandon-overdue --dry-run` previews eligible plans only.
+  Omitting `--dry-run` writes the eligible plans' state to
   `Abandoned` and notifies their submitters through `AZSDKTOOLS_NOTIFICATION_SERVICE_URL`.
-- Azure DevOps work-item permissions are required. Set `GITHUB_TOKEN` with read
+- Preview requires Azure DevOps read permissions; actual cleanup also requires
+  work-item update permissions. Set `GITHUB_TOKEN` with read
   access to the linked repositories, including private spec repositories.
   The pipeline uses the shared GitHub-login template; its service connection
   must be authorized for this pipeline. Email delivery uses the existing emailer secret.

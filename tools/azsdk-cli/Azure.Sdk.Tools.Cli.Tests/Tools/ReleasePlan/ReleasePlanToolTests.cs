@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 
@@ -1460,13 +1461,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(CreateMaintenancePullRequest("closed", merged: false));
             var tool = CreateOverdueMaintenanceTool(mockDevOps.Object, mockGitHub.Object, mockNotificationService.Object);
 
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ExitCode, Is.Zero);
+            Assert.That(preview.ReleasePlanDetailsList, Is.EqualTo(new[] { noPullRequest, closedPullRequest }));
+            Assert.That(updatedWorkItemIds, Is.Empty);
+            Assert.That(plans.All(plan => plan.Status != "Abandoned"), Is.True);
+            AssertDryRunHasNoSideEffects(mockDevOps, mockNotificationService);
+
             var response = await tool.AbandonOverdueReleasePlans();
 
             Assert.That(response.ResponseError, Is.Null);
             Assert.That(updatedWorkItemIds, Is.EqualTo(new[] { 204, 205 }));
             Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { noPullRequest, closedPullRequest }));
             mockNotificationService.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-            mockGitHub.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHub.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
         [TestCase(ApiReleaseType.PublicPreview, "September 2026", "2026-10-01", false)]
@@ -1494,6 +1503,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var mockNotification = new Mock<INotificationService>();
             var now = DateTimeOffset.Parse(today, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal);
             var tool = CreateOverdueMaintenanceTool(mockDevOps.Object, notification: mockNotification.Object, now: now);
+
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ExitCode, Is.Zero);
+            Assert.That(preview.ReleasePlanDetailsList, Has.Count.EqualTo(expectedAbandonment ? 1 : 0));
+            AssertDryRunHasNoSideEffects(mockDevOps, mockNotification);
 
             var response = await tool.AbandonOverdueReleasePlans();
 
@@ -1527,6 +1542,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var mockNotification = new Mock<INotificationService>();
             var tool = CreateOverdueMaintenanceTool(mockDevOps.Object, mockGitHub.Object, mockNotification.Object);
 
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ExitCode, Is.Zero);
+            Assert.That(preview.ReleasePlanDetailsList, Has.Count.EqualTo(expectedAbandonment ? 1 : 0));
+            AssertDryRunHasNoSideEffects(mockDevOps, mockNotification);
+
             var response = await tool.AbandonOverdueReleasePlans();
 
             Assert.That(response.ExitCode, Is.Zero);
@@ -1537,9 +1558,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 It.IsAny<CancellationToken>()), Times.Exactly(expectedAbandonment ? 1 : 0));
         }
 
-        [TestCase("open", false)]
-        [TestCase("closed", true)]
-        public async Task Test_abandon_overdue_release_plans_rechecks_cached_closed_sdk_pr(string state, bool merged)
+        [TestCase("open", false, false)]
+        [TestCase("closed", true, false)]
+        [TestCase("open", false, true)]
+        [TestCase("closed", true, true)]
+        public async Task Test_abandon_overdue_release_plans_rechecks_cached_closed_sdk_pr(string state, bool merged, bool dryRun)
         {
             var plan = new ReleasePlanWorkItem
             {
@@ -1554,15 +1577,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-java", 42, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMaintenancePullRequest(state, merged));
 
-            var response = await CreateOverdueMaintenanceTool(mockDevOps.Object, mockGitHub.Object).AbandonOverdueReleasePlans();
+            var notification = new Mock<INotificationService>();
+            var response = await CreateOverdueMaintenanceTool(mockDevOps.Object, mockGitHub.Object, notification.Object)
+                .AbandonOverdueReleasePlans(dryRun);
 
             Assert.That(response.ExitCode, Is.Zero);
             Assert.That(response.ReleasePlanDetailsList, Is.Empty);
-            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertDryRunHasNoSideEffects(mockDevOps, notification);
         }
 
-        [Test]
-        public async Task Test_abandon_overdue_private_preview_skips_failed_github_lookup_and_continues()
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task Test_abandon_overdue_private_preview_skips_failed_github_lookup_and_continues(bool dryRun)
         {
             var unreadable = new ReleasePlanWorkItem
             {
@@ -1578,12 +1604,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs-pr", 42, It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException("GitHub unavailable"));
 
-            var response = await CreateOverdueMaintenanceTool(mockDevOps.Object, mockGitHub.Object).AbandonOverdueReleasePlans();
+            var notification = new Mock<INotificationService>();
+            var response = await CreateOverdueMaintenanceTool(mockDevOps.Object, mockGitHub.Object, notification.Object)
+                .AbandonOverdueReleasePlans(dryRun);
 
             Assert.That(response.ExitCode, Is.EqualTo(1));
             Assert.That(response.ResponseErrors, Has.Some.Contains("303"));
             Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { inactive }));
             mockDevOps.Verify(x => x.UpdateWorkItemAsync(unreadable.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+            if (dryRun)
+            {
+                AssertDryRunHasNoSideEffects(mockDevOps, notification);
+                Assert.That(response.ToString(), Does.Contain("Dry run:").And.Contain("eligible list is incomplete"));
+                Assert.That(response.ToString(), Does.Contain("Release Plan ID: 304").And.Contain(inactive.ReleasePlanLink));
+                Assert.That(response.ToString(), Does.Contain("Eligibility Reason:").And.Contain("GitHub unavailable"));
+                Assert.That(response.EligibilityReasons!.Keys, Is.EquivalentTo(new[] { 304 }));
+            }
         }
 
         [Test]
@@ -1611,11 +1647,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             notification.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        [TestCase(ApiReleaseType.PrivatePreview, false)]
-        [TestCase(ApiReleaseType.PublicPreview, false)]
-        [TestCase(ApiReleaseType.PrivatePreview, true)]
-        [TestCase(ApiReleaseType.PublicPreview, true)]
-        public async Task Test_overdue_maintenance_cancellation_does_not_wait_for_stalled_github(ApiReleaseType releaseType, bool notifyOnly)
+        [TestCase(ApiReleaseType.PrivatePreview, false, false)]
+        [TestCase(ApiReleaseType.PublicPreview, false, false)]
+        [TestCase(ApiReleaseType.PrivatePreview, true, false)]
+        [TestCase(ApiReleaseType.PublicPreview, true, false)]
+        [TestCase(ApiReleaseType.PrivatePreview, false, true)]
+        [TestCase(ApiReleaseType.PublicPreview, false, true)]
+        public async Task Test_overdue_maintenance_cancellation_does_not_wait_for_stalled_github(ApiReleaseType releaseType, bool notifyOnly, bool dryRun)
         {
             var plan = new ReleasePlanWorkItem
             {
@@ -1637,7 +1675,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var tool = CreateOverdueMaintenanceTool(mockDevOps.Object, github.Object, notifications.Object, client: client);
             var operation = notifyOnly
                 ? tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send", ct: cts.Token)
-                : tool.AbandonOverdueReleasePlans(cts.Token);
+                : tool.AbandonOverdueReleasePlans(dryRun, cts.Token);
             try
             {
                 github.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), 42, cts.Token), Times.Once);
@@ -1653,6 +1691,200 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 pendingRead.TrySetResult(CreateMaintenancePullRequest("closed", merged: false));
                 await operation.ContinueWith(_ => { }, TaskScheduler.Default);
             }
+        }
+
+        [TestCase("--dry-run", true)]
+        [TestCase("--dry-run true", true)]
+        [TestCase("--dry-run false", false)]
+        [TestCase("", false)]
+        public async Task Test_abandon_overdue_command_routes_dry_run_flag(string arguments, bool dryRun)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 350, Revision = 7, Status = "In Progress",
+                ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026"
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            if (!dryRun)
+            {
+                service.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId,
+                        It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Abandoned"), 7, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+                notification.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                    .Returns(Task.CompletedTask);
+            }
+            var tool = CreateOverdueMaintenanceTool(service.Object, notification: notification.Object);
+            var command = tool.GetCommandInstances().Single(command => command.Name == "abandon-overdue");
+            var parsed = command.Parse(arguments);
+            Assert.That(parsed.Errors, Is.Empty);
+
+            var response = (ReleasePlanListResponse)await tool.HandleCommand(parsed, CancellationToken.None);
+
+            Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.DryRun, Is.EqualTo(dryRun));
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { plan }));
+            Assert.That(plan.Status, Is.EqualTo(dryRun ? "In Progress" : "Abandoned"));
+            if (dryRun)
+            {
+                AssertDryRunHasNoSideEffects(service, notification);
+            }
+            else
+            {
+                service.VerifyAll();
+                notification.VerifyAll();
+                using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
+                Assert.That(json.RootElement.TryGetProperty("dry_run", out _), Is.False);
+                Assert.That(json.RootElement.TryGetProperty("eligibility_reasons", out _), Is.False);
+            }
+        }
+
+        [TestCase(ApiReleaseType.GA, "none", "no SDK PRs are linked")]
+        [TestCase(ApiReleaseType.PublicPreview, "none", "no SDK PRs are linked")]
+        [TestCase(ApiReleaseType.GA, "closed", "all linked SDK PRs are closed without merging")]
+        [TestCase(ApiReleaseType.PublicPreview, "closed", "all linked SDK PRs are closed without merging")]
+        [TestCase(ApiReleaseType.PrivatePreview, "none", "Private Preview spec PR is missing")]
+        [TestCase(ApiReleaseType.PrivatePreview, "open", "Private Preview spec PR has not been merged")]
+        [TestCase(ApiReleaseType.PrivatePreview, "closed", "Private Preview spec PR has not been merged")]
+        public async Task Test_abandon_overdue_dry_run_reports_ids_links_and_reasons_without_mutation(
+            ApiReleaseType releaseType, string state, string expectedReason)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 351, ReleasePlanId = 35, Revision = 7, Status = "In Progress",
+                ApiReleaseType = releaseType, SDKReleaseMonth = "September 2026"
+            };
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            if (state != "none")
+            {
+                var repo = releaseType == ApiReleaseType.PrivatePreview ? "azure-rest-api-specs-pr" : "azure-sdk-for-python";
+                var url = $"https://github.com/Azure/{repo}/pull/42";
+                if (releaseType == ApiReleaseType.PrivatePreview)
+                {
+                    plan.ActiveSpecPullRequest = url;
+                }
+                else
+                {
+                    plan.SDKInfo.Add(new SDKInfo { SdkPullRequestUrl = url, PullRequestStatus = "Closed" });
+                }
+                github.Setup(x => x.GetPullRequestAsync("Azure", repo, 42, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(CreateMaintenancePullRequest(state, merged: false));
+            }
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            var captured = new List<JsonElement>();
+            using var client = CreateMaintenanceEmailClient(captured);
+            var tool = CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object, client: client);
+            var originalPlan = JsonSerializer.Serialize(plan);
+
+            var response = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.DryRun, Is.True);
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { plan }));
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(originalPlan));
+            Assert.That(response.EligibilityReasons![351], Does.Contain(expectedReason).And.Contain("September 2026"));
+            Assert.That(response.ToString(), Does.Contain("Dry run: 1").And.Contain("No plans were changed or notifications sent"));
+            Assert.That(response.ToString(), Does.Contain("Release Plan ID: 35").And.Contain(plan.ReleasePlanLink));
+            Assert.That(response.ToString(), Does.Contain("Status: In Progress").And.Contain(expectedReason));
+            Assert.That(response.NextSteps, Has.Some.Contains("point-in-time preview"));
+            using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
+            Assert.That(json.RootElement.GetProperty("dry_run").GetBoolean(), Is.True);
+            Assert.That(json.RootElement.GetProperty("release_plans")[0].GetProperty("ReleasePlanId").GetInt32(), Is.EqualTo(35));
+            Assert.That(json.RootElement.GetProperty("release_plans")[0].GetProperty("ReleasePlanLink").GetString(), Is.EqualTo(plan.ReleasePlanLink));
+            Assert.That(json.RootElement.GetProperty("eligibility_reasons").GetProperty("351").GetString(), Is.EqualTo(response.EligibilityReasons[351]));
+            AssertDryRunHasNoSideEffects(service, notification);
+            Assert.That(captured, Is.Empty);
+            github.VerifyAll();
+        }
+
+        [Test]
+        public async Task Test_abandon_overdue_dry_run_reports_empty_result()
+        {
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notification.Object)
+                .AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.ReleasePlanDetailsList, Is.Empty);
+            Assert.That(response.EligibilityReasons, Is.Empty);
+            Assert.That(response.ToString(), Does.Contain("Dry run: 0").And.Contain("No eligible release plans found"));
+            AssertDryRunHasNoSideEffects(service, notification);
+        }
+
+        [Test]
+        public async Task Test_abandon_overdue_dry_run_reports_initial_scan_failure()
+        {
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Work item 200 not found"));
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notification.Object)
+                .AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(response.DryRun, Is.True);
+            Assert.That(response.ReleasePlanDetailsList, Is.Null);
+            Assert.That(response.ToString(), Does.Contain("Dry run failed").And.Contain("No plans were changed or notifications sent"));
+            Assert.That(response.ResponseError, Does.Contain("Work item 200 not found"));
+            AssertDryRunHasNoSideEffects(service, notification);
+        }
+
+        [TestCase(0, false)]
+        [TestCase(-1, false)]
+        [TestCase(0, true)]
+        [TestCase(-1, true)]
+        public async Task Test_abandon_overdue_requires_valid_revision_in_both_modes(int revision, bool dryRun)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 352, Revision = revision, Status = "In Progress",
+                ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026"
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notification.Object)
+                .AbandonOverdueReleasePlans(dryRun);
+
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(response.ResponseErrors, Has.One.Contains("352").And.Contains("Revision"));
+            Assert.That(response.ReleasePlanDetailsList, Is.Empty);
+            Assert.That(plan.Status, Is.EqualTo("In Progress"));
+            AssertDryRunHasNoSideEffects(service, notification);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Test_abandon_overdue_dry_run_propagates_cancellation_during_scan(bool hasPlans)
+        {
+            using var cts = new CancellationTokenSource();
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(cts.Token))
+                .Callback(cts.Cancel)
+                .ReturnsAsync(hasPlans
+                    ? [new ReleasePlanWorkItem { WorkItemId = 353, Revision = 7, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" }]
+                    : []);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            var tool = CreateOverdueMaintenanceTool(service.Object, notification: notification.Object);
+
+            Assert.CatchAsync<OperationCanceledException>(async () => await tool.AbandonOverdueReleasePlans(dryRun: true, ct: cts.Token));
+
+            AssertDryRunHasNoSideEffects(service, notification);
+        }
+
+        private static void AssertDryRunHasNoSideEffects(Mock<IDevOpsService> service, Mock<INotificationService> notification)
+        {
+            service.Verify(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()), Times.Once);
+            service.VerifyNoOtherCalls();
+            notification.VerifyNoOtherCalls();
         }
 
         private ReleasePlanTool CreateOverdueMaintenanceTool(IDevOpsService service, IGitHubService? github = null,

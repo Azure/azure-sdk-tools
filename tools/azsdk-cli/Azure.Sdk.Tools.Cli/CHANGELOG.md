@@ -5,6 +5,7 @@
 ### Features Added
 
 - Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
+- Added `release-plan abandon-overdue --dry-run` to preview eligible plan IDs, dashboard links, and eligibility reasons using the cleanup policy without changing plans or sending notifications.
 
 ### Breaking Changes
 

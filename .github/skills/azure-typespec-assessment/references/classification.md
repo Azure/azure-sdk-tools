@@ -16,6 +16,13 @@ REST and downstream decisions are independent. A REST-compatible change can stil
 
 For every candidate, compare its `actual` current behavior with its `expected` compatibility behavior and explain the caller-visible consequence.
 
+For REST candidates, removing any previously accepted or documented serialized
+value from an existing query parameter, request header, or response header is a
+breaking narrowing and must be approved. Compare the exact before/after wire
+value sets. Do not reject the candidate merely because the outer schema remains
+an optional string, string enum, array, or CSV collection, or because its
+location, requiredness, and collection format are unchanged.
+
 - `approve`: supplied facts establish the incompatibility. Include severity.
 - `reject`: facts show additive/compatible behavior, no public/runtime impact, or insufficient causal evidence. Do not include a severity.
 - Preserve exact candidate IDs. Never add a finding, source, operation, SDK symbol, or fact.

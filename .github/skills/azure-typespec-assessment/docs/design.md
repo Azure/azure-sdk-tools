@@ -39,18 +39,6 @@ REST candidates still come from the existing AutoRest contract comparison.
 Any integration must preserve baseline/API-version provenance, source linkage,
 and the separation of REST compatibility from downstream SDK impact.
 
-### Proposed: suppression-based Azure Guidelines replacement
-
-The current documentation-fetch Azure Guidelines workflow is proposed for
-replacement by the repository's deterministic TypeSpec suppression analyzer.
-The replacement removes catalog ranking, guideline page fetches, and all Agent
-work from this dimension. It preserves the final Azure Guidelines report card
-and uses tool-provided rule descriptions and documentation URLs as expected
-guidance, with deterministic actual TypeSpec source.
-
-Until that proposal is implemented and validated, the remainder of this
-document describes the current runtime architecture.
-
 ### Invocation and performance boundaries
 
 Run the documented CLI directly, including when the installed skill is a

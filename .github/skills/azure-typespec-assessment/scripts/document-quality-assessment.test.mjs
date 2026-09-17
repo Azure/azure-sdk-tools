@@ -125,7 +125,7 @@ function completenessFixture(documentationPresent) {
 test("v4 deterministically reports missing compiler documentation", () => {
   const args = completenessFixture(false);
   const dimension = assembleDocumentQuality(args);
-  assert.equal(dimension.assessmentVersion, 4);
+  assert.equal(dimension.assessmentVersion, 5);
   assert.equal(dimension.status, "failed");
   assert.equal(dimension.coverage.declarationCount, 1);
   assert.equal(dimension.coverage.documentedDeclarationCount, 0);
@@ -513,7 +513,7 @@ test("v2 rejects legacy checks, mismatched model criteria, and unsupported versi
     assert.throws(() => assembleDocumentQuality(args), /mismatch/);
   }
   const args = fixture(2);
-  args.input.schemaVersion = 5;
+  args.input.schemaVersion = 6;
   assert.throws(() => assembleDocumentQuality(args), /unsupported input schemaVersion/);
   const legacy = fixture();
   legacy.decisions[0].check = "description";
@@ -673,7 +673,7 @@ test("v2 and v3 cannot relabel evidence, model metadata, or final dimensions", (
 });
 
 test("unsupported documentation versions are rejected rather than coerced", () => {
-  for (const version of [0, 5, "3", null]) {
+  for (const version of [0, 6, "3", null]) {
     const args = fixture(3);
     assert.throws(() => buildDocumentQualityInput({
       schemaVersion: version, sourceIndex: { sourceChanges: args.sourceChanges },

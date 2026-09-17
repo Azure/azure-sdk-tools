@@ -12,6 +12,11 @@ import {
 import { assembleCompliance } from "./compliance-assessment.mjs";
 import { assembleDocumentQuality, DOCUMENT_QUALITY_ARTIFACT } from "./document-quality-assessment.mjs";
 import { sameAutorestContract } from "./autorest-contract.mjs";
+import {
+  informationalIntentText,
+  partitionSemanticIntents,
+  semanticIntentType,
+} from "./semantic-assessment-scope.mjs";
 
 function duplicates(values) {
   const seen = new Set();
@@ -859,6 +864,31 @@ export function assembleAssessment({ work, judgment }) {
   const modelInput = fs.existsSync(modelInputPath)
     ? readJson(modelInputPath)
     : {};
+  const scopedCandidates = (canonicalCandidates, inputCandidates, label) => {
+    if (!Array.isArray(inputCandidates)) return canonicalCandidates;
+    const canonicalById = new Map(
+      canonicalCandidates.map((candidate) => [candidate.id, candidate]),
+    );
+    const unknownIds = inputCandidates
+      .map((candidate) => candidate.id)
+      .filter((id) => !canonicalById.has(id));
+    if (unknownIds.length) {
+      throw new Error(
+        `${label} model input references unknown candidates: ${unknownIds.join(", ")}.`,
+      );
+    }
+    return inputCandidates.map((candidate) => canonicalById.get(candidate.id));
+  };
+  const assessedRestCandidates = scopedCandidates(
+    rest.candidates,
+    modelInput.restCandidates,
+    "REST",
+  );
+  const assessedDownstreamCandidates = scopedCandidates(
+    downstream.candidates,
+    modelInput.downstreamCandidates,
+    "Downstream",
+  );
   validateInferenceRequests(modelInput);
   const inferenceRequests = modelInput.inferenceRequests ?? [];
   const inferencePath = path.join(work, "inference.json");
@@ -892,11 +922,11 @@ export function assembleAssessment({ work, judgment }) {
     ).values(),
   ];
   const restCandidates = [
-    ...rest.candidates,
+    ...assessedRestCandidates,
     ...inferredCandidates.filter((candidate) => candidate.dimension === "rest"),
   ];
   const downstreamCandidates = [
-    ...downstream.candidates,
+    ...assessedDownstreamCandidates,
     ...inferredCandidates.filter(
       (candidate) => candidate.dimension === "downstream",
     ),
@@ -932,7 +962,11 @@ export function assembleAssessment({ work, judgment }) {
     work,
     "compliance-search-evidence.json",
   );
-  const hasComplianceInput = Array.isArray(modelInput.complianceSearchRequests);
+  const hasComplianceContract = Array.isArray(
+    modelInput.complianceSearchRequests,
+  );
+  const hasComplianceInput =
+    hasComplianceContract && modelInput.complianceSearchRequests.length > 0;
   const complianceRequestArtifact =
     modelInput.artifactReferences?.complianceSearchRequests;
   const complianceRequests =
@@ -953,10 +987,30 @@ export function assembleAssessment({ work, judgment }) {
     ? readJson(complianceEvidencePath)
     : undefined;
   validateJudgment(answer);
+  const scopedSemantic = partitionSemanticIntents(semantic.reviewUnits);
+  const hasScopedSemanticInput = Array.isArray(modelInput.semanticReviewUnits);
+  const informationalSemanticIntentIds = new Set(
+    modelInput.informationalSemanticIntentIds ?? [],
+  );
+  if (hasScopedSemanticInput) {
+    exactCoverage(
+      scopedSemantic.informational.map((item) => item.id),
+      [...informationalSemanticIntentIds],
+      "informational semantic review unit",
+    );
+    exactCoverage(
+      scopedSemantic.assessed.map((item) => item.id),
+      modelInput.semanticReviewUnits.map((item) => item.reviewUnitId),
+      "model-input semantic review unit",
+    );
+  }
+  const assessedSemanticIntentIds = hasScopedSemanticInput
+    ? modelInput.semanticReviewUnits.map((item) => item.reviewUnitId)
+    : semantic.reviewUnits.map((item) => item.id);
   exactCoverage(
-    semantic.reviewUnits.map((item) => item.id),
+    assessedSemanticIntentIds,
     answer.semanticIntents.map((item) => item.reviewUnitId),
-    "semantic review unit",
+    "assessed semantic review unit",
   );
   exactCoverage(
     restCandidates.map((item) => item.id),
@@ -987,7 +1041,15 @@ export function assembleAssessment({ work, judgment }) {
     values.push(result);
     inferenceResultsByUnit.set(result.reviewUnitId, values);
   }
-  const semanticItems = answer.semanticIntents.map((intent) => {
+  const authoredSemanticIntents = new Map(
+    answer.semanticIntents.map((intent) => [intent.reviewUnitId, intent]),
+  );
+  const semanticIntentAnswers = semantic.reviewUnits.map((unit) =>
+    informationalSemanticIntentIds.has(unit.id)
+      ? informationalIntentText(unit)
+      : authoredSemanticIntents.get(unit.id),
+  );
+  const semanticItems = semanticIntentAnswers.map((intent) => {
     const unit = semanticUnits.get(intent.reviewUnitId);
     const modelUnit = modelSemanticUnits.get(intent.reviewUnitId);
     const operations = (
@@ -1026,8 +1088,10 @@ export function assembleAssessment({ work, judgment }) {
       ...unit,
       action,
       changeKind: action,
+      intentType: unit.intentType ?? semanticIntentType(unit),
       title: intent.title,
       summary: intent.summary,
+      informational: informationalSemanticIntentIds.has(intent.reviewUnitId),
       ...(modelUnit?.deterministicCoverage
         ? {
             deterministicCoverage: modelUnit.deterministicCoverage,
@@ -1074,7 +1138,11 @@ export function assembleAssessment({ work, judgment }) {
     { ...modelInput.facts, ...downstream.facts },
     sources,
   ).filter(meaningfulDownstreamFinding);
-  findingRelations(restFindings, downstreamFindings, semanticItems);
+  findingRelations(
+    restFindings,
+    downstreamFindings,
+    semanticItems.filter((intent) => !intent.informational),
+  );
   const downstreamAggregation = downstreamGroups(
     downstreamFindings,
     downstream.rootCauses,
@@ -1137,7 +1205,23 @@ export function assembleAssessment({ work, judgment }) {
                 ]
             : [],
       })
-    : {
+    : hasComplianceContract
+      ? {
+          status: "passed",
+          summary:
+            "No assessed Semantic intents require Azure Guidelines review.",
+          coverage: {
+            semanticIntentCount: 0,
+            assessedIntentCount: 0,
+            selectedDocumentCount: 0,
+            unassessedIntentIds: [],
+          },
+          intentAssessments: [],
+          findings: [],
+          retrievalFailures: [],
+          blockers: [],
+        }
+      : {
         status: "not-assessed",
         summary: "Azure Guidelines search input was not available.",
         coverage: {
@@ -1155,13 +1239,13 @@ export function assembleAssessment({ work, judgment }) {
               "compliance-search-input-missing: rerun deterministic analysis.",
           },
         ],
-      };
+        };
   const documentQualityPath = path.join(work, DOCUMENT_QUALITY_ARTIFACT);
   const documentQualityDimension = assembleDocumentQuality({
     input: fs.existsSync(documentQualityPath) ? readJson(documentQualityPath) : undefined,
     modelInput,
     decisions: answer.documentQualityDecisions,
-    semanticUnits: semantic.reviewUnits,
+    semanticUnits: scopedSemantic.assessed,
     semanticStatus: semantic.status,
     sourceChanges: sourceIndex.sourceChanges,
   });

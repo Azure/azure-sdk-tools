@@ -29,7 +29,7 @@ For PR assessment, pass the PR URL or number directly to the coordinator. It
 resolves the PR's actual base/head commits, fetches only missing refs, derives
 the TypeSpec scope, and performs the sparse checkout internally.
 
-The coordinator captures committed, staged, unstaged, and relevant untracked TypeSpec changes; creates service-scoped sparse base/current worktrees; selects one API version per side; compiles each affected project independently with AutoRest and TCGC using that same version pair; runs the analyzers; records compiler-derived documentation presence; calculates deterministic hunk coverage; and writes the bounded `model-input.json` once.
+The coordinator captures committed, staged, unstaged, and relevant untracked TypeSpec changes; creates service-scoped sparse base/current worktrees; selects one API version per side; compiles each affected project independently with AutoRest and TCGC using that same version pair; runs the analyzers; records compiler-derived documentation presence; calculates deterministic hunk coverage; writes the bounded `model-input.json` once; and builds the deterministic `agent-workspace`.
 
 For the head, select the newest newly added API version when one exists; otherwise select its latest API version. When the PR adds no version and that head version exists in base, compile both sides with that same version. When head adds a version, select base's latest stable version, or its latest preview when no stable version exists. Record the pair and selection reasons in the manifest and report.
 
@@ -81,20 +81,31 @@ Do not replace this with a full checkout or run the dimension analyzers against 
 
 ## Optional inference, Azure Guidelines search, and final Agent judgment
 
-Read only:
+When the coordinator prints `awaiting-agent-judgment`, continue immediately.
+Do not stop for a progress update or wait for another user turn.
 
-- `<work-directory>\model-input.json`;
-- evidence artifacts explicitly listed in
-  `model-input.json.artifactReferences`, resolving paths relative to the work
-  directory and reading only entries named by `evidenceSetId` or
-  `evidenceRef`;
+Read `<work-directory>\agent-workspace\agent-index.json` once. It contains the
+single bounded model-input path, required output files, drafts, exact coverage
+IDs, and completion checklist. Then read `model-input.json` exactly once unless
+guarded finalization requests the one permitted correction turn.
+`api-version-publication` and `api-version-wide-change` intents are not part of
+Agent coverage; guarded finalization restores them as deterministic
+informational Semantic intents with canonical affected operations and no
+finding relationships. Version-wide classification uses `Versions`
+declaration and version-transition/governance evidence, not an operation-count
+threshold.
+
+Also read only:
+
 - [classification guidance](classification.md), including [downstream cases](downstream-breaking-cases.md) and [candidate rules](downstream-candidate-rules.md);
 - the [agentic search procedure](agentic-search.md);
 - the [official document catalog](reference-document-links.md);
 - the [documentation checks](document-quality.md);
-- `scripts\inference.schema.json`;
-- `scripts\compliance-search-evidence.schema.json`;
-- `scripts\assessment-judgment.schema.json`.
+
+Do not recursively list the work directory, search report artifacts broadly,
+inspect raw compiler output, or repeatedly read schemas and canonical inputs.
+Use the prefilled drafts as structural templates; their unresolved placeholders
+are intentionally invalid and must never be copied to final output.
 
 If `inferenceRequests` is empty, do not create `inference.json`. Otherwise,
 analyze only the supplied unknown hunks and write one exact result per request
@@ -126,21 +137,18 @@ Documentation Completeness is assembled deterministically from
 `dimensions/document-quality-input.json`. The Agent does not read that artifact
 or author documentation decisions.
 
-## Assemble, validate, and render
+## Guarded finalization
 
 ```powershell
-node (Join-Path $Skill "scripts\assemble-assessment.mjs") `
-  --work $Work `
-  --judgment (Join-Path $Work "assessment-judgment.json") `
-  --output (Join-Path $Work "assessment.json")
-
-node (Join-Path $Skill "scripts\validate-assessment.mjs") `
-  (Join-Path $Work "assessment.json")
-
-node (Join-Path $Skill "scripts\render-assessment-html.mjs") `
-  (Join-Path $Work "assessment.json") `
-  (Join-Path $Work "assessment.html")
+node (Join-Path $Skill "scripts\finalize-assessment.mjs") --work $Work
 ```
+
+The finalizer verifies canonical artifact hashes, validates inference, shared
+guideline evidence, and judgment coverage, assembles and validates the complete
+assessment, and atomically writes `assessment.json` and `assessment.html`.
+It returns failure unless both artifacts are valid. `workflow-state.json`
+records preparation, Agent artifact, finalization, completion, blocker,
+artifact hash, and phase timing data.
 
 After rendering, start the report server with the host's attached background or
 long-lived process mechanism:
@@ -160,7 +168,8 @@ directory or fail to launch them.
 
 Rendering accepts an optional, explicitly selected matching graph artifact:
 append `--downstream-input (Join-Path $Work "dimensions\downstream-breaking-input.json")`
-to the renderer command. The JavaScript API is
+to the standalone renderer command. Guarded finalization supplies that matching
+artifact automatically. The JavaScript API is
 `renderAssessmentHtml(assessment, { downstreamInput })`, where `downstreamInput`
 is the parsed JSON object. Existing one-argument callers remain supported.
 The renderer checks root associations and exact recorded evidence facts before
@@ -183,6 +192,6 @@ reproducibility requires them; neither sidecar is discovered automatically.
 If assembly rejects schema or coverage, send only its compact errors to the
 same Agent for **one correction turn**. Correct
 `inference.json`, `compliance-search-evidence.json`, and/or
-`assessment-judgment.json`, then rerun the three commands above; do not rerun
+`assessment-judgment.json`, then rerun guarded finalization; do not rerun
 preparation, compilation, analyzers, or create a second independent judgment.
 If correction still fails, stop and report the blocker.

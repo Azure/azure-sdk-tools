@@ -191,6 +191,84 @@ test("assembly retains mapped operations without treating paging metadata as a w
   }
 });
 
+test("assembler restores API-version-wide intents without candidate decisions", () => {
+  const work = fixture();
+  try {
+    const semanticPath = path.join(
+      work,
+      "dimensions",
+      "semantic-intents-input.json",
+    );
+    const semantic = readJson(semanticPath);
+    semantic.reviewUnits = [
+      {
+        id: "semantic-version-wide",
+        action: "modify",
+        intentType: "api-version-wide-change",
+        sourceChangeIds: ["source-1"],
+        hunkIds: ["hunk-1"],
+        declarationIds: ["declaration-1"],
+        declarationNames: ["Versions"],
+        ownedOperationIds: [],
+        operationIds: ["operation-1", "operation-2"],
+        operations: [
+          {
+            operationId: "Widgets_Get",
+            afterFactId: "operation-1",
+            matchBasis: "version-transition-change",
+          },
+          {
+            operationId: "Widgets_List",
+            afterFactId: "operation-2",
+            matchBasis: "version-transition-change",
+          },
+        ],
+      },
+    ];
+    writeJson(semanticPath, semantic);
+    writeJson(path.join(work, "model-input.json"), {
+      semanticReviewUnits: [],
+      informationalSemanticIntentIds: ["semantic-version-wide"],
+      restCandidates: [],
+      downstreamCandidates: [],
+      inferenceRequests: [],
+      complianceSearchRequests: [],
+      inputAccounting: {},
+    });
+
+    const result = assembleAssessment({
+      work,
+      judgment: {
+        schemaVersion: 1,
+        overallConfidence: "high",
+        blockers: [],
+        semanticIntents: [],
+        restDecisions: [],
+        downstreamDecisions: [],
+        complianceDecisions: [],
+      },
+    });
+
+    assert.equal(result.dimensions.semantic.items.length, 1);
+    assert.equal(
+      result.dimensions.semantic.items[0].intentType,
+      "api-version-wide-change",
+    );
+    assert.equal(result.dimensions.semantic.items[0].informational, true);
+    assert.equal(result.dimensions.semantic.items[0].operations.length, 2);
+    assert.deepEqual(result.dimensions.rest.findings, []);
+    assert.equal(result.dimensions.compliance.status, "passed");
+    assert.deepEqual(result.dimensions.compliance.coverage, {
+      semanticIntentCount: 0,
+      assessedIntentCount: 0,
+      selectedDocumentCount: 0,
+      unassessedIntentIds: [],
+    });
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
 function addComplianceInput(work) {
   const request = {
     reviewUnitId: "semantic-1",

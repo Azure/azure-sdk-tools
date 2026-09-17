@@ -5,7 +5,25 @@ function unique(values = []) {
 export const DOCUMENT_QUALITY_CRITERION =
   "Does the @doc description clearly and accurately explain the associated TypeSpec code?";
 
-function buildCompletenessInput({ sourceIndex, semantic }) {
+const NEW_DECLARATION_KINDS = new Set(["operation", "model", "enum", "interface"]);
+
+function declarationIdentity(declaration) {
+  return `${declaration.kind}:${declaration.qualifiedName}`;
+}
+
+function isEligibleNewDeclaration(source, declaration, schemaVersion) {
+  if (schemaVersion < 5) return true;
+  if (!NEW_DECLARATION_KINDS.has(declaration.kind)) return false;
+  if (typeof declaration.newDeclaration === "boolean") {
+    return declaration.newDeclaration;
+  }
+  const identity = declarationIdentity(declaration);
+  return !(source.declarations ?? []).some((candidate) =>
+    candidate.source?.revision === "base" &&
+    declarationIdentity(candidate) === identity);
+}
+
+function buildCompletenessInput({ sourceIndex, semantic, schemaVersion }) {
   const sources = new Map((sourceIndex?.sourceChanges ?? []).map((source) => [source.id, source]));
   const blockers = [];
   if (!Array.isArray(semantic?.reviewUnits)) {
@@ -34,6 +52,17 @@ function buildCompletenessInput({ sourceIndex, semantic }) {
         reasons.push(`Unknown changed source: ${sourceId}.`);
         continue;
       }
+      const eligibleDeclarationIds = new Set(
+        (source.declarations ?? [])
+          .filter((declaration) => {
+            if (declaration.source?.revision !== "current") return false;
+            if (!isEligibleNewDeclaration(source, declaration, schemaVersion)) return false;
+            if (declarationIds.length) return declarationIds.includes(declaration.id);
+            return hunkIds.some((hunkId) => declaration.hunkIds?.includes(hunkId));
+          })
+          .map((declaration) => declaration.id),
+      );
+      if (schemaVersion >= 5 && !eligibleDeclarationIds.size) continue;
       const evidence = source.documentEvidence;
       if (evidence?.schemaVersion !== 4) {
         reasons.push(`Documentation presence must be recollected for ${source.path}.`);
@@ -47,12 +76,15 @@ function buildCompletenessInput({ sourceIndex, semantic }) {
         continue;
       }
       for (const declaration of evidence.declarations ?? []) {
+        if (!isEligibleNewDeclaration(source, declaration, schemaVersion)) continue;
+        if (schemaVersion >= 5 && !eligibleDeclarationIds.has(declaration.declarationId)) continue;
         if (declarationIds.length && !declarationIds.includes(declaration.declarationId)) continue;
         if (!declarationIds.length && !hunkIds.some((hunkId) =>
           source.declarations?.find((item) => item.id === declaration.declarationId)?.hunkIds?.includes(hunkId))) {
           continue;
         }
-        declarations.push({ ...declaration, sourceChangeId: sourceId });
+        const { newDeclaration: _newDeclaration, ...bounded } = declaration;
+        declarations.push({ ...bounded, sourceChangeId: sourceId });
       }
     }
     const uniqueDeclarations = [...new Map(
@@ -68,7 +100,9 @@ function buildCompletenessInput({ sourceIndex, semantic }) {
         ? { reason: unique(reasons).join(" ") }
         : uniqueDeclarations.length
           ? {}
-          : { reason: "No changed compiler declaration is in this Semantic intent." }),
+          : { reason: schemaVersion >= 5
+            ? "No newly added operation, model, enum, or interface declaration is in this Semantic intent."
+            : "No changed compiler declaration is in this Semantic intent." }),
       sourceChangeIds,
       hunkIds,
       declarationIds,
@@ -79,7 +113,7 @@ function buildCompletenessInput({ sourceIndex, semantic }) {
     blockers.push({ reviewUnitId: unit.reviewUnitId, reason: unit.reason });
   }
   return {
-    schemaVersion: 4,
+    schemaVersion,
     status: blockers.length ? "blocked" : "ready",
     blockers,
     reviewUnits,
@@ -173,8 +207,8 @@ function buildLegacyDocumentQualityInput({ sourceIndex, semantic, schemaVersion 
   return { schemaVersion, status: blockers.length ? "blocked" : "ready", blockers, reviewUnits };
 }
 
-export function buildDocumentQualityInput({ sourceIndex, semantic, schemaVersion = 4 }) {
-  return schemaVersion === 4
-    ? buildCompletenessInput({ sourceIndex, semantic })
+export function buildDocumentQualityInput({ sourceIndex, semantic, schemaVersion = 5 }) {
+  return schemaVersion === 4 || schemaVersion === 5
+    ? buildCompletenessInput({ sourceIndex, semantic, schemaVersion })
     : buildLegacyDocumentQualityInput({ sourceIndex, semantic, schemaVersion });
 }

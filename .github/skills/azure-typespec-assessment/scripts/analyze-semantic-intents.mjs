@@ -4,6 +4,7 @@ import {
   sameAutorestContract,
 } from "./autorest-contract.mjs";
 import { parseArgs, isMain, readJson, runMain, writeJson } from "./cli.mjs";
+import { semanticIntentType } from "./semantic-assessment-scope.mjs";
 import { canonicalJson, stableId } from "./stable-id.mjs";
 import { indexTcgcOperations, normalizeTcgcContract } from "./tcgc-contract.mjs";
 
@@ -949,6 +950,9 @@ export function analyzeSemanticIntents(options) {
     reviewUnits.length,
     ...dedupePublicationHunks(reviewUnits, sourceIndex.sourceChanges),
   );
+  for (const unit of reviewUnits) {
+    unit.intentType = semanticIntentType(unit);
+  }
   reviewUnits.sort((left, right) => left.id.localeCompare(right.id));
   const result = {
     schemaVersion: 1,

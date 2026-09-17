@@ -163,6 +163,15 @@ test("compiler evidence records only documentation presence on changed declarati
     documentationPresent: item.documentationPresent,
   })), [{ qualifiedName: "Widget", documentationPresent: true }]);
   assert.equal(JSON.stringify(source.documentEvidence).includes("A widget."), false);
+  assert.deepEqual(
+    source.declarations.find((item) => item.source.revision === "current").sourceSnippet,
+    {
+      startLine: 1,
+      endLine: 1,
+      lines: ["model Widget { value: string; }"],
+      truncated: false,
+    },
+  );
 });
 
 test("compiler evidence excludes unchanged declarations that are only diff context", async () => {

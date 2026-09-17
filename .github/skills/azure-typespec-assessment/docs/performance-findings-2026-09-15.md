@@ -117,27 +117,27 @@ For continuity with the original session analysis, the rounded phase view was:
 The 10m 56s bounded-evidence and judgment interval can be reconstructed from
 tool and artifact timestamps as:
 
-| Evidence and judgment activity                         | Estimated wall time | Notes |
-| ------------------------------------------------------ | ------------------: | ----- |
-| Post-analysis handoff and verification                 |               2m 09s | Read coordinator output, checked provenance and repository cleanliness, and waited for the explicit continue request |
-| Rules, schemas, and bounded-input loading              |               1m 57s | Loaded classification, downstream, search, catalog, judgment schemas, and the 1.34 MiB model input |
-| Semantic/downstream evidence extraction                |               2m 00s | Summarized seven intents, ten SDK candidates, eleven inference requests, and exact before/after facts; REST had no candidates |
-| Azure Guidelines ranking, retrieval, and inspection    |               2m 46s | Read query profiles and catalog metadata, then fetched four shared official documents concurrently |
-| Inference decision completion and serialization        |               1m 00s | Completed and wrote the eleven bounded inference decisions |
-| Shared guideline evidence and per-intent compliance    |                  44s | Materialized shared evidence and the seven intent-level guideline decisions |
-| Final bounded judgment serialization                   |                  20s | Wrote semantic, REST, downstream, and compliance decisions |
-| **Total**                                              |          **10m 56s** | Wall-clock reconstruction; overlapping tool durations are not summed |
+| Evidence and judgment activity                      | Estimated wall time | Notes                                                                                                                         |
+| --------------------------------------------------- | ------------------: | ----------------------------------------------------------------------------------------------------------------------------- |
+| Post-analysis handoff and verification              |              2m 09s | Read coordinator output, checked provenance and repository cleanliness, and waited for the explicit continue request          |
+| Rules, schemas, and bounded-input loading           |              1m 57s | Loaded classification, downstream, search, catalog, judgment schemas, and the 1.34 MiB model input                            |
+| Semantic/downstream evidence extraction             |              2m 00s | Summarized seven intents, ten SDK candidates, eleven inference requests, and exact before/after facts; REST had no candidates |
+| Azure Guidelines ranking, retrieval, and inspection |              2m 46s | Read query profiles and catalog metadata, then fetched four shared official documents concurrently                            |
+| Inference decision completion and serialization     |              1m 00s | Completed and wrote the eleven bounded inference decisions                                                                    |
+| Shared guideline evidence and per-intent compliance |                 44s | Materialized shared evidence and the seven intent-level guideline decisions                                                   |
+| Final bounded judgment serialization                |                 20s | Wrote semantic, REST, downstream, and compliance decisions                                                                    |
+| **Total**                                           |         **10m 56s** | Wall-clock reconstruction; overlapping tool durations are not summed                                                          |
 
 The approximately **3m** semantic/downstream evidence and inference interval
 breaks down as:
 
-| Semantic, downstream, and inference activity       | Estimated wall time | Detail |
-| -------------------------------------------------- | ------------------: | ------ |
-| Extract and inspect bounded judgment evidence      |                  59s | Produced a compact view of intents, candidates, requests, and referenced facts, then inspected the retained output |
-| Summarize exact downstream before/after differences |                  43s | Compared the ten SDK candidates and extracted the precise changed contracts |
-| Load inference contract and transition to search   |                  18s | Read the inference schema and prepared the eleven bounded decisions |
-| Complete and serialize inference decisions         |               1m 00s | Finalized no-impact/candidate conclusions, wrote `inference.json`, and checked the result |
-| **Total semantic/downstream and inference time**   |           **3m 00s** | Rounded reconstruction from tool and artifact timestamps |
+| Semantic, downstream, and inference activity        | Estimated wall time | Detail                                                                                                             |
+| --------------------------------------------------- | ------------------: | ------------------------------------------------------------------------------------------------------------------ |
+| Extract and inspect bounded judgment evidence       |                 59s | Produced a compact view of intents, candidates, requests, and referenced facts, then inspected the retained output |
+| Summarize exact downstream before/after differences |                 43s | Compared the ten SDK candidates and extracted the precise changed contracts                                        |
+| Load inference contract and transition to search    |                 18s | Read the inference schema and prepared the eleven bounded decisions                                                |
+| Complete and serialize inference decisions          |              1m 00s | Finalized no-impact/candidate conclusions, wrote `inference.json`, and checked the result                          |
+| **Total semantic/downstream and inference time**    |          **3m 00s** | Rounded reconstruction from tool and artifact timestamps                                                           |
 
 REST did not add a separate judgment cost because this run had no REST
 candidates. Semantic summaries and downstream compatibility shared the first
@@ -150,14 +150,14 @@ Azure Guidelines work therefore accounted for approximately **3m 30s**:
 2m 46s for ranking, retrieval, and document inspection plus 44s to materialize
 shared evidence and per-intent compliance decisions.
 
-| Azure Guidelines activity                            | Estimated wall time | Detail |
-| ---------------------------------------------------- | ------------------: | ------ |
-| Load combined query profiles                         |                  25s | Read the seven intent query profiles once |
-| Read, score, and select from the canonical catalog   |                  27s | Ranked the catalog across all intents and selected four documents |
-| Fetch four selected official documents               |                  37s | Four fetches ran concurrently; summed request durations were higher than wall time |
-| Inspect documents and map guidance to intent queries |               1m 17s | Searched the fetched content and reviewed compact request profiles |
-| Materialize shared evidence and compliance decisions |                  44s | Wrote shared retrieval evidence and seven per-intent applicability decisions |
-| **Total Azure Guidelines wall time**                 |          **3m 30s** | Rounded reconstruction from tool and artifact timestamps |
+| Azure Guidelines activity                            | Estimated wall time | Detail                                                                             |
+| ---------------------------------------------------- | ------------------: | ---------------------------------------------------------------------------------- |
+| Load combined query profiles                         |                 25s | Read the seven intent query profiles once                                          |
+| Read, score, and select from the canonical catalog   |                 27s | Ranked the catalog across all intents and selected four documents                  |
+| Fetch four selected official documents               |                 37s | Four fetches ran concurrently; summed request durations were higher than wall time |
+| Inspect documents and map guidance to intent queries |              1m 17s | Searched the fetched content and reviewed compact request profiles                 |
+| Materialize shared evidence and compliance decisions |                 44s | Wrote shared retrieval evidence and seven per-intent applicability decisions       |
+| **Total Azure Guidelines wall time**                 |          **3m 30s** | Rounded reconstruction from tool and artifact timestamps                           |
 
 The network portion was only about 37 seconds because the four documents were
 fetched concurrently. Approximately 2m 09s was spent loading, ranking, and
@@ -200,6 +200,281 @@ These raw files are not sent directly to the Agent, but their size affects
 compiler output generation and deterministic normalization. The bounded
 `model-input.json` for this run was approximately 1.34 MiB.
 
+## Optimized Agent input validation: PR 43718
+
+The single-input optimization from `perf-improvement-plan2.md` was validated
+against PR 43718 on September 16, 2026. The run produced a validated
+`assessment.json` and complete `assessment.html`; `workflow-state.json`
+finished in `complete` with result hashes for both artifacts.
+
+The optimized workflow uses one bounded `model-input.json` rather than
+per-intent packets. A large API-version publication/carry-over intent is
+excluded from model judgment and restored deterministically in the final
+Semantic section. It keeps its complete operation list but cannot own REST,
+downstream, Azure Guidelines, or Documentation Completeness findings.
+
+### Before and after
+
+| Metric                                              |         Previous PR 43718 run |  Optimized run |                                    Change |
+| --------------------------------------------------- | ----------------------------: | -------------: | ----------------------------------------: |
+| Report generation wall time                         |                     20m 56.2s |       5m 15.6s |                               74.9% lower |
+| Instrumented deterministic preparation              |                      8m 50.7s |       3m 29.0s |                               60.6% lower |
+| Observable post-preparation Agent/artifact interval |               10m 56s rounded |       1m 33.8s |                               85.7% lower |
+| Finalization                                        |                   43s rounded | 188ms internal |                       More than 99% lower |
+| Physical `model-input.json`                         | Approximately 1,400,460 bytes |  227,186 bytes |                               83.8% lower |
+| Minified input accounting                           |        Not separately bounded |  120,692 bytes |              Fits 131,072-byte small tier |
+| Estimated input tokens                              |                  Not reported |         30,173 |                  Accounting estimate only |
+| Agent-assessed Semantic intents                     |                             7 |              6 | One publication intent made informational |
+| Inference requests                                  |                            11 |             10 |           One publication request removed |
+| Azure Guidelines requests                           |                             7 |              6 |             Informational intent excluded |
+
+The optimized run started deterministic preparation at
+`2026-09-16T15:15:22.325Z`. The final assessment was generated at
+`2026-09-16T15:20:37.875Z`, giving a report-generation wall time of
+approximately **5m 15.6s**. This is below the previous run by approximately
+15m 40.6s.
+
+The observable 1m 33.8s post-preparation interval is measured from
+`deterministicReadyAt` to the first Agent artifact timestamp. It includes model
+judgment, file/tool work, scheduling, and artifact serialization. It must not
+be interpreted as active model inference time.
+
+### Optimized Agent/replay judgment breakdown
+
+The optimized validation did not invoke a fresh model independently for each
+dimension. `complete-pr43718.mjs` reconstructed the required Agent artifacts
+from retained validated decisions and cached Azure Guidelines evidence, then
+the guarded finalizer assembled the report. The first finalization attempt
+exposed an informational-intent scoping bug; the implementation was corrected
+and the artifacts were regenerated. The most defensible observable breakdown
+is therefore:
+
+| Evidence and judgment activity                        | Estimated wall time | Notes                                                                                                                               |
+| ----------------------------------------------------- | ------------------: | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Post-preparation handoff and Agent index loading      |               22.0s | From `deterministicReadyAt` through loading the 5,480-byte Agent index; includes 17.4s of turn/tool scheduling and a 4.6s file read |
+| Prepare the retained-decision replay                  |               10.5s | Transition from the index read to the first replay/finalizer command                                                                |
+| Reconstruct and serialize the first bounded judgment  |                9.1s | Produced inference, shared Guidelines evidence, and assessment judgment from retained evidence                                      |
+| Initial guarded finalization and failure reporting    |                3.6s | Finalization detected that Documentation Completeness still received the informational publication intent                           |
+| Diagnose and correct the finalization scope           |               43.8s | Located the assembly call, patched it to use assessed Semantic intents, and transitioned to the verification rerun                  |
+| Regenerate artifacts and produce the validated report |                6.3s | Rewrote all three Agent artifacts, assembled and validated `assessment.json`, and rendered `assessment.html`                        |
+| **Total to validated report**                         |        **1m 35.2s** | `deterministicReadyAt` to the final HTML write; includes debugging and scheduling, not just judgment                                |
+
+The earlier **1m 33.8s** telemetry value uses the final rewritten
+`inference.json` timestamp as `firstAgentArtifactAt`. Because the retry
+overwrote the initial artifacts, that field no longer represents the first
+artifact produced during the run. The workflow phase transition records the
+initial artifact set at `2026-09-16T15:19:44.297Z`, **41.6s** after
+deterministic preparation. The final validated HTML was written at
+`2026-09-16T15:20:37.932Z`, **1m 35.2s** after preparation.
+
+The approximately **9.1s** first bounded replay-generation interval covered:
+
+| Semantic, downstream, inference, and Guidelines activity |    Observed result | Detail                                                                                                                                               |
+| -------------------------------------------------------- | -----------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Semantic coverage                                        | 6 assessed intents | One 95-operation publication intent was excluded and retained deterministically                                                                      |
+| REST decisions                                           |       0 candidates | No REST judgment work was required                                                                                                                   |
+| Downstream decisions                                     |      10 candidates | Nine findings were retained and one compatible change was rejected                                                                                   |
+| Inference decisions                                      |        10 requests | One publication-only request was removed from the prior 11-request input                                                                             |
+| Azure Guidelines decisions                               |          6 intents | Reused the retained four-document shared evidence rather than performing fresh ranking and fetches                                                   |
+| Artifact serialization                                   |        3 artifacts | `inference.json`, `compliance-search-evidence.json`, and `assessment-judgment.json` were produced by one helper                                      |
+| **Combined replay generation**                           |           **9.1s** | The helper did not expose per-dimension timers, so assigning separate seconds to Semantic, downstream, inference, or Guidelines would be speculative |
+
+Unlike the previous 10m 56s run, there is no defensible independent Azure
+Guidelines ranking, network retrieval, or document-inspection duration for this
+optimized validation. The cached evidence was reused, and the three final
+Agent artifacts were rewritten within 8ms of one another on the successful
+retry. Consequently, this run validates bounded-input size, artifact contracts,
+quality preservation, and finalization latency, but it does **not** measure
+fresh model judgment latency by dimension. A clean run with explicit timers
+around inference, Guidelines ranking/fetch/inspection, and judgment
+serialization is still required for that measurement.
+
+### Optimized deterministic timing
+
+| Deterministic work             |           Time |
+| ------------------------------ | -------------: |
+| PR metadata                    |         2.899s |
+| Required-object fetch          |         0.144s |
+| Scope discovery                |         0.079s |
+| Sparse workspace preparation   |         7.581s |
+| Project discovery              |     1m 02.183s |
+| Baseline AutoRest              |        11.487s |
+| Baseline TCGC                  |        14.973s |
+| Target AutoRest                |        12.342s |
+| Target TCGC                    |        12.678s |
+| Semantic analysis              |         0.664s |
+| REST analysis                  |         0.235s |
+| Downstream analysis            |         7.507s |
+| Documentation analysis         |         0.001s |
+| Instrumented preparation total | **3m 29.033s** |
+
+`workflow-state.json` records 3m 40.416s from the start of `preparing` to
+`deterministicReadyAt`. The approximately 11.4-second difference includes
+workflow-state transitions, bounded input construction, Agent workspace
+construction, and other coordinator work outside the preparation manifest's
+instrumented total. Agent workspace construction itself took **38ms** and the
+Agent index was **5,480 bytes**.
+
+### Input and workload reduction
+
+The optimized minified accounting retained:
+
+| Retained input                 | Count |
+| ------------------------------ | ----: |
+| Evidence sets                  |    15 |
+| Facts                          |    18 |
+| Assessed Semantic intents      |     6 |
+| Informational Semantic intents |     1 |
+| REST candidates                |     0 |
+| Downstream candidates          |    10 |
+| Downstream root causes         |     4 |
+| Azure Guidelines requests      |     6 |
+| Inference requests             |    10 |
+
+The physical file is larger than the minified accounting because the persisted
+JSON is formatted. Both measurements describe the same bounded input:
+**227,186 physical bytes** and **120,692 minified bytes**. The estimated
+30,173-token value is a size approximation and is not a measurement of tokens
+actually submitted to or consumed by a model.
+
+The excluded informational intent is
+`semantic-4d6f4538b1cbec3a`. It represents the large API-version publication
+group and retains all **95 affected operations** in the final report with
+`informational: true`.
+
+### Quality comparison
+
+| Result                         | Previous validated report | Optimized validated report |
+| ------------------------------ | ------------------------: | -------------------------: |
+| Semantic intents               |                         7 |                          7 |
+| Informational Semantic intents |                         0 |                          1 |
+| REST findings                  |                         0 |                          0 |
+| Downstream findings            |                         9 |                          9 |
+| Azure Guidelines findings      |                         0 |                          0 |
+| Documentation findings         |                         0 |                          0 |
+| Blockers                       |                         0 |                          0 |
+| Overall confidence             |                    Medium |                       High |
+
+The same nine high-severity downstream Patch model-property findings were
+retained. The compatible `BareMetalMachines.reimage` optional method-parameter
+extension was still evaluated and rejected as a finding. The informational
+publication intent has no REST, downstream, Guidelines, documentation, or type
+impact relationships.
+
+This result demonstrates a quality-preserving reduction for PR 43718, but it
+does not by itself establish the same speedup distribution for all repository
+changes. The 12 historical reports are being replayed separately to validate
+small, documentation-heavy, REST-heavy, and downstream-heavy shapes.
+
+### Initial historical deterministic batch
+
+The first five successful deterministic preparations from the three-worker
+historical batch were:
+
+|         PR | Deterministic wall time |
+| ---------: | ----------------------: |
+|      43308 |                5m 57.5s |
+|      42853 |               11m 57.8s |
+|      44454 |               16m 30.3s |
+|      43745 |               17m 21.4s |
+|      44200 |               19m 10.1s |
+| **Median** |           **16m 30.3s** |
+|   **Mean** |           **14m 11.4s** |
+
+These are process wall times from three concurrent workers, not active CPU or
+model time. PR complexity differs, and concurrent TypeSpec compilation also
+contends for CPU, disk, Node/npm caches, and Git/worktree I/O. Therefore the
+wide 5m 57.5s-19m 10.1s range cannot be attributed solely to either code
+complexity or concurrency. Per-phase manifest telemetry and isolated reruns are
+required before using this batch to estimate normal single-report latency.
+
+### Completed 12-case optimized replay
+
+All 12 retained cases produced validated JSON and HTML reports. REST and
+downstream finding counts were preserved in every case. The replay is
+baseline-guided: it validates deterministic preparation, bounded contracts,
+assembly, validation, and rendering, but does not measure fresh model inference.
+
+| PR | Result | Semantic | Informational | REST | Downstream | Guidelines | Documentation | Physical model input | Instrumented preparation |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 42435 | Exact | 1 | 0 | 0 | 3 | 0 | 1 | 33,253 B | 32m 41.7s |
+| 42853 | Equivalent | 3 | 1 | 0 | 0 | 0 | 1 | 15,481 B | 11m 23.5s |
+| 43308 | Equivalent | 3 | 0 | 0 | 6 | 0 | 4 | 121,345 B | 5m 26.7s |
+| 43745 | Exact | 1 | 0 | 0 | 2 | 0 | 0 | 29,745 B | 17m 00.9s |
+| 44200 | Equivalent | 2 | 0 | 0 | 0 | 0 | 2 | 41,917 B | 17m 18.6s |
+| 44454 | Exact | 2 | 0 | 0 | 0 | 0 | 0 | 11,100 B | 16m 19.5s |
+| 44742 | Review | 5 | 0 | 22 | 18 | 4 | 0 | 290,675 B | 27m 47.6s |
+| 44882 | Exact | 1 | 0 | 0 | 0 | 0 | 0 | 10,595 B | 8h 01m 10.7s |
+| 44988 | Baseline invalid | 11 | 1 | 0 | 7 | 0 | 4 | 191,129 B | 8h 26m 45.9s |
+| 45162 | Equivalent | 3 | 1 | 0 | 0 | 0 | 0 | 40,659 B | 8h 15m 56.5s |
+| 45348 | Equivalent, intentional | 1 | 1 | 0 | 0 | 0 | 0 | 3,462 B | 23m 43.8s |
+| 45536 | Exact | 1 | 0 | 0 | 0 | 0 | 0 | 7,507 B | 3m 01.5s |
+
+The multi-hour values are synchronized host or process stalls, not normal
+compiler or analyzer performance. In particular, 44882, 44988, and 45162 must
+not be used to estimate steady-state latency. Even several shorter runs show
+substantial shared-machine contention.
+
+Quality interpretation:
+
+- **Exact:** 42435, 43745, 44454, 44882, and 45536 matched all retained
+  comparison categories.
+- **Equivalent:** 42853, 43308, 44200, and 45162 preserved core REST and
+  downstream results; differences were informational publication handling,
+  deterministic documentation coverage, comparison identity, or removal of
+  obsolete blockers.
+- **45348:** the single 109-operation `Versions` change is now
+  `api-version-wide-change` and informational. It remains in Semantic output
+  with all operations but creates no inference, REST, downstream, Guidelines,
+  or Documentation Completeness work.
+- **44742:** the same 22 REST, 18 downstream, and four Guidelines findings were
+  retained, but Semantic analysis split `BlockDeviceItem` into a fifth intent
+  instead of the retained baseline's four. This needs intent-grouping review;
+  it is not a finding-count regression.
+- **44988:** the local retained baseline is not authoritative for Azure
+  Guidelines. It contains zero findings and four selected documents, while the
+  published baseline report contains three findings and 44 selected documents.
+  The published findings cover a placeholder `#suppress` justification,
+  `Legacy.RoutedOperations`, and behavior-affecting `@operationId`
+  suppression. Because the replay used the stale local fixture and did not run
+  fresh Guidelines inference, its zero-finding Guidelines result is invalid
+  for quality comparison.
+
+Documentation Completeness was subsequently upgraded to assessment version 5.
+It checks only declarations newly added by the change whose compiler kind is
+`operation`, `model`, `enum`, or `interface`. Modified existing declarations,
+properties, namespaces, and other declaration kinds are excluded. For 44988,
+this reduced the result from 15 broad changed-declaration findings to four
+missing descriptions, all on newly added interfaces:
+`FirewallPolicyKubeSelectorGroups`, `AddressPrefixSets`,
+`FirstPartyServiceTags`, and `ExpressRouteLags`. Each finding now contains a
+collapsed exact TypeSpec declaration snippet.
+
+### PR 45348 API-version-wide reduction
+
+PR 45348 demonstrates why API-version-wide intent classification must be
+semantic rather than operation-count based. The only changed declaration is
+`Versions`; it directly owns no operation, and all 109 associated operations
+are mapped through version-transition evidence.
+
+| Metric | Previous replay | Version-wide validation | Change |
+| --- | ---: | ---: | ---: |
+| Physical `model-input.json` | 1,487,900 B | 3,462 B | 99.8% lower |
+| Minified input accounting | 691,719 B | 2,432 B | 99.6% lower |
+| Estimated input tokens | 172,930 | 608 | 99.6% lower |
+| Assessed Semantic intents | 1 | 0 | Removed from model judgment |
+| Informational Semantic intents | 0 | 1 | Explicit version-wide type |
+| REST candidates | 237 | 0 | Exclusively associated candidates removed |
+| Inference requests | 1 | 0 | No model inference required |
+| Guidelines requests | 1 | 0 | No guidance search required |
+| Finalization | 1.576s | 0.181s | 88.5% lower |
+
+The fresh deterministic preparation took 23m 43.8s, including 2.1s for setup
+metadata/fetch/scope, 7.5s for workspace preparation, 2m 04.4s for project
+discovery, 13m 15.7s for the four compiler invocations, and 25.2s for
+analyzers. This run was still affected by variable compiler latency; the input
+reduction does not itself accelerate TypeSpec compilation.
+
 ## Environment and deterministic analysis
 
 PR 44200 provides the cleanest complete retry without a multi-hour phase:
@@ -241,9 +516,9 @@ an **AI/tool workflow wall time**, not pure model inference time.
 
 | PR    | Semantic intents | AI/tool workflow | Finalization | Before finalization |
 | ----- | ---------------: | ---------------: | -----------: | ------------------: |
-| 42435 |                1 |      **14m 59.2s** |        20.6s |       **14m 38.6s** |
-| 44200 |                2 |      **18m 21.7s** |         8.4s |       **18m 13.3s** |
-| 44988 |               11 |      **23m 26.9s** |        18.0s |       **23m 08.9s** |
+| 42435 |                1 |    **14m 59.2s** |        20.6s |       **14m 38.6s** |
+| 44200 |                2 |    **18m 21.7s** |         8.4s |       **18m 13.3s** |
+| 44988 |               11 |    **23m 26.9s** |        18.0s |       **23m 08.9s** |
 
 The "before finalization" value is `agentWallMs` minus the separately recorded
 finalization window. It is the tightest available upper bound for AI judgment
@@ -265,12 +540,12 @@ reconstructed from visible Agent turns and tool timestamps:
 
 | Observed workflow window                                               |          Time | Share of AI/tool workflow |
 | ---------------------------------------------------------------------- | ------------: | ------------------------: |
-| Shared references, schemas, bounded input, and catalog setup           |     4m 19.6s |                     23.6% |
-| Read 41 descriptions, downstream facts, and inference schema           |        59.8s |                      5.4% |
-| Guidelines scoring, ranking, retrieval, linkage, and supporting reads  |    10m 36.0s |                     57.7% |
-| Author combined decisions, correct one excerpt, and start finalization |     2m 06.3s |                     11.5% |
-| Finalize evidence, assemble, validate, and render                      |         8.4s |                      0.8% |
-| Initial setup and analysis-return handling not assigned above          |        11.6s |                      1.1% |
+| Shared references, schemas, bounded input, and catalog setup           |      4m 19.6s |                     23.6% |
+| Read 41 descriptions, downstream facts, and inference schema           |         59.8s |                      5.4% |
+| Guidelines scoring, ranking, retrieval, linkage, and supporting reads  |     10m 36.0s |                     57.7% |
+| Author combined decisions, correct one excerpt, and start finalization |      2m 06.3s |                     11.5% |
+| Finalize evidence, assemble, validate, and render                      |          8.4s |                      0.8% |
+| Initial setup and analysis-return handling not assigned above          |         11.6s |                      1.1% |
 | **Total**                                                              | **18m 21.7s** |                  **100%** |
 
 These are observed workflow windows, not exclusive dimension-level model
@@ -279,13 +554,13 @@ the 2m 06.3s decision window authors multiple dimensions together.
 
 The separately instrumented PR 44200 finalization stages were:
 
-| Finalization stage               |    Time |
-| -------------------------------- | ------: |
-| Compliance evidence plan         |    2.7s |
-| Assessment assembly              |    1.6s |
-| Whole-report validation          |    0.4s |
-| HTML rendering                   |    2.5s |
-| Wrapper and inter-stage overhead | 1.2s |
+| Finalization stage               |     Time |
+| -------------------------------- | -------: |
+| Compliance evidence plan         |     2.7s |
+| Assessment assembly              |     1.6s |
+| Whole-report validation          |     0.4s |
+| HTML rendering                   |     2.5s |
+| Wrapper and inter-stage overhead |     1.2s |
 | **Finalization window**          | **8.4s** |
 
 For PRs 42435 and 44988, the retained artifacts expose only aggregate
@@ -297,11 +572,11 @@ The older 11-report phase fixture contains the following dimension estimates
 for these PRs. These values are useful as workload-shape references, but they
 are **not a breakdown of the successful retry wall times above**:
 
-| PR    | Semantic and documentation | REST | Downstream | Azure Guidelines | Other overhead | Historical total |
-| ----- | -------------------------: | ---: | ---------: | ---------------: | -------------: | ---------------: |
-| 42435 |                     5m 10s | 1m 20s |      1m 20s |           3m 12s |            29s |        11m 31.3s |
-| 44200 |                      4m 14s | 2m 20s |         55s |           4m 15s |            24s |        12m 08.4s |
-| 44988 |                      8m 40s | 1m 55s |       1m 07s |           3m 16s |         2m 04s |        17m 03.0s |
+| PR    | Semantic and documentation |   REST | Downstream | Azure Guidelines | Other overhead | Historical total |
+| ----- | -------------------------: | -----: | ---------: | ---------------: | -------------: | ---------------: |
+| 42435 |                     5m 10s | 1m 20s |     1m 20s |           3m 12s |            29s |        11m 31.3s |
+| 44200 |                     4m 14s | 2m 20s |        55s |           4m 15s |            24s |        12m 08.4s |
+| 44988 |                     8m 40s | 1m 55s |     1m 07s |           3m 16s |         2m 04s |        17m 03.0s |
 
 The historical fixture marks Semantic, REST, and downstream values as
 estimated; most Azure Guidelines values are measured, while overhead is
@@ -520,12 +795,16 @@ Provide deterministic commands that:
 Avoid repeated ad hoc Node and PowerShell probes and temporary authoring
 scripts.
 
-### 5. Batch judgments by semantic intent
+### 5. Use one bounded judgment input
 
-Judge related documentation descriptions and compatibility candidates in one
-structured operation per semantic intent while preserving one exact decision
-per required item. This reduces repeated context loading without reducing
-coverage.
+Judge all assessed Semantic intents and their compatibility candidates from one
+bounded `model-input.json`. Preserve one exact decision per required item, but
+do not duplicate evidence into per-intent packets. Exclude only narrowly
+defined `api-version-publication` and `api-version-wide-change` intents and
+restore them deterministically as informational Semantic results with no
+finding relationships. Version-wide classification is based on `Versions`
+declaration and version-transition/governance evidence, not an operation-count
+threshold.
 
 ### 6. Improve deterministic documentation ownership
 

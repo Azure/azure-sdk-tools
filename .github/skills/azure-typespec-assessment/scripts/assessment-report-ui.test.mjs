@@ -638,6 +638,50 @@ test("documentation completeness summarizes compiler declaration presence", () =
   assert.match(summary.detail, /3\/5 declarations documented/);
 });
 
+test("v5 documentation findings show the exact TypeSpec declaration", () => {
+  const dimension = {
+    assessmentVersion: 5,
+    status: "failed",
+    coverage: {
+      semanticIntentCount: 1,
+      assessedIntentCount: 1,
+      declarationCount: 1,
+      documentedDeclarationCount: 0,
+      missingDeclarationCount: 1,
+      unassessedIntentIds: [],
+      notApplicableIntentIds: [],
+    },
+    intentAssessments: [],
+    findings: [{
+      id: "document-finding-widget",
+      reviewUnitId: "semantic-1",
+      title: "Missing documentation for Widgets",
+      actual: "The TypeSpec compiler returned no nonempty documentation for this declaration.",
+      expected: "Add a nonempty TypeSpec documentation description.",
+      semanticIntentIds: ["semantic-1"],
+      sources: [{ path: "widgets.tsp" }],
+      declaration: {
+        qualifiedName: "Widgets",
+        source: { startLine: 3, endLine: 5 },
+      },
+      codeSnippet: {
+        path: "widgets.tsp",
+        startLine: 3,
+        endLine: 5,
+        lines: ["@armResourceOperations", "interface Widgets {", "}"],
+        truncated: false,
+      },
+    }],
+    blockers: [],
+  };
+  const quality = reportSection(presentationWithDocuments(dimension), "document-quality");
+  assert.match(quality, /<details class="report-subdetails document-quality-source"><summary>View TypeSpec declaration missing a description<\/summary>/);
+  assert.doesNotMatch(quality, /document-quality-source" open/);
+  assert.match(quality, /widgets\.tsp:3-5/);
+  assert.match(quality, /@armResourceOperations\ninterface Widgets \{\n\}/);
+  assert.doesNotMatch(quality, /View supporting TypeSpec location/);
+});
+
 test("41 passing descriptions stay out of HTML while summary data remains intact", () => {
   const dimension = documentDimension("pass");
   dimension.assessmentVersion = 3;

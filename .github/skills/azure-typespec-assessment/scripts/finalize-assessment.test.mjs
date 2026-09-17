@@ -6,10 +6,6 @@ import test from "node:test";
 import { readJson, writeJson } from "./cli.mjs";
 import { finalizeAssessment } from "./finalize-assessment.mjs";
 
-/** @typedef {{dimensions: {semantic: {items: unknown[]}}}} FinalAssessment */
-/** @typedef {import("./assessment-judgment.schema.js").TypeSpecAssessmentJudgment} AssessmentJudgment */
-/** @typedef {{state: string, failure: {code: string}}} TestWorkflowState */
-
 function fixture() {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "finalize-assessment-"));
   writeJson(path.join(work, "preparation-manifest.json"), {
@@ -89,7 +85,7 @@ function fixture() {
   return work;
 }
 
-void test("guarded finalization writes only validated complete artifacts", () => {
+test("guarded finalization writes only validated complete artifacts", () => {
   const work = fixture();
   try {
     const first = finalizeAssessment({ work });
@@ -97,35 +93,27 @@ void test("guarded finalization writes only validated complete artifacts", () =>
     assert.ok(fs.existsSync(first.reportPath));
     assert.equal(Number.isInteger(first.finalizationMs), true);
     assert.ok(first.finalizationMs >= 0);
-    const assessment = /** @type {FinalAssessment} */ (readJson(first.assessmentPath));
+    const assessment = readJson(first.assessmentPath);
     assert.equal(assessment.dimensions.semantic.items.length, 1);
-    assert.equal(
-      /** @type {TestWorkflowState} */ (readJson(path.join(work, "workflow-state.json"))).state,
-      "complete",
-    );
+    assert.equal(readJson(path.join(work, "workflow-state.json")).state, "complete");
     const second = finalizeAssessment({ work });
     assert.ok(fs.existsSync(second.assessmentPath));
-    assert.equal(
-      /** @type {TestWorkflowState} */ (readJson(path.join(work, "workflow-state.json"))).state,
-      "complete",
-    );
+    assert.equal(readJson(path.join(work, "workflow-state.json")).state, "complete");
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
 });
 
-void test("invalid Agent output leaves a correction-ready workflow state", () => {
+test("invalid Agent output leaves a correction-ready workflow state", () => {
   const work = fixture();
   try {
     const judgmentPath = path.join(work, "assessment-judgment.json");
-    const judgment = /** @type {AssessmentJudgment} */ (readJson(judgmentPath));
+    const judgment = readJson(judgmentPath);
     judgment.semanticIntents[0].title = "";
     writeJson(judgmentPath, judgment);
     assert.throws(() => finalizeAssessment({ work }), /incomplete/);
     assert.equal(fs.existsSync(path.join(work, "assessment.json")), false);
-    const state = /** @type {TestWorkflowState} */ (
-      readJson(path.join(work, "workflow-state.json"))
-    );
+    const state = readJson(path.join(work, "workflow-state.json"));
     assert.equal(state.state, "awaiting-agent-judgment");
     assert.equal(state.failure.code, "finalization-failed");
   } finally {

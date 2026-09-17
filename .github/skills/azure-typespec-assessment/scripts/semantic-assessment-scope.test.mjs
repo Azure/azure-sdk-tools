@@ -22,7 +22,7 @@ function publicationUnit(operationCount = 20) {
   };
 }
 
-void test("classifies every version publication intent as informational", () => {
+test("classifies large version publication intents as informational", () => {
   const publication = publicationUnit();
   const assessed = {
     id: "semantic-model-change",
@@ -36,8 +36,7 @@ void test("classifies every version publication intent as informational", () => 
   };
 
   assert.equal(isInformationalPublicationIntent(publication), true);
-  assert.equal(isInformationalPublicationIntent(publicationUnit(19)), true);
-  assert.equal(isInformationalPublicationIntent(publicationUnit(0)), true);
+  assert.equal(isInformationalPublicationIntent(publicationUnit(19)), false);
   assert.deepEqual(partitionSemanticIntents([publication, assessed]), {
     assessed: [assessed],
     informational: [publication],
@@ -45,7 +44,7 @@ void test("classifies every version publication intent as informational", () => 
   assert.match(informationalIntentText(publication).summary, /20 existing operations/);
 });
 
-void test("classifies version-wide changes without an operation threshold", () => {
+test("classifies version-wide changes without an operation threshold", () => {
   const versionWide = {
     id: "semantic-version-wide",
     declarationNames: ["Versions"],
@@ -66,5 +65,8 @@ void test("classifies version-wide changes without an operation threshold", () =
   assert.equal(isInformationalIntent(versionWide), true);
   assert.equal(semanticIntentType(versionWide), "api-version-wide-change");
   assert.equal(isInformationalIntent(normal), false);
-  assert.match(informationalIntentText(versionWide).summary, /2 affected operations/);
+  assert.match(
+    informationalIntentText(versionWide).summary,
+    /2 affected operations/,
+  );
 });

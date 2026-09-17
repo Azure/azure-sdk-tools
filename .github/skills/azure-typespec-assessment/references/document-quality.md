@@ -2,8 +2,9 @@
 
 ## Rule
 
-Check one deterministic condition for every changed compiler declaration in a
-Semantic intent:
+Check one deterministic condition only for declarations that are newly added
+by the change and whose compiler kind is `operation`, `model`, `enum`, or
+`interface`:
 
 A declaration is changed only when an added or removed diff line falls within
 the declaration or its immediately attached documentation/decorator prefix.
@@ -35,5 +36,9 @@ The deterministic dimension records:
 - unresolved Semantic intent IDs and compiler blockers.
 
 Documentation Completeness does not affect REST or downstream safety.
+Do not check modified existing declarations, properties, namespaces, enum
+members, union variants, aliases, or scalars. Each finding includes the exact
+bounded TypeSpec declaration source so the missing description is visible.
+
 Historical documentation-quality reports remain readable, but new assessments
-use completeness assessment version 4.
+use completeness assessment version 5.

@@ -1,0 +1,35 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+# This pipeline runs evaluations WITHOUT loading the azure-typespec-author skill,
+# testing the agent's baseline capability with the selected live or mock MCP tool surface.
+trigger: none
+pr: none
+
+parameters:
+  - name: McpKind
+    displayName: MCP implementation
+    type: string
+    default: live
+    values:
+      - live
+      - mock
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+  - group: AzSDK_Eval_Variable_group
+  - name: SkillBranch
+    value: ${{ parameters.SkillBranch }}
+
+extends:
+  template: /eng/common/pipelines/templates/stages/archetype-eval.yml
+  parameters:
+    vallyRoot: .github/skills/azure-typespec-assessment/evals
+    evalGlobs:
+      - 'assessment.eval.yaml'
+    mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+    TestType: ${{ parameters.McpKind }}
+    evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+    UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
+    azureSubscription: azuresdkqabot-dev
+    preEvalTemplate: /.github/skills/azure-typespec-assessment/evals/pipeline/typespec-assessment-preeval.yml
+    failOnFailedTests: false
+    shardTimeoutInMinutes: 90

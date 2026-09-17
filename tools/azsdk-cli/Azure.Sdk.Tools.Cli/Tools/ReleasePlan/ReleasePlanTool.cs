@@ -44,7 +44,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     ) : MCPMultiCommandTool
     {
         private const int ScheduleRiskWarningWindowDays = 7;
-        private const int SdkPullRequestRefreshTimeoutSeconds = 30;
         private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -415,7 +414,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
 
-        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type.")]
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type. SDK PR status is omitted; check the linked GitHub PRs or release plan dashboard for current PR status. SDK generation status describes pipeline history, not PR status.")]
         public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, string? apiReleaseType = null, string? apiVersion = null, CancellationToken ct = default)
         {
             try
@@ -518,7 +517,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                await RefreshSdkPullRequestStatusesAsync(response, ct);
+                if (releasePlan.SDKInfo.Any(sdk => !string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl)))
+                {
+                    (response.NextSteps ??= []).Add("SDK PR status is not included in release plan details. Check the linked GitHub PRs or release plan dashboard for current PR status. SDK generation status describes pipeline history, not current PR status.");
+                }
+
                 await AddReleasePlanScheduleRiskGuidanceAsync(response, ct);
                 return response;
             }
@@ -530,65 +533,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Failed to get release plan details");
                 return new ReleasePlanResponse { ResponseError = $"Failed to get release plan details: {ex.Message}" };
-            }
-        }
-
-        private async Task RefreshSdkPullRequestStatusesAsync(ReleasePlanResponse response, CancellationToken ct)
-        {
-            if (response.ReleasePlanDetails == null)
-            {
-                return;
-            }
-
-            // Bound the entire refresh, not each language, so stalled requests cannot multiply latency.
-            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(SdkPullRequestRefreshTimeoutSeconds), _timeProvider);
-            using var refreshCancellation = CancellationTokenSource.CreateLinkedTokenSource(ct, deadline.Token);
-            var refreshToken = refreshCancellation.Token;
-
-            foreach (var sdk in response.ReleasePlanDetails.SDKInfo)
-            {
-                ct.ThrowIfCancellationRequested();
-                if (string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    // After the deadline, keep stored statuses and warn without starting more GitHub calls.
-                    refreshToken.ThrowIfCancellationRequested();
-                    var parsedPr = DevOpsService.ParseSDKPullRequestUrl(sdk.SdkPullRequestUrl);
-                    if (!parsedPr.IsValid)
-                    {
-                        throw new ArgumentException("Invalid SDK pull request URL.");
-                    }
-
-                    var pullRequest = await githubService.GetPullRequestAsync(parsedPr.RepoOwner, parsedPr.RepoName, parsedPr.PrNumber, refreshToken).WaitAsync(refreshToken);
-                    if (pullRequest == null)
-                    {
-                        throw new InvalidOperationException("GitHub returned no pull request details.");
-                    }
-
-                    // Match the dashboard: merged > closed > draft > open. A closed draft is closed.
-                    // Refresh only the response's PR status; generation and release statuses remain unchanged.
-                    sdk.PullRequestStatus = pullRequest.Merged ? "Merged"
-                        : pullRequest.State.Value == ItemState.Closed ? "Closed"
-                        : pullRequest.Draft ? "Draft"
-                        : pullRequest.State.Value == ItemState.Open ? "Open"
-                        : "Unknown";
-                }
-                catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Failed to refresh {Language} SDK PR status for {PullRequestUrl}", sdk.Language, sdk.SdkPullRequestUrl);
-                    var deadlineWarning = deadline.IsCancellationRequested
-                        ? $" The shared {SdkPullRequestRefreshTimeoutSeconds}-second SDK PR refresh deadline expired."
-                        : string.Empty;
-                    (response.Warnings ??= []).Add($"Unable to refresh {sdk.Language} SDK PR status from GitHub for {sdk.SdkPullRequestUrl}. The stored release plan status may be stale.{deadlineWarning}");
-                }
             }
         }
 

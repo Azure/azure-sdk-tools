@@ -6,9 +6,9 @@
 
 ### Breaking Changes
 
-### Bugs Fixed
+- Release plan JSON/MCP responses no longer include `SDKInfo.PullRequestStatus`, which was sourced from potentially stale Azure DevOps data. SDK PR URLs and the dashboard link remain available for checking current PR status; generation and release statuses are unchanged.
 
-- Release plan lookups now refresh linked SDK pull request statuses from GitHub to match the release plan dashboard, with a shared 30-second refresh deadline and warnings when only the stored status is available.
+### Bugs Fixed
 
 ### Other Changes
 

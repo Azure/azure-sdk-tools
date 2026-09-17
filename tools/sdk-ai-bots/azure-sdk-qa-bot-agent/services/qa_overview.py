@@ -94,7 +94,8 @@ async def aggregate_overview(
         if channel not in groups:
             groups[channel] = OverviewRow(
                 channel_id=channel,
-                channel_name=channel_names.get(channel, channel) or "Unknown channel",
+                channel_name=(channel_names.get(channel, channel) if channel is not None else None)
+                or "Unknown channel",
             )
         return groups[channel]
 
@@ -148,9 +149,12 @@ async def aggregate_overview(
     rows = sorted(groups.values(), key=lambda row: (
         row.channel_name.casefold(), row.channel_id or "",
     ))
-    totals = OverviewRow(channel_name="Total", **{
-        name: sum(getattr(row, name) for row in rows)
-        for name in OverviewCounts.model_fields
+    totals = OverviewRow.model_validate({
+        "channel_name": "Total",
+        **{
+            name: sum(getattr(row, name) for row in rows)
+            for name in OverviewCounts.model_fields
+        },
     })
     return QAOverview(
         start=start, end=end, generated_at=datetime.now(timezone.utc),

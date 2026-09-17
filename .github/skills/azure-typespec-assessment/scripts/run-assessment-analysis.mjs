@@ -11,6 +11,13 @@ import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
 import { buildDocumentQualityInput } from "./document-quality-input.mjs";
 import { stableId } from "./stable-id.mjs";
 import { resolveAssessmentInput } from "./assessment-input.mjs";
+import { buildAgentWorkspace } from "./build-agent-workspace.mjs";
+import { partitionSemanticIntents } from "./semantic-assessment-scope.mjs";
+import {
+  readWorkflowState,
+  transitionWorkflowState,
+  verifyArtifactHashes,
+} from "./workflow-state.mjs";
 
 const BUDGET_TIERS = [
   ["small", 128 * 1024],
@@ -311,12 +318,16 @@ function referencedFacts(semantic, rest, downstream, retainedIds) {
   );
 }
 
-function downstreamReferencedFactIds(downstream) {
-  const ids = new Set(
-    (downstream.candidates ?? []).flatMap(
+function candidateReferencedFactIds(analysis) {
+  return new Set(
+    (analysis.candidates ?? []).flatMap(
       (candidate) => candidate.evidenceFactIds ?? [],
     ),
   );
+}
+
+function downstreamReferencedFactIds(downstream) {
+  const ids = candidateReferencedFactIds(downstream);
   for (const rootCause of downstream.rootCauses ?? []) {
     for (const id of [
       ...(rootCause.methodFactIds ?? []),
@@ -429,6 +440,7 @@ function compactSemanticReviewUnit(
   );
   return {
     reviewUnitId: unit.id,
+    intentType: unit.intentType ?? "normal",
     action: unit.action ?? unit.changeKind ?? "modify",
     declarationKinds: [
       ...new Set(declarations.map((item) => item.kind).filter(Boolean)),
@@ -1174,10 +1186,23 @@ export function buildModelInput({
   downstream,
   maximumBytes,
 }) {
-  const sourceChanges = compactSources(sourceIndex, semantic, rest, downstream);
   const semanticUnits = semantic.status === "ready" ? semantic.reviewUnits : [];
+  const {
+    assessed: assessedSemanticUnits,
+    informational: informationalSemanticUnits,
+  } = partitionSemanticIntents(semanticUnits);
+  const assessedSemantic = {
+    ...semantic,
+    reviewUnits: assessedSemanticUnits,
+  };
+  const sourceChanges = compactSources(
+    sourceIndex,
+    assessedSemantic,
+    rest,
+    downstream,
+  );
   const fullComplianceSearchRequests = buildComplianceSearchRequests({
-    semanticReviewUnits: semanticUnits,
+    semanticReviewUnits: assessedSemanticUnits,
     sourceChanges,
   });
   const complianceRequestsByUnit = new Map(
@@ -1187,7 +1212,7 @@ export function buildModelInput({
     ]),
   );
   const coverages = new Map(
-    semanticUnits.map((unit) => [
+    assessedSemanticUnits.map((unit) => [
       unit.id,
       deterministicCoverage({
         unit,
@@ -1199,8 +1224,65 @@ export function buildModelInput({
       }),
     ]),
   );
+  const informationalCoverages = new Map(
+    informationalSemanticUnits.map((unit) => [
+      unit.id,
+      deterministicCoverage({
+        unit,
+        sourceChanges,
+        semantic,
+        rest,
+        downstream,
+      }),
+    ]),
+  );
+  const retainedRestCandidateIds = new Set(
+    [...coverages.values()].flatMap((coverage) => coverage.restCandidateIds),
+  );
+  const informationalRestCandidateIds = new Set(
+    [...informationalCoverages.values()].flatMap(
+      (coverage) => coverage.restCandidateIds,
+    ),
+  );
+  const retainedDownstreamCandidateIds = new Set(
+    [...coverages.values()].flatMap(
+      (coverage) => coverage.downstreamCandidateIds,
+    ),
+  );
+  const informationalDownstreamCandidateIds = new Set(
+    [...informationalCoverages.values()].flatMap(
+      (coverage) => coverage.downstreamCandidateIds,
+    ),
+  );
+  const retainedRestCandidates =
+    rest.status === "ready"
+      ? rest.candidates.filter((candidate) =>
+          !informationalRestCandidateIds.has(candidate.id) ||
+          retainedRestCandidateIds.has(candidate.id),
+        )
+      : [];
+  const retainedDownstreamCandidates =
+    downstream.status === "ready"
+      ? downstream.candidates.filter((candidate) =>
+          !informationalDownstreamCandidateIds.has(candidate.id) ||
+          retainedDownstreamCandidateIds.has(candidate.id),
+        )
+      : [];
+  const retainedRootCauseIds = new Set(
+    retainedDownstreamCandidates.flatMap(
+      (candidate) => candidate.rootCauseIds ?? [],
+    ),
+  );
+  const retainedDownstreamRootCauses = (downstream.rootCauses ?? []).filter(
+    (rootCause) => retainedRootCauseIds.has(rootCause.id),
+  );
+  const retainedDownstream = {
+    ...downstream,
+    candidates: retainedDownstreamCandidates,
+    rootCauses: retainedDownstreamRootCauses,
+  };
   const evidenceSets = {};
-  const semanticReviewUnits = semanticUnits.map((unit) =>
+  const semanticReviewUnits = assessedSemanticUnits.map((unit) =>
     compactSemanticReviewUnit(
       unit,
       sourceChanges,
@@ -1209,12 +1291,12 @@ export function buildModelInput({
     ),
   );
   const inferenceRequests = buildInferenceRequests(
-    semanticUnits,
+    assessedSemanticUnits,
     sourceChanges,
     coverages,
   );
   const retainedInferenceFactIds = inferenceRelevantFactIds({
-    semanticUnits,
+    semanticUnits: assessedSemanticUnits,
     sourceChanges,
     semantic,
     rest,
@@ -1223,7 +1305,10 @@ export function buildModelInput({
   });
   const retainedFactIds = new Set([
     ...retainedInferenceFactIds,
-    ...downstreamReferencedFactIds(downstream),
+    ...retainedRestCandidates.flatMap(
+      (candidate) => candidate.evidenceFactIds ?? [],
+    ),
+    ...downstreamReferencedFactIds(retainedDownstream),
   ]);
   const compactCandidate = (candidate, artifact) => {
     const {
@@ -1313,15 +1398,18 @@ export function buildModelInput({
       retainedFactIds,
     ),
     semanticReviewUnits,
+    informationalSemanticIntentIds: informationalSemanticUnits.map(
+      (unit) => unit.id,
+    ),
     restCandidates:
       rest.status === "ready"
-        ? rest.candidates.map((candidate) =>
+        ? retainedRestCandidates.map((candidate) =>
             compactCandidate(candidate, ARTIFACT_REFERENCES.restCandidates),
           )
         : [],
     downstreamCandidates:
       downstream.status === "ready"
-        ? downstream.candidates.map((candidate) =>
+        ? retainedDownstreamCandidates.map((candidate) =>
             compactCandidate(
               candidate,
               ARTIFACT_REFERENCES.downstreamCandidates,
@@ -1329,7 +1417,7 @@ export function buildModelInput({
           )
         : [],
     downstreamRootCauses:
-      downstream.status === "ready" ? (downstream.rootCauses ?? []) : [],
+      downstream.status === "ready" ? retainedDownstreamRootCauses : [],
     complianceSearchRequests,
     inferenceRequests,
     blockers: [
@@ -1426,6 +1514,48 @@ export async function runAssessmentAnalysis(options) {
     ? options
     : resolveAssessmentInput(options);
   const output = path.resolve(resolvedOptions.output);
+  fs.mkdirSync(output, { recursive: true });
+  if (resolvedOptions.resume) {
+    const state = readWorkflowState(output);
+    if (!state) throw new Error("Cannot resume: workflow-state.json is missing.");
+    const expectedHead = resolvedOptions.head;
+    const actualHead = state.comparisonIdentity?.sourceComparison?.headCommit;
+    if (expectedHead && actualHead !== expectedHead) {
+      throw new Error(
+        `Cannot resume: comparison head changed from ${actualHead ?? "<missing>"} to ${expectedHead}.`,
+      );
+    }
+    const hashErrors = verifyArtifactHashes(output, state.artifactHashes);
+    if (hashErrors.length) {
+      throw new Error(`Cannot resume: ${hashErrors.join(" ")}`);
+    }
+    if (state.state === "complete") {
+      const assessmentPath = path.join(output, "assessment.json");
+      if (!fs.existsSync(assessmentPath)) {
+        throw new Error("Cannot resume: completed assessment.json is missing.");
+      }
+      return { status: "complete", assessment: readJson(assessmentPath) };
+    }
+    if (state.state === "awaiting-agent-judgment") {
+      const indexPath = path.join(
+        output,
+        state.artifacts?.agentIndex ?? "agent-workspace/agent-index.json",
+      );
+      if (!fs.existsSync(indexPath)) {
+        throw new Error("Cannot resume: Agent index is missing.");
+      }
+      return {
+        status: "awaiting-agent-judgment",
+        modelInput: readJson(path.join(output, "model-input.json")),
+        agentIndex: indexPath,
+      };
+    }
+    throw new Error(`Cannot resume workflow state ${state.state}.`);
+  }
+  transitionWorkflowState(output, "preparing", {
+    invocation: resolvedOptions.invocation,
+    failure: undefined,
+  });
   const manifest = await prepareAssessment({ ...resolvedOptions, output });
   if (manifest.status === "no-changes") {
     const result = {
@@ -1435,6 +1565,10 @@ export async function runAssessmentAnalysis(options) {
       comparison: manifest.comparison,
     };
     writeJson(path.join(output, "model-input.json"), result);
+    transitionWorkflowState(output, "complete", {
+      phaseComplete: true,
+      artifacts: { modelInput: "model-input.json" },
+    });
     return result;
   }
   const sourceIndex = readJson(
@@ -1472,7 +1606,16 @@ export async function runAssessmentAnalysis(options) {
     }),
   );
   const documentQuality = runDimension("documentQualityAnalysisMs", () =>
-    buildDocumentQualityInput({ sourceIndex, semantic }),
+    buildDocumentQualityInput({
+      sourceIndex,
+      semantic: {
+        ...semantic,
+        reviewUnits:
+          semantic.status === "ready"
+            ? partitionSemanticIntents(semantic.reviewUnits).assessed
+            : [],
+      },
+    }),
   );
   writeJson(
     path.join(output, "dimensions", "document-quality-input.json"),
@@ -1491,6 +1634,13 @@ export async function runAssessmentAnalysis(options) {
       path.join(output, "assessment.html"),
       renderAssessmentHtml(assessment),
     );
+    transitionWorkflowState(output, "blocked", {
+      phaseComplete: true,
+      artifacts: {
+        structuredResult: "assessment.json",
+        report: "assessment.html",
+      },
+    });
     return { status: "blocked", assessment };
   }
   const configuredMaximum =
@@ -1517,13 +1667,31 @@ export async function runAssessmentAnalysis(options) {
       schemaVersion: 1,
       requests: buildComplianceSearchRequests({
         semanticReviewUnits:
-          semantic.status === "ready" ? semantic.reviewUnits : [],
-        sourceChanges: compactSources(sourceIndex, semantic, rest, downstream),
+          semantic.status === "ready"
+            ? partitionSemanticIntents(semantic.reviewUnits).assessed
+            : [],
+        sourceChanges: compactSources(
+          sourceIndex,
+          {
+            ...semantic,
+            reviewUnits:
+              semantic.status === "ready"
+                ? partitionSemanticIntents(semantic.reviewUnits).assessed
+                : [],
+          },
+          rest,
+          downstream,
+        ),
       }),
     },
   );
   writeJson(path.join(output, "model-input.json"), modelInput);
-  return { status: "awaiting-agent-judgment", modelInput };
+  const workspace = buildAgentWorkspace({ work: output });
+  return {
+    status: "awaiting-agent-judgment",
+    modelInput,
+    agentIndex: workspace.indexPath,
+  };
 }
 
 if (isMain(import.meta.url)) {
@@ -1532,10 +1700,11 @@ if (isMain(import.meta.url)) {
       required: ["output"],
       defaults: { repo: process.cwd() },
       arrays: ["sparse-root"],
+      booleans: ["resume"],
     });
     const result = await runAssessmentAnalysis(args);
     console.log(
-      `${result.status}: ${path.join(path.resolve(args.output), "model-input.json")}`,
+      `${result.status}: ${result.agentIndex ?? path.join(path.resolve(args.output), "model-input.json")}`,
     );
     if (result.status === "blocked") process.exitCode = 1;
   });

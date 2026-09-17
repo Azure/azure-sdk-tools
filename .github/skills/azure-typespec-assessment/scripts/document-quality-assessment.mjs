@@ -96,7 +96,7 @@ function scopeForSemantic(unit) {
 
 function validateCompletenessInput(input, semanticUnits, sourceChanges, semanticStatus) {
   object(input, ["schemaVersion", "status", "blockers", "reviewUnits"], "input");
-  requireValue(input.schemaVersion === 4, "unsupported completeness input schemaVersion.");
+  requireValue([4, 5].includes(input.schemaVersion), "unsupported completeness input schemaVersion.");
   requireValue(["ready", "blocked"].includes(input.status), "invalid input status.");
   array(input.blockers, "input.blockers");
   array(input.reviewUnits, "input.reviewUnits");
@@ -137,7 +137,7 @@ function validateCompletenessInput(input, semanticUnits, sourceChanges, semantic
       "not-applicable review unit cannot contain declarations.");
   }
   equal(buildDocumentQualityInput({
-    schemaVersion: 4,
+    schemaVersion: input.schemaVersion,
     sourceIndex: { sourceChanges },
     semantic: {
       status: semanticStatus,
@@ -151,7 +151,7 @@ function validateCompletenessInput(input, semanticUnits, sourceChanges, semantic
 }
 
 export function validateDocumentQualityInput(input, semanticUnits, sourceChanges, semanticStatus = "ready") {
-  if (input?.schemaVersion === 4) {
+  if ([4, 5].includes(input?.schemaVersion)) {
     validateCompletenessInput(input, semanticUnits, sourceChanges, semanticStatus);
     return;
   }
@@ -293,6 +293,7 @@ function findingSources(unit, document, sources) {
 }
 
 function assembleCompleteness(input, sourceChanges) {
+  const newDeclarationsOnly = input.schemaVersion >= 5;
   const sources = new Map(sourceChanges.map((source) => [source.id, source]));
   const unassessedIntentIds = [];
   const notApplicableIntentIds = [];
@@ -310,6 +311,9 @@ function assembleCompleteness(input, sourceChanges) {
       (item) => !item.documentationPresent,
     )) {
       const source = sources.get(declaration.sourceChangeId);
+      const sourceDeclaration = source?.declarations?.find((item) =>
+        item.id === declaration.declarationId &&
+        item.source?.revision === "current");
       findings.push({
         id: stableId("document-finding", [unit.reviewUnitId, declaration.declarationId]),
         reviewUnitId: unit.reviewUnitId,
@@ -329,6 +333,14 @@ function assembleCompleteness(input, sourceChanges) {
               },
             ]
           : [],
+        ...(sourceDeclaration?.sourceSnippet
+          ? {
+              codeSnippet: {
+                path: source.path,
+                ...sourceDeclaration.sourceSnippet,
+              },
+            }
+          : {}),
         declaration,
       });
     }
@@ -354,15 +366,21 @@ function assembleCompleteness(input, sourceChanges) {
         ? "passed"
         : "not-applicable";
   return {
-    assessmentVersion: 4,
+    assessmentVersion: input.schemaVersion,
     status,
     summary: status === "failed"
-      ? `${missingDeclarationCount} changed declaration(s) have no nonempty compiler-resolved documentation.`
+      ? newDeclarationsOnly
+          ? `${missingDeclarationCount} newly added operation, model, enum, or interface declaration(s) have no nonempty compiler-resolved documentation.`
+          : `${missingDeclarationCount} changed declaration(s) have no nonempty compiler-resolved documentation.`
       : status === "not-assessed"
-        ? "Documentation completeness is incomplete because compiler evidence is unavailable."
-        : status === "not-applicable"
-          ? "No changed compiler declarations require documentation completeness assessment."
-          : "Every changed compiler declaration has nonempty compiler-resolved documentation.",
+          ? "Documentation completeness is incomplete because compiler evidence is unavailable."
+          : status === "not-applicable"
+            ? newDeclarationsOnly
+              ? "No newly added operation, model, enum, or interface declarations require documentation completeness assessment."
+              : "No changed compiler declarations require documentation completeness assessment."
+            : newDeclarationsOnly
+              ? "Every newly added operation, model, enum, and interface declaration has nonempty compiler-resolved documentation."
+              : "Every changed compiler declaration has nonempty compiler-resolved documentation.",
     coverage: {
       semanticIntentCount: input.reviewUnits.length,
       assessedIntentCount: input.reviewUnits.length - unassessedIntentIds.length,
@@ -469,7 +487,7 @@ function assembleDimension(input, decisions, sourceChanges) {
 }
 
 export function assembleDocumentQuality({ input, modelInput = {}, decisions, semanticUnits, sourceChanges, semanticStatus = "ready" }) {
-  if (input?.schemaVersion === 4) {
+  if (input?.schemaVersion === 4 || input?.schemaVersion === 5) {
     requireValue(decisions === undefined || (Array.isArray(decisions) && decisions.length === 0),
       "documentation completeness does not accept Agent decisions.");
     validateDocumentQualityInput(input, semanticUnits, sourceChanges, semanticStatus);
@@ -493,7 +511,7 @@ export function assembleDocumentQuality({ input, modelInput = {}, decisions, sem
 export function validateDocumentQualityDimension(dimension, semanticItems, semanticStatus = "ready") {
   const errors = [];
   try {
-    if (dimension?.assessmentVersion === 4) {
+    if ([4, 5].includes(dimension?.assessmentVersion)) {
       object(dimension, [
         "assessmentVersion", "status", "summary", "coverage",
         "intentAssessments", "findings", "blockers",
@@ -504,7 +522,23 @@ export function validateDocumentQualityDimension(dimension, semanticItems, seman
       }
       const sourceMap = new Map();
       for (const item of semanticItems) {
-        for (const source of item.sources ?? []) sourceMap.set(source.id, source);
+        for (const source of item.sources ?? []) {
+          const previous = sourceMap.get(source.id);
+          sourceMap.set(source.id, previous
+            ? {
+                ...previous,
+                ...source,
+                hunks: [...new Map([
+                  ...(previous.hunks ?? []),
+                  ...(source.hunks ?? []),
+                ].map((hunk) => [hunk.id, hunk])).values()],
+                declarations: [...new Map([
+                  ...(previous.declarations ?? []),
+                  ...(source.declarations ?? []),
+                ].map((declaration) => [declaration.id, declaration])).values()],
+              }
+            : source);
+        }
       }
       const semanticUnits = semanticItems.map((item) => ({
         ...item,
@@ -513,6 +547,7 @@ export function validateDocumentQualityDimension(dimension, semanticItems, seman
         declarationIds: scopeForSemantic(item).declarationIds,
       }));
       const input = buildDocumentQualityInput({
+        schemaVersion: dimension.assessmentVersion,
         sourceIndex: { sourceChanges: [...sourceMap.values()] },
         semantic: { status: semanticStatus, reviewUnits: semanticUnits },
       });

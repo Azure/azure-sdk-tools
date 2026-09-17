@@ -349,13 +349,14 @@ export function documentQualitySummary(dimension = {}) {
   const coverage = dimension.coverage;
   const findingCount = dimension.findings?.length ?? 0;
   const findingStatus = findingCount ? "failed" : "passed";
-  const assessedCount = dimension.assessmentVersion === 4
+  const completeness = [4, 5].includes(dimension.assessmentVersion);
+  const assessedCount = completeness
     ? coverage?.declarationCount
     : coverage?.assessedDocumentCount;
   const compactDetail = [
     `${findingCount} finding${findingCount === 1 ? "" : "s"}`,
     coverage
-      ? `${assessedCount} ${dimension.assessmentVersion === 4 ? "declaration" : "description"}${assessedCount === 1 ? "" : "s"} ${dimension.assessmentVersion === 4 ? "checked" : "assessed"}`
+      ? `${assessedCount} ${completeness ? "declaration" : "description"}${assessedCount === 1 ? "" : "s"} ${completeness ? "checked" : "assessed"}`
       : "Assessment count unavailable",
   ];
   const status = dimension.status === "passed" && coverage?.documentCount === 0
@@ -372,7 +373,7 @@ export function documentQualitySummary(dimension = {}) {
       .replaceAll("Documentation Correctness", "Documentation Completeness")
       .replaceAll("Doc Correctness", "Documentation Completeness"),
   };
-  if (dimension.assessmentVersion === 4) {
+  if (completeness) {
     const detail = [
       `${findingCount} findings`,
       `${coverage.documentedDeclarationCount}/${coverage.declarationCount} declarations documented`,
@@ -457,21 +458,27 @@ export function renderDocumentQuality(dimension = {}, helpers) {
   const presentation = documentQualitySummary(dimension);
   const findings = dimension.findings ?? [];
   const assessments = dimension.intentAssessments ?? [];
-  if (dimension.assessmentVersion === 4) {
+  if ([4, 5].includes(dimension.assessmentVersion)) {
     const cards = findings.map((finding) => {
       const declaration = finding.declaration ?? {};
       const source = declaration.source;
       const location = source
         ? `${finding.sources?.[0]?.path ?? "Source"}:${source.startLine}-${source.endLine}`
         : "Source location unavailable";
-      return `<details class="report-card document-quality-check" id="document-quality-${anchor(finding.id)}" open>${summary(
+      const snippet = finding.codeSnippet;
+      const sourceCode = snippet?.lines?.length
+        ? `<details class="report-subdetails document-quality-source"><summary>View TypeSpec declaration missing a description</summary><p class="sources"><code>${escape(`${snippet.path}:${snippet.startLine}-${snippet.endLine}`)}</code>${snippet.truncated ? " · first 40 lines shown" : ""}</p><pre><code>${escape(snippet.lines.join("\n"))}</code></pre></details>`
+        : "";
+      return `<details class="report-card document-quality-check" id="document-quality-${anchor(finding.id)}">${summary(
         escape(declaration.qualifiedName ?? finding.title),
         escape(finding.title),
         status("failed"),
         affectedIntents(finding.semanticIntentIds ?? [finding.reviewUnitId]),
-      )}<div class="report-card-body"><div class="report-guideline-section document-quality-explanation"><h3>Why this needs attention</h3><p>${escape(finding.actual)}</p></div><div class="report-guideline-section document-quality-suggestion"><h3>Suggested change</h3><p>${escape(finding.expected)}</p></div><details class="report-subdetails document-quality-source"><summary>View supporting TypeSpec location</summary><p class="sources"><code>${escape(location)}</code></p></details></div></details>`;
+      )}<div class="report-card-body">${sourceCode}<div class="report-guideline-section document-quality-explanation"><h3>Why this needs attention</h3><p>${escape(finding.actual)}</p></div><div class="report-guideline-section document-quality-suggestion"><h3>Suggested change</h3><p>${escape(finding.expected)}</p></div>${sourceCode ? "" : `<details class="report-subdetails document-quality-source"><summary>View supporting TypeSpec location</summary><p class="sources"><code>${escape(location)}</code></p></details>`}</div></details>`;
     }).join("");
-    const description = "Checks only whether each changed compiler declaration has a nonempty effective TypeSpec document. Documentation text is not compared with code.";
+    const description = dimension.assessmentVersion >= 5
+      ? "Checks only whether newly added operation, model, enum, and interface declarations have a nonempty effective TypeSpec description."
+      : "Checks only whether each changed compiler declaration has a nonempty effective TypeSpec document. Documentation text is not compared with code.";
     return {
       html: `<section id="document-quality">${sectionHead("Documentation Completeness", description, status(presentation.findingStatus))}<p class="report-small">${escape(presentation.compactDetail.join(" · "))}</p>${cards ? `<div class="document-quality-scope">${cards}</div>` : ""}</section>`,
       appendixHtml: "",

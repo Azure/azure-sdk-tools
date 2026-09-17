@@ -43,7 +43,7 @@ function fixture(documentationPresent = true) {
 
 test("compiler-resolved documentation presence is retained without document text", () => {
   const result = buildDocumentQualityInput(fixture(true));
-  assert.equal(result.schemaVersion, 4);
+  assert.equal(result.schemaVersion, 5);
   assert.equal(result.status, "ready");
   assert.equal(result.reviewUnits[0].status, "ready");
   assert.deepEqual(result.reviewUnits[0].declarations, [{
@@ -61,6 +61,82 @@ test("missing compiler documentation remains an assessable declaration", () => {
   const result = buildDocumentQualityInput(fixture(false));
   assert.equal(result.reviewUnits[0].status, "ready");
   assert.equal(result.reviewUnits[0].declarations[0].documentationPresent, false);
+});
+
+test("v5 checks only newly added operation, model, enum, and interface declarations", () => {
+  const args = fixture(false);
+  const source = args.sourceIndex.sourceChanges[0];
+  const declarations = [
+    { id: "new-model", kind: "model", qualifiedName: "NewModel", revision: "current" },
+    { id: "new-enum", kind: "enum", qualifiedName: "NewEnum", revision: "current" },
+    { id: "new-interface", kind: "interface", qualifiedName: "NewInterface", revision: "current" },
+    { id: "new-operation", kind: "operation", qualifiedName: "NewInterface.read", revision: "current" },
+    { id: "modified-interface-base", kind: "interface", qualifiedName: "Existing", revision: "base" },
+    { id: "modified-interface", kind: "interface", qualifiedName: "Existing", revision: "current" },
+    { id: "new-property", kind: "property", qualifiedName: "NewModel.value", revision: "current" },
+    { id: "new-namespace", kind: "namespace", qualifiedName: "Contoso", revision: "current" },
+  ].map((item) => ({
+    id: item.id,
+    kind: item.kind,
+    qualifiedName: item.qualifiedName,
+    documentationPresent: false,
+    hunkIds: ["hunk-1"],
+    source: { revision: item.revision, startLine: 1, endLine: 1 },
+  }));
+  source.declarations = declarations;
+  source.documentEvidence.declarations = declarations
+    .filter((item) => item.source.revision === "current")
+    .map((item) => ({
+      declarationId: item.id,
+      qualifiedName: item.qualifiedName,
+      kind: item.kind,
+      documentationPresent: false,
+      source: item.source,
+    }));
+  args.semantic.reviewUnits[0].declarationIds = declarations.map((item) => item.id);
+  const result = buildDocumentQualityInput(args);
+  assert.deepEqual(
+    result.reviewUnits[0].declarations.map((item) => item.qualifiedName).sort(),
+    ["NewEnum", "NewInterface", "NewInterface.read", "NewModel"],
+  );
+});
+
+test("v5 ignores compiler blockers on sources without eligible new declarations", () => {
+  const args = fixture(false);
+  const unrelated = {
+    id: "source-unrelated",
+    path: "client.tsp",
+    hunks: [{ id: "hunk-unrelated" }],
+    declarations: [{
+      id: "existing-current",
+      kind: "interface",
+      qualifiedName: "Existing",
+      hunkIds: ["hunk-unrelated"],
+      source: { revision: "current", startLine: 1, endLine: 1 },
+    }, {
+      id: "existing-base",
+      kind: "interface",
+      qualifiedName: "Existing",
+      hunkIds: ["hunk-unrelated"],
+      source: { revision: "base", startLine: 1, endLine: 1 },
+    }],
+    documentEvidence: {
+      schemaVersion: 4,
+      status: "blocked",
+      blockers: [{ message: "Changed source was not compiled." }],
+      declarations: [],
+    },
+  };
+  args.sourceIndex.sourceChanges.push(unrelated);
+  args.semantic.reviewUnits[0].sourceChangeIds.push(unrelated.id);
+  args.semantic.reviewUnits[0].hunkIds.push("hunk-unrelated");
+  args.semantic.reviewUnits[0].declarationIds.push("existing-current");
+  const result = buildDocumentQualityInput(args);
+  assert.equal(result.status, "ready");
+  assert.deepEqual(
+    result.reviewUnits[0].declarations.map((item) => item.qualifiedName),
+    ["Widget"],
+  );
 });
 
 test("compiler evidence blockers remain not-assessed input", () => {

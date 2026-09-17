@@ -1,5 +1,29 @@
 # Output Contract
 
+## Agent workspace
+
+After deterministic analysis, read
+`agent-workspace\agent-index.json` and its referenced bounded
+`model-input.json` exactly once. The index must remain compact and provides
+exact assessed Semantic intent, informational Semantic intent, candidate,
+inference-request, and Azure Guidelines request coverage.
+`inference.draft.json` and
+`assessment-judgment.draft.json` are structural templates with intentionally
+invalid unresolved placeholders; they are never valid final outputs.
+Before writing Agent outputs, read each schema listed under
+`agent-index.json.requiredOutputs.schemas` exactly once. Resolve those paths
+relative to the skill directory, not the assessment work directory, and do not
+search for schema files.
+
+`api-version-publication` and `api-version-wide-change` intents are excluded
+from Agent coverage. The latter is identified by a `Versions` declaration, no
+directly owned operation, and only version-transition/governance mappings, not
+by an operation-count threshold. Guarded finalization adds them back as
+deterministic informational Semantic intents with their canonical affected
+operations. They do not require inference or Azure Guidelines decisions,
+create findings, or receive
+relationships from other findings.
+
 ## Azure Guidelines search evidence
 
 Write `compliance-search-evidence.json` conforming to
@@ -89,13 +113,19 @@ output. Every `applicable-fail` decision must also provide a concise finding
 title and `high`, `medium`, or `low` severity for structured assessment data.
 
 Documentation Completeness is not part of the Agent judgment. The compiler
-evidence records one boolean presence fact per changed declaration. Assembly
-creates a finding for every declaration whose effective compiler document is
+evidence records documentation presence for changed declarations. Assembly
+checks only newly added operation, model, enum, and interface declarations and
+creates a finding for every eligible declaration whose effective compiler document is
 missing or empty. See the [documentation rules](document-quality.md).
 
 ## Final data
 
-Deterministic assembly joins Agent-confirmed decisions to complete facts and changed-source evidence, then writes `assessment.json`. The internal decision value `approve` means “retain this detected candidate as a finding”; it never means API review approval. Validation must reject duplicate, unknown, missing, unsupported, incomplete, or success-shaped results.
+Guarded finalization joins Agent-confirmed decisions to complete facts and
+changed-source evidence, validates the result, and atomically writes
+`assessment.json` and `assessment.html`. The internal decision value `approve`
+means “retain this detected candidate as a finding”; it never means API review
+approval. Validation must reject duplicate, unknown, missing, unsupported,
+incomplete, or success-shaped results.
 
 Every confirmed REST finding must contain actual and expected behavior, rationale, severity, affected operation, deterministic evidence, and exact changed TypeSpec source. Every confirmed downstream finding requires the same fields plus an SDK symbol or cross-language definition ID. User-facing output must say detected or confirmed, never approved. Semantic items require title, summary, affected operations, and changed source.
 
@@ -121,14 +151,14 @@ Dimension statuses are derived, not authored:
 - Azure Guidelines: `passed`, `failed`, or `not-assessed`, derived from
   Semantic intent coverage and applicable fetched guidance;
 - Documentation Completeness (`documentQuality`): `passed`, `failed`,
-  `not-assessed`, or `not-applicable`, with `assessmentVersion: 4` and
+  `not-assessed`, or `not-applicable`, with `assessmentVersion: 5` and
   declaration/documented/missing coverage;
 - safety scope: `rest-and-downstream-only`, never Azure Guidelines or document quality.
 
 A blocked implemented dimension cannot pass. Documentation Completeness is
-`failed` when one or more changed declarations lack a nonempty effective
+`failed` when one or more eligible newly added declarations lack a nonempty effective
 compiler document, `not-assessed` when compiler evidence is incomplete,
-`not-applicable` when no changed compiler declarations are in scope, and
+`not-applicable` when no eligible newly added declarations are in scope, and
 `passed` otherwise. Historical v1-v3 documentation-quality results remain
 valid legacy data.
 A completed Azure Guidelines search with no governing guidance is represented by an
@@ -259,8 +289,9 @@ of inventing zero. Full coverage and documentation blockers remain in
 
 The main documentation section contains only missing-document finding cards and
 compact coverage. Do not render Documentation Completeness details in the
-appendix. Each finding shows declaration identity, missing-document evidence,
-the suggested addition, and the compiler source location.
+appendix. Each finding shows declaration identity, the exact bounded TypeSpec declaration
+source, missing-document evidence, the suggested addition, and the compiler
+source location.
 Escape every string and do not fabricate replacement prose or new judgment
 fields. Omit documented declarations, incomplete scopes, and detailed coverage
 from HTML; complete presence facts and blockers remain in `assessment.json`.

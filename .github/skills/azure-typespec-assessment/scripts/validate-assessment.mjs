@@ -116,7 +116,9 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       "compliance-search-input-missing:",
     ),
   );
-  const semanticIds = semanticItems.map((item) => item.id);
+  const semanticIds = semanticItems
+    .filter((item) => !item.informational)
+    .map((item) => item.id);
   if (
     !migrationBlocked &&
     (semanticIds.some((id) => !assessmentIds.includes(id)) ||
@@ -547,7 +549,7 @@ export function validateAssessment(assessment) {
   }
   errors.push(...validateDocumentQualityDimension(
     dimensions.documentQuality,
-    dimensions.semantic?.items ?? [],
+    (dimensions.semantic?.items ?? []).filter((item) => !item.informational),
     dimensions.semantic?.status === "assessed" ? "ready" : "blocked",
   ));
   if (assessment.provenance?.documentQuality !== undefined &&
@@ -575,6 +577,16 @@ export function validateAssessment(assessment) {
       }
       if (!["add", "remove", "modify"].includes(item.action)) {
         errors.push(`Semantic item ${item.id} has invalid action.`);
+      }
+      if (
+        item.intentType !== undefined &&
+        ![
+          "normal",
+          "api-version-publication",
+          "api-version-wide-change",
+        ].includes(item.intentType)
+      ) {
+        errors.push(`Semantic item ${item.id} has invalid intentType.`);
       }
       if (!item.sources?.length)
         errors.push(`Semantic item ${item.id} has no changed source.`);

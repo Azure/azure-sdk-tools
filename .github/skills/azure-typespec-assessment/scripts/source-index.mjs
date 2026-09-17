@@ -79,6 +79,19 @@ function declarationPrefixStart(content, startLine) {
   return prefixStart;
 }
 
+function declarationSnippet(content, startLine, endLine, limit = 40) {
+  if (!content) return undefined;
+  const lines = content.split(/\r?\n/);
+  const firstLine = declarationPrefixStart(content, startLine);
+  const lastLine = Math.min(endLine, firstLine + limit - 1);
+  return {
+    startLine: firstLine,
+    endLine: lastLine,
+    lines: lines.slice(firstLine - 1, lastLine),
+    truncated: lastLine < endLine,
+  };
+}
+
 function declarations(content, hunks, revision, file, linkFactory) {
   if (!content) return [];
   const lines = content.split(/\r?\n/);
@@ -391,6 +404,7 @@ function compilerDeclaration(
     documentationPresent:
       typeof documentation === "string" && documentation.trim().length > 0,
     source: { revision, startLine, endLine },
+    sourceSnippet: declarationSnippet(sourceText, startLine, endLine),
   };
 }
 
@@ -638,6 +652,10 @@ export async function addCompilerEvidence({
               declarationId: declaration.id,
               qualifiedName: declaration.qualifiedName,
               kind: declaration.kind,
+              newDeclaration: !(source.declarations ?? []).some((candidate) =>
+                candidate.source.revision === "base" &&
+                candidate.kind === declaration.kind &&
+                candidate.qualifiedName === declaration.qualifiedName),
               documentationPresent: declaration.documentationPresent,
               source: declaration.source,
             })),

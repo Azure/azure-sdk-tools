@@ -1379,31 +1379,36 @@ File: `dimensions/document-quality-input.json`
 
 Documentation Completeness asks one deterministic question:
 **Does the TypeSpec compiler return a nonempty effective document for each
-changed declaration?**
+newly added operation, model, enum, or interface declaration?**
 
-The source index records one boolean `documentationPresent` fact for every
-changed compiler declaration in Semantic scope. The compiler's effective
-document is authoritative for presence, so inherited documentation counts as
-present. Empty or whitespace-only documentation counts as missing.
+The source index records `documentationPresent` and `newDeclaration` facts for
+changed compiler declarations in Semantic scope. Version 5 checks only newly
+added operations, models, enums, and interfaces. Modified existing
+declarations, properties, namespaces, and other declaration kinds are outside
+scope. The compiler's effective document is authoritative for presence, so
+inherited documentation counts as present. Empty or whitespace-only
+documentation counts as missing.
 
 The completeness artifact groups these declaration facts by Semantic intent.
 It contains declaration identity, kind, source location, and the presence
-boolean. It does not contain documentation text, declaration snapshots, a
-prose-quality rubric, or Agent instructions.
+boolean. It does not contain documentation text, a prose-quality rubric, or
+Agent instructions. Missing-document findings retain a bounded exact TypeSpec
+declaration snippet for report presentation.
 
 Assembly creates one finding for every declaration whose presence value is
 false. If compiler evidence or declaration scope is unavailable, the affected
 intent is `not-assessed`; missing evidence never becomes a missing-document
-finding. An intent with no changed compiler declaration is `not-applicable`.
+finding. An intent with no eligible newly added declaration is
+`not-applicable`.
 
 The bounded Agent input and `assessment-judgment.json` contain no documentation
 review units, criterion, or decisions. Documentation Completeness is assembled
 independently after the Agent judges Semantic summaries, REST/downstream
 candidates, and Azure Guidelines compliance.
 
-Final data uses `assessmentVersion: 4` and records Semantic intent count,
-changed declaration count, documented declaration count, missing declaration
-count, intent assessments, findings, and blockers. Historical v1-v3
+Final data uses `assessmentVersion: 5` and records Semantic intent count,
+eligible declaration count, documented declaration count, missing declaration
+count, intent assessments, findings, and blockers. Historical v1-v4
 documentation-quality data remains valid legacy report data. Documentation
 never changes scoped REST/downstream safety.
 

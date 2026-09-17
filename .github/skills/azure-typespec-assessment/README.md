@@ -59,7 +59,25 @@ node <skill>\scripts\run-assessment-analysis.mjs `
 ```
 
 For PR and explicit-head modes, the coordinator derives the changed TypeSpec
-scope when `--specification` is omitted.
+scope when `--specification` is omitted. It also writes
+`agent-workspace\agent-index.json`, one bounded `model-input.json`, safe output
+drafts, and `workflow-state.json`. API-version publication and version-wide
+intents are reported deterministically without sending their operation facts
+or exclusively associated candidates to the Agent.
+
+After completing the bounded Agent decisions, finalize all outputs with one
+guarded command:
+
+```powershell
+node <skill>\scripts\finalize-assessment.mjs --work <work-directory>
+```
+
+The command validates all Agent artifacts and canonical hashes before
+atomically writing `assessment.json` and `assessment.html`.
+
+To resume a previously prepared immutable comparison without recompiling, pass
+`--resume` with the same coordinator arguments and output directory. Resume is
+rejected when the comparison head or any canonical artifact hash changed.
 
 ## Results
 

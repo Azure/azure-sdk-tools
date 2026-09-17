@@ -2,60 +2,54 @@
 
 ## Problem and measured baseline
 
-The direct PR coordinator enhancement is complete. The new PR 43718 run in
-session `1995a1f6-134d-4e95-a589-a588fcdb9d20` reduced setup excluding fetch
-from 18m 51s to 29.9s and produced a complete validated report.
+The direct PR coordinator improvement reduced PR 43718 setup excluding fetch
+from 18m 51s to 29.9s, but the complete validated report still took about
+20m 56s. The largest remaining phase was bounded evidence review, Azure
+Guidelines analysis, inference, and Agent judgment.
 
-The new end-to-end timeline was:
+| Phase                                             |        Time |
+| ------------------------------------------------- | ----------: |
+| Direct setup, compilation, and deterministic work |      9m 05s |
+| Bounded evidence review and Agent judgment        |     10m 56s |
+| Assembly, validation, and HTML rendering          |         43s |
+| Total rounded session estimate                    | **20m 44s** |
 
-| Phase                                              |        Time | Share |
-| -------------------------------------------------- | ----------: | ----: |
-| Direct setup, compilation, and deterministic work |      9m 05s | 43.8% |
-| Bounded evidence review and Agent judgment        |     10m 56s | 52.7% |
-| Assembly, validation, and HTML rendering          |         43s |  3.5% |
-| Total report wall time                             | **20m 44s** |  100% |
+The 10m 56s interval included approximately two minutes waiting for an explicit
+continuation request. Active evidence review and judgment was approximately
+8m 54s.
 
-The 10m 56s interval includes approximately two minutes waiting for the user to
-request continuation after deterministic analysis. Active evidence review and
-judgment therefore took approximately 8m 54s.
+The original bounded workload contained:
 
-The bounded workload contained:
+| Input or output                   |                        Result |
+| --------------------------------- | ----------------------------: |
+| Semantic intents                  |                             7 |
+| REST candidates                   |                             0 |
+| Downstream candidates             |                            10 |
+| Inference requests                |                            11 |
+| Facts                             |                           204 |
+| `model-input.json`                | approximately 1,400,460 bytes |
+| Minified `facts` section          |                 529,946 bytes |
+| `inference.json`                  |                   4,499 bytes |
+| `assessment-judgment.json`        |                  18,728 bytes |
+| `compliance-search-evidence.json` |                  61,409 bytes |
 
-| Input or output                     | Result |
-| ----------------------------------- | -----: |
-| Semantic intents                    |      7 |
-| REST candidates                     |      0 |
-| Downstream candidates               |     10 |
-| Inference requests                  |     11 |
-| Facts                               |    204 |
-| `model-input.json`                  | 1,400,420 bytes |
-| Minified `facts` section            | 529,946 bytes |
-| `inference.json`                    | 4,499 bytes |
-| `assessment-judgment.json`          | 18,728 bytes |
-| `compliance-search-evidence.json`   | 61,409 bytes |
-
-The report phase used 15 PowerShell calls, 12 file views, 4 web fetches, 3
-searches, and 3 patches. The large read-to-decision ratio and repeated tool
-round trips are now a larger opportunity than compiler parallelism. On this
-warm run, the four sequential compiler invocations totaled only 2m 53s;
-pairwise AutoRest/TCGC parallelism has a theoretical saving of approximately
-1m 22s.
+The large read-to-decision ratio and repeated tool round trips were a larger
+opportunity than deterministic analyzers. The four compiler invocations still
+remain a separate optimization area.
 
 ## Goal
 
-Reduce active evidence review, inference, and judgment from approximately
-8m 54s to at most 5m 30s while preserving the complete assessment workflow and
-report quality.
-
-Also eliminate the manual continuation pause and reduce finalization to at most
-15 seconds of process wall time.
+Reduce active evidence review, inference, and judgment to at most 5m 30s while
+preserving the complete assessment workflow and report quality. Eliminate the
+manual continuation pause and reduce finalization process wall time to at most
+15 seconds.
 
 The optimization must preserve:
 
 - one concise result for every Semantic intent;
 - exact deterministic and inferred REST/downstream candidate coverage;
-- one Azure Guidelines decision for every Semantic intent;
-- shared guideline analysis across all intents;
+- one Azure Guidelines decision for every assessed Semantic intent;
+- shared guideline analysis across all assessed intents;
 - compiler-derived Documentation Completeness;
 - all blockers, provenance, source evidence, and stable IDs;
 - validated `assessment.json` and complete `assessment.html`;
@@ -63,62 +57,103 @@ The optimization must preserve:
 
 ## Coordination with other performance work
 
-This plan starts after:
+This plan follows:
 
 - `perf-improvement-plan.md`, direct PR/local coordinator invocation;
-- the separate shared Azure Guidelines analysis change;
-- `perf-improvement-plan1.md`, pairwise AutoRest/TCGC compilation, if that work
-  is enabled.
+- the shared Azure Guidelines analysis change;
+- `perf-improvement-plan1.md`, pairwise AutoRest/TCGC compilation, when
+  enabled.
 
-This plan must not duplicate or replace those implementations. Measure setup,
-compiler, guideline, Agent, and finalization savings independently before
-reporting combined end-to-end improvement.
+Setup, compiler, guideline, Agent, and finalization savings must be measured
+independently before combined end-to-end improvements are reported.
 
-## Design overview
+## Implemented design
 
-Keep `model-input.json` as the canonical bounded machine input. Add a
-deterministic Agent-facing projection that makes the required work explicit and
-small enough for targeted reads:
+`model-input.json` is both the canonical bounded machine input and the single
+Agent-facing evidence input. Evidence is not split into per-intent packets:
+one bounded read avoids duplicated facts and lets the Agent judge related
+intents and candidates together.
+
+API-version publication/carry-over intents and API-version-wide changes do not
+require model inference. They are removed from the Agent-facing workload and
+restored deterministically in the final Semantic section as informational
+intents. They retain their complete affected-operation list but cannot own
+REST, downstream, Azure Guidelines, or Documentation Completeness findings.
 
 ```text
-model-input.json + declared canonical evidence
-                         |
-                         v
-             build-agent-workspace.mjs
-                         |
-          +--------------+---------------+
-          |                              |
-          v                              v
- agent-index.json                 intent packets
- status, counts, order,       exact evidence required for
- required output paths        one Semantic intent and its
- and coverage checklist       inference/candidate decisions
-          |                              |
-          +--------------+---------------+
-                         |
-                         v
-              prefilled output drafts
-     inference.json + assessment-judgment.json
-                         |
-                         v
-                 bounded Agent work
-                         |
-                         v
-              finalize-assessment.mjs
-      validate inputs -> assemble -> validate -> render
+canonical deterministic evidence
+                 |
+                 v
+      build bounded model-input.json
+                 |
+        +--------+---------+
+        |                  |
+        v                  v
+ assessed intents     informational publication
+ and evidence         metadata and operations
+        |                  |
+        v                  |
+ agent-index.json          |
+ and safe drafts           |
+        |                  |
+        +--------+---------+
+                 |
+                 v
+       bounded Agent judgment
+                 |
+                 v
+      finalize-assessment.mjs
+ validate -> restore informational
+ intent -> assemble -> render
 ```
 
-The projection is an index over canonical evidence, not a replacement evidence
-source. Assembly and validation continue to trust only the existing canonical
-artifacts and validated Agent outputs.
+Assembly and validation trust only canonical artifacts and validated Agent
+outputs. Informational-intent reinsertion is deterministic and uses canonical
+Semantic evidence rather than Agent-authored content.
+
+## Informational API-version scope
+
+An API-version publication review unit is informational when all of these
+conditions hold:
+
+- its grouping reason is `publication` or
+  `cross-project:api-version-publication`;
+- it has at least 20 affected operations;
+- every operation is matched through `direct-version-governance` or
+  `version-transition-change`.
+
+The narrow predicate prevents ordinary version changes from bypassing model
+judgment.
+
+An `api-version-wide-change` is informational when:
+
+- its changed declaration is `Versions`;
+- it directly owns no operation;
+- every associated operation is mapped through
+  `direct-version-governance` or `version-transition-change`.
+
+This classification does not use an operation-count threshold. It describes
+the semantic origin of the operation set rather than its size.
+
+An informational intent:
+
+- remains in `dimensions.semantic.items`;
+- has a deterministic title and summary;
+- has `informational: true`;
+- includes all canonical affected operations;
+- is excluded from inference requests and Agent Semantic coverage;
+- is excluded from Azure Guidelines requests;
+- is excluded from Documentation Completeness input;
+- cannot be referenced by REST, downstream, Guidelines, or documentation
+  findings.
 
 ## Required workflow behavior
 
-When `run-assessment-analysis.mjs` returns `awaiting-agent-judgment`, the agent
-must continue immediately in the same task. It must not stop for a status
-summary or require the user to say "continue."
+When `run-assessment-analysis.mjs` returns `awaiting-agent-judgment`, the Agent
+continues immediately in the same task. It does not stop for a status summary
+or require the user to say "continue."
 
-The assessment is complete only when one of these conditions is true:
+The assessment is complete only when:
 
 1. `assessment.json` validates and `assessment.html` is rendered; or
 2. deterministic analysis reports an all-dimensions-blocked terminal result
@@ -127,201 +162,167 @@ The assessment is complete only when one of these conditions is true:
 The existence of `model-input.json`, a partial dimension blocker, or empty REST
 candidates is not a terminal condition.
 
-## Implementation plan
+## Implementation
 
-1. **Add an Agent workspace builder**
-   - Add `scripts/build-agent-workspace.mjs`.
-   - Read only `model-input.json` and its declared canonical artifact
-     references.
-   - Write an `agent-workspace` directory under the assessment work directory.
-   - Never modify `model-input.json` or canonical dimension artifacts.
-   - Produce deterministic files with stable ordering and no inferred facts.
+### Bounded model input
 
-2. **Write a compact Agent index**
-   - Write `agent-workspace/agent-index.json`.
-   - Keep it below 20 KiB for representative assessments so one normal file
-     read returns the complete index.
-   - Include:
-     - comparison identity and selected API versions;
-     - dimension statuses and blockers;
-     - Semantic intent, candidate, inference-request, and guideline-request
-       counts;
-     - exact required output files and schemas;
-     - one ordered entry per Semantic intent;
-     - exact candidate and inference IDs assigned to each intent;
-     - coverage totals and a completion checklist;
-     - paths to the corresponding intent packets.
-   - Do not include large operation or SDK fact bodies in the index.
+`run-assessment-analysis.mjs` builds one bounded `model-input.json` containing
+only evidence required for assessed Semantic intents, their inference requests,
+deterministic REST/downstream candidates, and shared Azure Guidelines
+decisions.
 
-3. **Write one evidence packet per Semantic intent**
-   - Write
-     `agent-workspace/intents/<review-unit-id>.json`.
-   - Include only canonical data required to:
-     - summarize that Semantic intent;
-     - resolve its bounded inference requests;
-     - judge its REST and downstream candidates;
-     - apply the already shared Azure Guidelines evidence.
-   - Embed exact referenced facts so the Agent does not scan the global
-     204-fact map.
-   - Deduplicate facts within each packet.
-   - Retain canonical IDs and evidence references for validation.
-   - Never omit evidence merely to satisfy a byte target. If a packet is large,
-     retain completeness and record its size in the index.
+The coordinator excludes informational API-version intents and their
+exclusively associated candidates from inference, Guidelines requests,
+Documentation Completeness input, and finding relationship matching. Canonical
+IDs, source evidence, and referenced facts remain intact.
+Physical and minified byte counts are recorded without treating estimated token
+counts as actual model usage.
 
-4. **Prefill structurally complete output drafts**
-   - Generate `agent-workspace/inference.draft.json` only when inference
-     requests exist.
-   - Generate `agent-workspace/assessment-judgment.draft.json`.
-   - Prefill every required ID exactly once in stable order.
-   - Use explicit unresolved placeholders that fail schema validation until the
-     Agent supplies the decision, rationale, title, summary, severity, or
-     guidance references required by the existing contract.
-   - Do not preselect decisions or generate success-shaped defaults.
-   - The Agent writes final files at the existing canonical output paths.
+### Agent workspace
 
-5. **Make shared guideline evidence directly reusable**
-   - Consume the separately implemented shared guideline analysis once.
-   - Put only applicable shared document references and sections into each
-     intent packet.
-   - Do not refetch, rescore, or reanalyze a guideline document per intent.
-   - Preserve one per-intent applicability decision and source/hunk coverage.
+`build-agent-workspace.mjs` writes:
 
-6. **Add one guarded finalization command**
-   - Add `scripts/finalize-assessment.mjs --work <directory>`.
-   - Validate `inference.json`, shared guideline evidence, and
-     `assessment-judgment.json`.
-   - Assemble `assessment.json`.
-   - Validate the assembled assessment.
-   - Render `assessment.html`.
-   - Print the structured-result path and report path.
-   - On failure, print compact actionable validation errors and leave existing
-     evidence intact for the one permitted correction turn.
-   - Do not return success unless both final artifacts exist and validation
-     passes.
+- `agent-workspace/agent-index.json`;
+- `agent-workspace/inference.draft.json` when inference is required;
+- `agent-workspace/assessment-judgment.draft.json`.
 
-7. **Persist workflow state**
-   - Write `workflow-state.json` atomically under the work directory.
-   - Record states:
-     - `preparing`;
-     - `awaiting-agent-judgment`;
-     - `agent-artifacts-written`;
-     - `finalizing`;
-     - `complete`;
-     - `blocked`.
-   - Record artifact paths, content hashes, phase start/end timestamps, and
-     compact failure details.
-   - Allow a later invocation to resume from valid completed deterministic
-     artifacts rather than rerunning preparation and compilation.
-   - Reject resume when comparison identity or canonical artifact hashes do not
-     match.
+The compact index contains comparison identity, statuses and blockers, assessed
+and informational intent IDs, counts, exact output/schema paths, the single
+model-input path, and a completion checklist. It does not duplicate operation
+or SDK fact bodies.
 
-8. **Update the skill workflow**
-   - Require one read of `agent-index.json`, followed by each listed intent
-     packet exactly once unless validation requests a correction.
-   - Prohibit recursive artifact listing, broad report-file searches, and
-     repeated schema inspection during normal execution.
-   - Require immediate continuation after deterministic analysis.
-   - Require `finalize-assessment.mjs` instead of separate assembly, validation,
-     and rendering commands.
-   - Preserve the existing one-correction-turn rule.
+Drafts contain every required ID exactly once in stable order. Explicit
+unresolved placeholders fail validation until the Agent supplies required
+decisions, rationales, summaries, severities, or guidance references. Draft
+generation never selects a success-shaped default.
 
-9. **Add Agent-phase telemetry**
-   - Record:
-     - deterministic-ready timestamp;
-     - Agent-workspace construction duration;
-     - user/host wait before judgment starts, when observable;
-     - inference artifact timestamp;
-     - guideline-evidence timestamp;
-     - judgment artifact timestamp;
-     - finalization process duration;
-     - index and packet sizes;
-     - number of Agent file reads and shell commands, when supplied by the
-       evaluation harness.
-   - Do not label elapsed wall time as active model execution time.
+### Shared Azure Guidelines evidence
+
+The separately implemented shared guideline analysis is consumed once and
+applied only to assessed intents. Documents are not refetched, rescored, or
+reanalyzed per intent. Per-intent applicability and source/hunk coverage remain
+required.
+
+### Guarded finalization
+
+`finalize-assessment.mjs --work <directory>`:
+
+1. validates `inference.json`, shared guideline evidence, and
+   `assessment-judgment.json`;
+2. restores informational Semantic intents from canonical evidence;
+3. assembles `assessment.json`;
+4. validates the assembled assessment;
+5. renders `assessment.html`;
+6. writes workflow telemetry and reports the final artifact paths.
+
+Failure produces compact actionable validation errors, preserves existing
+evidence for correction, and never records a success-shaped state.
+
+### Workflow state and resume
+
+`workflow-state.json` is written atomically with these states:
+
+- `preparing`;
+- `awaiting-agent-judgment`;
+- `agent-artifacts-written`;
+- `finalizing`;
+- `complete`;
+- `blocked`.
+
+It records artifact paths, content hashes, phase timestamps, telemetry, and
+compact failure details. Resume reuses valid deterministic artifacts only when
+comparison identity and canonical artifact hashes match.
+
+### Skill execution rules
+
+The skill requires:
+
+- one `agent-index.json` read;
+- one bounded `model-input.json` read;
+- exact schema reads relative to the skill root;
+- immediate continuation after deterministic analysis;
+- guarded finalization instead of separate assembly, validation, and rendering
+  commands;
+- at most one correction turn after finalizer validation failure.
+
+Normal execution does not recursively list artifacts, broadly search report
+files, search for schema locations, or repeatedly inspect schemas.
 
 ## Correctness and quality validation
 
-1. **Projection completeness tests**
-   - Every Semantic intent appears exactly once in the index and one packet.
-   - Every deterministic and inferred candidate is assigned exactly once.
-   - Every inference request appears exactly once.
-   - Every referenced fact exists and is copied without mutation.
-   - Every canonical evidence reference remains resolvable.
-   - Blocked dimensions and partial blockers remain visible.
+### Scope and completeness
 
-2. **Draft safety tests**
-   - Unresolved drafts fail validation.
-   - Missing, duplicate, unknown, or unsupported IDs fail validation.
-   - Draft generation never selects `approve`, `reject`,
-     `no-applicable-guidance`, or another decision.
-   - Empty candidate dimensions remain explicitly covered without fabricated
-     findings.
+- Every assessed Semantic intent appears exactly once in the bounded input.
+- Every informational Semantic intent appears only in deterministic
+  reinsertion metadata.
+- Every deterministic and inferred candidate appears exactly once.
+- Every inference request appears exactly once.
+- Every referenced fact and canonical evidence reference remains resolvable.
+- Blocked dimensions and partial blockers remain visible.
+- No finding can relate to an informational intent.
 
-3. **Finalization tests**
-   - A valid existing judgment produces the same assessment data and HTML as
-     the existing three-command sequence, excluding timing-only fields.
-   - Any invalid Agent artifact prevents both success and a success-shaped
-     workflow state.
-   - A partial documentation blocker still produces a report with the
-     appropriate `not-assessed` coverage and potential limit.
-   - Finalization is idempotent for unchanged inputs.
+### Draft and finalizer safety
 
-4. **Replay equivalence**
-   - Build the Agent workspace from each retained assessment fixture.
-   - Reuse its existing inference, guideline evidence, and judgment artifacts.
-   - Require equivalent findings, dimension statuses, blockers, source links,
-     provenance, stable anchors, and report sections.
-   - Run the existing report-quality graders and reject any regression.
+- Unresolved drafts fail validation.
+- Missing, duplicate, unknown, or unsupported IDs fail validation.
+- Draft generation never preselects a decision.
+- Empty candidate dimensions remain explicitly covered without fabricated
+  findings.
+- Invalid Agent artifacts cannot produce a complete workflow state.
+- Finalization is idempotent for unchanged inputs.
+- Partial documentation blockers retain the required `not-assessed` coverage
+  and potential limit.
 
-5. **Skill behavior evals**
-   - Verify the agent continues after `awaiting-agent-judgment` without another
-     user prompt.
-   - Verify it reads the index and listed packets rather than scanning the work
-     directory.
-   - Verify it invokes the guarded finalizer and does not claim completion
-     before validated HTML exists.
-   - Verify shared guideline evidence is analyzed once across all intents.
+### Replay equivalence
 
-## Performance validation
+Retained assessment fixtures are replayed through the optimized coordinator and
+guarded finalizer. Comparisons cover:
 
-Benchmark the current PR 43718 artifacts and at least three retained fixtures:
-one small case, one documentation-heavy case, and one downstream-heavy case.
+- comparison identity;
+- Semantic intent IDs and counts;
+- REST and downstream finding IDs;
+- Azure Guidelines decisions and findings;
+- Documentation Completeness finding IDs;
+- blockers;
+- validation and HTML generation.
 
-Acceptance targets:
+Historical replay reconstructs Agent outputs from retained validated baselines.
+It measures deterministic preparation and finalization compatibility, not
+active model inference time.
 
-- Agent index is at most 20 KiB for the representative PR 43718 case.
-- Normal Agent evidence reads are at most one index read plus one read per
-  Semantic intent packet.
-- Normal post-analysis shell commands are at most three:
-  workspace construction, guarded finalization, and report serving.
+## Performance acceptance
+
+- Agent index is at most 20 KiB for representative PR 43718.
+- Normal Agent evidence reads are one index read and one bounded model-input
+  read.
+- Normal post-analysis shell commands are at most workspace construction,
+  guarded finalization, and optional report serving.
 - No manual user continuation is required.
 - Active PR 43718 evidence review and judgment is at most 5m 30s.
 - Finalization process wall time is at most 15 seconds.
-- End-to-end PR 43718 wall time is at most 15 minutes after the current setup
-  and compiler improvements are enabled.
-- Findings, decisions, blockers, evidence, and report-quality grader results
-  are equivalent to the reference workflow.
+- Findings, decisions, blockers, evidence, and report-quality results are
+  equivalent to the reference workflow.
 
-If the time target is missed, retain the workspace and telemetry to identify
-whether the remaining cost is inference reasoning, downstream evidence volume,
-guideline comparison, or tool latency. Do not remove evidence, combine distinct
-decisions, or weaken validation to meet the target.
+If a target is missed, retain the workspace and telemetry to identify whether
+the remaining cost is inference reasoning, downstream evidence volume,
+guideline comparison, deterministic preparation, or tool latency. Do not
+remove evidence, combine distinct decisions, or weaken validation to meet a
+time target.
 
-## Expected improvement
+## Validated PR 43718 result
 
-For the measured PR 43718 run:
+The optimized PR 43718 run reduced the physical Agent-facing
+`model-input.json` from approximately 1,400,460 bytes to 227,186 bytes, an
+83.8% reduction. Its minified accounting size was 120,692 bytes. The bounded
+workload contained six assessed Semantic intents, one informational publication
+intent, ten downstream candidates, ten inference requests, and six Guidelines
+requests.
 
-- removing the manual continuation pause saves approximately two minutes;
-- compact indexed evidence and prefilled drafts target a further three to four
-  minutes;
-- guarded finalization targets approximately 28 seconds of improvement over
-  the measured 43-second finalization interval;
-- compiler parallelism remains a separate approximately one-minute opportunity
-  on this warm run.
-
-The expected quality-preserving result is approximately 14-16 minutes
-end-to-end, with a stretch target below 15 minutes after the compiler plan is
-also enabled.
+Guarded finalization completed in 188 ms internally and approximately 1.50
+seconds including Agent-output preparation and finalizer process wall time. The
+validated report retained all seven Semantic intents, all 95 operations on the
+informational publication intent, the same nine downstream findings, no
+additional dimension findings, and no blockers.
 
 ## Out of scope
 
@@ -330,7 +331,7 @@ also enabled.
 - Removing bounded inference requests.
 - Replacing Agent judgment with deterministic defaults.
 - Summarizing away canonical evidence.
+- Treating ordinary operation or model changes as informational.
 - Changing shared Azure Guidelines ranking or applicability semantics.
 - Changing compiler or emitter versions.
-- Parallelizing additional compiler roles or projects.
 - Reusing artifacts without comparison and content-hash validation.

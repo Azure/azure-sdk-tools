@@ -115,6 +115,163 @@ test("model input references canonical evidence without embedding sources", () =
   assert.equal(input.inputAccounting.omittedRedundant.sourceChanges, true);
 });
 
+test("model input retains facts referenced by REST candidates", () => {
+  const input = buildModelInput({
+    manifest: {
+      comparison: {
+        mergeBaseCommit: "base",
+        headCommit: "head",
+        baseRef: "origin/main",
+        workingTree: {},
+      },
+      projects: [{ id: "p", path: "specification/widget" }],
+      blockers: [],
+    },
+    sourceIndex: {
+      sourceChanges: [
+        {
+          id: "source-1",
+          path: "a.tsp",
+          hunks: [{ id: "hunk-1", lines: ["+model Widget {}"] }],
+          declarations: [],
+        },
+      ],
+    },
+    semantic: {
+      status: "ready",
+      facts: {},
+      reviewUnits: [
+        {
+          id: "semantic-1",
+          sourceChangeIds: ["source-1"],
+          hunkIds: ["hunk-1"],
+          declarationIds: [],
+          operationIds: [],
+          beforeFactIds: [],
+          afterFactIds: [],
+        },
+      ],
+      blockers: [],
+    },
+    rest: {
+      status: "ready",
+      facts: {
+        "rest-before": { id: "rest-before", required: false },
+        "rest-after": { id: "rest-after", required: true },
+      },
+      candidates: [
+        {
+          id: "rest-1",
+          sourceChangeIds: ["source-1"],
+          hunkIds: ["hunk-1"],
+          declarationIds: [],
+          evidenceFactIds: ["rest-before", "rest-after"],
+        },
+      ],
+      blockers: [],
+    },
+    downstream: {
+      status: "ready",
+      facts: {},
+      candidates: [],
+      blockers: [],
+    },
+  });
+  assert.deepEqual(Object.keys(input.facts), ["rest-after", "rest-before"]);
+});
+
+test("model input excludes API-version-wide intents and their candidates", () => {
+  const operations = ["Widgets_Get", "Widgets_List"].map(
+    (operationId, index) => ({
+      operationId,
+      beforeFactId: `before-${index}`,
+      afterFactId: `after-${index}`,
+      matchBasis: "version-transition-change",
+      sourceChangeIds: ["source-1"],
+      hunkIds: ["hunk-1"],
+    }),
+  );
+  const input = buildModelInput({
+    manifest: {
+      comparison: {
+        mergeBaseCommit: "base",
+        headCommit: "head",
+        baseRef: "origin/main",
+        workingTree: {},
+      },
+      projects: [{ id: "p", path: "specification/widget" }],
+      blockers: [],
+    },
+    sourceIndex: {
+      sourceChanges: [
+        {
+          id: "source-1",
+          path: "versions.tsp",
+          hunks: [{ id: "hunk-1", lines: ["+v2"] }],
+          declarations: [
+            {
+              id: "declaration-1",
+              kind: "enum",
+              qualifiedName: "Versions",
+              hunkIds: ["hunk-1"],
+            },
+          ],
+        },
+      ],
+    },
+    semantic: {
+      status: "ready",
+      facts: {},
+      reviewUnits: [
+        {
+          id: "semantic-version-wide",
+          intentType: "api-version-wide-change",
+          sourceChangeIds: ["source-1"],
+          hunkIds: ["hunk-1"],
+          declarationIds: ["declaration-1"],
+          declarationNames: ["Versions"],
+          ownedOperationIds: [],
+          operations,
+        },
+      ],
+      blockers: [],
+    },
+    rest: {
+      status: "ready",
+      facts: {
+        "rest-before": { id: "rest-before" },
+        "rest-after": { id: "rest-after" },
+      },
+      candidates: [
+        {
+          id: "rest-version-wide",
+          sourceChangeIds: ["source-1"],
+          hunkIds: ["hunk-1"],
+          declarationIds: ["declaration-1"],
+          operationIds: ["Widgets_Get", "Widgets_List"],
+          evidenceFactIds: ["rest-before", "rest-after"],
+        },
+      ],
+      blockers: [],
+    },
+    downstream: {
+      status: "ready",
+      facts: {},
+      candidates: [],
+      rootCauses: [],
+      blockers: [],
+    },
+  });
+
+  assert.deepEqual(input.semanticReviewUnits, []);
+  assert.deepEqual(input.informationalSemanticIntentIds, [
+    "semantic-version-wide",
+  ]);
+  assert.deepEqual(input.restCandidates, []);
+  assert.deepEqual(input.downstreamCandidates, []);
+  assert.deepEqual(input.facts, {});
+});
+
 test("documentation completeness is omitted from bounded Agent input", () => {
   const longDoc = "The amount of time, in seconds, to wait. ".repeat(10000);
   const unit = {

@@ -1,0 +1,35 @@
+# Dependencies are restored for the target platform, not committed.
+node_modules/
+
+# The repository-wide lib/ ignore must not hide the dashboard source.
+!lib/
+!lib/**
+
+# Runtime cache, lock and durable local journal; never include in deployment.
+eval.db
+eval.db-wal
+eval.db-shm
+eval.db.lock/
+ingestions.db*
+.ingestion-archive/
+
+# Eval result folders are data, not source — keep them out of version control.
+# The current server accepts HTTP submissions; results/ is legacy data only.
+results/
+poc-blob/
+poc-data/
+
+# Local test scratch
+.test*
+.blob-staging/
+
+# Misc
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Azure CLI `az webapp up` local cache + build/upload artifacts
+.azure/
+*.zip

@@ -35,6 +35,7 @@
 /tools/                                 @azure/azure-sdk-eng
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @danieljurek
+/tools/eval-pipeline-dashboard/         @helen229 @praveenkuttappan @azure/azure-sdk-eng
 /tools/fxlister/                        @KrzysztofCwalina
 /tools/github/                          @jsquire @lmazuel
 /tools/github-event-processor/          @benbp @jsquire

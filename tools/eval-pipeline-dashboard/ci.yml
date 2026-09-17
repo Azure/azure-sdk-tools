@@ -1,0 +1,101 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/eval-pipeline-dashboard/**
+
+parameters:
+  - name: deployDashboard
+    type: boolean
+    default: false
+  - name: stagingAppName
+    type: string
+    default: ''
+  - name: productionAppName
+    type: string
+    default: ''
+  - name: resourceGroup
+    type: string
+    default: ''
+  - name: azureServiceConnection
+    type: string
+    default: ''
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/eval-pipeline-dashboard/**
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: Test
+        jobs:
+          - job: TestDashboard
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+              - task: UseNode@1
+                inputs:
+                  version: 22.x
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+              - script: npm ci --ignore-scripts --include=optional
+                displayName: Restore locked dependencies
+                workingDirectory: tools/eval-pipeline-dashboard
+              - script: npm run postinstall
+                displayName: Apply Vally query optimization
+                workingDirectory: tools/eval-pipeline-dashboard
+              - script: npm test
+                displayName: Test local and emulated Azure ingestion
+                workingDirectory: tools/eval-pipeline-dashboard
+              - script: node scripts/stage-deployment.mjs "$(Build.ArtifactStagingDirectory)/app"
+                displayName: Stage deployment allowlist
+                workingDirectory: tools/eval-pipeline-dashboard
+              - script: npm ci --omit=dev --ignore-scripts --include=optional && npm run postinstall
+                displayName: Restore Linux production dependencies
+                workingDirectory: $(Build.ArtifactStagingDirectory)/app
+              - task: ArchiveFiles@2
+                displayName: Package deployment artifact
+                inputs:
+                  rootFolderOrFile: $(Build.ArtifactStagingDirectory)/app
+                  includeRootFolder: false
+                  archiveType: zip
+                  archiveFile: $(Build.ArtifactStagingDirectory)/package/eval-dashboard.zip
+              - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+                parameters:
+                  ArtifactName: eval-dashboard
+                  ArtifactPath: $(Build.ArtifactStagingDirectory)/package
+      # No cloud resources or service connection are implied by this file.
+      # Deployment requires an explicit opt-in and all resource-specific values.
+      - ${{ if and(parameters.deployDashboard, eq(variables['System.TeamProject'], 'internal'), ne(parameters.stagingAppName, ''), ne(parameters.productionAppName, ''), ne(parameters.resourceGroup, ''), ne(parameters.azureServiceConnection, '')) }}:
+          - template: pipelines/deploy-stage.yml
+            parameters:
+              stageName: Staging_Publish
+              dependsOn: Test
+              appName: ${{ parameters.stagingAppName }}
+              resourceGroup: ${{ parameters.resourceGroup }}
+              azureServiceConnection: ${{ parameters.azureServiceConnection }}
+              environmentName: eval-dashboard-staging
+          - template: pipelines/deploy-stage.yml
+            parameters:
+              stageName: Production_Publish
+              dependsOn: Staging_Publish
+              appName: ${{ parameters.productionAppName }}
+              resourceGroup: ${{ parameters.resourceGroup }}
+              azureServiceConnection: ${{ parameters.azureServiceConnection }}
+              environmentName: package-publish
+              isProduction: true

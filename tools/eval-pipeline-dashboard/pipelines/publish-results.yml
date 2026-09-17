@@ -1,0 +1,41 @@
+# Opt-in template for a trusted, private-network-connected publishing job.
+# Prerequisites: this tool and its production dependencies are available at toolPath;
+# the caller has consolidated all expected highest-attempt shards or produced a ZIP.
+parameters:
+  - name: toolPath
+    type: string
+    default: $(Build.SourcesDirectory)/tools/eval-pipeline-dashboard
+  - name: dashboardUrl
+    type: string
+  - name: dashboardAudience
+    type: string
+  - name: azureServiceConnection
+    type: string
+  - name: bundlePath
+    type: string
+  - name: receiptPath
+    type: string
+    default: $(Build.ArtifactStagingDirectory)/dashboard-receipt.json
+  - name: waitForIngestion
+    type: boolean
+    default: false
+
+steps:
+  - task: AzureCLI@2
+    displayName: Publish eval bundle to dashboard
+    condition: succeededOrFailed()
+    inputs:
+      azureSubscription: ${{ parameters.azureServiceConnection }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        args=(--bundle "$DASHBOARD_BUNDLE" --url "$DASHBOARD_URL" --audience "$DASHBOARD_AUDIENCE" --receipt "$DASHBOARD_RECEIPT")
+        if [ "${WAIT_FOR_INGESTION,,}" = "true" ]; then args+=(--wait); fi
+        node "$DASHBOARD_TOOL/scripts/publish-bundle.mjs" "${args[@]}"
+    env:
+      DASHBOARD_TOOL: ${{ parameters.toolPath }}
+      DASHBOARD_URL: ${{ parameters.dashboardUrl }}
+      DASHBOARD_AUDIENCE: ${{ parameters.dashboardAudience }}
+      DASHBOARD_BUNDLE: ${{ parameters.bundlePath }}
+      DASHBOARD_RECEIPT: ${{ parameters.receiptPath }}
+      WAIT_FOR_INGESTION: ${{ parameters.waitForIngestion }}

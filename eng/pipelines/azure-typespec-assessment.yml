@@ -33,7 +33,6 @@ extends:
     TestType: ${{ parameters.McpKind }}
     evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
     UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
-    azureSubscription: azuresdkqabot-dev
     preEvalTemplate: /.github/skills/azure-typespec-assessment/evals/pipeline/typespec-assessment-preeval.yml
     failOnFailedTests: false
     shardTimeoutInMinutes: 90

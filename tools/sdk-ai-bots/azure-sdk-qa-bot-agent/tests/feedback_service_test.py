@@ -32,7 +32,7 @@ async def test_process_saves_all_fields_before_issue_workflow(reaction):
         conversation_id="19:channel@thread.tacv2;messageid=123456789",
         conversation_type=ConversationType.teams_channel,
         reaction=reaction,
-        comment="需要更多细节",
+        comment="More details are needed",
         reasons=["Incorrect", "Incomplete"],
         link="https://teams.microsoft.com/l/message/example",
         user_name="Test User",

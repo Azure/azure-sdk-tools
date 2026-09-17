@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 
 from config import app_config
+from models.feedback import RootCauseClassification
 from models.conversation import (
     ConversationDocumentType,
     ConversationMessageItem,
@@ -21,9 +22,11 @@ from models.qa_dashboard import (
     QADashboardDetail,
     QADashboardRecord,
     QARecordPage,
+    QAOverview,
 )
 from models.qa_record import QARecord, QAStatus
 from services.conversation_service import ConversationService
+from services.qa_overview import aggregate_overview, validate_report_window
 from utils.azure_cosmosdb import (
     get_conversation_message_container,
     get_qa_records_container,
@@ -46,6 +49,19 @@ class QADashboardService:
     ) -> None:
         self._conversations = conversation_service or ConversationService()
 
+    async def get_overview(
+        self, *, start: datetime, end: datetime,
+        channel_id: str | None = None,
+    ) -> QAOverview:
+        start, end = validate_report_window(start, end)
+        channel_names = await _load_channel_names()
+        return await aggregate_overview(
+            qa_container=await get_qa_records_container(),
+            message_container=await get_conversation_message_container(),
+            channel_names=channel_names, start=start, end=end,
+            channel_id=channel_id,
+        )
+
     async def list_records(
         self,
         *,
@@ -54,6 +70,7 @@ class QADashboardService:
         channel_id: str | None = None,
         qa_status: QAStatus | None = None,
         feedback_status: FeedbackStatusFilter | None = None,
+        classification: RootCauseClassification | None = None,
         updated_from: datetime | None = None,
         updated_to: datetime | None = None,
         conversation_id: str | None = None,
@@ -70,6 +87,7 @@ class QADashboardService:
             channel_id=channel_id,
             qa_status=qa_status,
             feedback_status=feedback_status,
+            classification=classification,
             updated_from=updated_from,
             updated_to=updated_to,
             conversation_id=conversation_id,
@@ -197,6 +215,7 @@ class QADashboardService:
         updated_from: datetime | None,
         updated_to: datetime | None,
         conversation_id: str | None,
+        classification: RootCauseClassification | None = None,
     ) -> tuple[list[str], list[dict[str, Any]]]:
         conditions: list[str] = []
         parameters: list[dict[str, Any]] = []
@@ -231,6 +250,9 @@ class QADashboardService:
             parameters.append(
                 {"name": "@feedback_status", "value": feedback_status.value}
             )
+        if classification:
+            conditions.append("c.feedback.classification = @classification")
+            parameters.append({"name": "@classification", "value": classification.value})
         if updated_from:
             conditions.append("c.updated_at >= @updated_from")
             parameters.append(

@@ -137,6 +137,7 @@ async def _run(args: argparse.Namespace) -> None:
         "waiting_validation": 0,
         "validated": 0,
         "validation_failed": 0,
+        "validation_skipped": 0,
         "evolution_failed": 0,
         "skipped": 0,
     }
@@ -177,6 +178,9 @@ async def _run(args: argparse.Namespace) -> None:
             counts["validation_failed"] += 1
         elif result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
             counts["validated"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_skipped:
+            counts["validation_skipped"] += 1
+            logger.info("Validation skipped for %s (%s)", record.id, issue_url)
         else:
             counts["validation_failed"] += 1
 
@@ -216,13 +220,14 @@ async def _run(args: argparse.Namespace) -> None:
     logger.info(
         "Evolution scan complete: ongoing=%d finished=%d issues=%d "
         "waiting-validation=%d validated=%d validation-failed=%d "
-        "evolution-failed=%d skipped=%d",
+        "validation-skipped=%d evolution-failed=%d skipped=%d",
         counts["ongoing"],
         counts["finished"],
         counts["issues"],
         counts["waiting_validation"],
         counts["validated"],
         counts["validation_failed"],
+        counts["validation_skipped"],
         counts["evolution_failed"],
         counts["skipped"],
     )

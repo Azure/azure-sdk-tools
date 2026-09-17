@@ -3,7 +3,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from models.conversation import Role
 from models.qa_record import QARecord
@@ -18,6 +18,7 @@ class FeedbackStatusFilter(str, Enum):
     pending_validation = "pending_validation"
     validation_passed = "validation_passed"
     validation_failed = "validation_failed"
+    validation_skipped = "validation_skipped"
     failed = "failed"
 
 
@@ -64,11 +65,77 @@ class QARecordPage(BaseModel):
     channels: list[DashboardChannel]
 
 
+class OverviewMetric(BaseModel):
+    """A percentage with its underlying numerator and denominator."""
+
+    numerator: int = Field(ge=0)
+    denominator: int = Field(ge=0)
+    rate: float | None
+
+
+def _metric(numerator: int, denominator: int) -> OverviewMetric:
+    return OverviewMetric(
+        numerator=numerator,
+        denominator=denominator,
+        rate=100 * numerator / denominator if denominator else None,
+    )
+
+
+class OverviewCounts(BaseModel):
+    """Additive counts used to calculate channel metrics and weighted totals."""
+
+    conversations: int = Field(default=0, ge=0)
+    correct: int = Field(default=0, ge=0)
+    incorrect: int = Field(default=0, ge=0)
+    accuracy_excluded: int = Field(default=0, ge=0)
+    expert_yes: int = Field(default=0, ge=0)
+    questions: int = Field(default=0, ge=0)
+    bot_replies: int = Field(default=0, ge=0)
+
+
+class OverviewRow(OverviewCounts):
+    """Channel or total counts with serialized, derived metrics."""
+
+    channel_id: str | None = None
+    channel_name: str
+
+    @computed_field
+    @property
+    def accuracy(self) -> OverviewMetric:
+        return _metric(self.conversations - self.incorrect, self.conversations)
+
+    @computed_field
+    @property
+    def expert_interaction(self) -> OverviewMetric:
+        return _metric(self.expert_yes, self.conversations)
+
+    @computed_field
+    @property
+    def answer_rate(self) -> OverviewMetric:
+        return _metric(self.bot_replies, self.questions)
+
+
+class QAOverview(BaseModel):
+    """Full report for a half-open date range, optionally scoped to one channel."""
+
+    start: datetime
+    end: datetime
+    generated_at: datetime
+    channel_id: str | None = None
+    rows: list[OverviewRow]
+    totals: OverviewRow
+    notes: list[str]
+
+
 __all__ = [
     "DashboardChannel",
     "DashboardConversationMessage",
     "FeedbackStatusFilter",
+    "OverviewCounts",
+    "OverviewMetric",
+    "OverviewRow",
     "QADashboardDetail",
     "QADashboardRecord",
+    "QAOverview",
     "QARecordPage",
 ]

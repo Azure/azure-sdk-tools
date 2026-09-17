@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 from enum import Enum
 from typing import Callable
@@ -53,6 +54,16 @@ _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
 # Rank-smoothing constant for Reciprocal Rank Fusion.
 _RRF_K = 60
+
+_BEARER_TOKEN_RE = re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{16,}")
+_JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")
+_SENSITIVE_ASSIGNMENT_RE = re.compile(
+    r"(?i)\b("
+    r"account[-_ ]?key|shared[-_ ]?access[-_ ]?signature|"
+    r"client[-_ ]?secret|api[-_ ]?key|access[-_ ]?token|"
+    r"refresh[-_ ]?token|password|passwd|pwd|secret|signature|sig"
+    r")\b(\s*[:=]\s*)([^\s,;&]+)"
+)
 
 # Page-type filters for raw source chunks and generated wiki pages.
 NON_WIKI_FILTER = "(page_type eq null or page_type eq '')"
@@ -106,6 +117,16 @@ def split_source_ref(source_path: str) -> tuple[str, str]:
     folder = parts[0] if len(parts) > 1 else ""
     rel = path[len(folder) + 1:] if folder and path.startswith(folder + "/") else path
     return folder, rel
+
+
+def _redact_sensitive_query(query: str) -> str:
+    """Remove common credential forms before sending a query to retrievers."""
+    redacted = _BEARER_TOKEN_RE.sub("Bearer [REDACTED]", query)
+    redacted = _JWT_RE.sub("[REDACTED]", redacted)
+    return _SENSITIVE_ASSIGNMENT_RE.sub(
+        lambda match: f"{match.group(1)}{match.group(2)}[REDACTED]",
+        redacted,
+    )
 
 
 def _title_context_clause(title: str, context_id: str) -> str:
@@ -356,6 +377,7 @@ class SearchClient:
         search is opt-in. All query/retriever rankings contribute to one RRF
         result so duplicate hits accumulate support before the caller caps.
         """
+        queries = [_redact_sensitive_query(query) for query in queries]
 
         async def _ranked_for_query(query: str) -> list[list[KnowledgeChunk]]:
             coros: list = []
@@ -390,7 +412,7 @@ class SearchClient:
                 if isinstance(res, BaseException):
                     if isinstance(res, asyncio.CancelledError):
                         raise res
-                    logger.warning("Retriever failed for query=%r: %s", query, res)
+                    logger.warning("Retriever failed: %s", res)
                     continue
                 if res:
                     ranked_lists.append(res)

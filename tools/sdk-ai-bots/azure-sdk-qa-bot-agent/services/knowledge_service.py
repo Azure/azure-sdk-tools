@@ -36,9 +36,9 @@ class KnowledgeService:
         queries = [user_message]
         
         logger.info(
-            "Calling search_knowledge_base: tenant=%s, queries=%s",
+            "Calling search_knowledge_base: tenant=%s, query_count=%d",
             req.tenant_id.value,
-            queries,
+            len(queries),
         )
         
         try:

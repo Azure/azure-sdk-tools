@@ -26,7 +26,11 @@ if _PROJECT_ROOT not in sys.path:
 
 import tools.knowledge_tools as knowledge_tools_module
 from models.knowledge import KnowledgeChunk
-from tools.knowledge_tools import KnowledgeTools
+from tools.knowledge_tools import (
+    KnowledgeTools,
+    _prepare_search_queries,
+    _prioritize_process_results,
+)
 import utils.azure_ai_search as azure_ai_search_module
 from utils.azure_ai_search import SearchClient, _raw_chunk_filter
 from utils.azure_storage import BlobContent
@@ -48,6 +52,141 @@ def test_knowledge_chunk_accepts_null_page_type() -> None:
     chunk = KnowledgeChunk.model_validate({"page_type": None})
 
     assert chunk.page_type == ""
+
+
+def test_prepare_search_queries_builds_structural_code_query() -> None:
+    body = """Add suppressions for the warnings.
+
+```typespec
+import "@typespec/http";
+using TypeSpec.Http;
+namespace Microsoft.Widget;
+
+union SkuTier {
+  string,
+  Free: "Free",
+  Basic: "Basic",
+  Enterprise: "Enterprise",
+}
+```"""
+
+    result = _prepare_search_queries(
+        ["CASE 005001", body, "generic warning suppression"]
+    )
+
+    assert result[:2] == ["CASE 005001", body]
+    assert result[2].startswith("Add suppressions warnings")
+    assert "SkuTier" in result[2]
+    assert "Free" in result[2]
+    assert "Basic" in result[2]
+    assert "Enterprise" in result[2]
+    assert "@typespec/http" not in result[2]
+    assert "Microsoft.Widget" not in result[2]
+    assert result[2] != "generic warning suppression"
+
+
+def test_prepare_search_queries_leaves_non_transformations_unchanged() -> None:
+    queries = [
+        "Why does this fail?",
+        "```typespec\nmodel Widget { name: string; }\n```",
+        "TypeSpec model errors",
+    ]
+
+    assert _prepare_search_queries(queries) == queries
+
+
+def test_prepare_search_queries_does_not_treat_paths_as_code() -> None:
+    body = """We added a service folder below an existing RP namespace.
+
+```
+resource-manager
+--> Microsoft.Widget
+----> NewService
+------> preview/2026-01-01-preview
+```
+
+Should we update the registration path?
+```
+specification/widget/resource-manager/Microsoft.Widget/
+```"""
+    queries = ["RT registration with multiple files", body, "folder registration"]
+
+    assert _prepare_search_queries(queries) == queries
+
+
+def test_prepare_search_queries_preserves_process_facets() -> None:
+    body = """We have a new ARM API version to release.
+
+- How quickly can the API review be completed if the PR is ready next week?
+- Is there a way to streamline the release and get it done sooner?"""
+
+    result = _prepare_search_queries(
+        ["Service API Release", body, "ARM release workflow"]
+    )
+
+    assert result[:2] == ["Service API Release", body]
+    assert len(result) == 4
+    timing_query = result[2]
+    requirements_query = result[3]
+    assert "ARM" in timing_query
+    assert "API" in timing_query
+    assert "review" in timing_query
+    assert "turnaround" in timing_query
+    assert "SLA" in timing_query
+    assert "queue" in timing_query
+    assert "expedite" in timing_query
+    assert "readiness" in timing_query
+    assert "prerequisites" in timing_query
+    assert "TypeSpec" in requirements_query
+    assert "validation" in requirements_query
+    assert "CI" in requirements_query
+    assert "blocking" in requirements_query
+    assert "readiness" in requirements_query
+    assert timing_query != "ARM release workflow"
+    assert requirements_query != "ARM release workflow"
+
+
+def test_prepare_search_queries_combines_split_process_facets() -> None:
+    result = _prepare_search_queries(
+        [
+            "Service API Release",
+            "ARM API review timeline and turnaround",
+            "streamline release process and finish sooner",
+        ]
+    )
+
+    assert result[:2] == [
+        "Service API Release",
+        "ARM API review timeline and turnaround",
+    ]
+    assert len(result) == 4
+    assert "queue" in result[2]
+    assert "expedite" in result[2]
+    assert "readiness" in result[3]
+    assert "blocking" in result[3]
+
+
+def test_prioritize_process_results_reserves_each_facet() -> None:
+    groups = [
+        [KnowledgeChunk(chunk_id=f"exact-{i}") for i in range(5)],
+        [KnowledgeChunk(chunk_id=f"timing-{i}") for i in range(6)],
+        [KnowledgeChunk(chunk_id=f"ready-{i}") for i in range(6)],
+    ]
+
+    result = _prioritize_process_results(groups, top_k=10)
+
+    assert [chunk.chunk_id for chunk in result[:10]] == [
+        "exact-0",
+        "exact-1",
+        "timing-0",
+        "timing-1",
+        "timing-2",
+        "timing-3",
+        "ready-0",
+        "ready-1",
+        "ready-2",
+        "ready-3",
+    ]
 
 
 @pytest.mark.asyncio

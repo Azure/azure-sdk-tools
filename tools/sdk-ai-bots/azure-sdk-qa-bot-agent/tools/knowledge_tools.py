@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from enum import Enum
 from pathlib import PurePosixPath
 from typing import Annotated, Callable
@@ -59,6 +60,69 @@ _WIKI_ROUTE_PER_PAGE = 8
 _WIKI_ROUTE_MAX_REFS = 48
 _WIKI_ROUTE_MAX_TOTAL = 12
 
+_CODE_FENCE_RE = re.compile(r"```[^\n]*\n(?P<code>.*?)```", re.DOTALL)
+_CODE_TRANSFORMATION_RE = re.compile(
+    r"\b(?:add|apply|change|convert|fix|implement|migrate|modify|move|remove|"
+    r"rename|replace|set|suppress|update)\w*\b",
+    re.IGNORECASE,
+)
+_PROCESS_TOPIC_RE = re.compile(
+    r"\b(?:approval|deploy|onboard|pipeline|process|pull request|release|review|"
+    r"workflow|api version|pr)\b",
+    re.IGNORECASE,
+)
+_TIMELINE_RE = re.compile(
+    r"\b(?:how (?:fast|long|quickly)|next week|soon|sooner|timeline|turnaround)\b",
+    re.IGNORECASE,
+)
+_ACCELERATION_RE = re.compile(
+    r"\b(?:accelerat|expedit|fast(?:er)?|quick(?:er|ly)?|soon(?:er)?|speed up|"
+    r"streamlin)\w*\b",
+    re.IGNORECASE,
+)
+_IDENTIFIER_RE = re.compile(r"@?[A-Za-z_][A-Za-z0-9_./@-]*")
+_CONTEXT_ONLY_CODE_LINE_RE = re.compile(
+    r"^\s*(?:import|using|namespace)\b",
+    re.IGNORECASE,
+)
+_CODE_DECLARATION_RE = re.compile(
+    r"^\s*(?:alias|class|dec|enum|extern\s+dec|function|interface|model|op|"
+    r"record|resource|scalar|struct|type|union)\s+[A-Za-z_@]",
+    re.IGNORECASE | re.MULTILINE,
+)
+_STRUCTURAL_QUERY_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "by",
+    "can",
+    "could",
+    "code",
+    "details",
+    "do",
+    "for",
+    "from",
+    "get",
+    "have",
+    "how",
+    "in",
+    "is",
+    "it",
+    "our",
+    "of",
+    "on",
+    "or",
+    "question",
+    "set",
+    "the",
+    "there",
+    "this",
+    "to",
+    "we",
+    "were",
+    "with",
+}
+
 # Shared by both retrieval tracks so the agent picks a strategy the same way.
 _SEARCH_MODE_DESC = (
     "Search strategy to use. "
@@ -74,6 +138,190 @@ _SEARCH_MODE_DESC = (
     "Use 'deep' only when the question genuinely spans multiple unrelated concepts. "
     "Default: 'quick'."
 )
+
+
+def _structural_code_query(queries: list[str]) -> str | None:
+    """Build a stable search query for a requested transformation of fenced code."""
+    for query in sorted(queries, key=len, reverse=True):
+        code_blocks = [match.group("code") for match in _CODE_FENCE_RE.finditer(query)]
+        if not code_blocks:
+            continue
+        if not any(_CODE_DECLARATION_RE.search(block) for block in code_blocks):
+            continue
+
+        request = _CODE_FENCE_RE.sub(" ", query)
+        request = re.sub(r"(?im)^\s*title:\s*.*$", " ", request)
+        request = re.sub(r"(?i)\bquestion:\s*", " ", request)
+        if not _CODE_TRANSFORMATION_RE.search(request):
+            continue
+
+        relevant_code_lines = [
+            line
+            for block in code_blocks
+            for line in block.splitlines()
+            if line.strip()
+            and not line.lstrip().startswith(("//", "/*", "*"))
+            and not _CONTEXT_ONLY_CODE_LINE_RE.match(line)
+            and line.strip() not in {"{", "}", "};"}
+        ]
+        candidates = _IDENTIFIER_RE.findall(
+            f"{request}\n{' '.join(relevant_code_lines)}"
+        )
+
+        tokens: list[str] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            key = candidate.casefold()
+            if key in _STRUCTURAL_QUERY_STOPWORDS or key in seen:
+                continue
+            seen.add(key)
+            tokens.append(candidate)
+            if len(tokens) == 40:
+                break
+
+        if tokens:
+            return " ".join(tokens)
+    return None
+
+
+def _multi_part_process_text(queries: list[str]) -> str | None:
+    """Combine process facets even when the model splits them across queries."""
+    combined = "\n".join(query for query in queries if query.strip())
+    if _CODE_FENCE_RE.search(combined) or not _PROCESS_TOPIC_RE.search(combined):
+        return None
+    if combined.count("?") >= 2:
+        return combined
+    if _TIMELINE_RE.search(combined) and _ACCELERATION_RE.search(combined):
+        return combined
+    return None
+
+
+def _process_facets_query(queries: list[str]) -> str | None:
+    """Preserve timing, readiness, and acceleration facets in process questions."""
+    query = _multi_part_process_text(queries)
+    if query is None:
+        return None
+
+    question_lines = [line for line in query.splitlines() if "?" in line]
+    candidates = _IDENTIFIER_RE.findall(" ".join(question_lines) or query)
+    if _TIMELINE_RE.search(query):
+        candidates.extend(("turnaround", "time", "SLA", "queue"))
+    if _ACCELERATION_RE.search(query):
+        candidates.extend(("expedite", "readiness", "prerequisites", "blocking"))
+    if re.search(r"\bARM\b", query) and re.search(
+        r"\b(?:API|spec|service)\b",
+        query,
+        re.IGNORECASE,
+    ):
+        candidates.extend(("ARM", "spec", "PR"))
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = candidate.casefold()
+        if key in _STRUCTURAL_QUERY_STOPWORDS or key in seen:
+            continue
+        seen.add(key)
+        tokens.append(candidate)
+        if len(tokens) == 40:
+            break
+
+    return " ".join(tokens) if tokens else None
+
+
+def _process_requirements_query(queries: list[str]) -> str | None:
+    """Build a separate readiness query for a multi-part process question."""
+    query = _multi_part_process_text(queries)
+    if query is None:
+        return None
+
+    candidates: list[str] = []
+    if re.search(
+        r"\bnew\s+(?:ARM\s+)?API version\b",
+        query,
+        re.IGNORECASE,
+    ):
+        candidates.extend(
+            ("new", "ARM", "API", "version", "TypeSpec", "required", "blocked")
+        )
+    elif re.search(r"\bARM\b", query):
+        candidates.append("ARM")
+    if re.search(r"\bAPI\b", query):
+        candidates.append("API")
+    if re.search(r"\breview\b", query, re.IGNORECASE):
+        candidates.append("review")
+    if re.search(r"\brelease\b", query, re.IGNORECASE):
+        candidates.append("release")
+    candidates.extend(
+        (
+            "spec",
+            "PR",
+            "requirements",
+            "validation",
+            "breaking",
+            "changes",
+            "CI",
+            "blocking",
+            "readiness",
+            "prerequisites",
+        )
+    )
+
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = candidate.casefold()
+        if key in _STRUCTURAL_QUERY_STOPWORDS or key in seen:
+            continue
+        seen.add(key)
+        tokens.append(candidate)
+    return " ".join(tokens)
+
+
+def _prepare_search_queries(queries: list[str]) -> list[str]:
+    """Keep exact queries and make the final facet query deterministic."""
+    capped_queries = queries[:3]
+    structural_query = _structural_code_query(capped_queries)
+    if structural_query:
+        if len(capped_queries) == 3:
+            capped_queries[-1] = structural_query
+        else:
+            capped_queries.append(structural_query)
+        return capped_queries
+
+    process_query = _process_facets_query(capped_queries)
+    if process_query:
+        base_queries = capped_queries[:2]
+        base_queries.append(process_query)
+        requirements_query = _process_requirements_query(capped_queries)
+        if requirements_query:
+            base_queries.append(requirements_query)
+        return base_queries
+    return capped_queries
+
+
+def _prioritize_process_results(
+    result_groups: list[list[KnowledgeChunk]],
+    top_k: int,
+) -> list[KnowledgeChunk]:
+    """Reserve result capacity for exact, timing, and readiness facets."""
+    exact_quota = max(1, top_k // 5)
+    remaining = max(0, top_k - exact_quota)
+    timing_quota = (remaining + 1) // 2
+    readiness_quota = remaining - timing_quota
+    quotas = (exact_quota, timing_quota, readiness_quota)
+
+    prioritized = [
+        chunk
+        for group, quota in zip(result_groups, quotas)
+        for chunk in group[:quota]
+    ]
+    prioritized.extend(
+        chunk
+        for group, quota in zip(result_groups, quotas)
+        for chunk in group[quota:]
+    )
+    return prioritized
+
 
 class KbSourceView(BaseModel):
     folder: str
@@ -184,22 +432,41 @@ class KnowledgeTools:
             "Q&A; the index embeds the full body text, so complete natural "
             "sentences retrieve far better than stripped keyword fragments. "
             "The search combines semantic/vector and BM25 keyword retrieval. "
-            "Provide the queries as a **progressive abstraction ladder** — "
-            "start concrete and get more abstract with each query, so the set "
+            "Provide the queries as an **exact-to-abstract ladder** — "
+            "start with the user's wording and get more abstract, so the set "
             "covers both exact-wording recall and conceptual-topic recall. "
-            "QUERY 1 (REQUIRED) — the **most concrete** version: a full, "
-            "standalone restatement of the user's question that KEEPS their "
-            "concrete nouns (decorator names, model/property names, version "
-            "numbers, error text, rule IDs, check names, config keys) verbatim. "
-            "This is also the exact-term lookup path. Resolve follow-up context "
-            "(replace 'it'/'this' with the real subject) and normalize obvious synonyms "
-            "(e.g. 'CI failure' → 'validation failure'). "
-            "QUERY 2 (optional) — **more abstract**: drop the conversation-"
-            "specific sample values (their own model name, exact version "
-            "strings) but keep the underlying feature/concept terms. "
-            "QUERY 3 (optional) — the **most abstract / core question**: "
+            "Use all three queries when the user supplies code and requests a "
+            "concrete transformation. "
+            "Before constructing any query, replace credentials, access tokens, "
+            "connection strings, signed URL parameters, and other sensitive "
+            "values with [REDACTED]. Never send sensitive values to this tool. "
+            "QUERY 1 (REQUIRED) — the shortest exact non-sensitive identifier "
+            "provided by the user: an explicit title/subject, error message, "
+            "requested symbol, or otherwise the original question. When a short "
+            "title or subject precedes a longer body, search that title alone; "
+            "do not concatenate it with the body. Preserve word order and every "
+            "concrete non-sensitive token, including decorator names, model/property "
+            "names, version numbers, rule IDs, check names, config keys, and "
+            "repository names. Do not normalize synonyms or remove sample values "
+            "from this query. "
+            "QUERY 2 (optional) — the complete standalone question body when query "
+            "1 used a title/subject; otherwise a normalized restatement. Resolve "
+            "follow-up context and obvious synonyms, then drop conversation-specific "
+            "sample values only when they are not needed to identify the exact case. "
+            "QUERY 3 (required for a supplied-code transformation; otherwise "
+            "optional) — the **most abstract / core question**: "
             "distill to the underlying concept the docs are titled by, as one "
-            "short question or topic phrase. "
+            "short question or topic phrase. For a requested transformation of "
+            "supplied code, use a concise structural description instead: retain "
+            "the primary declaration name, relevant decorators or directives, and "
+            "repeated member names or construct pattern needed to find analogous "
+            "examples. Treat imports, using statements, namespaces, and surrounding "
+            "declarations as context unless the request targets them. Do not reduce "
+            "a concrete code shape to only a generic rule or diagnostic category. "
+            "For a multi-part process question, retain every requested facet, "
+            "especially timing or turnaround, prerequisites or blockers, and ways "
+            "to accelerate or escalate the process; do not reduce these to only the "
+            "overall workflow name. "
             "At least 1, at most 3 queries.",
         ],
         sources: Annotated[
@@ -207,14 +474,12 @@ class KnowledgeTools:
             "List of knowledge source **names** to search. "
             "Pick from the sources exposed by the active skill or tenant context. "
             "Example: ['typespec_docs', 'azure_api_guidelines']. "
-            "GUIDANCE: When seeking prescriptive guidance (the right pattern/template to use), "
-            "prioritize authoritative sources (e.g., 'typespec_azure_docs', 'azure_resource_manager_rpc') "
-            "OVER historical Q&A sources (e.g., 'static_typespec_qa'). "
-            "Q&A sources often discuss workarounds and edge cases; for template selection, "
-            "start with the official docs. "
-            "If not provided, falls back to the tenant's sources when a "
-            "`tenant_id` is given, otherwise every source in the whole "
-            "knowledge base.",
+            "Usually omit this parameter: with `tenant_id`, the default searches every "
+            "source configured for that tenant and preserves exact-case Q&A recall. "
+            "In particular, do not source-filter the initial search for an exact title, "
+            "error, linked case, exception, or source-location question. Restrict sources "
+            "only in a targeted follow-up for a named evidence gap. Without `tenant_id`, "
+            "omitting this parameter searches the whole knowledge base.",
         ] = None,
         tenant_id: Annotated[
             str | None,
@@ -264,19 +529,48 @@ class KnowledgeTools:
         source_filters = _resolve_source_filters(sources, tenant_id, service_type)
 
         use_deep = search_mode == SearchMode.deep.value
-        capped_queries = queries[:3]
+        capped_queries = _prepare_search_queries(queries)
 
-        raw_chunks = await search_client.fused_search(
-            capped_queries,
-            source_filters,
-            extra_filter=NON_WIKI_FILTER,
-            use_agentic=use_deep,
-        )
+        if len(capped_queries) == 4:
+            result_groups = await asyncio.gather(
+                search_client.fused_search(
+                    capped_queries[:2],
+                    source_filters,
+                    extra_filter=NON_WIKI_FILTER,
+                    use_agentic=use_deep,
+                ),
+                search_client.fused_search(
+                    [capped_queries[2]],
+                    source_filters,
+                    extra_filter=NON_WIKI_FILTER,
+                    use_agentic=use_deep,
+                ),
+                search_client.fused_search(
+                    [capped_queries[3]],
+                    source_filters,
+                    extra_filter=NON_WIKI_FILTER,
+                    use_agentic=use_deep,
+                ),
+            )
+            raw_chunks = _prioritize_process_results(
+                [
+                    search_client.deduplicate_chunks(group)
+                    for group in result_groups
+                ],
+                search_client.top_k,
+            )
+        else:
+            raw_chunks = await search_client.fused_search(
+                capped_queries,
+                source_filters,
+                extra_filter=NON_WIKI_FILTER,
+                use_agentic=use_deep,
+            )
 
         logger.info(
-            "Search completed: mode=%s, queries=%s, raw_chunks=%d",
+            "Search completed: mode=%s, query_count=%d, raw_chunks=%d",
             search_mode,
-            capped_queries,
+            len(capped_queries),
             len(raw_chunks),
         )
 
@@ -580,7 +874,9 @@ class KnowledgeTools:
             page_hits, key=lambda c: c.rerank_score, reverse=True
         )[:_WIKI_TOP]
         if not wiki_pages:
-            logger.info("wiki_search: no wiki pages for queries=%s", capped_queries)
+            logger.info(
+                "wiki_search: no wiki pages for query_count=%d", len(capped_queries)
+            )
             return SearchKnowledgeBaseResult(results=[])
 
         # Route each page to the SOURCE chunks it was built from (grounded detail).
@@ -610,8 +906,11 @@ class KnowledgeTools:
             )
         )
         logger.info(
-            "wiki_search: mode=%s, %d page(s) + %d routed source(s) for queries=%s",
-            search_mode, len(wiki_pages), len(routed), capped_queries,
+            "wiki_search: mode=%s, %d page(s) + %d routed source(s) for query_count=%d",
+            search_mode,
+            len(wiki_pages),
+            len(routed),
+            len(capped_queries),
         )
         return SearchKnowledgeBaseResult(results=results)
 

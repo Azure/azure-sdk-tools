@@ -579,6 +579,9 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "AzSDK agent, Azure MCP tool usage guidance",
             "Creating new service based on TypeSpec or OpenAPI (Swagger)",
         ],
+        exclusions=[
+            "API specification PR review timing, queue, readiness, validation, or merge blockers — route to api_spec_review_bot",
+        ],
         sources=_sources(
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_STATIC_CPEX_DOCS,
@@ -603,6 +606,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         scope="Azure REST API specification PR review process and failing checks (not API design questions).",
         topics=[
             "Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories",
+            "ARM specification review timing, queue position, readiness prerequisites, blockers, and supported escalation paths",
             "How to fix specification PR pipeline errors, SDK validation errors, check failures or CI failures",
             "How to suppress specification PR pipeline errors, SDK validation errors, check failures or CI failures",
         ],

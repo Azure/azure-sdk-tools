@@ -61,11 +61,14 @@ is not imported or used by the runtime.
 Separate invocation retries, dependency setup, compilation, analyzer work,
 Agent/tool waits, and finalization when reporting elapsed time. The preparation
 manifest's `totalMs` includes dependency setup, not just compiler work.
-Preparation already reuses the repository's installed toolchain when its
-lockfile hash and required package versions match; otherwise it installs an
-isolated toolchain. Use the repository's required Node version and install its
-locked dependencies once to enable that existing reuse path. Do not skip
-compatibility checks or reuse a mismatched toolchain for speed.
+Preparation detects npm or pnpm from `package.json` and the repository
+lockfile. npm retains the shared cached `node_modules` path; pnpm requires an
+exact `packageManager` version, installs once per sparse worktree with a frozen
+lockfile, and reuses a shared content-addressed store. Both modes disable
+lifecycle scripts and verify required TypeSpec package versions against the
+selected revision's lockfile. The dependency fingerprint includes package
+metadata, lockfile and workspace configuration, platform, and architecture.
+Do not skip compatibility checks or reuse a mismatched toolchain for speed.
 
 ## End-to-end flow
 
@@ -192,6 +195,24 @@ File: `preparation-manifest.json`
     "roots": ["specification/<service>"],
     "verified": true
   },
+  "dependencySetup": {
+    "baseline": {
+      "manager": "npm|pnpm",
+      "managerVersion": "11.8.0|null",
+      "lockFile": "package-lock.json|pnpm-lock.yaml",
+      "fingerprint": "<sha256>",
+      "reused": false,
+      "durationMs": 1000
+    },
+    "target": {
+      "manager": "npm|pnpm",
+      "managerVersion": "11.8.0|null",
+      "lockFile": "package-lock.json|pnpm-lock.yaml",
+      "fingerprint": "<sha256>",
+      "reused": true,
+      "durationMs": 100
+    }
+  },
   "changedFiles": [
     {
       "path": "specification/<service>/<project>/main.tsp",
@@ -296,11 +317,29 @@ Preparation rules:
 4. Create detached service-scoped sparse base/current worktrees for source
    analysis. Artifact roles may both use the current worktree.
 5. Apply dirty overlays only to the temporary current worktree.
-6. Select one source revision and API version for each artifact-comparison
+6. Detect and prepare the locked npm or pnpm toolchain for each worktree.
+7. Select one source revision and API version for each artifact-comparison
    role.
-7. Compile AutoRest and TCGC with the same source revision and API version for
+8. Compile AutoRest and TCGC with the same source revision and API version for
    each role.
-8. Preserve commands, logs, exit codes, timings, and hashes.
+9. Preserve commands, logs, exit codes, timings, and hashes.
+
+Dependency setup rules:
+
+1. Select npm when `package-lock.json` is the sole lockfile and no package
+   manager is declared. An exact npm declaration may also select it.
+2. Select pnpm only when `packageManager` declares an exact pnpm version and
+   `pnpm-lock.yaml` is present. Reject missing, ambiguous, or unsupported
+   package-manager inputs.
+3. Run npm with `npm ci`; cache the resulting `node_modules` by dependency
+   fingerprint and junction it into matching sparse worktrees.
+4. Run the declared pnpm version through `npx`, with `--frozen-lockfile`,
+   `--ignore-scripts`, and a shared store. Install separately in each sparse
+   worktree so workspace links resolve in that revision.
+5. Preflight the required TypeSpec packages against the applicable npm or pnpm
+   lockfile before compilation. Multi-document pnpm lockfiles are supported.
+6. On Windows, invoke npm, pnpm, and TypeSpec JavaScript CLIs directly through
+   Node rather than passing `.cmd` arguments through a shell.
 
 API-version policy:
 
@@ -2494,7 +2533,7 @@ Never label a head-source artifact as a base-commit artifact.
 | Azure Guidelines retrieval       | `references/agentic-search.md`, `references/reference-document-links.md`                                          |
 | Source-only documentation checks | `references/document-quality.md`, `scripts/document-quality-input.mjs`, `scripts/document-quality-assessment.mjs` |
 | Output contract                  | `references/output-contract.md`, `scripts/*.schema.json`                                                          |
-| Deterministic preparation        | `scripts/prepare-assessment.mjs`, `scripts/run-assessment-analysis.mjs`                                           |
+| Deterministic preparation        | `scripts/prepare-assessment.mjs`, `scripts/package-manager.mjs`, `scripts/run-assessment-analysis.mjs`            |
 | Dimension analyzers              | `scripts/analyze-*.mjs`                                                                                           |
 | Assembly and validation          | `scripts/assemble-assessment.mjs`, `scripts/validate-assessment.mjs`                                              |
 | HTML presentation                | `scripts/assessment-display.mjs`, `scripts/render-assessment-html.mjs`                                            |

@@ -4,9 +4,13 @@
 
 ### Features Added
 
+- Added `--max-attempts` / `maxAttempts` to customized-update for bounded custom-code repairs in one retained conversation, with `attemptsUsed` in the existing response.
+
 ### Breaking Changes
 
 ### Bugs Fixed
+
+- Customized-code repairs validate classifier no-op results and retain final build/regeneration diagnostics when attempts are exhausted.
 
 ### Other Changes
 

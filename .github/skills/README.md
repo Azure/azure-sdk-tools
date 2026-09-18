@@ -23,6 +23,7 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 | [azsdk-common-pipeline-analysis](azsdk-common-pipeline-analysis/SKILL.md)                     | "pipeline failed", "build failure", "CI check failing" | Analyze SDK CI failures and prescribe fixes without editing |
 | [azsdk-common-pipeline-fixer](azsdk-common-pipeline-fixer/SKILL.md)                           | "fix pipeline", "fix CI", "fix failing tests"          | Apply and verify fixes from pipeline analysis               |
 | [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md)                                 | "release SDK", "trigger release pipeline"              | Check release readiness and trigger SDK releases            |
+| [azsdk-common-sdk-breaking-change](azsdk-common-sdk-breaking-change/SKILL.md)                                 | "detect and mitigate SDK breaking changes"              | Detect SDK breaking changes and mitigate the breaking changes            |
 
 ### Development & Meta Skills
 

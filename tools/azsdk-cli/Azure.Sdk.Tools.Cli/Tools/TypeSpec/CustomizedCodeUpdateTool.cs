@@ -678,7 +678,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 await ApplyJavaScriptCustomizationAsync(languageService, packagePath, ct);
 
                 logger.LogDebug("Building {packagePath}", packagePath);
-                var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                var (success, error, _) = await languageService.BuildAsync(packagePath, additionalArguments: null, timeoutMinutes: CommandTimeoutInMinutes, ct: ct);
                 buildSucceeded = success;
                 buildError = error;
 
@@ -767,7 +767,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (!buildSucceeded && buildError == null)
         {
             logger.LogInformation("Building for error context...");
-            var (s, e, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+            var (s, e, _) = await languageService.BuildAsync(packagePath, additionalArguments: null, timeoutMinutes: CommandTimeoutInMinutes, ct: ct);
             buildSucceeded = s;
             buildError = e;
         }
@@ -902,7 +902,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         // Step 6: Final build to validate patches
         logger.LogInformation("Running final build to validate code customization patches...");
-        var (finalBuildSuccess, finalBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+        var (finalBuildSuccess, finalBuildError, _) = await languageService.BuildAsync(packagePath, additionalArguments: null, timeoutMinutes: CommandTimeoutInMinutes, ct: ct);
 
         if (finalBuildSuccess)
         {

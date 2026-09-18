@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -10,8 +9,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -104,6 +103,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, string sessionId = null)
         {
+            if (!DebugLogger.CheckLogLevel(LogLevel.Debug))
+            {
+                sanitizers = BodyKeySanitizer.Batch(sanitizers);
+            }
+
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
                 RecordEntry reqEntryPreSanitize = null;
@@ -207,6 +211,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             try
             {
+                if (!DebugLogger.CheckLogLevel(LogLevel.Debug))
+                {
+                    sanitizers = BodyKeySanitizer.Batch(sanitizers);
+                }
+
                 foreach (var sanitizer in sanitizers)
                 {
                     var entriesPreSanitize = Array.Empty<RecordEntry>();

@@ -1,107 +1,123 @@
 # Overdue release plan maintenance
 
+These CLI-only commands list overdue release plans, send reminders, and abandon
+eligible inactive plans. **Preview with `--dry-run` before running cleanup.**
+
+## Scope and grace period
+
+The scan considers Azure DevOps release plans in `New`, `Not Started`, or
+`In Progress` state, excluding plans tagged `Release Planner App Test`.
+A plan is overdue when the current UTC month is later than its recorded SDK
+target release month. The scan accepts full or abbreviated English month names
+(`September 2026` or `Sep 2026`); missing or unparseable target months are excluded.
+
+The first overdue calendar month is for reminders only. Cleanup can begin in
+the following month, provided the plan also meets the eligibility rules below:
+
+| Target month   | Reminder-only grace month | Earliest cleanup date |
+| -------------- | ------------------------- | --------------------- |
+| September 2026 | October 2026              | November 1, 2026      |
+| December 2026  | January 2027              | February 1, 2027      |
+
+The grace period is based on the recorded target month, not creation date, last
+modification, or the first reminder. Creation age and SDK generation status are
+not additional eligibility checks. Review incorrect dates before cleanup; the
+scan does not infer or repair them.
+
+## Eligibility and reminder policy
+
+The following rules apply after the scope and date checks above. Reminders are
+attempted while overdue; abandonment is allowed only after the grace period.
+
+| Release type and recorded work                                                      | Reminder action                                              | Eligible for abandonment |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------ |
+| Public Preview / GA: any SDK marked `Released`                                      | Update the target month or complete remaining SDK releases   | No                       |
+| Public Preview / GA: no released SDKs and no linked SDK PRs                         | Update the target month or abandon using the Azure SDK Agent | Yes                      |
+| Public Preview / GA: no released SDKs and all linked SDK PRs closed without merging | Update the target month or abandon using the Azure SDK Agent | Yes                      |
+| Public Preview / GA: any active or merged SDK PR                                    | Update the target month or complete remaining SDK releases   | No                       |
+| Private Preview: spec PR missing or unmerged                                        | Merge the spec PR, update the target month, or abandon       | Yes                      |
+| Private Preview: spec PR merged                                                     | No incomplete-spec reminder                                  | No                       |
+| Unknown release type                                                                | Update the target month or review the dashboard              | No                       |
+
+- SDK release status comes from the release plan. **Any SDK marked `Released`
+  protects a Public Preview/GA plan**, even if no PRs are linked or all are closed.
+- For Public Preview/GA, linked SDK PR states come from GitHub, not cached Azure
+  DevOps fields. All linked SDK PRs must be confirmed closed and unmerged to
+  authorize cleanup. Active, merged, or unrecognized SDK PR states protect the plan.
+- Private Preview uses the spec PR's merge state, not API approval.
+- Both `GA` and the legacy Azure DevOps value `APEX GA` are read as GA. New
+  release-type writes continue to use `GA`.
+
+## Commands and output
+
+| Command                                                                    | Behavior                                                                                                               |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `azsdk release-plan list-overdue`                                          | Read-only list of all scoped overdue plans, including protected plans and those still in their grace month. No emails. |
+| `azsdk release-plan abandon-overdue --dry-run`                             | Read-only preview of eligible plans using the same checks as cleanup. No updates or emails.                            |
+| `azsdk release-plan abandon-overdue`                                       | Marks eligible plans `Abandoned` and attempts confirmation emails. **Performs writes.**                                |
+| `azsdk release-plan list-overdue --notify-owners true --emailer-uri <uri>` | Attempts overdue reminders without changing plan states.                                                               |
+
+Preview and actual cleanup show plan IDs, dashboard links, statuses, target
+months, and reasons. Preview preserves the current statuses; actual cleanup
+returns only plans successfully marked `Abandoned`. Displayed IDs use the
+release-plan ID, falling back to the work-item ID when necessary.
+
+Add `--output json` for structured output. In cleanup responses, `release_plans`
+contains the results and `eligibility_reasons` is keyed by each plan's
+`WorkItemId`, which can differ from its `ReleasePlanId`. Preview also includes
+`dry_run: true`. Both text and JSON retain partial results alongside errors.
+
+A successful empty preview means no scanned plans qualify. It is a point-in-time
+assessment, not a reservation: an actual run re-evaluates eligibility, and a plan
+can change or its update can fail after the preview.
+
+## Safety and failures
+
+- **Initial scan failure:** failure to retrieve the plans, including an unreadable
+  linked Private Preview API-spec work item, stops that command before processing
+  plans. Unreadable spec data is not treated as a missing spec PR.
+- **GitHub lookup failure:** an invalid, inaccessible, or failed PR lookup skips
+  that plan for cleanup. The reminder command instead attempts a generic overdue
+  email asking the owner to update the target month or review the dashboard,
+  without asserting an activity state or recommending abandonment.
+- **Concurrent updates:** both modes require a valid work-item revision. Actual
+  cleanup atomically checks that revision when changing the state. A revision
+  conflict skips the plan with an error, without retry or confirmation email.
+- **Partial failures:** reported lookup, update, or reminder errors produce a
+  nonzero exit code while other plans continue. Preview identifies an incomplete
+  eligible list; actual cleanup retains only successful state changes. A fallback
+  reminder does not hide the lookup error. Confirmation delivery is best effort,
+  as described below.
+- **Cancellation:** stops further processing and the wait for a stalled GitHub
+  read. It does not trigger a fallback email or undo completed state changes.
+
+## Notifications and pipeline operation
+
+Azure DevOps read permissions are required for listing and preview; actual
+cleanup also requires work-item update permissions. GitHub credentials must
+allow reads of linked repositories, including private specs. The CLI supports
+`GITHUB_TOKEN` or an existing GitHub CLI login.
+
+Reminders require `--notify-owners true`, a valid `--emailer-uri`, and a valid
+submitter email address. They report lookup and send failures to the caller.
+Confirmation emails use `AZSDKTOOLS_NOTIFICATION_SERVICE_URL` and the shared
+notification service, which currently accepts only `@microsoft.com` recipients.
+A missing URL or unsupported recipient skips confirmation; delivery failures are
+logged and do not roll back abandonment. **A successful cleanup exit code does
+not guarantee email delivery.**
+
 The [unreleased-SDK pipeline](https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/report-unreleased-sdks.yml)
-runs on the first day of each month at 00:00 UTC. It applies cleanup first,
-then sends reminders for the remaining overdue plans. Manual pipeline runs
-send reminders only; the CLI cleanup command itself performs writes when invoked.
+is configured to run on `main` on the first day of each month at 00:00 UTC:
 
-## Calendar-month grace period
+- Scheduled runs perform cleanup, then query again to remind the remaining
+  overdue plans. Newly abandoned plans are excluded from that second query.
+- Manual pipeline runs attempt reminders only; **they are not read-only previews**.
+- The cleanup step allows errors so reminders can still be attempted. Earlier
+  setup failures or pipeline cancellation prevent subsequent steps from running;
+  a later reminder failure can still fail the job.
+- Authorize the pipeline's service connections and configure its existing
+  emailer secret. The pipeline installs the latest released CLI, not the checked-out
+  source, so publish a version containing these commands before enabling the schedule.
 
-A plan is overdue when the current UTC month is later than its target release
-month. Both `MMMM yyyy` and `MMM yyyy` are accepted.
-
-The first overdue month is a warning-only grace period. For a September 2026
-target, October 1 sends a reminder; November 1 is the first cleanup-eligible
-scan. Updating the target month moves that boundary. The policy applies to
-active plans (`New`, `Not Started`, and `In Progress`), not completed, closed,
-duplicate, abandoned, or test-tagged plans.
-
-## Policy
-
-| Release type and work state                             | Reminder when overdue                                                | Auto-abandon after the grace period |
-| ------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------- |
-| Public Preview / GA: no SDK PRs                         | Update the target month or abandon using the Azure SDK Agent         | Yes                                 |
-| Public Preview / GA: all SDK PRs closed without merging | Update the target month or abandon using the Azure SDK Agent         | Yes                                 |
-| Public Preview / GA: any active or merged SDK PR        | Update the target month or complete remaining SDK release activities | No                                  |
-| Public Preview / GA: any SDK already released           | Update the target month or complete remaining SDK release activities | No                                  |
-| Private Preview: spec PR missing or unmerged            | Merge the spec PR, update the target month, or abandon               | Yes                                 |
-| Private Preview: spec PR merged                         | No incomplete-spec reminder                                          | No                                  |
-
-Both `GA` and the legacy Azure DevOps value `APEX GA` are read as GA; new
-release-type writes still use `GA`.
-
-SDK PR eligibility uses current GitHub state, not cached Azure DevOps PR
-statuses. Every linked SDK PR must be confirmed closed without merging before
-cleanup is allowed, even if its stored status is empty or says it is still
-active. Active, merged, or unrecognized GitHub PR states prevent abandonment.
-Unknown release types never authorize cleanup. A partial release is protected
-even if every associated PR is closed or no PR URL is recorded. Private Preview
-eligibility uses GitHub's spec merge state, not API approval.
-
-GitHub lookup errors (including inaccessible private PRs) are reported and the
-affected plan is skipped for cleanup. When sending overdue reminders, a failed
-activity lookup instead produces a generic reminder to update the target month
-or review the dashboard, without asserting an activity state or recommending
-abandonment. The lookup error remains visible with a nonzero exit code even if
-the generic reminder is sent; email failures are reported separately. Cancellation
-does not trigger a fallback email. An unreadable Private Preview API-spec work
-item fails the initial scan rather than being treated as a missing spec. Other
-per-plan update and reminder failures are reported while the batch continues.
-Each abandonment atomically tests the scanned Azure DevOps work-item revision.
-If an owner or release automation changes the plan during the scan, the update
-is rejected and reported without retrying or sending a confirmation for that plan.
-The next scan re-evaluates its current state. Missing revisions also prevent updates.
-Cancellation stops processing without waiting for a stalled GitHub read to finish.
-Successful abandonment sends a confirmation
-email; the subsequent reminder query excludes the newly abandoned plan.
-
-## Preview eligible plans
-
-Run `azsdk release-plan abandon-overdue --dry-run` before live cleanup to list
-the plans currently eligible for abandonment. It uses the same overdue query,
-calendar-month grace period, release-type rules, live GitHub checks, and valid
-snapshot-revision requirement as an actual run. It does not update work items,
-change plan statuses, or send notifications.
-
-The preview shows each eligible plan's ID, dashboard link, current status,
-target month, and eligibility reason. Add `--output json` for structured output:
-`dry_run` is `true`, `release_plans` contains the eligible plans with their
-unchanged statuses, and `eligibility_reasons` is keyed by work item ID.
-Unlike `list-overdue`, this list excludes plans still in their grace month and
-plans protected by the release-work rules.
-
-Actual cleanup also returns plan IDs, dashboard links, statuses, and reasons,
-but only for plans successfully marked as abandoned. The same `eligibility_reasons`
-JSON field is used in both modes, keyed by work item ID. If some operations fail,
-the successful results and summary remain visible alongside the errors in both
-plain and JSON output. Failed state updates are not included as successful results.
-
-Lookup failures are reported with a nonzero exit code. If some plans cannot be
-evaluated, confirmed candidates are still returned, but the output explicitly
-marks the list as incomplete. A successful empty preview means no plans qualify.
-The preview is a point-in-time assessment, not a reservation: a later run
-re-evaluates eligibility and may skip plans that changed or whose updates fail.
-
-## Operations
-
-- `azsdk release-plan list-overdue` is read-only. Add `--notify-owners true`
-  and `--emailer-uri` to send state-specific reminders.
-- `azsdk release-plan abandon-overdue --dry-run` previews eligible plans only.
-  Omitting `--dry-run` writes the eligible plans' state to
-  `Abandoned` and notifies their submitters through `AZSDKTOOLS_NOTIFICATION_SERVICE_URL`.
-- Preview requires Azure DevOps read permissions; actual cleanup also requires
-  work-item update permissions. Set `GITHUB_TOKEN` with read
-  access to the linked repositories, including private spec repositories.
-  The pipeline uses the shared GitHub-login template; its service connection
-  must be authorized for this pipeline. Email delivery uses the existing emailer secret.
-- The pipeline installs the latest released `azsdk` binary. Publish a CLI
-  version containing this policy before enabling the monthly schedule.
-- Cleanup failures leave the pipeline partially succeeded and do not suppress
-  the following reminders. Authentication or installation failures still stop
-  processing, and cancellation does not start new reminder work.
-- Abandonment confirmation uses the existing best-effort notification service;
-  mail delivery errors are logged and do not roll back the state update.
-- To continue a release after abandonment, create a new release plan with an
-  updated SDK target release month. The CLI cannot reopen an abandoned plan.
-
-This maintenance policy does not require users to supply an abandonment reason.
+To continue a release after abandonment, create a new release plan with an
+updated SDK target release month. The CLI cannot reopen an abandoned plan.

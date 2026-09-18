@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Text;
-
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
@@ -11,9 +9,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 public class GitOptions : ProcessOptions, IProcessOptions
 {
     private const string GIT = "git";
-
-    // Git emits UTF-8 paths even when the Windows console uses an OEM code page.
-    public override Encoding? OutputEncoding => Encoding.UTF8;
 
     /// <summary>
     /// The git subcommand being run (e.g., "rev-parse", "remote", "merge-base").
@@ -40,14 +35,12 @@ public class GitOptions : ProcessOptions, IProcessOptions
     /// <param name="workingDirectory">Working directory for the git command</param>
     /// <param name="logOutputStream">Whether to log output streams</param>
     /// <param name="timeout">Optional timeout (defaults to 2 minutes from base class)</param>
-    /// <param name="environmentVariables">Environment overrides for this command only</param>
     public GitOptions(
         string[] args,
         string workingDirectory,
         bool logOutputStream = false,
-        TimeSpan? timeout = null,
-        IDictionary<string, string>? environmentVariables = null
-    ) : base(GIT, args, logOutputStream, workingDirectory, timeout, environmentVariables)
+        TimeSpan? timeout = null
+    ) : base(GIT, args, logOutputStream, workingDirectory, timeout)
     {
         SubCommand = args.Length > 0 ? args[0] : string.Empty;
     }
@@ -59,14 +52,12 @@ public class GitOptions : ProcessOptions, IProcessOptions
     /// <param name="workingDirectory">Working directory for the git command</param>
     /// <param name="logOutputStream">Whether to log output streams</param>
     /// <param name="timeout">Optional timeout (defaults to 2 minutes from base class)</param>
-    /// <param name="environmentVariables">Environment overrides for this command only</param>
     public GitOptions(
         string arguments,
         string workingDirectory,
         bool logOutputStream = false,
-        TimeSpan? timeout = null,
-        IDictionary<string, string>? environmentVariables = null
-    ) : this(arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries), workingDirectory, logOutputStream, timeout, environmentVariables)
+        TimeSpan? timeout = null
+    ) : this(arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries), workingDirectory, logOutputStream, timeout)
     {
     }
 }

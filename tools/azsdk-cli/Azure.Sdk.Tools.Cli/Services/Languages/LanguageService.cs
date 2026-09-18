@@ -1,14 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Collections.Concurrent;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
-using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
-using Azure.Sdk.Tools.Cli.Services.Repair;
-using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages
 {
@@ -399,123 +395,25 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             string packagePath,
             string buildContext,
             CancellationToken ct)
-        {
-            return Task.FromResult(new List<AppliedPatch>());
-        }
+            => ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct, 1, null);
 
         /// <summary>
-        /// Runs a single retained repair conversation. The caller owns deterministic validation
-        /// and decides whether each idle turn continues, independently of the agent's Exit result.
+        /// Applies patches in one agent session, validating the cumulative tool-recorded patches.
+        /// Failed validation feeds diagnostics back into the same conversation.
         /// </summary>
-        public virtual Task RunRepairSessionAsync(
+        /// <remarks>
+        /// Languages retain their original iteration budget plus maxAttempts - 1. MaxIterations
+        /// also counts missing-Exit reminders, so it is not AttemptsUsed; the caller caps validations.
+        /// </remarks>
+        public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(
             string customizationRoot,
             string packagePath,
             string buildContext,
-            int maxAttempts,
-            Func<CancellationToken, Task> onTurnStarting,
-            Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
-            Action<AppliedPatch> onPatchApplied,
-            CancellationToken ct)
-        {
-            throw new NotSupportedException($"Bounded customization repair is not supported for {Language}.");
-        }
-
-        protected async Task RunRepairAgentAsync(
-            ICopilotAgentRunner runner,
-            string customizationRoot,
-            string packagePath,
-            Func<List<string>, List<string>, string> createPrompt,
-            int maxAttempts,
-            Func<CancellationToken, Task> onTurnStarting,
-            Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
-            Action<AppliedPatch> onPatchApplied,
             CancellationToken ct,
-            bool allowRename = false)
+            int maxAttempts,
+            Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
         {
-            ct.ThrowIfCancellationRequested();
-            ArgumentOutOfRangeException.ThrowIfLessThan(maxAttempts, 1);
-            packagePath = Path.GetFullPath(packagePath);
-            customizationRoot = Path.GetFullPath(customizationRoot);
-            if (!ToolHelpers.IsPathWithinDirectoryWithoutLinks(packagePath, customizationRoot))
-            {
-                throw new ArgumentException("Customization root must be within the package and cannot contain links.", nameof(customizationRoot));
-            }
-
-            var policy = new CustomizationFilePolicy(Language, packagePath);
-            var files = policy.GetCustomizationFiles()
-                .Where(f => ToolHelpers.IsPathWithinDirectoryWithoutLinks(customizationRoot, f)).ToList();
-            var allowedFiles = new ConcurrentDictionary<string, byte>(
-                files.Select(f => new KeyValuePair<string, byte>(f, 0)),
-                OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
-            await using var mutations = new RepairToolGate(ct);
-            bool IsWritable(string path) => !ct.IsCancellationRequested && policy.IsCustomFile(path) &&
-                allowedFiles.ContainsKey(Path.GetFullPath(path));
-            bool IsReadable(string path) => ToolHelpers.IsPathWithinDirectoryWithoutLinks(packagePath, path);
-
-            var tools = new List<AIFunction>
-            {
-                FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true, isPathAllowed: IsReadable),
-                FileTools.CreateGrepSearchTool(packagePath, isPathAllowed: IsReadable),
-                CodePatchTools.CreateCodePatchTool(customizationRoot, onPatchApplied: onPatchApplied, isFileAllowed: IsWritable,
-                    isContentAllowed: CustomizationFilePolicy.IsCustomizationContentAllowed,
-                    acquireMutationLease: mutations.EnterAsync)
-            };
-            if (allowRename)
-            {
-                tools.Add(FileTools.CreateRenameFileTool(customizationRoot,
-                    onFileRenamed: (oldPath, newPath) =>
-                    {
-                        allowedFiles.TryRemove(Path.GetFullPath(Path.Combine(customizationRoot, oldPath)), out _);
-                        allowedFiles.TryAdd(Path.GetFullPath(Path.Combine(customizationRoot, newPath)), 0);
-                        onPatchApplied(new AppliedPatch(newPath, $"Renamed file from {oldPath} to {newPath}", 1));
-                    },
-                    isSourceAllowed: IsWritable,
-                    isDestinationAllowed: path => !ct.IsCancellationRequested && policy.IsCustomFile(path),
-                    acquireMutationLease: mutations.EnterAsync));
-            }
-
-            var prompt = createPrompt(
-                files.Select(f => Path.GetRelativePath(packagePath, f)).ToList(),
-                files.Select(f => Path.GetRelativePath(customizationRoot, f)).ToList());
-            await runner.RunAsync(new CopilotAgent<string>
-            {
-                Instructions = prompt + """
-
-                    This is a bounded build-repair conversation. Make one candidate repair per turn.
-                    Call Exit with your hypothesis and patch summary when ready for validation.
-                    The host runs preparation, generation, and build after each turn, even without Exit.
-                    Only host validation determines success. On a failed candidate, use the next diagnostic
-                    prompt and retained conversation history to revise the repair, not to repeat a failed state.
-                    Edit only the listed customization files or their accepted rename destinations.
-                    Never modify generated code, metadata, infrastructure, or symbolic links.
-                    """,
-                Tools = tools,
-                MaxIterations = maxAttempts,
-                OnTurnStarting = async token =>
-                {
-                    await mutations.CloseAsync(token);
-                    await onTurnStarting(token);
-                    token.ThrowIfCancellationRequested();
-                    mutations.Open();
-                },
-                OnTurnCompleted = async (result, token) =>
-                {
-                    await mutations.CloseAsync(token);
-                    var turn = await onTurnCompleted(result, token);
-                    if (!turn.Continue) { mutations.Complete(); }
-                    return turn;
-                }
-            }, ct);
-        }
-
-        /// <summary>
-        /// Strict preparation used by bounded repairs. Unlike legacy PreGenerateAsync, failures
-        /// are explicit and must prevent generation against stale or missing prerequisites.
-        /// </summary>
-        public virtual Task<GenerationPreparationResult> PrepareForGenerationAsync(string repoRoot, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-            return Task.FromResult(new GenerationPreparationResult(false, true, null));
+            return Task.FromResult(new List<AppliedPatch>());
         }
 
         /// <summary>
@@ -853,7 +751,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         {
             try
             {
-                ct.ThrowIfCancellationRequested();
                 // Skip build for Python projects early (Python SDKs don't require compilation)
                 if (Language == SdkLanguage.Python)
                 {
@@ -911,7 +808,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
                 // Execute the build process directly
                 var result = await processHelper.Run(processOptions, ct);
-                ct.ThrowIfCancellationRequested();
                 var trimmedOutput = (result.Output ?? string.Empty).Trim();
 
                 if (result.ExitCode != 0)
@@ -923,10 +819,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
                 logger.LogDebug("Build completed successfully.");
                 return (true, null, packageInfo);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
             }
             catch (Exception ex)
             {

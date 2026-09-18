@@ -26,10 +26,6 @@ public static partial class CodePatchTools
     /// </summary>
     /// <param name="baseDir">The base directory for resolving file paths.</param>
     /// <param name="description">Optional custom description for the tool.</param>
-    /// <param name="onPatchApplied">Optional callback after a successful write.</param>
-    /// <param name="isFileAllowed">Optional write policy, evaluated on the final absolute path, including filename fallback.</param>
-    /// <param name="isContentAllowed">Optional policy evaluated on the proposed complete contents before writing.</param>
-    /// <param name="acquireMutationLease">Optional lifetime gate held for the entire mutation tool call.</param>
     /// <returns>An AIFunction that applies code patches.</returns>
     /// <remarks>
     /// The approach solves two problems:
@@ -41,10 +37,7 @@ public static partial class CodePatchTools
     public static AIFunction CreateCodePatchTool(
         string baseDir,
         string description = "Code patch: finds OldText within lines StartLine-EndLine and replaces with NewText. Use for precise edits that preserve surrounding syntax.",
-        Action<AppliedPatch>? onPatchApplied = null,
-        Func<string, bool>? isFileAllowed = null,
-        Func<string, bool>? isContentAllowed = null,
-        Func<CancellationToken, ValueTask<IDisposable>>? acquireMutationLease = null)
+        Action<AppliedPatch>? onPatchApplied = null)
     {
         return AIFunctionFactory.Create(
             async (
@@ -68,10 +61,7 @@ public static partial class CodePatchTools
 
                 CancellationToken cancellationToken) =>
             {
-                using var mutationLease = acquireMutationLease != null
-                    ? await acquireMutationLease(cancellationToken).ConfigureAwait(false) : null;
-                var result = await ApplyPatchAsync(baseDir, filePath, startLine, endLine, oldText, newText, cancellationToken,
-                    isFileAllowed, isContentAllowed);
+                var result = await ApplyPatchAsync(baseDir, filePath, startLine, endLine, oldText, newText, cancellationToken);
                 if (result.Success && onPatchApplied is not null)
                 {
                     var summary = !string.IsNullOrWhiteSpace(patchDescription) ? patchDescription : result.Message;
@@ -85,7 +75,6 @@ public static partial class CodePatchTools
 
     /// <summary>
     /// Applies a code patch to a file.
-    /// When a policy is supplied, links are rejected and the policy is rechecked before writing.
     /// </summary>
     public static async Task<CodePatchResult> ApplyPatchAsync(
         string baseDir,
@@ -94,9 +83,7 @@ public static partial class CodePatchTools
         int endLine,
         string oldText,
         string newText,
-        CancellationToken ct,
-        Func<string, bool>? isFileAllowed = null,
-        Func<string, bool>? isContentAllowed = null)
+        CancellationToken ct)
     {
         // Validate inputs
         if (string.IsNullOrWhiteSpace(filePath))
@@ -130,23 +117,11 @@ public static partial class CodePatchTools
 
         try
         {
-            if (isFileAllowed != null && !ToolHelpers.IsPathWithinDirectoryWithoutLinks(
-                    baseDir, Path.Join(Path.GetFullPath(baseDir), filePath)))
-            {
-                return new CodePatchResult(false, "File path is invalid or contains a link");
-            }
-
             // If the resolved path doesn't exist, try to find the file by name within baseDir
             if (!File.Exists(safeFilePath))
             {
                 var fileName = Path.GetFileName(filePath);
-                var candidates = isFileAllowed == null
-                    ? Directory.GetFiles(baseDir, fileName, SearchOption.AllDirectories)
-                    : Directory.GetFiles(baseDir, fileName, new EnumerationOptions
-                    {
-                        RecurseSubdirectories = true,
-                        AttributesToSkip = FileAttributes.ReparsePoint
-                    });
+                var candidates = Directory.GetFiles(baseDir, fileName, SearchOption.AllDirectories);
                 if (candidates.Length == 1)
                 {
                     safeFilePath = candidates[0];
@@ -158,12 +133,6 @@ public static partial class CodePatchTools
                         : $"Multiple matches found: {string.Join(", ", candidates.Select(c => Path.GetRelativePath(baseDir, c)))}. Use a more specific path.";
                     return new CodePatchResult(false, $"File not found: {filePath}. {hint}");
                 }
-            }
-
-            safeFilePath = Path.GetFullPath(safeFilePath);
-            if (isFileAllowed != null && !isFileAllowed(safeFilePath))
-            {
-                return new CodePatchResult(false, "File is not an allowed customization file");
             }
 
             // Read the file
@@ -267,23 +236,10 @@ public static partial class CodePatchTools
             newAllLines.AddRange(allLines.Skip(endIdx + 1));
 
             // Write back
-            ct.ThrowIfCancellationRequested();
-            if (isContentAllowed != null && !isContentAllowed(string.Join(Environment.NewLine, newAllLines)))
-            {
-                return new CodePatchResult(false, "The proposed contents are not allowed in customization code");
-            }
-            if (isFileAllowed != null && !isFileAllowed(safeFilePath))
-            {
-                return new CodePatchResult(false, "File is no longer an allowed customization file");
-            }
             await File.WriteAllLinesAsync(safeFilePath, newAllLines, ct).ConfigureAwait(false);
 
             var description = $"Replaced \"{TruncateForDisplay(cleanOldText, 100)}\" with \"{TruncateForDisplay(cleanNewText, 100)}\" in lines {startLine}-{endLine}";
             return new CodePatchResult(true, $"Patch applied to {filePath}: {description}");
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
         }
         catch (Exception ex)
         {

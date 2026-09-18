@@ -59,34 +59,28 @@ public sealed partial class DotnetLanguageService: LanguageService
     /// </summary>
     public override async Task PreGenerateAsync(string repoRoot, CancellationToken ct)
     {
-        var result = await PrepareForGenerationAsync(repoRoot, ct);
-        if (!result.Success)
+        var pluginDir = Path.Combine(repoRoot, PluginRelativePath);
+        if (!Directory.Exists(pluginDir))
         {
-            logger.LogWarning("{Diagnostics} Continuing — GeneratorHandler may attempt its own build.", result.Diagnostics);
+            logger.LogWarning("Plugin directory not found at {PluginDir}, skipping pre-build", pluginDir);
+            return;
         }
-    }
 
-    public override async Task<GenerationPreparationResult> PrepareForGenerationAsync(string repoRoot, CancellationToken ct)
-    {
-        ct.ThrowIfCancellationRequested();
+        logger.LogInformation("Pre-building .NET plugin at {PluginDir}", pluginDir);
+        var options = new ProcessOptions(
+            DotNetCommand, ["build"],
+            workingDirectory: pluginDir,
+            timeout: PluginBuildTimeout);
+
         try
         {
-            var pluginDir = Path.Combine(repoRoot, PluginRelativePath);
-            if (!Directory.Exists(pluginDir))
-            {
-                return new(true, false, $"Plugin directory not found at {pluginDir}; required pre-build cannot run.");
-            }
-
-            logger.LogInformation("Pre-building .NET plugin at {PluginDir}", pluginDir);
-            var options = new ProcessOptions(
-                DotNetCommand, ["build"],
-                workingDirectory: pluginDir,
-                timeout: PluginBuildTimeout);
             var result = await processHelper.Run(options, ct);
-            ct.ThrowIfCancellationRequested();
-            return result.ExitCode == 0
-                ? new(true, true, result.Output)
-                : new(true, false, $"Plugin pre-build failed (exit code {result.ExitCode}).\n{result.Output}");
+            if (result.ExitCode != 0)
+            {
+                logger.LogWarning(
+                    "Plugin pre-build failed (exit code {ExitCode}). Continuing — GeneratorHandler may attempt its own build.\n{Output}",
+                    result.ExitCode, result.Output);
+            }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -94,8 +88,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         }
         catch (Exception ex)
         {
-            ct.ThrowIfCancellationRequested();
-            return new(true, false, $"Plugin pre-build failed: {ex.Message}");
+            logger.LogWarning(ex, "Plugin pre-build failed. Continuing — GeneratorHandler may attempt its own build.");
         }
     }
 
@@ -827,25 +820,20 @@ public sealed partial class DotnetLanguageService: LanguageService
     /// Applies patches to customization files based on build errors.
     /// This is a mechanical worker - the Classifier does the thinking and routing.
     /// </summary>
-    public override Task RunRepairSessionAsync(
+    public override Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
         string buildContext,
-        int maxAttempts,
-        Func<CancellationToken, Task> onTurnStarting,
-        Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
-        Action<AppliedPatch> onPatchApplied,
-        CancellationToken ct) =>
-        RunRepairAgentAsync(copilotAgentRunner, customizationRoot, packagePath,
-            (readPaths, patchPaths) => new DotnetErrorDrivenPatchTemplate(
-                buildContext, packagePath, customizationRoot, readPaths, patchPaths).BuildPrompt(),
-            maxAttempts, onTurnStarting, onTurnCompleted, onPatchApplied, ct, allowRename: true);
+        CancellationToken ct)
+        => ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct, 1, null);
 
     public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
         string buildContext,
-        CancellationToken ct)
+        CancellationToken ct,
+        int maxAttempts,
+        Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
     {
         try
         {
@@ -889,11 +877,12 @@ public sealed partial class DotnetLanguageService: LanguageService
                 customizationFiles,
                 patchFilePaths).BuildPrompt();
 
-            // Single-pass agent: applies all patches it can in one run
+            // Validation retries retain the same agent session and cumulative patch log.
             var agentDefinition = new CopilotAgent<string>
             {
                 Instructions = prompt,
-                MaxIterations = 10,
+                MaxIterations = 10 + maxAttempts - 1,
+                ValidateResult = validateResult == null ? null : _ => validateResult(patchLog.ToList()),
                 Tools =
                 [
                     FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,

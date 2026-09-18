@@ -1,5 +1,3 @@
-using System.CommandLine;
-using System.Globalization;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
@@ -8,8 +6,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Languages;
-using Azure.Sdk.Tools.Cli.Services.Repair;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
@@ -19,80 +15,22 @@ using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec;
 
 [TestFixture]
-public class CustomizedCodeUpdateToolAutoTests
+public partial class CustomizedCodeUpdateToolAutoTests
 {
     // --- Shared helpers ---
 
-    private readonly List<TempDirectory> _directories = [];
-
-    [TearDown]
-    public void TearDown()
+    private static string CreateTempDir()
     {
-        foreach (var directory in _directories) { directory.Dispose(); }
-        _directories.Clear();
-    }
-
-    private string CreateTempDir()
-    {
-        var directory = TempDirectory.Create("customized-update");
-        _directories.Add(directory);
-        return directory.DirectoryPath;
-    }
-
-    private string CreatePackageDir(SdkLanguage language, bool hasCustomizations = true)
-    {
-        var package = CreateTempDir();
-        File.WriteAllText(Path.Combine(package, "tsp-location.yaml"), "repo: specs\ncommit: immutable-pin\ndirectory: service");
-        if (hasCustomizations)
-        {
-            var path = CustomFile(package, language);
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, language == SdkLanguage.Python
-                ? "__all__ = ['OldName']\nclass OldName: pass"
-                : "internal class OldName { }");
-        }
-        return package;
-    }
-
-    private static string CustomFile(string package, SdkLanguage language) => Path.Combine(package, language switch
-    {
-        SdkLanguage.DotNet => Path.Combine("src", "Customization.cs"),
-        SdkLanguage.Java => Path.Combine("customization", "src", "main", "java", "Customization.java"),
-        SdkLanguage.JavaScript => Path.Combine("src", "customization.ts"),
-        SdkLanguage.Python => Path.Combine("package", "_patch.py"),
-        _ => throw new ArgumentOutOfRangeException(nameof(language))
-    });
-
-    private static void RenameCustomSymbol(string package, SdkLanguage language)
-    {
-        var path = CustomFile(package, language);
-        File.WriteAllText(path, File.ReadAllText(path).Replace("OldName", "NewName"));
-    }
-
-    private static void AssertValidatedRepair(CustomizedCodeUpdateResponse result, int attempts)
-    {
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Success, Is.True, result.ResponseError);
-            Assert.That(result.BuildValidated, Is.True);
-            Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.ExitCode, Is.Zero);
-            Assert.That(result.Repair, Is.Not.Null);
-            Assert.That(result.Repair!.TerminalReason, Is.EqualTo("repaired"));
-            Assert.That(result.Repair.AttemptsUsed, Is.EqualTo(attempts));
-            Assert.That(result.Repair.Validation.Succeeded, Is.True);
-            Assert.That(result.Repair.Validation.ValidatedTree, Is.EqualTo(result.Repair.FinalState!.Tree));
-            Assert.That(result.Repair.Input!.InitialTree, Is.Not.EqualTo(result.Repair.FinalState.Tree));
-            Assert.That(result.Repair.Input.TspLocationSha256, Is.EqualTo(result.Repair.FinalState.TspLocationSha256));
-            Assert.That(result.Repair.FinalState.ChangedFiles, Is.Not.Empty);
-        });
+        var path = Path.Combine(Path.GetTempPath(), "azsdk-test-" + Guid.NewGuid().ToString("n"));
+        Directory.CreateDirectory(path);
+        return path;
     }
 
     /// <summary>
     /// Creates a fully-wired <see cref="CustomizedCodeUpdateTool"/> with sensible default mocks.
     /// Callers can customise individual mocks before construction by passing them in.
     /// </summary>
-    private (CustomizedCodeUpdateTool tool, ToolMocks mocks) CreateTool(
+    private static (CustomizedCodeUpdateTool tool, ToolMocks mocks) CreateTool(
         LanguageService? languageService = null,
         Mock<IGitHelper>? gitHelper = null,
         Action<Mock<IGitHelper>>? configureGit = null,
@@ -106,8 +44,7 @@ public class CustomizedCodeUpdateToolAutoTests
         {
             gitHelper = new Mock<IGitHelper>();
             gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
-            gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((string path, CancellationToken _) => Path.GetFullPath(path));
+            gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
         }
         configureGit?.Invoke(gitHelper);
 
@@ -191,10 +128,6 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var svc = languageService ?? new ConfigurableLanguageService();
         var tsp = tspHelper ?? new MockTspHelper();
-        var source = new MemoryRepairSourceState();
-        var artifacts = new MemoryRepairArtifacts(CreateTempDir());
-        var repair = new CustomizedCodeRepairService(gitHelper.Object, typeSpecHelper.Object, tsp,
-            classifierService.Object, source, artifacts, TimeProvider.System, NullLogger<CustomizedCodeRepairService>.Instance);
 
         var tool = new CustomizedCodeUpdateTool(
             new NullLogger<CustomizedCodeUpdateTool>(),
@@ -205,10 +138,9 @@ public class CustomizedCodeUpdateToolAutoTests
             classifierService.Object,
             typeSpecCustomization.Object,
             typeSpecHelper.Object,
-            npxHelper ?? new Mock<INpxHelper>().Object,
-            repair);
+            npxHelper ?? new Mock<INpxHelper>().Object);
 
-        return (tool, new ToolMocks(gitHelper, feedbackService, classifierService, typeSpecCustomization, typeSpecHelper, artifacts));
+        return (tool, new ToolMocks(gitHelper, feedbackService, classifierService, typeSpecCustomization, typeSpecHelper));
     }
 
     private record ToolMocks(
@@ -216,15 +148,13 @@ public class CustomizedCodeUpdateToolAutoTests
         Mock<IAPIViewFeedbackService> FeedbackService,
         Mock<IFeedbackClassifierService> ClassifierService,
         Mock<ITypeSpecCustomizationService> TypeSpecCustomization,
-        Mock<ITypeSpecHelper> TypeSpecHelper,
-        MemoryRepairArtifacts Artifacts);
+        Mock<ITypeSpecHelper> TypeSpecHelper);
 
     /// <summary>
     /// Builds a classifier configuration whose first pass returns a single CODE_CUSTOMIZATION item, so the
     /// flow proceeds into the custom-code patch/regen pipeline (used by the optional-tspProjectPath tests).
     /// </summary>
-    private static Action<Mock<IFeedbackClassifierService>> CodeCustomizationClassifier(
-        string text, string classification = "CODE_CUSTOMIZATION") =>
+    private static Action<Mock<IFeedbackClassifierService>> CodeCustomizationClassifier(string text) =>
         c => c.Setup(x => x.ClassifyItemsAsync(
                 It.IsAny<List<FeedbackItem>>(),
                 It.IsAny<string>(),
@@ -250,7 +180,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 new FeedbackClassificationResponse.ItemClassificationDetails
                                 {
                                     ItemId = item.Id,
-                                    Classification = classification,
+                                    Classification = "CODE_CUSTOMIZATION",
                                     Reason = "Fix in customization file",
                                     Text = text
                                 }
@@ -868,9 +798,8 @@ public class CustomizedCodeUpdateToolAutoTests
         // Verified: exactly 2 classifier calls (pass 1 + pass 2), no retry loop
         Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice: pass 1 + pass 2 after regen failure");
 
-        Assert.That(buildCalls, Is.Zero, "A required regeneration failure must never validate stale generated code.");
-        Assert.That(result.BuildValidated, Is.False);
-        Assert.That(result.ExitCode, Is.Not.Zero);
+        // Regen failed so no build in the regen block, but a "build for error context" call should happen
+        Assert.That(buildCalls, Is.EqualTo(1), "Should build once for error context since regen failed");
 
         // Second pass should have the regen failure context
         Assert.That(secondPassContext, Does.Contain("Regeneration failed"), "Second pass should see regen failure");
@@ -1094,18 +1023,17 @@ public class CustomizedCodeUpdateToolAutoTests
             },
             hasCustomizations: true,
             patchesFunc: () => [new AppliedPatch("customization", "patch", 1)],
-            language: language,
-            repairPatch: (package, _) => RenameCustomSymbol(package, language));
+            language: language);
 
         var failingTsp = new CallCountMockTspHelper(
-            failAfterCall: 1,
+            failAfterCall: editScope == EditScope.All ? 1 : 0,
             failError: "regen failed: tsp-client error");
         var (tool, _) = CreateTool(
             languageService: svc,
             tspHelper: failingTsp,
             configureClassifier: editScope == EditScope.CustomCode ? CodeCustomizationClassifier("Fix customization") : null,
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoName));
-        var pkg = CreatePackageDir(language);
+        var pkg = CreateTempDir();
         var tspDir = editScope == EditScope.All ? CreateTempDir() : null;
 
         var result = await tool.UpdateAsync(
@@ -1114,23 +1042,9 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed));
-        if (editScope == EditScope.CustomCode)
-        {
-            Assert.That(result.Repair!.TerminalReason, Is.EqualTo("generation_failed"));
-            Assert.That(result.Repair.AttemptsUsed, Is.EqualTo(1));
-            Assert.That(result.Repair.Stages.Single(s => s.Id == "attempt-1-generate").DiagnosticSummary,
-                Is.EqualTo("regen failed: tsp-client error"));
-            Assert.That(result.ResponseError, Is.EqualTo("regen failed: tsp-client error"));
-            Assert.That(result.BuildResult, Is.EqualTo("error in build"), "Only the baseline build ran.");
-            Assert.That(result.BuildValidated, Is.False);
-        }
-        else
-        {
-            Assert.That(result.BuildResult, Is.EqualTo("regen failed: tsp-client error"));
-        }
+        Assert.That(result.BuildResult, Is.EqualTo("regen failed: tsp-client error"));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
-        Assert.That(result.TypeSpecChangesSummary, editScope == EditScope.All ? Has.Count.EqualTo(1) : Is.Null,
-            "CustomCode does not run the TypeSpec-edit stage or populate a spec-edit summary.");
+        Assert.That(result.TypeSpecChangesSummary, Has.Count.EqualTo(editScope == EditScope.All ? 1 : 0));
         Assert.That(buildCalls, Is.EqualTo(1), "A failed regeneration must prevent the final build.");
     }
 
@@ -1543,7 +1457,7 @@ public class CustomizedCodeUpdateToolAutoTests
         // With CustomCode scope this must NOT be applied (no spec-input edits); instead it is reported
         // as out of scope with errorCode 'SpecChangeRequired'.
         var (tool, mocks) = CreateTool();
-        var pkg = CreatePackageDir(SdkLanguage.Java);
+        var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(
@@ -1556,11 +1470,6 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired));
         Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
-        Assert.That(result.Repair!.TerminalReason, Is.EqualTo("spec_change_required"));
-        Assert.That(result.Repair.AttemptsUsed, Is.Zero);
-        Assert.That(result.Repair.Stages.Select(s => s.Name), Is.EqualTo(new[] { "prepare", "generate", "build", "classify" }));
-        Assert.That(result.BuildValidated, Is.False, "A green baseline cannot satisfy a spec-level request.");
-        Assert.That(result.Repair.Input!.InitialTree, Is.EqualTo(result.Repair.FinalState!.Tree));
 
         // Critically, CustomCode scope must never apply spec-input (client.tsp) customizations.
         mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
@@ -1572,9 +1481,8 @@ public class CustomizedCodeUpdateToolAutoTests
             "CustomCode scope must not apply TypeSpec (spec-input) customizations.");
     }
 
-    [TestCase(false)]
-    [TestCase(true)]
-    public async Task CustomCodeScope_CodeCustomization_PatchesApplied_BuildSucceeds(bool baselineGreen)
+    [Test]
+    public async Task CustomCodeScope_CodeCustomization_PatchesApplied_BuildSucceeds()
     {
         // CustomCode scope still performs custom-code patching: a CODE_CUSTOMIZATION item flows through
         // the patch pipeline exactly like update mode, and no spec-input edits are made.
@@ -1583,7 +1491,7 @@ public class CustomizedCodeUpdateToolAutoTests
             buildFunc: () =>
             {
                 buildCalls++;
-                return buildCalls <= 1 && !baselineGreen
+                return buildCalls <= 1
                     ? (false, "error: cannot find symbol maxSpeakers", null)
                     : (true, null, null);
             },
@@ -1592,8 +1500,7 @@ public class CustomizedCodeUpdateToolAutoTests
             [
                 new AppliedPatch("SpeechTranscriptionCustomization.java", "Renamed maxSpeakers to maxSpeakerCount", 2)
             ],
-            language: SdkLanguage.Java,
-            repairPatch: (package, _) => RenameCustomSymbol(package, SdkLanguage.Java));
+            language: SdkLanguage.Java);
 
         var (tool, mocks) = CreateTool(
             languageService: svc,
@@ -1633,7 +1540,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
                         }));
 
-        var pkg = CreatePackageDir(SdkLanguage.Java);
+        var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(
@@ -1643,12 +1550,8 @@ public class CustomizedCodeUpdateToolAutoTests
             editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
-        AssertValidatedRepair(result, 1);
-        Assert.That(buildCalls, Is.EqualTo(2), "The baseline never suppresses a requested code edit, even when green.");
-        Assert.That(svc.RepairSessions, Is.EqualTo(1));
-        Assert.That(svc.PatchTurns, Is.EqualTo(1));
-        Assert.That(File.ReadAllText(CustomFile(pkg, SdkLanguage.Java)), Does.Contain("NewName").And.Not.Contain("OldName"));
-        Assert.That(mocks.Artifacts.Content["attempt-1/patch.diff"], Does.Contain("OldName").And.Contain("NewName"));
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
         Assert.That(result.ErrorCode, Is.Null);
 
@@ -1662,10 +1565,10 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task CustomCodeScope_MixedSpecAndCode_StopsBeforePatching_SurfacesSpecChangeRequired()
+    public async Task CustomCodeScope_MixedSpecAndCode_PatchesCode_SurfacesSpecChangeRequired()
     {
         // Mixed feedback: one TSP_APPLICABLE (out of scope) + one CODE_CUSTOMIZATION (in scope).
-        // A spec prerequisite stops the entire request before any patch, rather than reporting partial success.
+        // CustomCode scope patches the code, reports the spec item as out of scope, and never edits client.tsp.
         var buildCalls = 0;
         var svc = new ConfigurableLanguageService(
             buildFunc: () =>
@@ -1677,8 +1580,7 @@ public class CustomizedCodeUpdateToolAutoTests
             },
             hasCustomizations: true,
             patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
-            language: SdkLanguage.Java,
-            repairPatch: (package, _) => RenameCustomSymbol(package, SdkLanguage.Java));
+            language: SdkLanguage.Java);
 
         var (tool, mocks) = CreateTool(
             languageService: svc,
@@ -1723,7 +1625,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
                         }));
 
-        var pkg = CreatePackageDir(SdkLanguage.Java);
+        var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(
@@ -1733,17 +1635,9 @@ public class CustomizedCodeUpdateToolAutoTests
             editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.BuildValidated, Is.False);
-        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired));
+        // Code path succeeds; the spec item is surfaced as out of scope rather than applied.
         Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
-        Assert.That(result.AppliedPatches, Is.Empty);
-        Assert.That(result.Repair!.TerminalReason, Is.EqualTo("spec_change_required"));
-        Assert.That(result.Repair.AttemptsUsed, Is.Zero);
-        Assert.That(svc.RepairSessions, Is.Zero);
-        Assert.That(buildCalls, Is.EqualTo(1));
-        Assert.That(File.ReadAllText(CustomFile(pkg, SdkLanguage.Java)), Does.Contain("OldName").And.Not.Contain("NewName"));
-        Assert.That(result.Repair.Input!.InitialTree, Is.EqualTo(result.Repair.FinalState!.Tree));
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
 
         mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
             It.IsAny<string>(),
@@ -1982,140 +1876,6 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     // ========================================================================
-    // Bounded CustomCode dispatch and public attempt limits
-    // ========================================================================
-
-    [TestCase(false, 1, true)]
-    [TestCase(true, 1, true)]
-    [TestCase(false, 1, false)]
-    [TestCase(true, 1, false)]
-    [TestCase(false, 2, false)]
-    [TestCase(true, 2, false)]
-    public async Task CustomCodeScope_CliAndMcp_UseRealBoundedSession(bool useCli, int attempts, bool omitOption)
-    {
-        var allowRetry = attempts > 1;
-        var package = CreatePackageDir(SdkLanguage.Java);
-        var builds = 0;
-        var service = new ConfigurableLanguageService(
-            buildFunc: () =>
-            {
-                builds++;
-                return File.ReadAllText(CustomFile(package, SdkLanguage.Java)).Contains("RequestedName")
-                    ? (true, null, null) : (false, $"cannot find symbol after build {builds}", null);
-            },
-            hasCustomizations: true,
-            patchesFunc: () => [new AppliedPatch("Customization.java", "Address requested symbol", 1)],
-            repairPatch: (path, attempt) =>
-            {
-                var file = CustomFile(path, SdkLanguage.Java);
-                File.WriteAllText(file, File.ReadAllText(file).Replace(
-                    attempt == 1 ? "OldName" : "CandidateOne", attempt == 1 ? "CandidateOne" : "RequestedName"));
-            });
-        var (tool, mocks) = CreateTool(languageService: service,
-            configureClassifier: CodeCustomizationClassifier("Rename OldName to RequestedName"));
-        CustomizedCodeUpdateResponse result;
-        if (useCli)
-        {
-            List<string> arguments = ["--customization-request", "Rename OldName to RequestedName",
-                "--package-path", package, "--edit-scope", "CustomCode"];
-            if (!omitOption) { arguments.AddRange(["--max-attempts", attempts.ToString(CultureInfo.InvariantCulture)]); }
-            var parsed = tool.GetCommandInstances().Single().Parse(arguments.ToArray());
-            Assert.That(parsed.Errors, Is.Empty);
-            result = (CustomizedCodeUpdateResponse)await tool.HandleCommand(parsed, CancellationToken.None);
-        }
-        else
-        {
-            result = !omitOption
-                ? await tool.UpdateAsync("Rename OldName to RequestedName", package, editScope: EditScope.CustomCode, maxAttempts: attempts)
-                : await tool.UpdateAsync("Rename OldName to RequestedName", package, editScope: EditScope.CustomCode);
-        }
-
-        Assert.That(result.Repair!.MaxAttempts, Is.EqualTo(attempts));
-        Assert.That(result.Repair.AttemptsUsed, Is.EqualTo(attempts));
-        Assert.That(service.RepairSessions, Is.EqualTo(1), "Retries must not create separate language sessions.");
-        Assert.That(service.LegacyPatchCalls, Is.Zero, "Neither default-one nor explicit attempt limits may use the legacy patch route.");
-        Assert.That(service.PatchTurns, Is.EqualTo(attempts));
-        Assert.That(builds, Is.EqualTo(attempts + 1), "Baseline build is outside the patch attempt budget.");
-        Assert.That(service.RetryPrompts, Has.Count.EqualTo(allowRetry ? 1 : 0));
-        Assert.That(mocks.ClassifierService.Invocations, Has.Count.EqualTo(1));
-        Assert.That(mocks.TypeSpecCustomization.Invocations, Is.Empty);
-        if (allowRetry)
-        {
-            AssertValidatedRepair(result, 2);
-            Assert.That(service.RetryPrompts.Single(), Does.Contain("cannot find symbol after build 2")
-                .And.Contain("CandidateOne").And.Contain("candidate 1"));
-            Assert.That(File.ReadAllText(CustomFile(package, SdkLanguage.Java)), Does.Contain("RequestedName"));
-        }
-        else
-        {
-            Assert.That(result.Success, Is.False);
-            Assert.That(result.BuildValidated, Is.False);
-            Assert.That(result.Repair.TerminalReason, Is.EqualTo("attempt_limit"));
-            Assert.That(result.ErrorCode, Is.EqualTo("AttemptLimit"));
-            Assert.That(result.ExitCode, Is.Not.Zero);
-            Assert.That(File.ReadAllText(CustomFile(package, SdkLanguage.Java)), Does.Contain("CandidateOne"));
-        }
-    }
-
-    [Test]
-    public async Task CustomCodeScope_GreenBaselineStillClassifiesBeforeReturningAlreadyGreen()
-    {
-        var builds = 0;
-        var service = new ConfigurableLanguageService(buildFunc: () =>
-        {
-            builds++;
-            return (true, null, null);
-        });
-        var (tool, mocks) = CreateTool(languageService: service,
-            configureClassifier: CodeCustomizationClassifier("Requested state already exists", "SUCCESS"));
-        var package = CreatePackageDir(SdkLanguage.Java, hasCustomizations: false);
-
-        var result = await tool.UpdateAsync("Confirm requested state", package, editScope: EditScope.CustomCode);
-
-        Assert.That(result.Success, Is.True, result.ResponseError);
-        Assert.That(result.BuildValidated, Is.True);
-        Assert.That(result.Repair!.TerminalReason, Is.EqualTo("already_green"));
-        Assert.That(result.Repair.Stages.Select(s => s.Name), Is.EqualTo(new[] { "prepare", "generate", "build", "classify" }));
-        Assert.That(result.Repair.AttemptsUsed, Is.Zero);
-        Assert.That(result.Repair.Input!.InitialTree, Is.EqualTo(result.Repair.FinalState!.Tree));
-        Assert.That(result.Repair.Validation.ValidatedTree, Is.EqualTo(result.Repair.FinalState.Tree));
-        Assert.That(builds, Is.EqualTo(1));
-        Assert.That(service.RepairSessions, Is.Zero);
-        Assert.That(mocks.ClassifierService.Invocations, Has.Count.EqualTo(1));
-    }
-
-    [Test]
-    public async Task CustomCodeScope_RealDotnetMissingPlugin_FailsStrictPreparationBeforeGenerationOrClassification()
-    {
-        var process = new Mock<IProcessHelper>(MockBehavior.Strict);
-        var runner = new Mock<ICopilotAgentRunner>(MockBehavior.Strict);
-        var service = new DotnetLanguageService(process.Object, Mock.Of<IPowershellHelper>(), runner.Object,
-            Mock.Of<IGitHelper>(), NullLogger<LanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
-            Mock.Of<IPackageInfoHelper>(), Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
-        var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
-        var (tool, mocks) = CreateTool(languageService: service, tspHelper: tsp.Object,
-            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync("azure-sdk-for-net"),
-            configureClassifier: CodeCustomizationClassifier("Rename customization"));
-        var package = CreatePackageDir(SdkLanguage.DotNet);
-
-        var result = await tool.UpdateAsync("Rename customization", package, editScope: EditScope.CustomCode);
-
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.BuildValidated, Is.False);
-        Assert.That(result.Repair!.TerminalReason, Is.EqualTo("preparation_failed"));
-        Assert.That(result.ResponseError, Does.Contain("Plugin directory not found").And.Contain("Client.Plugin"));
-        Assert.That(result.Repair.Stages.Select(s => s.Name), Is.EqualTo(new[] { "prepare" }));
-        Assert.That(result.Repair.Stages.Single().Status, Is.EqualTo("failed"));
-        Assert.That(result.Repair.AttemptsUsed, Is.Zero);
-        Assert.That(result.Repair.Input!.InitialTree, Is.EqualTo(result.Repair.FinalState!.Tree));
-        Assert.That(mocks.ClassifierService.Invocations, Is.Empty);
-        tsp.VerifyNoOtherCalls();
-        process.VerifyNoOtherCalls();
-        runner.VerifyNoOtherCalls();
-    }
-
-    // ========================================================================
     // Optional tspProjectPath (auto-resolve regen from pinned tsp-location.yaml)
     // ========================================================================
 
@@ -2126,7 +1886,7 @@ public class CustomizedCodeUpdateToolAutoTests
         // CustomCode scope does not edit spec inputs, so a local TypeSpec checkout is optional. When
         // tspProjectPath is omitted, post-patch regeneration must pass localSpecRepoPath == null,
         // causing tsp-client to regenerate from the commit pinned in the package's tsp-location.yaml.
-        var capturedLocalSpecRepos = new List<string?>();
+        string? capturedLocalSpecRepo = "SENTINEL";
         var callCount = 0;
 
         var tsp = new Mock<ITspClientHelper>();
@@ -2140,7 +1900,10 @@ public class CustomizedCodeUpdateToolAutoTests
                 (_, _, _, localSpec, _) =>
                 {
                     callCount++;
-                    capturedLocalSpecRepos.Add(localSpec);
+                    // CODE_CUSTOMIZATION only (no TSP_APPLICABLE), so post-patch regen is the
+                    // first and only UpdateGenerationAsync call.
+                    if (callCount == 1)
+                        capturedLocalSpecRepo = localSpec;
                 })
             .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
 
@@ -2153,8 +1916,7 @@ public class CustomizedCodeUpdateToolAutoTests
             },
             hasCustomizations: true,
             patchesFunc: () => [new AppliedPatch("customization", "Fixed reference", 1)],
-            language: language,
-            repairPatch: (package, _) => RenameCustomSymbol(package, language));
+            language: language);
 
         var (tool, _) = CreateTool(
             languageService: svc,
@@ -2162,8 +1924,7 @@ public class CustomizedCodeUpdateToolAutoTests
             configureClassifier: CodeCustomizationClassifier("Fix customization reference"),
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoName));
 
-        var pkg = CreatePackageDir(language);
-        var pin = File.ReadAllText(Path.Combine(pkg, "tsp-location.yaml"));
+        var pkg = CreateTempDir();
 
         var result = await tool.UpdateAsync(
             packagePath: pkg,
@@ -2171,13 +1932,12 @@ public class CustomizedCodeUpdateToolAutoTests
             editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
-        AssertValidatedRepair(result, 1);
+        Assert.That(result.Success, Is.True);
         Assert.That(result.ErrorCode, Is.Null);
-        Assert.That(callCount, Is.EqualTo(2), "Both baseline and post-patch generation use the unchanged pin.");
-        Assert.That(capturedLocalSpecRepos, Is.EqualTo(new string?[] { null, null }));
-        Assert.That(File.ReadAllText(Path.Combine(pkg, "tsp-location.yaml")), Is.EqualTo(pin));
-        tsp.Verify(t => t.UpdateGenerationAsync(pkg, null, false, null,
-            It.Is<CancellationToken>(token => token.CanBeCanceled)), Times.Exactly(2));
+        Assert.That(callCount, Is.EqualTo(1), "Regeneration should run once after patching, even without a local spec path.");
+        Assert.That(capturedLocalSpecRepo, Is.Null,
+            "With tspProjectPath omitted, regeneration must use the pinned tsp-location.yaml commit.");
+        tsp.Verify(t => t.UpdateGenerationAsync(pkg, null, false, null, CancellationToken.None), Times.Once);
     }
 
     [TestCase(SdkLanguage.JavaScript, "azure-sdk-for-js")]
@@ -2194,8 +1954,7 @@ public class CustomizedCodeUpdateToolAutoTests
             },
             hasCustomizations: true,
             patchesFunc: () => [new AppliedPatch("customization", "Fixed reference", 1)],
-            language: language,
-            repairPatch: (package, _) => RenameCustomSymbol(package, language));
+            language: language);
 
         var (tool, mocks) = CreateTool(
             languageService: svc,
@@ -2203,7 +1962,7 @@ public class CustomizedCodeUpdateToolAutoTests
             configureClassifier: CodeCustomizationClassifier("Fix customization reference"),
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoName));
 
-        var pkg = CreatePackageDir(language);
+        var pkg = CreateTempDir();
 
         var result = await tool.UpdateAsync(
             packagePath: pkg,
@@ -2211,10 +1970,7 @@ public class CustomizedCodeUpdateToolAutoTests
             editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
-        AssertValidatedRepair(result, 1);
-        Assert.That(buildCalls, Is.EqualTo(2));
-        Assert.That(result.Repair!.Stages.Where(s => s.Name is "prepare" or "generate").Select(s => s.Status),
-            Is.All.EqualTo("not_required"));
+        Assert.That(result.Success, Is.True);
         Assert.That(result.ErrorCode, Is.Null);
         mocks.TypeSpecHelper.Verify(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>()), Times.Never,
             "When tspProjectPath is omitted in CustomCode scope, the tool must not validate a spec path.");
@@ -2230,7 +1986,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         // When a local TypeSpec project path IS provided in CustomCode scope, post-patch regen
         // should use it as localSpecRepoPath (regenerate from the local checkout).
-        var capturedLocalSpecRepos = new List<string?>();
+        string? capturedLocalSpecRepo = null;
         var callCount = 0;
 
         var tsp = new Mock<ITspClientHelper>();
@@ -2244,7 +2000,8 @@ public class CustomizedCodeUpdateToolAutoTests
                 (_, _, _, localSpec, _) =>
                 {
                     callCount++;
-                    capturedLocalSpecRepos.Add(localSpec);
+                    if (callCount == 1)
+                        capturedLocalSpecRepo = localSpec;
                 })
             .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
 
@@ -2257,8 +2014,7 @@ public class CustomizedCodeUpdateToolAutoTests
             },
             hasCustomizations: true,
             patchesFunc: () => [new AppliedPatch("customization", "Fixed reference", 1)],
-            language: language,
-            repairPatch: (package, _) => RenameCustomSymbol(package, language));
+            language: language);
 
         var (tool, _) = CreateTool(
             languageService: svc,
@@ -2266,9 +2022,8 @@ public class CustomizedCodeUpdateToolAutoTests
             configureClassifier: CodeCustomizationClassifier("Fix customization reference"),
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoName));
 
-        var pkg = CreatePackageDir(language);
+        var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
-        File.WriteAllText(Path.Combine(tspDir, "client.tsp"), "// unchanged local spec inputs");
 
         var result = await tool.UpdateAsync(
             packagePath: pkg,
@@ -2277,14 +2032,11 @@ public class CustomizedCodeUpdateToolAutoTests
             editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
-        AssertValidatedRepair(result, 1);
-        Assert.That(callCount, Is.EqualTo(2));
-        Assert.That(capturedLocalSpecRepos, Is.EqualTo(new[] { Path.GetFullPath(tspDir), Path.GetFullPath(tspDir) }));
-        Assert.That(result.Repair!.Input!.LocalSpec!.ProjectPath, Is.EqualTo(Path.GetFullPath(tspDir)));
-        Assert.That(result.Repair.Input.LocalSpec.InitialTree, Is.EqualTo(result.Repair.Input.LocalSpec.FinalTree));
-        Assert.That(File.ReadAllText(Path.Combine(tspDir, "client.tsp")), Is.EqualTo("// unchanged local spec inputs"));
-        tsp.Verify(t => t.UpdateGenerationAsync(pkg, null, false, Path.GetFullPath(tspDir),
-            It.Is<CancellationToken>(token => token.CanBeCanceled)), Times.Exactly(2));
+        Assert.That(result.Success, Is.True);
+        Assert.That(callCount, Is.EqualTo(1));
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(Path.GetFullPath(tspDir)),
+            "When provided, the local TypeSpec project path should be passed to regeneration as an absolute localSpecRepoPath.");
+        tsp.Verify(t => t.UpdateGenerationAsync(pkg, null, false, Path.GetFullPath(tspDir), CancellationToken.None), Times.Once);
     }
 
     [TestCase(EditScope.CustomCode, true)]
@@ -2294,12 +2046,9 @@ public class CustomizedCodeUpdateToolAutoTests
     public async Task DotNet_Patches_AreRegeneratedBeforeFinalBuild(EditScope editScope, bool finalBuildSucceeds)
     {
         using var cts = new CancellationTokenSource();
-        var pkg = CreatePackageDir(SdkLanguage.DotNet);
+        var pkg = CreateTempDir();
         var tspDir = editScope == EditScope.All ? CreateTempDir() : null;
-        var repoRoot = editScope == EditScope.CustomCode ? pkg : CreateTempDir();
-        var generated = Path.Combine(pkg, "src", "Generated", "Token.cs");
-        Directory.CreateDirectory(Path.GetDirectoryName(generated)!);
-        File.WriteAllText(generated, "internal partial class Token { }");
+        var repoRoot = CreateTempDir();
         var operations = new List<string>();
         var customTypeIsPublic = false;
         var generatedTypeIsPublic = false;
@@ -2328,24 +2077,16 @@ public class CustomizedCodeUpdateToolAutoTests
             preGenerateFunc: async (root, ct) =>
             {
                 Assert.That(root, Is.EqualTo(repoRoot));
-                Assert.That(ct.CanBeCanceled, Is.True);
-                Assert.That(ct == cts.Token, Is.EqualTo(editScope == EditScope.All),
-                    "CustomCode shares an invocation-wide linked deadline token; All preserves its original token.");
+                Assert.That(ct, Is.EqualTo(cts.Token));
                 await Task.Yield();
                 operations.Add("prepare");
-            },
-            repairPatch: (package, _) =>
-            {
-                var path = CustomFile(package, SdkLanguage.DotNet);
-                File.WriteAllText(path, File.ReadAllText(path).Replace("internal", "public"));
             });
         var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
-        tsp.Setup(t => t.UpdateGenerationAsync(pkg, null, false, tspDir, It.IsAny<CancellationToken>()))
+        tsp.Setup(t => t.UpdateGenerationAsync(pkg, null, false, tspDir, cts.Token))
             .Callback(() =>
             {
                 operations.Add("regenerate");
                 generatedTypeIsPublic = customTypeIsPublic;
-                File.WriteAllText(generated, $"{(generatedTypeIsPublic ? "public" : "internal")} partial class Token {{ }}");
             })
             .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = pkg });
         var (tool, mocks) = CreateTool(
@@ -2355,48 +2096,24 @@ public class CustomizedCodeUpdateToolAutoTests
             configureGit: g =>
             {
                 g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-                g.Setup(x => x.DiscoverRepoRootAsync(pkg, It.IsAny<CancellationToken>())).ReturnsAsync(repoRoot);
+                g.Setup(x => x.DiscoverRepoRootAsync(pkg, cts.Token)).ReturnsAsync(repoRoot);
             });
 
         var result = await tool.UpdateAsync("Fix token accessibility", pkg, tspDir, editScope, cts.Token);
 
-        Assert.That(operations, Is.EqualTo(editScope == EditScope.CustomCode
-            ? new[] { "prepare", "regenerate", "build", "patch", "prepare", "regenerate", "build" }
-            : new[] { "build", "patch", "prepare", "regenerate", "build" }));
+        Assert.That(operations, Is.EqualTo(new[] { "build", "patch", "prepare", "regenerate", "build" }));
         Assert.That(result.Success, Is.EqualTo(finalBuildSucceeds));
-        Assert.That(result.ErrorCode, Is.EqualTo(finalBuildSucceeds ? null : editScope == EditScope.CustomCode
-            ? "AttemptLimit" : CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed));
+        Assert.That(result.ErrorCode, Is.EqualTo(finalBuildSucceeds ? null : CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed));
         Assert.That(result.BuildResult, Is.EqualTo(finalBuildSucceeds ? null : "Unresolved build error"));
         Assert.That(result.AppliedPatches, Has.Count.EqualTo(1));
-        if (editScope == EditScope.CustomCode)
-        {
-            Assert.That(svc.OperationTokens.Distinct().Count(), Is.EqualTo(1));
-            Assert.That(svc.OperationTokens[0], Is.Not.EqualTo(cts.Token));
-            Assert.That(result.Repair!.AttemptsUsed, Is.EqualTo(1));
-            Assert.That(File.ReadAllText(CustomFile(pkg, SdkLanguage.DotNet)), Does.Contain("public"));
-            Assert.That(File.ReadAllText(generated), Does.StartWith("public"));
-            if (finalBuildSucceeds) { AssertValidatedRepair(result, 1); }
-            else
-            {
-                Assert.That(result.Repair.TerminalReason, Is.EqualTo("attempt_limit"));
-                Assert.That(result.BuildValidated, Is.False);
-                Assert.That(result.Repair.Validation.Succeeded, Is.False);
-            }
-        }
-        else
-        {
-            Assert.That(result.Repair, Is.Null, "All remains the legacy one-pass path.");
-            Assert.That(svc.RepairSessions, Is.Zero);
-        }
         tsp.VerifyAll();
         mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [TestCase(true, false)]
-    [TestCase(false, false)]
-    [TestCase(true, true)]
-    public async Task DotNet_NoEffectivePatch_OnlyBaselineRegenerates(bool hasCustomizations, bool reportsPatch)
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task DotNet_NoPatches_DoesNotRegenerate(bool hasCustomizations)
     {
         var buildCalls = 0;
         var preparationCalls = 0;
@@ -2407,7 +2124,6 @@ public class CustomizedCodeUpdateToolAutoTests
                 return (false, "Build failed", null);
             },
             hasCustomizations: hasCustomizations,
-            patchesFunc: () => reportsPatch ? [new AppliedPatch("Customization.cs", "Claimed edit", 1)] : [],
             language: SdkLanguage.DotNet,
             preGenerateFunc: (_, _) =>
             {
@@ -2415,43 +2131,29 @@ public class CustomizedCodeUpdateToolAutoTests
                 return Task.CompletedTask;
             });
         var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
-        tsp.Setup(t => t.UpdateGenerationAsync(It.IsAny<string>(), null, false, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string path, string? _, bool _, string? _, CancellationToken _) =>
-                new TspToolResponse { IsSuccessful = true, TypeSpecProject = path });
         var (tool, _) = CreateTool(
             languageService: svc,
             tspHelper: tsp.Object,
             configureClassifier: CodeCustomizationClassifier("Fix customization"),
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
 
-        var package = CreatePackageDir(SdkLanguage.DotNet, hasCustomizations);
-        var result = await tool.UpdateAsync("Fix customization", package, editScope: EditScope.CustomCode);
+        var result = await tool.UpdateAsync("Fix customization", CreateTempDir(), editScope: EditScope.CustomCode);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(hasCustomizations
             ? CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed
             : CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed));
         Assert.That(buildCalls, Is.EqualTo(1));
-        Assert.That(preparationCalls, Is.EqualTo(1));
-        Assert.That(result.Repair!.AttemptsUsed, Is.EqualTo(hasCustomizations ? 1 : 0));
-        Assert.That(result.Repair.TerminalReason, Is.EqualTo(hasCustomizations ? "no_progress" : "no_customizations"));
-        Assert.That(svc.PatchTurns, Is.EqualTo(hasCustomizations ? 1 : 0));
-        Assert.That(result.Repair.Input!.InitialTree, Is.EqualTo(result.Repair.FinalState!.Tree));
-        Assert.That(result.BuildValidated, Is.False);
-        Assert.That(result.AppliedPatches, Has.Count.EqualTo(reportsPatch ? 1 : 0));
-        tsp.Verify(t => t.UpdateGenerationAsync(package, null, false, null, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.That(preparationCalls, Is.Zero);
         tsp.VerifyNoOtherCalls();
     }
 
-    [TestCase(true, false)]
-    [TestCase(false, false)]
-    [TestCase(true, true)]
-    [TestCase(false, true)]
-    public async Task DotNet_RequiredPreparationFailure_StopsRegeneration(bool cancel, bool failBaseline)
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task DotNet_PostPatchPreparationFailure_StopsRegeneration(bool cancel)
     {
         using var cts = new CancellationTokenSource();
         var buildCalls = 0;
-        var preparationCalls = 0;
         var svc = new ConfigurableLanguageService(
             buildFunc: () =>
             {
@@ -2463,46 +2165,44 @@ public class CustomizedCodeUpdateToolAutoTests
             language: SdkLanguage.DotNet,
             preGenerateFunc: (_, ct) =>
             {
-                preparationCalls++;
-                if (!failBaseline && preparationCalls == 1) { return Task.CompletedTask; }
                 if (cancel)
                 {
                     cts.Cancel();
                     throw new OperationCanceledException(ct);
                 }
                 throw new InvalidOperationException("Preparation failed");
-            },
-            repairPatch: (package, _) => RenameCustomSymbol(package, SdkLanguage.DotNet));
+            });
         var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
-        tsp.Setup(t => t.UpdateGenerationAsync(It.IsAny<string>(), null, false, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string path, string? _, bool _, string? _, CancellationToken _) =>
-                new TspToolResponse { IsSuccessful = true, TypeSpecProject = path });
         var (tool, _) = CreateTool(
             languageService: svc,
             tspHelper: tsp.Object,
             configureClassifier: CodeCustomizationClassifier("Fix customization"),
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
-        var pkg = CreatePackageDir(SdkLanguage.DotNet);
-        var result = await tool.UpdateAsync("Fix customization", pkg, editScope: EditScope.CustomCode, ct: cts.Token);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.BuildValidated, Is.False);
-        Assert.That(result.Repair!.TerminalReason, Is.EqualTo(cancel ? "cancelled" : "preparation_failed"));
-        Assert.That(result.ErrorCode, Is.EqualTo(cancel ? "Cancelled" : "PreparationFailed"));
-        Assert.That(result.ResponseError, Does.Contain(cancel ? "cancelled" : "Preparation failed"));
-        Assert.That(result.Repair.AttemptsUsed, Is.EqualTo(failBaseline ? 0 : 1));
-        Assert.That(result.Repair.Stages.Last().Status, Is.EqualTo(cancel ? "cancelled" : "failed"));
-        Assert.That(buildCalls, Is.EqualTo(failBaseline ? 0 : 1));
-        Assert.That(preparationCalls, Is.EqualTo(failBaseline ? 1 : 2));
-        tsp.Verify(t => t.UpdateGenerationAsync(pkg, null, false, null, It.IsAny<CancellationToken>()),
-            Times.Exactly(failBaseline ? 0 : 1));
+        var pkg = CreateTempDir();
+
+        if (cancel)
+        {
+            var exception = Assert.ThrowsAsync<OperationCanceledException>(
+                () => tool.UpdateAsync("Fix customization", pkg, editScope: EditScope.CustomCode, ct: cts.Token));
+            Assert.That(exception!.CancellationToken, Is.EqualTo(cts.Token));
+        }
+        else
+        {
+            var result = await tool.UpdateAsync("Fix customization", pkg, editScope: EditScope.CustomCode, ct: cts.Token);
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
+            Assert.That(result.BuildResult, Is.EqualTo("Preparation failed"));
+        }
+
+        Assert.That(buildCalls, Is.EqualTo(1));
         tsp.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task DotNet_PostPatchRegenerationCancellation_ReturnsStructuredCancelledResult()
+    public void DotNet_PostPatchRegenerationCancellation_Propagates()
     {
         using var cts = new CancellationTokenSource();
-        var pkg = CreatePackageDir(SdkLanguage.DotNet);
+        var pkg = CreateTempDir();
         var buildCalls = 0;
         var svc = new ConfigurableLanguageService(
             buildFunc: () =>
@@ -2512,38 +2212,21 @@ public class CustomizedCodeUpdateToolAutoTests
             },
             hasCustomizations: true,
             patchesFunc: () => [new AppliedPatch("Customization.cs", "Fixed reference", 1)],
-            language: SdkLanguage.DotNet,
-            repairPatch: (package, _) => RenameCustomSymbol(package, SdkLanguage.DotNet));
+            language: SdkLanguage.DotNet);
         var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
-        var generationCalls = 0;
-        tsp.Setup(t => t.UpdateGenerationAsync(pkg, null, false, null, It.IsAny<CancellationToken>()))
-            .Returns((string _, string? _, bool _, string? _, CancellationToken token) =>
-            {
-                generationCalls++;
-                if (generationCalls == 2)
-                {
-                    cts.Cancel();
-                    Assert.That(token.IsCancellationRequested, Is.True, "Caller cancellation must reach the shared linked token.");
-                    throw new OperationCanceledException(token);
-                }
-                return Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = pkg });
-            });
+        tsp.Setup(t => t.UpdateGenerationAsync(pkg, null, false, null, cts.Token))
+            .Callback(cts.Cancel)
+            .ThrowsAsync(new OperationCanceledException(cts.Token));
         var (tool, _) = CreateTool(
             languageService: svc,
             tspHelper: tsp.Object,
             configureClassifier: CodeCustomizationClassifier("Fix customization"),
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
 
-        var result = await tool.UpdateAsync("Fix customization", pkg, editScope: EditScope.CustomCode, ct: cts.Token);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.BuildValidated, Is.False);
-        Assert.That(result.Repair!.TerminalReason, Is.EqualTo("cancelled"));
-        Assert.That(result.ErrorCode, Is.EqualTo("Cancelled"));
-        Assert.That(result.ResponseError, Does.Contain("cancelled"));
-        Assert.That(result.Repair.AttemptsUsed, Is.EqualTo(1));
-        Assert.That(result.Repair.Stages.Last().Name, Is.EqualTo("generate"));
-        Assert.That(result.Repair.Stages.Last().Status, Is.EqualTo("cancelled"));
-        Assert.That(generationCalls, Is.EqualTo(2));
+        var exception = Assert.ThrowsAsync<OperationCanceledException>(
+            () => tool.UpdateAsync("Fix customization", pkg, editScope: EditScope.CustomCode, ct: cts.Token));
+
+        Assert.That(exception!.CancellationToken, Is.EqualTo(cts.Token));
         Assert.That(buildCalls, Is.EqualTo(1));
         tsp.VerifyAll();
     }
@@ -2636,11 +2319,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
-        Assert.That(result.ResponseError, Does.Contain("existing SDK package directory"));
-        Assert.That(result.Repair!.TerminalReason, Is.EqualTo("invalid_input"));
-        Assert.That(result.Repair.Stages, Is.Empty);
-        Assert.That(result.Repair.AttemptsUsed, Is.Zero);
-        Assert.That(result.ExitCode, Is.Not.Zero);
+        Assert.That(result.ResponseError, Does.Contain("Package path").IgnoreCase); ;
     }
 
     [Test]
@@ -2657,11 +2336,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
-        Assert.That(result.ResponseError, Does.Contain("existing SDK package directory"));
-        Assert.That(result.Repair!.TerminalReason, Is.EqualTo("invalid_input"));
-        Assert.That(result.Repair.Stages, Is.Empty);
-        Assert.That(result.Repair.AttemptsUsed, Is.Zero);
-        Assert.That(result.ExitCode, Is.Not.Zero);
+        Assert.That(result.ResponseError, Does.Contain("Package path").IgnoreCase); ;
     }
 
     [Test]
@@ -2762,7 +2437,7 @@ public class CustomizedCodeUpdateToolAutoTests
             {
                 throw new InvalidOperationException($"The directory '{path}' does not exist.");
             }
-            return Task.FromResult(Path.GetFullPath(path));
+            return Task.FromResult("/mock/repo/root");
         });
 
         return gitHelper;
@@ -2777,15 +2452,12 @@ public class CustomizedCodeUpdateToolAutoTests
         private readonly bool _hasCustomizations;
         private readonly bool _isCustomizedCodeUpdateSupported;
         private readonly Func<string, CancellationToken, Task>? _preGenerateFunc;
-        private readonly Action<string, int>? _repairPatch;
-        public int RepairSessions { get; private set; }
-        public int LegacyPatchCalls { get; private set; }
-        public int PatchTurns { get; private set; }
-        public List<string> RetryPrompts { get; } = [];
-        public List<CancellationToken> OperationTokens { get; } = [];
 
         public override SdkLanguage Language { get; }
         public override bool IsCustomizedCodeUpdateSupported => _isCustomizedCodeUpdateSupported;
+        public int RepairSessions { get; private set; }
+        public List<string> ValidationReasons { get; } = [];
+        public bool SkipAgentValidation { get; set; }
 
         public ConfigurableLanguageService(
             Func<(bool, string?, PackageInfo?)>? buildFunc = null,
@@ -2793,8 +2465,7 @@ public class CustomizedCodeUpdateToolAutoTests
             Func<List<AppliedPatch>>? patchesFunc = null,
             SdkLanguage language = SdkLanguage.Java,
             bool isCustomizedCodeUpdateSupported = true,
-            Func<string, CancellationToken, Task>? preGenerateFunc = null,
-            Action<string, int>? repairPatch = null)
+            Func<string, CancellationToken, Task>? preGenerateFunc = null)
         {
             _buildFunc = buildFunc ?? (() => (true, null, null));
             _hasCustomizations = hasCustomizations;
@@ -2802,62 +2473,46 @@ public class CustomizedCodeUpdateToolAutoTests
             Language = language;
             _isCustomizedCodeUpdateSupported = isCustomizedCodeUpdateSupported;
             _preGenerateFunc = preGenerateFunc;
-            _repairPatch = repairPatch;
         }
 
         public override Task PreGenerateAsync(string repoRoot, CancellationToken ct)
             => _preGenerateFunc?.Invoke(repoRoot, ct) ?? Task.CompletedTask;
 
-        public override async Task<GenerationPreparationResult> PrepareForGenerationAsync(string repoRoot, CancellationToken ct)
-        {
-            OperationTokens.Add(ct);
-            await PreGenerateAsync(repoRoot, ct);
-            return new GenerationPreparationResult(Language == SdkLanguage.DotNet, true, null);
-        }
-
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath, CancellationToken ct)
             => Task.FromResult(new List<ApiChange>());
 
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
-            => _hasCustomizations ? Path.GetDirectoryName(CustomFile(packagePath, Language)) : null;
+            => _hasCustomizations ? Path.Combine(packagePath, "customization") : null;
 
         public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct)
-        {
-            LegacyPatchCalls++;
-            return Task.FromResult(_patchesFunc?.Invoke() ?? new List<AppliedPatch>());
-        }
+            => Task.FromResult(_patchesFunc?.Invoke() ?? new List<AppliedPatch>());
 
-        public override async Task RunRepairSessionAsync(string customizationRoot, string packagePath, string buildContext,
-            int maxAttempts, Func<CancellationToken, Task> onTurnStarting,
-            Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
-            Action<AppliedPatch> onPatchApplied, CancellationToken ct)
+        public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+            string customizationRoot, string packagePath, string buildContext, CancellationToken ct,
+            int maxAttempts, Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
         {
             RepairSessions++;
-            OperationTokens.Add(ct);
-            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            List<AppliedPatch> patches = [];
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
             {
-                await onTurnStarting(ct);
-                PatchTurns++;
-                foreach (var patch in _patchesFunc?.Invoke() ?? [])
+                patches.AddRange(await ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct));
+                if (SkipAgentValidation || validateResult == null) { return patches; }
+                try
                 {
-                    onPatchApplied(patch);
+                    var validation = await validateResult(patches);
+                    if (validation.Success) { return patches; }
+                    ValidationReasons.Add(validation.Reason?.ToString() ?? "");
                 }
-                _repairPatch?.Invoke(packagePath, attempt);
-                ct.ThrowIfCancellationRequested();
-                var turn = await onTurnCompleted($"candidate {attempt}", ct);
-                if (!turn.Continue) { return; }
-                RetryPrompts.Add(turn.Prompt!);
+                catch (InvalidOperationException) { return patches; }
             }
+            return patches;
         }
 
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
             => Task.FromResult(ValidationResult.CreateSuccess());
 
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-        {
-            OperationTokens.Add(ct);
-            return Task.FromResult(_buildFunc());
-        }
+            => Task.FromResult(_buildFunc());
 
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
             => Task.FromResult(new PackageInfo

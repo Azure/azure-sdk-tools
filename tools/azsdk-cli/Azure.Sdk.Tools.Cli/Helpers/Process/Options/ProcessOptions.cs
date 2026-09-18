@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -14,7 +13,6 @@ public interface IProcessOptions
     bool LogOutputStream { get; }
     string ShortName { get; }
     IDictionary<string, string>? EnvironmentVariables { get; }
-    Encoding? OutputEncoding => null;
 }
 
 public class ProcessOptions : IProcessOptions
@@ -30,7 +28,6 @@ public class ProcessOptions : IProcessOptions
     public TimeSpan Timeout { get; }
     public bool LogOutputStream { get; }
     public IDictionary<string, string>? EnvironmentVariables { get; }
-    public virtual Encoding? OutputEncoding => null;
 
     private string shortName;
     public virtual string ShortName

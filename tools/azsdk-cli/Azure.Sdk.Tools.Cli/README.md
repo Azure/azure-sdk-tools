@@ -94,39 +94,21 @@ In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
 
-## Bounded custom-code updates
+## Retained customization repair attempts
 
-`azsdk tsp client customized-update` and MCP tool `azsdk_customized_code_update` share the same customization engine. For `CustomCode` scope, `--max-attempts` / `maxAttempts` controls how many patch attempts the engine may make in one conversation (1..10, default 1):
+`azsdk tsp client customized-update` / `azsdk_customized_code_update` accepts `--max-attempts` / `maxAttempts` (1..10, default 1). Multiple attempts currently require `CustomCode`; `All` and `SpecInputs` retain their single-pass behavior.
 
 ```text
-azsdk tsp client customized-update --package-path <absolute-package-path> --edit-scope CustomCode --customization-request "Repair the custom-code build failures" --max-attempts 3 --output json
+azsdk tsp client customized-update --package-path <package-root> --edit-scope CustomCode --customization-request "Repair the custom-code build failures" --max-attempts 3 --output json
 ```
 
-The package path is the SDK package root, not its `src` directory. A local TypeSpec checkout is optional: omitting `--tsp-project-path` regenerates from the unchanged inputs in `tsp-location.yaml`. An explicit local project must belong to a separate Git repository and remain unchanged throughout the update.
+One command invocation keeps the same Copilot session and feeds actual validation failures back into its existing conversation. Earlier tool calls, edits, and feedback remain available. Repeated outer CLI invocations preserve files but start new conversations. A repair attempt is a patch proposal evaluated by host code, not an individual tool call or an Exit reminder; the existing per-language agent-turn allowance is retained.
 
-The engine validates the initial source, classifies the requested customization, and retains hypotheses, actual diffs, and diagnostics across patch attempts. A green build does not skip a requested customization such as an API rename. Generation and build run in code, not at the agent's discretion. .NET and Java prepare/regenerate before building; .NET plugin preparation must succeed. JavaScript and Python keep their custom-code build/check behavior without adding regeneration.
+After each proposal, the command awaits the existing .NET/Java preparation and regeneration, then builds. JavaScript/Python retain their existing build/check behavior. Preparation fallback policy, pinned `tsp-location.yaml` inputs, and optional local spec handling are unchanged. A green build does not skip a requested semantic customization, and a classifier no-op must still pass an SDK build in custom-code scope. The session stops on success, no additional patches, cancellation, or the attempt limit.
 
-If the repository-local `tsp-client` executable is missing, generation first runs `npm ci --prefix <repo>/eng/common/tsp-client` using the existing package manifest and lockfile. Installation must produce the local executable; generation never infers an npm package named `tsp-client`. Node.js/npm and network access to the manifest's package registries are required. An already-installed local executable is reused.
+The existing response adds only `attemptsUsed` (default 0). Initial builds do not count; evaluated no-progress proposals do. Failures retain the final actual diagnostics in `buildResult` and `response_error`, the stopping reason/error code, known `appliedPatches`, and existing `specChangeRequired` / `next_steps` guidance for useful PR comments. `success` is not set by the agent's claim.
 
-Baseline validation does not consume an attempt. Each patch turn does, even when it makes no effective change. The session stops on success, no progress, a return to a previously failed state, an out-of-scope change, a required-stage failure, cancellation, or the attempt limit. A fixed 30-minute total deadline applies across the session. `All` and `SpecInputs` preserve their existing single-attempt behavior; multiple attempts currently require `CustomCode`.
-
-The response preserves existing properties and adds `buildValidated` plus a `repair` object for `CustomCode`:
-
-| Field | Meaning |
-| --- | --- |
-| `repair.schemaVersion` | Contract version, currently `1`. |
-| `repair.terminalReason` | `already_green`, `repaired`, or a specific failure such as `no_progress`, `scope_violation`, `preparation_failed`, `generation_failed`, `attempt_limit`, `timed_out`, or `cancelled`. |
-| `repair.repairKind` | `none`, `generation_only`, or `custom_code`. Successful baseline generation changes are a repair even with zero patch attempts. |
-| `repair.input` / `repair.finalState` | Initial/final HEAD, full Git-publishable source trees, package identity, pinned-input hashes, and actual changed files. Added/untracked nonignored outputs and deletions are included. |
-| `repair.validation` | Actual deterministic validation result, its source tree, and the required stage IDs, including the build. |
-| `repair.stages` / `repair.attempts` | Stage outcomes, retained hypotheses, source states, diagnostics, and paths to actual patch/validation diffs. |
-| `repair.artifactsPath` | External directory containing atomic checkpoints, logs, and diffs. |
-
-Artifacts are written to `<OS temporary directory>/azsdk-repair/<sessionId>`, never into the source tree. They may contain proprietary source and diagnostics; retain them according to your organization's policy and remove the specific session directory when no longer needed. They survive ordinary failure/cancellation, subject to OS cleanup; resuming another process from them is not supported. A forced termination may leave only a partial checkpoint.
-
-The new repair contract's JSON field names and non-null values match across CLI and MCP. The MCP SDK omits null object properties, while CLI JSON may include them; consumers must accept either for optional fields. Legacy `appliedPatches` items retain their existing CLI PascalCase versus MCP camelCase property names; use `repair.finalState.changedFiles` for complete source changes. Failures include a string `response_error`; actionable spec/manual guidance is in the string arrays `specChangeRequired` and `next_steps`, respectively.
-
-**Publication must not trust an agent's summary or a mutable JSON file alone.** A successful response requires the final build's source tree to equal the final source tree. A publishing workflow must independently check the complete changed-file allowlist, expected PR HEAD, pinned inputs, and candidate tree. If invocation/result capture is not controlled by a trusted runner, independently prepare, regenerate, and build the exact candidate before publishing. Keep publication credentials outside the repair agent. These receipts are not signed attestations or a sandbox against arbitrary repository build scripts.
+This feature adds no source receipt, artifact/checkpoint format, strict preparation policy, dependency bootstrap, or publication protocol. Existing repository generation prerequisites still apply. It retains existing tool/path restrictions and does not claim whole-repository change attestation or cross-process conversation resume.
 
 ## Telemetry Configuration
 Telemetry collection is on by default.

@@ -25,13 +25,11 @@ public static class FileTools
     /// <param name="baseDir">The base directory for relative path resolution.</param>
     /// <param name="includeLineNumbers">If true, prefix each line with its 1-based line number (e.g., "1: content").</param>
     /// <param name="description">Optional custom description for the tool.</param>
-    /// <param name="isPathAllowed">Optional read policy evaluated on the absolute path.</param>
     /// <returns>An AIFunction that reads files.</returns>
     public static AIFunction CreateReadFileTool(
         string baseDir,
         bool includeLineNumbers = false,
-        string? description = null,
-        Func<string, bool>? isPathAllowed = null)
+        string? description = null)
     {
         description ??= includeLineNumbers
             ? "Read the contents of a file with line numbers prefixed to each line"
@@ -49,10 +47,6 @@ public static class FileTools
                 if (!ToolHelpers.TryGetSafeFullPath(baseDir, filePath, out var path))
                 {
                     throw new ArgumentException("The provided path is invalid or outside the allowed base directory.");
-                }
-                if (isPathAllowed != null && !isPathAllowed(path))
-                {
-                    throw new ArgumentException("The provided path is not allowed.");
                 }
                 if (!File.Exists(path))
                 {
@@ -187,12 +181,10 @@ public static class FileTools
     /// </summary>
     /// <param name="baseDir">The base directory for relative path resolution.</param>
     /// <param name="description">Optional custom description for the tool.</param>
-    /// <param name="isPathAllowed">Optional policy applied to files and directories before traversal or reading.</param>
     /// <returns>An AIFunction that searches files for patterns.</returns>
     public static AIFunction CreateGrepSearchTool(
         string baseDir,
-        string description = "Search for patterns in files within the project",
-        Func<string, bool>? isPathAllowed = null)
+        string description = "Search for patterns in files within the project")
     {
         return AIFunctionFactory.Create(
             ([Description("The search pattern (can be text or regex depending on isRegex parameter)")] string pattern,
@@ -207,10 +199,6 @@ public static class FileTools
                 if (!ToolHelpers.TryGetSafeFullPath(baseDir, path, out var searchPath))
                 {
                     throw new ArgumentException("The provided path is invalid or outside the allowed base directory.");
-                }
-                if (isPathAllowed != null && !isPathAllowed(searchPath))
-                {
-                    throw new ArgumentException("The provided path is not allowed.");
                 }
                 if (!Path.Exists(searchPath))
                 {
@@ -232,7 +220,7 @@ public static class FileTools
                 }
                 var files = File.Exists(searchPath)
                     ? [searchPath]
-                    : EnumerateFileSystemEntries(searchPath, filesOnly: true, isPathAllowed: isPathAllowed).Take(2000).ToArray();
+                    : EnumerateFileSystemEntries(searchPath, filesOnly: true).Take(2000).ToArray();
 
                 var matches = new ConcurrentBag<GrepMatch>();
                 var totalMatches = 0;
@@ -253,11 +241,6 @@ public static class FileTools
 
                     try
                     {
-                        if (isPathAllowed != null && !isPathAllowed(entry.file))
-                        {
-                            Interlocked.Increment(ref skippedFiles);
-                            return;
-                        }
                         // Skip files > 2MB (use ReadFile for large files)
                         if (new FileInfo(entry.file).Length > 2 * 1024 * 1024)
                         {
@@ -325,8 +308,7 @@ public static class FileTools
             description);
     }
 
-    private static IEnumerable<string> EnumerateFileSystemEntries(string rootPath, string searchPattern = "*", bool filesOnly = false,
-        Func<string, bool>? isPathAllowed = null)
+    private static IEnumerable<string> EnumerateFileSystemEntries(string rootPath, string searchPattern = "*", bool filesOnly = false)
     {
         var pending = new Stack<string>();
         pending.Push(rootPath);
@@ -349,10 +331,7 @@ public static class FileTools
 
             foreach (var entry in entries)
             {
-                if (isPathAllowed == null || isPathAllowed(entry))
-                {
-                    yield return entry;
-                }
+                yield return entry;
             }
 
             IEnumerable<string> subdirectories;
@@ -367,8 +346,7 @@ public static class FileTools
 
             foreach (var subdirectory in subdirectories)
             {
-                if (IgnoredDirectories.Contains(Path.GetFileName(subdirectory)) ||
-                    (isPathAllowed != null && !isPathAllowed(subdirectory)))
+                if (IgnoredDirectories.Contains(Path.GetFileName(subdirectory)))
                 {
                     continue;
                 }
@@ -384,25 +362,16 @@ public static class FileTools
     /// <param name="baseDir">The base directory for relative path resolution.</param>
     /// <param name="description">Optional custom description for the tool.</param>
     /// <param name="onFileRenamed">Optional callback invoked after a successful rename.</param>
-    /// <param name="isSourceAllowed">Optional policy for the absolute source path.</param>
-    /// <param name="isDestinationAllowed">Optional policy checked before creating directories or moving the file.</param>
-    /// <param name="acquireMutationLease">Optional lifetime gate held for the entire mutation tool call.</param>
     /// <returns>An AIFunction that renames files.</returns>
     public static AIFunction CreateRenameFileTool(
         string baseDir,
         string description = "Rename a file within the project directory",
-        Action<string, string>? onFileRenamed = null,
-        Func<string, bool>? isSourceAllowed = null,
-        Func<string, bool>? isDestinationAllowed = null,
-        Func<CancellationToken, ValueTask<IDisposable>>? acquireMutationLease = null)
+        Action<string, string>? onFileRenamed = null)
     {
         return AIFunctionFactory.Create(
-            async ([Description("Current relative path of the file to rename")] string oldFilePath,
-             [Description("New relative path for the file (typically just a new filename in the same directory)")] string newFilePath,
-             CancellationToken cancellationToken) =>
+            ([Description("Current relative path of the file to rename")] string oldFilePath,
+             [Description("New relative path for the file (typically just a new filename in the same directory)")] string newFilePath) =>
             {
-                using var mutationLease = acquireMutationLease != null
-                    ? await acquireMutationLease(cancellationToken).ConfigureAwait(false) : null;
                 if (string.IsNullOrEmpty(oldFilePath))
                 {
                     throw new ArgumentException("Old file path cannot be null or empty.", nameof(oldFilePath));
@@ -419,15 +388,6 @@ public static class FileTools
                 {
                     throw new ArgumentException("The new path is invalid or outside the allowed base directory.");
                 }
-                if ((isSourceAllowed != null &&
-                     (!ToolHelpers.IsPathWithinDirectoryWithoutLinks(baseDir, Path.Join(Path.GetFullPath(baseDir), oldFilePath)) ||
-                      !isSourceAllowed(safeOldPath))) ||
-                    (isDestinationAllowed != null &&
-                     (!ToolHelpers.IsPathWithinDirectoryWithoutLinks(baseDir, Path.Join(Path.GetFullPath(baseDir), newFilePath)) ||
-                      !isDestinationAllowed(safeNewPath))))
-                {
-                    throw new ArgumentException("The source or destination is not an allowed customization file.");
-                }
                 if (!File.Exists(safeOldPath))
                 {
                     throw new ArgumentException($"Source file does not exist: {oldFilePath}");
@@ -443,11 +403,6 @@ public static class FileTools
                     Directory.CreateDirectory(newDir);
                 }
 
-                if ((isSourceAllowed != null && !isSourceAllowed(safeOldPath)) ||
-                    (isDestinationAllowed != null && !isDestinationAllowed(safeNewPath)))
-                {
-                    throw new ArgumentException("The source or destination is no longer an allowed customization file.");
-                }
                 File.Move(safeOldPath, safeNewPath);
                 onFileRenamed?.Invoke(oldFilePath, newFilePath);
                 return $"Successfully renamed {oldFilePath} to {newFilePath}";

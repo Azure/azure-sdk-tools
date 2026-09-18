@@ -19,20 +19,16 @@ public record AppliedPatch(
 public class CustomizedCodeUpdateResponse : PackageResponseBase
 {
     /// <summary>
-    /// Indicates whether the requested scope completed successfully. Spec-only updates do not validate an SDK build.
+    /// Indicates whether the update operation succeeded (build passed after patches).
     /// </summary>
     [JsonPropertyName("success")]
     public bool Success { get; set; }
 
     /// <summary>
-    /// Indicates actual SDK build validation, not an agent's claim or publication authorization.
+    /// Patch proposals evaluated by host validation, excluding the initial build and agent Exit reminders.
     /// </summary>
-    [JsonPropertyName("buildValidated")]
-    public bool BuildValidated { get; set; }
-
-    [JsonPropertyName("repair")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public CustomizedCodeRepairResult? Repair { get; set; }
+    [JsonPropertyName("attemptsUsed")]
+    public int AttemptsUsed { get; set; }
 
     [JsonPropertyName("appliedPatches")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -114,11 +110,6 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         if (!string.IsNullOrEmpty(Message))
         {
             sb.AppendLine(Message);
-        }
-        if (Repair != null)
-        {
-            sb.AppendLine($"Repair: {Repair.TerminalReason} ({Repair.AttemptsUsed}/{Repair.MaxAttempts} attempts)");
-            sb.AppendLine($"Repair artifacts: {Repair.ArtifactsPath}");
         }
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {

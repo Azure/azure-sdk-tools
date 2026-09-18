@@ -7,7 +7,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Azure.Sdk.Tools.Cli.Services.Repair;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -336,34 +335,27 @@ public sealed partial class PythonLanguageService : LanguageService
     public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(
         string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
     {
-        ct.ThrowIfCancellationRequested();
         var packageInfo = await GetPackageInfo(packagePath, ct);
         var check = await LintCode(packagePath, cancellationToken: ct);
-        ct.ThrowIfCancellationRequested();
         return check.ExitCode == 0
             ? (true, null, packageInfo)
             : (false, check.CheckStatusDetails, packageInfo);
     }
 
-    public override Task RunRepairSessionAsync(
+    public override Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
         string buildContext,
-        int maxAttempts,
-        Func<CancellationToken, Task> onTurnStarting,
-        Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
-        Action<AppliedPatch> onPatchApplied,
-        CancellationToken ct) =>
-        RunRepairAgentAsync(copilotAgentRunner, customizationRoot, packagePath,
-            (readPaths, patchPaths) => new PythonErrorDrivenPatchTemplate(
-                buildContext, packagePath, customizationRoot, readPaths, patchPaths).BuildPrompt(),
-            maxAttempts, onTurnStarting, onTurnCompleted, onPatchApplied, ct);
+        CancellationToken ct)
+        => ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct, 1, null);
 
     public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
         string buildContext,
-        CancellationToken ct)
+        CancellationToken ct,
+        int maxAttempts,
+        Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
     {
         try
         {
@@ -386,7 +378,8 @@ public sealed partial class PythonLanguageService : LanguageService
             var agent = new CopilotAgent<string>
             {
                 Instructions = prompt,
-                MaxIterations = 25,
+                MaxIterations = 25 + maxAttempts - 1,
+                ValidateResult = validateResult == null ? null : _ => validateResult(patchLog.ToList()),
                 Tools =
                 [
                     FileTools.CreateGrepSearchTool(packagePath,
@@ -415,6 +408,7 @@ public sealed partial class PythonLanguageService : LanguageService
             logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
             return appliedPatches;
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to apply patches");
@@ -429,7 +423,30 @@ public sealed partial class PythonLanguageService : LanguageService
     {
         try
         {
-            return CustomizationFilePolicy.HasNonEmptyPythonExports(patchFilePath);
+            foreach (var line in File.ReadLines(patchFilePath))
+            {
+                if (line.Contains("__all__") && line.Contains("="))
+                {
+                    // If line contains quoted strings, there are exports
+                    if (line.Contains('"') || line.Contains('\''))
+                    {
+                        return true;
+                    }
+
+                    // If line has [ but not ] on the same line after the =, it's multiline and non-empty.
+                    var valueAfterEquals = line[(line.LastIndexOf('=') + 1)..].Trim();
+                    if (valueAfterEquals.StartsWith('[') && !valueAfterEquals.StartsWith("[]"))
+                    {
+                        return true;
+                    }
+
+                    // Single-line empty: __all__ = [] or __all__: List[str] = []
+                    return false;
+                }
+            }
+
+            // No __all__ found - assume no customizations (template file)
+            return false;
         }
         catch (Exception ex)
         {

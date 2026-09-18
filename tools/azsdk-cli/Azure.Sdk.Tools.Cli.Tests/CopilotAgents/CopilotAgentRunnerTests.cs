@@ -127,214 +127,6 @@ internal class CopilotAgentRunnerTests
         Assert.That(result, Is.EqualTo(expectedResult));
     }
 
-    [TestCase(true)]
-    [TestCase(false)]
-    public async Task RunAsync_TurnHooks_RetainSessionAndOwnContinuation(bool callExit)
-    {
-        var order = new List<string>();
-        var prompts = new List<string>();
-        var results = new List<string?>();
-        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<MessageOptions, CancellationToken>((options, _) =>
-            {
-                prompts.Add(options.Prompt);
-                order.Add("send");
-                if (callExit)
-                {
-                    SimulateExitToolCall($"hypothesis-{prompts.Count}");
-                }
-                else
-                {
-                    SimulateSessionIdle();
-                }
-            })
-            .ReturnsAsync("message");
-        using var cts = new CancellationTokenSource();
-        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
-        var result = await runner.RunAsync(new CopilotAgent<string>
-        {
-            Instructions = "Repair",
-            MaxIterations = 4,
-            OnTurnStarting = ct =>
-            {
-                Assert.That(ct, Is.EqualTo(cts.Token));
-                order.Add("start");
-                return Task.CompletedTask;
-            },
-            OnTurnCompleted = (hypothesis, ct) =>
-            {
-                Assert.That(ct, Is.EqualTo(cts.Token));
-                results.Add(hypothesis);
-                order.Add("complete");
-                return Task.FromResult(new CopilotAgentTurnResult<string>(
-                    results.Count < 4, $"diagnostic-{results.Count}", string.Empty));
-            },
-            ValidateResult = _ => throw new AssertionException("Legacy validation must not run in turn-hook mode.")
-        }, cts.Token);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result, Is.Empty);
-            Assert.That(order, Is.EqualTo(Enumerable.Range(0, 4).SelectMany(_ => new[] { "start", "send", "complete" })));
-            Assert.That(prompts.Skip(1), Is.EqualTo(new[] { "diagnostic-1", "diagnostic-2", "diagnostic-3" }));
-            Assert.That(results, Is.EqualTo(Enumerable.Range(1, 4).Select(i => callExit ? $"hypothesis-{i}" : null)));
-        });
-        clientMock.Verify(c => c.CreateSessionAsync(It.IsAny<SessionConfig>(), cts.Token), Times.Once);
-        sessionMock.Verify(s => s.DisposeAsync(), Times.Once);
-    }
-
-    [Test]
-    public async Task RunAsync_TurnHookSession_AllowListsOnlyDeclaredToolsAndExit()
-    {
-        SessionConfig? config = null;
-        clientMock.Setup(c => c.CreateSessionAsync(It.IsAny<SessionConfig>(), It.IsAny<CancellationToken>()))
-            .Callback<SessionConfig, CancellationToken>((value, _) => config = value)
-            .ReturnsAsync(sessionMock.Object);
-        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
-            .Callback(SimulateSessionIdle).ReturnsAsync("message");
-        string[] names = ["ReadFile", "GrepSearch", "CodePatchTool", "RenameFile"];
-        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
-        await runner.RunAsync(new CopilotAgent<string>
-        {
-            Instructions = "Repair using host validation",
-            Tools = names.Select(name => AIFunctionFactory.Create(() => "", name)),
-            OnTurnCompleted = (_, _) => Task.FromResult(new CopilotAgentTurnResult<string>(false, null, string.Empty))
-        });
-        Assert.That(config!.AvailableTools, Is.EquivalentTo(names.Append("Exit")),
-            "Built-in shell, edit, generation, build and artifact tools must not be available.");
-        Assert.That(config.Tools!.Select(t => t.Name), Is.EquivalentTo(config.AvailableTools));
-    }
-
-    [Test]
-    public void RunAsync_TurnHooks_RespectHardIterationLimitWithoutExit()
-    {
-        var completed = 0;
-        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
-            .Callback(SimulateSessionIdle).ReturnsAsync("message");
-        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
-        var error = Assert.ThrowsAsync<InvalidOperationException>(() => runner.RunAsync(new CopilotAgent<string>
-        {
-            Instructions = "Repair",
-            MaxIterations = 2,
-            OnTurnCompleted = (_, _) =>
-            {
-                completed++;
-                return Task.FromResult(new CopilotAgentTurnResult<string>(true, "Retry", null));
-            }
-        }));
-        Assert.That(error!.Message, Does.Contain("2 iterations"));
-        Assert.That(completed, Is.EqualTo(2));
-        sessionMock.Verify(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-    }
-
-    [TestCase("start")]
-    [TestCase("send")]
-    [TestCase("complete")]
-    public void RunAsync_TurnHooks_CancellationStopsBeforeNextStage(string cancellationStage)
-    {
-        using var cts = new CancellationTokenSource();
-        var started = 0;
-        var sent = 0;
-        var completed = 0;
-        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
-            .Callback(() =>
-            {
-                sent++;
-                if (cancellationStage == "send")
-                {
-                    cts.Cancel();
-                }
-                SimulateSessionIdle();
-            }).ReturnsAsync("message");
-        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
-        Assert.CatchAsync<OperationCanceledException>(() => runner.RunAsync(new CopilotAgent<string>
-        {
-            Instructions = "Repair",
-            OnTurnStarting = _ =>
-            {
-                started++;
-                if (cancellationStage == "start")
-                {
-                    cts.Cancel();
-                }
-                return Task.CompletedTask;
-            },
-            OnTurnCompleted = (_, _) =>
-            {
-                completed++;
-                cts.Cancel();
-                return Task.FromResult(new CopilotAgentTurnResult<string>(true, "Retry", null));
-            }
-        }, cts.Token));
-        Assert.That(started, Is.EqualTo(1));
-        Assert.That(sent, Is.EqualTo(cancellationStage == "start" ? 0 : 1));
-        Assert.That(completed, Is.EqualTo(cancellationStage == "complete" ? 1 : 0));
-        sessionMock.Verify(s => s.DisposeAsync(), Times.Once);
-    }
-
-    [Test]
-    public void RunAsync_TurnHooks_SessionErrorPreventsCompletionCallback()
-    {
-        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
-            .Callback(() =>
-            {
-                DispatchEvent(new SessionErrorEvent
-                {
-                    Id = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    Data = new SessionErrorData { ErrorType = "failure", Message = "broken session" }
-                });
-                SimulateSessionIdle();
-            }).ReturnsAsync("message");
-        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
-        var error = Assert.ThrowsAsync<InvalidOperationException>(() => runner.RunAsync(new CopilotAgent<string>
-        {
-            Instructions = "Repair",
-            OnTurnCompleted = (_, _) => throw new AssertionException("Must not validate a failed session")
-        }));
-        Assert.That(error!.Message, Does.Contain("broken session"));
-    }
-
-    [TestCase(false)]
-    [TestCase(true)]
-    public void RunAsync_TurnHooks_IdleTimeoutIsDistinctFromCallerCancellation(bool cancelCaller)
-    {
-        using var cts = new CancellationTokenSource();
-        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
-            .Callback(() =>
-            {
-                if (cancelCaller)
-                {
-                    cts.Cancel();
-                }
-            }).ReturnsAsync("message");
-        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
-        var error = Assert.CatchAsync(() => runner.RunAsync(new CopilotAgent<string>
-        {
-            Instructions = "Repair",
-            IdleTimeout = TimeSpan.FromMilliseconds(10),
-            OnTurnCompleted = (_, _) => throw new AssertionException("No idle event was received")
-        }, cts.Token));
-        Assert.That(error, cancelCaller ? Is.InstanceOf<OperationCanceledException>() : Is.TypeOf<TimeoutException>());
-    }
-
-    [TestCase(true)]
-    [TestCase(false)]
-    public void RunAsync_TurnHookExceptions_AreSurfaced(bool failAtStart)
-    {
-        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
-            .Callback(SimulateSessionIdle).ReturnsAsync("message");
-        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
-        var error = Assert.ThrowsAsync<IOException>(() => runner.RunAsync(new CopilotAgent<string>
-        {
-            Instructions = "Repair",
-            OnTurnStarting = _ => failAtStart ? throw new IOException("snapshot failure") : Task.CompletedTask,
-            OnTurnCompleted = (_, _) => throw new IOException("validation failure")
-        }));
-        Assert.That(error!.Message, Is.EqualTo(failAtStart ? "snapshot failure" : "validation failure"));
-        sessionMock.Verify(s => s.DisposeAsync(), Times.Once);
-    }
-
     [Test]
     public async Task RunAsync_WithValidationSuccess_ReturnsResult()
     {
@@ -454,6 +246,75 @@ internal class CopilotAgentRunnerTests
         });
 
         Assert.That(ex.Message, Does.Contain("3 iterations"));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task RunAsync_AwaitsValidationAndRetainsOneSessionForSuccessiveDiagnostics(bool omitFirstExit)
+    {
+        var prompts = new List<string>();
+        var validations = 0;
+        var firstValidation = new TaskCompletionSource<CopilotAgentValidationResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var validationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<MessageOptions, CancellationToken>((options, _) =>
+            {
+                prompts.Add(options.Prompt!);
+                if (omitFirstExit && prompts.Count == 1)
+                {
+                    SimulateSessionIdle();
+                }
+                else
+                {
+                    SimulateExitToolCall("Everything is fixed.");
+                }
+            })
+            .ReturnsAsync("message-id");
+        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
+        var agent = new CopilotAgent<string>
+        {
+            Instructions = "Apply compiler-guided patches.",
+            MaxIterations = 4,
+            ValidateResult = _ =>
+            {
+                validations++;
+                if (validations == 1)
+                {
+                    validationStarted.SetResult();
+                    return firstValidation.Task;
+                }
+                return Task.FromResult(new CopilotAgentValidationResult
+                {
+                    Success = validations == 3,
+                    Reason = "Second awaited build: missing member Beta."
+                });
+            }
+        };
+
+        var run = runner.RunAsync(agent);
+        try
+        {
+            await validationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.That(run.IsCompleted, Is.False, "An Exit success claim must not bypass awaited host validation.");
+            Assert.That(prompts, Has.Count.EqualTo(omitFirstExit ? 2 : 1));
+        }
+        finally
+        {
+            firstValidation.TrySetResult(new CopilotAgentValidationResult
+            {
+                Success = false,
+                Reason = "First awaited build: missing member Alpha."
+            });
+        }
+        var result = await run.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.That(result, Is.EqualTo("Everything is fixed."));
+        Assert.That(validations, Is.EqualTo(3), "A missing Exit consumes an iteration, not a host validation.");
+        Assert.That(prompts, Has.Count.EqualTo(omitFirstExit ? 4 : 3));
+        Assert.That(prompts[^2], Does.Contain("First awaited build: missing member Alpha."));
+        Assert.That(prompts[^1], Does.Contain("Second awaited build: missing member Beta."));
+        clientMock.Verify(c => c.CreateSessionAsync(It.IsAny<SessionConfig>(), It.IsAny<CancellationToken>()), Times.Once);
+        sessionMock.Verify(s => s.DisposeAsync(), Times.Once);
     }
 
     [Test]

@@ -524,28 +524,20 @@ public sealed partial class JavaScriptLanguageService : LanguageService
     /// Handles TypeScript compiler errors and merge conflict markers left by
     /// <c>dev-tool customization apply</c>.
     /// </summary>
-    public override Task RunRepairSessionAsync(
+    public override Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
         string buildContext,
-        int maxAttempts,
-        Func<CancellationToken, Task> onTurnStarting,
-        Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
-        Action<AppliedPatch> onPatchApplied,
         CancellationToken ct)
-    {
-        customizationRoot = Path.Combine(packagePath, "src");
-        return RunRepairAgentAsync(copilotAgentRunner, customizationRoot, packagePath,
-            (readPaths, patchPaths) => new JavaScriptErrorDrivenPatchTemplate(
-                buildContext, packagePath, customizationRoot, readPaths, patchPaths).BuildPrompt(),
-            maxAttempts, onTurnStarting, onTurnCompleted, onPatchApplied, ct);
-    }
+        => ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct, 1, null);
 
     public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
         string buildContext,
-        CancellationToken ct)
+        CancellationToken ct,
+        int maxAttempts,
+        Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
     {
         try
         {
@@ -586,7 +578,8 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             var agent = new CopilotAgent<string>
             {
                 Instructions = prompt,
-                MaxIterations = 25,
+                MaxIterations = 25 + maxAttempts - 1,
+                ValidateResult = validateResult == null ? null : _ => validateResult(patchLog.ToList()),
                 Tools =
                 [
                     FileTools.CreateGrepSearchTool(packagePath,
@@ -616,6 +609,7 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
             return appliedPatches;
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to apply patches");

@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { parseArgs, isMain, runMain, writeJson } from "./cli.mjs";
 import {
   collectChanges,
@@ -14,39 +13,7 @@ import {
 import { addCompilerEvidence, buildSourceIndex } from "./source-index.mjs";
 import { runProjectCompilers } from "./compiler-runner.mjs";
 import { resolveProjectApiVersions } from "./api-version-selection.mjs";
-
-const REQUIRED_TOOLCHAIN_PACKAGES = [
-  "@typespec/compiler",
-  "@typespec/openapi3",
-  "@azure-tools/typespec-autorest",
-  "@azure-tools/typespec-azure-resource-manager",
-  "@azure-tools/typespec-client-generator-core",
-];
-
-export function preflightToolchain(root) {
-  const lockPath = path.join(root, "package-lock.json");
-  if (!fs.existsSync(lockPath)) throw new Error(`package-lock.json is missing from ${root}`);
-  const lock = JSON.parse(fs.readFileSync(lockPath, "utf8"));
-  const failures = [];
-  for (const packageName of REQUIRED_TOOLCHAIN_PACKAGES) {
-    const expected = lock.packages?.[`node_modules/${packageName}`]?.version;
-    const packagePath = path.join(root, "node_modules", ...packageName.split("/"), "package.json");
-    if (!expected) {
-      failures.push(`${packageName} is absent from package-lock.json`);
-      continue;
-    }
-    if (!fs.existsSync(packagePath)) {
-      failures.push(`${packageName} is not installed`);
-      continue;
-    }
-    const installed = JSON.parse(fs.readFileSync(packagePath, "utf8")).version;
-    if (installed !== expected) {
-      failures.push(`${packageName} installed version ${installed} does not match lock version ${expected}`);
-    }
-  }
-  if (failures.length) throw new Error(failures.join("\n"));
-  return { packages: REQUIRED_TOOLCHAIN_PACKAGES };
-}
+import { ensureDependencies } from "./package-manager.mjs";
 
 function stableProjectId(project) {
   return `project-${crypto.createHash("sha256").update(project).digest("hex").slice(0, 12)}`;
@@ -195,59 +162,6 @@ function copyOverlay(repo, currentWorktree, changedFiles) {
       fs.rmSync(target);
     }
   }
-}
-
-function ensureDependencies(worktree, work, reuseRoot) {
-  const lockFile = path.join(worktree, "package-lock.json");
-  const packageFile = path.join(worktree, "package.json");
-  if (!fs.existsSync(lockFile) || !fs.existsSync(packageFile)) {
-    throw new Error(`Root package.json/package-lock.json are unavailable in ${worktree}.`);
-  }
-  const lockHash = crypto.createHash("sha256").update(fs.readFileSync(lockFile)).digest("hex");
-  const cache = path.join(work, "cache", "toolchains", lockHash);
-  const source = path.join(cache, "node_modules");
-  const target = path.join(worktree, "node_modules");
-  if (fs.existsSync(target)) return;
-  if (!fs.existsSync(source)) {
-    fs.mkdirSync(cache, { recursive: true });
-    fs.copyFileSync(packageFile, path.join(cache, "package.json"));
-    fs.copyFileSync(lockFile, path.join(cache, "package-lock.json"));
-    let reused = false;
-    if (reuseRoot && fs.existsSync(path.join(reuseRoot, "node_modules"))) {
-      try {
-        const reuseLock = fs.readFileSync(path.join(reuseRoot, "package-lock.json"));
-        const reuseLockHash = crypto.createHash("sha256").update(reuseLock).digest("hex");
-        if (reuseLockHash !== lockHash) throw new Error("lockfile hash mismatch");
-        preflightToolchain(reuseRoot);
-        fs.symlinkSync(
-          path.join(reuseRoot, "node_modules"),
-          source,
-          process.platform === "win32" ? "junction" : "dir",
-        );
-        reused = true;
-      } catch {
-        reused = false;
-      }
-    }
-    if (!reused) {
-      const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-      const install = spawnSync(npm, ["ci", "--ignore-scripts", "--no-audit", "--no-fund"], {
-        cwd: cache,
-        encoding: "utf8",
-        maxBuffer: 64 * 1024 * 1024,
-        shell: process.platform === "win32",
-      });
-      fs.writeFileSync(
-        path.join(cache, "npm-ci.log"),
-        [install.stdout, install.stderr].filter(Boolean).join("\n"),
-      );
-      if (install.status !== 0) {
-        throw new Error(`npm ci failed for toolchain ${lockHash.slice(0, 12)}.`);
-      }
-    }
-  }
-  fs.symlinkSync(source, target, process.platform === "win32" ? "junction" : "dir");
-  preflightToolchain(worktree);
 }
 
 function findExternalLocalImports(repo, projects, sparseRoots) {
@@ -442,8 +356,18 @@ export async function prepareAssessment({
     manifest.timings.projectDiscoveryMs;
   try {
     if (!blockers.length) {
-      ensureDependencies(baseWorktree, work, repository);
-      ensureDependencies(currentWorktree, work, repository);
+      manifest.dependencySetup = {
+        baseline: ensureDependencies({
+          worktree: baseWorktree,
+          work,
+          reuseRoot: repository,
+        }),
+        target: ensureDependencies({
+          worktree: currentWorktree,
+          work,
+          reuseRoot: repository,
+        }),
+      };
     }
   } catch (error) {
     blockers.push({ code: "dependency-setup-failed", message: error.message });

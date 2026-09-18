@@ -31,6 +31,12 @@ AutoRest and TCGC using that pair; runs analyzers; records compiler-derived
 documentation presence; calculates deterministic hunk coverage; writes bounded
 `model-input.json` once; and builds `agent-workspace`.
 
+Dependency setup supports npm and pnpm repositories. npm uses `npm ci`; pnpm
+uses the exact version declared by `packageManager`, a frozen lockfile, and a
+shared content-addressed store for the base and target worktrees. Both modes
+disable lifecycle scripts and verify the installed TypeSpec toolchain against
+the selected revision's lockfile.
+
 For head, select the newest newly added API version, otherwise its latest
 version. When no version was added and that head version exists in base, compile
 both sides with it. When head adds a version, select base's latest stable

@@ -21,22 +21,41 @@ function findFiles(root, predicate) {
   return files.sort();
 }
 
-function resolveTsp(worktree) {
+export function resolveTsp(
+  worktree,
+  { platform = process.platform, execPath = process.execPath } = {},
+) {
   const candidates = [
-    path.join(worktree, "node_modules", ".bin", "tsp.cmd"),
+    ...(platform === "win32"
+      ? [path.join(worktree, "node_modules", ".bin", "tsp.cmd")]
+      : []),
     path.join(worktree, "node_modules", ".bin", "tsp"),
   ];
-  const executable = candidates.find(fs.existsSync);
-  if (!executable) {
+  const displayExecutable = candidates.find(fs.existsSync);
+  if (!displayExecutable) {
     throw new Error(`TypeSpec compiler not found under ${worktree}\\node_modules\\.bin.`);
   }
-  return executable;
+  if (platform !== "win32") {
+    return { executable: displayExecutable, args: [], displayExecutable };
+  }
+  const packageRoot = path.join(worktree, "node_modules", "@typespec", "compiler");
+  const manifestPath = path.join(packageRoot, "package.json");
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`TypeSpec compiler package manifest not found at ${manifestPath}.`);
+  }
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  const bin = typeof manifest.bin === "string" ? manifest.bin : manifest.bin?.tsp;
+  const cli = bin && path.resolve(packageRoot, bin);
+  if (!cli || !fs.existsSync(cli)) {
+    throw new Error(`TypeSpec compiler CLI is unavailable in ${manifestPath}.`);
+  }
+  return { executable: execPath, args: [cli], displayExecutable };
 }
 
 function runEmitter({ worktree, project, emitter, output, log, apiVersion, workRoot }) {
   fs.mkdirSync(output, { recursive: true });
   fs.mkdirSync(path.dirname(log), { recursive: true });
-  const executable = resolveTsp(worktree);
+  const command = resolveTsp(worktree);
   const args = [
     "compile",
     path.join(worktree, project),
@@ -63,20 +82,21 @@ function runEmitter({ worktree, project, emitter, output, log, apiVersion, workR
     args.push(`--option=${emitter}.${option}=${apiVersion}`);
   }
   const started = performance.now();
-  const result = spawnSync(executable, args, {
+  const result = spawnSync(command.executable, [...command.args, ...args], {
     cwd: worktree,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
-    shell: process.platform === "win32",
   });
   const durationMs = Math.round(performance.now() - started);
   fs.writeFileSync(
     log,
-    [`> ${executable} ${args.join(" ")}`, result.stdout, result.stderr].filter(Boolean).join("\n"),
+    [`> ${command.displayExecutable} ${args.join(" ")}`, result.stdout, result.stderr]
+      .filter(Boolean)
+      .join("\n"),
   );
   return {
     status: result.status === 0 ? "succeeded" : "failed",
-    command: { executable: path.relative(worktree, executable), args },
+    command: { executable: path.relative(worktree, command.displayExecutable), args },
     exitCode: result.status,
     durationMs,
     configPath: path.relative(workRoot, path.join(worktree, project, "tspconfig.yaml")),

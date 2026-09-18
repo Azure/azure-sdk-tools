@@ -6,6 +6,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, computed_field
 
 from models.conversation import Role
+from models.feedback import RootCauseClassification
 from models.qa_record import QARecord
 
 
@@ -91,6 +92,14 @@ class OverviewCounts(BaseModel):
     expert_yes: int = Field(default=0, ge=0)
     questions: int = Field(default=0, ge=0)
     bot_replies: int = Field(default=0, ge=0)
+    findings: int = Field(default=0, ge=0)
+    issue_cases: int = Field(default=0, ge=0)
+    resolved_cases: int = Field(default=0, ge=0)
+    pending_validation_cases: int = Field(default=0, ge=0)
+    validation_failed_cases: int = Field(default=0, ge=0)
+    validation_skipped_cases: int = Field(default=0, ge=0)
+    processing_error_cases: int = Field(default=0, ge=0)
+    other_issue_cases: int = Field(default=0, ge=0)
 
 
 class OverviewRow(OverviewCounts):
@@ -98,6 +107,20 @@ class OverviewRow(OverviewCounts):
 
     channel_id: str | None = None
     channel_name: str
+
+    # Distinct issue counts are not additive across channels.
+    tracked_issues: int = Field(default=0, ge=0)
+    root_causes: dict[RootCauseClassification, int] = Field(default_factory=dict)
+
+    @computed_field
+    @property
+    def unresolved_cases(self) -> int:
+        return self.issue_cases - self.resolved_cases
+
+    @computed_field
+    @property
+    def resolved_rate(self) -> OverviewMetric:
+        return _metric(self.resolved_cases, self.issue_cases)
 
     @computed_field
     @property

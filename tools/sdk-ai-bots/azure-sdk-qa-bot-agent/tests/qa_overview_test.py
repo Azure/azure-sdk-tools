@@ -10,6 +10,7 @@ import httpx
 import pytest
 
 from models.qa_dashboard import OverviewCounts, OverviewRow
+from models.feedback import RootCauseClassification
 from services.qa_dashboard_service import QADashboardService
 from services.qa_overview import REPORT_NOTES, validate_report_window
 
@@ -39,7 +40,12 @@ class Container:
                 continue
             if not start <= datetime.fromisoformat(timestamp) < end:
                 continue
-            yield doc
+            if not self.messages and "feedback" in doc:
+                feedback = doc["feedback"] or {}
+                yield {**doc, "classification": feedback.get("classification"),
+                       "issue_url": feedback.get("issue_url"), "feedback_status": feedback.get("status")}
+            else:
+                yield doc
 
 
 def qa(channel="a", verdict="correct", expert=False, **changes):
@@ -270,7 +276,7 @@ async def test_undated_mock_results_never_create_rows_or_change_metrics(storage,
 async def test_empty_report_is_na(storage):
     result = await QADashboardService().get_overview(start=START, end=END)
     assert result.rows == []
-    for metric in (result.totals.accuracy, result.totals.expert_interaction, result.totals.answer_rate):
+    for metric in (result.totals.accuracy, result.totals.expert_interaction, result.totals.answer_rate, result.totals.resolved_rate):
         assert metric.rate is None
         assert metric.numerator == metric.denominator == 0
 
@@ -323,7 +329,7 @@ def test_serialized_metrics_have_no_goal(changes):
     for removed in ("correctness_unknown", "expert_no", "expert_unknown"):
         assert removed not in OverviewCounts.model_fields
         assert removed not in data
-    for name in ("accuracy", "expert_interaction", "answer_rate"):
+    for name in ("accuracy", "expert_interaction", "answer_rate", "resolved_rate"):
         assert "goal" not in data[name]
         assert set(data[name]) == {"numerator", "denominator", "rate"}
 
@@ -376,24 +382,161 @@ def test_maximum_window_allowed():
     assert validate_report_window(START, START + timedelta(days=93))[0] == START
 
 
+def issue_feedback(status="validation_passed", number=1, classification="reasoning_gap"):
+    return {"status": status, "issue_url": f"https://github.com/Azure/example/issues/{number}",
+            "classification": classification}
+
+
+@pytest.mark.asyncio
+async def test_issue_resolution_is_case_based_and_globally_deduplicated(storage):
+    records, _ = storage
+    records.documents = [qa(feedback=issue_feedback()) for _ in range(9)] + [
+        qa("b", feedback=issue_feedback("pending_validation")),
+        qa("b", feedback=issue_feedback("validation_failed", number=2)),
+        qa("b", feedback=issue_feedback("validation_skipped", number=3)),
+        qa("b", feedback=issue_feedback("failed", number=4)),
+        qa("b", feedback=issue_feedback("running", number=5)),
+        qa("b", feedback=issue_feedback("done", number=6)),
+        qa("b", feedback={"classification": "missing_content"}),
+        qa("b", feedback=None),
+    ]
+    report = await QADashboardService().get_overview(start=START, end=END)
+    total = report.totals
+    assert total.findings == 16
+    assert total.issue_cases == 15
+    assert total.tracked_issues == 6  # Shared issue 1 is counted only once globally.
+    assert sum(row.tracked_issues for row in report.rows) == 7
+    assert total.resolved_cases == 9 and total.unresolved_cases == 6
+    assert total.resolved_rate.model_dump() == {"numerator": 9, "denominator": 15, "rate": 60}
+    assert [row.resolved_rate.rate for row in report.rows] == [100, 0]
+    assert total.pending_validation_cases == total.validation_failed_cases == 1
+    assert total.validation_skipped_cases == total.processing_error_cases == 1
+    assert total.other_issue_cases == 2
+    assert total.unresolved_cases == sum(getattr(total, name) for name in (
+        "pending_validation_cases", "validation_failed_cases", "validation_skipped_cases",
+        "processing_error_cases", "other_issue_cases",
+    ))
+    assert total.root_causes == {"reasoning_gap": 15, "missing_content": 1}
+    query = records.calls[0]["query"]
+    assert "c.feedback.issue_url AS issue_url" in query
+    assert "c.feedback.status AS feedback_status" in query
+
+
+@pytest.mark.parametrize("status, resolved, other", [
+    ("validation_passed", 1, 0), ("validation_failed", 0, 0),
+    ("pending_validation", 0, 0), ("validation_skipped", 0, 0), ("failed", 0, 0),
+    ("created", 0, 1), ("running", 0, 1), ("done", 0, 1),
+    ("closed", 0, 1), (None, 0, 1), ("unknown", 0, 1),
+])
+@pytest.mark.asyncio
+async def test_only_explicit_passed_validation_is_resolved(storage, status, resolved, other):
+    storage[0].documents = [qa(feedback=issue_feedback(status, classification=None))]
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.findings == 0  # A linked case does not require a classification.
+    assert total.issue_cases == total.tracked_issues == 1
+    assert total.resolved_cases == resolved
+    assert total.resolved_rate.rate == 100 * resolved
+    assert total.unresolved_cases == 1 - resolved
+    assert total.other_issue_cases == other
+
+
+@pytest.mark.parametrize("url", [
+    None, "", "  ", 123, "not a url", "https://github.com/Azure/example/pull/1",
+    "https://github.com.evil.test/Azure/example/issues/1", "https://github.com/Azure/example/issues/0",
+    "https://github.com/Azure/example/issues/1/extra",
+])
+@pytest.mark.asyncio
+async def test_missing_or_invalid_issue_links_never_inflate_resolution(storage, url):
+    storage[0].documents = [qa(feedback={**issue_feedback(), "issue_url": url})]
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.findings == 1
+    assert total.issue_cases == total.tracked_issues == total.resolved_cases == 0
+    assert total.resolved_rate.rate is None
+
+
+@pytest.mark.asyncio
+async def test_issue_identity_normalization(storage):
+    urls = [
+        "https://github.com/Azure/example/issues/1",
+        " https://GITHUB.COM/azure/Example/issues/01/ ",
+        "https://github.com/Azure/example/issues/1#issuecomment-123",
+        "https://github.com/Azure/example/issues/1?source=report",
+        "https://github.com/Azure/other/issues/1",
+    ]
+    storage[0].documents = [qa(feedback={**issue_feedback(), "issue_url": url}) for url in urls]
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.tracked_issues == 2
+    assert total.issue_cases == total.resolved_cases == 5
+
+
+@pytest.mark.asyncio
+async def test_findings_include_all_known_causes_without_inference(storage):
+    storage[0].documents = [qa(verdict="incorrect", feedback={"classification": cause.value})
+                            for cause in RootCauseClassification]
+    storage[0].documents += [qa(feedback={"classification": value}) for value in (None, "", "new_cause")]
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.findings == len(RootCauseClassification)
+    assert total.root_causes == {cause: 1 for cause in RootCauseClassification}
+    assert sum(total.root_causes.values()) == total.findings
+    assert total.accuracy_excluded == 2
+    assert total.issue_cases == 0
+    assert total.model_dump(mode="json")["root_causes"]["missing_content"] == 1
+
+
+@pytest.mark.asyncio
+async def test_issue_scope_uses_conversation_cohort_and_current_status(storage):
+    storage[0].documents = [
+        qa("a", feedback={**issue_feedback(), "validated_at": (END + timedelta(days=30)).isoformat()}),
+        qa("b", feedback=issue_feedback(number=2)),
+        qa("test", feedback=issue_feedback(number=3)),
+        qa("a", conversation_created_at=(START - timedelta(seconds=1)).isoformat(), feedback=issue_feedback(number=4)),
+        qa("a", conversation_created_at=END.isoformat(), feedback=issue_feedback(number=5)),
+        qa("a", conversation_created_at=None, feedback=issue_feedback(number=6)),
+    ]
+    report = await QADashboardService().get_overview(start=START, end=END, channel_id="a")
+    assert report.totals.findings == report.totals.tracked_issues == report.totals.resolved_cases == 1
+    assert report.totals.resolved_rate.rate == 100
+    assert report.totals.root_causes == {"reasoning_gap": 1}
+    empty = await QADashboardService().get_overview(start=START, end=END, channel_id="test")
+    assert empty.totals.tracked_issues == empty.totals.findings == 0
+    assert empty.totals.resolved_rate.rate is None
+
+
+def test_resolution_notes_and_tables_explain_case_and_issue_distinction():
+    notes = " ".join(REPORT_NOTES)
+    assert "Only validation_passed counts as resolved" in notes
+    assert "not distinct issues" in notes
+    assert "Legacy done states are not proof" in notes
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    assert "data.totals.resolved_rate" in html
+    assert "Closed issues and skipped validation do not count as resolved" in html
+    assert "row.resolved_rate.numerator} / ${row.resolved_rate.denominator}" in html
+    assert "the total deduplicates across channels" in html
+    for cause in RootCauseClassification:
+        assert f"row.root_causes.{cause.value} || 0" in html
+
+
 @pytest.mark.asyncio
 async def test_overview_route_validates_and_serializes(storage):
     import server
 
-    storage[0].documents = [qa()]
+    storage[0].documents = [qa(feedback=issue_feedback())]
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="http://test") as client:
         response = await client.get("/api/dashboard/overview", params={
             "start": START.isoformat(), "end": END.isoformat(), "channel_id": "a",
         })
         assert response.status_code == 200
         assert response.json()["totals"]["accuracy"]["rate"] == 100
+        assert response.json()["totals"]["resolved_rate"] == {"numerator": 1, "denominator": 1, "rate": 100}
+        assert response.json()["totals"]["tracked_issues"] == 1
+        assert response.json()["totals"]["root_causes"] == {"reasoning_gap": 1}
         assert "tenant_id" not in response.json()
         assert response.json()["channel_id"] == "a"
         assert response.json()["notes"]
         for row in [*response.json()["rows"], response.json()["totals"]]:
             assert "tenant_id" not in row
             assert "undated_conversations" not in row
-            for name in ("accuracy", "expert_interaction", "answer_rate"):
+            for name in ("accuracy", "expert_interaction", "answer_rate", "resolved_rate"):
                 assert "goal" not in row[name]
                 assert set(row[name]) == {"numerator", "denominator", "rate"}
         for params in [
@@ -468,19 +611,23 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
         assert removed not in tables.lower()
     assert re.findall(r'title: "([^"]+)"', tables) == [
         "Accuracy", "Interaction rate", "Answer rate",
+        "Issue findings & resolution", "Unresolved case status", "Root-cause findings",
     ]
     headings = [json.loads(value) for value in re.findall(r"headings: (\[[^\n]+\])", tables)]
     assert headings == [
         ["Channel", "Conversations", "Correct", "Excluded", "Accuracy"],
         ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
+        ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Unresolved", "Resolved rate"],
+        ["Channel", "Pending validation", "Validation failed", "Validation skipped", "Processing errors", "Other"],
+        ["Channel", "Missing documentation", "Outdated documentation", "Insufficient documentation", "Retrieval mismatch", "Reasoning gap", "Out of scope", "Findings"],
     ]
     for removed in ("undated_conversations", ".coverage"):
         assert removed not in tables
     assert "(Conversations - incorrect) / conversations" in tables
     assert "Unassessed and excluded conversations count as successful" in tables
     assert "Unassessed cases remain in the denominator" in tables
-    assert len(re.findall(r'description: "[^"]+"', tables)) == 3
+    assert len(re.findall(r'description: "[^"]+"', tables)) == 6
     # Both visible/printed tables and the copied Markdown use these definitions.
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
     copying = html.split("function buildOverviewReport(data)", 1)[1].split("function invalidateOverview", 1)[0]
@@ -493,7 +640,7 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
 def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     visual = html.split("function renderOverviewVisual(data)", 1)[1].split("function renderOverview(data)", 1)[0]
-    for field in ("accuracy", "expert_interaction", "answer_rate"):
+    for field in ("accuracy", "expert_interaction", "answer_rate", "resolved_rate"):
         assert f"data.totals.{field}" in visual
     assert "At a glance" not in html
     assert "Channels with data" not in html
@@ -513,6 +660,8 @@ def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
     assert "report.tables.replaceChildren();" in invalidation
     assert ".overview-metrics { grid-template-columns: 1fr; }" in html
     assert "print-color-adjust: exact" in html
+    assert ".report-section table { min-width: 0; table-layout: fixed; }" in html
+    assert ".report-section th, .report-section td { overflow-wrap: anywhere; }" in html
 
 
 def test_overview_notes_are_collapsible_below_each_table_and_in_copied_report():

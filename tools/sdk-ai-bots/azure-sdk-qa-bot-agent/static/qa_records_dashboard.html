@@ -415,10 +415,11 @@
     [hidden] { display: none !important; }
     .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
     .overview-visual { margin: 24px 0 32px; }
-    .overview-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .overview-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
     .overview-card { --metric-color: #0067b8; padding: 20px; border: 1px solid #dce4ef; border-top: 4px solid var(--metric-color); border-radius: 12px; background: white; min-width: 0; }
     .overview-card.interaction { --metric-color: #7251b5; }
     .overview-card.answer { --metric-color: #087e8b; }
+    .overview-card.resolution { --metric-color: #495a80; }
     .overview-card h3 { font-size: 15px; margin: 0; }
     .overview-rate { color: var(--metric-color); font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 10px 0 18px; }
     .overview-rate-counts { display: inline-block; color: #52627a; font-size: 16px; font-weight: 400; }
@@ -439,7 +440,8 @@
       header { color: black; background: white; padding: 0 0 12px; }
       header p { color: black; }
       .table-wrap { overflow: visible; }
-      .report-section table { min-width: 0; }
+      .report-section table { min-width: 0; table-layout: fixed; }
+      .report-section th, .report-section td { overflow-wrap: anywhere; }
       .overview-card { break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
       th { position: static; }
       th, td { font-size: 10px; padding: 6px; }
@@ -448,6 +450,7 @@
     }
     @media (max-width: 1100px) {
       .filters { grid-template-columns: repeat(3, minmax(160px, 1fr)); }
+      .overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 700px) {
       main { padding: 14px; }
@@ -1267,6 +1270,7 @@
 
     const conversationLimitations = "Conversations use their creation date, not assessment date; undated records and threads without bot replies are absent. Later assessments can change the results.";
     const sharedLimitations = "Dates use local time (start inclusive, end exclusive). Testing channels are excluded; unknown channels remain included. Totals use all matching stored counts, not averages of channel percentages. Missing ingestion is not measured; data may change during report generation.";
+    const resolutionLimitations = "Uses current stored status for conversations created in the selected dates, not issues created or fixes completed in that period. Closing a GitHub issue does not count as resolution; only validation passed does. No live GitHub status is fetched. Skipped validation and legacy done states are not proof of successful validation.";
 
     // These same table definitions drive both the DOM and the copied report.
     const reportTables = [
@@ -1291,6 +1295,32 @@
         limitations: ["Each qualifying user message counts once. Replies include assistant and system/error messages. Messages use their own creation dates, independently of conversation dates, and include questions without QA records.", "Replies are not matched to questions. Multiple replies and exchanges crossing the date boundary can produce rates above 100%; this measures reply volume, not the percentage of distinct questions answered.", sharedLimitations],
         headings: ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
         values: row => [row.questions, row.bot_replies, percent(row.answer_rate.rate)]
+      },
+      {
+        title: "Issue findings & resolution",
+        description: "Resolved rate = validated resolved cases / cases with a valid linked GitHub issue. Findings count conversation cases with a recognized root cause, including findings without a linked issue. N/A means no issue-linked cases.",
+        limitations: ["Tracked issues are distinct GitHub issues, not cases. The same issue may appear in multiple channels; the total deduplicates across channels and may be less than their sum. Unresolved counts issue-linked cases without passed validation, not distinct open GitHub issues.", resolutionLimitations, conversationLimitations, sharedLimitations],
+        headings: ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Unresolved", "Resolved rate"],
+        values: row => [row.findings, row.tracked_issues, row.issue_cases,
+          row.resolved_cases, row.unresolved_cases,
+          `${percent(row.resolved_rate.rate)} (${row.resolved_rate.numerator} / ${row.resolved_rate.denominator})`]
+      },
+      {
+        title: "Unresolved case status",
+        description: "Issue-linked cases without passed validation, split by their current stored lifecycle status. These counts sum to Unresolved; a processing error is not a validated failure or a resolved case.",
+        limitations: ["Pending validation includes cases waiting for issue closure as well as validation. Other includes created, running, missing, unknown and legacy done states. Findings without a valid linked issue are not included in this table or the resolved-rate denominator.", resolutionLimitations, sharedLimitations],
+        headings: ["Channel", "Pending validation", "Validation failed", "Validation skipped", "Processing errors", "Other"],
+        values: row => [row.pending_validation_cases, row.validation_failed_cases,
+          row.validation_skipped_cases, row.processing_error_cases, row.other_issue_cases]
+      },
+      {
+        title: "Root-cause findings",
+        description: "One finding per conversation with a recognized root-cause classification, regardless of whether an issue was linked or validation passed. Missing or unrecognized classifications are not inferred.",
+        limitations: ["Missing documentation and out-of-scope findings are included here even though they are excluded from the incorrect count in Accuracy. This breakdown counts cases, not distinct GitHub issues.", conversationLimitations, sharedLimitations],
+        headings: ["Channel", "Missing documentation", "Outdated documentation", "Insufficient documentation", "Retrieval mismatch", "Reasoning gap", "Out of scope", "Findings"],
+        values: row => [row.root_causes.missing_content || 0, row.root_causes.outdated_content || 0,
+          row.root_causes.insufficient_content || 0, row.root_causes.retrieval_mismatch || 0,
+          row.root_causes.reasoning_gap || 0, row.root_causes.out_of_scope || 0, row.findings]
       }
     ];
 
@@ -1330,7 +1360,10 @@
           note: "Meaningful expert follow-up after a bot reply. Unassessed conversations remain in the total."},
         {title: "Answer rate", style: "answer", metric: data.totals.answer_rate,
           labels: ["Bot replies", "In-scope questions"],
-          note: "Reply volume, not matched answers. Includes system/error replies and can exceed 100%."}
+          note: "Reply volume, not matched answers. Includes system/error replies and can exceed 100%."},
+        {title: "Resolved rate", style: "resolution", metric: data.totals.resolved_rate,
+          labels: ["Validated resolved cases", "Issue-linked cases"],
+          note: "Current validation results for conversations in this period. Closed issues and skipped validation do not count as resolved."}
       ];
       for (const {title, style, metric, labels, note} of metrics) {
         const card = node("article", `overview-card ${style}`);

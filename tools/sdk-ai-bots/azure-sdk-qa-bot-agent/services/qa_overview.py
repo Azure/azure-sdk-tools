@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import re
 from typing import Any
 
+from models.feedback import RootCauseClassification
 from models.qa_dashboard import OverviewCounts, OverviewRow, QAOverview
 from utils.channel_policy import is_testing_channel
 
@@ -30,6 +31,14 @@ REPORT_NOTES = [
     "messages and boundary-crossing exchanges can produce rates above 100%. This is reply volume, "
     "not the percentage of distinct questions answered.",
     "Zero denominators are N/A.",
+    "Findings count cases with a recognized root cause, including accuracy exclusions. "
+    "Tracked issues count distinct GitHub issue URLs within each channel and globally; "
+    "the total may be less than the sum of channel counts. Resolved rate = validated resolved "
+    "cases / cases with a valid linked GitHub issue, not distinct issues. Only validation_passed "
+    "counts as resolved. Pending, failed, skipped, processing errors and other states remain "
+    "unresolved. Current stored status is used for conversations created in the selected range, "
+    "not issues created or fixes completed during that range. No live GitHub status is fetched. "
+    "Legacy done states are not proof of successful validation.",
     "Testing channels are excluded by the configured-name policy (word testing, "
     "Azure SDK QA Bot - Auto Reply - Test, smoke-tests). Channel IDs fall back to conversation_id; "
     "unconfigured/unknown channels remain included.",
@@ -42,6 +51,24 @@ REPORT_NOTES = [
 _BOT_MENTION = re.compile(
     r"<at\b[^>]*>Azure SDK Q(?:&amp;|&)A Bot</at>", re.IGNORECASE
 )
+
+_ISSUE_URL = re.compile(
+    r"https://github\.com/([\w.-]+)/([\w.-]+)/issues/([0-9]+)/?(?:[?#].*)?",
+    re.IGNORECASE,
+)
+
+
+def _issue_key(value: Any) -> str | None:
+    """Canonical identity for deduplication, without contacting GitHub."""
+    if not isinstance(value, str):
+        return None
+    match = _ISSUE_URL.fullmatch(value.strip())
+    if not match:
+        return None
+    owner, repo, number = match.groups()
+    if int(number) <= 0:
+        return None
+    return f"{owner.casefold()}/{repo.casefold()}/{int(number)}"
 
 
 def _is_question(document: dict[str, Any]) -> bool:
@@ -78,7 +105,7 @@ async def aggregate_overview(
     *, qa_container: Any, message_container: Any, channel_names: dict[str, str],
     start: datetime, end: datetime, channel_id: str | None,
 ) -> QAOverview:
-    """Stream projected documents across every SDK page, keeping only per-channel counts."""
+    """Stream all pages, retaining counts and distinct issue identities, not transcripts."""
     start, end = validate_report_window(start, end)
     parameters: list[dict[str, Any]] = [
         {"name": "@start", "value": start.isoformat()},
@@ -86,6 +113,8 @@ async def aggregate_overview(
     ]
     excluded = {key for key, name in channel_names.items() if is_testing_channel(name)}
     groups: dict[str | None, OverviewRow] = {}
+    issues_by_channel: dict[str | None, set[str]] = {}
+    all_issues: set[str] = set()
 
     def row_for(document: dict[str, Any], *, message: bool = False) -> OverviewRow | None:
         channel = _channel(document, message=message)
@@ -102,6 +131,7 @@ async def aggregate_overview(
     qa_query = (
         "SELECT c.channel_id, c.conversation_id, c.conversation_created_at, "
         "c.verdict, c.feedback.classification AS classification, "
+        "c.feedback.issue_url AS issue_url, c.feedback.status AS feedback_status, "
         "c.has_expert_interaction FROM c WHERE "
         "c.conversation_created_at >= @start AND c.conversation_created_at < @end"
     )
@@ -124,6 +154,30 @@ async def aggregate_overview(
         expert = document.get("has_expert_interaction")
         if expert is True:
             row.expert_yes += 1
+
+        classification = document.get("classification")
+        if isinstance(classification, str) and classification in RootCauseClassification:
+            root_cause = RootCauseClassification(classification)
+            row.findings += 1
+            row.root_causes[root_cause] = row.root_causes.get(root_cause, 0) + 1
+        issue_key = _issue_key(document.get("issue_url"))
+        if issue_key is not None:
+            row.issue_cases += 1
+            issues_by_channel.setdefault(row.channel_id, set()).add(issue_key)
+            all_issues.add(issue_key)
+            status = document.get("feedback_status")
+            if status == "validation_passed":
+                row.resolved_cases += 1
+            elif status == "pending_validation":
+                row.pending_validation_cases += 1
+            elif status == "validation_failed":
+                row.validation_failed_cases += 1
+            elif status == "validation_skipped":
+                row.validation_skipped_cases += 1
+            elif status == "failed":
+                row.processing_error_cases += 1
+            else:
+                row.other_issue_cases += 1
 
     # Do not join to QA records: unanswered questions have no QA record.
     message_query = (
@@ -149,8 +203,16 @@ async def aggregate_overview(
     rows = sorted(groups.values(), key=lambda row: (
         row.channel_name.casefold(), row.channel_id or "",
     ))
+    for row in rows:
+        row.tracked_issues = len(issues_by_channel.get(row.channel_id, set()))
     totals = OverviewRow.model_validate({
         "channel_name": "Total",
+        "tracked_issues": len(all_issues),
+        "root_causes": {
+            cause: sum(row.root_causes.get(cause, 0) for row in rows)
+            for cause in RootCauseClassification
+            if any(cause in row.root_causes for row in rows)
+        },
         **{
             name: sum(getattr(row, name) for row in rows)
             for name in OverviewCounts.model_fields

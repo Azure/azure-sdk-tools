@@ -65,13 +65,24 @@ def continuation_token(link: str, channel: dict, message_id: str | None) -> str:
 
 
 def _validate_messages(messages, message_id=None):
+    """Validate the raw message list and return only entries whose messageType is "message".
+
+    Structural validation (id presence, reply-to-thread consistency) is still applied
+    to every message returned by the connector; only after a message passes validation
+    is it checked against the messageType filter, so malformed payloads are still
+    surfaced as errors instead of being silently dropped.
+    """
     if not isinstance(messages, list):
         raise ValueError("Teams connector did not return a message list.")
+    filtered = []
     for message in messages:
         if not isinstance(message, dict) or not isinstance(message.get("id"), str) or not message["id"]:
             raise ValueError("Teams connector returned a message without an ID.")
         if message_id is not None and message.get("replyToId") != message_id:
             raise ValueError("Reply does not belong to the requested thread.")
+        if message.get("messageType") == "message":
+            filtered.append(message)
+    return filtered
 
 
 class TeamsCollectionService:
@@ -91,8 +102,8 @@ class TeamsCollectionService:
             page = await self._fetch_page(channel, message_id, token)
             if not isinstance(page, dict):
                 raise ValueError("Teams connector did not return a message list.")
-            _validate_messages(page.get("value"), message_id)
-            yield page["value"]
+            messages = _validate_messages(page.get("value"), message_id)
+            yield messages
             link = page.get("@odata.nextLink")
             if not link:
                 return
@@ -129,8 +140,8 @@ class TeamsCollectionService:
                     previous = index.get(document_id)
                     replies = {}
                     if "replies" in root and not root.get("replies@odata.nextLink"):
-                        _validate_messages(root["replies"], root_id)
-                        replies = {reply["id"]: reply for reply in root["replies"]}
+                        valid_replies = _validate_messages(root["replies"], root_id)
+                        replies = {reply["id"]: reply for reply in valid_replies}
                     else:
                         async for page in self._pages(channel, root_id):
                             for reply in page:

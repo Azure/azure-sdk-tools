@@ -29,13 +29,15 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     TenantID.API_SPEC_REVIEW_BOT: (
-        "Azure REST API specification PR review: validation errors, LintDiff, "
-        "Avocado, breaking changes, merge process in azure-rest-api-specs repos."
+        "Azure REST API specification PR review: ARM review timing, queue, "
+        "readiness and escalation; validation errors, LintDiff, Avocado, breaking "
+        "changes, and merge process in azure-rest-api-specs repos. Prefer this skill "
+        "when spec review is the primary question, even if release context is included."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
         "permissions, Azure SDK Tools Agent usage, and release plan creation, status, "
-        "readiness, lifecycle, and troubleshooting."
+        "readiness, lifecycle, and troubleshooting after specification review."
     ),
     TenantID.AZSDK_TOOLS_AGENT_QA_BOT: (
         "Azure SDK Tools Agent (azsdk CLI/MCP): agent and MCP server setup and "

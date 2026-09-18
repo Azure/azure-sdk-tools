@@ -94,6 +94,26 @@ def test_fused_search_applies_extra_filter_and_caps_queries():
     assert {c[2] for c in client.calls} == {"WIKI"}
 
 
+def test_fused_search_redacts_sensitive_query_values():
+    client = _FakeSearchClient()
+    query = (
+        "Bearer token-value-123456 AccountKey=storage-key "
+        "https://example.test/?sig=sas-signature&se=tomorrow "
+        "eyJheader12345.eyJpayload12345.signature12345 model Foo"
+    )
+    asyncio.run(client.fused_search([query], {"s": "f"}))
+
+    forwarded_queries = {call[1] for call in client.calls}
+    assert len(forwarded_queries) == 1
+    forwarded_query = forwarded_queries.pop()
+    assert forwarded_query.count("[REDACTED]") == 4
+    assert "token-value-123456" not in forwarded_query
+    assert "storage-key" not in forwarded_query
+    assert "sas-signature" not in forwarded_query
+    assert "signature12345" not in forwarded_query
+    assert "model Foo" in forwarded_query
+
+
 def test_fused_search_survives_a_failing_retriever():
     client = _FakeSearchClient(failing={"vector"})
     fused = asyncio.run(client.fused_search(["q"], {"s": "f"}))

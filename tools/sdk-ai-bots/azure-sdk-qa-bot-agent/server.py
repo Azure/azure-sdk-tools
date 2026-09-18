@@ -298,9 +298,9 @@ async def save_conversation(req: ConversationMessage):
 async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
     """Retrieve knowledge for a request using search_knowledge_base tool."""
     logger.info(
-        "Retrieve knowledge request: tenant=%s, message=%s",
+        "Retrieve knowledge request: tenant=%s, query_length=%d",
         req.tenant_id,
-        req.query[:200],
+        len(req.query),
     )
     try:
         resp = await _knowledge_service.retrieve(req)

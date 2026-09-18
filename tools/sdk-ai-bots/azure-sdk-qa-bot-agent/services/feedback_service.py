@@ -12,7 +12,7 @@ from uuid import uuid4
 
 from models.feedback import FeedbackRequest, FeedbackResponse, Reaction
 from models.qa_record import QARecord
-from utils.azure_cosmosdb import get_feedback_container, reopen_finished_qa_record
+from utils.azure_cosmosdb import get_feedback_container, requeue_qa_record_for_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class FeedbackService:
         if req.reaction == Reaction.bad:
             if req.conversation_id and req.conversation_type:
                 record_id = QARecord.build_id(req.conversation_type, req.conversation_id)
-                if await reopen_finished_qa_record(
+                if await requeue_qa_record_for_analysis(
                     record_id=record_id, tenant_id=req.tenant_id,
                 ):
                     logger.info("Reopened QA record %s after negative feedback", record_id)

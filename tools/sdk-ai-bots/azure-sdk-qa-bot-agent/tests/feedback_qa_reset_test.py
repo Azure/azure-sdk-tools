@@ -26,7 +26,7 @@ async def test_reset_uses_atomic_no_issue_guard_and_clears_only_assessment():
     record_id = "teams_channel:19:channel@thread.tacv2;messageid=123"
     before = datetime.now(timezone.utc)
     with patch.object(azure_cosmosdb, "get_qa_records_container", return_value=container):
-        assert await azure_cosmosdb.reopen_finished_qa_record(
+        assert await azure_cosmosdb.requeue_qa_record_for_analysis(
             record_id=record_id, tenant_id="typespec",
         )
     after = datetime.now(timezone.utc)
@@ -79,7 +79,7 @@ async def test_missing_or_ineligible_record_is_noop(status_code):
         status_code=status_code, message="Missing record or predicate not satisfied",
     )
     with patch.object(azure_cosmosdb, "get_qa_records_container", return_value=container):
-        assert not await azure_cosmosdb.reopen_finished_qa_record(
+        assert not await azure_cosmosdb.requeue_qa_record_for_analysis(
             record_id="teams_channel:thread", tenant_id="typespec",
         )
     assert container.patch_item.await_count == 1
@@ -94,7 +94,7 @@ async def test_unexpected_storage_errors_propagate(status_code):
     container.patch_item.side_effect = error
     with patch.object(azure_cosmosdb, "get_qa_records_container", return_value=container):
         with pytest.raises(exceptions.CosmosHttpResponseError) as caught:
-            await azure_cosmosdb.reopen_finished_qa_record(
+            await azure_cosmosdb.requeue_qa_record_for_analysis(
                 record_id="teams_channel:thread", tenant_id="typespec",
             )
     assert caught.value is error
@@ -110,7 +110,7 @@ async def test_duplicate_reset_does_not_retry_after_state_changes():
     ]
     with patch.object(azure_cosmosdb, "get_qa_records_container", return_value=container):
         results = await asyncio.gather(*(
-            azure_cosmosdb.reopen_finished_qa_record(
+            azure_cosmosdb.requeue_qa_record_for_analysis(
                 record_id="teams_channel:thread", tenant_id="typespec",
             ) for _ in range(2)
         ))

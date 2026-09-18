@@ -25,7 +25,7 @@ from utils import azure_cosmosdb
 
 @pytest.fixture(autouse=True)
 def reopen_qa_record():
-    with patch("services.feedback_service.reopen_finished_qa_record", return_value=False) as reopen:
+    with patch("services.feedback_service.requeue_qa_record_for_analysis", return_value=False) as reopen:
         yield reopen
 
 

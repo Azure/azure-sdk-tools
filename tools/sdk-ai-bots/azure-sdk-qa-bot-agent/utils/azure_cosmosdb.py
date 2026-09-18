@@ -453,7 +453,7 @@ async def upsert_qa_record(document: dict[str, Any]) -> dict[str, Any]:
     return await container.upsert_item(document)
 
 
-async def reopen_finished_qa_record(*, record_id: str, tenant_id: str) -> bool:
+async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> bool:
     """Requeue a completed no-issue assessment without overwriting active work.
 
     The predicate is checked atomically by Cosmos, including for duplicate

@@ -3,8 +3,21 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import { documentQualitySummary, downstreamMethodData, downstreamPresentationDimension, renderReportSections, sdkTypeName } from "./assessment-report-ui.mjs";
-import { escapeHtml, renderAssessmentHtml } from "./render-assessment-html.mjs";
-import { reportSection } from "./report-test-utils.mjs";
+import {
+  escapeHtml,
+  renderAssessmentHtml as renderCurrentAssessmentHtml,
+} from "./render-assessment-html.mjs";
+import {
+  normalizeRecordedAssessment,
+  reportSection,
+} from "./report-test-utils.mjs";
+
+function renderAssessmentHtml(assessment, options) {
+  return renderCurrentAssessmentHtml(
+    normalizeRecordedAssessment(assessment),
+    options,
+  );
+}
 
 function fixture() {
   const typeFact = (role) => ({

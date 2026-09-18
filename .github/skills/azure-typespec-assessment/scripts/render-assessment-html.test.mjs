@@ -6,7 +6,7 @@ import {
   downstreamTypeCards,
   escapeHtml,
   operationContractRows,
-  renderAssessmentHtml,
+  renderAssessmentHtml as renderCurrentAssessmentHtml,
   restContractCards,
   representativeSource,
   visibleSharedTypeImpacts,
@@ -15,7 +15,17 @@ import { documentQualitySummary } from "./assessment-report-ui.mjs";
 import { readComplianceCatalog } from "./compliance-assessment.mjs";
 import { assembleDocumentQuality, DOCUMENT_QUALITY_ARTIFACT } from "./document-quality-assessment.mjs";
 import { buildDocumentQualityInput } from "./document-quality-input.mjs";
-import { reportSection } from "./report-test-utils.mjs";
+import {
+  normalizeRecordedAssessment,
+  reportSection,
+} from "./report-test-utils.mjs";
+
+function renderAssessmentHtml(assessment, options) {
+  return renderCurrentAssessmentHtml(
+    normalizeRecordedAssessment(assessment),
+    options,
+  );
+}
 
 function assertNoDocumentAppendixUi(html) {
   const body = html.includes("<main") ? html.slice(html.indexOf("<main")) : html;
@@ -1919,7 +1929,7 @@ test("content puts findings first and follows header order within both groups", 
     },
     {
       assessment: JSON.parse(readFileSync(new URL("../evals/assessments/44988/assessment.json", import.meta.url), "utf8")),
-      expected: ["azure-compliance", "downstream-breaking", "document-quality", "semantic-intents", "rest-breaking", "appendix"],
+      expected: ["downstream-breaking", "document-quality", "semantic-intents", "azure-compliance", "rest-breaking", "appendix"],
     },
   ];
   for (const { assessment, expected } of cases) {

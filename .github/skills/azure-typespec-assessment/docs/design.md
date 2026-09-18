@@ -2500,7 +2500,7 @@ Never label a head-source artifact as a base-commit artifact.
 | HTML presentation                | `scripts/assessment-display.mjs`, `scripts/render-assessment-html.mjs`                                            |
 | Regression coverage              | `scripts/*.test.mjs`, `evals/`                                                                                    |
 
-Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
+Preserve local assessment reports and user-owned eval changes.
 
 ## 13. Completion criteria
 

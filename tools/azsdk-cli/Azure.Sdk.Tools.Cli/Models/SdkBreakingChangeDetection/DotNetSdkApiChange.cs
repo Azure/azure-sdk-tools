@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 /// Native .NET API evidence and the ApiCompat diagnostic, if any, that identifies it.
 /// Additions are supplementary evidence and are not inherently compatible or breaking.
 /// </summary>
-public class DotnetSdkApiChange
+public class DotNetSdkApiChange
 {
     [JsonPropertyName("kind")]
     public string Kind { get; set; } = string.Empty;

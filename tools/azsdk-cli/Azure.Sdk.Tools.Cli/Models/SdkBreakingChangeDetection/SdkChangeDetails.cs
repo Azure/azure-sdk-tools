@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 /// Language-neutral detector metadata, preserved independently of AI classification.
 /// Unrecognized language schemas round-trip without requiring a type discriminator.
 /// </summary>
-[JsonDerivedType(typeof(DotnetSdkChangeDetails))]
+[JsonDerivedType(typeof(DotNetSdkChangeDetails))]
 public class SdkChangeDetails
 {
     /// <summary>Additional detector provenance and evidence retained without interpretation.</summary>

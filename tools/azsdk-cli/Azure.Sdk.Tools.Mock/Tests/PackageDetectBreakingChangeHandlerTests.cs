@@ -423,9 +423,9 @@ public class PackageDetectBreakingChangeHandlerTests
         return (SdkBreakingChangeDetectionResult)response.Result!;
     }
 
-    private static DotnetSdkChangeDetails GetDotnetDetails(SdkBreakingChangeDetectionResult result)
+    private static DotNetSdkChangeDetails GetDotnetDetails(SdkBreakingChangeDetectionResult result)
     {
-        Assert.That(result.Details, Is.TypeOf<DotnetSdkChangeDetails>());
-        return (DotnetSdkChangeDetails)result.Details!;
+        Assert.That(result.Details, Is.TypeOf<DotNetSdkChangeDetails>());
+        return (DotNetSdkChangeDetails)result.Details!;
     }
 }

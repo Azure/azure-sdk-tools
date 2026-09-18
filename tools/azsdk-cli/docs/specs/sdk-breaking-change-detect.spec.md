@@ -357,8 +357,8 @@ The existing `changes` and `hasBreakingChange` fields remain unchanged.
 Optional `details` uses a language-neutral `SdkChangeDetails` metadata container.
 Unknown language fields and shapes round-trip without being interpreted as
 .NET metadata or requiring a type discriminator in the report.
-`DotnetSdkChangeDetails` supplies the typed .NET view: baseline version, API
-changes (`DotnetSdkApiChange`), original diagnostics, and limitations. The tool
+`DotNetSdkChangeDetails` supplies the typed .NET view: baseline version, API
+changes (`DotNetSdkApiChange`), original diagnostics, and limitations. The tool
 interprets this view only for a .NET package. These are native observations,
 not LLM classifications or instructions for applying a fix. The existing JSON
 shape is unchanged:

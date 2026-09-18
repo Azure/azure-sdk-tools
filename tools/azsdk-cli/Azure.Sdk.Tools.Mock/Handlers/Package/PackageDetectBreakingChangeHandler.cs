@@ -107,7 +107,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
             response.Result = new SdkBreakingChangeDetectionResult
             {
                 SdkChangeMD = limitation,
-                Details = new DotnetSdkChangeDetails { Limitations = [limitation] },
+                Details = new DotNetSdkChangeDetails { Limitations = [limitation] },
             };
             return response;
         }
@@ -190,11 +190,11 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
         var diagnosticId = isDotnet ? "CP0002" : "MOCK001";
         var diagnostic = RemovalDiagnostic(packageInfo);
         var addition = $"Public API '{addedSymbol}' was added.";
-        var details = new DotnetSdkChangeDetails { BaselineVersion = "1.0.0" };
+        var details = new DotNetSdkChangeDetails { BaselineVersion = "1.0.0" };
         if (!additionsOnly)
         {
             details.Diagnostics.Add(diagnostic);
-            details.ApiChanges.Add(new DotnetSdkApiChange
+            details.ApiChanges.Add(new DotNetSdkApiChange
             {
                 Kind = "removed",
                 Symbol = removedSymbol,
@@ -204,7 +204,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
                 TargetFramework = isDotnet ? "net8.0" : null,
             });
         }
-        details.ApiChanges.Add(new DotnetSdkApiChange
+        details.ApiChanges.Add(new DotNetSdkApiChange
         {
             Kind = "added",
             Symbol = addedSymbol,

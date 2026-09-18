@@ -143,7 +143,7 @@ an LLM classifier.
 Default responses retain package metadata, removal and addition Markdown,
 classified breaks with `mitigationStrategy`, and .NET-native `details` for .NET
 packages. The common details contract is language-neutral, with
-`DotnetSdkChangeDetails` providing the .NET view. Java does not fabricate
+`DotNetSdkChangeDetails` providing the .NET view. Java does not fabricate
 .NET-native details or mitigation strategies. `changesOnly: true` returns
 the same raw evidence without classification. These are synthetic fixtures,
 not comparisons against files at the supplied path.

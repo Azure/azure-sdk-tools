@@ -166,14 +166,77 @@ public class SdkBreakingChangeReportTests
 
         var response = await ReadReportAsync();
         var details = JsonSerializer.SerializeToElement(((SdkBreakingChangeDetectionResult)response.Result!).Details);
-        var dotnet = details.Deserialize<DotnetSdkChangeDetails>()!;
+        var dotnet = details.Deserialize<DotNetSdkChangeDetails>()!;
 
         Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Clean));
-        Assert.That(dotnet.ApiChanges.Single(), Is.TypeOf<DotnetSdkApiChange>());
+        Assert.That(dotnet.ApiChanges.Single(), Is.TypeOf<DotNetSdkApiChange>());
         Assert.That(details.GetProperty("baselineSource").GetProperty("feed").GetString(), Is.EqualTo("NuGet"));
         Assert.That(details.GetProperty("detectorVersion").GetInt32(), Is.EqualTo(2));
         Assert.That(details.GetProperty("apiChanges")[0].GetProperty("newSignature").GetString(), Is.EqualTo("class Widget"));
         Assert.That(details.GetProperty("apiChanges")[0].GetProperty("oldSignature").ValueKind, Is.EqualTo(JsonValueKind.Null));
+    }
+
+    [TestCase(false, false)]
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public void DotNetMetadata_SerializesWithUnchangedWireNames(bool useBaseType, bool includeOptionalFields)
+    {
+        var details = new DotNetSdkChangeDetails
+        {
+            BaselineVersion = "1.2.3",
+            ApiChanges =
+            [
+                new DotNetSdkApiChange
+                {
+                    Kind = "removed",
+                    Symbol = "Widget",
+                    Description = "Widget removed",
+                    IsBreaking = true,
+                    DiagnosticId = includeOptionalFields ? "CP0002" : null,
+                    TargetFramework = includeOptionalFields ? "net8.0" : null,
+                    AdditionalProperties = new Dictionary<string, JsonElement>
+                    {
+                        ["oldSignature"] = JsonSerializer.SerializeToElement("class Widget"),
+                    },
+                },
+            ],
+            Diagnostics = ["Original diagnostic"],
+            Limitations = ["Behavior not compared"],
+            AdditionalProperties = new Dictionary<string, JsonElement>
+            {
+                ["baselineSource"] = JsonSerializer.SerializeToElement(new { feed = "NuGet" }),
+            },
+        };
+
+        var json = useBaseType
+            ? JsonSerializer.SerializeToElement<SdkChangeDetails>(details)
+            : JsonSerializer.SerializeToElement(details);
+
+        Assert.That(json.EnumerateObject().Select(property => property.Name), Is.EquivalentTo(
+            new[] { "baselineVersion", "apiChanges", "diagnostics", "limitations", "baselineSource" }));
+        var apiChange = json.GetProperty("apiChanges")[0];
+        var expectedApiFields = new List<string> { "kind", "symbol", "description", "isBreaking", "oldSignature" };
+        if (includeOptionalFields)
+        {
+            expectedApiFields.AddRange(["diagnosticId", "targetFramework"]);
+        }
+        Assert.That(apiChange.EnumerateObject().Select(property => property.Name), Is.EquivalentTo(expectedApiFields));
+        Assert.That(json.GetRawText(), Does.Not.Contain("$type"));
+
+        var roundTrip = json.Deserialize<DotNetSdkChangeDetails>()!;
+        Assert.That(roundTrip.BaselineVersion, Is.EqualTo(details.BaselineVersion));
+        Assert.That(roundTrip.Diagnostics, Is.EqualTo(details.Diagnostics));
+        Assert.That(roundTrip.Limitations, Is.EqualTo(details.Limitations));
+        Assert.That(roundTrip.AdditionalProperties!["baselineSource"].GetProperty("feed").GetString(), Is.EqualTo("NuGet"));
+        var nativeChange = roundTrip.ApiChanges.Single();
+        Assert.That(nativeChange.Kind, Is.EqualTo("removed"));
+        Assert.That(nativeChange.Symbol, Is.EqualTo("Widget"));
+        Assert.That(nativeChange.Description, Is.EqualTo("Widget removed"));
+        Assert.That(nativeChange.IsBreaking, Is.True);
+        Assert.That(nativeChange.DiagnosticId, Is.EqualTo(includeOptionalFields ? "CP0002" : null));
+        Assert.That(nativeChange.TargetFramework, Is.EqualTo(includeOptionalFields ? "net8.0" : null));
+        Assert.That(nativeChange.AdditionalProperties!["oldSignature"].GetString(), Is.EqualTo("class Widget"));
     }
 
     [Test]

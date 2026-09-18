@@ -122,7 +122,7 @@ public class SdkBreakingChangeDetectToolTests
             {
                 HasBreakingChange = true,
                 SdkChangeMD = "Untrusted rewritten evidence",
-                Details = new DotnetSdkChangeDetails { BaselineVersion = "invented" },
+                Details = new DotNetSdkChangeDetails { BaselineVersion = "invented" },
                 BreakingChanges =
                 [
                     new SdkBreakingChange
@@ -168,7 +168,7 @@ public class SdkBreakingChangeDetectToolTests
             {
                 HasBreakingChange = breaking,
                 SdkChangeMD = "No GA release.",
-                Details = new DotnetSdkChangeDetails { Limitations = ["No GA baseline is available."] },
+                Details = new DotNetSdkChangeDetails { Limitations = ["No GA baseline is available."] },
             }));
 
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath, changesOnly: changesOnly);
@@ -591,7 +591,7 @@ public class SdkBreakingChangeDetectToolTests
         ConfigureScript(JsonSerializer.Serialize(new SdkChange
         {
             SdkChangeMD = Additions,
-            Details = new DotnetSdkChangeDetails { BaselineVersion = "1.0.0" },
+            Details = new DotNetSdkChangeDetails { BaselineVersion = "1.0.0" },
         }), contentType: contentType);
 
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
@@ -934,12 +934,12 @@ public class SdkBreakingChangeDetectToolTests
 
     private void ConfigureDetectorReport(bool hasBreakingChange)
     {
-        _details = new DotnetSdkChangeDetails
+        _details = new DotNetSdkChangeDetails
         {
             BaselineVersion = "1.2.3",
             ApiChanges =
             [
-                new DotnetSdkApiChange
+                new DotNetSdkApiChange
                 {
                     Kind = hasBreakingChange ? "removed" : "added",
                     Symbol = hasBreakingChange ? "P:Azure.Test.Widget.Name" : "P:Azure.Test.Widget.DisplayName",

@@ -7,6 +7,7 @@
 # 3. For paths matching $Merge, merge changes from $SourceBranch allowing the user to resolve conflicts manually
 #
 # Adding paths to $Merge excludes them from the default keep or overwrite behaviour of $Ours and $Theirs.
+# Only the selected paths are resolved; untracked files and conflicts requiring a manual merge are left untouched.
 #
 # This script can be run locally from the root of the repo:
 # .\eng\scripts\Merge-Branch.ps1 -SourceBranch 'main' -Theirs '**' -Ours 'sdk/template' -Merge 'sdk/template/ci.yml', '**/README.md'
@@ -17,9 +18,9 @@
 [CmdLetBinding()]
 param(
     [string]$SourceBranch,
-    [string[]]$Theirs, # paths to always overwrite
-    [string[]]$Ours, # paths to never merge or overwrite
-    [string[]]$Merge, # paths to merge or overwrite
+    [string[]]$Theirs = @(), # paths to always overwrite
+    [string[]]$Ours = @(), # paths to never merge or overwrite
+    [string[]]$Merge = @(), # paths to merge or overwrite
     [bool]$AcceptTheirsForFinalMerge = $false
 )
 
@@ -55,31 +56,32 @@ git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" merge $Sourc
 if ($LASTEXITCODE -and -not $mergeOutput.EndsWith('Automatic merge failed; fix conflicts and then commit the result.')) { ErrorExit $LASTEXITCODE }
 
 # update paths matching "theirs", except for "ours" and "merge", to the state in $SourceBranch
+# Resolve selected conflicts before restoring so source-deleted files are removed from both the index and working tree.
 if ($Theirs.Length) {
-    Write-Verbose "git restore -s $SourceBranch --staged --worktree --ignore-unmerged -- $theirIncludes $ourExcludes $mergeExcludes"
-    git restore -s $SourceBranch --staged --worktree --ignore-unmerged -- $theirIncludes $ourExcludes $mergeExcludes
+    Write-Verbose "git add -u -- $theirIncludes $ourExcludes $mergeExcludes"
+    git add -u -- $theirIncludes $ourExcludes $mergeExcludes
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
-    Write-Verbose "git add -A"
-    git add -A
+    Write-Verbose "git restore -s $SourceBranch --staged --worktree -- $theirIncludes $ourExcludes $mergeExcludes"
+    git restore -s $SourceBranch --staged --worktree -- $theirIncludes $ourExcludes $mergeExcludes
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
 }
 
 # update paths matching "ours", except for "merge", to their pre-merge state
 if ($Ours.Length) {
-    Write-Verbose "git restore -s (git rev-parse HEAD) --staged --worktree --ignore-unmerged -- $ourIncludes $mergeExcludes"
-    git restore -s (git rev-parse HEAD) --staged --worktree --ignore-unmerged -- $ourIncludes $mergeExcludes
+    Write-Verbose "git add -u -- $ourIncludes $mergeExcludes"
+    git add -u -- $ourIncludes $mergeExcludes
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
-    Write-Verbose "git add -A"
-    git add -A
+    Write-Verbose "git restore -s (git rev-parse HEAD) --staged --worktree -- $ourIncludes $mergeExcludes"
+    git restore -s (git rev-parse HEAD) --staged --worktree -- $ourIncludes $mergeExcludes
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
 }
 
-if ($AcceptTheirsForFinalMerge) {
-    Write-Verbose "git restore -s $SourceBranch --staged --worktree --ignore-unmerged -- $mergeIncludes"
-    git restore -s $SourceBranch --staged --worktree --ignore-unmerged -- $mergeIncludes
+if ($AcceptTheirsForFinalMerge -and $Merge.Length) {
+    Write-Verbose "git add -u -- $mergeIncludes"
+    git add -u -- $mergeIncludes
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
-    Write-Verbose "git add -A"
-    git add -A
+    Write-Verbose "git restore -s $SourceBranch --staged --worktree -- $mergeIncludes"
+    git restore -s $SourceBranch --staged --worktree -- $mergeIncludes
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
 }
 else {

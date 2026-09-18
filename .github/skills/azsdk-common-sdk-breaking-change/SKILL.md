@@ -25,7 +25,7 @@ Prerequisites: azure-sdk-mcp server must be running.
 
 - For each selected language in step 1, execute steps 2 through 6 **one language at a time** — fully complete all steps for one language before starting the next. Process multiple selected languages in the same order they appear in the list above.
 
-2. Follow `azsdk-common-generate-sdk-locally` skill to generate SDK only.
+2. Follow `azsdk-common-generate-sdk-locally` skill to generate SDK only. For .NET, skip API compatibility checks.
 3. **Detect SDK breaking Changes** - Run `azure-sdk-mcp:azsdk_package_detect_breaking_change`
 4. **Display detected breaking changes** — If step 3 detects breaking changes, display a `## Detected Breaking Changes` title followed by a Markdown table. Include exactly one breaking change per row with these columns: `Breaking Change`, `Category`, and `Resolution`. Preserve the category and resolution returned by the detection tool; do not replace them with a summary. If no breaking changes are detected, report that result and stop processing the current language.
 5. **Prompt the user to choose breaking changes to mitigate** — If the user requested detection only, stop processing the current language after displaying the results. Otherwise, present the list from step 3 as a multiple-choice selection.

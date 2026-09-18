@@ -2,13 +2,14 @@ parameters:
   - name: vallyRoot
     type: string
 
-- script: |
-    node "$(Build.SourcesDirectory)/eng/common/scripts/eval/invoke-eval-shard.js" \
-      --eval-args "$(evalArgs)" \
-      --shard-name "$(shardName)" \
-      --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
-      --threshold ${{ parameters.threshold }}
-  displayName: 'vally eval $(shardName)'
-  workingDirectory: ${{ parameters.vallyRoot }}
-  env:
-    GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+steps:
+  - script: |
+      node "$(Build.SourcesDirectory)/eng/common/scripts/eval/invoke-eval-shard.js" \
+        --eval-args "$(evalArgs)" \
+        --shard-name "$(shardName)" \
+        --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
+        --threshold ${{ parameters.threshold }}
+    displayName: 'vally eval $(shardName)'
+    workingDirectory: ${{ parameters.vallyRoot }}
+    env:
+      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)

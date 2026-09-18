@@ -88,4 +88,4 @@ at the absolute `assessment.json` path returned by the agent.
 
 [Browse reports for 12 existing PRs](https://wonderful-coast-0b5cc5a00.3.azurestaticapps.net)
 or read the [high-level design spec](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/typespec-assessment.spec.md)
-and [detailed design](docs/design.md).
+and [detailed design](design.md).

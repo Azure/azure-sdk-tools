@@ -198,20 +198,16 @@ test("builds a compact complete Agent workspace", () => {
     assert.equal(index.input.bytes, fs.statSync(path.join(work, "model-input.json")).size);
     assert.equal(index.counts.assessedSemanticIntents, 1);
     assert.equal(index.counts.informationalSemanticIntents, 0);
-    const inferenceDraft = readJson(
-      path.join(work, "agent-workspace", "inference.draft.json"),
+    const decisionsDraft = readJson(
+      path.join(work, "agent-workspace", "agent-decisions.draft.json"),
     );
-    assert.equal(inferenceDraft.results[0].decision, "__UNRESOLVED__");
-    const judgmentDraft = readJson(
-      path.join(
-        work,
-        "agent-workspace",
-        "assessment-judgment.draft.json",
-      ),
-    );
-    assert.equal(judgmentDraft.semanticIntents[0].title, "");
     assert.equal(
-      judgmentDraft.downstreamDecisions[0].decision,
+      decisionsDraft.inferenceResults[0].decision,
+      "__UNRESOLVED__",
+    );
+    assert.equal(decisionsDraft.semanticSummaries[0].title, "");
+    assert.equal(
+      decisionsDraft.downstreamDecisions[0].decision,
       "__UNRESOLVED__",
     );
     const state = readJson(path.join(work, "workflow-state.json"));

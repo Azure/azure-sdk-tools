@@ -68,11 +68,13 @@ contains the results and `eligibility_reasons` is keyed by each plan's
 `dry_run: true`. Both text and JSON retain partial results alongside errors.
 
 Dry-run output also reports scanned, eligible, skipped, and evaluation-error
-counts, plus skipped-plan IDs, links, target months, and reasons. JSON exposes
-these as `preview_summary` and `skipped_plans`. Counts cover the plans returned
-by the overdue query, not plans already excluded by its state, tag, or date
-filters. Each skipped plan records its **first exclusion reason**; for example,
-a plan in its grace month is not checked for additional PR-based exclusions.
+counts in `preview_summary`, including totals by exclusion reason.
+`skipped_plans` is a simple map of release-plan IDs to dashboard links, falling
+back to work-item IDs when a release-plan ID is unavailable. It contains no
+per-plan titles, target months, or reason details. Counts cover the plans returned
+by the overdue query, not plans already excluded by its state, tag, or date filters.
+Each skipped plan counts under its **first exclusion reason**; for example, a
+plan in its grace month is not checked for additional PR-based exclusions.
 Lookup failures and invalid revisions count as evaluation errors, not confirmed
 exclusions. Scanned equals eligible plus skipped plus evaluation errors.
 

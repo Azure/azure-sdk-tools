@@ -2048,12 +2048,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(summary.GetProperty("skipped").GetInt32(), Is.EqualTo(1));
             Assert.That(summary.GetProperty("evaluation_errors").GetInt32(), Is.Zero);
             Assert.That(summary.GetProperty("skipped_by_reason").GetProperty(category).GetInt32(), Is.EqualTo(1));
-            var skipped = json.RootElement.GetProperty("skipped_plans")[0];
-            Assert.That(skipped.GetProperty("work_item_id").GetInt32(), Is.EqualTo(500));
-            Assert.That(skipped.GetProperty("release_plan_id").GetInt32(), Is.EqualTo(50));
-            Assert.That(skipped.GetProperty("release_plan_link").GetString(), Is.EqualTo(plan.ReleasePlanLink));
-            Assert.That(skipped.GetProperty("category").GetString(), Is.EqualTo(category));
-            Assert.That(skipped.GetProperty("reason").GetString(), Is.Not.Empty);
+            var skipped = json.RootElement.GetProperty("skipped_plans");
+            Assert.That(skipped.EnumerateObject().Count(), Is.EqualTo(1));
+            Assert.That(skipped.GetProperty("50").GetString(), Is.EqualTo(plan.ReleasePlanLink));
             Assert.That(preview.ToString(), Does.Contain("Scanned: 1").And.Contain("Skipped: 1").And.Contain("Evaluation errors: 0"));
             Assert.That(preview.ToString(), Does.Contain(plan.ReleasePlanLink).And.Contain("Release Plan ID: 50"));
             Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(originalPlan));
@@ -2127,8 +2124,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(summary.GetProperty("skipped").GetInt32(), Is.EqualTo(4));
             Assert.That(summary.GetProperty("evaluation_errors").GetInt32(), Is.EqualTo(2));
             Assert.That(summary.GetProperty("skipped_by_reason").GetProperty("sdk_released").GetInt32(), Is.EqualTo(2));
-            var skippedIds = json.RootElement.GetProperty("skipped_plans").EnumerateArray()
-                .Select(item => item.GetProperty("work_item_id").GetInt32()).ToArray();
+            var skippedIds = json.RootElement.GetProperty("skipped_plans").EnumerateObject()
+                .Select(item => int.Parse(item.Name)).ToArray();
             Assert.That(skippedIds, Is.EquivalentTo(new[] { 502, 503, 504, 505 }));
             Assert.That(preview.ToString(), Does.Contain("Scanned: 7").And.Contain("Eligible: 1").And.Contain("Skipped: 4").And.Contain("Evaluation errors: 2"));
             Assert.That(preview.ToString(), Does.Contain("Release Plan ID: 502").And.Contain(grace.ReleasePlanLink));
@@ -2141,6 +2138,30 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             service.Verify(x => x.UpdateWorkItemAsync(eligible.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()), Times.Once);
             notification.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Once);
             github.Verify(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        [TestCase(0, 508)]
+        [TestCase(-1, 508)]
+        [TestCase(51, 51)]
+        public async Task Test_abandon_overdue_preview_skipped_links_use_release_id_with_work_item_fallback(int releasePlanId, int expectedId)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 508, ReleasePlanId = releasePlanId, Revision = 7,
+                ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "October 2026"
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notification.Object)
+                .AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.SkippedPlans, Has.Count.EqualTo(1));
+            Assert.That(response.SkippedPlans![expectedId], Is.EqualTo(plan.ReleasePlanLink));
+            Assert.That(response.PreviewSummary!.Skipped, Is.EqualTo(1));
+            AssertDryRunHasNoSideEffects(service, notification);
         }
 
         [Test]
@@ -2159,7 +2180,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ToString(), Does.Contain("Dry run: 0").And.Contain("No eligible release plans found"));
             using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
             Assert.That(json.RootElement.GetProperty("preview_summary").GetProperty("scanned").GetInt32(), Is.Zero);
-            Assert.That(json.RootElement.GetProperty("skipped_plans").GetArrayLength(), Is.Zero);
+            Assert.That(json.RootElement.GetProperty("skipped_plans").EnumerateObject(), Is.Empty);
             AssertDryRunHasNoSideEffects(service, notification);
         }
 

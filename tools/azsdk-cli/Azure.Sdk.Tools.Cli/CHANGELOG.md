@@ -5,7 +5,7 @@
 ### Features Added
 
 - Added monthly cleanup and state-specific reminders for inactive overdue release plans, with a one-calendar-month grace period and protection for active release work.
-- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan reasons, and summary counts without updates or emails.
+- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
 
 ### Breaking Changes
 

@@ -32,9 +32,12 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ReleasePlanPreviewSummary? PreviewSummary { get; set; }
 
+        /// <summary>
+        /// Skipped-plan dashboard links keyed by release plan ID, falling back to work item ID.
+        /// </summary>
         [JsonPropertyName("skipped_plans")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<ReleasePlanSkipDetails>? SkippedPlans { get; set; }
+        public Dictionary<int, string>? SkippedPlans { get; set; }
 
         public override string ToString()
         {
@@ -89,13 +92,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
             }
             if (SkippedPlans?.Count > 0)
             {
-                result.AppendLine("Skipped release plans (first exclusion reason):");
-                foreach (var plan in SkippedPlans)
+                result.AppendLine("Skipped release plans:");
+                foreach (var (planId, link) in SkippedPlans)
                 {
-                    var planId = plan.ReleasePlanId > 0 ? plan.ReleasePlanId : plan.WorkItemId;
-                    result.AppendLine($"- Release Plan ID: {planId} | {plan.Title} | Target month: {plan.TargetMonth}");
-                    result.AppendLine($"  {plan.Category}: {plan.Reason}");
-                    result.AppendLine($"  Release Plan Link: {plan.ReleasePlanLink}");
+                    result.AppendLine($"- Release Plan ID: {planId} | Release Plan Link: {link}");
                 }
             }
             return result.ToString();

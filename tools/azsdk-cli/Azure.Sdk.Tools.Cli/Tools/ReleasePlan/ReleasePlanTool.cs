@@ -2083,7 +2083,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var today = _timeProvider.GetUtcNow().Date;
                 var resultPlans = new List<ReleasePlanWorkItem>();
                 var responseErrors = new List<string>();
-                var skippedPlans = dryRun ? new List<ReleasePlanSkipDetails>() : null;
+                var skippedPlans = dryRun ? new Dictionary<int, string>() : null;
+                var skippedByReason = new Dictionary<string, int>();
+
+                void RecordSkippedPlan(ReleasePlanWorkItem plan, string category)
+                {
+                    if (skippedPlans == null)
+                    {
+                        return;
+                    }
+                    var planId = plan.ReleasePlanId > 0 ? plan.ReleasePlanId : plan.WorkItemId;
+                    skippedPlans.Add(planId, plan.ReleasePlanLink);
+                    skippedByReason[category] = skippedByReason.GetValueOrDefault(category) + 1;
+                }
 
                 foreach (var releasePlan in overdueReleasePlans)
                 {
@@ -2094,23 +2106,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         if (!DateTime.TryParseExact(releasePlan.SDKReleaseMonth, ["MMMM yyyy", "MMM yyyy"],
                                 CultureInfo.InvariantCulture, DateTimeStyles.None, out var targetMonth))
                         {
-                            skippedPlans?.Add(new ReleasePlanSkipDetails(releasePlan, "invalid_target_month", "The target release month is missing or invalid."));
+                            RecordSkippedPlan(releasePlan, "invalid_target_month");
                             continue;
                         }
 
                         var monthsPastTarget = (today.Year - targetMonth.Year) * 12 + today.Month - targetMonth.Month;
                         if (monthsPastTarget <= 1)
                         {
-                            skippedPlans?.Add(new ReleasePlanSkipDetails(releasePlan,
-                                monthsPastTarget == 1 ? "grace_period" : "not_overdue",
-                                monthsPastTarget == 1 ? "The first overdue calendar month is reminder-only." : "The target release month has not passed."));
+                            RecordSkippedPlan(releasePlan, monthsPastTarget == 1 ? "grace_period" : "not_overdue");
                             continue;
                         }
 
                         var assessment = await EvaluateReleasePlanWorkAsync(releasePlan, ct);
                         if (!assessment.IsInactive)
                         {
-                            skippedPlans?.Add(new ReleasePlanSkipDetails(releasePlan, assessment.Category, assessment.Reason));
+                            RecordSkippedPlan(releasePlan, assessment.Category);
                             continue;
                         }
 
@@ -2172,8 +2182,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         Eligible = resultPlans.Count,
                         Skipped = skippedPlans.Count,
                         EvaluationErrors = responseErrors.Count,
-                        SkippedByReason = skippedPlans.GroupBy(plan => plan.Category)
-                            .ToDictionary(group => group.Key, group => group.Count())
+                        SkippedByReason = skippedByReason
                     };
                 }
                 if (responseErrors.Count > 0)

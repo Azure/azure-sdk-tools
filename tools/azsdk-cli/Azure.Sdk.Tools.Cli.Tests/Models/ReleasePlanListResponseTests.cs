@@ -83,20 +83,20 @@ public class ReleasePlanListResponseTests
 
     [TestCase(0)]
     [TestCase(42)]
-    public void PreviewDiagnostics_PreserveSkippedPlanDetailsAlongsideErrors(int releasePlanId)
+    public void PreviewDiagnostics_PreserveSkippedPlanIdsAndLinksAlongsideErrors(int releasePlanId)
     {
         var plan = new ReleasePlanWorkItem
         {
             WorkItemId = 420, ReleasePlanId = releasePlanId, Title = "Contoso release", SDKReleaseMonth = "October 2026"
         };
-        var skipped = new ReleasePlanSkipDetails(plan, "grace_period", "The first overdue calendar month is reminder-only.");
+        var displayId = releasePlanId > 0 ? releasePlanId : plan.WorkItemId;
         var response = new ReleasePlanListResponse
         {
             DryRun = true,
             Message = "Dry run: the eligible list is incomplete.",
             ReleasePlanDetailsList = [],
             EligibilityReasons = [],
-            SkippedPlans = [skipped],
+            SkippedPlans = new Dictionary<int, string> { [displayId] = plan.ReleasePlanLink },
             PreviewSummary = new ReleasePlanPreviewSummary
             {
                 Scanned = 2, Eligible = 0, Skipped = 1, EvaluationErrors = 1,
@@ -110,16 +110,16 @@ public class ReleasePlanListResponseTests
         Assert.That(response.ExitCode, Is.EqualTo(1));
         Assert.That(text, Does.Contain("Scanned: 2; Eligible: 0; Skipped: 1; Evaluation errors: 1"));
         Assert.That(text, Does.Contain("grace_period: 1"));
-        Assert.That(text, Does.Contain($"Release Plan ID: {(releasePlanId > 0 ? releasePlanId : plan.WorkItemId)}"));
-        Assert.That(text, Does.Contain(plan.ReleasePlanLink).And.Contain(skipped.Reason).And.Contain(plan.SDKReleaseMonth));
+        Assert.That(text, Does.Contain($"Release Plan ID: {displayId} | Release Plan Link: {plan.ReleasePlanLink}"));
+        Assert.That(text, Does.Not.Contain(plan.Title).And.Not.Contain(plan.SDKReleaseMonth));
         Assert.That(text, Does.Contain("[ERROR] Plan 421 could not be evaluated."));
         Assert.That(text.IndexOf("Skipped release plans", StringComparison.Ordinal),
             Is.EqualTo(text.LastIndexOf("Skipped release plans", StringComparison.Ordinal)));
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
         Assert.That(json.RootElement.GetProperty("release_plans").GetArrayLength(), Is.Zero);
-        Assert.That(json.RootElement.GetProperty("skipped_plans")[0].GetProperty("work_item_id").GetInt32(), Is.EqualTo(420));
-        Assert.That(json.RootElement.GetProperty("skipped_plans")[0].GetProperty("release_plan_id").GetInt32(), Is.EqualTo(releasePlanId));
-        Assert.That(json.RootElement.GetProperty("skipped_plans")[0].TryGetProperty("Owner", out _), Is.False);
+        var links = json.RootElement.GetProperty("skipped_plans");
+        Assert.That(links.EnumerateObject().Count(), Is.EqualTo(1));
+        Assert.That(links.GetProperty(displayId.ToString()).GetString(), Is.EqualTo(plan.ReleasePlanLink));
     }
 
     [Test]

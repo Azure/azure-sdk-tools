@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "value": "azuresdkqabot-dev-teams-collection"
+    },
+    "location": {
+      "value": "westus2"
+    },
+    "teamsConnectionResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/connections/teams"
+    },
+    "tenantId": {
+      "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+    },
+    "allowedChannels": {
+      "value": [
+        "7ccc31f0-b371-450b-a73c-48f5a31a9b96|19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2",
+        "7ccc31f0-b371-450b-a73c-48f5a31a9b96|19:43d25834bb394e0fa9a3b316ce5a2ea4@thread.tacv2"
+      ]
+    },
+    "cosmosAccountName": {
+      "value": "azuresdkqabot-dev-db"
+    }
+  }
+}

@@ -274,22 +274,15 @@ Role names/assignment IDs in the template are deterministic. Deploying it grants
 
 1. Review [config/teams_collection.json](config/teams_collection.json) for the target environment before building. It contains the Entra tenant, allowed team/channel IDs, optional per-channel `startTime`, and Routine schedule. `startTime` must include a timezone; `null` starts from all available roots. All replies to selected roots are collected. Later runs still scan the source, but only new/changed thread documents are written. The checkpoint is not a source delta cursor.
 2. For an existing deployment, disable its Routine before updating. Run the Agent CD pipeline with `agentName=teams_collection_agent` and the correct environment. This builds the image and creates `azure-sdk-teams-collection-agent`; it does **not** deploy the collection Logic App or Routine. Do not dispatch yet. Obtain the collector's runtime identity and grant App Configuration access before its first invocation.
-3. Generate parameters and deploy the dedicated collection template into the resource group containing the Cosmos account/database. Do not deploy it over the bot's message-mirroring Logic App. Example from the project directory in PowerShell, after setting the environment-specific variables:
+3. Deploy the dedicated collection template into the resource group containing the Cosmos account/database. Do not deploy it over the bot's message-mirroring Logic App. Select `dev`, `test`, or `prod`; the checked-in parameter file supplies the environment-specific workflow name and resource settings. The collector identity is generated when the Hosted Agent is deployed, so pass its object ID separately:
 
     ```powershell
-    $parametersFile = Join-Path $env:TEMP 'teams-collection.parameters.json'
-    python scripts/teams_collection.py render-parameters `
-       --logic-app-name $logicAppName --location $location `
-       --teams-connection-resource-id $teamsConnectionResourceId `
-       --collector-principal-id $collectorPrincipalId `
-       --cosmos-account-name $cosmosAccountName |
-       Out-File -FilePath $parametersFile -Encoding utf8
-    if ($LASTEXITCODE -ne 0) { throw 'Parameter generation failed.' }
-
+    $environment = 'dev'
+    $parametersFile = "pipelines/teams-collection/parameters.azure_sdk.$environment.json"
     az deployment group create --subscription $subscriptionId `
        --resource-group $resourceGroup --name teams-channel-collection `
        --mode Incremental --template-file pipelines/teams-collection/template.json `
-       --parameters "@$parametersFile"
+       --parameters "@$parametersFile" collectorPrincipalId=$collectorPrincipalId
     ```
 
 4. Set `TEAMS_COLLECTION_LOGIC_APP_URL` in the App Configuration store used by the deployed collector. Use the deployed manual trigger's HTTPS URL ending in `/triggers/manual/paths/invoke?api-version=2016-10-01`; exclude `sig`, `sp`, and `sv`. The collector rejects SAS URLs. Also verify `AZURE_COSMOSDB_ENDPOINT` points to the account just provisioned. Configuration is loaded at process startup: if the collector has already started, redeploy its version after changing these settings.

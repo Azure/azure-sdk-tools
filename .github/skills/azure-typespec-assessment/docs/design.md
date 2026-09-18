@@ -88,10 +88,10 @@ compatibility checks or reuse a mismatched toolchain for speed.
                                                                                                      (compiler declarations
                                                                                                       and presence)
               |                       |                       |                       |                       |
-              +-----------------------+-----------------------+-----------------------+-----------------------+
+              +-----------------------+-----------------------+-----------------------+                       +--> Retain for guarded finalization
                                                               |
                                                               v
-                                                  Collect all five inputs
+                                              Collect bounded Agent inputs
                                           (canonical artifacts + bounded references)
                                                               |
                                                               v
@@ -105,24 +105,22 @@ compatibility checks or reuse a mismatched toolchain for speed.
                                                all classified    unknown hunks
                                                        |             |
                                                        |             v
-                                                       |      Bounded AI inference
-                                                       |      for unknown hunks only
-                                                       |             |
-                                                       |       inference.json
+                                                       |      Add bounded inference
+                                                       |      requests to Agent input
                                                        |             |
                                                        +------+------+
                                                               |
                                                               v
                                                   One bounded Agent judgment
-              +-----------------------+-----------------------+-----------------------+-----------------------+
-              |                       |                       |                       |                       |
-              v                       v                       v                       v                       v
-         Summarize each          Classify each           Classify each          Rank and fetch         Assess each eligible
-         semantic intent         deterministic or        deterministic or       official guidance,     description against
-         once                    inferred REST           inferred SDK           then assess each       its code, once
+              +-----------------------+-----------------------+-----------------------+
+              |                       |                       |                       |
+              v                       v                       v                       v
+         Summarize each          Classify each           Classify each          Rank and fetch
+         semantic intent         deterministic or        deterministic or       official guidance,
+         once                    inferred REST           inferred SDK           then assess each
                                  candidate               candidate              intent once
-              |                       |                       |                       |                       |
-              +-----------------------+-----------------------+-----------------------+-----------------------+
+              |                       |                       |                       |
+              +-----------------------+-----------------------+-----------------------+
                                                               |
                                                               v
                                             agent-workspace/agent-decisions.json
@@ -140,7 +138,13 @@ compatibility checks or reuse a mismatched toolchain for speed.
                           +-----------------------------------+-----------------------------------+
                                                               |
                                                               v
-                                                    Assemble and validate
+                                          Materialized Agent artifacts       Documentation Completeness input
+                                                       |                                      |
+                                                       +------------------+-------------------+
+                                                                          |
+                                                                          v
+                                                               Guarded finalization
+                                                         (assemble, validate, and render)
                                                               |
                                                               v
                                             assessment.json + assessment.html
@@ -155,10 +159,12 @@ materialization validates it, joins canonical evidence, and atomically writes
 artifacts into the report.
 
 Azure Guidelines and documentation assessment branch from Semantic review
-units rather than REST or downstream candidates. Documentation collection is
-deterministic; description-versus-code assessment is an Agent judgment, not regex quality
-scores. Documentation checks still run when a hunk has no compatibility impact.
-Inference runs only for hunks whose deterministic coverage status is `unknown`.
+units rather than REST or downstream candidates. Documentation Completeness is
+deterministic, bypasses Agent input and materialization, and joins the
+materialized artifacts during guarded finalization. Documentation checks still
+run when a hunk has no compatibility impact. Inference runs only for hunks
+whose deterministic coverage status is `unknown`; the Agent records the compact
+decision and the materializer writes `inference.json`.
 
 ## 1. Preparation manifest
 

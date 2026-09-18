@@ -275,10 +275,12 @@ async def handle_chat(req: ChatRequest):
 async def handle_feedback(req: FeedbackRequest):
     """Process user feedback through the feedback workflow."""
     logger.info(
-        "Feedback request: tenant=%s, link=%s, reaction=%s",
+        "Feedback request: tenant=%s, link=%s, reaction=%s, conversation_id=%s, conversation_type=%s",
         req.tenant_id,
         req.link,
         req.reaction,
+        req.conversation_id,
+        req.conversation_type,
     )
     return await _feedback_service.process(req)
 

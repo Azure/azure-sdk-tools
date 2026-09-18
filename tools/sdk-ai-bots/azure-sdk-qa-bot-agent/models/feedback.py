@@ -25,6 +25,10 @@ class FeedbackRequest(BaseModel):
 
     channel_id: str | None = None
     tenant_id: str = "unknown"
+    conversation_id: str | None = Field(
+        default=None, description="Exact conversation/thread ID used to store messages"
+    )
+    conversation_type: ConversationType | None = None
     reaction: Reaction = Reaction.unknown
     comment: str | None = None
     reasons: list[str] = []

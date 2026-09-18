@@ -22,7 +22,7 @@ function publicationUnit(operationCount = 20) {
   };
 }
 
-test("classifies large version publication intents as informational", () => {
+test("classifies every version publication intent as informational", () => {
   const publication = publicationUnit();
   const assessed = {
     id: "semantic-model-change",
@@ -36,7 +36,8 @@ test("classifies large version publication intents as informational", () => {
   };
 
   assert.equal(isInformationalPublicationIntent(publication), true);
-  assert.equal(isInformationalPublicationIntent(publicationUnit(19)), false);
+  assert.equal(isInformationalPublicationIntent(publicationUnit(19)), true);
+  assert.equal(isInformationalPublicationIntent(publicationUnit(0)), true);
   assert.deepEqual(partitionSemanticIntents([publication, assessed]), {
     assessed: [assessed],
     informational: [publication],

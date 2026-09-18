@@ -1,4 +1,3 @@
-const PUBLICATION_OPERATION_THRESHOLD = 20;
 const VERSION_MATCH_BASES = new Set([
   "direct-version-governance",
   "version-transition-change",
@@ -13,14 +12,7 @@ function hasPublicationReason(unit) {
 }
 
 export function isInformationalPublicationIntent(unit) {
-  const operations = unit.operations ?? [];
-  return (
-    hasPublicationReason(unit) &&
-    operations.length >= PUBLICATION_OPERATION_THRESHOLD &&
-    operations.every((operation) =>
-      VERSION_MATCH_BASES.has(operation.matchBasis),
-    )
-  );
+  return hasPublicationReason(unit);
 }
 
 export function isApiVersionWideChangeIntent(unit) {

@@ -166,10 +166,16 @@
       background: #deefff;
     }
     .status-not_started, .status-not_evaluated, .status-inconclusive,
-    .status-not_applicable {
+    .status-not_applicable, .status-validation_skipped {
       color: #596579;
       background: #edf0f4;
     }
+    .status-missing_content { color: #87450c; background: #fff0d6; }
+    .status-outdated_content { color: #973b2c; background: #ffe8e2; }
+    .status-insufficient_content { color: #705500; background: #fff1bd; }
+    .status-retrieval_mismatch { color: #075a9c; background: #deefff; }
+    .status-reasoning_gap { color: #63348b; background: #eee2fa; }
+    .status-out_of_scope { color: #596579; background: #edf0f4; }
     .pagination {
       display: flex;
       justify-content: flex-end;
@@ -406,8 +412,45 @@
       text-align: center;
     }
     a { color: #0067b8; }
+    [hidden] { display: none !important; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .overview-visual { margin: 24px 0 32px; }
+    .overview-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .overview-card { --metric-color: #0067b8; padding: 20px; border: 1px solid #dce4ef; border-top: 4px solid var(--metric-color); border-radius: 12px; background: white; min-width: 0; }
+    .overview-card.interaction { --metric-color: #7251b5; }
+    .overview-card.answer { --metric-color: #087e8b; }
+    .overview-card.resolution { --metric-color: #495a80; }
+    .overview-card h3 { font-size: 15px; margin: 0; }
+    .overview-rate { color: var(--metric-color); font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 10px 0 18px; }
+    .overview-rate-counts { display: inline-block; color: #52627a; font-size: 16px; font-weight: 400; }
+    .overview-card-note { color: #52627a; font-size: 12px; line-height: 1.6; margin: 16px 0 0; }
+    .report-section { margin: 24px 0; }
+    .report-section h2 { margin-bottom: 8px; font-size: 19px; }
+    .report-section table { min-width: 600px; }
+    .report-notes { color: #41506a; font-size: 13px; line-height: 1.6; margin-top: 12px; }
+    .report-notes summary { font-weight: 600; cursor: pointer; }
+    .report-notes p { margin: 4px 0; }
+    .report-notes ul { margin: 4px 0; padding-left: 20px; }
+    .report-section tfoot { font-weight: 700; background: #eef3f9; }
+    #report-fallback { width: 100%; min-height: 160px; }
+    @media print {
+      header .account, .tabs, .filters, .report-actions, #conversations-panel,
+      #report-fallback, #overview-error, dialog { display: none !important; }
+      main { padding: 0; }
+      header { color: black; background: white; padding: 0 0 12px; }
+      header p { color: black; }
+      .table-wrap { overflow: visible; }
+      .report-section table { min-width: 0; table-layout: fixed; }
+      .report-section th, .report-section td { overflow-wrap: anywhere; }
+      .overview-card { break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      th { position: static; }
+      th, td { font-size: 10px; padding: 6px; }
+      tr { break-inside: avoid; }
+      h2 { break-after: avoid; }
+    }
     @media (max-width: 1100px) {
       .filters { grid-template-columns: repeat(3, minmax(160px, 1fr)); }
+      .overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 700px) {
       main { padding: 14px; }
@@ -418,6 +461,7 @@
         padding: 18px 14px;
       }
       .filters, .meta-grid { grid-template-columns: 1fr; }
+      .overview-metrics { grid-template-columns: 1fr; }
       .detail-content { padding: 16px 12px 24px; }
       .timeline { padding-left: 24px; }
       .message { max-width: 100%; }
@@ -436,6 +480,32 @@
     </div>
   </header>
   <main>
+    <nav class="tabs" aria-label="Overview">
+      <button id="overview-tab" type="button" aria-pressed="true" aria-controls="overview-panel">Overview</button>
+      <button id="conversations-tab" class="secondary" type="button" aria-pressed="false" aria-controls="conversations-panel">Conversations</button>
+    </nav>
+    <section id="overview-panel" aria-label="Weekly Status Report">
+      <form id="overview-filters" class="filters">
+        <label>From (local time, inclusive)<input id="report-start" type="date" required></label>
+        <label>To (local time, exclusive)<input id="report-end" type="date" required></label>
+        <label>Channel<select id="report-channel"><option value="">All channels</option></select></label>
+        <div class="actions">
+          <button type="submit">Update report</button>
+          <button id="last-week" class="secondary" type="button">Last full week</button>
+        </div>
+      </form>
+      <div class="summary">
+        <span id="report-period" role="status">Loading last 7 days...</span>
+        <div class="actions report-actions">
+          <button id="copy-report" class="secondary" type="button" disabled>Copy report</button>
+          <button id="print-report" class="secondary" type="button" disabled>Print report</button>
+        </div>
+      </div>
+      <p id="overview-error" class="error" role="alert"></p>
+      <textarea id="report-fallback" aria-label="Report text — copy manually" readonly hidden></textarea>
+      <div id="overview-tables"></div>
+    </section>
+    <section id="conversations-panel" aria-label="Conversation records" hidden>
     <form id="filters" class="filters">
       <label>Channel
         <select id="channel"><option value="">All channels</option></select>
@@ -457,7 +527,19 @@
           <option value="pending_validation">Pending validation</option>
           <option value="validation_passed">Validation passed</option>
           <option value="validation_failed">Validation failed</option>
+          <option value="validation_skipped">Validation skipped</option>
           <option value="failed">Failed</option>
+        </select>
+      </label>
+      <label>Root cause
+        <select id="classification">
+          <option value="">All root causes</option>
+          <option value="missing_content">Missing documentation</option>
+          <option value="outdated_content">Outdated documentation</option>
+          <option value="insufficient_content">Insufficient documentation</option>
+          <option value="retrieval_mismatch">Retrieval mismatch</option>
+          <option value="reasoning_gap">Reasoning gap</option>
+          <option value="out_of_scope">Out of scope</option>
         </select>
       </label>
       <label>Updated from
@@ -490,6 +572,7 @@
             <th>Conversation</th>
             <th>Conversation status</th>
             <th>Evolution status</th>
+            <th>Root cause</th>
             <th>Issue</th>
             <th>Details</th>
           </tr>
@@ -503,6 +586,7 @@
       <span id="page-label">Page 1</span>
       <button id="next" class="secondary" type="button">Next</button>
     </div>
+    </section>
   </main>
 
   <dialog id="details">
@@ -550,6 +634,7 @@
       channel: document.querySelector("#channel"),
       conversationStatus: document.querySelector("#conversation-status"),
       evolutionStatus: document.querySelector("#evolution-status"),
+      classification: document.querySelector("#classification"),
       updatedFrom: document.querySelector("#updated-from"),
       updatedTo: document.querySelector("#updated-to"),
       conversationId: document.querySelector("#conversation-id"),
@@ -595,6 +680,12 @@
       const badge = node("span", `badge status-${value}`);
       badge.textContent = text || label(value);
       return badge;
+    }
+
+    function classificationLabel(value) {
+      const option = Array.from(elements.classification.options)
+        .find(option => option.value === value && value);
+      return option ? option.textContent : label(value);
     }
 
     function cell(value, className = "") {
@@ -710,7 +801,7 @@
       if (!items.length) {
         const row = node("tr");
         const empty = cell("No conversations match the current filters.");
-        empty.colSpan = 7;
+        empty.colSpan = 8;
         row.append(empty);
         elements.records.append(row);
         return;
@@ -745,6 +836,15 @@
         const evolutionStatus = node("td");
         evolutionStatus.append(evolutionStatusBadge(record));
         row.append(evolutionStatus);
+        const rootCause = cell("—", "root-cause");
+        const classification = record.feedback?.classification;
+        if (classification) {
+          rootCause.replaceChildren(statusBadge(classification, classificationLabel(classification)));
+        } else {
+          rootCause.classList.add("muted");
+          rootCause.title = "No root cause recorded";
+        }
+        row.append(rootCause);
 
         const issue = node("td");
         if (isAllowedIssueUrl(record.feedback?.issue_url)) {
@@ -846,10 +946,18 @@
       metadata.append(metaItem("Conversation status", conversationStatus(record)));
       metadata.append(metaItem("Answer assessment", assessment.text));
       metadata.append(metaItem(
+        "Expert interaction",
+        record.has_expert_interaction === true ? "Yes"
+          : record.has_expert_interaction === false ? "No" : "Not assessed"
+      ));
+      metadata.append(metaItem(
         "Confidence",
         record.confidence == null ? "—" : `${Math.round(record.confidence * 100)}%`
       ));
       step.append(metadata);
+      if (record.expert_interaction_reason) {
+        step.append(evidence("Expert interaction reason", record.expert_interaction_reason));
+      }
       if (
         record.reasoning
         && record.feedback?.error !== "agent_remediation_failed"
@@ -873,10 +981,10 @@
       const step = timelineStep(
         "Diagnosis and remediation attempt",
         record.feedback?.created_at,
-        classification ? statusBadge(classification) : null
+        classification ? statusBadge(classification, classificationLabel(classification)) : null
       );
       const metadata = node("div", "meta-grid");
-      metadata.append(metaItem("Root-cause category", label(classification)));
+      metadata.append(metaItem("Root cause", classificationLabel(classification)));
       metadata.append(metaItem(
         "Evolution status",
         label(record.feedback?.status ?? "not_started")
@@ -932,8 +1040,9 @@
       )) return null;
 
       const waiting = feedback.status === "pending_validation";
+      const skipped = feedback.status === "validation_skipped";
       const step = timelineStep(
-        waiting ? "Awaiting post-fix validation" : "Post-fix validation",
+        skipped ? "Validation skipped" : waiting ? "Awaiting post-fix validation" : "Post-fix validation",
         feedback.validated_at || feedback.updated_at,
         statusBadge(feedback.status)
       );
@@ -943,7 +1052,7 @@
           "Validation starts after the remediation issue is closed."
         ));
       } else if (feedback.validation_reasoning) {
-        step.append(evidence("Validation result", feedback.validation_reasoning));
+        step.append(evidence(skipped ? "Why validation was skipped" : "Validation result", feedback.validation_reasoning));
       }
       return step;
     }
@@ -960,7 +1069,7 @@
       const assessment = answerAssessment(record);
       overview.append(statusBadge(assessment.value, assessment.text));
       if (record.feedback?.classification) {
-        overview.append(statusBadge(record.feedback.classification));
+        overview.append(statusBadge(record.feedback.classification, classificationLabel(record.feedback.classification)));
       }
 
       const timeline = node("div", "timeline");
@@ -1020,6 +1129,7 @@
       addParameter(parameters, "channel_id", elements.channel.value);
       addParameter(parameters, "qa_status", elements.conversationStatus.value);
       addParameter(parameters, "feedback_status", elements.evolutionStatus.value);
+      addParameter(parameters, "classification", elements.classification.value);
       addParameter(parameters, "updated_from", toIso(elements.updatedFrom.value));
       addParameter(parameters, "updated_to", toIso(elements.updatedTo.value));
       addParameter(parameters, "conversation_id", elements.conversationId.value.trim());
@@ -1099,8 +1209,341 @@
       elements.details.close();
     });
 
+    const report = {
+      form: document.querySelector("#overview-filters"),
+      start: document.querySelector("#report-start"),
+      end: document.querySelector("#report-end"),
+      channel: document.querySelector("#report-channel"),
+      period: document.querySelector("#report-period"),
+      error: document.querySelector("#overview-error"),
+      tables: document.querySelector("#overview-tables"),
+      copy: document.querySelector("#copy-report"),
+      print: document.querySelector("#print-report"),
+      fallback: document.querySelector("#report-fallback")
+    };
+    let overviewRequest = null;
+    let overviewData = null;
+    let conversationsLoaded = false;
+
+    function selectView(overview) {
+      document.querySelector("#overview-panel").hidden = !overview;
+      document.querySelector("#conversations-panel").hidden = overview;
+      for (const [id, selected] of [["overview-tab", overview], ["conversations-tab", !overview]]) {
+        const button = document.getElementById(id);
+        button.setAttribute("aria-pressed", String(selected));
+        button.classList.toggle("secondary", !selected);
+      }
+      if (!overview && !conversationsLoaded) {
+        conversationsLoaded = true;
+        loadRecords();
+      }
+    }
+
+    function localDateValue(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    }
+
+    function lastSevenDays(now = new Date()) {
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const start = new Date(end);
+      start.setDate(start.getDate() - 7);
+      return {start: localDateValue(start), end: localDateValue(end)};
+    }
+
+    function lastFullWeek(now = new Date()) {
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      end.setDate(end.getDate() - (end.getDay() + 6) % 7);
+      const start = new Date(end);
+      start.setDate(start.getDate() - 7);
+      return {start: localDateValue(start), end: localDateValue(end)};
+    }
+
+    function setLastWeek() {
+      const week = lastFullWeek();
+      report.start.value = week.start;
+      report.end.value = week.end;
+    }
+
+    function percent(value) {
+      return value == null ? "N/A" : `${value.toFixed(1)}%`;
+    }
+
+    const conversationLimitations = "Conversations use their creation date, not assessment date; undated records and threads without bot replies are absent. Later assessments can change the results.";
+    const sharedLimitations = "Dates use local time (start inclusive, end exclusive). Testing channels are excluded; unknown channels remain included. Totals use all matching stored counts, not averages of channel percentages. Missing ingestion is not measured; data may change during report generation.";
+    const resolutionLimitations = "Uses current stored status for conversations created in the selected dates, not issues created or fixes completed in that period. Closing a GitHub issue does not count as resolution; only validation passed does. No live GitHub status is fetched. Skipped validation and legacy done states are not proof of successful validation.";
+
+    // These same table definitions drive both the DOM and the copied report.
+    const reportTables = [
+      {
+        title: "Accuracy",
+        description: "(Conversations - incorrect) / conversations. Missing-documentation and out-of-scope cases are excluded from the incorrect count, not the total. Unassessed and excluded conversations count as successful in this rate. Correct shows confirmed correct verdicts, not the numerator. N/A means no conversations.",
+        limitations: [conversationLimitations, sharedLimitations],
+        headings: ["Channel", "Conversations", "Correct", "Excluded", "Accuracy"],
+        values: row => [row.conversations, row.correct,
+          row.accuracy_excluded, percent(row.accuracy.rate)]
+      },
+      {
+        title: "Interaction rate",
+        description: "Conversations with meaningful expert follow-up / all conversations. Counts substantive guidance from another human after a bot reply, not acknowledgments or required human actions alone. Unassessed cases remain in the denominator. N/A means no conversations.",
+        limitations: ["Only an explicit positive expert-interaction assessment counts; missing or uncertain assessments do not. The question author's own follow-ups are excluded.", conversationLimitations, sharedLimitations],
+        headings: ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
+        values: row => [row.conversations, row.expert_yes, percent(row.expert_interaction.rate)]
+      },
+      {
+        title: "Answer rate",
+        description: "Bot replies / user messages with should_reply=true or an explicit @mention of Azure SDK Q&A Bot. N/A means no qualifying questions.",
+        limitations: ["Each qualifying user message counts once. Replies include assistant and system/error messages. Messages use their own creation dates, independently of conversation dates, and include questions without QA records.", "Replies are not matched to questions. Multiple replies and exchanges crossing the date boundary can produce rates above 100%; this measures reply volume, not the percentage of distinct questions answered.", sharedLimitations],
+        headings: ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
+        values: row => [row.questions, row.bot_replies, percent(row.answer_rate.rate)]
+      },
+      {
+        title: "Issue findings & resolution",
+        description: "Resolved rate = validated resolved cases / cases with a valid linked GitHub issue. Findings count conversation cases with a recognized root cause, including findings without a linked issue. N/A means no issue-linked cases.",
+        limitations: ["Tracked issues are distinct GitHub issues, not cases. The same issue may appear in multiple channels; the total deduplicates across channels and may be less than their sum. Unresolved counts issue-linked cases without passed validation, not distinct open GitHub issues.", resolutionLimitations, conversationLimitations, sharedLimitations],
+        headings: ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Unresolved", "Resolved rate"],
+        values: row => [row.findings, row.tracked_issues, row.issue_cases,
+          row.resolved_cases, row.unresolved_cases,
+          `${percent(row.resolved_rate.rate)} (${row.resolved_rate.numerator} / ${row.resolved_rate.denominator})`]
+      },
+      {
+        title: "Unresolved case status",
+        description: "Issue-linked cases without passed validation, split by their current stored lifecycle status. These counts sum to Unresolved; a processing error is not a validated failure or a resolved case.",
+        limitations: ["Pending validation includes cases waiting for issue closure as well as validation. Other includes created, running, missing, unknown and legacy done states. Findings without a valid linked issue are not included in this table or the resolved-rate denominator.", resolutionLimitations, sharedLimitations],
+        headings: ["Channel", "Pending validation", "Validation failed", "Validation skipped", "Processing errors", "Other"],
+        values: row => [row.pending_validation_cases, row.validation_failed_cases,
+          row.validation_skipped_cases, row.processing_error_cases, row.other_issue_cases]
+      },
+      {
+        title: "Root-cause findings",
+        description: "One finding per conversation with a recognized root-cause classification, regardless of whether an issue was linked or validation passed. Missing or unrecognized classifications are not inferred.",
+        limitations: ["Missing documentation and out-of-scope findings are included here even though they are excluded from the incorrect count in Accuracy. This breakdown counts cases, not distinct GitHub issues.", conversationLimitations, sharedLimitations],
+        headings: ["Channel", "Missing documentation", "Outdated documentation", "Insufficient documentation", "Retrieval mismatch", "Reasoning gap", "Out of scope", "Findings"],
+        values: row => [row.root_causes.missing_content || 0, row.root_causes.outdated_content || 0,
+          row.root_causes.insufficient_content || 0, row.root_causes.retrieval_mismatch || 0,
+          row.root_causes.reasoning_gap || 0, row.root_causes.out_of_scope || 0, row.findings]
+      }
+    ];
+
+    function reportRowValues(definition, row, totalRow = false) {
+      return [totalRow ? "Total" : row.channel_name, ...definition.values(row)];
+    }
+
+    function teamsChannelUrl(row) {
+      return row.channel_id
+        ? `https://teams.microsoft.com/l/channel/${encodeURIComponent(row.channel_id)}`
+        : null;
+    }
+
+    function reportChannelCell(row) {
+      const td = cell(row.channel_name);
+      const url = teamsChannelUrl(row);
+      if (url) {
+        const link = node("a", "", row.channel_name);
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        td.replaceChildren(link);
+      }
+      return td;
+    }
+
+    function renderOverviewVisual(data) {
+      const section = node("section", "overview-visual");
+      section.setAttribute("aria-label", "Total data overview");
+      const cards = node("div", "overview-metrics");
+      const metrics = [
+        {title: "Accuracy", style: "accuracy", metric: data.totals.accuracy,
+          labels: ["Not counted incorrect", "Conversations"],
+          note: "Includes unassessed and excluded conversations as successful; not the confirmed-correct percentage."},
+        {title: "Interaction rate", style: "interaction", metric: data.totals.expert_interaction,
+          labels: ["Expert interactions", "Conversations"],
+          note: "Meaningful expert follow-up after a bot reply. Unassessed conversations remain in the total."},
+        {title: "Answer rate", style: "answer", metric: data.totals.answer_rate,
+          labels: ["Bot replies", "In-scope questions"],
+          note: "Reply volume, not matched answers. Includes system/error replies and can exceed 100%."},
+        {title: "Resolved rate", style: "resolution", metric: data.totals.resolved_rate,
+          labels: ["Validated resolved cases", "Issue-linked cases"],
+          note: "Current validation results for conversations in this period. Closed issues and skipped validation do not count as resolved."}
+      ];
+      for (const {title, style, metric, labels, note} of metrics) {
+        const card = node("article", `overview-card ${style}`);
+        card.setAttribute("aria-label", `${title}: ${percent(metric.rate)}`);
+        const rate = node("p", "overview-rate", `${percent(metric.rate)} `);
+        const rateCounts = node("span", "overview-rate-counts",
+          `(${metric.numerator.toLocaleString()} / ${metric.denominator.toLocaleString()})`);
+        rateCounts.title = `${labels[0]} / ${labels[1]}`;
+        rateCounts.setAttribute("aria-label",
+          `${labels[0]}: ${metric.numerator}; ${labels[1]}: ${metric.denominator}`);
+        rate.append(rateCounts);
+        card.append(node("h3", "", title), rate);
+        card.append(node("p", "overview-card-note", note));
+        cards.append(card);
+      }
+      section.append(cards);
+      return section;
+    }
+
+    function renderOverview(data) {
+      report.period.textContent = "";
+      report.tables.replaceChildren(renderOverviewVisual(data));
+      for (const definition of reportTables) {
+        const section = node("section", "report-section");
+        section.append(node("h2", "", definition.title));
+        const wrap = node("div", "table-wrap");
+        const table = node("table");
+        table.setAttribute("aria-label", definition.title);
+        const thead = node("thead");
+        const headingRow = node("tr");
+        for (const heading of definition.headings) {
+          const th = node("th", "", heading);
+          th.scope = "col";
+          headingRow.append(th);
+        }
+        thead.append(headingRow);
+        const tbody = node("tbody");
+        for (const row of data.rows) {
+          const tr = node("tr");
+          tr.append(reportChannelCell(row), ...definition.values(row).map(value => cell(value)));
+          tbody.append(tr);
+        }
+        if (!data.rows.length) {
+          const tr = node("tr");
+          const td = cell("No matching persisted data. Rates are N/A.");
+          td.colSpan = definition.headings.length;
+          tr.append(td);
+          tbody.append(tr);
+        }
+        const tfoot = node("tfoot");
+        const totalRow = node("tr");
+        totalRow.append(...reportRowValues(definition, data.totals, true).map(value => cell(value)));
+        tfoot.append(totalRow);
+        table.append(thead, tbody, tfoot);
+        wrap.append(table);
+        section.append(wrap);
+        const notes = node("details", "report-notes");
+        const limitations = node("ul");
+        limitations.append(...definition.limitations.map(note => node("li", "", note)));
+        notes.append(node("summary", "", "Notes"),
+          node("p", "", definition.description), limitations);
+        section.append(notes);
+        report.tables.append(section);
+      }
+      const choices = report.channel;
+      // Retain discovered options when subsequently narrowing the report scope.
+      for (const row of data.rows) {
+        if (!row.channel_id || Array.from(choices.options).some(option => option.value === row.channel_id)) continue;
+        const option = node("option", "", row.channel_name);
+        option.value = row.channel_id;
+        choices.append(option);
+      }
+    }
+
+    function markdownValue(value) {
+      return String(value).replaceAll("\\", "\\\\").replace(/[\[\]<>*_`]/g, "\\$&").replaceAll("|", "\\|").replace(/[\r\n\t]+/g, " ");
+    }
+
+    function buildOverviewReport(data) {
+      const lines = ["# Weekly Status Report", ""];
+      for (const definition of reportTables) {
+        lines.push(`## ${definition.title}`, "");
+        lines.push(`| ${definition.headings.join(" | ")} |`);
+        lines.push(`| ${definition.headings.map(() => "---").join(" | ")} |`);
+        for (const [row, totalRow] of [...data.rows.map(row => [row, false]), [data.totals, true]]) {
+          const values = reportRowValues(definition, row, totalRow).map(markdownValue);
+          const url = totalRow ? null : teamsChannelUrl(row);
+          if (url) values[0] = `[${values[0]}](${url.replaceAll("(", "%28").replaceAll(")", "%29")})`;
+          lines.push(`| ${values.join(" | ")} |`);
+        }
+        lines.push("", "### Notes", "", definition.description,
+          "", ...definition.limitations.map(note => `- ${note}`), "");
+      }
+      return lines.join("\n");
+    }
+
+    function invalidateOverview() {
+      if (overviewRequest) overviewRequest.abort();
+      overviewRequest = null;
+      overviewData = null;
+      report.copy.disabled = true;
+      report.print.disabled = true;
+      report.fallback.hidden = true;
+      report.error.textContent = "";
+      report.tables.replaceChildren();
+      report.period.textContent = "Update report to apply the selected local dates and scope.";
+    }
+
+    async function loadOverview() {
+      invalidateOverview();
+      // Interpret calendar dates at local midnight; toISOString converts them for the API.
+      const start = new Date(`${report.start.value}T00:00:00`);
+      const end = new Date(`${report.end.value}T00:00:00`);
+      if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) ||
+          end <= start || end - start > 93 * 86400000) {
+        report.error.textContent = "Choose a positive local date range spanning at most 93 × 24 hours (end exclusive).";
+        return;
+      }
+      const request = new AbortController();
+      overviewRequest = request;
+      report.period.textContent = "Loading full report...";
+      const parameters = new URLSearchParams({start: start.toISOString(), end: end.toISOString()});
+      addParameter(parameters, "channel_id", report.channel.value.trim());
+      try {
+        const response = await fetch(`/api/dashboard/overview?${parameters}`, {
+          cache: "no-store", signal: request.signal
+        });
+        if (!response.ok) throw new Error(`Report request failed (${response.status})`);
+        const data = await response.json();
+        if (overviewRequest !== request) return;
+        overviewData = data;
+        renderOverview(data);
+        report.copy.disabled = false;
+        report.print.disabled = false;
+      } catch (error) {
+        if (error.name === "AbortError" || overviewRequest !== request) return;
+        report.error.textContent = error.message;
+        report.period.textContent = "Unable to load report; no partial totals shown.";
+      } finally {
+        if (overviewRequest === request) overviewRequest = null;
+      }
+    }
+
+    document.querySelector("#overview-tab").addEventListener("click", () => selectView(true));
+    document.querySelector("#conversations-tab").addEventListener("click", () => selectView(false));
+    report.form.addEventListener("submit", event => { event.preventDefault(); loadOverview(); });
+    report.form.addEventListener("input", invalidateOverview);
+    document.querySelector("#last-week").addEventListener("click", () => { setLastWeek(); loadOverview(); });
+    report.copy.addEventListener("click", async () => {
+      if (!overviewData) return;
+      const data = overviewData;
+      const text = buildOverviewReport(data);
+      try {
+        await navigator.clipboard.writeText(text);
+        if (overviewData === data) report.period.textContent = "Report copied.";
+      } catch {
+        if (overviewData !== data) return;
+        report.fallback.value = text;
+        report.fallback.hidden = false;
+        report.fallback.focus();
+        report.fallback.select();
+        report.error.textContent = "Clipboard unavailable. Copy the selected report text manually.";
+      }
+    });
+    let notesBeforePrint = [];
+    window.addEventListener("beforeprint", () => {
+      notesBeforePrint = Array.from(report.tables.querySelectorAll("details.report-notes"),
+        notes => ({notes, open: notes.open}));
+      for (const {notes} of notesBeforePrint) notes.open = true;
+    });
+    window.addEventListener("afterprint", () => {
+      for (const {notes, open} of notesBeforePrint) notes.open = open;
+      notesBeforePrint = [];
+    });
+    report.print.addEventListener("click", () => { if (overviewData) window.print(); });
+    const defaultRange = lastSevenDays();
+    report.start.value = defaultRange.start;
+    report.end.value = defaultRange.end;
     loadIdentity();
-    loadRecords();
+    loadOverview();
   </script>
 </body>
 </html>

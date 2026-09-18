@@ -23,13 +23,14 @@ from fastapi.responses import FileResponse
 from models.bot_config import ChannelConfigResponse
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
-from models.feedback import FeedbackRequest, FeedbackResponse
+from models.feedback import FeedbackRequest, FeedbackResponse, RootCauseClassification
 from models.intention import IntentionRequest, IntentionResponse
 from models.knowledge_retrieve import KnowledgeRetrieveResponse, KnowledgeRetrieveRequest
 from models.qa_dashboard import (
     FeedbackStatusFilter,
     QADashboardDetail,
     QARecordPage,
+    QAOverview,
 )
 from models.qa_record import QAStatus
 from services.bot_config_service import BotConfigService
@@ -174,6 +175,7 @@ async def list_dashboard_qa_records(
     channel_id: str | None = Query(default=None, max_length=200),
     qa_status: QAStatus | None = None,
     feedback_status: FeedbackStatusFilter | None = None,
+    classification: RootCauseClassification | None = None,
     updated_from: datetime | None = None,
     updated_to: datetime | None = None,
     conversation_id: str | None = Query(default=None, max_length=500),
@@ -186,9 +188,25 @@ async def list_dashboard_qa_records(
             channel_id=channel_id,
             qa_status=qa_status,
             feedback_status=feedback_status,
+            classification=classification,
             updated_from=updated_from,
             updated_to=updated_to,
             conversation_id=conversation_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/dashboard/overview", response_model=QAOverview)
+async def get_dashboard_overview(
+    start: datetime,
+    end: datetime,
+    channel_id: str | None = Query(default=None, min_length=1, max_length=200),
+) -> QAOverview:
+    """Aggregate the full UTC reporting window, independently of list filters."""
+    try:
+        return await _qa_dashboard_service.get_overview(
+            start=start, end=end, channel_id=channel_id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

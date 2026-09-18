@@ -160,7 +160,20 @@ async def test_run_invokes_agent_for_analysis_without_external_evaluator() -> No
 
 
 @pytest.mark.asyncio
-async def test_run_validates_only_after_issue_closes() -> None:
+@pytest.mark.parametrize(
+    ("outcome", "validated", "failed", "skipped"),
+    [
+        (ChatbotEvolutionAgentOutcome.validation_passed, 1, 0, 0),
+        (ChatbotEvolutionAgentOutcome.validation_failed, 0, 1, 0),
+        (ChatbotEvolutionAgentOutcome.validation_skipped, 0, 0, 1),
+        (ChatbotEvolutionAgentOutcome.processing_failed, 0, 1, 0),
+        (None, 0, 1, 0),
+    ],
+)
+async def test_run_validates_only_after_issue_closes(
+    outcome, validated, failed, skipped, caplog
+) -> None:
+    caplog.set_level("INFO", logger="run_feedback_jobs")
     qa_service = MagicMock()
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
     qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
@@ -175,9 +188,7 @@ async def test_run_validates_only_after_issue_closes() -> None:
     qa_service.list_analyzable = AsyncMock(return_value=[])
     evolution = MagicMock()
     evolution.run_job = AsyncMock(
-        return_value=_result(
-            ChatbotEvolutionAgentOutcome.validation_passed,
-        )
+        return_value=_result(outcome) if outcome is not None else None
     )
 
     with (
@@ -209,3 +220,9 @@ async def test_run_validates_only_after_issue_closes() -> None:
         evolution.run_job.await_args.kwargs["mode"]
         == ChatbotEvolutionAgentMode.validation
     )
+    assert (
+        f"waiting-validation=0 validated={validated} validation-failed={failed} "
+        f"validation-skipped={skipped} evolution-failed=0 skipped=0"
+    ) in caplog.text
+    if skipped:
+        assert "Validation skipped for teams_channel:conversation-1" in caplog.text

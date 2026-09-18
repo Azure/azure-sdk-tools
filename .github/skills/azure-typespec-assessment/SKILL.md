@@ -1,7 +1,10 @@
 ---
 name: azure-typespec-assessment
-description: "Assess TypeSpec Git diffs for semantic intent, REST and SDK breaking changes, Azure Guidelines, and documentation completeness. WHEN: \"assess TypeSpec changes\", \"review TypeSpec diff\", \"check TypeSpec breaking changes\", \"assess TypeSpec against Azure Guidelines\", \"explain TypeSpec REST impact\", \"review TypeSpec documentation\". DO NOT USE FOR: modifying TypeSpec or as a subworkflow of azure-typespec-author."
-license: Apache-2.0
+description: "Assess Azure TypeSpec Git diffs for semantic intent, REST and downstream SDK breaking changes, Azure Guidelines compliance, and documentation completeness. Generate a read-only assessment without modifying the TypeSpec source. WHEN: \"assess TypeSpec changes\", \"review TypeSpec diff\", \"check TypeSpec breaking changes\", \"assess TypeSpec against Azure Guidelines\", \"explain TypeSpec REST impact\", \"review TypeSpec documentation\". DO NOT USE FOR: editing, fixing, or otherwise modifying TypeSpec; use azure-typespec-author for authoring and remediation."
+license: MIT
+metadata:
+  author: Microsoft
+  version: "0.0.0-placeholder"
 ---
 
 # Azure TypeSpec Assessment

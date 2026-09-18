@@ -611,6 +611,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         [TestCase("python", "Python")]
         [TestCase(".net", "Dotnet")]
+        [TestCase("csharp", "Dotnet")]
         [TestCase("javascript", "JavaScript")]
         [TestCase("java", "Java")]
         [TestCase("go", "Go")]

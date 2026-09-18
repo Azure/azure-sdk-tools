@@ -12,7 +12,7 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
 [TestFixture]
-public class DotnetBreakingChangeClassificationTests
+public class DotNetBreakingChangeClassificationTests
 {
     private Mock<ICopilotAgentRunner> _agentRunner = null!;
     private SdkBreakingChangeClassificationService _service = null!;
@@ -89,7 +89,7 @@ public class DotnetBreakingChangeClassificationTests
         var result = await _service.ClassifySdkBreakingChangesAsync("Changes", "Patterns", "DotNet", null, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
-        var language = Languages.DotnetLanguageServiceBreakingChangeTests.CreateService(
+        var language = Languages.DotNetLanguageServiceBreakingChangeTests.CreateService(
             Mock.Of<Azure.Sdk.Tools.Cli.Helpers.ISpecGenSdkConfigHelper>());
         Assert.That(language.ValidateBreakingChangeClassification(result!), Is.Not.Null);
     }
@@ -123,7 +123,7 @@ public class DotnetBreakingChangeClassificationTests
     [TestCase("DotNet")]
     [TestCase("csharp")]
     [TestCase("c#")]
-    public void DotnetPrompt_RequiresConservativeEvidenceBasedRouting(string language)
+    public void DotNetPrompt_RequiresConservativeEvidenceBasedRouting(string language)
     {
         var prompt = new SdkBreakingChangeClassificationTemplate(
             "Pattern catalog", "Original ApiCompat diagnostics", language, null).BuildPrompt();
@@ -148,7 +148,7 @@ public class DotnetBreakingChangeClassificationTests
     }
 
     [Test]
-    public void OtherLanguagePrompt_DoesNotRequireDotnetMitigation()
+    public void OtherLanguagePrompt_DoesNotRequireDotNetMitigation()
     {
         var prompt = new SdkBreakingChangeClassificationTemplate("Patterns", "Changes", "Go", null).BuildPrompt();
 
@@ -238,7 +238,7 @@ public class DotnetBreakingChangeClassificationTests
         var classification = JsonSerializer.Deserialize<SdkBreakingChangeDetectionResult>(example)!;
         classification.SdkChangeMD = "### Breaking Changes\n- <exact original breaking change #1 from sdk changes ### Breaking Changes>\n- <exact original breaking change #2 from sdk changes ### Breaking Changes>";
         var validator = requiresRoute
-            ? Languages.DotnetLanguageServiceBreakingChangeTests.CreateService(Mock.Of<Azure.Sdk.Tools.Cli.Helpers.ISpecGenSdkConfigHelper>())
+            ? Languages.DotNetLanguageServiceBreakingChangeTests.CreateService(Mock.Of<Azure.Sdk.Tools.Cli.Helpers.ISpecGenSdkConfigHelper>())
             : (Azure.Sdk.Tools.Cli.Services.Languages.LanguageService)new Mock<Azure.Sdk.Tools.Cli.Services.Languages.LanguageService> { CallBase = true }.Object;
         Assert.That(validator.ValidateBreakingChangeClassification(classification), Is.Null);
     }

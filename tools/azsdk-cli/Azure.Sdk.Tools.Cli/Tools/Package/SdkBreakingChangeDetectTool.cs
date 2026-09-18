@@ -146,11 +146,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 if (sdkChange != null)
                 {
-                    var dotnetDetails = languageService.Language == SdkLanguage.DotNet && sdkChange.Details != null
+                    var dotNetDetails = languageService.Language == SdkLanguage.DotNet && sdkChange.Details != null
                         ? JsonSerializer.SerializeToElement(sdkChange.Details).Deserialize<DotNetSdkChangeDetails>()
                         : null;
                     if (languageService.Language == SdkLanguage.DotNet &&
-                        string.IsNullOrWhiteSpace(dotnetDetails?.BaselineVersion))
+                        string.IsNullOrWhiteSpace(dotNetDetails?.BaselineVersion))
                     {
                         return new PackageOperationResponse
                         {

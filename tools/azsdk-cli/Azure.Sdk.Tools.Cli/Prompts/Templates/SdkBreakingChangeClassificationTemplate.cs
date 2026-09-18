@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             var referenceTypeSpecInstruction = string.IsNullOrEmpty(_tspProjectPath) ? "" : $"""
                 When identifying an SDK breaking change, you **must** search the TypeSpec code in the provided TypeSpec project `{_tspProjectPath}` for the matching **spec pattern** in the SDK Breaking Change Pattern Document.
                 """;
-            var dotnetInstructions = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet ? """
+            var dotNetInstructions = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet ? """
                 **.NET compatibility and mitigation:**
                 - ApiCompat's forward comparison against the latest GA release is the compatibility authority. Preserve every reported compatibility violation and its diagnostic ID; do not suppress or downgrade it.
                 - Populate originBreaks with each original breaking bullet's exact text without its leading "- ", including diagnostic IDs and target-framework details. Cover every input entry exactly once.
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             **Task:**
             Analyze the following SDK changes and classify each SDK breaking change based on the provided SDK breaking change pattern document.
             {referenceTypeSpecInstruction}
-            {dotnetInstructions}
+            {dotNetInstructions}
             Compare each SDK change against the patterns and conditions in the document to determine whether it is a breaking change, assign the correct category, and retrieve the resolution when one is available in the matched pattern.
             First pass requirement: iterate through every entry in `sdk changes ### Breaking Changes` and reference to `sdk changes in ### Features Added` if any to determine its root-cause candidate.
             Merge entries that share the same root cause into one classified breaking change, for example: "model 'User' renamed to 'Customer'". Include every related breaking caused by that root change (direct and cascading) in the same merged breaking change.

@@ -5,6 +5,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Models;
 [TestFixture]
 public class SdkLanguageTests
 {
+    [TestCase("DotNet")]
+    [TestCase("Dotnet")]
+    [TestCase("dotnet")]
+    [TestCase("DOTNET")]
+    [TestCase(".NET")]
+    [TestCase(".net")]
+    [TestCase("csharp")]
+    [TestCase("c#")]
+    public void GetSdkLanguage_DotNetAliasesPreserveWorkItemName(string alias)
+    {
+        var language = SdkLanguageHelpers.GetSdkLanguage(alias);
+
+        Assert.That(language, Is.EqualTo(SdkLanguage.DotNet));
+        Assert.That(language.ToWorkItemString(), Is.EqualTo(".NET"));
+    }
+
     [TestCase(SdkLanguage.DotNet, "azure-sdk-for-net")]
     [TestCase(SdkLanguage.Go, "azure-sdk-for-go")]
     [TestCase(SdkLanguage.Java, "azure-sdk-for-java")]

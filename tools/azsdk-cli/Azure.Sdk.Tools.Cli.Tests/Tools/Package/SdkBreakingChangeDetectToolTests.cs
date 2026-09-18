@@ -62,9 +62,9 @@ public class SdkBreakingChangeDetectToolTests
         _configHelper.Setup(c => c.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.GetSdkChanges, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
         _classifier = new Mock<ISdkBreakingChangeClassificationService>();
-        var dotnetService = DotnetLanguageServiceBreakingChangeTests.CreateService(_configHelper.Object);
+        var dotNetService = DotNetLanguageServiceBreakingChangeTests.CreateService(_configHelper.Object);
         _languageService.Setup(s => s.ValidateBreakingChangeClassification(It.IsAny<SdkBreakingChangeDetectionResult>()))
-            .Returns<SdkBreakingChangeDetectionResult>(dotnetService.ValidateBreakingChangeClassification);
+            .Returns<SdkBreakingChangeDetectionResult>(dotNetService.ValidateBreakingChangeClassification);
         _logger = new TestLogger<SdkBreakingChangeDetectTool>();
         _tool = new SdkBreakingChangeDetectTool(
             _gitHelper.Object,
@@ -478,7 +478,7 @@ public class SdkBreakingChangeDetectToolTests
 
     [TestCase(null)]
     [TestCase((SdkBreakingChangeMitigationStrategy)999)]
-    public async Task DotnetClassification_RejectsInvalidRoutesAndPreservesRawEvidence(SdkBreakingChangeMitigationStrategy? mitigation)
+    public async Task DotNetClassification_RejectsInvalidRoutesAndPreservesRawEvidence(SdkBreakingChangeMitigationStrategy? mitigation)
     {
         ConfigureDetectorReport(true);
         ConfigureClassification(mitigation);
@@ -495,7 +495,7 @@ public class SdkBreakingChangeDetectToolTests
     [TestCase(SdkBreakingChangeMitigationStrategy.Generator)]
     [TestCase(SdkBreakingChangeMitigationStrategy.ClientCustomization)]
     [TestCase(SdkBreakingChangeMitigationStrategy.Manual)]
-    public async Task DotnetClassification_AcceptsValidRoutes(SdkBreakingChangeMitigationStrategy route)
+    public async Task DotNetClassification_AcceptsValidRoutes(SdkBreakingChangeMitigationStrategy route)
     {
         ConfigureDetectorReport(true);
         ConfigureClassification(route);
@@ -510,7 +510,7 @@ public class SdkBreakingChangeDetectToolTests
     [TestCase(SdkLanguage.Java, "azure-sdk-for-java")]
     [TestCase(SdkLanguage.JavaScript, "azure-sdk-for-js")]
     [TestCase(SdkLanguage.Python, "azure-sdk-for-python")]
-    public async Task OtherLanguageClassification_DoesNotRequireDotnetMitigation(SdkLanguage language, string repository)
+    public async Task OtherLanguageClassification_DoesNotRequireDotNetMitigation(SdkLanguage language, string repository)
     {
         _languageService.SetupGet(s => s.Language).Returns(language);
         _gitHelper.Setup(g => g.GetRepoNameAsync(_packagePath, It.IsAny<CancellationToken>())).ReturnsAsync(repository);
@@ -543,7 +543,7 @@ public class SdkBreakingChangeDetectToolTests
     [TestCase("null")]
     [TestCase("\"\"")]
     [TestCase("\"  \"")]
-    public async Task DotnetReport_UnknownBaselineIsInconclusive(string baseline)
+    public async Task DotNetReport_UnknownBaselineIsInconclusive(string baseline)
     {
         ConfigureScript("""{"changes":"No changes","hasBreakingChange":false,"details":{"baselineVersion":""" + baseline + "}}");
 
@@ -605,7 +605,7 @@ public class SdkBreakingChangeDetectToolTests
     [TestCase(SdkLanguage.Java, "azure-sdk-for-java")]
     [TestCase(SdkLanguage.JavaScript, "azure-sdk-for-js")]
     [TestCase(SdkLanguage.Python, "azure-sdk-for-python")]
-    public async Task OtherLanguageCleanReport_DoesNotRequireDotnetBaseline(SdkLanguage language, string repository)
+    public async Task OtherLanguageCleanReport_DoesNotRequireDotNetBaseline(SdkLanguage language, string repository)
     {
         _languageService.SetupGet(s => s.Language).Returns(language);
         _gitHelper.Setup(g => g.GetRepoNameAsync(_packagePath, It.IsAny<CancellationToken>())).ReturnsAsync(repository);
@@ -667,7 +667,7 @@ public class SdkBreakingChangeDetectToolTests
 
     [TestCase("")]
     [TestCase(" \n")]
-    public async Task MissingDotnetCatalog_PreservesEvidenceWithoutInvokingClassifier(string catalog)
+    public async Task MissingDotNetCatalog_PreservesEvidenceWithoutInvokingClassifier(string catalog)
     {
         ConfigureDetectorReport(true);
         _languageService.Setup(s => s.GetSdkBreakingPattern(It.IsAny<string>(), It.IsAny<CancellationToken>()))

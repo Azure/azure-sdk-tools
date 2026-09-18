@@ -5,7 +5,7 @@ using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
-public sealed partial class DotnetLanguageService
+public sealed partial class DotNetLanguageService
 {
     public override bool RequiresBreakingChangePatternCatalog => true;
 

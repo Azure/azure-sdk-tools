@@ -182,12 +182,12 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
 
     private static SdkBreakingChangeDetectionResult CreateChanges(PackageInfo packageInfo, bool additionsOnly)
     {
-        var isDotnet = packageInfo.Language == SdkLanguage.DotNet;
+        var isDotNet = packageInfo.Language == SdkLanguage.DotNet;
         var removedSymbol = RemovedSymbol(packageInfo);
-        var addedSymbol = isDotnet
+        var addedSymbol = isDotNet
             ? $"{packageInfo.PackageName}.Widget.DisplayName"
             : "com.azure.resourcemanager.contoso.models.Widget.displayName()";
-        var diagnosticId = isDotnet ? "CP0002" : "MOCK001";
+        var diagnosticId = isDotNet ? "CP0002" : "MOCK001";
         var diagnostic = RemovalDiagnostic(packageInfo);
         var addition = $"Public API '{addedSymbol}' was added.";
         var details = new DotNetSdkChangeDetails { BaselineVersion = "1.0.0" };
@@ -201,7 +201,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
                 Description = diagnostic,
                 IsBreaking = true,
                 DiagnosticId = diagnosticId,
-                TargetFramework = isDotnet ? "net8.0" : null,
+                TargetFramework = isDotNet ? "net8.0" : null,
             });
         }
         details.ApiChanges.Add(new DotNetSdkApiChange
@@ -210,14 +210,14 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
             Symbol = addedSymbol,
             Description = addition,
             IsBreaking = false,
-            TargetFramework = isDotnet ? "net8.0" : null,
+            TargetFramework = isDotNet ? "net8.0" : null,
         });
         return new SdkBreakingChangeDetectionResult
         {
             HasBreakingChange = !additionsOnly,
             SdkChangeMD = (additionsOnly ? "" : $"### Breaking Changes\n\n- {diagnostic}\n\n")
                 + $"### Features Added\n\n- {addition}",
-            Details = isDotnet ? details : null,
+            Details = isDotNet ? details : null,
         };
     }
 

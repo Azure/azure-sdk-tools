@@ -113,9 +113,9 @@ public class SdkBreakingChangeReportTests
     [TestCase(null)]
     [TestCase("")]
     [TestCase(" ")]
-    public async Task DotnetNoBaselineReport_PreservesLimitationsWithoutInventingProvenance(string? baseline)
+    public async Task DotNetNoBaselineReport_PreservesLimitationsWithoutInventingProvenance(string? baseline)
     {
-        UseDotnet();
+        UseDotNet();
         await File.WriteAllTextAsync(_reportPath, JsonSerializer.Serialize(new
         {
             changes = "No released baseline.",
@@ -133,7 +133,7 @@ public class SdkBreakingChangeReportTests
 
     [TestCase(false)]
     [TestCase(true)]
-    public async Task OtherLanguageMetadata_RoundTripsWithoutDotnetSchema(bool breaking)
+    public async Task OtherLanguageMetadata_RoundTripsWithoutDotNetSchema(bool breaking)
     {
         const string metadata = """
             {"baselineVersion":{"release":"tag-v1"},"apiChanges":{"format":"language-specific"},
@@ -155,7 +155,7 @@ public class SdkBreakingChangeReportTests
     [Test]
     public async Task NativeEvidence_RoundTripsUnknownProvenanceAndApiFields()
     {
-        UseDotnet();
+        UseDotNet();
         await File.WriteAllTextAsync(_reportPath, """
             {"changes":"### Features Added\n- Widget","hasBreakingChange":false,
              "details":{"baselineVersion":"1.2.3","baselineSource":{"feed":"NuGet"},"detectorVersion":2,
@@ -240,9 +240,9 @@ public class SdkBreakingChangeReportTests
     }
 
     [Test]
-    public async Task DotnetMetadata_IsValidatedOnlyInDotnetContext()
+    public async Task DotNetMetadata_IsValidatedOnlyInDotNetContext()
     {
-        UseDotnet();
+        UseDotNet();
         await File.WriteAllTextAsync(_reportPath, """
             {"changes":"Evidence","hasBreakingChange":false,"details":{"baselineVersion":42}}
             """);
@@ -260,7 +260,7 @@ public class SdkBreakingChangeReportTests
         Assert.CatchAsync<OperationCanceledException>(() => ReadReportAsync(cts.Token));
     }
 
-    private void UseDotnet()
+    private void UseDotNet()
     {
         _language.SetupGet(s => s.Language).Returns(SdkLanguage.DotNet);
         _git.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");

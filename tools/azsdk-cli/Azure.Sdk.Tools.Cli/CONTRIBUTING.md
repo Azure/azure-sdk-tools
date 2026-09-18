@@ -174,7 +174,7 @@ Services are **DI-registered, long-lived** classes that encapsulate access to an
 | `IUserPromptProcessor` | `UserPromptProcessor` | Interactive user-prompt processing. |
 | `IVerifySetupService` | `VerifySetupService` | Local environment / prerequisite verification (used by `Tools/Verify`). |
 | `ITypeSpecCustomizationService` | `TypeSpecCustomizationService` | TypeSpec customization automation (used by `Tools/TypeSpec`). |
-| `LanguageService` (abstract) | `DotnetLanguageService`, `PythonLanguageService`, `JavaLanguageService`, `GoLanguageService`, `JavaScriptLanguageService`, `RustLanguageService` | Language-specific SDK CLIs: `dotnet`, `python`/`pip`, `mvn`, `go`, `npm`, `cargo`. Selected per-package by detecting the language. See [`docs/per-language.md`](../docs/per-language.md). |
+| `LanguageService` (abstract) | `DotNetLanguageService`, `PythonLanguageService`, `JavaLanguageService`, `GoLanguageService`, `JavaScriptLanguageService`, `RustLanguageService` | Language-specific SDK CLIs: `dotnet`, `python`/`pip`, `mvn`, `go`, `npm`, `cargo`. Selected per-package by detecting the language. See [`docs/per-language.md`](../docs/per-language.md). |
 
 When adding a service:
 

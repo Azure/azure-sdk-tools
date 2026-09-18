@@ -12,15 +12,15 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
 [TestFixture]
-public class DotnetLanguageServiceBreakingChangeTests
+public class DotNetLanguageServiceBreakingChangeTests
 {
     private const string FirstBreak = "[CP0002] Member 'Azure.Test.Widget.Name' was removed. (target framework: netstandard2.0)";
     private const string SecondBreak = "[CP0002] Member 'Azure.Test.Widget.Name' was removed. (target framework: net8.0)";
     private TempDirectory _directory = null!;
-    private DotnetLanguageService _service = null!;
+    private DotNetLanguageService _service = null!;
     private string _configPath = null!;
     private string _defaultCatalogPath = null!;
-    private TestLogger<DotnetLanguageService> _logger = null!;
+    private TestLogger<DotNetLanguageService> _logger = null!;
 
     [SetUp]
     public void SetUp()
@@ -32,7 +32,7 @@ public class DotnetLanguageServiceBreakingChangeTests
         _defaultCatalogPath = Path.Combine(_directory.DirectoryPath, "doc", "dev", "SDKBreakingChanges.md");
         Directory.CreateDirectory(Path.GetDirectoryName(_defaultCatalogPath)!);
         File.WriteAllText(_defaultCatalogPath, "Default .NET patterns");
-        _logger = new TestLogger<DotnetLanguageService>();
+        _logger = new TestLogger<DotNetLanguageService>();
         _service = CreateService(new SpecGenSdkConfigHelper(
             new TestLogger<SpecGenSdkConfigHelper>(), Mock.Of<IProcessHelper>()), _logger);
     }
@@ -43,7 +43,7 @@ public class DotnetLanguageServiceBreakingChangeTests
     [TestCase("{}")]
     [TestCase("{\"packageOptions\":{}}")]
     [TestCase("{\"packageOptions\":{\"buildScript\":{\"command\":\"build\"}}}")]
-    public async Task PatternCatalog_AbsentPropertyDoesNotSelectDotnetDefault(string config)
+    public async Task PatternCatalog_AbsentPropertyDoesNotSelectDotNetDefault(string config)
     {
         await File.WriteAllTextAsync(_configPath, config);
 
@@ -311,7 +311,7 @@ public class DotnetLanguageServiceBreakingChangeTests
     }
 
     [Test]
-    public void BaseLanguageClassification_DoesNotRequireDotnetRoute()
+    public void BaseLanguageClassification_DoesNotRequireDotNetRoute()
     {
         var otherLanguage = new Mock<LanguageService> { CallBase = true };
 
@@ -350,9 +350,9 @@ public class DotnetLanguageServiceBreakingChangeTests
         OriginBreaks = origins.ToList(),
     };
 
-    internal static DotnetLanguageService CreateService(ISpecGenSdkConfigHelper configHelper, TestLogger<DotnetLanguageService>? logger = null) => new(
+    internal static DotNetLanguageService CreateService(ISpecGenSdkConfigHelper configHelper, TestLogger<DotNetLanguageService>? logger = null) => new(
         Mock.Of<IProcessHelper>(), Mock.Of<IPowershellHelper>(), Mock.Of<ICopilotAgentRunner>(),
-        Mock.Of<IGitHelper>(), logger ?? new TestLogger<DotnetLanguageService>(),
+        Mock.Of<IGitHelper>(), logger ?? new TestLogger<DotNetLanguageService>(),
         Mock.Of<ICommonValidationHelpers>(), Mock.Of<IPackageInfoHelper>(), Mock.Of<IFileHelper>(),
         configHelper, Mock.Of<IChangelogHelper>());
 }

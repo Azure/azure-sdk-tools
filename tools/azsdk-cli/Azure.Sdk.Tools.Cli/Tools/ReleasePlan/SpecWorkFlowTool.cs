@@ -287,9 +287,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
+                // Do not regenerate an SDK that has already been released for this language.
+                var sdkInfo = releasePlan.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
+                if (string.Equals(sdkInfo?.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation(
+                        "SDK for {Language} has already been released for release plan work item {WorkItemId}. Skipping SDK generation.",
+                        language,
+                        workItemId);
+                    response.Status = "Success";
+                    response.Details.Add($"SDK for {language} has already been released for release plan work item {workItemId}. A new SDK generation run was not triggered.");
+                    return response;
+                }
+
                 // Check the current SDK generation status for the language in the release plan.
                 // If a generation is already in progress or pending, skip triggering a new run to avoid duplicate SDK generation.
-                var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => s.Language == language);
                 var currentGenerationStatus = sdkInfo?.GenerationStatus ?? string.Empty;
                 if (currentGenerationStatus.Equals("In progress", StringComparison.OrdinalIgnoreCase) ||
                     currentGenerationStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))

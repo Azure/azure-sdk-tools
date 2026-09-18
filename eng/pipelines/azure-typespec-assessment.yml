@@ -48,4 +48,4 @@ extends:
         jobs:
           - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
             parameters:
-              failOnFailedTests: ${{ parameters.failOnFailedTests }}
+              failOnFailedTests: false

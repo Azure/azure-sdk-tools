@@ -67,6 +67,15 @@ contains the results and `eligibility_reasons` is keyed by each plan's
 `WorkItemId`, which can differ from its `ReleasePlanId`. Preview also includes
 `dry_run: true`. Both text and JSON retain partial results alongside errors.
 
+Dry-run output also reports scanned, eligible, skipped, and evaluation-error
+counts, plus skipped-plan IDs, links, target months, and reasons. JSON exposes
+these as `preview_summary` and `skipped_plans`. Counts cover the plans returned
+by the overdue query, not plans already excluded by its state, tag, or date
+filters. Each skipped plan records its **first exclusion reason**; for example,
+a plan in its grace month is not checked for additional PR-based exclusions.
+Lookup failures and invalid revisions count as evaluation errors, not confirmed
+exclusions. Scanned equals eligible plus skipped plus evaluation errors.
+
 A successful empty preview means no scanned plans qualify. It is a point-in-time
 assessment, not a reservation: an actual run re-evaluates eligibility, and a plan
 can change or its update can fail after the preview.

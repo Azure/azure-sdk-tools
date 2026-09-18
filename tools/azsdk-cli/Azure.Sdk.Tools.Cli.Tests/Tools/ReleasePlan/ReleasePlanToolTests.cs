@@ -1983,6 +1983,166 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             github.VerifyAll();
         }
 
+        [TestCase("grace", "grace_period")]
+        [TestCase("current_month", "not_overdue")]
+        [TestCase("invalid_month", "invalid_target_month")]
+        [TestCase("unknown_type", "unknown_release_type")]
+        [TestCase("released", "sdk_released")]
+        [TestCase("active_pr", "sdk_pr_not_closed")]
+        [TestCase("merged_pr", "sdk_pr_merged")]
+        [TestCase("merged_spec", "spec_pr_merged")]
+        public async Task Test_abandon_overdue_preview_explains_skipped_plan_without_changing_policy(string scenario, string category)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 500, ReleasePlanId = 50, Revision = 7, Status = "In Progress",
+                Title = "Contoso release", ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026"
+            };
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            switch (scenario)
+            {
+                case "grace":
+                    plan.SDKReleaseMonth = "October 2026";
+                    // The first exclusion wins; reporting must not read PRs after a date-based skip.
+                    plan.SDKInfo = [new SDKInfo { ReleaseStatus = "Released", SdkPullRequestUrl = "not-a-pr-url" }];
+                    break;
+                case "current_month":
+                    plan.SDKReleaseMonth = "November 2026";
+                    break;
+                case "invalid_month":
+                    plan.SDKReleaseMonth = "invalid";
+                    break;
+                case "unknown_type":
+                    plan.ReleasePlanType = "Unknown";
+                    break;
+                case "released":
+                    plan.SDKInfo = [new SDKInfo { ReleaseStatus = "Released", SdkPullRequestUrl = "not-a-pr-url" }];
+                    break;
+                case "active_pr":
+                case "merged_pr":
+                    plan.SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/42" }];
+                    github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()))
+                        .ReturnsAsync(CreateMaintenancePullRequest(scenario == "active_pr" ? "open" : "closed", scenario == "merged_pr"));
+                    break;
+                case "merged_spec":
+                    plan.ApiReleaseType = ApiReleaseType.PrivatePreview;
+                    plan.ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs-pr/pull/42";
+                    github.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs-pr", 42, It.IsAny<CancellationToken>()))
+                        .ReturnsAsync(CreateMaintenancePullRequest("closed", merged: true));
+                    break;
+            }
+            var originalPlan = JsonSerializer.Serialize(plan);
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            var tool = CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object);
+
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ExitCode, Is.Zero);
+            Assert.That(preview.ReleasePlanDetailsList, Is.Empty);
+            using var json = JsonDocument.Parse(JsonSerializer.Serialize(preview));
+            var summary = json.RootElement.GetProperty("preview_summary");
+            Assert.That(summary.GetProperty("scanned").GetInt32(), Is.EqualTo(1));
+            Assert.That(summary.GetProperty("eligible").GetInt32(), Is.Zero);
+            Assert.That(summary.GetProperty("skipped").GetInt32(), Is.EqualTo(1));
+            Assert.That(summary.GetProperty("evaluation_errors").GetInt32(), Is.Zero);
+            Assert.That(summary.GetProperty("skipped_by_reason").GetProperty(category).GetInt32(), Is.EqualTo(1));
+            var skipped = json.RootElement.GetProperty("skipped_plans")[0];
+            Assert.That(skipped.GetProperty("work_item_id").GetInt32(), Is.EqualTo(500));
+            Assert.That(skipped.GetProperty("release_plan_id").GetInt32(), Is.EqualTo(50));
+            Assert.That(skipped.GetProperty("release_plan_link").GetString(), Is.EqualTo(plan.ReleasePlanLink));
+            Assert.That(skipped.GetProperty("category").GetString(), Is.EqualTo(category));
+            Assert.That(skipped.GetProperty("reason").GetString(), Is.Not.Empty);
+            Assert.That(preview.ToString(), Does.Contain("Scanned: 1").And.Contain("Skipped: 1").And.Contain("Evaluation errors: 0"));
+            Assert.That(preview.ToString(), Does.Contain(plan.ReleasePlanLink).And.Contain("Release Plan ID: 50"));
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(originalPlan));
+            AssertDryRunHasNoSideEffects(service, notification);
+
+            var actual = await tool.AbandonOverdueReleasePlans();
+
+            Assert.That(actual.ExitCode, Is.Zero);
+            Assert.That(actual.ReleasePlanDetailsList, Is.Empty);
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(originalPlan));
+            using var actualJson = JsonDocument.Parse(JsonSerializer.Serialize(actual));
+            Assert.That(actualJson.RootElement.TryGetProperty("preview_summary", out _), Is.False);
+            Assert.That(actualJson.RootElement.TryGetProperty("skipped_plans", out _), Is.False);
+            service.Verify(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+            service.VerifyNoOtherCalls();
+            notification.VerifyNoOtherCalls();
+            github.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(scenario is "active_pr" or "merged_pr" or "merged_spec" ? 2 : 0));
+        }
+
+        [Test]
+        public async Task Test_abandon_overdue_preview_counts_each_plan_once_and_separates_errors()
+        {
+            var eligible = new ReleasePlanWorkItem { WorkItemId = 501, ReleasePlanType = "APEX GA" };
+            var grace = new ReleasePlanWorkItem { WorkItemId = 502 };
+            var released = new ReleasePlanWorkItem { WorkItemId = 503, SDKInfo = [new SDKInfo { ReleaseStatus = "Released" }] };
+            var alsoReleased = new ReleasePlanWorkItem { WorkItemId = 504, SDKInfo = [new SDKInfo { ReleaseStatus = "Released" }] };
+            var unknown = new ReleasePlanWorkItem { WorkItemId = 505 };
+            var invalidRevision = new ReleasePlanWorkItem { WorkItemId = 506 };
+            var unreadable = new ReleasePlanWorkItem
+            {
+                WorkItemId = 507,
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/42" }]
+            };
+            List<ReleasePlanWorkItem> plans = [eligible, grace, released, alsoReleased, unknown, invalidRevision, unreadable];
+            foreach (var plan in plans)
+            {
+                if (plan.WorkItemId != eligible.WorkItemId)
+                {
+                    plan.ApiReleaseType = ApiReleaseType.GA;
+                }
+                plan.Revision = 7;
+                plan.Status = "In Progress";
+                plan.SDKReleaseMonth = "September 2026";
+            }
+            grace.SDKReleaseMonth = "October 2026";
+            unknown.ReleasePlanType = "Unknown";
+            invalidRevision.Revision = 0;
+            var originalPlans = JsonSerializer.Serialize(plans);
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync(plans);
+            service.Setup(x => x.UpdateWorkItemAsync(eligible.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new HttpRequestException("GitHub unavailable"));
+            var notification = new Mock<INotificationService>();
+            var tool = CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object);
+
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ExitCode, Is.EqualTo(1));
+            Assert.That(preview.ReleasePlanDetailsList, Is.EqualTo(new[] { eligible }));
+            Assert.That(preview.ResponseErrors, Has.Count.EqualTo(2));
+            Assert.That(JsonSerializer.Serialize(plans), Is.EqualTo(originalPlans));
+            AssertDryRunHasNoSideEffects(service, notification);
+            using var json = JsonDocument.Parse(JsonSerializer.Serialize(preview));
+            var summary = json.RootElement.GetProperty("preview_summary");
+            Assert.That(summary.GetProperty("scanned").GetInt32(), Is.EqualTo(7));
+            Assert.That(summary.GetProperty("eligible").GetInt32(), Is.EqualTo(1));
+            Assert.That(summary.GetProperty("skipped").GetInt32(), Is.EqualTo(4));
+            Assert.That(summary.GetProperty("evaluation_errors").GetInt32(), Is.EqualTo(2));
+            Assert.That(summary.GetProperty("skipped_by_reason").GetProperty("sdk_released").GetInt32(), Is.EqualTo(2));
+            var skippedIds = json.RootElement.GetProperty("skipped_plans").EnumerateArray()
+                .Select(item => item.GetProperty("work_item_id").GetInt32()).ToArray();
+            Assert.That(skippedIds, Is.EquivalentTo(new[] { 502, 503, 504, 505 }));
+            Assert.That(preview.ToString(), Does.Contain("Scanned: 7").And.Contain("Eligible: 1").And.Contain("Skipped: 4").And.Contain("Evaluation errors: 2"));
+            Assert.That(preview.ToString(), Does.Contain("Release Plan ID: 502").And.Contain(grace.ReleasePlanLink));
+            Assert.That(preview.ToString(), Does.Contain("eligible list is incomplete").And.Contain("GitHub unavailable"));
+
+            var actual = await tool.AbandonOverdueReleasePlans();
+
+            Assert.That(actual.ReleasePlanDetailsList, Is.EqualTo(new[] { eligible }));
+            Assert.That(actual.ExitCode, Is.EqualTo(1));
+            service.Verify(x => x.UpdateWorkItemAsync(eligible.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()), Times.Once);
+            notification.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Once);
+            github.Verify(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
         [Test]
         public async Task Test_abandon_overdue_dry_run_reports_empty_result()
         {
@@ -1997,6 +2157,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ReleasePlanDetailsList, Is.Empty);
             Assert.That(response.EligibilityReasons, Is.Empty);
             Assert.That(response.ToString(), Does.Contain("Dry run: 0").And.Contain("No eligible release plans found"));
+            using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
+            Assert.That(json.RootElement.GetProperty("preview_summary").GetProperty("scanned").GetInt32(), Is.Zero);
+            Assert.That(json.RootElement.GetProperty("skipped_plans").GetArrayLength(), Is.Zero);
             AssertDryRunHasNoSideEffects(service, notification);
         }
 
@@ -2016,6 +2179,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ReleasePlanDetailsList, Is.Null);
             Assert.That(response.ToString(), Does.Contain("Dry run failed").And.Contain("No plans were changed or notifications sent"));
             Assert.That(response.ResponseError, Does.Contain("Work item 200 not found"));
+            using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
+            Assert.That(json.RootElement.TryGetProperty("preview_summary", out _), Is.False, "Do not imply a completed empty scan after an initial failure.");
+            Assert.That(json.RootElement.TryGetProperty("skipped_plans", out _), Is.False);
             AssertDryRunHasNoSideEffects(service, notification);
         }
 

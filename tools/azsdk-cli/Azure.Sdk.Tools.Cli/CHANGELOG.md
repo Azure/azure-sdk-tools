@@ -4,16 +4,13 @@
 
 ### Features Added
 
-- Added `release-plan abandon-overdue` to abandon inactive Public Preview, GA, and Private Preview release plans after one full overdue calendar month. Public/GA plans with merged or active SDK PRs, or any released SDK, are preserved; Private Preview plans are assessed by spec PR merge status. Overdue reminders provide release-type-specific actions.
-- Added `release-plan abandon-overdue --dry-run` to preview eligible plan IDs, dashboard links, and eligibility reasons using the cleanup policy without changing plans or sending notifications.
+- Added monthly cleanup and state-specific reminders for inactive overdue release plans, with a one-calendar-month grace period and protection for active release work.
+- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan reasons, and summary counts without updates or emails.
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
-- Included plan links, reasons, and partial results in actual overdue cleanup output as well as previews, and corrected abandonment emails to direct users to create a new release plan.
-- Fixed overdue release-plan selection for legacy `APEX GA` values and stale cached SDK PR statuses by checking current GitHub state.
-- Retained generic overdue reminders when release-activity lookups fail, without permitting automatic abandonment.
 - Release plan creation and target-month updates now reject malformed or past target months, while allowing the current UTC month and future months.
 
 ### Other Changes

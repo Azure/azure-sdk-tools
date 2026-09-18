@@ -28,6 +28,14 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Dictionary<int, string>? EligibilityReasons { get; set; }
 
+        [JsonPropertyName("preview_summary")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ReleasePlanPreviewSummary? PreviewSummary { get; set; }
+
+        [JsonPropertyName("skipped_plans")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<ReleasePlanSkipDetails>? SkippedPlans { get; set; }
+
         public override string ToString()
         {
             // Preserve partial results and summaries alongside errors in either mode.
@@ -42,6 +50,14 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
             if (!string.IsNullOrWhiteSpace(Message))
             {
                 result.AppendLine(Message);
+            }
+            if (PreviewSummary != null)
+            {
+                result.AppendLine($"Scanned: {PreviewSummary.Scanned}; Eligible: {PreviewSummary.Eligible}; Skipped: {PreviewSummary.Skipped}; Evaluation errors: {PreviewSummary.EvaluationErrors}");
+                foreach (var (category, count) in PreviewSummary.SkippedByReason)
+                {
+                    result.AppendLine($"  {category}: {count}");
+                }
             }
             if (ReleasePlanDetailsList != null && ReleasePlanDetailsList.Count > 0)
             {
@@ -70,6 +86,17 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
                 result.AppendLine(ReleasePlanDetailsList != null && EligibilityReasons != null
                     ? (DryRun ? "No eligible release plans found." : "No release plans were abandoned.")
                     : "No release plan details available.");
+            }
+            if (SkippedPlans?.Count > 0)
+            {
+                result.AppendLine("Skipped release plans (first exclusion reason):");
+                foreach (var plan in SkippedPlans)
+                {
+                    var planId = plan.ReleasePlanId > 0 ? plan.ReleasePlanId : plan.WorkItemId;
+                    result.AppendLine($"- Release Plan ID: {planId} | {plan.Title} | Target month: {plan.TargetMonth}");
+                    result.AppendLine($"  {plan.Category}: {plan.Reason}");
+                    result.AppendLine($"  Release Plan Link: {plan.ReleasePlanLink}");
+                }
             }
             return result.ToString();
         }

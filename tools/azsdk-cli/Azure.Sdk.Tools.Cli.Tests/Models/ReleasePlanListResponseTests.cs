@@ -77,6 +77,49 @@ public class ReleasePlanListResponseTests
         Assert.That(text, Does.Not.Contain("Abandonment Reason:").And.Not.Contain("Eligibility Reason:"));
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
         Assert.That(json.RootElement.TryGetProperty("eligibility_reasons", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("preview_summary", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("skipped_plans", out _), Is.False);
+    }
+
+    [TestCase(0)]
+    [TestCase(42)]
+    public void PreviewDiagnostics_PreserveSkippedPlanDetailsAlongsideErrors(int releasePlanId)
+    {
+        var plan = new ReleasePlanWorkItem
+        {
+            WorkItemId = 420, ReleasePlanId = releasePlanId, Title = "Contoso release", SDKReleaseMonth = "October 2026"
+        };
+        var skipped = new ReleasePlanSkipDetails(plan, "grace_period", "The first overdue calendar month is reminder-only.");
+        var response = new ReleasePlanListResponse
+        {
+            DryRun = true,
+            Message = "Dry run: the eligible list is incomplete.",
+            ReleasePlanDetailsList = [],
+            EligibilityReasons = [],
+            SkippedPlans = [skipped],
+            PreviewSummary = new ReleasePlanPreviewSummary
+            {
+                Scanned = 2, Eligible = 0, Skipped = 1, EvaluationErrors = 1,
+                SkippedByReason = new Dictionary<string, int> { ["grace_period"] = 1 }
+            },
+            ResponseErrors = ["Plan 421 could not be evaluated."]
+        };
+
+        var text = response.ToString();
+
+        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(text, Does.Contain("Scanned: 2; Eligible: 0; Skipped: 1; Evaluation errors: 1"));
+        Assert.That(text, Does.Contain("grace_period: 1"));
+        Assert.That(text, Does.Contain($"Release Plan ID: {(releasePlanId > 0 ? releasePlanId : plan.WorkItemId)}"));
+        Assert.That(text, Does.Contain(plan.ReleasePlanLink).And.Contain(skipped.Reason).And.Contain(plan.SDKReleaseMonth));
+        Assert.That(text, Does.Contain("[ERROR] Plan 421 could not be evaluated."));
+        Assert.That(text.IndexOf("Skipped release plans", StringComparison.Ordinal),
+            Is.EqualTo(text.LastIndexOf("Skipped release plans", StringComparison.Ordinal)));
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
+        Assert.That(json.RootElement.GetProperty("release_plans").GetArrayLength(), Is.Zero);
+        Assert.That(json.RootElement.GetProperty("skipped_plans")[0].GetProperty("work_item_id").GetInt32(), Is.EqualTo(420));
+        Assert.That(json.RootElement.GetProperty("skipped_plans")[0].GetProperty("release_plan_id").GetInt32(), Is.EqualTo(releasePlanId));
+        Assert.That(json.RootElement.GetProperty("skipped_plans")[0].TryGetProperty("Owner", out _), Is.False);
     }
 
     [Test]

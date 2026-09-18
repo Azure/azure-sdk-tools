@@ -2083,6 +2083,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var today = _timeProvider.GetUtcNow().Date;
                 var resultPlans = new List<ReleasePlanWorkItem>();
                 var responseErrors = new List<string>();
+                var skippedPlans = dryRun ? new List<ReleasePlanSkipDetails>() : null;
 
                 foreach (var releasePlan in overdueReleasePlans)
                 {
@@ -2091,22 +2092,32 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         // September targets are warned in October and become eligible in November.
                         if (!DateTime.TryParseExact(releasePlan.SDKReleaseMonth, ["MMMM yyyy", "MMM yyyy"],
-                                CultureInfo.InvariantCulture, DateTimeStyles.None, out var targetMonth)
-                            || (today.Year - targetMonth.Year) * 12 + today.Month - targetMonth.Month <= 1)
+                                CultureInfo.InvariantCulture, DateTimeStyles.None, out var targetMonth))
                         {
+                            skippedPlans?.Add(new ReleasePlanSkipDetails(releasePlan, "invalid_target_month", "The target release month is missing or invalid."));
                             continue;
                         }
 
-                        var inactivityReason = await GetReleasePlanInactivityReasonAsync(releasePlan, ct);
-                        if (inactivityReason == null)
+                        var monthsPastTarget = (today.Year - targetMonth.Year) * 12 + today.Month - targetMonth.Month;
+                        if (monthsPastTarget <= 1)
                         {
+                            skippedPlans?.Add(new ReleasePlanSkipDetails(releasePlan,
+                                monthsPastTarget == 1 ? "grace_period" : "not_overdue",
+                                monthsPastTarget == 1 ? "The first overdue calendar month is reminder-only." : "The target release month has not passed."));
+                            continue;
+                        }
+
+                        var assessment = await EvaluateReleasePlanWorkAsync(releasePlan, ct);
+                        if (!assessment.IsInactive)
+                        {
+                            skippedPlans?.Add(new ReleasePlanSkipDetails(releasePlan, assessment.Category, assessment.Reason));
                             continue;
                         }
 
                         ct.ThrowIfCancellationRequested();
                         // An actual update requires a valid snapshot revision, so previews must too.
                         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlan.Revision);
-                        var reason = $"Target month {releasePlan.SDKReleaseMonth} is past the one-full-month grace period. {inactivityReason}";
+                        var reason = $"Target month {releasePlan.SDKReleaseMonth} is past the one-full-month grace period. {assessment.Reason}";
                         if (dryRun)
                         {
                             resultPlans.Add(releasePlan);
@@ -2152,6 +2163,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ? $"Dry run: {resultPlans.Count} release plan(s) eligible for abandonment after one full overdue calendar month. No plans were changed or notifications sent."
                     : $"Abandoned {resultPlans.Count} inactive release plan(s) after one full overdue calendar month.";
                 response.ReleasePlanDetailsList = resultPlans;
+                if (skippedPlans != null)
+                {
+                    response.SkippedPlans = skippedPlans;
+                    response.PreviewSummary = new ReleasePlanPreviewSummary
+                    {
+                        Scanned = overdueReleasePlans.Count,
+                        Eligible = resultPlans.Count,
+                        Skipped = skippedPlans.Count,
+                        EvaluationErrors = responseErrors.Count,
+                        SkippedByReason = skippedPlans.GroupBy(plan => plan.Category)
+                            .ToDictionary(group => group.Key, group => group.Count())
+                    };
+                }
                 if (responseErrors.Count > 0)
                 {
                     response.ResponseErrors = responseErrors;
@@ -2181,25 +2205,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         /// <summary>
         /// Evaluates the release-work rules shared by cleanup and overdue reminders.
-        /// Returns an inactivity reason, or null when the plan is protected. The cleanup caller checks the calendar-month grace period.
+        /// Returns the same decision with an explanation for either inactivity or protection.
+        /// The cleanup caller checks the calendar-month grace period first.
         /// </summary>
-        private async Task<string?> GetReleasePlanInactivityReasonAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
+        private async Task<(bool IsInactive, string Category, string Reason)> EvaluateReleasePlanWorkAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
         {
             if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
             {
                 if (string.IsNullOrWhiteSpace(releasePlan.ActiveSpecPullRequest))
                 {
-                    return "Private Preview spec PR is missing.";
+                    return (true, string.Empty, "Private Preview spec PR is missing.");
                 }
                 var specPr = await GetValidatedPullRequestDetailsAsync(releasePlan.ActiveSpecPullRequest, isSpec: true, ct);
-                return specPr.Merged ? null : "Private Preview spec PR has not been merged.";
+                return specPr.Merged
+                    ? (false, "spec_pr_merged", "The Private Preview spec PR is merged.")
+                    : (true, string.Empty, "Private Preview spec PR has not been merged.");
             }
 
-            if (releasePlan.ApiReleaseType is not (ApiReleaseType.PublicPreview or ApiReleaseType.GA)
-                || releasePlan.SDKInfo.Any(sdk => string.Equals(sdk.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)))
+            if (releasePlan.ApiReleaseType is not (ApiReleaseType.PublicPreview or ApiReleaseType.GA))
             {
-                // A non-private type can still be Unknown. Unknown types and any published SDK protect the plan.
-                return null;
+                // A non-private type can still be Unknown and must not authorize abandonment.
+                return (false, "unknown_release_type", "The API release type is not recognized.");
+            }
+            if (releasePlan.SDKInfo.Any(sdk => string.Equals(sdk.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)))
+            {
+                return (false, "sdk_released", "At least one SDK is marked Released.");
             }
 
             var sdkPullRequests = releasePlan.SDKInfo.Where(sdk => !string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl)).ToList();
@@ -2210,12 +2240,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (pr.Merged || pr.State.Value != ItemState.Closed)
                 {
                     // Active, merged, or unrecognized PR states must not permit abandonment.
-                    return null;
+                    return pr.Merged
+                        ? (false, "sdk_pr_merged", "A linked SDK PR is merged.")
+                        : (false, "sdk_pr_not_closed", "A linked SDK PR is not confirmed closed and unmerged on GitHub.");
                 }
             }
-            return sdkPullRequests.Count == 0
+            return (true, string.Empty, sdkPullRequests.Count == 0
                 ? "No SDK has been released and no SDK PRs are linked."
-                : "No SDK has been released and all linked SDK PRs are closed without merging.";
+                : "No SDK has been released and all linked SDK PRs are closed without merging.");
         }
 
         /// <summary>
@@ -2277,7 +2309,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         if (releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
                         {
-                            hasInactiveWork = await GetReleasePlanInactivityReasonAsync(releasePlan, ct) != null;
+                            hasInactiveWork = (await EvaluateReleasePlanWorkAsync(releasePlan, ct)).IsInactive;
                         }
                     }
                     catch (OperationCanceledException) when (ct.IsCancellationRequested)

@@ -1,11 +1,6 @@
 using Azure.Sdk.Tools.TestProxy.Common;
-using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -65,17 +60,17 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             {
                 var currentEntry = session.Entries[i];
 
-                if (currentEntry.Response.Headers.ContainsKey(_targetKey) && String.IsNullOrWhiteSpace(newValue))
+                if (currentEntry.Response.Headers.ContainsKey(_targetKey) && string.IsNullOrWhiteSpace(newValue))
                 {
                     newValue = (string)_updateMethod[_method].DynamicInvoke();
-                    currentEntry.Response.Headers[_targetKey] = new string[] { newValue };
+                    currentEntry.Response.Headers[_targetKey] = [newValue];
 
                     continue;
                 }
 
-                if (currentEntry.Request.Headers.ContainsKey(_targetKey) && !String.IsNullOrWhiteSpace(newValue))
+                if (currentEntry.Request.Headers.ContainsKey(_targetKey) && !string.IsNullOrWhiteSpace(newValue))
                 {
-                    currentEntry.Request.Headers[_targetKey] = new string[] { newValue };
+                    currentEntry.Request.Headers[_targetKey] = [newValue];
 
                     if (_resetAfterFirst)
                     {

@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -22,8 +23,6 @@ using Xunit;
 using Azure.Core;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using Azure.Sdk.Tools.TestProxy.Store;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -99,7 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (skipsToCheck.HasFlag(CheckSkips.IncludeSanitizers))
             {
-                
+
                 var sanitizers = await handlerForTest.SanitizerRegistry.GetSanitizers();
 
                 Assert.Equal(DefaultExtensionCount, sanitizers.Count);
@@ -751,6 +750,216 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+        [Theory]
+        [InlineData("gzip", false, false, false)]
+        [InlineData("br", false, false, false)]
+        [InlineData(null, false, false, false)]
+        [InlineData("gzip", true, false, false)]
+        [InlineData("br", true, false, false)]
+        [InlineData(null, true, false, false)]
+        [InlineData("gzip", false, true, false)]
+        [InlineData("br", false, true, false)]
+        [InlineData("gzip", false, false, true)]
+        [InlineData("br", false, false, true)]
+        public async Task RecordingPreservesUpstreamResponseBytes(string encoding, bool emptyBody, bool headRequest, bool skipRecording)
+        {
+            byte[] body = emptyBody ? Array.Empty<byte>() : Encoding.UTF8.GetBytes(new string('a', 4096));
+            byte[] wireBody = body;
+            if (encoding != null)
+            {
+                using var compressed = new MemoryStream();
+                using (Stream compressor = encoding == "gzip"
+                    ? new GZipStream(compressed, CompressionLevel.Fastest, leaveOpen: true)
+                    : new BrotliStream(compressed, CompressionLevel.Fastest, leaveOpen: true))
+                {
+                    compressor.Write(body);
+                }
+                wireBody = compressed.ToArray();
+                if (encoding == "gzip")
+                {
+                    wireBody[4] = 42;
+                }
+            }
+
+            if (skipRecording)
+            {
+                wireBody = new byte[] { 0, 1, 2, 3 };
+            }
+
+            using var client = new HttpClient(new MockHttpHandler(wireBody, "application/octet-stream", encoding, encodedResponse: true));
+            var handler = new RecordingHandler(Directory.GetCurrentDirectory())
+            {
+                RedirectableClient = client,
+                RedirectlessClient = client
+            };
+            var context = new DefaultHttpContext();
+            using var output = new MemoryStream();
+            context.Response.Body = output;
+            await handler.StartRecordingAsync(string.Empty, context.Response);
+            string recordingId = context.Response.Headers["x-recording-id"];
+            context.Request.Method = headRequest ? "HEAD" : "GET";
+            context.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
+            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("request"));
+            context.Request.ContentLength = context.Request.Body.Length;
+            if (skipRecording)
+            {
+                context.Request.Headers["x-recording-skip"] = "request-response";
+            }
+
+            await handler.HandleRecordRequestAsync(recordingId, context.Request, context.Response);
+
+            Assert.Equal(headRequest ? Array.Empty<byte>() : wireBody, output.ToArray());
+            Assert.Equal(wireBody.Length, context.Response.ContentLength);
+            Assert.Equal(encoding ?? string.Empty, context.Response.Headers["Content-Encoding"].ToString());
+            var entries = handler.RecordingSessions[recordingId].Session.Entries;
+            if (skipRecording)
+            {
+                Assert.Empty(entries);
+            }
+            else
+            {
+                var recorded = Assert.Single(entries);
+                Assert.Equal(emptyBody || headRequest ? null : body, recorded.Response.Body);
+            }
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        public async Task SkippedRecordingStreamsAndHonorsCancellation(bool cancelRequest, bool timeoutResponse)
+        {
+            var pipe = new System.IO.Pipelines.Pipe();
+            using var client = new HttpClient(new StreamingHttpHandler(pipe.Reader.AsStream()))
+            {
+                Timeout = timeoutResponse ? TimeSpan.FromMilliseconds(250) : Timeout.InfiniteTimeSpan
+            };
+            var handler = new RecordingHandler(Directory.GetCurrentDirectory())
+            {
+                RedirectableClient = client,
+                RedirectlessClient = client
+            };
+            using var cancellation = new CancellationTokenSource();
+            var context = new DefaultHttpContext { RequestAborted = cancellation.Token };
+            using var output = new CapturedWriteStream();
+            context.Response.Body = output;
+            await handler.StartRecordingAsync(string.Empty, context.Response);
+            string recordingId = context.Response.Headers["x-recording-id"];
+            context.Request.Method = "GET";
+            context.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
+            context.Request.Headers["x-recording-skip"] = "request-response";
+            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("request"));
+            context.Request.ContentLength = context.Request.Body.Length;
+            byte[] firstChunk = Encoding.UTF8.GetBytes("first chunk");
+            byte[] lastChunk = Encoding.UTF8.GetBytes("last chunk");
+            if (!timeoutResponse)
+            {
+                await pipe.Writer.WriteAsync(firstChunk);
+            }
+
+            Task forwarding = handler.HandleRecordRequestAsync(recordingId, context.Request, context.Response);
+            try
+            {
+                if (!timeoutResponse)
+                {
+                    await output.FirstWrite.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                    Assert.Equal(firstChunk, output.ToArray());
+                    Assert.False(forwarding.IsCompleted);
+                }
+
+                if (cancelRequest)
+                {
+                    cancellation.Cancel();
+                }
+                if (cancelRequest || timeoutResponse)
+                {
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => forwarding.WaitAsync(TimeSpan.FromSeconds(5)));
+                }
+                else
+                {
+                    await pipe.Writer.WriteAsync(lastChunk);
+                }
+            }
+            finally
+            {
+                await pipe.Writer.CompleteAsync();
+                try
+                {
+                    await forwarding.WaitAsync(TimeSpan.FromSeconds(5));
+                }
+                catch (OperationCanceledException) when (cancelRequest || timeoutResponse)
+                {
+                }
+            }
+
+            Assert.Empty(handler.RecordingSessions[recordingId].Session.Entries);
+            if (!cancelRequest && !timeoutResponse)
+            {
+                Assert.Equal(firstChunk.Concat(lastChunk), output.ToArray());
+            }
+        }
+
+        [Theory]
+        [InlineData("gzip", "br")]
+        [InlineData("br", "gzip")]
+        public async Task RetainedPlaybackRefreshesCompressedBytesAfterTransforms(string encoding, string nextEncoding)
+        {
+            var handler = new RecordingHandler(Directory.GetCurrentDirectory());
+            await handler.SanitizerRegistry.Clear();
+            var entry = new RecordEntry
+            {
+                RequestUri = "http://example.org/response",
+                RequestMethod = RequestMethod.Get,
+                StatusCode = 200
+            };
+            entry.Response.Body = Encoding.UTF8.GetBytes(new string('a', 4096));
+            entry.Response.Headers["Content-Type"] = new[] { "application/octet-stream" };
+            entry.Response.Headers["Content-Length"] = new[] { entry.Response.Body.Length.ToString() };
+            entry.Response.Headers["Content-Encoding"] = new[] { encoding };
+            var session = new RecordSession();
+            session.Entries.Add(entry);
+            const string recordingId = "retained-playback";
+            Assert.True(handler.PlaybackSessions.TryAdd(recordingId,
+                new ModifiableRecordSession(session, handler.SanitizerRegistry, recordingId) { IsSanitized = true }));
+
+            byte[] previousBuffer = null;
+            for (int iteration = 0; iteration < 4; iteration++)
+            {
+                if (iteration == 2)
+                {
+                    entry.Response.Body[0] = (byte)'b';
+                }
+                if (iteration == 3)
+                {
+                    handler.AddTransformToRecording(recordingId, new HeaderTransform("Content-Encoding", nextEncoding));
+                }
+
+                var request = TestHelpers.CreateRequestFromEntry(entry);
+                request.Headers["x-recording-remove"] = "false";
+                var response = new DefaultHttpContext().Response;
+                using var output = new CapturedWriteStream();
+                response.Body = output;
+
+                await handler.HandlePlaybackRequest(recordingId, request, response);
+
+                Assert.Equal(iteration == 3 ? nextEncoding : encoding, response.Headers["Content-Encoding"].ToString());
+                Assert.Equal(output.Length, response.ContentLength);
+                Assert.Equal(entry.Response.Body, CompressionUtilities.DecompressBody(output.ToArray(), response.Headers));
+                Assert.Single(session.Entries);
+                Assert.True(MemoryMarshal.TryGetArray(Assert.Single(output.Writes), out var writtenBuffer));
+                if (iteration == 1)
+                {
+                    Assert.Same(previousBuffer, writtenBuffer.Array);
+                }
+                else if (previousBuffer != null)
+                {
+                    Assert.NotSame(previousBuffer, writtenBuffer.Array);
+                }
+
+                previousBuffer = writtenBuffer.Array;
+            }
+        }
+
         [Fact]
         public async Task RecordingHandlerIsThreadSafe()
         {
@@ -813,7 +1022,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             int bodyPosition = 0;
 
             // ensure that all bytes are accounted for across the batches
-            foreach(var chunk in chunks)
+            foreach (var chunk in chunks)
             {
                 for (int j = 0; j < chunk.Length; j++)
                 {
@@ -823,6 +1032,67 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
 
             Assert.Equal(bodyPosition, bodyData.Length);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(9)]
+        [InlineData(10)]
+        [InlineData(11)]
+        [InlineData(17)]
+        [InlineData(19)]
+        [InlineData(20)]
+        [InlineData(21)]
+        [InlineData(1024)]
+        public async Task DelayedPlaybackWritesOriginalBufferSlices(int length)
+        {
+            var handler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var body = Enumerable.Range(0, length).Select(index => (byte)(index % 256)).ToArray();
+            var expectedChunks = handler.GetBatches(body, 10);
+            var response = new DefaultHttpContext().Response;
+            using var output = new CapturedWriteStream();
+            response.Body = output;
+
+            await handler.WriteBodyBytes(body, 1, response);
+
+            Assert.Equal(body, output.ToArray());
+            Assert.Equal(expectedChunks.Length, output.Writes.Count);
+            for (int index = 0; index < expectedChunks.Length; index++)
+            {
+                Assert.Equal(expectedChunks[index], output.Writes[index].ToArray());
+                Assert.True(MemoryMarshal.TryGetArray(output.Writes[index], out var writtenBuffer));
+                Assert.Same(body, writtenBuffer.Array);
+            }
+        }
+
+        private sealed class CapturedWriteStream : MemoryStream
+        {
+            public List<ReadOnlyMemory<byte>> Writes { get; } = new List<ReadOnlyMemory<byte>>();
+            public TaskCompletionSource<bool> FirstWrite { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+            {
+                Writes.Add(buffer);
+                var write = base.WriteAsync(buffer, cancellationToken);
+                FirstWrite.TrySetResult(true);
+                return write;
+            }
+        }
+
+        private sealed class StreamingHttpHandler : HttpMessageHandler
+        {
+            private readonly Stream _responseBody;
+
+            public StreamingHttpHandler(Stream responseBody)
+            {
+                _responseBody = responseBody;
+            }
+
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(_responseBody) });
+            }
         }
 
         #endregion
@@ -1111,12 +1381,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         private readonly byte[] _responseContent;
         private readonly string _contentType;
         private readonly string _contentEncoding;
+        private readonly bool _encodedResponse;
 
-        public MockHttpHandler(byte[] responseContent = default, string contentType = default, string contentEncoding = default)
+        public MockHttpHandler(byte[] responseContent = default, string contentType = default, string contentEncoding = default, bool encodedResponse = false)
         {
             _responseContent = responseContent ?? Encoding.UTF8.GetBytes(DefaultResponse);
             _contentType = contentType ?? "application/json";
             _contentEncoding = contentEncoding;
+            _encodedResponse = encodedResponse;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -1130,7 +1402,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await Task.Delay(100, cancellationToken);
 
             // we need to set the content before the content headers as otherwise they will be cleared out after setting content.
-            if (_contentEncoding == "gzip")
+            if (_contentEncoding == "gzip" && !_encodedResponse)
             {
                 response.Content = new ByteArrayContent(CompressionUtilities.CompressBodyCore(_responseContent, _contentEncoding));
             }
@@ -1140,6 +1412,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
 
             response.Content.Headers.ContentType = new MediaTypeHeaderValue(_contentType);
+            if (_encodedResponse)
+            {
+                response.Content.Headers.ContentLength = _responseContent.Length;
+            }
             if (_contentEncoding != null)
             {
                 response.Content.Headers.ContentEncoding.Add(_contentEncoding);

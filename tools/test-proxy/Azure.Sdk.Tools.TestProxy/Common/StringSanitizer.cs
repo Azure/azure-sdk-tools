@@ -1,8 +1,6 @@
 using System;
-using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -36,7 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return replacementValue;
             }
 
-            var replacement = String.Empty;
+            var replacement = string.Empty;
 
             if (groupName != null)
             {
@@ -56,7 +54,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         var currentCaptureLength = capture.Index - m.Index - previousCaptureEnd;
 
                         // append everything up to our current capture. (also if we're between multiple captures in a single match string)
-                        sb.Append(m.Value.Substring(previousCaptureEnd, currentCaptureLength));
+                        sb.Append(m.Value.AsSpan(previousCaptureEnd, currentCaptureLength));
 
                         // add the replacement value where the original resided
                         sb.Append(replacementValue);
@@ -68,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     }
 
                     // one final append to pick up the remainder of the string after the capture
-                    sb.Append(m.Value.Substring(previousCaptureEnd));
+                    sb.Append(m.Value.AsSpan(previousCaptureEnd));
 
                     return sb.ToString();
                 });

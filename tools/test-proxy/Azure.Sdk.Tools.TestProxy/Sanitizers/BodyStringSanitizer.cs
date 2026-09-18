@@ -1,6 +1,4 @@
 using Azure.Sdk.Tools.TestProxy.Common;
-using System;
-using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {

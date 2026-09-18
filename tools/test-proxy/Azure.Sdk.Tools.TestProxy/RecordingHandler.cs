@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (PlaybackSessions.Keys.Any())
             {
-                foreach(var value in PlaybackSessions.Values)
+                foreach (var value in PlaybackSessions.Values)
                 {
                     results.Add(value.AuditLog);
                 }
@@ -264,9 +264,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             (RecordEntry entry, byte[] requestBody) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, requestBody);
-
-            HttpResponseMessage upstreamResponse = null;
+            using var upstreamRequest = CreateUpstreamRequest(incomingRequest, requestBody);
 
             // The experience around Content-Length is a bit weird in .NET. We're using the .NET native HttpClient class to send our requests. This comes with
             // some automagic.
@@ -280,32 +278,33 @@ namespace Azure.Sdk.Tools.TestProxy
             // header WILL be added. This is due to the fact that on send, the client considers a populated Client property as having a body, even if it's zero length.
             if (incomingRequest.ContentLength == null)
             {
-                if(!incomingRequest.Headers["Transfer-Encoding"].ToString().Split(' ').Select(x => x.Trim()).Contains("chunked"))
+                if (!incomingRequest.Headers.TransferEncoding.ToString().Split(' ').Select(x => x.Trim()).Contains("chunked"))
                 {
                     upstreamRequest.Content = null;
                 }
             }
 
-            if (HandleRedirects)
-            {
-                upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest).ConfigureAwait(false);
-            }
-            else
-            {
-                upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
-            }
-
-            byte[] body = Array.Empty<byte>();
+            EntryRecordMode mode = GetRecordMode(incomingRequest);
+            var client = session.Client ?? (HandleRedirects ? RedirectableClient : RedirectlessClient);
+            using var forwardingCancellation = mode == EntryRecordMode.DontRecord
+                ? CancellationTokenSource.CreateLinkedTokenSource(incomingRequest.HttpContext.RequestAborted)
+                : null;
+            forwardingCancellation?.CancelAfter(client.Timeout);
+            using var upstreamResponse = await client.SendAsync(upstreamRequest,
+                mode == EntryRecordMode.DontRecord ? HttpCompletionOption.ResponseHeadersRead : HttpCompletionOption.ResponseContentRead,
+                forwardingCancellation?.Token ?? CancellationToken.None).ConfigureAwait(false);
+            MemoryStream responseBody = null;
 
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
-            if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
+            bool hasResponseBody = !incomingRequest.Method.Equals("HEAD", StringComparison.InvariantCultureIgnoreCase);
+            if (hasResponseBody && mode != EntryRecordMode.DontRecord)
             {
-                body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+                responseBody = (MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                var body = CompressionUtilities.DecompressBody(responseBody, upstreamResponse.Content.Headers);
+                entry.Response.Body = body.Length == 0 ? null : body;
+                responseBody.Position = 0;
             }
-            entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
-
-            EntryRecordMode mode = GetRecordMode(incomingRequest);
 
             if (mode != EntryRecordMode.DontRecord)
             {
@@ -339,14 +338,17 @@ namespace Azure.Sdk.Tools.TestProxy
 
             outgoingResponse.Headers.Remove("Transfer-Encoding");
 
-            if (entry.Response.Body?.Length > 0)
+            if (mode == EntryRecordMode.DontRecord && hasResponseBody)
             {
-                var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
-
-                if (entry.Response.Headers.ContainsKey("Content-Length")){
-                    outgoingResponse.ContentLength = bodyData.Length;
+                await upstreamResponse.Content.CopyToAsync(outgoingResponse.Body, forwardingCancellation.Token).ConfigureAwait(false);
+            }
+            else if (responseBody?.Length > 0)
+            {
+                if (entry.Response.Headers.ContainsKey("Content-Length"))
+                {
+                    outgoingResponse.ContentLength = responseBody.Length;
                 }
-                await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
+                await responseBody.CopyToAsync(outgoingResponse.Body).ConfigureAwait(false);
             }
         }
 
@@ -589,7 +591,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 if (match.Response.Body?.Length > 0)
                 {
-                    var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
+                    bool cacheCompression = incomingRequest.Headers.TryGetValue("x-recording-remove", out var cacheHeader)
+                        && bool.TryParse(cacheHeader, out bool removeEntry) && !removeEntry;
+                    var bodyData = match.Response.GetBodyForPlayback(cacheCompression);
 
                     if (match.Response.Headers.ContainsKey("Content-Length"))
                     {
@@ -635,10 +639,10 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             int chunkLength = bodyData.Length / batchCount;
-            int remainder = (bodyData.Length % batchCount);
+            int remainder = bodyData.Length % batchCount;
             var batches = new byte[batchCount + (remainder > 0 ? 1 : 0)][];
 
-            for(int i = 0; i < batches.Length; i++)
+            for (int i = 0; i < batches.Length; i++)
             {
                 var calculatedChunkLength = ((i == batches.Length - 1) && (batches.Length > 1) && (remainder > 0)) ? remainder : chunkLength;
                 var batch = new byte[calculatedChunkLength];
@@ -652,25 +656,24 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
         {
-            if (playbackResponseTime > 0)
+            const int batchCount = 10;
+            if (playbackResponseTime > 0 && bodyData.Length >= batchCount)
             {
-                int batchCount = 10;
                 int sleepLength = playbackResponseTime / batchCount;
+                int chunkLength = bodyData.Length / batchCount;
+                int remainder = bodyData.Length % batchCount;
+                int chunkCount = batchCount + (remainder > 0 ? 1 : 0);
 
-                byte[][] chunks = GetBatches(bodyData, batchCount);
-
-                for(int i = 0; i < chunks.Length; i++)
+                for (int index = 0; index < chunkCount; index++)
                 {
-                    var chunk = chunks[i];
-
+                    var chunk = bodyData.AsMemory(index * chunkLength, index == batchCount ? remainder : chunkLength);
                     await outgoingResponse.Body.WriteAsync(chunk).ConfigureAwait(false);
 
-                    if (i != chunks.Length - 1)
+                    if (index != chunkCount - 1)
                     {
                         await Task.Delay(sleepLength);
                     }
                 }
-
             }
             else
             {
@@ -1055,7 +1058,8 @@ namespace Azure.Sdk.Tools.TestProxy
             else
             {
                 await SanitizerRegistry.SessionSanitizerLock.WaitAsync();
-                try {
+                try
+                {
                     foreach (var sanitizer in sanitizers)
                     {
                         registrations.Add(await SanitizerRegistry.Register(sanitizer, shouldLock: false));
@@ -1102,7 +1106,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             await session.Session.EntryLock.WaitAsync();
-            try {
+            try
+            {
                 session.CustomMatcher = matcher;
             }
             finally
@@ -1215,7 +1220,8 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var contextDirectory = await Store.GetPath(assetsPath);
 
-                if (Path.IsPathFullyQualified(file)) {
+                if (Path.IsPathFullyQualified(file))
+                {
                     throw new HttpException(
                         HttpStatusCode.BadRequest,
                         $"The path provided in the recording file value {file} is fully qualified. This is not allowed when an assets.json is provided."
@@ -1253,7 +1259,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             var hostValue = GetHeader(request, "x-recording-upstream-base-uri", allowNulls: true);
 
-            if ((Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback) && null == hostValue) 
+            if ((Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback) && null == hostValue)
             {
                 // remember from above, if we use UriBuilder or similar, we get auto-decoding of escaped characters in the path/query, which will break 
                 // some requests.

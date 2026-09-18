@@ -21,12 +21,31 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static byte[] CompressBody(byte[] incomingBody, IDictionary<string, string[]> headers)
         {
-            if (headers.TryGetValue(ContentEncoding, out var values) && (values.Contains(Gzip) || values.Contains(Brotli)))
+            var encoding = GetCompressionEncoding(headers);
+            if (encoding != null)
             {
-                return CompressBodyCore(incomingBody, values);
+                return CompressBodyCore(incomingBody, encoding);
             }
 
             return incomingBody;
+        }
+
+        internal static string GetCompressionEncoding(IDictionary<string, string[]> headers)
+        {
+            if (headers.TryGetValue(ContentEncoding, out var values))
+            {
+                if (values.Contains(Brotli))
+                {
+                    return Brotli;
+                }
+
+                if (values.Contains(Gzip))
+                {
+                    return Gzip;
+                }
+            }
+
+            return null;
         }
 
         public static byte[] CompressBody(byte[] incomingBody, IHeaderDictionary headers)
@@ -52,7 +71,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 return resultStream.ToArray();
             }
-            
+
             if (encodingValues.Contains(Gzip))
             {
                 using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
@@ -61,7 +80,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 return resultStream.ToArray();
             }
-            
+
             return body;
         }
 
@@ -98,7 +117,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 uncompressedStream = new GZipStream(stream, CompressionMode.Decompress);
             }
-            
+
             if (uncompressedStream == null)
             {
                 throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The test-proxy does not currently support decompression for content encoded with \"{encodingValues.ToString()}.\". "

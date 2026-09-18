@@ -43,13 +43,13 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override void SanitizeHeaders(IDictionary<string, string[]> headers)
         {
-            if (headers.ContainsKey(_targetKey))
+            if (headers.TryGetValue(_targetKey, out string[] value))
             {
                 // Accessing 0th key safe due to the fact that we force header values in without splitting them on ;.
                 // We do this because letting .NET split and then reassemble header values introduces a space into the header itself
                 // Ex: "application/json;odata=minimalmetadata" with .NET default header parsing becomes "application/json; odata=minimalmetadata"
                 // Given this breaks signature verification, we have to avoid it.
-                headers[_targetKey] = headers[_targetKey].Select(x => StringSanitizer.SanitizeValue(x, _newValue, _regex, _groupForReplace)).ToArray();
+                headers[_targetKey] = value.Select(x => StringSanitizer.SanitizeValue(x, _newValue, _regex, _groupForReplace)).ToArray();
             }
         }
     }

@@ -37,5 +37,59 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.NotEqual(decompressedResult, compressedBody);
         }
 
+        [Theory]
+        [InlineData("gzip")]
+        [InlineData("br")]
+        public void PlaybackCompressionCacheReusesUnchangedBodies(string encoding)
+        {
+            var response = new RequestOrResponse { Body = Encoding.UTF8.GetBytes("response body") };
+            response.Headers.Add("Content-Encoding", new[] { encoding });
+
+            var compressed = response.GetBodyForPlayback(cacheCompression: true);
+            Assert.Same(compressed, response.GetBodyForPlayback(cacheCompression: true));
+            response.Body = (byte[])response.Body.Clone();
+            response.Headers["x-request-id"] = new[] { Guid.NewGuid().ToString() };
+            Assert.Same(compressed, response.GetBodyForPlayback(cacheCompression: true));
+            Assert.NotSame(compressed, response.GetBodyForPlayback(cacheCompression: false));
+
+            var headers = new HeaderDictionary { ["Content-Encoding"] = encoding };
+            Assert.Equal(response.Body, CompressionUtilities.DecompressBody(compressed, headers));
+        }
+
+        [Theory]
+        [InlineData("gzip", "br")]
+        [InlineData("br", "gzip")]
+        public void PlaybackCompressionCacheTracksBodyAndEncodingChanges(string encoding, string nextEncoding)
+        {
+            var response = new RequestOrResponse { Body = Encoding.UTF8.GetBytes("response body") };
+            response.Headers.Add("Content-Encoding", new[] { encoding });
+            var original = response.GetBodyForPlayback(cacheCompression: true);
+
+            response.Body[0] = (byte)'R';
+            var changedBody = response.GetBodyForPlayback(cacheCompression: true);
+            Assert.NotSame(original, changedBody);
+            var headers = new HeaderDictionary { ["Content-Encoding"] = encoding };
+            Assert.Equal(response.Body, CompressionUtilities.DecompressBody(changedBody, headers));
+
+            response.Headers["Content-Encoding"][0] = nextEncoding;
+            var changedEncoding = response.GetBodyForPlayback(cacheCompression: true);
+            Assert.NotSame(changedBody, changedEncoding);
+            headers["Content-Encoding"] = nextEncoding;
+            Assert.Equal(response.Body, CompressionUtilities.DecompressBody(changedEncoding, headers));
+
+            response.Headers.Remove("Content-Encoding");
+            Assert.Same(response.Body, response.GetBodyForPlayback(cacheCompression: true));
+            response.Headers["Content-Encoding"] = new[] { nextEncoding };
+            Assert.NotSame(changedEncoding, response.GetBodyForPlayback(cacheCompression: true));
+        }
+
+        [Fact]
+        public void UncompressedPlaybackKeepsOriginalBuffer()
+        {
+            var response = new RequestOrResponse { Body = Encoding.UTF8.GetBytes("response body") };
+            Assert.Same(response.Body, response.GetBodyForPlayback(cacheCompression: true));
+            Assert.Same(response.Body, response.GetBodyForPlayback(cacheCompression: false));
+        }
+
     }
 }

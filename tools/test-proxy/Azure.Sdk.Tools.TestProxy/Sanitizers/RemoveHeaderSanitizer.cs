@@ -33,10 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             foreach (var headerKey in _keysForRemoval)
             {
-                if (headers.ContainsKey(headerKey))
-                {
-                    headers.Remove(headerKey);
-                }
+                headers.Remove(headerKey);
             }
         }
     }

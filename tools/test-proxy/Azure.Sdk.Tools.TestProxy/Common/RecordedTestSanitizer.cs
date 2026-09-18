@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             try
             {
-                return new Regex(regex, RegexOptions.Compiled);
+                return KnownSanitizerRegexes.Get(regex) ?? new Regex(regex, RegexOptions.Compiled);
             }
             catch (Exception e)
             {
@@ -174,7 +174,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     section.Headers.TryGetValue("Content-Type", out var contentType);
 
                     var sanitised = SanitizeTextBody(contentType.ToString(), text);
-                    section.Body = enc.GetBytes(sanitised);
+                    if (!string.Equals(text, sanitised, StringComparison.Ordinal))
+                    {
+                        section.Body = enc.GetBytes(sanitised);
+                    }
 
                     // Update Content-Length header if present
                     if (section.Headers.ContainsKey("Content-Length"))
@@ -192,7 +195,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual void SanitizeBody(RequestOrResponse message)
         {
-            if (message.Body != null)
+            if (message.HasBody)
             {
                 message.TryGetContentType(out string contentType);
 
@@ -202,7 +205,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 else if (message.TryGetBodyAsText(out string text))
                 {
-                    message.Body = Encoding.UTF8.GetBytes(SanitizeTextBody(contentType, text));
+                    var sanitized = SanitizeTextBody(contentType, text);
+                    if (!string.Equals(text, sanitized, StringComparison.Ordinal))
+                    {
+                        message.SetBodyText(sanitized);
+                    }
                 }
                 else
                 {
@@ -226,11 +233,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
 
                 // add a couple assertions
-                if (entry.Request.Body != null && ContentTypeUtilities.IsMultipart(entry.Request.Headers, out _) && entry.Request.CachedBodyMetadata == null)
+                if (entry.Request.HasBody && ContentTypeUtilities.IsMultipart(entry.Request.Headers, out _) && entry.Request.CachedBodyMetadata == null)
                 {
                     throw new HttpException(HttpStatusCode.InternalServerError, "TestProxy sanitizer: Multipart request body exists but precaching failed - CachedBodyMetadata is null");
                 }
-                if (entry.Response.Body != null && ContentTypeUtilities.IsMultipart(entry.Response.Headers, out _) && entry.Response.CachedBodyMetadata == null)
+                if (entry.Response.HasBody && ContentTypeUtilities.IsMultipart(entry.Response.Headers, out _) && entry.Response.CachedBodyMetadata == null)
                 {
                     throw new HttpException(HttpStatusCode.InternalServerError, "TestProxy sanitizer: Multipart response body exists but precaching failed - CachedBodyMetadata is null");
                 }
@@ -273,7 +280,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         public virtual void PreCacheBodyMetadata(RequestOrResponse message)
         {
-            if (message?.Body == null || message.CachedBodyMetadata != null)
+            if (message == null || !message.HasBody || message.CachedBodyMetadata != null)
             {
                 return;  // already has metadata, or no body
             }
@@ -403,7 +410,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
         protected internal static void UpdateSanitizedContentLength(RequestOrResponse requestOrResponse)
         {
             var headers = requestOrResponse.Headers;
-            int sanitizedLength = requestOrResponse.Body?.Length ?? 0;
+            int sanitizedLength = requestOrResponse.BodyLength;
             // Only update Content-Length if already present.
             if (headers.ContainsKey("Content-Length"))
             {

@@ -46,6 +46,7 @@ to documentation in your specific language repository in order to configure reco
   - [Session and Test Level Transforms, Sanitizers, and Matchers](#session-and-test-level-transforms-sanitizers-and-matchers)
     - [Add Sanitizer](#add-sanitizer)
       - [A note about where sanitizers apply](#a-note-about-where-sanitizers-apply)
+      - [XML body sanitization](#xml-body-sanitization)
       - [Passing sanitizers in bulk](#passing-sanitizers-in-bulk)
     - [Set a Matcher](#set-a-matcher)
       - [The `Custom Default` Matcher](#the-custom-default-matcher)
@@ -590,6 +591,32 @@ Each sanitizer is optionally prefaced with the **specific part** of the request/
 - `Body`
 
 A sanitizer that does _not_ include this prefix is something different, and probably applies at the session level instead on an individual request/response pair.
+
+#### XML body sanitization
+
+`BodyXmlSanitizer` replaces values selected by an XPath 1.0 expression. It applies to request and response bodies with `application/xml`, `text/xml`, or a `+xml` media type, including XML sections in multipart bodies.
+
+```jsonc
+// POST to <proxyURL>/Admin/AddSanitizer
+// headers
+{
+  "x-abstraction-identifier": "BodyXmlSanitizer"
+}
+// request body
+{
+  "xmlPath": "//*[local-name()='UserDelegationKey']/*[local-name()='Value']",
+  "value": "MA=="
+}
+```
+
+- `xmlPath` is required. It can select leaf elements (`//secret`), attributes (`//@secret`), or text (`//secret/text()`). Elements containing child elements are left intact.
+- Use `local-name()` for namespace-independent selection, or combine `local-name()` and `namespace-uri()` to select a particular namespace. Unbound namespace prefixes are rejected.
+- `value` defaults to `Sanitized`; an empty string is allowed. Replacement text is XML-escaped automatically.
+- `condition` supports the same request URI and response-header conditions as other sanitizers.
+- Non-XML content types, empty bodies, and documents without matching nodes are unchanged. Matching documents are serialized with whitespace and any leading BOM preserved; quote style, entity spelling, and empty-element formatting can be normalized, even when a selected value is already sanitized.
+- Invalid XPath expressions fail registration with HTTP 400. Malformed XML or documents containing DTDs fail sanitization with HTTP 400 rather than being stored unsanitized. External entities are never resolved.
+
+The defaults `AZSDK3005`, `AZSDK3006`, `AZSDK3007`, `AZSDK3010`, `AZSDK3011`, and `AZSDK3012` use XML paths instead of regular expressions. Their identifiers and replacement values are unchanged. Adjacent unconditional XML-path rules share parsing when Debug logging is disabled; Debug logging retains individual rule diagnostics.
 
 #### Passing sanitizers in bulk
 

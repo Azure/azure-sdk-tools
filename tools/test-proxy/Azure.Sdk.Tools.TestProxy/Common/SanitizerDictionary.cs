@@ -254,15 +254,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         "AZSDK3004"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<Value>)(?<group>.+)(?:</Value>)", groupForReplace: "group", value: BASE64ZERO),
+                        new BodyXmlSanitizer("//*[local-name()='UserDelegationKey']/*[local-name()='Value']", value: BASE64ZERO),
                         "AZSDK3005"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<SignedTid>)(?<group>.+)(?:</SignedTid>)", groupForReplace: "group", value: EMPTYGUID),
+                        new BodyXmlSanitizer("//*[local-name()='UserDelegationKey']/*[local-name()='SignedTid']", value: EMPTYGUID),
                         "AZSDK3006"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<SignedOid>)(?<group>.+)(?:</SignedOid>)", groupForReplace: "group", value: EMPTYGUID),
+                        new BodyXmlSanitizer("//*[local-name()='UserDelegationKey']/*[local-name()='SignedOid']", value: EMPTYGUID),
                         "AZSDK3007"
                     ),
                     new RegisteredSanitizer(
@@ -274,15 +274,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         "AZSDK3009"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.+)(?:</PrimaryKey>)", groupForReplace: "key"),
+                        new BodyXmlSanitizer("//*[local-name()='PrimaryKey']"),
                         "AZSDK3010"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.+)(?:</SecondaryKey>)", groupForReplace: "key"),
+                        new BodyXmlSanitizer("//*[local-name()='SecondaryKey']"),
                         "AZSDK3011"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
+                        new BodyXmlSanitizer("//*[local-name()='ClientIp']"),
                         "AZSDK3012"
                     ),
                     #endregion

@@ -13,6 +13,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -33,6 +34,458 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public string lookaheadReplaceRegex = @"[a-z]+(?=\.(?:table|blob|queue)\.core\.windows\.net)";
         public string capturingGroupReplaceRegex = @"https\:\/\/(?<account>[a-z]+)\.(?:table|blob|queue)\.core\.windows\.net";
         public string scopeClean = @"scope\=(?<scope>[^&]*)";
+
+        [Theory]
+        [InlineData("application/json", "{ \"value\": \"unchanged\" }", "missing", "Sanitized")]
+        [InlineData("text/plain", "unchanged", "unchanged", "unchanged")]
+        [InlineData("application/xml", "<root>unchanged</root>", "missing", "Sanitized")]
+        public void UnchangedTextSanitizationKeepsOriginalBuffer(string contentType, string body, string pattern, string replacement)
+        {
+            byte[] original = Encoding.UTF8.GetBytes(body);
+            var message = new RequestOrResponse { Body = original };
+            message.Headers["Content-Type"] = new[] { contentType };
+            message.Headers["Content-Length"] = new[] { original.Length.ToString() };
+
+            new BodyRegexSanitizer(regex: pattern, value: replacement).SanitizeBody(message);
+
+            Assert.Same(original, message.Body);
+            Assert.Equal(original.Length.ToString(), message.Headers["Content-Length"][0]);
+        }
+
+        [Fact]
+        public void TextSanitizerBatchAvoidsRepeatedDecoding()
+        {
+            var sanitizers = Enumerable.Range(0, 21)
+                .Select(index => new BodyRegexSanitizer(regex: $"missing{index}"))
+                .ToArray();
+            var batched = SanitizerBatch.Create(sanitizers).ToArray();
+            Assert.Single(batched);
+            byte[] body = Encoding.UTF8.GetBytes(new string('a', 65536));
+            var entry = new RecordEntry();
+            entry.Request.Headers["Content-Type"] = new[] { "application/json" };
+            entry.Request.Body = body;
+            const int iterations = 20;
+
+            long Measure(RecordedTestSanitizer[] pipeline)
+            {
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                for (int iteration = 0; iteration < iterations; iteration++)
+                {
+                    foreach (var sanitizer in pipeline)
+                    {
+                        sanitizer.Sanitize(entry);
+                    }
+                }
+                return (GC.GetAllocatedBytesForCurrentThread() - before) / iterations;
+            }
+
+            Measure(sanitizers);
+            Measure(batched);
+            long sequentialBytes = Measure(sanitizers);
+            long batchedBytes = Measure(batched);
+
+            _output.WriteLine($"21 no-op body regexes, 64 KiB body: sequential {sequentialBytes:N0} bytes/op; batched {batchedBytes:N0} bytes/op.");
+            Assert.True(batchedBytes < sequentialBytes / 4);
+            Assert.Same(body, entry.Request.Body);
+        }
+
+        [Fact]
+        public async Task TextSanitizerBatchPreservesHeaderAndBodyOrder()
+        {
+            var entry = new RecordEntry { RequestUri = "https://example.org/initial" };
+            entry.Request.Body = Encoding.UTF8.GetBytes("{\"secret\":\"initial\"}");
+            entry.Request.Headers["Content-Type"] = new[] { "application/json" };
+            entry.Request.Headers["Content-Length"] = new[] { entry.Request.Body.Length.ToString() };
+            entry.Response.Body = (byte[])entry.Request.Body.Clone();
+            entry.Response.Headers["Content-Type"] = new[] { "application/json" };
+            var sequential = entry.Clone();
+            var sanitizers = new RecordedTestSanitizer[]
+            {
+                new GeneralRegexSanitizer(regex: "initial", value: "first"),
+                new BodyKeySanitizer("$.secret", value: "second"),
+                new BodyKeySanitizer("$.missing"),
+                new HeaderRegexSanitizer("Content-Type", value: "text/plain"),
+                new BodyKeySanitizer("$.secret", value: "incorrect"),
+                new BodyRegexSanitizer(regex: "second", value: "final"),
+                new BodyRegexSanitizer(regex: "final", value: "conditional", condition: new ApplyCondition { UriRegex = "first" })
+            };
+            foreach (var sanitizer in sanitizers)
+            {
+                sanitizer.Sanitize(sequential);
+            }
+            var session = new RecordSession();
+            session.Entries.Add(entry);
+            await session.Sanitize(sanitizers);
+
+            Assert.Equal(sequential.RequestUri, entry.RequestUri);
+            Assert.Equal(sequential.Request.Body, entry.Request.Body);
+            Assert.Equal(sequential.Response.Body, entry.Response.Body);
+            Assert.Equal(sequential.Request.Headers["Content-Length"], entry.Request.Headers["Content-Length"]);
+            Assert.Contains("conditional", Encoding.UTF8.GetString(entry.Request.Body));
+        }
+
+        [Fact]
+        public void KnownRegexesAreSharedAndPreserveMatching()
+        {
+            var registry = new SanitizerDictionary();
+            var patterns = registry.DefaultSanitizerList
+                .SelectMany(item => GetSanitizerRegexes(item.Sanitizer))
+                .Select(regex => regex.ToString())
+                .Distinct()
+                .Where(pattern => KnownSanitizerRegexes.Get(pattern) != null)
+                .ToArray();
+            Assert.Equal(18, patterns.Length);
+            string[] inputs =
+            {
+                "",
+                "ordinary text\nwith a second line",
+                "SharedAccessKey=sample;AccountKey=sample;accesskey=sample;Accesskey=sample;Secret=sample;Password=sample;User ID=sample;",
+                "https://account.example.org/common/userrealm/realm/identities/identity?sig=sample&sv=sample&token=sample",
+                "client_id=sample&client_secret=sample&client_assertion=sample",
+                "-----BEGIN PRIVATE KEY-----\nline-one\nline-two\n-----END PRIVATE KEY-----\n"
+            };
+
+            foreach (var pattern in patterns)
+            {
+                var generated = RecordedTestSanitizer.GetRegex(pattern);
+                var compiled = new Regex(pattern, RegexOptions.Compiled);
+                Assert.Same(generated, RecordedTestSanitizer.GetRegex(pattern));
+                Assert.Equal(compiled.GetGroupNames(), generated.GetGroupNames());
+                foreach (var input in inputs)
+                {
+                    Assert.Equal(compiled.Replace(input, "Sanitized"), generated.Replace(input, "Sanitized"));
+                    foreach (var group in compiled.GetGroupNames())
+                    {
+                        Assert.Equal(
+                            StringSanitizer.SanitizeValue(input, "Sanitized", compiled, group),
+                            StringSanitizer.SanitizeValue(input, "Sanitized", generated, group));
+                    }
+                }
+            }
+        }
+
+        [Fact]
+        public void DynamicRegexesKeepExistingConstructionAndValidation()
+        {
+            const string pattern = "custom-(?<value>[0-9]+)";
+            var regex = RecordedTestSanitizer.GetRegex(pattern);
+            Assert.NotSame(regex, RecordedTestSanitizer.GetRegex(pattern));
+            Assert.True(regex.Options.HasFlag(RegexOptions.Compiled));
+            Assert.Throws<HttpException>(() => RecordedTestSanitizer.GetRegex("["));
+            Assert.Throws<HttpException>(() => RecordedTestSanitizer.GetRegex(null));
+        }
+
+        private static IEnumerable<Regex> GetSanitizerRegexes(RecordedTestSanitizer sanitizer)
+        {
+            foreach (var field in sanitizer.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                var value = field.GetValue(sanitizer);
+                if (value is Regex regex)
+                {
+                    yield return regex;
+                }
+                else if (value is RecordedTestSanitizer child)
+                {
+                    foreach (var nested in GetSanitizerRegexes(child))
+                    {
+                        yield return nested;
+                    }
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData("application/xml", "<root><secret>first</secret><secret>second</secret></root>", "//secret", "<root><secret>Sanitized</secret><secret>Sanitized</secret></root>")]
+        [InlineData("text/xml; charset=utf-8", "<root>\n  <secret>first\nsecond</secret>\n</root>", "//secret", "<root>\n  <secret>Sanitized</secret>\n</root>")]
+        [InlineData("APPLICATION/SERVICE+XML", "<root xmlns='urn:test'><secret>value</secret></root>", "//*[local-name()='secret']", "<root xmlns=\"urn:test\"><secret>Sanitized</secret></root>")]
+        [InlineData("application/xml", "<root secret='value'/>", "/root/@secret", "<root secret=\"Sanitized\" />")]
+        [InlineData("application/xml", "<root><secret>value</secret></root>", "/root/secret/text()", "<root><secret>Sanitized</secret></root>")]
+        [InlineData("application/xml", "<root><secret><![CDATA[value]]></secret></root>", "//secret", "<root><secret>Sanitized</secret></root>")]
+        [InlineData("application/xml", "<root><secret/></root>", "//secret", "<root><secret>Sanitized</secret></root>")]
+        [InlineData("application/xml", "<root><secret><child>value</child></secret></root>", "//secret", "<root><secret><child>value</child></secret></root>")]
+        [InlineData("application/xml", "<root>unchanged</root>", "//missing", "<root>unchanged</root>")]
+        [InlineData("application/xml", "\uFEFF<root>unchanged</root>", "//missing", "\uFEFF<root>unchanged</root>")]
+        [InlineData("application/xml", "\uFEFF<root><secret>value</secret></root>", "//secret", "\uFEFF<root><secret>Sanitized</secret></root>")]
+        [InlineData("application/json", "{\"secret\":\"value\"}", "//secret", "{\"secret\":\"value\"}")]
+        [InlineData("text/plain", "<secret>value</secret>", "//secret", "<secret>value</secret>")]
+        [InlineData("application/xml", "", "//secret", "")]
+        public void BodyXmlSanitizerSelectsXmlValues(string contentType, string body, string xmlPath, string expected)
+        {
+            var sanitizer = new BodyXmlSanitizer(xmlPath);
+            Assert.Equal(expected, sanitizer.SanitizeTextBody(contentType, body));
+        }
+
+        [Theory]
+        [InlineData("//secret[")]
+        [InlineData("count(//secret)")]
+        [InlineData("//unknown:secret")]
+        [InlineData(null)]
+        public void BodyXmlSanitizerRejectsInvalidPaths(string xmlPath)
+        {
+            Assert.Throws<HttpException>(() => new BodyXmlSanitizer(xmlPath));
+        }
+
+        [Theory]
+        [InlineData("<root><secret>unfinished</root>")]
+        [InlineData("<!DOCTYPE root [<!ENTITY value 'secret'>]><root>&value;</root>")]
+        [InlineData("<!DOCTYPE root SYSTEM 'file:///not-accessed'><root/>")]
+        public void BodyXmlSanitizerRejectsUnsafeOrMalformedXml(string body)
+        {
+            var sanitizer = new BodyXmlSanitizer("//secret");
+            Assert.Throws<HttpException>(() => sanitizer.SanitizeTextBody("application/xml", body));
+        }
+
+        [Fact]
+        public void BodyXmlSanitizerEscapesReplacementValues()
+        {
+            const string replacement = "<&\"'>]]>";
+            var sanitizer = new BodyXmlSanitizer("//secret | //@secret", replacement);
+            var sanitized = sanitizer.SanitizeTextBody("application/xml", "<root secret='value'><secret>value</secret></root>");
+            var document = new XmlDocument { XmlResolver = null };
+            document.LoadXml(sanitized);
+
+            Assert.Equal(replacement, document.DocumentElement.GetAttribute("secret"));
+            Assert.Equal(replacement, document.SelectSingleNode("//secret").InnerText);
+        }
+
+        [Fact]
+        public async Task DefaultXmlSanitizersKeepIdsAndHandleNamespaces()
+        {
+            var registry = new SanitizerDictionary();
+            string[] ids = { "AZSDK3005", "AZSDK3006", "AZSDK3007", "AZSDK3010", "AZSDK3011", "AZSDK3012" };
+            var sanitizers = ids.Select(id => registry.Sanitizers[id].Sanitizer).ToArray();
+            Assert.All(sanitizers, sanitizer => Assert.IsType<BodyXmlSanitizer>(sanitizer));
+            var entry = new RecordEntry();
+            entry.Request.Headers["Content-Type"] = new[] { "application/xml" };
+            entry.Request.Headers["Content-Length"] = new[] { "0" };
+            entry.Request.Body = Encoding.UTF8.GetBytes(
+                "<root xmlns='urn:test'>\n<UserDelegationKey><Value>secret\nvalue</Value><SignedTid>tenant</SignedTid><SignedOid>owner</SignedOid></UserDelegationKey>" +
+                "<Value>unchanged</Value><PrimaryKey>first</PrimaryKey><PrimaryKey>second</PrimaryKey><SecondaryKey>second</SecondaryKey><ClientIp>127.0.0.1</ClientIp></root>");
+            var session = new RecordSession();
+            session.Entries.Add(entry);
+
+            await session.Sanitize(sanitizers);
+
+            string body = Encoding.UTF8.GetString(entry.Request.Body);
+            Assert.Contains("<Value>MA==</Value>", body);
+            Assert.Contains("<Value>unchanged</Value>", body);
+            Assert.Contains("<SignedTid>00000000-0000-0000-0000-000000000000</SignedTid>", body);
+            Assert.Contains("<SignedOid>00000000-0000-0000-0000-000000000000</SignedOid>", body);
+            Assert.Contains("<PrimaryKey>Sanitized</PrimaryKey><PrimaryKey>Sanitized</PrimaryKey>", body);
+            Assert.Contains("<SecondaryKey>Sanitized</SecondaryKey><ClientIp>Sanitized</ClientIp>", body);
+            Assert.Equal(entry.Request.Body.Length.ToString(), entry.Request.Headers["Content-Length"][0]);
+        }
+
+        [Theory]
+        [InlineData("<root><secret>initial</secret><secret>other</secret></root>")]
+        [InlineData("<?xml version='1.0' encoding='utf-8'?><root xmlns='urn:test'>\r\n  <secret>initial</secret>\r\n</root>")]
+        [InlineData("<root><secret><![CDATA[initial]]></secret><!--keep--></root>")]
+        [InlineData("<root><secret /></root>")]
+        [InlineData("<root>unchanged</root>")]
+        public void BodyXmlSanitizerBatchPreservesOrder(string body)
+        {
+            var sanitizers = new RecordedTestSanitizer[]
+            {
+                new BodyXmlSanitizer("//*[local-name()='secret']", "first"),
+                new BodyXmlSanitizer("//*[local-name()='secret' and text()='first']", "final")
+            };
+            string expected = body;
+            foreach (var sanitizer in sanitizers)
+            {
+                expected = sanitizer.SanitizeTextBody("application/xml", expected);
+            }
+
+            var batched = Assert.Single(BodyXmlSanitizer.Batch(sanitizers));
+            Assert.Equal(expected, batched.SanitizeTextBody("application/xml", body));
+        }
+
+        [Fact]
+        public async Task BodyXmlSanitizerCreatesOverApi()
+        {
+            var handler = new RecordingHandler(Directory.GetCurrentDirectory());
+            await handler.SanitizerRegistry.Clear();
+            var context = new DefaultHttpContext();
+            context.Request.Headers["x-abstraction-identifier"] = "BodyXmlSanitizer";
+            context.Request.Body = TestHelpers.GenerateStreamRequestBody(
+                "{\"xmlPath\":\"//secret\",\"value\":\"redacted\",\"condition\":{\"uriRegex\":\"example\"}}");
+            context.Request.ContentLength = context.Request.Body.Length;
+            var controller = new Admin(handler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext { HttpContext = context }
+            };
+
+            await controller.AddSanitizer();
+
+            var sanitizer = Assert.IsType<BodyXmlSanitizer>(Assert.Single(await handler.SanitizerRegistry.GetSanitizers()));
+            var entry = new RecordEntry { RequestUri = "https://example.org" };
+            entry.Request.Headers["Content-Type"] = new[] { "application/xml" };
+            entry.Request.Body = Encoding.UTF8.GetBytes("<root><secret>value</secret></root>");
+            sanitizer.Sanitize(entry);
+            Assert.Contains("<secret>redacted</secret>", Encoding.UTF8.GetString(entry.Request.Body));
+            entry.RequestUri = "https://other.org";
+            entry.Request.Body = Encoding.UTF8.GetBytes("<root><secret>value</secret></root>");
+            sanitizer.Sanitize(entry);
+            Assert.Contains("<secret>value</secret>", Encoding.UTF8.GetString(entry.Request.Body));
+        }
+
+        [Fact]
+        public void DefaultRegexInstancesAreSharedAcrossRegistries()
+        {
+            var first = new SanitizerDictionary().DefaultSanitizerList.SelectMany(item => GetSanitizerRegexes(item.Sanitizer)).ToArray();
+            var second = new SanitizerDictionary().DefaultSanitizerList.SelectMany(item => GetSanitizerRegexes(item.Sanitizer)).ToArray();
+
+            Assert.Equal(162, first.Length);
+            Assert.Equal(18, first.Distinct().Count());
+            Assert.Equal(first.Length, second.Length);
+            for (int index = 0; index < first.Length; index++)
+            {
+                Assert.Same(first[index], second[index]);
+            }
+        }
+
+        [Fact]
+        public void SharedBodyTextIsInvalidatedByRawByteChanges()
+        {
+            var message = new RequestOrResponse { Body = Encoding.UTF8.GetBytes("initial") };
+            message.Headers["Content-Type"] = new[] { "text/plain" };
+            message.BeginTextSanitization();
+            try
+            {
+                Assert.True(message.TryGetBodyAsText(out var initial));
+                Assert.True(message.TryGetBodyAsText(out var reused));
+                Assert.Same(initial, reused);
+
+                message.Body[0] = (byte)'I';
+                Assert.True(message.TryGetBodyAsText(out var edited));
+                Assert.Equal("Initial", edited);
+                message.Body = Encoding.UTF8.GetBytes("replacement");
+                Assert.True(message.TryGetBodyAsText(out var replaced));
+                Assert.Equal("replacement", replaced);
+                message.SetBodyText("final");
+                Assert.True(message.TryGetBodyAsText(out var final));
+                Assert.Equal("final", final);
+            }
+            finally
+            {
+                message.EndTextSanitization();
+            }
+
+            Assert.True(message.TryGetBodyAsText(out var after));
+            Assert.True(message.TryGetBodyAsText(out var next));
+            Assert.NotSame(after, next);
+        }
+
+        [Theory]
+        [InlineData("post_delete_get_content.json")]
+        [InlineData("response_with_xml_body.json")]
+        [InlineData("xml_body_with_sas_present.json")]
+        [InlineData("multipart_request.json")]
+        public async Task DefaultSanitizerBatchMatchesSequentialOutput(string recording)
+        {
+            var sequential = TestHelpers.LoadRecordSession($"Test.RecordEntries/{recording}").Session;
+            var batched = TestHelpers.LoadRecordSession($"Test.RecordEntries/{recording}").Session;
+            var sanitizers = new SanitizerDictionary().DefaultSanitizerList.Select(item => item.Sanitizer).ToArray();
+            foreach (var sanitizer in sanitizers)
+            {
+                await sequential.Sanitize(sanitizer);
+            }
+            await batched.Sanitize(sanitizers);
+
+            Assert.Equal(sequential.Entries.Count, batched.Entries.Count);
+            for (int index = 0; index < sequential.Entries.Count; index++)
+            {
+                var expected = sequential.Entries[index];
+                var actual = batched.Entries[index];
+                Assert.Equal(expected.RequestUri, actual.RequestUri);
+                Assert.Equal(expected.Request.Body, actual.Request.Body);
+                Assert.Equal(expected.Response.Body, actual.Response.Body);
+                Assert.Equal(System.Text.Json.JsonSerializer.Serialize(expected.Request.Headers), System.Text.Json.JsonSerializer.Serialize(actual.Request.Headers));
+                Assert.Equal(System.Text.Json.JsonSerializer.Serialize(expected.Response.Headers), System.Text.Json.JsonSerializer.Serialize(actual.Response.Headers));
+            }
+        }
+
+        [Fact]
+        public async Task BodyXmlSanitizerMatchesSanitizedRecording()
+        {
+            var request = new RecordEntry { RequestUri = "https://example.org/", RequestMethod = Core.RequestMethod.Post };
+            request.Request.Headers["Content-Type"] = new[] { "application/xml" };
+            request.Request.Body = Encoding.UTF8.GetBytes("<?xml version='1.0'?><root attribute='keep'>\r\n<PrimaryKey>first</PrimaryKey><Value>&#x41;</Value></root>");
+            var recorded = request.Clone();
+            recorded.RequestMethod = request.RequestMethod;
+            recorded.Request.Body = Encoding.UTF8.GetBytes("<?xml version='1.0'?><root attribute='keep'>\r\n<PrimaryKey>second</PrimaryKey><Value>&#x41;</Value></root>");
+            var sanitizers = new RecordedTestSanitizer[]
+            {
+                new BodyXmlSanitizer("//PrimaryKey"),
+                new BodyXmlSanitizer("//missing")
+            };
+            var session = new RecordSession();
+            session.Entries.Add(recorded);
+            await session.Sanitize(sanitizers);
+            byte[] firstPass = recorded.Request.Body;
+            await session.Sanitize(sanitizers);
+
+            Assert.Equal(firstPass, recorded.Request.Body);
+            Assert.Same(recorded, session.Lookup(request, new RecordMatcher(), sanitizers, remove: false));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void BodyXmlSanitizerHonorsHeadAndBodyMatching(bool compareBodies)
+        {
+            var entry = new RecordEntry { RequestMethod = Core.RequestMethod.Head };
+            entry.Request.Headers["Content-Type"] = new[] { "application/xml" };
+            entry.Response.Headers["Content-Type"] = new[] { "application/xml" };
+            entry.Response.Headers["Content-Length"] = new[] { "42" };
+            entry.Request.Body = Encoding.UTF8.GetBytes("<secret>original</secret>");
+            entry.Response.Body = Encoding.UTF8.GetBytes("<secret>original</secret>");
+            var sanitizer = Assert.Single(SanitizerBatch.Create(new RecordedTestSanitizer[]
+            {
+                new BodyXmlSanitizer("//secret", "first"),
+                new BodyXmlSanitizer("//secret", "second")
+            }));
+
+            sanitizer.Sanitize(entry, compareBodies);
+
+            Assert.Equal(compareBodies ? "<secret>second</secret>" : "<secret>original</secret>", Encoding.UTF8.GetString(entry.Request.Body));
+            Assert.Equal("<secret>original</secret>", Encoding.UTF8.GetString(entry.Response.Body));
+            Assert.Equal("42", entry.Response.Headers["Content-Length"][0]);
+        }
+
+        [Theory]
+        [InlineData("before<![CDATA[middle]]>after")]
+        [InlineData("<![CDATA[value]]>")]
+        [InlineData("   ")]
+        public void BodyXmlSanitizerReplacesLogicalTextNodes(string text)
+        {
+            const string replacement = "<&>]]>";
+            var sanitizer = new BodyXmlSanitizer("//secret/text()", replacement);
+            string sanitized = sanitizer.SanitizeTextBody("application/xml", $"<root><secret>{text}</secret></root>");
+            var document = new XmlDocument { XmlResolver = null };
+            document.LoadXml(sanitized);
+            Assert.Equal(replacement, document.SelectSingleNode("//secret").InnerText);
+        }
+
+        [Fact]
+        public async Task BodyXmlSanitizerHandlesMultipartSections()
+        {
+            const string body = "--boundary\r\nContent-Type: application/xml\r\nContent-Length: 24\r\n\r\n<secret>initial</secret>\r\n--boundary--\r\n";
+            var entry = new RecordEntry();
+            entry.Request.Headers["Content-Type"] = new[] { "multipart/mixed; boundary=boundary" };
+            entry.Request.Body = Encoding.UTF8.GetBytes(body);
+            var session = new RecordSession();
+            session.Entries.Add(entry);
+            await session.Sanitize(new RecordedTestSanitizer[]
+            {
+                new BodyXmlSanitizer("//secret", "first"),
+                new BodyXmlSanitizer("//secret[text()='first']", "final")
+            });
+
+            string sanitized = Encoding.UTF8.GetString(entry.Request.Body);
+            Assert.Contains("<secret>final</secret>", sanitized);
+            Assert.Contains("Content-Length: 22", sanitized);
+            Assert.EndsWith("--boundary--\r\n", sanitized);
+        }
 
         [Fact]
         public async void OauthResponseSanitizerCleansV2AuthRequest()

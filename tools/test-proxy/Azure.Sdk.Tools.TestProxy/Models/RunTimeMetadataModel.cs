@@ -133,6 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
         public static Dictionary<string, string> FieldNameMapping = new Dictionary<string, string>()
         {
             { "_jsonPath", "jsonPath" },
+            { "_xmlPath", "xmlPath" },
             { "_value", "value" },
             { "_regex", "regex" },
             { "_groupForReplace", "groupForReplace" },

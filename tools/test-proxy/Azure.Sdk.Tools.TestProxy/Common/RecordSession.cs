@@ -105,7 +105,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             if (!DebugLogger.CheckLogLevel(LogLevel.Debug))
             {
-                sanitizers = BodyKeySanitizer.Batch(sanitizers);
+                sanitizers = SanitizerBatch.Create(sanitizers);
             }
 
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
@@ -213,7 +213,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 if (!DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
-                    sanitizers = BodyKeySanitizer.Batch(sanitizers);
+                    sanitizers = SanitizerBatch.Create(sanitizers);
                 }
 
                 foreach (var sanitizer in sanitizers)

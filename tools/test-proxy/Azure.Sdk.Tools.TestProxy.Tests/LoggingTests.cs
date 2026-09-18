@@ -17,29 +17,35 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     [Collection(nameof(LoggingCollection))]
     public class LoggingTests
     {
-        [Fact]
-        public async Task BodyKeySanitizersKeepIndividualDebugLogs()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task BodyKeySanitizersKeepIndividualDebugLogs(bool xml)
         {
             var logger = new TestLogger();
             DebugLogger.Logger = logger;
             try
             {
                 var entry = new RecordEntry();
-                entry.Request.Headers.Add("Content-Type", ["application/json"]);
-                entry.Request.Body = Encoding.UTF8.GetBytes("{\"secret\":\"original\"}");
+                entry.Request.Headers.Add("Content-Type", [xml ? "application/xml" : "application/json"]);
+                entry.Request.Body = Encoding.UTF8.GetBytes(xml ? "<secret>original</secret>" : "{\"secret\":\"original\"}");
                 var session = new RecordSession();
                 session.Entries.Add(entry);
 
+                RecordedTestSanitizer first = xml ? new BodyXmlSanitizer("//secret", "first") : new BodyKeySanitizer("$.secret", value: "first");
+                RecordedTestSanitizer second = xml ? new BodyXmlSanitizer("//secret", "second") : new BodyKeySanitizer("$.secret", value: "second");
+                first.SanitizerId = "first";
+                second.SanitizerId = "second";
                 await session.Sanitize(
                 [
-                    new BodyKeySanitizer("$.secret", value: "first") { SanitizerId = "first" },
-                    new BodyKeySanitizer("$.secret", value: "second") { SanitizerId = "second" }
+                    first,
+                    second
                 ]);
 
                 Assert.Equal(2, logger.Logs.Count);
                 Assert.Contains("rule first modified the entry", logger.Logs[0].ToString());
                 Assert.Contains("rule second modified the entry", logger.Logs[1].ToString());
-                Assert.Equal("{\"secret\":\"second\"}", Encoding.UTF8.GetString(entry.Request.Body));
+                Assert.Equal(xml ? "<secret>second</secret>" : "{\"secret\":\"second\"}", Encoding.UTF8.GetString(entry.Request.Body));
             }
             finally
             {

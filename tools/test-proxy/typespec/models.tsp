@@ -51,6 +51,7 @@ namespace Admin {
         BodyKeySanitizer: "BodyKeySanitizer",
         BodyRegexSanitizer: "BodyRegexSanitizer",
         BodyStringSanitizer: "BodyStringSanitizer",
+        BodyXmlSanitizer: "BodyXmlSanitizer",
         ContentDispositionFilePathSanitizer: "ContentDispositionFilePathSanitizer",
         GeneralRegexSanitizer: "GeneralRegexSanitizer",
         GeneralStringSanitizer: "GeneralStringSanitizer",
@@ -100,6 +101,15 @@ namespace Admin {
         Name: SanitizerType.BodyStringSanitizer;
         Body:  {
             target: string;
+            value?: string;
+            condition?: ApplyCondition;
+        };
+    }
+
+    model BodyXmlSanitizer extends SanitizerAddition {
+        Name: SanitizerType.BodyXmlSanitizer;
+        Body: {
+            xmlPath: string;
             value?: string;
             condition?: ApplyCondition;
         };

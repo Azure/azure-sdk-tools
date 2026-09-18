@@ -452,7 +452,9 @@ def test_overview_html_contract():
     assert "T00:00:00Z" not in report_script
     assert "const defaultRange = lastSevenDays();" in report_script
     assert "start: start.toISOString(), end: end.toISOString()" in report_script
-    assert "Local time (${timezone})" in report_script
+    assert "reportHeading" not in report_script
+    assert "Generated:" not in report_script
+    assert 'report.period.textContent = "";' in report_script
     assert "tenant" not in report_script.lower()
     assert "tenant_id: record.tenant_id" in html
     assert 'report.print.addEventListener("click", () => { if (overviewData) window.print(); });' in html
@@ -488,19 +490,71 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
         assert "definition.description" in consumer
 
 
-def test_overview_notes_are_collapsed_and_metric_help_supports_hover_and_focus():
+def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
-    notes = next((match for match in re.finditer(r"<details\b([^>]*)>(.*?)</details>", html, re.DOTALL)
-                  if 'id="report-notes"' in match.group(2)), None)
-    assert notes is not None, "Report notes must be inside native details"
-    assert not re.search(r"\bopen\b", notes.group(1))
-    assert "<summary" in notes.group(2)
+    visual = html.split("function renderOverviewVisual(data)", 1)[1].split("function renderOverview(data)", 1)[0]
+    for field in ("accuracy", "expert_interaction", "answer_rate"):
+        assert f"data.totals.{field}" in visual
+    assert "At a glance" not in html
+    assert "Channels with data" not in html
+    assert "overview-count" not in html
+    assert "overview-caption" not in html
+    assert 'section.setAttribute("aria-label", "Total data overview")' in visual
+    assert "percent(metric.rate)" in visual
+    assert "(${metric.numerator.toLocaleString()} / ${metric.denominator.toLocaleString()})" in visual
+    assert "rate.append(rateCounts)" in visual
+    assert 'rateCounts.title = `${labels[0]} / ${labels[1]}`' in visual
+    assert 'rateCounts.setAttribute("aria-label"' in visual
+    assert "overview-bar" not in html
+    assert "can exceed 100%" in visual
+    assert "not the confirmed-correct percentage" in visual
+    assert "report.tables.replaceChildren(renderOverviewVisual(data))" in html
+    invalidation = html.split("function invalidateOverview()", 1)[1].split("async function loadOverview()", 1)[0]
+    assert "report.tables.replaceChildren();" in invalidation
+    assert ".overview-metrics { grid-template-columns: 1fr; }" in html
+    assert "print-color-adjust: exact" in html
+
+
+def test_overview_notes_are_collapsible_below_each_table_and_in_copied_report():
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    assert 'id="report-notes"' not in html
+    assert "metric-help" not in html
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
-    assert re.search(r'node\("details",\s*"metric-help"\)', rendering)
-    assert 'node("summary"' in rendering
-    assert "definition.title" in rendering and "definition.description" in rendering
-    assert ".metric-help:hover" in html
-    assert ".metric-help:focus-within" in html
+    assert rendering.index("section.append(wrap)") < rendering.index("section.append(notes)")
+    assert 'node("details", "report-notes")' in rendering
+    assert 'node("summary", "", "Notes")' in rendering
+    assert "notes.open" not in rendering
+    assert "Definitions and data limitations" not in html
+    assert "definition.limitations.map" in rendering
+    copying = html.split("function buildOverviewReport(data)", 1)[1].split("function invalidateOverview", 1)[0]
+    assert copying.index('lines.push(`| ${values.join') < copying.index("### Notes")
+    assert "definition.limitations.map" in copying
+    assert "rates above 100%" in html
+    assert 'window.addEventListener("beforeprint"' in html
+    assert 'window.addEventListener("afterprint"' in html
+    assert "notes.open = true" in html
+    assert "notes.open = open" in html
+
+
+def test_overview_channel_names_link_to_teams_without_displaying_ids():
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    assert '<label>Channel<select id="report-channel"><option value="">All channels</option></select></label>' in html
+    assert "Channel ID (optional)" not in html
+    assert 'id="report-channels"' not in html
+    assert "const choices = report.channel;" in html
+    assert 'node("option", "", row.channel_name)' in html
+    assert "option.value = row.channel_id;" in html
+    values = html.split("function reportRowValues", 1)[1].split("function teamsChannelUrl", 1)[0]
+    assert "row.channel_id" not in values
+    assert 'totalRow ? "Total" : row.channel_name' in values
+    assert "https://teams.microsoft.com/l/channel/${encodeURIComponent(row.channel_id)}" in html
+    channel_cell = html.split("function reportChannelCell", 1)[1].split("function renderOverview", 1)[0]
+    assert 'node("a", "", row.channel_name)' in channel_cell
+    assert 'link.rel = "noopener noreferrer"' in channel_cell
+    assert "if (url)" in channel_cell
+    assert "tr.append(reportChannelCell(row)" in html
+    assert "const url = totalRow ? null : teamsChannelUrl(row);" in html
+    assert "if (url) values[0] =" in html
 
 
 @pytest.mark.parametrize("flag", [True, False, None, "missing"])

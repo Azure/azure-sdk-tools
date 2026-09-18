@@ -452,7 +452,10 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "All root causes" in html
     assert "Insufficient documentation" in html
     assert 'addParameter(parameters, "classification", elements.classification.value)' in html
-    assert "cell(classificationLabel(record.feedback?.classification))" in html
+    assert "rootCause.replaceChildren(statusBadge(classification, classificationLabel(classification)))" in html
+    assert 'rootCause.title = "No root cause recorded"' in html
+    for classification in RootCauseClassification:
+        assert f".status-{classification.value} {{" in html
     assert "empty.colSpan = 8" in html
     assert "Bot answered correctly" in html
     assert "Needs evolution" in html

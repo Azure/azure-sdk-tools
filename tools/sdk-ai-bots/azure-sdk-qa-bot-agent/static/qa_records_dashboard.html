@@ -170,6 +170,12 @@
       color: #596579;
       background: #edf0f4;
     }
+    .status-missing_content { color: #87450c; background: #fff0d6; }
+    .status-outdated_content { color: #973b2c; background: #ffe8e2; }
+    .status-insufficient_content { color: #705500; background: #fff1bd; }
+    .status-retrieval_mismatch { color: #075a9c; background: #deefff; }
+    .status-reasoning_gap { color: #63348b; background: #eee2fa; }
+    .status-out_of_scope { color: #596579; background: #edf0f4; }
     .pagination {
       display: flex;
       justify-content: flex-end;
@@ -408,19 +414,23 @@
     a { color: #0067b8; }
     [hidden] { display: none !important; }
     .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .overview-visual { margin: 24px 0 32px; }
+    .overview-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .overview-card { --metric-color: #0067b8; padding: 20px; border: 1px solid #dce4ef; border-top: 4px solid var(--metric-color); border-radius: 12px; background: white; min-width: 0; }
+    .overview-card.interaction { --metric-color: #7251b5; }
+    .overview-card.answer { --metric-color: #087e8b; }
+    .overview-card h3 { font-size: 15px; margin: 0; }
+    .overview-rate { color: var(--metric-color); font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 10px 0 18px; }
+    .overview-rate-counts { display: inline-block; color: #52627a; font-size: 16px; font-weight: 400; }
+    .overview-card-note { color: #52627a; font-size: 12px; line-height: 1.6; margin: 16px 0 0; }
     .report-section { margin: 24px 0; }
     .report-section h2 { margin-bottom: 8px; font-size: 19px; }
     .report-section table { min-width: 600px; }
-    .metric-help { position: relative; width: fit-content; margin-bottom: 10px; }
-    .metric-help summary { cursor: help; color: #0067b8; font-size: 13px; }
-    .metric-help p { display: none; margin: 0; padding: 12px; width: min(480px, 80vw);
-      background: white; border: 1px solid #aebbd0; border-radius: 6px;
-      box-shadow: 0 4px 12px #17203322; font-size: 13px; line-height: 1.5; }
-    .metric-help:hover::details-content, .metric-help:focus-within::details-content { content-visibility: visible; }
-    .metric-help:hover p, .metric-help:focus-within p, .metric-help[open] p {
-      display: block; position: absolute; z-index: 3; }
+    .report-notes { color: #41506a; font-size: 13px; line-height: 1.6; margin-top: 12px; }
+    .report-notes summary { font-weight: 600; cursor: pointer; }
+    .report-notes p { margin: 4px 0; }
+    .report-notes ul { margin: 4px 0; padding-left: 20px; }
     .report-section tfoot { font-weight: 700; background: #eef3f9; }
-    #report-notes { color: #41506a; font-size: 13px; line-height: 1.6; }
     #report-fallback { width: 100%; min-height: 160px; }
     @media print {
       header .account, .tabs, .filters, .report-actions, #conversations-panel,
@@ -430,6 +440,7 @@
       header p { color: black; }
       .table-wrap { overflow: visible; }
       .report-section table { min-width: 0; }
+      .overview-card { break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
       th { position: static; }
       th, td { font-size: 10px; padding: 6px; }
       tr { break-inside: avoid; }
@@ -447,6 +458,7 @@
         padding: 18px 14px;
       }
       .filters, .meta-grid { grid-template-columns: 1fr; }
+      .overview-metrics { grid-template-columns: 1fr; }
       .detail-content { padding: 16px 12px 24px; }
       .timeline { padding-left: 24px; }
       .message { max-width: 100%; }
@@ -473,8 +485,7 @@
       <form id="overview-filters" class="filters">
         <label>From (local time, inclusive)<input id="report-start" type="date" required></label>
         <label>To (local time, exclusive)<input id="report-end" type="date" required></label>
-        <label>Channel ID (optional)<input id="report-channel" type="text" maxlength="200" list="report-channels" placeholder="All channels"></label>
-        <datalist id="report-channels"></datalist>
+        <label>Channel<select id="report-channel"><option value="">All channels</option></select></label>
         <div class="actions">
           <button type="submit">Update report</button>
           <button id="last-week" class="secondary" type="button">Last full week</button>
@@ -490,10 +501,6 @@
       <p id="overview-error" class="error" role="alert"></p>
       <textarea id="report-fallback" aria-label="Report text — copy manually" readonly hidden></textarea>
       <div id="overview-tables"></div>
-      <details>
-        <summary>Definitions and data limitations</summary>
-        <ol id="report-notes"></ol>
-      </details>
     </section>
     <section id="conversations-panel" aria-label="Conversation records" hidden>
     <form id="filters" class="filters">
@@ -826,7 +833,15 @@
         const evolutionStatus = node("td");
         evolutionStatus.append(evolutionStatusBadge(record));
         row.append(evolutionStatus);
-        row.append(cell(classificationLabel(record.feedback?.classification)));
+        const rootCause = cell("—", "root-cause");
+        const classification = record.feedback?.classification;
+        if (classification) {
+          rootCause.replaceChildren(statusBadge(classification, classificationLabel(classification)));
+        } else {
+          rootCause.classList.add("muted");
+          rootCause.title = "No root cause recorded";
+        }
+        row.append(rootCause);
 
         const issue = node("td");
         if (isAllowedIssueUrl(record.feedback?.issue_url)) {
@@ -1199,7 +1214,6 @@
       period: document.querySelector("#report-period"),
       error: document.querySelector("#overview-error"),
       tables: document.querySelector("#overview-tables"),
-      notes: document.querySelector("#report-notes"),
       copy: document.querySelector("#copy-report"),
       print: document.querySelector("#print-report"),
       fallback: document.querySelector("#report-fallback")
@@ -1251,11 +1265,15 @@
       return value == null ? "N/A" : `${value.toFixed(1)}%`;
     }
 
+    const conversationLimitations = "Conversations use their creation date, not assessment date; undated records and threads without bot replies are absent. Later assessments can change the results.";
+    const sharedLimitations = "Dates use local time (start inclusive, end exclusive). Testing channels are excluded; unknown channels remain included. Totals use all matching stored counts, not averages of channel percentages. Missing ingestion is not measured; data may change during report generation.";
+
     // These same table definitions drive both the DOM and the copied report.
     const reportTables = [
       {
         title: "Accuracy",
         description: "(Conversations - incorrect) / conversations. Missing-documentation and out-of-scope cases are excluded from the incorrect count, not the total. Unassessed and excluded conversations count as successful in this rate. Correct shows confirmed correct verdicts, not the numerator. N/A means no conversations.",
+        limitations: [conversationLimitations, sharedLimitations],
         headings: ["Channel", "Conversations", "Correct", "Excluded", "Accuracy"],
         values: row => [row.conversations, row.correct,
           row.accuracy_excluded, percent(row.accuracy.rate)]
@@ -1263,38 +1281,81 @@
       {
         title: "Interaction rate",
         description: "Conversations with meaningful expert follow-up / all conversations. Counts substantive guidance from another human after a bot reply, not acknowledgments or required human actions alone. Unassessed cases remain in the denominator. N/A means no conversations.",
+        limitations: ["Only an explicit positive expert-interaction assessment counts; missing or uncertain assessments do not. The question author's own follow-ups are excluded.", conversationLimitations, sharedLimitations],
         headings: ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         values: row => [row.conversations, row.expert_yes, percent(row.expert_interaction.rate)]
       },
       {
         title: "Answer rate",
         description: "Bot replies / user messages with should_reply=true or an explicit @mention of Azure SDK Q&A Bot. N/A means no qualifying questions.",
+        limitations: ["Each qualifying user message counts once. Replies include assistant and system/error messages. Messages use their own creation dates, independently of conversation dates, and include questions without QA records.", "Replies are not matched to questions. Multiple replies and exchanges crossing the date boundary can produce rates above 100%; this measures reply volume, not the percentage of distinct questions answered.", sharedLimitations],
         headings: ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
         values: row => [row.questions, row.bot_replies, percent(row.answer_rate.rate)]
       }
     ];
 
     function reportRowValues(definition, row, totalRow = false) {
-      const channel = row.channel_id ? `${row.channel_name} (${row.channel_id})` : row.channel_name;
-      return [totalRow ? "Total" : channel, ...definition.values(row)];
+      return [totalRow ? "Total" : row.channel_name, ...definition.values(row)];
     }
 
-    function reportHeading(data) {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return `Local time (${timezone}) [${formatDate(data.start)}, ${formatDate(data.end)}) | Channel: ${data.channel_id || "All"} | Generated: ${formatDate(data.generated_at)}`;
+    function teamsChannelUrl(row) {
+      return row.channel_id
+        ? `https://teams.microsoft.com/l/channel/${encodeURIComponent(row.channel_id)}`
+        : null;
+    }
+
+    function reportChannelCell(row) {
+      const td = cell(row.channel_name);
+      const url = teamsChannelUrl(row);
+      if (url) {
+        const link = node("a", "", row.channel_name);
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        td.replaceChildren(link);
+      }
+      return td;
+    }
+
+    function renderOverviewVisual(data) {
+      const section = node("section", "overview-visual");
+      section.setAttribute("aria-label", "Total data overview");
+      const cards = node("div", "overview-metrics");
+      const metrics = [
+        {title: "Accuracy", style: "accuracy", metric: data.totals.accuracy,
+          labels: ["Not counted incorrect", "Conversations"],
+          note: "Includes unassessed and excluded conversations as successful; not the confirmed-correct percentage."},
+        {title: "Interaction rate", style: "interaction", metric: data.totals.expert_interaction,
+          labels: ["Expert interactions", "Conversations"],
+          note: "Meaningful expert follow-up after a bot reply. Unassessed conversations remain in the total."},
+        {title: "Answer rate", style: "answer", metric: data.totals.answer_rate,
+          labels: ["Bot replies", "In-scope questions"],
+          note: "Reply volume, not matched answers. Includes system/error replies and can exceed 100%."}
+      ];
+      for (const {title, style, metric, labels, note} of metrics) {
+        const card = node("article", `overview-card ${style}`);
+        card.setAttribute("aria-label", `${title}: ${percent(metric.rate)}`);
+        const rate = node("p", "overview-rate", `${percent(metric.rate)} `);
+        const rateCounts = node("span", "overview-rate-counts",
+          `(${metric.numerator.toLocaleString()} / ${metric.denominator.toLocaleString()})`);
+        rateCounts.title = `${labels[0]} / ${labels[1]}`;
+        rateCounts.setAttribute("aria-label",
+          `${labels[0]}: ${metric.numerator}; ${labels[1]}: ${metric.denominator}`);
+        rate.append(rateCounts);
+        card.append(node("h3", "", title), rate);
+        card.append(node("p", "overview-card-note", note));
+        cards.append(card);
+      }
+      section.append(cards);
+      return section;
     }
 
     function renderOverview(data) {
-      report.period.textContent = reportHeading(data);
-      report.tables.replaceChildren();
+      report.period.textContent = "";
+      report.tables.replaceChildren(renderOverviewVisual(data));
       for (const definition of reportTables) {
         const section = node("section", "report-section");
         section.append(node("h2", "", definition.title));
-        const help = node("details", "metric-help");
-        const summary = node("summary", "", "How it is calculated");
-        summary.setAttribute("aria-label", `${definition.title}: how it is calculated`);
-        help.append(summary, node("p", "", definition.description));
-        section.append(help);
         const wrap = node("div", "table-wrap");
         const table = node("table");
         table.setAttribute("aria-label", definition.title);
@@ -1309,7 +1370,7 @@
         const tbody = node("tbody");
         for (const row of data.rows) {
           const tr = node("tr");
-          tr.append(...reportRowValues(definition, row).map(value => cell(value)));
+          tr.append(reportChannelCell(row), ...definition.values(row).map(value => cell(value)));
           tbody.append(tr);
         }
         if (!data.rows.length) {
@@ -1326,10 +1387,15 @@
         table.append(thead, tbody, tfoot);
         wrap.append(table);
         section.append(wrap);
+        const notes = node("details", "report-notes");
+        const limitations = node("ul");
+        limitations.append(...definition.limitations.map(note => node("li", "", note)));
+        notes.append(node("summary", "", "Notes"),
+          node("p", "", definition.description), limitations);
+        section.append(notes);
         report.tables.append(section);
       }
-      report.notes.replaceChildren(...data.notes.map(note => node("li", "", note)));
-      const choices = document.querySelector("#report-channels");
+      const choices = report.channel;
       // Retain discovered options when subsequently narrowing the report scope.
       for (const row of data.rows) {
         if (!row.channel_id || Array.from(choices.options).some(option => option.value === row.channel_id)) continue;
@@ -1340,22 +1406,24 @@
     }
 
     function markdownValue(value) {
-      return String(value).replaceAll("\\", "\\\\").replaceAll("|", "\\|").replace(/[\r\n\t]+/g, " ");
+      return String(value).replaceAll("\\", "\\\\").replace(/[\[\]<>*_`]/g, "\\$&").replaceAll("|", "\\|").replace(/[\r\n\t]+/g, " ");
     }
 
     function buildOverviewReport(data) {
-      const lines = ["# Weekly Status Report", "", reportHeading(data), ""];
+      const lines = ["# Weekly Status Report", ""];
       for (const definition of reportTables) {
         lines.push(`## ${definition.title}`, "");
-        lines.push(definition.description, "");
         lines.push(`| ${definition.headings.join(" | ")} |`);
         lines.push(`| ${definition.headings.map(() => "---").join(" | ")} |`);
         for (const [row, totalRow] of [...data.rows.map(row => [row, false]), [data.totals, true]]) {
-          lines.push(`| ${reportRowValues(definition, row, totalRow).map(markdownValue).join(" | ")} |`);
+          const values = reportRowValues(definition, row, totalRow).map(markdownValue);
+          const url = totalRow ? null : teamsChannelUrl(row);
+          if (url) values[0] = `[${values[0]}](${url.replaceAll("(", "%28").replaceAll(")", "%29")})`;
+          lines.push(`| ${values.join(" | ")} |`);
         }
-        lines.push("");
+        lines.push("", "### Notes", "", definition.description,
+          "", ...definition.limitations.map(note => `- ${note}`), "");
       }
-      lines.push("## Definitions and data limitations", ...data.notes.map(note => `- ${note}`));
       return lines.join("\n");
     }
 
@@ -1368,7 +1436,6 @@
       report.fallback.hidden = true;
       report.error.textContent = "";
       report.tables.replaceChildren();
-      report.notes.replaceChildren();
       report.period.textContent = "Update report to apply the selected local dates and scope.";
     }
 
@@ -1418,7 +1485,7 @@
       const text = buildOverviewReport(data);
       try {
         await navigator.clipboard.writeText(text);
-        if (overviewData === data) report.period.textContent = `${reportHeading(data)} | Copied`;
+        if (overviewData === data) report.period.textContent = "Report copied.";
       } catch {
         if (overviewData !== data) return;
         report.fallback.value = text;
@@ -1427,6 +1494,16 @@
         report.fallback.select();
         report.error.textContent = "Clipboard unavailable. Copy the selected report text manually.";
       }
+    });
+    let notesBeforePrint = [];
+    window.addEventListener("beforeprint", () => {
+      notesBeforePrint = Array.from(report.tables.querySelectorAll("details.report-notes"),
+        notes => ({notes, open: notes.open}));
+      for (const {notes} of notesBeforePrint) notes.open = true;
+    });
+    window.addEventListener("afterprint", () => {
+      for (const {notes, open} of notesBeforePrint) notes.open = open;
+      notesBeforePrint = [];
     });
     report.print.addEventListener("click", () => { if (overviewData) window.print(); });
     const defaultRange = lastSevenDays();

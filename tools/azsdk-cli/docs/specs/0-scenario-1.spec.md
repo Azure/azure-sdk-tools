@@ -298,7 +298,7 @@ For Python requirements, set environment variable `AZSDKTOOLS_PYTHON_VENV_PATH` 
 
 **Command:**
 ```bash
-azsdk verify setup --languages Dotnet Java JavaScript Python Go
+azsdk verify setup --languages DotNet Java JavaScript Python Go
 ```
 
 **Options:**

@@ -839,10 +839,10 @@ Translate all Java samples for Health Deidentification to .NET.
 
 ```bash
 # Auto-install mode
-azsdk verify setup install --languages "Dotnet,Java,JavaScript,Python,Go"
+azsdk verify setup install --languages "DotNet,Java,JavaScript,Python,Go"
 
 # Verification-only mode
-azsdk verify setup check --languages "Dotnet,Java,JavaScript,Python,Go"
+azsdk verify setup check --languages "DotNet,Java,JavaScript,Python,Go"
 ```
 
 **Options:**

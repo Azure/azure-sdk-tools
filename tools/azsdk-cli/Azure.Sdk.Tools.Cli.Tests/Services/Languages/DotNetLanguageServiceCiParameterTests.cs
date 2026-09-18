@@ -10,7 +10,7 @@ using YamlDotNet.Serialization;
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
 [TestFixture]
-public class DotnetLanguageServiceCiParameterTests
+public class DotNetLanguageServiceCiParameterTests
 {
     private TempDirectory _tempDir = null!;
     private PackageInfoHelper _packageInfoHelper = null!;
@@ -51,7 +51,7 @@ extends:
             Language = SdkLanguage.DotNet
         };
 
-        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotnetCiPipelineYamlParameters>(info);
+        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotNetCiPipelineYamlParameters>(info);
 
         Assert.That(parameters, Is.Not.Null);
         Assert.That(parameters!.BuildSnippets, Is.False);
@@ -80,7 +80,7 @@ extends:
             Language = SdkLanguage.DotNet
         };
 
-        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotnetCiPipelineYamlParametersWithDefaults>(info);
+        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotNetCiPipelineYamlParametersWithDefaults>(info);
 
         Assert.That(parameters, Is.Not.Null);
         Assert.That(parameters!.BuildSnippets, Is.True, "BuildSnippets should default to true");
@@ -100,7 +100,7 @@ extends:
             Language = SdkLanguage.DotNet
         };
 
-        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotnetCiPipelineYamlParameters>(info);
+        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotNetCiPipelineYamlParameters>(info);
 
         Assert.That(parameters, Is.Null);
     }
@@ -130,8 +130,8 @@ extends:
         };
 
         // Simulate what ApplyLanguageCiParameters does
-        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotnetCiPipelineYamlParametersWithDefaults>(info)
-            ?? new TestDotnetCiPipelineYamlParametersWithDefaults();
+        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotNetCiPipelineYamlParametersWithDefaults>(info)
+            ?? new TestDotNetCiPipelineYamlParametersWithDefaults();
 
         info.CiParameters.BuildSnippets = parameters.BuildSnippets;
 
@@ -152,8 +152,8 @@ extends:
         };
 
         // Simulate what ApplyLanguageCiParameters does when no ci.yml is found
-        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotnetCiPipelineYamlParametersWithDefaults>(info)
-            ?? new TestDotnetCiPipelineYamlParametersWithDefaults();
+        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotNetCiPipelineYamlParametersWithDefaults>(info)
+            ?? new TestDotNetCiPipelineYamlParametersWithDefaults();
 
         info.CiParameters.BuildSnippets = parameters.BuildSnippets;
 
@@ -185,7 +185,7 @@ extends:
             Language = SdkLanguage.DotNet
         };
 
-        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotnetCiPipelineYamlParameters>(info);
+        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotNetCiPipelineYamlParameters>(info);
 
         Assert.That(parameters, Is.Not.Null);
         Assert.That(parameters!.BuildSnippets, Is.False);
@@ -217,20 +217,20 @@ extends:
             Language = SdkLanguage.DotNet
         };
 
-        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotnetCiPipelineYamlParameters>(info);
+        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotNetCiPipelineYamlParameters>(info);
 
         Assert.That(parameters, Is.Not.Null);
         Assert.That(parameters!.BuildSnippets, Is.True);
     }
 
     // Test helper classes (mirrors the pattern used in PackageInfoHelperTests for Go)
-    private class TestDotnetCiPipelineYamlParameters : CiPipelineYamlParametersBase
+    private class TestDotNetCiPipelineYamlParameters : CiPipelineYamlParametersBase
     {
         [YamlMember(Alias = "BuildSnippets")]
         public bool? BuildSnippets { get; set; }
     }
 
-    private class TestDotnetCiPipelineYamlParametersWithDefaults : CiPipelineYamlParametersBase
+    private class TestDotNetCiPipelineYamlParametersWithDefaults : CiPipelineYamlParametersBase
     {
         [YamlMember(Alias = "BuildSnippets")]
         public bool? BuildSnippets { get; set; } = true;

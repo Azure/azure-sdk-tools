@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// Handles changelog updates (via base class) and .csproj version updates directly in C#,
 /// avoiding a PowerShell script dependency.
 /// </summary>
-public sealed partial class DotnetLanguageService : LanguageService
+public sealed partial class DotNetLanguageService : LanguageService
 {
     // Regex to match <Version>...</Version> in .csproj XML
     private static readonly Regex CsprojVersionRegex = new(

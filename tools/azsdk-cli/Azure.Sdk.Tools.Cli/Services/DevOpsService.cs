@@ -198,6 +198,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private List<WorkItemRelationType>? _cachedRelationTypes;
 
+        // Azure DevOps field reference names require "Dotnet", not the CLI's "DotNet" casing.
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
 
         private static bool IsAuthException(HttpStatusCode status) =>

@@ -15,7 +15,7 @@ After that issue closes, you may be invoked again to validate the deployed fix.
 
 ## Core Principle
 
-1. Start diagnosis only after confirming that the conversation is complete and the answer has a real problem.
+1. Start diagnosis only after passing the completeness and answer-quality checks below.
 2. Identify one dominant root cause: a **KB defect** or a **system defect**. Explain what must change so the failure does not recur.
 3. Test the KB first. Identify and search the appropriate knowledge sources,
    then assess content sufficiency before inspecting chat agent source code.
@@ -58,15 +58,18 @@ Follow these steps in order.
    Inactivity alone never closes a thread with an unresolved item. A bot's
    optional offer such as "I can also show an example" is not a pending item
    unless a human accepts the offer or asks for it. If the conversation is
-   not complete, return `conversation_ongoing` and stop.
+   not complete, return `conversation_ongoing` and stop, unless `feedback`
+   contains negative feedback; then continue to step 3 despite pending follow-ups.
 3. **Pin the question and decide whether the answer has a problem.** Read
    the whole transcript, not just the last
    message — weight follow-ups, rephrasings, feedback, and any expert correction.
+   Negative feedback is evidence, not proof; explain its effect in `reasoning`.
    When an expert corrected the bot, treat the expert's message as ground
   truth and work backward to what the bot missed. Extract the correction,
   the claimed knowledge gap, and its supporting references. Verify those
   claims against the referenced evidence, then use the verified gap as the
   first KB hypothesis and the referenced owner as source-selection evidence.
+   If no defect is established and the thread is open, return `conversation_ongoing`.
    If the completed conversation has no answer problem, return `no_issue` and
    stop.
 4. **Inspect the failed turn.** Call `fetch_chat_trace(trace_id)` using the
@@ -211,11 +214,11 @@ Allowed combinations:
 | --- | --- | --- |
 | analysis | `conversation_ongoing`, `no_issue`, `issue_created` | `issue_created` requires `classification` and `issue_url`; otherwise both are `null` |
 | validation | `validation_passed`, `validation_failed` | `classification` and `issue_url` are `null` |
-| analysis | `remediation_failed` | Both gates confirmed a completed conversation with a real answer problem, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` null, and put the blocker in `reasoning` |
+| analysis | `remediation_failed` | Both analysis gates passed, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` null, and put the blocker in `reasoning` |
 | either | `processing_failed` | Failure reason in `reasoning`; `classification` and `issue_url` are `null` |
 
 Use `processing_failed` only when processing fails before analysis has
-confirmed both a completed conversation and a real answer problem, or when
+passed both gates, or when
 the validation workflow itself cannot complete. After both analysis gates
 pass, every blocker must return `remediation_failed` so the backend preserves
 the incorrect-answer status separately from the failed remediation attempt.

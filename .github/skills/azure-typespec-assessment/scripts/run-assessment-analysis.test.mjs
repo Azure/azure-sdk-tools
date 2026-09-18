@@ -1,6 +1,30 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
-import { buildModelInput } from "./run-assessment-analysis.mjs";
+import {
+  assertFreshOutput,
+  buildModelInput,
+} from "./run-assessment-analysis.mjs";
+
+test("requires a fresh assessment output directory", () => {
+  const root = fs.mkdtempSync(
+    path.join(os.tmpdir(), "typespec-assessment-output-"),
+  );
+  const missing = path.join(root, "new");
+  try {
+    assert.doesNotThrow(() => assertFreshOutput(missing));
+    assert.doesNotThrow(() => assertFreshOutput(root));
+    fs.writeFileSync(path.join(root, "workflow-state.json"), "{}");
+    assert.throws(
+      () => assertFreshOutput(root),
+      /Assessment output directory must be empty/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("model input references canonical evidence without embedding sources", () => {
   const input = buildModelInput({

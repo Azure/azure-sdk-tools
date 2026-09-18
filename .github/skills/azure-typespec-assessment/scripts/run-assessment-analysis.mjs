@@ -13,11 +13,7 @@ import { stableId } from "./stable-id.mjs";
 import { resolveAssessmentInput } from "./assessment-input.mjs";
 import { buildAgentWorkspace } from "./build-agent-workspace.mjs";
 import { partitionSemanticIntents } from "./semantic-assessment-scope.mjs";
-import {
-  readWorkflowState,
-  transitionWorkflowState,
-  verifyArtifactHashes,
-} from "./workflow-state.mjs";
+import { transitionWorkflowState } from "./workflow-state.mjs";
 
 const BUDGET_TIERS = [
   ["small", 128 * 1024],
@@ -1509,49 +1505,24 @@ function blockedAssessment(manifest, semantic, rest, downstream) {
   };
 }
 
+export function assertFreshOutput(output) {
+  if (
+    fs.existsSync(output) &&
+    fs.readdirSync(output, { withFileTypes: true }).length
+  ) {
+    throw new Error(
+      `Assessment output directory must be empty: ${output}. Choose a new --output directory.`,
+    );
+  }
+}
+
 export async function runAssessmentAnalysis(options) {
+  const output = path.resolve(options.output);
+  assertFreshOutput(output);
   const resolvedOptions = options.invocation
     ? options
     : resolveAssessmentInput(options);
-  const output = path.resolve(resolvedOptions.output);
   fs.mkdirSync(output, { recursive: true });
-  if (resolvedOptions.resume) {
-    const state = readWorkflowState(output);
-    if (!state) throw new Error("Cannot resume: workflow-state.json is missing.");
-    const expectedHead = resolvedOptions.head;
-    const actualHead = state.comparisonIdentity?.sourceComparison?.headCommit;
-    if (expectedHead && actualHead !== expectedHead) {
-      throw new Error(
-        `Cannot resume: comparison head changed from ${actualHead ?? "<missing>"} to ${expectedHead}.`,
-      );
-    }
-    const hashErrors = verifyArtifactHashes(output, state.artifactHashes);
-    if (hashErrors.length) {
-      throw new Error(`Cannot resume: ${hashErrors.join(" ")}`);
-    }
-    if (state.state === "complete") {
-      const assessmentPath = path.join(output, "assessment.json");
-      if (!fs.existsSync(assessmentPath)) {
-        throw new Error("Cannot resume: completed assessment.json is missing.");
-      }
-      return { status: "complete", assessment: readJson(assessmentPath) };
-    }
-    if (state.state === "awaiting-agent-judgment") {
-      const indexPath = path.join(
-        output,
-        state.artifacts?.agentIndex ?? "agent-workspace/agent-index.json",
-      );
-      if (!fs.existsSync(indexPath)) {
-        throw new Error("Cannot resume: Agent index is missing.");
-      }
-      return {
-        status: "awaiting-agent-judgment",
-        modelInput: readJson(path.join(output, "model-input.json")),
-        agentIndex: indexPath,
-      };
-    }
-    throw new Error(`Cannot resume workflow state ${state.state}.`);
-  }
   transitionWorkflowState(output, "preparing", {
     invocation: resolvedOptions.invocation,
     failure: undefined,
@@ -1700,7 +1671,6 @@ if (isMain(import.meta.url)) {
       required: ["output"],
       defaults: { repo: process.cwd() },
       arrays: ["sparse-root"],
-      booleans: ["resume"],
     });
     const result = await runAssessmentAnalysis(args);
     console.log(

@@ -75,9 +75,9 @@ node <skill>\scripts\finalize-assessment.mjs --work <work-directory>
 The command validates all Agent artifacts and canonical hashes before
 atomically writing `assessment.json` and `assessment.html`.
 
-To resume a previously prepared immutable comparison without recompiling, pass
-`--resume` with the same coordinator arguments and output directory. Resume is
-rejected when the comparison head or any canonical artifact hash changed.
+Every coordinator invocation requires a new or empty output directory. This
+prevents artifacts from an earlier Git comparison from being returned as a
+current assessment.
 
 ## Results
 

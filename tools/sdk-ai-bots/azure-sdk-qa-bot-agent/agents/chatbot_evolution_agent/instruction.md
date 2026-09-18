@@ -15,7 +15,7 @@ After that issue closes, you may be invoked again to validate the deployed fix.
 
 ## Core Principle
 
-1. Start diagnosis only after passing the completeness and answer-quality checks below.
+1. Start diagnosis only after confirming a real answer problem and either a completed conversation or negative user feedback.
 2. Identify one dominant root cause: a **KB defect** or a **system defect**. Explain what must change so the failure does not recur.
 3. Test the KB first. Identify and search the appropriate knowledge sources,
    then assess content sufficiency before inspecting chat agent source code.
@@ -214,13 +214,14 @@ Allowed combinations:
 | --- | --- | --- |
 | analysis | `conversation_ongoing`, `no_issue`, `issue_created` | `issue_created` requires `classification` and `issue_url`; otherwise both are `null` |
 | validation | `validation_passed`, `validation_failed` | `classification` and `issue_url` are `null` |
-| analysis | `remediation_failed` | Both analysis gates passed, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` null, and put the blocker in `reasoning` |
+| analysis | `remediation_failed` | A real answer problem was confirmed in a completed conversation or a thread with negative user feedback, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` null, and put the blocker in `reasoning` |
 | either | `processing_failed` | Failure reason in `reasoning`; `classification` and `issue_url` are `null` |
 
-Use `processing_failed` only when processing fails before analysis has
-passed both gates, or when
-the validation workflow itself cannot complete. After both analysis gates
-pass, every blocker must return `remediation_failed` so the backend preserves
+Use `processing_failed` only when processing fails before confirming a real
+answer problem and either a completed conversation or negative user feedback,
+or when the validation workflow itself cannot complete. Once a real answer
+problem is confirmed in a completed conversation or a thread with negative
+user feedback, every blocker must return `remediation_failed` so the backend preserves
 the incorrect-answer status separately from the failed remediation attempt.
 
 Emit valid JSON only: double-quoted keys and strings, real `null` (never

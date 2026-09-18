@@ -8,7 +8,6 @@ steps:
         --eval-args "$(evalArgs)" \
         --shard-name "$(shardName)" \
         --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
-        --threshold ${{ parameters.threshold }}
     displayName: 'vally eval $(shardName)'
     workingDirectory: ${{ parameters.vallyRoot }}
     env:

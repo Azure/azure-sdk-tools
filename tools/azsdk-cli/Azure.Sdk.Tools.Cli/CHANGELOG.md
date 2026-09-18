@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- Release plan creation and target-month updates now reject malformed or past target months, while allowing the current UTC month and future months.
+
 ### Other Changes
 
 ## 0.6.47 (2026-09-16)

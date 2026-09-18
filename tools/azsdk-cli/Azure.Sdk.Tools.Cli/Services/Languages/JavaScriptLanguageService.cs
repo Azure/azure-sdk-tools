@@ -524,6 +524,23 @@ public sealed partial class JavaScriptLanguageService : LanguageService
     /// Handles TypeScript compiler errors and merge conflict markers left by
     /// <c>dev-tool customization apply</c>.
     /// </summary>
+    public override Task RunRepairSessionAsync(
+        string customizationRoot,
+        string packagePath,
+        string buildContext,
+        int maxAttempts,
+        Func<CancellationToken, Task> onTurnStarting,
+        Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
+        Action<AppliedPatch> onPatchApplied,
+        CancellationToken ct)
+    {
+        customizationRoot = Path.Combine(packagePath, "src");
+        return RunRepairAgentAsync(copilotAgentRunner, customizationRoot, packagePath,
+            (readPaths, patchPaths) => new JavaScriptErrorDrivenPatchTemplate(
+                buildContext, packagePath, customizationRoot, readPaths, patchPaths).BuildPrompt(),
+            maxAttempts, onTurnStarting, onTurnCompleted, onPatchApplied, ct);
+    }
+
     public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,

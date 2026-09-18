@@ -161,6 +161,7 @@ public class CopilotAgentRunner(
 
         while (iterations < agent.MaxIterations)
         {
+            ct.ThrowIfCancellationRequested();
             iterations++;
             capturedResult = default;
             sessionError = null; // Reset error state for each iteration
@@ -168,7 +169,13 @@ public class CopilotAgentRunner(
             logger.LogDebug("Sending message iteration {Iteration}", iterations);
 
             // Create TCS before sending to ensure we don't miss the event
-            sessionIdleTcs = new TaskCompletionSource();
+            sessionIdleTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            if (agent.OnTurnStarting != null)
+            {
+                await agent.OnTurnStarting(ct);
+                ct.ThrowIfCancellationRequested();
+            }
 
             // SendAsync returns the message ID but doesn't wait for processing
             // We need to wait for SessionIdleEvent to know when the agent is done
@@ -183,19 +190,34 @@ public class CopilotAgentRunner(
             {
                 await sessionIdleTcs.Task.WaitAsync(linkedCts.Token);
             }
-            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
             {
                 throw new TimeoutException(
                     $"Agent session idle timeout of {agent.IdleTimeout.Minutes}m was exceeded while waiting for the agent to complete.");
             }
 
             logger.LogDebug("Message completed, capturedResult is {HasResult}", capturedResult != null ? "set" : "null");
+            ct.ThrowIfCancellationRequested();
 
             // Check if there was a session error
             if (sessionError != null)
             {
                 throw new InvalidOperationException(
                     $"Session error during agent execution: [{sessionError.Data.ErrorType}] {sessionError.Data.Message}");
+            }
+
+            if (agent.OnTurnCompleted != null)
+            {
+                var turn = await agent.OnTurnCompleted(capturedResult, ct);
+                ct.ThrowIfCancellationRequested();
+                if (turn.Continue)
+                {
+                    prompt = turn.Prompt ?? "Continue the task using the conversation and validation feedback.";
+                    continue;
+                }
+
+                tokenUsageHelper.LogUsage();
+                return turn.Result ?? throw new InvalidOperationException("A completed turn must provide a result.");
             }
 
             // Check if Exit was called

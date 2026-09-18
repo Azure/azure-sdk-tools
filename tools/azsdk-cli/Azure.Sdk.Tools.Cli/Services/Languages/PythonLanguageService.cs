@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using Azure.Sdk.Tools.Cli.Services.Repair;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -335,12 +336,28 @@ public sealed partial class PythonLanguageService : LanguageService
     public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(
         string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
         var packageInfo = await GetPackageInfo(packagePath, ct);
         var check = await LintCode(packagePath, cancellationToken: ct);
+        ct.ThrowIfCancellationRequested();
         return check.ExitCode == 0
             ? (true, null, packageInfo)
             : (false, check.CheckStatusDetails, packageInfo);
     }
+
+    public override Task RunRepairSessionAsync(
+        string customizationRoot,
+        string packagePath,
+        string buildContext,
+        int maxAttempts,
+        Func<CancellationToken, Task> onTurnStarting,
+        Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
+        Action<AppliedPatch> onPatchApplied,
+        CancellationToken ct) =>
+        RunRepairAgentAsync(copilotAgentRunner, customizationRoot, packagePath,
+            (readPaths, patchPaths) => new PythonErrorDrivenPatchTemplate(
+                buildContext, packagePath, customizationRoot, readPaths, patchPaths).BuildPrompt(),
+            maxAttempts, onTurnStarting, onTurnCompleted, onPatchApplied, ct);
 
     public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
@@ -412,30 +429,7 @@ public sealed partial class PythonLanguageService : LanguageService
     {
         try
         {
-            foreach (var line in File.ReadLines(patchFilePath))
-            {
-                if (line.Contains("__all__") && line.Contains("="))
-                {
-                    // If line contains quoted strings, there are exports
-                    if (line.Contains('"') || line.Contains('\''))
-                    {
-                        return true;
-                    }
-
-                    // If line has [ but not ] on the same line after the =, it's multiline and non-empty.
-                    var valueAfterEquals = line[(line.LastIndexOf('=') + 1)..].Trim();
-                    if (valueAfterEquals.StartsWith('[') && !valueAfterEquals.StartsWith("[]"))
-                    {
-                        return true;
-                    }
-
-                    // Single-line empty: __all__ = [] or __all__: List[str] = []
-                    return false;
-                }
-            }
-
-            // No __all__ found - assume no customizations (template file)
-            return false;
+            return CustomizationFilePolicy.HasNonEmptyPythonExports(patchFilePath);
         }
         catch (Exception ex)
         {

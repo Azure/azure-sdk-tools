@@ -108,15 +108,45 @@ public class TspClientHelper : ITspClientHelper
         }
 
         var npmPrefix = await GetNpmPrefixAsync(repoRootFolder, ct);
+        if (!NpmOptions.IsLocalBinaryAvailable(npmPrefix, "tsp-client"))
+        {
+            if (!File.Exists(Path.Combine(npmPrefix, "package.json")) ||
+                !File.Exists(Path.Combine(npmPrefix, "package-lock.json")))
+            {
+                return new TspToolResponse
+                {
+                    ResponseError = $"Cannot install the pinned tsp-client: package.json and package-lock.json are required under '{npmPrefix}'.",
+                    TypeSpecProject = tspLocationDirectory
+                };
+            }
+
+            logger.LogInformation("Installing pinned tsp-client dependencies from {npmPrefix}", npmPrefix);
+            var installResult = await npmHelper.Run(new NpmOptions(
+                ["ci", "--prefix", npmPrefix],
+                workingDirectory: npmPrefix,
+                timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)), ct);
+            ct.ThrowIfCancellationRequested();
+            if (installResult.ExitCode != 0 || !NpmOptions.IsLocalBinaryAvailable(npmPrefix, "tsp-client"))
+            {
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed to install the pinned tsp-client executable under '{npmPrefix}'." +
+                        Environment.NewLine + installResult.Output,
+                    TypeSpecProject = tspLocationDirectory
+                };
+            }
+        }
         var npmOptions = new NpmOptions(
             npmPrefix,
             args.ToArray(),
             logOutputStream: true,
             workingDirectory: tspLocationDirectory,
-            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
+            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes),
+            requireLocalBinary: true
         );
 
         var result = await npmHelper.Run(npmOptions, ct);
+        ct.ThrowIfCancellationRequested();
         if (result.ExitCode != 0)
         {
             return new TspToolResponse

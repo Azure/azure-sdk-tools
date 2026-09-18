@@ -374,6 +374,20 @@ public sealed partial class JavaLanguageService : LanguageService
     /// Applies patches to customization files based on build errors.
     /// This is a mechanical worker - the Classifier does the thinking and routing.
     /// </summary>
+    public override Task RunRepairSessionAsync(
+        string customizationRoot,
+        string packagePath,
+        string buildContext,
+        int maxAttempts,
+        Func<CancellationToken, Task> onTurnStarting,
+        Func<string?, CancellationToken, Task<CopilotAgentTurnResult<string>>> onTurnCompleted,
+        Action<AppliedPatch> onPatchApplied,
+        CancellationToken ct) =>
+        RunRepairAgentAsync(copilotAgentRunner, customizationRoot, packagePath,
+            (readPaths, patchPaths) => new JavaErrorDrivenPatchTemplate(
+                buildContext, packagePath, customizationRoot, readPaths, patchPaths).BuildPrompt(),
+            maxAttempts, onTurnStarting, onTurnCompleted, onPatchApplied, ct);
+
     public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,

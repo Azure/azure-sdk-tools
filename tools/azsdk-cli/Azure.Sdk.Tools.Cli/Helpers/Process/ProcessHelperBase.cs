@@ -46,6 +46,8 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             RedirectStandardInput = true,
+            StandardOutputEncoding = options.OutputEncoding,
+            StandardErrorEncoding = options.OutputEncoding,
             UseShellExecute = false,
             CreateNoWindow = true
         };

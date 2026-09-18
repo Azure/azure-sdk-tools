@@ -20,6 +20,7 @@ using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.Notification;
+using Azure.Sdk.Tools.Cli.Services.Repair;
 using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
@@ -107,6 +108,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
             services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
+            services.AddSingleton(TimeProvider.System);
+            services.AddSingleton<IRepairSourceState, RepairSourceState>();
+            services.AddSingleton<IRepairArtifacts, RepairArtifacts>();
+            services.AddScoped<ICustomizedCodeRepairService, CustomizedCodeRepairService>();
             services.AddScoped<ISdkBreakingChangeClassificationService, SdkBreakingChangeClassificationService>();
             services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 

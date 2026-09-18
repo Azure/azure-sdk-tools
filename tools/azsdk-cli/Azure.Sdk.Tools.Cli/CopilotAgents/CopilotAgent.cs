@@ -45,4 +45,15 @@ public class CopilotAgent<TResult> where TResult : notnull
     /// If this callback is not provided, no validation is performed.
     /// </summary>
     public Func<TResult, Task<CopilotAgentValidationResult>>? ValidateResult { get; init; }
+
+    /// <summary>
+    /// Optional hook called immediately before each message is sent.
+    /// </summary>
+    public Func<CancellationToken, Task>? OnTurnStarting { get; init; }
+
+    /// <summary>
+    /// Optional hook called after every idle turn, even when Exit was not called.
+    /// When provided, this hook owns continuation instead of Exit reminders and ValidateResult.
+    /// </summary>
+    public Func<TResult?, CancellationToken, Task<CopilotAgentTurnResult<TResult>>>? OnTurnCompleted { get; init; }
 }

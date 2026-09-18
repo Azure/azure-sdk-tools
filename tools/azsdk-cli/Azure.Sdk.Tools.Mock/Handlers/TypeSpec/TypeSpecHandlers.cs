@@ -118,11 +118,12 @@ public class CustomizedCodeUpdateHandler : IMockToolHandler
     public CommandResponse Handle(Dictionary<string, object?>? arguments) => new CustomizedCodeUpdateResponse
     {
         Success = true,
-        Message = "Customized code updated and rebuilt successfully (mock).",
+        BuildValidated = false,
+        Message = "Simulated customization update (mock); no deterministic build validation was run.",
         AppliedPatches =
         [
             new AppliedPatch(
-                FilePath: "src/Generated/Customization/WidgetClientCustomization.cs",
+                FilePath: "src/Customization/WidgetClientCustomization.cs",
                 Description: "Renamed Get to GetWidget",
                 ReplacementCount: 2)
         ]

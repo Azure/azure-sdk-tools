@@ -101,6 +101,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
+        public void Constructor_RequiredLocalBinaryMissing_DoesNotInferPackageName()
+        {
+            Assert.Throws<FileNotFoundException>(() =>
+                new NpmOptions(tempDir, ["tsp-client", "update"], requireLocalBinary: true));
+        }
+
+        [Test]
+        public void Constructor_RequiredLocalBinaryInstalled_RunsInstalledExecutable()
+        {
+            var binDir = Path.Combine(tempDir, "node_modules", ".bin");
+            Directory.CreateDirectory(binDir);
+            var shim = Path.Combine(binDir, OperatingSystem.IsWindows() ? "tsp-client.cmd" : "tsp-client");
+            File.WriteAllText(shim, "stub");
+            var options = new NpmOptions(tempDir, ["tsp-client", "update"], requireLocalBinary: true);
+            Assert.That(options.Command == shim || options.Args.Contains(shim), Is.True);
+            Assert.That(options.Args, Does.Not.Contain("exec"));
+        }
+
+        [Test]
         public void Constructor_WithPrefix_BinaryExistsInNodeModulesBin_ResolvesDirectly()
         {
             var binDir = Path.Combine(tempDir, "node_modules", ".bin");

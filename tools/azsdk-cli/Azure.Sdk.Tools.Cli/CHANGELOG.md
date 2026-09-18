@@ -4,9 +4,16 @@
 
 ### Features Added
 
+- Added bounded custom-code customization sessions with `--max-attempts` / `maxAttempts`, retained repair context, and source-bound validation evidence.
+
 ### Breaking Changes
 
+- CustomCode updates require successful .NET plugin preparation and reject out-of-scope source changes rather than relying on preparation warnings or agent-reported success.
+
 ### Bugs Fixed
+
+- Customized-code updates now validate classifier no-op results against the SDK build and report required regeneration failures without validating stale generated code.
+- TypeSpec regeneration installs missing repository-local tsp-client dependencies from the existing lockfile instead of inferring an unrelated npm package from the executable name.
 
 ### Other Changes
 

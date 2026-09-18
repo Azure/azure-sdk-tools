@@ -31,14 +31,16 @@ public class NpmOptions : ProcessOptions, IProcessOptions
     /// <param name="logOutputStream">Whether to log the output stream. Defaults to true.</param>
     /// <param name="workingDirectory">The working directory for the command. Defaults to current directory.</param>
     /// <param name="timeout">The timeout for the command. Defaults to 2 minutes.</param>
+    /// <param name="requireLocalBinary">Reject a missing local executable instead of inferring a package name with npm exec.</param>
     public NpmOptions(
         string? prefix,
         string[] args,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null
+        TimeSpan? timeout = null,
+        bool requireLocalBinary = false
     ) : base(
-        ResolveBinCommand(prefix, args) ?? NPM,
+        ResolveCommand(prefix, args, requireLocalBinary),
         ResolveBinArgs(prefix, args),
         logOutputStream,
         workingDirectory,
@@ -60,6 +62,23 @@ public class NpmOptions : ProcessOptions, IProcessOptions
         string? workingDirectory = null,
         TimeSpan? timeout = null
     ) : base("npm", args, logOutputStream, workingDirectory, timeout) {}
+
+    internal static bool IsLocalBinaryAvailable(string prefix, string binaryName) =>
+        ResolveBinCommand(prefix, [binaryName]) != null;
+
+    private static string ResolveCommand(string? prefix, string[] args, bool requireLocalBinary)
+    {
+        var command = ResolveBinCommand(prefix, args);
+        if (command != null)
+        {
+            return command;
+        }
+        if (requireLocalBinary)
+        {
+            throw new FileNotFoundException($"Required local npm executable '{args.FirstOrDefault()}' was not found under '{prefix}'.");
+        }
+        return NPM;
+    }
 
     /// <summary>
     /// Resolves the binary command from node_modules/.bin when a prefix is provided

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json;
 
@@ -11,42 +10,52 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public static List<string> CompareJson(byte[] json1, byte[] json2)
         {
             var differences = new List<string>();
-            JsonDocument doc1;
-            JsonDocument doc2;
-
-            // Deserialize the byte arrays to JsonDocument
-            try
+            using var doc1 = ParseJson(json1, "request", differences);
+            if (doc1 == null)
             {
-                doc1 = JsonDocument.Parse(json1);
-            }
-            catch(Exception ex)
-            {
-                differences.Add($"Unable to parse the request json body. Content \"{Encoding.UTF8.GetString(json1)}.\" Exception: {ex.Message}");
                 return differences;
             }
 
-            try
+            using var doc2 = ParseJson(json2, "record", differences);
+            if (doc2 != null)
             {
-                doc2 = JsonDocument.Parse(json2);
+                CompareElements(doc1.RootElement, doc2.RootElement, differences, "");
             }
-            
-            catch (Exception ex)
-            {
-                differences.Add($"Unable to parse the record json body. Content \"{Encoding.UTF8.GetString(json2)}.\" Exception: {ex.Message}");
-                return differences;
-            }
-
-            CompareElements(doc1.RootElement, doc2.RootElement, differences, "");
 
             return differences;
         }
 
-        private static void CompareElements(JsonElement element1, JsonElement element2, List<string> differences, string path)
+        internal static bool AreEqual(byte[] json1, byte[] json2)
+        {
+            using var doc1 = ParseJson(json1, "request", null);
+            if (doc1 == null)
+            {
+                return false;
+            }
+
+            using var doc2 = ParseJson(json2, "record", null);
+            return doc2 != null && CompareElements(doc1.RootElement, doc2.RootElement, null, null);
+        }
+
+        private static JsonDocument ParseJson(byte[] json, string description, List<string> differences)
+        {
+            try
+            {
+                return JsonDocument.Parse(json);
+            }
+            catch (Exception exception)
+            {
+                differences?.Add($"Unable to parse the {description} json body. Content \"{Encoding.UTF8.GetString(json)}.\" Exception: {exception.Message}");
+                return null;
+            }
+        }
+
+        private static bool CompareElements(JsonElement element1, JsonElement element2, List<string> differences, string path)
         {
             if (element1.ValueKind != element2.ValueKind)
             {
-                differences.Add($"{path}: Request and record have different types.");
-                return;
+                differences?.Add($"{path}: Request and record have different types.");
+                return false;
             }
 
             switch (element1.ValueKind)
@@ -65,15 +74,33 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         foreach (var prop in properties2)
                             propDict2[prop.Name] = prop.Value;
 
-                        foreach (var key in propDict1.Keys)
+                        if (differences == null && propDict1.Count != propDict2.Count)
                         {
-                            if (propDict2.ContainsKey(key))
+                            return false;
+                        }
+
+                        bool equal = true;
+                        foreach (var property in propDict1)
+                        {
+                            bool propertyEqual;
+                            if (propDict2.TryGetValue(property.Key, out var otherValue))
                             {
-                                CompareElements(propDict1[key], propDict2[key], differences, $"{path}.{key}");
+                                propertyEqual = CompareElements(property.Value, otherValue, differences,
+                                    differences == null ? null : $"{path}.{property.Key}");
                             }
                             else
                             {
-                                differences.Add($"{path}.{key}: Missing in request JSON");
+                                differences?.Add($"{path}.{property.Key}: Missing in request JSON");
+                                propertyEqual = false;
+                            }
+
+                            if (!propertyEqual)
+                            {
+                                if (differences == null)
+                                {
+                                    return false;
+                                }
+                                equal = false;
                             }
                         }
 
@@ -81,75 +108,82 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         {
                             if (!propDict1.ContainsKey(key))
                             {
-                                differences.Add($"{path}.{key}: Missing in record JSON");
+                                differences?.Add($"{path}.{key}: Missing in record JSON");
+                                equal = false;
                             }
                         }
 
-                        break;
+                        return equal;
                     }
                 case JsonValueKind.Array:
                     {
-                        var array1 = element1.EnumerateArray();
-                        var array2 = element2.EnumerateArray();
+                        if (differences == null && element1.GetArrayLength() != element2.GetArrayLength())
+                        {
+                            return false;
+                        }
 
                         int index = 0;
-                        var enum1 = array1.GetEnumerator();
-                        var enum2 = array2.GetEnumerator();
-
-                        while (enum1.MoveNext() && enum2.MoveNext())
-                        {
-                            CompareElements(enum1.Current, enum2.Current, differences, $"{path}[{index}]");
-                            index++;
-                        }
+                        bool equal = true;
+                        var enum1 = element1.EnumerateArray();
+                        var enum2 = element2.EnumerateArray();
 
                         while (enum1.MoveNext())
                         {
-                            differences.Add($"{path}[{index}]: Extra element in request JSON");
+                            if (enum2.MoveNext())
+                            {
+                                if (!CompareElements(enum1.Current, enum2.Current, differences,
+                                    differences == null ? null : $"{path}[{index}]"))
+                                {
+                                    if (differences == null)
+                                    {
+                                        return false;
+                                    }
+                                    equal = false;
+                                }
+                            }
+                            else
+                            {
+                                differences?.Add($"{path}[{index}]: Extra element in request JSON");
+                                equal = false;
+                            }
                             index++;
                         }
 
                         while (enum2.MoveNext())
                         {
-                            differences.Add($"{path}[{index}]: Extra element in record JSON");
+                            differences?.Add($"{path}[{index}]: Extra element in record JSON");
+                            equal = false;
                             index++;
                         }
 
-                        break;
+                        return equal;
                     }
                 case JsonValueKind.String:
                     {
                         if (element1.GetString() != element2.GetString())
                         {
-                            differences.Add($"{path}: \"{element1.GetString()}\" != \"{element2.GetString()}\"");
+                            differences?.Add($"{path}: \"{element1.GetString()}\" != \"{element2.GetString()}\"");
+                            return false;
                         }
-                        break;
+                        return true;
                     }
                 case JsonValueKind.Number:
                     {
                         if (element1.GetDecimal() != element2.GetDecimal())
                         {
-                            differences.Add($"{path}: {element1.GetDecimal()} != {element2.GetDecimal()}");
+                            differences?.Add($"{path}: {element1.GetDecimal()} != {element2.GetDecimal()}");
+                            return false;
                         }
-                        break;
+                        return true;
                     }
                 case JsonValueKind.True:
                 case JsonValueKind.False:
-                    {
-                        if (element1.GetBoolean() != element2.GetBoolean())
-                        {
-                            differences.Add($"{path}: {element1.GetBoolean()} != {element2.GetBoolean()}");
-                        }
-                        break;
-                    }
                 case JsonValueKind.Null:
-                    {
-                        // Both are null, nothing to compare
-                        break;
-                    }
+                    return true;
                 default:
                     {
-                        differences.Add($"{path}: Unhandled value kind {element1.ValueKind}");
-                        break;
+                        differences?.Add($"{path}: Unhandled value kind {element1.ValueKind}");
+                        return false;
                     }
             }
         }

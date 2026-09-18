@@ -4,12 +4,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -18,6 +21,226 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public BodilessMatcher BodilessMatcher = new BodilessMatcher();
         public HeaderlessMatcher HeaderlessMatcher = new HeaderlessMatcher();
         public RecordMatcher RecordMatcher = new RecordMatcher();
+        private readonly ITestOutputHelper _output;
+
+        public MatcherTests(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
+        [Fact]
+        public void FindMatchOnlyComparesPlausibleCandidates()
+        {
+            var matcher = new CountingRecordMatcher();
+            var request = CreateMatchEntry("https://example.org/match", Core.RequestMethod.Get);
+            var wrongMethod = CreateMatchEntry(request.RequestUri, Core.RequestMethod.Post);
+            var wrongUri = CreateMatchEntry("https://example.org/other", request.RequestMethod);
+            var wrongHeader = CreateMatchEntry(request.RequestUri, request.RequestMethod);
+            wrongHeader.Request.Headers["x-match"] = new[] { "different" };
+            var wrongBody = CreateMatchEntry(request.RequestUri, request.RequestMethod);
+            wrongBody.Request.Body = Encoding.UTF8.GetBytes("different");
+            var matched = CreateMatchEntry(request.RequestUri, request.RequestMethod);
+            var duplicate = CreateMatchEntry(request.RequestUri, request.RequestMethod);
+
+            Assert.Same(matched, matcher.FindMatch(request, new[] { wrongMethod, wrongUri, wrongHeader, wrongBody, matched, duplicate }));
+            Assert.Equal(3, matcher.HeaderComparisons);
+            Assert.Equal(2, matcher.BodyComparisons);
+        }
+
+        [Theory]
+        [InlineData("http")]
+        [InlineData("https")]
+        public void FindMatchPreservesTrack1Matching(string scheme)
+        {
+            var matcher = new CountingRecordMatcher();
+            matcher.IgnoredQueryParameters.Add("signature");
+            var request = CreateMatchEntry($"{scheme}://example.org/match?signature=current", Core.RequestMethod.Get);
+            var recorded = new RecordEntry
+            {
+                IsTrack1Recording = true,
+                RequestUri = "/match?signature=recorded",
+                RequestMethod = request.RequestMethod
+            };
+
+            Assert.Same(recorded, matcher.FindMatch(request, new[] { recorded }));
+            Assert.Equal(0, matcher.HeaderComparisons);
+            Assert.Equal(0, matcher.BodyComparisons);
+        }
+
+        [Fact]
+        public void FindMatchRanksAllEntriesWhenNoExactMatch()
+        {
+            var request = CreateMatchEntry("https://example.org/match", Core.RequestMethod.Get);
+            var sameUri = CreateMatchEntry(request.RequestUri, request.RequestMethod);
+            sameUri.Request.Headers["x-match"] = new[] { "different" };
+            sameUri.Request.Body = Encoding.UTF8.GetBytes("different");
+            var closest = CreateMatchEntry("https://example.org/closest", request.RequestMethod);
+            var tied = CreateMatchEntry("https://example.org/tied", request.RequestMethod);
+
+            var exception = Assert.Throws<TestRecordingMismatchException>(() =>
+                RecordMatcher.FindMatch(request, new[] { sameUri, closest, tied }));
+
+            Assert.Contains("record  <https://example.org/closest>", exception.Message);
+            Assert.DoesNotContain("values differ", exception.Message);
+            Assert.DoesNotContain("bodies do not match", exception.Message);
+            Assert.Contains("0: https://example.org/match", exception.Message);
+            Assert.Contains("2: https://example.org/tied", exception.Message);
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void HeaderComparisonMatchesDiagnosticScores(bool differentComparers, bool caseSensitiveExclusions)
+        {
+            var headers = new SortedDictionary<string, string[]>(differentComparers ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
+            {
+                ["Accept"] = new[] { "application/json,text/plain" },
+                ["Content-Type"] = new[] { "multipart/mixed;boundary=request" },
+                ["x-value"] = new[] { "request" },
+                ["x-ignored"] = new[] { "request" },
+                ["x-excluded"] = new[] { "request" },
+                ["x-request-only"] = new[] { "request" }
+            };
+            var recorded = new SortedDictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Accept"] = new[] { "application/json, text/plain" },
+                ["Content-Type"] = new[] { "multipart/mixed; boundary=record" },
+                ["X-Value"] = new[] { "record" },
+                ["X-Ignored"] = new[] { "record" },
+                ["X-Excluded"] = new[] { "record" },
+                ["x-record-only"] = new[] { "record" }
+            };
+            var ignored = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "x-ignored" };
+            var excluded = new HashSet<string>(caseSensitiveExclusions ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase) { "x-excluded" };
+            var description = new StringBuilder();
+
+            int diagnosticScore = RecordMatcher.CompareHeaderDictionaries(headers, recorded, ignored, excluded, description);
+            int score = RecordMatcher.CompareHeaderDictionaries(headers, recorded, ignored, excluded);
+
+            Assert.Equal(caseSensitiveExclusions ? 4 : 3, score);
+            Assert.Equal(diagnosticScore, score);
+            Assert.Equal(6, headers.Count);
+            Assert.Equal(6, recorded.Count);
+            Assert.Equal("application/json,text/plain", headers["Accept"][0]);
+        }
+
+        [Theory]
+        [InlineData("{\"first\":1,\"second\":2}", "{\"second\":2,\"first\":1}", true)]
+        [InlineData("{\"number\":1}", "{\"number\":1.0}", true)]
+        [InlineData("{\"number\":1e1}", "{\"number\":10}", true)]
+        [InlineData("{\"value\":1,\"value\":2}", "{\"value\":2}", true)]
+        [InlineData("{\"value\":1,\"value\":2}", "{\"value\":1}", false)]
+        [InlineData("{\"Value\":1}", "{\"value\":1}", false)]
+        [InlineData("[1,{\"values\":[true,null,\"text\"]}]", "[1.0,{\"values\":[true,null,\"text\"]}]", true)]
+        [InlineData("[1,2]", "[2,1]", false)]
+        [InlineData("[1,2]", "[1]", false)]
+        [InlineData("[1]", "[1,2]", false)]
+        [InlineData("[null]", "[]", false)]
+        [InlineData("[]", "[null]", false)]
+        [InlineData("{\"values\":[1,2]}", "{\"values\":[1]}", false)]
+        [InlineData("{\"extra\":true}", "{}", false)]
+        [InlineData("{}", "{\"extra\":true}", false)]
+        [InlineData("null", " null ", true)]
+        [InlineData("false", "true", false)]
+        [InlineData("\"a\"", "\"\\u0061\"", true)]
+        [InlineData("\"1\"", "1", false)]
+        [InlineData("invalid", "{}", false)]
+        [InlineData("{}", "invalid", false)]
+        public void JsonBodyComparisonMatchesDiagnosticResult(string requestBody, string recordedBody, bool equal)
+        {
+            byte[] request = Encoding.UTF8.GetBytes(requestBody);
+            byte[] recorded = Encoding.UTF8.GetBytes(recordedBody);
+            var description = new StringBuilder();
+
+            Assert.Equal(equal, JsonComparer.AreEqual(request, recorded));
+            Assert.Equal(equal, JsonComparer.CompareJson(request, recorded).Count == 0);
+            Assert.Equal(equal ? 0 : 1, RecordMatcher.CompareBodies(request, recorded, "application/json", "application/json", Encoding.UTF8));
+            Assert.Equal(equal ? 0 : 1, RecordMatcher.CompareBodies(request, recorded, "application/json", "application/json", Encoding.UTF8, description));
+            Assert.Equal(equal, description.Length == 0);
+        }
+
+        [Fact]
+        public void JsonDiagnosticsIncludeEveryDifference()
+        {
+            var request = Encoding.UTF8.GetBytes("{\"name\":\"request\",\"values\":[1,2,3],\"requestOnly\":true}");
+            var recorded = Encoding.UTF8.GetBytes("{\"name\":\"record\",\"values\":[1],\"recordOnly\":false}");
+
+            Assert.Equal(new[]
+            {
+                ".name: \"request\" != \"record\"",
+                ".values[1]: Extra element in request JSON",
+                ".values[2]: Extra element in request JSON",
+                ".requestOnly: Missing in request JSON",
+                ".recordOnly: Missing in record JSON"
+            }, JsonComparer.CompareJson(request, recorded));
+        }
+
+        [Fact]
+        public void JsonEqualityAvoidsDiagnosticAllocations()
+        {
+            var request = Encoding.UTF8.GetBytes("[" + string.Join(",", Enumerable.Repeat("1", 512)) + "]");
+            var recorded = Encoding.UTF8.GetBytes("[" + string.Join(",", Enumerable.Repeat("2", 512)) + "]");
+            const int iterations = 50;
+
+            (long AllocatedBytes, double Milliseconds) Measure(bool diagnostics)
+            {
+                var stopwatch = new Stopwatch();
+                bool foundEqual = false;
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                stopwatch.Start();
+                for (int iteration = 0; iteration < iterations; iteration++)
+                {
+                    foundEqual |= diagnostics
+                        ? JsonComparer.CompareJson(request, recorded).Count == 0
+                        : JsonComparer.AreEqual(request, recorded);
+                }
+                stopwatch.Stop();
+                long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+                Assert.False(foundEqual);
+                return (allocated, stopwatch.Elapsed.TotalMilliseconds);
+            }
+
+            Measure(diagnostics: true);
+            Measure(diagnostics: false);
+            var diagnosticResult = Measure(diagnostics: true);
+            var equalityResult = Measure(diagnostics: false);
+
+            _output.WriteLine($"512-element JSON arrays, first element differs, {iterations} iterations:");
+            _output.WriteLine($"Diagnostics: {diagnosticResult.AllocatedBytes / iterations:N0} bytes/op, {diagnosticResult.Milliseconds / iterations:F3} ms/op");
+            _output.WriteLine($"Equality: {equalityResult.AllocatedBytes / iterations:N0} bytes/op, {equalityResult.Milliseconds / iterations:F3} ms/op");
+            Assert.True(equalityResult.AllocatedBytes < diagnosticResult.AllocatedBytes / 4,
+                $"Expected at least 75% fewer allocations; diagnostics: {diagnosticResult.AllocatedBytes}, equality: {equalityResult.AllocatedBytes}.");
+        }
+
+        private static RecordEntry CreateMatchEntry(string uri, Core.RequestMethod method)
+        {
+            var entry = new RecordEntry { RequestUri = uri, RequestMethod = method };
+            entry.Request.Headers.Add("x-match", new[] { "expected" });
+            entry.Request.Body = Encoding.UTF8.GetBytes("body");
+            return entry;
+        }
+
+        private sealed class CountingRecordMatcher : RecordMatcher
+        {
+            public int HeaderComparisons { get; private set; }
+            public int BodyComparisons { get; private set; }
+
+            public override int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders,
+                HashSet<string> ignoredHeaders, HashSet<string> excludedHeaders, StringBuilder descriptionBuilder = null)
+            {
+                HeaderComparisons++;
+                return base.CompareHeaderDictionaries(headers, entryHeaders, ignoredHeaders, excludedHeaders, descriptionBuilder);
+            }
+
+            public override int CompareBodies(byte[] requestBody, byte[] recordBody, string requestContentType, string recordContentType,
+                Encoding encoding, StringBuilder descriptionBuilder = null)
+            {
+                BodyComparisons++;
+                return base.CompareBodies(requestBody, recordBody, requestContentType, recordContentType, encoding, descriptionBuilder);
+            }
+        }
 
         [Theory]
         [InlineData("Test.RecordEntries/response_with_xml_body.json", "Content-Type", "application/json;     odata=nometadata")]

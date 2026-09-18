@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import { documentQualitySummary, downstreamMethodData, downstreamPresentationDimension, renderReportSections, sdkTypeName } from "./assessment-report-ui.mjs";
@@ -18,6 +18,10 @@ function renderAssessmentHtml(assessment, options) {
     options,
   );
 }
+
+const recordedAssessmentTest = existsSync(
+  new URL("../evals/assessments", import.meta.url),
+) ? test : test.skip;
 
 function fixture() {
   const typeFact = (role) => ({
@@ -328,7 +332,7 @@ test("retains every finding anchor and escapes intent and source text", () => {
   for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(id), `Missing anchor ${id}`);
 });
 
-test("guideline cards retain every recorded diff once with distinct expected and actual sections", () => {
+recordedAssessmentTest("guideline cards retain every recorded diff once with distinct expected and actual sections", () => {
   const input = JSON.parse(readFileSync(new URL("../evals/assessments/44742/assessment.json", import.meta.url), "utf8"));
   const first = input.dimensions.compliance.findings[0];
   first.actual = first.codeSnippets[0].lines.join("\n");
@@ -1155,7 +1159,7 @@ test("failure cards preserve other affected intents without repeating the owning
   assert.match(main, /href="#intent-semantic-1">Change the widget contract/);
 });
 
-test("PR44988 keeps failed findings, compact counts and stable fragments without doc appendix details", () => {
+recordedAssessmentTest("PR44988 keeps failed findings, compact counts and stable fragments without doc appendix details", () => {
   const input = JSON.parse(readFileSync(new URL("../evals/assessments/44988/assessment.json", import.meta.url), "utf8"));
   const original = structuredClone(input);
   const html = renderAssessmentHtml(input);
@@ -1183,7 +1187,7 @@ test("PR44988 keeps failed findings, compact counts and stable fragments without
   assert.deepEqual(input, original);
 });
 
-test("appendix fragments open enclosing details on initial load, repeated clicks and hash changes", () => {
+recordedAssessmentTest("appendix fragments open enclosing details on initial load, repeated clicks and hash changes", () => {
   const input = JSON.parse(readFileSync(new URL("../evals/assessments/44988/assessment.json", import.meta.url), "utf8"));
   const html = renderAssessmentHtml(input);
   const { main, appendix } = documentationSections(html);

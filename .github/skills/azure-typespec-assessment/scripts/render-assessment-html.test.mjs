@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import {
   complianceFindingGroups,
@@ -26,6 +26,10 @@ function renderAssessmentHtml(assessment, options) {
     options,
   );
 }
+
+const recordedAssessmentTest = existsSync(
+  new URL("../evals/assessments", import.meta.url),
+) ? test : test.skip;
 
 function assertNoDocumentAppendixUi(html) {
   const body = html.includes("<main") ? html.slice(html.indexOf("<main")) : html;
@@ -1243,7 +1247,7 @@ test("renderer shows complete changed intent source once and expanded", () => {
   assert.doesNotMatch(html, /complete-typespec-evidence/);
 });
 
-test("refreshed baseline preserves semantic and REST-derived downstream links", () => {
+recordedAssessmentTest("refreshed baseline preserves semantic and REST-derived downstream links", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44742/assessment.json", import.meta.url),
@@ -1315,7 +1319,7 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
   assert.match(html, /\.finding\{border-left:1px solid var\(--line\)\}/);
 });
 
-test("counts repeated Azure guideline findings as raw findings in header cards despite one visible issue", () => {
+recordedAssessmentTest("counts repeated Azure guideline findings as raw findings in header cards despite one visible issue", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44742/assessment.json", import.meta.url),
@@ -1382,7 +1386,7 @@ test("counts repeated Azure guideline findings as raw findings in header cards d
   }
 });
 
-test("keeps REST location labels out of SDK type rows without TCGC paths", () => {
+recordedAssessmentTest("keeps REST location labels out of SDK type rows without TCGC paths", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44742/assessment.json", import.meta.url),
@@ -1440,7 +1444,7 @@ test("keeps REST location labels out of SDK type rows without TCGC paths", () =>
   );
 });
 
-test("labels SDK method parameters with normalized TCGC locations", () => {
+recordedAssessmentTest("labels SDK method parameters with normalized TCGC locations", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44988/assessment.json", import.meta.url),
@@ -1459,7 +1463,7 @@ test("labels SDK method parameters with normalized TCGC locations", () => {
   );
 });
 
-test("labels response header contract rows consistently", () => {
+recordedAssessmentTest("labels response header contract rows consistently", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/43308/assessment.json", import.meta.url),
@@ -1474,7 +1478,7 @@ test("labels response header contract rows consistently", () => {
   );
 });
 
-test("omits compatible response-wrapper and response-only required properties", () => {
+recordedAssessmentTest("omits compatible response-wrapper and response-only required properties", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/45162/assessment.json", import.meta.url),
@@ -1552,7 +1556,7 @@ test("keeps whole-operation additions as one contract row", () => {
   ]);
 });
 
-test("shows nested response header changes without identical response summaries", () => {
+recordedAssessmentTest("shows nested response header changes without identical response summaries", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/43308/assessment.json", import.meta.url),
@@ -1590,7 +1594,7 @@ test("shows nested response header changes without identical response summaries"
   );
 });
 
-test("renders version-reference-only operation changes as unchanged", () => {
+recordedAssessmentTest("renders version-reference-only operation changes as unchanged", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/42853/assessment.json", import.meta.url),
@@ -1670,7 +1674,7 @@ test("does not group Azure guideline findings by title alone", () => {
   );
 });
 
-test("renderer links assessed intents with no applicable guidance by title", () => {
+recordedAssessmentTest("renderer links assessed intents with no applicable guidance by title", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/42853/assessment.json", import.meta.url),
@@ -1721,7 +1725,7 @@ test("renderer links assessed intents with no applicable guidance by title", () 
   );
 });
 
-test("downstream section excludes REST breaking changes", () => {
+recordedAssessmentTest("downstream section excludes REST breaking changes", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44742/assessment.json", import.meta.url),
@@ -1751,7 +1755,7 @@ test("downstream section excludes REST breaking changes", () => {
   assert.doesNotMatch(downstream, /REST-compatible downstream changes/);
 });
 
-test("renderer keeps API versions in the appendix", () => {
+recordedAssessmentTest("renderer keeps API versions in the appendix", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/42853/assessment.json", import.meta.url),
@@ -1777,7 +1781,7 @@ test("renderer keeps API versions in the appendix", () => {
   assert.match(html, /newest-added-version/);
 });
 
-test("renderer presents assessment blockers as potential limits in the appendix", () => {
+recordedAssessmentTest("renderer presents assessment blockers as potential limits in the appendix", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/42853/assessment.json", import.meta.url),
@@ -1801,7 +1805,7 @@ test("renderer presents assessment blockers as potential limits in the appendix"
   );
 });
 
-test("renderer derives overall code quality from assessed dimensions", () => {
+recordedAssessmentTest("renderer derives overall code quality from assessed dimensions", () => {
   const highAssessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/45348/assessment.json", import.meta.url),
@@ -1917,7 +1921,7 @@ test("five dimension cards retain the requested order without an overall quality
   assert.match(html, /@media\(min-width:1051px\)\{\.summary-grid\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)\}\}/);
 });
 
-test("content puts findings first and follows header order within both groups", () => {
+recordedAssessmentTest("content puts findings first and follows header order within both groups", () => {
   const cases = [
     {
       assessment: documentedAssessment("pass"),
@@ -2006,7 +2010,7 @@ test("document hero stays compact while detailed coverage remains in the summary
   }
 });
 
-test("partial document review omits appendix coverage strings but preserves raw summary data", () => {
+recordedAssessmentTest("partial document review omits appendix coverage strings but preserves raw summary data", () => {
   const assessment = JSON.parse(readFileSync(new URL("../evals/assessments/43308/assessment.json", import.meta.url), "utf8"));
   const original = structuredClone(assessment);
   const html = renderAssessmentHtml(assessment);
@@ -2022,7 +2026,7 @@ test("partial document review omits appendix coverage strings but preserves raw 
   assert.deepEqual(assessment, original);
 });
 
-test("failed document hero shows findings and checked-declaration count", () => {
+recordedAssessmentTest("failed document hero shows findings and checked-declaration count", () => {
   const assessment = JSON.parse(readFileSync(new URL("../evals/assessments/44988/assessment.json", import.meta.url), "utf8"));
   const html = renderAssessmentHtml(assessment);
   const hero = html.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
@@ -2074,7 +2078,7 @@ for (const version of [2, 3]) test(`v${version} renders one description assessme
   }
 });
 
-test("removing aggregate quality preserves documentation findings, assessment status and safety", () => {
+recordedAssessmentTest("removing aggregate quality preserves documentation findings, assessment status and safety", () => {
   const recorded = JSON.parse(readFileSync(new URL("../evals/assessments/45348/assessment.json", import.meta.url), "utf8"));
   const passedGuidance = recorded.dimensions.compliance.intentAssessments[0];
   assert.equal(recorded.dimensions.compliance.status, "passed");

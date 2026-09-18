@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from azure.cosmos import PartitionKey, exceptions as cosmos_exceptions
@@ -450,6 +451,38 @@ async def upsert_qa_record(document: dict[str, Any]) -> dict[str, Any]:
     """Upsert a QA-record document into the qa-records container."""
     container = await get_qa_records_container()
     return await container.upsert_item(document)
+
+
+async def reopen_finished_qa_record(*, record_id: str, tenant_id: str) -> bool:
+    """Requeue a completed no-issue assessment without overwriting active work.
+
+    The predicate is checked atomically by Cosmos, including for duplicate
+    feedback submissions. Missing records and changed states are no-ops;
+    other storage failures propagate so a failed reset is not reported as success.
+    """
+    container = await get_qa_records_container()
+    try:
+        await container.patch_item(
+            item=record_id,
+            partition_key=tenant_id,
+            filter_predicate=(
+                "FROM c WHERE c.qa_status = 'finished' AND c.verdict = 'correct' "
+                "AND (NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback))"
+            ),
+            patch_operations=[
+                {"op": "set", "path": "/qa_status", "value": "ongoing"},
+                {"op": "set", "path": "/verdict", "value": "unknown"},
+                {"op": "set", "path": "/reasoning", "value": None},
+                {"op": "set", "path": "/confidence", "value": None},
+                {"op": "set", "path": "/evaluated_at", "value": None},
+                {"op": "set", "path": "/updated_at", "value": datetime.now(timezone.utc).isoformat()},
+            ],
+        )
+    except cosmos_exceptions.CosmosHttpResponseError as exc:
+        if exc.status_code in (404, 412):
+            return False
+        raise
+    return True
 
 
 async def read_qa_record(*, record_id: str, tenant_id: str) -> dict[str, Any] | None:

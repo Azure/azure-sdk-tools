@@ -23,9 +23,15 @@ from services.feedback_service import FeedbackService
 from utils import azure_cosmosdb
 
 
+@pytest.fixture(autouse=True)
+def reopen_qa_record():
+    with patch("services.feedback_service.reopen_finished_qa_record", return_value=False) as reopen:
+        yield reopen
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("reaction", list(Reaction))
-async def test_process_saves_all_fields_before_issue_workflow(reaction):
+async def test_process_saves_all_fields_before_qa_reset(reaction, reopen_qa_record):
     req = FeedbackRequest(
         tenant_id="typespec",
         channel_id="19:channel@thread.tacv2",
@@ -40,16 +46,14 @@ async def test_process_saves_all_fields_before_issue_workflow(reaction):
     original = req.model_dump(mode="json")
     container = AsyncMock()
 
-    async def create_issue(request):
+    async def reopen_record(**kwargs):
         container.create_item.assert_awaited_once()
-        assert request is req
-        return "https://github.com/Azure/azure-sdk-pr/issues/123"
+        return True
+
+    reopen_qa_record.side_effect = reopen_record
 
     before = datetime.now(timezone.utc)
-    with (
-        patch("services.feedback_service.get_feedback_container", return_value=container),
-        patch.object(FeedbackService, "_create_github_issue", side_effect=create_issue) as issue,
-    ):
+    with patch("services.feedback_service.get_feedback_container", return_value=container):
         result = await FeedbackService().process(req)
 
     after = datetime.now(timezone.utc)
@@ -68,12 +72,14 @@ async def test_process_saves_all_fields_before_issue_workflow(reaction):
     assert type(document["conversation_type"]) is str
     assert req.model_dump(mode="json") == original
     assert result.saved is True
+    assert result.issue_url is None
     if reaction == Reaction.bad:
-        issue.assert_awaited_once_with(req)
-        assert result.issue_url == "https://github.com/Azure/azure-sdk-pr/issues/123"
+        reopen_qa_record.assert_awaited_once_with(
+            record_id="teams_channel:19:channel@thread.tacv2;messageid=123456789",
+            tenant_id="typespec",
+        )
     else:
-        issue.assert_not_awaited()
-        assert result.issue_url is None
+        reopen_qa_record.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -116,22 +122,55 @@ def test_feedback_request_rejects_unsupported_conversation_type():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failure_stage", ["container", "write"])
-async def test_storage_failure_propagates_without_creating_issue(failure_stage):
+async def test_storage_failure_propagates_without_resetting_qa(failure_stage, reopen_qa_record):
     container = AsyncMock()
     error = RuntimeError("Storage unavailable")
     if failure_stage == "write":
         container.create_item.side_effect = error
-    with (
-        patch(
-            "services.feedback_service.get_feedback_container",
-            return_value=container,
-            side_effect=error if failure_stage == "container" else None,
-        ),
-        patch.object(FeedbackService, "_create_github_issue") as issue,
+    with patch(
+        "services.feedback_service.get_feedback_container",
+        return_value=container,
+        side_effect=error if failure_stage == "container" else None,
     ):
         with pytest.raises(RuntimeError, match="Storage unavailable"):
-            await FeedbackService().process(FeedbackRequest(reaction=Reaction.bad))
-    issue.assert_not_awaited()
+            await FeedbackService().process(FeedbackRequest(
+                reaction=Reaction.bad,
+                tenant_id="typespec",
+                conversation_id="thread",
+                conversation_type=ConversationType.teams_channel,
+            ))
+    reopen_qa_record.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("coordinates", [
+    {},
+    {"conversation_id": "thread"},
+    {"conversation_type": "teams_channel"},
+    {"conversation_id": "", "conversation_type": "teams_channel"},
+])
+async def test_bad_feedback_without_coordinates_is_saved_without_reset(coordinates, reopen_qa_record):
+    with patch("services.feedback_service.get_feedback_container", return_value=AsyncMock()):
+        result = await FeedbackService().process(FeedbackRequest(
+            reaction=Reaction.bad, **coordinates,
+        ))
+    assert result.saved
+    reopen_qa_record.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_reset_failure_propagates_after_feedback_is_saved(reopen_qa_record):
+    reopen_qa_record.side_effect = RuntimeError("Reset unavailable")
+    container = AsyncMock()
+    with patch("services.feedback_service.get_feedback_container", return_value=container):
+        with pytest.raises(RuntimeError, match="Reset unavailable"):
+            await FeedbackService().process(FeedbackRequest(
+                tenant_id="typespec",
+                conversation_id="thread",
+                conversation_type=ConversationType.teams_channel,
+                reaction=Reaction.bad,
+            ))
+    container.create_item.assert_awaited_once()
 
 
 @pytest.fixture

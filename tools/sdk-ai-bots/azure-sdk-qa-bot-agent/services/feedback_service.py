@@ -8,32 +8,32 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional
 from uuid import uuid4
 
 from models.feedback import FeedbackRequest, FeedbackResponse, Reaction
-from utils.azure_cosmosdb import get_feedback_container
+from models.qa_record import QARecord
+from utils.azure_cosmosdb import get_feedback_container, reopen_finished_qa_record
 
 logger = logging.getLogger(__name__)
 
 
 class FeedbackService:
-    """Workflow that persists feedback and creates GitHub issues for bad cases."""
+    """Persist feedback and reopen completed no-issue QA records for reanalysis."""
 
     async def process(self, req: FeedbackRequest) -> FeedbackResponse:
-        """Run the full feedback workflow.
-
-        Steps:
-          1. Save the feedback record to Azure Cosmos DB.
-          2. If reaction is "bad", create a GitHub issue.
-        """
+        """Save feedback, then reopen a completed no-issue record if negative."""
         result = FeedbackResponse()
 
         await self._save_feedback(req)
         result.saved = True
 
         if req.reaction == Reaction.bad:
-            result.issue_url = await self._create_github_issue(req)
+            if req.conversation_id and req.conversation_type:
+                record_id = QARecord.build_id(req.conversation_type, req.conversation_id)
+                if await reopen_finished_qa_record(
+                    record_id=record_id, tenant_id=req.tenant_id,
+                ):
+                    logger.info("Reopened QA record %s after negative feedback", record_id)
 
         return result
 
@@ -47,10 +47,3 @@ class FeedbackService:
         await container.create_item(body=document)
         logger.info("Saved feedback %s to Cosmos DB", document["id"])
 
-    async def _create_github_issue(self, req: FeedbackRequest) -> Optional[str]:
-        """Create a GitHub issue for a bad feedback case.
-
-        Returns the issue URL on success, or None on failure.
-        """
-        # TODO: implement with GitHub API
-        return None

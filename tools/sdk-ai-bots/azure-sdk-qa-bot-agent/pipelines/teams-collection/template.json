@@ -111,18 +111,33 @@
                           "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
                           "runAfter": {}
                         },
+                        "Filter_messages": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('GetMessagesFromChannel')?['value']",
+                            "where": "@equals(item()?['messageType'], 'message')"
+                          },
+                          "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
+                          "runAfter": { "GetMessagesFromChannel": ["Succeeded"] }
+                        },
                         "Return_messages": {
                           "type": "Response",
                           "kind": "Http",
-                          "inputs": { "statusCode": 200, "body": { "operation": "messages", "data": "@body('GetMessagesFromChannel')" } },
+                          "inputs": { "statusCode": 200, "body": { "operation": "messages", "data": "@setProperty(body('GetMessagesFromChannel'), 'value', body('Filter_messages'))" } },
                           "runtimeConfiguration": { "secureData": { "properties": ["inputs"] } },
-                          "runAfter": { "GetMessagesFromChannel": ["Succeeded"] }
+                          "runAfter": { "Filter_messages": ["Succeeded"] }
                         },
                         "Fail_messages": {
                           "type": "Response",
                           "kind": "Http",
                           "inputs": { "statusCode": 502, "body": { "error": "GetMessagesFromChannel failed", "runId": "@workflow().run.name" } },
                           "runAfter": { "GetMessagesFromChannel": ["Failed", "TimedOut"] }
+                        },
+                        "Fail_filter_messages": {
+                          "type": "Response",
+                          "kind": "Http",
+                          "inputs": { "statusCode": 502, "body": { "error": "Filtering channel messages failed", "runId": "@workflow().run.name" } },
+                          "runAfter": { "Filter_messages": ["Failed", "TimedOut"] }
                         }
                       }
                     },
@@ -140,18 +155,33 @@
                           "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
                           "runAfter": {}
                         },
+                        "Filter_replies": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('ListRepliesToMessage')?['value']",
+                            "where": "@equals(item()?['messageType'], 'message')"
+                          },
+                          "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
+                          "runAfter": { "ListRepliesToMessage": ["Succeeded"] }
+                        },
                         "Return_replies": {
                           "type": "Response",
                           "kind": "Http",
-                          "inputs": { "statusCode": 200, "body": { "operation": "replies", "data": "@body('ListRepliesToMessage')" } },
+                          "inputs": { "statusCode": 200, "body": { "operation": "replies", "data": "@setProperty(body('ListRepliesToMessage'), 'value', body('Filter_replies'))" } },
                           "runtimeConfiguration": { "secureData": { "properties": ["inputs"] } },
-                          "runAfter": { "ListRepliesToMessage": ["Succeeded"] }
+                          "runAfter": { "Filter_replies": ["Succeeded"] }
                         },
                         "Fail_replies": {
                           "type": "Response",
                           "kind": "Http",
                           "inputs": { "statusCode": 502, "body": { "error": "ListRepliesToMessage failed", "runId": "@workflow().run.name" } },
                           "runAfter": { "ListRepliesToMessage": ["Failed", "TimedOut"] }
+                        },
+                        "Fail_filter_replies": {
+                          "type": "Response",
+                          "kind": "Http",
+                          "inputs": { "statusCode": 502, "body": { "error": "Filtering message replies failed", "runId": "@workflow().run.name" } },
+                          "runAfter": { "Filter_replies": ["Failed", "TimedOut"] }
                         }
                       }
                     }

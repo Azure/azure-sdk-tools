@@ -26,6 +26,10 @@ def next_link(channel, message_id=None, token="next"):
     return f"https://logic-apis-westus2.azure-apim.net/apim/teams/connection{path}?$skiptoken={quote(token, safe='')}"
 
 
+def graph_message(values):
+    return {"messageType": "message", **values}
+
+
 class MemoryStore:
     def __init__(self):
         self.items = {}
@@ -100,7 +104,10 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         store.record_run = AsyncMock()
         client = AsyncMock()
         client.post.return_value = httpx.Response(200, json={"operation": "messages", "data": {
-            "value": [{"id": "root", "replies": [{"id": "reply", "replyToId": "root"}]}],
+            "value": [graph_message({
+                "id": "root",
+                "replies": [graph_message({"id": "reply", "replyToId": "root"})],
+            })],
         }})
         client.__aenter__.return_value = client
         credential = AsyncMock()
@@ -274,6 +281,52 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("$skiptoken", action["inputs"]["queries"])
             self.assertEqual(action["runtimeConfiguration"]["secureData"]["properties"], ["inputs", "outputs"])
         self.assertIn('$expand', cases["messages"]["actions"]["GetMessagesFromChannel"]["inputs"]["queries"])
+        for name, operation, filter_name, return_name in (
+                ("messages", "GetMessagesFromChannel", "Filter_messages", "Return_messages"),
+                ("replies", "ListRepliesToMessage", "Filter_replies", "Return_replies")):
+            actions = cases[name]["actions"]
+            filter_action = actions[filter_name]
+            self.assertEqual(filter_action["type"], "Query")
+            self.assertEqual(filter_action["inputs"]["from"], f"@body('{operation}')?['value']")
+            self.assertEqual(filter_action["inputs"]["where"],
+                             "@equals(item()?['messageType'], 'message')")
+            self.assertEqual(filter_action["runtimeConfiguration"]["secureData"]["properties"],
+                             ["inputs", "outputs"])
+            self.assertEqual(filter_action["runAfter"], {operation: ["Succeeded"]})
+            response = actions[return_name]
+            self.assertEqual(response["runAfter"], {filter_name: ["Succeeded"]})
+            self.assertEqual(
+                response["inputs"]["body"]["data"],
+                f"@setProperty(body('{operation}'), 'value', body('{filter_name}'))",
+            )
+
+    def test_environment_parameter_files_match_collection_config(self):
+        project = Path(__file__).resolve().parents[1]
+        config = json.loads((project / "config/teams_collection.json").read_text())
+        allowed_channels = [
+            f"{channel['teamId']}|{channel['channelId']}" for channel in config["channels"]
+        ]
+        expected = {
+            "dev": ("azuresdkqabot-dev-teams-collection", "azure-sdk-qa-bot-dev",
+                    "azuresdkqabot-dev-db"),
+            "test": ("azuresdkqabot-test-teams-collection", "azure-sdk-qa-bot",
+                     "azuresdkqabot-db"),
+            "prod": ("azuresdkqabot-teams-collection", "azure-sdk-qa-bot",
+                     "azuresdkqabot-db"),
+        }
+        for environment, (workflow_name, connection_group, cosmos_account) in expected.items():
+            with self.subTest(environment=environment):
+                parameter_file = project / (
+                    f"pipelines/teams-collection/parameters.azure_sdk.{environment}.json"
+                )
+                parameters = json.loads(parameter_file.read_text())["parameters"]
+                self.assertEqual(parameters["logicAppName"]["value"], workflow_name)
+                self.assertIn(f"/resourceGroups/{connection_group}/",
+                              parameters["teamsConnectionResourceId"]["value"])
+                self.assertEqual(parameters["tenantId"]["value"], config["tenantId"])
+                self.assertEqual(parameters["allowedChannels"]["value"], allowed_channels)
+                self.assertEqual(parameters["cosmosAccountName"]["value"], cosmos_account)
+                self.assertNotIn("collectorPrincipalId", parameters)
 
     def test_template_grants_collector_metadata_and_only_archive_data_access(self):
         project = Path(__file__).resolve().parents[1]
@@ -331,13 +384,21 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         container.read_item.assert_not_awaited()
 
     async def test_expanded_replies_only_write_new_or_changed_threads(self):
-        root = {"id": "root", "createdDateTime": "2026-09-01T00:00:00Z",
-                "lastModifiedDateTime": "2026-09-01T00:00:00Z"}
-        quiet = {"id": "quiet", "createdDateTime": "2026-09-01T00:00:00Z", "replies": []}
-        reply = {"id": "reply", "replyToId": "root", "createdDateTime": "2026-09-01T01:00:00Z",
-                 "body": {"content": "original"}}
+        root = graph_message({
+            "id": "root", "createdDateTime": "2026-09-01T00:00:00Z",
+            "lastModifiedDateTime": "2026-09-01T00:00:00Z",
+        })
+        quiet = graph_message({
+            "id": "quiet", "createdDateTime": "2026-09-01T00:00:00Z", "replies": [],
+        })
+        reply = graph_message({
+            "id": "reply", "replyToId": "root", "createdDateTime": "2026-09-01T01:00:00Z",
+            "body": {"content": "original"},
+        })
         edited = {**reply, "lastModifiedDateTime": "2026-09-10T00:00:00Z", "body": {"content": "edited"}}
-        new_post = {"id": "new", "createdDateTime": "2026-09-10T00:00:00Z", "replies": []}
+        new_post = graph_message({
+            "id": "new", "createdDateTime": "2026-09-10T00:00:00Z", "replies": [],
+        })
         fetch = AsyncMock(side_effect=[
             {"value": [{**root, "replies": [reply]}, quiet]},
             {"value": [{**root, "replies": [edited]}, quiet, new_post]},
@@ -360,10 +421,31 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(quiet_before, next(document for document in store.items.values() if document["post_id"] == "quiet"))
         self.assertEqual(len(store.checkpoints), 1)
 
+    async def test_non_message_posts_and_replies_are_not_archived(self):
+        reply = graph_message({"id": "reply", "replyToId": "root"})
+        fetch = AsyncMock(return_value={"value": [
+            {"id": "system-root", "messageType": "systemEventMessage"},
+            graph_message({
+                "id": "root",
+                "replies": [
+                    {"id": "system-reply", "replyToId": "root",
+                     "messageType": "systemEventMessage"},
+                    reply,
+                ],
+            }),
+        ]})
+        store = MemoryStore()
+
+        result = await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])
+
+        self.assertEqual(result["postsRead"], 1)
+        self.assertEqual(result["repliesRead"], 1)
+        self.assertEqual(next(iter(store.items.values()))["replies"], [reply])
+
     async def test_partial_expansion_falls_back_to_full_reply_paging(self):
-        root = {"id": "root"}
-        reply1 = {"id": "reply1", "replyToId": "root"}
-        reply2 = {"id": "reply2", "replyToId": "root"}
+        root = graph_message({"id": "root"})
+        reply1 = graph_message({"id": "reply1", "replyToId": "root"})
+        reply2 = graph_message({"id": "reply2", "replyToId": "root"})
         fetch = AsyncMock(side_effect=[
             {"value": [{**root, "replies": [reply1], "replies@odata.count": 1,
                         "replies@odata.nextLink": next_link(CHANNEL, "root")}]},
@@ -386,7 +468,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
     async def test_failed_scan_preserves_checkpoint_and_retries_completed_threads(self):
         from datetime import datetime, timezone
 
-        root = {"id": "root", "replies": []}
+        root = graph_message({"id": "root", "replies": []})
         changed = {**root, "body": {"content": "updated"}}
         fetch = AsyncMock(side_effect=[
             {"value": [root]},
@@ -409,9 +491,11 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotEqual(store.checkpoints, checkpoint)
 
     async def test_invalid_expanded_replies_do_not_write_or_checkpoint(self):
-        for replies in (None, {}, [{"id": "reply", "replyToId": "another-root"}]):
+        for replies in (None, {}, [graph_message({"id": "reply", "replyToId": "another-root"})]):
             with self.subTest(replies=replies):
-                fetch = AsyncMock(return_value={"value": [{"id": "root", "replies": replies}]})
+                fetch = AsyncMock(return_value={
+                    "value": [graph_message({"id": "root", "replies": replies})],
+                })
                 store = MemoryStore()
                 with self.assertRaises(ValueError):
                     await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])
@@ -465,17 +549,29 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         channel = {**CHANNEL, "startTime": "2026-09-01T08:00:00+08:00"}
         second = {**CHANNEL, "channelId": "19:second@thread.tacv2", "startTime": "2026-09-02T00:00:00Z"}
         fetch = AsyncMock(side_effect=[
-            {"value": [{"id": "old", "createdDateTime": "2026-08-31T23:59:59Z",
-                        "lastModifiedDateTime": "2026-09-10T00:00:00Z"}],
+            {"value": [graph_message({
+                "id": "old", "createdDateTime": "2026-08-31T23:59:59Z",
+                "lastModifiedDateTime": "2026-09-10T00:00:00Z",
+            })],
              "@odata.nextLink": next_link(channel)},
-            {"value": [{"id": "boundary", "createdDateTime": "2026-09-01T00:00:00Z"},
-                       {"id": "later", "createdDateTime": "2026-09-03T09:00:00+08:00"}]},
-            {"value": [{"id": "reply1", "replyToId": "boundary", "createdDateTime": "2026-09-01T01:00:00Z"}],
+            {"value": [
+                graph_message({"id": "boundary", "createdDateTime": "2026-09-01T00:00:00Z"}),
+                graph_message({"id": "later", "createdDateTime": "2026-09-03T09:00:00+08:00"}),
+            ]},
+            {"value": [graph_message({
+                "id": "reply1", "replyToId": "boundary",
+                "createdDateTime": "2026-09-01T01:00:00Z",
+            })],
              "@odata.nextLink": next_link(channel, "boundary")},
-            {"value": [{"id": "reply2", "replyToId": "boundary", "createdDateTime": "2026-09-10T00:00:00Z"}]},
+            {"value": [graph_message({
+                "id": "reply2", "replyToId": "boundary",
+                "createdDateTime": "2026-09-10T00:00:00Z",
+            })]},
             {"value": []},
-            {"value": [{"id": "before-second", "createdDateTime": "2026-09-01T00:00:00Z"},
-                       {"id": "second-boundary", "createdDateTime": "2026-09-02T00:00:00Z"}]},
+            {"value": [
+                graph_message({"id": "before-second", "createdDateTime": "2026-09-01T00:00:00Z"}),
+                graph_message({"id": "second-boundary", "createdDateTime": "2026-09-02T00:00:00Z"}),
+            ]},
             {"value": []},
         ])
         store = MemoryStore()
@@ -503,7 +599,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         channel = {**CHANNEL, "startTime": "2026-09-01T00:00:00Z"}
         for value in (None, "invalid", "2026-09-02T00:00:00"):
             with self.subTest(value=value):
-                root = {"id": "root"}
+                root = graph_message({"id": "root"})
                 if value is not None:
                     root["createdDateTime"] = value
                 fetch = AsyncMock(return_value={"value": [root]})
@@ -514,7 +610,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(store.items)
 
     async def test_start_time_is_optional_and_does_not_change_thread_identity(self):
-        root = {"id": "root", "createdDateTime": "2026-08-01T00:00:00Z"}
+        root = graph_message({"id": "root", "createdDateTime": "2026-08-01T00:00:00Z"})
         fetch = AsyncMock(side_effect=[{"value": [root]}, {"value": []}] * 3)
         store = MemoryStore()
         service = TeamsCollectionService(fetch, store, TENANT)
@@ -528,11 +624,12 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
     async def test_collects_multiple_channels_and_all_root_and_reply_pages(self):
         second = {**CHANNEL, "channelId": "19:second@thread.tacv2"}
         fetch = AsyncMock(side_effect=[
-            {"value": [{"id": "root"}], "@odata.nextLink": next_link(CHANNEL)},
-            {"value": [{"id": "reply1", "replyToId": "root"}], "@odata.nextLink": next_link(CHANNEL, "root")},
-            {"value": [{"id": "reply2", "replyToId": "root"}]},
-            {"value": [{"id": "older"}]}, {"value": []},
-            {"value": [{"id": "root"}]}, {"value": []},
+            {"value": [graph_message({"id": "root"})], "@odata.nextLink": next_link(CHANNEL)},
+            {"value": [graph_message({"id": "reply1", "replyToId": "root"})],
+             "@odata.nextLink": next_link(CHANNEL, "root")},
+            {"value": [graph_message({"id": "reply2", "replyToId": "root"})]},
+            {"value": [graph_message({"id": "older"})]}, {"value": []},
+            {"value": [graph_message({"id": "root"})]}, {"value": []},
         ])
         store = MemoryStore()
         result = await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL, second])
@@ -544,11 +641,11 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(next(iter(store.items.values()))["replies"]), 2)
 
     async def test_reply_changes_update_existing_post_even_when_root_is_unchanged(self):
-        root = {"id": "old", "lastModifiedDateTime": "2020-01-01T00:00:00Z"}
+        root = graph_message({"id": "old", "lastModifiedDateTime": "2020-01-01T00:00:00Z"})
         fetch = AsyncMock(side_effect=[
             {"value": [root]}, {"value": []},
             {"value": [root]}, {"value": []},
-            {"value": [root]}, {"value": [{"id": "new", "replyToId": "old"}]},
+            {"value": [root]}, {"value": [graph_message({"id": "new", "replyToId": "old"})]},
         ])
         store = MemoryStore()
         service = TeamsCollectionService(fetch, store, TENANT)
@@ -561,9 +658,14 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(next(iter(store.items.values()))["replies"][0]["id"], "new")
 
     async def test_old_reply_edit_is_detected_without_a_root_timestamp_change(self):
-        root = {"id": "root", "lastModifiedDateTime": "2026-09-01T00:00:00Z", "etag": "root-version"}
-        reply = {"id": "reply", "replyToId": "root", "createdDateTime": "2026-09-01T01:00:00Z",
-                 "lastModifiedDateTime": "2026-09-01T01:00:00Z", "body": {"content": "original"}}
+        root = graph_message({
+            "id": "root", "lastModifiedDateTime": "2026-09-01T00:00:00Z",
+            "etag": "root-version",
+        })
+        reply = graph_message({
+            "id": "reply", "replyToId": "root", "createdDateTime": "2026-09-01T01:00:00Z",
+            "lastModifiedDateTime": "2026-09-01T01:00:00Z", "body": {"content": "original"},
+        })
         edited = {**reply, "lastModifiedDateTime": "2026-09-10T00:00:00Z", "body": {"content": "edited"}}
         fetch = AsyncMock(side_effect=[
             {"value": [root]}, {"value": [reply]},
@@ -582,8 +684,9 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_reply_failure_never_overwrites_existing_thread(self):
         fetch = AsyncMock(side_effect=[
-            {"value": [{"id": "root"}]}, {"value": [{"id": "original", "replyToId": "root"}]},
-            {"value": [{"id": "root"}]},
+            {"value": [graph_message({"id": "root"})]},
+            {"value": [graph_message({"id": "original", "replyToId": "root"})]},
+            {"value": [graph_message({"id": "root"})]},
             {"value": [], "@odata.nextLink": next_link(CHANNEL, "root")}, RuntimeError("unavailable"),
         ])
         store = MemoryStore()
@@ -596,16 +699,16 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_reply_page_limit_and_wrong_parent_do_not_save_partial_thread(self):
         for page in ({"value": [], "@odata.nextLink": next_link(CHANNEL, "root")},
-                     {"value": [{"id": "reply", "replyToId": "other"}]}):
+                     {"value": [graph_message({"id": "reply", "replyToId": "other"})]}):
             store = MemoryStore()
-            fetch = AsyncMock(side_effect=[{"value": [{"id": "root"}]}, page])
+            fetch = AsyncMock(side_effect=[{"value": [graph_message({"id": "root"})]}, page])
             with self.assertRaises((RuntimeError, ValueError)):
                 await TeamsCollectionService(fetch, store, TENANT, max_pages=1).collect([CHANNEL])
             self.assertFalse(store.items)
 
     async def test_repeated_continuation_fails_without_writing_partial_replies(self):
         page = {"value": [], "@odata.nextLink": next_link(CHANNEL, "root")}
-        fetch = AsyncMock(side_effect=[{"value": [{"id": "root"}]}, page, page])
+        fetch = AsyncMock(side_effect=[{"value": [graph_message({"id": "root"})]}, page, page])
         store = MemoryStore()
         with self.assertRaisesRegex(RuntimeError, "repeated"):
             await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])

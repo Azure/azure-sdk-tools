@@ -751,6 +751,110 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(releaseplan.Message, Does.Contain("Successfully retrieved release plan"));
         }
 
+        [TestCase("work-item")]
+        [TestCase("release-plan")]
+        [TestCase("spec-pr")]
+        [TestCase("typespec")]
+        [TestCase("api-version")]
+        public async Task Test_Get_Release_Plan_omits_sdk_pr_status_without_fetching_github_for_each_identifier(string identifier)
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            const string specPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            const string apiVersion = "2026-07-03-preview";
+            (string Language, string Repository, string StoredStatus)[] sdks =
+            [
+                (".NET", "azure-sdk-for-net", "Merged"),
+                ("JavaScript", "azure-sdk-for-js", "Ready for review"),
+                ("Python", "azure-sdk-for-python", "Failed to generate SDK"),
+                ("Java", "azure-sdk-for-java", "Closed"),
+                ("Go", "azure-sdk-for-go", "")
+            ];
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 777,
+                ReleasePlanId = 77,
+                // The missing project path produces existing spec guidance that must be retained.
+                ActiveSpecPullRequest = specPullRequestUrl,
+                SDKInfo = sdks.Select(sdk => new SDKInfo
+                {
+                    Language = sdk.Language,
+                    SdkPullRequestUrl = $"https://github.com/Azure/{sdk.Repository}/pull/1",
+                    PullRequestStatus = sdk.StoredStatus,
+                    GenerationStatus = "Completed",
+                    ReleaseStatus = "Pending"
+                }).ToList()
+            };
+            var mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
+            mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(777, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, It.IsAny<bool>(), ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            var mockGitHub = new Mock<IGitHubService>(MockBehavior.Strict);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, mockGitHub.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = identifier switch
+            {
+                "work-item" => await tool.GetReleasePlan(workItemId: 777),
+                "release-plan" => await tool.GetReleasePlan(releasePlanId: 77),
+                "spec-pr" => await tool.GetReleasePlan(specPullRequestUrl: specPullRequestUrl),
+                "typespec" => await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath),
+                _ => await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath, apiReleaseType: "Public Preview", apiVersion: apiVersion)
+            };
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.Warnings, Is.Null);
+            Assert.That(response.NextSteps, Has.Some.Contains("set the TypeSpec project path"));
+            Assert.That(response.NextSteps, Has.Some.Contains("release plan dashboard").And.Contains("not current PR status"));
+            Assert.That(new OutputHelper(OutputHelper.OutputModes.Plain).Format(response), Does.Contain("release plan dashboard").And.Contain(response.ReleasePlanLink));
+
+            using var document = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Json).Format(response));
+            var sdkDetails = document.RootElement.GetProperty("release_plan_details").GetProperty("SDKInfo");
+            Assert.That(sdkDetails.GetArrayLength(), Is.EqualTo(sdks.Length));
+            for (var index = 0; index < sdks.Length; index++)
+            {
+                Assert.That(sdkDetails[index].TryGetProperty("PullRequestStatus", out _), Is.False);
+                Assert.That(sdkDetails[index].GetProperty("SdkPullRequestUrl").GetString(), Is.EqualTo(releasePlan.SDKInfo[index].SdkPullRequestUrl));
+                Assert.That(sdkDetails[index].GetProperty("GenerationStatus").GetString(), Is.EqualTo("Completed"));
+                Assert.That(sdkDetails[index].GetProperty("ReleaseStatus").GetString(), Is.EqualTo("Pending"));
+                Assert.That(response.ReleasePlanDetails!.SDKInfo[index].PullRequestStatus, Is.EqualTo(sdks[index].StoredStatus), "Stored PR status remains available to internal release-plan selection.");
+            }
+            Assert.That(mockDevOps.Invocations, Has.Count.EqualTo(1), "Reading the plan must not write SDK PR status back to Azure DevOps.");
+            mockGitHub.VerifyNoOtherCalls();
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("  ")]
+        public async Task Test_Get_Release_Plan_omits_stored_pr_status_even_without_pr_url(string? prUrl)
+        {
+            var sdk = new SDKInfo
+            {
+                Language = "Python",
+                SdkPullRequestUrl = prUrl!,
+                PullRequestStatus = "Failed to generate SDK",
+                GenerationStatus = "Completed"
+            };
+            var mockGitHub = new Mock<IGitHubService>(MockBehavior.Strict);
+            var mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ReleasePlanWorkItem { ReleasePlanId = 77, SDKInfo = [sdk] });
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, mockGitHub.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.GetReleasePlan(releasePlanId: 77);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.Warnings, Is.Null);
+            Assert.That(response.NextSteps, Is.Null);
+            Assert.That(response.ReleasePlanDetails!.SDKInfo.Single().PullRequestStatus, Is.EqualTo("Failed to generate SDK"));
+            Assert.That(response.ReleasePlanDetails.SDKInfo.Single().GenerationStatus, Is.EqualTo("Completed"));
+            using var document = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Mcp).Format(response));
+            Assert.That(document.RootElement.GetProperty("release_plan_details").GetProperty("SDKInfo")[0].TryGetProperty("PullRequestStatus", out _), Is.False);
+            mockGitHub.VerifyNoOtherCalls();
+            mockDevOps.Verify(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.VerifyNoOtherCalls();
+        }
+
         [Test]
         public async Task Test_Get_Release_Plan_by_typespec_project_path()
         {

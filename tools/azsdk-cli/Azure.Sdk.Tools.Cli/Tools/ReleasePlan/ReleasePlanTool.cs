@@ -415,7 +415,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
 
-        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type.")]
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type. SDK PR status is omitted; check the linked GitHub PRs or release plan dashboard for current PR status. SDK generation status describes pipeline history, not PR status.")]
         public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, string? apiReleaseType = null, string? apiVersion = null, CancellationToken ct = default)
         {
             try
@@ -516,6 +516,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             }
                         }
                     }
+                }
+
+                if (releasePlan.SDKInfo.Any(sdk => !string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl)))
+                {
+                    (response.NextSteps ??= []).Add("SDK PR status is not included in release plan details. Check the linked GitHub PRs or release plan dashboard for current PR status. SDK generation status describes pipeline history, not current PR status.");
                 }
 
                 await AddReleasePlanScheduleRiskGuidanceAsync(response, ct);

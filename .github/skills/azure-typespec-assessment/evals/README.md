@@ -1,14 +1,18 @@
-# Azure TypeSpec assessment routing eval
+# Azure TypeSpec assessment eval
 
-`assessment.eval.yaml` contains four skill-invocation checks:
+`assessment.eval.yaml` contains four routing checks and one hermetic capability
+check:
 
 - two prompts that must invoke `azure-typespec-assessment`;
 - one authoring prompt that must invoke `azure-typespec-author`;
 - one SDK generation prompt that must invoke
-  `azsdk-common-generate-sdk-locally`.
+  `azsdk-common-generate-sdk-locally`;
+- one no-changes assessment that invokes the production coordinator against a
+  temporary Git repository and verifies its command, files, structured status,
+  workflow state, and response.
 
 The eval intentionally contains no assessment replay data, benchmark fixtures,
-or custom scripts.
+or custom eval scripts.
 
 From `.github\skills`, run:
 

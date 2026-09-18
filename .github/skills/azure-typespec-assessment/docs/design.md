@@ -2527,8 +2527,9 @@ Preserve local assessment reports and user-owned eval changes.
 - Agent judgment has one concise Semantic result and one Azure Guidelines decision
   per intent, plus exact deterministic and inferred REST/downstream candidate
   coverage.
-- Every eligible target description receives exactly one `description`
-  decision, with canonical source-only evidence and explicit coverage.
+- Every eligible newly added operation, model, enum, and interface records
+  compiler-resolved effective-document presence exactly once; documentation
+  text is never compared with code.
 - Documentation findings do not introduce guessed severity or change scoped
   REST/downstream safety.
 - Final JSON rejects unsupported or incomplete results.

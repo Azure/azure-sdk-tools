@@ -66,6 +66,6 @@ remain `not-assessed`; do not turn missing evidence into a pass. Azure
 Guidelines follows the fetched-document evidence contract. A completed search
 with no governing document is assessed as `no-applicable-guidance`, not blocked
 or `not-assessed`. Documentation Completeness follows the separate
-[source-only description-versus-code criterion](document-quality.md); derive its
-status from confirmed findings and explicit document/check coverage, without
-severity or runtime-agent claims.
+[compiler-resolved presence criterion](document-quality.md) for newly added
+operations, models, enums, and interfaces. It is deterministic and outside
+Agent judgment: never compare documentation text with code or assign severity.

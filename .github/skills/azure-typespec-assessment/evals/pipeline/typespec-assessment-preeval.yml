@@ -54,5 +54,6 @@ steps:
 
   - script: |
       set -e
-      node --test .github/skills/azure-typespec-assessment/evals/scripts/run-e2e.test.mjs
-    displayName: 'Deterministic Node E2E test without model or network variability'
+      npm ci
+    displayName: "Install the assessment scripts' dependencies"
+    workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-assessment

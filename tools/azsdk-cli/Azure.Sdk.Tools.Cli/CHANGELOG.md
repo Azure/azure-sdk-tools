@@ -5,6 +5,7 @@
 ### Features Added
 
 - Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
+- Added `release-plan abandon-overdue` to abandon inactive Public Preview, GA, and Private Preview release plans after one full overdue calendar month. Public/GA plans with merged or active SDK PRs, or any released SDK, are preserved; Private Preview plans are assessed by spec PR merge status. Overdue reminders provide release-type-specific actions.
 - Added `release-plan abandon-overdue --dry-run` to preview eligible plan IDs, dashboard links, and eligibility reasons using the cleanup policy without changing plans or sending notifications.
 
 ### Breaking Changes
@@ -25,10 +26,6 @@
 ### Bugs Fixed
 
 - C# customized-code updates now regenerate the SDK after patching customizations and before the final build.
-
-### Features Added
-
-- Added `release-plan abandon-overdue` to abandon inactive Public Preview, GA, and Private Preview release plans after one full overdue calendar month. Public/GA plans with merged or active SDK PRs, or any released SDK, are preserved; Private Preview plans are assessed by spec PR merge status. Overdue reminders provide release-type-specific actions.
 
 ## 0.6.44 (2026-09-08)
 

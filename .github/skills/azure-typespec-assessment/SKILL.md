@@ -4,7 +4,7 @@ description: "Assess Azure TypeSpec Git diffs for semantic intent, REST and down
 license: MIT
 metadata:
   author: Microsoft
-  version: "0.0.0-placeholder"
+  version: "0.0.0-beta"
 ---
 
 # Azure TypeSpec Assessment

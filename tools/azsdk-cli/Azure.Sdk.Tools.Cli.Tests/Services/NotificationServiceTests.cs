@@ -122,8 +122,22 @@ public class NotificationServiceTests
         Assert.That(template.Body, Does.Contain("Hi Test Owner,"));
         Assert.That(template.Body, Does.Contain("has been marked as abandoned because there are no active SDK PRs associated with it"));
         Assert.That(template.Body, Does.Contain("more than one month"));
-        Assert.That(template.Body, Does.Contain("please reopen the release plan and update the target release month accordingly"));
+        Assert.That(template.Body, Does.Contain("please create a new release plan with an updated SDK target release month"));
+        Assert.That(template.Body, Does.Not.Contain("reopen"));
         Assert.That(template.Body, Does.Contain("reaches either Completed or Closed status by the end of its target release month"));
+    }
+
+    [TestCase(ApiReleaseType.GA)]
+    [TestCase(ApiReleaseType.PublicPreview)]
+    [TestCase(ApiReleaseType.PrivatePreview)]
+    public void PastDueReleasePlanEmail_ContinuingReleaseRequiresNewPlan(ApiReleaseType releaseType)
+    {
+        var plan = new ReleasePlanWorkItem { WorkItemId = 100, ApiReleaseType = releaseType };
+
+        var body = new PastDueReleasePlanEmail(plan).Body;
+
+        Assert.That(body, Does.Contain("create a new release plan with an updated SDK target release month"));
+        Assert.That(body, Does.Not.Contain("reopen"));
     }
 
     [Test]

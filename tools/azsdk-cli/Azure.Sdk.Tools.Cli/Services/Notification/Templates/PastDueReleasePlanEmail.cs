@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             <body>
                 <p>Hi {WebUtility.HtmlEncode(releasePlan.Owner)},</p>
                 <p>Your release plan (<a href="{WebUtility.HtmlEncode(releasePlan.ReleasePlanLink)}">{ReleasePlanIdentifier}</a>) is more than one month past its target release month ({WebUtility.HtmlEncode(releasePlan.SDKReleaseMonth)}) and has been marked as abandoned because {AbandonmentExplanation}.</p>
-                <p>If you intend to continue the release, please reopen the release plan and update the target release month accordingly. Going forward, please ensure that your release plan is actively managed and reaches either Completed or Closed status by the end of its target release month.</p>
+                <p>If you intend to continue the release, please create a new release plan with an updated SDK target release month. Going forward, please ensure that your release plan is actively managed and reaches either Completed or Closed status by the end of its target release month.</p>
                 <p>Thank you.</p>
             </body>
             </html>

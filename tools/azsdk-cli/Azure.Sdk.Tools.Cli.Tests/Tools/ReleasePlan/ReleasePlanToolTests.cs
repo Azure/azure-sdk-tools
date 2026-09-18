@@ -1491,6 +1491,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase(ApiReleaseType.GA, "September 2026", "2026-11-01", true)]
         [TestCase(ApiReleaseType.PrivatePreview, "September 2026", "2026-10-01", false)]
         [TestCase(ApiReleaseType.PrivatePreview, "September 2026", "2026-11-01", true)]
+        [TestCase(ApiReleaseType.GA, "December 2026", "2027-01-01", false)]
         [TestCase(ApiReleaseType.GA, "December 2026", "2027-01-31", false)]
         [TestCase(ApiReleaseType.GA, "December 2026", "2027-02-01", true)]
         [TestCase(ApiReleaseType.GA, "Sep 2026", "2026-11-01", true)]
@@ -1733,6 +1734,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.DryRun, Is.EqualTo(dryRun));
             Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { plan }));
             Assert.That(plan.Status, Is.EqualTo(dryRun ? "In Progress" : "Abandoned"));
+            Assert.That(response.EligibilityReasons![plan.WorkItemId], Does.Contain("September 2026").And.Contain("no SDK PRs are linked"));
+            Assert.That(response.ToString(), Does.Contain(plan.ReleasePlanLink).And.Contain("Release Plan ID: 350"));
             if (dryRun)
             {
                 AssertDryRunHasNoSideEffects(service, notification);
@@ -1743,7 +1746,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 notification.VerifyAll();
                 using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
                 Assert.That(json.RootElement.TryGetProperty("dry_run", out _), Is.False);
-                Assert.That(json.RootElement.TryGetProperty("eligibility_reasons", out _), Is.False);
+                Assert.That(json.RootElement.GetProperty("eligibility_reasons").GetProperty("350").GetString(),
+                    Is.EqualTo(response.EligibilityReasons[350]));
             }
         }
 
@@ -2413,6 +2417,40 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ExitCode, Is.EqualTo(1));
             Assert.That(response.ResponseErrors, Has.One.Contains("211"));
             Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { abandonedPlan }));
+            Assert.That(response.EligibilityReasons!.Keys, Is.EquivalentTo(new[] { abandonedPlan.WorkItemId }));
+            Assert.That(response.ToString(), Does.Contain("Abandoned 1").And.Contain("Some plans could not be fully processed"));
+            Assert.That(response.ToString(), Does.Contain("Release Plan ID: 212").And.Contain(abandonedPlan.ReleasePlanLink));
+            Assert.That(response.ToString(), Does.Contain("Abandonment Reason:").And.Contain("211"));
+            Assert.That(response.ToString(), Does.Not.Contain("eligible list is incomplete").And.Not.Contain("No plans were changed"));
+        }
+
+        [Test]
+        public async Task Test_abandon_overdue_confirmation_failure_keeps_successful_update_visible()
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 404, Revision = 7, Status = "In Progress", ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "September 2026"
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            service.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), plan.Revision,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+            var notifications = new Mock<INotificationService>(MockBehavior.Strict);
+            notifications.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Notification failed."));
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notifications.Object)
+                .AbandonOverdueReleasePlans();
+
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(plan.Status, Is.EqualTo("Abandoned"));
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { plan }));
+            Assert.That(response.EligibilityReasons![plan.WorkItemId], Does.Contain("no SDK PRs are linked"));
+            Assert.That(response.ToString(), Does.Contain("Abandoned 1").And.Contain("Status: Abandoned"));
+            Assert.That(response.ToString(), Does.Contain(plan.ReleasePlanLink).And.Contain("Abandonment Reason:"));
+            Assert.That(response.ToString(), Does.Contain("Some plans could not be fully processed").And.Contain("Notification failed."));
         }
 
         [Test]

@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
         public bool DryRun { get; set; }
 
         /// <summary>
-        /// Preview eligibility reasons keyed by Azure DevOps work item ID.
+        /// Eligibility reasons for previewed or successfully abandoned plans, keyed by Azure DevOps work item ID.
         /// </summary>
         [JsonPropertyName("eligibility_reasons")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -30,8 +30,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
 
         public override string ToString()
         {
-            // Keep confirmed candidates visible when a dry run also reports lookup failures.
-            return DryRun && OperationStatus == Status.Failed
+            // Preserve partial results and summaries alongside errors in either mode.
+            return OperationStatus == Status.Failed && (ReleasePlanDetailsList != null || !string.IsNullOrWhiteSpace(Message))
                 ? Format() + Environment.NewLine + base.ToString()
                 : base.ToString();
         }
@@ -39,7 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
         protected override string Format()
         {
             var result = new StringBuilder();
-            if (DryRun)
+            if (!string.IsNullOrWhiteSpace(Message))
             {
                 result.AppendLine(Message);
             }
@@ -51,27 +51,24 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
                 for (int i = 0; i < ReleasePlanDetailsList.Count; i++)
                 {
                     var rp = ReleasePlanDetailsList[i];
-                    var planId = DryRun && rp.ReleasePlanId <= 0 ? rp.WorkItemId : rp.ReleasePlanId;
+                    var planId = rp.ReleasePlanId > 0 ? rp.ReleasePlanId : rp.WorkItemId;
                     result.AppendLine($"[{i + 1}] Release Plan ID: {planId}");
                     result.AppendLine($"Title: {rp.Title}");
                     result.AppendLine($"Status: {rp.Status}");
                     result.AppendLine($"Owner: {rp.Owner}");
                     result.AppendLine($"SDK Release Month: {rp.SDKReleaseMonth}");
-                    if (DryRun)
+                    result.AppendLine($"Release Plan Link: {rp.ReleasePlanLink}");
+                    if (EligibilityReasons?.TryGetValue(rp.WorkItemId, out var reason) == true)
                     {
-                        result.AppendLine($"Release Plan Link: {rp.ReleasePlanLink}");
-                        if (EligibilityReasons?.TryGetValue(rp.WorkItemId, out var reason) == true)
-                        {
-                            result.AppendLine($"Eligibility Reason: {reason}");
-                        }
+                        result.AppendLine($"{(DryRun ? "Eligibility" : "Abandonment")} Reason: {reason}");
                     }
                     result.AppendLine(new string('-', 40));
                 }
             }
             else
             {
-                result.AppendLine(DryRun && ReleasePlanDetailsList != null
-                    ? "No eligible release plans found."
+                result.AppendLine(ReleasePlanDetailsList != null && EligibilityReasons != null
+                    ? (DryRun ? "No eligible release plans found." : "No release plans were abandoned.")
                     : "No release plan details available.");
             }
             return result.ToString();

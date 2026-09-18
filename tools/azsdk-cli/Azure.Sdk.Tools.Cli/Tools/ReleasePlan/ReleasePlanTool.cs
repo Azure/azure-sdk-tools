@@ -1982,7 +1982,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             var response = new ReleasePlanListResponse
             {
                 DryRun = dryRun,
-                EligibilityReasons = dryRun ? new Dictionary<int, string>() : null,
+                EligibilityReasons = new Dictionary<int, string>(),
                 NextSteps = dryRun
                     ? ["This is a point-in-time preview. A later run re-evaluates eligibility and may skip plans that changed."]
                     : null
@@ -2009,8 +2009,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             continue;
                         }
 
-                        var reason = await GetInactiveReleaseWorkReasonAsync(releasePlan, ct);
-                        if (reason == null)
+                        var inactivityReason = await GetReleasePlanInactivityReasonAsync(releasePlan, ct);
+                        if (inactivityReason == null)
                         {
                             continue;
                         }
@@ -2018,11 +2018,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         ct.ThrowIfCancellationRequested();
                         // An actual update requires a valid snapshot revision, so previews must too.
                         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlan.Revision);
+                        var reason = $"Target month {releasePlan.SDKReleaseMonth} is past the one-full-month grace period. {inactivityReason}";
                         if (dryRun)
                         {
                             resultPlans.Add(releasePlan);
-                            response.EligibilityReasons![releasePlan.WorkItemId] =
-                                $"Target month {releasePlan.SDKReleaseMonth} is past the one-full-month grace period. {reason}";
+                            response.EligibilityReasons[releasePlan.WorkItemId] = reason;
                             continue;
                         }
 
@@ -2042,6 +2042,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                         releasePlan.Status = "Abandoned";
                         resultPlans.Add(releasePlan);
+                        response.EligibilityReasons[releasePlan.WorkItemId] = reason;
                         await notificationService.SendEmailNotificationAsync(new PastDueReleasePlanEmail(releasePlan), ct);
                         ct.ThrowIfCancellationRequested();
                         logger.LogInformation("Abandoned overdue release plan {WorkItemId}", releasePlan.WorkItemId);
@@ -2066,10 +2067,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (responseErrors.Count > 0)
                 {
                     response.ResponseErrors = responseErrors;
-                    if (dryRun)
-                    {
-                        response.Message += " Some plans could not be evaluated; the eligible list is incomplete.";
-                    }
+                    response.Message += dryRun
+                        ? " Some plans could not be evaluated; the eligible list is incomplete."
+                        : " Some plans could not be fully processed; see the errors below. The list contains only plans successfully marked as abandoned.";
                 }
                 return response;
             }
@@ -2091,7 +2091,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private async Task<string?> GetInactiveReleaseWorkReasonAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
+        /// <summary>
+        /// Evaluates the release-work rules shared by cleanup and overdue reminders.
+        /// Returns an inactivity reason, or null when the plan is protected. The cleanup caller checks the calendar-month grace period.
+        /// </summary>
+        private async Task<string?> GetReleasePlanInactivityReasonAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
         {
             if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
             {
@@ -2099,14 +2103,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return "Private Preview spec PR is missing.";
                 }
-                var specPr = await GetMaintenancePullRequestAsync(releasePlan.ActiveSpecPullRequest, isSpec: true, ct);
+                var specPr = await GetValidatedPullRequestDetailsAsync(releasePlan.ActiveSpecPullRequest, isSpec: true, ct);
                 return specPr.Merged ? null : "Private Preview spec PR has not been merged.";
             }
 
             if (releasePlan.ApiReleaseType is not (ApiReleaseType.PublicPreview or ApiReleaseType.GA)
                 || releasePlan.SDKInfo.Any(sdk => string.Equals(sdk.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)))
             {
-                // Any published SDK protects a partial (or already complete) release, even if PRs are closed.
+                // A non-private type can still be Unknown. Unknown types and any published SDK protect the plan.
                 return null;
             }
 
@@ -2114,7 +2118,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             // Stored PR statuses can be stale or empty. Only current GitHub state authorizes cleanup.
             foreach (var url in sdkPullRequests.Select(sdk => sdk.SdkPullRequestUrl).Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                var pr = await GetMaintenancePullRequestAsync(url, isSpec: false, ct);
+                var pr = await GetValidatedPullRequestDetailsAsync(url, isSpec: false, ct);
                 if (pr.Merged || pr.State.Value != ItemState.Closed)
                 {
                     // Active, merged, or unrecognized PR states must not permit abandonment.
@@ -2126,7 +2130,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 : "No SDK has been released and all linked SDK PRs are closed without merging.";
         }
 
-        private async Task<PullRequest> GetMaintenancePullRequestAsync(string url, bool isSpec, CancellationToken ct)
+        /// <summary>
+        /// Validates a release plan's linked PR URL, then delegates to the GitHub service with a cancellable wait.
+        /// </summary>
+        private async Task<PullRequest> GetValidatedPullRequestDetailsAsync(string url, bool isSpec, CancellationToken ct)
         {
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
                 || uri.Scheme != Uri.UriSchemeHttps
@@ -2182,7 +2189,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         if (releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
                         {
-                            hasInactiveWork = await GetInactiveReleaseWorkReasonAsync(releasePlan, ct) != null;
+                            hasInactiveWork = await GetReleasePlanInactivityReasonAsync(releasePlan, ct) != null;
                         }
                     }
                     catch (OperationCanceledException) when (ct.IsCancellationRequested)

@@ -11,6 +11,7 @@
 
 ### Bugs Fixed
 
+- Included plan links, reasons, and partial results in actual overdue cleanup output as well as previews, and corrected abandonment emails to direct users to create a new release plan.
 - Fixed overdue release-plan selection for legacy `APEX GA` values and stale cached SDK PR statuses by checking current GitHub state.
 - Retained generic overdue reminders when release-activity lookups fail, without permitting automatic abandonment.
 - Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.

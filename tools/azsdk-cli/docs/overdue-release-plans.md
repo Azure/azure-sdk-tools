@@ -70,6 +70,12 @@ unchanged statuses, and `eligibility_reasons` is keyed by work item ID.
 Unlike `list-overdue`, this list excludes plans still in their grace month and
 plans protected by the release-work rules.
 
+Actual cleanup also returns plan IDs, dashboard links, statuses, and reasons,
+but only for plans successfully marked as abandoned. The same `eligibility_reasons`
+JSON field is used in both modes, keyed by work item ID. If some operations fail,
+the successful results and summary remain visible alongside the errors in both
+plain and JSON output. Failed state updates are not included as successful results.
+
 Lookup failures are reported with a nonzero exit code. If some plans cannot be
 evaluated, confirmed candidates are still returned, but the output explicitly
 marks the list as incomplete. A successful empty preview means no plans qualify.
@@ -95,5 +101,7 @@ re-evaluates eligibility and may skip plans that changed or whose updates fail.
   processing, and cancellation does not start new reminder work.
 - Abandonment confirmation uses the existing best-effort notification service;
   mail delivery errors are logged and do not roll back the state update.
+- To continue a release after abandonment, create a new release plan with an
+  updated SDK target release month. The CLI cannot reopen an abandoned plan.
 
 This maintenance policy does not require users to supply an abandonment reason.

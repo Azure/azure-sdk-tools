@@ -471,7 +471,7 @@ function DeleteAndPurgeGroups([array]$toDelete) {
           SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) 
           Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) -CheckPrefix $CheckPrefix
         }
-        Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
+        Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) -CheckPrefix $CheckPrefix
 
         Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
       }

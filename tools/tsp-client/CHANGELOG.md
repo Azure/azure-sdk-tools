@@ -1,5 +1,9 @@
 # Release
 
+## 2026-07-16 - 0.34.0
+
+- Copy a repository's checked-in `eng/common/.npmrc` (if present) into the `TempTypeSpecFiles` directory before running npm for the `init`, `sync`, `generate`, `update`, `generate-lock-file`, and `generate-config-files` commands, so those npm operations honor the repository's npm registry configuration.
+
 ## 2026-04-30 - 0.33.1
 
 - Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.
@@ -22,7 +26,7 @@
 
 ## 2025-11-24 - 0.31.0
 
-- Add support for batch library generation. See [README](./README.md) for more information on how to configure.
+- Add support for batch library generation. See [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md#batch-library-generation) for more information on how to configure.
 
 ## 2025-11-05 - 0.30.0
 

@@ -17,12 +17,35 @@ variables:
     value: ${{ parameters.SkillBranch }}
 
 extends:
-  template: /eng/common/pipelines/templates/stages/archetype-eval.yml
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    vallyRoot: .github/skills/azure-typespec-assessment/evals
-    evalGlobs:
-      - 'assessment.eval.yaml'
-    evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
-    preEvalTemplate: /.github/skills/azure-typespec-assessment/evals/pipeline/typespec-assessment-preeval.yml
-    failOnFailedTests: false
-    shardTimeoutInMinutes: 90
+    Use1ESOfficial: true
+    stages:
+      - stage: Prepare
+        displayName: Prepare track
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
+            parameters:
+              vallyRoot: .github/skills/azure-typespec-assessment/evals
+              evalGlobs:
+                - 'assessment.eval.yaml'
+
+      - stage: Eval
+        displayName: Run Eval
+        dependsOn: Prepare
+        jobs:
+          - template: /.github/skills/azure-typespec-assessment/evals/pipeline/typespec-assessment-eval.yml
+            parameters:
+              vallyRoot: /.github/skills/azure-typespec-assessment/evals
+              evalInvokeTemplate: /.github/skills/azure-typespec-assessment/evals/pipeline/typespec-assessment-eval-invoke.yml
+              preEvalTemplate: /.github/skills/azure-typespec-assessment/evals/pipeline/typespec-assessment-preeval.yml
+              shardTimeoutInMinutes: 50
+      
+      - stage: Summary
+        displayName: 'Summarize results'
+        dependsOn: Eval
+        condition: always()
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
+            parameters:
+              failOnFailedTests: ${{ parameters.failOnFailedTests }}

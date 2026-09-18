@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildDocumentQualityInput } from "./document-quality-input.mjs";
+import {
+  buildDocumentQualityInput,
+  DOCUMENT_QUALITY_CRITERION,
+} from "./document-quality-input.mjs";
 
 function fixture(documentationPresent = true) {
   const declaration = {
@@ -42,6 +45,10 @@ function fixture(documentationPresent = true) {
 }
 
 test("compiler-resolved documentation presence is retained without document text", () => {
+  assert.equal(
+    DOCUMENT_QUALITY_CRITERION,
+    "Does the TypeSpec compiler return a nonempty effective document?",
+  );
   const result = buildDocumentQualityInput(fixture(true));
   assert.equal(result.schemaVersion, 5);
   assert.equal(result.status, "ready");

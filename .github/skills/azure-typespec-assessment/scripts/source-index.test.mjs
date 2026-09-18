@@ -298,3 +298,64 @@ test("compiler evidence includes a declaration when only its documentation prefi
     [{ qualifiedName: "Widget", documentationPresent: true }],
   );
 });
+
+test("compiler evidence preserves parsed decorators and source links", async () => {
+  const baseText = '@clientName("OldWidget")\nmodel Widget {}\n';
+  const currentText = '@clientName("Widget")\nmodel Widget {}\n';
+  const sourceIndex = buildSourceIndex({
+    repo: "repo",
+    mergeBase: "base",
+    headCommit: "head",
+    changedFiles: [{ path: "main.tsp", status: "modified" }],
+    remoteUrl: "https://github.com/contoso/widgets.git",
+    readFile: (revision) => revision === "base" ? baseText : currentText,
+    diffFile: () => `@@ -1,2 +1,2 @@
+-@clientName("OldWidget")
++@clientName("Widget")
+ model Widget {}`,
+  });
+  const filePath = path.resolve("main.tsp");
+  let revision = 0;
+  await addCompilerEvidence({
+    sourceIndex,
+    baseWorktree: ".",
+    currentWorktree: ".",
+    projects: ["main.tsp"],
+    loadCompiler: async () => {
+      const text = revision++ ? currentText : baseText;
+      const file = {
+        path: filePath,
+        text,
+        getLineAndCharacterOfPosition: (position) => ({
+          line: text.slice(0, position).split("\n").length - 1,
+          character: 0,
+        }),
+      };
+      const type = { kind: "Model", name: "Widget" };
+      return {
+        compilerVersion: "test",
+        NodeHost: {},
+        compile: async () => ({
+          diagnostics: [],
+          sourceFiles: new Map([["main.tsp", { file }]]),
+        }),
+        navigateProgram: (_program, listeners) => listeners.model(type),
+        getSourceLocation: () => {
+          const pos = text.indexOf("model Widget");
+          return { file, pos, end: pos + "model Widget {}".length };
+        },
+        getDoc: () => "A widget.",
+      };
+    },
+  });
+
+  const declaration = sourceIndex.sourceChanges[0].declarations.find(
+    (item) => item.source.revision === "current",
+  );
+  assert.deepEqual(declaration.decorators, ['@clientName("Widget")']);
+  assert.equal(
+    declaration.source.link,
+    "https://github.com/contoso/widgets/blob/head/main.tsp#L2-L2",
+  );
+  assert.equal(declaration.compilerEvidence.kind, "semantic-type");
+});

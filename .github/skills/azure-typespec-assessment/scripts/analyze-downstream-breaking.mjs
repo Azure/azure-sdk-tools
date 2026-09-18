@@ -25,11 +25,68 @@ function artifactReady(artifact) {
 function evidence(project, sourceIndex) {
   const sourceById = new Map(sourceIndex.sourceChanges.map((item) => [item.id, item]));
   const sourceChangeIds = (project.sourceChangeIds ?? []).filter((id) => sourceById.has(id)).sort();
-  const declarations = sourceChangeIds.flatMap((id) => sourceById.get(id).declarations ?? []);
+  const sources = sourceChangeIds.map((id) => sourceById.get(id));
+  const declarations = sources.flatMap((item) => item.declarations ?? []);
   return {
     sourceChangeIds,
     declarationIds: declarations.map((item) => item.id).filter(Boolean).sort(),
     declarations,
+    sources,
+  };
+}
+
+function candidateEvidence(source, symbol, before, after, kind, detail) {
+  const names = new Set();
+  const memberNames = new Set();
+  const addName = (value) => {
+    if (typeof value === "string" && value.trim()) names.add(value.trim());
+  };
+  for (const value of [symbol, before, after]) {
+    if (typeof value === "string") {
+      addName(value);
+      continue;
+    }
+    addName(value?.identity);
+    addName(value?.crossLanguageDefinitionId);
+    addName(value?.name);
+    if (kind === "method" && value?.clientName && value?.name) {
+      addName(`${value.clientName}.${value.name}`);
+    }
+  }
+  if (detail?.name) {
+    for (const value of [symbol, before?.identity, before?.name, after?.identity, after?.name]) {
+      if (value) memberNames.add(`${value}.${detail.name}`);
+    }
+  }
+  const matchesName = (qualifiedName, expectedNames) => {
+    if (!qualifiedName) return false;
+    return [...expectedNames].some((name) =>
+      qualifiedName === name ||
+      qualifiedName.endsWith(`.${name}`) ||
+      name.endsWith(`.${qualifiedName}`));
+  };
+  let declarations = source.declarations.filter((item) =>
+    matchesName(item.qualifiedName, memberNames.size ? memberNames : names));
+  if (!declarations.length && memberNames.size) {
+    declarations = source.declarations.filter((item) =>
+      matchesName(item.qualifiedName, names));
+  }
+  if (!declarations.length) {
+    return {
+      sourceChangeIds: source.sources.length === 1 ? [source.sources[0].id] : [],
+      declarationIds: [],
+      hunkIds: [],
+    };
+  }
+  const declarationIds = new Set(declarations.map((item) => item.id).filter(Boolean));
+  return {
+    sourceChangeIds: source.sources
+      .filter((item) => (item.declarations ?? []).some((declaration) =>
+        declarationIds.has(declaration.id)))
+      .map((item) => item.id)
+      .sort(),
+    declarationIds: [...declarationIds].sort(),
+    hunkIds: [...new Set(declarations.flatMap((item) => item.hunkIds ?? []))].sort(),
   };
 }
 
@@ -85,6 +142,7 @@ function candidateText(rule, symbol, detail) {
   let actual;
   switch (rule) {
     case "method-removed": actual = `${symbol} is no longer generated.`; break;
+    case "method-identity-changed": actual = `${symbol} changed its generated SDK method name or identity.`; break;
     case "method-location-changed": actual = `${symbol} moved to a different client.`; break;
     case "method-kind-changed":
       actual = `${symbol} changed method kind${detail ? ` from ${detail.before} to ${detail.after}` : ""}.`;
@@ -99,6 +157,7 @@ function candidateText(rule, symbol, detail) {
       actual = `${symbol}.${detail.name} changed type, optionality, flattening, or access.`;
       break;
     case "model-property-added-required": actual = `${symbol} added required property ${detail.name}.`; break;
+    case "model-hierarchy-changed": actual = `${symbol} changed its base model or discriminator hierarchy.`; break;
     case "enum-values-removed": actual = `${symbol} removed enum values: ${detail.values.join(", ")}.`; break;
     case "enum-extensibility-changed": actual = `${symbol} changed enum extensibility.`; break;
     case "public-surface-changed": actual = `${symbol} changed public access, usage, or reachability.`; break;
@@ -120,14 +179,16 @@ function pushCandidate(candidates, facts, source, projectId, rule, symbol, befor
     ? addFact(facts, projectId, "target", kind, after, source.artifactComparison)
     : undefined;
   const text = candidateText(rule, symbol, detail);
+  const ownership = candidateEvidence(source, symbol, before, after, kind, detail);
   const candidate = {
     rule,
     defaultSeverity: severity(rule),
     actual: text.actual,
     expected: text.expected,
     crossLanguageDefinitionId: symbol,
-    sourceChangeIds: source.sourceChangeIds,
-    declarationIds: source.declarationIds,
+    sourceChangeIds: ownership.sourceChangeIds,
+    declarationIds: ownership.declarationIds,
+    hunkIds: ownership.hunkIds,
     evidenceFactIds: [beforeFactId, afterFactId].filter(Boolean),
     reviewRequired: true,
   };
@@ -155,6 +216,12 @@ function compareMethods(projectId, base, current, source, facts, candidates) {
     if (!after) {
       pushCandidate(candidates, facts, source, projectId, "method-removed", symbol, before, undefined, "method");
       continue;
+    }
+    if (
+      before.identity !== after.identity ||
+      before.name !== after.name
+    ) {
+      pushCandidate(candidates, facts, source, projectId, "method-identity-changed", symbol, before, after, "method");
     }
     if (before.client !== after.client) {
       pushCandidate(candidates, facts, source, projectId, "method-location-changed", symbol, before, after, "method");
@@ -209,6 +276,14 @@ function compareModels(projectId, base, current, source, facts, candidates) {
       before.reachable !== after.reachable
     ) {
       pushCandidate(candidates, facts, source, projectId, "public-surface-changed", symbol, before, after, "model");
+    }
+    if (
+      !same(before.baseModel, after.baseModel) ||
+      !same(before.discriminatorProperty, after.discriminatorProperty) ||
+      !same(before.discriminatorValue, after.discriminatorValue) ||
+      !same(before.discriminatedSubtypes, after.discriminatedSubtypes)
+    ) {
+      pushCandidate(candidates, facts, source, projectId, "model-hierarchy-changed", symbol, before, after, "model");
     }
     const afterProperties = new Map(after.properties.map((item) => [item.name, item]));
     const beforeProperties = new Set(before.properties.map((item) => item.name));
@@ -330,7 +405,8 @@ function compareClients(projectId, base, current, source, facts, candidates) {
 }
 
 function compareCustomizations(projectId, source, facts, candidates) {
-  const relevant = /^@(clientName|flattenProperty|clientLocation|override)\b/;
+  const relevant =
+    /^@@?(?:(?:Azure\.)?ClientGenerator\.Core(?:\.Legacy)?\.)?(clientName|flattenProperty|clientLocation|override)\b/;
   const byDeclaration = new Map();
   for (const declaration of source.declarations) {
     const selected = (declaration.decorators ?? []).filter((item) => relevant.test(item)).sort();

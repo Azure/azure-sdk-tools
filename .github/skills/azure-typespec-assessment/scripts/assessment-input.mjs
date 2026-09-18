@@ -98,7 +98,8 @@ function ensureMergeBase(repo, base, head, deepen) {
 function changedTypeSpecPaths(repo, mergeBase, head) {
   const output = git(repo, [
     "diff",
-    "--name-only",
+    "--name-status",
+    "--find-renames",
     mergeBase,
     head,
     "--",
@@ -107,6 +108,12 @@ function changedTypeSpecPaths(repo, mergeBase, head) {
   return output
     .split(/\r?\n/)
     .filter(Boolean)
+    .flatMap((line) => {
+      const [status, ...files] = line.split("\t");
+      return status.startsWith("R") || status.startsWith("C")
+        ? files.slice(0, 2)
+        : files.slice(0, 1);
+    })
     .map((file) => file.replaceAll("\\", "/"))
     .filter(
       (file) => file.endsWith(".tsp") || path.posix.basename(file) === "tspconfig.yaml",
@@ -163,7 +170,7 @@ function ensureExplicitCommit(repo, ref, label) {
   return fetched;
 }
 
-export function resolveAssessmentInput(options) {
+export function resolveAssessmentInput(options, dependencies = {}) {
   const started = performance.now();
   const repo = path.resolve(options.repo ?? process.cwd());
   const timings = {
@@ -185,7 +192,10 @@ export function resolveAssessmentInput(options) {
   let pullRequest;
   if (hasPr) {
     const metadataStarted = performance.now();
-    pullRequest = getPullRequest(repo, options.pr);
+    pullRequest = (dependencies.getPullRequest ?? getPullRequest)(
+      repo,
+      options.pr,
+    );
     timings.metadataMs = elapsed(metadataStarted);
     if (!pullRequest.baseCommit || !pullRequest.headCommit || !pullRequest.cloneUrl) {
       throw new Error(`PR metadata is incomplete for ${options.pr}.`);
@@ -251,6 +261,7 @@ export function resolveAssessmentInput(options) {
     ...(sparseRoots?.length ? { sparseRoots } : {}),
     mergeBaseCommit,
     includeWorkingTree: !head,
+    ...(pullRequest ? { pullRequest } : {}),
     invocation: {
       mode: hasPr ? "pull-request" : hasHead ? "commits" : "local",
       ...(pullRequest ? { pullRequest } : {}),

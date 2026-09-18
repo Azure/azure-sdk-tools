@@ -442,6 +442,41 @@ function materializeSearch(
   catalog,
   resolvedDeclarations,
 ) {
+  if (!requests.length) {
+    exactCoverage(
+      [],
+      decisions.catalogScores.map((item) => item.catalogId),
+      "Catalog score",
+    );
+    if (
+      decisions.fetchedDocuments.length ||
+      decisions.failedRetrievals.length ||
+      decisions.searchBlockers.length
+    ) {
+      throw new Error(
+        "Guideline retrieval results are invalid without compliance search requests.",
+      );
+    }
+    return {
+      evidence: {
+        schemaVersion: 2,
+        queryProfiles: [],
+        catalogRanking: [],
+        rankedDocuments: [],
+        retrievalAttempts: [],
+        blockers: [],
+        inputAccounting: {
+          catalogEntriesScored: 0,
+          documentsFetched: 0,
+          documentBytesFetched: 0,
+          guidanceExcerptsRetained: 0,
+          guidanceExcerptBytesRetained: 0,
+        },
+      },
+      catalogById: new Map(),
+      fetchedById: new Map(),
+    };
+  }
   const catalogById = new Map(catalog.map((item) => [item.catalogId, item]));
   const declarationsByGuidance = citedGuidanceDeclarations(
     decisions,

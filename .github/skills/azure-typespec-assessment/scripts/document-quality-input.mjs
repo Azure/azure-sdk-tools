@@ -3,7 +3,7 @@ function unique(values = []) {
 }
 
 export const DOCUMENT_QUALITY_CRITERION =
-  "Does the @doc description clearly and accurately explain the associated TypeSpec code?";
+  "Does the TypeSpec compiler return a nonempty effective document?";
 
 const NEW_DECLARATION_KINDS = new Set(["operation", "model", "enum", "interface"]);
 

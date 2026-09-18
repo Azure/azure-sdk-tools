@@ -9,6 +9,36 @@ export function typeIdentity(value) {
     value?.kind;
 }
 
+function parameterTypeContract(type) {
+  if (!type || typeof type !== "object") return typeIdentity(type);
+  switch (type.kind) {
+    case "array":
+      return {
+        kind: "array",
+        valueType: parameterTypeContract(type.valueType),
+      };
+    case "dictionary":
+    case "dict":
+      return {
+        kind: "dictionary",
+        keyType: parameterTypeContract(type.keyType),
+        valueType: parameterTypeContract(type.valueType),
+      };
+    case "tuple":
+      return {
+        kind: "tuple",
+        valueTypes: (type.valueTypes ?? []).map(parameterTypeContract),
+      };
+    case "nullable":
+      return {
+        kind: "nullable",
+        type: parameterTypeContract(type.type),
+      };
+    default:
+      return typeIdentity(type);
+  }
+}
+
 export function publicParameterContract(parameters = []) {
   return parameters
     .filter((parameter) => parameter.type?.kind !== "constant")
@@ -17,7 +47,7 @@ export function publicParameterContract(parameters = []) {
       optional: Boolean(parameter.optional),
       onClient: Boolean(parameter.onClient),
       isApiVersionParam: Boolean(parameter.isApiVersionParam),
-      type: typeIdentity(parameter.type),
+      type: parameterTypeContract(parameter.type),
     }));
 }
 

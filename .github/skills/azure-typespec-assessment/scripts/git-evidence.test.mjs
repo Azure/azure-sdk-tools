@@ -137,6 +137,84 @@ test("normalizes explicit sparse roots without collapsing them", () => {
     ),
     ["specification/widget"],
   );
+  assert.deepEqual(
+    normalizeSparseRoots(
+      ["./specification//widget/./resource-manager/"],
+      "specification/widget",
+    ),
+    ["specification/widget/resource-manager"],
+  );
+  for (const root of [
+    "../specification/widget",
+    "specification/widget/../other",
+    "specification/widget/resource-manager/../../other",
+    "/specification/widget",
+    "C:\\specification\\widget",
+  ]) {
+    assert.throws(
+      () => normalizeSparseRoots([root], "specification/widget"),
+      /Sparse roots must be under/,
+    );
+  }
+});
+
+test("collectChanges classifies both sides of TypeSpec renames across sparse roots", () => {
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-renames-"));
+  try {
+    git(repo, "init", "-q");
+    git(repo, "config", "user.email", "test@example.com");
+    git(repo, "config", "user.name", "Test");
+    const one = path.join(repo, "specification", "one");
+    const two = path.join(repo, "specification", "two");
+    fs.mkdirSync(one, { recursive: true });
+    fs.mkdirSync(two, { recursive: true });
+    fs.writeFileSync(path.join(one, "cross.tsp"), "model Cross {}\n");
+    fs.writeFileSync(path.join(one, "removed.tsp"), "model Removed {}\n");
+    fs.writeFileSync(path.join(two, "promoted.txt"), "model Promoted {}\n");
+    git(repo, "add", ".");
+    git(repo, "commit", "-qm", "base");
+    const base = git(repo, "rev-parse", "HEAD");
+
+    git(repo, "mv", "specification/one/cross.tsp", "specification/two/cross.tsp");
+    git(repo, "mv", "specification/one/removed.tsp", "specification/one/removed.txt");
+    git(repo, "mv", "specification/two/promoted.txt", "specification/two/promoted.tsp");
+    git(repo, "commit", "-qam", "rename files");
+    const head = git(repo, "rev-parse", "HEAD");
+
+    const changes = collectChanges(
+      repo,
+      base,
+      ["specification/one", "specification/two"],
+      { headRef: head, includeWorkingTree: false },
+    );
+
+    assert.deepEqual(
+      changes.map(({ path: file, previousPath, status }) => ({
+        path: file,
+        previousPath,
+        status,
+      })),
+      [
+        {
+          path: "specification/one/removed.txt",
+          previousPath: "specification/one/removed.tsp",
+          status: "removed",
+        },
+        {
+          path: "specification/two/cross.tsp",
+          previousPath: "specification/one/cross.tsp",
+          status: "modified",
+        },
+        {
+          path: "specification/two/promoted.tsp",
+          previousPath: "specification/two/promoted.txt",
+          status: "added",
+        },
+      ],
+    );
+  } finally {
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
 });
 
 test("creates a worktree with multiple sparse roots", () => {

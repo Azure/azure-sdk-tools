@@ -97,3 +97,46 @@ test("does not select a version for an unversioned project", () => {
   assert.equal(pair.baseline.sourceRevision, "base");
   assert.equal(pair.currentReason, "unversioned");
 });
+
+test("compares an unversioned base with a versioned target", () => {
+  const pair = selectApiVersionPair({
+    base: extractApiVersions(["namespace Contoso;"]),
+    current: extractApiVersions([source(`
+  v2025_01_01: "2025-01-01",
+  v2026_01_01_preview: "2026-01-01-preview",
+  `)]),
+    baseCommit: "base-sha",
+    headCommit: "head-sha",
+  });
+
+  assert.equal(pair.mode, "existing-api-version");
+  assert.equal(pair.versioningChange, "unversioned-to-versioned");
+  assert.equal(pair.baseline.sourceRevision, "base");
+  assert.equal(pair.baseline.apiVersion, undefined);
+  assert.equal(pair.target.sourceRevision, "current");
+  assert.equal(pair.target.apiVersion, "2026-01-01-preview");
+  assert.deepEqual(pair.addedCurrentVersions, [
+    "2025-01-01",
+    "2026-01-01-preview",
+  ]);
+});
+
+test("compares a versioned base with an unversioned target", () => {
+  const pair = selectApiVersionPair({
+    base: extractApiVersions([source(`
+  v2025_01_01: "2025-01-01",
+  v2026_01_01_preview: "2026-01-01-preview",
+  `)]),
+    current: extractApiVersions(["namespace Contoso;"]),
+    baseCommit: "base-sha",
+    headCommit: "head-sha",
+  });
+
+  assert.equal(pair.mode, "existing-api-version");
+  assert.equal(pair.versioningChange, "versioned-to-unversioned");
+  assert.equal(pair.baseline.sourceRevision, "base");
+  assert.equal(pair.baseline.apiVersion, "2026-01-01-preview");
+  assert.equal(pair.target.sourceRevision, "current");
+  assert.equal(pair.target.apiVersion, undefined);
+  assert.equal(pair.currentReason, "unversioned");
+});

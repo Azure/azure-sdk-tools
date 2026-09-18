@@ -126,6 +126,12 @@ test("materializes guideline evidence and judgment without inference", () => {
     const judgment = readJson(result.judgmentPath);
     assert.equal(judgment.schemaVersion, 1);
     assert.deepEqual(judgment.complianceDecisions, []);
+    const evidence = readJson(
+      path.join(work, "compliance-search-evidence.json"),
+    );
+    assert.deepEqual(evidence.catalogRanking, []);
+    assert.deepEqual(evidence.rankedDocuments, []);
+    assert.equal(evidence.inputAccounting.catalogEntriesScored, 0);
     assert.equal(
       JSON.stringify(readJson(path.join(work, "workflow-state.json"))).includes(
         "guideline",

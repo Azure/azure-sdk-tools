@@ -65,6 +65,62 @@ export function selectApiVersionPair({ base, current, baseCommit, headCommit }) 
       available: { base: base.versions, current: current.versions },
     };
   }
+  if (!base.versioned && current.versioned) {
+    if (!current.versions.length) {
+      throw new Error("Unable to resolve API versions from the versioned TypeSpec project.");
+    }
+    const currentVersion = latest(current.versions);
+    return {
+      mode: "existing-api-version",
+      versioningChange: "unversioned-to-versioned",
+      baseline: {
+        sourceRevision: "base",
+        commit: baseCommit,
+        apiVersion: undefined,
+        reason: "unversioned",
+      },
+      target: {
+        sourceRevision: "current",
+        commit: headCommit,
+        apiVersion: currentVersion,
+        reason: "newest-added-version",
+      },
+      base: undefined,
+      current: currentVersion,
+      baseReason: "unversioned",
+      currentReason: "new-version-added",
+      addedCurrentVersions: current.versions,
+      available: { base: base.versions, current: current.versions },
+    };
+  }
+  if (base.versioned && !current.versioned) {
+    if (!base.versions.length) {
+      throw new Error("Unable to resolve API versions from the versioned TypeSpec project.");
+    }
+    const baseVersion = latest(base.versions);
+    return {
+      mode: "existing-api-version",
+      versioningChange: "versioned-to-unversioned",
+      baseline: {
+        sourceRevision: "base",
+        commit: baseCommit,
+        apiVersion: baseVersion,
+        reason: "affected-existing-version",
+      },
+      target: {
+        sourceRevision: "current",
+        commit: headCommit,
+        apiVersion: undefined,
+        reason: "unversioned",
+      },
+      base: baseVersion,
+      current: undefined,
+      baseReason: "affected-existing-version",
+      currentReason: "unversioned",
+      addedCurrentVersions: [],
+      available: { base: base.versions, current: current.versions },
+    };
+  }
   if (!base.versions.length || !current.versions.length) {
     throw new Error("Unable to resolve API versions from the versioned TypeSpec project.");
   }

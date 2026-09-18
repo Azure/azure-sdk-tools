@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import {
   assertFreshOutput,
+  blockedAssessment,
   buildModelInput,
 } from "./run-assessment-analysis.mjs";
 
@@ -24,6 +25,32 @@ test("requires a fresh assessment output directory", () => {
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("blocked assessments preserve pull request metadata", () => {
+  const pullRequest = {
+    number: 123,
+    url: "https://github.com/Azure/azure-rest-api-specs/pull/123",
+  };
+  const assessment = blockedAssessment(
+    {
+      repository: { remoteUrl: "https://github.com/Azure/azure-rest-api-specs" },
+      pullRequest,
+      comparison: {
+        baseRef: "main",
+        mergeBaseCommit: "base",
+        headCommit: "head",
+        workingTree: {},
+      },
+      projects: [],
+      blockers: [],
+    },
+    { blockers: [] },
+    { blockers: [] },
+    { blockers: [] },
+  );
+
+  assert.deepEqual(assessment.pullRequest, pullRequest);
 });
 
 test("model input references canonical evidence without embedding sources", () => {

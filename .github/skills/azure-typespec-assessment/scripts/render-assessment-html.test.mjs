@@ -1883,7 +1883,7 @@ function documentedAssessment(decision = "pass", noDocs = false, version = 1) {
     modelInput: {
       ...(version >= 2 ? {
         documentQualityAssessmentVersion: version,
-        documentQualityCriterion: "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+        documentQualityCriterion: "Does the TypeSpec compiler return a nonempty effective document?",
       } : {}),
       artifactReferences: { documentQuality: DOCUMENT_QUALITY_ARTIFACT },
       documentQualityReviewUnits: [{
@@ -2060,7 +2060,10 @@ for (const version of [2, 3]) test(`v${version} renders one description assessme
     const quality = reportSection(html, "document-quality");
     const hero = html.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
     assert.equal(summaryCardValue(html, "Documentation Completeness"), Number(count));
-    assert.match(quality, /Does the description clearly and accurately explain the associated TypeSpec code\?/);
+    assert.match(
+      quality,
+      /Does the TypeSpec compiler return a nonempty effective document\?/,
+    );
     assert.doesNotMatch(quality.replaceAll("Documentation Completeness", ""), /Correctness|Meaning|Legacy assessment|checks assessed/);
     assert.match(
       documentQualitySummary(assessment.dimensions.documentQuality).detail,
@@ -2172,7 +2175,10 @@ test("Documentation Completeness labels retain red impacts and historical anchor
     assert.match(hero, /<div class="summary-label">Documentation Completeness<\/div>/);
     assert.doesNotMatch(hero, /Doc Correctness|Document Quality|Agent Friendliness/);
     assert.match(main, /<h2>Documentation Completeness<\/h2>/);
-    assert.match(main, /Does the description clearly and accurately explain the associated TypeSpec code\?/);
+    assert.match(
+      main,
+      /Does the TypeSpec compiler return a nonempty effective document\?/,
+    );
     assert.match(main, /Examples, external documentation, and agent execution are not assessed/);
     assertNoDocumentAppendixUi(html);
     const semantic = reportSection(html, "semantic-intents");

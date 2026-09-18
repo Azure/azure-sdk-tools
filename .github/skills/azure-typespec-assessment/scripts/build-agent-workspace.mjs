@@ -125,14 +125,16 @@ function decisionsDraft(modelInput, declarationNames) {
           })),
         }
       : {}),
-    catalogScores: readComplianceCatalog().map((entry) => ({
-      catalogId: entry.catalogId,
-      exactSymbol: 0,
-      patternCategory: 0,
-      servicePlane: 0,
-      changeContext: 0,
-      rationale: "",
-    })),
+    catalogScores: modelInput.complianceSearchRequests.length
+      ? readComplianceCatalog().map((entry) => ({
+          catalogId: entry.catalogId,
+          exactSymbol: 0,
+          patternCategory: 0,
+          servicePlane: 0,
+          changeContext: 0,
+          rationale: "",
+        }))
+      : [],
     fetchedDocuments: [],
     failedRetrievals: [],
     searchBlockers: [],
@@ -248,7 +250,11 @@ export function buildAgentWorkspace({ work }) {
       ...(modelInput.inferenceRequests.length
         ? ["Resolve every inference request in the compact Agent decisions."]
         : []),
-      "Score the full catalog, fetch the first four retrievable documents with fallback, and complete the compact Agent decisions; use only prefilled intent-scoped declarationNames in complianceJudgments.",
+      ...(modelInput.complianceSearchRequests.length
+        ? [
+            "Score the full catalog, fetch the first four retrievable documents with fallback, and complete the compact Agent decisions; use only prefilled intent-scoped declarationNames in complianceJudgments.",
+          ]
+        : []),
       "Run materialize-assessment-results.mjs and require all materialized Agent artifacts.",
       "Run finalize-assessment.mjs and require validated assessment.json and assessment.html.",
     ],

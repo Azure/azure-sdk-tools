@@ -52,6 +52,138 @@ function stableProjectId(project) {
   return `project-${crypto.createHash("sha256").update(project).digest("hex").slice(0, 12)}`;
 }
 
+function isTypeSpecPath(file) {
+  return file?.endsWith(".tsp") || path.basename(file ?? "") === "tspconfig.yaml";
+}
+
+function changeTouchesRoot(change, root) {
+  return [change.path, change.previousPath].some(
+    (file) => file === root || file?.startsWith(`${root}/`),
+  );
+}
+
+export function typeSpecChangesForAnalysis(changes) {
+  return changes.flatMap((change) => {
+    if (!change.previousPath || change.previousPath === change.path) return [change];
+    const previousRelevant = isTypeSpecPath(change.previousPath);
+    const currentRelevant = isTypeSpecPath(change.path);
+    return [
+      ...(previousRelevant && change.status !== "added"
+        ? [{ ...change, path: change.previousPath, status: "removed" }]
+        : []),
+      ...(currentRelevant
+        ? [{ ...change, status: "added" }]
+        : []),
+    ];
+  }).sort((left, right) => left.path.localeCompare(right.path));
+}
+
+export function prepareProjectRecords({
+  projects,
+  sourceIndex,
+  blockers,
+  baseWorktree,
+  currentWorktree,
+  baseCommit,
+  headCommit,
+  workRoot,
+  enabled = true,
+  resolveApiVersions = resolveProjectApiVersions,
+  runCompilers = runProjectCompilers,
+}) {
+  const records = [];
+  for (const project of projects) {
+    const projectId = stableProjectId(project);
+    const projectSourceIds = sourceIndex.sourceChanges
+      .filter(
+        (change) =>
+          change.path.startsWith(`${project}/`) ||
+          change.path === project ||
+          !projects.some(
+            (candidate) =>
+              change.path.startsWith(`${candidate}/`) || change.path === candidate,
+          ),
+      )
+      .map((change) => change.id);
+    const projectBlockers = [];
+    const addBlocker = (blocker) => {
+      projectBlockers.push(blocker);
+      blockers.push(blocker);
+    };
+    const record = {
+      id: projectId,
+      path: project,
+      sourceChangeIds: projectSourceIds,
+      artifacts: {},
+      blockers: projectBlockers,
+    };
+    if (enabled) {
+      try {
+        record.artifactComparison = resolveApiVersions({
+          baseWorktree,
+          currentWorktree,
+          project,
+          baseCommit,
+          headCommit,
+        });
+        record.apiVersions = {
+          base: record.artifactComparison.baseline.apiVersion,
+          current: record.artifactComparison.target.apiVersion,
+          baseReason: record.artifactComparison.baseline.reason,
+          currentReason: record.artifactComparison.target.reason,
+          addedCurrentVersions: record.artifactComparison.addedCurrentVersions,
+          available: record.artifactComparison.available,
+        };
+      } catch (error) {
+        addBlocker({
+          code: "api-version-resolution-failed",
+          projectId,
+          message: error.message,
+        });
+      }
+    }
+    if (enabled && !projectBlockers.length) {
+      for (const comparisonRole of ["baseline", "target"]) {
+        const selection = record.artifactComparison[comparisonRole];
+        const worktree = selection.sourceRevision === "base" ? baseWorktree : currentWorktree;
+        try {
+          record.artifacts[comparisonRole] = runCompilers({
+            worktree,
+            project,
+            projectId,
+            comparisonRole,
+            sourceRevision: selection.sourceRevision,
+            sourceCommit: selection.commit,
+            workRoot,
+            apiVersion: selection.apiVersion,
+          });
+          for (const emitter of ["autorest", "tcgc"]) {
+            if (record.artifacts[comparisonRole][emitter].status === "failed") {
+              addBlocker({
+                code: `${emitter}-compile-failed`,
+                projectId,
+                comparisonRole,
+                sourceRevision: selection.sourceRevision,
+                message: `${emitter} compilation failed for ${project} (${comparisonRole}: ${selection.sourceRevision}@${selection.apiVersion ?? "unversioned"}).`,
+              });
+            }
+          }
+        } catch (error) {
+          addBlocker({
+            code: "compiler-runner-failed",
+            projectId,
+            comparisonRole,
+            sourceRevision: selection.sourceRevision,
+            message: error.message,
+          });
+        }
+      }
+    }
+    records.push(record);
+  }
+  return records;
+}
+
 function copyOverlay(repo, currentWorktree, changedFiles) {
   for (const file of changedFiles) {
     const source = path.join(repo, file.path);
@@ -158,6 +290,7 @@ export async function prepareAssessment({
   output,
   sparse_root,
   sparseRoots: requestedSparseRoots,
+  pullRequest,
   invocation,
 }) {
   const started = performance.now();
@@ -184,16 +317,12 @@ export async function prepareAssessment({
   const changedFiles = collectChanges(
     repository,
     comparison.mergeBaseCommit,
-    scope,
+    sparseRoots,
     {
       headRef: comparison.headCommit,
       includeWorkingTree,
     },
-  ).filter((file) =>
-    sparseRoots.some(
-      (root) => file.path === root || file.path.startsWith(`${root}/`),
-    ),
-  );
+  ).filter((file) => sparseRoots.some((root) => changeTouchesRoot(file, root)));
   const changeDiscoveryMs = Math.round(
     performance.now() - changeDiscoveryStarted,
   );
@@ -201,6 +330,7 @@ export async function prepareAssessment({
   const manifest = {
     schemaVersion: 1,
     repository: { root: repository, remoteUrl: comparison.remoteUrl },
+    ...(pullRequest ? { pullRequest } : {}),
     ...(invocation ? { invocation } : {}),
     comparison: {
       baseRef: comparison.baseRef,
@@ -233,16 +363,17 @@ export async function prepareAssessment({
     writeJson(path.join(work, "preparation-manifest.json"), manifest);
     return manifest;
   }
+  const analysisFiles = typeSpecChangesForAnalysis(changedFiles);
 
   const sourceIndex = buildSourceIndex({
     repo: repository,
     mergeBase: comparison.mergeBaseCommit,
     headCommit: comparison.headCommit,
-    changedFiles,
+    changedFiles: analysisFiles,
     remoteUrl: comparison.remoteUrl,
     currentRevision: includeWorkingTree ? "working" : comparison.headCommit,
   });
-  writeJson(path.join(work, "source", "changed-files.json"), changedFiles);
+  writeJson(path.join(work, "source", "changed-files.json"), analysisFiles);
   writeJson(path.join(work, "source", "source-index.json"), sourceIndex);
   writeJson(
     path.join(work, "source", "typespec-diff.json"),
@@ -257,7 +388,7 @@ export async function prepareAssessment({
     createSparseWorktree(repository, comparison.headCommit, sparseRoots, currentWorktree);
     manifest.sparseCheckout.verified = true;
     if (includeWorkingTree) {
-      copyOverlay(repository, currentWorktree, changedFiles);
+      copyOverlay(repository, currentWorktree, analysisFiles);
     }
   } catch (error) {
     blockers.push({ code: "workspace-preparation-failed", message: error.message });
@@ -272,7 +403,7 @@ export async function prepareAssessment({
       sparseRoots.flatMap((root) =>
         discoverProjects(
           currentWorktree,
-          changedFiles.filter(
+          analysisFiles.filter(
             (file) => file.path === root || file.path.startsWith(`${root}/`),
           ),
           root,
@@ -326,84 +457,17 @@ export async function prepareAssessment({
     });
     writeJson(path.join(work, "source", "source-index.json"), sourceIndex);
   }
-  for (const project of projects) {
-    const projectId = stableProjectId(project);
-    const projectSourceIds = sourceIndex.sourceChanges
-      .filter(
-        (change) =>
-          change.path.startsWith(`${project}/`) ||
-          change.path === project ||
-          !projects.some(
-            (candidate) =>
-              change.path.startsWith(`${candidate}/`) || change.path === candidate,
-          ),
-      )
-      .map((change) => change.id);
-    const record = { id: projectId, path: project, sourceChangeIds: projectSourceIds, artifacts: {} };
-    if (!blockers.length) {
-      try {
-        record.artifactComparison = resolveProjectApiVersions({
-          baseWorktree,
-          currentWorktree,
-          project,
-          baseCommit: comparison.mergeBaseCommit,
-          headCommit: comparison.headCommit,
-        });
-        record.apiVersions = {
-          base: record.artifactComparison.baseline.apiVersion,
-          current: record.artifactComparison.target.apiVersion,
-          baseReason: record.artifactComparison.baseline.reason,
-          currentReason: record.artifactComparison.target.reason,
-          addedCurrentVersions: record.artifactComparison.addedCurrentVersions,
-          available: record.artifactComparison.available,
-        };
-      } catch (error) {
-        blockers.push({
-          code: "api-version-resolution-failed",
-          projectId,
-          message: error.message,
-        });
-      }
-    }
-    if (!blockers.length) {
-      for (const comparisonRole of ["baseline", "target"]) {
-        const selection = record.artifactComparison[comparisonRole];
-        const worktree = selection.sourceRevision === "base" ? baseWorktree : currentWorktree;
-        try {
-          record.artifacts[comparisonRole] = runProjectCompilers({
-            worktree,
-            project,
-            projectId,
-            comparisonRole,
-            sourceRevision: selection.sourceRevision,
-            sourceCommit: selection.commit,
-            workRoot: work,
-            apiVersion: selection.apiVersion,
-          });
-          for (const emitter of ["autorest", "tcgc"]) {
-            if (record.artifacts[comparisonRole][emitter].status === "failed") {
-              blockers.push({
-                code: `${emitter}-compile-failed`,
-                projectId,
-                comparisonRole,
-                sourceRevision: selection.sourceRevision,
-                message: `${emitter} compilation failed for ${project} (${comparisonRole}: ${selection.sourceRevision}@${selection.apiVersion ?? "unversioned"}).`,
-              });
-            }
-          }
-        } catch (error) {
-          blockers.push({
-            code: "compiler-runner-failed",
-            projectId,
-            comparisonRole,
-            sourceRevision: selection.sourceRevision,
-            message: error.message,
-          });
-        }
-      }
-    }
-    manifest.projects.push(record);
-  }
+  manifest.projects.push(...prepareProjectRecords({
+    projects,
+    sourceIndex,
+    blockers,
+    baseWorktree,
+    currentWorktree,
+    baseCommit: comparison.mergeBaseCommit,
+    headCommit: comparison.headCommit,
+    workRoot: work,
+    enabled: !blockers.length,
+  }));
   manifest.status = blockers.length ? "blocked" : "ready";
   manifest.timings.totalMs = Math.round(performance.now() - started);
   writeJson(path.join(work, "preparation-manifest.json"), manifest);

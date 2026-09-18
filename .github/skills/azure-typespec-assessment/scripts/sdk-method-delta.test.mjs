@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   diffPublicParameters,
+  publicParameterContract,
   semanticLroContract,
 } from "./sdk-method-delta.mjs";
 
@@ -58,4 +59,34 @@ test("does not treat URI-template-only metadata as an LRO behavior change", () =
   };
 
   assert.deepEqual(semanticLroContract(base), semanticLroContract(current));
+});
+
+test("retains nested array and dictionary parameter type contracts", () => {
+  const composite = (model) => ({
+    kind: "array",
+    valueType: {
+      kind: "dictionary",
+      keyType: { kind: "string" },
+      valueType: {
+        kind: "model",
+        name: model,
+        crossLanguageDefinitionId: `Contoso.${model}`,
+      },
+    },
+  });
+  const before = [{ ...parameter("items", "array"), type: composite("Widget") }];
+  const after = [{ ...parameter("items", "array"), type: composite("Gadget") }];
+
+  assert.deepEqual(publicParameterContract(before)[0].type, {
+    kind: "array",
+    valueType: {
+      kind: "dictionary",
+      keyType: "string",
+      valueType: "Contoso.Widget",
+    },
+  });
+  assert.deepEqual(
+    diffPublicParameters(before, after).modified[0].changedFields,
+    ["type"],
+  );
 });

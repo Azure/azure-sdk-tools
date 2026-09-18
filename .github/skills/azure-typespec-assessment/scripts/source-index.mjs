@@ -602,8 +602,33 @@ export async function addCompilerEvidence({
   for (const source of sourceIndex.sourceChanges) {
     const compiled = declarations.get(source.id);
     if (compiled.length) {
+      const parsed = source.declarations ?? [];
+      const merged = compiled.map((declaration) => {
+        const candidates = parsed
+          .filter((item) =>
+            item.kind === declaration.kind &&
+            item.qualifiedName === declaration.qualifiedName &&
+            item.source?.revision === declaration.source?.revision)
+          .sort((left, right) =>
+            Math.abs(left.source.startLine - declaration.source.startLine) -
+            Math.abs(right.source.startLine - declaration.source.startLine));
+        const parsedDeclaration =
+          candidates.find((item) => item.id === declaration.id) ?? candidates[0];
+        if (!parsedDeclaration) return declaration;
+        return {
+          ...parsedDeclaration,
+          ...declaration,
+          decorators: parsedDeclaration.decorators ?? declaration.decorators,
+          versionedMembers:
+            parsedDeclaration.versionedMembers ?? declaration.versionedMembers,
+          source: {
+            ...parsedDeclaration.source,
+            ...declaration.source,
+          },
+        };
+      });
       const identities = new Map();
-      for (const declaration of compiled) {
+      for (const declaration of merged) {
         const key = `${declaration.kind}:${declaration.qualifiedName}`;
         if (declaration.hunkIds.length) {
           identities.set(key, [
@@ -615,7 +640,7 @@ export async function addCompilerEvidence({
         }
       }
       source.declarations = [
-        ...new Map(compiled.map((item) => [item.id, item])).values(),
+        ...new Map(merged.map((item) => [item.id, item])).values(),
       ]
         .filter((declaration) =>
           identities.has(`${declaration.kind}:${declaration.qualifiedName}`),

@@ -1427,12 +1427,13 @@ export function buildModelInput({
   return accountInput(input, maximumBytes);
 }
 
-function blockedAssessment(manifest, semantic, rest, downstream) {
+export function blockedAssessment(manifest, semantic, rest, downstream) {
   return {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     title: `TypeSpec assessment: ${manifest.projects.map((project) => project.path).join(", ")}`,
     repository: manifest.repository,
+    ...(manifest.pullRequest ? { pullRequest: manifest.pullRequest } : {}),
     comparison: {
       baseRef: manifest.comparison.baseRef,
       baseCommit: manifest.comparison.mergeBaseCommit,

@@ -27,15 +27,37 @@ export function resolveComparison(repo, baseRef, headRef = "HEAD", mergeBase) {
 function nameStatus(repo, args, origin) {
   const output = git(repo, args).stdout.trim();
   if (!output) return [];
-  return output.split(/\r?\n/).map((line) => {
+  return output.split(/\r?\n/).flatMap((line) => {
     const fields = line.split("\t");
     const code = fields[0][0];
-    return {
-      path: fields.at(-1).replaceAll("\\", "/"),
-      previousPath: fields.length > 2 ? fields[1].replaceAll("\\", "/") : undefined,
-      status: code === "A" ? "added" : code === "D" ? "removed" : "modified",
-      origin,
-    };
+    const currentPath = fields.at(-1).replaceAll("\\", "/");
+    const previousPath =
+      fields.length > 2 ? fields[1].replaceAll("\\", "/") : undefined;
+    const relevant = (file) =>
+      file?.endsWith(".tsp") || path.basename(file ?? "") === "tspconfig.yaml";
+    if ((code === "R" || code === "C") && previousPath) {
+      const previousRelevant = relevant(previousPath);
+      const currentRelevant = relevant(currentPath);
+      if (!previousRelevant && !currentRelevant) return [];
+      return [{
+        path: currentPath,
+        previousPath,
+        status:
+          code === "C" || (!previousRelevant && currentRelevant)
+            ? "added"
+            : previousRelevant && !currentRelevant
+              ? "removed"
+              : "modified",
+        origin,
+      }];
+    }
+    return relevant(currentPath)
+      ? [{
+          path: currentPath,
+          status: code === "A" ? "added" : code === "D" ? "removed" : "modified",
+          origin,
+        }]
+      : [];
   });
 }
 
@@ -45,23 +67,24 @@ export function collectChanges(
   scope,
   { headRef = "HEAD", includeWorkingTree = true } = {},
 ) {
-  const scoped = scope ? ["--", scope] : [];
+  const scopes = Array.isArray(scope) ? scope : scope ? [scope] : [];
+  const scoped = scopes.length ? ["--", ...scopes] : [];
   const entries = [
     ...nameStatus(
       repo,
-      ["diff", "--name-status", mergeBase, headRef, ...scoped],
+      ["diff", "--find-renames", "--name-status", mergeBase, headRef, ...scoped],
       "committed",
     ),
     ...(includeWorkingTree
       ? [
           ...nameStatus(
             repo,
-            ["diff", "--cached", "--name-status", ...scoped],
+            ["diff", "--find-renames", "--cached", "--name-status", ...scoped],
             "staged",
           ),
           ...nameStatus(
             repo,
-            ["diff", "--name-status", ...scoped],
+            ["diff", "--find-renames", "--name-status", ...scoped],
             "unstaged",
           ),
         ]
@@ -72,7 +95,7 @@ export function collectChanges(
         "ls-files",
         "--others",
         "--exclude-standard",
-        ...(scope ? ["--", scope] : []),
+        ...scoped,
       ]).stdout
         .trim()
         .split(/\r?\n/)
@@ -85,9 +108,9 @@ export function collectChanges(
     : [];
   const merged = new Map();
   for (const entry of [...entries, ...untracked]) {
-    if (!entry.path.endsWith(".tsp") && path.basename(entry.path) !== "tspconfig.yaml") continue;
     const current = merged.get(entry.path) ?? { ...entry, origins: [] };
     current.status = entry.status;
+    if (entry.previousPath) current.previousPath = entry.previousPath;
     if (!current.origins.includes(entry.origin)) current.origins.push(entry.origin);
     merged.set(entry.path, current);
   }
@@ -136,7 +159,17 @@ export function normalizeSparseRoots(sparseRoots, specification) {
   const roots = sparseRoots?.length ? sparseRoots : [deriveServiceRoot(specification)];
   const normalized = [
     ...new Set(
-      roots.map((root) => root.replaceAll("\\", "/").replace(/^\.?\//, "").replace(/\/$/, "")),
+      roots.map((root) => {
+        const portable = root.replaceAll("\\", "/");
+        if (
+          path.posix.isAbsolute(portable) ||
+          /^[A-Za-z]:\//.test(portable) ||
+          portable.split("/").includes("..")
+        ) {
+          throw new Error("Sparse roots must be under specification/<service>.");
+        }
+        return path.posix.normalize(portable).replace(/^(?:\.\/)+/, "").replace(/\/$/, "");
+      }),
     ),
   ].sort();
   if (

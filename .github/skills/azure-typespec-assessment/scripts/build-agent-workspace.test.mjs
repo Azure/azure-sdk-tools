@@ -235,3 +235,36 @@ test("rejects mutated or unresolved canonical evidence", () => {
     fs.rmSync(work, { recursive: true, force: true });
   }
 });
+
+test("skips shared guideline search when all semantic intents are informational", () => {
+  const { work } = fixture();
+  try {
+    const modelInputPath = path.join(work, "model-input.json");
+    const modelInput = readJson(modelInputPath);
+    modelInput.semanticReviewUnits = [];
+    modelInput.informationalSemanticIntentIds = ["semantic-1"];
+    modelInput.downstreamCandidates = [];
+    modelInput.complianceSearchRequests = [];
+    modelInput.inferenceRequests = [];
+    writeJson(modelInputPath, modelInput);
+
+    const { indexPath } = buildAgentWorkspace({ work });
+    const index = readJson(indexPath);
+    const decisionsDraft = readJson(
+      path.join(work, "agent-workspace", "agent-decisions.draft.json"),
+    );
+
+    assert.deepEqual(decisionsDraft.complianceJudgments, []);
+    assert.deepEqual(decisionsDraft.catalogScores, []);
+    assert.equal(index.counts.assessedSemanticIntents, 0);
+    assert.equal(index.counts.informationalSemanticIntents, 1);
+    assert.equal(index.counts.guidelineRequests, 0);
+    assert.ok(
+      !index.completionChecklist.some((item) =>
+        item.includes("fetch the first four"),
+      ),
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});

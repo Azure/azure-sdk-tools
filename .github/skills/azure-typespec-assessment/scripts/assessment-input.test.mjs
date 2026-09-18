@@ -109,6 +109,80 @@ test("resolves an explicit head without changing the current checkout", (t) => {
   assert.ok(resolved.invocation.timings.setupExcludingFetchMs < 60_000);
 });
 
+test("discovers both service roots for a cross-service TypeSpec rename", (t) => {
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "assessment-rename-"));
+  t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
+  git(repo, "init", "-q");
+  git(repo, "config", "user.email", "test@example.com");
+  git(repo, "config", "user.name", "Test");
+  const source = path.join(repo, "specification", "alpha", "Widget");
+  const destination = path.join(repo, "specification", "beta", "Widget");
+  fs.mkdirSync(source, { recursive: true });
+  fs.writeFileSync(path.join(source, "main.tsp"), "model Widget {}\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-qm", "base");
+  const base = git(repo, "rev-parse", "HEAD");
+  fs.mkdirSync(destination, { recursive: true });
+  git(
+    repo,
+    "mv",
+    "specification/alpha/Widget/main.tsp",
+    "specification/beta/Widget/main.tsp",
+  );
+  git(repo, "commit", "-qm", "move service");
+  const head = git(repo, "rev-parse", "HEAD");
+
+  const resolved = resolveAssessmentInput({
+    repo,
+    base,
+    head,
+    output: path.join(repo, "output"),
+  });
+
+  assert.deepEqual(resolved.sparseRoots, [
+    "specification/alpha",
+    "specification/beta",
+  ]);
+  assert.equal(resolved.specification, "specification");
+});
+
+test("exposes pull request metadata for downstream reports", (t) => {
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "assessment-pr-"));
+  t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
+  git(repo, "init", "-q");
+  git(repo, "config", "user.email", "test@example.com");
+  git(repo, "config", "user.name", "Test");
+  const project = path.join(repo, "specification", "widget", "Widget");
+  fs.mkdirSync(project, { recursive: true });
+  fs.writeFileSync(path.join(project, "tspconfig.yaml"), "emit: []\n");
+  fs.writeFileSync(path.join(project, "main.tsp"), "model Widget {}\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-qm", "base");
+  const baseCommit = git(repo, "rev-parse", "HEAD");
+  fs.appendFileSync(path.join(project, "main.tsp"), "model Added {}\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-qm", "head");
+  const headCommit = git(repo, "rev-parse", "HEAD");
+  const pullRequest = {
+    owner: "Azure",
+    repository: "azure-rest-api-specs",
+    number: 123,
+    url: "https://github.com/Azure/azure-rest-api-specs/pull/123",
+    cloneUrl: repo,
+    baseRef: "main",
+    baseCommit,
+    headCommit,
+  };
+
+  const resolved = resolveAssessmentInput(
+    { repo, pr: "Azure/azure-rest-api-specs#123" },
+    { getPullRequest: () => pullRequest },
+  );
+
+  assert.deepEqual(resolved.pullRequest, pullRequest);
+  assert.deepEqual(resolved.invocation.pullRequest, pullRequest);
+});
+
 test("fetches missing explicit refs without checking them out", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "assessment-fetch-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

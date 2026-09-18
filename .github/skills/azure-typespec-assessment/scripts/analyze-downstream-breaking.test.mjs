@@ -174,7 +174,7 @@ function nestedResponseShape(current) {
   return shape;
 }
 
-function analyzeShapes(context, base, current) {
+function analyzeShapes(context, base, current, declarations = [], suppliedSources) {
   const work = fs.mkdtempSync(path.join(process.cwd(), ".downstream-analyzer-test-"));
   context.after(() => fs.rmSync(work, { recursive: true, force: true }));
   fs.writeFileSync(path.join(work, "base.yaml"), stringify(base));
@@ -184,24 +184,26 @@ function analyzeShapes(context, base, current) {
     format: "tcgc-yaml",
     files: [{ path: file }],
   });
+  const sourceChanges = suppliedSources ?? [{
+    id: "source-supplied",
+    declarations: [
+      { id: "declaration-supplied", decorators: [] },
+      ...declarations,
+    ],
+  }];
   return analyzeDownstreamBreaking({
     workRoot: work,
     manifest: {
       projects: [{
         id: "project-1",
-        sourceChangeIds: ["source-supplied"],
+        sourceChangeIds: sourceChanges.map((item) => item.id),
         artifacts: {
           base: { tcgc: artifact("base.yaml") },
           current: { tcgc: artifact("current.yaml") },
         },
       }],
     },
-    sourceIndex: {
-      sourceChanges: [{
-        id: "source-supplied",
-        declarations: [{ id: "declaration-supplied", decorators: [] }],
-      }],
-    },
+    sourceIndex: { sourceChanges },
   });
 }
 
@@ -273,6 +275,142 @@ test("retains actual LRO behavior changes", (context) => {
 
   assert.ok(result.candidates.some((item) => item.rule === "method-lro-changed"));
   assert.ok(!result.candidates.some((item) => item.rule === "method-parameters-changed"));
+});
+
+test("reports SDK method identity changes when matching by HTTP route", (context) => {
+  const base = packageShape(false);
+  const current = packageShape(false);
+  const method = current.clients[0].methods[0];
+  method.name = "abort";
+  method.crossLanguageDefinitionId = "Microsoft.Chaos.ScenarioRuns.abort";
+
+  const result = analyzeShapes(context, base, current);
+
+  assert.ok(result.candidates.some((item) => item.rule === "method-identity-changed"));
+  assert.ok(!result.candidates.some((item) => item.rule === "method-removed"));
+});
+
+test("detects model base and discriminator hierarchy changes", (context) => {
+  const cases = [
+    ["base model", (model, current) => {
+      model.baseModel = {
+        kind: "model",
+        name: current ? "NewBase" : "OldBase",
+        crossLanguageDefinitionId: `Microsoft.Chaos.${current ? "NewBase" : "OldBase"}`,
+      };
+    }],
+    ["discriminator property", (model, current) => {
+      model.discriminatorProperty = { name: current ? "type" : "kind" };
+    }],
+    ["discriminator value", (model, current) => {
+      model.discriminatorValue = current ? "chaos" : "scenario";
+    }],
+    ["polymorphic subtypes", (model, current) => {
+      model.discriminatedSubtypes = {
+        [current ? "chaos" : "scenario"]: {
+          kind: "model",
+          name: current ? "ChaosRun" : "ScenarioRunDetails",
+          crossLanguageDefinitionId:
+            `Microsoft.Chaos.${current ? "ChaosRun" : "ScenarioRunDetails"}`,
+        },
+      };
+    }],
+  ];
+
+  for (const [label, configure] of cases) {
+    const base = packageShape(true);
+    const current = packageShape(true);
+    configure(base.models[0], false);
+    configure(current.models[0], true);
+    const result = analyzeShapes(context, base, current);
+    assert.ok(
+      result.candidates.some((item) => item.rule === "model-hierarchy-changed"),
+      label,
+    );
+  }
+});
+
+test("limits downstream evidence to matching declarations and hunks", (context) => {
+  const base = packageShape(false);
+  const current = packageShape(false);
+  current.models[0].properties = [];
+  const declaration = (id, kind, qualifiedName, revision, hunkId) => ({
+    id,
+    kind,
+    qualifiedName,
+    hunkIds: [hunkId],
+    decorators: [],
+    source: { revision },
+  });
+  const result = analyzeShapes(context, base, current, [], [
+    {
+      id: "scenario-source",
+      declarations: [
+        declaration("scenario-model", "model", "ScenarioRun", "current", "scenario-model-hunk"),
+        declaration("scenario-status", "property", "ScenarioRun.status", "base", "scenario-status-hunk"),
+      ],
+    },
+    {
+      id: "unrelated-source",
+      declarations: [
+        declaration("other-model", "model", "Unrelated", "current", "other-hunk"),
+      ],
+    },
+  ]);
+  const candidate = result.candidates.find(
+    (item) => item.rule === "model-property-removed",
+  );
+
+  assert.deepEqual(candidate.sourceChangeIds, ["scenario-source"]);
+  assert.deepEqual(candidate.declarationIds, ["scenario-status"]);
+  assert.deepEqual(candidate.hunkIds, ["scenario-status-hunk"]);
+});
+
+test("detects augment and qualified SDK customization decorators", (context) => {
+  const declaration = (id, qualifiedName, revision, decorator) => ({
+    id,
+    qualifiedName,
+    decorators: [decorator],
+    source: { revision },
+  });
+  const result = analyzeShapes(context, packageShape(false), packageShape(false), [
+    declaration(
+      "location-base",
+      "Microsoft.Chaos.ScenarioRuns.cancel",
+      "base",
+      '@@clientLocation(ScenarioRuns.cancel, Microsoft.Chaos, "go")',
+    ),
+    declaration(
+      "location-current",
+      "Microsoft.Chaos.ScenarioRuns.cancel",
+      "current",
+      '@@clientLocation(ScenarioRuns.cancel, Microsoft.Chaos, "python")',
+    ),
+    declaration(
+      "name-base",
+      "Microsoft.Chaos.ScenarioRun",
+      "base",
+      '@@Azure.ClientGenerator.Core.clientName(ScenarioRun, "ScenarioRun")',
+    ),
+    declaration(
+      "name-current",
+      "Microsoft.Chaos.ScenarioRun",
+      "current",
+      '@@Azure.ClientGenerator.Core.clientName(ScenarioRun, "ChaosScenarioRun")',
+    ),
+  ]);
+  const customizations = result.candidates.filter(
+    (item) => item.rule === "customization-changed",
+  );
+
+  assert.equal(customizations.length, 2);
+  assert.deepEqual(
+    customizations.map((item) => item.crossLanguageDefinitionId).sort(),
+    [
+      "Microsoft.Chaos.ScenarioRun",
+      "Microsoft.Chaos.ScenarioRuns.cancel",
+    ],
+  );
 });
 
 test("links nested response type changes to unchanged public methods", (context) => {

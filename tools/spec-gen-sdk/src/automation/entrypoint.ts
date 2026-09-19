@@ -16,7 +16,7 @@ import { getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 import { extractPathFromSpecConfig } from '../utils/utils';
 import { FailureType, SdkAutoContext, SdkAutoOptions, WorkflowContext } from '../types/Workflow';
-import { getSdkRepoConfig, loadConfigContent, setFailureType } from '../utils/workflowUtils';
+import { getSdkRepoConfig, loadConfigContent, resolveRepoRelativePath, setFailureType } from '../utils/workflowUtils';
 
 export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAutoContext> => {
   const logger = winston.createLogger({
@@ -60,7 +60,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   const specRepoConfig = getSpecConfig(specConfigContent, options.specRepo);
 
   const sdkRepoConfig = await getSdkRepoConfig(options, specRepoConfig);
-  const swaggerToSdkConfigPath = path.join(options.localSdkRepoPath, sdkRepoConfig.configFilePath);
+  const swaggerToSdkConfigPath = resolveRepoRelativePath(options.localSdkRepoPath, sdkRepoConfig.configFilePath, 'configFilePath');
   const swaggerToSdkConfigContent = loadConfigContent(swaggerToSdkConfigPath, logger);
   const swaggerToSdkConfig = getSwaggerToSdkConfig(swaggerToSdkConfigContent);
 

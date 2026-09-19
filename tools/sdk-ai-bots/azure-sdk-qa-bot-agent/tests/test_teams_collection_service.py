@@ -236,7 +236,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         definition = routine_definition(config)
         self.assertFalse(definition["enabled"])
         self.assertEqual(definition["authorization"], {"identity": "agent"})
-        self.assertEqual(definition["triggers"]["schedule"]["cron_expression"], "0 * * * *")
+        self.assertEqual(definition["triggers"]["schedule"]["cron_expression"], "0 0 * * 0")
         client = AsyncMock()
         client.get.return_value = httpx.Response(404)
         client.put.return_value = httpx.Response(201, json={"name": "teams-channel-collection", "enabled": False})
@@ -266,6 +266,11 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(access["sasAuthenticationPolicy"]["state"], "Disabled")
         self.assertEqual({claim["name"] for claim in access["openAuthenticationPolicies"]["policies"]["collector"]["claims"]},
                          {"iss", "aud", "oid"})
+        claims = {
+            claim["name"]: claim["value"]
+            for claim in access["openAuthenticationPolicies"]["policies"]["collector"]["claims"]
+        }
+        self.assertEqual(claims["aud"], "https://management.core.windows.net")
         definition = workflow["properties"]["definition"]
         self.assertEqual(list(definition["triggers"]), ["manual"])
         self.assertEqual(definition["triggers"]["manual"]["operationOptions"], "EnableSchemaValidation")
@@ -281,6 +286,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("$skiptoken", action["inputs"]["queries"])
             self.assertEqual(action["runtimeConfiguration"]["secureData"]["properties"], ["inputs", "outputs"])
         self.assertIn('$expand', cases["messages"]["actions"]["GetMessagesFromChannel"]["inputs"]["queries"])
+        self.assertIn('$top', cases["messages"]["actions"]["GetMessagesFromChannel"]["inputs"]["queries"])
         for name, operation, filter_name, return_name in (
                 ("messages", "GetMessagesFromChannel", "Filter_messages", "Return_messages"),
                 ("replies", "ListRepliesToMessage", "Filter_replies", "Return_replies")):
@@ -334,6 +340,8 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         definitions = [resource for resource in template["resources"]
                        if resource["type"].endswith("/sqlRoleDefinitions")]
         self.assertEqual(len(definitions), 1)
+        self.assertEqual(template["variables"]["metadataRoleName"],
+                         "41cd8d60-edff-4171-9ff9-e7e1810d045b")
         self.assertEqual(definitions[0]["properties"]["type"], "CustomRole")
         self.assertEqual(definitions[0]["properties"]["permissions"], [
             {"dataActions": ["Microsoft.DocumentDB/databaseAccounts/readMetadata"]}])
@@ -428,8 +436,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             graph_message({
                 "id": "root",
                 "replies": [
-                    {"id": "system-reply", "replyToId": "root",
-                     "messageType": "systemEventMessage"},
+                    {"id": "system-reply", "messageType": "systemEventMessage"},
                     reply,
                 ],
             }),
@@ -439,6 +446,18 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         result = await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])
 
         self.assertEqual(result["postsRead"], 1)
+        self.assertEqual(result["repliesRead"], 1)
+        self.assertEqual(next(iter(store.items.values()))["replies"], [reply])
+
+    async def test_expanded_reply_without_reply_to_id_uses_root_context(self):
+        reply = graph_message({"id": "reply"})
+        fetch = AsyncMock(return_value={"value": [
+            graph_message({"id": "root", "replies": [reply]}),
+        ]})
+        store = MemoryStore()
+
+        result = await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])
+
         self.assertEqual(result["repliesRead"], 1)
         self.assertEqual(next(iter(store.items.values()))["replies"], [reply])
 
@@ -489,6 +508,88 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(retried["postsUnchanged"], 1)
         self.assertEqual(store.writes, 2)
         self.assertNotEqual(store.checkpoints, checkpoint)
+
+    async def test_first_scan_is_full_even_with_a_lookback_window(self):
+        from datetime import datetime, timezone
+
+        first = graph_message({
+            "id": "first", "createdDateTime": "2020-01-01T00:00:00Z", "replies": [],
+        })
+        second = graph_message({
+            "id": "second", "createdDateTime": "2019-01-01T00:00:00Z", "replies": [],
+        })
+        fetch = AsyncMock(side_effect=[
+            {"value": [first], "@odata.nextLink": next_link(CHANNEL)},
+            {"value": [second]},
+        ])
+        store = MemoryStore()
+        with patch("services.teams_collection_service.datetime", wraps=datetime) as clock:
+            clock.now.return_value = datetime(2026, 9, 18, tzinfo=timezone.utc)
+            result = await TeamsCollectionService(
+                fetch, store, TENANT, lookback_days=7
+            ).collect([CHANNEL])
+
+        self.assertEqual(result["postsRead"], 2)
+        self.assertEqual(fetch.await_count, 2)
+        checkpoint = next(iter(store.checkpoints.values()))
+        self.assertEqual(checkpoint["scan_mode"], "full")
+        self.assertIsNone(checkpoint["lookback_cutoff"])
+
+    async def test_incremental_scan_stops_after_the_reply_chain_activity_cutoff(self):
+        import hashlib
+        from datetime import datetime, timezone
+
+        key = hashlib.sha256(json.dumps(
+            [TENANT, CHANNEL["teamId"], CHANNEL["channelId"]]
+        ).encode()).hexdigest()
+        store = MemoryStore()
+        store.checkpoints[key] = {
+            "id": "channel-checkpoint",
+            "channel_key": key,
+            "last_successful_scan_started_at": "2026-09-11T00:00:00+00:00",
+        }
+        recent_reply = graph_message({
+            "id": "recent-reply", "replyToId": "recent-thread",
+            "createdDateTime": "2026-09-15T00:00:00Z",
+        })
+        recent_thread = graph_message({
+            "id": "recent-thread", "createdDateTime": "2020-01-01T00:00:00Z",
+            "lastModifiedDateTime": "2020-01-01T00:00:00Z",
+            "replies": [recent_reply],
+        })
+        cutoff_thread = graph_message({
+            "id": "cutoff", "createdDateTime": "2026-09-10T23:59:59Z",
+            "replies": [],
+        })
+        older_thread = graph_message({
+            "id": "older", "createdDateTime": "2019-01-01T00:00:00Z",
+            "replies": [],
+        })
+        fetch = AsyncMock(return_value={
+            "value": [recent_thread, cutoff_thread, older_thread],
+            "@odata.nextLink": next_link(CHANNEL),
+        })
+        with patch("services.teams_collection_service.datetime", wraps=datetime) as clock:
+            clock.now.return_value = datetime(2026, 9, 18, tzinfo=timezone.utc)
+            result = await TeamsCollectionService(
+                fetch, store, TENANT, lookback_days=7
+            ).collect([CHANNEL])
+
+        self.assertEqual(result, {
+            "channelsCompleted": 1, "postsRead": 1, "postsWritten": 1,
+            "postsUnchanged": 0, "repliesRead": 1,
+        })
+        fetch.assert_awaited_once_with(CHANNEL, None, None)
+        self.assertEqual({document["post_id"] for document in store.items.values()},
+                         {"recent-thread"})
+        checkpoint = store.checkpoints[key]
+        self.assertEqual(checkpoint["scan_mode"], "incremental")
+        self.assertEqual(checkpoint["lookback_cutoff"], "2026-09-11T00:00:00+00:00")
+
+    def test_rejects_invalid_lookback_window(self):
+        for value in (True, 0, 31, 1.5, "7"):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "lookback_days"):
+                TeamsCollectionService(AsyncMock(), MemoryStore(), TENANT, lookback_days=value)
 
     async def test_invalid_expanded_replies_do_not_write_or_checkpoint(self):
         for replies in (None, {}, [graph_message({"id": "reply", "replyToId": "another-root"})]):
@@ -544,6 +645,27 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(RuntimeError, "HTTP 403") as failure:
             await pages.fetch_page(channel, None, None)
         self.assertNotIn("secret", str(failure.exception))
+
+    async def test_logic_app_retries_transient_failures(self):
+        import httpx
+        from types import SimpleNamespace
+        from utils.teams_collection import LogicAppPageClient
+
+        url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
+        credential = AsyncMock()
+        credential.get_token.return_value = SimpleNamespace(token="secret")
+        success = httpx.Response(200, json={"operation": "messages", "data": {"value": []}})
+        for transient in (httpx.ReadTimeout("timed out"), httpx.Response(503)):
+            with self.subTest(transient=type(transient).__name__):
+                client = AsyncMock()
+                client.post.side_effect = [transient, success]
+                pages = LogicAppPageClient(
+                    client, credential, url, "https://management.core.windows.net/", [CHANNEL]
+                )
+                with patch("utils.teams_collection.asyncio.sleep", new=AsyncMock()) as sleep:
+                    self.assertEqual(await pages.fetch_page(CHANNEL, None, None), {"value": []})
+                self.assertEqual(client.post.await_count, 2)
+                sleep.assert_awaited_once_with(1)
 
     async def test_start_time_filters_root_creation_inclusively_and_keeps_paging(self):
         channel = {**CHANNEL, "startTime": "2026-09-01T08:00:00+08:00"}

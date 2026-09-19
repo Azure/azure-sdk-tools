@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import UUID
 
@@ -64,13 +64,12 @@ def continuation_token(link: str, channel: dict, message_id: str | None) -> str:
     return tokens[0]
 
 
-def _validate_messages(messages, message_id=None):
+def _validate_messages(messages, message_id=None, allow_missing_reply_to=False):
     """Validate the raw message list and return only entries whose messageType is "message".
 
-    Structural validation (id presence, reply-to-thread consistency) is still applied
-    to every message returned by the connector; only after a message passes validation
-    is it checked against the messageType filter, so malformed payloads are still
-    surfaced as errors instead of being silently dropped.
+    Every entry must have an ID, but reply-to-thread validation applies only to
+    actual messages because Teams system event records do not consistently carry
+    a replyToId.
     """
     if not isinstance(messages, list):
         raise ValueError("Teams connector did not return a message list.")
@@ -78,22 +77,47 @@ def _validate_messages(messages, message_id=None):
     for message in messages:
         if not isinstance(message, dict) or not isinstance(message.get("id"), str) or not message["id"]:
             raise ValueError("Teams connector returned a message without an ID.")
-        if message_id is not None and message.get("replyToId") != message_id:
+        if message.get("messageType") != "message":
+            continue
+        reply_to_id = message.get("replyToId")
+        if (message_id is not None and reply_to_id != message_id
+                and not (allow_missing_reply_to and reply_to_id is None)):
             raise ValueError("Reply does not belong to the requested thread.")
-        if message.get("messageType") == "message":
-            filtered.append(message)
+        filtered.append(message)
     return filtered
 
 
+def _message_activity(message: dict, field: str) -> datetime:
+    timestamps = []
+    for name in ("lastModifiedDateTime", "createdDateTime"):
+        if message.get(name) is not None:
+            timestamps.append(_parse_timestamp(message[name], f"{field} {name}"))
+    if not timestamps:
+        raise ValueError(f"{field} requires createdDateTime or lastModifiedDateTime.")
+    return max(timestamps)
+
+
+def _thread_activity(root: dict, replies: list[dict]) -> datetime:
+    return max([_message_activity(root, "Post"), *(
+        _message_activity(reply, "Reply") for reply in replies
+    )])
+
+
 class TeamsCollectionService:
-    def __init__(self, fetch_page, store, tenant_id: str, max_pages: int = 1000):
+    def __init__(self, fetch_page, store, tenant_id: str, max_pages: int = 1000,
+                 lookback_days: int | None = None):
         UUID(tenant_id)
         if not 1 <= max_pages <= 1000:
             raise ValueError("max_pages must be between 1 and 1000.")
+        if (lookback_days is not None
+                and (isinstance(lookback_days, bool) or not isinstance(lookback_days, int)
+                     or not 1 <= lookback_days <= 30)):
+            raise ValueError("lookback_days must be between 1 and 30.")
         self._fetch_page = fetch_page
         self._store = store
         self._tenant_id = tenant_id
         self._max_pages = max_pages
+        self._lookback_days = lookback_days
 
     async def _pages(self, channel: dict, message_id: str | None = None):
         token = None
@@ -118,15 +142,26 @@ class TeamsCollectionService:
         summary = {"channelsCompleted": 0, "postsRead": 0, "postsWritten": 0,
                    "postsUnchanged": 0, "repliesRead": 0}
         for channel in channels:
-            scan_started_at = datetime.now(timezone.utc).isoformat()
+            scan_started = datetime.now(timezone.utc)
+            scan_started_at = scan_started.isoformat()
             start_time = (_parse_timestamp(channel["startTime"], "startTime")
                           if channel.get("startTime") is not None else None)
             key = hashlib.sha256(json.dumps(
                 [self._tenant_id, channel["teamId"], channel["channelId"]]
             ).encode()).hexdigest()
             previous_checkpoint = await self._store.read("channel-checkpoint", key)
+            lookback_cutoff = None
+            if previous_checkpoint is not None and self._lookback_days is not None:
+                previous_scan = _parse_timestamp(
+                    previous_checkpoint.get("last_successful_scan_started_at"),
+                    "Checkpoint last_successful_scan_started_at",
+                )
+                lookback_cutoff = min(
+                    previous_scan, scan_started - timedelta(days=self._lookback_days)
+                )
             index = await self._store.read_channel_index(key)
             seen_roots = set()
+            reached_lookback_cutoff = False
             async for roots in self._pages(channel):
                 for root in roots:
                     root_id = root["id"]
@@ -136,21 +171,28 @@ class TeamsCollectionService:
                     if (start_time is not None
                             and _parse_timestamp(root.get("createdDateTime"), "Post createdDateTime") < start_time):
                         continue
-                    document_id = hashlib.sha256(f"{key}:{root_id}".encode()).hexdigest()
-                    previous = index.get(document_id)
                     replies = {}
                     if "replies" in root and not root.get("replies@odata.nextLink"):
-                        valid_replies = _validate_messages(root["replies"], root_id)
+                        valid_replies = _validate_messages(
+                            root["replies"], root_id, allow_missing_reply_to=True
+                        )
                         replies = {reply["id"]: reply for reply in valid_replies}
                     else:
                         async for page in self._pages(channel, root_id):
                             for reply in page:
                                 replies[reply["id"]] = reply
-                    post = {name: value for name, value in root.items()
-                            if name not in ("replies", "replies@odata.nextLink", "replies@odata.count")}
                     ordered_replies = sorted(replies.values(), key=lambda reply: (
                         reply.get("createdDateTime") or "", reply["id"]
                     ))
+                    if (lookback_cutoff is not None
+                            and _thread_activity(root, ordered_replies) < lookback_cutoff):
+                        # Graph orders roots by the latest activity in the entire reply chain.
+                        reached_lookback_cutoff = True
+                        break
+                    document_id = hashlib.sha256(f"{key}:{root_id}".encode()).hexdigest()
+                    previous = index.get(document_id)
+                    post = {name: value for name, value in root.items()
+                            if name not in ("replies", "replies@odata.nextLink", "replies@odata.count")}
                     content = {"post": post, "replies": ordered_replies}
                     digest = hashlib.sha256(json.dumps(
                         content, sort_keys=True, ensure_ascii=False, separators=(",", ":")
@@ -171,10 +213,15 @@ class TeamsCollectionService:
                         raise ValueError("Thread exceeds the Cosmos document size budget; no partial write was made.")
                     await self._store.write(document, previous)
                     summary["postsWritten"] += 1
+                if reached_lookback_cutoff:
+                    break
             await self._store.write({
                 "id": "channel-checkpoint", "channel_key": key, "type": "channel-checkpoint",
                 "tenant_id": self._tenant_id, "team_id": channel["teamId"], "channel_id": channel["channelId"],
                 "start_time": start_time.isoformat() if start_time is not None else None,
+                "lookback_days": self._lookback_days,
+                "lookback_cutoff": lookback_cutoff.isoformat() if lookback_cutoff is not None else None,
+                "scan_mode": "incremental" if lookback_cutoff is not None else "full",
                 "last_successful_scan_started_at": scan_started_at,
                 "completed_at": datetime.now(timezone.utc).isoformat(),
             }, previous_checkpoint)

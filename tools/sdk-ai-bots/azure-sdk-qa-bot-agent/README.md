@@ -272,7 +272,7 @@ Role names/assignment IDs in the template are deterministic. Deploying it grants
 
 #### Deploy and Configure
 
-1. Review [config/teams_collection.json](config/teams_collection.json) for the target environment before building. It contains the Entra tenant, allowed team/channel IDs, optional per-channel `startTime`, and Routine schedule. `startTime` must include a timezone; `null` starts from all available roots. All replies to selected roots are collected. Later runs still scan the source, but only new/changed thread documents are written. The checkpoint is not a source delta cursor.
+1. Review [config/teams_collection.json](config/teams_collection.json) for the target environment before building. It contains the Entra tenant, allowed team/channel IDs, optional per-channel `startTime`, the incremental `lookbackDays`, and Routine schedule. `startTime` must include a timezone; `null` makes the first successful scan collect all available roots. Later scans process activity since at least the configured lookback window, stopping when Graph's reply-chain activity ordering reaches older threads. The previous successful scan start extends the window after delays or failures so changes are not skipped.
 2. For an existing deployment, disable its Routine before updating. Run the Agent CD pipeline with `agentName=teams_collection_agent` and the correct environment. This builds the image and creates `azure-sdk-teams-collection-agent`; it does **not** deploy the collection Logic App or Routine. Do not dispatch yet. Obtain the collector's runtime identity and grant App Configuration access before its first invocation.
 3. Deploy the dedicated collection template into the resource group containing the Cosmos account/database. Do not deploy it over the bot's message-mirroring Logic App. Select `dev`, `test`, or `prod`; the checked-in parameter file supplies the environment-specific workflow name and resource settings. The collector identity is generated when the Hosted Agent is deployed, so pass its object ID separately:
 
@@ -317,7 +317,7 @@ Only after cloud verification succeeds, enable the schedule:
 python scripts/teams_collection.py routine-enable --project-endpoint $projectEndpoint
 ```
 
-The default is hourly in UTC. Use `routine-disable` to pause future dispatches; it does not cancel an active collection. Channel configuration is baked into the image: changing it requires both redeploying the Hosted Agent and updating the Logic App allowlist with newly rendered parameters. Keep the Routine disabled until both changes are ready. Failed scans do not advance the channel checkpoint; complete thread writes made before a failure may remain and will be skipped if unchanged on retry.
+The default schedule is weekly at 00:00 UTC on Sunday. The first successful run is full; later runs use a seven-day activity window. Use `routine-disable` to pause future dispatches; it does not cancel an active collection. Channel configuration is baked into the image: changing it requires both redeploying the Hosted Agent and updating the Logic App allowlist with newly rendered parameters. Keep the Routine disabled until both changes are ready. Failed scans do not advance the channel checkpoint; complete thread writes made before a failure may remain and will be skipped if unchanged on retry.
 
 ### Server Deploy
 

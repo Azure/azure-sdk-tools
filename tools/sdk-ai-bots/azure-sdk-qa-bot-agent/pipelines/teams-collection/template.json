@@ -1,0 +1,265 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": { "type": "string" },
+    "location": { "type": "string" },
+    "teamsConnectionResourceId": { "type": "string" },
+    "tenantId": { "type": "string" },
+    "collectorPrincipalId": { "type": "string" },
+    "allowedChannels": { "type": "array", "minLength": 1 },
+    "cosmosAccountName": { "type": "string" }
+  },
+  "variables": {
+    "cosmosAccountResourceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName'))]",
+    "metadataRoleName": "41cd8d60-edff-4171-9ff9-e7e1810d045b"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(parameters('cosmosAccountName'), '/azure-sdk-qa-bot/teams-channel-posts')]",
+      "properties": {
+        "resource": {
+          "id": "teams-channel-posts",
+          "partitionKey": { "paths": ["/channel_key"], "kind": "Hash", "version": 2 },
+          "indexingPolicy": {
+            "indexingMode": "consistent",
+            "automatic": true,
+            "includedPaths": [ { "path": "/*" } ],
+            "excludedPaths": [ { "path": "/post/*" }, { "path": "/replies/*" } ]
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('logicAppName')]",
+      "location": "[parameters('location')]",
+      "tags": { "purpose": "teams-channel-collection" },
+      "properties": {
+        "state": "Enabled",
+        "accessControl": {
+          "triggers": {
+            "sasAuthenticationPolicy": { "state": "Disabled" },
+            "openAuthenticationPolicies": {
+              "policies": {
+                "collector": {
+                  "type": "AAD",
+                  "claims": [
+                    { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
+                    { "name": "aud", "value": "https://management.core.windows.net" },
+                    { "name": "oid", "value": "[parameters('collectorPrincipalId')]" }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": { "type": "Object" },
+            "allowedChannels": { "type": "Array" }
+          },
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "operationOptions": "EnableSchemaValidation",
+              "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
+              "inputs": {
+                "method": "POST",
+                "schema": {
+                  "type": "object",
+                  "required": ["operation", "teamId", "channelId"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "operation": { "type": "string", "enum": ["messages", "replies"] },
+                    "teamId": { "type": "string", "minLength": 1 },
+                    "channelId": { "type": "string", "minLength": 1 },
+                    "messageId": { "type": "string", "minLength": 1 },
+                    "skipToken": { "type": "string", "minLength": 1 }
+                  }
+                }
+              }
+            }
+          },
+          "actions": {
+            "Authorize_channel": {
+              "type": "If",
+              "expression": "@and(contains(parameters('allowedChannels'), concat(triggerBody()?['teamId'], '|', triggerBody()?['channelId'])), or(equals(triggerBody()?['operation'], 'messages'), and(equals(triggerBody()?['operation'], 'replies'), not(empty(triggerBody()?['messageId'])))))",
+              "actions": {
+                "Select_operation": {
+                  "type": "Switch",
+                  "expression": "@triggerBody()['operation']",
+                  "cases": {
+                    "messages": {
+                      "case": "messages",
+                      "actions": {
+                        "GetMessagesFromChannel": {
+                          "type": "ApiConnection",
+                          "inputs": {
+                            "host": { "connection": { "name": "@parameters('$connections')['teams']['connectionId']" } },
+                            "method": "get",
+                            "path": "/beta/teams/@{encodeURIComponent(triggerBody()['teamId'])}/channels/@{encodeURIComponent(triggerBody()['channelId'])}/messages",
+                            "queries": "@if(empty(triggerBody()?['skipToken']), json('{\"$expand\":\"replies\",\"$top\":50}'), setProperty(json('{\"$expand\":\"replies\",\"$top\":50}'), '$skiptoken', triggerBody()['skipToken']))"
+                          },
+                          "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
+                          "runAfter": {}
+                        },
+                        "Filter_messages": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('GetMessagesFromChannel')?['value']",
+                            "where": "@equals(item()?['messageType'], 'message')"
+                          },
+                          "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
+                          "runAfter": { "GetMessagesFromChannel": ["Succeeded"] }
+                        },
+                        "Return_messages": {
+                          "type": "Response",
+                          "kind": "Http",
+                          "inputs": { "statusCode": 200, "body": { "operation": "messages", "data": "@setProperty(body('GetMessagesFromChannel'), 'value', body('Filter_messages'))" } },
+                          "runtimeConfiguration": { "secureData": { "properties": ["inputs"] } },
+                          "runAfter": { "Filter_messages": ["Succeeded"] }
+                        },
+                        "Fail_messages": {
+                          "type": "Response",
+                          "kind": "Http",
+                          "inputs": { "statusCode": 502, "body": { "error": "GetMessagesFromChannel failed", "runId": "@workflow().run.name" } },
+                          "runAfter": { "GetMessagesFromChannel": ["Failed", "TimedOut"] }
+                        },
+                        "Fail_filter_messages": {
+                          "type": "Response",
+                          "kind": "Http",
+                          "inputs": { "statusCode": 502, "body": { "error": "Filtering channel messages failed", "runId": "@workflow().run.name" } },
+                          "runAfter": { "Filter_messages": ["Failed", "TimedOut"] }
+                        }
+                      }
+                    },
+                    "replies": {
+                      "case": "replies",
+                      "actions": {
+                        "ListRepliesToMessage": {
+                          "type": "ApiConnection",
+                          "inputs": {
+                            "host": { "connection": { "name": "@parameters('$connections')['teams']['connectionId']" } },
+                            "method": "get",
+                            "path": "/v1.0/teams/@{encodeURIComponent(triggerBody()['teamId'])}/channels/@{encodeURIComponent(triggerBody()['channelId'])}/messages/@{encodeURIComponent(triggerBody()['messageId'])}/replies",
+                            "queries": "@if(empty(triggerBody()?['skipToken']), json('{\"$top\":50}'), setProperty(json('{\"$top\":50}'), '$skiptoken', triggerBody()['skipToken']))"
+                          },
+                          "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
+                          "runAfter": {}
+                        },
+                        "Filter_replies": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('ListRepliesToMessage')?['value']",
+                            "where": "@equals(item()?['messageType'], 'message')"
+                          },
+                          "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
+                          "runAfter": { "ListRepliesToMessage": ["Succeeded"] }
+                        },
+                        "Return_replies": {
+                          "type": "Response",
+                          "kind": "Http",
+                          "inputs": { "statusCode": 200, "body": { "operation": "replies", "data": "@setProperty(body('ListRepliesToMessage'), 'value', body('Filter_replies'))" } },
+                          "runtimeConfiguration": { "secureData": { "properties": ["inputs"] } },
+                          "runAfter": { "Filter_replies": ["Succeeded"] }
+                        },
+                        "Fail_replies": {
+                          "type": "Response",
+                          "kind": "Http",
+                          "inputs": { "statusCode": 502, "body": { "error": "ListRepliesToMessage failed", "runId": "@workflow().run.name" } },
+                          "runAfter": { "ListRepliesToMessage": ["Failed", "TimedOut"] }
+                        },
+                        "Fail_filter_replies": {
+                          "type": "Response",
+                          "kind": "Http",
+                          "inputs": { "statusCode": 502, "body": { "error": "Filtering message replies failed", "runId": "@workflow().run.name" } },
+                          "runAfter": { "Filter_replies": ["Failed", "TimedOut"] }
+                        }
+                      }
+                    }
+                  },
+                  "default": { "actions": {} },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {
+                  "Reject_request": {
+                    "type": "Response",
+                    "kind": "Http",
+                    "inputs": { "statusCode": 403, "body": { "error": "Channel or operation is not allowed" } },
+                    "runAfter": {}
+                  }
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "allowedChannels": { "value": "[parameters('allowedChannels')]" },
+          "$connections": {
+            "value": {
+              "teams": {
+                "connectionId": "[parameters('teamsConnectionResourceId')]",
+                "connectionName": "[last(split(parameters('teamsConnectionResourceId'), '/'))]",
+                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'teams')]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(parameters('cosmosAccountName'), '/', variables('metadataRoleName'))]",
+      "properties": {
+        "roleName": "Teams Collection Metadata Reader",
+        "type": "CustomRole",
+        "assignableScopes": ["[variables('cosmosAccountResourceId')]"],
+        "permissions": [
+          { "dataActions": ["Microsoft.DocumentDB/databaseAccounts/readMetadata"] }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(parameters('cosmosAccountName'), '/', guid(variables('cosmosAccountResourceId'), parameters('collectorPrincipalId'), 'teams-collection-metadata'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosAccountName'), variables('metadataRoleName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosAccountName'), variables('metadataRoleName'))]",
+        "principalId": "[parameters('collectorPrincipalId')]",
+        "scope": "[variables('cosmosAccountResourceId')]"
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(parameters('cosmosAccountName'), '/', guid(variables('cosmosAccountResourceId'), parameters('collectorPrincipalId'), 'teams-collection-archive'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', parameters('cosmosAccountName'), 'azure-sdk-qa-bot', 'teams-channel-posts')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosAccountName'), '00000000-0000-0000-0000-000000000002')]",
+        "principalId": "[parameters('collectorPrincipalId')]",
+        "scope": "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/teams-channel-posts')]"
+      }
+    }
+  ],
+  "outputs": {
+    "workflowResourceId": { "type": "string", "value": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]" }
+  }
+}

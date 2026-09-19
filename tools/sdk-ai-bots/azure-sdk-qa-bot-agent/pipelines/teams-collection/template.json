@@ -12,7 +12,7 @@
   },
   "variables": {
     "cosmosAccountResourceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName'))]",
-    "metadataRoleName": "[guid(variables('cosmosAccountResourceId'), 'teams-collection-metadata-reader')]"
+    "metadataRoleName": "41cd8d60-edff-4171-9ff9-e7e1810d045b"
   },
   "resources": [
     {
@@ -50,7 +50,7 @@
                   "type": "AAD",
                   "claims": [
                     { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
-                    { "name": "aud", "value": "https://management.core.windows.net/" },
+                    { "name": "aud", "value": "https://management.core.windows.net" },
                     { "name": "oid", "value": "[parameters('collectorPrincipalId')]" }
                   ]
                 }
@@ -106,7 +106,7 @@
                             "host": { "connection": { "name": "@parameters('$connections')['teams']['connectionId']" } },
                             "method": "get",
                             "path": "/beta/teams/@{encodeURIComponent(triggerBody()['teamId'])}/channels/@{encodeURIComponent(triggerBody()['channelId'])}/messages",
-                            "queries": "@if(empty(triggerBody()?['skipToken']), json('{\"$expand\":\"replies\"}'), setProperty(json('{\"$expand\":\"replies\"}'), '$skiptoken', triggerBody()['skipToken']))"
+                            "queries": "@if(empty(triggerBody()?['skipToken']), json('{\"$expand\":\"replies\",\"$top\":50}'), setProperty(json('{\"$expand\":\"replies\",\"$top\":50}'), '$skiptoken', triggerBody()['skipToken']))"
                           },
                           "runtimeConfiguration": { "secureData": { "properties": ["inputs", "outputs"] } },
                           "runAfter": {}

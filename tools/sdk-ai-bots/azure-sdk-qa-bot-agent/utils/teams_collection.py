@@ -40,15 +40,25 @@ class LogicAppPageClient:
         if skip_token is not None:
             payload["skipToken"] = skip_token
         token = await self._credential.get_token(self._audience + ".default")
-        try:
-            response = await self._client.post(
-                self._url, json=payload, headers={"Authorization": f"Bearer {token.token}"},
-                follow_redirects=False, timeout=180,
-            )
-        except httpx.HTTPError:
-            raise RuntimeError("Logic App request failed; retry the collection after checking workflow status.") from None
-        if response.status_code != 200:
-            raise RuntimeError(f"Logic App returned HTTP {response.status_code}; collection was not completed.")
+        for attempt in range(4):
+            try:
+                response = await self._client.post(
+                    self._url, json=payload, headers={"Authorization": f"Bearer {token.token}"},
+                    follow_redirects=False, timeout=180,
+                )
+            except httpx.RequestError:
+                if attempt == 3:
+                    raise RuntimeError(
+                        "Logic App request failed; retry the collection after checking workflow status."
+                    ) from None
+            else:
+                if response.status_code == 200:
+                    break
+                if response.status_code not in (408, 429, 500, 502, 503, 504) or attempt == 3:
+                    raise RuntimeError(
+                        f"Logic App returned HTTP {response.status_code}; collection was not completed."
+                    )
+            await asyncio.sleep(2 ** attempt)
         try:
             result = response.json()
             if result["operation"] != payload["operation"]:
@@ -117,7 +127,10 @@ async def collect_configured_channels(config, settings):
                 client, get_credential(), settings("TEAMS_COLLECTION_LOGIC_APP_URL", ""),
                 "https://management.core.windows.net/", config["channels"],
             )
-            service = TeamsCollectionService(pages.fetch_page, store, config["tenantId"], config["maxPages"])
+            service = TeamsCollectionService(
+                pages.fetch_page, store, config["tenantId"], config["maxPages"],
+                config.get("lookbackDays"),
+            )
             summary = await service.collect(config["channels"])
         run.update({"status": "succeeded", "summary": summary})
     except (Exception, asyncio.CancelledError) as error:

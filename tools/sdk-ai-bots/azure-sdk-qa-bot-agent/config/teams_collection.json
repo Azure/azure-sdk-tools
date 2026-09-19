@@ -1,20 +1,21 @@
 {
   "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
   "maxPages": 1000,
+  "lookbackDays": 7,
   "routine": {
     "name": "teams-channel-collection",
-    "cron": "0 * * * *",
+    "cron": "0 0 * * 0",
     "timeZone": "UTC"
   },
   "channels": [
     {
-      "teamId": "7ccc31f0-b371-450b-a73c-48f5a31a9b96",
-      "channelId": "19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2",
+      "teamId": "3e17dcb0-4257-4a30-b843-77f47f1d4121",
+      "channelId": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype",
       "startTime": null
     },
     {
-      "teamId": "7ccc31f0-b371-450b-a73c-48f5a31a9b96",
-      "channelId": "19:43d25834bb394e0fa9a3b316ce5a2ea4@thread.tacv2",
+      "teamId": "3e17dcb0-4257-4a30-b843-77f47f1d4121",
+      "channelId": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype",
       "startTime": null
     }
   ]

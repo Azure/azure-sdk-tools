@@ -113,6 +113,7 @@ exports[`reportStatus > generateReport > should generate report successfully wit
       "installInstructions": "npm install test-package",
       "language": "JavaScript",
       "packageName": "test-package",
+      "packageRootPath": "packages/test-package",
       "presentBreakingChangeSuppressions": [],
       "readmeMd": [
         "README.md",

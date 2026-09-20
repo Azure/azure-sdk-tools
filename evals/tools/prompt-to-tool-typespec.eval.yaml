@@ -24,14 +24,14 @@ scoring:
 stimuli:
   # ==== azsdk_convert_swagger_to_typespec triggers ====
   - name: invoke-azsdk-convert-swagger-to-typespec-1
-    prompt: "Convert the OpenAPI/Swagger spec at specification/contosowidgetmanager/swagger/widgetmanager.json to TypeSpec. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Convert the Azure Swagger described by specification/contosowidgetmanager/resource-manager/readme.md to TypeSpec in the existing empty output directory specification/contosowidgetmanager/Contoso.WidgetManager. This is a data-plane API and full compatibility is false. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_convert_swagger_to_typespec"
   - name: invoke-azsdk-convert-swagger-to-typespec-2
-    prompt: "Migrate my API from swagger to TypeSpec using the spec at specification/contosowidgetmanager/swagger/widgetmanager.json. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Migrate my data-plane API from Swagger to TypeSpec using specification/contosowidgetmanager/resource-manager/readme.md, writing to the existing empty directory specification/contosowidgetmanager/Contoso.WidgetManager with full compatibility disabled. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -40,6 +40,10 @@ stimuli:
 
   # ==== azsdk_customized_code_update triggers ====
   - name: invoke-azsdk-customized-code-update-1
+    environment: &sdkPackageFixture
+      files:
+        - src: ../fixtures/README.md
+          dest: sdk/contosowidgetmanager/Azure.Template.Contoso/README.md
     prompt: "Update customized code with patches to fix build errors in the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
@@ -47,6 +51,7 @@ stimuli:
           required:
             - name: "azsdk_customized_code_update"
   - name: invoke-azsdk-customized-code-update-2
+    environment: *sdkPackageFixture
     prompt: "Apply customized code patches and rebuild to fix errors in the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
@@ -79,7 +84,13 @@ stimuli:
           required:
             - name: "azsdk_run_typespec_validation"
   - name: invoke-azsdk-run-typespec-validation-2
-    prompt: "Run TypeSpec configuration validation for my project root path. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    environment:
+      files:
+        - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/contosowidgetmanager/Contoso.WidgetManager/main.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml
+    prompt: "Run TypeSpec configuration validation for project root specification/contosowidgetmanager/Contoso.WidgetManager. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -126,7 +137,7 @@ stimuli:
             - name: "azsdk_typespec_delegate_apiview_feedback"
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-4
     prompt: >
-      Help me fix these comments: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd
+      Delegate these APIView comments to Copilot for resolution by creating and assigning a GitHub issue: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd. Invoke the appropriate Azure SDK MCP tool directly; do not only retrieve the comments.
     graders:
       - type: tool-calls
         config:
@@ -134,7 +145,7 @@ stimuli:
             - name: "azsdk_typespec_delegate_apiview_feedback"
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-5
     prompt: >
-      Fix this feedback: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd
+      Have Copilot resolve this APIView feedback by delegating it through a GitHub issue: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd. Invoke the appropriate Azure SDK MCP tool directly; do not only retrieve the comments.
     graders:
       - type: tool-calls
         config:

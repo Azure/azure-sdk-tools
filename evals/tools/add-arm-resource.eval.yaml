@@ -26,12 +26,15 @@ stimuli:
     prompt: |
       I'm extending the Microsoft.Widget resource provider under
       specification/widget/resource-manager/Microsoft.Widget/Widget. Add a new
-      tracked ARM resource called 'Asset' with the standard CRUD operations
+      tracked ARM resource called 'Asset' with the standard CRUD operations and
+      make sure the TypeSpec project validates.
     # Seed a minimal but valid Microsoft.Widget ARM TypeSpec project so the agent
     # can locate the project referenced in the prompt. Without this the agent
     # spends its turns hunting for a non-existent project and never gets to
     # author anything.
     environment:
+      skills:
+        - ../../.github/skills/azure-typespec-author
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
@@ -50,7 +53,7 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azsdk_typespec_generate_authoring_plan
+            - azsdk_run_typespec_validation
 
 scoring:
   weights:

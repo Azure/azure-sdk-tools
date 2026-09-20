@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.41.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.47.
 
 ## Tools list
 
@@ -20,7 +20,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_create_pull_request |  | Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch. |
 | azsdk_create_release_plan | `azsdk release-plan create` | Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available. |
 | azsdk_create_service_label |  | Creates a pull request to add a new service label |
-| azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result. |
+| azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (C# and Java), builds, and returns success/failure with build result. |
 | azsdk_engsys_codeowner_add_label_owner |  | Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. A 3-segment path (e.g. sdk/<service>/<package>) is rejected because it targets a package directory; add owners to the package by name instead, or set force=true to create the path anyway. |
 | azsdk_engsys_codeowner_add_package_label |  | Add PR label(s) to a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_add_package_owner |  | Add source owner(s) to a package in CODEOWNERS work items. |
@@ -41,11 +41,12 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_get_pr_checks | `azsdk ci checks` | Get pipeline and CI check results from a GitHub Pull Request link or PR number |
 | azsdk_get_pull_request |  | This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews. |
 | azsdk_get_pull_request_link_for_current_branch |  | Get pull request link for current branch in the repo. Provide absolute path to repository root as param. This tool call GetPullRequest to get pull request details. |
-| azsdk_get_release_plan | `azsdk release-plan get` | Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). |
+| azsdk_get_release_plan | `azsdk release-plan get` | Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type. SDK PR status is omitted; check the linked GitHub PRs or release plan dashboard for current PR status. SDK generation status describes pipeline history, not PR status. |
 | azsdk_get_sdk_pull_request_link | `azsdk spec-workflow get-sdk-pr` | Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item. |
 | azsdk_get_service_details_by_typespec_path | `azsdk release-plan get-service-details` | Get service and service tree product details for a product using TypeSpec project path: Get service tree product details (service tree ID, service ID, package display name, product service tree link). |
 | azsdk_link_namespace_approval_issue | `azsdk release-plan link-namespace-approval` | Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id. |
 | azsdk_link_sdk_pull_request_to_release_plan | `azsdk release-plan link-sdk-pr` | Link SDK pull request to release plan work item |
+| azsdk_onboard_product | `azsdk release-plan onboard-product` | Create or update a product onboarding work item. |
 | azsdk_package_build_code | `azsdk pkg build` | Build/compile SDK code for a specified project locally. |
 | azsdk_package_detect_breaking_change | `azsdk pkg detect-breaking-change` | Detects breaking changes in the SDK. |
 | azsdk_package_generate_code | `azsdk pkg generate` | Generate SDK code locally or run code generation for a package from TypeSpec. Creates client library code for Azure services. Runs locally, not via pipeline. |
@@ -61,11 +62,11 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_release_sdk | `azsdk pkg release` | Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead. |
 | azsdk_run_generate_sdk | `azsdk spec-workflow generate-sdk` | Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). It generates one language per call, so to generate for all languages call this tool once per language. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK. |
 | azsdk_run_typespec_validation | `azsdk tsp validate` | Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation. |
-| azsdk_onboard_product | `azsdk release-plan onboard-product` | Create or update a product onboarding work item. |
 | azsdk_typespec_check_project_in_public_repo | `azsdk tsp check-public-repo` | Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param. |
 | azsdk_typespec_delegate_apiview_feedback | `azsdk tsp delegate-apiview-feedback` | Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations. |
-| azsdk_typespec_generate_authoring_plan |  | Generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.<br>This tool applies to all tasks involving **TypeSpec**:<br>- Writing new TypeSpec definitions: service, api version, resource, models, operations<br>- Editing or refactoring existing TypeSpec files, editing api version, service, resource, models, operations, or properties.<br>- Versioning evolution:<br>  - Make a **preview** API **stable (GA)**.<br>  - Replace an existing **preview** with a **new preview**.<br>  - Replace a **preview** with a **stable**<br>  - Replacing a preview API with a stable API and a new preview API.<br>  - **Add** a preview or **add** a stable API version.<br>- Resolving TypeSpec-related issues<br>Pass in a `request` to get an AI-generated response with references.<br>Returns an answer with supporting references and documentation links<br> |
+| azsdk_typespec_generate_authoring_plan | `azsdk tsp generate-authoring-plan` | Generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.<br>This tool applies to all tasks involving **TypeSpec**:<br>- Writing new TypeSpec definitions: service, api version, resource, models, operations<br>- Editing or refactoring existing TypeSpec files, editing api version, service, resource, models, operations, or properties.<br>- Versioning evolution:<br>  - Make a **preview** API **stable (GA)**.<br>  - Replace an existing **preview** with a **new preview**.<br>  - Replace a **preview** with a **stable**<br>  - Replacing a preview API with a stable API and a new preview API.<br>  - **Add** a preview or **add** a stable API version.<br>- Resolving TypeSpec-related issues<br>Pass in a `request` to get an AI-generated response with references.<br>Returns an answer with supporting references and documentation links<br> |
 | azsdk_typespec_init_project | `azsdk tsp init` | Use this tool to initialize a new TypeSpec project. Returns the path to the created project. |
+| azsdk_typespec_retrieve_knowledge | `azsdk tsp retrieve-knowledge` | Retrieve knowledge for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.<br>This tool applies to all tasks involving **TypeSpec**:<br>- Writing new TypeSpec definitions: service, api version, resource, models, operations<br>- Editing or refactoring existing TypeSpec files, editing api version, service, resource, models, operations, or properties.<br>- Versioning evolution:<br>  - Make a **preview** API **stable (GA)**.<br>  - Replace an existing **preview** with a **new preview**.<br>  - Replace a **preview** with a **stable**<br>  - Replacing a preview API with a stable API and a new preview API.<br>  - **Add** a preview or **add** a stable API version.<br>- Resolving TypeSpec-related issues<br>Pass in a `request` to get an AI-generated response with references.<br>Returns an answer with supporting references and documentation links<br> |
 | azsdk_update_api_spec_pull_request_in_release_plan | `azsdk release-plan update-spec-pr` | Update TypeSpec pull request URL in a release plan using work item id or release plan id. |
 | azsdk_update_language_exclusion_justification |  | Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. Optionally pass a language name to explicitly request exclusion for a specific language. |
 | azsdk_update_release_plan | `azsdk release-plan update` | Update an existing release plan. Updates spec PR URL, TypeSpec project path, SDK release type, and optionally service/product IDs. When a product ID is provided, product name, product lifecycle and product type are resolved from a matching triage work item in Azure DevOps. If the product type cannot be determined, provide it via productType (allowed values: Offering, Feature, Sku). Runs TypeSpec metadata emitter to resolve package names and updates SDK details. If work item ID is not provided, finds the active release plan by TypeSpec project path or spec PR URL. |
@@ -74,7 +75,6 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_upgrade | `azsdk upgrade` | Upgrade the MCP server to the latest version. IMPORTANT: After upgrade completes, the MCP server must be restarted to use the new version. |
 | azsdk_verify_setup | `azsdk verify setup check` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, the packagePath of the repo to check, and an optional list of requirement names to try installing. To auto-install, call with `requirementsToInstall` containing the exact requirement names the user wants to install. |
 |  | `azsdk apiview get-content` | Get content by APIView URL |
-|  | `azsdk tsp generate-authoring-plan` | Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service. |
 |  | `azsdk release-plan update-release-status` |  |
 |  | `azsdk release-plan list-overdue` |  |
 |  | `azsdk quokka` |  |
@@ -87,21 +87,21 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk config github-label sync-ado` | Synchronize service labels from the GitHub CSV to Azure DevOps Work Items |
 |  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
 |  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
-|  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
-|  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file |
+|  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
+|  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
 |  | `azsdk config codeowners remove-label-owner` | Remove owner(s) from a label and optional path |
 |  | `azsdk config codeowners remove-package-label` | Remove PR label(s) from a package |
 |  | `azsdk config codeowners remove-package-owner` | Remove source owner(s) from a package |
 |  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
 |  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
+|  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
 |  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
-|  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
 |  | `azsdk eng evaluate` | Evaluate whether Copilot's pipeline-failure fixes changed failing checks to passing over the last N days |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
-|  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
+|  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file |
 |  | `azsdk list` |  |
 

@@ -15,7 +15,7 @@ After that issue closes, you may be invoked again to validate the deployed fix.
 
 ## Core Principle
 
-1. Start diagnosis only after confirming that the conversation is complete and the answer has a real problem.
+1. Start diagnosis only after confirming a real answer problem and either a completed conversation or negative user feedback.
 2. Identify one dominant root cause: a **KB defect** or a **system defect**. Explain what must change so the failure does not recur.
 3. Test the KB first. Identify and search the appropriate knowledge sources,
    then assess content sufficiency before inspecting chat agent source code.
@@ -30,8 +30,7 @@ You receive one JSON message identifying the **conversation (QA thread)**:
 - `evaluation_time` — the current UTC time used for inactivity calculations.
 - `issue_url` — present only in `validation` mode.
 
-`fetch_conversation` returns the full transcript; each bot message carries its
-own `trace_id`, so you pick the bot turn to analyze and trace it from there.
+`fetch_conversation` returns the full transcript and all thread feedback. Each bot message carries its own `trace_id` for tracing the turn being analyzed.
 
 ## Workflow
 
@@ -59,15 +58,18 @@ Follow these steps in order.
    Inactivity alone never closes a thread with an unresolved item. A bot's
    optional offer such as "I can also show an example" is not a pending item
    unless a human accepts the offer or asks for it. If the conversation is
-   not complete, return `conversation_ongoing` and stop.
+   not complete, return `conversation_ongoing` and stop, unless `feedback`
+   contains negative feedback; then continue to step 3 despite pending follow-ups.
 3. **Pin the question and decide whether the answer has a problem.** Read
    the whole transcript, not just the last
-   message — weight follow-ups, rephrasings, and any expert correction.
+   message — weight follow-ups, rephrasings, feedback, and any expert correction.
+   Negative feedback is evidence, not proof; explain its effect in `reasoning`.
    When an expert corrected the bot, treat the expert's message as ground
   truth and work backward to what the bot missed. Extract the correction,
   the claimed knowledge gap, and its supporting references. Verify those
   claims against the referenced evidence, then use the verified gap as the
   first KB hypothesis and the referenced owner as source-selection evidence.
+   If no defect is established and the thread is open, return `conversation_ongoing`.
    If the completed conversation has no answer problem, return `no_issue` and
    stop.
 4. **Inspect the failed turn.** Call `fetch_chat_trace(trace_id)` using the
@@ -84,19 +86,47 @@ Follow these steps in order.
    deficient guidance; follow [KB remediation](#kb-remediation).
 8. **Validate the KB candidate.** Read the authoritative target document,
    apply a grounded candidate with `update_knowledge`, then call
-   `chat` with `target="candidate"` and the complete original question. Compare the
-   answer with the grounded expected answer; tool completion alone is not a
-   pass. If validation fails, strengthen the guidance in that same
+   `chat` with `target="candidate"` and the complete original question. Evaluate the
+   answer against grounded acceptance criteria using [Validation semantics](#validation-semantics).
+   Tool completion alone is not a pass. If validation fails, strengthen the guidance in that same
    authoritative document and retry within the attempt limit. If all attempts
    fail, return `remediation_failed` without creating an issue.
 9. **File one issue** in `Azure/azure-sdk-pr` via `issue_write` (`method="create"`) after a system diagnosis or successful KB validation. Apply the labels `feedback-agent`, `classification:<classification>`, and `fix-validation:pending`, use the title and body in *Issue format* below, then return the JSON *Output*.
 
 ### Validation mode
 
-1. Read `issue_url` with `issue_read` and recover the original case and expected behavior from the issue.
-2. Call `chat` once with the original question, `tenant_id`, and `target="prod"`, then compare the answer with the expected behavior.
-3. Add one issue comment containing the answer, trace ID, and pass/fail reasoning.
+1. Read `issue_url` with `issue_read` and recover the original case, user requirements, and expected behavior from the issue. If the original question or decisive context is missing, retrieve the linked conversation rather than substitute the issue summary for the user's question.
+2. Call `chat` once with the complete original question, `tenant_id`, and `target="prod"`, then evaluate the answer using [Validation semantics](#validation-semantics).
+3. Add one issue comment containing the answer, trace ID, and criterion-based pass/fail reasoning.
 4. Use `issue_write` to replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, preserving other labels, then return `validation_passed` or `validation_failed`.
+
+### Validation semantics
+
+Apply these rules to both KB candidate validation and post-deployment validation.
+
+- **Define acceptance criteria, not a canonical answer.** Ground the required
+   outcome, constraints, and material errors to avoid in the original user request
+   and verified defect. For older issues written as reference answers, extract
+   these criteria without treating every sentence as mandatory. Do not add
+   requirements or relax verified constraints merely to match the generated answer.
+- **Judge the whole answer.** Consider its scope, conditions, qualifications,
+   examples, and final recommendation together. Do not fail an isolated phrase
+   when the surrounding explanation resolves it. A caveat does not excuse a
+   contradictory example or recommendation that still materially misleads the user.
+- **Allow valid alternatives.** Equivalent wording, different ordering, additional
+   correct context, and other supported solutions are acceptable. Recommending a
+   standard approach when it meets the user's requirements, with an explicit
+   fallback when it does not, is valid; recommending the fallback first is not
+   required. Apply any already-known constraints to the actual case.
+- **Pass on substance; fail on a material gap.** Pass when the answer satisfies
+   the required outcome and constraints without a material factual error or
+   misleading action. Fail for a missing required outcome, violated constraint,
+   or material contradiction—not a stylistic preference or mismatch with the
+   reference answer. Tool completion alone is not a pass.
+- **Explain the decision with evidence.** For a pass, identify how the answer
+   satisfies the decisive criteria. For a failure, name the unmet criterion,
+   quote the conflicting guidance or identify the omission, and explain the
+   practical consequence after considering the answer's qualifications.
 
 ### Classification taxonomy
 
@@ -124,7 +154,7 @@ the same selected search result; never synthesize a document URL. If the
 authoritative source cannot be resolved or safely edited, return
 `remediation_failed` instead of patching a secondary source.
 
-Use only an exact `blob_path` returned by search. Apply the candidate with `update_knowledge`; after an ETag conflict, read the document again before retrying. Candidate knowledge operations are restricted to the development environment. Validate with `target="candidate"`, the complete original question, and compare the answer with grounded expected behavior. Tool completion alone is not a pass. Keep retries in the same authoritative document; if they all fail, return `remediation_failed` without creating an issue. Never update production knowledge storage or its search index.
+Use only an exact `blob_path` returned by search. Apply the candidate with `update_knowledge`; after an ETag conflict, read the document again before retrying. Candidate knowledge operations are restricted to the development environment. Validate with `target="candidate"` and the complete original question, applying [Validation semantics](#validation-semantics). Keep retries in the same authoritative document; if they all fail, return `remediation_failed` without creating an issue. Never update production knowledge storage or its search index.
 
 ## Issue format
 
@@ -153,13 +183,13 @@ leading `#`).
 - **Validated change:** <1–2 sentences describing the exact guidance added or corrected>
 
 ### Validation
-**Result:** <Passed or Failed> — <semantic comparison explaining why the answer passed or what remains unresolved>
+**Result:** <Passed or Failed> — <criterion-based reasoning identifying how the answer meets the requirements or the material gap that remains>
 **Trace ID:** <validation trace ID>
 
 <If no safe candidate could be applied, replace the Fixed document and Validation sections with a concise Remediation blocker section. Omit both sections for a system defect.>
 
 ### Expected behavior
-<A concise grounded answer or behavior used later for validation. Keep only the decisive rule and recommended action.>
+<Concise, grounded acceptance criteria: the required outcome, applicable constraints, and material errors to avoid. Allow supported alternatives and conditional recommendations that satisfy the user's requirements; do not prescribe exact wording, presentation order, or one canonical solution unless the verified requirements demand it.>
 ```
 
 ## Output
@@ -184,13 +214,14 @@ Allowed combinations:
 | --- | --- | --- |
 | analysis | `conversation_ongoing`, `no_issue`, `issue_created` | `issue_created` requires `classification` and `issue_url`; otherwise both are `null` |
 | validation | `validation_passed`, `validation_failed` | `classification` and `issue_url` are `null` |
-| analysis | `remediation_failed` | Both gates confirmed a completed conversation with a real answer problem, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` null, and put the blocker in `reasoning` |
+| analysis | `remediation_failed` | A real answer problem was confirmed in a completed conversation or a thread with negative user feedback, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` null, and put the blocker in `reasoning` |
 | either | `processing_failed` | Failure reason in `reasoning`; `classification` and `issue_url` are `null` |
 
-Use `processing_failed` only when processing fails before analysis has
-confirmed both a completed conversation and a real answer problem, or when
-the validation workflow itself cannot complete. After both analysis gates
-pass, every blocker must return `remediation_failed` so the backend preserves
+Use `processing_failed` only when processing fails before confirming a real
+answer problem and either a completed conversation or negative user feedback,
+or when the validation workflow itself cannot complete. Once a real answer
+problem is confirmed in a completed conversation or a thread with negative
+user feedback, every blocker must return `remediation_failed` so the backend preserves
 the incorrect-answer status separately from the failed remediation attempt.
 
 Emit valid JSON only: double-quoted keys and strings, real `null` (never

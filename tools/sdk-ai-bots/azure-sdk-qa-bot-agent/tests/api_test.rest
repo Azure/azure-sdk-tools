@@ -41,6 +41,9 @@ Content-type: application/json; charset=utf-8
     "conversation_type": "teams_channel"
 }
 
+### Local test - channel config
+GET http://localhost:8089/config/channel?channel_id=test_channel_id HTTP/1.1
+
 ### Local test - knowledge retrieval
 POST http://localhost:8089/knowledge/retrieve HTTP/1.1
 Content-type: application/json; charset=utf-8

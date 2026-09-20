@@ -506,6 +506,107 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region MapPackageWorkItemToModel PlannedReleases parsing Tests
+
+        private static string CreateReleaseTable(string rows)
+        {
+            // GetMDVersionValue stores Markdown in a hidden div alongside its rendered HTML.
+            return "<div style='display:none' id=__md>| Type | Version | Date |\n" +
+                "| - | - | - |\n" + rows + "\n</div>";
+        }
+
+        private static WorkItem CreatePackageWorkItem(string plannedPackages, string version = "1.2.1")
+        {
+            return new WorkItem
+            {
+                Id = 1,
+                Url = "https://dev.azure.com/azure-sdk/internal/_apis/wit/workItems/1",
+                Fields = new Dictionary<string, object>
+                {
+                    { "System.WorkItemType", "Package" },
+                    { "System.State", "Active" },
+                    { "Custom.Package", "arm-computelimit" },
+                    { "Custom.PackageVersion", version },
+                    { "Custom.Language", "JavaScript" },
+                    { "Custom.PlannedPackages", plannedPackages }
+                },
+                Relations = new List<WorkItemRelation>()
+            };
+        }
+
+        [TestCase("2026-07-07")]
+        [TestCase("07/07/2026")]
+        public void MapPackageWorkItemToModel_ParsesPatchPlannedReleaseRow(string releaseDate)
+        {
+            // A Patch row must parse; previously the release-type allowlist (Beta|Stable|GA)
+            // dropped it, causing a false "No planned release date found" readiness failure.
+            var plannedPackages = CreateReleaseTable($"| Patch | 1.2.1 | {releaseDate} |");
+
+            var model = DevOpsService.MapPackageWorkItemToModel(CreatePackageWorkItem(plannedPackages));
+
+            Assert.That(model.PlannedReleases, Has.Count.EqualTo(1));
+            var planned = model.PlannedReleases[0];
+            Assert.Multiple(() =>
+            {
+                Assert.That(planned.ReleaseType, Is.EqualTo("Patch"));
+                Assert.That(planned.Version, Is.EqualTo("1.2.1"));
+                Assert.That(planned.ReleaseDate, Is.EqualTo(releaseDate));
+            });
+        }
+
+        [Test]
+        public void MapPackageWorkItemToModel_ParsesAllReleaseTypeLabels()
+        {
+            // All labels should parse, but the production header and separator must not.
+            var plannedPackages = CreateReleaseTable(
+                "| Beta | 1.0.0-beta.1 | 2026-07-01 |\n" +
+                "| Stable | 1.0.0 | 2026-07-02 |\n" +
+                "| GA | 1.3.0 | 2026-07-03 |\n" +
+                "| Patch | 1.2.1 | 2026-07-04 |\n" +
+                "| Hotfix | 1.3.0.post1 | 2026-07-05 |");
+
+            var model = DevOpsService.MapPackageWorkItemToModel(CreatePackageWorkItem(plannedPackages));
+
+            Assert.That(
+                model.PlannedReleases.Select(r => r.ReleaseType),
+                Is.EqualTo(new[] { "Beta", "Stable", "GA", "Patch", "Hotfix" }));
+        }
+
+        [TestCase("Custom.PlannedPackages")]
+        [TestCase("Custom.ShippedPackages")]
+        public void MapPackageWorkItemToModel_IgnoresReleaseTableWithoutDataRows(string field)
+        {
+            var workItem = CreatePackageWorkItem(string.Empty);
+            workItem.Fields[field] = CreateReleaseTable(string.Empty);
+
+            var model = DevOpsService.MapPackageWorkItemToModel(workItem);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(model.PlannedReleases, Is.Empty);
+                Assert.That(model.ReleasedVersions, Is.Empty);
+            });
+        }
+
+        [Test]
+        public void MapPackageWorkItemToModel_ParsesShippedReleaseWithoutTableMetadata()
+        {
+            var workItem = CreatePackageWorkItem(string.Empty);
+            workItem.Fields["Custom.ShippedPackages"] = CreateReleaseTable("| Patch | 1.2.1 | 07/07/2026 |");
+
+            var model = DevOpsService.MapPackageWorkItemToModel(workItem);
+
+            Assert.That(model.ReleasedVersions, Has.Count.EqualTo(1));
+            Assert.Multiple(() =>
+            {
+                Assert.That(model.ReleasedVersions[0].ReleaseType, Is.EqualTo("Patch"));
+                Assert.That(model.ReleasedVersions[0].Version, Is.EqualTo("1.2.1"));
+                Assert.That(model.ReleasedVersions[0].ReleaseDate, Is.EqualTo("07/07/2026"));
+            });
+        }
+
+        #endregion
+
         #region GetReleasePlansForPackageAsync Tests
 
         [TestCase("python", "Python")]
@@ -743,7 +844,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var apiVersion = "2024-01-01";
 
             // Act
-            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, ApiReleaseType.GA, CancellationToken.None);
 
             // Assert
             Assert.IsNull(result, "Should return null when no release plans exist for the TypeSpec path");
@@ -766,7 +867,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(apiSpec);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, ApiReleaseType.GA, CancellationToken.None);
 
             // Assert
             Assert.IsNull(result, "Should return null when API version does not match");
@@ -780,6 +881,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var apiVersion = "2024-01-01";
             
             var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            releasePlan.Fields["Custom.ReleasePlanType"] = "GA";
             var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
                 apiVersion, parentId: 100);
             releasePlan.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
@@ -789,7 +891,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(apiSpec);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, ApiReleaseType.GA, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result, "Should return release plan when API version matches");
@@ -806,11 +908,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             
             var releasePlan1 = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             releasePlan1.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
+            releasePlan1.Fields["Custom.ReleasePlanType"] = "GA";
             var apiSpec1 = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
                 "2023-06-01", parentId: 100);
             
             var releasePlan2 = CreateReleasePlanWorkItemWithApiSpecChild(101, "In Progress", 201);
             releasePlan2.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
+            releasePlan2.Fields["Custom.ReleasePlanType"] = "GA";
             var apiSpec2 = CreateApiSpecWorkItemWithVersion(201, "https://github.com/Azure/azure-rest-api-specs/pull/12346", "Active", 
                 requestedApiVersion, parentId: 101);
             
@@ -822,7 +926,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(apiSpec2);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, ApiReleaseType.GA, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result, "Should find matching release plan even when multiple exist");
@@ -840,6 +944,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             
             var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             releasePlan.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
+            releasePlan.Fields["Custom.ReleasePlanType"] = "GA";
             var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
                 existingApiVersion, parentId: 100);
             
@@ -848,7 +953,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(apiSpec);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, ApiReleaseType.GA, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result, "Should match API version case-insensitively");
@@ -862,10 +967,70 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var apiVersion = "";
 
             // Act
-            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, ApiReleaseType.GA, CancellationToken.None);
 
             // Assert
             Assert.IsNull(result, "Should return null when API version is empty");
+        }
+
+        [Test]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_ReturnsNullWhenApiReleaseTypeDoesNotMatch()
+        {
+            var typeSpecPath = "specification/contoso/Contoso.Management";
+            var apiVersion = "2024-01-01";
+            var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            releasePlan.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
+            releasePlan.Fields["Custom.ReleasePlanType"] = "APEX Public Preview";
+            var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active",
+                apiVersion, parentId: 100);
+
+            _connection.AddWorkItemToQuery(releasePlan);
+            _connection.AddWorkItem(releasePlan);
+            _connection.AddWorkItem(apiSpec);
+
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                typeSpecPath, apiVersion, ApiReleaseType.GA, CancellationToken.None);
+
+            Assert.IsNull(result, "Should return null when API release type does not match");
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.ReleasePlanType] = 'GA'"));
+        }
+
+        [Test]
+        public void GetActiveReleasePlansByTypeSpecProjectPathAsync_PropagatesCancellationWhileMapping()
+        {
+            var releasePlanWorkItem = CreateReleasePlanWorkItem(100, "In Progress");
+            releasePlanWorkItem.Fields["Custom.ApiSpecProjectPath"] = "specification/contoso/Contoso.Management";
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await _devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    "specification/contoso/Contoso.Management",
+                    ct: cts.Token));
+        }
+
+        [Test]
+        public void GetActiveReleasePlansByTypeSpecProjectPathAsync_PropagatesCancellationFromQuery()
+        {
+            _connection.CancelQuery();
+
+            Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await _devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    "specification/contoso/Contoso.Management"));
+        }
+
+        [Test]
+        public void GetActiveReleasePlansByTypeSpecProjectPathAsync_PropagatesCancellationFromBulkFetch()
+        {
+            var releasePlanWorkItem = CreateReleasePlanWorkItem(100, "In Progress");
+            releasePlanWorkItem.Fields["Custom.ApiSpecProjectPath"] = "specification/contoso/Contoso.Management";
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+            _connection.CancelBulkFetch();
+
+            Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await _devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    "specification/contoso/Contoso.Management"));
         }
 
         #endregion
@@ -913,6 +1078,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             {
                 _workItemClient.AddWorkItem(workItem);
             }
+
+            public void CancelQuery()
+            {
+                _workItemClient.CancelQuery = true;
+            }
+
+            public void CancelBulkFetch()
+            {
+                _workItemClient.CancelBulkFetch = true;
+            }
         }
 
         private class TestWorkItemClient : WorkItemTrackingHttpClient
@@ -923,6 +1098,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public string? LastCapturedQuery { get; private set; }
 
             public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument { get; private set; }
+
+            public bool CancelQuery { get; set; }
+
+            public bool CancelBulkFetch { get; set; }
 
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
@@ -950,6 +1129,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 CancellationToken cancellationToken = default)
             {
                 LastCapturedQuery = wiql?.Query;
+                if (CancelQuery)
+                {
+                    return Task.FromCanceled<WorkItemQueryResult>(new CancellationToken(canceled: true));
+                }
                 var result = new WorkItemQueryResult
                 {
                     WorkItems = _queryWorkItems.Select(wi => new WorkItemReference { Id = wi.Id ?? 0 }).ToList()
@@ -966,6 +1149,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 CancellationToken cancellationToken = default)
             {
                 LastCapturedQuery = wiql?.Query;
+                if (CancelQuery)
+                {
+                    return Task.FromCanceled<WorkItemQueryResult>(new CancellationToken(canceled: true));
+                }
                 var result = new WorkItemQueryResult
                 {
                     WorkItems = _queryWorkItems.Select(wi => new WorkItemReference { Id = wi.Id ?? 0 }).ToList()
@@ -976,6 +1163,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public override Task<List<WorkItem>> GetWorkItemsAsync(IEnumerable<int> ids, IEnumerable<string>? fields = null, DateTime? asOf = null, WorkItemExpand? expand = null, WorkItemErrorPolicy? errorPolicy = null, object? userState = null, CancellationToken cancellationToken = default(CancellationToken))
             {
+                if (CancelBulkFetch)
+                {
+                    return Task.FromCanceled<List<WorkItem>>(new CancellationToken(canceled: true));
+                }
                 var workItems = _queryWorkItems.Where(wi => ids.Contains(wi.Id ?? 0)).ToList();
                 return Task.FromResult(workItems);
             }
@@ -998,6 +1189,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 object? userState = null,
                 CancellationToken cancellationToken = default)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Task.FromCanceled<WorkItem>(cancellationToken);
+                }
                 if (_workItems.TryGetValue(id, out var workItem))
                 {
                     return Task.FromResult(workItem);

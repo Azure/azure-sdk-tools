@@ -68,24 +68,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<bool> needsSdkOpt = new("--needs-sdk")
-        {
-            Description = "Indicates whether an SDK is needed",
-            Required = true,
-        };
-
         private readonly Option<string> dataPlaneOpt = new("--data-plane")
         {
             Description = "Indicates whether a data plane SDK is applicable",
-            Required = false,
-            DefaultValueFactory = _ => "N/A",
+            Required = true,
         };
 
         private readonly Option<string> managementPlaneOpt = new("--management-plane")
         {
             Description = "Indicates whether a management plane SDK is applicable",
-            Required = false,
-            DefaultValueFactory = _ => "N/A",
+            Required = true,
         };
 
         private readonly Option<string> submitterOpt = new("--submitter")
@@ -104,7 +96,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 productLifecycleOpt,
                 serviceIdOpt,
                 serviceNameOpt,
-                needsSdkOpt,
                 dataPlaneOpt,
                 managementPlaneOpt,
                 submitterOpt,
@@ -124,7 +115,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var productLifecycle = commandParser.GetValue(productLifecycleOpt);
                     var serviceId = commandParser.GetValue(serviceIdOpt);
                     var serviceName = commandParser.GetValue(serviceNameOpt);
-                    var needsSdk = commandParser.GetValue(needsSdkOpt);
                     var dataPlane = commandParser.GetValue(dataPlaneOpt);
                     var managementPlane = commandParser.GetValue(managementPlaneOpt);
                     var submitter = commandParser.GetValue(submitterOpt);
@@ -135,7 +125,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         productLifecycle,
                         serviceId,
                         serviceName,
-                        needsSdk,
                         dataPlane,
                         managementPlane,
                         submitter,
@@ -157,7 +146,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             string productLifecycle,
             Guid serviceId,
             string serviceName,
-            bool needsSdk,
             string dataPlane,
             string managementPlane,
             string submitter,
@@ -202,27 +190,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 var dp = DataPlaneApplicability.Unknown;
                 var mp = ManagementPlaneApplicability.Unknown;
-                if (needsSdk)
+                if (!DataPlaneApplicabilityExtensions.TryParseFromUserInput(dataPlane, out dp) || dp == DataPlaneApplicability.Unknown)
                 {
-                    if (!DataPlaneApplicabilityExtensions.TryParseFromUserInput(dataPlane, out dp) || dp == DataPlaneApplicability.Unknown)
+                    return new ()
                     {
-                        return new ()
-                        {
-                            ResponseError
-                            = $"Invalid data plane applicability '{dataPlane}'. Allowed values: {
-                                string.Join(", ", DataPlaneApplicabilityExtensions.ListValidUserInputs().Select(t => $"'{t}'"))}."
-                        };
-                    }
+                        ResponseError
+                        = $"Invalid data plane applicability '{dataPlane}'. Allowed values: {
+                            string.Join(", ", DataPlaneApplicabilityExtensions.ListValidUserInputs().Select(t => $"'{t}'"))}."
+                    };
+                }
 
-                    if (!ManagementPlaneApplicabilityExtensions.TryParseFromUserInput(managementPlane, out mp) || mp == ManagementPlaneApplicability.Unknown)
+                if (!ManagementPlaneApplicabilityExtensions.TryParseFromUserInput(managementPlane, out mp) || mp == ManagementPlaneApplicability.Unknown)
+                {
+                    return new ()
                     {
-                        return new ()
-                        {
-                            ResponseError
-                            = $"Invalid management plane applicability '{managementPlane}'. Allowed values: {
-                                string.Join(", ", ManagementPlaneApplicabilityExtensions.ListValidUserInputs().Select(t => $"'{t}'"))}."
-                        };
-                    }
+                        ResponseError
+                        = $"Invalid management plane applicability '{managementPlane}'. Allowed values: {
+                            string.Join(", ", ManagementPlaneApplicabilityExtensions.ListValidUserInputs().Select(t => $"'{t}'"))}."
+                    };
                 }
 
                 var status = new ProductOnboardingStatus

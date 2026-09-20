@@ -253,7 +253,7 @@ Foundry Routine -> Teams Collection Hosted Agent -> dedicated Logic App
                         -> existing Teams connector -> Hosted Agent -> Cosmos DB
 ```
 
-The collector uses the configured Foundry completion model to create the versioned Q&A processing result after it has assembled a complete thread. It does not use the bot's conversation-save endpoint or memory extraction. There is no `scripts/teams_collection.py run` command or direct connector transport. `routine-dispatch` invokes the deployed flow, not collection on the operator's machine.
+The collector uses the configured Foundry completion model to create the versioned Q&A processing result after it has assembled a complete thread. It does not use the bot's conversation-save endpoint or memory extraction. There is no local collection command or direct connector transport. `routine-dispatch` invokes the deployed flow, not collection on the operator's machine.
 
 #### Prerequisites and Identity
 
@@ -291,7 +291,7 @@ Role names/assignment IDs in the template are deterministic. Deploying it grants
 3. For a manual equivalent after deploying the hosted agent, run:
 
     ```powershell
-    python scripts/deploy_teams_collection.py `
+    python scripts/deploy_teams_collection.py deploy `
       --environment dev `
       --resource-group azure-sdk-qa-bot-dev `
       --appconfig-endpoint https://azuresdkqabot-dev-config.azconfig.io
@@ -300,7 +300,8 @@ Role names/assignment IDs in the template are deterministic. Deploying it grants
 4. Manually dispatch the disabled Routine for verification:
 
     ```powershell
-    python scripts/teams_collection.py routine-dispatch --project-endpoint $projectEndpoint
+    python scripts/deploy_teams_collection.py routine-dispatch `
+      --project-endpoint $projectEndpoint
     ```
 
 #### Verify and Enable
@@ -320,7 +321,8 @@ To regenerate summaries after changing the processing instructions or version, i
 Only after cloud verification succeeds, enable the schedule:
 
 ```powershell
-python scripts/teams_collection.py routine-enable --project-endpoint $projectEndpoint
+python scripts/deploy_teams_collection.py routine-enable `
+  --project-endpoint $projectEndpoint
 ```
 
 The default schedule is weekly at 00:00 UTC on Sunday. The first successful run is full; later runs use a seven-day activity window. Use `routine-disable` to pause future dispatches; it does not cancel an active collection. Channel and processing configuration are baked into the image: changing them requires redeploying the Hosted Agent, while channel ID changes also require updating the Logic App allowlist. Keep the Routine disabled until both changes are ready. Failed scans do not advance the channel checkpoint; complete processed thread writes made before a failure may remain and will be skipped if their raw content and processing version are unchanged on retry.

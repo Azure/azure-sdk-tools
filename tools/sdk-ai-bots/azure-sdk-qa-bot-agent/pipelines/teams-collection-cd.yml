@@ -75,7 +75,7 @@ extends:
                       --tag "$(Build.BuildId)" \
                       --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
 
-                    python scripts/deploy_teams_collection.py \
+                    python scripts/deploy_teams_collection.py deploy \
                       --environment "${{ parameters.environment }}" \
                       --resource-group "$(RESOURCE_GROUP)" \
                       --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"

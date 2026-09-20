@@ -383,7 +383,8 @@ def test_expert_assessment_requires_added_value_not_technical_confirmation():
     assert "confirmation or repetition alone does not count, even when technically substantive" in instruction
     assert "identifying what was added beyond the bot's answer when `true`" in instruction
     html = (root / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
-    assert "Confirmation or repetition alone does not count, even when technically substantive" in html
+    assert "Confirmation, repetition, thanks, or required human actions alone do not count" in html
+    assert "add guidance beyond the bot's answer" in html
 
 
 @pytest.mark.asyncio
@@ -571,11 +572,10 @@ async def test_issue_scope_uses_conversation_cohort_and_current_status(storage):
 def test_resolution_tables_keep_skipped_separate_from_unresolved():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     assert "data.totals.resolved_rate" in html
-    assert "Skipped validation is terminal, not pending work" in html
+    assert "These cases are no longer waiting for validation, but have no validated fix" in html
     assert "row.resolved_rate.numerator} / ${row.resolved_rate.denominator}" in html
     assert "Issue-linked cases = validated resolved + skipped + unresolved" in html
-    assert "Unresolved excludes passed and skipped validation" in html
-    assert "They remain in the resolved-rate denominator but do not increase its numerator" in html
+    assert "Issue-linked cases that have neither passed nor skipped validation" in html
     summary = html.split('title: "Issue findings & resolution",', 1)[1].split('title: "Unresolved cases",', 1)[0]
     assert "row.resolved_cases, row.validation_skipped_cases, row.unresolved_cases" in summary
     unresolved = html.split('title: "Unresolved cases",', 1)[1].split('title: "Root-cause findings",', 1)[0]
@@ -652,7 +652,7 @@ def test_conversation_assessment_displays_expert_interaction_and_reason():
 def test_overview_html_contract():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     assert "innerHTML" not in html
-    for fragment in ("overview-tab", "conversations-tab", "report-start", "report-end", "Last full week", "Copy report", "Print report", "setDate", "getDay", "buildOverviewReport", "reportRowValues", "AbortController", "overviewRequest !== request", "report.fallback.select()"):
+    for fragment in ("overview-tab", "conversations-tab", "report-start", "report-end", "Copy report", "Print report", "setDate", "buildOverviewReport", "reportRowValues", "AbortController", "overviewRequest !== request", "report.fallback.select()"):
         assert fragment in html
     assert 'id="report-end" type="date" required' in html
     assert 'aria-label="Weekly Status Report"' in html
@@ -670,6 +670,33 @@ def test_overview_html_contract():
     assert "tenant" not in report_script.lower()
     assert "tenant_id: record.tenant_id" in html
     assert 'report.print.addEventListener("click", () => { if (overviewData) window.print(); });' in html
+
+
+def test_overview_filters_reload_automatically_without_action_buttons():
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    form = html.split('<form id="overview-filters"', 1)[1].split("</form>", 1)[0]
+    assert "<button" not in form
+    for removed in ("Update report", "Last full week", "last-week", "lastFullWeek", "setLastWeek"):
+        assert removed not in html
+    assert 'report.form.addEventListener("input", invalidateOverview)' in html
+    assert 'report.form.addEventListener("change", loadOverview)' in html
+    assert 'event.preventDefault(); loadOverview();' in html
+    loading = html.split("async function loadOverview()", 1)[1].split('document.querySelector("#overview-tab")', 1)[0]
+    assert loading.index("invalidateOverview();") < loading.index("const start =")
+    assert loading.index("end <= start") < loading.index("await fetch(")
+
+
+def test_overview_date_selection_includes_end_day_and_defaults_to_seven_complete_days():
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    assert 'To (local time, inclusive)<input id="report-end"' in html
+    assert "but not the end date" not in html
+    default = html.split("function lastSevenDays(", 1)[1].split("function percent", 1)[0]
+    assert "start.setDate(start.getDate() - 7)" in default
+    assert "end.setDate(end.getDate() - 1)" in default
+    loading = html.split("async function loadOverview()", 1)[1].split('document.querySelector("#overview-tab")', 1)[0]
+    assert loading.index("end.setDate(end.getDate() + 1)") < loading.index("end <= start")
+    assert "end.getTime() + 86400000" not in loading
+    assert "From on or before To" in loading
 
 
 def test_overview_tables_have_no_goal_columns_or_threshold_titles():
@@ -696,7 +723,7 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
     assert "row.accuracy.denominator" in tables
     assert tables.count("description:") == 6
     assert tables.count("limitations:") == 6
-    assert "Eligible conversations exclude missing-documentation and out-of-scope cases from both numerator and denominator" in tables
+    assert "Missing-documentation and out-of-scope cases are excluded from both counts" in tables
     assert "N/A means no eligible conversations" in tables
     # Both visible/printed tables and the copied Markdown use these definitions.
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
@@ -724,8 +751,7 @@ def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
     assert 'rateCounts.title = `${labels[0]} / ${labels[1]}`' in visual
     assert 'rateCounts.setAttribute("aria-label"' in visual
     assert "overview-bar" not in html
-    assert "can exceed 100%" in visual
-    assert "not the confirmed-correct percentage" in visual.lower()
+    assert "eligible conversations not marked incorrect / all eligible conversations" in html
     assert "report.tables.replaceChildren(renderOverviewVisual(data))" in html
     invalidation = html.split("function invalidateOverview()", 1)[1].split("async function loadOverview()", 1)[0]
     assert "report.tables.replaceChildren();" in invalidation
@@ -735,8 +761,29 @@ def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
     assert ".report-section th, .report-section td { overflow-wrap: anywhere; }" in html
 
 
+def test_metric_descriptions_keep_cards_short_and_define_counts_in_notes():
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    visual = html.split("function renderOverviewVisual(data)", 1)[1].split("function renderOverview(data)", 1)[0]
+    notes = re.findall(r'note: "([^"]+)"', visual)
+    assert len(notes) == 4
+    assert all(len(note.split()) <= 40 for note in notes)
+    accuracy, interaction, answer, resolution = notes
+    assert all(" / " in note for note in (accuracy, answer, resolution))
+    assert "Missing-documentation and out-of-scope cases are excluded from both counts" in html
+    assert "expert follow-up after a bot reply" in interaction
+    assert "Only a positive assessment counts as expert follow-up" in html
+    assert "bot replies / in-scope user messages" in answer.lower()
+    assert "In-scope questions are user messages marked as needing a reply or explicitly mentioning Azure SDK Q&A Bot" in html
+    assert "passed validation / all issue-linked cases" in resolution
+    assert "Issue-linked cases = validated resolved + skipped + unresolved" in html
+    for misleading in ("count as successful", "excluded conversations as successful", "terminal"):
+        assert misleading not in visual
+
+
 def test_overview_keeps_collapsible_notes_in_display_copy_and_print_without_document_dependency():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    for removed in ("conversationLimitations", "sharedLimitations", "resolutionLimitations"):
+        assert removed not in html
     assert "metric-definitions" not in html
     assert 'node("details", "report-notes")' in html
     assert 'node("summary", "", "Notes")' in html

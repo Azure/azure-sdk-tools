@@ -487,12 +487,8 @@
     <section id="overview-panel" aria-label="Weekly Status Report">
       <form id="overview-filters" class="filters">
         <label>From (local time, inclusive)<input id="report-start" type="date" required></label>
-        <label>To (local time, exclusive)<input id="report-end" type="date" required></label>
+        <label>To (local time, inclusive)<input id="report-end" type="date" required></label>
         <label>Channel<select id="report-channel"><option value="">All channels</option></select></label>
-        <div class="actions">
-          <button type="submit">Update report</button>
-          <button id="last-week" class="secondary" type="button">Last full week</button>
-        </div>
       </form>
       <div class="summary">
         <span id="report-period" role="status">Loading last 7 days...</span>
@@ -1247,59 +1243,42 @@
       const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const start = new Date(end);
       start.setDate(start.getDate() - 7);
+      end.setDate(end.getDate() - 1);
       return {start: localDateValue(start), end: localDateValue(end)};
-    }
-
-    function lastFullWeek(now = new Date()) {
-      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      end.setDate(end.getDate() - (end.getDay() + 6) % 7);
-      const start = new Date(end);
-      start.setDate(start.getDate() - 7);
-      return {start: localDateValue(start), end: localDateValue(end)};
-    }
-
-    function setLastWeek() {
-      const week = lastFullWeek();
-      report.start.value = week.start;
-      report.end.value = week.end;
     }
 
     function percent(value) {
       return value == null ? "N/A" : `${value.toFixed(1)}%`;
     }
 
-    const conversationLimitations = "Conversations use their creation date, not assessment date; undated records and threads without bot replies are absent. Later assessments can change the results.";
-    const sharedLimitations = "Dates use local time (start inclusive, end exclusive). Testing channels are excluded; unknown channels remain included. Totals use all matching stored counts, not averages of channel percentages. Missing ingestion is not measured; data may change during report generation.";
-    const resolutionLimitations = "Uses current stored status for conversations created in the selected dates, not issues created or fixes completed in that period. Closing a GitHub issue does not count as resolution; only validation passed does. No live GitHub status is fetched. Skipped validation and legacy done states are not proof of successful validation.";
-
     // These same table definitions drive both the DOM and the copied report.
     const reportTables = [
       {
         title: "Accuracy",
-        description: "(Eligible conversations - incorrect) / eligible conversations. Eligible conversations exclude missing-documentation and out-of-scope cases from both numerator and denominator. Unassessed eligible conversations count as successful in this rate. Correct shows confirmed correct eligible verdicts, not the numerator. N/A means no eligible conversations.",
-        limitations: [conversationLimitations, sharedLimitations],
+        description: "Accuracy = eligible conversations not marked incorrect / all eligible conversations. N/A means no eligible conversations.",
+        limitations: ["Missing-documentation and out-of-scope cases are excluded from both counts."],
         headings: ["Channel", "Eligible conversations", "Correct", "Excluded", "Accuracy"],
         values: row => [row.accuracy.denominator, row.correct,
           row.accuracy_excluded, percent(row.accuracy.rate)]
       },
       {
         title: "Interaction rate",
-        description: "Conversations with meaningful expert follow-up / all conversations. Counts substantive guidance from another human after a bot reply that adds meaningful information beyond the bot's answer. Confirmation or repetition alone does not count, even when technically substantive; neither do acknowledgments or required human actions alone. Unassessed cases remain in the denominator. N/A means no conversations.",
-        limitations: ["Only an explicit positive expert-interaction assessment counts; missing or uncertain assessments do not. The question author's own follow-ups are excluded.", conversationLimitations, sharedLimitations],
+        description: "Interaction rate = conversations assessed as having expert follow-up / all conversations. N/A means no conversations.",
+        limitations: ["Expert follow-up must come after a bot reply, be from someone other than the question author, and add guidance beyond the bot's answer. Confirmation, repetition, thanks, or required human actions alone do not count.", "Only a positive assessment counts as expert follow-up."],
         headings: ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         values: row => [row.conversations, row.expert_yes, percent(row.expert_interaction.rate)]
       },
       {
         title: "Answer rate",
-        description: "Bot replies / user messages with should_reply=true or an explicit @mention of Azure SDK Q&A Bot. N/A means no qualifying questions.",
-        limitations: ["Each qualifying user message counts once. Teams mention tags containing either Q&A or Q&amp;A are recognized; &amp; is the HTML representation of &. Replies include assistant and system/error messages. Messages use their own creation dates, independently of conversation dates, and include questions without QA records.", "Replies are not matched to questions. Multiple replies and exchanges crossing the date boundary can produce rates above 100%; this measures reply volume, not the percentage of distinct questions answered.", sharedLimitations],
+        description: "Answer rate = bot replies / in-scope user messages. N/A means no in-scope user messages.",
+        limitations: ["In-scope questions are user messages marked as needing a reply or explicitly mentioning Azure SDK Q&A Bot."],
         headings: ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
         values: row => [row.questions, row.bot_replies, percent(row.answer_rate.rate)]
       },
       {
         title: "Issue findings & resolution",
-        description: "Resolved rate = validated resolved cases / cases with a valid linked GitHub issue. Issue-linked cases = validated resolved + skipped + unresolved. Findings count conversation cases with a recognized root cause, including findings without a linked issue. N/A means no issue-linked cases.",
-        limitations: ["Tracked issues are distinct GitHub issues, not cases. The same issue may appear in multiple channels; the total deduplicates across channels and may be less than their sum. Unresolved excludes passed and skipped validation, and is not a count of open GitHub issues.", "Skipped cases are terminal and shown separately, not counted as unresolved or validated resolved. They remain in the resolved-rate denominator but do not increase its numerator.", resolutionLimitations, conversationLimitations, sharedLimitations],
+        description: "Resolved rate = cases with passed validation / all issue-linked cases. Issue-linked cases = validated resolved + skipped + unresolved. N/A means no issue-linked cases.",
+        limitations: ["A case is one conversation with a valid GitHub issue link.", "Skipped means validation was intentionally not performed. These cases are no longer waiting for validation, but have no validated fix."],
         headings: ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Skipped", "Unresolved", "Resolved rate"],
         values: row => [row.findings, row.tracked_issues, row.issue_cases,
           row.resolved_cases, row.validation_skipped_cases, row.unresolved_cases,
@@ -1307,16 +1286,16 @@
       },
       {
         title: "Unresolved cases",
-        description: "Issue-linked cases with neither passed nor skipped validation, split by their current stored lifecycle status. These counts sum to Unresolved; a processing error is not a validated failure or a resolved case.",
-        limitations: ["Pending validation includes cases waiting for issue closure as well as validation. Other includes created, running, missing, unknown and legacy done states. Findings without a valid linked issue are not included in this table or the resolved-rate denominator.", resolutionLimitations, sharedLimitations],
+        description: "Issue-linked cases that have neither passed nor skipped validation.",
+        limitations: ["Pending validation means waiting for issue closure or validation. Validation failed means the validation check did not pass. Processing errors means the workflow could not complete, not that validation failed.", "Other includes cases not yet processed, still running, or with missing, unknown, or older done statuses.", "Cases without a valid GitHub issue link are excluded from this table and the resolved rate."],
         headings: ["Channel", "Pending validation", "Validation failed", "Processing errors", "Other"],
         values: row => [row.pending_validation_cases, row.validation_failed_cases,
           row.processing_error_cases, row.other_issue_cases]
       },
       {
         title: "Root-cause findings",
-        description: "One finding per conversation with a recognized root-cause classification, regardless of whether an issue was linked or validation passed. Missing or unrecognized classifications are not inferred.",
-        limitations: ["Missing documentation and out-of-scope findings are included here even though they are excluded from both the numerator and denominator in Accuracy. This breakdown counts cases, not distinct GitHub issues.", conversationLimitations, sharedLimitations],
+        description: "Conversations grouped by their identified root cause.",
+        limitations: ["Conversations without a recognized root cause are not included."],
         headings: ["Channel", "Missing documentation", "Outdated documentation", "Insufficient documentation", "Retrieval mismatch", "Reasoning gap", "Out of scope", "Findings"],
         values: row => [row.root_causes.missing_content || 0, row.root_causes.outdated_content || 0,
           row.root_causes.insufficient_content || 0, row.root_causes.retrieval_mismatch || 0,
@@ -1354,16 +1333,16 @@
       const metrics = [
         {title: "Accuracy", style: "accuracy", metric: data.totals.accuracy,
           labels: ["Not counted incorrect", "Eligible conversations"],
-          note: "Missing-content and out-of-scope cases are excluded; unassessed conversations remain eligible. Not the confirmed-correct percentage."},
+          note: "Correct responses not counted as incorrect / all eligible conversations."},
         {title: "Interaction rate", style: "interaction", metric: data.totals.expert_interaction,
           labels: ["Expert interactions", "Conversations"],
-          note: "Meaningful expert follow-up after a bot reply. Unassessed conversations remain in the total."},
+          note: "Meaningful expert follow-up after a bot reply."},
         {title: "Answer rate", style: "answer", metric: data.totals.answer_rate,
-          labels: ["Bot replies", "In-scope questions"],
-          note: "Reply volume, not matched answers. Includes system/error replies and can exceed 100%."},
+          labels: ["Bot replies", "User questions"],
+          note: "Bot replies / In-scope user messages."},
         {title: "Resolved rate", style: "resolution", metric: data.totals.resolved_rate,
           labels: ["Validated resolved cases", "Issue-linked cases"],
-          note: "Only passed validation is a verified fix. Skipped validation is terminal, not pending work; closing an issue alone is not a verified fix."}
+          note: "Cases with passed validation / all issue-linked cases."}
       ];
       for (const {title, style, metric, labels, note} of metrics) {
         const card = node("article", `overview-card ${style}`);
@@ -1469,17 +1448,18 @@
       report.fallback.hidden = true;
       report.error.textContent = "";
       report.tables.replaceChildren();
-      report.period.textContent = "Update report to apply the selected local dates and scope.";
+      report.period.textContent = "";
     }
 
     async function loadOverview() {
       invalidateOverview();
-      // Interpret calendar dates at local midnight; toISOString converts them for the API.
+      // Include the selected end day by using the next local midnight as the API's exclusive bound.
       const start = new Date(`${report.start.value}T00:00:00`);
       const end = new Date(`${report.end.value}T00:00:00`);
+      end.setDate(end.getDate() + 1);
       if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) ||
           end <= start || end - start > 93 * 86400000) {
-        report.error.textContent = "Choose a positive local date range spanning at most 93 × 24 hours (end exclusive).";
+        report.error.textContent = "Select valid dates with From on or before To (maximum duration: 93 × 24 hours).";
         return;
       }
       const request = new AbortController();
@@ -1511,7 +1491,7 @@
     document.querySelector("#conversations-tab").addEventListener("click", () => selectView(false));
     report.form.addEventListener("submit", event => { event.preventDefault(); loadOverview(); });
     report.form.addEventListener("input", invalidateOverview);
-    document.querySelector("#last-week").addEventListener("click", () => { setLastWeek(); loadOverview(); });
+    report.form.addEventListener("change", loadOverview);
     report.copy.addEventListener("click", async () => {
       if (!overviewData) return;
       const data = overviewData;

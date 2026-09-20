@@ -188,7 +188,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   // Resource / identity names emitted by main.bicep outputs.
   const workflowName = requireEnv("LOGIC_APP_WORKFLOW_NAME");
   const teamsConnName = requireEnv("TEAMS_CONNECTION_NAME");
-  const docDbConnName = requireEnv("DOCUMENT_DB_CONNECTION_NAME");
 
   const serverIdentityName = requireEnv("MANAGED_IDENTITY_NAME");
   const botIdentityName = requireEnv("FRONTEND_SITE_NAME");
@@ -233,7 +232,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   const botIdentityResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.ManagedIdentity", "userAssignedIdentities", botIdentityName);
   const functionAppResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "sites", functionAppName);
   const teamsConnResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "connections", teamsConnName);
-  const docDbConnResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "connections", docDbConnName);
 
   // Load and templatize the workflow definition. `function.id` is resolved at
   // PATCH time (ARM rejects `@{parameters(...)}` there); the rest of the
@@ -248,22 +246,7 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
 
   const parameters = {
     $connections: {
-      // Keyed by the connector token (teams / documentdb) — the
-      // static, designer-friendly form the portal Logic App designer expects.
-      // The connectionId / id still point at the real connection resources, so
-      // runtime behavior is identical to keying by resource name.
       value: {
-        documentdb: {
-          connectionId: docDbConnResourceId,
-          connectionName: docDbConnName,
-          connectionProperties: {
-            authentication: {
-              identity: serverIdentityResourceId,
-              type: "ManagedServiceIdentity",
-            },
-          },
-          id: managedApiId(subscriptionId, location, "documentdb"),
-        },
         teams: {
           connectionId: teamsConnResourceId,
           connectionName: teamsConnName,

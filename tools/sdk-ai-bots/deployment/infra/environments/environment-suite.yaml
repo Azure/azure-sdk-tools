@@ -32,43 +32,80 @@
 
 environments:
     dev:
-        subscriptionId: 'faa080af-c1d8-40ad-9cce-e1a450ca5b57'
+        # Existing shared dev environment in the Azure SDK Engineering System
+        # subscription. Name overrides below attach every supported layer to
+        # the resources already deployed in `azure-sdk-qa-bot-dev`.
+        subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
-        serverApplicationClientId: 'f9b6590e-3710-402a-a17a-d6b99de129a3'
-        serverApplicationIdUri: 'api://72f988bf-86f1-41af-91ab-2d7cd011db47/azure-sdk-qa-bot-playground'
-        resourceGroupPrefix: 'azure-sdk-qa-bot-dev-20260826'
-        keyVaultName: 'azsdkqabot-kv-dev260826'
-        appConfigName: 'azsdkqabot-config-dev-20260826'
-        containerRegistryName: 'azsdkqabotacrdev20260826'
+        serverApplicationClientId: '830f1656-8b36-4e8e-9781-87ccdd038644'
+        serverApplicationIdUri: 'api://azure-sdk-qa-bot-dev'
+        resourceGroupPrefix: 'azure-sdk-qa-bot-dev'
+        keyVaultName: 'azuresdkqabot-dev-kv'
+        appConfigName: 'azuresdkqabot-dev-config'
+        containerRegistryName: 'azuresdkqabotdevcontainer'
         # Site names for CD pipelines. These are passed as bicep params
         # (frontendBaseName / agentServerSiteName / functionAppName) so the
         # deployed resources match — no post-provision discovery required.
-        frontendSiteName: 'azsdkqabot-dev-20260826'
-        agentServerSiteName: 'azuresdkqabot-server-dev-20260826'
-        functionAppName: 'azuresdkqabot-function-dev-20260826'
+        frontendSiteName: 'azsdkqabotdev'
+        agentServerSiteName: 'azuresdkqabot-dev-server'
+        functionAppName: 'azuresdkqabot-dev-function'
         # Teams Toolkit app registration for this environment. Each env owns a
         # DIFFERENT Teams app (created by `teamsapp provision`); the value is
         # written into azure-sdk-qa-bot/env/.env.azd by the postprovision hook
         # (deployment/hooks/lib/sync-teams-env.ts). If empty on first-ever
         # provision, teamsapp will create one and you should copy its GUID here.
         teamsAppId: '9d620152-6b1b-44f2-9635-b1f120c93c4a'
-        teamsGroupId: 'e33c7fe9-84fa-47c8-a288-1a23b7b92ea5'
+        teamsGroupId: '7ccc31f0-b371-450b-a73c-48f5a31a9b96'
         teamsChannelIds:
-            - '19:ZK2wSwDjcdWUr_0jR1njUWFbnTCzKJ8QnyyDkNURqUE1@thread.tacv2'
-        location: 'centralus'
-        aiLocation: 'eastus2'
-        cosmosDbLocation: 'eastus2'
+            - '19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2'
+            - '19:43d25834bb394e0fa9a3b316ce5a2ea4@thread.tacv2'
+            - '19:f876c6910f4048aa81f172300e0f7104@thread.tacv2'
+            - '19:6f6b56e7deda45ecb9dc001a18dcfa3b@thread.tacv2'
+            - '19:7fed54bbc68e443381c6e196c7615b6b@thread.tacv2'
+            - '19:b518e8426f32490eab370e9642b3600a@thread.tacv2'
+            - '19:06178cf7377f447cb486bb15fca7a5f5@thread.tacv2'
+            - '19:e0c83381ddd141d08e5ebea53fd8366c@thread.tacv2'
+            - '19:2f1cb90ce78a46678b203709167db8c1@thread.tacv2'
+            - '19:975533cdd084485ca305739f16b30507@thread.tacv2'
+            - '19:453ec446a66446589d764132f5cebb00@thread.tacv2'
+            - '19:037246b9968445edb3a23612ea44524d@thread.tacv2'
+        location: 'westus2'
+        aiLocation: 'swedencentral'
+        cosmosDbLocation: 'westus2'
         chatbotEvolutionAgentEnabled: false
         bicepOverrides:
             DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
             DEVELOPER_PRINCIPAL_TYPE: 'Group'
-            BOT_SERVICE_NAME: 'azsdkqabot-dev-20260826-federated'
-            # Set to 'true' for one provision only when recovering a soft-deleted
-            # AIServices account, then reset to 'false' after recovery succeeds.
+            MANAGED_IDENTITY_NAME: 'azuresdkqabot-dev-identity'
+            ACTION_GROUP_NAME: 'azuresdkqabot-dev-alert'
+            SEARCH_SERVICE_NAME: 'azuresdkqabot-dev-search'
+            STORAGE_ACCOUNT_NAME: 'azuresdkqabotdevstorage'
+            COSMOS_DB_ACCOUNT_NAME: 'azuresdkqabot-dev-db'
+            BOT_SERVICE_NAME: 'azsdkqabotdev'
+            AI_RESOURCE_NAME: 'azuresdkqabot-dev-ai-resource'
+            AI_PROJECT_NAME: 'azuresdkqabot-ai'
+            AGENT_LOG_WORKSPACE_NAME: 'azuresdkqabot-dev-log'
+            AGENT_LOG_WORKSPACE_LOCATION: 'westus2'
+            AGENT_APP_INSIGHTS_NAME: 'azuresdkqabot-dev-agent'
+            FRONTEND_APP_INSIGHTS_NAME: 'azsdkqabotdev-insights'
+            FRONTEND_EMAIL_ACTION_GROUP_NAME: 'azsdkqabotdev-email-alerts'
+            FRONTEND_HEALTH_TEST_NAME: 'azsdkqabotdev-health-test'
+            FRONTEND_SERVER_ERRORS_ALERT_NAME: 'azsdkqabotdev-server-errors'
+            FRONTEND_HEALTH_CHECK_ALERT_NAME: 'azsdkqabotdev-health-check-failure'
+            FRONTEND_DELETE_LOCK_NAME: 'azsdkqabotdev-delete-lock'
+            AGENT_SERVER_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-dev-appserviceplan'
+            AGENT_SERVER_LOG_WORKSPACE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/DefaultResourceGroup-WUS2/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-a18897a6-7e44-457d-9260-f2854c0aca42-WUS2'
+            AGENT_SERVER_APP_INSIGHTS_NAME: 'azuresdkqabot-dev-server'
+            AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-dev-alert'
+            FUNCTION_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-dev-functionserviceplan'
+            FUNCTION_LOG_WORKSPACE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/DefaultResourceGroup-WUS2/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-a18897a6-7e44-457d-9260-f2854c0aca42-WUS2'
+            INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-dev-ia'
+            TEAMS_CONNECTION_NAME: 'teams'
+            LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-dev-logicapp'
+            LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
             AI_RESOURCE_RESTORE: 'false'
-        # This existing environment already has the required RBAC assignments
-        # and delete lock. Local developers hold Contributor, which cannot PUT
-        # Microsoft.Authorization resources or run privileged data seeding.
+        # The shared environment already has runtime RBAC assignments and
+        # delete locks. Local provisioning must not attempt privileged writes.
         manageAuthorizationResources: false
         localDeployAllowed: true
 
@@ -160,7 +197,6 @@ environments:
             FUNCTION_LOG_WORKSPACE_NAME: 'azuresdkqabot-function-log'
             INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-ia'
             TEAMS_CONNECTION_NAME: 'teams'
-            DOCUMENT_DB_CONNECTION_NAME: 'documentdb'
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
         manageAuthorizationResources: true

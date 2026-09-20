@@ -18,6 +18,9 @@ param storageBlobEndpoint string
 @description('Name of the Log Analytics workspace backing the agent Application Insights.')
 param agentLogWorkspaceNameOverride string = ''
 
+@description('Location of the Log Analytics workspace backing the agent Application Insights. Defaults to the agent resource location.')
+param agentLogWorkspaceLocation string = location
+
 @description('Name of the Application Insights component for the agent.')
 param agentAppInsightsNameOverride string = ''
 
@@ -59,7 +62,7 @@ var aiProjectName = !empty(aiProjectNameOverride) ? aiProjectNameOverride : 'qab
 // shared qabot-log workspace.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
   name: agentLogWorkspaceName
-  location: location
+  location: agentLogWorkspaceLocation
   properties: {
     sku: {
       name: 'PerGB2018'

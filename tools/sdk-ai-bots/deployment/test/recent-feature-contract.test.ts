@@ -84,6 +84,30 @@ test("keeps dev developer roles separate from the deployment principal", () => {
   assert.match(agent, /resource deploymentFoundryProjectManagerRoleAssignment /);
 });
 
+test("targets the existing shared dev environment", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  const dev = suite.environments.dev;
+  const serviceConnections = read("pipelines/templates/service-connection.yml");
+
+  assert.equal(dev.subscriptionId, "a18897a6-7e44-457d-9260-f2854c0aca42");
+  assert.equal(dev.resourceGroupPrefix, "azure-sdk-qa-bot-dev");
+  assert.equal(dev.location, "westus2");
+  assert.equal(dev.aiLocation, "swedencentral");
+  assert.equal(dev.keyVaultName, "azuresdkqabot-dev-kv");
+  assert.equal(dev.appConfigName, "azuresdkqabot-dev-config");
+  assert.equal(dev.containerRegistryName, "azuresdkqabotdevcontainer");
+  assert.equal(dev.frontendSiteName, "azsdkqabotdev");
+  assert.equal(dev.agentServerSiteName, "azuresdkqabot-dev-server");
+  assert.equal(dev.functionAppName, "azuresdkqabot-dev-function");
+  assert.equal(dev.bicepOverrides.MANAGED_IDENTITY_NAME, "azuresdkqabot-dev-identity");
+  assert.equal(dev.bicepOverrides.AI_RESOURCE_NAME, "azuresdkqabot-dev-ai-resource");
+  assert.equal(dev.bicepOverrides.AI_PROJECT_NAME, "azuresdkqabot-ai");
+  assert.match(
+    serviceConnections,
+    /eq\(parameters\.environment, 'dev'\)\s*\}\}:\s*\n\s*value: 'Azure SDK Engineering System'/,
+  );
+});
+
 test("reports the selected image version before each azd deployment", () => {
   const orchestrator = read("pipelines/orchestrators/qa-bot-deploy.yml");
   const fullStack = read("pipelines/templates/deploy-stage.yml");
@@ -291,9 +315,15 @@ test("loads Logic App channel configuration through the authenticated backend", 
   assert.equal(threadActions.Decode_Channel_Config, undefined);
   assert.equal(threadActions.Get_Tenant_ID, undefined);
   assert.doesNotMatch(workflowText, /azureblob|blobStorageAccountName/);
-  assert.doesNotMatch(bicep, /blobConnection|azureBlobConnection/);
-  assert.doesNotMatch(parameters, /AZURE_BLOB_CONNECTION_NAME|blobStorageAccountName/);
-  assert.doesNotMatch(patchWorkflow, /AZURE_BLOB_CONNECTION_NAME|blobConn/);
+  assert.doesNotMatch(bicep, /blobConnection|azureBlobConnection|documentdb/i);
+  assert.doesNotMatch(
+    parameters,
+    /AZURE_BLOB_CONNECTION_NAME|blobStorageAccountName|DOCUMENT_DB_CONNECTION_NAME/,
+  );
+  assert.doesNotMatch(
+    patchWorkflow,
+    /AZURE_BLOB_CONNECTION_NAME|blobConn|DOCUMENT_DB_CONNECTION_NAME|documentdb/i,
+  );
   assert.match(server, /@app\.get\("\/config\/channel"/);
   assert.match(server, /_bot_config_service\.get_channel_config\(channel_id\)/);
 });

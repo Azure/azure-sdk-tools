@@ -35,6 +35,9 @@ param agentServerAppServicePlanNameOverride string = ''
 @description('Name of the Log Analytics workspace backing agent-server Application Insights.')
 param agentServerLogWorkspaceNameOverride string = ''
 
+@description('Existing Log Analytics workspace resource ID. When set, the layer reuses it instead of creating a workspace.')
+param agentServerLogWorkspaceResourceId string = ''
+
 @description('Name of the agent-server web app.')
 param agentServerSiteNameOverride string = ''
 
@@ -51,6 +54,7 @@ var agentServerSiteName = !empty(agentServerSiteNameOverride) ? agentServerSiteN
 var agentServerAppInsightsName = !empty(agentServerAppInsightsNameOverride) ? agentServerAppInsightsNameOverride : 'azuresdkqabot-server202510300250-${suffix}'
 var agentServerAlertName = !empty(agentServerAlertNameOverride) ? agentServerAlertNameOverride : 'azuresdkqabot-alert-${suffix}'
 var azureCliClientId = '04b07795-8ddb-461a-bbee-02f9e1bf7b46'
+var createAgentServerLogWorkspace = empty(agentServerLogWorkspaceResourceId)
 
 // User-assigned identities attached to the agent-server site.
 var siteUserAssignedIdentities = {
@@ -75,7 +79,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 }
 
 // Log Analytics workspace backing the agent-server Application Insights component.
-resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
+resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = if (createAgentServerLogWorkspace) {
   name: agentServerLogWorkspaceName
   location: location
   properties: {
@@ -97,7 +101,7 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
     Flow_Type: 'Bluefield'
     Request_Source: 'rest'
     RetentionInDays: 90
-    WorkspaceResourceId: workspace.id
+    WorkspaceResourceId: createAgentServerLogWorkspace ? workspace!.id : agentServerLogWorkspaceResourceId
   }
 }
 

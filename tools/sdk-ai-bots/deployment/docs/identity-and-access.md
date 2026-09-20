@@ -48,7 +48,7 @@ flowchart LR
 Azure DevOps uses one Azure Resource Manager service connection per
 environment:
 
-- dev: `azure-sdk-tests-playground`;
+- dev: `Azure SDK Engineering System`;
 - preview: `azuresdkqabot-preview`;
 - prod: `Azure SDK Engineering System`.
 

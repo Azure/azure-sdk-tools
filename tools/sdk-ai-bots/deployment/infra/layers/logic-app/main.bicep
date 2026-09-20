@@ -46,9 +46,6 @@ param integrationAccountNameOverride string = ''
 @description('Name of the Teams managed API connection.')
 param teamsConnectionNameOverride string = ''
 
-@description('Name of the Cosmos DB (documentdb) managed API connection.')
-param documentDbConnectionNameOverride string = ''
-
 @description('Name of the Logic App workflow.')
 param logicAppWorkflowNameOverride string = ''
 
@@ -61,7 +58,6 @@ param actionGroupName string = 'qabot-alert-${substring(uniqueString(resourceGro
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var integrationAccountName = !empty(integrationAccountNameOverride) ? integrationAccountNameOverride : 'azuresdkqabot-ia-${suffix}'
 var teamsConnectionName = !empty(teamsConnectionNameOverride) ? teamsConnectionNameOverride : 'teams-${suffix}'
-var documentDbConnectionName = !empty(documentDbConnectionNameOverride) ? documentDbConnectionNameOverride : 'documentdb-${suffix}'
 var logicAppWorkflowName = !empty(logicAppWorkflowNameOverride) ? logicAppWorkflowNameOverride : 'azuresdkqabot-logicapp-${suffix}'
 var logicAppAlertName = !empty(logicAppAlertNameOverride) ? logicAppAlertNameOverride : 'azuresdkqabot-logicapp-alert-${suffix}'
 
@@ -106,17 +102,6 @@ var emptyWorkflowDefinition = {
 var workflowParameters = {
   '$connections': {
     value: {
-      documentdb: {
-        connectionId: documentDbConnection.id
-        connectionName: documentDbConnection.name
-        connectionProperties: {
-          authentication: {
-            identity: serverIdentityResourceId
-            type: 'ManagedServiceIdentity'
-          }
-        }
-        id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/documentdb'
-      }
       teams: {
         connectionId: teamsConnectionResourceId
         connectionName: teamsConnectionName
@@ -180,22 +165,6 @@ resource teamsConnection 'Microsoft.Web/connections@2016-06-01' = if (createTeam
       id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/teams'
     }
     parameterValues: {}
-  }
-}
-
-resource documentDbConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: documentDbConnectionName
-  location: location
-  properties: {
-    displayName: 'documentdb'
-    api: {
-      id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/documentdb'
-    }
-    #disable-next-line BCP089
-    parameterValueSet: {
-      name: 'managedIdentityAuth'
-      values: {}
-    }
   }
 }
 
@@ -269,5 +238,4 @@ resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
 }
 
 output TEAMS_CONNECTION_NAME string = teamsConnectionName
-output DOCUMENT_DB_CONNECTION_NAME string = documentDbConnectionName
 output LOGIC_APP_WORKFLOW_NAME string = logicAppWorkflowName

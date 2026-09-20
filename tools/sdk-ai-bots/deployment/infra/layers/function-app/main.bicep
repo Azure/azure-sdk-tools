@@ -28,6 +28,9 @@ param functionAppServicePlanNameOverride string = ''
 @description('Name of the Log Analytics workspace backing Function App insights.')
 param functionLogWorkspaceNameOverride string = ''
 
+@description('Existing Log Analytics workspace resource ID. When set, the layer reuses it instead of creating a workspace.')
+param functionLogWorkspaceResourceId string = ''
+
 @description('Name of the Function App (also used for its Application Insights component).')
 param functionAppNameOverride string = ''
 
@@ -35,6 +38,7 @@ var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var functionAppServicePlanName = !empty(functionAppServicePlanNameOverride) ? functionAppServicePlanNameOverride : 'azuresdkqabot-functionserviceplan-${suffix}'
 var functionLogWorkspaceName = !empty(functionLogWorkspaceNameOverride) ? functionLogWorkspaceNameOverride : 'azuresdkqabot-function-log-${suffix}'
 var functionAppName = !empty(functionAppNameOverride) ? functionAppNameOverride : 'azuresdkqabot-function-${suffix}'
+var createFunctionLogWorkspace = empty(functionLogWorkspaceResourceId)
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
   name: functionAppServicePlanName
@@ -54,7 +58,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
   kind: 'elastic'
 }
 
-resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
+resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = if (createFunctionLogWorkspace) {
   name: functionLogWorkspaceName
   location: location
   properties: {
@@ -72,7 +76,7 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
   properties: {
     Application_Type: 'web'
     RetentionInDays: 90
-    WorkspaceResourceId: workspace.id
+    WorkspaceResourceId: createFunctionLogWorkspace ? workspace!.id : functionLogWorkspaceResourceId
   }
 }
 

@@ -15,4 +15,5 @@ param aiResourceNameOverride = readEnvironmentVariable('AI_RESOURCE_NAME_OVERRID
 param restoreAiResource = readEnvironmentVariable('AI_RESOURCE_RESTORE', 'false') == 'true'
 param aiProjectNameOverride = readEnvironmentVariable('AI_PROJECT_NAME_OVERRIDE', '')
 param agentLogWorkspaceNameOverride = readEnvironmentVariable('AGENT_LOG_WORKSPACE_NAME', '')
+param agentLogWorkspaceLocation = readEnvironmentVariable('AGENT_LOG_WORKSPACE_LOCATION', readEnvironmentVariable('AZURE_AI_LOCATION', readEnvironmentVariable('AZURE_LOCATION', 'westus2')))
 param agentAppInsightsNameOverride = readEnvironmentVariable('AGENT_APP_INSIGHTS_NAME', '')

@@ -8,8 +8,8 @@ test("resolves smoke targets from the environment suite", () => {
   assert.deepEqual(
     resolveSmokeTarget({ component: "frontend", environment: "dev" }),
     {
-      appName: "azsdkqabot-dev-20260826",
-      resourceGroup: "azure-sdk-qa-bot-dev-20260826",
+      appName: "azsdkqabotdev",
+      resourceGroup: "azure-sdk-qa-bot-dev",
       healthPath: "/health",
       slot: "default",
     },

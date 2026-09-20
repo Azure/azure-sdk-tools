@@ -1255,51 +1255,33 @@
     const reportTables = [
       {
         title: "Accuracy",
-        description: "Accuracy = eligible conversations not marked incorrect / all eligible conversations. N/A means no eligible conversations.",
+        description: "Accuracy = eligible conversations not marked incorrect / all eligible conversations.",
         limitations: ["Missing-documentation and out-of-scope cases are excluded from both counts."],
-        headings: ["Channel", "Eligible conversations", "Correct", "Excluded", "Accuracy"],
-        values: row => [row.accuracy.denominator, row.correct,
-          row.accuracy_excluded, percent(row.accuracy.rate)]
+        headings: ["Channel", "Conversations", "Correct", "Excluded"],
+        values: row => [row.conversations, row.correct, row.accuracy_excluded]
       },
       {
         title: "Interaction rate",
-        description: "Interaction rate = conversations assessed as having expert follow-up / all conversations. N/A means no conversations.",
-        limitations: ["Expert follow-up must come after a bot reply, be from someone other than the question author, and add guidance beyond the bot's answer. Confirmation, repetition, thanks, or required human actions alone do not count.", "Only a positive assessment counts as expert follow-up."],
+        description: "Interaction rate = conversations with expert follow-up / all conversations.",
+        limitations: ["Expert follow-up adds guidance beyond the bot's answer, not just confirmation or thanks."],
         headings: ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         values: row => [row.conversations, row.expert_yes, percent(row.expert_interaction.rate)]
       },
       {
         title: "Answer rate",
-        description: "Answer rate = bot replies / in-scope user messages. N/A means no in-scope user messages.",
-        limitations: ["In-scope questions are user messages marked as needing a reply or explicitly mentioning Azure SDK Q&A Bot."],
+        description: "Answer rate = bot replies / in-scope user messages.",
+        limitations: ["In-scope messages need a reply or mention the bot."],
         headings: ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
         values: row => [row.questions, row.bot_replies, percent(row.answer_rate.rate)]
       },
       {
-        title: "Issue findings & resolution",
-        description: "Resolved rate = cases with passed validation / all issue-linked cases. Issue-linked cases = validated resolved + skipped + unresolved. N/A means no issue-linked cases.",
-        limitations: ["A case is one conversation with a valid GitHub issue link.", "Skipped means validation was intentionally not performed. These cases are no longer waiting for validation, but have no validated fix."],
+        title: "Issue findings",
+        description: "Resolved rate = cases with passed validation / all issue-linked cases.",
+        limitations: ["Skipped cases have no validated fix and still count in the total."],
         headings: ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Skipped", "Unresolved", "Resolved rate"],
         values: row => [row.findings, row.tracked_issues, row.issue_cases,
           row.resolved_cases, row.validation_skipped_cases, row.unresolved_cases,
           `${percent(row.resolved_rate.rate)} (${row.resolved_rate.numerator} / ${row.resolved_rate.denominator})`]
-      },
-      {
-        title: "Unresolved cases",
-        description: "Issue-linked cases that have neither passed nor skipped validation.",
-        limitations: ["Pending validation means waiting for issue closure or validation. Validation failed means the validation check did not pass. Processing errors means the workflow could not complete, not that validation failed.", "Other includes cases not yet processed, still running, or with missing, unknown, or older done statuses.", "Cases without a valid GitHub issue link are excluded from this table and the resolved rate."],
-        headings: ["Channel", "Pending validation", "Validation failed", "Processing errors", "Other"],
-        values: row => [row.pending_validation_cases, row.validation_failed_cases,
-          row.processing_error_cases, row.other_issue_cases]
-      },
-      {
-        title: "Root-cause findings",
-        description: "Conversations grouped by their identified root cause.",
-        limitations: ["Conversations without a recognized root cause are not included."],
-        headings: ["Channel", "Missing documentation", "Outdated documentation", "Insufficient documentation", "Retrieval mismatch", "Reasoning gap", "Out of scope", "Findings"],
-        values: row => [row.root_causes.missing_content || 0, row.root_causes.outdated_content || 0,
-          row.root_causes.insufficient_content || 0, row.root_causes.retrieval_mismatch || 0,
-          row.root_causes.reasoning_gap || 0, row.root_causes.out_of_scope || 0, row.findings]
       }
     ];
 
@@ -1333,16 +1315,16 @@
       const metrics = [
         {title: "Accuracy", style: "accuracy", metric: data.totals.accuracy,
           labels: ["Not counted incorrect", "Eligible conversations"],
-          note: "Correct responses not counted as incorrect / all eligible conversations."},
+          note: "Correct answered conversations / All conversations"},
         {title: "Interaction rate", style: "interaction", metric: data.totals.expert_interaction,
           labels: ["Expert interactions", "Conversations"],
-          note: "Meaningful expert follow-up after a bot reply."},
+          note: "Meaningful expert follow-up after a bot reply / All conversations"},
         {title: "Answer rate", style: "answer", metric: data.totals.answer_rate,
           labels: ["Bot replies", "User questions"],
-          note: "Bot replies / In-scope user messages."},
+          note: "Bot replies / User questions"},
         {title: "Resolved rate", style: "resolution", metric: data.totals.resolved_rate,
-          labels: ["Validated resolved cases", "Issue-linked cases"],
-          note: "Cases with passed validation / all issue-linked cases."}
+          labels: ["Validated resolved issues", "All issues"],
+          note: "Validated passed issues / All finding cases."}
       ];
       for (const {title, style, metric, labels, note} of metrics) {
         const card = node("article", `overview-card ${style}`);

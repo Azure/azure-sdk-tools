@@ -383,8 +383,8 @@ def test_expert_assessment_requires_added_value_not_technical_confirmation():
     assert "confirmation or repetition alone does not count, even when technically substantive" in instruction
     assert "identifying what was added beyond the bot's answer when `true`" in instruction
     html = (root / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
-    assert "Confirmation, repetition, thanks, or required human actions alone do not count" in html
-    assert "add guidance beyond the bot's answer" in html
+    assert "not just confirmation or thanks" in html
+    assert "adds guidance beyond the bot's answer" in html
 
 
 @pytest.mark.asyncio
@@ -572,16 +572,13 @@ async def test_issue_scope_uses_conversation_cohort_and_current_status(storage):
 def test_resolution_tables_keep_skipped_separate_from_unresolved():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     assert "data.totals.resolved_rate" in html
-    assert "These cases are no longer waiting for validation, but have no validated fix" in html
+    assert "Skipped cases have no validated fix and still count in the total" in html
     assert "row.resolved_rate.numerator} / ${row.resolved_rate.denominator}" in html
-    assert "Issue-linked cases = validated resolved + skipped + unresolved" in html
-    assert "Issue-linked cases that have neither passed nor skipped validation" in html
-    summary = html.split('title: "Issue findings & resolution",', 1)[1].split('title: "Unresolved cases",', 1)[0]
+    assert "Resolved rate = cases with passed validation / all issue-linked cases" in html
+    summary = html.split('title: "Issue findings & resolution",', 1)[1].split("function reportRowValues", 1)[0]
     assert "row.resolved_cases, row.validation_skipped_cases, row.unresolved_cases" in summary
-    unresolved = html.split('title: "Unresolved cases",', 1)[1].split('title: "Root-cause findings",', 1)[0]
-    assert "validation_skipped_cases" not in unresolved
-    for cause in RootCauseClassification:
-        assert f"row.root_causes.{cause.value} || 0" in html
+    assert 'title: "Unresolved cases"' not in html
+    assert 'title: "Root-cause findings"' not in html
 
 
 @pytest.mark.asyncio
@@ -707,24 +704,25 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
         assert removed not in tables.lower()
     assert re.findall(r'title: "([^"]+)"', tables) == [
         "Accuracy", "Interaction rate", "Answer rate",
-        "Issue findings & resolution", "Unresolved cases", "Root-cause findings",
+        "Issue findings & resolution",
     ]
     headings = [json.loads(value) for value in re.findall(r"headings: (\[[^\n]+\])", tables)]
     assert headings == [
-        ["Channel", "Eligible conversations", "Correct", "Excluded", "Accuracy"],
+        ["Channel", "Conversations", "Correct", "Excluded"],
         ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
         ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Skipped", "Unresolved", "Resolved rate"],
-        ["Channel", "Pending validation", "Validation failed", "Processing errors", "Other"],
-        ["Channel", "Missing documentation", "Outdated documentation", "Insufficient documentation", "Retrieval mismatch", "Reasoning gap", "Out of scope", "Findings"],
     ]
     for removed in ("undated_conversations", ".coverage"):
         assert removed not in tables
-    assert "row.accuracy.denominator" in tables
-    assert tables.count("description:") == 6
-    assert tables.count("limitations:") == 6
+    accuracy_table = tables.split('title: "Interaction rate",', 1)[0]
+    assert "values: row => [row.conversations, row.correct, row.accuracy_excluded]" in accuracy_table
+    assert "row.accuracy.denominator" not in accuracy_table
+    assert "percent(row.accuracy.rate)" not in accuracy_table
+    assert tables.count("description:") == 4
+    assert tables.count("limitations:") == 4
     assert "Missing-documentation and out-of-scope cases are excluded from both counts" in tables
-    assert "N/A means no eligible conversations" in tables
+    assert "eligible conversations not marked incorrect / all eligible conversations" in tables
     # Both visible/printed tables and the copied Markdown use these definitions.
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
     copying = html.split("function buildOverviewReport(data)", 1)[1].split("function invalidateOverview", 1)[0]
@@ -766,16 +764,23 @@ def test_metric_descriptions_keep_cards_short_and_define_counts_in_notes():
     visual = html.split("function renderOverviewVisual(data)", 1)[1].split("function renderOverview(data)", 1)[0]
     notes = re.findall(r'note: "([^"]+)"', visual)
     assert len(notes) == 4
-    assert all(len(note.split()) <= 40 for note in notes)
+    assert all(len(note.split()) <= 15 for note in notes)
+    tables = html.split("const reportTables = [", 1)[1].split("function reportRowValues", 1)[0]
+    descriptions = re.findall(r'description: "([^"]+)"', tables)
+    limitations = [json.loads(value) for value in re.findall(r"limitations: (\[[^\n]+\])", tables)]
+    assert len(descriptions) == len(limitations) == 4
+    assert all(len(description.split()) <= 20 for description in descriptions)
+    assert all(len(items) <= 1 for items in limitations)
+    assert all(len(note.split()) <= 25 for items in limitations for note in items)
     accuracy, interaction, answer, resolution = notes
     assert all(" / " in note for note in (accuracy, answer, resolution))
     assert "Missing-documentation and out-of-scope cases are excluded from both counts" in html
     assert "expert follow-up after a bot reply" in interaction
-    assert "Only a positive assessment counts as expert follow-up" in html
-    assert "bot replies / in-scope user messages" in answer.lower()
-    assert "In-scope questions are user messages marked as needing a reply or explicitly mentioning Azure SDK Q&A Bot" in html
-    assert "passed validation / all issue-linked cases" in resolution
-    assert "Issue-linked cases = validated resolved + skipped + unresolved" in html
+    assert "adds guidance beyond the bot's answer, not just confirmation or thanks" in html
+    assert "bot replies / user questions" in answer.lower()
+    assert "In-scope messages need a reply or mention the bot" in html
+    assert "passed validation / all issue-linked cases" in tables
+    assert "Skipped cases have no validated fix and still count in the total" in html
     for misleading in ("count as successful", "excluded conversations as successful", "terminal"):
         assert misleading not in visual
 

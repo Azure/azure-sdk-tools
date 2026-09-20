@@ -312,6 +312,18 @@ resource searchCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/role
   }
 }
 
+// Search also needs OpenAI data-plane access to call embedding deployments when
+// local authentication is disabled on the AI Services account.
+resource searchOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
+  scope: account
+  name: guid(account.id, searchServicePrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
+    principalId: searchServicePrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // NOTE: the "Azure AI User" (Foundry User, 53ca6127-db72-4b80-b1b0-d745d6d5456d)
 // grant for qabot-identity on this AI account is NOT declared here. It is created
 // idempotently (create-if-not-exists) by the agent layer's postprovision hook

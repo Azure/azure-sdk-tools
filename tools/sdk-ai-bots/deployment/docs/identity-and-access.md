@@ -201,7 +201,10 @@ required role-assignment migration through an approved change.
 - **Storage Blob Data Reader**
   (`2a2b9908-6ea1-4ae2-8e65-a410df84e7d1`) on the shared storage account;
 - **Cognitive Services User**
-  (`a97b65f3-24c7-4388-baec-2e87135dc908`) on the AI Services account.
+  (`a97b65f3-24c7-4388-baec-2e87135dc908`) on the AI Services account;
+- **Cognitive Services OpenAI User**
+  (`5e0bd9bd-7b93-4f28-af87-19fc36ad61bd`) on the AI Services account so Search
+  can call embedding deployments when local authentication is disabled.
 
 ### Foundry project identity role
 

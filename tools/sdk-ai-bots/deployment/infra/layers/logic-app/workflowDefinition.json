@@ -62,33 +62,79 @@
       "foreach": "@triggerBody()?['value']",
       "runAfter": {},
       "actions": {
-        "Get_message_details": {
-          "type": "ApiConnection",
-          "inputs": {
-            "body": {
-              "recipient": {
-                "channelId": "@item()?['channelId']",
-                "groupId": "@parameters('teamsGroupId')",
-                "parentMessageId": "@item()?['replyToMessageId']"
+        "Get_and_resolve_message_details": {
+          "type": "Scope",
+          "actions": {
+            "Get_message_details": {
+              "type": "ApiConnection",
+              "inputs": {
+                "body": {
+                  "recipient": {
+                    "channelId": "@item()?['channelId']",
+                    "groupId": "@parameters('teamsGroupId')",
+                    "parentMessageId": "@item()?['replyToMessageId']"
+                  }
+                },
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['teams']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "/beta/teams/messages/@{encodeURIComponent(item()?['messageId'])}/messageType/@{encodeURIComponent('channel')}"
               }
             },
-            "host": {
-              "connection": {
-                "name": "@parameters('$connections')['teams']['connectionId']"
+            "Resolve_forwarded_message_content": {
+              "type": "JavaScriptCode",
+              "inputs": {
+                "code": "var message=workflowContext.actions.Get_message_details.outputs.body;\nif(!message||!message.body)return message;\nvar content=message.body.content||'';\nvar attachments=message.attachments||[];\nfor(var index=0;index<attachments.length;index++){\n  var attachment=attachments[index];\n  if(attachment.contentType!=='forwardedMessageReference'||!attachment.content)continue;\n  var forwarded=attachment.content;\n  try{\n    var parsed=typeof forwarded==='string'?JSON.parse(forwarded):forwarded;\n    forwarded=parsed.body&&parsed.body.content||parsed.message&&parsed.message.body&&parsed.message.body.content||parsed.originalMessage&&parsed.originalMessage.body&&parsed.originalMessage.body.content||parsed.content||forwarded;\n  }catch(error){}\n  var placeholder='<attachment id=\"'+attachment.id+'\"></attachment>';\n  content=content.split(placeholder).join(forwarded);\n}\nmessage.body.content=content;\nreturn message;",
+                "explicitDependencies": {
+                  "actions": [
+                    "Get_message_details"
+                  ]
+                }
+              },
+              "runAfter": {
+                "Get_message_details": [
+                  "Succeeded"
+                ]
               }
             },
-            "method": "post",
-            "path": "/beta/teams/messages/@{encodeURIComponent(item()?['messageId'])}/messageType/@{encodeURIComponent('channel')}"
+            "Include_post_title_in_message_content": {
+              "type": "JavaScriptCode",
+              "inputs": {
+                "code": "var message=workflowContext.actions.Resolve_forwarded_message_content.outputs.body;\nif(!message||!message.body)return message;\nif(typeof message.subject==='string'&&message.subject.trim().length>0){\n  message.body.content='title: '+message.subject.trim()+'\\n\\n'+(message.body.content||'');\n}\nreturn message;",
+                "explicitDependencies": {
+                  "actions": [
+                    "Resolve_forwarded_message_content"
+                  ]
+                }
+              },
+              "runAfter": {
+                "Resolve_forwarded_message_content": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Resolved_message_details": {
+              "type": "Compose",
+              "inputs": "@body('Include_post_title_in_message_content')",
+              "runAfter": {
+                "Include_post_title_in_message_content": [
+                  "Succeeded"
+                ]
+              }
+            }
           }
         },
         "Filter_messages_mentioned_bot": {
           "type": "Query",
           "inputs": {
-            "from": "@body('Get_message_details')?['mentions']",
+            "from": "@outputs('Resolved_message_details')?['mentions']",
             "where": "@not(equals(item()?['mentioned']?['application'], null))"
           },
           "runAfter": {
-            "Get_message_details": [
+            "Get_and_resolve_message_details": [
               "Succeeded"
             ]
           }
@@ -96,7 +142,7 @@
         "Filter_announcement_messages": {
           "type": "Query",
           "inputs": {
-            "from": "@body('Get_message_details')['attachments']",
+            "from": "@outputs('Resolved_message_details')['attachments']",
             "where": "@equals(item()?['contentType'], 'application/vnd.microsoft.teams.messaging-announcementBanner')"
           },
           "runAfter": {
@@ -108,7 +154,7 @@
         "Filter_meeting_messages": {
           "type": "Query",
           "inputs": {
-            "from": "@body('Get_message_details')['attachments']",
+            "from": "@outputs('Resolved_message_details')['attachments']",
             "where": "@equals(item()?['contentType'], 'meetingReference')"
           },
           "runAfter": {
@@ -124,7 +170,7 @@
               {
                 "not": {
                   "startsWith": [
-                    "@body('Get_message_details')?['body']?['plainTextContent']",
+                    "@outputs('Resolved_message_details')?['body']?['plainTextContent']",
                     "Your feedback is received"
                   ]
                 }
@@ -137,7 +183,7 @@
               },
               {
                 "equals": [
-                  "@body('Get_message_details')?['messageType']",
+                  "@outputs('Resolved_message_details')?['messageType']",
                   "message"
                 ]
               },
@@ -149,7 +195,7 @@
               },
               {
                 "equals": [
-                  "@body('Get_message_details')?['from']?['application']",
+                  "@outputs('Resolved_message_details')?['from']?['application']",
                   "@null"
                 ]
               }
@@ -181,18 +227,18 @@
             "Build_Conversation_Save_Request_Body": {
               "type": "Compose",
               "inputs": {
-                "content": "@body('Get_message_details')?['body']?['content']",
-                "conversation_id": "@concat(body('Get_message_details')?['channelId'], ';messageid=', body('Get_message_details')?['replyToId'])",
+                "content": "@outputs('Resolved_message_details')?['body']?['content']",
+                "conversation_id": "@concat(outputs('Resolved_message_details')?['channelId'], ';messageid=', outputs('Resolved_message_details')?['replyToId'])",
                 "conversation_type": "teams_channel",
-                "created_at": "@body('Get_message_details')?['createdDateTime']",
+                "created_at": "@outputs('Resolved_message_details')?['createdDateTime']",
                 "extra_info": {
                   "channel_id": "@item()?['channelId']",
-                  "message_link": "@body('Get_message_details')?['messageLink']"
+                  "message_link": "@outputs('Resolved_message_details')?['messageLink']"
                 },
                 "id": "@item()?['messageId']",
-                "sender_id": "@if(not(equals(body('Get_message_details')?['from']?['application'], null)), body('Get_message_details')?['from']?['application']?['id'], body('Get_message_details')?['from']?['user']?['id'])",
-                "sender_name": "@if(not(equals(body('Get_message_details')?['from']?['application'], null)), body('Get_message_details')?['from']?['application']?['displayName'], body('Get_message_details')?['from']?['user']?['displayName'])",
-                "sender_role": "@if(not(equals(body('Get_message_details')?['from']?['application'], null)), 'system', 'user')",
+                "sender_id": "@if(not(equals(outputs('Resolved_message_details')?['from']?['application'], null)), outputs('Resolved_message_details')?['from']?['application']?['id'], outputs('Resolved_message_details')?['from']?['user']?['id'])",
+                "sender_name": "@if(not(equals(outputs('Resolved_message_details')?['from']?['application'], null)), outputs('Resolved_message_details')?['from']?['application']?['displayName'], outputs('Resolved_message_details')?['from']?['user']?['displayName'])",
+                "sender_role": "@if(not(equals(outputs('Resolved_message_details')?['from']?['application'], null)), 'system', 'user')",
                 "tenant_id": "@body('Get_Channel_Config')?['tenant_id']"
               },
               "runAfter": {
@@ -224,25 +270,13 @@
                 }
               }
             },
-            "Filter_messages_mentioned_someone": {
-              "type": "Query",
-              "inputs": {
-                "from": "@body('Get_message_details')['mentions']",
-                "where": "@not(equals(item()?['mentioned']?['user'], null))"
-              },
-              "runAfter": {
-                "Save_Conversation_Message": [
-                  "Succeeded"
-                ]
-              }
-            },
             "Need_Reply": {
               "type": "If",
               "expression": {
                 "and": [
                   {
                     "equals": [
-                      "@body('Get_message_details')?['from']?['application']",
+                      "@outputs('Resolved_message_details')?['from']?['application']",
                       "@null"
                     ]
                   },
@@ -251,23 +285,11 @@
                       "@length(body('Filter_messages_mentioned_bot'))",
                       0
                     ]
-                  },
-                  {
-                    "equals": [
-                      "@body('Get_message_details')?['body']?['mentions']",
-                      "@null"
-                    ]
-                  },
-                  {
-                    "equals": [
-                      "@length(body('Filter_messages_mentioned_someone'))",
-                      0
-                    ]
                   }
                 ]
               },
               "runAfter": {
-                "Filter_messages_mentioned_someone": [
+                "Save_Conversation_Message": [
                   "Succeeded"
                 ]
               },
@@ -275,13 +297,14 @@
                 "Build_Intention_Request_Body": {
                   "type": "Compose",
                   "inputs": {
-                    "conversation_id": "@concat(body('Get_message_details')?['channelId'], ';messageid=', body('Get_message_details')?['replyToId'])",
+                    "conversation_id": "@concat(outputs('Resolved_message_details')?['channelId'], ';messageid=', outputs('Resolved_message_details')?['replyToId'])",
                     "conversation_type": "teams_channel",
                     "message": {
-                      "content": "@body('Get_message_details')?['body']?['content']",
+                      "content": "@outputs('Resolved_message_details')?['body']?['content']",
                       "role": "user",
-                      "user_id": "@body('Get_message_details')?['from']?['user']?['id']",
-                      "user_name": "@body('Get_message_details')?['from']?['user']?['displayName']"
+                      "id": "@item()?['messageId']",
+                      "user_id": "@outputs('Resolved_message_details')?['from']?['user']?['id']",
+                      "user_name": "@outputs('Resolved_message_details')?['from']?['user']?['displayName']"
                     }
                   }
                 },
@@ -325,7 +348,7 @@
                     "convertActivity": {
                       "type": "Function",
                       "inputs": {
-                        "body": "@body('Get_message_details')",
+                        "body": "@outputs('Resolved_message_details')",
                         "function": {
                           "id": "@{parameters('functionAppResourceId')}/functions/convertActivity"
                         }
@@ -368,7 +391,9 @@
                           "inputs": "@outputs('Invoke_QA_Bot')?['statusCode']",
                           "runAfter": {
                             "Invoke_QA_Bot": [
-                              "Succeeded"
+                              "Succeeded",
+                              "TimedOut",
+                              "Failed"
                             ]
                           }
                         }

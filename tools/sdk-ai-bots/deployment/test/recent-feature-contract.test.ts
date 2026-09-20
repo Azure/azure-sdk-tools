@@ -195,6 +195,15 @@ test("declares principal-aware frontend role assignments in Bicep", () => {
   assert.doesNotMatch(hook, /ensureFrontendRoleAssignments/);
 });
 
+test("grants Search access to Foundry embedding deployments", () => {
+  const bicep = read("infra/layers/agent/main.bicep");
+
+  assert.match(
+    bicep,
+    /resource searchOpenAiUserRoleAssignment[\s\S]*?roleDefinitionId: subscriptionResourceId\('Microsoft\.Authorization\/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'\)[\s\S]*?principalId: searchServicePrincipalId/,
+  );
+});
+
 test("can reuse pre-authorized environments without privileged ARM writes", () => {
   const suite = read("infra/environments/environment-suite.yaml");
   const postprovision = read("hooks/postprovision.ts");
@@ -287,4 +296,39 @@ test("loads Logic App channel configuration through the authenticated backend", 
   assert.doesNotMatch(patchWorkflow, /AZURE_BLOB_CONNECTION_NAME|blobConn/);
   assert.match(server, /@app\.get\("\/config\/channel"/);
   assert.match(server, /_bot_config_service\.get_channel_config\(channel_id\)/);
+});
+
+test("resolves forwarded Teams messages before processing them", () => {
+  const workflow = JSON.parse(
+    read("infra/layers/logic-app/workflowDefinition.json"),
+  );
+  const actions = workflow.actions.For_each.actions;
+  const resolution = actions.Get_and_resolve_message_details;
+  const threadActions = actions.Thread_Message_From_User.actions;
+
+  assert.equal(resolution.type, "Scope");
+  assert.match(
+    resolution.actions.Resolve_forwarded_message_content.inputs.code,
+    /forwardedMessageReference/,
+  );
+  assert.match(
+    resolution.actions.Include_post_title_in_message_content.inputs.code,
+    /message\.subject/,
+  );
+  assert.equal(
+    resolution.actions.Resolved_message_details.inputs,
+    "@body('Include_post_title_in_message_content')",
+  );
+  assert.equal(
+    actions.Filter_messages_mentioned_bot.inputs.from,
+    "@outputs('Resolved_message_details')?['mentions']",
+  );
+  assert.equal(
+    threadActions.Build_Conversation_Save_Request_Body.inputs.content,
+    "@outputs('Resolved_message_details')?['body']?['content']",
+  );
+  assert.equal(
+    threadActions.Need_Reply.actions.Should_Reply.actions.convertActivity.inputs.body,
+    "@outputs('Resolved_message_details')",
+  );
 });

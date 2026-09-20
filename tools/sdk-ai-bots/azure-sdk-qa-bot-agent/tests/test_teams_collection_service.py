@@ -60,9 +60,9 @@ class MemoryStore:
 class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
     def test_cli_rejects_local_collection(self):
         from io import StringIO
-        from scripts.teams_collection import main
+        from scripts.deploy_teams_collection import main
 
-        with patch.object(sys, "argv", ["teams_collection.py", "run"]), \
+        with patch.object(sys, "argv", ["deploy_teams_collection.py", "run"]), \
                 patch("sys.stderr", new_callable=StringIO) as stderr:
             with self.assertRaises(SystemExit) as failure:
                 main()
@@ -138,29 +138,34 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_cli_dispatches_remote_routine_and_closes_credential(self):
         from types import SimpleNamespace
-        from scripts.teams_collection import execute
+        from scripts.deploy_teams_collection import execute_routine
 
         config = {"channels": [CHANNEL], "tenantId": TENANT, "maxPages": 100}
         endpoint = "https://account.services.ai.azure.com/api/projects/project"
-        arguments = SimpleNamespace(command="routine-dispatch", project_endpoint=endpoint)
+        arguments = SimpleNamespace(
+            command="routine-dispatch",
+            project_endpoint=endpoint,
+            appconfig_endpoint=None,
+        )
         for fails in (False, True):
             with self.subTest(fails=fails), \
                     patch("config.app_config.init", new=AsyncMock()) as initialize, \
-                    patch("scripts.teams_collection.routine_request", new=AsyncMock(
+                    patch("scripts.deploy_teams_collection.routine_request", new=AsyncMock(
                         return_value={"dispatch_id": "dispatch"},
                         side_effect=RuntimeError("dispatch failed") if fails else None,
                     )) as dispatch, \
-                    patch("utils.teams_collection.collect_configured_channels", new=AsyncMock()) as collect, \
                     patch("utils.azure_credential.get_credential"), \
                     patch("utils.azure_credential.close_credential", new=AsyncMock()) as close_credential:
                 if fails:
                     with self.assertRaisesRegex(RuntimeError, "dispatch failed"):
-                        await execute(arguments, config)
+                        await execute_routine(arguments, config)
                 else:
-                    self.assertEqual(await execute(arguments, config), {"dispatch_id": "dispatch"})
+                    self.assertEqual(
+                        await execute_routine(arguments, config),
+                        {"dispatch_id": "dispatch"},
+                    )
             initialize.assert_not_awaited()
             self.assertEqual(dispatch.call_args.args[:3], (config, "routine-dispatch", endpoint))
-            collect.assert_not_awaited()
             close_credential.assert_awaited_once()
 
     async def test_failed_collection_records_failure_without_raw_error_content(self):
@@ -238,7 +243,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
     async def test_routine_creation_is_paused_and_dispatch_uses_public_endpoint(self):
         import httpx
         from types import SimpleNamespace
-        from scripts.teams_collection import routine_request, routine_definition
+        from scripts.deploy_teams_collection import routine_request, routine_definition
 
         config = json.loads(
             (Path(__file__).resolve().parents[1] / "config/teams_collection_config.json").read_text()
@@ -256,6 +261,11 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         await routine_request(config, "routine-create", endpoint, credential, client)
         self.assertEqual(client.put.call_args.args[0], endpoint + "/routines/teams-channel-collection")
         self.assertEqual(client.put.call_args.kwargs["json"], definition)
+        self.assertEqual(client.put.call_args.kwargs["params"], {"api-version": "v1"})
+        self.assertEqual(
+            client.put.call_args.kwargs["headers"]["Foundry-Features"],
+            "Routines=V2Preview",
+        )
         client.get.return_value = httpx.Response(200, json=definition)
         client.post.return_value = httpx.Response(202, json={"dispatch_id": "dispatch"})
         await routine_request(config, "routine-dispatch", endpoint, credential, client)
@@ -368,21 +378,6 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(assignment["properties"]["principalId"], "[parameters('collectorPrincipalId')]")
             self.assertIn("guid(", assignment["name"])
             self.assertTrue(assignment["dependsOn"])
-
-    def test_render_parameters_binds_workflow_to_deployed_collector_and_channels(self):
-        from types import SimpleNamespace
-        from scripts.teams_collection import deployment_parameters
-
-        principal = "00000000-0000-0000-0000-000000000003"
-        arguments = SimpleNamespace(
-            collector_principal_id=principal, teams_connection_resource_id=CONNECTION,
-            logic_app_name="test-teams-collection", location="westus2", cosmos_account_name="test-cosmos",
-        )
-        config = {"tenantId": TENANT, "channels": [{**CHANNEL, "startTime": "2026-09-01T00:00:00Z"}]}
-        parameters = deployment_parameters(config, arguments)["parameters"]
-        self.assertEqual(parameters["collectorPrincipalId"]["value"], principal)
-        self.assertEqual(parameters["teamsConnectionResourceId"]["value"], CONNECTION)
-        self.assertEqual(parameters["allowedChannels"]["value"], [f"{CHANNEL['teamId']}|{CHANNEL['channelId']}"])
 
     def test_collection_deployment_resolves_identity_and_sanitizes_callback_url(self):
         from types import SimpleNamespace

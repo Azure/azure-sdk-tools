@@ -1,8 +1,9 @@
-"""Deploy the Teams collection infrastructure after its hosted agent.
+"""Deploy and manage the Teams channel collection workflow.
 
 The hosted agent must exist before this script runs because its instance
 identity is used by the Logic App access policy and Cosmos data-plane roles.
-The Routine is created or updated in the disabled state.
+Deployment creates or updates the Routine in the disabled state. Separate
+commands enable, disable, or manually dispatch the deployed Routine.
 """
 
 from __future__ import annotations
@@ -10,12 +11,13 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import shutil
 import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qs, quote, urlencode, urlsplit, urlunsplit
 from uuid import UUID
 
 import httpx
@@ -27,10 +29,13 @@ PROJECT = Path(__file__).resolve().parents[1]
 if str(PROJECT) not in sys.path:
     sys.path.insert(0, str(PROJECT))
 
-from scripts.teams_collection import AGENT_NAME, routine_request
+from services.teams_collection_service import validate_channels
 
+AGENT_NAME = "azure-sdk-teams-collection-agent"
 APP_CONFIG_READER_ROLE = "App Configuration Data Reader"
 LOGIC_APP_URL_KEY = "TEAMS_COLLECTION_LOGIC_APP_URL"
+ROUTINES_API_VERSION = "v1"
+ROUTINES_FEATURE = "Routines=V2Preview"
 
 
 def _run_az(arguments: list[str]) -> str:
@@ -133,6 +138,110 @@ def _resolve_collector_principal(project_endpoint: str) -> str:
         credential.close()
 
 
+def routine_definition(config: dict) -> dict:
+    routine = config["routine"]
+    if not re.fullmatch(r"teams-channel-collection[-a-zA-Z0-9]*", routine["name"]):
+        raise ValueError("Routine name must start with teams-channel-collection.")
+    if len(routine["cron"].split()) != 5 or not routine["timeZone"]:
+        raise ValueError(
+            "Routine requires a five-field cron expression and timeZone; "
+            "minimum interval is five minutes."
+        )
+    return {
+        "description": "Collect, process, and archive configured Teams channels and their replies.",
+        "enabled": False,
+        "authorization": {"identity": "agent"},
+        "triggers": {
+            "schedule": {
+                "type": "schedule",
+                "cron_expression": routine["cron"],
+                "time_zone": routine["timeZone"],
+            }
+        },
+        "action": {
+            "type": "invoke_agent_responses_api",
+            "agent_name": AGENT_NAME,
+            "input": "Collect configured Teams channels.",
+        },
+    }
+
+
+async def routine_request(config, command, endpoint, credential, client) -> dict:
+    definition = routine_definition(config)
+    address = urlsplit(endpoint)
+    if (address.scheme != "https" or not address.hostname
+            or not address.hostname.endswith(".services.ai.azure.com")
+            or address.username or address.password or address.port not in (None, 443)
+            or not re.fullmatch(r"/api/projects/[^/]+/?", address.path)
+            or address.query or address.fragment):
+        raise ValueError("Expected a Foundry project endpoint in Azure public cloud.")
+    url = endpoint.rstrip("/") + "/routines/" + quote(config["routine"]["name"], safe="")
+    token = await credential.get_token("https://ai.azure.com/.default")
+    headers = {
+        "Authorization": f"Bearer {token.token}",
+        "Foundry-Features": ROUTINES_FEATURE,
+    }
+    query = {"api-version": ROUTINES_API_VERSION}
+    existing = await client.get(
+        url, params=query, headers=headers, follow_redirects=False
+    )
+    if existing.status_code == 200:
+        if existing.json().get("action", {}).get("agent_name") != AGENT_NAME:
+            raise ValueError("Refusing to modify a Routine targeting a different agent.")
+    elif existing.status_code != 404 or command != "routine-create":
+        raise RuntimeError(f"Routine lookup returned HTTP {existing.status_code}.")
+    if command == "routine-create":
+        response = await client.put(
+            url, params=query, headers=headers, json=definition, follow_redirects=False
+        )
+    else:
+        action = {
+            "routine-enable": "enable",
+            "routine-disable": "disable",
+            "routine-dispatch": "dispatch_async",
+        }[command]
+        response = await client.post(
+            url + ":" + action,
+            params=query,
+            headers=headers,
+            json={},
+            follow_redirects=False,
+        )
+    if response.status_code not in (200, 201, 202):
+        raise RuntimeError(
+            f"Routine operation returned HTTP {response.status_code}; "
+            "no response content was logged."
+        )
+    result = response.json()
+    return {
+        key: result[key]
+        for key in ("name", "enabled", "dispatch_id", "task_id")
+        if key in result
+    }
+
+
+async def execute_routine(arguments, config) -> dict:
+    from dotenv import load_dotenv
+    from config import app_config
+    from utils.azure_credential import close_credential, get_credential
+
+    load_dotenv(PROJECT / ".env", override=False)
+    try:
+        if arguments.project_endpoint:
+            endpoint = arguments.project_endpoint
+        elif arguments.appconfig_endpoint:
+            endpoint = _project_endpoint(arguments.appconfig_endpoint)
+        else:
+            await app_config.init()
+            endpoint = app_config.get("AI_FOUNDRY_PROJECT_ENDPOINT", "")
+        async with httpx.AsyncClient(timeout=60) as client:
+            return await routine_request(
+                config, arguments.command, endpoint, get_credential(), client
+            )
+    finally:
+        await close_credential()
+
+
 def _deploy_infrastructure(
     environment: str,
     resource_group: str,
@@ -204,6 +313,7 @@ def _deploy_infrastructure(
 
 async def deploy(arguments) -> dict:
     config = json.loads(arguments.config.read_text(encoding="utf-8"))
+    validate_channels(config["channels"])
     project_endpoint = _project_endpoint(arguments.appconfig_endpoint)
     collector_principal_id = _resolve_collector_principal(project_endpoint)
     workflow_resource_id = _deploy_infrastructure(
@@ -234,9 +344,21 @@ async def deploy(arguments) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--environment", choices=("dev", "test", "prod"), required=True)
-    parser.add_argument("--resource-group", required=True)
-    parser.add_argument("--appconfig-endpoint", required=True)
+    parser.add_argument(
+        "command",
+        choices=(
+            "deploy",
+            "routine-definition",
+            "routine-create",
+            "routine-enable",
+            "routine-disable",
+            "routine-dispatch",
+        ),
+    )
+    parser.add_argument("--environment", choices=("dev", "test", "prod"))
+    parser.add_argument("--resource-group")
+    parser.add_argument("--appconfig-endpoint")
+    parser.add_argument("--project-endpoint")
     parser.add_argument(
         "--config",
         type=Path,
@@ -244,13 +366,25 @@ def main() -> int:
     )
     arguments = parser.parse_args()
     try:
-        result = asyncio.run(deploy(arguments))
+        config = json.loads(arguments.config.read_text(encoding="utf-8"))
+        validate_channels(config["channels"])
+        if arguments.command == "deploy":
+            for name in ("environment", "resource_group", "appconfig_endpoint"):
+                if not getattr(arguments, name):
+                    parser.error(
+                        "--" + name.replace("_", "-") + " is required for deploy."
+                    )
+            result = asyncio.run(deploy(arguments))
+        elif arguments.command == "routine-definition":
+            result = routine_definition(config)
+        else:
+            result = asyncio.run(execute_routine(arguments, config))
         print(json.dumps(result, indent=2))
         return 0
     except Exception as error:
         print(
             f"Teams collection deployment failed ({type(error).__name__}); "
-            "check the service connection permissions and deployment logs.",
+            f"{error}",
             file=sys.stderr,
         )
         return 1

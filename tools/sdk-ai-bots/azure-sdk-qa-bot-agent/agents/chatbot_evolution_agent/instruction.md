@@ -46,20 +46,12 @@ Follow these steps in order.
    returned `tenant_id` for all tenant-scoped tools. Each bot message in the
    transcript carries its `trace_id`.
 2. **Assess expert interaction.** Set `has_expert_interaction` from the same transcript:
-   - `true` for substantive correction, technical guidance, or troubleshooting
-     that adds meaningful information beyond the bot's answer, from another
-     human after a bot reply. Identify the author using the first
-     user message's `sender_id`, not display names.
-   - Compare with the preceding bot answer: confirmation or repetition alone
-     does not count, even when technically substantive or stated by an expert.
-   - Exclude author follow-ups, pre-bot contributions, acknowledgments, and
-     required human actions (approvals, permission grants, sign-off), unless
-     those actions include new substantive technical guidance.
-   - `false` if the complete transcript shows none; `null` if identity, ordering,
-     or context is insufficient. Clear positive evidence suffices for `true`.
-   Give `expert_interaction_reason` in one evidence-based sentence (maximum
-   500 characters), identifying what was added beyond the bot's answer when
-   `true`. This observation does not change correctness or remediation.
+    - Identify the question author using the first user message's `sender_id`, not display names; only another human's contribution after a bot reply can qualify.
+    - Compare with the preceding bot answer: confirmation or repetition alone does not count, even when technically substantive; acknowledgments and required human actions (approvals, permission grants, sign-off) qualify only if they add new substantive technical guidance.
+    - **If** there is clear evidence of at least one qualifying correction, technical guidance, or troubleshooting message that adds meaningful information beyond the bot's answer, set `true`.
+    - **Else if** the full transcript is available and identity, ordering, and context are sufficient to determine that no message qualifies, set `false` (for example, there are only author follow-ups or confirmations of the bot's answer).
+    - **Else**, set `null`: the available evidence cannot establish whether a qualifying interaction occurred.
+    Give `expert_interaction_reason` in one evidence-based sentence (maximum 500 characters), identifying what was added beyond the bot's answer when `true`, why no message qualifies when `false`, or what evidence is missing when `null`. This observation does not change correctness or remediation.
 3. **Decide whether the conversation is complete.** It is complete when
    the exchange has concluded and its result is safe to treat as final. It
    remains ongoing when the latest question or follow-up is unanswered, or

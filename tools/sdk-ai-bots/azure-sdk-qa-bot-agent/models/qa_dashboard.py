@@ -115,7 +115,8 @@ class OverviewRow(OverviewCounts):
     @computed_field
     @property
     def unresolved_cases(self) -> int:
-        return self.issue_cases - self.resolved_cases
+        """Issue-linked cases that are neither validated resolved nor skipped."""
+        return self.issue_cases - self.resolved_cases - self.validation_skipped_cases
 
     @computed_field
     @property
@@ -125,7 +126,8 @@ class OverviewRow(OverviewCounts):
     @computed_field
     @property
     def accuracy(self) -> OverviewMetric:
-        return _metric(self.conversations - self.incorrect, self.conversations)
+        eligible = self.conversations - self.accuracy_excluded
+        return _metric(eligible - self.incorrect, eligible)
 
     @computed_field
     @property
@@ -147,7 +149,6 @@ class QAOverview(BaseModel):
     channel_id: str | None = None
     rows: list[OverviewRow]
     totals: OverviewRow
-    notes: list[str]
 
 
 __all__ = [

@@ -12,7 +12,7 @@ import pytest
 from models.qa_dashboard import OverviewCounts, OverviewRow
 from models.feedback import RootCauseClassification
 from services.qa_dashboard_service import QADashboardService
-from services.qa_overview import REPORT_NOTES, validate_report_window
+from services.qa_overview import validate_report_window
 
 START = datetime(2026, 9, 7, tzinfo=timezone.utc)
 END = START + timedelta(days=7)
@@ -122,8 +122,8 @@ async def test_unknowns_exclusions_and_legacy_are_not_inferred(storage):
     assert total.conversations == 6
     assert total.accuracy_excluded == 2
     assert total.correct == 1 and total.incorrect == 1
-    assert total.accuracy.numerator == 5 and total.accuracy.denominator == 6
-    assert total.accuracy.rate == pytest.approx(500 / 6)
+    assert total.accuracy.numerator == 3 and total.accuracy.denominator == 4
+    assert total.accuracy.rate == 75
     assert total.expert_interaction.denominator == 6
     assert total.expert_interaction.rate == pytest.approx(100 / 6)
     assert total.expert_yes == 1
@@ -175,7 +175,6 @@ async def test_questions_count_without_threads_and_replies_are_not_paired(storag
     answered = next(row for row in result.rows if row.channel_id == "a")
     assert answered.bot_replies == 3 and answered.answer_rate.rate == 300
     assert result.totals.answer_rate.rate == 100
-    assert "No question-to-reply pairing" in " ".join(result.notes)
 
 
 @pytest.mark.asyncio
@@ -291,18 +290,47 @@ def test_expert_rate_uses_all_conversations(conversations, expert_yes, rate):
     }
 
 
-@pytest.mark.parametrize("changes, numerator, rate", [
-    ({}, 0, None),
-    ({"conversations": 10}, 10, 100),
-    ({"conversations": 10, "incorrect": 2}, 8, 80),
-    ({"conversations": 10, "incorrect": 10}, 0, 0),
-    ({"conversations": 10, "accuracy_excluded": 10}, 10, 100),
+@pytest.mark.parametrize("changes, numerator, denominator, rate", [
+    ({}, 0, 0, None),
+    ({"conversations": 10}, 10, 10, 100),
+    ({"conversations": 10, "incorrect": 2}, 8, 10, 80),
+    ({"conversations": 10, "incorrect": 10}, 0, 10, 0),
+    ({"conversations": 10, "accuracy_excluded": 10}, 0, 0, None),
+    ({"conversations": 10, "accuracy_excluded": 2, "incorrect": 3}, 5, 8, 62.5),
 ])
-def test_accuracy_subtracts_only_incorrect_from_all_conversations(changes, numerator, rate):
+def test_accuracy_removes_exclusions_from_numerator_and_denominator(changes, numerator, denominator, rate):
     row = OverviewRow(channel_name="Test", **changes)
     assert row.accuracy.model_dump() == {
-        "numerator": numerator, "denominator": row.conversations, "rate": rate,
+        "numerator": numerator, "denominator": denominator, "rate": rate,
     }
+
+
+@pytest.mark.parametrize("verdict", ["correct", "incorrect", "unknown", None])
+@pytest.mark.asyncio
+async def test_excluded_only_channels_have_na_accuracy_without_hiding_other_metrics(storage, verdict):
+    storage[0].documents = [
+        qa("a", verdict=verdict, expert=True, feedback=issue_feedback(classification="missing_content")),
+        qa("b", verdict=verdict, feedback=issue_feedback(classification="out_of_scope")),
+    ]
+    report = await QADashboardService().get_overview(start=START, end=END)
+    for row in [*report.rows, report.totals]:
+        assert row.accuracy.model_dump() == {"numerator": 0, "denominator": 0, "rate": None}
+        assert row.correct == row.incorrect == 0
+        assert row.conversations == row.accuracy_excluded
+    assert report.totals.conversations == report.totals.findings == report.totals.issue_cases == 2
+    assert report.totals.expert_interaction.model_dump() == {"numerator": 1, "denominator": 2, "rate": 50}
+
+
+@pytest.mark.asyncio
+async def test_accuracy_totals_weight_eligible_conversations_not_channel_rates(storage):
+    storage[0].documents = [qa("a") for _ in range(3)] + [
+        qa("a", verdict="incorrect", classification="missing_content"),
+        qa("b", verdict="incorrect"),
+        qa("b", verdict="incorrect", classification="out_of_scope"),
+    ]
+    report = await QADashboardService().get_overview(start=START, end=END)
+    assert [row.accuracy.rate for row in report.rows] == [100, 0]
+    assert report.totals.accuracy.model_dump() == {"numerator": 3, "denominator": 4, "rate": 75}
 
 
 @pytest.mark.asyncio
@@ -334,34 +362,14 @@ def test_serialized_metrics_have_no_goal(changes):
         assert set(data[name]) == {"numerator", "denominator", "rate"}
 
 
-def test_report_notes_describe_metrics_without_goals():
-    notes = " ".join(REPORT_NOTES).lower()
-    for removed in ("goal", "target", "threshold", "marked met"):
-        assert removed not in notes
-    assert "tenant" not in notes
-    assert "undated" not in notes
-    assert "only dated conversations in the requested utc range [start, end)" in notes
-    assert "coverage" not in notes
-    assert "(conversations - incorrect) / conversations" in notes
-    assert "unassessed and excluded conversations count as successful" in notes
-    for retained in ("excluded", "totals", "zero denominators"):
-        assert retained in notes
-
-
-def test_report_notes_explain_persisted_expert_values_without_inferring_no_interaction():
-    notes = " ".join(REPORT_NOTES).lower()
-    for retained in (
-        "expert_yes / conversations", "persisted has_expert_interaction values",
-        "all conversations remain in the denominator, including null/missing assessments",
-        "true means qualifying expert interaction, false means none, and null means insufficient evidence",
-        "has_expert_reply is not used",
-    ):
-        assert retained in notes
-
-
 def test_expert_instruction_and_example_match_boolean_metric_semantics():
     instruction = (Path(__file__).resolve().parent.parent / "agents/chatbot_evolution_agent/instruction.md").read_text(encoding="utf-8")
-    assert "`false` if the complete transcript shows none; `null` if identity, ordering," in instruction
+    assessment = instruction.split("2. **Assess expert interaction.**", 1)[1].split("3. **Decide", 1)[0]
+    assert assessment.index("**If**") < assessment.index("**Else if**") < assessment.index("**Else**")
+    assert "no message qualifies, set `false`" in assessment
+    assert "only author follow-ups or confirmations" in assessment
+    assert "set `null`: the available evidence cannot establish" in assessment
+    assert all(line.lstrip().startswith(("- ", "Give ")) for line in assessment.splitlines()[1:] if line.strip())
     example = json.loads(re.search(r"```json\s*(.*?)\s*```", instruction, re.DOTALL).group(1))
     assert example["has_expert_interaction"] is None
     assert "Insufficient evidence" in example["expert_interaction_reason"]
@@ -375,8 +383,7 @@ def test_expert_assessment_requires_added_value_not_technical_confirmation():
     assert "confirmation or repetition alone does not count, even when technically substantive" in instruction
     assert "identifying what was added beyond the bot's answer when `true`" in instruction
     html = (root / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
-    for text in (" ".join(REPORT_NOTES), html):
-        assert "Confirmation or repetition alone does not count, even when technically substantive" in text
+    assert "Confirmation or repetition alone does not count, even when technically substantive" in html
 
 
 @pytest.mark.asyncio
@@ -432,16 +439,18 @@ async def test_issue_resolution_is_case_based_and_globally_deduplicated(storage)
     assert total.issue_cases == 15
     assert total.tracked_issues == 6  # Shared issue 1 is counted only once globally.
     assert sum(row.tracked_issues for row in report.rows) == 7
-    assert total.resolved_cases == 9 and total.unresolved_cases == 6
+    assert total.resolved_cases == 9 and total.unresolved_cases == 5
     assert total.resolved_rate.model_dump() == {"numerator": 9, "denominator": 15, "rate": 60}
     assert [row.resolved_rate.rate for row in report.rows] == [100, 0]
     assert total.pending_validation_cases == total.validation_failed_cases == 1
     assert total.validation_skipped_cases == total.processing_error_cases == 1
     assert total.other_issue_cases == 2
     assert total.unresolved_cases == sum(getattr(total, name) for name in (
-        "pending_validation_cases", "validation_failed_cases", "validation_skipped_cases",
+        "pending_validation_cases", "validation_failed_cases",
         "processing_error_cases", "other_issue_cases",
     ))
+    for row in [*report.rows, total]:
+        assert row.issue_cases == row.resolved_cases + row.validation_skipped_cases + row.unresolved_cases
     assert total.root_causes == {"reasoning_gap": 15, "missing_content": 1}
     query = records.calls[0]["query"]
     assert "c.feedback.issue_url AS issue_url" in query
@@ -462,8 +471,39 @@ async def test_only_explicit_passed_validation_is_resolved(storage, status, reso
     assert total.issue_cases == total.tracked_issues == 1
     assert total.resolved_cases == resolved
     assert total.resolved_rate.rate == 100 * resolved
-    assert total.unresolved_cases == 1 - resolved
+    skipped = int(status == "validation_skipped")
+    assert total.validation_skipped_cases == skipped
+    assert total.unresolved_cases == 1 - resolved - skipped
     assert total.other_issue_cases == other
+
+
+@pytest.mark.parametrize("statuses, resolved, skipped, unresolved", [
+    ([], 0, 0, 0),
+    (["validation_skipped", "validation_skipped"], 0, 2, 0),
+    (["validation_passed", "validation_skipped", "pending_validation", "validation_failed"], 1, 1, 2),
+])
+@pytest.mark.asyncio
+async def test_overview_api_partitions_issue_cases_without_counting_skipped_as_resolved(
+    storage, statuses, resolved, skipped, unresolved,
+):
+    import server
+
+    storage[0].documents = [qa(feedback=issue_feedback(status)) for status in statuses]
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="http://test") as client:
+        response = await client.get("/api/dashboard/overview", params={
+            "start": START.isoformat(), "end": END.isoformat(),
+        })
+    assert response.status_code == 200
+    data = response.json()
+    for row in [*data["rows"], data["totals"]]:
+        assert row["resolved_cases"] == resolved
+        assert row["validation_skipped_cases"] == skipped
+        assert row["unresolved_cases"] == unresolved
+        assert row["issue_cases"] == resolved + skipped + unresolved
+        assert row["resolved_rate"] == {
+            "numerator": resolved, "denominator": len(statuses),
+            "rate": 100 * resolved / len(statuses) if statuses else None,
+        }
 
 
 @pytest.mark.parametrize("url", [
@@ -528,16 +568,18 @@ async def test_issue_scope_uses_conversation_cohort_and_current_status(storage):
     assert empty.totals.resolved_rate.rate is None
 
 
-def test_resolution_notes_and_tables_explain_case_and_issue_distinction():
-    notes = " ".join(REPORT_NOTES)
-    assert "Only validation_passed counts as resolved" in notes
-    assert "not distinct issues" in notes
-    assert "Legacy done states are not proof" in notes
+def test_resolution_tables_keep_skipped_separate_from_unresolved():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     assert "data.totals.resolved_rate" in html
-    assert "Closed issues and skipped validation do not count as resolved" in html
+    assert "Skipped validation is terminal, not pending work" in html
     assert "row.resolved_rate.numerator} / ${row.resolved_rate.denominator}" in html
-    assert "the total deduplicates across channels" in html
+    assert "Issue-linked cases = validated resolved + skipped + unresolved" in html
+    assert "Unresolved excludes passed and skipped validation" in html
+    assert "They remain in the resolved-rate denominator but do not increase its numerator" in html
+    summary = html.split('title: "Issue findings & resolution",', 1)[1].split('title: "Unresolved cases",', 1)[0]
+    assert "row.resolved_cases, row.validation_skipped_cases, row.unresolved_cases" in summary
+    unresolved = html.split('title: "Unresolved cases",', 1)[1].split('title: "Root-cause findings",', 1)[0]
+    assert "validation_skipped_cases" not in unresolved
     for cause in RootCauseClassification:
         assert f"row.root_causes.{cause.value} || 0" in html
 
@@ -558,7 +600,7 @@ async def test_overview_route_validates_and_serializes(storage):
         assert response.json()["totals"]["root_causes"] == {"reasoning_gap": 1}
         assert "tenant_id" not in response.json()
         assert response.json()["channel_id"] == "a"
-        assert response.json()["notes"]
+        assert "notes" not in response.json()
         for row in [*response.json()["rows"], response.json()["totals"]]:
             assert "tenant_id" not in row
             assert "undated_conversations" not in row
@@ -581,6 +623,7 @@ def test_overview_openapi_removes_tenant_only_from_overview():
     from models.qa_record import QARecord
 
     schema = server.app.openapi()
+    assert "notes" not in schema["components"]["schemas"]["QAOverview"]["properties"]
     parameters = schema["paths"]["/api/dashboard/overview"]["get"]["parameters"]
     assert {parameter["name"] for parameter in parameters} == {"start", "end", "channel_id"}
     for name in ("QAOverview", "OverviewRow"):
@@ -609,7 +652,7 @@ def test_conversation_assessment_displays_expert_interaction_and_reason():
 def test_overview_html_contract():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     assert "innerHTML" not in html
-    for fragment in ("overview-tab", "conversations-tab", "report-start", "report-end", "Last full week", "Copy report", "Print report", "setDate", "getDay", "buildOverviewReport", "reportRowValues", "report-notes", "AbortController", "overviewRequest !== request", "report.fallback.select()"):
+    for fragment in ("overview-tab", "conversations-tab", "report-start", "report-end", "Last full week", "Copy report", "Print report", "setDate", "getDay", "buildOverviewReport", "reportRowValues", "AbortController", "overviewRequest !== request", "report.fallback.select()"):
         assert fragment in html
     assert 'id="report-end" type="date" required' in html
     assert 'aria-label="Weekly Status Report"' in html
@@ -637,23 +680,24 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
         assert removed not in tables.lower()
     assert re.findall(r'title: "([^"]+)"', tables) == [
         "Accuracy", "Interaction rate", "Answer rate",
-        "Issue findings & resolution", "Unresolved case status", "Root-cause findings",
+        "Issue findings & resolution", "Unresolved cases", "Root-cause findings",
     ]
     headings = [json.loads(value) for value in re.findall(r"headings: (\[[^\n]+\])", tables)]
     assert headings == [
-        ["Channel", "Conversations", "Correct", "Excluded", "Accuracy"],
+        ["Channel", "Eligible conversations", "Correct", "Excluded", "Accuracy"],
         ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
-        ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Unresolved", "Resolved rate"],
-        ["Channel", "Pending validation", "Validation failed", "Validation skipped", "Processing errors", "Other"],
+        ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Skipped", "Unresolved", "Resolved rate"],
+        ["Channel", "Pending validation", "Validation failed", "Processing errors", "Other"],
         ["Channel", "Missing documentation", "Outdated documentation", "Insufficient documentation", "Retrieval mismatch", "Reasoning gap", "Out of scope", "Findings"],
     ]
     for removed in ("undated_conversations", ".coverage"):
         assert removed not in tables
-    assert "(Conversations - incorrect) / conversations" in tables
-    assert "Unassessed and excluded conversations count as successful" in tables
-    assert "Unassessed cases remain in the denominator" in tables
-    assert len(re.findall(r'description: "[^"]+"', tables)) == 6
+    assert "row.accuracy.denominator" in tables
+    assert tables.count("description:") == 6
+    assert tables.count("limitations:") == 6
+    assert "Eligible conversations exclude missing-documentation and out-of-scope cases from both numerator and denominator" in tables
+    assert "N/A means no eligible conversations" in tables
     # Both visible/printed tables and the copied Markdown use these definitions.
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
     copying = html.split("function buildOverviewReport(data)", 1)[1].split("function invalidateOverview", 1)[0]
@@ -661,6 +705,7 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
         assert "for (const definition of reportTables)" in consumer
         assert "reportRowValues(definition," in consumer
         assert "definition.description" in consumer
+        assert "definition.limitations" in consumer
 
 
 def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
@@ -680,7 +725,7 @@ def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
     assert 'rateCounts.setAttribute("aria-label"' in visual
     assert "overview-bar" not in html
     assert "can exceed 100%" in visual
-    assert "not the confirmed-correct percentage" in visual
+    assert "not the confirmed-correct percentage" in visual.lower()
     assert "report.tables.replaceChildren(renderOverviewVisual(data))" in html
     invalidation = html.split("function invalidateOverview()", 1)[1].split("async function loadOverview()", 1)[0]
     assert "report.tables.replaceChildren();" in invalidation
@@ -690,24 +735,22 @@ def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
     assert ".report-section th, .report-section td { overflow-wrap: anywhere; }" in html
 
 
-def test_overview_notes_are_collapsible_below_each_table_and_in_copied_report():
+def test_overview_keeps_collapsible_notes_in_display_copy_and_print_without_document_dependency():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
-    assert 'id="report-notes"' not in html
+    assert "metric-definitions" not in html
+    assert 'node("details", "report-notes")' in html
+    assert 'node("summary", "", "Notes")' in html
     assert "metric-help" not in html
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
-    assert rendering.index("section.append(wrap)") < rendering.index("section.append(notes)")
-    assert 'node("details", "report-notes")' in rendering
-    assert 'node("summary", "", "Notes")' in rendering
-    assert "notes.open" not in rendering
-    assert "Definitions and data limitations" not in html
-    assert "definition.limitations.map" in rendering
+    assert "definition.limitations.map(note => node(\"li\", \"\", note))" in rendering
     copying = html.split("function buildOverviewReport(data)", 1)[1].split("function invalidateOverview", 1)[0]
-    assert copying.index('lines.push(`| ${values.join') < copying.index("### Notes")
-    assert "definition.limitations.map" in copying
-    assert "rates above 100%" in html
+    assert 'const lines = ["# Weekly Status Report", ""];' in copying
+    assert "### Notes" in copying
+    assert "definition.limitations" in copying
     assert 'window.addEventListener("beforeprint"' in html
-    assert 'window.addEventListener("afterprint"' in html
+    assert "notes => ({notes, open: notes.open})" in html
     assert "notes.open = true" in html
+    assert 'window.addEventListener("afterprint"' in html
     assert "notes.open = open" in html
 
 

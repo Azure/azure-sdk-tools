@@ -8,46 +8,6 @@ from models.feedback import RootCauseClassification
 from models.qa_dashboard import OverviewCounts, OverviewRow, QAOverview
 from utils.channel_policy import is_testing_channel
 
-REPORT_NOTES = [
-    "Only dated conversations in the requested UTC range [start, end) are included, using "
-    "conversation_created_at, not updated_at. Messages use their own created_at independently.",
-    "Accuracy = (conversations - incorrect) / conversations, using persisted verdicts. "
-    "feedback.classification missing_content and out_of_scope are excluded from the incorrect "
-    "count, not the conversation total; missing classification is not an exclusion. "
-    "Unassessed and excluded conversations count as successful in this rate. "
-    "The Correct column shows confirmed correct verdicts, not the accuracy numerator.",
-    "Meaningful expert interaction = expert_yes / conversations, using persisted "
-    "has_expert_interaction values. Only true increases expert_yes; all conversations remain "
-    "in the denominator, including null/missing assessments and accuracy exclusions. "
-    "has_expert_reply is not used. True means qualifying expert "
-    "interaction, false means none, and null means insufficient evidence. Qualifying interactions "
-    "are substantive non-author guidance after a bot reply that adds meaningful information "
-    "beyond the bot's answer. Confirmation or repetition alone does not count, even when "
-    "technically substantive; neither do acknowledgments or required human actions alone.",
-    "Question answer rate = persisted bot replies (assistant or system) / user messages with "
-    "should_reply=true OR an explicit Teams @mention of Azure SDK Q&A Bot "
-    "(including the HTML-encoded name). Each qualifying message counts once, including "
-    "questions without QA records. Other user messages are not counted. "
-    "No question-to-reply pairing exists: multiple replies, system/error "
-    "messages and boundary-crossing exchanges can produce rates above 100%. This is reply volume, "
-    "not the percentage of distinct questions answered.",
-    "Zero denominators are N/A.",
-    "Findings count cases with a recognized root cause, including accuracy exclusions. "
-    "Tracked issues count distinct GitHub issue URLs within each channel and globally; "
-    "the total may be less than the sum of channel counts. Resolved rate = validated resolved "
-    "cases / cases with a valid linked GitHub issue, not distinct issues. Only validation_passed "
-    "counts as resolved. Pending, failed, skipped, processing errors and other states remain "
-    "unresolved. Current stored status is used for conversations created in the selected range, "
-    "not issues created or fixes completed during that range. No live GitHub status is fetched. "
-    "Legacy done states are not proof of successful validation.",
-    "Testing channels are excluded by the configured-name policy (word testing, "
-    "Azure SDK QA Bot - Auto Reply - Test, smoke-tests). Channel IDs fall back to conversation_id; "
-    "unconfigured/unknown channels remain included.",
-    "Totals sum raw counts across all matching persisted rows, not channel percentages or list "
-    "pages. QA records omit threads without bot replies; missing ingestion is not measured. "
-    "Assessments/backfills can change reports; cross-container reads are not an atomic snapshot.",
-]
-
 
 _BOT_MENTION = re.compile(
     r"<at\b[^>]*>Azure SDK Q(?:&amp;|&)A Bot</at>", re.IGNORECASE
@@ -222,5 +182,4 @@ async def aggregate_overview(
     return QAOverview(
         start=start, end=end, generated_at=datetime.now(timezone.utc),
         channel_id=channel_id, rows=rows, totals=totals,
-        notes=REPORT_NOTES,
     )

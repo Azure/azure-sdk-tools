@@ -1,7 +1,8 @@
-# Deployment pipeline for the Azure SDK QA Bot Agent.
-# Builds the container image, pushes to ACR, and deploys to Azure AI Foundry.
+# Deployment pipeline for the complete Teams channel collection workflow.
+# Deploys the hosted agent first, then its Logic App, Cosmos access,
+# App Configuration setting/RBAC, and a disabled Foundry Routine.
 
-name: Deploy Azure SDK QA Bot Agent
+name: Deploy Azure SDK QA Bot Teams Collection
 
 trigger: none
 pr: none
@@ -14,14 +15,6 @@ parameters:
     values:
       - dev
       - prod
-  - name: agentName
-    displayName: 'Agent to Deploy'
-    type: string
-    default: chat_agent
-    values:
-      - chat_agent
-      - azure_mcp_server_agent
-      - chatbot_evolution_agent
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -40,11 +33,11 @@ extends:
   parameters:
     Use1ESOfficial: true
     stages:
-      - stage: DeployAgent
-        displayName: 'Deploy ${{ parameters.agentName }} (${{ parameters.environment }})'
+      - stage: DeployTeamsCollection
+        displayName: 'Deploy Teams Collection (${{ parameters.environment }})'
         jobs:
           - job: BuildAndDeploy
-            displayName: 'Build & Deploy'
+            displayName: 'Build Agent & Deploy Collection Infrastructure'
             pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
@@ -59,7 +52,7 @@ extends:
                   artifactFeeds: 'public/azure-sdk-for-python'
 
               - task: AzureCLI@2
-                displayName: 'Build, Push & Deploy Agent'
+                displayName: 'Deploy Teams Collection'
                 inputs:
                   azureSubscription: $(SERVICE_CONNECTION)
                   scriptType: bash
@@ -68,32 +61,29 @@ extends:
                   inlineScript: |
                     set -euo pipefail
 
-                    if [ "${{ parameters.agentName }}" = "chatbot_evolution_agent" ] && [ "${{ parameters.environment }}" != "prod" ]; then
-                      echo "chatbot_evolution_agent is production-only."
-                      exit 1
-                    fi
-
-                    # Suppress Azure CLI welcome banner on fresh CI agents.
                     export AZURE_CORE_WELCOME_MESSAGE=false
                     az version > /dev/null 2>&1 || true
                     az config set core.welcome_message=false 2>/dev/null || true
 
                     python -m pip install --upgrade pip
                     python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
-
                     python -m pip config set global.index-url "$PIP_INDEX_URL"
-
                     pip install -r requirements.txt --retries 5 --timeout 60
 
                     python scripts/deploy_hosted_agent.py \
-                      ${{ parameters.agentName }} \
+                      teams_collection_agent \
                       --tag "$(Build.BuildId)" \
+                      --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
+
+                    python scripts/deploy_teams_collection.py \
+                      --environment "${{ parameters.environment }}" \
+                      --resource-group "$(RESOURCE_GROUP)" \
                       --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
                 env:
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
                   AI_FOUNDRY_RAI_POLICY_ID: $(AI_FOUNDRY_RAI_POLICY_ID)
                   AI_FOUNDRY_PROJECT_NAME: $(AI_FOUNDRY_PROJECT_NAME)
                   ACR_NAME: $(ACR_NAME)
                   ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
-                  CANDIDATE_APPCONFIG_ENDPOINT: $(CANDIDATE_APPCONFIG_ENDPOINT)
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)

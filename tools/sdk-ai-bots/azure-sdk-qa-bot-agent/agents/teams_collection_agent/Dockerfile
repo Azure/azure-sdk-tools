@@ -9,7 +9,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --pre -r requirements.txt azure-ai-agentserver-core==2.2.0b1 azure-ai-agentserver-responses==1.0.0b9
 
 COPY config/ ./config/
+COPY models/ ./models/
 COPY services/ ./services/
+COPY tools/ ./tools/
 COPY utils/ ./utils/
 COPY agents/teams_collection_agent/ ./agents/teams_collection_agent/
 

@@ -37,7 +37,7 @@ def routine_definition(config):
     if len(routine["cron"].split()) != 5 or not routine["timeZone"]:
         raise ValueError("Routine requires a five-field cron expression and timeZone; minimum interval is five minutes.")
     return {
-        "description": "Collect configured Teams channels and their replies into the dedicated Cosmos archive.",
+        "description": "Collect, process, and archive configured Teams channels and their replies.",
         "enabled": False,
         "authorization": {"identity": "agent"},
         "triggers": {"schedule": {"type": "schedule", "cron_expression": routine["cron"],
@@ -119,7 +119,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=("render-parameters", "routine-definition", "routine-create",
                                            "routine-enable", "routine-disable", "routine-dispatch"))
-    parser.add_argument("--config", type=Path, default=PROJECT / "config/teams_collection.json")
+    parser.add_argument("--config", type=Path, default=PROJECT / "config/teams_collection_config.json")
     parser.add_argument("--project-endpoint")
     parser.add_argument("--logic-app-name", default="azuresdkqabot-dev-teams-collection")
     parser.add_argument("--location", default="westus2")

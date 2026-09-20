@@ -9,6 +9,9 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import UUID
 
 
+_COSMOS_DOCUMENT_SIZE_BUDGET = 1_900_000
+
+
 def _parse_timestamp(value: str, field: str) -> datetime:
     try:
         timestamp = datetime.fromisoformat(value)
@@ -103,9 +106,32 @@ def _thread_activity(root: dict, replies: list[dict]) -> datetime:
     )])
 
 
+def _channel_key(tenant_id: str, channel: dict) -> str:
+    return hashlib.sha256(json.dumps(
+        [tenant_id, channel["teamId"], channel["channelId"]]
+    ).encode()).hexdigest()
+
+
+def _thread_content(root: dict, replies: list[dict]) -> dict:
+    post = {name: value for name, value in root.items()
+            if name not in ("replies", "replies@odata.nextLink", "replies@odata.count")}
+    return {"post": post, "replies": replies}
+
+
+def _content_hash(content: dict) -> str:
+    return hashlib.sha256(json.dumps(
+        content, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+    ).encode("utf-8")).hexdigest()
+
+
+def _validate_document_size(document: dict) -> None:
+    if len(json.dumps(document, ensure_ascii=False).encode("utf-8")) > _COSMOS_DOCUMENT_SIZE_BUDGET:
+        raise ValueError("Thread exceeds the Cosmos document size budget; no partial write was made.")
+
+
 class TeamsCollectionService:
     def __init__(self, fetch_page, store, tenant_id: str, max_pages: int = 1000,
-                 lookback_days: int | None = None):
+                 lookback_days: int | None = None, processor=None):
         UUID(tenant_id)
         if not 1 <= max_pages <= 1000:
             raise ValueError("max_pages must be between 1 and 1000.")
@@ -118,6 +144,7 @@ class TeamsCollectionService:
         self._tenant_id = tenant_id
         self._max_pages = max_pages
         self._lookback_days = lookback_days
+        self._processor = processor
 
     async def _pages(self, channel: dict, message_id: str | None = None):
         token = None
@@ -146,9 +173,7 @@ class TeamsCollectionService:
             scan_started_at = scan_started.isoformat()
             start_time = (_parse_timestamp(channel["startTime"], "startTime")
                           if channel.get("startTime") is not None else None)
-            key = hashlib.sha256(json.dumps(
-                [self._tenant_id, channel["teamId"], channel["channelId"]]
-            ).encode()).hexdigest()
+            key = _channel_key(self._tenant_id, channel)
             previous_checkpoint = await self._store.read("channel-checkpoint", key)
             lookback_cutoff = None
             if previous_checkpoint is not None and self._lookback_days is not None:
@@ -191,15 +216,16 @@ class TeamsCollectionService:
                         break
                     document_id = hashlib.sha256(f"{key}:{root_id}".encode()).hexdigest()
                     previous = index.get(document_id)
-                    post = {name: value for name, value in root.items()
-                            if name not in ("replies", "replies@odata.nextLink", "replies@odata.count")}
-                    content = {"post": post, "replies": ordered_replies}
-                    digest = hashlib.sha256(json.dumps(
-                        content, sort_keys=True, ensure_ascii=False, separators=(",", ":")
-                    ).encode("utf-8")).hexdigest()
+                    content = _thread_content(root, ordered_replies)
+                    digest = _content_hash(content)
                     summary["postsRead"] += 1
                     summary["repliesRead"] += len(ordered_replies)
-                    if previous and previous.get("content_hash") == digest:
+                    processing_is_current = (
+                        self._processor is None
+                        or self._processor.is_current(previous.get("processing"), digest)
+                    ) if previous else False
+                    if (previous and previous.get("content_hash") == digest
+                            and processing_is_current):
                         summary["postsUnchanged"] += 1
                         continue
                     document = {
@@ -209,8 +235,11 @@ class TeamsCollectionService:
                         "collected_at": datetime.now(timezone.utc).isoformat(),
                         "all_reply_pages_read": True,
                     }
-                    if len(json.dumps(document, ensure_ascii=False).encode("utf-8")) > 1_900_000:
-                        raise ValueError("Thread exceeds the Cosmos document size budget; no partial write was made.")
+                    if self._processor is not None:
+                        document["processing"] = await self._processor.process(
+                            channel, content["post"], ordered_replies, digest
+                        )
+                    _validate_document_size(document)
                     await self._store.write(document, previous)
                     summary["postsWritten"] += 1
                 if reached_lookback_cutoff:
@@ -225,5 +254,32 @@ class TeamsCollectionService:
                 "last_successful_scan_started_at": scan_started_at,
                 "completed_at": datetime.now(timezone.utc).isoformat(),
             }, previous_checkpoint)
+            summary["channelsCompleted"] += 1
+        return summary
+
+    async def reprocess(self, channels: list[dict]) -> dict:
+        validate_channels(channels)
+        if self._processor is None:
+            raise RuntimeError("A Teams thread processor is required for reprocessing.")
+        summary = {"channelsCompleted": 0, "postsRead": 0, "postsReprocessed": 0}
+        for channel in channels:
+            key = _channel_key(self._tenant_id, channel)
+            documents = await self._store.read_channel_documents(key)
+            for previous in documents:
+                content = {"post": previous["post"], "replies": previous["replies"]}
+                digest = _content_hash(content)
+                if previous.get("content_hash") != digest:
+                    raise ValueError("Stored Teams thread content does not match its content hash.")
+                document = {
+                    name: value for name, value in previous.items()
+                    if not name.startswith("_")
+                }
+                document["processing"] = await self._processor.process(
+                    channel, content["post"], content["replies"], digest
+                )
+                _validate_document_size(document)
+                await self._store.write(document, previous)
+                summary["postsRead"] += 1
+                summary["postsReprocessed"] += 1
             summary["channelsCompleted"] += 1
         return summary

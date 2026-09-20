@@ -19,7 +19,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
-import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -45,22 +44,9 @@ from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
 from utils.azure_storage import close_storage_client, download_blob
+from utils.channel_policy import is_testing_channel
 
 logger = logging.getLogger("run_feedback_jobs")
-
-_TESTING_CHANNEL_PATTERN = re.compile(r"\btesting\b", re.IGNORECASE)
-_TESTING_CHANNEL_NAMES = {
-    "azure sdk qa bot - auto reply - test",
-    "smoke-tests",
-}
-
-
-def _is_testing_channel(name: str) -> bool:
-    normalized = name.strip().casefold()
-    return (
-        _TESTING_CHANNEL_PATTERN.search(normalized) is not None
-        or normalized in _TESTING_CHANNEL_NAMES
-    )
 
 
 async def _load_excluded_channels() -> set[str]:
@@ -80,7 +66,7 @@ async def _load_excluded_channels() -> set[str]:
     for entry in parsed.get("channels", []) or []:
         channel_id = entry.get("id")
         name = entry.get("name") or ""
-        if channel_id and _is_testing_channel(name):
+        if channel_id and is_testing_channel(name):
             excluded.add(channel_id)
     return excluded
 

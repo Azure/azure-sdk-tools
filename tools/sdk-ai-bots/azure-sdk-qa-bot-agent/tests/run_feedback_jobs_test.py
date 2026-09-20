@@ -16,6 +16,7 @@ from models.feedback import (
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from scripts import run_feedback_jobs
+from utils.channel_policy import is_testing_channel
 
 
 def _record(
@@ -82,7 +83,7 @@ def _args() -> argparse.Namespace:
     ],
 )
 def test_testing_channel_names_are_excluded(name: str) -> None:
-    assert run_feedback_jobs._is_testing_channel(name)
+    assert is_testing_channel(name)
 
 
 @pytest.mark.parametrize(
@@ -94,7 +95,24 @@ def test_testing_channel_names_are_excluded(name: str) -> None:
     ],
 )
 def test_product_channels_with_test_in_name_are_not_excluded(name: str) -> None:
-    assert not run_feedback_jobs._is_testing_channel(name)
+    assert not is_testing_channel(name)
+
+
+@pytest.mark.asyncio
+async def test_excluded_channels_use_shared_policy() -> None:
+    assert run_feedback_jobs.is_testing_channel is is_testing_channel
+    data = run_feedback_jobs.yaml.safe_dump({"channels": [
+        {"id": "testing", "name": "Stress (testing)"},
+        {"id": "smoke", "name": "Smoke-Tests"},
+        {"id": "product", "name": "Python Test V-Team"},
+        {"id": "unnamed"},
+        {"name": "Stress (testing)"},
+    ]}).encode("utf-8")
+    with (
+        patch.object(run_feedback_jobs.app_config, "get", side_effect=["config", "channel.yaml"]),
+        patch.object(run_feedback_jobs, "download_blob", new=AsyncMock(return_value=data)),
+    ):
+        assert await run_feedback_jobs._load_excluded_channels() == {"testing", "smoke"}
 
 
 @pytest.mark.asyncio

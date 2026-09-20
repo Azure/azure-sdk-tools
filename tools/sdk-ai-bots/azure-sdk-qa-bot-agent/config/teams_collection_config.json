@@ -1,0 +1,33 @@
+{
+  "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+  "maxPages": 1000,
+  "lookbackDays": 7,
+  "processing": {
+    "version": "2026-09-19"
+  },
+  "routine": {
+    "name": "teams-channel-collection",
+    "cron": "0 0 * * 0",
+    "timeZone": "UTC"
+  },
+  "channels": [
+    {
+      "teamId": "3e17dcb0-4257-4a30-b843-77f47f1d4121",
+      "channelId": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype",
+      "startTime": null,
+      "processingScope": {
+        "name": "general",
+        "description": "Azure Team end-to-end developer experience, including Azure SDKs, developer tools, and development processes."
+      }
+    },
+    {
+      "teamId": "3e17dcb0-4257-4a30-b843-77f47f1d4121",
+      "channelId": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype",
+      "startTime": null,
+      "processingScope": {
+        "name": "apispec",
+        "description": "API Spec Review support for azure-rest-api-specs and azure-rest-api-specs-pr, including PR review and sign-off, TypeSpec or Swagger specifications, ARM or data-plane validation, and SDK generation validation."
+      }
+    }
+  ]
+}

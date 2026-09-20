@@ -40,6 +40,7 @@ class LogicAppPageClient:
         if skip_token is not None:
             payload["skipToken"] = skip_token
         token = await self._credential.get_token(self._audience + ".default")
+        response = None
         for attempt in range(4):
             try:
                 response = await self._client.post(
@@ -59,6 +60,8 @@ class LogicAppPageClient:
                         f"Logic App returned HTTP {response.status_code}; collection was not completed."
                     )
             await asyncio.sleep(2 ** attempt)
+        if response is None:
+            raise RuntimeError("Logic App request did not produce a response.")
         try:
             result = response.json()
             if result["operation"] != payload["operation"]:
@@ -85,10 +88,18 @@ class CosmosThreadStore:
 
     async def read_channel_index(self, partition):
         items = self._container.query_items(
-            query="SELECT c.id, c.content_hash, c._etag FROM c WHERE IS_DEFINED(c.post_id)",
+            query=("SELECT c.id, c.content_hash, c.processing, c._etag "
+                   "FROM c WHERE IS_DEFINED(c.post_id)"),
             partition_key=partition,
         )
         return {item["id"]: item async for item in items}
+
+    async def read_channel_documents(self, partition):
+        items = self._container.query_items(
+            query="SELECT * FROM c WHERE IS_DEFINED(c.post_id)",
+            partition_key=partition,
+        )
+        return [item async for item in items]
 
     async def write(self, document, previous):
         try:
@@ -108,18 +119,31 @@ class CosmosThreadStore:
         await self._container.upsert_item(body=document)
 
 
-async def collect_configured_channels(config, settings):
+async def _configured_store():
     from utils.azure_cosmosdb import get_teams_channel_posts_container
-    from utils.azure_credential import get_credential
 
-    validate_channels(config["channels"])
     container = await get_teams_channel_posts_container()
     store = CosmosThreadStore(container)
     await store.validate()
+    return store
+
+
+def _new_run(operation, channel_count):
     run_id = str(uuid4())
     run = {"id": f"run-{run_id}", "channel_key": "collection-runs", "type": "collection-run",
            "status": "running", "started_at": datetime.now(timezone.utc).isoformat(),
-           "channelCount": len(config["channels"])}
+           "operation": operation, "channelCount": channel_count}
+    return run_id, run
+
+
+async def collect_configured_channels(config, settings, processor=None):
+    from utils.azure_credential import get_credential
+
+    validate_channels(config["channels"])
+    if config.get("processing") is not None and processor is None:
+        raise RuntimeError("Configured Teams processing requires a processor.")
+    store = await _configured_store()
+    run_id, run = _new_run("collect", len(config["channels"]))
     await store.record_run(run)
     try:
         async with httpx.AsyncClient() as client:
@@ -129,9 +153,32 @@ async def collect_configured_channels(config, settings):
             )
             service = TeamsCollectionService(
                 pages.fetch_page, store, config["tenantId"], config["maxPages"],
-                config.get("lookbackDays"),
+                config.get("lookbackDays"), processor,
             )
             summary = await service.collect(config["channels"])
+        run.update({"status": "succeeded", "summary": summary})
+    except (Exception, asyncio.CancelledError) as error:
+        run.update({"status": "failed", "error_type": type(error).__name__})
+        raise
+    finally:
+        run["ended_at"] = datetime.now(timezone.utc).isoformat()
+        await store.record_run(run)
+    return {"runId": run_id, **summary}
+
+
+async def reprocess_configured_channels(config, processor):
+    validate_channels(config["channels"])
+    if processor is None:
+        raise RuntimeError("A Teams thread processor is required for reprocessing.")
+    store = await _configured_store()
+    run_id, run = _new_run("reprocess", len(config["channels"]))
+    await store.record_run(run)
+    try:
+        service = TeamsCollectionService(
+            None, store, config["tenantId"], config["maxPages"],
+            config.get("lookbackDays"), processor,
+        )
+        summary = await service.reprocess(config["channels"])
         run.update({"status": "succeeded", "summary": summary})
     except (Exception, asyncio.CancelledError) as error:
         run.update({"status": "failed", "error_type": type(error).__name__})

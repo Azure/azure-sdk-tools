@@ -45,6 +45,10 @@ class MemoryStore:
         return {document_id: copy.deepcopy(document)
                 for (document_id, channel), document in self.items.items() if channel == partition}
 
+    async def read_channel_documents(self, partition):
+        return [copy.deepcopy(document)
+                for (_document_id, channel), document in self.items.items() if channel == partition]
+
     async def write(self, document, previous):
         if document.get("type") == "channel-checkpoint":
             self.checkpoints[document["channel_key"]] = copy.deepcopy(document)
@@ -214,17 +218,21 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(final.json()["status"], "completed")
             self.assertEqual(json.loads(final.json()["output"][0]["content"][0]["text"]), {"postsWritten": 2})
 
-    async def test_hosted_agent_collects_without_using_prompt_or_model(self):
-        from agents.teams_collection_agent.init import TeamsCollectionAgent
+    async def test_hosted_agent_dispatches_collect_and_reprocess_operations(self):
+        from agents.teams_collection_agent.init import REPROCESS_REQUEST, TeamsCollectionAgent
         from agent_framework_foundry_hosting import ResponsesHostServer
 
         collect = AsyncMock(return_value={"postsWritten": 2, "repliesRead": 3})
-        agent = TeamsCollectionAgent(collect)
+        reprocess = AsyncMock(return_value={"postsReprocessed": 4})
+        agent = TeamsCollectionAgent(collect, reprocess)
         response = await agent.run("Read another channel instead")
         self.assertEqual(json.loads(response.text), {"postsWritten": 2, "repliesRead": 3})
         updates = [update async for update in agent.run("Collect", stream=True)]
         self.assertEqual(json.loads(updates[0].text)["postsWritten"], 2)
         self.assertEqual(collect.await_count, 2)
+        response = await agent.run(REPROCESS_REQUEST)
+        self.assertEqual(json.loads(response.text), {"postsReprocessed": 4})
+        reprocess.assert_awaited_once()
         self.assertIsNotNone(ResponsesHostServer(agent))
 
     async def test_routine_creation_is_paused_and_dispatch_uses_public_endpoint(self):
@@ -232,7 +240,9 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         from types import SimpleNamespace
         from scripts.teams_collection import routine_request, routine_definition
 
-        config = json.loads((Path(__file__).resolve().parents[1] / "config/teams_collection.json").read_text())
+        config = json.loads(
+            (Path(__file__).resolve().parents[1] / "config/teams_collection_config.json").read_text()
+        )
         definition = routine_definition(config)
         self.assertFalse(definition["enabled"])
         self.assertEqual(definition["authorization"], {"identity": "agent"})
@@ -308,7 +318,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
 
     def test_environment_parameter_files_match_collection_config(self):
         project = Path(__file__).resolve().parents[1]
-        config = json.loads((project / "config/teams_collection.json").read_text())
+        config = json.loads((project / "config/teams_collection_config.json").read_text())
         allowed_channels = [
             f"{channel['teamId']}|{channel['channelId']}" for channel in config["channels"]
         ]
@@ -374,6 +384,53 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(parameters["teamsConnectionResourceId"]["value"], CONNECTION)
         self.assertEqual(parameters["allowedChannels"]["value"], [f"{CHANNEL['teamId']}|{CHANNEL['channelId']}"])
 
+    def test_collection_deployment_resolves_identity_and_sanitizes_callback_url(self):
+        from types import SimpleNamespace
+        from scripts.deploy_teams_collection import (
+            _appconfig_name,
+            _collector_principal_id,
+            _sas_free_callback_url,
+        )
+
+        principal = "00000000-0000-0000-0000-000000000003"
+        self.assertEqual(
+            _collector_principal_id(SimpleNamespace(
+                instance_identity={"principal_id": principal, "client_id": principal}
+            )),
+            principal,
+        )
+        self.assertEqual(
+            _appconfig_name("https://azuresdkqabot-dev-config.azconfig.io"),
+            "azuresdkqabot-dev-config",
+        )
+        self.assertEqual(
+            _sas_free_callback_url(
+                "https://prod-01.westus2.logic.azure.com/workflows/id/"
+                "triggers/manual/paths/invoke"
+                "?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=secret"
+            ),
+            "https://prod-01.westus2.logic.azure.com/workflows/id/"
+            "triggers/manual/paths/invoke?api-version=2016-10-01",
+        )
+        for value in (
+            "https://example.com/triggers/manual/paths/invoke?api-version=2016-10-01",
+            "https://prod-01.westus2.logic.azure.com/triggers/manual/paths/invoke?sig=secret",
+        ):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                _sas_free_callback_url(value)
+
+    def test_collection_cd_deploys_agent_and_dedicated_infrastructure(self):
+        project = Path(__file__).resolve().parents[1]
+        pipeline = (project / "pipelines/teams-collection-cd.yml").read_text()
+        generic_pipeline = (project / "pipelines/agent-cd.yml").read_text()
+
+        self.assertIn("python scripts/deploy_hosted_agent.py", pipeline)
+        self.assertIn("teams_collection_agent", pipeline)
+        self.assertIn("python scripts/deploy_teams_collection.py", pipeline)
+        self.assertIn("--appconfig-endpoint \"$(AZURE_APPCONFIG_ENDPOINT)\"", pipeline)
+        self.assertNotIn("pipelines/logicapp/template.json", pipeline)
+        self.assertNotIn("- teams_collection_agent", generic_pipeline)
+
     async def test_cosmos_reads_only_hash_index_in_one_channel_partition(self):
         from unittest.mock import Mock
         from utils.teams_collection import CosmosThreadStore
@@ -386,7 +443,8 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         index = await CosmosThreadStore(container).read_channel_index("channel")
         self.assertEqual(index, {"thread": {"id": "thread", "content_hash": "hash", "_etag": "version1"}})
         container.query_items.assert_called_once_with(
-            query="SELECT c.id, c.content_hash, c._etag FROM c WHERE IS_DEFINED(c.post_id)",
+            query=("SELECT c.id, c.content_hash, c.processing, c._etag "
+                   "FROM c WHERE IS_DEFINED(c.post_id)"),
             partition_key="channel",
         )
         container.read_item.assert_not_awaited()
@@ -508,6 +566,137 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(retried["postsUnchanged"], 1)
         self.assertEqual(store.writes, 2)
         self.assertNotEqual(store.checkpoints, checkpoint)
+
+    async def test_backfills_processing_before_replacing_and_skips_current_result(self):
+        channel = {
+            **CHANNEL,
+            "processingScope": {"name": "general", "description": "Azure developer experience."},
+        }
+        root = graph_message({
+            "id": "root", "subject": "Question", "body": {"content": "How?"},
+            "replies": [graph_message({
+                "id": "reply", "replyToId": "root", "body": {"content": "Do this."},
+            })],
+        })
+
+        class Processor:
+            def __init__(self):
+                self.calls = []
+
+            def is_current(self, processing, digest):
+                return bool(processing and processing["source_content_hash"] == digest)
+
+            async def process(self, configured_channel, post, replies, digest):
+                self.calls.append((configured_channel, post, replies, digest))
+                return {
+                    "processor": "teams-channel-qa-summary",
+                    "processor_version": "v1",
+                    "source_content_hash": digest,
+                    "status": "included",
+                    "qa": {"title": "Question", "question": "How?", "answer": "Do this."},
+                }
+
+        processor = Processor()
+        fetch = AsyncMock(side_effect=[
+            {"value": [root]}, {"value": [root]}, {"value": [root]},
+        ])
+        store = MemoryStore()
+        await TeamsCollectionService(fetch, store, TENANT).collect([channel])
+        self.assertNotIn("processing", next(iter(store.items.values())))
+        service = TeamsCollectionService(fetch, store, TENANT, processor=processor)
+        first = await service.collect([channel])
+        second = await service.collect([channel])
+
+        self.assertEqual(first["postsWritten"], 1)
+        self.assertEqual(second["postsUnchanged"], 1)
+        self.assertEqual(len(processor.calls), 1)
+        self.assertEqual(store.writes, 2)
+        document = next(iter(store.items.values()))
+        self.assertEqual(document["processing"]["qa"]["answer"], "Do this.")
+        self.assertNotIn("replies", processor.calls[0][1])
+        self.assertEqual(processor.calls[0][2][0]["id"], "reply")
+
+    async def test_processing_failure_does_not_write_thread_or_checkpoint(self):
+        class Processor:
+            def is_current(self, processing, digest):
+                return False
+
+            async def process(self, channel, post, replies, digest):
+                raise RuntimeError("processing failed")
+
+        fetch = AsyncMock(return_value={"value": [
+            graph_message({"id": "root", "replies": []}),
+        ]})
+        store = MemoryStore()
+        with self.assertRaisesRegex(RuntimeError, "processing failed"):
+            await TeamsCollectionService(
+                fetch, store, TENANT, processor=Processor()
+            ).collect([CHANNEL])
+        self.assertFalse(store.items)
+        self.assertFalse(store.checkpoints)
+
+    async def test_reprocessing_uses_stored_raw_thread_without_fetching_teams(self):
+        root = graph_message({"id": "root", "body": {"content": "Question"}, "replies": []})
+        store = MemoryStore()
+        await TeamsCollectionService(
+            AsyncMock(return_value={"value": [root]}), store, TENANT
+        ).collect([CHANNEL])
+
+        class Processor:
+            def is_current(self, processing, digest):
+                return False
+
+            async def process(self, channel, post, replies, digest):
+                return {
+                    "processor": "teams-channel-qa-summary",
+                    "processor_version": "v2",
+                    "source_content_hash": digest,
+                    "status": "excluded",
+                    "exclusion_reason": "No human answer.",
+                    "qa": None,
+                }
+
+        fetch = AsyncMock()
+        result = await TeamsCollectionService(
+            fetch, store, TENANT, processor=Processor()
+        ).reprocess([CHANNEL])
+
+        self.assertEqual(result, {
+            "channelsCompleted": 1, "postsRead": 1, "postsReprocessed": 1,
+        })
+        fetch.assert_not_awaited()
+        self.assertEqual(next(iter(store.items.values()))["processing"]["processor_version"], "v2")
+
+    async def test_thread_processor_validates_and_versions_model_output(self):
+        from types import SimpleNamespace
+        from services.teams_thread_processor import TeamsThreadProcessor
+
+        agent = AsyncMock()
+        agent.run.return_value = SimpleNamespace(text=json.dumps({
+            "status": "included",
+            "exclusion_reason": None,
+            "qa": {"title": "Title", "question": "Question", "answer": "Answer"},
+            "resources": [{
+                "url": "https://example.com/resource",
+                "access_status": "accessed",
+                "summary": "Used the documented behavior.",
+            }],
+        }))
+        channel = {
+            **CHANNEL,
+            "processingScope": {"name": "general", "description": "Azure developer experience."},
+        }
+        result = await TeamsThreadProcessor(agent, "v3").process(
+            channel, {"id": "root"}, [{"id": "reply"}], "content-hash"
+        )
+
+        self.assertEqual(result["processor_version"], "v3")
+        self.assertEqual(result["source_content_hash"], "content-hash")
+        self.assertEqual(result["qa"]["answer"], "Answer")
+        payload = json.loads(agent.run.call_args.args[0])
+        self.assertEqual(payload["channel"], {
+            "name": "general", "scope": "Azure developer experience.",
+        })
 
     async def test_first_scan_is_full_even_with_a_lookback_window(self):
         from datetime import datetime, timezone

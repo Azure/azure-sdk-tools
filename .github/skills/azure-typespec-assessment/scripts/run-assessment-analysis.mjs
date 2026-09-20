@@ -1,19 +1,40 @@
 import fs from "node:fs";
 import path from "node:path";
-import { parseArgs, isMain, readJson, runMain, writeJson } from "./cli.mjs";
-import { prepareAssessment } from "./prepare-assessment.mjs";
-import { analyzeSemanticIntents } from "./analyze-semantic-intents.mjs";
-import { analyzeRestBreaking } from "./analyze-rest-breaking.mjs";
-import { analyzeDownstreamBreaking } from "./analyze-downstream-breaking.mjs";
-import { validateAssessment } from "./validate-assessment.mjs";
-import { renderAssessmentHtml } from "./render-assessment-html.mjs";
-import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
-import { buildDocumentQualityInput } from "./document-quality-input.mjs";
-import { stableId } from "./stable-id.mjs";
-import { resolveAssessmentInput } from "./assessment-input.mjs";
-import { buildAgentWorkspace } from "./build-agent-workspace.mjs";
-import { partitionSemanticIntents } from "./semantic-assessment-scope.mjs";
-import { transitionWorkflowState } from "./workflow-state.mjs";
+import { ensureSkillDependencies } from "./skill-dependencies.mjs";
+
+await ensureSkillDependencies();
+
+const [
+  { parseArgs, isMain, readJson, runMain, writeJson },
+  { prepareAssessment },
+  { analyzeSemanticIntents },
+  { analyzeRestBreaking },
+  { analyzeDownstreamBreaking },
+  { validateAssessment },
+  { renderAssessmentHtml },
+  { buildComplianceSearchRequests },
+  { buildDocumentQualityInput },
+  { stableId },
+  { resolveAssessmentInput },
+  { buildAgentWorkspace },
+  { partitionSemanticIntents },
+  { transitionWorkflowState },
+] = await Promise.all([
+  import("./cli.mjs"),
+  import("./prepare-assessment.mjs"),
+  import("./analyze-semantic-intents.mjs"),
+  import("./analyze-rest-breaking.mjs"),
+  import("./analyze-downstream-breaking.mjs"),
+  import("./validate-assessment.mjs"),
+  import("./render-assessment-html.mjs"),
+  import("./compliance-search-request.mjs"),
+  import("./document-quality-input.mjs"),
+  import("./stable-id.mjs"),
+  import("./assessment-input.mjs"),
+  import("./build-agent-workspace.mjs"),
+  import("./semantic-assessment-scope.mjs"),
+  import("./workflow-state.mjs"),
+]);
 
 const BUDGET_TIERS = [
   ["small", 128 * 1024],

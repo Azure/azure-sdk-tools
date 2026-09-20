@@ -58,6 +58,12 @@ mode excludes them.
 Production behavior lives under `scripts/`. Code under `evals/` and test files
 is not imported or used by the runtime.
 
+The coordinator bootstraps the skill's own locked dependencies before loading
+the assessment implementation. When the installed `yaml` version is missing or
+does not match `package-lock.json`, it runs lifecycle-script-free `npm ci` in
+the skill directory under an installation lock. Normal downstream commands
+reuse that installation because the coordinator is always the first command.
+
 Separate invocation retries, dependency setup, compilation, analyzer work,
 Agent/tool waits, and finalization when reporting elapsed time. The preparation
 manifest's `totalMs` includes dependency setup, not just compiler work.
@@ -2533,6 +2539,7 @@ Never label a head-source artifact as a base-commit artifact.
 | Azure Guidelines retrieval       | `references/agentic-search.md`, `references/reference-document-links.md`                                          |
 | Source-only documentation checks | `references/document-quality.md`, `scripts/document-quality-input.mjs`, `scripts/document-quality-assessment.mjs` |
 | Output contract                  | `references/output-contract.md`, `scripts/*.schema.json`                                                          |
+| Skill dependency bootstrap       | `scripts/skill-dependencies.mjs`, `scripts/npm-command.mjs`                                                       |
 | Deterministic preparation        | `scripts/prepare-assessment.mjs`, `scripts/package-manager.mjs`, `scripts/run-assessment-analysis.mjs`            |
 | Dimension analyzers              | `scripts/analyze-*.mjs`                                                                                           |
 | Assembly and validation          | `scripts/assemble-assessment.mjs`, `scripts/validate-assessment.mjs`                                              |

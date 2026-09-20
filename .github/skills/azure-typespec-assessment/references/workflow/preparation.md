@@ -45,6 +45,10 @@ the manifest and report.
 
 ## Commands
 
+The coordinator verifies and, when necessary, installs the skill's own locked
+dependencies before loading the assessment implementation. Do not run a
+separate dependency-install command.
+
 For local code, set values using the confirmed baseline:
 
 ```powershell

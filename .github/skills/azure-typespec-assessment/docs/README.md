@@ -4,11 +4,10 @@ Use `azure-typespec-assessment` with your coding agent to review TypeSpec
 changes and generate an assessment report without modifying your source.
 Make sure the skill is available to your agent.
 
-Install the assessment scripts' dependencies from this skill directory:
-
-```sh
-npm ci
-```
+The coordinator verifies the assessment scripts' locked dependencies and runs
+`npm ci` automatically when they are missing or stale. The first assessment
+therefore requires npm registry access and a writable skill directory; later
+runs reuse the installed dependencies.
 
 ## 1. Assess local code
 

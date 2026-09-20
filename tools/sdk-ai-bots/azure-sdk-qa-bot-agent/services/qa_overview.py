@@ -21,8 +21,9 @@ REPORT_NOTES = [
     "in the denominator, including null/missing assessments and accuracy exclusions. "
     "has_expert_reply is not used. True means qualifying expert "
     "interaction, false means none, and null means insufficient evidence. Qualifying interactions "
-    "are substantive non-author guidance after a bot reply, not acknowledgments or required "
-    "human actions alone.",
+    "are substantive non-author guidance after a bot reply that adds meaningful information "
+    "beyond the bot's answer. Confirmation or repetition alone does not count, even when "
+    "technically substantive; neither do acknowledgments or required human actions alone.",
     "Question answer rate = persisted bot replies (assistant or system) / user messages with "
     "should_reply=true OR an explicit Teams @mention of Azure SDK Q&A Bot "
     "(including the HTML-encoded name). Each qualifying message counts once, including "

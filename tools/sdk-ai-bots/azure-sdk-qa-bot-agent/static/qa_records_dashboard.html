@@ -1284,7 +1284,7 @@
       },
       {
         title: "Interaction rate",
-        description: "Conversations with meaningful expert follow-up / all conversations. Counts substantive guidance from another human after a bot reply, not acknowledgments or required human actions alone. Unassessed cases remain in the denominator. N/A means no conversations.",
+        description: "Conversations with meaningful expert follow-up / all conversations. Counts substantive guidance from another human after a bot reply that adds meaningful information beyond the bot's answer. Confirmation or repetition alone does not count, even when technically substantive; neither do acknowledgments or required human actions alone. Unassessed cases remain in the denominator. N/A means no conversations.",
         limitations: ["Only an explicit positive expert-interaction assessment counts; missing or uncertain assessments do not. The question author's own follow-ups are excluded.", conversationLimitations, sharedLimitations],
         headings: ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         values: row => [row.conversations, row.expert_yes, percent(row.expert_interaction.rate)]

@@ -47,15 +47,19 @@ Follow these steps in order.
    transcript carries its `trace_id`.
 2. **Assess expert interaction.** Set `has_expert_interaction` from the same transcript:
    - `true` for substantive correction, technical guidance, or troubleshooting
-     from another human after a bot reply. Identify the author using the first
+     that adds meaningful information beyond the bot's answer, from another
+     human after a bot reply. Identify the author using the first
      user message's `sender_id`, not display names.
+   - Compare with the preceding bot answer: confirmation or repetition alone
+     does not count, even when technically substantive or stated by an expert.
    - Exclude author follow-ups, pre-bot contributions, acknowledgments, and
      required human actions (approvals, permission grants, sign-off), unless
-     those actions include substantive technical guidance.
+     those actions include new substantive technical guidance.
    - `false` if the complete transcript shows none; `null` if identity, ordering,
      or context is insufficient. Clear positive evidence suffices for `true`.
    Give `expert_interaction_reason` in one evidence-based sentence (maximum
-   500 characters). This observation does not change correctness or remediation.
+   500 characters), identifying what was added beyond the bot's answer when
+   `true`. This observation does not change correctness or remediation.
 3. **Decide whether the conversation is complete.** It is complete when
    the exchange has concluded and its result is safe to treat as final. It
    remains ongoing when the latest question or follow-up is unanswered, or

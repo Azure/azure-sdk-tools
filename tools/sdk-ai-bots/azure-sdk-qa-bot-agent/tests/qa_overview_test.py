@@ -367,6 +367,32 @@ def test_expert_instruction_and_example_match_boolean_metric_semantics():
     assert "Insufficient evidence" in example["expert_interaction_reason"]
 
 
+def test_expert_assessment_requires_added_value_not_technical_confirmation():
+    root = Path(__file__).resolve().parent.parent
+    instruction = " ".join((root / "agents/chatbot_evolution_agent/instruction.md").read_text(encoding="utf-8").split())
+    assert "adds meaningful information beyond the bot's answer" in instruction
+    assert "Compare with the preceding bot answer" in instruction
+    assert "confirmation or repetition alone does not count, even when technically substantive" in instruction
+    assert "identifying what was added beyond the bot's answer when `true`" in instruction
+    html = (root / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    for text in (" ".join(REPORT_NOTES), html):
+        assert "Confirmation or repetition alone does not count, even when technically substantive" in text
+
+
+@pytest.mark.asyncio
+async def test_confirmation_only_assessment_does_not_increase_expert_rate(storage):
+    # Given a false semantic assessment, reporting must not infer interaction
+    # from a technical confirmation or the older expert-reply heuristic.
+    storage[0].documents = [qa(expert=False, has_expert_reply=True,
+        expert_interaction_reason=(
+            "Another human only confirmed the bot's answer: Making additive changes "
+            "to an existing API is expressly disallowed and enforced by breaking change checks."
+        ))]
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.expert_yes == 0
+    assert total.expert_interaction.model_dump() == {"numerator": 0, "denominator": 1, "rate": 0}
+
+
 @pytest.mark.parametrize("start,end", [
     (START, START), (END, START), (START, START + timedelta(days=94)),
     (START.replace(tzinfo=None), END), (START, END.replace(tzinfo=None)),

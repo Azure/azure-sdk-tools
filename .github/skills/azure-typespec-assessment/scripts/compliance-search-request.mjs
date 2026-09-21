@@ -16,12 +16,18 @@ const IGNORED_TOKENS = new Set([
   "using",
 ]);
 
+/** @param {(string | undefined)[]} values */
 function uniqueSorted(values) {
-  return [...new Set(values.filter(Boolean))].sort((left, right) =>
-    left.localeCompare(right),
-  );
+  return [
+    ...new Set(
+      values.filter(
+        /** @returns {value is string} */ (value) => value !== undefined,
+      ),
+    ),
+  ].sort((left, right) => left.localeCompare(right));
 }
 
+/** @param {SourceDeclaration} declaration */
 function declarationSymbols(declaration) {
   const decorators = (declaration.decorators ?? []).flatMap((decorator) => {
     if (typeof decorator === "string") return [decorator];
@@ -35,6 +41,10 @@ function declarationSymbols(declaration) {
   ];
 }
 
+/**
+ * @param {SourceChange[]} sources
+ * @param {string[]} hunkIds
+ */
 function changedTokens(sources, hunkIds) {
   const allowed = new Set(hunkIds);
   return uniqueSorted(
@@ -57,6 +67,10 @@ function changedTokens(sources, hunkIds) {
   );
 }
 
+/**
+ * @param {SourceChange[]} sources
+ * @param {string[]} hunkIds
+ */
 function representativeSourceExcerpts(sources, hunkIds) {
   const allowed = new Set(hunkIds);
   return sources
@@ -75,6 +89,7 @@ function representativeSourceExcerpts(sources, hunkIds) {
     )
     .filter((excerpt) => excerpt.text)
     .sort((left, right) => {
+      /** @param {{path: string, text: string}} excerpt */
       const score = (excerpt) => {
         const compatibilityFile =
           /(?:^|\/)(?:client|back-compatible)\.tsp$/i.test(excerpt.path);
@@ -91,13 +106,18 @@ function representativeSourceExcerpts(sources, hunkIds) {
     .slice(0, 3);
 }
 
+/**
+ * @param {SourceDeclaration[]} declarations
+ * @param {string[]} tokens
+ */
 function categories(declarations, tokens) {
   const kinds = new Set(declarations.map((item) => item.kind?.toLowerCase()));
   const normalizedTokens = new Set(
     tokens.map((token) =>
-      token.replace(/^@/, "").split(".").at(-1).toLowerCase(),
+      (token.replace(/^@/, "").split(".").at(-1) ?? "").toLowerCase(),
     ),
   );
+  /** @param {string[]} values */
   const hasToken = (...values) =>
     values.some((value) => normalizedTokens.has(value.toLowerCase()));
   const values = [];
@@ -168,6 +188,10 @@ function categories(declarations, tokens) {
   return uniqueSorted(values.length ? values : ["general"]);
 }
 
+/**
+ * @param {SemanticReviewUnit} unit
+ * @param {SourceChange[]} sources
+ */
 function materialDeclarations(unit, sources) {
   const allowedHunks = new Set(unit.hunkIds ?? []);
   const preferredRevision = unit.action === "remove" ? "base" : "current";
@@ -180,6 +204,7 @@ function materialDeclarations(unit, sources) {
       )
       .map((declaration) => ({ ...declaration, sourceChangeId: source.id })),
   );
+  /** @type {Map<string, SourceDeclaration & {sourceChangeId: string}>} */
   const byIdentity = new Map();
   for (const declaration of all) {
     const key = declaration.qualifiedName ?? declaration.id;
@@ -193,6 +218,12 @@ function materialDeclarations(unit, sources) {
   );
 }
 
+/**
+ * @param {{
+ *   semanticReviewUnits: SemanticReviewUnit[],
+ *   sourceChanges: Record<string, SourceChange>
+ * }} options
+ */
 export function buildComplianceSearchRequests({
   semanticReviewUnits,
   sourceChanges,
@@ -237,3 +268,6 @@ export function buildComplianceSearchRequests({
   });
 }
 import { stableId } from "./stable-id.mjs";
+/** @typedef {import("./runtime-types.js").SemanticReviewUnit} SemanticReviewUnit */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+/** @typedef {import("./runtime-types.js").SourceDeclaration} SourceDeclaration */

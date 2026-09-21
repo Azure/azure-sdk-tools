@@ -24,6 +24,7 @@ function fixture() {
   return root;
 }
 
+/** @param {string} root @param {string} [version] */
 function installYaml(root, version = "2.9.0") {
   const directory = path.join(root, "node_modules", "yaml");
   fs.mkdirSync(directory, { recursive: true });
@@ -33,7 +34,7 @@ function installYaml(root, version = "2.9.0") {
   );
 }
 
-test("skips installation when locked skill dependencies are ready", async () => {
+void test("skips installation when locked skill dependencies are ready", async () => {
   const root = fixture();
   installYaml(root);
   const result = await ensureSkillDependencies({
@@ -45,7 +46,7 @@ test("skips installation when locked skill dependencies are ready", async () => 
   assert.equal(result.packages.yaml, "2.9.0");
 });
 
-test("installs missing or stale skill dependencies", async () => {
+void test("installs missing or stale skill dependencies", async () => {
   for (const installed of [undefined, "2.8.0"]) {
     const root = fixture();
     if (installed) installYaml(root, installed);
@@ -64,13 +65,17 @@ test("installs missing or stale skill dependencies", async () => {
   }
 });
 
-test("serializes concurrent first-use installation", async () => {
+void test("serializes concurrent first-use installation", async () => {
   const root = fixture();
-  let releaseInstall;
-  let signalStarted;
+  /** @type {() => void} */
+  let releaseInstall = () => {};
+  /** @type {() => void} */
+  let signalStarted = () => {};
+  /** @type {Promise<void>} */
   const started = new Promise((resolve) => {
     signalStarted = resolve;
   });
+  /** @type {Promise<void>} */
   const released = new Promise((resolve) => {
     releaseInstall = resolve;
   });
@@ -97,7 +102,7 @@ test("serializes concurrent first-use installation", async () => {
   assert.equal(secondResult.installed, false);
 });
 
-test("cleans the installation lock after failure", async () => {
+void test("cleans the installation lock after failure", async () => {
   const root = fixture();
   await assert.rejects(
     ensureSkillDependencies({
@@ -112,7 +117,7 @@ test("cleans the installation lock after failure", async () => {
   assert.equal(fs.existsSync(path.join(root, ".dependency-install.lock")), false);
 });
 
-test("builds a deterministic lifecycle-script-free skill install", () => {
+void test("builds a deterministic lifecycle-script-free skill install", () => {
   assert.deepEqual(
     skillDependencyInstallCommand({ platform: "win32" }),
     {

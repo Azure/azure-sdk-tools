@@ -1,13 +1,126 @@
 import { isDeepStrictEqual } from "node:util";
 import { DOCUMENT_QUALITY_CRITERION } from "./document-quality-input.mjs";
 
-const unique = (values) => [...new Set(values.filter(Boolean))];
+/** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
+/** @typedef {import("./runtime-types.js").AssessmentFinding} AssessmentFinding */
+/** @typedef {import("./runtime-types.js").AssessmentMethodGroup} AssessmentMethodGroup */
+/** @typedef {import("./runtime-types.js").AssessmentOutput} AssessmentOutput */
+/** @typedef {import("./runtime-types.js").AssessmentTypeImpact} AssessmentTypeImpact */
+/** @typedef {import("./runtime-types.js").DocumentQualityDimension} DocumentQualityDimension */
+/** @typedef {import("./runtime-types.js").DocumentQualityDecision} DocumentQualityDecision */
+/** @typedef {import("./runtime-types.js").DocumentationDocument} DocumentationDocument */
+/** @typedef {import("./runtime-types.js").DocumentationSnapshot} DocumentationSnapshot */
+/** @typedef {import("./runtime-types.js").DownstreamAnalysis} DownstreamAnalysis */
+/** @typedef {import("./runtime-types.js").ComplianceIntentAssessment} ComplianceIntentAssessment */
+/** @typedef {import("./runtime-types.js").InternalSemanticOperation} InternalSemanticOperation */
+/** @typedef {import("./runtime-types.js").LegacyAssessmentFinding} LegacyAssessmentFinding */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+/** @typedef {import("./runtime-types.js").SdkType} SdkType */
+/**
+ * @typedef {AssessmentOutput["dimensions"]["downstream"]} DownstreamDimension
+ * @typedef {{area: string, label?: string, member?: string, areaKind?: string, before: unknown, after: unknown, detail?: string, model?: string, identity?: string}} ReportRow
+ * @typedef {{location?: string, role: string, path: string}} ReferencePath
+ * @typedef {{fromFactId?: string, toFactId?: string, kind: string, memberName?: string, location?: string}} DownstreamRootCauseReference
+ * @typedef {{
+ *   id: string,
+ *   type: string,
+ *   findings: AssessmentFinding[],
+ *   rows: ReportRow[],
+ *   mapped: {symbol: string, projectId?: string, paths: ReferencePath[]}[],
+ *   anchorId: string,
+ *   semanticIds: string[]
+ * }} TypePresentation
+ * @typedef {{
+ *   symbol: string,
+ *   projectId?: string,
+ *   name: string,
+ *   aliases: string[],
+ *   group?: AssessmentMethodGroup,
+ *   findingIds: string[],
+ *   rows: ReportRow[],
+ *   types: {type: TypePresentation, paths: ReferencePath[]}[],
+ *   semanticIds: string[],
+ *   cause?: "mixed" | "direct" | "indirect",
+ *   id?: string
+ * }} MethodPresentation
+ * @typedef {{
+ *   projectId?: string,
+ *   operationId: string,
+ *   apiVersion?: string,
+ *   method?: string,
+ *   path?: string
+ * }} ReportOperation
+ * @typedef {{
+ *   operation: ReportOperation,
+ *   findings: AssessmentFinding[],
+ *   semanticIds: string[],
+ *   key: string,
+ *   id: string
+ * }} RestCard
+ * @typedef {NonNullable<DocumentQualityDimension["findings"]>[number]} DocumentQualityFinding
+ * @typedef {{
+ *   reviewUnitId: string,
+ *   documentId?: string,
+ *   check?: string,
+ *   decision?: string,
+ *   rationale?: string,
+ *   title?: string,
+ *   expected?: string,
+ *   docQuote?: string
+ * }} DocumentQualityCheck
+ * @typedef {{
+ *   escapeHtml: (value: unknown) => string,
+ *   sectionHead: (title: string, description: string, metadata: string) => string,
+ *   status: (value: string | undefined) => string,
+ *   count: (value: string) => string,
+ *   summary: (title: string, description: string, badges: string, links?: string) => string,
+ *   affectedIntents: (ids: string[]) => string,
+ *   intentLinks: (ids: string[]) => string,
+ *   intentTitle?: (id: string) => string,
+ *   intentSources?: (id: string) => import("./runtime-types.js").SourceChange[]
+ * }} DocumentRenderHelpers
+ * @typedef {{
+ *   escapeHtml: (value: unknown) => string,
+ *   operationContractRows: (operation: InternalSemanticOperation, findings: AssessmentFinding[], semanticId: string) => ReportRow[],
+ *   restContractDelta: (finding: AssessmentFinding) => ReportRow,
+ *   findingMatchesOperation: (finding: AssessmentFinding, operation: InternalSemanticOperation, semanticId: string) => boolean,
+ *   complianceFindingGroups: (findings: ComplianceIntentAssessment[]) => {findings: ComplianceIntentAssessment[]}[],
+ *   complianceCode: (snippets: unknown[]) => string,
+ *   renderSourceHunks: (sources: SourceChange[]) => string,
+ *   sourceLinks: (sources: SourceChange[]) => string,
+ *   legacyEvidence: (evidence: string[]) => string,
+ *   contractAreaParts: (row: ReportRow) => {areaKind: string, member: string},
+ *   directLegacyDownstreamFindings: (findings: LegacyAssessmentFinding[]) => LegacyAssessmentFinding[]
+ * }} ReportRenderHelpers
+ */
+
+/**
+ * @template T
+ * @param {T} value
+ * @returns {value is Exclude<T, undefined | null | false | "">}
+ */
+const isPresent = (value) => Boolean(value);
+/**
+ * @template T
+ * @param {T[]} values
+ * @returns {Exclude<T, undefined | null | false | "">[]}
+ */
+const unique = (values) => [...new Set(values.filter(isPresent))];
+/** @param {unknown} value */
 const anchor = (value) => String(value).replaceAll(/[^A-Za-z0-9_-]/g, "-");
+/** @param {AssessmentFact | undefined} fact */
 const symbolOf = (fact) => fact?.crossLanguageDefinitionId ?? fact?.identity;
+/** @param {Partial<DownstreamDimension>} dimension */
 const impactsOf = (dimension) => dimension.typeImpacts ?? dimension.sharedTypeImpacts ?? [];
-const rootsOf = (item) => unique(item.rootCauseIds ?? [item.rootCauseId]);
+/** @param {{rootCauseIds?: string[], rootCauseId?: string} | undefined} item */
+const rootsOf = (item) => unique(item?.rootCauseIds ?? [item?.rootCauseId]);
+/** @param {string | undefined} symbol */
 const shortName = (symbol) => String(symbol ?? "Unknown method").split(".").slice(-2).join(".");
 
+/**
+ * @param {SdkType | string | null | undefined} type
+ * @returns {string | undefined}
+ */
 export function sdkTypeName(type) {
   if (type === null) return "void";
   if (type === undefined) return "Not recorded";
@@ -19,6 +132,10 @@ export function sdkTypeName(type) {
   return type.name ?? type.id ?? type.kind ?? "unknown";
 }
 
+/**
+ * @param {AssessmentFact} method
+ * @param {NonNullable<AssessmentFact["parameters"]>[number]} parameter
+ */
 function parameterLocation(method, parameter) {
   const protocol = [
     ...(method?.operation?.parameters ?? []),
@@ -35,6 +152,7 @@ function parameterLocation(method, parameter) {
     : "location unknown";
 }
 
+/** @param {AssessmentFact | undefined} method */
 function methodInputs(method) {
   if (!method || !Array.isArray(method.parameters)) return "Not recorded";
   return method.parameters
@@ -43,11 +161,17 @@ function methodInputs(method) {
     .join("\n") || "No caller inputs";
 }
 
+/** @param {unknown} value */
 function displayValue(value) {
   return value === undefined ? "Not recorded" : typeof value === "string" ? value : JSON.stringify(value, null, 2);
 }
 
+/**
+ * @param {AssessmentMethodGroup} group
+ * @returns {ReportRow[]}
+ */
 function methodRows(group) {
+  /** @type {ReportRow[]} */
   const rows = [];
   if (!group.deltas?.some((delta) => delta.field === "parameters") && (group.before?.parameters || group.after?.parameters)) {
     rows.push({ area: "SDK method", label: "Normalized input order", before: methodInputs(group.before), after: methodInputs(group.after) });
@@ -60,7 +184,8 @@ function methodRows(group) {
       rows.push({ area: "SDK method", label: "Normalized input order", before: methodInputs(group.before), after: methodInputs(group.after), detail: delta.rationale });
     } else if (delta.field === "parameters" && delta.changes) {
       // Older reports sometimes contain deltas but no complete method facts.
-      const signature = (parameter) => `${parameter.name}${parameter.optional ? "?" : ""} (location unknown): ${sdkTypeName(parameter.type)}`;
+        /** @param {NonNullable<AssessmentFact["parameters"]>[number]} parameter */
+        const signature = (parameter) => `${parameter.name}${parameter.optional ? "?" : ""} (location unknown): ${sdkTypeName(parameter.type)}`;
       rows.push(
         ...(delta.changes.added ?? []).map(({ parameter }) => ({ area: "Method parameter", label: parameter.name, before: "not present", after: signature(parameter) })),
         ...(delta.changes.removed ?? []).map(({ parameter }) => ({ area: "Method parameter", label: parameter.name, before: signature(parameter), after: "removed" })),
@@ -70,7 +195,11 @@ function methodRows(group) {
     } else if (delta.field !== "responseType") {
       rows.push({
         area: "SDK method",
-        label: { kind: "Method kind", lro: "Long-running behavior", paging: "Paging" }[delta.field] ?? delta.field ?? delta.rule,
+        label: /** @type {Record<string, string>} */ ({
+          kind: "Method kind",
+          lro: "Long-running behavior",
+          paging: "Paging",
+        })[delta.field ?? ""] ?? delta.field ?? delta.rule,
         before: displayValue(delta.before), after: displayValue(delta.after), detail: delta.rationale,
       });
     }
@@ -78,15 +207,27 @@ function methodRows(group) {
   const responseDelta = group.deltas?.find((delta) => delta.field === "responseType");
   rows.push({
     area: "SDK method", label: "Return type (body output)",
-    before: sdkTypeName(group.before && "responseType" in group.before ? group.before.responseType : responseDelta?.before),
-    after: sdkTypeName(group.after && "responseType" in group.after ? group.after.responseType : responseDelta?.after),
+    before: sdkTypeName(group.before && "responseType" in group.before ? group.before.responseType : sdkTypeValue(responseDelta?.before)),
+    after: sdkTypeName(group.after && "responseType" in group.after ? group.after.responseType : sdkTypeValue(responseDelta?.after)),
   });
   return rows;
+}
+
+/** @param {unknown} value */
+function sdkTypeValue(value) {
+  return typeof value === "string" || value === null || value === undefined ||
+    (typeof value === "object" && !Array.isArray(value))
+    ? value
+    : undefined;
 }
 
 /**
  * Raw graph enrichment is opt-in. IDs alone are insufficient: verify the recorded
  * facts and candidates before using edges from another artifact.
+ */
+/**
+ * @param {Partial<DownstreamDimension>} dimension
+ * @param {DownstreamAnalysis | undefined} raw
  */
 export function validateDownstreamInput(dimension, raw) {
   if (!raw) return;
@@ -103,12 +244,13 @@ export function validateDownstreamInput(dimension, raw) {
   }
   for (const finding of findings) {
     const evidence = finding.evidence ?? [];
-    const ids = finding.evidenceFactIds ?? evidence.map((fact) => fact.id).filter(Boolean);
+    const ids = finding.evidenceFactIds ?? unique(evidence.map((fact) => fact.id));
     if (rootsOf(finding).length && !ids.length) {
       throw new Error(`Downstream input cannot verify evidence for ${finding.id}.`);
     }
     for (const id of rootsOf(finding)) {
       const root = roots.get(id);
+      if (!root) throw new Error(`Downstream input snapshot mismatch: missing root ${id}.`);
       if (![...(root.directCandidateIds ?? []), ...(root.propagatedCandidateIds ?? [])].includes(finding.id)) {
         throw new Error(`Downstream input snapshot mismatch: root ${id} has no matching confirmed finding ${finding.id}.`);
       }
@@ -129,6 +271,7 @@ export function validateDownstreamInput(dimension, raw) {
   for (const impact of impactsOf(dimension)) {
     for (const id of rootsOf(impact)) {
       const root = roots.get(id);
+      if (!root) throw new Error(`Downstream input snapshot mismatch: missing root ${id}.`);
       const rootCandidates = new Set([...(root.directCandidateIds ?? []), ...(root.propagatedCandidateIds ?? [])]);
       if (!(impact.findingIds ?? []).some((findingId) => rootCandidates.has(findingId))) {
         throw new Error(`Downstream input snapshot mismatch: root ${id} has no matching confirmed finding.`);
@@ -137,6 +280,11 @@ export function validateDownstreamInput(dimension, raw) {
   }
 }
 
+/**
+ * @param {AssessmentOutput} assessment
+ * @param {{downstreamAssessment?: AssessmentOutput, downstreamInput?: DownstreamAnalysis}} [options]
+ * @returns {DownstreamDimension}
+ */
 export function downstreamPresentationDimension(assessment, options = {}) {
   const dimension = assessment.dimensions.downstream;
   const replay = options.downstreamAssessment;
@@ -155,7 +303,12 @@ export function downstreamPresentationDimension(assessment, options = {}) {
   if (findings.length !== replayFindings.length || replayById.size !== findings.length) {
     throw new Error("Downstream assessment provenance mismatch: finding coverage.");
   }
-  const withoutRoots = ({ rootCauseIds, ...finding }) => finding;
+  /** @param {AssessmentFinding} finding */
+  const withoutRoots = (finding) => {
+    const result = { ...finding };
+    delete result.rootCauseIds;
+    return result;
+  };
   for (const finding of findings) {
     const matched = replayById.get(finding.id);
     if (!matched || !isDeepStrictEqual(withoutRoots(finding), withoutRoots(matched))) {
@@ -164,6 +317,7 @@ export function downstreamPresentationDimension(assessment, options = {}) {
   }
   // Replace only presentation root associations. All judgments, facts, grouping,
   // method contracts and semantic relationships still come from the input.
+  /** @type {DownstreamDimension} */
   const presentation = {
     ...dimension,
     findings: findings.map((finding) => ({
@@ -180,28 +334,44 @@ export function downstreamPresentationDimension(assessment, options = {}) {
   return presentation;
 }
 
+/**
+ * @param {AssessmentTypeImpact} impact
+ * @param {string} type
+ * @param {DownstreamAnalysis | undefined} raw
+ */
 function mappedPaths(impact, type, raw) {
   if (!raw) return [];
+  /** @type {Map<string, {
+   *   symbol: string,
+   *   projectId?: string,
+   *   paths: ReferencePath[]
+   * }>} */
   const result = new Map();
   const rootIds = new Set(rootsOf(impact));
   for (const cause of raw.rootCauses.filter((root) => rootIds.has(root.id))) {
     const edges = cause.referenceEvidence ?? [];
     for (const methodId of cause.methodFactIds ?? []) {
       const method = raw.facts[methodId];
-      if (method?.factKind !== "method" || !symbolOf(method)) continue;
+      const methodSymbol = symbolOf(method);
+      if (method?.factKind !== "method" || !methodSymbol) continue;
       for (const start of edges.filter((edge) => edge.fromFactId === methodId)) {
+        if (!start.toFactId) continue;
+        /** @type {{id: string, path: DownstreamRootCauseReference[]}[]} */
         const queue = [{ id: start.toFactId, path: [start] }];
+        /** @type {Set<string>} */
         const visited = new Set();
         while (queue.length) {
           const current = queue.shift();
+          if (!current) break;
           if (visited.has(current.id)) continue;
           visited.add(current.id);
           const fact = raw.facts[current.id];
           if (!fact || fact.projectId !== method.projectId || fact.comparisonRole !== method.comparisonRole ||
               fact.sourceCommit !== method.sourceCommit || fact.apiVersion !== method.apiVersion) continue;
           if (symbolOf(fact) === type) {
-            const key = `${method.projectId ?? ""}:${symbolOf(method)}`;
-            const mapping = result.get(key) ?? { symbol: symbolOf(method), projectId: method.projectId, paths: [] };
+            const key = `${method.projectId ?? ""}:${methodSymbol}`;
+            /** @type {{symbol: string, projectId?: string, paths: ReferencePath[]}} */
+            const mapping = result.get(key) ?? { symbol: methodSymbol, projectId: method.projectId, paths: [] };
             mapping.paths.push({
               location: start.location,
               role: method.comparisonRole ?? "unavailable",
@@ -211,7 +381,11 @@ function mappedPaths(impact, type, raw) {
             break;
           }
           for (const edge of edges) {
-            if (edge.fromFactId === current.id && edge.location === start.location) {
+            if (
+              edge.fromFactId === current.id &&
+              edge.toFactId &&
+              edge.location === start.location
+            ) {
               queue.push({ id: edge.toFactId, path: [...current.path, edge] });
             }
           }
@@ -225,6 +399,10 @@ function mappedPaths(impact, type, raw) {
   }));
 }
 
+/**
+ * @param {AssessmentFinding} finding
+ * @param {string} [kind]
+ */
 function factPair(finding, kind) {
   const facts = (finding.evidence ?? []).filter((fact) => !kind || fact.factKind === kind);
   return {
@@ -233,7 +411,13 @@ function factPair(finding, kind) {
   };
 }
 
+/**
+ * @param {string} type
+ * @param {AssessmentFinding[]} findings
+ * @returns {ReportRow[]}
+ */
 function typeRows(type, findings) {
+  /** @type {ReportRow[]} */
   const rows = [];
   for (const finding of findings) {
     const { before, after } = factPair(finding);
@@ -244,13 +428,15 @@ function typeRows(type, findings) {
       const current = after?.properties?.find((property) => property.name === name);
       rows.push({ area: "SDK type member", label: name, before: previous ? `${sdkTypeName(previous.type)}${previous.optional ? "?" : ""}` : finding.expected, after: current ? sdkTypeName(current.type) : "removed" });
     } else if (finding.rule === "public-surface-changed") {
+      /** @param {AssessmentFact | undefined} fact */
       const surface = (fact) => fact
-        ? `access: ${fact.access ?? "not recorded"} · reachable: ${fact.reachable ?? "not recorded"} · usage: ${fact.usage ?? "not recorded"}`
+        ? `access: ${fact.access ?? "not recorded"} · reachable: ${fact.reachable ?? "not recorded"} · usage: ${String(fact.usage ?? "not recorded")}`
         : "Not recorded";
       rows.push({ area: "SDK type availability", label: type.split(".").at(-1), before: surface(before), after: surface(after) });
       rows.push({ area: "SDK type contract", label: type.split(".").at(-1), before: finding.expected, after: finding.actual });
     } else if (before?.factKind === "enum" && after?.factKind === "enum") {
       if (before.isFixed !== after.isFixed || before.isUnionAsEnum !== after.isUnionAsEnum) {
+        /** @param {AssessmentFact} fact */
         const shape = (fact) => fact.isFixed ? "Fixed enum" : fact.isUnionAsEnum ? "Extensible enum" : "Enum";
         rows.push({ area: "Enum shape", label: type, before: shape(before), after: shape(after) });
       }
@@ -273,16 +459,28 @@ function typeRows(type, findings) {
   return [...new Map(rows.map((row) => [JSON.stringify(row), row])).values()];
 }
 
+/**
+ * @param {Partial<DownstreamDimension>} [dimension]
+ * @param {DownstreamAnalysis} [raw]
+ */
 export function downstreamMethodData(dimension = {}, raw) {
   validateDownstreamInput(dimension, raw);
+  /** @type {MethodPresentation[]} */
   const methods = [];
+  /** @type {Map<string, MethodPresentation>} */
   const aliases = new Map();
+  /**
+   * @param {string | undefined} projectId
+   * @param {string} symbol
+   */
   const key = (projectId, symbol) => `${projectId ?? ""}:${symbol}`;
+  /** @param {MethodPresentation} method */
   const addMethod = (method) => {
     methods.push(method);
     for (const alias of method.aliases) aliases.set(key(method.projectId, alias), method);
     return method;
   };
+  /** @type {Set<string>} */
   const groupedFindings = new Set();
   for (const group of dimension.methodGroups ?? dimension.operationGroups ?? []) {
     const symbol = symbolOf(group.after) ?? group.symbol ?? symbolOf(group.before) ?? group.id;
@@ -296,6 +494,7 @@ export function downstreamMethodData(dimension = {}, raw) {
       semanticIds: unique([...(group.relatedSemanticIntents ?? []), ...(dimension.findings ?? []).filter((finding) => findingIds.includes(finding.id)).flatMap((finding) => finding.relatedSemanticIntents ?? [])]),
     });
   }
+  /** @type {TypePresentation[]} */
   const types = [];
   const represented = new Set(groupedFindings);
   for (const impact of impactsOf(dimension)) {
@@ -312,6 +511,7 @@ export function downstreamMethodData(dimension = {}, raw) {
         symbol: item.symbol, projectId: impact.projectId, paths: [],
       }))];
       const findingIntentIds = unique(findings.flatMap((finding) => finding.relatedSemanticIntents ?? []));
+      /** @type {TypePresentation} */
       const item = {
         id: impact.id, type, findings, rows: typeRows(type, findings), mapped,
         anchorId: `downstream-type-${anchor(`${impact.projectId ?? ""}:${type}`)}`,
@@ -345,11 +545,16 @@ export function downstreamMethodData(dimension = {}, raw) {
   return { methods: methods.sort((a, b) => a.name.localeCompare(b.name)), types, unmapped: types.filter((type) => !type.mapped.length) };
 }
 
-export function documentQualitySummary(dimension = {}) {
+/** @param {DocumentQualityDimension} [dimension] */
+export function documentQualitySummary(dimension = {
+  status: "not-assessed",
+  summary: "Documentation Completeness is not assessed.",
+}) {
   const coverage = dimension.coverage;
   const findingCount = dimension.findings?.length ?? 0;
   const findingStatus = findingCount ? "failed" : "passed";
-  const completeness = [4, 5].includes(dimension.assessmentVersion);
+  const assessmentVersion = dimension.assessmentVersion ?? 0;
+  const completeness = [4, 5].includes(assessmentVersion);
   const assessedCount = completeness
     ? coverage?.declarationCount
     : coverage?.assessedDocumentCount;
@@ -386,7 +591,7 @@ export function documentQualitySummary(dimension = {}) {
   }
   const detail = [
     `${dimension.findings?.length ?? 0} findings`,
-    ...(dimension.assessmentVersion >= 2
+    ...(assessmentVersion >= 2
       ? [`${coverage.assessedDocumentCount}/${coverage.documentCount} descriptions assessed`]
       : [`${coverage.assessedCheckCount}/${coverage.checkCount} checks assessed`,
         `${coverage.assessedDocumentCount}/${coverage.documentCount} descriptions assessed`]),
@@ -395,7 +600,7 @@ export function documentQualitySummary(dimension = {}) {
   const units = dimension.intentAssessments ?? [];
   const checks = units.flatMap((item) => item.checks ?? []);
   const passes = checks.filter((check) => check.decision === "pass").length;
-  detail.push(`${passes} ${dimension.assessmentVersion >= 2 ? "descriptions" : "legacy checks"} passed`);
+  detail.push(`${passes} ${assessmentVersion >= 2 ? "descriptions" : "legacy checks"} passed`);
   const unreviewed = units.reduce((total, item) => total + (item.documents ?? []).filter((document) =>
     !(item.checks ?? []).some((check) => check.documentId === document.id) &&
     !(dimension.findings ?? []).some((finding) => finding.reviewUnitId === item.reviewUnitId && finding.documentId === document.id)).length, 0);
@@ -409,6 +614,7 @@ export function documentQualitySummary(dimension = {}) {
   return { status, label, findingStatus, detail: detail.join(" · "), compactDetail };
 }
 
+/** @param {string} [source] */
 function declarationIncludesDoc(source = "") {
   // Only leading decorator applications belong to this declaration, not nested or quoted @doc text.
   let position = 0;
@@ -453,15 +659,20 @@ function declarationIncludesDoc(source = "") {
   return false;
 }
 
-export function renderDocumentQuality(dimension = {}, helpers) {
-  const { escapeHtml: escape, sectionHead, status, count, summary, affectedIntents, intentLinks, intentTitle, intentSources } = helpers;
+/**
+ * @param {DocumentQualityDimension} dimension
+ * @param {DocumentRenderHelpers} helpers
+ */
+export function renderDocumentQuality(dimension, helpers) {
+  const { escapeHtml: escape, sectionHead, status, summary, affectedIntents, intentLinks, intentTitle, intentSources } = helpers;
   const presentation = documentQualitySummary(dimension);
+  const assessmentVersion = dimension.assessmentVersion ?? 0;
   const findings = dimension.findings ?? [];
   const assessments = dimension.intentAssessments ?? [];
-  if ([4, 5].includes(dimension.assessmentVersion)) {
+  if ([4, 5].includes(assessmentVersion)) {
     const cards = findings.map((finding) => {
-      const declaration = finding.declaration ?? {};
-      const source = declaration.source;
+      const declaration = finding.declaration;
+      const source = declaration?.source;
       const location = source
         ? `${finding.sources?.[0]?.path ?? "Source"}:${source.startLine}-${source.endLine}`
         : "Source location unavailable";
@@ -470,13 +681,13 @@ export function renderDocumentQuality(dimension = {}, helpers) {
         ? `<details class="report-subdetails document-quality-source"><summary>View TypeSpec declaration missing a description</summary><p class="sources"><code>${escape(`${snippet.path}:${snippet.startLine}-${snippet.endLine}`)}</code>${snippet.truncated ? " · first 40 lines shown" : ""}</p><pre><code>${escape(snippet.lines.join("\n"))}</code></pre></details>`
         : "";
       return `<details class="report-card document-quality-check" id="document-quality-${anchor(finding.id)}">${summary(
-        escape(declaration.qualifiedName ?? finding.title),
+        escape(declaration?.qualifiedName ?? finding.title),
         escape(finding.title),
         status("failed"),
         affectedIntents(finding.semanticIntentIds ?? [finding.reviewUnitId]),
       )}<div class="report-card-body">${sourceCode}<div class="report-guideline-section document-quality-explanation"><h3>Why this needs attention</h3><p>${escape(finding.actual)}</p></div><div class="report-guideline-section document-quality-suggestion"><h3>Suggested change</h3><p>${escape(finding.expected)}</p></div>${sourceCode ? "" : `<details class="report-subdetails document-quality-source"><summary>View supporting TypeSpec location</summary><p class="sources"><code>${escape(location)}</code></p></details>`}</div></details>`;
     }).join("");
-    const description = dimension.assessmentVersion >= 5
+    const description = assessmentVersion >= 5
       ? "Checks only whether newly added operation, model, enum, and interface declarations have a nonempty effective TypeSpec description."
       : "Checks only whether each changed compiler declaration has a nonempty effective TypeSpec document. Documentation text is not compared with code.";
     return {
@@ -484,13 +695,19 @@ export function renderDocumentQuality(dimension = {}, helpers) {
       appendixHtml: "",
     };
   }
+  /** @param {string | undefined} check */
   const checkName = (check) => check === "description" ? "Description explains code"
     : check === "correctness" ? "Correctness (legacy)" : check === "meaning" ? "Meaning (legacy)" : "Recorded check";
+  /** @param {DocumentationDocument | undefined} document */
   const identity = (document) => {
     const name = document?.qualifiedName ?? "Document identity unavailable";
-    const short = name.split(".").slice(["property", "operation", "enum-member", "union-variant", "scalar-constructor"].includes(document?.kind) ? -2 : -1).join(".");
+    const short = name.split(".").slice(["property", "operation", "enum-member", "union-variant", "scalar-constructor"].includes(document?.kind ?? "") ? -2 : -1).join(".");
     return `<span title="${escape(name)}">${escape(short)}</span>`;
   };
+  /**
+   * @param {DocumentationSnapshot | null | undefined} value
+   * @param {string} side
+   */
   const snapshot = (value, side) => {
     if (!value) return `<div class="report-document-snapshot"><h4>${side}</h4><p class="report-small">No ${side.toLowerCase()} snapshot recorded.</p></div>`;
     const source = value.source;
@@ -499,9 +716,15 @@ export function renderDocumentQuality(dimension = {}, helpers) {
     const includesDoc = !inherited && declarationIncludesDoc(value.declaration);
     return `<div class="report-document-snapshot"><h4>${side}</h4><p class="sources"><code>${escape(location)}</code></p>${includesDoc ? "" : `<h5>${inherited ? "Compiler-resolved inherited description" : "Recorded description"}</h5><pre><code>${escape(value.doc)}</code></pre>`}<h5>${inherited ? "Exact associated declaration source" : includesDoc ? "Description and declaration" : "Declaration contract"}</h5><pre><code>${escape(value.declaration)}</code></pre></div>`;
   };
+  /**
+   * @param {DocumentationDocument} document
+   * @param {"before" | "after"} side
+   * @param {string} reviewUnitId
+   */
   const relatedTypes = (document, side, reviewUnitId) => {
     const documents = assessments.find((item) => item.reviewUnitId === reviewUnitId)?.documents ?? [];
     const sources = intentSources?.(reviewUnitId) ?? [];
+    /** @param {DocumentationDocument} item */
     const declarationFor = (item) => {
       const value = item[side];
       if (!value?.source) return;
@@ -513,42 +736,66 @@ export function renderDocumentQuality(dimension = {}, helpers) {
           (declaration.qualifiedName === item.qualifiedName || item.qualifiedName?.endsWith(`.${declaration.qualifiedName}`)));
       return matches.length === 1 ? matches[0] : undefined;
     };
-    const references = new Set(declarationFor(document)?.compilerEvidence.referencedNames ?? []);
+    const references = new Set(declarationFor(document)?.compilerEvidence?.referencedNames ?? []);
     if (!references.size) return "";
+    const documentSnapshot = document[side];
+    if (!documentSnapshot) return "";
     const candidates = documents.filter((item) =>
-      item.id !== document.id && item[side]?.source?.revision === document[side]?.source?.revision &&
+      item.id !== document.id && item[side]?.source?.revision === documentSnapshot.source?.revision &&
       ["model", "enum", "union", "scalar", "alias"].includes(item.kind))
-      .map((item) => ({ document: item, declaration: declarationFor(item) }))
-      .filter((item) => item.declaration);
+      .flatMap((item) => {
+        const declaration = declarationFor(item);
+        return declaration ? [{ document: item, declaration }] : [];
+      });
     // Compiler names in historical artifacts can omit namespaces. Never guess an ambiguous target.
-    const related = candidates.filter((item) => references.has(item.declaration.qualifiedName) &&
-      candidates.filter((other) => other.declaration.qualifiedName === item.declaration.qualifiedName).length === 1 &&
-      !(item.document[side].source.path === document[side].source.path &&
-        item.document[side].source.startLine >= document[side].source.startLine &&
-        item.document[side].source.endLine <= document[side].source.endLine));
+    const related = candidates.filter((item) => {
+      const itemSnapshot = item.document[side];
+      return references.has(item.declaration.qualifiedName) &&
+        candidates.filter((other) => other.declaration.qualifiedName === item.declaration.qualifiedName).length === 1 &&
+        itemSnapshot !== null &&
+        !(itemSnapshot.source.path === documentSnapshot.source.path &&
+          itemSnapshot.source.startLine >= documentSnapshot.source.startLine &&
+          itemSnapshot.source.endLine <= documentSnapshot.source.endLine);
+    });
     if (!related.length) return "";
     return `<div class="report-document-related"><h4>Related type definitions</h4><p class="report-small">Compiler-recorded type references from this declaration, using retained evidence from the same intent and revision.</p>${related.map((item) =>
       `<div class="report-document-related-type"><h5>${escape(item.document.qualifiedName)}</h5>${snapshot(item.document[side], side === "before" ? "Referenced baseline declaration" : "Referenced current declaration")}</div>`,
     ).join("")}</div>`;
   };
+  /**
+   * @param {DocumentQualityCheck} check
+   * @param {DocumentationDocument | undefined} document
+   * @param {DocumentQualityFinding | undefined} finding
+   * @param {number} index
+   */
   const renderCheck = (check, document, finding, index) => {
     const decision = finding ? "failed" : check.decision === "pass" ? "passed" : check.decision === "fail" ? "failed" : "not-assessed";
     const id = finding ? `document-quality-${anchor(finding.id)}` : `document-check-${index}`;
     const title = finding?.title ?? check.title ?? `${checkName(check.check)}: ${document?.qualifiedName ?? "Documentation"}`;
     const expected = finding?.expected ?? check.expected;
     const rationale = finding?.rationale ?? check.rationale;
-    const sides = document ? ["before", "after"].filter((side) => document[side]) : [];
+    const sides = document
+      ? /** @type {const} */ (["before", "after"]).filter(
+          (side) => document[side],
+        )
+      : [];
+    /** @param {"before" | "after"} side */
+    const renderSide = (side) => {
+      if (!document) return "";
+      return `<div class="report-document-context">${snapshot(document[side], side === "before" ? "Before" : sides.length === 1 ? "Current declaration" : "After")}${relatedTypes(document, side, finding?.reviewUnitId ?? check.reviewUnitId)}</div>`;
+    };
     const actual = sides.length
-      ? `<div class="report-document-snapshots${sides.length === 1 ? " single-snapshot" : ""}">${sides.map((side) =>
-        `<div class="report-document-context">${snapshot(document[side], side === "before" ? "Before" : sides.length === 1 ? "Current declaration" : "After")}${relatedTypes(document, side, finding?.reviewUnitId ?? check.reviewUnitId)}</div>`,
-      ).join("")}</div>`
+      ? `<div class="report-document-snapshots${sides.length === 1 ? " single-snapshot" : ""}">${sides.map(renderSide).join("")}</div>`
       : `<p class="report-small">Document source snapshots unavailable.</p>${finding?.actual !== undefined ? `<h4>Recorded description evidence</h4><pre><code>${escape(finding.actual)}</code></pre>` : ""}`;
     const doc = document?.after?.doc;
     const quote = finding?.docQuote ?? check.docQuote;
     const position = typeof doc === "string" && typeof quote === "string" && quote.length ? doc.indexOf(quote) : -1;
-    const description = typeof doc === "string"
-      ? `<blockquote>${position < 0 ? escape(doc) : `${escape(doc.slice(0, position))}<mark>${escape(quote)}</mark>${escape(doc.slice(position + quote.length))}`}</blockquote>`
-      : '<p class="report-small">Current description evidence unavailable.</p>';
+    let description = '<p class="report-small">Current description evidence unavailable.</p>';
+    if (typeof doc === "string") {
+      description = position < 0 || typeof quote !== "string"
+        ? `<blockquote>${escape(doc)}</blockquote>`
+        : `<blockquote>${escape(doc.slice(0, position))}<mark>${escape(quote)}</mark>${escape(doc.slice(position + quote.length))}</blockquote>`;
+    }
     const grouped = assessments.some((item) => item.reviewUnitId === (finding?.reviewUnitId ?? check.reviewUnitId));
     const relatedIntents = unique([finding?.reviewUnitId, check.reviewUnitId, ...(finding?.semanticIntentIds ?? [])])
       .filter((id) => !grouped || id !== (finding?.reviewUnitId ?? check.reviewUnitId));
@@ -557,8 +804,14 @@ export function renderDocumentQuality(dimension = {}, helpers) {
       status(decision), relatedIntents.length ? affectedIntents(relatedIntents) : "",
     )}<div class="report-card-body"><div class="document-quality-current document-quality-document-body"><div class="document-quality-description-heading"><h3>Current description</h3><span class="report-small">${document?.after?.documentationOrigin === "inherited" ? "Compiler-resolved inherited description" : "Compiler-resolved"}</span></div>${description}</div>${rationale ? `<div class="report-guideline-section document-quality-explanation"><h3>Why this needs attention</h3><p>${escape(rationale)}</p></div>` : ""}${expected ? `<div class="report-guideline-section document-quality-suggestion"><h3>Suggested change</h3><p>${escape(expected)}</p></div>` : ""}<details class="report-subdetails document-quality-source"><summary>View supporting TypeSpec and source evidence</summary>${actual}</details></div></details>`;
   };
+  /** @type {Set<string>} */
   const checkedFindings = new Set();
   let index = 0;
+  /**
+   * @param {DocumentQualityCheck} check
+   * @param {DocumentationDocument | undefined} document
+   * @param {DocumentQualityFinding | undefined} finding
+   */
   const card = (check, document, finding) => {
     const reviewUnitId = finding?.reviewUnitId ?? check.reviewUnitId;
     return { reviewUnitId, html: renderCheck(check, document, finding, index++) };
@@ -576,6 +829,10 @@ export function renderDocumentQuality(dimension = {}, helpers) {
     const document = finding.document ?? assessments.find((item) => item.reviewUnitId === finding.reviewUnitId)?.documents?.find((item) => item.id === finding.documentId);
     cards.push(card(finding, document, finding));
   }
+  /**
+   * @param {number} value
+   * @param {string} noun
+   */
   const counted = (value, noun) => `${value} ${noun}${value === 1 ? "" : "s"}`;
   const mainCards = assessments.map((item) => {
     const failures = cards.filter((entry) => entry.reviewUnitId === item.reviewUnitId);
@@ -587,7 +844,7 @@ export function renderDocumentQuality(dimension = {}, helpers) {
   }).join("");
   const orphanCards = cards.filter((entry) => !assessments.some((item) => item.reviewUnitId === entry.reviewUnitId)).map((entry) => entry.html).join("");
   const criterion = DOCUMENT_QUALITY_CRITERION.replace("@doc description", "description");
-  const legacy = dimension.coverage && !(dimension.assessmentVersion >= 2)
+  const legacy = dimension.coverage && !(assessmentVersion >= 2)
     ? "Legacy assessment: separate description Correctness and Meaning checks. " : "";
   const description = `${criterion} ${legacy}Examples, external documentation, and agent execution are not assessed.`;
   return {
@@ -596,6 +853,11 @@ export function renderDocumentQuality(dimension = {}, helpers) {
   };
 }
 
+/**
+ * @param {AssessmentOutput} assessment
+ * @param {ReportRenderHelpers} helpers
+ * @param {{downstreamAssessment?: AssessmentOutput, downstreamInput?: DownstreamAnalysis}} [options]
+ */
 export function renderReportSections(assessment, helpers, options = {}) {
   const { escapeHtml: escape, operationContractRows, restContractDelta, findingMatchesOperation, complianceFindingGroups, complianceCode, renderSourceHunks, sourceLinks, legacyEvidence, contractAreaParts, directLegacyDownstreamFindings } = helpers;
   const { dimensions } = assessment;
@@ -603,33 +865,63 @@ export function renderReportSections(assessment, helpers, options = {}) {
   const intentById = new Map(items.map((item) => [item.id, item]));
   const downstream = downstreamMethodData(downstreamPresentationDimension(assessment, options), options.downstreamInput);
   const legacyDownstream = directLegacyDownstreamFindings(dimensions.downstream.legacyFindings ?? []);
+  /** @param {string | undefined} value */
   const status = (value) => `<span class="report-badge ${value === "passed" ? "add" : value === "failed" ? "remove" : "unknown"}">${escape(value?.replaceAll("-", " ") ?? "Not assessed")}</span>`;
+  /**
+   * @param {string} title
+   * @param {string} description
+   * @param {string} metadata
+   */
   const sectionHead = (title, description, metadata) => `<div class="report-section-head"><div><h2>${escape(title)}</h2><p>${escape(description)}</p></div><div class="report-section-meta">${metadata}</div></div>`;
+  /**
+   * @param {string} title
+   * @param {string} description
+   * @param {string} badges
+   * @param {string} [links]
+   */
   const summary = (title, description, badges, links = "") => `<summary><div class="report-card-title"><strong>${title}</strong><small>${description}</small>${links}</div><div class="report-badges">${badges}</div></summary>`;
+  /** @param {string} text */
   const count = (text) => `<span class="report-count">${escape(text)}</span>`;
-  const intentLinks = (ids) => unique(ids).filter((id) => intentById.has(id)).map((id) => `<a class="report-link" href="#intent-${anchor(id)}">${escape(intentById.get(id).title)}</a>`).join("");
+  /** @param {string[]} ids */
+  const intentLinks = (ids) => unique(ids).flatMap((id) => {
+    const intent = intentById.get(id);
+    return intent ? [`<a class="report-link" href="#intent-${anchor(id)}">${escape(intent.title)}</a>`] : [];
+  }).join("");
+  /** @param {string[]} ids */
   const affectedIntents = (ids) => {
     const known = unique(ids).filter((id) => intentById.has(id));
     return `<div class="report-intent-relations"><span class="report-relation-label">Affected intents (${known.length})</span><div class="report-link-row">${intentLinks(known) || '<span class="report-small">No linked semantic intent.</span>'}</div></div>`;
   };
+  /** @param {ReportRow[]} rows */
   const table = (rows) => {
     const changed = rows.filter((row) => escape(row.before) !== escape(row.after));
     if (!changed.length) return "";
     return `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody>${changed.map((row) => `<tr><td><span class="contract-area-kind">${escape(row.area ?? row.areaKind ?? "Contract")}</span><strong>${escape(row.label ?? row.member)}</strong>${row.model ? `<span class="report-small">Affected model: <code>${escape(row.model)}</code></span>` : ""}${row.detail ? `<span class="report-detail">${escape(row.detail)}</span>` : ""}</td><td><pre>${escape(row.before)}</pre></td><td><pre>${escape(row.after)}</pre></td></tr>`).join("")}</tbody></table></div>`;
   };
+  /** @type {Set<string>} */
   const emitted = new Set();
+  /** @param {string} id */
   const emitAnchor = (id) => {
     if (emitted.has(id)) return "";
     emitted.add(id);
     return `<span id="${escape(id)}"></span>`;
   };
+  /**
+   * @param {{id?: string}[]} findings
+   * @param {string} [prefix]
+   */
   const findingAnchors = (findings, prefix = "finding") => findings.map((finding) => emitAnchor(`${prefix}-${anchor(finding.id)}`)).join("");
+  /** @param {{rationale?: string}[]} findings */
   const rationale = (findings) => {
     const reasons = unique(findings.map((finding) => finding.rationale));
     if (!reasons.length) return "";
     const body = reasons.length === 1 ? escape(reasons[0]) : `<ul>${reasons.map((reason) => `<li>${escape(reason)}</li>`).join("")}</ul>`;
     return `<div class="breaking-rationale"><strong>Why this is breaking:</strong> ${body}</div>`;
   };
+  /**
+   * @param {LegacyAssessmentFinding} finding
+   * @param {boolean} [downstream]
+   */
   const legacyCard = (finding, downstream = false) => `<details class="report-card legacy-finding" id="${downstream ? "downstream" : "finding"}-${anchor(finding.id)}">${summary(
     escape(finding.title),
     escape(finding.summary),
@@ -638,14 +930,22 @@ export function renderReportSections(assessment, helpers, options = {}) {
   )}<div class="report-card-body"><p class="mapping-unavailable">${downstream ? "Normalized SDK method mapping" : "Normalized operation mapping"} unavailable in this historical finding; recorded evidence follows.</p>${legacyEvidence(finding.evidence ?? [])}</div></details>`;
 
   const restFindings = dimensions.rest.findings ?? [];
+  /** @type {Map<string, RestCard>} */
   const operations = new Map();
+  /** @param {ReportOperation} operation */
   const operationKey = (operation) => `${operation.projectId ?? ""}:${operation.operationId}:${operation.apiVersion ?? ""}`;
   for (const item of items) {
     for (const operation of item.operations ?? []) {
       const findings = restFindings.filter((finding) => findingMatchesOperation(finding, operation, item.id));
       if (!findings.length) continue;
       const key = operationKey(operation);
-      const entry = operations.get(key) ?? { operation, findings: [], semanticIds: [], key };
+      const entry = operations.get(key) ?? {
+        operation,
+        findings: [],
+        semanticIds: [],
+        key,
+        id: `rest-operation-${anchor(key)}`,
+      };
       entry.findings.push(...findings);
       entry.semanticIds.push(item.id, ...findings.flatMap((finding) => finding.relatedSemanticIntents ?? []));
       operations.set(key, entry);
@@ -656,9 +956,23 @@ export function renderReportSections(assessment, helpers, options = {}) {
     const facts = (finding.evidence ?? []).filter((fact) => fact.operationId);
     for (const operationId of finding.operationIds ?? []) {
       const fact = facts.find((fact) => fact.operationId === operationId && fact.comparisonRole === "target") ?? facts.find((fact) => fact.operationId === operationId);
-      const operation = fact ?? { operationId, projectId: finding.projectId };
+      /** @type {ReportOperation} */
+      const operation = {
+        operationId,
+        projectId: fact?.projectId ?? finding.projectId,
+        apiVersion: fact?.apiVersion,
+        method: fact?.method,
+        path: fact?.path,
+      };
       const key = operationKey(operation);
-      const entry = operations.get(key) ?? { operation, findings: [], semanticIds: [], key };
+      /** @type {RestCard} */
+      const entry = operations.get(key) ?? {
+        operation,
+        findings: [],
+        semanticIds: [],
+        key,
+        id: `rest-operation-${anchor(key)}`,
+      };
       entry.findings.push(finding);
       entry.semanticIds.push(...(finding.relatedSemanticIntents ?? []));
       operations.set(key, entry);
@@ -669,8 +983,8 @@ export function renderReportSections(assessment, helpers, options = {}) {
   for (const entry of restCards) {
     entry.findings = [...new Map(entry.findings.map((finding) => [finding.id, finding])).values()];
     entry.semanticIds = unique(entry.semanticIds);
-    entry.id = `rest-operation-${anchor(entry.key)}`;
   }
+  /** @param {RestCard} entry */
   const restRows = (entry) => entry.findings.map((finding) => {
     const row = restContractDelta(finding);
     const parts = contractAreaParts(row);
@@ -684,13 +998,31 @@ export function renderReportSections(assessment, helpers, options = {}) {
     restFindings.filter((finding) => !mappedRest.has(finding.id)).map((finding) => `<details class="report-card">${summary(escape(finding.rule), "Confirmed REST finding; operation mapping unavailable.", status("failed"), affectedIntents(finding.relatedSemanticIntents ?? []))}<div class="report-card-body">${findingAnchors([finding])}${table([{ area: "REST contract", label: finding.rule, before: finding.expected, after: finding.actual }])}${rationale([finding])}</div></details>`).join("") +
     (dimensions.rest.legacyFindings ?? []).map((finding) => legacyCard(finding)).join("");
 
+  /** @type {Record<string, string>} */
   const locations = { "request-query": "Input / query", "request-header": "Input / header", "request-body": "Input / body", "request-path": "Input / path", "response-header": "Output / header", "response-body": "Output / body" };
+  /**
+   * @param {TypePresentation} type
+   * @param {ReferencePath[]} [paths]
+   */
   const typeContent = (type, paths) => `<div class="report-type-impact">${emitAnchor(type.anchorId)}${emitAnchor(`downstream-${anchor(type.id)}`)}${findingAnchors(type.findings, "downstream")}${findingAnchors(type.findings)}<h4>${escape(type.type.split(".").at(-1))}</h4><p class="report-small"><code>${escape(type.type)}</code></p>${paths?.length
-    ? `<p class="report-small">Representative method paths from recorded graph edges:</p><div class="report-reference-paths">${paths.map((item) => `<div class="report-reference-path"><span>${escape(locations[item.location] ?? "Location unavailable")}</span><code>${escape(item.path)}</code><span>${escape(item.role)} evidence</span></div>`).join("")}</div>`
+    ? `<p class="report-small">Representative method paths from recorded graph edges:</p><div class="report-reference-paths">${paths.map((item) => `<div class="report-reference-path"><span>${escape(locations[item.location ?? ""] ?? "Location unavailable")}</span><code>${escape(item.path)}</code><span>${escape(item.role)} evidence</span></div>`).join("")}</div>`
     : '<p class="mapping-unavailable">Precise method path, location and baseline/target role unavailable. Aggregate root locations are not method-specific evidence.</p>'}${table(type.rows)}${rationale(type.findings)}</div>`;
   const downstreamBody = downstream.methods.map((method) => {
     const groupAnchors = method.group ? emitAnchor(`downstream-${anchor(method.group.id)}`) + method.findingIds.map((id) => emitAnchor(`downstream-${anchor(id)}`) + emitAnchor(`finding-${anchor(id)}`)).join("") : "";
-    const constants = ["before", "after"].flatMap((side) => (method.group?.[side]?.operation?.parameters ?? []).filter((parameter) => parameter.kind === "header" && parameter.type?.kind === "constant").map((parameter) => `${side === "before" ? "Baseline" : "Target"}: ${parameter.serializedName ?? parameter.name} (header): ${JSON.stringify(parameter.type.value)}`));
+    const constants = /** @type {const} */ (["before", "after"]).flatMap(
+      (side) =>
+        (method.group?.[side]?.operation?.parameters ?? [])
+          .filter(
+            (parameter) =>
+              parameter.kind === "header" &&
+              typeof parameter.type !== "string" &&
+              parameter.type?.kind === "constant",
+          )
+          .map(
+            (parameter) =>
+              `${side === "before" ? "Baseline" : "Target"}: ${parameter.serializedName ?? parameter.name} (header): ${JSON.stringify(typeof parameter.type === "string" ? undefined : parameter.type?.value)}`,
+          ),
+    );
     const description = method.group ? "The normalized SDK method contract changes directly." : "The method uses changed SDK types; its top-level signature need not change.";
     return `<details class="report-card sdk-method-card" id="${method.id}">${summary(escape(method.name), escape(description), `<span class="report-badge ${method.cause}">${method.cause === "mixed" ? "Mixed: direct + type change" : method.cause === "direct" ? "Direct method change" : "Indirect type change"}</span>`, affectedIntents(method.semanticIds))}<div class="report-card-body">${groupAnchors}<p class="report-small"><strong>${method.group?.after ? "Target normalized SDK method" : "Recorded normalized SDK method"}:</strong> <code>${escape(method.symbol)}</code></p>${method.rows.length ? table(method.rows) : ""}${constants.length ? `<p class="report-small"><strong>Constant headers (not numbered caller inputs):</strong> ${constants.map(escape).join("; ")}</p>` : ""}${method.group ? rationale(method.group.deltas ?? []) : ""}${method.types.map(({ type, paths }) => typeContent(type, paths)).join("")}<p class="report-small">Language-neutral TCGC evidence is shown; generated language signatures are not fabricated.</p></div></details>`;
   }).join("") + downstream.unmapped.map((type) => `<details class="report-card sdk-contract-card">${summary(escape(type.type.split(".").at(-1)), "Confirmed SDK type finding retained without a deterministic SDK method mapping.", '<span class="report-badge unknown">Method mapping unavailable</span>', affectedIntents(type.semanticIds))}<div class="report-card-body">${typeContent(type)}</div></details>`).join("") +
@@ -700,8 +1032,17 @@ export function renderReportSections(assessment, helpers, options = {}) {
   const complianceFindings = [...(compliance.findings ?? []), ...(compliance.legacyFindings ?? [])];
   const guidelineCards = complianceFindingGroups(complianceFindings).map(({ findings }) => {
     const first = findings[0];
+    if (!first) return "";
     const ids = unique(findings.flatMap((finding) => [finding.semanticIntentId, ...(finding.relatedSemanticIntents ?? [])]));
     const gaps = unique(findings.map((finding) => finding.gap ?? finding.summary));
+    /** @type {Map<string, {
+     *   url: string,
+     *   title: string,
+     *   section?: string,
+     *   examples?: string[],
+     *   excerpts?: string[],
+     *   snippets?: unknown[]
+     * }>} */
     const guidance = new Map();
     for (const finding of findings) {
       const intent = compliance.intentAssessments?.find((item) => item.semanticIntentId === finding.semanticIntentId);
@@ -761,7 +1102,7 @@ export function renderReportSections(assessment, helpers, options = {}) {
     for (const finding of dimensions.rest.legacyFindings ?? []) {
       if (finding.relatedSemanticIntents?.includes(item.id) || related.rest?.includes(finding.id)) restLinks.push(`<a class="report-link impact" href="#finding-${anchor(finding.id)}">REST: ${escape(finding.title ?? finding.rule)}</a>`);
     }
-    const downstreamLinks = downstream.methods.filter((method) => method.semanticIds.includes(item.id) || related.downstream?.includes(method.group?.id)).map((method) => `<a class="report-link impact" href="#${method.id}">Downstream: ${escape(method.name)}</a>`);
+    const downstreamLinks = downstream.methods.filter((method) => method.semanticIds.includes(item.id) || (method.group !== undefined && related.downstream?.includes(method.group.id))).map((method) => `<a class="report-link impact" href="#${method.id}">Downstream: ${escape(method.name)}</a>`);
     for (const type of downstream.unmapped.filter((type) => type.semanticIds.includes(item.id))) downstreamLinks.push(`<a class="report-link impact" href="#${type.anchorId}">Downstream: ${escape(type.type.split(".").at(-1))} (SDK type)</a>`);
     for (const finding of legacyDownstream) {
       if (finding.relatedSemanticIntents?.includes(item.id) || related.downstream?.includes(finding.id)) downstreamLinks.push(`<a class="report-link impact" href="#downstream-${anchor(finding.id)}">Downstream: ${escape(finding.title ?? finding.rule)}</a>`);

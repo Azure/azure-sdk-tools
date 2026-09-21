@@ -13,8 +13,25 @@ import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { reportSection } from "./report-test-utils.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 
-test("validator rejects passed dimensions with blockers", () => {
-  const errors = validateAssessment({
+/** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
+/** @typedef {import("./runtime-types.js").AssessmentJudgment} AssessmentJudgment */
+/** @typedef {import("./runtime-types.js").AssessmentMethodGroup} AssessmentMethodGroup */
+/** @typedef {import("./runtime-types.js").AssessmentOutput} AssessmentOutput */
+/** @typedef {import("./runtime-types.js").ComplianceDecision} ComplianceDecision */
+
+/**
+ * Treat the assembler's inferred return shape as its public output contract.
+ * @param {Parameters<typeof assembleAssessment>[0]} options
+ * @returns {AssessmentOutput}
+ */
+function assembleTestAssessment(options) {
+  return /** @type {AssessmentOutput} */ (
+    /** @type {unknown} */ (assembleAssessment(options))
+  );
+}
+
+void test("validator rejects passed dimensions with blockers", () => {
+  const malformedAssessment = {
     schemaVersion: 1,
     safety: { scope: "rest-and-downstream-only", status: "safe" },
     dimensions: {
@@ -41,7 +58,12 @@ test("validator rejects passed dimensions with blockers", () => {
       documentQuality: { status: "not-assessed" },
     },
     blockers: [],
-  });
+  };
+  const errors = validateAssessment(
+    /** @type {AssessmentOutput} */ (
+      /** @type {unknown} */ (malformedAssessment)
+    ),
+  );
 
   assert.ok(errors.includes("REST status must be not-assessed."));
 });
@@ -140,7 +162,7 @@ function fixture() {
   return work;
 }
 
-test("assembly retains mapped operations without treating paging metadata as a wire change", () => {
+void test("assembly retains mapped operations without treating paging metadata as a wire change", () => {
   for (const wireField of [undefined, "responses", "produces"]) {
     const work = fixture();
     try {
@@ -167,19 +189,22 @@ test("assembly retains mapped operations without treating paging metadata as a w
       writeJson(path.join(work, "dimensions", "rest-breaking-input.json"), {
         status: "ready", facts: {}, candidates: [], blockers: [],
       });
-      const result = assembleAssessment({ work, judgment: {
+      const result = assembleTestAssessment({ work, judgment: {
         schemaVersion: 1, overallConfidence: "high", blockers: [],
         semanticIntents: [{ reviewUnitId: "semantic-1", title: "Mark outbound rules as paged", summary: "Add SDK paging metadata." }],
         restDecisions: [], downstreamDecisions: [], complianceDecisions: [],
       } });
       const operations = result.dimensions.semantic.items[0].operations;
       assert.equal(operations.length, 1);
-      assert.equal(operations[0].operationId, "OutboundRules_Post");
-      assert.equal(operations[0].restChanged, Boolean(wireField));
-      assert.ok(operations[0].changedAspects.includes("paging"));
-      if (wireField) assert.match(operations[0].outcome, /REST contract changed:/);
+      const operation = operations[0];
+      assert.ok(operation);
+      assert.equal(operation.operationId, "OutboundRules_Post");
+      assert.equal(operation.restChanged, Boolean(wireField));
+      assert.ok(operation.changedAspects?.includes("paging"));
+      assert.ok(operation.outcome);
+      if (wireField) assert.match(operation.outcome, /REST contract changed:/);
       else {
-        assert.match(operations[0].outcome, /HTTP signature and represented payload contract unchanged; SDK paging metadata changed/);
+        assert.match(operation.outcome, /HTTP signature and represented payload contract unchanged; SDK paging metadata changed/);
         const html = renderAssessmentHtml(result);
         assert.match(html, /Affected operations \(1\)/);
         assert.match(html, /OutboundRules_Post/);
@@ -191,7 +216,7 @@ test("assembly retains mapped operations without treating paging metadata as a w
   }
 });
 
-test("assembler restores API-version-wide intents without candidate decisions", () => {
+void test("assembler restores API-version-wide intents without candidate decisions", () => {
   const work = fixture();
   try {
     const semanticPath = path.join(
@@ -199,7 +224,10 @@ test("assembler restores API-version-wide intents without candidate decisions", 
       "dimensions",
       "semantic-intents-input.json",
     );
-    const semantic = readJson(semanticPath);
+    const semantic =
+      /** @type {{reviewUnits: Record<string, unknown>[]}} */ (
+        readJson(semanticPath)
+      );
     semantic.reviewUnits = [
       {
         id: "semantic-version-wide",
@@ -236,7 +264,7 @@ test("assembler restores API-version-wide intents without candidate decisions", 
       inputAccounting: {},
     });
 
-    const result = assembleAssessment({
+    const result = assembleTestAssessment({
       work,
       judgment: {
         schemaVersion: 1,
@@ -269,6 +297,7 @@ test("assembler restores API-version-wide intents without candidate decisions", 
   }
 });
 
+/** @param {string} work @returns {ComplianceDecision[]} */
 function addComplianceInput(work) {
   const request = {
     reviewUnitId: "semantic-1",
@@ -422,9 +451,9 @@ function inferenceModelInput() {
   };
 }
 
-test("assembler joins confirmed evidence and derives scoped safety", () => {
+void test("assembler joins confirmed evidence and derives scoped safety", () => {
   const work = fixture();
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -466,6 +495,7 @@ test("assembler joins confirmed evidence and derives scoped safety", () => {
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
+/** @returns {AssessmentJudgment} */
 function documentJudgment() {
   return {
     schemaVersion: 1,
@@ -482,9 +512,13 @@ function documentJudgment() {
   };
 }
 
+/** @param {string} work @param {boolean} documentationPresent */
 function addDocumentInput(work, documentationPresent) {
   const semanticPath = path.join(work, "dimensions", "semantic-intents-input.json");
-  const semantic = readJson(semanticPath);
+  const semantic =
+    /** @type {{reviewUnits: {declarationIds: string[]}[]}} */ (
+      readJson(semanticPath)
+    );
   semantic.reviewUnits[0].declarationIds = ["declaration-1"];
   writeJson(semanticPath, semantic);
   const declaration = {
@@ -496,7 +530,10 @@ function addDocumentInput(work, documentationPresent) {
     source: { revision: "current", startLine: 1, endLine: 2 },
   };
   const sourceIndexPath = path.join(work, "source", "source-index.json");
-  const sourceIndex = readJson(sourceIndexPath);
+  const sourceIndex =
+    /** @type {{sourceChanges: {declarations: unknown[], documentEvidence?: unknown}[]}} */ (
+      readJson(sourceIndexPath)
+    );
   sourceIndex.sourceChanges[0].declarations = [{
     id: "declaration-1",
     qualifiedName: "Contoso.Widget",
@@ -509,9 +546,15 @@ function addDocumentInput(work, documentationPresent) {
     schemaVersion: 4,
     status: "ready",
     blockers: [],
-    declarations: [{ ...declaration, sourceChangeId: undefined }].map(
-      ({ sourceChangeId: _sourceChangeId, ...item }) => item,
-    ),
+    declarations: [
+      {
+        declarationId: declaration.declarationId,
+        qualifiedName: declaration.qualifiedName,
+        kind: declaration.kind,
+        documentationPresent: declaration.documentationPresent,
+        source: declaration.source,
+      },
+    ],
   };
   writeJson(sourceIndexPath, sourceIndex);
   writeJson(path.join(work, "dimensions", "document-quality-input.json"), {
@@ -524,20 +567,24 @@ function addDocumentInput(work, documentationPresent) {
   });
 }
 
-test("assembler derives missing documentation without changing REST/downstream safety", () => {
+void test("assembler derives missing documentation without changing REST/downstream safety", () => {
   const work = fixture();
   try {
     addDocumentInput(work, false);
     const judgment = documentJudgment();
-    const assessment = assembleAssessment({ work, judgment });
-    assert.equal(assessment.dimensions.documentQuality.status, "failed");
-    assert.equal(assessment.dimensions.documentQuality.assessmentVersion, 4);
-    assert.equal(assessment.dimensions.documentQuality.coverage.missingDeclarationCount, 1);
-    assert.match(assessment.dimensions.documentQuality.findings[0].title, /Missing documentation/);
+    const assessment = assembleTestAssessment({ work, judgment });
+    const documentQuality = assessment.dimensions.documentQuality;
+    assert.equal(documentQuality.status, "failed");
+    assert.equal(documentQuality.assessmentVersion, 4);
+    assert.ok(documentQuality.coverage);
+    assert.equal(documentQuality.coverage.missingDeclarationCount, 1);
+    assert.ok(documentQuality.findings);
+    assert.match(documentQuality.findings[0].title, /Missing documentation/);
     assert.equal(assessment.safety.status, "passed");
+    assert.ok(assessment.provenance);
     assert.equal(assessment.provenance.documentQuality, "dimensions/document-quality-input.json");
     assert.deepEqual(validateAssessment(assessment), []);
-    assessment.dimensions.documentQuality.findings = [];
+    documentQuality.findings = [];
     assert.ok(validateAssessment(assessment).some((error) => error.includes("Document Quality")));
     assessment.dimensions.documentQuality = { status: "not-assessed", summary: "Pretend legacy input." };
     assert.ok(validateAssessment(assessment).some((error) => error.includes("canonical provenance")));
@@ -546,32 +593,47 @@ test("assembler derives missing documentation without changing REST/downstream s
   }
 });
 
-test("assembler rejects Agent-authored documentation decisions", () => {
+void test("assembler rejects Agent-authored documentation decisions", () => {
   const work = fixture();
   try {
     const judgment = documentJudgment();
-    assert.equal(assembleAssessment({ work, judgment }).dimensions.documentQuality.status, "not-assessed");
-    judgment.documentQualityDecisions = [];
-    assert.throws(() => assembleAssessment({ work, judgment }), /unknown fields: documentQualityDecisions/);
+    assert.equal(assembleTestAssessment({ work, judgment }).dimensions.documentQuality.status, "not-assessed");
+    const malformedJudgment = {
+      ...judgment,
+      documentQualityDecisions: [],
+    };
+    assert.throws(
+      () => assembleTestAssessment({
+        work,
+        judgment: /** @type {AssessmentJudgment} */ (
+          /** @type {unknown} */ (malformedJudgment)
+        ),
+      }),
+      /unknown fields: documentQualityDecisions/,
+    );
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
 });
 
-test("compiler documentation presence flows through assembly, validation, and HTML", () => {
+void test("compiler documentation presence flows through assembly, validation, and HTML", () => {
   const work = fixture();
   try {
     addDocumentInput(work, false);
     const judgment = documentJudgment();
     judgment.complianceDecisions = addComplianceInput(work).map((decision) => {
-      const { title: _title, severity: _severity, ...pass } = decision;
+      const pass = { ...decision };
+      delete pass.title;
+      delete pass.severity;
       return {
         ...pass, decision: "applicable-pass",
         actual: "The source model satisfies the selected model guidance.",
         rationale: "The applicable model guidance is satisfied.",
       };
     });
-    const modelInput = readJson(path.join(work, "model-input.json"));
+    const modelInput = /** @type {AssessmentModelInput} */ (
+      readJson(path.join(work, "model-input.json"))
+    );
     if (modelInput.inferenceRequests?.length) {
       writeJson(path.join(work, "inference.json"), {
         schemaVersion: 1,
@@ -584,18 +646,22 @@ test("compiler documentation presence flows through assembly, validation, and HT
     }
     assert.equal(modelInput.documentQualityReviewUnits, undefined);
     assert.equal(modelInput.documentQualityCriterion, undefined);
-    const assessment = assembleAssessment({ work, judgment });
+    const assessment = assembleTestAssessment({ work, judgment });
     assert.deepEqual(validateAssessment(assessment), []);
-    assert.equal(assessment.dimensions.documentQuality.status, "failed");
-    assert.equal(assessment.dimensions.documentQuality.assessmentVersion, 4);
-    assert.equal(assessment.dimensions.documentQuality.coverage.declarationCount, 1);
+    const documentQuality = assessment.dimensions.documentQuality;
+    assert.equal(documentQuality.status, "failed");
+    assert.equal(documentQuality.assessmentVersion, 4);
+    assert.ok(documentQuality.coverage);
+    assert.equal(documentQuality.coverage.declarationCount, 1);
     assert.equal(assessment.dimensions.rest.status, "passed");
     assert.equal(assessment.dimensions.downstream.status, "passed");
     assert.equal(assessment.dimensions.compliance.status, "passed");
     assert.equal(assessment.safety.status, "passed");
-    const finding = assessment.dimensions.documentQuality.findings[0];
+    assert.ok(documentQuality.findings);
+    const finding = documentQuality.findings[0];
     assert.equal(finding.declarationId, "declaration-1");
     assert.match(finding.actual, /returned no nonempty documentation/);
+    assert.ok(finding.sources);
     assert.equal(finding.sources[0].id, "source-1");
     assert.equal(finding.sources[0].path, "specification/a/main.tsp");
     assert.equal(finding.sources[0].hunks, undefined);
@@ -603,7 +669,7 @@ test("compiler documentation presence flows through assembly, validation, and HT
     assert.match(html, /Documentation Completeness/);
     assert.match(html, /Missing documentation for Contoso\.Widget/);
     fs.rmSync(path.join(work, "dimensions", "document-quality-input.json"));
-    const legacy = assembleAssessment({ work, judgment });
+    const legacy = assembleTestAssessment({ work, judgment });
     assert.deepEqual(validateAssessment(legacy), []);
     assert.equal(legacy.dimensions.documentQuality.status, "not-assessed");
     assert.equal(Object.keys(legacy.dimensions.documentQuality).length, 2);
@@ -613,11 +679,11 @@ test("compiler documentation presence flows through assembly, validation, and HT
   }
 });
 
-test("assembler rejects incomplete candidate coverage", () => {
+void test("assembler rejects incomplete candidate coverage", () => {
   const work = fixture();
   assert.throws(
     () =>
-      assembleAssessment({
+      assembleTestAssessment({
         work,
         judgment: {
           schemaVersion: 1,
@@ -639,12 +705,12 @@ test("assembler rejects incomplete candidate coverage", () => {
   );
 });
 
-test("assembler requires inference output for uncovered hunk requests", () => {
+void test("assembler requires inference output for uncovered hunk requests", () => {
   const work = fixture();
   writeJson(path.join(work, "model-input.json"), inferenceModelInput());
   assert.throws(
     () =>
-      assembleAssessment({
+      assembleTestAssessment({
         work,
         judgment: {
           schemaVersion: 1,
@@ -673,7 +739,7 @@ test("assembler requires inference output for uncovered hunk requests", () => {
   );
 });
 
-test("assembler validates and joins inferred candidates", () => {
+void test("assembler validates and joins inferred candidates", () => {
   const work = fixture();
   writeJson(path.join(work, "model-input.json"), inferenceModelInput());
   writeJson(path.join(work, "inference.json"), {
@@ -705,7 +771,7 @@ test("assembler validates and joins inferred candidates", () => {
       },
     ],
   });
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -749,11 +815,12 @@ test("assembler validates and joins inferred candidates", () => {
     ["inference-request-1"],
   );
   assert.equal(assessment.dimensions.downstream.findings[0].evidence.length, 1);
+  assert.ok(assessment.provenance);
   assert.equal(assessment.provenance.inference, "inference.json");
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
-test("blocked inference makes scoped safety not assessed", () => {
+void test("blocked inference makes scoped safety not assessed", () => {
   const work = fixture();
   writeJson(path.join(work, "model-input.json"), inferenceModelInput());
   writeJson(path.join(work, "inference.json"), {
@@ -769,7 +836,7 @@ test("blocked inference makes scoped safety not assessed", () => {
       },
     ],
   });
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -797,14 +864,16 @@ test("blocked inference makes scoped safety not assessed", () => {
   assert.equal(assessment.dimensions.rest.status, "not-assessed");
   assert.equal(assessment.dimensions.downstream.status, "not-assessed");
   assert.equal(assessment.safety.status, "not-assessed");
-  assert.equal(assessment.blockers[0].code, "inference-blocked");
+  const blocker = assessment.blockers[0];
+  assert.ok(blocker && typeof blocker === "object" && "code" in blocker);
+  assert.equal(blocker.code, "inference-blocked");
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
-test("assembler requires and joins active Azure Guidelines evidence", () => {
+void test("assembler requires and joins active Azure Guidelines evidence", () => {
   const work = fixture();
   const complianceDecisions = addComplianceInput(work);
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -830,10 +899,9 @@ test("assembler requires and joins active Azure Guidelines evidence", () => {
   });
   assert.equal(assessment.dimensions.compliance.status, "failed");
   assert.equal(assessment.dimensions.compliance.findings.length, 1);
-  assert.equal(
-    assessment.dimensions.compliance.sharedSearch.documents.length,
-    4,
-  );
+  const compliance = assessment.dimensions.compliance;
+  assert.equal(compliance.sharedSearch?.documents?.length, 4);
+  assert.ok(assessment.provenance);
   assert.equal(
     assessment.provenance.complianceSearchEvidence,
     "compliance-search-evidence.json",
@@ -841,11 +909,14 @@ test("assembler requires and joins active Azure Guidelines evidence", () => {
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
-test("assembler treats no applicable guidance as assessed and links its intent", () => {
+void test("assembler treats no applicable guidance as assessed and links its intent", () => {
   const work = fixture();
   const complianceDecisions = addComplianceInput(work);
   const evidencePath = path.join(work, "compliance-search-evidence.json");
-  const evidence = readJson(evidencePath);
+  const evidence =
+    /** @type {{rankedDocuments: {guidance: unknown[], noRelevantGuidance: boolean}[], inputAccounting: Record<string, number>}} */ (
+      readJson(evidencePath)
+    );
   for (const document of evidence.rankedDocuments) {
     document.guidance = [];
     document.noRelevantGuidance = true;
@@ -863,7 +934,7 @@ test("assembler treats no applicable guidance as assessed and links its intent",
     actual: "The intent uses a generator-specific decorator.",
     rationale: "None of the fetched documents governs this decorator.",
   };
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -908,7 +979,7 @@ test("assembler treats no applicable guidance as assessed and links its intent",
   assert.doesNotMatch(complianceHtml, /<code>semantic-1<\/code>/);
 });
 
-test("aggregates direct SDK deltas by method without REST operation links", () => {
+void test("aggregates direct SDK deltas by method without REST operation links", () => {
   const work = fixture();
   const before = {
     id: "sdk-before",
@@ -934,6 +1005,7 @@ test("aggregates direct SDK deltas by method without REST operation links", () =
       logicalResult: { kind: "model", name: "Widget" },
     },
   };
+  /** @param {string} id @param {string} rule */
   const candidate = (id, rule) => ({
     id,
     rule,
@@ -953,7 +1025,7 @@ test("aggregates direct SDK deltas by method without REST operation links", () =
     ],
     blockers: [],
   });
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -997,32 +1069,40 @@ test("aggregates direct SDK deltas by method without REST operation links", () =
     },
   });
 
-  assert.equal(assessment.dimensions.downstream.methodGroups.length, 1);
+  const methodGroups = assessment.dimensions.downstream.methodGroups;
+  assert.ok(methodGroups);
+  assert.equal(methodGroups.length, 1);
+  const group = methodGroups[0];
+  assert.ok(group);
   assert.equal(
-    assessment.dimensions.downstream.methodGroups[0].deltas.length,
+    group.deltas.length,
     3,
   );
   assert.equal(
-    assessment.dimensions.downstream.methodGroups[0].parametersUnchanged,
+    group.parametersUnchanged,
     true,
   );
   assert.equal(
-    assessment.dimensions.downstream.methodGroups[0].deltas[0].before,
+    group.deltas[0].before,
     "basic",
   );
   assert.equal(
-    assessment.dimensions.downstream.methodGroups[0].deltas[0].after,
+    group.deltas[0].after,
     "lro",
   );
+  const relatedFindings =
+    assessment.dimensions.semantic.items[0].relatedFindings;
+  assert.ok(relatedFindings);
   assert.deepEqual(
-    assessment.dimensions.semantic.items[0].relatedFindings.downstream,
-    [assessment.dimensions.downstream.methodGroups[0].id],
+    relatedFindings.downstream,
+    [group.id],
   );
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
-test("assembles changed-only parameters and suppresses URI-template-only LRO deltas", () => {
+void test("assembles changed-only parameters and suppresses URI-template-only LRO deltas", () => {
   const work = fixture();
+  /** @param {string} name @param {string} kind @param {boolean} [optional] */
   const parameter = (name, kind, optional = false) => ({
     name,
     optional,
@@ -1071,6 +1151,7 @@ test("assembles changed-only parameters and suppresses URI-template-only LRO del
       },
     },
   };
+  /** @param {string} id @param {string} rule */
   const candidate = (id, rule) => ({
     id,
     rule,
@@ -1089,7 +1170,7 @@ test("assembles changed-only parameters and suppresses URI-template-only LRO del
     ],
     blockers: [],
   });
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -1127,14 +1208,22 @@ test("assembles changed-only parameters and suppresses URI-template-only LRO del
     },
   });
 
-  const group = assessment.dimensions.downstream.methodGroups[0];
+  const methodGroups = assessment.dimensions.downstream.methodGroups;
+  assert.ok(methodGroups);
+  const group = methodGroups[0];
+  assert.ok(group);
   assert.equal(assessment.dimensions.downstream.findings.length, 1);
   assert.equal(group.deltas.length, 1);
   assert.equal(group.deltas[0].field, "parameters");
   assert.equal(group.deltas[0].before, undefined);
   assert.equal(group.deltas[0].after, undefined);
+  const parameterChanges =
+    /** @type {NonNullable<AssessmentMethodGroup["deltas"][number]["changes"]>} */ (
+      group.deltas[0].changes
+    );
+  assert.ok(parameterChanges);
   assert.deepEqual(
-    group.deltas[0].changes.added.map((item) => item.parameter),
+    (parameterChanges.added ?? []).map((item) => item.parameter),
     [
       {
         name: "afcManagedSync",
@@ -1145,11 +1234,11 @@ test("assembles changed-only parameters and suppresses URI-template-only LRO del
       },
     ],
   );
-  assert.equal(group.deltas[0].changes.unchangedCount, 3);
+  assert.equal(parameterChanges.unchangedCount, 3);
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
-test("assembles SDK type impacts from deterministic method paths", () => {
+void test("assembles SDK type impacts from deterministic method paths", () => {
   const work = fixture();
   const before = {
     id: "sdk-type-before",
@@ -1219,7 +1308,7 @@ test("assembles SDK type impacts from deterministic method paths", () => {
     ],
     blockers: [],
   });
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -1251,25 +1340,35 @@ test("assembles SDK type impacts from deterministic method paths", () => {
     },
   });
 
-  assert.equal(assessment.dimensions.downstream.typeImpacts.length, 1);
-  const impact = assessment.dimensions.downstream.typeImpacts[0];
+  const typeImpacts = assessment.dimensions.downstream.typeImpacts;
+  assert.ok(typeImpacts);
+  assert.equal(typeImpacts.length, 1);
+  const impact = typeImpacts[0];
+  assert.ok(impact);
   assert.equal(impact.type, "Contoso.Widget");
   assert.deepEqual(impact.locations, ["response-body"]);
+  assert.ok(impact.affectedMethods);
   assert.deepEqual(
     impact.affectedMethods.map((item) => item.symbol),
     ["Contoso.Widgets.get"],
   );
+  const relatedFindings =
+    assessment.dimensions.semantic.items[0].relatedFindings;
+  assert.ok(relatedFindings);
   assert.deepEqual(
-    assessment.dimensions.semantic.items[0].relatedFindings.typeImpact,
+    relatedFindings.typeImpact,
     [impact.id],
   );
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
-test("uses only version-governance hunks for legacy publication operations", () => {
+void test("uses only version-governance hunks for legacy publication operations", () => {
   const work = fixture();
   const manifestPath = path.join(work, "preparation-manifest.json");
-  const manifest = readJson(manifestPath);
+  const manifest =
+    /** @type {{projects: {id: string, path: string, sourceChangeIds: string[]}[]}} */ (
+      readJson(manifestPath)
+    );
   manifest.projects = [
     {
       id: "project-1",
@@ -1284,7 +1383,10 @@ test("uses only version-governance hunks for legacy publication operations", () 
   ];
   writeJson(manifestPath, manifest);
   const sourceIndexPath = path.join(work, "source", "source-index.json");
-  const sourceIndex = readJson(sourceIndexPath);
+  const sourceIndex =
+    /** @type {{sourceChanges: {id: string, path?: string, hunks: {id: string}[], declarations: {id: string, kind: string, qualifiedName: string, hunkIds: string[], source: {revision: "current", startLine: number, endLine: number}}[]}[]}} */ (
+      readJson(sourceIndexPath)
+    );
   sourceIndex.sourceChanges[0].declarations = [
     {
       id: "version-declaration",
@@ -1314,7 +1416,10 @@ test("uses only version-governance hunks for legacy publication operations", () 
     "dimensions",
     "semantic-intents-input.json",
   );
-  const semantic = readJson(semanticPath);
+  const semantic =
+    /** @type {{facts: Record<string, {projectId?: string}>, reviewUnits: {sourceChangeIds: string[], hunkIds: string[], groupingEvidence?: {reasons: string[]}}[]}} */ (
+      readJson(semanticPath)
+    );
   semantic.facts["operation-1"].projectId = "project-1";
   semantic.reviewUnits[0].sourceChangeIds = ["source-1", "source-unrelated"];
   semantic.reviewUnits[0].hunkIds = ["hunk-1", "hunk-unrelated"];
@@ -1323,7 +1428,7 @@ test("uses only version-governance hunks for legacy publication operations", () 
   };
   writeJson(semanticPath, semantic);
 
-  const assessment = assembleAssessment({
+  const assessment = assembleTestAssessment({
     work,
     judgment: {
       schemaVersion: 1,
@@ -1350,6 +1455,7 @@ test("uses only version-governance hunks for legacy publication operations", () 
 
   const operationSources =
     assessment.dimensions.semantic.items[0].operations[0].sources;
+  assert.ok(operationSources);
   assert.deepEqual(
     operationSources.map((source) => source.id),
     ["source-1"],
@@ -1360,7 +1466,7 @@ test("uses only version-governance hunks for legacy publication operations", () 
   );
 });
 
-test("matches type findings to semantic intents by changed declaration identity", () => {
+void test("matches type findings to semantic intents by changed declaration identity", () => {
   const semanticItems = [
     {
       id: "semantic-file-items",
@@ -1389,12 +1495,20 @@ test("matches type findings to semantic intents by changed declaration identity"
     },
   ];
 
+  const finding =
+    /** @type {Parameters<typeof matchTypeFindingIntents>[0]} */ (
+      /** @type {unknown} */ ({
+        crossLanguageDefinitionId: "Storage.File.FileItem",
+        evidence: [],
+      })
+    );
+  const semanticItemFixtures =
+    /** @type {Parameters<typeof matchTypeFindingIntents>[1]} */ (
+      /** @type {unknown} */ (semanticItems)
+    );
   const matches = matchTypeFindingIntents(
-    {
-      crossLanguageDefinitionId: "Storage.File.FileItem",
-      evidence: [],
-    },
-    semanticItems,
+    finding,
+    semanticItemFixtures,
   );
 
   assert.deepEqual(

@@ -2,16 +2,39 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { isRecord, readJsonObject } from "./cli.mjs";
 import { readRevisionFile, unifiedDiff } from "./git-evidence.mjs";
 
+/** @typedef {import("./runtime-types.js").CompilerApi} CompilerApi */
+/** @typedef {import("./runtime-types.js").CompilerProgram} CompilerProgram */
+/** @typedef {import("./runtime-types.js").CompilerType} CompilerType */
+/** @typedef {import("./runtime-types.js").DiffHunk} DiffHunk */
+/** @typedef {import("./runtime-types.js").ResourceModel} ResourceModel */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+/** @typedef {import("./runtime-types.js").SourceDeclaration} SourceDeclaration */
+/** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
+/** @typedef {import("./runtime-types.js").SourceRevision} SourceRevision */
+/** @typedef {import("./runtime-types.js").ReferencedDeclaration} ReferencedDeclaration */
+
 // Raw revision text is process-local: never serialize whole files into model evidence.
+/** @type {WeakMap<SourceIndex, Map<string, {base: string | null, current: string | null}>>} */
 const revisionSources = new WeakMap();
 
+/**
+ * @param {string} prefix
+ * @param {string} value
+ * @returns {string}
+ */
 function id(prefix, value) {
   return `${prefix}-${crypto.createHash("sha256").update(value).digest("hex").slice(0, 16)}`;
 }
 
+/**
+ * @param {string} diff
+ * @returns {DiffHunk[]}
+ */
 export function parseUnifiedHunks(diff) {
+  /** @type {DiffHunk[]} */
   const hunks = [];
   const lines = diff.split(/\r?\n/);
   for (let index = 0; index < lines.length; index += 1) {
@@ -37,9 +60,15 @@ export function parseUnifiedHunks(diff) {
   return hunks;
 }
 
+/**
+ * @param {DiffHunk} hunk
+ * @param {SourceRevision} revision
+ * @returns {number[]}
+ */
 function changedLines(hunk, revision) {
   let baseLine = hunk.base.startLine;
   let currentLine = hunk.current.startLine;
+  /** @type {number[]} */
   const lines = [];
   for (const line of hunk.lines) {
     if (line.startsWith("-") && !line.startsWith("---")) {
@@ -56,6 +85,13 @@ function changedLines(hunk, revision) {
   return lines;
 }
 
+/**
+ * @param {DiffHunk[]} hunks
+ * @param {SourceRevision} revision
+ * @param {number} startLine
+ * @param {number} endLine
+ * @returns {DiffHunk[]}
+ */
 function changedHunks(hunks, revision, startLine, endLine) {
   return hunks.filter((hunk) =>
     changedLines(hunk, revision).some(
@@ -64,6 +100,11 @@ function changedHunks(hunks, revision, startLine, endLine) {
   );
 }
 
+/**
+ * @param {string | null} content
+ * @param {number} startLine
+ * @returns {number}
+ */
 function declarationPrefixStart(content, startLine) {
   if (!content || startLine <= 1) return startLine;
   const lines = content.split(/\r?\n/);
@@ -79,6 +120,12 @@ function declarationPrefixStart(content, startLine) {
   return prefixStart;
 }
 
+/**
+ * @param {string | null} content
+ * @param {number} startLine
+ * @param {number} endLine
+ * @param {number} [limit]
+ */
 function declarationSnippet(content, startLine, endLine, limit = 40) {
   if (!content) return undefined;
   const lines = content.split(/\r?\n/);
@@ -92,16 +139,31 @@ function declarationSnippet(content, startLine, endLine, limit = 40) {
   };
 }
 
+/**
+ * @param {string | null} content
+ * @param {DiffHunk[]} hunks
+ * @param {SourceRevision} revision
+ * @param {string} file
+ * @param {((file: string, revision: SourceRevision, start: number, end: number) => string | undefined) | undefined} linkFactory
+ * @returns {SourceDeclaration[]}
+ */
 function declarations(content, hunks, revision, file, linkFactory) {
   if (!content) return [];
   const lines = content.split(/\r?\n/);
   const pattern = /^\s*(?:extern\s+)?(model|scalar|enum|union|alias|interface|op)\s+([A-Za-z_]\w*)/;
+  /** @type {SourceDeclaration[]} */
   const results = [];
+  /** @type {{kind: string, name: string, startLine: number, endLine: number}[]} */
   const spans = [];
+  /**
+   * @param {number} startLine
+   * @param {number} [endLine]
+   */
   const relatedHunks = (startLine, endLine = startLine) => hunks.filter((hunk) => {
     const range = hunk[revision];
     return range && range.endLine >= startLine && range.startLine <= endLine;
   });
+  /** @param {number} line */
   const enclosingInterface = (line) => {
     for (let previous = line - 1; previous >= 0; previous -= 1) {
       const match = /^\s*interface\s+([A-Za-z_]\w*)/.exec(lines[previous]);
@@ -215,6 +277,19 @@ function declarations(content, hunks, revision, file, linkFactory) {
   return results;
 }
 
+/**
+ * @param {{
+ *   repo: string,
+ *   mergeBase: string,
+ *   headCommit: string,
+ *   changedFiles: {path: string, status: string, origins: string[]}[],
+ *   remoteUrl?: string,
+ *   currentRevision?: string,
+ *   readFile?: (revision: string, file: string) => string | null,
+ *   diffFile?: (file: string) => string
+ * }} options
+ * @returns {SourceIndex}
+ */
 export function buildSourceIndex({
   repo,
   mergeBase,
@@ -231,6 +306,7 @@ export function buildSourceIndex({
       currentRevision === "working" ? undefined : currentRevision,
     ),
 }) {
+  /** @type {Map<string, {base: string | null, current: string | null}>} */
   const texts = new Map();
   const sourceChanges = changedFiles.map((file) => {
     const base = readFile(mergeBase, file.path);
@@ -252,6 +328,7 @@ export function buildSourceIndex({
       id: id("hunk", `${file.path}:${hunk.id}`),
     }));
     const github = /github\.com[/:]([^/]+)\/([^/.]+)(?:\.git)?$/.exec(remoteUrl ?? "");
+    /** @type {((sourcePath: string, revision: SourceRevision, start: number, end: number) => string | undefined) | undefined} */
     const linkFactory = github
       ? (sourcePath, revision, start, end) => {
           if (revision === "current" && current !== head) return undefined;
@@ -272,6 +349,7 @@ export function buildSourceIndex({
       ],
     };
   });
+  /** @type {SourceIndex} */
   const result = {
     schemaVersion: 1,
     analysis: {
@@ -285,11 +363,36 @@ export function buildSourceIndex({
   return result;
 }
 
+/**
+ * @param {string} root
+ * @param {string} file
+ * @returns {string}
+ */
 function normalizedRelative(root, file) {
   return path.relative(root, file).replaceAll("\\", "/");
 }
 
+/**
+ * @template T
+ * @param {Map<string, T>} map
+ * @param {string} key
+ * @returns {T}
+ */
+function requiredMapValue(map, key) {
+  const value = map.get(key);
+  if (value === undefined) {
+    throw new Error(`Missing map entry: ${key}`);
+  }
+  return value;
+}
+
+/**
+ * @param {CompilerType} type
+ * @param {string} kind
+ * @returns {string | undefined}
+ */
 function semanticQualifiedName(type, kind) {
+  /** @param {unknown} value */
   const name = (value) =>
     typeof value === "string" || typeof value === "number" ? String(value) : undefined;
   const ownName = name(type.name);
@@ -306,9 +409,19 @@ function semanticQualifiedName(type, kind) {
   return owner ? `${owner}.${ownName}` : ownName;
 }
 
+/**
+ * @param {CompilerType} type
+ * @returns {string[]}
+ */
 function compilerReferences(type) {
+  /** @type {Set<string>} */
   const references = new Set();
+  /** @type {WeakSet<object>} */
   const visited = new WeakSet();
+  /**
+   * @param {CompilerType | undefined} value
+   * @param {number} [depth]
+   */
   const visit = (value, depth = 0) => {
     if (!value || typeof value !== "object" || visited.has(value) || depth > 8) return;
     visited.add(value);
@@ -321,6 +434,7 @@ function compilerReferences(type) {
       );
       if (name) references.add(name);
     }
+    /** @type {(CompilerType | undefined)[]} */
     const children = [];
     switch (value.kind) {
       case "Operation":
@@ -349,12 +463,25 @@ function compilerReferences(type) {
       default:
         break;
     }
-    children.filter(Boolean).forEach((child) => visit(child, depth + 1));
+    children
+      .filter((child) => child !== undefined)
+      .forEach((child) => visit(child, depth + 1));
   };
   visit(type);
   return [...references].sort();
 }
 
+/**
+ * @param {CompilerType} type
+ * @param {string} kind
+ * @param {SourceRevision} revision
+ * @param {string} root
+ * @param {SourceChange} source
+ * @param {string | null | undefined} sourceText
+ * @param {CompilerApi} compiler
+ * @param {CompilerProgram} program
+ * @returns {SourceDeclaration | undefined}
+ */
 function compilerDeclaration(
   type,
   kind,
@@ -365,6 +492,7 @@ function compilerDeclaration(
   compiler,
   program,
 ) {
+  const normalizedSourceText = sourceText ?? null;
   const location = compiler.getSourceLocation(type);
   if (!location?.file?.path || !Number.isInteger(location.pos) || !Number.isInteger(location.end)) {
     return undefined;
@@ -378,7 +506,7 @@ function compilerDeclaration(
   const hunkIds = changedHunks(
     source.hunks ?? [],
     revision,
-    declarationPrefixStart(sourceText, startLine),
+    declarationPrefixStart(normalizedSourceText, startLine),
     endLine,
   )
     .map((hunk) => hunk.id);
@@ -404,20 +532,55 @@ function compilerDeclaration(
     documentationPresent:
       typeof documentation === "string" && documentation.trim().length > 0,
     source: { revision, startLine, endLine },
-    sourceSnippet: declarationSnippet(sourceText, startLine, endLine),
+    sourceSnippet: declarationSnippet(normalizedSourceText, startLine, endLine),
   };
 }
 
+/**
+ * @param {unknown} value
+ * @returns {value is CompilerApi}
+ */
+function isCompilerApi(value) {
+  return isRecord(value)
+    && "NodeHost" in value
+    && typeof value.compile === "function"
+    && typeof value.navigateProgram === "function"
+    && typeof value.getSourceLocation === "function";
+}
+
+/**
+ * @param {string} worktree
+ * @returns {Promise<CompilerApi>}
+ */
 async function compilerModule(worktree) {
   const entry = path.join(worktree, "node_modules", "@typespec", "compiler", "dist", "src", "index.js");
   if (!fs.existsSync(entry)) throw new Error(`TypeSpec compiler not found: ${entry}`);
-  const compiler = await import(pathToFileURL(entry).href);
-  const packageJson = JSON.parse(fs.readFileSync(
-    path.join(worktree, "node_modules", "@typespec", "compiler", "package.json"), "utf8",
-  ));
-  return { ...compiler, compilerVersion: packageJson.version };
+  const loaded = /** @type {unknown} */ (await import(pathToFileURL(entry).href));
+  if (!isCompilerApi(loaded)) {
+    throw new TypeError(`Invalid TypeSpec compiler module: ${entry}`);
+  }
+  const packageJson = readJsonObject(
+    path.join(worktree, "node_modules", "@typespec", "compiler", "package.json"),
+  );
+  if (typeof packageJson.version !== "string") {
+    throw new TypeError(`Invalid TypeSpec compiler package metadata under ${worktree}.`);
+  }
+  return {
+    ...loaded,
+    compilerVersion: packageJson.version,
+  };
 }
 
+/**
+ * @param {{
+ *   sourceIndex: SourceIndex,
+ *   baseWorktree: string,
+ *   currentWorktree: string,
+ *   projects: string[],
+ *   loadCompiler?: (worktree: string) => CompilerApi | Promise<CompilerApi>
+ * }} options
+ * @returns {Promise<SourceIndex>}
+ */
 export async function addCompilerEvidence({
   sourceIndex,
   baseWorktree,
@@ -425,31 +588,45 @@ export async function addCompilerEvidence({
   projects,
   loadCompiler = compilerModule,
 }) {
+  /** @type {Map<string, Set<string>>} */
   const compiledDocumentSources = new Map(
     sourceIndex.sourceChanges.map((source) => [source.id, new Set()]),
   );
+  /** @type {Map<string, {revision: string, message: string}[]>} */
   const documentBlockers = new Map(sourceIndex.sourceChanges.map((source) => [source.id, []]));
+  /** @type {Map<string, SourceDeclaration[]>} */
   const declarations = new Map(sourceIndex.sourceChanges.map((source) => [source.id, []]));
+  /** @type {Record<string, ReferencedDeclaration>} */
   const referencedDeclarations = {};
+  /** @type {Record<string, ResourceModel>} */
   const resourceModels = {};
+  /** @type {{revision: string, project: string, operationCount: number, changedNameCount: number, matchedOperationCount: number}[]} */
   const operationProjectionStats = [];
+  /** @type {{revision: string, project?: string, message: string}[]} */
   const blockers = [];
+  /** @type {Set<string>} */
   const versions = new Set();
-  for (const [revision, worktree] of [["base", baseWorktree], ["current", currentWorktree]]) {
+  /** @type {[SourceRevision, string][]} */
+  const revisions = [["base", baseWorktree], ["current", currentWorktree]];
+  for (const [revision, worktree] of revisions) {
+    /** @type {CompilerApi} */
     let compiler;
     try {
       compiler = await loadCompiler(worktree);
       versions.add(compiler.compilerVersion ?? "unknown");
       if (typeof compiler.getDoc !== "function") {
         for (const source of sourceIndex.sourceChanges) {
-          documentBlockers.get(source.id).push({
+          requiredMapValue(documentBlockers, source.id).push({
             revision,
             message: "This TypeSpec compiler does not expose the required documentation resolution API.",
           });
         }
       }
     } catch (error) {
-      blockers.push({ revision, message: error.message });
+      blockers.push({
+        revision,
+        message: error instanceof Error ? error.message : String(error),
+      });
       continue;
     }
     for (const project of projects) {
@@ -475,14 +652,16 @@ export async function addCompilerEvidence({
           const raw = revisionSources.get(sourceIndex)?.get(source.path)?.[revision];
           if (raw === null) continue;
           if (raw !== undefined && raw !== script.file.text) {
-            documentBlockers.get(source.id).push({
+            requiredMapValue(documentBlockers, source.id).push({
               revision, message: "Compiled source differs from the captured changed revision.",
             });
             continue;
           }
-          compiledDocumentSources.get(source.id).add(revision);
+          requiredMapValue(compiledDocumentSources, source.id).add(revision);
         }
+        /** @type {CompilerType[]} */
         const operationTypes = [];
+        /** @type {Record<string, (type: CompilerType) => void>} */
         const listeners = {};
         for (const [event, kind] of [
           ["namespace", "namespace"],
@@ -499,23 +678,27 @@ export async function addCompilerEvidence({
           listeners[event] = (type) => {
             if (kind === "operation") operationTypes.push(type);
             if (kind === "model") {
+              /** @param {import("./runtime-types.js").CompilerDecorator} decorator */
               const decoratorName = (decorator) =>
                 decorator.decorator?.name ??
                 decorator.definition?.name ??
                 decorator.node?.target?.sv;
               const decorators = (type.decorators ?? [])
                 .map(decoratorName)
-                .filter(Boolean);
+                .filter((name) => name !== undefined);
               if (decorators.includes("$feature") || decorators.includes("$parentResource")) {
                 const location = compiler.getSourceLocation(type);
                 const qualifiedName = semanticQualifiedName(type, "model");
                 if (qualifiedName && location?.file?.path) {
+                  /** @type {ResourceModel} */
                   const model = {
                     name: qualifiedName,
                     revision,
                     project,
                     sourcePath: normalizedRelative(worktree, location.file.path),
-                    baseModel: type.baseModel?.name,
+                    baseModel: typeof type.baseModel?.name === "string"
+                      ? type.baseModel.name
+                      : undefined,
                     decorators,
                     parentResource: (type.decorators ?? [])
                       .find((decorator) => decoratorName(decorator) === "$parentResource")
@@ -536,7 +719,9 @@ export async function addCompilerEvidence({
                 compiler,
                 program,
               );
-              if (declaration) declarations.get(source.id).push(declaration);
+              if (declaration) {
+                requiredMapValue(declarations, source.id).push(declaration);
+              }
             }
           };
         }
@@ -566,6 +751,7 @@ export async function addCompilerEvidence({
           const end = location.file.getLineAndCharacterOfPosition(
             Math.max(location.pos, location.end - 1),
           );
+          /** @type {ReferencedDeclaration} */
           const declaration = {
             id: id("referenced-declaration", `${project}:${revision}:${qualifiedName}:${file}`),
             kind: "operation",
@@ -593,14 +779,18 @@ export async function addCompilerEvidence({
           matchedOperationCount,
         });
       } catch (error) {
-        blockers.push({ revision, project, message: error.message });
+        blockers.push({
+          revision,
+          project,
+          message: error instanceof Error ? error.message : String(error),
+        });
       }
       sourceIndex.referencedDeclarations = referencedDeclarations;
       sourceIndex.resourceModels = resourceModels;
     }
   }
   for (const source of sourceIndex.sourceChanges) {
-    const compiled = declarations.get(source.id);
+    const compiled = requiredMapValue(declarations, source.id);
     if (compiled.length) {
       const parsed = source.declarations ?? [];
       const merged = compiled.map((declaration) => {
@@ -627,6 +817,7 @@ export async function addCompilerEvidence({
           },
         };
       });
+      /** @type {Map<string, string[]>} */
       const identities = new Map();
       for (const declaration of merged) {
         const key = `${declaration.kind}:${declaration.qualifiedName}`;
@@ -652,14 +843,17 @@ export async function addCompilerEvidence({
                 ...declaration,
                 hunkIds: identities.get(
                   `${declaration.kind}:${declaration.qualifiedName}`,
-                ),
+                ) ?? [],
               },
         )
         .sort((left, right) => left.source.startLine - right.source.startLine);
     }
-    const evidenceBlockers = documentBlockers.get(source.id);
+    const evidenceBlockers = requiredMapValue(documentBlockers, source.id);
     const currentAbsent = source.status === "deleted";
-    if (!currentAbsent && !compiledDocumentSources.get(source.id).has("current")) {
+    if (
+      !currentAbsent
+      && !requiredMapValue(compiledDocumentSources, source.id).has("current")
+    ) {
       evidenceBlockers.push({
         revision: "current",
         message: "Changed source was not available in a successfully compiled TypeSpec program.",

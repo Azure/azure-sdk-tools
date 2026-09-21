@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { isMain, parseArgs, readJson, runMain } from "./cli.mjs";
+import { isMain, parseArgs, readJsonObject, runMain } from "./cli.mjs";
 import {
   atomicWriteJson,
   comparisonIdentity,
@@ -10,16 +10,36 @@ import {
 } from "./workflow-state.mjs";
 import { readComplianceCatalog } from "./compliance-assessment.mjs";
 
+/** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
+/** @typedef {import("./runtime-types.js").ComplianceSearchRequest} ComplianceSearchRequest */
+/** @typedef {import("./runtime-types.js").EvidenceSet} EvidenceSet */
+/** @typedef {import("./runtime-types.js").ModelInputItem} ModelInputItem */
+/** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
+
 const INDEX_FILE = "agent-workspace/agent-index.json";
 const DECISIONS_DRAFT = "agent-workspace/agent-decisions.draft.json";
 const DECISIONS_FILE = "agent-workspace/agent-decisions.json";
 
+/** @param {(string | undefined)[]} values */
 function unique(values) {
-  return [...new Set(values.filter(Boolean))].sort();
+  return [
+    ...new Set(
+      values.filter(
+        /** @returns {value is string} */ (value) => value !== undefined,
+      ),
+    ),
+  ].sort();
 }
 
+/**
+ * @param {AssessmentModelInput} modelInput
+ * @param {ModelInputItem} item
+ * @returns {EvidenceSet}
+ */
 function evidenceFor(modelInput, item) {
-  const evidence = modelInput.evidenceSets?.[item.evidenceSetId];
+  const evidence = item.evidenceSetId
+    ? modelInput.evidenceSets?.[item.evidenceSetId]
+    : undefined;
   if (!evidence) {
     throw new Error(
       `Missing evidence set ${item.evidenceSetId ?? "<missing>"} for ${item.id ?? item.reviewUnitId ?? item.requestId}.`,
@@ -28,6 +48,7 @@ function evidenceFor(modelInput, item) {
   return evidence;
 }
 
+/** @param {AssessmentModelInput} modelInput */
 function validateBoundedEvidence(modelInput) {
   const referencedFactIds = unique(
     [
@@ -44,17 +65,31 @@ function validateBoundedEvidence(modelInput) {
   }
 }
 
+/**
+ * @param {string} root
+ * @param {AssessmentModelInput} modelInput
+ * @returns {Map<string, string[]>}
+ */
 function declarationNamesByIntent(root, modelInput) {
   if (!modelInput.complianceSearchRequests.length) return new Map();
-  const requests = readJson(
+  const requestsValue = readJsonObject(
     resolveWorkPath(
       root,
       modelInput.artifactReferences.complianceSearchRequests,
     ),
   ).requests;
-  const sourceChanges = readJson(
-    resolveWorkPath(root, modelInput.artifactReferences.sourceIndex),
-  ).sourceChanges;
+  if (!Array.isArray(requestsValue)) {
+    throw new Error("Compliance search requests must contain a requests array.");
+  }
+  const requests = /** @type {ComplianceSearchRequest[]} */ (requestsValue);
+  const sourceIndex = /** @type {SourceIndex} */ (
+    /** @type {unknown} */ (
+      readJsonObject(
+        resolveWorkPath(root, modelInput.artifactReferences.sourceIndex),
+      )
+    )
+  );
+  const sourceChanges = sourceIndex.sourceChanges;
   const sourcesById = new Map(
     sourceChanges.map((source) => [source.id, source]),
   );
@@ -100,7 +135,12 @@ function declarationNamesByIntent(root, modelInput) {
   );
 }
 
+/**
+ * @param {AssessmentModelInput} modelInput
+ * @param {Map<string, string[]>} declarationNames
+ */
 function decisionsDraft(modelInput, declarationNames) {
+  /** @param {{id: string}} candidate */
   const decision = (candidate) => ({
     candidateId: candidate.id,
     decision: "__UNRESOLVED__",
@@ -151,6 +191,7 @@ function decisionsDraft(modelInput, declarationNames) {
   };
 }
 
+/** @param {AssessmentModelInput} modelInput */
 function canonicalPaths(modelInput) {
   return unique([
     "model-input.json",
@@ -160,12 +201,13 @@ function canonicalPaths(modelInput) {
   ]);
 }
 
+/** @param {{work: string}} options */
 export function buildAgentWorkspace({ work }) {
   const started = performance.now();
   const root = path.resolve(work);
   const modelInputPath = path.join(root, "model-input.json");
   if (!fs.existsSync(modelInputPath)) throw new Error("Missing model-input.json.");
-  const modelInput = readJson(modelInputPath);
+  const modelInput = /** @type {AssessmentModelInput} */ (readJsonObject(modelInputPath));
   validateBoundedEvidence(modelInput);
 
   fs.mkdirSync(path.join(root, "agent-workspace"), { recursive: true });
@@ -283,9 +325,11 @@ export function buildAgentWorkspace({ work }) {
 }
 
 if (isMain(import.meta.url)) {
-  runMain(async () => {
+  void runMain(() => {
     const args = parseArgs(process.argv.slice(2), { required: ["work"] });
-    const result = buildAgentWorkspace({ work: args.work });
+    const work = args.work;
+    if (typeof work !== "string") throw new Error("--work must be a path.");
+    const result = buildAgentWorkspace({ work });
     console.log(result.indexPath);
   });
 }

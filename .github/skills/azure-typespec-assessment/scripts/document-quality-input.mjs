@@ -1,3 +1,26 @@
+/** @typedef {import("./runtime-types.js").SemanticAnalysis} SemanticAnalysis */
+/** @typedef {import("./runtime-types.js").SemanticDocumentItem} SemanticDocumentItem */
+/** @typedef {import("./runtime-types.js").DocumentQualityInput} DocumentQualityInput */
+/** @typedef {import("./runtime-types.js").DocumentationDeclaration} DocumentationDeclaration */
+/** @typedef {import("./runtime-types.js").DocumentationDocument} DocumentationDocument */
+/** @typedef {import("./runtime-types.js").DocumentationReviewUnit} DocumentationReviewUnit */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+/** @typedef {import("./runtime-types.js").SourceDeclaration} SourceDeclaration */
+/** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
+/** @typedef {Pick<SourceIndex, "sourceChanges">} DocumentSourceIndex */
+/** @typedef {{status: "ready" | "blocked", reviewUnits: SemanticDocumentItem[]}} DocumentSemanticAnalysis */
+/**
+ * @typedef {{
+ *   id?: string,
+ *   declarationId?: string,
+ *   kind: string,
+ *   qualifiedName: string,
+ *   newDeclaration?: boolean,
+ *   source?: import("./runtime-types.js").SourceLocation
+ * }} EligibleDeclaration
+ */
+
+/** @param {string[]} values */
 function unique(values = []) {
   return [...new Set(values)].sort();
 }
@@ -7,10 +30,16 @@ export const DOCUMENT_QUALITY_CRITERION =
 
 const NEW_DECLARATION_KINDS = new Set(["operation", "model", "enum", "interface"]);
 
+/** @param {EligibleDeclaration} declaration */
 function declarationIdentity(declaration) {
   return `${declaration.kind}:${declaration.qualifiedName}`;
 }
 
+/**
+ * @param {SourceChange} source
+ * @param {EligibleDeclaration} declaration
+ * @param {number} schemaVersion
+ */
 function isEligibleNewDeclaration(source, declaration, schemaVersion) {
   if (schemaVersion < 5) return true;
   if (!NEW_DECLARATION_KINDS.has(declaration.kind)) return false;
@@ -23,6 +52,10 @@ function isEligibleNewDeclaration(source, declaration, schemaVersion) {
     declarationIdentity(candidate) === identity);
 }
 
+/**
+ * @param {{sourceIndex: DocumentSourceIndex, semantic: DocumentSemanticAnalysis, schemaVersion: number}} options
+ * @returns {DocumentQualityInput}
+ */
 function buildCompletenessInput({ sourceIndex, semantic, schemaVersion }) {
   const sources = new Map((sourceIndex?.sourceChanges ?? []).map((source) => [source.id, source]));
   const blockers = [];
@@ -37,7 +70,8 @@ function buildCompletenessInput({ sourceIndex, semantic, schemaVersion }) {
   if (semantic.status === "blocked") {
     blockers.push({ reason: "Semantic assessment is blocked; documentation scope cannot be established." });
   }
-  const reviewUnits = semantic.reviewUnits.map((unit) => {
+  const reviewUnits = semantic.reviewUnits.map(
+    /** @returns {DocumentationReviewUnit} */ (unit) => {
     const sourceChangeIds = unique(unit.sourceChangeIds);
     const hunkIds = unique(unit.hunkIds);
     const declarationIds = unique(unit.declarationIds);
@@ -83,8 +117,16 @@ function buildCompletenessInput({ sourceIndex, semantic, schemaVersion }) {
           source.declarations?.find((item) => item.id === declaration.declarationId)?.hunkIds?.includes(hunkId))) {
           continue;
         }
-        const { newDeclaration: _newDeclaration, ...bounded } = declaration;
-        declarations.push({ ...bounded, sourceChangeId: sourceId });
+        const { newDeclaration, ...bounded } = declaration;
+        void newDeclaration;
+        declarations.push({
+          ...bounded,
+          documentationPresent: /** @type {boolean} */ (
+            declaration.documentationPresent
+          ),
+          sourceChangeId: sourceId,
+          },
+        );
       }
     }
     const uniqueDeclarations = [...new Map(
@@ -120,6 +162,10 @@ function buildCompletenessInput({ sourceIndex, semantic, schemaVersion }) {
   };
 }
 
+/**
+ * @param {{sourceIndex: DocumentSourceIndex, semantic: DocumentSemanticAnalysis, schemaVersion: number}} options
+ * @returns {DocumentQualityInput}
+ */
 function buildLegacyDocumentQualityInput({ sourceIndex, semantic, schemaVersion }) {
   if (![1, 2, 3].includes(schemaVersion)) throw new Error("Unsupported documentation input schemaVersion.");
   const sources = new Map((sourceIndex?.sourceChanges ?? []).map((source) => [source.id, source]));
@@ -136,6 +182,7 @@ function buildLegacyDocumentQualityInput({ sourceIndex, semantic, schemaVersion 
     : undefined;
   if (semanticBlockReason) blockers.push({ reason: semanticBlockReason });
   const reviewUnits = (semantic?.reviewUnits ?? []).map((unit) => {
+    /** @type {DocumentationReviewUnit & {documents: DocumentationDocument[]}} */
     const result = {
       reviewUnitId: unit.id,
       status: "ready",
@@ -165,7 +212,8 @@ function buildLegacyDocumentQualityInput({ sourceIndex, semantic, schemaVersion 
         }`);
         continue;
       }
-      if (!result.hunkIds.length && !result.declarationIds.length && evidence.documents.length) {
+      const documents = evidence.documents ?? [];
+      if (!result.hunkIds.length && !result.declarationIds.length && documents.length) {
         reasons.push(`No hunk or declaration association establishes documentation scope for ${source.path}.`);
         continue;
       }
@@ -173,7 +221,7 @@ function buildLegacyDocumentQualityInput({ sourceIndex, semantic, schemaVersion 
         .filter((declaration) => result.declarationIds.includes(declaration.id))
         .flatMap((declaration) => declaration.hunkIds ?? []);
       const scopedHunks = result.hunkIds.length ? result.hunkIds : declarationHunks;
-      for (const document of evidence.documents) {
+      for (const document of documents) {
         if (!document.hunkIds.some((hunkId) => scopedHunks.includes(hunkId))) continue;
         if (document.after && document.after.doc.trim().length === 0) continue;
         if (schemaVersion === 3 && document.after?.documentationOrigin === "inherited") {
@@ -185,7 +233,9 @@ function buildLegacyDocumentQualityInput({ sourceIndex, semantic, schemaVersion 
           continue;
         }
         if (!document.after) continue;
-        const { hunkIds: _hunkIds, blocker: _blocker, ...bounded } = document;
+        const { hunkIds: documentHunkIds, blocker, ...bounded } = document;
+        void documentHunkIds;
+        void blocker;
         result.documents.push(bounded);
       }
     }
@@ -207,6 +257,10 @@ function buildLegacyDocumentQualityInput({ sourceIndex, semantic, schemaVersion 
   return { schemaVersion, status: blockers.length ? "blocked" : "ready", blockers, reviewUnits };
 }
 
+/**
+ * @param {{sourceIndex: DocumentSourceIndex, semantic: DocumentSemanticAnalysis, schemaVersion?: number}} options
+ * @returns {DocumentQualityInput}
+ */
 export function buildDocumentQualityInput({ sourceIndex, semantic, schemaVersion = 5 }) {
   return schemaVersion === 4 || schemaVersion === 5
     ? buildCompletenessInput({ sourceIndex, semantic, schemaVersion })

@@ -1,10 +1,34 @@
 import path from "node:path";
-import { isMain, readJson, runMain } from "./cli.mjs";
+import { isMain, readJsonObject, runMain } from "./cli.mjs";
 import { deriveSafety, dimensionStatus } from "./assessment-display.mjs";
 import { readComplianceCatalog } from "./compliance-assessment.mjs";
 import { DOCUMENT_QUALITY_ARTIFACT, validateDocumentQualityDimension } from "./document-quality-assessment.mjs";
 
+/** @typedef {import("./runtime-types.js").AssessmentFinding} AssessmentFinding */
+/** @typedef {import("./runtime-types.js").AssessmentOutput} AssessmentOutput */
+/** @typedef {import("./runtime-types.js").AssessmentSemanticItem} AssessmentSemanticItem */
+/** @typedef {import("./runtime-types.js").FinalComplianceAssessment} FinalComplianceAssessment */
+/**
+ * @typedef {{
+ *   schemaVersion?: never,
+ *   baseline?: {commit?: string},
+ *   head?: {commit?: string},
+ *   dimensions?: {
+ *     semanticUnderstanding?: {items?: unknown[]},
+ *     restBreakingChanges?: {findings?: unknown[]},
+ *     restCompatibleDownstreamBreakingChanges?: {findings?: unknown[]},
+ *     azureCompliance?: {findings?: unknown[]}
+ *   }
+ * }} LegacyAssessment
+ */
+
+/**
+ * @param {{id?: string}[]} items
+ * @param {string} pathName
+ * @param {string[]} errors
+ */
 function uniqueIds(items, pathName, errors) {
+  /** @type {Set<string>} */
   const seen = new Set();
   for (const item of items) {
     if (!item?.id) errors.push(`${pathName} contains an item without id.`);
@@ -14,6 +38,11 @@ function uniqueIds(items, pathName, errors) {
   }
 }
 
+/**
+ * @template T
+ * @param {T[]} values
+ * @returns {T[]}
+ */
 function duplicateValues(values) {
   return [
     ...new Set(
@@ -22,6 +51,11 @@ function duplicateValues(values) {
   ];
 }
 
+/**
+ * @param {AssessmentFinding} finding
+ * @param {"REST" | "downstream"} dimension
+ * @param {string[]} errors
+ */
 function validateFinding(finding, dimension, errors) {
   const prefix = `${dimension} finding ${finding.id ?? "<unknown>"}`;
   if (!finding.actual?.trim())
@@ -60,7 +94,9 @@ function validateFinding(finding, dimension, errors) {
   }
 }
 
+/** @param {LegacyAssessment} assessment */
 function validateLegacy(assessment) {
+  /** @type {string[]} */
   const errors = [];
   if (!assessment.baseline?.commit)
     errors.push("Legacy assessment is missing baseline.commit.");
@@ -82,17 +118,22 @@ function validateLegacy(assessment) {
   return errors;
 }
 
+/**
+ * @param {FinalComplianceAssessment} compliance
+ * @param {AssessmentSemanticItem[]} semanticItems
+ * @param {string[]} errors
+ */
 function validateComplianceDimension(compliance, semanticItems, errors) {
   if (!["passed", "failed", "not-assessed"].includes(compliance?.status)) {
     errors.push("Azure Guidelines status is invalid.");
     return;
   }
-  for (const field of [
+  for (const field of /** @type {const} */ ([
     "intentAssessments",
     "findings",
     "retrievalFailures",
     "blockers",
-  ]) {
+  ])) {
     if (!Array.isArray(compliance[field]))
       errors.push(`Azure Guidelines ${field} must be an array.`);
   }
@@ -112,9 +153,13 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     errors.push("Azure Guidelines contains duplicate intent assessments.");
   }
   const migrationBlocked = (compliance.blockers ?? []).some((item) =>
-    String(item?.message ?? item).startsWith(
-      "compliance-search-input-missing:",
-    ),
+    (
+      typeof item === "string"
+        ? item
+        : typeof item.message === "string"
+          ? item.message
+          : JSON.stringify(item)
+    ).startsWith("compliance-search-input-missing:"),
   );
   const semanticIds = semanticItems
     .filter((item) => !item.informational)
@@ -136,7 +181,13 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
   let selectedDocumentCount = sharedSearch ? sharedDocuments.length : 0;
   if (sharedSearch) {
     const hasExhaustion = (compliance.blockers ?? []).some((item) =>
-      String(item?.message ?? item).startsWith("catalog-exhausted:"),
+      (
+        typeof item === "string"
+          ? item
+          : typeof item.message === "string"
+            ? item.message
+            : JSON.stringify(item)
+      ).startsWith("catalog-exhausted:"),
     );
     if (sharedDocuments.length !== 4 && !hasExhaustion) {
       errors.push("Azure Guidelines shared search requires four documents.");
@@ -194,7 +245,9 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       errors.push("Azure Guidelines shared search selected invalid documents.");
     }
   }
+  /** @type {string[]} */
   const assessedIntentIds = [];
+  /** @type {string[]} */
   const failedIntentIds = [];
   let incompleteEvidence = (compliance.blockers ?? []).length > 0;
   for (const item of assessments) {
@@ -371,6 +424,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       failedIntentIds.push(item.semanticIntentId);
       if (
         !item.title?.trim() ||
+        typeof item.severity !== "string" ||
         !["high", "medium", "low"].includes(item.severity)
       ) {
         errors.push(
@@ -383,7 +437,8 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
 
   for (const failure of compliance.retrievalFailures ?? []) {
     if (
-      (!sharedSearch && !semanticMap.has(failure.reviewUnitId)) ||
+      (!sharedSearch &&
+        (!failure.reviewUnitId || !semanticMap.has(failure.reviewUnitId))) ||
       !catalogUrls.has(failure.canonicalUrl) ||
       failure.status !== "failed" ||
       !failure.error?.trim()
@@ -409,6 +464,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       !finding.actual?.trim() ||
       !finding.gap?.trim() ||
       !finding.title?.trim() ||
+      typeof finding.severity !== "string" ||
       !["high", "medium", "low"].includes(finding.severity) ||
       !Array.isArray(finding.applicableGuidance) ||
       !finding.applicableGuidance.length ||
@@ -444,8 +500,13 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     errors.push(`Azure Guidelines status must be ${expectedStatus}.`);
   }
 }
+/**
+ * @param {AssessmentOutput | LegacyAssessment} assessment
+ * @returns {string[]}
+ */
 export function validateAssessment(assessment) {
   if (assessment?.schemaVersion !== 1) return validateLegacy(assessment);
+  /** @type {string[]} */
   const errors = [];
   if (!assessment.comparison?.baseCommit)
     errors.push("comparison.baseCommit is required.");
@@ -495,13 +556,13 @@ export function validateAssessment(assessment) {
         "existing-api-version",
         "unversioned",
         "legacy",
-      ].includes(comparison.mode)
+      ].includes(comparison.mode ?? "")
     ) {
       errors.push(
         `Artifact comparison ${comparison.projectId} has invalid mode.`,
       );
     }
-    for (const role of ["baseline", "target"]) {
+    for (const role of /** @type {const} */ (["baseline", "target"])) {
       const selection = comparison[role];
       if (
         !selection ||
@@ -570,12 +631,13 @@ export function validateAssessment(assessment) {
     validateFinding(finding, "downstream", errors);
   }
   if (dimensions.semantic?.status === "assessed") {
+    /** @type {string[]} */
     const coveredHunks = [];
     for (const item of dimensions.semantic.items ?? []) {
       if (!item.title?.trim() || !item.summary?.trim()) {
         errors.push(`Semantic item ${item.id} is incomplete.`);
       }
-      if (!["add", "remove", "modify"].includes(item.action)) {
+      if (!["add", "remove", "modify"].includes(item.action ?? "")) {
         errors.push(`Semantic item ${item.id} has invalid action.`);
       }
       if (
@@ -691,6 +753,7 @@ export function validateAssessment(assessment) {
   }
   for (const item of dimensions.semantic?.items ?? []) {
     for (const [kind, ids] of Object.entries(item.relatedFindings ?? {})) {
+      if (!ids) continue;
       const duplicates = duplicateValues(ids);
       if (duplicates.length) {
         errors.push(
@@ -727,6 +790,7 @@ export function validateAssessment(assessment) {
   const downstreamFindingIds = new Set(
     (dimensions.downstream?.findings ?? []).map((item) => item.id),
   );
+  /** @type {string[]} */
   const aggregatedFindingIds = [];
   for (const group of methodGroups) {
     if (!group.symbol || !group.deltas?.length)
@@ -836,11 +900,15 @@ export function validateAssessment(assessment) {
 }
 
 if (isMain(import.meta.url)) {
-  runMain(async () => {
+  void runMain(() => {
     const file = process.argv[2];
     if (!file)
       throw new Error("Usage: validate-assessment.mjs <assessment.json>");
-    const errors = validateAssessment(readJson(path.resolve(file)));
+    const assessment =
+      /** @type {AssessmentOutput | LegacyAssessment} */ (
+        readJsonObject(path.resolve(file))
+      );
+    const errors = validateAssessment(assessment);
     if (errors.length) throw new Error(errors.join("\n"));
     console.log(`${path.resolve(file)} is valid.`);
   });

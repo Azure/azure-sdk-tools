@@ -3,65 +3,145 @@ import {
   normalizeAutorestContract,
   sameAutorestContract,
 } from "./autorest-contract.mjs";
-import { parseArgs, isMain, readJson, runMain, writeJson } from "./cli.mjs";
+import { isRecord, parseArgs, isMain, readJsonObject, runMain, writeJson } from "./cli.mjs";
 import { semanticIntentType } from "./semantic-assessment-scope.mjs";
 import { canonicalJson, stableId } from "./stable-id.mjs";
 import { indexTcgcOperations, normalizeTcgcContract } from "./tcgc-contract.mjs";
 
+/** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
+/** @typedef {import("./runtime-types.js").ArtifactSelection} ArtifactSelection */
+/** @typedef {import("./runtime-types.js").AutorestArtifact} AutorestArtifact */
+/** @typedef {import("./runtime-types.js").InternalSemanticOperation} InternalSemanticOperation */
+/** @typedef {import("./runtime-types.js").InternalSemanticUnit} InternalSemanticUnit */
+/** @typedef {import("./runtime-types.js").NormalizedAutorestContract} NormalizedAutorestContract */
+/** @typedef {import("./runtime-types.js").NormalizedAutorestOperation} NormalizedAutorestOperation */
+/** @typedef {import("./runtime-types.js").NormalizedSchema} NormalizedSchema */
+/** @typedef {import("./runtime-types.js").PreparationBlocker} PreparationBlocker */
+/** @typedef {import("./runtime-types.js").PreparationManifest} PreparationManifest */
+/** @typedef {import("./runtime-types.js").PreparationProject} PreparationProject */
+/** @typedef {import("./runtime-types.js").ReferencedDeclaration} ReferencedDeclaration */
+/** @typedef {import("./runtime-types.js").SemanticAnalysis} SemanticAnalysis */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+/** @typedef {import("./runtime-types.js").SourceDeclaration} SourceDeclaration */
+/** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
+/** @typedef {import("./runtime-types.js").TcgcArtifact} TcgcArtifact */
+/** @typedef {PreparationBlocker & {apiVersion?: string, declarationId?: string, identities?: string[]}} AnalysisBlocker */
+/**
+ * @typedef {{
+ *   artifact?: TcgcArtifact & {status?: string},
+ *   selection?: ArtifactSelection,
+ *   revision: string,
+ *   scope: Record<string, unknown>,
+ *   contract: NormalizedAutorestContract,
+ *   names?: Map<string, NormalizedAutorestOperation[]>,
+ *   loaded?: boolean,
+ *   index?: Map<string, Map<string, Set<string>>>,
+ *   routes?: Map<string, NormalizedAutorestOperation[]>
+ * }} OperationBridgeEntry
+ */
+
+/**
+ * @param {{
+ *   manifest: string | PreparationManifest,
+ *   manifestPath?: string,
+ *   workRoot?: string,
+ *   sourceIndex?: SourceIndex,
+ *   output?: string
+ * }} options
+ */
 function loadInputs(options) {
-  const manifestPath = typeof options.manifest === "string"
-    ? path.resolve(options.manifest)
+  const manifestInput = options.manifest;
+  const manifestPath = typeof manifestInput === "string"
+    ? path.resolve(manifestInput)
     : options.manifestPath
       ? path.resolve(options.manifestPath)
       : undefined;
   const workRoot = path.resolve(options.workRoot ?? (manifestPath ? path.dirname(manifestPath) : process.cwd()));
+  const manifestValue = typeof manifestInput === "string"
+    ? readJsonObject(path.resolve(manifestInput))
+    : manifestInput;
+  if (!isPreparationManifest(manifestValue)) {
+    throw new TypeError("Expected a preparation manifest.");
+  }
+  const sourceIndexValue = options.sourceIndex ??
+    readJsonObject(path.join(workRoot, "source", "source-index.json"));
+  if (!isSourceIndex(sourceIndexValue)) {
+    throw new TypeError("Expected a source index.");
+  }
   return {
     workRoot,
-    manifest: typeof options.manifest === "object" ? options.manifest : readJson(manifestPath),
-    sourceIndex: options.sourceIndex ?? readJson(path.join(workRoot, "source", "source-index.json")),
+    manifest: manifestValue,
+    sourceIndex: sourceIndexValue,
   };
 }
 
-function operationWireShape(operation, includeVersion = true) {
-  return {
-    apiVersion: includeVersion ? operation.apiVersion : undefined,
-    operationId: operation.operationId,
-    path: operation.path,
-    method: operation.method,
-    routeSource: operation.routeSource,
-    parameters: operation.parameters,
-    request: operation.request,
-    responses: operation.responses,
-    consumes: operation.consumes,
-    produces: operation.produces,
-    paging: operation.paging,
-    lro: operation.lro,
-  };
+/** @param {unknown} value @returns {value is PreparationManifest} */
+function isPreparationManifest(value) {
+  return isRecord(value) &&
+    Array.isArray(value.projects) &&
+    value.projects.every((project) =>
+      isRecord(project) &&
+      typeof project.id === "string" &&
+      typeof project.path === "string" &&
+      Array.isArray(project.sourceChangeIds) &&
+      isRecord(project.artifacts));
 }
 
+/** @param {unknown} value @returns {value is SourceIndex} */
+function isSourceIndex(value) {
+  return isRecord(value) &&
+    isRecord(value.analysis) &&
+    typeof value.analysis.status === "string" &&
+    Array.isArray(value.sourceChanges);
+}
+
+/**
+ * @param {unknown} left
+ * @param {unknown} right
+ */
 function same(left, right) {
   return sameAutorestContract(left, right);
 }
 
+/**
+ * @param {NormalizedAutorestOperation | AssessmentFact | undefined} before
+ * @param {NormalizedAutorestOperation | AssessmentFact | undefined} after
+ * @returns {string[]}
+ */
 function changedAspects(before, after) {
   if (!before || !after) return ["operation"];
   const fields = ["method", "path", "parameters", "request", "responses", "paging", "lro"];
   return fields.filter((field) => !same(before[field], after[field]));
 }
 
+/**
+ * @param {NormalizedAutorestOperation | undefined} before
+ * @param {NormalizedAutorestOperation | undefined} after
+ */
 function restChanged(before, after) {
   // x-ms-pageable describes SDK traversal, not a change to the HTTP payload.
   return changedAspects(before, after).some((field) => field !== "paging") ||
     !same(before?.consumes, after?.consumes) || !same(before?.produces, after?.produces);
 }
 
+/**
+ * @param {unknown} before
+ * @param {unknown} after
+ * @param {Set<string>} [roots]
+ * @returns {Set<string>}
+ */
 function changedReferenceRoots(before, after, roots = new Set()) {
   if (same(before, after) || !before || !after ||
       typeof before !== "object" || typeof after !== "object") {
     return roots;
   }
-  if (before.reference && before.reference === after.reference) {
-    roots.add(before.reference.split("/").at(-1));
+  if (!isRecord(before) || !isRecord(after)) return roots;
+  if (
+    typeof before.reference === "string" &&
+    before.reference === after.reference
+  ) {
+    const root = before.reference.split("/").at(-1);
+    if (root) roots.add(root);
     return roots;
   }
   for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
@@ -79,6 +159,10 @@ function changedReferenceRoots(before, after, roots = new Set()) {
   return roots;
 }
 
+/**
+ * @param {NormalizedAutorestOperation | undefined} before
+ * @param {NormalizedAutorestOperation | undefined} after
+ */
 function operationChangedRoots(before, after) {
   const beforeContract = before && {
     parameters: before.parameters,
@@ -97,6 +181,7 @@ function operationChangedRoots(before, after) {
   return [...changedReferenceRoots(beforeContract, afterContract)].sort();
 }
 
+/** @param {string | undefined} value */
 function resourceStem(value) {
   return comparableName(value)
     .replace(/^list/, "")
@@ -106,10 +191,16 @@ function resourceStem(value) {
     .replace(/s$/, "");
 }
 
+/**
+ * @param {{before?: NormalizedAutorestOperation, after?: NormalizedAutorestOperation}} pair
+ * @param {SourceIndex} sourceIndex
+ * @param {PreparationProject} project
+ */
 function publicationRootEligible(pair, sourceIndex, project) {
   const roots = operationChangedRoots(pair.before, pair.after);
   if (!roots.length) return true;
   const operation = pair.after ?? pair.before;
+  if (!operation) return false;
   const family = resourceStem(operation.operationId.split("_")[0]);
   const operationName = resourceStem(operation.operationId);
   const models = Object.values(sourceIndex.resourceModels ?? {})
@@ -146,29 +237,50 @@ function publicationRootEligible(pair, sourceIndex, project) {
   });
 }
 
+/**
+ * @param {(AutorestArtifact & {status?: string}) | undefined} artifact
+ * @returns {artifact is AutorestArtifact & {status?: string}}
+ */
 function artifactReady(artifact) {
-  return artifact && (!artifact.status || artifact.status === "succeeded") && artifact.files?.length;
+  return Boolean(artifact && (!artifact.status || artifact.status === "succeeded") && artifact.files?.length);
 }
 
+/**
+ * @param {NormalizedSchema | undefined} schema
+ * @param {number} [depth]
+ * @returns {NormalizedSchema | undefined}
+ */
 function compactSchema(schema, depth = 0) {
   if (!schema || typeof schema !== "object") return schema;
-  const result = Object.fromEntries(
-    ["kind", "type", "format", "nullable", "reference", "ref", "cycle", "unresolved"]
-      .filter((key) => schema[key] !== undefined)
-      .map((key) => [key, schema[key]]),
-  );
+  /** @type {NormalizedSchema} */
+  const result = { kind: schema.kind };
+  for (const key of ["type", "format", "nullable", "reference", "ref", "cycle", "unresolved"]) {
+    if (schema[key] !== undefined) result[key] = schema[key];
+  }
   if (schema.references?.length) result.references = schema.references;
   if (depth < 2 && schema.properties?.length) {
     result.properties = schema.properties.map((property) => ({
       name: property.name,
       required: property.required,
-      schema: compactSchema(property.schema, depth + 1),
+      schema: compactRequiredSchema(property.schema, depth + 1),
     }));
   }
-  if (depth < 2 && schema.items) result.items = compactSchema(schema.items, depth + 1);
+  if (depth < 2 && schema.items) result.items = compactRequiredSchema(schema.items, depth + 1);
   return result;
 }
 
+/**
+ * @param {NormalizedSchema} schema
+ * @param {number} depth
+ * @returns {NormalizedSchema}
+ */
+function compactRequiredSchema(schema, depth) {
+  const compacted = compactSchema(schema, depth);
+  if (!compacted) throw new TypeError("Expected a normalized schema.");
+  return compacted;
+}
+
+/** @param {NormalizedAutorestOperation} operation */
 function compactOperation(operation) {
   return {
     apiVersion: operation.apiVersion,
@@ -197,6 +309,12 @@ function compactOperation(operation) {
   };
 }
 
+/**
+ * @param {Record<string, AssessmentFact>} facts
+ * @param {PreparationProject} project
+ * @param {"baseline" | "target"} comparisonRole
+ * @param {NormalizedAutorestOperation} operation
+ */
 function addFact(facts, project, comparisonRole, operation) {
   const selection = project.artifactComparison?.[comparisonRole];
   const value = {
@@ -204,17 +322,85 @@ function addFact(facts, project, comparisonRole, operation) {
     comparisonRole,
     sourceRevision: selection?.sourceRevision ?? (comparisonRole === "baseline" ? "base" : "current"),
     sourceCommit: selection?.commit,
-    apiVersion: selection?.apiVersion ?? operation.apiVersion,
     ...compactOperation(operation),
   };
   const id = stableId("operation", value);
-  facts[id] = { id, ...value };
+  const fact = { id, ...value };
+  if (!isAssessmentFact(fact)) {
+    throw new TypeError(`Expected a valid assessment fact for ${operation.operationId}.`);
+  }
+  facts[id] = fact;
   return id;
 }
 
+/** @param {unknown} value @returns {value is string | undefined} */
+function isOptionalString(value) {
+  return value === undefined || typeof value === "string";
+}
+
+/** @param {unknown} value @returns {value is NormalizedSchema | undefined} */
+function isOptionalSchema(value) {
+  return value === undefined ||
+    (isRecord(value) && typeof value.kind === "string");
+}
+
+/** @param {unknown} value @returns {value is AssessmentFact} */
+function isAssessmentFact(value) {
+  if (!isRecord(value) ||
+      !isOptionalString(value.id) ||
+      !isOptionalString(value.projectId) ||
+      !isOptionalString(value.operationId) ||
+      !isOptionalString(value.apiVersion) ||
+      !isOptionalString(value.method) ||
+      !isOptionalString(value.path) ||
+      !isOptionalString(value.routeSource)) {
+    return false;
+  }
+  if (value.parameters !== undefined &&
+      (!Array.isArray(value.parameters) || value.parameters.some((parameter) =>
+        !isRecord(parameter) ||
+        !isOptionalString(parameter.name) ||
+        !isOptionalString(parameter.in) ||
+        !isOptionalSchema(parameter.schema)))) {
+    return false;
+  }
+  if (value.request !== undefined) {
+    if (!isRecord(value.request) || !isOptionalSchema(value.request.schema)) return false;
+    if (value.request.members !== undefined &&
+        (!Array.isArray(value.request.members) || value.request.members.some((member) =>
+          !isRecord(member) ||
+          !isOptionalString(member.name) ||
+          !isOptionalString(member.in) ||
+          !isOptionalString(member.collectionFormat) ||
+          !isOptionalSchema(member.schema)))) {
+      return false;
+    }
+  }
+  if (value.responses !== undefined &&
+      (!Array.isArray(value.responses) || value.responses.some((response) =>
+        !isRecord(response) ||
+        !isOptionalString(response.status) ||
+        !isOptionalSchema(response.schema) ||
+        (response.headers !== undefined &&
+          (!Array.isArray(response.headers) || response.headers.some((header) =>
+            !isRecord(header) ||
+            !isOptionalString(header.name) ||
+            !isOptionalString(header.collectionFormat) ||
+            !isOptionalSchema(header.schema))))))) {
+    return false;
+  }
+  return (value.paging === undefined || isRecord(value.paging)) &&
+    (value.lro === undefined || isRecord(value.lro));
+}
+
+/**
+ * @param {NormalizedAutorestContract} base
+ * @param {NormalizedAutorestContract} current
+ * @returns {{operationId: string, before?: NormalizedAutorestOperation, after?: NormalizedAutorestOperation}[]}
+ */
 function operationPairs(base, current) {
-  const baseById = new Map(base.operations.map((item) => [item.operationId, item]));
   const currentById = new Map(current.operations.map((item) => [item.operationId, item]));
+  /** @type {Map<string, NormalizedAutorestOperation[]>} */
   const currentByHttp = new Map();
   for (const operation of current.operations) {
     const key = `${operation.method}\u0000${operation.path}`;
@@ -223,6 +409,7 @@ function operationPairs(base, current) {
     currentByHttp.set(key, values);
   }
   const used = new Set();
+  /** @type {{operationId: string, before?: NormalizedAutorestOperation, after?: NormalizedAutorestOperation}[]} */
   const result = [];
   for (const before of base.operations) {
     let after = currentById.get(before.operationId);
@@ -239,14 +426,23 @@ function operationPairs(base, current) {
   return result.sort((left, right) => left.operationId.localeCompare(right.operationId));
 }
 
+/** @param {string | undefined} value */
 function comparableName(value) {
-  return String(value ?? "").replaceAll(/[^a-z0-9]/gi, "").toLowerCase();
+  return (value ?? "").replaceAll(/[^a-z0-9]/gi, "").toLowerCase();
 }
 
+/**
+ * @param {SourceChange} source
+ * @param {string} hunkId
+ */
 function declarationsForHunk(source, hunkId) {
   return (source.declarations ?? []).filter((item) => item.hunkIds?.includes(hunkId));
 }
 
+/**
+ * @param {SourceChange} source
+ * @param {SourceDeclaration[]} declarations
+ */
 function actionFor(source, declarations) {
   if (source.status === "added") return "add";
   if (source.status === "removed") return "remove";
@@ -261,22 +457,39 @@ function actionFor(source, declarations) {
   return "modify";
 }
 
+/** @type {WeakMap<NormalizedAutorestOperation, string[]>} */
 const operationReferenceCache = new WeakMap();
+/** @type {WeakMap<NormalizedAutorestOperation, string[]>} */
 const transitiveOperationReferenceCache = new WeakMap();
+/**
+ * @param {NormalizedAutorestOperation} operation
+ * @param {boolean} [transitive]
+ * @returns {string[]}
+ */
 function operationReferences(operation, transitive = false) {
   const cache = transitive ? transitiveOperationReferenceCache : operationReferenceCache;
-  if (cache.has(operation)) return cache.get(operation);
+  const cached = cache.get(operation);
+  if (cached !== undefined) return cached;
+  /** @type {Set<string>} */
   const references = new Set();
   const schemas = [
     ...(operation.parameters ?? []).map((parameter) => parameter.schema),
     operation.request?.schema,
     ...(operation.responses ?? []).map((response) => response.schema),
   ].filter(Boolean);
+  /** @param {unknown} schema */
   const visit = (schema) => {
     if (!schema || typeof schema !== "object") return;
-    if (schema.reference) references.add(schema.reference);
-    else if (schema.ref) references.add(schema.ref);
-    else if (schema.references?.length === 1) references.add(schema.references[0]);
+    if (!isRecord(schema)) return;
+    if (typeof schema.reference === "string") references.add(schema.reference);
+    else if (typeof schema.ref === "string") references.add(schema.ref);
+    else if (
+      Array.isArray(schema.references) &&
+      schema.references.length === 1 &&
+      typeof schema.references[0] === "string"
+    ) {
+      references.add(schema.references[0]);
+    }
     if (!transitive) return;
     for (const value of Object.values(schema)) {
       if (Array.isArray(value)) value.forEach(visit);
@@ -291,8 +504,15 @@ function operationReferences(operation, transitive = false) {
   return result;
 }
 
+/**
+ * @param {{before?: NormalizedAutorestOperation, after?: NormalizedAutorestOperation}} pair
+ * @param {(SourceDeclaration | ReferencedDeclaration)[]} declarations
+ * @param {boolean} [transitive]
+ * @param {(declaration: SourceDeclaration | ReferencedDeclaration) => Set<NormalizedAutorestOperation> | undefined} [resolveOperation]
+ */
 function operationMatchesDeclarations(pair, declarations, transitive = false, resolveOperation) {
   const operation = pair.after ?? pair.before;
+  if (!operation) return undefined;
   const operationName = comparableName(operation.operationId);
   const specificOperations = declarations.filter((item) => item.kind === "operation");
   const candidates = specificOperations.length
@@ -304,7 +524,7 @@ function operationMatchesDeclarations(pair, declarations, transitive = false, re
     if (declaration.kind === "operation") {
       const resolved = resolveOperation?.(declaration);
       if (resolved !== undefined) {
-        if (resolved.has(pair.before) || resolved.has(pair.after)) {
+        if ((pair.before && resolved.has(pair.before)) || (pair.after && resolved.has(pair.after))) {
           return "operation-identity";
         }
       } else if (operationName === comparableName(member ? `${owner}_${member}` : owner)) {
@@ -323,11 +543,18 @@ function operationMatchesDeclarations(pair, declarations, transitive = false, re
   return undefined;
 }
 
+/**
+ * @param {SourceIndex} sourceIndex
+ * @param {SourceDeclaration[]} declarations
+ * @param {PreparationProject} project
+ * @returns {(SourceDeclaration | ReferencedDeclaration)[]}
+ */
 function referencedOperationDeclarations(sourceIndex, declarations, project) {
   const names = new Set(declarations
     .map((item) => item.qualifiedName)
     .filter(Boolean));
   if (!names.size) return [];
+  /** @type {(SourceDeclaration | ReferencedDeclaration)[]} */
   const references = [];
   const candidates = [
     ...sourceIndex.sourceChanges
@@ -346,10 +573,26 @@ function referencedOperationDeclarations(sourceIndex, declarations, project) {
   return references;
 }
 
+/**
+ * @param {(string | undefined)[]} values
+ * @returns {string[]}
+ */
 function unique(values) {
-  return [...new Set(values.filter(Boolean))].sort();
+  return [...new Set(values.filter(isPresentString))].sort();
 }
 
+/**
+ * @param {string | undefined} value
+ * @returns {value is string}
+ */
+function isPresentString(value) {
+  return value !== undefined && value !== "";
+}
+
+/**
+ * @param {SourceIndex} sourceIndex
+ * @param {string | undefined} hunkId
+ */
 function hunkText(sourceIndex, hunkId) {
   for (const source of sourceIndex.sourceChanges) {
     const hunk = source.hunks?.find((item) => item.id === hunkId);
@@ -358,8 +601,13 @@ function hunkText(sourceIndex, hunkId) {
   return "";
 }
 
+/**
+ * @param {InternalSemanticUnit} unit
+ * @param {SourceIndex} sourceIndex
+ */
 function groupingTags(unit, sourceIndex) {
   const text = hunkText(sourceIndex, unit.hunkIds[0]);
+  /** @type {string[]} */
   const tags = [];
   if (/\barmResourceIdentifier\b/.test(text)) tags.push("transform:arm-resource-identifier");
   if (/@clientName\b/.test(text)) tags.push("transform:client-name");
@@ -372,6 +620,12 @@ function groupingTags(unit, sourceIndex) {
   return unique(tags);
 }
 
+/**
+ * @param {PreparationProject} project
+ * @param {InternalSemanticUnit[]} units
+ * @param {SourceIndex} sourceIndex
+ * @returns {InternalSemanticUnit[]}
+ */
 function mergeUnits(project, units, sourceIndex) {
   if (units.length < 2) return units;
   const totalHunks = units.reduce((count, unit) => count + unit.hunkIds.length, 0);
@@ -385,10 +639,11 @@ function mergeUnits(project, units, sourceIndex) {
     const featureNames = unique(
       units
         .map((unit) => sourceById.get(unit.sourceChangeIds[0])?.path)
-        .filter(Boolean)
+        .filter(isPresentString)
         .map((file) => path.basename(file, ".tsp"))
         .filter((name) => !["main", "models", "client", "back-compatible"].includes(name)),
     );
+    /** @type {Map<string, InternalSemanticUnit[]>} */
     const grouped = new Map();
     for (const unit of units) {
       const tags = groupingTags(unit, sourceIndex);
@@ -420,7 +675,15 @@ function mergeUnits(project, units, sourceIndex) {
     );
   }
   const parents = units.map((_, index) => index);
+  /**
+   * @param {number} index
+   * @returns {number}
+   */
   const find = (index) => parents[index] === index ? index : (parents[index] = find(parents[index]));
+  /**
+   * @param {number} left
+   * @param {number} right
+   */
   const join = (left, right) => {
     const leftRoot = find(left);
     const rightRoot = find(right);
@@ -429,22 +692,28 @@ function mergeUnits(project, units, sourceIndex) {
   const tags = units.map((unit) => groupingTags(unit, sourceIndex));
   for (let left = 0; left < units.length; left += 1) {
     for (let right = left + 1; right < units.length; right += 1) {
-      const sharedOperations = units[left].operations.some((operation) =>
-        units[right].operations.some((candidate) => candidate.operationId === operation.operationId));
-      const sharedTags = tags[left].some((tag) =>
-        tags[right].includes(tag) &&
+      const leftUnit = units[left];
+      const rightUnit = units[right];
+      const leftTags = tags[left];
+      const rightTags = tags[right];
+      if (!leftUnit || !rightUnit || !leftTags || !rightTags) continue;
+      const sharedOperations = leftUnit.operations.some((operation) =>
+        rightUnit.operations.some((candidate) => candidate.operationId === operation.operationId));
+      const sharedTags = leftTags.some((tag) =>
+        rightTags.includes(tag) &&
         (tag.startsWith("transform:") || tag.startsWith("behavior:")));
-      const sameSource = units[left].sourceChangeIds.some((id) =>
-        units[right].sourceChangeIds.includes(id));
+      const sameSource = leftUnit.sourceChangeIds.some((id) =>
+        rightUnit.sourceChangeIds.includes(id));
       const supportForBehavior = sameSource &&
-        (tags[left].length === 0 || tags[right].length === 0) &&
-        [...tags[left], ...tags[right]].some((tag) =>
+        (leftTags.length === 0 || rightTags.length === 0) &&
+        [...leftTags, ...rightTags].some((tag) =>
           tag.startsWith("transform:") || tag.startsWith("behavior:"));
       const compatibleOperationOverlap = sharedOperations &&
-        (!tags[left].length || !tags[right].length || sharedTags);
+        (!leftTags.length || !rightTags.length || sharedTags);
       if (compatibleOperationOverlap || sharedTags || supportForBehavior) join(left, right);
     }
   }
+  /** @type {Map<number, InternalSemanticUnit[]>} */
   const groups = new Map();
   for (let index = 0; index < units.length; index += 1) {
     const root = find(index);
@@ -457,16 +726,20 @@ function mergeUnits(project, units, sourceIndex) {
   );
 }
 
+/** @param {InternalSemanticOperation} operation */
 function stableOperationIdentity(operation) {
-  const {
-    sourceChangeIds: _sourceChangeIds,
-    hunkIds: _hunkIds,
-    declarationIds: _declarationIds,
-    ...stableOperation
-  } = operation;
+  const stableOperation = { ...operation };
+  Reflect.deleteProperty(stableOperation, "sourceChangeIds");
+  Reflect.deleteProperty(stableOperation, "hunkIds");
+  Reflect.deleteProperty(stableOperation, "declarationIds");
   return stableOperation;
 }
 
+/**
+ * @param {InternalSemanticUnit[]} reviewUnits
+ * @param {SourceChange[]} sourceChanges
+ * @returns {InternalSemanticUnit[]}
+ */
 export function dedupePublicationHunks(reviewUnits, sourceChanges) {
   const specificallyOwnedHunks = new Set(
     reviewUnits
@@ -503,27 +776,38 @@ export function dedupePublicationHunks(reviewUnits, sourceChanges) {
       declarationIds,
       groupingEvidence: {
         ...unit.groupingEvidence,
-        memberHunkIds: unit.groupingEvidence.memberHunkIds
+        memberHunkIds: (unit.groupingEvidence?.memberHunkIds ?? [])
           .filter((id) => retainedHunks.has(id)),
       },
     };
-    const { id: _id, ...identity } = updated;
+    const identity = { ...updated };
+    Reflect.deleteProperty(identity, "id");
     return {
+      ...identity,
       id: stableId("semantic", {
         ...identity,
         operations: identity.operations.map(stableOperationIdentity),
       }),
-      ...identity,
     };
   });
 }
 
+/**
+ * @param {InternalSemanticUnit[]} units
+ * @param {SourceIndex} sourceIndex
+ * @param {string[]} groupingEvidence
+ * @returns {InternalSemanticUnit}
+ */
 function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
+  const firstUnit = units[0];
+  if (!firstUnit) {
+    throw new TypeError("Cannot merge an empty semantic unit group.");
+  }
   const action = units.some((unit) => unit.action === "modify")
     ? "modify"
     : units.some((unit) => unit.action === "add") && units.some((unit) => unit.action === "remove")
       ? "modify"
-      : units[0].action;
+      : firstUnit.action;
   const legacyOperations = [...new Map(
     units.flatMap((unit) => unit.operations).map((operation) => [operation.operationId, operation]),
   ).values()]
@@ -531,6 +815,7 @@ function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
     .sort((left, right) => left.operationId.localeCompare(right.operationId));
   const publication = groupingEvidence.some((reason) =>
     reason === "publication" || reason.includes("api-version-publication"));
+  /** @param {InternalSemanticOperation} operation */
   const rank = (operation) => {
     const versionMapping = ["direct-version-governance", "version-transition-change"]
       .includes(operation.matchBasis);
@@ -540,6 +825,7 @@ function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
     if (operation.matchBasis === "compiler-reference") return publication ? 3 : 2;
     return versionMapping ? 3 : 4;
   };
+  /** @type {Map<string, InternalSemanticOperation[]>} */
   const byOperation = new Map();
   for (const operation of units.flatMap((unit) => unit.operations)) {
     const values = byOperation.get(operation.operationId) ?? [];
@@ -551,6 +837,9 @@ function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
     const selected = values.filter((operation) => rank(operation) === bestRank);
     const representative = [...selected].sort((left, right) =>
       canonicalJson(left).localeCompare(canonicalJson(right)))[0];
+    if (!representative) {
+      throw new TypeError("Cannot select a representative semantic operation.");
+    }
     return {
       ...representative,
       sourceChangeIds: unique(selected.flatMap((operation) => operation.sourceChangeIds ?? [])),
@@ -560,8 +849,6 @@ function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
   }).sort((left, right) => left.operationId.localeCompare(right.operationId));
   const directOperations = allOperations.filter((operation) =>
     operation.matchBasis === "operation-identity");
-  const changedOperations = allOperations.filter((operation) =>
-    operation.beforeFactId && operation.afterFactId && operation.restChanged);
   const addedOperations = allOperations.filter((operation) =>
     !operation.beforeFactId && operation.afterFactId);
   const removedOperations = allOperations.filter((operation) =>
@@ -607,7 +894,7 @@ function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
         ? "modify"
         : action;
   const merged = {
-    projectId: units[0].projectId,
+    projectId: firstUnit.projectId,
     projectIds: unique(units.flatMap((unit) => unit.projectIds ?? [unit.projectId])),
     action: semanticAction,
     changeKind: semanticAction,
@@ -656,20 +943,37 @@ function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
   return { id: stableId("semantic", identity), ...merged };
 }
 
+/**
+ * @param {PreparationProject} project
+ * @param {NormalizedAutorestContract} base
+ * @param {NormalizedAutorestContract} current
+ * @param {SourceIndex} sourceIndex
+ * @param {string} workRoot
+ * @param {AnalysisBlocker[]} blockers
+ * @returns {(declaration: SourceDeclaration | ReferencedDeclaration) => Set<NormalizedAutorestOperation>}
+ */
 function operationResolver(project, base, current, sourceIndex, workRoot, blockers) {
+  /** @type {Set<object>} */
   const changedOperations = new Set(sourceIndex.sourceChanges
     .filter((source) => project.sourceChangeIds?.includes(source.id))
     .flatMap((source) => source.declarations ?? [])
     .filter((declaration) => declaration.kind === "operation"));
-  const roles = [
-    ["baseline", "base", base], ["target", "current", current],
-  ].map(([role, legacyRole, contract]) => {
+  const roleSpecs = /** @type {const} */ ([
+    { role: "baseline", legacyRole: "base", contract: base },
+    { role: "target", legacyRole: "current", contract: current },
+  ]);
+  /** @type {OperationBridgeEntry[]} */
+  const roles = roleSpecs.map(({ role, legacyRole, contract }) => {
     const artifact = project.artifacts?.[role]?.tcgc ?? project.artifacts?.[legacyRole]?.tcgc;
     const selection = project.artifactComparison?.[role];
     const revision = selection?.sourceRevision ?? (role === "baseline" ? "base" : "current");
     const scope = { projectId: project.id, comparisonRole: role, sourceRevision: revision };
     return { artifact, selection, revision, scope, contract };
   });
+  /**
+   * @param {OperationBridgeEntry} entry
+   * @param {string} name
+   */
   const directOperations = (entry, name) => {
     if (!entry.names) {
       entry.names = new Map();
@@ -682,6 +986,9 @@ function operationResolver(project, base, current, sourceIndex, workRoot, blocke
     }
     return entry.names.get(name) ?? [];
   };
+  /**
+   * @param {OperationBridgeEntry} entry
+   */
   const loadBridge = (entry) => {
     if (entry.loaded) return;
     entry.loaded = true;
@@ -691,8 +998,15 @@ function operationResolver(project, base, current, sourceIndex, workRoot, blocke
       const sdk = normalizeTcgcContract({ workRoot, artifact });
       const versions = unique(contract.operations.map((operation) => operation.apiVersion));
       const apiVersion = selection?.apiVersion ?? (versions.length === 1 ? versions[0] : undefined);
-      const sdkVersions = sdk.package.apiVersions.map((value) =>
-        typeof value === "string" ? value : value.version);
+      const sdkVersions = sdk.package.apiVersions
+        .map((value) =>
+          typeof value === "string"
+            ? value
+            : isRecord(value) && typeof value.version === "string"
+              ? value.version
+              : undefined,
+        )
+        .filter((value) => value !== undefined);
       if (!apiVersion || sdkVersions.length && !sdkVersions.includes(apiVersion)) {
         blockers.push({ code: "tcgc-operation-version-mismatch", ...scope, apiVersion,
           message: "TCGC operation mapping requires the selected REST API version." });
@@ -710,12 +1024,20 @@ function operationResolver(project, base, current, sourceIndex, workRoot, blocke
       }
     } catch (error) {
       // SDK artifacts enrich REST semantics; an unavailable SDK must not block them.
-      blockers.push({ code: "tcgc-operation-mapping-unavailable", ...scope, message: error.message });
+      blockers.push({
+        code: "tcgc-operation-mapping-unavailable",
+        ...scope,
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   };
+  /** @type {WeakMap<object, Set<NormalizedAutorestOperation>>} */
   const cache = new WeakMap();
+  /** @param {SourceDeclaration | ReferencedDeclaration} declaration */
   return (declaration) => {
-    if (cache.has(declaration)) return cache.get(declaration);
+    const cached = cache.get(declaration);
+    if (cached) return cached;
+    /** @type {Set<NormalizedAutorestOperation>} */
     const matches = new Set();
     cache.set(declaration, matches);
     const revision = declaration.source?.revision ?? declaration.revision;
@@ -734,10 +1056,11 @@ function operationResolver(project, base, current, sourceIndex, workRoot, blocke
       const identities = entry.index?.get(declaration.qualifiedName);
       if (!identities) continue;
       const routes = identities.size === 1 ? [...identities.values()][0] : undefined;
-      const operations = routes?.size === 1 ? entry.routes.get([...routes][0]) ?? [] : [];
-      if (identities.size !== 1 || routes.size !== 1 || operations.length !== 1) {
+      const route = routes?.size === 1 ? [...routes][0] : undefined;
+      const operations = route ? entry.routes?.get(route) ?? [] : [];
+      if (identities.size !== 1 || (routes?.size ?? 0) !== 1 || operations.length !== 1) {
         blockers.push({
-          code: identities.size > 1 || routes?.size > 1 || operations.length > 1
+          code: identities.size > 1 || (routes?.size ?? 0) > 1 || operations.length > 1
             ? "tcgc-operation-mapping-ambiguous" : "tcgc-operation-route-unresolved",
           ...entry.scope,
           declarationId: declaration.id,
@@ -746,12 +1069,22 @@ function operationResolver(project, base, current, sourceIndex, workRoot, blocke
         });
         continue;
       }
-      matches.add(operations[0]);
+      const matchedOperation = operations[0];
+      if (matchedOperation) matches.add(matchedOperation);
     }
     return matches;
   };
 }
 
+/**
+ * @param {PreparationProject} project
+ * @param {NormalizedAutorestContract} base
+ * @param {NormalizedAutorestContract} current
+ * @param {SourceIndex} sourceIndex
+ * @param {Record<string, AssessmentFact>} facts
+ * @param {(declaration: SourceDeclaration | ReferencedDeclaration) => Set<NormalizedAutorestOperation>} resolveOperation
+ * @returns {InternalSemanticUnit[]}
+ */
 function buildProjectUnits(project, base, current, sourceIndex, facts, resolveOperation) {
   const projectSources = sourceIndex.sourceChanges.filter(
     (source) => project.sourceChangeIds?.includes(source.id),
@@ -760,8 +1093,11 @@ function buildProjectUnits(project, base, current, sourceIndex, facts, resolveOp
   const smallNewVersion = project.artifactComparison?.mode === "new-api-version" &&
     projectSources.length <= 2 &&
     projectSources.reduce((count, source) => count + (source.hunks?.length ?? 0), 0) <= 5;
+  /** @type {InternalSemanticUnit[]} */
   const units = [];
+  /** @type {WeakMap<object, Set<NormalizedAutorestOperation>>} */
   const resolvedOperations = new WeakMap();
+  /** @param {SourceDeclaration | ReferencedDeclaration} declaration */
   const resolvedOperation = (declaration) => resolvedOperations.get(declaration);
   for (const source of projectSources) {
     for (const hunk of source.hunks ?? []) {
@@ -774,7 +1110,9 @@ function buildProjectUnits(project, base, current, sourceIndex, facts, resolveOp
       }
       const versionGovernance = declarations.some((item) =>
         item.qualifiedName === "Versions" || item.qualifiedName.endsWith(".Versions"));
+      /** @type {InternalSemanticOperation[]} */
       const operations = [];
+      /** @type {string[]} */
       const ownedOperationIds = [];
       for (const pair of pairs) {
         const versionTransitionMatch = versionGovernance && (
@@ -823,11 +1161,14 @@ function buildProjectUnits(project, base, current, sourceIndex, facts, resolveOp
         declarationNames: [...new Set(declarations.map((item) => item.qualifiedName))].sort(),
         ownedOperationIds: unique(ownedOperationIds),
         operations: operations.sort((left, right) => left.operationId.localeCompare(right.operationId)),
-        operationIds: operations.map((item) => item.afterFactId ?? item.beforeFactId).filter(Boolean).sort(),
-        beforeFactIds: operations.map((item) => item.beforeFactId).filter(Boolean).sort(),
-        afterFactIds: operations.map((item) => item.afterFactId).filter(Boolean).sort(),
+        operationIds: unique(operations.map((item) => item.afterFactId ?? item.beforeFactId)),
+        beforeFactIds: unique(operations.map((item) => item.beforeFactId)),
+        afterFactIds: unique(operations.map((item) => item.afterFactId)),
         changedAspects: [...new Set(operations.flatMap((item) =>
-          changedAspects(facts[item.beforeFactId], facts[item.afterFactId]),
+          changedAspects(
+            item.beforeFactId ? facts[item.beforeFactId] : undefined,
+            item.afterFactId ? facts[item.afterFactId] : undefined,
+          ),
         ))].sort(),
       };
       const identity = {
@@ -840,14 +1181,28 @@ function buildProjectUnits(project, base, current, sourceIndex, facts, resolveOp
   return mergeUnits(project, units, sourceIndex);
 }
 
+/**
+ * @param {{
+ *   manifest: string | PreparationManifest,
+ *   manifestPath?: string,
+ *   workRoot?: string,
+ *   sourceIndex?: SourceIndex,
+ *   output?: string
+ * }} options
+ * @returns {SemanticAnalysis}
+ */
 export function analyzeSemanticIntents(options) {
   const { workRoot, manifest, sourceIndex } = loadInputs(options);
+  /** @type {Record<string, AssessmentFact>} */
   const facts = {};
+  /** @type {InternalSemanticUnit[]} */
   const reviewUnits = [];
+  /** @type {AnalysisBlocker[]} */
   const blockers = [];
   let analyzedProjects = 0;
   if (sourceIndex.analysis && sourceIndex.analysis.status !== "ready") {
-    return {
+    /** @type {SemanticAnalysis} */
+    const result = {
       schemaVersion: 1,
       status: "blocked",
       facts,
@@ -858,6 +1213,8 @@ export function analyzeSemanticIntents(options) {
         details: sourceIndex.analysis.blockers ?? [],
       }],
     };
+    if (options.output) writeJson(path.resolve(options.output), result);
+    return result;
   }
   for (const project of [...(manifest.projects ?? [])].sort((left, right) => left.id.localeCompare(right.id))) {
     const baseArtifact = project.artifacts?.baseline?.autorest ?? project.artifacts?.base?.autorest;
@@ -871,6 +1228,10 @@ export function analyzeSemanticIntents(options) {
       continue;
     }
     try {
+      /**
+       * @param {AutorestArtifact} artifact
+       * @param {"baseline" | "target"} role
+       */
       const selectedContract = (artifact, role) => {
         const contract = normalizeAutorestContract({ workRoot, artifact });
         const version = project.artifactComparison?.[role]?.apiVersion;
@@ -887,7 +1248,7 @@ export function analyzeSemanticIntents(options) {
       blockers.push({
         code: "autorest-contract-unsupported",
         projectId: project.id,
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -917,15 +1278,19 @@ export function analyzeSemanticIntents(options) {
         .flatMap((unit) => unit.operations)
         .map((operation) => operation.operationId),
     );
-    const versionTransitionOperationIds = new Set(mergedPublication.versionTransitionOperationIds);
+    const versionTransitionOperationIds = new Set(
+      mergedPublication.versionTransitionOperationIds ?? [],
+    );
     const publicationEligibleOperationIds = new Set(
-      mergedPublication.publicationEligibleOperationIds,
+      mergedPublication.publicationEligibleOperationIds ?? [],
     );
     mergedPublication.operations = mergedPublication.operations.filter((operation) => {
-      const fact = facts[operation.afterFactId ?? operation.beforeFactId];
+      const factId = operation.afterFactId ?? operation.beforeFactId;
+      const fact = factId ? facts[factId] : undefined;
       return versionTransitionOperationIds.has(operation.operationId) &&
         publicationEligibleOperationIds.has(operation.operationId) &&
-        newVersionProjectIds.has(fact?.projectId) &&
+        fact?.projectId !== undefined &&
+        newVersionProjectIds.has(fact.projectId) &&
         !otherOperationIds.has(operation.operationId);
     });
     mergedPublication.operationIds = unique(
@@ -954,6 +1319,7 @@ export function analyzeSemanticIntents(options) {
     unit.intentType = semanticIntentType(unit);
   }
   reviewUnits.sort((left, right) => left.id.localeCompare(right.id));
+  /** @type {SemanticAnalysis} */
   const result = {
     schemaVersion: 1,
     status: analyzedProjects ? "ready" : "blocked",
@@ -966,10 +1332,15 @@ export function analyzeSemanticIntents(options) {
 }
 
 if (isMain(import.meta.url)) {
-  runMain(async () => {
+  void runMain(() => {
     const args = parseArgs(process.argv.slice(2), { required: ["manifest", "output"] });
-    const result = analyzeSemanticIntents(args);
-    console.log(path.resolve(args.output));
+    const manifest = args.manifest;
+    const output = args.output;
+    if (typeof manifest !== "string" || typeof output !== "string") {
+      throw new TypeError("--manifest and --output must be strings.");
+    }
+    const result = analyzeSemanticIntents({ ...args, manifest, output });
+    console.log(path.resolve(output));
     if (result.status === "blocked") process.exitCode = 1;
   });
 }

@@ -20,9 +20,152 @@ import {
   reportSection,
 } from "./report-test-utils.mjs";
 
+/** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
+/** @typedef {import("./runtime-types.js").AssessmentFinding} AssessmentFinding */
+/** @typedef {import("./runtime-types.js").AssessmentOutput} AssessmentOutput */
+/** @typedef {import("./runtime-types.js").AssessmentTypeImpact} AssessmentTypeImpact */
+/** @typedef {import("./runtime-types.js").DocumentQualityDimension} DocumentQualityDimension */
+/** @typedef {import("./runtime-types.js").FinalComplianceAssessment} FinalComplianceAssessment */
+/** @typedef {NonNullable<Parameters<typeof renderCurrentAssessmentHtml>[1]>} RenderOptions */
+/**
+ * @typedef {{
+ *   schemaVersion?: number,
+ *   comparison?: {
+ *     baseCommit: string,
+ *     headCommit: string,
+ *     workingTree?: boolean | Record<string, unknown>,
+ *     [key: string]: unknown
+ *   },
+ *   dimensions: Record<string, unknown>,
+ *   blockers?: unknown[],
+ *   [key: string]: unknown
+ * }} AssessmentFixture
+ */
+/**
+ * @typedef {AssessmentOutput & {
+ *   dimensions: AssessmentOutput["dimensions"] & {
+ *     documentQuality: DocumentQualityDimension & {
+ *       coverage: NonNullable<DocumentQualityDimension["coverage"]>,
+ *       intentAssessments: NonNullable<DocumentQualityDimension["intentAssessments"]>,
+ *       findings: NonNullable<DocumentQualityDimension["findings"]>
+ *     }
+ *   }
+ * }} DocumentedAssessment
+ */
+/** @typedef {"pass" | "fail" | "not-assessed"} TestDocumentDecision */
+/** @typedef {Pick<AssessmentTypeImpact, "findingIds" | "affectedMethodCount">} VisibleImpactFixture */
+/**
+ * @typedef {Pick<AssessmentFinding,
+ *   "id" | "severity" | "crossLanguageDefinitionId" | "relatedSemanticIntents"
+ * >} DownstreamFindingFixture
+ */
+/**
+ * @typedef {Pick<AssessmentFinding,
+ *   "id" | "rule" | "severity" | "contractChange" | "operationIds" |
+ *   "relatedSemanticIntents" | "sources" | "evidence"
+ * >} RestFindingFixture
+ */
+
+/**
+ * @template T
+ * @param {T | null | undefined} value
+ * @param {string} [message]
+ * @returns {T}
+ */
+function required(value, message = "Expected test fixture value.") {
+  assert.ok(value, message);
+  return value;
+}
+
+/**
+ * @param {{
+ *   operationId: string,
+ *   changedAspects: string[],
+ *   before: Record<string, unknown>,
+ *   after: Record<string, unknown>
+ * }} operation
+ */
+function fixtureOperationContractRows(operation) {
+  return operationContractRows(
+    /** @type {Parameters<typeof operationContractRows>[0]} */ (
+      /** @type {unknown} */ (operation)
+    ),
+  );
+}
+
+/** @param {{sources: Record<string, unknown>[], operations: Record<string, unknown>[]}} item */
+function fixtureRepresentativeSource(item) {
+  return representativeSource(
+    /** @type {Parameters<typeof representativeSource>[0]} */ (
+      /** @type {unknown} */ (item)
+    ),
+  );
+}
+
+/** @param {Record<string, unknown>[]} findings */
+function fixtureComplianceFindingGroups(findings) {
+  return complianceFindingGroups(
+    /** @type {Parameters<typeof complianceFindingGroups>[0]} */ (
+      /** @type {unknown} */ (findings)
+    ),
+  );
+}
+
+/**
+ * @param {string} value
+ * @param {RegExp} pattern
+ * @param {number} [group]
+ */
+function requiredMatch(value, pattern, group = 0) {
+  const match = value.match(pattern);
+  assert.ok(match);
+  const capture = match[group];
+  assert.ok(capture);
+  return capture;
+}
+
+/** @param {VisibleImpactFixture[]} impacts */
+function visibleFixtureImpacts(impacts) {
+  return visibleSharedTypeImpacts(
+    /** @type {AssessmentTypeImpact[]} */ (/** @type {unknown} */ (impacts)),
+  );
+}
+
+/**
+ * @param {{findings: DownstreamFindingFixture[], typeImpacts: AssessmentTypeImpact[]}} dimension
+ */
+function fixtureDownstreamTypeCards(dimension) {
+  return downstreamTypeCards(
+    /** @type {AssessmentOutput["dimensions"]["downstream"]} */ (
+      /** @type {unknown} */ (dimension)
+    ),
+  );
+}
+
+/** @param {RestFindingFixture[]} findings */
+function fixtureRestContractCards(findings) {
+  return restContractCards(
+    /** @type {AssessmentFinding[]} */ (/** @type {unknown} */ (findings)),
+  );
+}
+
+/** @param {URL} url @returns {AssessmentOutput} */
+function readAssessment(url) {
+  const value = /** @type {unknown} */ (
+    JSON.parse(readFileSync(url, "utf8"))
+  );
+  return /** @type {AssessmentOutput} */ (value);
+}
+
+/**
+ * @param {AssessmentOutput | AssessmentFixture} assessment
+ * @param {RenderOptions} [options]
+ */
 function renderAssessmentHtml(assessment, options) {
   return renderCurrentAssessmentHtml(
-    normalizeRecordedAssessment(assessment),
+    normalizeRecordedAssessment(
+      /** @type {AssessmentOutput} */ (/** @type {unknown} */ (assessment)),
+    ),
     options,
   );
 }
@@ -31,22 +174,25 @@ const recordedAssessmentTest = existsSync(
   new URL("../evals/assessments", import.meta.url),
 ) ? test : test.skip;
 
+/** @param {string} html */
 function assertNoDocumentAppendixUi(html) {
   const body = html.includes("<main") ? html.slice(html.indexOf("<main")) : html;
   assert.doesNotMatch(body, /documentation-review-appendix|document-quality-passed-group|document-quality-not-assessed-group|document-quality-file|class="document-quality-document"/);
 }
 
+/** @param {string} html @param {string} label */
 function summaryCardValue(html, label) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return Number(
-    html.match(
+    required(html.match(
       new RegExp(
         `<div class="summary-label">${escapedLabel}<\\/div><\\/div><div class="summary-detail">(?:Not assessed<br>)?(\\d+) (?:findings?|intents?)`,
       ),
-    )[1],
+    ))[1],
   );
 }
 
+/** @returns {FinalComplianceAssessment} */
 function notAssessedCompliance() {
   return {
     status: "not-assessed",
@@ -69,14 +215,14 @@ function notAssessedCompliance() {
   };
 }
 
-test("shows confirmed type impacts without method reachability", () => {
+void test("shows confirmed type impacts without method reachability", () => {
   const impact = {
     findingIds: ["downstream-1"],
     affectedMethodCount: 0,
   };
-  assert.deepEqual(visibleSharedTypeImpacts([impact]), [impact]);
+  assert.deepEqual(visibleFixtureImpacts([impact]), [impact]);
   assert.deepEqual(
-    visibleSharedTypeImpacts([
+    visibleFixtureImpacts([
       {
         findingIds: [],
         affectedMethodCount: 0,
@@ -86,7 +232,8 @@ test("shows confirmed type impacts without method reachability", () => {
   );
 });
 
-test("renders one collapsed downstream card per SDK type", () => {
+void test("renders one collapsed downstream card per SDK type", () => {
+  /** @type {DownstreamFindingFixture[]} */
   const findings = [
     {
       id: "downstream-1",
@@ -107,7 +254,7 @@ test("renders one collapsed downstream card per SDK type", () => {
       relatedSemanticIntents: ["semantic-2"],
     },
   ];
-  const cards = downstreamTypeCards({
+  const cards = fixtureDownstreamTypeCards({
     findings,
     typeImpacts: [
       {
@@ -138,7 +285,7 @@ test("renders one collapsed downstream card per SDK type", () => {
   assert.deepEqual(cards[0].legacyImpactIds, ["shared-2"]);
 });
 
-test("renders SDK contract changes without REST operation association", () => {
+void test("renders SDK contract changes without REST operation association", () => {
   const source = {
     id: "source-enum",
     path: "specification/hardwaresecuritymodules/models.tsp",
@@ -158,6 +305,13 @@ test("renders SDK contract changes without REST operation association", () => {
     ],
     declarations: [],
   };
+  /**
+   * @param {string} comparisonRole
+   * @param {{name: string, value: string | number}[]} values
+   * @param {boolean} isFixed
+   * @param {boolean} isUnionAsEnum
+   * @returns {AssessmentFact}
+   */
   const enumFact = (comparisonRole, values, isFixed, isUnionAsEnum) => ({
     factKind: "enum",
     comparisonRole,
@@ -292,9 +446,10 @@ test("renders SDK contract changes without REST operation association", () => {
   );
   assert.match(html, /CloudHsmClusterSkuName\.Standard B10/);
   assert.match(html, /StandardB10/);
-  const downstream = html.match(
+  const downstream = requiredMatch(html,
     /<section id="downstream-breaking">([\s\S]*?)<\/section>/,
-  )[1];
+    1,
+  );
   assert.doesNotMatch(downstream, /Affected REST operations/);
   assert.match(downstream, /1 mapped methods/);
   assert.match(
@@ -311,8 +466,14 @@ test("renders SDK contract changes without REST operation association", () => {
   assert.match(downstream, /Affected intents \(1\)/);
 });
 
-test("groups REST contract deltas by schema identity and retains affected operations", () => {
-  const operation = (comparisonRole, operationId) => ({
+void test("groups REST contract deltas by schema identity and retains affected operations", () => {
+  /**
+   * @param {string} comparisonRole
+   * @param {string} operationId
+   * @returns {AssessmentFact}
+   */
+  const operation = (comparisonRole, operationId) =>
+    /** @type {AssessmentFact} */ (/** @type {unknown} */ ({
     comparisonRole,
     operationId,
     apiVersion: "v1",
@@ -341,7 +502,8 @@ test("groups REST contract deltas by schema identity and retains affected operat
         },
       },
     ],
-  });
+    }));
+  /** @type {RestFindingFixture[]} */
   const findings = ["Widgets_Get", "Widgets_List"].map(
     (operationId, index) => ({
       id: `rest-${index}`,
@@ -361,7 +523,7 @@ test("groups REST contract deltas by schema identity and retains affected operat
     }),
   );
 
-  const cards = restContractCards(findings);
+  const cards = fixtureRestContractCards(findings);
 
   assert.equal(cards.length, 1);
   assert.equal(cards[0].identity, "WidgetState");
@@ -373,7 +535,7 @@ test("groups REST contract deltas by schema identity and retains affected operat
   assert.equal(cards[0].findings[0].contractDelta.after, "removed");
 });
 
-test("renderer shows fetched Azure Guidelines guidance and expands failures", () => {
+void test("renderer shows fetched Azure Guidelines guidance and expands failures", () => {
   const catalog = readComplianceCatalog();
   const scores = [10, 9, 8, 7];
   const catalogRanking = catalog.map((item, index) => ({
@@ -575,9 +737,6 @@ test("renderer shows fetched Azure Guidelines guidance and expands failures", ()
         intentAssessments: [
           {
             semanticIntentId: "semantic-1",
-            sourceChangeIds: ["source-1"],
-            hunkIds: ["hunk-1"],
-            declarationIds: ["declaration-1"],
             ...intentAssessment,
             blockers: [],
           },
@@ -671,14 +830,14 @@ test("renderer shows fetched Azure Guidelines guidance and expands failures", ()
   assert.match(findingHtml, /interface ChildOperations/);
 });
 
-test("escapeHtml escapes Agent and source text", () => {
+void test("escapeHtml escapes Agent and source text", () => {
   assert.equal(
     escapeHtml('<script x="1">&'),
     "&lt;script x=&quot;1&quot;&gt;&amp;",
   );
 });
 
-test("renderer labels active Azure Guidelines and scoped safety", () => {
+void test("renderer labels active Azure Guidelines and scoped safety", () => {
   const html = renderAssessmentHtml({
     schemaVersion: 1,
     pullRequest: {
@@ -840,7 +999,7 @@ test("renderer labels active Azure Guidelines and scoped safety", () => {
   assert.doesNotMatch(html, /Assessment comparison/);
 });
 
-test("renderer shows expandable REST operations and aggregated downstream methods", () => {
+void test("renderer shows expandable REST operations and aggregated downstream methods", () => {
   const source = {
     id: "source-1",
     path: "specification/widgets/main.tsp",
@@ -1010,9 +1169,10 @@ test("renderer shows expandable REST operations and aggregated downstream method
   assert.match(html, /not present/);
   assert.match(html, /Method kind/);
   assert.match(html, /Why this is breaking/);
-  const downstream = html.match(
+  const downstream = requiredMatch(html,
     /<section id="downstream-breaking">([\s\S]*?)<\/section>/,
-  )[1];
+    1,
+  );
   assert.doesNotMatch(downstream, /Changed TypeSpec:/);
   assert.match(downstream, /Affected intents \(1\)/);
   assert.match(
@@ -1050,7 +1210,7 @@ test("renderer shows expandable REST operations and aggregated downstream method
   assert.doesNotMatch(operationCards[0], /class="diff"/);
 });
 
-test("renderer reports operations omitted from large semantic intents", () => {
+void test("renderer reports operations omitted from large semantic intents", () => {
   const source = {
     id: "source-1",
     path: "specification/widgets/main.tsp",
@@ -1103,7 +1263,7 @@ test("renderer reports operations omitted from large semantic intents", () => {
   for (const operation of operations) assert.ok(html.includes(operation.operationId));
 });
 
-test("representative source prefers operation evidence and stable ordering", () => {
+void test("representative source prefers operation evidence and stable ordering", () => {
   const item = {
     sources: [
       {
@@ -1139,18 +1299,19 @@ test("representative source prefers operation evidence and stable ordering", () 
     ],
   };
 
+  const selected = required(fixtureRepresentativeSource(item));
   assert.equal(
-    representativeSource(item).path,
+    selected.path,
     "specification/widgets/feature.tsp",
   );
   assert.deepEqual(
-    representativeSource(item).hunks.map((hunk) => hunk.id),
+    selected.hunks.map((hunk) => hunk.id),
     ["hunk-operation"],
   );
 });
 
-test("representative source uses hunk position before hunk ID", () => {
-  const selected = representativeSource({
+void test("representative source uses hunk position before hunk ID", () => {
+  const selected = required(fixtureRepresentativeSource({
     sources: [
       {
         id: "source-1",
@@ -1171,12 +1332,12 @@ test("representative source uses hunk position before hunk ID", () => {
       },
     ],
     operations: [],
-  });
+  }));
 
   assert.equal(selected.hunks[0].id, "hunk-z");
 });
 
-test("renderer shows complete changed intent source once and expanded", () => {
+void test("renderer shows complete changed intent source once and expanded", () => {
   const sources = [
     {
       id: "source-1",
@@ -1247,26 +1408,26 @@ test("renderer shows complete changed intent source once and expanded", () => {
   assert.doesNotMatch(html, /complete-typespec-evidence/);
 });
 
-recordedAssessmentTest("refreshed baseline preserves semantic and REST-derived downstream links", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/44742/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("refreshed baseline preserves semantic and REST-derived downstream links", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/44742/assessment.json", import.meta.url),
   );
   const html = renderAssessmentHtml(assessment);
-  const complianceFinding = assessment.dimensions.compliance.findings[0];
+  const complianceFinding = required(assessment.dimensions.compliance.findings[0]);
   const complianceIntent = assessment.dimensions.semantic.items.find(
     (item) => item.id === complianceFinding.semanticIntentId,
   );
-  const restFinding = assessment.dimensions.rest.findings[0];
+  const restFinding = required(assessment.dimensions.rest.findings[0]);
+  const restIntentId = required(restFinding.relatedSemanticIntents)[0];
   const restIntent = assessment.dimensions.semantic.items.find(
-    (item) => item.id === restFinding.relatedSemanticIntents[0],
+    (item) => item.id === restIntentId,
   );
   assert.ok(
     html.includes(`href="#compliance-finding-${complianceFinding.id}"`),
   );
-  assert.ok(html.includes(`href="#intent-${complianceIntent.id}"`));
+  const selectedComplianceIntent = required(complianceIntent);
+  const selectedRestIntent = required(restIntent);
+  assert.ok(html.includes(`href="#intent-${selectedComplianceIntent.id}"`));
 
   assert.match(html, /4 intents ·/);
   assert.match(
@@ -1289,7 +1450,7 @@ recordedAssessmentTest("refreshed baseline preserves semantic and REST-derived d
   assert.doesNotMatch(restHtml, /<details class="affected-operations" open>/);
   assert.ok(
     restHtml.includes(
-      `href="#intent-${restIntent.id}">${restIntent.title}</a>`,
+      `href="#intent-${selectedRestIntent.id}">${selectedRestIntent.title}</a>`,
     ),
   );
   assert.doesNotMatch(restHtml, /Changed TypeSpec:/);
@@ -1310,21 +1471,22 @@ recordedAssessmentTest("refreshed baseline preserves semantic and REST-derived d
     /<summary><strong><span class="action"><\/span>\s*<\/strong><\/summary>/,
   );
   assert.ok(
-    Object.values(assessment.dimensions).some((dimension) =>
-      (dimension.findings ?? []).some((finding) => finding.severity),
-    ),
+    assessment.dimensions.rest.findings.some((finding) => finding.severity) ||
+      assessment.dimensions.downstream.findings.some(
+        (finding) => finding.severity,
+      ) ||
+      assessment.dimensions.compliance.findings.some(
+        (finding) => finding.severity,
+      ),
   );
   assert.doesNotMatch(html, /<span class="severity/);
   assert.doesNotMatch(html, /class="finding [^"]*\b(?:high|medium|low)\b/);
   assert.match(html, /\.finding\{border-left:1px solid var\(--line\)\}/);
 });
 
-recordedAssessmentTest("counts repeated Azure guideline findings as raw findings in header cards despite one visible issue", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/44742/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("counts repeated Azure guideline findings as raw findings in header cards despite one visible issue", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/44742/assessment.json", import.meta.url),
   );
   const findings = assessment.dimensions.compliance.findings;
   const html = renderAssessmentHtml(assessment);
@@ -1371,9 +1533,9 @@ recordedAssessmentTest("counts repeated Azure guideline findings as raw findings
     1,
   );
   for (const finding of findings) {
-    const intent = assessment.dimensions.semantic.items.find(
+    const intent = required(assessment.dimensions.semantic.items.find(
       (item) => item.id === finding.semanticIntentId,
-    );
+    ));
     assert.ok(
       complianceHtml.includes(`id="compliance-finding-${finding.id}"`),
     );
@@ -1386,24 +1548,22 @@ recordedAssessmentTest("counts repeated Azure guideline findings as raw findings
   }
 });
 
-recordedAssessmentTest("keeps REST location labels out of SDK type rows without TCGC paths", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/44742/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("keeps REST location labels out of SDK type rows without TCGC paths", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/44742/assessment.json", import.meta.url),
   );
   const intent = assessment.dimensions.semantic.items.find(
     (item) => item.id === "semantic-259f67bc56ae9c3d",
   );
-  const operation = intent.operations.find(
+  const selectedIntent = required(intent);
+  const operation = selectedIntent.operations.find(
     (item) =>
       item.operationId === "Directory_ListFilesAndDirectoriesSegment",
   );
   const rows = operationContractRows(
-    operation,
+    required(operation),
     assessment.dimensions.rest.findings,
-    intent.id,
+    selectedIntent.id,
   );
 
   assert.ok(
@@ -1444,12 +1604,9 @@ recordedAssessmentTest("keeps REST location labels out of SDK type rows without 
   );
 });
 
-recordedAssessmentTest("labels SDK method parameters with normalized TCGC locations", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/44988/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("labels SDK method parameters with normalized TCGC locations", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/44988/assessment.json", import.meta.url),
   );
   const html = renderAssessmentHtml(assessment);
 
@@ -1463,12 +1620,9 @@ recordedAssessmentTest("labels SDK method parameters with normalized TCGC locati
   );
 });
 
-recordedAssessmentTest("labels response header contract rows consistently", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/43308/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("labels response header contract rows consistently", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/43308/assessment.json", import.meta.url),
   );
   const html = renderAssessmentHtml(assessment);
 
@@ -1478,12 +1632,9 @@ recordedAssessmentTest("labels response header contract rows consistently", () =
   );
 });
 
-recordedAssessmentTest("omits compatible response-wrapper and response-only required properties", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/45162/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("omits compatible response-wrapper and response-only required properties", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/45162/assessment.json", import.meta.url),
   );
   const html = renderAssessmentHtml(assessment);
 
@@ -1501,8 +1652,8 @@ recordedAssessmentTest("omits compatible response-wrapper and response-only requ
   );
 });
 
-test("derives narrow structural rows without confirmed REST findings", () => {
-  const rows = operationContractRows({
+void test("derives narrow structural rows without confirmed REST findings", () => {
+  const rows = fixtureOperationContractRows({
     operationId: "Widgets_Get",
     changedAspects: ["responses"],
     before: { responses: [{ status: "200" }] },
@@ -1518,8 +1669,8 @@ test("derives narrow structural rows without confirmed REST findings", () => {
   ]);
 });
 
-test("keeps whole-operation additions as one contract row", () => {
-  const rows = operationContractRows({
+void test("keeps whole-operation additions as one contract row", () => {
+  const rows = fixtureOperationContractRows({
     operationId: "Widgets_Create",
     changedAspects: [
       "method",
@@ -1556,25 +1707,23 @@ test("keeps whole-operation additions as one contract row", () => {
   ]);
 });
 
-recordedAssessmentTest("shows nested response header changes without identical response summaries", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/43308/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("shows nested response header changes without identical response summaries", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/43308/assessment.json", import.meta.url),
   );
   const intent = assessment.dimensions.semantic.items.find((item) =>
     item.operations?.some(
       (operation) => operation.operationId === "ScenarioRuns_Get",
     ),
   );
-  const operation = intent.operations.find(
+  const selectedIntent = required(intent);
+  const operation = selectedIntent.operations.find(
     (item) => item.operationId === "ScenarioRuns_Get",
   );
   const rows = operationContractRows(
-    operation,
+    required(operation),
     assessment.dimensions.rest.findings,
-    intent.id,
+    selectedIntent.id,
   );
 
   assert.deepEqual(rows, [
@@ -1594,27 +1743,25 @@ recordedAssessmentTest("shows nested response header changes without identical r
   );
 });
 
-recordedAssessmentTest("renders version-reference-only operation changes as unchanged", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/42853/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("renders version-reference-only operation changes as unchanged", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/42853/assessment.json", import.meta.url),
   );
   const intent = assessment.dimensions.semantic.items.find((item) =>
     item.operations?.some(
       (operation) => operation.operationId === "DeletedVaults_Get",
     ),
   );
-  const operation = intent.operations.find(
+  const selectedIntent = required(intent);
+  const operation = selectedIntent.operations.find(
     (item) => item.operationId === "DeletedVaults_Get",
   );
 
   assert.deepEqual(
     operationContractRows(
-      operation,
+      required(operation),
       assessment.dimensions.rest.findings,
-      intent.id,
+      selectedIntent.id,
     ),
     [],
   );
@@ -1637,7 +1784,7 @@ recordedAssessmentTest("renders version-reference-only operation changes as unch
   assert.doesNotMatch(card, /REST contract changed: responses/);
 });
 
-test("does not group Azure guideline findings by title alone", () => {
+void test("does not group Azure guideline findings by title alone", () => {
   const base = {
     id: "compliance-1",
     title: "Repeated title",
@@ -1649,7 +1796,7 @@ test("does not group Azure guideline findings by title alone", () => {
       },
     ],
   };
-  const groups = complianceFindingGroups([
+  const groups = fixtureComplianceFindingGroups([
     base,
     {
       ...base,
@@ -1674,20 +1821,17 @@ test("does not group Azure guideline findings by title alone", () => {
   );
 });
 
-recordedAssessmentTest("renderer links assessed intents with no applicable guidance by title", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/42853/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("renderer links assessed intents with no applicable guidance by title", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/42853/assessment.json", import.meta.url),
   );
   const noGuidance = assessment.dimensions.compliance.intentAssessments.filter(
     (item) => item.decision === "no-applicable-guidance",
   );
   assert.equal(noGuidance.length, 1);
-  const intent = assessment.dimensions.semantic.items.find(
-    (item) => item.id === noGuidance[0].semanticIntentId,
-  );
+  const intent = required(assessment.dimensions.semantic.items.find(
+    (item) => item.id === required(noGuidance[0]).semanticIntentId,
+  ));
   const html = renderAssessmentHtml(assessment);
   const complianceHtml = reportSection(html, "azure-compliance");
   assert.ok(
@@ -1698,15 +1842,15 @@ recordedAssessmentTest("renderer links assessed intents with no applicable guida
   assert.doesNotMatch(complianceHtml, /Unassessed intents/);
   assert.doesNotMatch(complianceHtml, /<code>semantic-[^<]+<\/code>/);
 
-  const another = assessment.dimensions.compliance.intentAssessments.find(
+  const another = required(assessment.dimensions.compliance.intentAssessments.find(
     (item) => item.decision === "applicable-pass",
-  );
+  ));
   another.decision = "no-applicable-guidance";
   another.applicableGuidance = [];
   delete another.expected;
-  const anotherIntent = assessment.dimensions.semantic.items.find(
+  const anotherIntent = required(assessment.dimensions.semantic.items.find(
     (item) => item.id === another.semanticIntentId,
-  );
+  ));
   const multipleHtml = renderAssessmentHtml(assessment);
   const multipleComplianceHtml = reportSection(multipleHtml, "azure-compliance");
   assert.match(
@@ -1725,12 +1869,9 @@ recordedAssessmentTest("renderer links assessed intents with no applicable guida
   );
 });
 
-recordedAssessmentTest("downstream section excludes REST breaking changes", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/44742/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("downstream section excludes REST breaking changes", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/44742/assessment.json", import.meta.url),
   );
   const html = renderAssessmentHtml(assessment);
   assert.match(
@@ -1755,12 +1896,9 @@ recordedAssessmentTest("downstream section excludes REST breaking changes", () =
   assert.doesNotMatch(downstream, /REST-compatible downstream changes/);
 });
 
-recordedAssessmentTest("renderer keeps API versions in the appendix", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/42853/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("renderer keeps API versions in the appendix", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/42853/assessment.json", import.meta.url),
   );
   const html = renderAssessmentHtml(assessment);
 
@@ -1781,12 +1919,9 @@ recordedAssessmentTest("renderer keeps API versions in the appendix", () => {
   assert.match(html, /newest-added-version/);
 });
 
-recordedAssessmentTest("renderer presents assessment blockers as potential limits in the appendix", () => {
-  const assessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/42853/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("renderer presents assessment blockers as potential limits in the appendix", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/42853/assessment.json", import.meta.url),
   );
   assessment.blockers = [
     "Before/after evidence is incomplete for <one> candidate.",
@@ -1805,18 +1940,12 @@ recordedAssessmentTest("renderer presents assessment blockers as potential limit
   );
 });
 
-recordedAssessmentTest("renderer derives overall code quality from assessed dimensions", () => {
-  const highAssessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/45348/assessment.json", import.meta.url),
-      "utf8",
-    ),
+void recordedAssessmentTest("renderer derives overall code quality from assessed dimensions", () => {
+  const highAssessment = readAssessment(
+    new URL("../evals/assessments/45348/assessment.json", import.meta.url),
   );
-  const mediumAssessment = JSON.parse(
-    readFileSync(
-      new URL("../evals/assessments/45536/assessment.json", import.meta.url),
-      "utf8",
-    ),
+  const mediumAssessment = readAssessment(
+    new URL("../evals/assessments/45536/assessment.json", import.meta.url),
   );
   const compliance = mediumAssessment.dimensions.compliance;
   compliance.status = "not-assessed";
@@ -1842,7 +1971,22 @@ recordedAssessmentTest("renderer derives overall code quality from assessed dime
   }
 });
 
+/**
+ * @param {TestDocumentDecision | Record<"correctness" | "meaning", TestDocumentDecision>} [decision]
+ * @param {boolean} [noDocs]
+ * @param {number} [version]
+ * @returns {DocumentedAssessment}
+ */
 function documentedAssessment(decision = "pass", noDocs = false, version = 1) {
+  /**
+   * @type {{
+   *   id: string,
+   *   path: string,
+   *   hunks: {id: string, lines: string[]}[],
+   *   declarations: {id: string, qualifiedName: string, kind: string, hunkIds: string[]}[],
+   *   documentEvidence?: Record<string, unknown>
+   * }}
+   */
   const source = {
     id: "source-widget", path: "models.tsp",
     hunks: [{ id: "hunk-widget", lines: ['-@doc("The count.")', '+@doc("A positive count.")'] }],
@@ -1858,27 +2002,42 @@ function documentedAssessment(decision = "pass", noDocs = false, version = 1) {
     before: { doc: "The count.", declaration: '@doc("The count.")\ncount: int32;', source: { path: source.path, revision: "base", startLine: 1, endLine: 2 } },
     after: { doc: "A positive count.", declaration: '@doc("A positive count.")\n@minValue(1)\ncount: int32;', source: { path: source.path, revision: "current", startLine: 1, endLine: 3 } },
   };
-  source.documentEvidence = { status: "ready", documents: noDocs ? [] : [{ ...document, hunkIds: ["hunk-widget"] }], blockers: [] };
-  if (version >= 2) source.documentEvidence.schemaVersion = version;
+  source.documentEvidence = {
+    schemaVersion: version,
+    status: "ready",
+    documents: noDocs ? [] : [{ ...document, hunkIds: ["hunk-widget"] }],
+    blockers: [],
+  };
   const unit = {
     reviewUnitId: intent.id, status: noDocs ? "not-applicable" : "ready",
     ...(noDocs ? { reason: "No current @doc in the changed declaration scope." } : {}),
     sourceChangeIds: [source.id], hunkIds: ["hunk-widget"], declarationIds: ["declaration-widget"], documents: noDocs ? [] : [document],
   };
-  const input = buildDocumentQualityInput({
+  const input = buildDocumentQualityInput(
+    /** @type {Parameters<typeof buildDocumentQualityInput>[0]} */ (
+      /** @type {unknown} */ ({
     schemaVersion: version,
     sourceIndex: { sourceChanges: [source] },
     semantic: { reviewUnits: [{ id: intent.id, sourceChangeIds: unit.sourceChangeIds, hunkIds: unit.hunkIds, declarationIds: unit.declarationIds }] },
-  });
-  const decisions = noDocs ? [] : (version >= 2 ? ["description"] : ["correctness", "meaning"]).map((check) => {
-    const checkDecision = typeof decision === "string" ? decision : decision[check];
+      })
+    ),
+  );
+  const checks = /** @type {("description" | "correctness" | "meaning")[]} */ (
+    version >= 2 ? ["description"] : ["correctness", "meaning"]
+  );
+  const decisions = noDocs ? [] : checks.map((check) => {
+    const checkDecision = typeof decision === "string"
+      ? decision
+      : /** @type {Partial<Record<typeof check, TestDocumentDecision>>} */ (decision)[check];
     return {
       reviewUnitId: intent.id, documentId: document.id, check, decision: checkDecision,
       rationale: checkDecision === "not-assessed" ? "Contract evidence incomplete." : "Recorded documentation judgment.",
       ...(checkDecision === "fail" ? { title: `${check} issue in count documentation`, expected: "State the exact allowed count.", docQuote: "positive count" } : {}),
     };
   });
-  const documentQuality = assembleDocumentQuality({
+  const documentQuality = assembleDocumentQuality(
+    /** @type {Parameters<typeof assembleDocumentQuality>[0]} */ (
+      /** @type {unknown} */ ({
     input,
     modelInput: {
       ...(version >= 2 ? {
@@ -1897,9 +2056,11 @@ function documentedAssessment(decision = "pass", noDocs = false, version = 1) {
         },
       },
     },
-    decisions, semanticUnits: [intent], sourceChanges: [source],
-  });
-  return {
+        decisions, semanticUnits: [intent], sourceChanges: [source],
+      })
+    ),
+  );
+  return /** @type {DocumentedAssessment} */ (/** @type {unknown} */ ({
     schemaVersion: 1, comparison: { baseCommit: "baseline", headCommit: "target" },
     confidence: "high", safety: { scope: "rest-and-downstream-only", status: "passed" },
     dimensions: {
@@ -1908,10 +2069,10 @@ function documentedAssessment(decision = "pass", noDocs = false, version = 1) {
       compliance: notAssessedCompliance(), documentQuality,
     },
     blockers: [], projects: [], changedFiles: [], provenance: {},
-  };
+  }));
 }
 
-test("five dimension cards retain the requested order without an overall quality card", () => {
+void test("five dimension cards retain the requested order without an overall quality card", () => {
   const html = renderAssessmentHtml(documentedAssessment("not-assessed"));
   const header = html.slice(html.indexOf('<div class="summary-grid">'), html.indexOf("</header>"));
   const links = [...header.matchAll(/<a class="summary-card" href="#([^"]+)"/g)].map(match => match[1]);
@@ -1921,7 +2082,7 @@ test("five dimension cards retain the requested order without an overall quality
   assert.match(html, /@media\(min-width:1051px\)\{\.summary-grid\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)\}\}/);
 });
 
-recordedAssessmentTest("content puts findings first and follows header order within both groups", () => {
+void recordedAssessmentTest("content puts findings first and follows header order within both groups", () => {
   const cases = [
     {
       assessment: documentedAssessment("pass"),
@@ -1932,7 +2093,9 @@ recordedAssessmentTest("content puts findings first and follows header order wit
       expected: ["document-quality", "semantic-intents", "azure-compliance", "rest-breaking", "downstream-breaking", "appendix"],
     },
     {
-      assessment: JSON.parse(readFileSync(new URL("../evals/assessments/44988/assessment.json", import.meta.url), "utf8")),
+      assessment: readAssessment(
+        new URL("../evals/assessments/44988/assessment.json", import.meta.url),
+      ),
       expected: ["downstream-breaking", "document-quality", "semantic-intents", "azure-compliance", "rest-breaking", "appendix"],
     },
   ];
@@ -1946,8 +2109,10 @@ recordedAssessmentTest("content puts findings first and follows header order wit
   }
 });
 
-test("hero headings contain only an icon and title with counts in the detail below", () => {
-  for (const [decision, noDocs] of [["pass", false], ["fail", false], ["not-assessed", false], ["pass", true]]) {
+void test("hero headings contain only an icon and title with counts in the detail below", () => {
+  for (const [decision, noDocs] of /** @type {[TestDocumentDecision, boolean][]} */ (
+    [["pass", false], ["fail", false], ["not-assessed", false], ["pass", true]]
+  )) {
     const html = renderAssessmentHtml(documentedAssessment(decision, noDocs));
     const header = html.slice(html.indexOf('<div class="summary-grid">'), html.indexOf("</header>"));
     const headings = [...header.matchAll(/<div class="summary-heading"><div class="summary-value"><span[^>]*>([^<]+)<\/span><\/div><div class="summary-label">([^<]+)<\/div><\/div><div class="summary-detail">/g)];
@@ -1956,7 +2121,7 @@ test("hero headings contain only an icon and title with counts in the detail bel
     assert.deepEqual(headings.map(([, , label]) => summaryCardValue(html, label)), [1, 0, 0, 0, decision === "fail" ? 2 : 0]);
     assert.match(header, /0 findings/);
     assert.match(header, /class="info" aria-label="Information only">ⓘ<\/span>/);
-    const docCard = header.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
+    const docCard = requiredMatch(header, /<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/);
     if (noDocs) assert.match(docCard, /0 findings<br>0 descriptions assessed/);
     if (decision === "not-assessed") assert.match(docCard, /0 findings<br>0 descriptions assessed/);
     assert.doesNotMatch(docCard, /Not reviewed|Partially reviewed/);
@@ -1964,12 +2129,12 @@ test("hero headings contain only an icon and title with counts in the detail bel
   }
 });
 
-test("Semantic intents is informational and stays in the no-findings group regardless of document findings", () => {
-  for (const decision of ["pass", "fail"]) {
+void test("Semantic intents is informational and stays in the no-findings group regardless of document findings", () => {
+  for (const decision of /** @type {const} */ (["pass", "fail"])) {
     const assessment = documentedAssessment(decision);
     const original = structuredClone(assessment);
     const html = renderAssessmentHtml(assessment);
-    const card = html.match(/<a class="summary-card" href="#semantic-intents">[\s\S]*?<\/a>/)[0];
+    const card = requiredMatch(html, /<a class="summary-card" href="#semantic-intents">[\s\S]*?<\/a>/);
     assert.match(card, /<div class="summary-value"><span class="info" aria-label="Information only">ⓘ<\/span><\/div>/);
     assert.equal(summaryCardValue(html, "Semantic intents"), 1);
     assert.match(card, /0 operations<br>0 Added, 1 Modified, 0 Removed/);
@@ -1984,22 +2149,28 @@ test("Semantic intents is informational and stays in the no-findings group regar
   }
 });
 
-test("document hero stays compact while detailed coverage remains in the summary API", () => {
-  for (const [decision, noDocs, count, compact, coverage] of [
+void test("document hero stays compact while detailed coverage remains in the summary API", () => {
+  for (const [decision, noDocs, count, compact, coverage] of /** @type {[TestDocumentDecision, boolean, string, string, string][]} */ ([
     ["pass", false, "0", "0 findings<br>1 description assessed", "2/2 checks assessed"],
     ["fail", false, "2", "2 findings<br>1 description assessed", "2/2 checks assessed"],
     ["not-assessed", false, "0", "0 findings<br>0 descriptions assessed", "0/2 checks assessed"],
     ["pass", true, "0", "0 findings<br>0 descriptions assessed", "0/0 checks assessed"],
-  ]) {
+  ])) {
     const assessment = documentedAssessment(decision, noDocs);
     const before = structuredClone(assessment);
     const html = renderAssessmentHtml(assessment);
-    const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>'))[0];
+    const hero = required([...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>')))[0];
     assert.equal(summaryCardValue(html, "Documentation Completeness"), Number(count));
     assert.ok(hero.includes(compact));
     assert.doesNotMatch(hero, /checks assessed|intent scopes|retained descriptions/);
-    assert.match(documentQualitySummary(assessment.dimensions.documentQuality).detail, new RegExp(coverage.replace("/", "\\/")));
-    assert.doesNotMatch(reportSection(html, "appendix"), new RegExp(coverage.replace("/", "\\/")));
+    assert.match(
+      documentQualitySummary(assessment.dimensions.documentQuality).detail,
+      new RegExp(String(coverage).replace("/", "\\/")),
+    );
+    assert.doesNotMatch(
+      reportSection(html, "appendix"),
+      new RegExp(String(coverage).replace("/", "\\/")),
+    );
     assertNoDocumentAppendixUi(html);
     assert.doesNotMatch(html, /Overall code quality/);
     assert.deepEqual(assessment, before);
@@ -2010,11 +2181,13 @@ test("document hero stays compact while detailed coverage remains in the summary
   }
 });
 
-recordedAssessmentTest("partial document review omits appendix coverage strings but preserves raw summary data", () => {
-  const assessment = JSON.parse(readFileSync(new URL("../evals/assessments/43308/assessment.json", import.meta.url), "utf8"));
+void recordedAssessmentTest("partial document review omits appendix coverage strings but preserves raw summary data", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/43308/assessment.json", import.meta.url),
+  );
   const original = structuredClone(assessment);
   const html = renderAssessmentHtml(assessment);
-  const hero = html.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
+  const hero = requiredMatch(html, /<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/);
   assert.match(hero, /<div class="summary-detail">0 findings<br>9 descriptions assessed<\/div>/);
   assert.match(hero, /class="pass" aria-label="Passed">✓<\/span>/);
   assert.doesNotMatch(hero, /9\/9|intent|retained|applicable|not reviewed|Partially/);
@@ -2026,19 +2199,26 @@ recordedAssessmentTest("partial document review omits appendix coverage strings 
   assert.deepEqual(assessment, original);
 });
 
-recordedAssessmentTest("failed document hero shows findings and checked-declaration count", () => {
-  const assessment = JSON.parse(readFileSync(new URL("../evals/assessments/44988/assessment.json", import.meta.url), "utf8"));
+void recordedAssessmentTest("failed document hero shows findings and checked-declaration count", () => {
+  const assessment = readAssessment(
+    new URL("../evals/assessments/44988/assessment.json", import.meta.url),
+  );
   const html = renderAssessmentHtml(assessment);
-  const hero = html.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
+  const hero = requiredMatch(html, /<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/);
   assert.match(hero, /<div class="summary-detail">20 findings<br>881 declarations checked<\/div>/);
   assert.doesNotMatch(hero, /861\/881|intent|inherited|retained|not reviewed/);
 });
 
-test("legacy document hero uses findings status without inventing an assessed count", () => {
+void test("legacy document hero uses findings status without inventing an assessed count", () => {
   const assessment = documentedAssessment();
-  assessment.dimensions.documentQuality = { status: "not-assessed", summary: 'Old artifacts lack <documentation> evidence & "checks".' };
+  assessment.dimensions.documentQuality =
+    /** @type {DocumentedAssessment["dimensions"]["documentQuality"]} */ (
+      /** @type {unknown} */ ({
+        status: "not-assessed", summary: 'Old artifacts lack <documentation> evidence & "checks".',
+      })
+    );
   const html = renderAssessmentHtml(assessment);
-  const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>'))[0];
+  const hero = required([...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>')))[0];
   assert.match(hero, /0 findings<br>Assessment count unavailable/);
   assert.match(hero, /class="pass" aria-label="Passed">✓<\/span>/);
   assert.doesNotMatch(hero, /&lt;documentation&gt;/);
@@ -2048,17 +2228,16 @@ test("legacy document hero uses findings status without inventing an assessed co
   assertNoDocumentAppendixUi(html);
 });
 
-for (const version of [2, 3]) test(`v${version} renders one description assessment and an honest no-document outcome`, () => {
-  for (const [decision, noDocs, count] of [
+for (const version of [2, 3]) void test(`v${version} renders one description assessment and an honest no-document outcome`, () => {
+  for (const [decision, noDocs, count] of /** @type {[TestDocumentDecision, boolean, string][]} */ ([
     ["pass", false, "0"],
     ["fail", false, "1"],
     ["not-assessed", false, "0"],
     ["pass", true, "0"],
-  ]) {
+  ])) {
     const assessment = documentedAssessment(decision, noDocs, version);
     const html = renderAssessmentHtml(assessment);
     const quality = reportSection(html, "document-quality");
-    const hero = html.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
     assert.equal(summaryCardValue(html, "Documentation Completeness"), Number(count));
     assert.match(
       quality,
@@ -2081,24 +2260,33 @@ for (const version of [2, 3]) test(`v${version} renders one description assessme
   }
 });
 
-recordedAssessmentTest("removing aggregate quality preserves documentation findings, assessment status and safety", () => {
-  const recorded = JSON.parse(readFileSync(new URL("../evals/assessments/45348/assessment.json", import.meta.url), "utf8"));
-  const passedGuidance = recorded.dimensions.compliance.intentAssessments[0];
+void recordedAssessmentTest("removing aggregate quality preserves documentation findings, assessment status and safety", () => {
+  const recorded = readAssessment(
+    new URL("../evals/assessments/45348/assessment.json", import.meta.url),
+  );
+  const passedGuidance = required(recorded.dimensions.compliance.intentAssessments[0]);
   assert.equal(recorded.dimensions.compliance.status, "passed");
-  for (const version of [1, 2, 3]) for (const [decision, legacy, expectedCount, noDocs = false] of [
+  for (const version of [1, 2, 3]) for (const [decision, legacy, expectedCount, noDocs = false] of /** @type {[TestDocumentDecision, boolean, string, boolean?][]} */ ([
     ["pass", false, "0"],
     ["fail", false, version === 1 ? "2" : "1"],
     ["not-assessed", false, "0"],
     ["pass", true, "0"],
     ["pass", false, "0", true],
-  ]) {
+  ])) {
     const assessment = documentedAssessment(decision, noDocs, version);
     assessment.dimensions.compliance = {
       ...structuredClone(recorded.dimensions.compliance),
       intentAssessments: [{ ...structuredClone(passedGuidance), semanticIntentId: "semantic-widget" }],
-      coverage: { semanticIntentCount: 1, assessedIntentCount: 1, selectedDocumentCount: passedGuidance.documents.length, unassessedIntentIds: [] },
+      coverage: { semanticIntentCount: 1, assessedIntentCount: 1, selectedDocumentCount: required(passedGuidance.documents).length, unassessedIntentIds: [] },
     };
-    if (legacy) assessment.dimensions.documentQuality = { status: "not-assessed", summary: "Historical artifact has no doc assessment." };
+    if (legacy) {
+      assessment.dimensions.documentQuality =
+        /** @type {DocumentedAssessment["dimensions"]["documentQuality"]} */ (
+          /** @type {unknown} */ ({
+            status: "not-assessed", summary: "Historical artifact has no doc assessment.",
+          })
+        );
+    }
     const before = structuredClone(assessment);
     const html = renderAssessmentHtml(assessment);
     assert.doesNotMatch(html, /Overall code quality/);
@@ -2109,11 +2297,11 @@ recordedAssessmentTest("removing aggregate quality preserves documentation findi
   }
 });
 
-test("failed documentation with partial checks reports incomplete intent coverage", () => {
+void test("failed documentation with partial checks reports incomplete intent coverage", () => {
   const assessment = documentedAssessment({ correctness: "fail", meaning: "not-assessed" });
   const dimension = assessment.dimensions.documentQuality;
   assert.equal(dimension.status, "failed");
-  assert.equal(dimension.intentAssessments[0].status, "failed");
+  assert.equal(required(dimension.intentAssessments[0]).status, "failed");
   assert.deepEqual(dimension.coverage.unassessedIntentIds, ["semantic-widget"]);
   assert.equal(dimension.coverage.assessedIntentCount, 0);
   assert.equal(dimension.coverage.assessedCheckCount, 1);
@@ -2126,9 +2314,9 @@ test("failed documentation with partial checks reports incomplete intent coverag
   assert.equal(assessment.safety.status, "passed");
 });
 
-test("passed documentation is omitted from HTML while summary data stays intact", () => {
+void test("passed documentation is omitted from HTML while summary data stays intact", () => {
   const assessment = documentedAssessment("pass");
-  assert.ok(assessment.dimensions.documentQuality.intentAssessments[0].checks.every((check) => check.expected === undefined));
+  assert.ok(required(required(assessment.dimensions.documentQuality.intentAssessments[0]).checks).every((check) => check.expected === undefined));
   const html = renderAssessmentHtml(assessment);
   const main = reportSection(html, "document-quality");
   assert.doesNotMatch(main, /document-quality-intent|document-quality-check|Widget\.count/);
@@ -2137,7 +2325,7 @@ test("passed documentation is omitted from HTML while summary data stays intact"
   assertNoDocumentAppendixUi(html);
 });
 
-test("one failed and one passed doc check render only one full source comparison", () => {
+void test("one failed and one passed doc check render only one full source comparison", () => {
   const html = renderAssessmentHtml(documentedAssessment({ correctness: "pass", meaning: "fail" }));
   const quality = reportSection(html, "document-quality");
   assert.equal((quality.match(/class="report-card document-quality-check"/g) ?? []).length, 1);
@@ -2152,7 +2340,7 @@ test("one failed and one passed doc check render only one full source comparison
   assert.doesNotMatch(quality, /Expected meaning or contract was not recorded/);
 });
 
-test("unassessed documentation keeps summary coverage while HTML omits removed appendix details", () => {
+void test("unassessed documentation keeps summary coverage while HTML omits removed appendix details", () => {
   const html = renderAssessmentHtml(documentedAssessment("not-assessed"));
   const main = reportSection(html, "document-quality");
   const summary = documentQualitySummary(documentedAssessment("not-assessed").dimensions.documentQuality);
@@ -2164,14 +2352,14 @@ test("unassessed documentation keeps summary coverage while HTML omits removed a
   assertNoDocumentAppendixUi(html);
 });
 
-test("Documentation Completeness labels retain red impacts and historical anchors", () => {
+void test("Documentation Completeness labels retain red impacts and historical anchors", () => {
   for (const version of [1, 2, 3]) {
     const assessment = documentedAssessment("fail", false, version);
     const original = structuredClone(assessment);
     const html = renderAssessmentHtml(assessment);
     const main = reportSection(html, "document-quality");
-    const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)]
-      .find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>'))[0];
+    const hero = required([...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)]
+      .find(([card]) => card.includes('<div class="summary-label">Documentation Completeness</div>')))[0];
     assert.match(hero, /<div class="summary-label">Documentation Completeness<\/div>/);
     assert.doesNotMatch(hero, /Doc Correctness|Document Quality|Agent Friendliness/);
     assert.match(main, /<h2>Documentation Completeness<\/h2>/);

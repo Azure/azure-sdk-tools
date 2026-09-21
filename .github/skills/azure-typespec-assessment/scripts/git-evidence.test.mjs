@@ -13,13 +13,14 @@ import {
   resolveComparison,
 } from "./git-evidence.mjs";
 
+/** @param {string} repo @param {...string} args */
 function git(repo, ...args) {
   const result = spawnSync("git", ["-C", repo, ...args], { encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
   return result.stdout.trim();
 }
 
-test("collectChanges combines committed, staged, unstaged, and untracked TypeSpec", () => {
+void test("collectChanges combines committed, staged, unstaged, and untracked TypeSpec", () => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-git-"));
   git(repo, "init", "-q");
   git(repo, "config", "user.email", "test@example.com");
@@ -56,7 +57,7 @@ test("collectChanges combines committed, staged, unstaged, and untracked TypeSpe
   );
 });
 
-test("collectChanges compares an explicit head without local overlays", () => {
+void test("collectChanges compares an explicit head without local overlays", () => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-head-"));
   try {
     git(repo, "init", "-q");
@@ -92,7 +93,7 @@ test("collectChanges compares an explicit head without local overlays", () => {
   }
 });
 
-test("deriveServiceRoot rejects paths outside specification", () => {
+void test("deriveServiceRoot rejects paths outside specification", () => {
   assert.equal(deriveServiceRoot("specification"), "specification");
   assert.equal(
     deriveServiceRoot("specification/widget/resource-manager/Widget"),
@@ -101,7 +102,7 @@ test("deriveServiceRoot rejects paths outside specification", () => {
   assert.throws(() => deriveServiceRoot("tools/widget"), /specification/);
 });
 
-test("normalizes absolute and relative specification paths within the repository", () => {
+void test("normalizes absolute and relative specification paths within the repository", () => {
   const repo = path.join(os.tmpdir(), "typespec-scope");
   const relative = "specification/widget/resource-manager/Widget";
   assert.equal(normalizeSpecification(repo, path.join(repo, relative)), relative);
@@ -118,7 +119,7 @@ test("normalizes absolute and relative specification paths within the repository
   }
 });
 
-test("normalizes explicit sparse roots without collapsing them", () => {
+void test("normalizes explicit sparse roots without collapsing them", () => {
   assert.deepEqual(
     normalizeSparseRoots(
       [
@@ -158,7 +159,7 @@ test("normalizes explicit sparse roots without collapsing them", () => {
   }
 });
 
-test("collectChanges classifies both sides of TypeSpec renames across sparse roots", () => {
+void test("collectChanges classifies both sides of TypeSpec renames across sparse roots", () => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-renames-"));
   try {
     git(repo, "init", "-q");
@@ -217,7 +218,7 @@ test("collectChanges classifies both sides of TypeSpec renames across sparse roo
   }
 });
 
-test("creates a worktree with multiple sparse roots", () => {
+void test("creates a worktree with multiple sparse roots", () => {
   const repo = fs.mkdtempSync(
     path.join(os.tmpdir(), "typespec-sparse-source-"),
   );

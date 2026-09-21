@@ -3,32 +3,76 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonicalJson, stableId } from "./stable-id.mjs";
 
+/** @typedef {import("./compliance-search-evidence.schema.js").Document} ComplianceDocument */
+/** @typedef {import("./compliance-search-evidence.schema.js").Guidance} ComplianceGuidance */
+/** @typedef {import("./compliance-search-evidence.schema.js").RankedCatalogEntry} RankedCatalogEntry */
+/** @typedef {import("./compliance-search-evidence.schema.js").RetrievalAttempt} RetrievalAttempt */
+/** @typedef {import("./compliance-search-evidence.schema.js").Score} ComplianceScore */
+/** @typedef {import("./compliance-search-evidence.schema.js").TypeSpecAzureGuidelinesSearchEvidence} SearchEvidence */
+/** @typedef {import("./runtime-types.js").ComplianceAssessment} ComplianceAssessment */
+/** @typedef {import("./runtime-types.js").ComplianceDecision} ComplianceDecision */
+/** @typedef {import("./runtime-types.js").ComplianceSearchRequest} ComplianceSearchRequest */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+/**
+ * @typedef {{
+ *   catalogId: string,
+ *   catalogOrder: number,
+ *   category: string,
+ *   title: string,
+ *   canonicalUrl: string,
+ *   description: string
+ * }} CatalogEntry
+ * @typedef {{
+ *   reviewUnitId: string,
+ *   queryProfile: Record<string, unknown>,
+ *   catalogRanking: RankedCatalogEntry[],
+ *   rankedDocuments: ComplianceDocument[],
+ *   retrievalAttempts: RetrievalAttempt[],
+ *   blockers: string[]
+ * }} LegacyIntentEvidence
+ * @typedef {{
+ *   schemaVersion: 1,
+ *   intents: LegacyIntentEvidence[],
+ *   inputAccounting: SearchEvidence["inputAccounting"]
+ * }} LegacySearchEvidence
+ * @typedef {Omit<ComplianceDocument, "retrieval"> & {
+ *   retrievedAt: string,
+ *   contentHash: string
+ * }} FinalComplianceDocument
+ */
+
 const CATALOG_PATH = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
   "references",
   "reference-document-links.md",
 );
-const SCORE_FIELDS = [
+const SCORE_FIELDS = /** @type {const} */ ([
   "exactSymbol",
   "patternCategory",
   "servicePlane",
   "changeContext",
-];
+]);
 const SCORE_VALUES = {
   exactSymbol: [0, 4],
   patternCategory: [0, 3],
   servicePlane: [0, 2],
   changeContext: [0, 1],
 };
-const DECISIONS = [
+const DECISIONS = /** @type {const} */ ([
   "applicable-pass",
   "applicable-fail",
   "no-applicable-guidance",
   "not-assessed",
-];
+]);
 
+/**
+ * @template T
+ * @param {T[]} values
+ * @returns {T[]}
+ */
 function duplicates(values) {
+  /** @type {Set<T>} */
   const seen = new Set();
   return [
     ...new Set(
@@ -39,6 +83,11 @@ function duplicates(values) {
   ];
 }
 
+/**
+ * @param {object} value
+ * @param {string[]} allowed
+ * @param {string} label
+ */
 function assertKeys(value, allowed, label) {
   const unknown = Object.keys(value ?? {}).filter(
     (key) => !allowed.includes(key),
@@ -47,6 +96,12 @@ function assertKeys(value, allowed, label) {
     throw new Error(`${label} contains unknown fields: ${unknown.join(", ")}.`);
 }
 
+/**
+ * @template T
+ * @param {T[]} expected
+ * @param {T[]} actual
+ * @param {string} label
+ */
 function exactCoverage(expected, actual, label) {
   const duplicate = duplicates(actual);
   const expectedSet = new Set(expected);
@@ -60,7 +115,12 @@ function exactCoverage(expected, actual, label) {
   }
 }
 
+/**
+ * @param {string} [file]
+ * @returns {CatalogEntry[]}
+ */
 export function readComplianceCatalog(file = CATALOG_PATH) {
+  /** @type {CatalogEntry[]} */
   const entries = [];
   const urls = new Set();
   let catalogOrder = 0;
@@ -88,6 +148,10 @@ export function readComplianceCatalog(file = CATALOG_PATH) {
   return entries;
 }
 
+/**
+ * @param {ComplianceScore} score
+ * @param {string} label
+ */
 function validateScore(score, label) {
   assertKeys(score, [...SCORE_FIELDS, "total"], `${label} score`);
   let total = 0;
@@ -102,6 +166,11 @@ function validateScore(score, label) {
   }
 }
 
+/**
+ * @param {ComplianceGuidance} guidance
+ * @param {string[]} declarationIds
+ * @param {string} label
+ */
 function validateGuidance(guidance, declarationIds, label) {
   assertKeys(
     guidance,
@@ -143,6 +212,12 @@ function validateGuidance(guidance, declarationIds, label) {
   }
 }
 
+/**
+ * @param {ComplianceDocument} document
+ * @param {Map<string, CatalogEntry>} catalogByUrl
+ * @param {string[]} declarationIds
+ * @param {string} label
+ */
 function validateDocument(document, catalogByUrl, declarationIds, label) {
   assertKeys(
     document,
@@ -197,6 +272,12 @@ function validateDocument(document, catalogByUrl, declarationIds, label) {
   );
 }
 
+/**
+ * @param {RankedCatalogEntry} entry
+ * @param {Map<string, CatalogEntry>} catalogByUrl
+ * @param {number} expectedRank
+ * @param {string} label
+ */
 function validateRankingEntry(entry, catalogByUrl, expectedRank, label) {
   assertKeys(
     entry,
@@ -226,10 +307,16 @@ function validateRankingEntry(entry, catalogByUrl, expectedRank, label) {
   }
 }
 
+/**
+ * @param {ComplianceSearchRequest} request
+ * @param {string[]} declarationIds
+ * @param {string[]} hunkIds
+ * @param {Map<string, SourceChange>} sourceMap
+ */
 function sourceEvidence(request, declarationIds, hunkIds, sourceMap) {
   const sources = request.sourceChangeIds
     .map((id) => sourceMap.get(id))
-    .filter(Boolean);
+    .filter(/** @returns {item is SourceChange} */ (item) => item !== undefined);
   const selectedDeclarations = sources.flatMap((source) =>
     (source.declarations ?? [])
       .filter((item) => declarationIds.includes(item.id))
@@ -260,6 +347,16 @@ function sourceEvidence(request, declarationIds, hunkIds, sourceMap) {
   };
 }
 
+/**
+ * @param {{
+ *   requests: ComplianceSearchRequest[],
+ *   evidence: SearchEvidence | LegacySearchEvidence,
+ *   decisions: ComplianceDecision[],
+ *   sourceChanges: SourceChange[],
+ *   initialBlockers?: unknown[]
+ * }} options
+ * @returns {ComplianceAssessment}
+ */
 export function assembleCompliance({
   requests,
   evidence,
@@ -284,14 +381,28 @@ export function assembleCompliance({
     catalog.map((item) => [item.canonicalUrl, item]),
   );
   const requestMap = new Map(requests.map((item) => [item.reviewUnitId, item]));
+  /** @param {string} reviewUnitId */
+  const requireRequest = (reviewUnitId) => {
+    const request = requestMap.get(reviewUnitId);
+    if (!request) throw new Error(`Unknown Azure Guidelines intent ${reviewUnitId}.`);
+    return request;
+  };
 
   const sourceMap = new Map(sourceChanges.map((item) => [item.id, item]));
+  /** @type {Map<string, FinalComplianceDocument[]>} */
   const documentsByIntent = new Map();
+  /** @type {Map<string, RankedCatalogEntry[]>} */
   const catalogRankingByIntent = new Map();
+  /** @type {Map<string, string[]>} */
   const blockersByIntent = new Map();
   const blockers = initialBlockers.map((message) => ({
-    message: String(message?.message ?? message),
+    message: String(
+      message && typeof message === "object" && "message" in message
+        ? message.message
+        : message,
+    ),
   }));
+  /** @type {(RetrievalAttempt & {reviewUnitId?: string})[]} */
   const retrievalFailures = [];
   let guidanceExcerptCount = 0;
 
@@ -309,13 +420,13 @@ export function assembleCompliance({
       ],
       "Azure Guidelines search evidence",
     );
-    for (const field of [
+    for (const field of /** @type {const} */ ([
       "queryProfiles",
       "catalogRanking",
       "rankedDocuments",
       "retrievalAttempts",
       "blockers",
-    ]) {
+    ])) {
       if (!Array.isArray(evidence[field])) {
         throw new Error(`Azure Guidelines ${field} must be an array.`);
       }
@@ -331,7 +442,7 @@ export function assembleCompliance({
         ["reviewUnitId", "queryProfile"],
         `Azure Guidelines query profile ${profile.reviewUnitId}`,
       );
-      const request = requestMap.get(profile.reviewUnitId);
+      const request = requireRequest(profile.reviewUnitId);
       if (
         canonicalJson(profile.queryProfile) !==
         canonicalJson(request.queryProfile)
@@ -433,14 +544,14 @@ export function assembleCompliance({
         `Azure Guidelines shared document[${index}]`,
       );
       const ranking = expectedDocuments[index];
-      for (const field of [
+      for (const field of /** @type {const} */ ([
         "rank",
         "catalogOrder",
         "title",
         "canonicalUrl",
         "score",
         "selectionRationale",
-      ]) {
+      ])) {
         if (canonicalJson(document[field]) !== canonicalJson(ranking[field])) {
           throw new Error(
             `Azure Guidelines shared document[${index}] differs from its ranking.`,
@@ -477,7 +588,7 @@ export function assembleCompliance({
       "Azure Guidelines intent",
     );
     for (const intent of evidence.intents) {
-    const request = requestMap.get(intent.reviewUnitId);
+    const request = requireRequest(intent.reviewUnitId);
     assertKeys(
       intent,
       [
@@ -592,14 +703,14 @@ export function assembleCompliance({
         `Azure Guidelines document ${intent.reviewUnitId}[${index}]`,
       );
       const ranking = expectedDocuments[index];
-      for (const field of [
+      for (const field of /** @type {const} */ ([
         "rank",
         "catalogOrder",
         "title",
         "canonicalUrl",
         "score",
         "selectionRationale",
-      ]) {
+      ])) {
         if (canonicalJson(document[field]) !== canonicalJson(ranking[field])) {
           throw new Error(
             `Azure Guidelines document ${intent.reviewUnitId}[${index}] differs from its ranking.`,
@@ -658,7 +769,9 @@ export function assembleCompliance({
     throw new Error("Azure Guidelines search input accounting is inconsistent.");
   }
 
+  /** @type {Map<string, ComplianceDecision>} */
   const decisionsByIntent = new Map();
+  /** @type {Record<string, unknown>[]} */
   const findings = [];
   for (const decision of decisions) {
     assertKeys(
@@ -694,7 +807,8 @@ export function assembleCompliance({
     if (
       decision.decision === "applicable-fail" &&
       (!decision.title?.trim() ||
-        !["high", "medium", "low"].includes(decision.severity))
+        (typeof decision.severity !== "string" ||
+          !["high", "medium", "low"].includes(decision.severity)))
     ) {
       throw new Error(
         `Azure Guidelines decision ${decision.reviewUnitId} lacks finding presentation.`,
@@ -703,13 +817,17 @@ export function assembleCompliance({
     if (
       decision.decision === "no-applicable-guidance" &&
       (decision.applicableGuidance.length ||
-        blockersByIntent.get(decision.reviewUnitId).length)
+        (blockersByIntent.get(decision.reviewUnitId) ?? []).length)
     ) {
       throw new Error(
         `Azure Guidelines decision ${decision.reviewUnitId} cannot use no-applicable-guidance with applicable guidance or blockers.`,
       );
     }
-    const request = requestMap.get(decision.reviewUnitId);
+    const request = requireRequest(decision.reviewUnitId);
+    /**
+     * @param {string[]} actual
+     * @param {string[]} expected
+     */
     const subset = (actual, expected) =>
       !duplicates(actual).length &&
       actual.every((item) => expected.includes(item));
@@ -742,7 +860,7 @@ export function assembleCompliance({
       );
       const document = documentsByIntent
         .get(decision.reviewUnitId)
-        .find((item) => item.canonicalUrl === applicable.canonicalDocumentUrl);
+        ?.find((item) => item.canonicalUrl === applicable.canonicalDocumentUrl);
       const guidance = document?.guidance.find(
         (item) =>
           item.section === applicable.guidanceSection &&
@@ -779,13 +897,18 @@ export function assembleCompliance({
         applicableGuidance: decision.applicableGuidance.map((item) => {
           const document = documentsByIntent
             .get(decision.reviewUnitId)
-            .find(
+            ?.find(
               (candidate) =>
                 candidate.canonicalUrl === item.canonicalDocumentUrl,
             );
-          const guidance = document.guidance.find(
+          const guidance = document?.guidance.find(
             (candidate) => candidate.section === item.guidanceSection,
           );
+          if (!guidance) {
+            throw new Error(
+              `Azure Guidelines decision ${decision.reviewUnitId} uses missing guidance.`,
+            );
+          }
           return {
             ...item,
             excerpt: guidance.excerpt,
@@ -858,7 +981,7 @@ export function assembleCompliance({
       : {}),
     intentAssessments,
     findings,
-    retrievalFailures,
+    retrievalFailures: retrievalFailures.map((failure) => ({ ...failure })),
     blockers,
   };
 }

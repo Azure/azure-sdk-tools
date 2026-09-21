@@ -6,6 +6,12 @@ import {
   semanticLroContract,
 } from "./sdk-method-delta.mjs";
 
+/**
+ * @typedef {{kind: string, name?: string, crossLanguageDefinitionId?: string, valueType?: SdkType, keyType?: SdkType}} SdkType
+ * @typedef {{name: string, type: SdkType, optional: boolean, onClient: boolean, isApiVersionParam: boolean}} SdkParameter
+ */
+
+/** @param {string} name @param {string} type @param {boolean} [optional] @returns {SdkParameter} */
 const parameter = (name, type, optional = false) => ({
   name,
   type: { kind: type },
@@ -14,7 +20,7 @@ const parameter = (name, type, optional = false) => ({
   isApiVersionParam: false,
 });
 
-test("diffs added, removed, modified, and relatively reordered parameters", () => {
+void test("diffs added, removed, modified, and relatively reordered parameters", () => {
   const changes = diffPublicParameters(
     [
       parameter("removed", "string"),
@@ -39,7 +45,7 @@ test("diffs added, removed, modified, and relatively reordered parameters", () =
   assert.equal(changes.unchangedCount, 1);
 });
 
-test("does not treat URI-template-only metadata as an LRO behavior change", () => {
+void test("does not treat URI-template-only metadata as an LRO behavior change", () => {
   const base = {
     finalStateVia: "azure-async-operation",
     operation: {
@@ -61,7 +67,8 @@ test("does not treat URI-template-only metadata as an LRO behavior change", () =
   assert.deepEqual(semanticLroContract(base), semanticLroContract(current));
 });
 
-test("retains nested array and dictionary parameter type contracts", () => {
+void test("retains nested array and dictionary parameter type contracts", () => {
+  /** @param {string} model @returns {SdkType} */
   const composite = (model) => ({
     kind: "array",
     valueType: {

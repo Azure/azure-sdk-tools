@@ -5,6 +5,9 @@ import test from "node:test";
 import { stringify } from "yaml";
 import { analyzeDownstreamBreaking } from "./analyze-downstream-breaking.mjs";
 
+/** @typedef {import("node:test").TestContext} TestContext */
+
+/** @param {boolean} current */
 function packageShape(current) {
   const stringType = { kind: "string" };
   const widgetType = {
@@ -81,6 +84,10 @@ function packageShape(current) {
   };
 }
 
+/**
+ * @param {boolean} current
+ * @param {string} [finalStateVia]
+ */
 function parameterOnlyLroShape(current, finalStateVia = "azure-async-operation") {
   const shape = packageShape(true);
   const method = shape.clients[0].methods[0];
@@ -97,11 +104,13 @@ function parameterOnlyLroShape(current, finalStateVia = "azure-async-operation")
   method.operation.uriTemplate = current
     ? "/runs/{runId}/cancel?api-version,afcManagedSync"
     : "/runs/{runId}/cancel?api-version";
+  assert.ok(method.lroMetadata);
   method.lroMetadata.finalStateVia = finalStateVia;
   method.lroMetadata.operation.uriTemplate = method.operation.uriTemplate;
   return shape;
 }
 
+/** @param {boolean} current */
 function nestedResponseShape(current) {
   const shape = packageShape(false);
   const method = shape.clients[0].methods[0];
@@ -117,6 +126,7 @@ function nestedResponseShape(current) {
         "Storage.File.ListFilesAndDirectoriesSegmentResponse",
     },
   };
+  /** @param {string} name @param {unknown} type */
   const property = (name, type) => ({
     kind: "property",
     name,
@@ -125,7 +135,12 @@ function nestedResponseShape(current) {
     discriminator: false,
     type,
   });
-  shape.models = [
+  const mutableShape = /** @type {{
+    models: (Record<string, unknown> & {
+      properties: ReturnType<typeof property>[]
+    })[]
+  }} */ (/** @type {unknown} */ (shape));
+  mutableShape.models = [
     {
       kind: "model",
       name: "ListFilesAndDirectoriesSegmentResponse",
@@ -174,11 +189,19 @@ function nestedResponseShape(current) {
   return shape;
 }
 
+/**
+ * @param {TestContext} context
+ * @param {unknown} base
+ * @param {unknown} current
+ * @param {Record<string, unknown>[]} [declarations]
+ * @param {{id: string, declarations: Record<string, unknown>[]}[]} [suppliedSources]
+ */
 function analyzeShapes(context, base, current, declarations = [], suppliedSources) {
   const work = fs.mkdtempSync(path.join(process.cwd(), ".downstream-analyzer-test-"));
   context.after(() => fs.rmSync(work, { recursive: true, force: true }));
   fs.writeFileSync(path.join(work, "base.yaml"), stringify(base));
   fs.writeFileSync(path.join(work, "current.yaml"), stringify(current));
+  /** @param {string} file */
   const artifact = (file) => ({
     status: "succeeded",
     format: "tcgc-yaml",
@@ -191,7 +214,7 @@ function analyzeShapes(context, base, current, declarations = [], suppliedSource
       ...declarations,
     ],
   }];
-  return analyzeDownstreamBreaking({
+  const options = {
     workRoot: work,
     manifest: {
       projects: [{
@@ -204,10 +227,15 @@ function analyzeShapes(context, base, current, declarations = [], suppliedSource
       }],
     },
     sourceIndex: { sourceChanges },
-  });
+  };
+  return analyzeDownstreamBreaking(
+    /** @type {Parameters<typeof analyzeDownstreamBreaking>[0]} */ (
+      /** @type {unknown} */ (options)
+    ),
+  );
 }
 
-test("detects PR 43308-style kind/response/LRO changes without inventing parameter changes", (context) => {
+void test("detects PR 43308-style kind/response/LRO changes without inventing parameter changes", (context) => {
   const result = analyzeShapes(context, packageShape(false), packageShape(true));
   const rules = new Set(result.candidates.map((item) => item.rule));
   assert.ok(rules.has("method-kind-changed"));
@@ -224,7 +252,7 @@ test("detects PR 43308-style kind/response/LRO changes without inventing paramet
   ));
 });
 
-test("retains response-header evidence without changing established candidate IDs", (context) => {
+void test("retains response-header evidence without changing established candidate IDs", (context) => {
   const withoutHeaders = analyzeShapes(
     context,
     packageShape(false),
@@ -233,14 +261,20 @@ test("retains response-header evidence without changing established candidate ID
   const base = packageShape(false);
   const current = packageShape(true);
   for (const shape of [base, current]) {
-    shape.clients[0].methods[0].operation.responses[0].headers = [{
+    const operation = /** @type {{
+      responses: {headers?: Record<string, unknown>[]}[],
+      exceptions: {headers?: Record<string, unknown>[]}[]
+    }} */ (
+      /** @type {unknown} */ (shape.clients[0].methods[0].operation)
+    );
+    operation.responses[0].headers = [{
       kind: "responseheader",
       name: "location",
       serializedName: "Location",
       optional: true,
       type: { kind: "string" },
     }];
-    shape.clients[0].methods[0].operation.exceptions[0].headers = [];
+    operation.exceptions[0].headers = [];
   }
   const withHeaders = analyzeShapes(context, base, current);
 
@@ -250,11 +284,11 @@ test("retains response-header evidence without changing established candidate ID
   );
   assert.ok(Object.values(withHeaders.facts).some((fact) =>
     fact.factKind === "method" &&
-    fact.operation.responses[0].headers[0].serializedName === "Location",
+    fact.operation?.responses?.[0]?.headers?.[0]?.serializedName === "Location",
   ));
 });
 
-test("does not emit an LRO finding when only a public parameter and nested URI template change", (context) => {
+void test("does not emit an LRO finding when only a public parameter and nested URI template change", (context) => {
   const result = analyzeShapes(
     context,
     parameterOnlyLroShape(false),
@@ -266,7 +300,7 @@ test("does not emit an LRO finding when only a public parameter and nested URI t
   assert.ok(!rules.includes("method-lro-changed"));
 });
 
-test("retains actual LRO behavior changes", (context) => {
+void test("retains actual LRO behavior changes", (context) => {
   const result = analyzeShapes(
     context,
     parameterOnlyLroShape(false, "location"),
@@ -277,7 +311,7 @@ test("retains actual LRO behavior changes", (context) => {
   assert.ok(!result.candidates.some((item) => item.rule === "method-parameters-changed"));
 });
 
-test("reports SDK method identity changes when matching by HTTP route", (context) => {
+void test("reports SDK method identity changes when matching by HTTP route", (context) => {
   const base = packageShape(false);
   const current = packageShape(false);
   const method = current.clients[0].methods[0];
@@ -290,7 +324,8 @@ test("reports SDK method identity changes when matching by HTTP route", (context
   assert.ok(!result.candidates.some((item) => item.rule === "method-removed"));
 });
 
-test("detects model base and discriminator hierarchy changes", (context) => {
+void test("detects model base and discriminator hierarchy changes", (context) => {
+  /** @type {[string, (model: Record<string, unknown>, current: boolean) => void][]} */
   const cases = [
     ["base model", (model, current) => {
       model.baseModel = {
@@ -330,10 +365,17 @@ test("detects model base and discriminator hierarchy changes", (context) => {
   }
 });
 
-test("limits downstream evidence to matching declarations and hunks", (context) => {
+void test("limits downstream evidence to matching declarations and hunks", (context) => {
   const base = packageShape(false);
   const current = packageShape(false);
   current.models[0].properties = [];
+  /**
+   * @param {string} id
+   * @param {string} kind
+   * @param {string} qualifiedName
+   * @param {string} revision
+   * @param {string} hunkId
+   */
   const declaration = (id, kind, qualifiedName, revision, hunkId) => ({
     id,
     kind,
@@ -361,12 +403,19 @@ test("limits downstream evidence to matching declarations and hunks", (context) 
     (item) => item.rule === "model-property-removed",
   );
 
+  assert.ok(candidate);
   assert.deepEqual(candidate.sourceChangeIds, ["scenario-source"]);
   assert.deepEqual(candidate.declarationIds, ["scenario-status"]);
   assert.deepEqual(candidate.hunkIds, ["scenario-status-hunk"]);
 });
 
-test("detects augment and qualified SDK customization decorators", (context) => {
+void test("detects augment and qualified SDK customization decorators", (context) => {
+  /**
+   * @param {string} id
+   * @param {string} qualifiedName
+   * @param {string} revision
+   * @param {unknown} decorator
+   */
   const declaration = (id, qualifiedName, revision, decorator) => ({
     id,
     qualifiedName,
@@ -413,7 +462,7 @@ test("detects augment and qualified SDK customization decorators", (context) => 
   );
 });
 
-test("links nested response type changes to unchanged public methods", (context) => {
+void test("links nested response type changes to unchanged public methods", (context) => {
   const result = analyzeShapes(
     context,
     nestedResponseShape(false),
@@ -430,6 +479,7 @@ test("links nested response type changes to unchanged public methods", (context)
   const root = result.rootCauses.find((item) =>
     item.directCandidateIds.includes(propertyCandidate.id),
   );
+  assert.ok(root);
   assert.equal(root.kind, "type-contract-propagation");
   assert.equal(root.methodFactIds.length, 1);
   assert.ok(

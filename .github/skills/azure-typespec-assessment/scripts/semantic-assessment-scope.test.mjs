@@ -22,7 +22,7 @@ function publicationUnit(operationCount = 20) {
   };
 }
 
-test("classifies every version publication intent as informational", () => {
+void test("classifies every version publication intent as informational", () => {
   const publication = publicationUnit();
   const assessed = {
     id: "semantic-model-change",
@@ -45,7 +45,7 @@ test("classifies every version publication intent as informational", () => {
   assert.match(informationalIntentText(publication).summary, /20 existing operations/);
 });
 
-test("classifies version-wide changes without an operation threshold", () => {
+void test("classifies version-wide changes without an operation threshold", () => {
   const versionWide = {
     id: "semantic-version-wide",
     declarationNames: ["Versions"],

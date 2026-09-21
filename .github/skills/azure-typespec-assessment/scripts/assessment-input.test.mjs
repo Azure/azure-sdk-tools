@@ -12,6 +12,7 @@ import {
   resolveAssessmentInput,
 } from "./assessment-input.mjs";
 
+/** @param {string} repo @param {...string} args */
 function git(repo, ...args) {
   const result = spawnSync("git", ["-C", repo, ...args], {
     encoding: "utf8",
@@ -20,16 +21,19 @@ function git(repo, ...args) {
   return result.stdout.trim();
 }
 
-test("parses supported pull request identifiers", () => {
+void test("parses supported pull request identifiers", () => {
   assert.deepEqual(
-    parsePullRequest("https://github.com/Azure/azure-rest-api-specs/pull/43718"),
+    parsePullRequest(
+      "https://github.com/Azure/azure-rest-api-specs/pull/43718",
+      "",
+    ),
     {
       owner: "Azure",
       repository: "azure-rest-api-specs",
       number: 43718,
     },
   );
-  assert.deepEqual(parsePullRequest("Azure/azure-rest-api-specs#43718"), {
+  assert.deepEqual(parsePullRequest("Azure/azure-rest-api-specs#43718", ""), {
     owner: "Azure",
     repository: "azure-rest-api-specs",
     number: 43718,
@@ -53,7 +57,7 @@ test("parses supported pull request identifiers", () => {
   );
 });
 
-test("derives sparse and common specification roots", () => {
+void test("derives sparse and common specification roots", () => {
   const roots = deriveSparseRoots([
     "specification/network/Network/main.tsp",
     "specification/network/Network/models.tsp",
@@ -71,7 +75,7 @@ test("derives sparse and common specification roots", () => {
   );
 });
 
-test("resolves an explicit head without changing the current checkout", (t) => {
+void test("resolves an explicit head without changing the current checkout", (t) => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), "assessment-input-"));
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
   git(repo, "init", "-q");
@@ -109,7 +113,7 @@ test("resolves an explicit head without changing the current checkout", (t) => {
   assert.ok(resolved.invocation.timings.setupExcludingFetchMs < 60_000);
 });
 
-test("discovers both service roots for a cross-service TypeSpec rename", (t) => {
+void test("discovers both service roots for a cross-service TypeSpec rename", (t) => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), "assessment-rename-"));
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
   git(repo, "init", "-q");
@@ -146,7 +150,7 @@ test("discovers both service roots for a cross-service TypeSpec rename", (t) => 
   assert.equal(resolved.specification, "specification");
 });
 
-test("exposes pull request metadata for downstream reports", (t) => {
+void test("exposes pull request metadata for downstream reports", (t) => {
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), "assessment-pr-"));
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
   git(repo, "init", "-q");
@@ -183,7 +187,7 @@ test("exposes pull request metadata for downstream reports", (t) => {
   assert.deepEqual(resolved.invocation.pullRequest, pullRequest);
 });
 
-test("fetches missing explicit refs without checking them out", (t) => {
+void test("fetches missing explicit refs without checking them out", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "assessment-fetch-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const remote = path.join(root, "remote");
@@ -223,7 +227,7 @@ test("fetches missing explicit refs without checking them out", (t) => {
   assert.equal(git(repo, "symbolic-ref", "HEAD"), originalHead);
 });
 
-test("rejects conflicting remote comparison inputs", () => {
+void test("rejects conflicting remote comparison inputs", () => {
   assert.throws(
     () =>
       resolveAssessmentInput({

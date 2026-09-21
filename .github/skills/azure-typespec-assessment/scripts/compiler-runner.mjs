@@ -2,14 +2,49 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { isRecord, readJsonObject } from "./cli.mjs";
 
+/**
+ * @typedef {{
+ *   executable: string,
+ *   args: string[],
+ *   displayExecutable: string
+ * }} CompilerCommand
+ * @typedef {{
+ *   status: "succeeded" | "failed",
+ *   command: {executable: string, args: string[]},
+ *   exitCode: number | null,
+ *   durationMs: number,
+ *   configPath: string,
+ *   configHash: string,
+ *   logPath: string
+ * }} EmitterRun
+ * @typedef {{
+ *   path: string,
+ *   apiVersion?: string,
+ *   documentRole: "common" | "primary" | "feature",
+ *   contentHash: string
+ * }} OpenApiArtifact
+ */
+
+/**
+ * @param {string} file
+ * @returns {string}
+ */
 function hashFile(file) {
   return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
 
+/**
+ * @param {string} root
+ * @param {(file: string) => boolean} predicate
+ * @returns {string[]}
+ */
 function findFiles(root, predicate) {
   if (!fs.existsSync(root)) return [];
+  /** @type {string[]} */
   const files = [];
+  /** @param {string} directory */
   const visit = (directory) => {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       const fullPath = path.join(directory, entry.name);
@@ -21,6 +56,11 @@ function findFiles(root, predicate) {
   return files.sort();
 }
 
+/**
+ * @param {string} worktree
+ * @param {{platform?: NodeJS.Platform, execPath?: string}} [options]
+ * @returns {CompilerCommand}
+ */
 export function resolveTsp(
   worktree,
   { platform = process.platform, execPath = process.execPath } = {},
@@ -43,8 +83,13 @@ export function resolveTsp(
   if (!fs.existsSync(manifestPath)) {
     throw new Error(`TypeSpec compiler package manifest not found at ${manifestPath}.`);
   }
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  const bin = typeof manifest.bin === "string" ? manifest.bin : manifest.bin?.tsp;
+  const manifest = readJsonObject(manifestPath);
+  const binValue = manifest.bin;
+  const bin = typeof binValue === "string"
+    ? binValue
+    : isRecord(binValue) && typeof binValue.tsp === "string"
+      ? binValue.tsp
+      : undefined;
   const cli = bin && path.resolve(packageRoot, bin);
   if (!cli || !fs.existsSync(cli)) {
     throw new Error(`TypeSpec compiler CLI is unavailable in ${manifestPath}.`);
@@ -52,6 +97,18 @@ export function resolveTsp(
   return { executable: execPath, args: [cli], displayExecutable };
 }
 
+/**
+ * @param {{
+ *   worktree: string,
+ *   project: string,
+ *   emitter: string,
+ *   output: string,
+ *   log: string,
+ *   apiVersion?: string,
+ *   workRoot: string
+ * }} options
+ * @returns {EmitterRun}
+ */
 function runEmitter({ worktree, project, emitter, output, log, apiVersion, workRoot }) {
   fs.mkdirSync(output, { recursive: true });
   fs.mkdirSync(path.dirname(log), { recursive: true });
@@ -105,16 +162,22 @@ function runEmitter({ worktree, project, emitter, output, log, apiVersion, workR
   };
 }
 
+/**
+ * @param {string} output
+ * @param {string} workRoot
+ * @returns {OpenApiArtifact[]}
+ */
 function describeAutorest(output, workRoot) {
   return findFiles(output, (file) => file.endsWith(".json"))
-    .map((file) => {
+    .map(/** @returns {OpenApiArtifact | null} */ (file) => {
       try {
-        const document = JSON.parse(fs.readFileSync(file, "utf8"));
+        const document = readJsonObject(file);
         if (document.swagger !== "2.0") return null;
+        const info = isRecord(document.info) ? document.info : undefined;
         const name = path.basename(file).toLowerCase();
         return {
           path: path.relative(workRoot, file),
-          apiVersion: document.info?.version,
+          ...(typeof info?.version === "string" ? { apiVersion: info.version } : {}),
           documentRole: name.includes("common")
             ? "common"
             : name === "openapi.json"
@@ -126,9 +189,21 @@ function describeAutorest(output, workRoot) {
         return null;
       }
     })
-    .filter(Boolean);
+    .filter((value) => value !== null);
 }
 
+/**
+ * @param {{
+ *   worktree: string,
+ *   project: string,
+ *   projectId: string,
+ *   comparisonRole: string,
+ *   sourceRevision: string,
+ *   sourceCommit: string,
+ *   workRoot: string,
+ *   apiVersion?: string
+ * }} options
+ */
 export function runProjectCompilers({
   worktree,
   project,

@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
-import { parseArgs, isMain, readJson, runMain, writeJson } from "./cli.mjs";
+import { parseArgs, isMain, readJsonObject, runMain, writeJson } from "./cli.mjs";
 import { deriveSafety, dimensionStatus } from "./assessment-display.mjs";
 import { canonicalJson, stableId } from "./stable-id.mjs";
 import {
@@ -18,13 +18,87 @@ import {
   semanticIntentType,
 } from "./semantic-assessment-scope.mjs";
 
+/** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
+/** @typedef {import("./runtime-types.js").AssessmentInference} AssessmentInference */
+/** @typedef {import("./runtime-types.js").AssessmentJudgment} AssessmentJudgment */
+/** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
+/** @typedef {import("./runtime-types.js").BreakingAnalysis} BreakingAnalysis */
+/** @typedef {import("./runtime-types.js").BreakingCandidate} BreakingCandidate */
+/** @typedef {import("./runtime-types.js").CandidateDecision} CandidateDecision */
+/** @typedef {import("./runtime-types.js").ComplianceSearchRequest} ComplianceSearchRequest */
+/** @typedef {import("./runtime-types.js").DownstreamAnalysis} DownstreamAnalysis */
+/** @typedef {import("./runtime-types.js").DownstreamCandidate} DownstreamCandidate */
+/** @typedef {import("./runtime-types.js").DownstreamRootCause} DownstreamRootCause */
+/** @typedef {import("./runtime-types.js").InferenceCandidate} InferenceCandidate */
+/** @typedef {import("./runtime-types.js").InferenceRequest} InferenceRequest */
+/** @typedef {import("./runtime-types.js").InternalSemanticOperation} InternalSemanticOperation */
+/** @typedef {import("./runtime-types.js").InternalSemanticUnit} InternalSemanticUnit */
+/** @typedef {import("./runtime-types.js").PreparationManifest} PreparationManifest */
+/** @typedef {import("./runtime-types.js").PreparationProject} PreparationProject */
+/** @typedef {import("./runtime-types.js").SemanticAnalysis} SemanticAnalysis */
+/** @typedef {import("./runtime-types.js").SdkType} SdkType */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+/** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
+/** @typedef {import("./runtime-types.js").DocumentQualityInput} DocumentQualityInput */
+/** @typedef {import("./compliance-search-evidence.schema.js").TypeSpecAzureGuidelinesSearchEvidence} ComplianceSearchEvidence */
+/**
+ * @typedef {{
+ *   severity: "high" | "medium" | "low",
+ *   rationale: string,
+ *   evidence: AssessmentFact[],
+ *   sources: SourceChange[],
+ *   relatedSemanticIntents?: string[],
+ *   semanticMatchBasis?: string,
+ *   symbol?: string
+ * }} JoinedFindingFields
+ * @typedef {(BreakingCandidate | InferenceCandidate) & JoinedFindingFields} RestFinding
+ * @typedef {(DownstreamCandidate | InferenceCandidate) & JoinedFindingFields} DownstreamFinding
+ * @typedef {InternalSemanticOperation & {
+ *   apiVersion?: string,
+ *   method?: string,
+ *   path?: string,
+ *   restChanged: boolean,
+ *   changedAspects: string[],
+ *   before?: AssessmentFact,
+ *   after?: AssessmentFact,
+ *   outcome: string,
+ *   sources: SourceChange[]
+ * }} PresentedOperation
+ * @typedef {InternalSemanticUnit & {
+ *   title: string,
+ *   summary: string,
+ *   informational: boolean,
+ *   operations: PresentedOperation[],
+ *   sources: SourceChange[],
+ *   relatedFindings?: {rest: string[], downstream: string[], typeImpact: string[]}
+ * }} SemanticItem
+ * @typedef {{
+ *   name: string,
+ *   optional?: boolean,
+ *   onClient?: boolean,
+ *   isApiVersionParam?: boolean,
+ *   type?: SdkType
+ * }} SdkMethodParameter
+ */
+
+/**
+ * @template T
+ * @param {T[]} values
+ * @returns {T[]}
+ */
 function duplicates(values) {
+  /** @type {Set<T>} */
   const seen = new Set();
   return values.filter((value) =>
     seen.has(value) ? true : (seen.add(value), false),
   );
 }
 
+/**
+ * @param {string[]} expected
+ * @param {string[]} actual
+ * @param {string} label
+ */
 function exactCoverage(expected, actual, label) {
   const duplicate = duplicates(actual);
   if (duplicate.length)
@@ -41,6 +115,10 @@ function exactCoverage(expected, actual, label) {
   }
 }
 
+/**
+ * @param {CandidateDecision} decision
+ * @param {{id: string}} candidate
+ */
 function validateDecision(decision, candidate) {
   if (!["approve", "reject"].includes(decision.decision)) {
     throw new Error(`Invalid decision for ${candidate.id}.`);
@@ -49,7 +127,9 @@ function validateDecision(decision, candidate) {
     throw new Error(`Missing rationale for ${candidate.id}.`);
   if (
     decision.decision === "approve" &&
-    !["high", "medium", "low"].includes(decision.severity)
+    decision.severity !== "high" &&
+    decision.severity !== "medium" &&
+    decision.severity !== "low"
   ) {
     throw new Error(
       `An approve decision for candidate ${candidate.id} requires severity.`,
@@ -60,12 +140,18 @@ function validateDecision(decision, candidate) {
   }
 }
 
+/**
+ * @param {object} value
+ * @param {string[]} allowed
+ * @param {string} label
+ */
 function assertKeys(value, allowed, label) {
   const unknown = Object.keys(value).filter((key) => !allowed.includes(key));
   if (unknown.length)
     throw new Error(`${label} contains unknown fields: ${unknown.join(", ")}.`);
 }
 
+/** @param {AssessmentJudgment} answer */
 function validateJudgment(answer) {
   if (!answer || typeof answer !== "object" || Array.isArray(answer)) {
     throw new Error("Judgment must be an object.");
@@ -85,14 +171,16 @@ function validateJudgment(answer) {
   );
   if (answer.schemaVersion !== 1)
     throw new Error("Unsupported judgment schemaVersion.");
-  for (const field of [
-    "semanticIntents",
-    "restDecisions",
-    "downstreamDecisions",
-    "complianceDecisions",
-    "blockers",
-  ]) {
-    if (!Array.isArray(answer[field]))
+  /** @type {[string, unknown][]} */
+  const arrayFields = [
+    ["semanticIntents", answer.semanticIntents],
+    ["restDecisions", answer.restDecisions],
+    ["downstreamDecisions", answer.downstreamDecisions],
+    ["complianceDecisions", answer.complianceDecisions],
+    ["blockers", answer.blockers],
+  ];
+  for (const [field, value] of arrayFields) {
+    if (!Array.isArray(value))
       throw new Error(`Judgment.${field} must be an array.`);
   }
   if (!["high", "medium", "low"].includes(answer.overallConfidence)) {
@@ -144,6 +232,11 @@ function validateJudgment(answer) {
   }
 }
 
+/**
+ * @param {AssessmentInference} inference
+ * @param {InferenceRequest[]} requests
+ * @param {Partial<AssessmentModelInput>} modelInput
+ */
 function validateInference(inference, requests, modelInput) {
   if (!inference || typeof inference !== "object" || Array.isArray(inference)) {
     throw new Error("Inference must be an object.");
@@ -161,6 +254,7 @@ function validateInference(inference, requests, modelInput) {
   const requestsById = new Map(
     requests.map((request) => [request.requestId, request]),
   );
+  /** @type {Map<string, InferenceCandidate>} */
   const candidatesById = new Map();
   for (const result of inference.results) {
     assertKeys(
@@ -176,6 +270,9 @@ function validateInference(inference, requests, modelInput) {
       `Inference result ${result.requestId ?? "<unknown>"}`,
     );
     const request = requestsById.get(result.requestId);
+    if (!request) {
+      throw new Error(`Inference result ${result.requestId} is unknown.`);
+    }
     if (
       result.reviewUnitId !== request.reviewUnitId ||
       result.hunkId !== request.hunkId
@@ -311,6 +408,7 @@ function validateInference(inference, requests, modelInput) {
   }
 }
 
+/** @param {Partial<AssessmentModelInput>} modelInput */
 function validateInferenceRequests(modelInput) {
   const units = modelInput.semanticReviewUnits ?? [];
   const requests = modelInput.inferenceRequests ?? [];
@@ -345,20 +443,38 @@ function validateInferenceRequests(modelInput) {
   }
 }
 
+/**
+ * @param {SourceIndex} sourceIndex
+ * @returns {Record<string, SourceChange>}
+ */
 function sourceMap(sourceIndex) {
   return Object.fromEntries(
     sourceIndex.sourceChanges.map((source) => [source.id, source]),
   );
 }
 
+/**
+ * @template {BreakingCandidate | DownstreamCandidate | InferenceCandidate} T
+ * @param {T[]} candidates
+ * @param {CandidateDecision[]} decisions
+ * @param {Record<string, AssessmentFact>} facts
+ * @param {Record<string, SourceChange>} sources
+ * @returns {(T & JoinedFindingFields)[]}
+ */
 function joinFindings(candidates, decisions, facts, sources) {
   const decisionMap = new Map(
     decisions.map((decision) => [decision.candidateId, decision]),
   );
   return candidates.flatMap((candidate) => {
     const decision = decisionMap.get(candidate.id);
+    if (!decision) {
+      throw new Error(`Missing decision for ${candidate.id}.`);
+    }
     validateDecision(decision, candidate);
     if (decision.decision === "reject") return [];
+    if (decision.severity === undefined) {
+      throw new Error(`Missing severity for ${candidate.id}.`);
+    }
     return [
       {
         ...candidate,
@@ -380,12 +496,21 @@ function joinFindings(candidates, decisions, facts, sources) {
   });
 }
 
+/**
+ * @param {AssessmentFact | undefined} before
+ * @param {AssessmentFact | undefined} after
+ * @param {string[]} fields
+ */
 function changedFields(before, after, fields) {
   return fields.filter(
     (field) => !sameAutorestContract(before?.[field], after?.[field]),
   );
 }
 
+/**
+ * @param {InternalSemanticOperation} operation
+ * @param {Record<string, AssessmentFact>} facts
+ */
 function operationPresentation(operation, facts) {
   const before = operation.beforeFactId
     ? facts[operation.beforeFactId]
@@ -423,6 +548,10 @@ function operationPresentation(operation, facts) {
   };
 }
 
+/**
+ * @param {InternalSemanticUnit} unit
+ * @param {PresentedOperation[]} operations
+ */
 function semanticAction(unit, operations) {
   if (
     operations.length &&
@@ -444,6 +573,11 @@ function semanticAction(unit, operations) {
   return unit.action ?? unit.changeKind;
 }
 
+/**
+ * @param {SourceChange} source
+ * @param {string[]} hunkIds
+ * @returns {SourceChange}
+ */
 function sourceForUnit(source, hunkIds) {
   const allowed = new Set(hunkIds);
   return {
@@ -455,6 +589,14 @@ function sourceForUnit(source, hunkIds) {
   };
 }
 
+/**
+ * @param {InternalSemanticOperation} operation
+ * @param {InternalSemanticUnit} unit
+ * @param {Record<string, SourceChange>} sources
+ * @param {Record<string, AssessmentFact>} facts
+ * @param {Map<string, PreparationProject>} projectsById
+ * @returns {SourceChange[]}
+ */
 function sourcesForOperation(operation, unit, sources, facts, projectsById) {
   let sourceChangeIds = operation.sourceChangeIds ?? [];
   let hunkIds = operation.hunkIds ?? [];
@@ -464,9 +606,15 @@ function sourcesForOperation(operation, unit, sources, facts, projectsById) {
   );
   if (!sourceChangeIds.length && publication) {
     const unitHunkIds = new Set(unit.hunkIds ?? []);
-    const operationFact =
-      facts[operation.afterFactId ?? operation.beforeFactId];
-    const projectPath = projectsById.get(operationFact?.projectId)?.path;
+    const operationFactId = operation.afterFactId ?? operation.beforeFactId;
+    const operationFact = operationFactId
+      ? facts[operationFactId]
+      : undefined;
+    const projectId = operationFact?.projectId;
+    const projectPath = projectId
+      ? projectsById.get(projectId)?.path
+      : undefined;
+    /** @param {SourceChange | undefined} source */
     const inProject = (source) =>
       !projectPath ||
       source?.path === projectPath ||
@@ -495,10 +643,12 @@ function sourcesForOperation(operation, unit, sources, facts, projectsById) {
   }
   return sourceChangeIds
     .map((id) => sources[id] && sourceForUnit(sources[id], hunkIds))
-    .filter(Boolean);
+    .filter((source) => source !== undefined);
 }
 
+/** @param {DownstreamFinding} finding */
 function methodFacts(finding) {
+  /** @param {AssessmentFact} fact */
   const role = (fact) =>
     fact.comparisonRole ??
     (fact.revision === "base"
@@ -516,33 +666,50 @@ function methodFacts(finding) {
   };
 }
 
+/**
+ * @param {AssessmentFact | undefined} fact
+ * @param {string} field
+ */
 function methodDeltaValue(fact, field) {
-  const value = fact?.[field];
   if (field === "responseType") {
-    return typeIdentity(value) ?? "void";
+    return typeIdentity(fact?.responseType) ?? "void";
   }
   if (field === "lro") {
-    const semantic = semanticLroContract(value);
-    return value
+    const semantic = semanticLroContract(fact?.lro);
+    if (!semantic) return "none";
+    return {
+      finalStateVia: semantic.finalStateVia,
+      logicalResult: typeIdentity(semantic.logicalResult),
+      pollingStep:
+        semantic.pollingStep?.kind ??
+        semantic.pollingStep?.responseBody?.kind,
+      finalStep: semantic.finalStep?.kind,
+      statusMonitorStep: semantic.statusMonitorStep?.kind,
+    };
+  }
+  if (field === "paging") {
+    return fact?.paging
       ? {
-          finalStateVia: semantic.finalStateVia,
-          logicalResult: typeIdentity(semantic.logicalResult),
-          pollingStep:
-            semantic.pollingStep?.kind ??
-            semantic.pollingStep?.responseBody?.kind,
-          finalStep: semantic.finalStep?.kind,
-          statusMonitorStep: semantic.statusMonitorStep?.kind,
+          nextLinkName: fact.paging.nextLinkName,
+          itemName: fact.paging.itemName,
         }
       : "none";
   }
-  if (field === "paging") {
-    return value
-      ? { nextLinkName: value.nextLinkName, itemName: value.itemName }
-      : "none";
-  }
-  return value ?? "none";
+  return fact?.[field] ?? "none";
 }
 
+/**
+ * The SDK delta helpers require names produced by the SDK analyzer.
+ * @param {AssessmentFact["parameters"]} parameters
+ * @returns {SdkMethodParameter[] | undefined}
+ */
+function sdkMethodParameters(parameters) {
+  return /** @type {SdkMethodParameter[] | undefined} */ (
+    /** @type {unknown} */ (parameters)
+  );
+}
+
+/** @type {Record<string, string | undefined>} */
 const METHOD_RULE_FIELDS = {
   "method-kind-changed": "kind",
   "method-location-changed": "client",
@@ -553,6 +720,7 @@ const METHOD_RULE_FIELDS = {
   "method-lro-changed": "lro",
 };
 
+/** @param {DownstreamFinding} finding */
 function meaningfulDownstreamFinding(finding) {
   const field = METHOD_RULE_FIELDS[finding.rule];
   if (!field) return true;
@@ -560,8 +728,12 @@ function meaningfulDownstreamFinding(finding) {
   if (!before && !after) return true;
   if (field === "parameters") {
     return (
-      canonicalJson(publicParameterContract(before?.parameters)) !==
-      canonicalJson(publicParameterContract(after?.parameters))
+      canonicalJson(
+        publicParameterContract(sdkMethodParameters(before?.parameters)),
+      ) !==
+      canonicalJson(
+        publicParameterContract(sdkMethodParameters(after?.parameters)),
+      )
     );
   }
   const beforeValue =
@@ -577,7 +749,9 @@ function meaningfulDownstreamFinding(finding) {
   );
 }
 
+/** @param {SemanticItem[]} semanticItems */
 function semanticOperationIndex(semanticItems) {
+  /** @type {{intent: SemanticItem, operation: PresentedOperation}[]} */
   const operations = [];
   for (const intent of semanticItems) {
     for (const operation of intent.operations) {
@@ -587,25 +761,10 @@ function semanticOperationIndex(semanticItems) {
   return operations;
 }
 
-function matchMethodOperation(finding, semanticOperations) {
-  const { before, after } = methodFacts(finding);
-  const protocol = (after ?? before)?.operation;
-  if (!protocol?.path || !protocol?.verb) return undefined;
-  const matches = semanticOperations.filter(
-    ({ operation }) =>
-      operation.path === protocol.path &&
-      operation.method === protocol.verb &&
-      (!operation.apiVersion ||
-        !(after ?? before)?.apiVersions?.length ||
-        (after ?? before).apiVersions.includes(operation.apiVersion)),
-  );
-  const direct = matches.filter(
-    ({ operation }) => operation.matchBasis === "operation-identity",
-  );
-  if (direct.length === 1) return direct[0];
-  return matches.length === 1 ? matches[0] : undefined;
-}
-
+/**
+ * @param {DownstreamFinding} finding
+ * @param {SemanticItem[]} semanticItems
+ */
 export function matchTypeFindingIntents(finding, semanticItems) {
   const typeNames = new Set(
     [
@@ -629,6 +788,11 @@ export function matchTypeFindingIntents(finding, semanticItems) {
   });
 }
 
+/**
+ * @param {RestFinding[]} restFindings
+ * @param {DownstreamFinding[]} downstreamFindings
+ * @param {SemanticItem[]} semanticItems
+ */
 function findingRelations(restFindings, downstreamFindings, semanticItems) {
   const semanticOperations = semanticOperationIndex(semanticItems);
   for (const finding of restFindings) {
@@ -662,12 +826,26 @@ function findingRelations(restFindings, downstreamFindings, semanticItems) {
   }
 }
 
+/**
+ * @param {DownstreamFinding[]} downstreamFindings
+ * @param {DownstreamRootCause[]} [rootCauses]
+ * @param {Record<string, AssessmentFact>} [facts]
+ */
 function downstreamGroups(
   downstreamFindings,
   rootCauses = [],
   facts = {},
 ) {
+  /** @type {Map<string, {
+   *   id: string,
+   *   projectId?: string,
+   *   symbol: string,
+   *   before?: AssessmentFact,
+   *   after?: AssessmentFact,
+   *   findings: DownstreamFinding[]
+   * }>} */
   const byMethod = new Map();
+  /** @type {DownstreamFinding[]} */
   const typeFindings = [];
   for (const finding of downstreamFindings) {
     const facts = methodFacts(finding);
@@ -676,6 +854,9 @@ function downstreamGroups(
       continue;
     }
     const symbol = finding.crossLanguageDefinitionId ?? finding.symbol;
+    if (!symbol) {
+      throw new Error(`Downstream finding ${finding.id} has no SDK symbol.`);
+    }
     const projectId = (facts.after ?? facts.before)?.projectId;
     const key = `${projectId ?? ""}:${symbol}`;
     const group = byMethod.get(key) ?? {
@@ -698,10 +879,27 @@ function downstreamGroups(
         ...group,
         apiVersion: (group.after ?? group.before)?.apiVersion,
         parametersUnchanged:
-          canonicalJson(publicParameterContract(group.before?.parameters)) ===
-          canonicalJson(publicParameterContract(group.after?.parameters)),
+          canonicalJson(
+            publicParameterContract(
+              sdkMethodParameters(group.before?.parameters),
+            ),
+          ) ===
+          canonicalJson(
+            publicParameterContract(
+              sdkMethodParameters(group.after?.parameters),
+            ),
+          ),
         deltas: group.findings.map((finding) => {
           const field = METHOD_RULE_FIELDS[finding.rule];
+          /** @type {Record<string, unknown> & {
+           *   findingId: string,
+           *   rule: string,
+           *   field: string | undefined,
+           *   severity: string,
+           *   actual: string,
+           *   expected: string,
+           *   rationale: string
+           * }} */
           const delta = {
             findingId: finding.id,
             rule: finding.rule,
@@ -713,8 +911,8 @@ function downstreamGroups(
           };
           if (field === "parameters") {
             delta.changes = diffPublicParameters(
-              group.before?.parameters,
-              group.after?.parameters,
+              sdkMethodParameters(group.before?.parameters),
+              sdkMethodParameters(group.after?.parameters),
             );
           } else if (field) {
             delta.before = methodDeltaValue(group.before, field);
@@ -732,9 +930,18 @@ function downstreamGroups(
     })
     .sort((left, right) => left.symbol.localeCompare(right.symbol));
   const rootCauseById = new Map(rootCauses.map((item) => [item.id, item]));
+  /** @type {Map<string, {
+   *   projectId?: string,
+   *   type: string,
+   *   findings: DownstreamFinding[],
+   *   rootCauseIds: Set<string>
+   * }>} */
   const typeGroups = new Map();
   for (const finding of typeFindings) {
     const type = finding.crossLanguageDefinitionId ?? finding.symbol;
+    if (!type) {
+      throw new Error(`Downstream finding ${finding.id} has no SDK type.`);
+    }
     const projectId = finding.evidence.find((fact) => fact.projectId)?.projectId;
     const key = `${projectId ?? ""}:${type}`;
     const group = typeGroups.get(key) ?? {
@@ -752,14 +959,19 @@ function downstreamGroups(
       const findingIds = group.findings.map((finding) => finding.id).sort();
       const roots = [...group.rootCauseIds]
         .map((id) => rootCauseById.get(id))
-        .filter(Boolean);
+        .filter((root) => root !== undefined);
+      /** @type {Map<string, {
+       *   symbol: string,
+       *   locations: Set<string>,
+       *   referenceFactIds: Set<string>
+       * }>} */
       const affectedMethods = new Map();
       for (const root of roots) {
         const locations = [
           ...new Set(
             (root.referenceEvidence ?? [])
               .map((edge) => edge.location)
-              .filter(Boolean),
+              .filter((location) => location !== undefined),
           ),
         ].sort();
         const referenceFactIds = [
@@ -767,7 +979,7 @@ function downstreamGroups(
             (root.referenceEvidence ?? []).flatMap((edge) => [
               edge.fromFactId,
               edge.toFactId,
-            ]),
+            ]).filter((id) => id !== undefined),
           ),
         ].sort();
         for (const methodFactId of root.methodFactIds ?? []) {
@@ -775,6 +987,7 @@ function downstreamGroups(
           if (!method || method.factKind !== "method") continue;
           const symbol =
             method.crossLanguageDefinitionId ?? method.identity ?? method.name;
+          if (!symbol) continue;
           const current = affectedMethods.get(symbol) ?? {
             symbol,
             locations: new Set(),
@@ -826,6 +1039,14 @@ function downstreamGroups(
   return { methodGroups, typeImpacts };
 }
 
+/**
+ * @param {SemanticItem[]} semanticItems
+ * @param {RestFinding[]} restFindings
+ * @param {{
+ *   methodGroups: {id: string, relatedSemanticIntents: string[]}[],
+ *   typeImpacts: {id: string, relatedSemanticIntents: string[]}[]
+ * }} downstream
+ */
 function addReciprocalRelations(semanticItems, restFindings, downstream) {
   for (const intent of semanticItems) {
     intent.relatedFindings = {
@@ -847,23 +1068,64 @@ function addReciprocalRelations(semanticItems, restFindings, downstream) {
   }
 }
 
+/**
+ * @param {{work: string, judgment: string | AssessmentJudgment}} options
+ */
 export function assembleAssessment({ work, judgment }) {
-  const manifest = readJson(path.join(work, "preparation-manifest.json"));
-  const sourceIndex = readJson(path.join(work, "source", "source-index.json"));
-  const semantic = readJson(
-    path.join(work, "dimensions", "semantic-intents-input.json"),
-  );
-  const rest = readJson(
-    path.join(work, "dimensions", "rest-breaking-input.json"),
-  );
-  const downstream = readJson(
-    path.join(work, "dimensions", "downstream-breaking-input.json"),
-  );
-  const answer = typeof judgment === "string" ? readJson(judgment) : judgment;
+  const manifest =
+    /** @type {PreparationManifest} */ (
+      /** @type {unknown} */ (
+        readJsonObject(path.join(work, "preparation-manifest.json"))
+      )
+    );
+  const sourceIndex =
+    /** @type {SourceIndex} */ (
+      /** @type {unknown} */ (
+        readJsonObject(path.join(work, "source", "source-index.json"))
+      )
+    );
+  const semantic =
+    /** @type {SemanticAnalysis} */ (
+      /** @type {unknown} */ (
+        readJsonObject(
+          path.join(work, "dimensions", "semantic-intents-input.json"),
+        )
+      )
+    );
+  const rest =
+    /** @type {BreakingAnalysis} */ (
+      /** @type {unknown} */ (
+        readJsonObject(
+          path.join(work, "dimensions", "rest-breaking-input.json"),
+        )
+      )
+    );
+  const downstream =
+    /** @type {DownstreamAnalysis} */ (
+      /** @type {unknown} */ (
+        readJsonObject(
+          path.join(work, "dimensions", "downstream-breaking-input.json"),
+        )
+      )
+    );
+  const answer =
+    typeof judgment === "string"
+      ? /** @type {AssessmentJudgment} */ (
+          /** @type {unknown} */ (readJsonObject(judgment))
+        )
+      : judgment;
   const modelInputPath = path.join(work, "model-input.json");
+  /** @type {Partial<AssessmentModelInput>} */
   const modelInput = fs.existsSync(modelInputPath)
-    ? readJson(modelInputPath)
+    ? /** @type {AssessmentModelInput} */ (readJsonObject(modelInputPath))
     : {};
+  /**
+   * @template {{id: string}} T
+   * @param {T[]} canonicalCandidates
+   * @param {{id: string}[] | undefined} inputCandidates
+   * @param {string} label
+   * @returns {T[]}
+   */
   const scopedCandidates = (canonicalCandidates, inputCandidates, label) => {
     if (!Array.isArray(inputCandidates)) return canonicalCandidates;
     const canonicalById = new Map(
@@ -877,7 +1139,13 @@ export function assembleAssessment({ work, judgment }) {
         `${label} model input references unknown candidates: ${unknownIds.join(", ")}.`,
       );
     }
-    return inputCandidates.map((candidate) => canonicalById.get(candidate.id));
+    return inputCandidates.map((candidate) => {
+      const canonical = canonicalById.get(candidate.id);
+      if (!canonical) {
+        throw new Error(`${label} model input candidate is unavailable.`);
+      }
+      return canonical;
+    });
   };
   const assessedRestCandidates = scopedCandidates(
     rest.candidates,
@@ -899,7 +1167,9 @@ export function assembleAssessment({ work, judgment }) {
     throw new Error("Unexpected inference.json without inference requests.");
   }
   const inference = inferenceRequests.length
-    ? readJson(inferencePath)
+    ? /** @type {AssessmentInference} */ (
+        /** @type {unknown} */ (readJsonObject(inferencePath))
+      )
     : undefined;
   if (inference) validateInference(inference, inferenceRequests, modelInput);
   const inferredCandidates = [
@@ -910,7 +1180,7 @@ export function assembleAssessment({ work, judgment }) {
           {
             ...candidate,
             inferred: true,
-            inferenceRequestIds: (inference.results ?? [])
+            inferenceRequestIds: (inference?.results ?? [])
               .filter((item) =>
                 item.candidates.some((value) => value.id === candidate.id),
               )
@@ -950,6 +1220,9 @@ export function assembleAssessment({ work, judgment }) {
     .filter((result) => result.decision === "blocked")
     .map((result) => {
       const request = inferenceRequestsById.get(result.requestId);
+      if (!request) {
+        throw new Error(`Inference result ${result.requestId} is unknown.`);
+      }
       return {
         code: "inference-blocked",
         reviewUnitId: result.reviewUnitId,
@@ -962,20 +1235,26 @@ export function assembleAssessment({ work, judgment }) {
     work,
     "compliance-search-evidence.json",
   );
-  const hasComplianceContract = Array.isArray(
-    modelInput.complianceSearchRequests,
-  );
+  const modelComplianceRequests = modelInput.complianceSearchRequests;
+  const hasComplianceContract = Array.isArray(modelComplianceRequests);
+  const scopedComplianceRequests = hasComplianceContract
+    ? modelComplianceRequests
+    : [];
   const hasComplianceInput =
-    hasComplianceContract && modelInput.complianceSearchRequests.length > 0;
+    hasComplianceContract && scopedComplianceRequests.length > 0;
   const complianceRequestArtifact =
     modelInput.artifactReferences?.complianceSearchRequests;
   const complianceRequests =
     hasComplianceInput && complianceRequestArtifact
-      ? readJson(path.join(work, complianceRequestArtifact)).requests
-      : modelInput.complianceSearchRequests;
+      ? /** @type {{requests: ComplianceSearchRequest[]}} */ (
+          readJsonObject(path.join(work, complianceRequestArtifact))
+        ).requests
+      : /** @type {ComplianceSearchRequest[]} */ (
+          /** @type {unknown} */ (scopedComplianceRequests)
+        );
   if (hasComplianceInput && complianceRequestArtifact) {
     exactCoverage(
-      modelInput.complianceSearchRequests.map((item) => item.requestId),
+      scopedComplianceRequests.map((item) => item.requestId),
       complianceRequests.map((item) => item.requestId),
       "Azure Guidelines search request",
     );
@@ -984,11 +1263,20 @@ export function assembleAssessment({ work, judgment }) {
     throw new Error("Missing compliance-search-evidence.json.");
   }
   const complianceEvidence = hasComplianceInput
-    ? readJson(complianceEvidencePath)
+    ? /** @type {ComplianceSearchEvidence} */ (
+        /** @type {unknown} */ (readJsonObject(complianceEvidencePath))
+      )
     : undefined;
+  if (hasComplianceInput && !complianceEvidence) {
+    throw new Error("Missing compliance search evidence.");
+  }
   validateJudgment(answer);
   const scopedSemantic = partitionSemanticIntents(semantic.reviewUnits);
-  const hasScopedSemanticInput = Array.isArray(modelInput.semanticReviewUnits);
+  const modelSemanticReviewUnits = modelInput.semanticReviewUnits;
+  const hasScopedSemanticInput = Array.isArray(modelSemanticReviewUnits);
+  const scopedModelSemanticUnits = hasScopedSemanticInput
+    ? modelSemanticReviewUnits
+    : [];
   const informationalSemanticIntentIds = new Set(
     modelInput.informationalSemanticIntentIds ?? [],
   );
@@ -1000,12 +1288,12 @@ export function assembleAssessment({ work, judgment }) {
     );
     exactCoverage(
       scopedSemantic.assessed.map((item) => item.id),
-      modelInput.semanticReviewUnits.map((item) => item.reviewUnitId),
+      scopedModelSemanticUnits.map((item) => item.reviewUnitId),
       "model-input semantic review unit",
     );
   }
   const assessedSemanticIntentIds = hasScopedSemanticInput
-    ? modelInput.semanticReviewUnits.map((item) => item.reviewUnitId)
+    ? scopedModelSemanticUnits.map((item) => item.reviewUnitId)
     : semantic.reviewUnits.map((item) => item.id);
   exactCoverage(
     assessedSemanticIntentIds,
@@ -1030,11 +1318,12 @@ export function assembleAssessment({ work, judgment }) {
     semantic.reviewUnits.map((unit) => [unit.id, unit]),
   );
   const modelSemanticUnits = new Map(
-    (modelInput.semanticReviewUnits ?? []).map((unit) => [
+    scopedModelSemanticUnits.map((unit) => [
       unit.reviewUnitId,
       unit,
     ]),
   );
+  /** @type {Map<string, import("./runtime-types.js").InferenceResult[]>} */
   const inferenceResultsByUnit = new Map();
   for (const result of inference?.results ?? []) {
     const values = inferenceResultsByUnit.get(result.reviewUnitId) ?? [];
@@ -1044,13 +1333,21 @@ export function assembleAssessment({ work, judgment }) {
   const authoredSemanticIntents = new Map(
     answer.semanticIntents.map((intent) => [intent.reviewUnitId, intent]),
   );
-  const semanticIntentAnswers = semantic.reviewUnits.map((unit) =>
-    informationalSemanticIntentIds.has(unit.id)
+  const semanticIntentAnswers = semantic.reviewUnits.map((unit) => {
+    const intent = informationalSemanticIntentIds.has(unit.id)
       ? informationalIntentText(unit)
-      : authoredSemanticIntents.get(unit.id),
-  );
+      : authoredSemanticIntents.get(unit.id);
+    if (!intent) {
+      throw new Error(`Missing authored Semantic intent ${unit.id}.`);
+    }
+    return intent;
+  });
+  /** @type {SemanticItem[]} */
   const semanticItems = semanticIntentAnswers.map((intent) => {
     const unit = semanticUnits.get(intent.reviewUnitId);
+    if (!unit) {
+      throw new Error(`Unknown Semantic intent ${intent.reviewUnitId}.`);
+    }
     const modelUnit = modelSemanticUnits.get(intent.reviewUnitId);
     const operations = (
       unit.operations ??
@@ -1100,8 +1397,8 @@ export function assembleAssessment({ work, judgment }) {
         : {}),
       ...(inferenceResultsByUnit.has(intent.reviewUnitId)
         ? {
-            inferenceResults: inferenceResultsByUnit
-              .get(intent.reviewUnitId)
+            inferenceResults: (inferenceResultsByUnit
+              .get(intent.reviewUnitId) ?? [])
               .map((result) => ({
                 requestId: result.requestId,
                 hunkId: result.hunkId,
@@ -1193,7 +1490,8 @@ export function assembleAssessment({ work, judgment }) {
   const complianceDimension = hasComplianceInput
     ? assembleCompliance({
         requests: complianceRequests,
-        evidence: complianceEvidence,
+        evidence:
+          /** @type {ComplianceSearchEvidence} */ (complianceEvidence),
         decisions: answer.complianceDecisions,
         sourceChanges: sourceIndex.sourceChanges,
         initialBlockers:
@@ -1242,9 +1540,13 @@ export function assembleAssessment({ work, judgment }) {
         };
   const documentQualityPath = path.join(work, DOCUMENT_QUALITY_ARTIFACT);
   const documentQualityDimension = assembleDocumentQuality({
-    input: fs.existsSync(documentQualityPath) ? readJson(documentQualityPath) : undefined,
+    input: fs.existsSync(documentQualityPath)
+      ? /** @type {DocumentQualityInput} */ (
+          /** @type {unknown} */ (readJsonObject(documentQualityPath))
+        )
+      : undefined,
     modelInput,
-    decisions: answer.documentQualityDecisions,
+    decisions: undefined,
     semanticUnits: scopedSemantic.assessed,
     semanticStatus: semantic.status,
     sourceChanges: sourceIndex.sourceChanges,
@@ -1327,7 +1629,11 @@ export function assembleAssessment({ work, judgment }) {
           }
         : {}),
       ...(hasComplianceInput
-        ? { compliance: complianceEvidence.inputAccounting }
+        ? {
+            compliance:
+              /** @type {ComplianceSearchEvidence} */ (complianceEvidence)
+                .inputAccounting,
+          }
         : {}),
     },
     timings: manifest.timings,
@@ -1335,15 +1641,25 @@ export function assembleAssessment({ work, judgment }) {
 }
 
 if (isMain(import.meta.url)) {
-  runMain(async () => {
+  void runMain(() => {
     const args = parseArgs(process.argv.slice(2), {
       required: ["work", "judgment", "output"],
     });
+    const work = args.work;
+    const judgment = args.judgment;
+    const output = args.output;
+    if (
+      typeof work !== "string" ||
+      typeof judgment !== "string" ||
+      typeof output !== "string"
+    ) {
+      throw new Error("--work, --judgment, and --output must be paths.");
+    }
     const assessment = assembleAssessment({
-      work: path.resolve(args.work),
-      judgment: path.resolve(args.judgment),
+      work: path.resolve(work),
+      judgment: path.resolve(judgment),
     });
-    writeJson(path.resolve(args.output), assessment);
-    console.log(path.resolve(args.output));
+    writeJson(path.resolve(output), assessment);
+    console.log(path.resolve(output));
   });
 }

@@ -1,5 +1,53 @@
 import { canonicalJson } from "./stable-id.mjs";
 
+/**
+ * @typedef {{
+ *   kind?: string,
+ *   crossLanguageDefinitionId?: string,
+ *   identity?: string,
+ *   id?: string,
+ *   name?: string,
+ *   valueType?: SdkType,
+ *   keyType?: SdkType,
+ *   valueTypes?: SdkType[],
+ *   type?: SdkType
+ * }} SdkType
+ * @typedef {{
+ *   name: string,
+ *   optional?: boolean,
+ *   onClient?: boolean,
+ *   isApiVersionParam?: boolean,
+ *   type?: SdkType
+ * }} SdkParameter
+ * @typedef {{kind?: string, responseBody?: {kind?: string}}} LroStep
+ * @typedef {{
+ *   name: string,
+ *   optional: boolean,
+ *   onClient: boolean,
+ *   isApiVersionParam: boolean,
+ *   type: unknown
+ * }} PublicParameter
+ * @typedef {{
+ *   operation?: {kind?: unknown, path?: unknown, verb?: unknown},
+ *   finalStateVia?: unknown,
+ *   pollingStep?: LroStep,
+ *   finalStep?: LroStep,
+ *   statusMonitorStep?: LroStep,
+ *   logicalResult?: SdkType | string,
+ *   pollingInfo?: unknown,
+ *   envelopeResult?: unknown,
+ *   finalEnvelopeResult?: unknown,
+ *   finalResult?: unknown,
+ *   logicalPath?: unknown,
+ *   finalResultPath?: unknown,
+ *   finalResponse?: unknown
+ * }} LongRunningOperation
+ */
+
+/**
+ * @param {SdkType | string | undefined} value
+ * @returns {string | undefined}
+ */
 export function typeIdentity(value) {
   if (typeof value === "string") return value;
   return value?.crossLanguageDefinitionId ??
@@ -9,6 +57,10 @@ export function typeIdentity(value) {
     value?.kind;
 }
 
+/**
+ * @param {SdkType | string | undefined} type
+ * @returns {unknown}
+ */
 function parameterTypeContract(type) {
   if (!type || typeof type !== "object") return typeIdentity(type);
   switch (type.kind) {
@@ -39,6 +91,10 @@ function parameterTypeContract(type) {
   }
 }
 
+/**
+ * @param {SdkParameter[]} [parameters]
+ * @returns {PublicParameter[]}
+ */
 export function publicParameterContract(parameters = []) {
   return parameters
     .filter((parameter) => parameter.type?.kind !== "constant")
@@ -51,6 +107,9 @@ export function publicParameterContract(parameters = []) {
     }));
 }
 
+/**
+ * @param {LongRunningOperation | undefined} lro
+ */
 export function semanticLroContract(lro) {
   if (!lro) return undefined;
   const operation = lro.operation
@@ -77,8 +136,15 @@ export function semanticLroContract(lro) {
   };
 }
 
+/**
+ * @param {PublicParameter} before
+ * @param {PublicParameter} after
+ * @returns {string[]}
+ */
 function changedParameterFields(before, after) {
-  return ["optional", "onClient", "isApiVersionParam", "type"]
+  /** @type {(keyof Omit<PublicParameter, "name">)[]} */
+  const fields = ["optional", "onClient", "isApiVersionParam", "type"];
+  return fields
     .filter((field) => {
       const left = before[field];
       const right = after[field];
@@ -88,6 +154,10 @@ function changedParameterFields(before, after) {
     });
 }
 
+/**
+ * @param {SdkParameter[]} [beforeParameters]
+ * @param {SdkParameter[]} [afterParameters]
+ */
 export function diffPublicParameters(beforeParameters = [], afterParameters = []) {
   const before = publicParameterContract(beforeParameters);
   const after = publicParameterContract(afterParameters);
@@ -107,7 +177,8 @@ export function diffPublicParameters(beforeParameters = [], afterParameters = []
   const removed = before.flatMap((parameter, index) =>
     afterByName.has(parameter.name) ? [] : [{ parameter, index }]);
   const modified = retainedAfter.flatMap((parameter) => {
-    const previous = beforeByName.get(parameter.name).parameter;
+    const previous = beforeByName.get(parameter.name)?.parameter;
+    if (!previous) return [];
     const changedFields = changedParameterFields(previous, parameter);
     return changedFields.length
       ? [{ name: parameter.name, before: previous, after: parameter, changedFields }]

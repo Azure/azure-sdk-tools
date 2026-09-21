@@ -1,38 +1,82 @@
 import { canonicalJson, stableId } from "./stable-id.mjs";
 import { buildDocumentQualityInput, DOCUMENT_QUALITY_CRITERION } from "./document-quality-input.mjs";
 
+/** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
+/** @typedef {import("./runtime-types.js").DocumentQualityDecision} DocumentQualityDecision */
+/** @typedef {import("./runtime-types.js").DocumentQualityDimension} DocumentQualityDimension */
+/** @typedef {import("./runtime-types.js").DocumentQualityInput} DocumentQualityInput */
+/** @typedef {import("./runtime-types.js").DocumentationDocument} DocumentationDocument */
+/** @typedef {import("./runtime-types.js").DocumentationReviewUnit} DocumentationReviewUnit */
+/** @typedef {import("./runtime-types.js").DocumentationSnapshot} DocumentationSnapshot */
+/** @typedef {import("./runtime-types.js").SemanticDocumentItem} SemanticDocumentItem */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+
 export const DOCUMENT_QUALITY_ARTIFACT = "dimensions/document-quality-input.json";
-const checksFor = (version) => version >= 2 ? ["description"] : ["correctness", "meaning"];
+/** @param {number} version @returns {readonly DocumentQualityDecision["check"][]} */
+const checksFor = (version) => version >= 2
+  ? /** @type {const} */ (["description"])
+  : /** @type {const} */ (["correctness", "meaning"]);
 const DECISION_FIELDS = [
   "reviewUnitId", "documentId", "check", "decision", "rationale",
   "title", "expected", "docQuote",
 ];
 const LEGACY_SUMMARY = "Document Quality was not assessed: source documentation input is unavailable.";
 
+/**
+ * @param {unknown} condition
+ * @param {string} message
+ * @returns {asserts condition}
+ */
 function requireValue(condition, message) {
   if (!condition) throw new Error(`Document Quality: ${message}`);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string[]} fields
+ * @param {string} label
+ * @returns {asserts value is Record<string, unknown>}
+ */
 function object(value, fields, label) {
   requireValue(value && typeof value === "object" && !Array.isArray(value), `${label} must be an object.`);
   const unknown = Object.keys(value).filter((key) => !fields.includes(key));
   requireValue(!unknown.length, `${label} contains unknown fields: ${unknown.join(", ")}.`);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {asserts value is string}
+ */
 function text(value, label) {
   requireValue(typeof value === "string" && value.trim().length > 0, `${label} must be a nonempty string.`);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {asserts value is unknown[]}
+ */
 function array(value, label) {
   requireValue(Array.isArray(value), `${label} must be an array.`);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {asserts value is string[]}
+ */
 function ids(value, label) {
   array(value, label);
   value.forEach((id) => text(id, label));
   requireValue(new Set(value).size === value.length, `${label} contains duplicates.`);
 }
 
+/**
+ * @param {string[]} expected
+ * @param {unknown} actual
+ * @param {string} label
+ */
 function coverage(expected, actual, label) {
   ids(actual, label);
   requireValue(
@@ -41,10 +85,22 @@ function coverage(expected, actual, label) {
   );
 }
 
+/**
+ * @param {unknown} expected
+ * @param {unknown} actual
+ * @param {string} label
+ */
 function equal(expected, actual, label) {
   requireValue(canonicalJson(expected) === canonicalJson(actual), `${label} does not match canonical evidence.`);
 }
 
+/**
+ * @param {DocumentationSnapshot | null} snapshot
+ * @param {string} revision
+ * @param {SourceChange} source
+ * @param {string} label
+ * @param {number} version
+ */
 function validateSnapshot(snapshot, revision, source, label, version) {
   if (snapshot === null) return;
   object(snapshot, ["doc", "declaration", "source", ...(version === 3 ? ["documentationOrigin"] : [])], label);
@@ -62,6 +118,12 @@ function validateSnapshot(snapshot, revision, source, label, version) {
   );
 }
 
+/**
+ * @param {DocumentationDocument} document
+ * @param {DocumentationReviewUnit} unit
+ * @param {Map<string, SourceChange>} sources
+ * @param {number} version
+ */
 function validateDocument(document, unit, sources, version) {
   object(document, ["id", "sourceChangeId", "qualifiedName", "kind", "before", "after"], "document");
   text(document.id, "document.id");
@@ -76,7 +138,9 @@ function validateDocument(document, unit, sources, version) {
     .flatMap((declaration) => declaration.hunkIds ?? []);
   requireValue(evidence && evidence.hunkIds?.some((id) => scopedHunks.includes(id)),
     `document ${document.id} does not match its semantic declaration scope.`);
-  const { hunkIds: _hunks, blocker: _blocker, ...canonical } = evidence;
+  const canonical = /** @type {Record<string, unknown>} */ ({ ...evidence });
+  delete canonical.hunkIds;
+  delete canonical.blocker;
   validateSnapshot(document.before, "base", source, `${document.id}.before`, version);
   requireValue(document.after !== null, `document ${document.id} requires current documentation.`);
   validateSnapshot(document.after, "current", source, `${document.id}.after`, version);
@@ -85,6 +149,7 @@ function validateDocument(document, unit, sources, version) {
   equal(canonical, document, `document ${document.id}`);
 }
 
+/** @param {SemanticDocumentItem} unit */
 function scopeForSemantic(unit) {
   const sourceIds = unit.sourceChangeIds ?? (unit.sources ?? []).map((source) => source.id);
   const hunkIds = unit.hunkIds ?? (unit.sources ?? []).flatMap((source) => source.hunks.map((hunk) => hunk.id));
@@ -94,6 +159,12 @@ function scopeForSemantic(unit) {
   };
 }
 
+/**
+ * @param {DocumentQualityInput} input
+ * @param {SemanticDocumentItem[]} semanticUnits
+ * @param {SourceChange[]} sourceChanges
+ * @param {"ready" | "blocked"} semanticStatus
+ */
 function validateCompletenessInput(input, semanticUnits, sourceChanges, semanticStatus) {
   object(input, ["schemaVersion", "status", "blockers", "reviewUnits"], "input");
   requireValue([4, 5].includes(input.schemaVersion), "unsupported completeness input schemaVersion.");
@@ -112,7 +183,7 @@ function validateCompletenessInput(input, semanticUnits, sourceChanges, semantic
     ], "review unit");
     requireValue(["ready", "not-applicable", "blocked"].includes(unit.status), "invalid review unit status.");
     if (unit.status !== "ready") text(unit.reason, "review unit reason");
-    for (const field of ["sourceChangeIds", "hunkIds", "declarationIds"]) {
+    for (const field of /** @type {const} */ (["sourceChangeIds", "hunkIds", "declarationIds"])) {
       ids(unit[field], `review unit ${field}`);
     }
     array(unit.declarations, "review unit declarations");
@@ -150,6 +221,12 @@ function validateCompletenessInput(input, semanticUnits, sourceChanges, semantic
   }), input, "input");
 }
 
+/**
+ * @param {DocumentQualityInput} input
+ * @param {SemanticDocumentItem[]} semanticUnits
+ * @param {SourceChange[]} sourceChanges
+ * @param {"ready" | "blocked"} [semanticStatus]
+ */
 export function validateDocumentQualityInput(input, semanticUnits, sourceChanges, semanticStatus = "ready") {
   if ([4, 5].includes(input?.schemaVersion)) {
     validateCompletenessInput(input, semanticUnits, sourceChanges, semanticStatus);
@@ -169,7 +246,9 @@ export function validateDocumentQualityInput(input, semanticUnits, sourceChanges
     if (unit.inheritedDocumentIds !== undefined) ids(unit.inheritedDocumentIds, "inherited document IDs");
     requireValue(["ready", "not-applicable", "blocked"].includes(unit.status), "invalid review unit status.");
     if (unit.status !== "ready" || unit.reason !== undefined) text(unit.reason, "review unit reason");
-    const scope = scopeForSemantic(semantic.get(unit.reviewUnitId));
+    const semanticUnit = semantic.get(unit.reviewUnitId);
+    requireValue(semanticUnit, `unknown semantic intent ${unit.reviewUnitId}.`);
+    const scope = scopeForSemantic(semanticUnit);
     coverage(scope.sourceIds, unit.sourceChangeIds, "source change");
     coverage(scope.hunkIds, unit.hunkIds, "hunk");
     coverage(scope.declarationIds, unit.declarationIds, "declaration");
@@ -178,11 +257,11 @@ export function validateDocumentQualityInput(input, semanticUnits, sourceChanges
     }
     for (const id of unit.hunkIds) {
       requireValue(unit.sourceChangeIds.some((sourceId) =>
-        sources.get(sourceId).hunks?.some((hunk) => hunk.id === id)), `unknown hunk ${id}.`);
+        sources.get(sourceId)?.hunks?.some((hunk) => hunk.id === id)), `unknown hunk ${id}.`);
     }
     for (const id of unit.declarationIds) {
       requireValue(unit.sourceChangeIds.some((sourceId) =>
-        sources.get(sourceId).declarations?.some((declaration) =>
+        sources.get(sourceId)?.declarations?.some((declaration) =>
           declaration.id === id && (!unit.hunkIds.length ||
             declaration.hunkIds?.some((hunkId) => unit.hunkIds.includes(hunkId))))),
       `unknown or out-of-scope declaration ${id}.`);
@@ -214,6 +293,10 @@ export function validateDocumentQualityInput(input, semanticUnits, sourceChanges
   }), input, "input");
 }
 
+/**
+ * @param {Partial<AssessmentModelInput>} modelInput
+ * @param {DocumentQualityInput} input
+ */
 function validateModelSummaries(modelInput, input) {
   if (input.schemaVersion >= 2) {
     requireValue(modelInput.documentQualityAssessmentVersion === input.schemaVersion, "model documentation assessment version mismatch.");
@@ -231,10 +314,12 @@ function validateModelSummaries(modelInput, input) {
       "qualifiedNames", "sourceChangeIds", "hunkIds", "declarationIds", "inheritedDocumentCount",
     ], "model review unit");
     const unit = input.reviewUnits.find((item) => item.reviewUnitId === summary.reviewUnitId);
+    requireValue(unit, `model references unknown review unit ${summary.reviewUnitId}.`);
+    const documents = unit.documents ?? [];
     requireValue((summary.inheritedDocumentCount ?? 0) === (unit.inheritedDocumentIds?.length ?? 0),
       "model inherited documentation count mismatch.");
     requireValue(summary.status === unit.status, "model review unit status mismatch.");
-    coverage(unit.documents.map((document) => document.id), summary.documentIds, "model document");
+    coverage(documents.map((document) => document.id), summary.documentIds, "model document");
     text(summary.evidenceSetId, "model evidenceSetId");
     const evidence = modelInput.evidenceSets?.[summary.evidenceSetId];
     requireValue(evidence, "model references an unknown evidence set.");
@@ -246,10 +331,10 @@ function validateModelSummaries(modelInput, input) {
       evidenceRef: { artifact: DOCUMENT_QUALITY_ARTIFACT, id: unit.reviewUnitId },
     }, evidence, "model evidence set");
     if (summary.qualifiedNames !== undefined) {
-      coverage([...new Set(unit.documents.map((document) => document.qualifiedName))].sort().slice(0, 24),
+      coverage([...new Set(documents.map((document) => document.qualifiedName))].sort().slice(0, 24),
         summary.qualifiedNames, "model qualified name");
     }
-    for (const field of ["sourceChangeIds", "hunkIds", "declarationIds"]) {
+    for (const field of /** @type {const} */ (["sourceChangeIds", "hunkIds", "declarationIds"])) {
       if (summary[field] !== undefined) coverage(unit[field], summary[field], `model ${field}`);
     }
     if (unit.reason !== undefined || summary.reason !== undefined) {
@@ -258,11 +343,15 @@ function validateModelSummaries(modelInput, input) {
   }
 }
 
+/**
+ * @param {DocumentQualityInput} input
+ * @param {DocumentQualityDecision[]} decisions
+ */
 export function validateDocumentQualityDecisions(input, decisions) {
   array(decisions, "decisions");
   const checks = checksFor(input.schemaVersion);
   const expected = input.reviewUnits.filter((unit) => unit.status === "ready")
-    .flatMap((unit) => unit.documents.flatMap((document) =>
+    .flatMap((unit) => (unit.documents ?? []).flatMap((document) =>
       checks.map((check) => `${unit.reviewUnitId}/${document.id}/${check}`)));
   for (const decision of decisions) {
     object(decision, DECISION_FIELDS, "decision");
@@ -273,7 +362,7 @@ export function validateDocumentQualityDecisions(input, decisions) {
       if (decision.decision === "fail" || decision[field] !== undefined) text(decision[field], `decision.${field}`);
     }
     const unit = input.reviewUnits.find((item) => item.reviewUnitId === decision.reviewUnitId);
-    const document = unit?.documents.find((item) => item.id === decision.documentId);
+    const document = unit?.documents?.find((item) => item.id === decision.documentId);
     requireValue(unit?.status === "ready" && document, "decision references an unknown or ineligible document.");
     if (decision.docQuote !== undefined) {
       requireValue(document.after.doc.includes(decision.docQuote), "docQuote must be an exact substring of current canonical @doc text.");
@@ -283,8 +372,14 @@ export function validateDocumentQualityDecisions(input, decisions) {
     `${decision.reviewUnitId}/${decision.documentId}/${decision.check}`), "decision");
 }
 
+/**
+ * @param {DocumentationReviewUnit} unit
+ * @param {DocumentationDocument} document
+ * @param {Map<string, SourceChange>} sources
+ */
 function findingSources(unit, document, sources) {
   const source = sources.get(document.sourceChangeId);
+  requireValue(source, `document ${document.id} references an unknown source.`);
   return [{
     ...source,
     hunks: (source.hunks ?? []).filter((hunk) => unit.hunkIds.includes(hunk.id)),
@@ -292,22 +387,31 @@ function findingSources(unit, document, sources) {
   }];
 }
 
+/**
+ * @param {DocumentQualityInput} input
+ * @param {SourceChange[]} sourceChanges
+ * @returns {DocumentQualityDimension}
+ */
 function assembleCompleteness(input, sourceChanges) {
   const newDeclarationsOnly = input.schemaVersion >= 5;
   const sources = new Map(sourceChanges.map((source) => [source.id, source]));
+  /** @type {string[]} */
   const unassessedIntentIds = [];
+  /** @type {string[]} */
   const notApplicableIntentIds = [];
+  /** @type {NonNullable<DocumentQualityDimension["findings"]>} */
   const findings = [];
   let declarationCount = 0;
   let documentedDeclarationCount = 0;
   const intentAssessments = input.reviewUnits.map((unit) => {
+    const declarations = unit.declarations ?? [];
     if (unit.status === "blocked") unassessedIntentIds.push(unit.reviewUnitId);
     if (unit.status === "not-applicable") notApplicableIntentIds.push(unit.reviewUnitId);
-    declarationCount += unit.declarations.length;
-    documentedDeclarationCount += unit.declarations.filter(
+    declarationCount += declarations.length;
+    documentedDeclarationCount += declarations.filter(
       (declaration) => declaration.documentationPresent,
     ).length;
-    for (const declaration of unit.declarations.filter(
+    for (const declaration of declarations.filter(
       (item) => !item.documentationPresent,
     )) {
       const source = sources.get(declaration.sourceChangeId);
@@ -333,7 +437,7 @@ function assembleCompleteness(input, sourceChanges) {
               },
             ]
           : [],
-        ...(sourceDeclaration?.sourceSnippet
+        ...(source && sourceDeclaration?.sourceSnippet
           ? {
               codeSnippet: {
                 path: source.path,
@@ -350,11 +454,11 @@ function assembleCompleteness(input, sourceChanges) {
         ? "not-assessed"
         : unit.status === "not-applicable"
           ? "not-applicable"
-          : unit.declarations.some((declaration) => !declaration.documentationPresent)
+          : declarations.some((declaration) => !declaration.documentationPresent)
             ? "failed"
             : "passed",
       ...(unit.reason ? { reason: unit.reason } : {}),
-      declarations: unit.declarations,
+      declarations,
     };
   });
   const missingDeclarationCount = declarationCount - documentedDeclarationCount;
@@ -396,16 +500,26 @@ function assembleCompleteness(input, sourceChanges) {
   };
 }
 
+/**
+ * @param {DocumentQualityInput} input
+ * @param {DocumentQualityDecision[]} decisions
+ * @param {SourceChange[]} sourceChanges
+ * @returns {DocumentQualityDimension}
+ */
 function assembleDimension(input, decisions, sourceChanges) {
   const checksPerDocument = checksFor(input.schemaVersion).length;
   const sources = new Map(sourceChanges.map((source) => [source.id, source]));
+  /** @type {string[]} */
   const unassessedIntentIds = [];
+  /** @type {string[]} */
   const notApplicableIntentIds = [];
   let documentCount = 0;
   let assessedDocumentCount = 0;
   let assessedCheckCount = 0;
+  /** @type {NonNullable<DocumentQualityDimension["findings"]>} */
   const findings = [];
   const intentAssessments = input.reviewUnits.map((unit) => {
+    const documents = unit.documents ?? [];
     const checks = decisions.filter((decision) => decision.reviewUnitId === unit.reviewUnitId);
     const eligible = unit.status === "ready";
     const complete = unit.status === "not-applicable" ||
@@ -413,20 +527,25 @@ function assembleDimension(input, decisions, sourceChanges) {
     if (!complete) unassessedIntentIds.push(unit.reviewUnitId);
     if (unit.status === "not-applicable") notApplicableIntentIds.push(unit.reviewUnitId);
     if (eligible) {
-      documentCount += unit.documents.length;
-      assessedDocumentCount += unit.documents.filter((document) =>
+      documentCount += documents.length;
+      assessedDocumentCount += documents.filter((document) =>
         checks.filter((check) => check.documentId === document.id && check.decision !== "not-assessed").length === checksPerDocument).length;
       assessedCheckCount += checks.filter((check) => check.decision !== "not-assessed").length;
     }
     for (const check of checks.filter((check) => check.decision === "fail")) {
-      const document = unit.documents.find((document) => document.id === check.documentId);
+      const document = documents.find((document) => document.id === check.documentId);
+      requireValue(document, `decision references unknown document ${check.documentId}.`);
+      const title = check.title;
+      const expected = check.expected;
+      requireValue(title, "failed decision requires a title.");
+      requireValue(expected, "failed decision requires an expected value.");
       findings.push({
         id: stableId("document-finding", [unit.reviewUnitId, document.id, check.check]),
         reviewUnitId: unit.reviewUnitId,
         documentId: document.id,
         check: check.check,
-        title: check.title,
-        expected: check.expected,
+        title,
+        expected,
         actual: document.after.doc,
         rationale: check.rationale,
         docQuote: check.docQuote,
@@ -442,7 +561,7 @@ function assembleDimension(input, decisions, sourceChanges) {
       reviewUnitId: unit.reviewUnitId,
       status,
       ...(unit.reason ? { reason: unit.reason } : {}),
-      documents: unit.documents,
+      documents,
       ...(unit.inheritedDocumentIds ? { inheritedDocumentIds: unit.inheritedDocumentIds } : {}),
       checks,
     };
@@ -486,6 +605,17 @@ function assembleDimension(input, decisions, sourceChanges) {
   };
 }
 
+/**
+ * @param {{
+ *   input?: DocumentQualityInput,
+ *   modelInput?: Partial<AssessmentModelInput>,
+ *   decisions?: DocumentQualityDecision[],
+ *   semanticUnits: SemanticDocumentItem[],
+ *   sourceChanges: SourceChange[],
+ *   semanticStatus?: "ready" | "blocked"
+ * }} options
+ * @returns {DocumentQualityDimension}
+ */
 export function assembleDocumentQuality({ input, modelInput = {}, decisions, semanticUnits, sourceChanges, semanticStatus = "ready" }) {
   if (input?.schemaVersion === 4 || input?.schemaVersion === 5) {
     requireValue(decisions === undefined || (Array.isArray(decisions) && decisions.length === 0),
@@ -504,14 +634,23 @@ export function assembleDocumentQuality({ input, modelInput = {}, decisions, sem
   requireValue(input !== undefined, "declared canonical artifact is missing.");
   validateDocumentQualityInput(input, semanticUnits, sourceChanges, semanticStatus);
   validateModelSummaries(modelInput, input);
+  requireValue(decisions !== undefined, "decisions must be an array.");
   validateDocumentQualityDecisions(input, decisions);
   return assembleDimension(input, decisions, sourceChanges);
 }
 
+/**
+ * @param {DocumentQualityDimension} dimension
+ * @param {SemanticDocumentItem[]} semanticItems
+ * @param {"ready" | "blocked"} [semanticStatus]
+ * @returns {string[]}
+ */
 export function validateDocumentQualityDimension(dimension, semanticItems, semanticStatus = "ready") {
+  /** @type {string[]} */
   const errors = [];
   try {
-    if ([4, 5].includes(dimension?.assessmentVersion)) {
+    if (dimension.assessmentVersion !== undefined &&
+        [4, 5].includes(dimension.assessmentVersion)) {
       object(dimension, [
         "assessmentVersion", "status", "summary", "coverage",
         "intentAssessments", "findings", "blockers",
@@ -520,6 +659,7 @@ export function validateDocumentQualityDimension(dimension, semanticItems, seman
       for (const field of ["intentAssessments", "findings", "blockers"]) {
         array(dimension[field], `dimension.${field}`);
       }
+      /** @type {Map<string, SourceChange>} */
       const sourceMap = new Map();
       for (const item of semanticItems) {
         for (const source of item.sources ?? []) {
@@ -562,8 +702,23 @@ export function validateDocumentQualityDimension(dimension, semanticItems, seman
       requireValue(dimension.status === "not-assessed", "legacy dimension must be not-assessed.");
       return errors;
     }
-    for (const field of ["intentAssessments", "findings", "blockers"]) array(dimension[field], `dimension.${field}`);
-    coverage(semanticItems.map((item) => item.id), dimension.intentAssessments.map((item) => item.reviewUnitId), "final intent");
+    for (const field of /** @type {const} */ (["intentAssessments", "findings", "blockers"])) {
+      array(dimension[field], `dimension.${field}`);
+    }
+    const intentAssessments = /** @type {{
+     *   reviewUnitId: string,
+     *   status: string,
+     *   reason?: string,
+     *   documents: DocumentationDocument[],
+     *   checks: DocumentQualityDecision[],
+     *   inheritedDocumentIds?: string[]
+     * }[]} */ (dimension.intentAssessments);
+    coverage(
+      semanticItems.map((item) => item.id),
+      intentAssessments.map((item) => item.reviewUnitId),
+      "final intent",
+    );
+    /** @type {Map<string, SourceChange>} */
     const sourceMap = new Map();
     for (const item of semanticItems) {
       for (const source of item.sources ?? []) {
@@ -575,13 +730,15 @@ export function validateDocumentQualityDimension(dimension, semanticItems, seman
         } : source);
       }
     }
-    const reviewUnits = dimension.intentAssessments.map((item) => {
+    /** @type {DocumentationReviewUnit[]} */
+    const reviewUnits = intentAssessments.map((item) => {
       object(item, ["reviewUnitId", "status", "reason", "documents", "checks",
         ...(dimension.assessmentVersion === 3 ? ["inheritedDocumentIds"] : [])], "intent assessment");
       requireValue(["passed", "failed", "not-assessed", "not-applicable"].includes(item.status), "invalid intent status.");
       array(item.documents, "intent documents");
       array(item.checks, "intent checks");
       const semantic = semanticItems.find((unit) => unit.id === item.reviewUnitId);
+      requireValue(semantic, `unknown semantic intent ${item.reviewUnitId}.`);
       const scope = scopeForSemantic(semantic);
       const status = item.status === "not-applicable" ? "not-applicable"
         : item.checks.length ? "ready" : "blocked";
@@ -596,14 +753,20 @@ export function validateDocumentQualityDimension(dimension, semanticItems, seman
         ...(item.inheritedDocumentIds !== undefined ? { inheritedDocumentIds: item.inheritedDocumentIds } : {}),
       };
     });
+    /** @type {DocumentQualityInput} */
     const input = {
       schemaVersion: dimension.assessmentVersion ?? 1,
-      status: dimension.blockers.length || reviewUnits.some((unit) => unit.status === "blocked") ? "blocked" : "ready",
-      blockers: dimension.blockers,
+      status: (dimension.blockers?.length ?? 0) ||
+          reviewUnits.some((unit) => unit.status === "blocked")
+        ? "blocked"
+        : "ready",
+      blockers: /** @type {Record<string, unknown>[]} */ (
+        dimension.blockers ?? []
+      ),
       reviewUnits,
     };
     validateDocumentQualityInput(input, semanticItems, [...sourceMap.values()], semanticStatus);
-    const decisions = dimension.intentAssessments.flatMap((item) => item.checks);
+    const decisions = intentAssessments.flatMap((item) => item.checks);
     validateDocumentQualityDecisions(input, decisions);
     const expected = assembleDimension(input, decisions, [...sourceMap.values()]);
     equal(expected.status, dimension.status, "dimension status");
@@ -611,7 +774,7 @@ export function validateDocumentQualityDimension(dimension, semanticItems, seman
     equal(expected.intentAssessments, dimension.intentAssessments, "intent assessments");
     equal(expected.findings, dimension.findings, "findings");
   } catch (error) {
-    errors.push(error.message);
+    errors.push(error instanceof Error ? error.message : String(error));
   }
   return errors;
 }

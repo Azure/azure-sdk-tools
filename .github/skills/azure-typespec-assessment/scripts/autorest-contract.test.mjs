@@ -13,7 +13,7 @@ function fixtureDirectory() {
   return fs.mkdtempSync(path.join(process.cwd(), ".autorest-contract-test-"));
 }
 
-test("ignores version-specific document prefixes in equivalent schema references", () => {
+void test("ignores version-specific document prefixes in equivalent schema references", () => {
   const before = {
     kind: "object",
     reference:
@@ -48,7 +48,7 @@ test("ignores version-specific document prefixes in equivalent schema references
   assert.equal(sameAutorestContract(before, after), true);
 });
 
-test("normalizes Swagger 2 paths, x-ms-paths, refs, allOf, multipart, and response statuses", () => {
+void test("normalizes Swagger 2 paths, x-ms-paths, refs, allOf, multipart, and response statuses", () => {
   const root = path.resolve("virtual-autorest");
   const commonPath = path.join(root, "common.json");
   const featurePath = path.join(root, "feature.json");
@@ -157,21 +157,43 @@ test("normalizes Swagger 2 paths, x-ms-paths, refs, allOf, multipart, and respon
   assert.equal(contract.documents.length, 2);
   assert.equal(contract.operations.length, 3);
   const create = contract.operations.find((item) => item.operationId === "Widgets_Create");
+  assert.ok(create);
   assert.equal(create.parameters[0].name, "subscriptionId");
-  assert.equal(create.request.schema.kind, "object");
-  assert.deepEqual(create.request.schema.properties.map((item) => item.name), ["id", "note", "state"]);
-  assert.equal(create.request.schema.properties.find((item) => item.name === "note").schema.nullable, true);
+  const createRequest = create.request;
+  assert.ok(createRequest);
+  const createSchema = createRequest.schema;
+  assert.ok(createSchema);
+  const createProperties = createSchema.properties;
+  assert.ok(createProperties);
+  assert.equal(createSchema.kind, "object");
+  assert.deepEqual(createProperties.map((item) => item.name), ["id", "note", "state"]);
+  const note = createProperties.find((item) => item.name === "note");
+  assert.ok(note);
+  assert.equal(note.schema.nullable, true);
   assert.deepEqual(create.responses.map((item) => item.status), ["200", "4XX", "default"]);
-  assert.equal(create.lro.options["final-state-via"], "location");
+  assert.ok(create.lro);
+  assert.equal(
+    /** @type {{options: Record<string, unknown>}} */ (create.lro)
+      .options["final-state-via"],
+    "location",
+  );
   const upload = contract.operations.find((item) => item.operationId === "Widgets_Upload");
-  assert.equal(upload.request.kind, "multipart");
-  assert.equal(upload.request.members.find((item) => item.name === "file").schema.type, "file");
+  assert.ok(upload);
+  const uploadRequest = upload.request;
+  assert.ok(uploadRequest);
+  assert.equal(uploadRequest.kind, "multipart");
+  const uploadMembers = uploadRequest.members;
+  assert.ok(uploadMembers);
+  const file = uploadMembers.find((item) => item.name === "file");
+  assert.ok(file?.schema);
+  assert.equal(file.schema.type, "file");
   const list = contract.operations.find((item) => item.operationId === "Widgets_List");
+  assert.ok(list);
   assert.equal(list.routeSource, "x-ms-paths");
   assert.equal(list.responses[0].status, "2XX");
 });
 
-test("discovers configurable multi-file output from service manifest and rejects OpenAPI 3", (context) => {
+void test("discovers configurable multi-file output from service manifest and rejects OpenAPI 3", (context) => {
   const root = fixtureDirectory();
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, "generated"), { recursive: true });
@@ -201,7 +223,7 @@ test("discovers configurable multi-file output from service manifest and rejects
   assert.equal(responseStatusKind("2XX"), "normal");
 });
 
-test("keeps resolved reference identities stable across base and current artifact roots", () => {
+void test("keeps resolved reference identities stable across base and current artifact roots", () => {
   const document = {
     swagger: "2.0",
     info: { title: "Widgets", version: "2026-01-01" },
@@ -217,6 +239,7 @@ test("keeps resolved reference identities stable across base and current artifac
       },
     },
   };
+  /** @param {string} revision */
   const normalize = (revision) => normalizeAutorestDocuments([{
     path: `projects/widgets/${revision}/autorest/stable/2026-01-01/openapi.json`,
     absolutePath: path.resolve("virtual-autorest", revision, "openapi.json"),

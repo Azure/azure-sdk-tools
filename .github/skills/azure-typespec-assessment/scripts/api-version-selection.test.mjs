@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { extractApiVersions, selectApiVersionPair } from "./api-version-selection.mjs";
 
+/** @param {string} members */
 const source = (members) => `
 @versioned(Versions)
 namespace Contoso;
@@ -9,7 +10,7 @@ enum Versions {
 ${members}
 }`;
 
-test("selects a newly added head version and the latest stable base version", () => {
+void test("selects a newly added head version and the latest stable base version", () => {
   const base = extractApiVersions([source(`
   v2025_01_01: "2025-01-01",
   @Azure.Core.previewVersion
@@ -54,7 +55,7 @@ test("selects a newly added head version and the latest stable base version", ()
   });
 });
 
-test("uses the latest head version and latest preview base when no stable exists", () => {
+void test("uses the latest head version and latest preview base when no stable exists", () => {
   const base = extractApiVersions([source(`
   v2024_01_01_preview: "2024-01-01-preview",
   v2025_01_01_preview: "2025-01-01-preview",
@@ -73,7 +74,7 @@ test("uses the latest head version and latest preview base when no stable exists
   assert.equal(pair.currentReason, "latest-version");
 });
 
-test("uses the same latest preview on both sides when the PR adds no version", () => {
+void test("uses the same latest preview on both sides when the PR adds no version", () => {
   const versions = extractApiVersions([source(`
   v2025_01_01: "2025-01-01",
   v2026_05_01_preview: "2026-05-01-preview",
@@ -87,7 +88,7 @@ test("uses the same latest preview on both sides when the PR adds no version", (
   assert.equal(pair.currentReason, "latest-version");
 });
 
-test("does not select a version for an unversioned project", () => {
+void test("does not select a version for an unversioned project", () => {
   const unversioned = extractApiVersions(["namespace Contoso;"]);
   const pair = selectApiVersionPair({ base: unversioned, current: unversioned });
 
@@ -98,7 +99,7 @@ test("does not select a version for an unversioned project", () => {
   assert.equal(pair.currentReason, "unversioned");
 });
 
-test("compares an unversioned base with a versioned target", () => {
+void test("compares an unversioned base with a versioned target", () => {
   const pair = selectApiVersionPair({
     base: extractApiVersions(["namespace Contoso;"]),
     current: extractApiVersions([source(`
@@ -121,7 +122,7 @@ test("compares an unversioned base with a versioned target", () => {
   ]);
 });
 
-test("compares a versioned base with an unversioned target", () => {
+void test("compares a versioned base with an unversioned target", () => {
   const pair = selectApiVersionPair({
     base: extractApiVersions([source(`
   v2025_01_01: "2025-01-01",

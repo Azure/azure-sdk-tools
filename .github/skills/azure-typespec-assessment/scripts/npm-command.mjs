@@ -1,6 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 
+/**
+ * @typedef {{executable: string, args: string[]}} DependencyCommand
+ */
+
+/**
+ * @param {string} executable
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string | null}
+ */
 function resolveWindowsNpmCli(executable, env = process.env) {
   const cliName = {
     "npm.cmd": "npm-cli.js",
@@ -22,6 +31,11 @@ function resolveWindowsNpmCli(executable, env = process.env) {
   throw new Error(`Unable to resolve ${cliName} from ${executable}.`);
 }
 
+/**
+ * @param {DependencyCommand} command
+ * @param {{platform?: NodeJS.Platform, env?: NodeJS.ProcessEnv, execPath?: string}} [options]
+ * @returns {DependencyCommand}
+ */
 export function dependencyProcessCommand(
   command,
   { platform = process.platform, env = process.env, execPath = process.execPath } = {},

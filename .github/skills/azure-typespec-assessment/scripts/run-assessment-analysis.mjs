@@ -5,7 +5,7 @@ import { ensureSkillDependencies } from "./skill-dependencies.mjs";
 await ensureSkillDependencies();
 
 const [
-  { parseArgs, isMain, readJson, runMain, writeJson },
+  { parseArgs, isMain, isRecord, readJsonObject, runMain, writeJson },
   { prepareAssessment },
   { analyzeSemanticIntents },
   { analyzeRestBreaking },
@@ -36,6 +36,91 @@ const [
   import("./workflow-state.mjs"),
 ]);
 
+/** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
+/** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
+/** @typedef {import("./runtime-types.js").AssessmentOutput} AssessmentOutput */
+/** @typedef {import("./runtime-types.js").BreakingAnalysis} BreakingAnalysis */
+/** @typedef {import("./runtime-types.js").BreakingCandidate} BreakingCandidate */
+/** @typedef {import("./runtime-types.js").ComplianceSearchRequest} ComplianceSearchRequest */
+/** @typedef {import("./runtime-types.js").DownstreamAnalysis} DownstreamAnalysis */
+/** @typedef {import("./runtime-types.js").DownstreamCandidate} DownstreamCandidate */
+/** @typedef {import("./runtime-types.js").InferenceRequest} InferenceRequest */
+/** @typedef {import("./runtime-types.js").InternalSemanticOperation} InternalSemanticOperation */
+/** @typedef {import("./runtime-types.js").InternalSemanticUnit} InternalSemanticUnit */
+/** @typedef {import("./runtime-types.js").PreparationManifest} PreparationManifest */
+/** @typedef {import("./runtime-types.js").SemanticAnalysis} SemanticAnalysis */
+/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
+/** @typedef {import("./runtime-types.js").SourceDeclaration} SourceDeclaration */
+/** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
+/**
+ * @typedef {{
+ *   hunkId: string,
+ *   status: string,
+ *   reason: string,
+ *   restCandidateIds: string[],
+ *   downstreamCandidateIds: string[]
+ * }} HunkClassification
+ * @typedef {{
+ *   restCandidateIds: string[],
+ *   downstreamCandidateIds: string[],
+ *   complianceSearchRequestIds: string[],
+ *   relatedOperationIds: string[],
+ *   coveredHunkIds: string[],
+ *   uncoveredHunkIds: string[],
+ *   classifications: HunkClassification[],
+ *   gaps: {hunkId: string, reason: string}[]
+ * }} DeterministicCoverage
+ * @typedef {BreakingCandidate | DownstreamCandidate} AssessmentCandidate
+ * @typedef {{
+ *   schemaVersion: number,
+ *   context: Record<string, unknown>,
+ *   artifactReferences: AssessmentModelInput["artifactReferences"],
+ *   evidenceSets: Record<string, import("./runtime-types.js").EvidenceSet & Record<string, unknown>>,
+ *   facts: Record<string, unknown>,
+ *   semanticReviewUnits: AssessmentModelInput["semanticReviewUnits"],
+ *   informationalSemanticIntentIds: string[],
+ *   restCandidates: AssessmentModelInput["restCandidates"],
+ *   downstreamCandidates: AssessmentModelInput["downstreamCandidates"],
+ *   downstreamRootCauses: import("./runtime-types.js").DownstreamRootCause[],
+ *   complianceSearchRequests: AssessmentModelInput["complianceSearchRequests"],
+ *   inferenceRequests: AssessmentModelInput["inferenceRequests"],
+ *   blockers: unknown[],
+ *   inputAccounting: Record<string, unknown>
+ * }} AnalysisModelInput
+ * @typedef {{
+ *   budgetTier: string | undefined,
+ *   budgetBytes: number | undefined,
+ *   bytes: number,
+ *   estimatedTokens: number,
+ *   retained: {
+ *     evidenceSets: number,
+ *     facts: number,
+ *     semanticReviewUnits: number,
+ *     restCandidates: number,
+ *     downstreamCandidates: number,
+ *     downstreamRootCauses: number,
+ *     complianceSearchRequests: number,
+ *     inferenceRequests: number
+ *   },
+ *   omittedRedundant: Record<string, boolean>
+ * }} InputAccounting
+ * @typedef {{
+ *   output: string,
+ *   repo?: string,
+ *   pr?: string | number,
+ *   base?: string,
+ *   head?: string,
+ *   sparse_root?: string[],
+ *   sparseRoots?: string[],
+ *   specification?: string,
+ *   invocation?: Record<string, unknown>,
+ *   model_input_budget_bytes?: string | number,
+ *   [key: string]: unknown
+ * }} AssessmentAnalysisOptions
+ * @typedef {Record<string, string | boolean | string[] | undefined> & {_?: string[]}} CliArguments
+ */
+
+/** @type {[string, number][]} */
 const BUDGET_TIERS = [
   ["small", 128 * 1024],
   ["medium", 256 * 1024],
@@ -53,20 +138,29 @@ const QUALIFIED_NAME_LIMIT = 24;
 const CHANGED_CONSTRUCT_LIMIT = 40;
 const QUERY_TERM_LIMIT = 40;
 
+/**
+ * @param {unknown} value
+ * @returns {value is string}
+ */
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
+/**
+ * @param {unknown} value
+ * @param {number} [depth]
+ * @returns {unknown}
+ */
 function typeSummary(value, depth = 0) {
   if (value === undefined || value === null) return value;
   if (typeof value !== "object") return value;
   if (depth >= 3) {
-    return (
-      value.id ??
-      value.crossLanguageDefinitionId ??
-      value.name ??
-      value.kind ??
-      "nested"
-    );
+    if (!isRecord(value)) return "nested";
+    return value.id ?? value.crossLanguageDefinitionId ?? value.name ?? value.kind ?? "nested";
   }
-  if (Array.isArray(value))
-    return value.map((item) => typeSummary(item, depth + 1));
+  if (Array.isArray(value)) return value.map((item) => typeSummary(item, depth + 1));
+  if (!isRecord(value)) return "nested";
+  /** @type {Record<string, unknown>} */
   const result = {};
   for (const key of [
     "kind",
@@ -86,33 +180,34 @@ function typeSummary(value, depth = 0) {
   ]) {
     if (value[key] !== undefined) {
       result[key] =
-        typeof value[key] === "object"
-          ? typeSummary(value[key], depth + 1)
-          : value[key];
+        typeof value[key] === "object" ? typeSummary(value[key], depth + 1) : value[key];
     }
   }
   if (value.items) result.items = typeSummary(value.items, depth + 1);
-  if (value.valueType)
-    result.valueType = typeSummary(value.valueType, depth + 1);
+  if (value.valueType) result.valueType = typeSummary(value.valueType, depth + 1);
   if (value.keyType) result.keyType = typeSummary(value.keyType, depth + 1);
-  if (value.variantTypes)
-    result.variantTypes = value.variantTypes.map((item) =>
-      typeSummary(item, depth + 1),
-    );
-  if (value.properties) {
+  if (Array.isArray(value.variantTypes))
+    result.variantTypes = value.variantTypes.map((item) => typeSummary(item, depth + 1));
+  if (Array.isArray(value.properties)) {
     result.properties = value.properties.map((property) => ({
-      name: property.name,
-      serializedName: property.serializedName,
-      required: property.required,
-      optional: property.optional,
-      type: typeSummary(property.schema ?? property.type, depth + 1),
+      name: isRecord(property) ? property.name : undefined,
+      serializedName: isRecord(property) ? property.serializedName : undefined,
+      required: isRecord(property) ? property.required : undefined,
+      optional: isRecord(property) ? property.optional : undefined,
+      type: typeSummary(
+        isRecord(property) ? (property.schema ?? property.type) : undefined,
+        depth + 1,
+      ),
     }));
   }
   return result;
 }
 
+/** @param {unknown} value */
 function metadataSummary(value) {
   if (!value || typeof value !== "object") return value;
+  if (!isRecord(value)) return value;
+  /** @type {Record<string, unknown>} */
   const result = {};
   for (const key of [
     "isLongRunning",
@@ -124,12 +219,7 @@ function metadataSummary(value) {
   ]) {
     if (value[key] !== undefined) result[key] = value[key];
   }
-  for (const key of [
-    "logicalResult",
-    "envelopeResult",
-    "finalEnvelopeResult",
-    "responseType",
-  ]) {
+  for (const key of ["logicalResult", "envelopeResult", "finalEnvelopeResult", "responseType"]) {
     if (value[key] !== undefined) result[key] = typeSummary(value[key]);
   }
   for (const key of [
@@ -140,24 +230,27 @@ function metadataSummary(value) {
     "continuationTokenResponseSegments",
     "nextLinkReInjectedParametersSegments",
   ]) {
-    if (value[key]) {
+    if (Array.isArray(value[key])) {
       result[key] = value[key].map((item) =>
-        typeof item === "object"
-          ? (item.crossLanguageDefinitionId ??
-            item.name ??
-            item.serializedName ??
-            item.kind)
-          : item,
+        isRecord(item)
+          ? (item.crossLanguageDefinitionId ?? item.name ?? item.serializedName ?? item.kind)
+          : typeSummary(item, 1),
       );
     }
   }
   for (const key of ["pollingStep", "statusMonitorStep", "finalStep"]) {
-    if (value[key])
-      result[key] = { kind: value[key].kind, target: value[key].target?.kind };
+    if (isRecord(value[key])) {
+      const item = value[key];
+      result[key] = {
+        kind: item.kind,
+        target: isRecord(item.target) ? item.target.kind : undefined,
+      };
+    }
   }
   return result;
 }
 
+/** @param {AssessmentFact} fact */
 function compactOperationFact(fact) {
   return {
     id: fact.id,
@@ -204,6 +297,7 @@ function compactOperationFact(fact) {
   };
 }
 
+/** @param {AssessmentFact} fact */
 function compactSdkFact(fact) {
   return {
     id: fact.id,
@@ -260,6 +354,10 @@ function compactSdkFact(fact) {
   };
 }
 
+/**
+ * @param {string} id
+ * @param {AssessmentFact} fact
+ */
 function compactFact(id, fact) {
   if (id.startsWith("sdk-fact-")) return compactSdkFact(fact);
   if (id.startsWith("operation-") || id.startsWith("rest-fact-")) {
@@ -268,6 +366,16 @@ function compactFact(id, fact) {
   return { id, summary: typeSummary(fact) };
 }
 
+/**
+ * @param {{
+ *   semanticUnits: InternalSemanticUnit[],
+ *   sourceChanges: Record<string, SourceChange>,
+ *   semantic: SemanticAnalysis,
+ *   rest: BreakingAnalysis,
+ *   downstream: DownstreamAnalysis,
+ *   coverages: Map<string, DeterministicCoverage>
+ * }} options
+ */
 function inferenceRelevantFactIds({
   semanticUnits,
   sourceChanges,
@@ -276,11 +384,12 @@ function inferenceRelevantFactIds({
   downstream,
   coverages,
 }) {
+  /** @type {Set<string>} */
   const ids = new Set();
   const available = { ...semantic.facts, ...rest.facts, ...downstream.facts };
 
   for (const unit of semanticUnits) {
-    if (!(coverages.get(unit.id)?.uncoveredHunkIds.length > 0)) continue;
+    if ((coverages.get(unit.id)?.uncoveredHunkIds.length ?? 0) === 0) continue;
     for (const id of [
       ...(unit.beforeFactIds ?? []),
       ...(unit.afterFactIds ?? []),
@@ -292,29 +401,19 @@ function inferenceRelevantFactIds({
       if (id && available[id] !== undefined) ids.add(id);
     }
 
-    const projectIds = new Set(
-      unit.projectIds ?? (unit.projectId ? [unit.projectId] : []),
-    );
+    const projectIds = new Set(unit.projectIds ?? (unit.projectId ? [unit.projectId] : []));
     const sourceText = (unit.hunkIds ?? [])
-      .map((hunkId) =>
-        inferenceHunkText(sourceForHunk(unit, sourceChanges, hunkId), hunkId),
-      )
+      .map((hunkId) => inferenceHunkText(sourceForHunk(unit, sourceChanges, hunkId), hunkId))
       .join("\n");
-    const operationIds = new Set(
-      (unit.operations ?? []).map((operation) => operation.operationId),
-    );
+    const operationIds = new Set((unit.operations ?? []).map((operation) => operation.operationId));
     for (const [id, fact] of Object.entries(available)) {
       if (fact.projectId && !projectIds.has(fact.projectId)) continue;
-      const terms = [
-        fact.operationId,
-        fact.identity,
-        fact.crossLanguageDefinitionId,
-        fact.name,
-      ]
-        .filter((term) => typeof term === "string" && term.length >= 3)
-        .flatMap((term) => [term, term.split(".").at(-1)]);
+      const terms = [fact.operationId, fact.identity, fact.crossLanguageDefinitionId, fact.name]
+        .filter(isNonEmptyString)
+        .filter((term) => term.length >= 3)
+        .flatMap((term) => [term, term.split(".").at(-1)].filter(isNonEmptyString));
       if (
-        operationIds.has(fact.operationId) ||
+        (fact.operationId !== undefined && operationIds.has(fact.operationId)) ||
         terms.some((term) => sourceText.includes(term))
       ) {
         ids.add(id);
@@ -324,6 +423,12 @@ function inferenceRelevantFactIds({
   return ids;
 }
 
+/**
+ * @param {SemanticAnalysis} semantic
+ * @param {BreakingAnalysis} rest
+ * @param {DownstreamAnalysis} downstream
+ * @param {Set<string>} retainedIds
+ */
 function referencedFacts(semantic, rest, downstream, retainedIds) {
   const ids = new Set(retainedIds);
   const available = { ...semantic.facts, ...rest.facts, ...downstream.facts };
@@ -335,24 +440,21 @@ function referencedFacts(semantic, rest, downstream, retainedIds) {
   );
 }
 
+/** @param {{candidates?: AssessmentCandidate[]}} analysis */
 function candidateReferencedFactIds(analysis) {
   return new Set(
-    (analysis.candidates ?? []).flatMap(
-      (candidate) => candidate.evidenceFactIds ?? [],
-    ),
+    (analysis.candidates ?? []).flatMap((candidate) => candidate.evidenceFactIds ?? []),
   );
 }
 
+/** @param {DownstreamAnalysis} downstream */
 function downstreamReferencedFactIds(downstream) {
   const ids = candidateReferencedFactIds(downstream);
   for (const rootCause of downstream.rootCauses ?? []) {
     for (const id of [
       ...(rootCause.methodFactIds ?? []),
       ...(rootCause.typeFactIds ?? []),
-      ...(rootCause.referenceEvidence ?? []).flatMap((edge) => [
-        edge.fromFactId,
-        edge.toFactId,
-      ]),
+      ...(rootCause.referenceEvidence ?? []).flatMap((edge) => [edge.fromFactId, edge.toFactId]),
     ]) {
       if (id) ids.add(id);
     }
@@ -360,6 +462,10 @@ function downstreamReferencedFactIds(downstream) {
   return ids;
 }
 
+/**
+ * @param {InternalSemanticUnit} unit
+ * @param {Record<string, SourceChange>} sourceChanges
+ */
 function semanticSourceExcerpts(unit, sourceChanges) {
   const allowed = new Set(unit.hunkIds ?? []);
   return unit.sourceChangeIds
@@ -379,11 +485,10 @@ function semanticSourceExcerpts(unit, sourceChanges) {
     })
     .filter((excerpt) => excerpt.text)
     .sort((left, right) => {
+      /** @param {{path: string, text: string}} excerpt */
       const score = (excerpt) => {
-        const compatibilityFile =
-          /(?:^|\/)(?:client|back-compatible)\.tsp$/i.test(excerpt.path);
-        const substantive =
-          /\b(model|interface|op|enum|union|scalar|alias)\b/.test(excerpt.text);
+        const compatibilityFile = /(?:^|\/)(?:client|back-compatible)\.tsp$/i.test(excerpt.path);
+        const substantive = /\b(model|interface|op|enum|union|scalar|alias)\b/.test(excerpt.text);
         return (compatibilityFile ? 2 : 0) + (substantive ? 0 : 1);
       };
       return (
@@ -395,8 +500,12 @@ function semanticSourceExcerpts(unit, sourceChanges) {
     .slice(0, 3);
 }
 
+/**
+ * @param {(string | undefined)[]} values
+ * @param {number} limit
+ */
 function bounded(values, limit) {
-  const unique = [...new Set(values.filter(Boolean))].sort();
+  const unique = [...new Set(values.filter(isNonEmptyString))].sort();
   return {
     values: unique.slice(0, limit),
     count: unique.length,
@@ -404,6 +513,17 @@ function bounded(values, limit) {
   };
 }
 
+/**
+ * @param {Record<string, import("./runtime-types.js").EvidenceSet & Record<string, unknown>>} registry
+ * @param {{
+ *   sourceChangeIds?: string[],
+ *   hunkIds?: string[],
+ *   declarationIds?: string[],
+ *   evidenceFactIds?: string[]
+ * }} evidence
+ * @param {string} artifact
+ * @param {string} entityId
+ */
 function evidenceSet(registry, evidence, artifact, entityId) {
   const normalized = {
     sourceChangeIds: [...new Set(evidence.sourceChangeIds ?? [])].sort(),
@@ -422,12 +542,13 @@ function evidenceSet(registry, evidence, artifact, entityId) {
   return id;
 }
 
-function compactSemanticReviewUnit(
-  unit,
-  sourceChanges,
-  deterministicCoverage,
-  evidenceSets,
-) {
+/**
+ * @param {InternalSemanticUnit} unit
+ * @param {Record<string, SourceChange>} sourceChanges
+ * @param {DeterministicCoverage} deterministicCoverage
+ * @param {Record<string, import("./runtime-types.js").EvidenceSet & Record<string, unknown>>} evidenceSets
+ */
+function compactSemanticReviewUnit(unit, sourceChanges, deterministicCoverage, evidenceSets) {
   const declarations = unit.sourceChangeIds.flatMap((sourceId) => {
     const source = sourceChanges[sourceId];
     const allowed = new Set(unit.hunkIds ?? []);
@@ -459,20 +580,15 @@ function compactSemanticReviewUnit(
     reviewUnitId: unit.id,
     intentType: unit.intentType ?? "normal",
     action: unit.action ?? unit.changeKind ?? "modify",
-    declarationKinds: [
-      ...new Set(declarations.map((item) => item.kind).filter(Boolean)),
-    ].sort(),
+    declarationKinds: [...new Set(declarations.map((item) => item.kind).filter(Boolean))].sort(),
     qualifiedNames: qualifiedNames.values,
     qualifiedNameCount: qualifiedNames.count,
     changedConstructs: changedConstructs.values,
     changedConstructCount: changedConstructs.count,
     representativeSourceExcerpts: semanticSourceExcerpts(unit, sourceChanges),
     affectedOperationCount: operations.length,
-    representativeOperationIds: operations
-      .slice(0, 3)
-      .map((item) => item.operationId),
-    restChangedOperationCount: operations.filter((item) => item.restChanged)
-      .length,
+    representativeOperationIds: operations.slice(0, 3).map((item) => item.operationId),
+    restChangedOperationCount: operations.filter((item) => item.restChanged).length,
     groupingSummaries: (unit.groupingEvidence?.edges ?? [])
       .map((item) => item.summary)
       .filter(Boolean)
@@ -488,17 +604,46 @@ function compactSemanticReviewUnit(
   };
 }
 
+/**
+ * @template T
+ * @param {T[]} left
+ * @param {Set<T> | T[]} right
+ */
 function intersection(left, right) {
   const rightSet = right instanceof Set ? right : new Set(right);
   return left.filter((item) => rightSet.has(item));
 }
 
+/**
+ * @template T
+ * @param {Map<string, T>} values
+ * @param {string} key
+ * @param {string} label
+ * @returns {T}
+ */
+function requireMapValue(values, key, label) {
+  const value = values.get(key);
+  if (value === undefined) {
+    throw new Error(`${label} is missing for ${key}.`);
+  }
+  return value;
+}
+
+/**
+ * @param {InternalSemanticUnit} unit
+ * @param {Record<string, SourceChange>} sourceChanges
+ * @param {string} hunkId
+ */
 function sourceForHunk(unit, sourceChanges, hunkId) {
   return unit.sourceChangeIds
     .map((sourceChangeId) => sourceChanges[sourceChangeId])
     .find((source) => source?.hunks?.some((hunk) => hunk.id === hunkId));
 }
 
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ */
 function changedHunkText(source, hunkId) {
   const hunk = source?.hunks?.find((item) => item.id === hunkId);
   return (hunk?.lines ?? [])
@@ -507,11 +652,19 @@ function changedHunkText(source, hunkId) {
     .join("\n");
 }
 
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ */
 function inferenceHunkText(source, hunkId) {
   const hunk = source?.hunks?.find((item) => item.id === hunkId);
   return (hunk?.lines ?? []).slice(0, 40).join("\n");
 }
 
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ */
 function documentationOnly(source, hunkId) {
   const changed = changedHunkText(source, hunkId)
     .split("\n")
@@ -521,14 +674,15 @@ function documentationOnly(source, hunkId) {
     changed.length > 0 &&
     changed.every(
       (line) =>
-        line.startsWith("//") ||
-        line.startsWith("/*") ||
-        line.startsWith("*") ||
-        line === "*/",
+        line.startsWith("//") || line.startsWith("/*") || line.startsWith("*") || line === "*/",
     )
   );
 }
 
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ */
 function contractNeutralSupportingChange(source, hunkId) {
   const changed = changedHunkText(source, hunkId)
     .split("\n")
@@ -549,21 +703,22 @@ function contractNeutralSupportingChange(source, hunkId) {
   );
 }
 
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ */
 function docDecoratorOnly(source, hunkId) {
   const hunk = source?.hunks?.find((item) => item.id === hunkId);
   const changed = changedHunkText(source, hunkId);
-  const decorators = [...changed.matchAll(/@@?[A-Za-z0-9_.]+/g)].map(
-    (match) => match[0],
-  );
+  const decorators = [...changed.matchAll(/@@?[A-Za-z0-9_.]+/g)].map((match) => match[0]);
   return (
     (hunk?.lines ?? []).some((line) => /@@?doc\s*\(/.test(line)) &&
-    decorators.every(
-      (decorator) => decorator === "@doc" || decorator === "@@doc",
-    ) &&
+    decorators.every((decorator) => decorator === "@doc" || decorator === "@@doc") &&
     !/\b(model|interface|op|enum|union|scalar|alias)\b/.test(changed)
   );
 }
 
+/** @param {string} line */
 function structuralParenthesisDelta(line) {
   let quote;
   let escaped = false;
@@ -592,12 +747,13 @@ function structuralParenthesisDelta(line) {
   return delta;
 }
 
-function decoratorOnlyChange(
-  source,
-  hunkId,
-  allowedDecorators,
-  allowedStandalone = () => false,
-) {
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ * @param {Set<string>} allowedDecorators
+ * @param {(line: string) => boolean} [allowedStandalone]
+ */
+function decoratorOnlyChange(source, hunkId, allowedDecorators, allowedStandalone = () => false) {
   const hunk = source?.hunks?.find((item) => item.id === hunkId);
   let activeDecorator;
   let depth = 0;
@@ -606,21 +762,16 @@ function decoratorOnlyChange(
 
   for (const rawLine of hunk?.lines ?? []) {
     const changed = rawLine.startsWith("+") || rawLine.startsWith("-");
-    const line =
-      changed || rawLine.startsWith(" ") ? rawLine.slice(1) : rawLine;
-    const decorators = [...line.matchAll(/@@?[A-Za-z0-9_.]+/g)].map(
-      (match) => match[0],
-    );
+    const line = changed || rawLine.startsWith(" ") ? rawLine.slice(1) : rawLine;
+    const decorators = [...line.matchAll(/@@?[A-Za-z0-9_.]+/g)].map((match) => match[0]);
     const standaloneAllowed = allowedStandalone(line.trim());
     const startsAllowedDecorator =
-      decorators.length > 0 &&
-      decorators.every((decorator) => allowedDecorators.has(decorator));
+      decorators.length > 0 && decorators.every((decorator) => allowedDecorators.has(decorator));
 
     if (changed) {
       changedLineCount += 1;
       if (
-        (!standaloneAllowed &&
-          decorators.some((decorator) => !allowedDecorators.has(decorator))) ||
+        (!standaloneAllowed && decorators.some((decorator) => !allowedDecorators.has(decorator))) ||
         (!activeDecorator && !startsAllowedDecorator && !standaloneAllowed)
       ) {
         return false;
@@ -644,6 +795,12 @@ function decoratorOnlyChange(
   return changedLineCount > 0 && sawAllowedDecorator;
 }
 
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ * @param {BreakingAnalysis} rest
+ * @param {DownstreamAnalysis} downstream
+ */
 function representedArtifactChange(source, hunkId, rest, downstream) {
   const changedText = changedHunkText(source, hunkId);
   if (
@@ -679,16 +836,21 @@ function representedArtifactChange(source, hunkId, rest, downstream) {
   return undefined;
 }
 
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ */
 function decoratorsAffectingChangedLines(source, hunkId) {
   const hunk = source?.hunks?.find((item) => item.id === hunkId);
+  /** @type {Set<string>} */
   const decorators = new Set();
+  /** @type {string | undefined} */
   let activeDecorator;
   let depth = 0;
 
   for (const rawLine of hunk?.lines ?? []) {
     const changed = rawLine.startsWith("+") || rawLine.startsWith("-");
-    const line =
-      changed || rawLine.startsWith(" ") ? rawLine.slice(1) : rawLine;
+    const line = changed || rawLine.startsWith(" ") ? rawLine.slice(1) : rawLine;
     const decorator = line.match(/^\s*(@@?[A-Za-z0-9_.]+)/)?.[1];
     if (decorator) {
       activeDecorator = decorator;
@@ -707,13 +869,15 @@ function decoratorsAffectingChangedLines(source, hunkId) {
   return decorators;
 }
 
+/**
+ * @param {SourceChange | undefined} source
+ * @param {string} hunkId
+ */
 function inferenceGapReason(source, hunkId) {
   const hunk = source?.hunks?.find((item) => item.id === hunkId);
   const fullText = (hunk?.lines ?? []).join("\n");
   const changedDecorators = decoratorsAffectingChangedLines(source, hunkId);
-  const hasLanguageScope = /\b(csharp|java|javascript|python|go)\b/i.test(
-    fullText,
-  );
+  const hasLanguageScope = /\b(csharp|java|javascript|python|go)\b/i.test(fullText);
   if (changedDecorators.has("@@clientLocation") && hasLanguageScope) {
     return "language-specific-client-location-not-represented";
   }
@@ -808,22 +972,23 @@ function inferenceGapReason(source, hunkId) {
     "@@Azure.ClientGenerator.Core.clientName",
     "@@visibility",
   ]);
-  if (
-    [...changedDecorators].some(
-      (decorator) => !representedDecorators.has(decorator),
-    )
-  ) {
+  if ([...changedDecorators].some((decorator) => !representedDecorators.has(decorator))) {
     return "unsupported-customization-not-represented";
   }
   return undefined;
 }
 
+/**
+ * @param {InternalSemanticUnit} unit
+ * @param {Record<string, SourceChange>} sourceChanges
+ * @returns {Map<string, SourceDeclaration[]>}
+ */
 function declarationHunkIds(unit, sourceChanges) {
   const ids = new Set(unit.hunkIds ?? []);
+  /** @type {Map<string, SourceDeclaration[]>} */
   const result = new Map();
   for (const sourceChangeId of unit.sourceChangeIds) {
-    for (const declaration of sourceChanges[sourceChangeId]?.declarations ??
-      []) {
+    for (const declaration of sourceChanges[sourceChangeId]?.declarations ?? []) {
       for (const hunkId of declaration.hunkIds ?? []) {
         if (!ids.has(hunkId)) continue;
         const values = result.get(hunkId) ?? [];
@@ -835,7 +1000,12 @@ function declarationHunkIds(unit, sourceChanges) {
   return result;
 }
 
+/**
+ * @param {InternalSemanticUnit} unit
+ * @returns {Map<string, InternalSemanticOperation[]>}
+ */
 function operationHunkIds(unit) {
+  /** @type {Map<string, InternalSemanticOperation[]>} */
   const result = new Map();
   for (const operation of unit.operations ?? []) {
     for (const hunkId of operation.hunkIds ?? []) {
@@ -847,6 +1017,7 @@ function operationHunkIds(unit) {
   return result;
 }
 
+/** @param {string | undefined} value */
 function normalizedSymbolNames(value) {
   if (!value) return [];
   const full = value.toLowerCase();
@@ -854,49 +1025,44 @@ function normalizedSymbolNames(value) {
   return full === leaf ? [full] : [full, leaf];
 }
 
-function candidateHunks(
-  unit,
-  candidate,
-  facts,
-  declarationsByHunk,
-  operationsByHunk,
-) {
+/**
+ * @param {InternalSemanticUnit} unit
+ * @param {AssessmentCandidate} candidate
+ * @param {Record<string, AssessmentFact>} facts
+ * @param {Map<string, SourceDeclaration[]>} declarationsByHunk
+ * @param {Map<string, InternalSemanticOperation[]>} operationsByHunk
+ */
+function candidateHunks(unit, candidate, facts, declarationsByHunk, operationsByHunk) {
+  /** @type {Set<string>} */
   const matched = new Set();
   const candidateOperations = new Set(candidate.operationIds ?? []);
   for (const [hunkId, operations] of operationsByHunk) {
-    if (
-      operations.some((operation) =>
-        candidateOperations.has(operation.operationId),
-      )
-    ) {
+    if (operations.some((operation) => candidateOperations.has(operation.operationId))) {
       matched.add(hunkId);
     }
   }
 
   const candidateOperationKeys = new Set(
-    (candidate.evidenceFactIds ?? [])
-      .map((id) => facts[id])
-      .filter((fact) => fact?.operation?.verb && fact.operation.path)
-      .map(
-        (fact) => `${fact.operation.verb.toLowerCase()} ${fact.operation.path}`,
-      ),
+    (candidate.evidenceFactIds ?? []).flatMap((id) => {
+      const operation = facts[id]?.operation;
+      return operation?.verb && operation.path
+        ? [`${operation.verb.toLowerCase()} ${operation.path}`]
+        : [];
+    }),
   );
   if (candidateOperationKeys.size) {
     for (const [hunkId, operations] of operationsByHunk) {
       const operationKeys = operations.flatMap((operation) =>
-        [operation.beforeFactId, operation.afterFactId]
-          .map((id) => facts[id])
-          .filter((fact) => fact?.method && fact.path)
-          .map((fact) => `${fact.method.toLowerCase()} ${fact.path}`),
+        [operation.beforeFactId, operation.afterFactId].flatMap((id) => {
+          const fact = id ? facts[id] : undefined;
+          return fact?.method && fact.path ? [`${fact.method.toLowerCase()} ${fact.path}`] : [];
+        }),
       );
-      if (operationKeys.some((key) => candidateOperationKeys.has(key)))
-        matched.add(hunkId);
+      if (operationKeys.some((key) => candidateOperationKeys.has(key))) matched.add(hunkId);
     }
   }
 
-  const candidateSymbols = new Set(
-    normalizedSymbolNames(candidate.crossLanguageDefinitionId),
-  );
+  const candidateSymbols = new Set(normalizedSymbolNames(candidate.crossLanguageDefinitionId));
   if (candidateSymbols.size) {
     for (const [hunkId, declarations] of declarationsByHunk) {
       if (
@@ -913,6 +1079,17 @@ function candidateHunks(
   return matched;
 }
 
+/**
+ * @param {{
+ *   unit: InternalSemanticUnit,
+ *   sourceChanges: Record<string, SourceChange>,
+ *   semantic: SemanticAnalysis,
+ *   rest: BreakingAnalysis,
+ *   downstream: DownstreamAnalysis,
+ *   complianceRequest?: ComplianceSearchRequest
+ * }} options
+ * @returns {DeterministicCoverage}
+ */
 function deterministicCoverage({
   unit,
   sourceChanges,
@@ -923,9 +1100,14 @@ function deterministicCoverage({
 }) {
   const declarationsByHunk = declarationHunkIds(unit, sourceChanges);
   const operationsByHunk = operationHunkIds(unit);
-  const restByHunk = new Map((unit.hunkIds ?? []).map((id) => [id, []]));
-  const downstreamByHunk = new Map((unit.hunkIds ?? []).map((id) => [id, []]));
+  /** @type {Map<string, string[]>} */
+  const restByHunk = new Map((unit.hunkIds ?? []).map((id) => [id, /** @type {string[]} */ ([])]));
+  /** @type {Map<string, string[]>} */
+  const downstreamByHunk = new Map(
+    (unit.hunkIds ?? []).map((id) => [id, /** @type {string[]} */ ([])]),
+  );
   const unitSources = new Set(unit.sourceChangeIds ?? []);
+  /** @param {AssessmentCandidate} candidate */
   const relevant = (candidate) =>
     intersection(candidate.sourceChangeIds ?? [], unitSources).length > 0;
 
@@ -941,9 +1123,7 @@ function deterministicCoverage({
       restByHunk.get(hunkId)?.push(candidate.id);
     }
   }
-  for (const candidate of downstream.status === "ready"
-    ? downstream.candidates
-    : []) {
+  for (const candidate of downstream.status === "ready" ? downstream.candidates : []) {
     if (!relevant(candidate)) continue;
     for (const hunkId of candidateHunks(
       unit,
@@ -956,11 +1136,10 @@ function deterministicCoverage({
     }
   }
 
+  /** @type {HunkClassification[]} */
   const classifications = (unit.hunkIds ?? []).map((hunkId) => {
     const restCandidateIds = [...new Set(restByHunk.get(hunkId) ?? [])].sort();
-    const downstreamCandidateIds = [
-      ...new Set(downstreamByHunk.get(hunkId) ?? []),
-    ].sort();
+    const downstreamCandidateIds = [...new Set(downstreamByHunk.get(hunkId) ?? [])].sort();
     const source = sourceForHunk(unit, sourceChanges, hunkId);
     if (rest.status === "blocked" || downstream.status === "blocked") {
       return {
@@ -1028,12 +1207,7 @@ function deterministicCoverage({
         downstreamCandidateIds: [],
       };
     }
-    const representedReason = representedArtifactChange(
-      source,
-      hunkId,
-      rest,
-      downstream,
-    );
+    const representedReason = representedArtifactChange(source, hunkId, rest, downstream);
     if (representedReason) {
       return {
         hunkId,
@@ -1055,21 +1229,13 @@ function deterministicCoverage({
     .filter((item) => item.status === "unknown")
     .map((item) => item.hunkId);
   return {
-    restCandidateIds: [
-      ...new Set(classifications.flatMap((item) => item.restCandidateIds)),
-    ].sort(),
+    restCandidateIds: [...new Set(classifications.flatMap((item) => item.restCandidateIds))].sort(),
     downstreamCandidateIds: [
-      ...new Set(
-        classifications.flatMap((item) => item.downstreamCandidateIds),
-      ),
+      ...new Set(classifications.flatMap((item) => item.downstreamCandidateIds)),
     ].sort(),
-    complianceSearchRequestIds: complianceRequest
-      ? [complianceRequest.requestId]
-      : [],
+    complianceSearchRequestIds: complianceRequest ? [complianceRequest.requestId] : [],
     relatedOperationIds: [
-      ...new Set(
-        (unit.operations ?? []).map((operation) => operation.operationId),
-      ),
+      ...new Set((unit.operations ?? []).map((operation) => operation.operationId)),
     ].sort(),
     coveredHunkIds: classifications
       .filter((item) => item.status !== "unknown")
@@ -1085,11 +1251,20 @@ function deterministicCoverage({
   };
 }
 
+/**
+ * @param {InternalSemanticUnit[]} semanticUnits
+ * @param {Record<string, SourceChange>} sourceChanges
+ * @param {Map<string, DeterministicCoverage>} coverages
+ * @returns {InferenceRequest[]}
+ */
 function buildInferenceRequests(semanticUnits, sourceChanges, coverages) {
   return semanticUnits.flatMap((unit) => {
-    const coverage = coverages.get(unit.id);
+    const coverage = requireMapValue(coverages, unit.id, "Deterministic coverage");
     return coverage.uncoveredHunkIds.map((hunkId) => {
       const source = sourceForHunk(unit, sourceChanges, hunkId);
+      if (!source) {
+        throw new Error(`Semantic review unit ${unit.id} references unknown hunk ${hunkId}.`);
+      }
       const request = {
         reviewUnitId: unit.id,
         sourceChangeId: source.id,
@@ -1100,7 +1275,10 @@ function buildInferenceRequests(semanticUnits, sourceChanges, coverages) {
           .filter((operation) => operation.hunkIds?.includes(hunkId))
           .map((operation) => operation.operationId)
           .sort(),
-        allowedDimensions: ["rest", "downstream"],
+        allowedDimensions: /** @type {InferenceRequest["allowedDimensions"]} */ ([
+          "rest",
+          "downstream",
+        ]),
       };
       return {
         requestId: stableId("inference-request", request),
@@ -1115,13 +1293,16 @@ function buildInferenceRequests(semanticUnits, sourceChanges, coverages) {
   });
 }
 
+/**
+ * @param {SourceIndex} sourceIndex
+ * @param {SemanticAnalysis} semantic
+ * @param {BreakingAnalysis} rest
+ * @param {DownstreamAnalysis} downstream
+ * @returns {Record<string, SourceChange>}
+ */
 function compactSources(sourceIndex, semantic, rest, downstream) {
   const ids = new Set();
-  for (const item of [
-    ...semantic.reviewUnits,
-    ...rest.candidates,
-    ...downstream.candidates,
-  ]) {
+  for (const item of [...semantic.reviewUnits, ...rest.candidates, ...downstream.candidates]) {
     for (const id of item.sourceChangeIds) ids.add(id);
   }
   return Object.fromEntries(
@@ -1142,17 +1323,26 @@ function compactSources(sourceIndex, semantic, rest, downstream) {
   );
 }
 
+/**
+ * @param {AnalysisModelInput} input
+ * @param {number | undefined} maximumBytes
+ * @returns {AnalysisModelInput}
+ */
 function accountInput(input, maximumBytes) {
+  /** @type {[string, number][]} */
   const tiers = maximumBytes
     ? [
         ...BUDGET_TIERS.filter(([, limit]) => limit < maximumBytes),
-        ["configured-maximum", maximumBytes],
+        /** @type {[string, number]} */ (["configured-maximum", maximumBytes]),
       ]
     : BUDGET_TIERS;
   let bytes = 0;
+  /** @type {[string, number] | undefined} */
   let tier;
+  /** @type {InputAccounting | undefined} */
+  let accounting;
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    input.inputAccounting = {
+    accounting = {
       budgetTier: tier?.[0],
       budgetBytes: tier?.[1],
       bytes,
@@ -1178,23 +1368,34 @@ function accountInput(input, maximumBytes) {
         repeatedReviewUnitEvidence: true,
       },
     };
+    input.inputAccounting = accounting;
     bytes = Buffer.byteLength(JSON.stringify(input));
     tier = tiers.find(([, limit]) => bytes <= limit);
   }
-  if (!tier) {
+  const maximumTier = tiers.at(-1);
+  if (!tier || !maximumTier || !accounting) {
     throw new Error(
-      `Required model input is ${bytes} bytes, above the ${tiers.at(-1)[1]} byte maximum.`,
+      `Required model input is ${bytes} bytes, above the ${maximumTier?.[1]} byte maximum.`,
     );
   }
-  input.inputAccounting.budgetTier = tier[0];
-  input.inputAccounting.budgetBytes = tier[1];
-  input.inputAccounting.bytes = Buffer.byteLength(JSON.stringify(input));
-  input.inputAccounting.estimatedTokens = Math.ceil(
-    input.inputAccounting.bytes / 4,
-  );
+  accounting.budgetTier = tier[0];
+  accounting.budgetBytes = tier[1];
+  accounting.bytes = Buffer.byteLength(JSON.stringify(input));
+  accounting.estimatedTokens = Math.ceil(accounting.bytes / 4);
   return input;
 }
 
+/**
+ * @param {{
+ *   manifest: PreparationManifest,
+ *   sourceIndex: SourceIndex,
+ *   semantic: SemanticAnalysis,
+ *   rest: BreakingAnalysis,
+ *   downstream: DownstreamAnalysis,
+ *   maximumBytes?: number
+ * }} options
+ * @returns {AnalysisModelInput}
+ */
 export function buildModelInput({
   manifest,
   sourceIndex,
@@ -1204,29 +1405,19 @@ export function buildModelInput({
   maximumBytes,
 }) {
   const semanticUnits = semantic.status === "ready" ? semantic.reviewUnits : [];
-  const {
-    assessed: assessedSemanticUnits,
-    informational: informationalSemanticUnits,
-  } = partitionSemanticIntents(semanticUnits);
+  const { assessed: assessedSemanticUnits, informational: informationalSemanticUnits } =
+    partitionSemanticIntents(semanticUnits);
   const assessedSemantic = {
     ...semantic,
     reviewUnits: assessedSemanticUnits,
   };
-  const sourceChanges = compactSources(
-    sourceIndex,
-    assessedSemantic,
-    rest,
-    downstream,
-  );
+  const sourceChanges = compactSources(sourceIndex, assessedSemantic, rest, downstream);
   const fullComplianceSearchRequests = buildComplianceSearchRequests({
     semanticReviewUnits: assessedSemanticUnits,
     sourceChanges,
   });
   const complianceRequestsByUnit = new Map(
-    fullComplianceSearchRequests.map((request) => [
-      request.reviewUnitId,
-      request,
-    ]),
+    fullComplianceSearchRequests.map((request) => [request.reviewUnitId, request]),
   );
   const coverages = new Map(
     assessedSemanticUnits.map((unit) => [
@@ -1257,61 +1448,52 @@ export function buildModelInput({
     [...coverages.values()].flatMap((coverage) => coverage.restCandidateIds),
   );
   const informationalRestCandidateIds = new Set(
-    [...informationalCoverages.values()].flatMap(
-      (coverage) => coverage.restCandidateIds,
-    ),
+    [...informationalCoverages.values()].flatMap((coverage) => coverage.restCandidateIds),
   );
   const retainedDownstreamCandidateIds = new Set(
-    [...coverages.values()].flatMap(
-      (coverage) => coverage.downstreamCandidateIds,
-    ),
+    [...coverages.values()].flatMap((coverage) => coverage.downstreamCandidateIds),
   );
   const informationalDownstreamCandidateIds = new Set(
-    [...informationalCoverages.values()].flatMap(
-      (coverage) => coverage.downstreamCandidateIds,
-    ),
+    [...informationalCoverages.values()].flatMap((coverage) => coverage.downstreamCandidateIds),
   );
   const retainedRestCandidates =
     rest.status === "ready"
-      ? rest.candidates.filter((candidate) =>
-          !informationalRestCandidateIds.has(candidate.id) ||
-          retainedRestCandidateIds.has(candidate.id),
+      ? rest.candidates.filter(
+          (candidate) =>
+            !informationalRestCandidateIds.has(candidate.id) ||
+            retainedRestCandidateIds.has(candidate.id),
         )
       : [];
   const retainedDownstreamCandidates =
     downstream.status === "ready"
-      ? downstream.candidates.filter((candidate) =>
-          !informationalDownstreamCandidateIds.has(candidate.id) ||
-          retainedDownstreamCandidateIds.has(candidate.id),
+      ? downstream.candidates.filter(
+          (candidate) =>
+            !informationalDownstreamCandidateIds.has(candidate.id) ||
+            retainedDownstreamCandidateIds.has(candidate.id),
         )
       : [];
   const retainedRootCauseIds = new Set(
-    retainedDownstreamCandidates.flatMap(
-      (candidate) => candidate.rootCauseIds ?? [],
-    ),
+    retainedDownstreamCandidates.flatMap((candidate) => candidate.rootCauseIds ?? []),
   );
-  const retainedDownstreamRootCauses = (downstream.rootCauses ?? []).filter(
-    (rootCause) => retainedRootCauseIds.has(rootCause.id),
+  const retainedDownstreamRootCauses = (downstream.rootCauses ?? []).filter((rootCause) =>
+    retainedRootCauseIds.has(rootCause.id),
   );
   const retainedDownstream = {
     ...downstream,
     candidates: retainedDownstreamCandidates,
     rootCauses: retainedDownstreamRootCauses,
   };
+  /** @type {Record<string, import("./runtime-types.js").EvidenceSet & Record<string, unknown>>} */
   const evidenceSets = {};
   const semanticReviewUnits = assessedSemanticUnits.map((unit) =>
     compactSemanticReviewUnit(
       unit,
       sourceChanges,
-      coverages.get(unit.id),
+      requireMapValue(coverages, unit.id, "Deterministic coverage"),
       evidenceSets,
     ),
   );
-  const inferenceRequests = buildInferenceRequests(
-    assessedSemanticUnits,
-    sourceChanges,
-    coverages,
-  );
+  const inferenceRequests = buildInferenceRequests(assessedSemanticUnits, sourceChanges, coverages);
   const retainedInferenceFactIds = inferenceRelevantFactIds({
     semanticUnits: assessedSemanticUnits,
     sourceChanges,
@@ -1322,18 +1504,15 @@ export function buildModelInput({
   });
   const retainedFactIds = new Set([
     ...retainedInferenceFactIds,
-    ...retainedRestCandidates.flatMap(
-      (candidate) => candidate.evidenceFactIds ?? [],
-    ),
+    ...retainedRestCandidates.flatMap((candidate) => candidate.evidenceFactIds ?? []),
     ...downstreamReferencedFactIds(retainedDownstream),
   ]);
+  /**
+   * @param {AssessmentCandidate} candidate
+   * @param {string} artifact
+   */
   const compactCandidate = (candidate, artifact) => {
-    const {
-      sourceChangeIds,
-      hunkIds,
-      declarationIds,
-      ...judgmentInput
-    } = candidate;
+    const { sourceChangeIds, hunkIds, declarationIds, ...judgmentInput } = candidate;
     return {
       ...judgmentInput,
       evidenceSetId: evidenceSet(
@@ -1349,6 +1528,7 @@ export function buildModelInput({
       ),
     };
   };
+  /** @param {ComplianceSearchRequest["queryProfile"]} profile */
   const compactQuerySummary = (profile) => ({
     servicePlane: profile.servicePlane,
     action: profile.action,
@@ -1362,19 +1542,18 @@ export function buildModelInput({
     changedTokenCount: profile.changedTokens.length,
     affectedOperationCount: profile.affectedOperationCount,
   });
-  const complianceSearchRequests = fullComplianceSearchRequests.map(
-    (request) => ({
-      requestId: request.requestId,
-      reviewUnitId: request.reviewUnitId,
-      evidenceSetId: evidenceSet(
-        evidenceSets,
-        request,
-        ARTIFACT_REFERENCES.complianceSearchRequests,
-        request.requestId,
-      ),
-      querySummary: compactQuerySummary(request.queryProfile),
-    }),
-  );
+  const complianceSearchRequests = fullComplianceSearchRequests.map((request) => ({
+    requestId: request.requestId,
+    reviewUnitId: request.reviewUnitId,
+    evidenceSetId: evidenceSet(
+      evidenceSets,
+      request,
+      ARTIFACT_REFERENCES.complianceSearchRequests,
+      request.requestId,
+    ),
+    querySummary: compactQuerySummary(request.queryProfile),
+  }));
+  /** @type {AnalysisModelInput} */
   const input = {
     schemaVersion: 1,
     context: {
@@ -1408,16 +1587,9 @@ export function buildModelInput({
     },
     artifactReferences: ARTIFACT_REFERENCES,
     evidenceSets,
-    facts: referencedFacts(
-      semantic,
-      rest,
-      downstream,
-      retainedFactIds,
-    ),
+    facts: referencedFacts(semantic, rest, downstream, retainedFactIds),
     semanticReviewUnits,
-    informationalSemanticIntentIds: informationalSemanticUnits.map(
-      (unit) => unit.id,
-    ),
+    informationalSemanticIntentIds: informationalSemanticUnits.map((unit) => unit.id),
     restCandidates:
       rest.status === "ready"
         ? retainedRestCandidates.map((candidate) =>
@@ -1427,14 +1599,10 @@ export function buildModelInput({
     downstreamCandidates:
       downstream.status === "ready"
         ? retainedDownstreamCandidates.map((candidate) =>
-            compactCandidate(
-              candidate,
-              ARTIFACT_REFERENCES.downstreamCandidates,
-            ),
+            compactCandidate(candidate, ARTIFACT_REFERENCES.downstreamCandidates),
           )
         : [],
-    downstreamRootCauses:
-      downstream.status === "ready" ? retainedDownstreamRootCauses : [],
+    downstreamRootCauses: downstream.status === "ready" ? retainedDownstreamRootCauses : [],
     complianceSearchRequests,
     inferenceRequests,
     blockers: [
@@ -1448,8 +1616,15 @@ export function buildModelInput({
   return accountInput(input, maximumBytes);
 }
 
+/**
+ * @param {PreparationManifest} manifest
+ * @param {SemanticAnalysis} semantic
+ * @param {BreakingAnalysis} rest
+ * @param {DownstreamAnalysis} downstream
+ * @returns {AssessmentOutput}
+ */
 export function blockedAssessment(manifest, semantic, rest, downstream) {
-  return {
+  return requireAssessmentOutput({
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     title: `TypeSpec assessment: ${manifest.projects.map((project) => project.path).join(", ")}`,
@@ -1495,8 +1670,7 @@ export function blockedAssessment(manifest, semantic, rest, downstream) {
       },
       compliance: {
         status: "not-assessed",
-        summary:
-          "Azure Guidelines could not run because deterministic analysis was blocked.",
+        summary: "Azure Guidelines could not run because deterministic analysis was blocked.",
         coverage: {
           semanticIntentCount: 0,
           assessedIntentCount: 0,
@@ -1524,26 +1698,67 @@ export function blockedAssessment(manifest, semantic, rest, downstream) {
     ],
     provenance: { preparationManifest: "preparation-manifest.json" },
     timings: manifest.timings,
-  };
+  });
 }
 
+/** @param {string} output */
 export function assertFreshOutput(output) {
-  if (
-    fs.existsSync(output) &&
-    fs.readdirSync(output, { withFileTypes: true }).length
-  ) {
+  if (fs.existsSync(output) && fs.readdirSync(output, { withFileTypes: true }).length) {
     throw new Error(
       `Assessment output directory must be empty: ${output}. Choose a new --output directory.`,
     );
   }
 }
 
+/**
+ * @param {unknown} value
+ * @returns {AssessmentOutput}
+ */
+function requireAssessmentOutput(value) {
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== 1 ||
+    !isRecord(value.comparison) ||
+    !isRecord(value.safety) ||
+    !isRecord(value.dimensions) ||
+    !Array.isArray(value.blockers)
+  ) {
+    throw new TypeError("Expected a current assessment output.");
+  }
+  return /** @type {AssessmentOutput} */ (value);
+}
+
+/**
+ * @param {string} file
+ * @returns {SourceIndex}
+ */
+function readSourceIndex(file) {
+  const value = readJsonObject(file);
+  if (
+    typeof value.schemaVersion !== "number" ||
+    !isRecord(value.analysis) ||
+    !Array.isArray(value.sourceChanges) ||
+    !value.sourceChanges.every(
+      (source) =>
+        isRecord(source) &&
+        typeof source.id === "string" &&
+        typeof source.path === "string" &&
+        Array.isArray(source.hunks) &&
+        Array.isArray(source.declarations),
+    )
+  ) {
+    throw new TypeError(`Expected a source index in ${file}.`);
+  }
+  return /** @type {SourceIndex} */ (/** @type {unknown} */ (value));
+}
+
+/**
+ * @param {AssessmentAnalysisOptions} options
+ */
 export async function runAssessmentAnalysis(options) {
   const output = path.resolve(options.output);
   assertFreshOutput(output);
-  const resolvedOptions = options.invocation
-    ? options
-    : resolveAssessmentInput(options);
+  const resolvedOptions = options.invocation ? options : resolveAssessmentInput(options);
   fs.mkdirSync(output, { recursive: true });
   transitionWorkflowState(output, "preparing", {
     invocation: resolvedOptions.invocation,
@@ -1564,10 +1779,14 @@ export async function runAssessmentAnalysis(options) {
     });
     return result;
   }
-  const sourceIndex = readJson(
-    path.join(output, "source", "source-index.json"),
-  );
+  const sourceIndex = readSourceIndex(path.join(output, "source", "source-index.json"));
   fs.mkdirSync(path.join(output, "dimensions"), { recursive: true });
+  /**
+   * @template T
+   * @param {string} name
+   * @param {() => T} action
+   * @returns {T}
+   */
   const runDimension = (name, action) => {
     const started = performance.now();
     const result = action();
@@ -1610,23 +1829,15 @@ export async function runAssessmentAnalysis(options) {
       },
     }),
   );
-  writeJson(
-    path.join(output, "dimensions", "document-quality-input.json"),
-    documentQuality,
-  );
+  writeJson(path.join(output, "dimensions", "document-quality-input.json"), documentQuality);
   writeJson(path.join(output, "preparation-manifest.json"), manifest);
-  const allBlocked = [semantic, rest, downstream].every(
-    (item) => item.status === "blocked",
-  );
+  const allBlocked = [semantic, rest, downstream].every((item) => item.status === "blocked");
   if (allBlocked) {
     const assessment = blockedAssessment(manifest, semantic, rest, downstream);
     const errors = validateAssessment(assessment);
     if (errors.length) throw new Error(errors.join("\n"));
     writeJson(path.join(output, "assessment.json"), assessment);
-    fs.writeFileSync(
-      path.join(output, "assessment.html"),
-      renderAssessmentHtml(assessment),
-    );
+    fs.writeFileSync(path.join(output, "assessment.html"), renderAssessmentHtml(assessment));
     transitionWorkflowState(output, "blocked", {
       phaseComplete: true,
       artifacts: {
@@ -1637,9 +1848,9 @@ export async function runAssessmentAnalysis(options) {
     return { status: "blocked", assessment };
   }
   const configuredMaximum =
-    resolvedOptions.model_input_budget_bytes === undefined
+    options.model_input_budget_bytes === undefined
       ? undefined
-      : Number(resolvedOptions.model_input_budget_bytes);
+      : Number(options.model_input_budget_bytes);
   if (
     configuredMaximum !== undefined &&
     (!Number.isInteger(configuredMaximum) || configuredMaximum <= 0)
@@ -1654,30 +1865,25 @@ export async function runAssessmentAnalysis(options) {
     downstream,
     maximumBytes: configuredMaximum,
   });
-  writeJson(
-    path.join(output, "dimensions", "compliance-search-requests.json"),
-    {
-      schemaVersion: 1,
-      requests: buildComplianceSearchRequests({
-        semanticReviewUnits:
-          semantic.status === "ready"
-            ? partitionSemanticIntents(semantic.reviewUnits).assessed
-            : [],
-        sourceChanges: compactSources(
-          sourceIndex,
-          {
-            ...semantic,
-            reviewUnits:
-              semantic.status === "ready"
-                ? partitionSemanticIntents(semantic.reviewUnits).assessed
-                : [],
-          },
-          rest,
-          downstream,
-        ),
-      }),
-    },
-  );
+  writeJson(path.join(output, "dimensions", "compliance-search-requests.json"), {
+    schemaVersion: 1,
+    requests: buildComplianceSearchRequests({
+      semanticReviewUnits:
+        semantic.status === "ready" ? partitionSemanticIntents(semantic.reviewUnits).assessed : [],
+      sourceChanges: compactSources(
+        sourceIndex,
+        {
+          ...semantic,
+          reviewUnits:
+            semantic.status === "ready"
+              ? partitionSemanticIntents(semantic.reviewUnits).assessed
+              : [],
+        },
+        rest,
+        downstream,
+      ),
+    }),
+  });
   writeJson(path.join(output, "model-input.json"), modelInput);
   const workspace = buildAgentWorkspace({ work: output });
   return {
@@ -1687,17 +1893,53 @@ export async function runAssessmentAnalysis(options) {
   };
 }
 
+/**
+ * @param {CliArguments} args
+ * @returns {AssessmentAnalysisOptions}
+ */
+function assessmentOptionsFromArgs(args) {
+  for (const name of [
+    "output",
+    "repo",
+    "base",
+    "head",
+    "specification",
+    "model_input_budget_bytes",
+  ]) {
+    if (args[name] !== undefined && typeof args[name] !== "string") {
+      throw new TypeError(`--${name.replaceAll("_", "-")} requires a value.`);
+    }
+  }
+  if (args.pr !== undefined && typeof args.pr !== "string" && typeof args.pr !== "number") {
+    throw new TypeError("--pr requires a value.");
+  }
+  if (
+    args.sparse_root !== undefined &&
+    (!Array.isArray(args.sparse_root) ||
+      !args.sparse_root.every((value) => typeof value === "string"))
+  ) {
+    throw new TypeError("--sparse-root requires a value.");
+  }
+  if (typeof args.output !== "string") {
+    throw new TypeError("--output requires a value.");
+  }
+  return /** @type {AssessmentAnalysisOptions} */ (/** @type {unknown} */ (args));
+}
+
 if (isMain(import.meta.url)) {
-  runMain(async () => {
+  void runMain(async () => {
     const args = parseArgs(process.argv.slice(2), {
       required: ["output"],
       defaults: { repo: process.cwd() },
       arrays: ["sparse-root"],
     });
-    const result = await runAssessmentAnalysis(args);
-    console.log(
-      `${result.status}: ${result.agentIndex ?? path.join(path.resolve(args.output), "model-input.json")}`,
-    );
+    const options = assessmentOptionsFromArgs(args);
+    const result = await runAssessmentAnalysis(options);
+    const agentIndex =
+      "agentIndex" in result && typeof result.agentIndex === "string"
+        ? result.agentIndex
+        : path.join(path.resolve(options.output), "model-input.json");
+    console.log(`${result.status}: ${agentIndex}`);
     if (result.status === "blocked") process.exitCode = 1;
   });
 }

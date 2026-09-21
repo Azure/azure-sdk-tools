@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { isMain, parseArgs, readJson, runMain } from "./cli.mjs";
+import { isMain, parseArgs, readJsonObject, runMain } from "./cli.mjs";
+import { readComplianceCatalog } from "./compliance-assessment.mjs";
 import {
   atomicWriteJson,
   comparisonIdentity,
@@ -8,18 +9,31 @@ import {
   resolveWorkPath,
   transitionWorkflowState,
 } from "./workflow-state.mjs";
-import { readComplianceCatalog } from "./compliance-assessment.mjs";
+
+/** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
+/** @typedef {import("./runtime-types.js").ComplianceSearchRequest} ComplianceSearchRequest */
+/** @typedef {import("./runtime-types.js").EvidenceSet} EvidenceSet */
+/** @typedef {import("./runtime-types.js").ModelInputItem} ModelInputItem */
+/** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
 
 const INDEX_FILE = "agent-workspace/agent-index.json";
 const DECISIONS_DRAFT = "agent-workspace/agent-decisions.draft.json";
 const DECISIONS_FILE = "agent-workspace/agent-decisions.json";
 
+/** @param {(string | undefined)[]} values */
 function unique(values) {
-  return [...new Set(values.filter(Boolean))].sort();
+  return [
+    ...new Set(values.filter(/** @returns {value is string} */ (value) => value !== undefined)),
+  ].sort();
 }
 
+/**
+ * @param {AssessmentModelInput} modelInput
+ * @param {ModelInputItem} item
+ * @returns {EvidenceSet}
+ */
 function evidenceFor(modelInput, item) {
-  const evidence = modelInput.evidenceSets?.[item.evidenceSetId];
+  const evidence = item.evidenceSetId ? modelInput.evidenceSets?.[item.evidenceSetId] : undefined;
   if (!evidence) {
     throw new Error(
       `Missing evidence set ${item.evidenceSetId ?? "<missing>"} for ${item.id ?? item.reviewUnitId ?? item.requestId}.`,
@@ -28,6 +42,7 @@ function evidenceFor(modelInput, item) {
   return evidence;
 }
 
+/** @param {AssessmentModelInput} modelInput */
 function validateBoundedEvidence(modelInput) {
   const referencedFactIds = unique(
     [
@@ -44,20 +59,27 @@ function validateBoundedEvidence(modelInput) {
   }
 }
 
+/**
+ * @param {string} root
+ * @param {AssessmentModelInput} modelInput
+ * @returns {Map<string, string[]>}
+ */
 function declarationNamesByIntent(root, modelInput) {
   if (!modelInput.complianceSearchRequests.length) return new Map();
-  const requests = readJson(
-    resolveWorkPath(
-      root,
-      modelInput.artifactReferences.complianceSearchRequests,
-    ),
+  const requestsValue = readJsonObject(
+    resolveWorkPath(root, modelInput.artifactReferences.complianceSearchRequests),
   ).requests;
-  const sourceChanges = readJson(
-    resolveWorkPath(root, modelInput.artifactReferences.sourceIndex),
-  ).sourceChanges;
-  const sourcesById = new Map(
-    sourceChanges.map((source) => [source.id, source]),
+  if (!Array.isArray(requestsValue)) {
+    throw new Error("Compliance search requests must contain a requests array.");
+  }
+  const requests = /** @type {ComplianceSearchRequest[]} */ (requestsValue);
+  const sourceIndex = /** @type {SourceIndex} */ (
+    /** @type {unknown} */ (
+      readJsonObject(resolveWorkPath(root, modelInput.artifactReferences.sourceIndex))
+    )
   );
+  const sourceChanges = sourceIndex.sourceChanges;
+  const sourcesById = new Map(sourceChanges.map((source) => [source.id, source]));
   return new Map(
     requests.map((request) => {
       const declarationIds = new Set(request.declarationIds);
@@ -85,9 +107,7 @@ function declarationNamesByIntent(root, modelInput) {
       }
       const unnamed = declarations
         .filter(
-          (declaration) =>
-            declarationIds.has(declaration.id) &&
-            !declaration.qualifiedName?.trim(),
+          (declaration) => declarationIds.has(declaration.id) && !declaration.qualifiedName?.trim(),
         )
         .map((declaration) => declaration.id);
       if (unnamed.length) {
@@ -100,7 +120,12 @@ function declarationNamesByIntent(root, modelInput) {
   );
 }
 
+/**
+ * @param {AssessmentModelInput} modelInput
+ * @param {Map<string, string[]>} declarationNames
+ */
 function decisionsDraft(modelInput, declarationNames) {
+  /** @param {{id: string}} candidate */
   const decision = (candidate) => ({
     candidateId: candidate.id,
     decision: "__UNRESOLVED__",
@@ -151,6 +176,7 @@ function decisionsDraft(modelInput, declarationNames) {
   };
 }
 
+/** @param {AssessmentModelInput} modelInput */
 function canonicalPaths(modelInput) {
   return unique([
     "model-input.json",
@@ -160,22 +186,22 @@ function canonicalPaths(modelInput) {
   ]);
 }
 
+/** @param {{work: string}} options */
 export function buildAgentWorkspace({ work }) {
   const started = performance.now();
   const root = path.resolve(work);
   const modelInputPath = path.join(root, "model-input.json");
   if (!fs.existsSync(modelInputPath)) throw new Error("Missing model-input.json.");
-  const modelInput = readJson(modelInputPath);
+  const modelInput = /** @type {AssessmentModelInput} */ (readJsonObject(modelInputPath));
   validateBoundedEvidence(modelInput);
 
   fs.mkdirSync(path.join(root, "agent-workspace"), { recursive: true });
   fs.rmSync(resolveWorkPath(root, "agent-workspace/inference.draft.json"), {
     force: true,
   });
-  fs.rmSync(
-    resolveWorkPath(root, "agent-workspace/assessment-judgment.draft.json"),
-    { force: true },
-  );
+  fs.rmSync(resolveWorkPath(root, "agent-workspace/assessment-judgment.draft.json"), {
+    force: true,
+  });
   atomicWriteJson(
     resolveWorkPath(root, DECISIONS_DRAFT),
     decisionsDraft(modelInput, declarationNamesByIntent(root, modelInput)),
@@ -196,8 +222,7 @@ export function buildAgentWorkspace({ work }) {
     },
     counts: {
       assessedSemanticIntents: modelInput.semanticReviewUnits.length,
-      informationalSemanticIntents:
-        modelInput.informationalSemanticIntentIds?.length ?? 0,
+      informationalSemanticIntents: modelInput.informationalSemanticIntentIds?.length ?? 0,
       restCandidates: modelInput.restCandidates.length,
       downstreamCandidates: modelInput.downstreamCandidates.length,
       inferenceRequests: modelInput.inferenceRequests.length,
@@ -206,8 +231,7 @@ export function buildAgentWorkspace({ work }) {
     requiredOutputs: {
       agentDecisions: DECISIONS_FILE,
       materialized: {
-        inference:
-          modelInput.inferenceRequests.length > 0 ? "inference.json" : null,
+        inference: modelInput.inferenceRequests.length > 0 ? "inference.json" : null,
         guidelineEvidence: "compliance-search-evidence.json",
         judgment: "assessment-judgment.json",
       },
@@ -229,21 +253,12 @@ export function buildAgentWorkspace({ work }) {
         "node <skill-directory>\\scripts\\materialize-assessment-results.mjs --work <work-directory>",
     },
     coverage: {
-      semanticIntentIds: modelInput.semanticReviewUnits.map(
-        (unit) => unit.reviewUnitId,
-      ),
-      informationalSemanticIntentIds:
-        modelInput.informationalSemanticIntentIds ?? [],
+      semanticIntentIds: modelInput.semanticReviewUnits.map((unit) => unit.reviewUnitId),
+      informationalSemanticIntentIds: modelInput.informationalSemanticIntentIds ?? [],
       restCandidateIds: modelInput.restCandidates.map((candidate) => candidate.id),
-      downstreamCandidateIds: modelInput.downstreamCandidates.map(
-        (candidate) => candidate.id,
-      ),
-      inferenceRequestIds: modelInput.inferenceRequests.map(
-        (request) => request.requestId,
-      ),
-      guidelineRequestIds: modelInput.complianceSearchRequests.map(
-        (request) => request.requestId,
-      ),
+      downstreamCandidateIds: modelInput.downstreamCandidates.map((candidate) => candidate.id),
+      inferenceRequestIds: modelInput.inferenceRequests.map((request) => request.requestId),
+      guidelineRequestIds: modelInput.complianceSearchRequests.map((request) => request.requestId),
     },
     completionChecklist: [
       "Read model-input.json exactly once.",
@@ -283,9 +298,11 @@ export function buildAgentWorkspace({ work }) {
 }
 
 if (isMain(import.meta.url)) {
-  runMain(async () => {
+  void runMain(() => {
     const args = parseArgs(process.argv.slice(2), { required: ["work"] });
-    const result = buildAgentWorkspace({ work: args.work });
+    const work = args.work;
+    if (typeof work !== "string") throw new Error("--work must be a path.");
+    const result = buildAgentWorkspace({ work });
     console.log(result.indexPath);
   });
 }

@@ -9,6 +9,20 @@ import {
   validateCompactDecisions,
 } from "./materialize-assessment-results.mjs";
 
+/** @typedef {import("./agent-decisions.schema.js").CatalogScore} CatalogScore */
+/** @typedef {import("./agent-decisions.schema.js").FetchedDocument} FetchedDocument */
+/** @typedef {import("./assessment-judgment.schema.js").TypeSpecAssessmentJudgment} AssessmentJudgment */
+/** @typedef {import("./compliance-search-evidence.schema.js").TypeSpecAzureGuidelinesSearchEvidence} ComplianceSearchEvidence */
+/** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
+/**
+ * @typedef {{
+ *   catalogScores: CatalogScore[],
+ *   fetchedDocuments: FetchedDocument[],
+ *   overallConfidence: "high" | "medium" | "low",
+ *   [key: string]: unknown
+ * }} TestAgentDecisions
+ */
+
 function fixture({ inference = false } = {}) {
   const work = fs.mkdtempSync(path.join(process.cwd(), ".materializer-test-"));
   writeJson(path.join(work, "preparation-manifest.json"), {
@@ -88,54 +102,45 @@ function fixture({ inference = false } = {}) {
   return work;
 }
 
+/** @param {string} work */
 function completedDecisions(work) {
-  const decisions = readJson(
-    path.join(work, "agent-workspace", "agent-decisions.draft.json"),
+  const decisions = /** @type {TestAgentDecisions} */ (
+    readJson(path.join(work, "agent-workspace", "agent-decisions.draft.json"))
   );
   decisions.catalogScores = decisions.catalogScores.map((score) => ({
     ...score,
     rationale: "No changed semantic intent requires this document.",
   }));
-  decisions.fetchedDocuments = decisions.catalogScores
-    .slice(0, 4)
-    .map(({ catalogId }) => ({
-      catalogId,
-      retrievedAt: "2026-09-18T00:00:00.000Z",
-      contentHash: `sha256:${"0".repeat(64)}`,
-      bytes: 0,
-      guidance: [],
-      noRelevantGuidance: true,
-    }));
+  decisions.fetchedDocuments = decisions.catalogScores.slice(0, 4).map(({ catalogId }) => ({
+    catalogId,
+    retrievedAt: "2026-09-18T00:00:00.000Z",
+    contentHash: `sha256:${"0".repeat(64)}`,
+    bytes: 0,
+    guidance: [],
+    noRelevantGuidance: true,
+  }));
   decisions.overallConfidence = "high";
   return decisions;
 }
 
-test("materializes guideline evidence and judgment without inference", () => {
+void test("materializes guideline evidence and judgment without inference", () => {
   const work = fixture();
   try {
-    writeJson(
-      path.join(work, "agent-workspace", "agent-decisions.json"),
-      completedDecisions(work),
-    );
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), completedDecisions(work));
     const result = materializeAssessmentResults({ work });
     assert.equal(result.inferencePath, null);
-    assert.equal(
-      fs.existsSync(path.join(work, "compliance-search-evidence.json")),
-      true,
-    );
-    const judgment = readJson(result.judgmentPath);
+    assert.equal(fs.existsSync(path.join(work, "compliance-search-evidence.json")), true);
+    const judgment = /** @type {AssessmentJudgment} */ (readJson(result.judgmentPath));
     assert.equal(judgment.schemaVersion, 1);
     assert.deepEqual(judgment.complianceDecisions, []);
-    const evidence = readJson(
-      path.join(work, "compliance-search-evidence.json"),
+    const evidence = /** @type {ComplianceSearchEvidence} */ (
+      readJson(path.join(work, "compliance-search-evidence.json"))
     );
     assert.deepEqual(evidence.catalogRanking, []);
     assert.deepEqual(evidence.rankedDocuments, []);
     assert.equal(evidence.inputAccounting.catalogEntriesScored, 0);
     assert.equal(
-      JSON.stringify(readJson(path.join(work, "workflow-state.json"))).includes(
-        "guideline",
-      ),
+      JSON.stringify(readJson(path.join(work, "workflow-state.json"))).includes("guideline"),
       true,
     );
   } finally {
@@ -143,7 +148,7 @@ test("materializes guideline evidence and judgment without inference", () => {
   }
 });
 
-test("rejects unknown fields in compact decisions", () => {
+void test("rejects unknown fields in compact decisions", () => {
   assert.throws(
     () =>
       validateCompactDecisions({
@@ -164,15 +169,14 @@ test("rejects unknown fields in compact decisions", () => {
   );
 });
 
-test("rejects changed canonical input before materialization", () => {
+void test("rejects changed canonical input before materialization", () => {
   const work = fixture();
   try {
-    writeJson(
-      path.join(work, "agent-workspace", "agent-decisions.json"),
-      completedDecisions(work),
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), completedDecisions(work));
+    const input = /** @type {AssessmentModelInput} */ (
+      readJson(path.join(work, "model-input.json"))
     );
-    const input = readJson(path.join(work, "model-input.json"));
-    input.blockers.push("changed");
+    /** @type {unknown[]} */ (input.blockers).push("changed");
     writeJson(path.join(work, "model-input.json"), input);
     assert.throws(
       () => materializeAssessmentResults({ work }),

@@ -414,6 +414,8 @@
     a { color: #0067b8; }
     [hidden] { display: none !important; }
     .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .tabs a { padding: 7px 9px; border: 1px solid #aebbd0; border-radius: 6px; background: white; color: #24324a; font-weight: 600; text-decoration: none; }
+    .tabs a[aria-current="page"] { color: white; border-color: #0067b8; background: #0067b8; }
     .overview-visual { margin: 24px 0 32px; }
     .overview-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
     .overview-card { --metric-color: #0067b8; padding: 20px; border: 1px solid #dce4ef; border-top: 4px solid var(--metric-color); border-radius: 12px; background: white; min-width: 0; }
@@ -480,11 +482,11 @@
     </div>
   </header>
   <main>
-    <nav class="tabs" aria-label="Overview">
-      <button id="overview-tab" type="button" aria-pressed="true" aria-controls="overview-panel">Overview</button>
-      <button id="conversations-tab" class="secondary" type="button" aria-pressed="false" aria-controls="conversations-panel">Conversations</button>
+    <nav class="tabs" aria-label="Dashboard pages">
+      <a id="overview-tab" href="/dashboard/overview">Overview</a>
+      <a id="conversations-tab" href="/dashboard/qa-records">Conversations</a>
     </nav>
-    <section id="overview-panel" aria-label="Weekly Status Report">
+    <section id="overview-panel" aria-label="Weekly Status Report" hidden>
       <form id="overview-filters" class="filters">
         <label>From (local time, inclusive)<input id="report-start" type="date" required></label>
         <label>To (local time, inclusive)<input id="report-end" type="date" required></label>
@@ -1219,20 +1221,16 @@
     };
     let overviewRequest = null;
     let overviewData = null;
-    let conversationsLoaded = false;
 
     function selectView(overview) {
       document.querySelector("#overview-panel").hidden = !overview;
       document.querySelector("#conversations-panel").hidden = overview;
       for (const [id, selected] of [["overview-tab", overview], ["conversations-tab", !overview]]) {
-        const button = document.getElementById(id);
-        button.setAttribute("aria-pressed", String(selected));
-        button.classList.toggle("secondary", !selected);
+        const link = document.getElementById(id);
+        if (selected) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
       }
-      if (!overview && !conversationsLoaded) {
-        conversationsLoaded = true;
-        loadRecords();
-      }
+      document.title = overview ? "Chatbot Evolution Dashboard" : "Chatbot Evolution Records";
     }
 
     function localDateValue(date) {
@@ -1474,8 +1472,6 @@
       }
     }
 
-    document.querySelector("#overview-tab").addEventListener("click", () => selectView(true));
-    document.querySelector("#conversations-tab").addEventListener("click", () => selectView(false));
     report.form.addEventListener("submit", event => { event.preventDefault(); loadOverview(); });
     report.form.addEventListener("input", invalidateOverview);
     report.form.addEventListener("change", loadOverview);
@@ -1510,7 +1506,10 @@
     report.start.value = defaultRange.start;
     report.end.value = defaultRange.end;
     loadIdentity();
-    loadOverview();
+    const isOverview = window.location.pathname.replace(/\/$/, "") !== "/dashboard/qa-records";
+    selectView(isOverview);
+    if (isOverview) loadOverview();
+    else loadRecords();
   </script>
 </body>
 </html>

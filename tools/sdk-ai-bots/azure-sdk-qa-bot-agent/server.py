@@ -156,6 +156,12 @@ _thread_memory_service = ThreadMemoryService()
 _QA_DASHBOARD_PATH = Path(__file__).parent / "static" / "qa_records_dashboard.html"
 
 
+@app.get("/dashboard/overview", response_class=FileResponse)
+async def qa_overview_dashboard() -> FileResponse:
+    """Serve the QA overview report."""
+    return FileResponse(_QA_DASHBOARD_PATH)
+
+
 @app.get("/dashboard/qa-records", response_class=FileResponse)
 async def qa_records_dashboard() -> FileResponse:
     """Serve the read-only QA record dashboard."""

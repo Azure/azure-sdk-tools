@@ -681,6 +681,20 @@ def test_overview_html_contract():
     assert 'report.print.addEventListener("click", () => { if (overviewData) window.print(); });' in html
 
 
+def test_dashboard_pages_use_distinct_routes_and_load_only_selected_data():
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    assert '<a id="overview-tab" href="/dashboard/overview">Overview</a>' in html
+    assert '<a id="conversations-tab" href="/dashboard/qa-records">Conversations</a>' in html
+    assert r'window.location.pathname.replace(/\/$/, "") !== "/dashboard/qa-records"' in html
+    assert 'selectView(isOverview);\n    if (isOverview) loadOverview();\n    else loadRecords();' in html
+    assert 'link.setAttribute("aria-current", "page")' in html
+    assert 'link.removeAttribute("aria-current")' in html
+    assert 'document.querySelector("#overview-panel").hidden = !overview;' in html
+    assert 'document.querySelector("#conversations-panel").hidden = overview;' in html
+    assert 'conversationsLoaded' not in html
+    assert 'addEventListener("click", () => selectView(' not in html
+
+
 def test_overview_filters_reload_automatically_without_action_buttons():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     form = html.split('<form id="overview-filters"', 1)[1].split("</form>", 1)[0]
@@ -690,7 +704,7 @@ def test_overview_filters_reload_automatically_without_action_buttons():
     assert 'report.form.addEventListener("input", invalidateOverview)' in html
     assert 'report.form.addEventListener("change", loadOverview)' in html
     assert 'event.preventDefault(); loadOverview();' in html
-    loading = html.split("async function loadOverview()", 1)[1].split('document.querySelector("#overview-tab")', 1)[0]
+    loading = html.split("async function loadOverview()", 1)[1].split('report.form.addEventListener', 1)[0]
     assert loading.index("invalidateOverview();") < loading.index("const start =")
     assert loading.index("end <= start") < loading.index("await fetch(")
 
@@ -702,7 +716,7 @@ def test_overview_date_selection_includes_end_day_and_defaults_to_seven_complete
     default = html.split("function lastSevenDays(", 1)[1].split("function percent", 1)[0]
     assert "start.setDate(start.getDate() - 7)" in default
     assert "end.setDate(end.getDate() - 1)" in default
-    loading = html.split("async function loadOverview()", 1)[1].split('document.querySelector("#overview-tab")', 1)[0]
+    loading = html.split("async function loadOverview()", 1)[1].split('report.form.addEventListener', 1)[0]
     assert loading.index("end.setDate(end.getDate() + 1)") < loading.index("end <= start")
     assert "end.getTime() + 86400000" not in loading
     assert "From on or before To" in loading

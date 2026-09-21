@@ -411,6 +411,7 @@ async def test_dashboard_routes(feedback_status) -> None:
                 },
             )
             page_response = await client.get("/dashboard/qa-records")
+            overview_page_response = await client.get("/dashboard/overview")
             invalid_response = await client.get(
                 "/api/dashboard/qa-records", params={"classification": "invalid"}
             )
@@ -429,6 +430,10 @@ async def test_dashboard_routes(feedback_status) -> None:
     }
     assert page_response.status_code == 200
     assert "Chatbot Evolution Dashboard" in page_response.text
+    assert overview_page_response.status_code == 200
+    assert "text/html" in overview_page_response.headers["content-type"]
+    assert 'href="/dashboard/overview"' in page_response.text
+    assert 'href="/dashboard/qa-records"' in overview_page_response.text
     service.list_records.assert_awaited_once()
     assert service.list_records.await_args.kwargs["feedback_status"] == FeedbackStatusFilter(feedback_status)
     assert service.list_records.await_args.kwargs["classification"] == RootCauseClassification.insufficient_content

@@ -3,6 +3,7 @@ parameters:
   ShouldTag: true
   Feed: 'public/azure-sdk-for-net'
   ShouldPublishExecutables: false
+  ShouldPublishToAzsdkArtifacts: false
   RequireStrongNames: true
   PublishEnvironment: ''
   ExeMatrix: []
@@ -109,6 +110,15 @@ stages:
             pwsh: true
           env:
             GH_TOKEN: $(GH_TOKEN_Azure)
+
+        - task: PowerShell@2
+          displayName: 'Post to azuresdkartifacts'
+          condition: and(succeeded(), eq(${{ parameters.ShouldPublishToAzsdkArtifacts }}, true))
+          inputs:
+            targetType: filePath
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-azsdkartifacts.ps1'
+            arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)"'
+            pwsh: true
 
       # if we are verifying the changelog, we should definitely submit an increment version + changelog update PR
       - ${{ if eq(parameters.VerifyChangelog, true) }}:

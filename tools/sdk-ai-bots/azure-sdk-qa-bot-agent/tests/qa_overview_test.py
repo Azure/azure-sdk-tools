@@ -575,7 +575,7 @@ def test_resolution_tables_keep_skipped_separate_from_unresolved():
     assert "Skipped cases have no validated fix and still count in the total" in html
     assert "row.resolved_rate.numerator} / ${row.resolved_rate.denominator}" in html
     assert "Resolved rate = cases with passed validation / all issue-linked cases" in html
-    summary = html.split('title: "Issue findings & resolution",', 1)[1].split("function reportRowValues", 1)[0]
+    summary = html.split('title: "Issue findings",', 1)[1].split("function reportRowValues", 1)[0]
     assert "row.resolved_cases, row.validation_skipped_cases, row.unresolved_cases" in summary
     assert 'title: "Unresolved cases"' not in html
     assert 'title: "Root-cause findings"' not in html
@@ -704,11 +704,11 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
         assert removed not in tables.lower()
     assert re.findall(r'title: "([^"]+)"', tables) == [
         "Accuracy", "Interaction rate", "Answer rate",
-        "Issue findings & resolution",
+        "Issue findings",
     ]
     headings = [json.loads(value) for value in re.findall(r"headings: (\[[^\n]+\])", tables)]
     assert headings == [
-        ["Channel", "Conversations", "Correct", "Excluded"],
+        ["Channel", "Conversations", "Incorrect", "Excluded", "Accuracy"],
         ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
         ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Skipped", "Unresolved", "Resolved rate"],
@@ -716,12 +716,12 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
     for removed in ("undated_conversations", ".coverage"):
         assert removed not in tables
     accuracy_table = tables.split('title: "Interaction rate",', 1)[0]
-    assert "values: row => [row.conversations, row.correct, row.accuracy_excluded]" in accuracy_table
-    assert "row.accuracy.denominator" not in accuracy_table
-    assert "percent(row.accuracy.rate)" not in accuracy_table
+    assert "values: row => [row.conversations, row.incorrect, row.accuracy_excluded," in accuracy_table
+    assert "row.correct" not in accuracy_table
+    assert "${percent(row.accuracy.rate)} (${row.accuracy.numerator} / ${row.accuracy.denominator})" in accuracy_table
     assert tables.count("description:") == 4
     assert tables.count("limitations:") == 4
-    assert "Missing-documentation and out-of-scope cases are excluded from both counts" in tables
+    assert "Missing-documentation and out-of-scope cases are excluded" in tables
     assert "eligible conversations not marked incorrect / all eligible conversations" in tables
     # Both visible/printed tables and the copied Markdown use these definitions.
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]

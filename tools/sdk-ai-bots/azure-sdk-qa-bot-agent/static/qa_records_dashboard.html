@@ -1256,9 +1256,10 @@
       {
         title: "Accuracy",
         description: "Accuracy = eligible conversations not marked incorrect / all eligible conversations.",
-        limitations: ["Missing-documentation and out-of-scope cases are excluded from both counts."],
-        headings: ["Channel", "Conversations", "Correct", "Excluded"],
-        values: row => [row.conversations, row.correct, row.accuracy_excluded]
+        limitations: ["Missing-documentation and out-of-scope cases are excluded."],
+        headings: ["Channel", "Conversations", "Incorrect", "Excluded", "Accuracy"],
+        values: row => [row.conversations, row.incorrect, row.accuracy_excluded,
+          `${percent(row.accuracy.rate)} (${row.accuracy.numerator} / ${row.accuracy.denominator})`]
       },
       {
         title: "Interaction rate",

@@ -91,7 +91,7 @@ stages:
         inputs:
           targetType: filePath
           filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-azuresdkartifacts.ps1'
-          arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)"'
+          arguments: '-TargetRelease "azsdk_0.6.48" -BinariesDirectory "$(Binaries)"'
           pwsh: true
 
       - task: 1ES.PublishPipelineArtifact@1

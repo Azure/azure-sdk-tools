@@ -20,7 +20,8 @@ param(
 $SearchPath = Join-Path $BinariesDirectory "*"
 $filesForPublish = Get-ChildItem -Path $SearchPath -Include "$FileFilter"
 
-$releaseId = GetReleaseId -ReleaseName $TargetRelease
+#$releaseId = GetReleaseId -ReleaseName $TargetRelease
+$releaseId = "azsdk_0.6.47"
 
 $context = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
 

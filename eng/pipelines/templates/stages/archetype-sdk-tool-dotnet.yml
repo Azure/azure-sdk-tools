@@ -240,6 +240,7 @@ extends:
             Feed: 'public/azure-sdk-for-net'
             ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
             ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
+            ShouldPublishToAzsdkArtifacts: ${{ parameters.ReleaseBinaries }}
             ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
             ${{ if parameters.PublishEnvironment }}:

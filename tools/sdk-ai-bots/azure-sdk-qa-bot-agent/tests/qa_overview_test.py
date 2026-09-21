@@ -734,7 +734,7 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
     assert tables.count("description:") == 4
     assert tables.count("limitations:") == 3
     assert "Missing-documentation and out-of-scope cases are excluded" in tables
-    assert "eligible conversations not marked incorrect / all eligible conversations" in tables
+    assert "Accuracy = correct answered conversations / (conversations − excluded)." in tables
     # Both visible/printed tables and the copied Markdown use these definitions.
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
     copying = html.split("function buildOverviewReport(data)", 1)[1].split("function invalidateOverview", 1)[0]
@@ -743,6 +743,20 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
         assert "reportRowValues(definition," in consumer
         assert "definition.description" in consumer
         assert "definition.limitations" in consumer
+
+
+def test_interaction_rate_table_shows_percentage_and_counts():
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    interaction = html.split('title: "Interaction rate",', 1)[1].split('title: "Answer rate",', 1)[0]
+    assert "values: row => [row.conversations, row.expert_yes," in interaction
+    assert "${percent(row.expert_interaction.rate)} (${row.expert_interaction.numerator} / ${row.expert_interaction.denominator})" in interaction
+
+
+def test_answer_rate_table_shows_percentage_and_counts():
+    html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
+    answer = html.split('title: "Answer rate",', 1)[1].split('title: "Issue findings",', 1)[0]
+    assert "values: row => [row.questions, row.bot_replies," in answer
+    assert "${percent(row.answer_rate.rate)} (${row.answer_rate.numerator} / ${row.answer_rate.denominator})" in answer
 
 
 def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
@@ -761,7 +775,7 @@ def test_overview_visual_shows_total_rates_with_inline_counts_without_bars():
     assert 'rateCounts.title = `${labels[0]} / ${labels[1]}`' in visual
     assert 'rateCounts.setAttribute("aria-label"' in visual
     assert "overview-bar" not in html
-    assert "eligible conversations not marked incorrect / all eligible conversations" in html
+    assert "Accuracy = correct answered conversations / (conversations − excluded)." in html
     assert "report.tables.replaceChildren(renderOverviewVisual(data))" in html
     invalidation = html.split("function invalidateOverview()", 1)[1].split("async function loadOverview()", 1)[0]
     assert "report.tables.replaceChildren();" in invalidation

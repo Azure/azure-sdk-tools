@@ -1255,7 +1255,7 @@
     const reportTables = [
       {
         title: "Accuracy",
-        description: "Accuracy = eligible conversations not marked incorrect / all eligible conversations.",
+        description: "Accuracy = correct answered conversations / (conversations − excluded).",
         limitations: ["Missing-documentation and out-of-scope cases are excluded from the accuracy calculation."],
         headings: ["Channel", "Conversations", "Incorrect", "Excluded", "Accuracy"],
         values: row => [row.conversations, row.incorrect, row.accuracy_excluded,
@@ -1266,14 +1266,16 @@
         description: "Interaction rate = conversations with expert follow-up / all conversations.",
         limitations: ["Expert follow-up adds guidance beyond the bot's answer."],
         headings: ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
-        values: row => [row.conversations, row.expert_yes, percent(row.expert_interaction.rate)]
+        values: row => [row.conversations, row.expert_yes,
+          `${percent(row.expert_interaction.rate)} (${row.expert_interaction.numerator} / ${row.expert_interaction.denominator})`]
       },
       {
         title: "Answer rate",
         description: "Answer rate = bot replies / in-scope user messages.",
         limitations: ["In-scope messages need a reply or mention the bot."],
         headings: ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
-        values: row => [row.questions, row.bot_replies, percent(row.answer_rate.rate)]
+        values: row => [row.questions, row.bot_replies,
+          `${percent(row.answer_rate.rate)} (${row.answer_rate.numerator} / ${row.answer_rate.denominator})`]
       },
       {
         title: "Issue findings",

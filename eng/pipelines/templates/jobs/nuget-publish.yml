@@ -98,9 +98,3 @@ jobs:
           - input: pipelineArtifact
             artifactName: ${{ parameters.ArtifactName }}-signed
             targetPath: $(Artifacts)
-
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-              

@@ -349,6 +349,40 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Not.Contain("has been initiated to generate the SDK"));
         }
 
+        [TestCase("In progress")]
+        [TestCase("Pending")]
+        public async Task GenerateSDK_WhenActiveStatusHasNoPipelineUrl_RetriesGeneration(string generationStatus)
+        {
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo =
+                [
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test",
+                        GenerationStatus = generationStatus,
+                    }
+                ]
+            };
+            var devOpsService = SetupSdkGenerationTool(releasePlan);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
         [Test]
         public async Task GenerateSDK_WhenAnotherActiveReleasePlanHasSdkPullRequest_BlocksGeneration()
         {

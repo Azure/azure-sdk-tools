@@ -11,6 +11,7 @@
 ### Bugs Fixed
 
 - Release plan creation and target-month updates now reject malformed or past target months, while allowing the current UTC month and future months.
+- SDK generation now retries stale `In progress` or `Pending` statuses when the release plan has no corresponding pipeline URL.
 
 ### Other Changes
 

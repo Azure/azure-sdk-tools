@@ -300,11 +300,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                // Check the current SDK generation status for the language in the release plan.
-                // If a generation is already in progress or pending, skip triggering a new run to avoid duplicate SDK generation.
+                // A status can be set before generation starts; only block retries when a pipeline URL is also recorded.
                 var currentGenerationStatus = sdkInfo?.GenerationStatus ?? string.Empty;
-                if (currentGenerationStatus.Equals("In progress", StringComparison.OrdinalIgnoreCase) ||
-                    currentGenerationStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                var hasActiveGenerationStatus = currentGenerationStatus.Equals("In progress", StringComparison.OrdinalIgnoreCase) ||
+                    currentGenerationStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase);
+                if (hasActiveGenerationStatus && !string.IsNullOrEmpty(sdkInfo?.GenerationPipelineUrl))
                 {
                     logger.LogInformation(
                         "SDK generation for {Language} is already in status '{GenerationStatus}'. Skipping new generation run to avoid a duplicate.",

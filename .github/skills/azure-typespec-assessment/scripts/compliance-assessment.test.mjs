@@ -1,9 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  assembleCompliance,
-  readComplianceCatalog,
-} from "./compliance-assessment.mjs";
+import { assembleCompliance, readComplianceCatalog } from "./compliance-assessment.mjs";
 import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
 
 /** @typedef {import("./compliance-search-evidence.schema.js").Document} ComplianceDocument */
@@ -43,17 +40,16 @@ void test("catalog prioritizes API evolution and separates supported resource an
     "/getstarted/azure-core/step05/",
     "/libraries/azure-core/reference/interfaces/",
   ]) {
-    assert.equal(urls.some((url) => url.endsWith(excluded)), false);
+    assert.equal(
+      urls.some((url) => url.endsWith(excluded)),
+      false,
+    );
   }
-  const pagination = catalog.find(
-    (entry) => entry.title === "TypeSpec pagination",
-  );
+  const pagination = catalog.find((entry) => entry.title === "TypeSpec pagination");
   const resourceManagerDataTypes = catalog.find(
     (entry) => entry.title === "Azure.ResourceManager data types",
   );
-  const restDecorators = catalog.find(
-    (entry) => entry.title === "TypeSpec.Rest decorators",
-  );
+  const restDecorators = catalog.find((entry) => entry.title === "TypeSpec.Rest decorators");
   const resourceManagerDecorators = catalog.find(
     (entry) => entry.title === "Azure.ResourceManager decorators",
   );
@@ -81,10 +77,7 @@ function fixture() {
         id: "hunk-1",
         base: { startLine: 10, endLine: 10 },
         current: { startLine: 10, endLine: 11 },
-        lines: [
-          "+@parentResource(Widget)",
-          "+model Child is ProxyResource<ChildProperties>;",
-        ],
+        lines: ["+@parentResource(Widget)", "+model Child is ProxyResource<ChildProperties>;"],
       },
     ],
     declarations: [
@@ -104,20 +97,19 @@ function fixture() {
       },
     ],
   };
-  const requests =
-    /** @type {[ComplianceSearchRequest, ...ComplianceSearchRequest[]]} */ (
-      buildComplianceSearchRequests({
-        semanticReviewUnits: [
-          {
-            id: "semantic-1",
-            action: "add",
-            sourceChangeIds: ["source-1"],
-            hunkIds: ["hunk-1"],
-          },
-        ],
-        sourceChanges: { "source-1": source },
-      })
-    );
+  const requests = /** @type {[ComplianceSearchRequest, ...ComplianceSearchRequest[]]} */ (
+    buildComplianceSearchRequests({
+      semanticReviewUnits: [
+        {
+          id: "semantic-1",
+          action: "add",
+          sourceChangeIds: ["source-1"],
+          hunkIds: ["hunk-1"],
+        },
+      ],
+      sourceChanges: { "source-1": source },
+    })
+  );
   /** @type {ComplianceScore[]} */
   const scoreValues = [
     {
@@ -168,10 +160,7 @@ function fixture() {
   }));
   assert.ok(catalogRankingEntries[0]);
   /** @type {[RankedCatalogEntry, ...RankedCatalogEntry[]]} */
-  const catalogRanking = [
-    catalogRankingEntries[0],
-    ...catalogRankingEntries.slice(1),
-  ];
+  const catalogRanking = [catalogRankingEntries[0], ...catalogRankingEntries.slice(1)];
   const documentEntries = catalogRanking.slice(0, 4).map((item, index) => ({
     ...item,
     retrieval: {
@@ -189,9 +178,7 @@ function fixture() {
               examples: /** @type {[string]} */ ([
                 "model Child is ProxyResource<ChildProperties>;",
               ]),
-              applicableDeclarationIds: /** @type {[string]} */ ([
-                "declaration-1",
-              ]),
+              applicableDeclarationIds: /** @type {[string]} */ (["declaration-1"]),
             },
           ]
         : [],
@@ -283,9 +270,7 @@ void test("assembles one Azure Guidelines finding and coverage per Semantic inte
   assert.ok(compliance.sharedSearch);
   assert.ok(isUnknownArray(compliance.sharedSearch.documents));
   assert.equal(compliance.sharedSearch.documents.length, 4);
-  const snippets = /** @type {{lines?: string[]}[]} */ (
-    compliance.findings[0].codeSnippets
-  );
+  const snippets = /** @type {{lines?: string[]}[]} */ (compliance.findings[0].codeSnippets);
   assert.ok(snippets);
   assert.deepEqual(snippets[0].lines, [
     "+@parentResource(Widget)",
@@ -295,8 +280,7 @@ void test("assembles one Azure Guidelines finding and coverage per Semantic inte
 
 void test("rejects uncataloged Azure Guidelines evidence", () => {
   const { source, requests, evidence, decisions } = fixture();
-  evidence.rankedDocuments[0].canonicalUrl =
-    "https://example.test/invented";
+  evidence.rankedDocuments[0].canonicalUrl = "https://example.test/invented";
   assert.throws(
     () =>
       assembleCompliance({
@@ -342,9 +326,7 @@ void test("rejects incomplete declaration source provenance", () => {
 void test("counts completed searches with no governing guidance as assessed", () => {
   const { source, requests, evidence, decisions } = fixture();
   requests[0].declarationIds.push("declaration-2");
-  evidence.rankedDocuments[0].guidance[0].applicableDeclarationIds.push(
-    "declaration-2",
-  );
+  evidence.rankedDocuments[0].guidance[0].applicableDeclarationIds.push("declaration-2");
   decisions[0] = {
     reviewUnitId: "semantic-1",
     applicableGuidance: [],
@@ -431,8 +413,7 @@ void test("ranks and fetches one shared document set for multiple Semantic inten
   assert.equal(compliance.sharedSearch.documents.length, 4);
   assert.ok(
     compliance.intentAssessments.every(
-      (intent) =>
-        intent.catalogRanking === undefined && intent.documents === undefined,
+      (intent) => intent.catalogRanking === undefined && intent.documents === undefined,
     ),
   );
 });

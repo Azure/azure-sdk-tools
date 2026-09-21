@@ -73,11 +73,11 @@ export function readWorkflowState(work) {
   if (!fs.existsSync(file)) return undefined;
   const value = readJsonObject(file);
   if (
-    typeof value.schemaVersion !== "number"
-    || (value.state !== undefined && typeof value.state !== "string")
-    || (value.updatedAt !== undefined && typeof value.updatedAt !== "string")
-    || !isRecord(value.phases)
-    || !isRecord(value.telemetry)
+    typeof value.schemaVersion !== "number" ||
+    (value.state !== undefined && typeof value.state !== "string") ||
+    (value.updatedAt !== undefined && typeof value.updatedAt !== "string") ||
+    !isRecord(value.phases) ||
+    !isRecord(value.telemetry)
   ) {
     throw new TypeError(`Invalid workflow state in ${file}.`);
   }
@@ -122,15 +122,13 @@ export function resolveWorkPath(work, relativePath) {
  */
 export function hashArtifacts(work, relativePaths) {
   return Object.fromEntries(
-    [...new Set(relativePaths)]
-      .sort()
-      .map((relativePath) => {
-        const file = resolveWorkPath(work, relativePath);
-        if (!fs.existsSync(file)) {
-          throw new Error(`Missing canonical artifact: ${relativePath}.`);
-        }
-        return [relativePath.replaceAll("\\", "/"), sha256File(file)];
-      }),
+    [...new Set(relativePaths)].sort().map((relativePath) => {
+      const file = resolveWorkPath(work, relativePath);
+      if (!fs.existsSync(file)) {
+        throw new Error(`Missing canonical artifact: ${relativePath}.`);
+      }
+      return [relativePath.replaceAll("\\", "/"), sha256File(file)];
+    }),
   );
 }
 

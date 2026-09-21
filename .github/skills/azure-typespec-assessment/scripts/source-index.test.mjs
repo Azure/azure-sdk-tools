@@ -37,17 +37,20 @@ void test("parseUnifiedHunks retains base and current ranges", () => {
 void test("indexes changed interface operation members", () => {
   const files = {
     base: "interface Widgets {\n  get is ArmResourceRead<Widget>;\n}\n",
-    working: "interface Widgets {\n  get is ArmResourceRead<Widget>;\n  cancel is ArmResourceActionAsync<Widget>;\n}\n",
+    working:
+      "interface Widgets {\n  get is ArmResourceRead<Widget>;\n  cancel is ArmResourceActionAsync<Widget>;\n}\n",
   };
   const index = buildSourceIndex({
     repo: "repo",
     mergeBase: "base",
     headCommit: "head",
-    changedFiles: [{
-      path: "specification/widgets/main.tsp",
-      status: "modified",
-      origins: ["committed"],
-    }],
+    changedFiles: [
+      {
+        path: "specification/widgets/main.tsp",
+        status: "modified",
+        origins: ["committed"],
+      },
+    ],
     remoteUrl: "",
     readFile: (revision) => files[/** @type {keyof typeof files} */ (revision)] ?? files.working,
     diffFile: () => `@@ -1,3 +1,4 @@
@@ -56,9 +59,11 @@ void test("indexes changed interface operation members", () => {
 +  cancel is ArmResourceActionAsync<Widget>;
  }`,
   });
-  assert.ok(required(index.sourceChanges[0]).declarations.some(
-    (item) => item.kind === "operation" && item.qualifiedName === "Widgets.cancel",
-  ));
+  assert.ok(
+    required(index.sourceChanges[0]).declarations.some(
+      (item) => item.kind === "operation" && item.qualifiedName === "Widgets.cancel",
+    ),
+  );
 });
 
 void test("does not classify inline operation response fields as interface properties", () => {
@@ -74,11 +79,13 @@ void test("does not classify inline operation response fields as interface prope
     repo: "repo",
     mergeBase: "base",
     headCommit: "head",
-    changedFiles: [{
-      path: "specification/widgets/main.tsp",
-      status: "modified",
-      origins: ["committed"],
-    }],
+    changedFiles: [
+      {
+        path: "specification/widgets/main.tsp",
+        status: "modified",
+        origins: ["committed"],
+      },
+    ],
     remoteUrl: "",
     readFile: () => content,
     diffFile: () => `@@ -1,7 +1,7 @@
@@ -92,22 +99,31 @@ void test("does not classify inline operation response fields as interface prope
  }`,
   });
 
-  assert.ok(!required(index.sourceChanges[0]).declarations.some(
-    (item) => item.kind === "property" && item.qualifiedName === "Widgets.location",
-  ));
+  assert.ok(
+    !required(index.sourceChanges[0]).declarations.some(
+      (item) => item.kind === "property" && item.qualifiedName === "Widgets.location",
+    ),
+  );
 });
 
 void test("raw revision sources are not serialized and unavailable compilers block documentation presence", async () => {
   const sourceIndex = buildSourceIndex({
-    repo: "repo", mergeBase: "base", headCommit: "head",
+    repo: "repo",
+    mergeBase: "base",
+    headCommit: "head",
     changedFiles: [{ path: "main.tsp", status: "modified", origins: ["working"] }],
     readFile: () => '@doc("private raw marker") model Widget {}',
     diffFile: () => "@@ -1 +1 @@\n-model Widget {}\n+model Widget { x: string; }",
   });
   assert.ok(!JSON.stringify(sourceIndex).includes("private raw marker"));
   await addCompilerEvidence({
-    sourceIndex, baseWorktree: ".", currentWorktree: ".", projects: ["main.tsp"],
-    loadCompiler: () => { throw new Error("Compiler missing"); },
+    sourceIndex,
+    baseWorktree: ".",
+    currentWorktree: ".",
+    projects: ["main.tsp"],
+    loadCompiler: () => {
+      throw new Error("Compiler missing");
+    },
   });
   assert.equal(sourceIndex.analysis.status, "blocked");
   const evidence = required(required(sourceIndex.sourceChanges[0]).documentEvidence);
@@ -119,13 +135,18 @@ void test("raw revision sources are not serialized and unavailable compilers blo
 
 void test("failed compiler programs never report @doc evidence ready", async () => {
   const sourceIndex = buildSourceIndex({
-    repo: "repo", mergeBase: "base", headCommit: "head",
+    repo: "repo",
+    mergeBase: "base",
+    headCommit: "head",
     changedFiles: [{ path: "main.tsp", status: "modified", origins: [] }],
     readFile: () => '@doc("A model") model Widget {}',
     diffFile: () => "@@ -1 +1 @@\n-model Widget {}\n+model Widget { x: string; }",
   });
   await addCompilerEvidence({
-    sourceIndex, baseWorktree: ".", currentWorktree: ".", projects: ["main.tsp"],
+    sourceIndex,
+    baseWorktree: ".",
+    currentWorktree: ".",
+    projects: ["main.tsp"],
     loadCompiler: () => ({
       NodeHost: {},
       compile: () => ({
@@ -137,16 +158,15 @@ void test("failed compiler programs never report @doc evidence ready", async () 
     }),
   });
   assert.equal(sourceIndex.analysis.status, "blocked");
-  assert.equal(
-    required(required(sourceIndex.sourceChanges[0]).documentEvidence).status,
-    "blocked",
-  );
+  assert.equal(required(required(sourceIndex.sourceChanges[0]).documentEvidence).status, "blocked");
 });
 
 void test("compiler evidence records only documentation presence on changed declarations", async () => {
   const sourceText = "model Widget { value: string; }";
   const sourceIndex = buildSourceIndex({
-    repo: "repo", mergeBase: "base", headCommit: "head",
+    repo: "repo",
+    mergeBase: "base",
+    headCommit: "head",
     changedFiles: [{ path: "main.tsp", status: "modified", origins: [] }],
     readFile: () => sourceText,
     diffFile: () => "@@ -1 +1 @@\n-model Widget {}\n+model Widget { value: string; }",
@@ -183,15 +203,16 @@ void test("compiler evidence records only documentation presence on changed decl
   const evidence = required(source.documentEvidence);
   assert.equal(evidence.schemaVersion, 4);
   assert.equal(evidence.status, "ready");
-  assert.deepEqual(evidence.declarations.map((item) => ({
-    qualifiedName: item.qualifiedName,
-    documentationPresent: item.documentationPresent,
-  })), [{ qualifiedName: "Widget", documentationPresent: true }]);
+  assert.deepEqual(
+    evidence.declarations.map((item) => ({
+      qualifiedName: item.qualifiedName,
+      documentationPresent: item.documentationPresent,
+    })),
+    [{ qualifiedName: "Widget", documentationPresent: true }],
+  );
   assert.equal(JSON.stringify(evidence).includes("A widget."), false);
   assert.deepEqual(
-    required(
-      source.declarations.find((item) => item.source.revision === "current"),
-    ).sourceSnippet,
+    required(source.declarations.find((item) => item.source.revision === "current")).sourceSnippet,
     {
       startLine: 1,
       endLine: 1,
@@ -203,8 +224,7 @@ void test("compiler evidence records only documentation presence on changed decl
 
 void test("compiler evidence excludes unchanged declarations that are only diff context", async () => {
   const baseText = "interface Unchanged {}\ninterface Changed {}\n";
-  const currentText =
-    "interface Unchanged {}\ninterface Changed {\n  added(): void;\n}\n";
+  const currentText = "interface Unchanged {}\ninterface Changed {\n  added(): void;\n}\n";
   const sourceIndex = buildSourceIndex({
     repo: "repo",
     mergeBase: "base",
@@ -262,9 +282,7 @@ void test("compiler evidence excludes unchanged declarations that are only diff 
     },
   });
   assert.deepEqual(
-    required(
-      required(sourceIndex.sourceChanges[0]).documentEvidence,
-    ).declarations.map(
+    required(required(sourceIndex.sourceChanges[0]).documentEvidence).declarations.map(
       (item) => item.qualifiedName,
     ),
     ["Changed"],
@@ -320,12 +338,10 @@ void test("compiler evidence includes a declaration when only its documentation 
     },
   });
   assert.deepEqual(
-    required(
-      required(sourceIndex.sourceChanges[0]).documentEvidence,
-    ).declarations.map((item) => ({
-        qualifiedName: item.qualifiedName,
-        documentationPresent: item.documentationPresent,
-      })),
+    required(required(sourceIndex.sourceChanges[0]).documentEvidence).declarations.map((item) => ({
+      qualifiedName: item.qualifiedName,
+      documentationPresent: item.documentationPresent,
+    })),
     [{ qualifiedName: "Widget", documentationPresent: true }],
   );
 });
@@ -339,7 +355,7 @@ void test("compiler evidence preserves parsed decorators and source links", asyn
     headCommit: "head",
     changedFiles: [{ path: "main.tsp", status: "modified", origins: [] }],
     remoteUrl: "https://github.com/contoso/widgets.git",
-    readFile: (revision) => revision === "base" ? baseText : currentText,
+    readFile: (revision) => (revision === "base" ? baseText : currentText),
     diffFile: () => `@@ -1,2 +1,2 @@
 -@clientName("OldWidget")
 +@clientName("Widget")
@@ -380,9 +396,11 @@ void test("compiler evidence preserves parsed decorators and source links", asyn
     },
   });
 
-  const declaration = required(required(sourceIndex.sourceChanges[0]).declarations.find(
-    (item) => item.source.revision === "current",
-  ));
+  const declaration = required(
+    required(sourceIndex.sourceChanges[0]).declarations.find(
+      (item) => item.source.revision === "current",
+    ),
+  );
   assert.deepEqual(declaration.decorators, ['@clientName("Widget")']);
   assert.equal(
     declaration.source.link,

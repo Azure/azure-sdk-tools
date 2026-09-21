@@ -1,12 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import {
-  extractApiVersions,
-  selectApiVersionPair,
-} from "./api-version-selection.mjs";
+import { extractApiVersions, selectApiVersionPair } from "./api-version-selection.mjs";
+import { documentQualitySummary, renderReportSections } from "./assessment-report-ui.mjs";
 import { isMain, parseArgs, readJsonObject, runMain } from "./cli.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
-import { documentQualitySummary, renderReportSections } from "./assessment-report-ui.mjs";
 
 /** @typedef {import("./runtime-types.js").ArtifactSelection} ArtifactSelection */
 /** @typedef {import("./runtime-types.js").ArtifactComparison} ArtifactComparison */
@@ -80,7 +77,10 @@ import { documentQualitySummary, renderReportSections } from "./assessment-repor
  * @typedef {{downstreamAssessment?: AssessmentOutput, downstreamInput?: DownstreamAnalysis}} RenderOptions
  */
 
-const reportStyles = fs.readFileSync(new URL("./assessment-report-ui.css", import.meta.url), "utf8");
+const reportStyles = fs.readFileSync(
+  new URL("./assessment-report-ui.css", import.meta.url),
+  "utf8",
+);
 
 /** @param {unknown} value @returns {value is Record<string, unknown>} */
 function isRecord(value) {
@@ -101,10 +101,7 @@ function recordValue(value, key) {
  * @returns {assessment is AssessmentOutput}
  */
 function isCurrentAssessment(assessment) {
-  return (
-    assessment.schemaVersion === 1 &&
-    "semantic" in assessment.dimensions
-  );
+  return assessment.schemaVersion === 1 && "semantic" in assessment.dimensions;
 }
 
 /**
@@ -197,9 +194,9 @@ export function escapeHtml(value) {
 function sourceLinks(sources = []) {
   return sources
     .map((source) => {
-      const current = source.declarations?.find(
-        (item) => item.source?.revision === "current",
-      ) ?? source.declarations?.find((item) => item.source?.link);
+      const current =
+        source.declarations?.find((item) => item.source?.revision === "current") ??
+        source.declarations?.find((item) => item.source?.link);
       const label = `${source.path}${current ? `:${current.source.startLine}` : ""}`;
       return current?.source?.link
         ? `<a href="${escapeHtml(current.source.link)}">${escapeHtml(label)}</a>`
@@ -242,11 +239,7 @@ function headerSummary(assessment) {
   const semanticItems = assessment.dimensions.semantic.items ?? [];
   const actionCounts = { add: 0, modify: 0, remove: 0 };
   for (const item of semanticItems) {
-    if (
-      item.action === "add" ||
-      item.action === "modify" ||
-      item.action === "remove"
-    ) {
+    if (item.action === "add" || item.action === "modify" || item.action === "remove") {
       actionCounts[item.action] += 1;
     }
   }
@@ -265,13 +258,11 @@ function headerSummary(assessment) {
       assessment.dimensions.downstream.operationGroups?.length ??
       0) +
     downstreamTypeCards(assessment.dimensions.downstream).length +
-    directLegacyDownstreamFindings(
-      assessment.dimensions.downstream.legacyFindings,
-    ).length;
+    directLegacyDownstreamFindings(assessment.dimensions.downstream.legacyFindings).length;
   const downstreamCount = directDownstreamCount;
   const compliance = assessment.dimensions.compliance;
-  const complianceFindingCount = (compliance.legacyFindings?.length ?? 0) +
-    (compliance.findings?.length ?? 0);
+  const complianceFindingCount =
+    (compliance.legacyFindings?.length ?? 0) + (compliance.findings?.length ?? 0);
   const complianceIssueCount = compliance.legacyFindings
     ? compliance.legacyFindings.length
     : complianceFindingGroups(compliance.findings).length;
@@ -282,11 +273,13 @@ function headerSummary(assessment) {
     actionCounts,
     operationCount,
     restCount,
-    restFindingCount: (assessment.dimensions.rest.findings?.length ?? 0) +
+    restFindingCount:
+      (assessment.dimensions.rest.findings?.length ?? 0) +
       (assessment.dimensions.rest.legacyFindings?.length ?? 0),
     directDownstreamCount,
     downstreamCount,
-    downstreamFindingCount: (assessment.dimensions.downstream.findings?.length ?? 0) +
+    downstreamFindingCount:
+      (assessment.dimensions.downstream.findings?.length ?? 0) +
       directLegacyDownstreamFindings(assessment.dimensions.downstream.legacyFindings).length,
     complianceStatus: compliance.status,
     complianceFindingCount,
@@ -301,7 +294,8 @@ function headerSummary(assessment) {
 
 /** @param {string | undefined} status */
 function complianceStatus(status) {
-  if (status === "passed" || status === "assessed") return { icon: "✓", className: "pass", label: "Pass" };
+  if (status === "passed" || status === "assessed")
+    return { icon: "✓", className: "pass", label: "Pass" };
   if (status === "failed") return { icon: "×", className: "fail", label: "Fail" };
   return { icon: "i", className: "", label: "N/A" };
 }
@@ -311,7 +305,14 @@ function complianceStatus(status) {
  * @param {StatusPresentation} status
  */
 function summaryHeading(title, status) {
-  const label = status.label === "Pass" ? "Passed" : status.label === "Fail" ? "Failed" : status.label === "N/A" ? "Not assessed" : status.label;
+  const label =
+    status.label === "Pass"
+      ? "Passed"
+      : status.label === "Fail"
+        ? "Failed"
+        : status.label === "N/A"
+          ? "Not assessed"
+          : status.label;
   return `<div class="summary-heading"><div class="summary-value"><span class="${escapeHtml(status.className)}" aria-label="${escapeHtml(label)}">${escapeHtml(status.icon)}</span></div><div class="summary-label">${escapeHtml(title)}</div></div>`;
 }
 
@@ -346,12 +347,8 @@ function complianceCode(snippets = []) {
   return snippets
     .map((snippet) => {
       const details = isComplianceSnippet(snippet) ? snippet : undefined;
-      const lines = Array.isArray(snippet)
-        ? snippet
-        : (details?.lines ?? []);
-      const startLine = Number.isFinite(details?.startLine)
-        ? details?.startLine
-        : undefined;
+      const lines = Array.isArray(snippet) ? snippet : (details?.lines ?? []);
+      const startLine = Number.isFinite(details?.startLine) ? details?.startLine : undefined;
       const label =
         details?.caption ??
         (details?.path
@@ -380,10 +377,7 @@ function complianceCode(snippets = []) {
 
 /** @param {unknown} value */
 function normalizedComplianceGroupText(value) {
-  return displayValue(value)
-    .trim()
-    .replaceAll(/\s+/g, " ")
-    .toLowerCase();
+  return displayValue(value).trim().replaceAll(/\s+/g, " ").toLowerCase();
 }
 
 /** @param {ComplianceFinding[]} [findings] */
@@ -427,9 +421,7 @@ function complianceEvidenceAppendix(dimension) {
   /** @type {ComplianceDocumentReference[]} */
   const documents = [
     ...(dimension.sharedSearch?.documents ?? []),
-    ...(dimension.intentAssessments ?? []).flatMap(
-      (item) => item.documents ?? [],
-    ),
+    ...(dimension.intentAssessments ?? []).flatMap((item) => item.documents ?? []),
     ...(dimension.legacyDocuments ?? []),
   ];
   /** @type {Set<string>} */
@@ -483,10 +475,7 @@ function headerComparison(assessment) {
 function semanticLinks(ids = []) {
   return ids.length
     ? ids
-        .map(
-          (id) =>
-            `<a href="#intent-${anchor(id)}"><code>${escapeHtml(id)}</code></a>`,
-        )
+        .map((id) => `<a href="#intent-${anchor(id)}"><code>${escapeHtml(id)}</code></a>`)
         .join(", ")
     : "None";
 }
@@ -503,9 +492,7 @@ function schemaDisplay(schema) {
   const identity = schemaIdentity(schema);
   if (schema.kind === "array") return `${schemaDisplay(schema.items)}[]`;
   if (schema.kind === "enum") {
-    const values = Array.isArray(schema.values)
-      ? schema.values.join(" | ")
-      : schema.values;
+    const values = Array.isArray(schema.values) ? schema.values.join(" | ") : schema.values;
     return `${identity ?? schema.type ?? "enum"}${values ? ` { ${values} }` : ""}`;
   }
   if (identity) return identity;
@@ -523,9 +510,7 @@ function schemaPath(schema, pathSegments) {
   for (const rawSegment of pathSegments) {
     const isArray = rawSegment.endsWith("[]");
     const name = rawSegment.replace(/\[\]$/, "");
-    const property = (current?.properties ?? []).find(
-      (item) => item.name === name,
-    );
+    const property = (current?.properties ?? []).find((item) => item.name === name);
     if (!property) return { schema: undefined, identity };
     current = property.schema;
     identity = schemaIdentity(current) ?? identity;
@@ -541,8 +526,7 @@ function schemaPath(schema, pathSegments) {
 function operationFacts(finding) {
   const facts = finding.evidence ?? [];
   return {
-    before:
-      facts.find((fact) => fact.comparisonRole === "baseline") ?? facts[0],
+    before: facts.find((fact) => fact.comparisonRole === "baseline") ?? facts[0],
     after: facts.find((fact) => fact.comparisonRole === "target") ?? facts[1],
   };
 }
@@ -553,9 +537,7 @@ function operationFacts(finding) {
  * @returns {ContractValue}
  */
 function parameterValue(operation, name) {
-  const parameter = (operation?.parameters ?? []).find(
-    (item) => item.name === name,
-  );
+  const parameter = (operation?.parameters ?? []).find((item) => item.name === name);
   return {
     schema: parameter?.schema,
     identity: schemaIdentity(parameter?.schema),
@@ -594,9 +576,7 @@ function responseHeaderValue(operation, name) {
 function responseSchemaValue(operation, location) {
   const match = location?.match(/^response ([^.]+)(?:\.(.*))?$/);
   if (!match) return { display: "unavailable" };
-  const response = (operation?.responses ?? []).find(
-    (item) => item.status === match[1],
-  );
+  const response = (operation?.responses ?? []).find((item) => item.status === match[1]);
   if (!response) return { display: "removed" };
   const result = schemaPath(response.schema, match[2]?.split(".") ?? []);
   return {
@@ -615,10 +595,7 @@ function restContractDelta(finding) {
   let beforeValue;
   /** @type {ContractValue} */
   let afterValue;
-  if (
-    rule.startsWith("parameter-") ||
-    rule === "required-parameter-added"
-  ) {
+  if (rule.startsWith("parameter-") || rule === "required-parameter-added") {
     beforeValue = parameterValue(before, location);
     afterValue = parameterValue(after, location);
   } else if (rule.startsWith("response-header-")) {
@@ -650,10 +627,7 @@ function restContractDelta(finding) {
   /** @type {string | undefined} */
   let areaKind;
   let member = location;
-  if (
-    rule.startsWith("parameter-") ||
-    rule === "required-parameter-added"
-  ) {
+  if (rule.startsWith("parameter-") || rule === "required-parameter-added") {
     const wireLocation = [beforeValue.display, afterValue.display]
       .map((display) => display?.match(/^(query|path|header):/i)?.[1])
       .find(Boolean);
@@ -663,9 +637,7 @@ function restContractDelta(finding) {
       path: "Path parameter",
       header: "Request header",
     };
-    areaKind = wireLocation
-      ? labels[wireLocation.toLowerCase()]
-      : undefined;
+    areaKind = wireLocation ? labels[wireLocation.toLowerCase()] : undefined;
     for (const value of [beforeValue, afterValue]) {
       if (value.display?.includes(" · ")) {
         value.display = value.display.split(" · ").slice(1).join(" · ");
@@ -702,10 +674,7 @@ function findingMatchesOperation(finding, operation, semanticIntentId) {
   if (!(finding.operationIds ?? []).includes(operation.operationId)) {
     return false;
   }
-  if (
-    semanticIntentId &&
-    !(finding.relatedSemanticIntents ?? []).includes(semanticIntentId)
-  ) {
+  if (semanticIntentId && !(finding.relatedSemanticIntents ?? []).includes(semanticIntentId)) {
     return false;
   }
   const operationFacts = (finding.evidence ?? []).filter(
@@ -788,9 +757,7 @@ function schemaContractRows(before, after, area) {
   const afterProperties = new Map(
     (after.properties ?? []).map((property) => [property.name, property]),
   );
-  for (const name of [
-    ...new Set([...beforeProperties.keys(), ...afterProperties.keys()]),
-  ].sort()) {
+  for (const name of [...new Set([...beforeProperties.keys(), ...afterProperties.keys()])].sort()) {
     const previous = beforeProperties.get(name);
     const current = afterProperties.get(name);
     const propertyArea = `${area}.${name}`;
@@ -802,9 +769,7 @@ function schemaContractRows(before, after, area) {
       });
       continue;
     }
-    rows.push(
-      ...schemaContractRows(previous.schema, current.schema, propertyArea),
-    );
+    rows.push(...schemaContractRows(previous.schema, current.schema, propertyArea));
   }
   return rows;
 }
@@ -818,9 +783,7 @@ function parameterDisplay(parameter, missing = "not present") {
   const details = [
     structuralSchemaDisplay(parameter.schema),
     parameter.required ? "required" : "optional",
-    parameter.collectionFormat
-      ? `collection: ${parameter.collectionFormat}`
-      : undefined,
+    parameter.collectionFormat ? `collection: ${parameter.collectionFormat}` : undefined,
   ].filter(Boolean);
   return details.join(" · ");
 }
@@ -837,9 +800,7 @@ function parameterContractRows(before = [], after = []) {
   const afterParameters = new Map(after.map((item) => [key(item), item]));
   /** @type {ContractChangeRow[]} */
   const rows = [];
-  for (const area of [
-    ...new Set([...beforeParameters.keys(), ...afterParameters.keys()]),
-  ].sort()) {
+  for (const area of [...new Set([...beforeParameters.keys(), ...afterParameters.keys()])].sort()) {
     const previous = beforeParameters.get(area);
     const current = afterParameters.get(area);
     if (!previous || !current) {
@@ -850,11 +811,7 @@ function parameterContractRows(before = [], after = []) {
       });
       continue;
     }
-    const schemaRows = schemaContractRows(
-      previous.schema,
-      current.schema,
-      area,
-    );
+    const schemaRows = schemaContractRows(previous.schema, current.schema, area);
     if (
       previous.required !== current.required ||
       previous.collectionFormat !== current.collectionFormat
@@ -918,9 +875,7 @@ function responseHeaderDisplay(header, missing) {
   if (!header) return missing;
   return [
     structuralSchemaDisplay(header.schema),
-    header.collectionFormat
-      ? `collection: ${header.collectionFormat}`
-      : undefined,
+    header.collectionFormat ? `collection: ${header.collectionFormat}` : undefined,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -933,10 +888,7 @@ function responseHeaderDisplay(header, missing) {
 function responseDisplay(response, missing) {
   if (!response) return missing;
   return (
-    [
-      response.statusKind,
-      response.schema ? structuralSchemaDisplay(response.schema) : undefined,
-    ]
+    [response.statusKind, response.schema ? structuralSchemaDisplay(response.schema) : undefined]
       .filter(Boolean)
       .join(" · ") || "present"
   );
@@ -948,17 +900,11 @@ function responseDisplay(response, missing) {
  * @returns {ContractChangeRow[]}
  */
 function responseContractRows(before = [], after = []) {
-  const beforeResponses = new Map(
-    before.map((response) => [response.status, response]),
-  );
-  const afterResponses = new Map(
-    after.map((response) => [response.status, response]),
-  );
+  const beforeResponses = new Map(before.map((response) => [response.status, response]));
+  const afterResponses = new Map(after.map((response) => [response.status, response]));
   /** @type {ContractChangeRow[]} */
   const rows = [];
-  for (const status of [
-    ...new Set([...beforeResponses.keys(), ...afterResponses.keys()]),
-  ].sort()) {
+  for (const status of [...new Set([...beforeResponses.keys(), ...afterResponses.keys()])].sort()) {
     const previous = beforeResponses.get(status);
     const current = afterResponses.get(status);
     const responseArea = `response ${status}`;
@@ -977,24 +923,12 @@ function responseContractRows(before = [], after = []) {
         after: current.statusKind ?? "unknown",
       });
     }
-    rows.push(
-      ...schemaContractRows(
-        previous.schema,
-        current.schema,
-        `${responseArea}.body`,
-      ),
-    );
+    rows.push(...schemaContractRows(previous.schema, current.schema, `${responseArea}.body`));
     const beforeHeaders = new Map(
-      (previous.headers ?? []).map((header) => [
-        header.name?.toLowerCase() ?? "",
-        header,
-      ]),
+      (previous.headers ?? []).map((header) => [header.name?.toLowerCase() ?? "", header]),
     );
     const afterHeaders = new Map(
-      (current.headers ?? []).map((header) => [
-        header.name?.toLowerCase() ?? "",
-        header,
-      ]),
+      (current.headers ?? []).map((header) => [header.name?.toLowerCase() ?? "", header]),
     );
     for (const headerName of [
       ...new Set([...beforeHeaders.keys(), ...afterHeaders.keys()]),
@@ -1041,18 +975,9 @@ function simpleContractRows(before, after, area) {
     /** @type {ContractChangeRow[]} */
     const rows = [];
     for (const key of [
-      ...new Set([
-        ...Object.keys(beforeObject ?? {}),
-        ...Object.keys(afterObject ?? {}),
-      ]),
+      ...new Set([...Object.keys(beforeObject ?? {}), ...Object.keys(afterObject ?? {})]),
     ].sort()) {
-      rows.push(
-        ...simpleContractRows(
-          beforeObject?.[key],
-          afterObject?.[key],
-          `${area}.${key}`,
-        ),
-      );
+      rows.push(...simpleContractRows(beforeObject?.[key], afterObject?.[key], `${area}.${key}`));
     }
     if (rows.length) return rows;
   }
@@ -1080,19 +1005,18 @@ function structuralOperationRows(operation) {
   const operationExists = (value) =>
     Boolean(
       value &&
-        (value.method ||
-          value.path ||
-          value.request ||
-          value.parameters?.length ||
-          value.responses?.length),
+      (value.method ||
+        value.path ||
+        value.request ||
+        value.parameters?.length ||
+        value.responses?.length),
     );
   const beforeExists = operationExists(operation.before);
   const afterExists = operationExists(operation.after);
   if (beforeExists !== afterExists) {
     /** @param {AssessmentFact | undefined} value @param {string} missing */
     const display = (value, missing) =>
-      [value?.method?.toUpperCase(), value?.path].filter(Boolean).join(" ") ||
-      missing;
+      [value?.method?.toUpperCase(), value?.path].filter(Boolean).join(" ") || missing;
     return [
       {
         area: "operation",
@@ -1109,25 +1033,12 @@ function structuralOperationRows(operation) {
     const after = operation.after?.[field];
     if (field === "parameters") {
       rows.push(
-        ...parameterContractRows(
-          operation.before?.parameters,
-          operation.after?.parameters,
-        ),
+        ...parameterContractRows(operation.before?.parameters, operation.after?.parameters),
       );
     } else if (field === "request") {
-      rows.push(
-        ...requestContractRows(
-          operation.before?.request,
-          operation.after?.request,
-        ),
-      );
+      rows.push(...requestContractRows(operation.before?.request, operation.after?.request));
     } else if (field === "responses") {
-      rows.push(
-        ...responseContractRows(
-          operation.before?.responses,
-          operation.after?.responses,
-        ),
-      );
+      rows.push(...responseContractRows(operation.before?.responses, operation.after?.responses));
     } else if (field === "paging" || field === "lro") {
       rows.push(...simpleContractRows(before, after, field));
     } else if (field === "operation") {
@@ -1157,19 +1068,11 @@ function structuralOperationRows(operation) {
  * @param {string} [semanticIntentId]
  * @returns {ContractChangeRow[]}
  */
-export function operationContractRows(
-  operation,
-  restFindings = [],
-  semanticIntentId,
-) {
+export function operationContractRows(operation, restFindings = [], semanticIntentId) {
   const detailedRows = restFindings
-    .filter((finding) =>
-      findingMatchesOperation(finding, operation, semanticIntentId),
-    )
+    .filter((finding) => findingMatchesOperation(finding, operation, semanticIntentId))
     .map(restContractDelta);
-  const rows = detailedRows.length
-    ? detailedRows
-    : structuralOperationRows(operation);
+  const rows = detailedRows.length ? detailedRows : structuralOperationRows(operation);
   return [
     ...new Map(
       rows
@@ -1180,10 +1083,7 @@ export function operationContractRows(
             left.before.localeCompare(right.before) ||
             left.after.localeCompare(right.after),
         )
-        .map((row) => [
-          `${row.area}\u0000${row.before}\u0000${row.after}`,
-          row,
-        ]),
+        .map((row) => [`${row.area}\u0000${row.before}\u0000${row.after}`, row]),
     ).values(),
   ];
 }
@@ -1292,9 +1192,7 @@ export function restContractCards(findings = []) {
     card.sources.push(...(finding.sources ?? []));
     const { before, after } = operationFacts(finding);
     for (const operationId of finding.operationIds ?? []) {
-      const fact = [after, before].find(
-        (item) => item?.operationId === operationId,
-      );
+      const fact = [after, before].find((item) => item?.operationId === operationId);
       card.operations.push({
         operationId,
         apiVersion: fact?.apiVersion,
@@ -1302,10 +1200,7 @@ export function restContractCards(findings = []) {
         path: fact?.path,
       });
     }
-    if (
-      (severityOrder[finding.severity] ?? 0) >
-      (severityOrder[card.severity] ?? 0)
-    ) {
+    if ((severityOrder[finding.severity] ?? 0) > (severityOrder[card.severity] ?? 0)) {
       card.severity = finding.severity;
     }
   }
@@ -1321,9 +1216,7 @@ export function restContractCards(findings = []) {
       ];
       card.relatedSemanticIntents = [...new Set(card.relatedSemanticIntents)];
       card.sources = [
-        ...new Map(
-          card.sources.map((source) => [source.id ?? source.path, source]),
-        ).values(),
+        ...new Map(card.sources.map((source) => [source.id ?? source.path, source])).values(),
       ];
       return card;
     })
@@ -1338,26 +1231,20 @@ function legacyEvidence(evidence) {
   const remaining = [];
   for (const rawItem of evidence) {
     const item = displayValue(rawItem);
-    const parameter = item.match(
-      /^(.+) changed (\d+) parameter contract\(s\)\.$/,
-    );
+    const parameter = item.match(/^(.+) changed (\d+) parameter contract\(s\)\.$/);
     if (parameter) {
       details.operation = parameter[1];
       const count = Number(parameter[2]);
       details.impact = `${count} parameter contract${count === 1 ? "" : "s"} changed`;
       continue;
     }
-    const response = item.match(
-      /^(.+) changed an existing response contract\.$/,
-    );
+    const response = item.match(/^(.+) changed an existing response contract\.$/);
     if (response) {
       details.operation = response[1];
       details.impact = "Existing response contract changed";
       continue;
     }
-    const request = item.match(
-      /^Compared REST operation:\s*([^:]+):([A-Z]+):(.*)\.$/i,
-    );
+    const request = item.match(/^Compared REST operation:\s*([^:]+):([A-Z]+):(.*)\.$/i);
     if (request) {
       details.apiVersion = request[1];
       details.method = request[2].toUpperCase();
@@ -1388,8 +1275,7 @@ function legacyFindingCards(findings = [], downstream = false) {
   return findings
     .map((finding) => {
       const omittedRestEvidence =
-        downstream &&
-        finding.evidence?.some((item) => /^Approved REST finding:/i.test(item));
+        downstream && finding.evidence?.some((item) => /^Approved REST finding:/i.test(item));
       const evidence = (finding.evidence ?? []).filter(
         (item) => !downstream || !/^Approved REST finding:/i.test(item),
       );
@@ -1420,34 +1306,25 @@ ${downstream ? "" : `<p class="sources"><strong>Changed TypeSpec:</strong> ${sou
 function directLegacyDownstreamFindings(findings = []) {
   return findings.filter(
     (finding) =>
-      !finding.evidence?.some((item) =>
-        /^Approved REST finding:/i.test(displayValue(item)),
-      ),
+      !finding.evidence?.some((item) => /^Approved REST finding:/i.test(displayValue(item))),
   );
 }
 
 /** @param {AssessmentTypeImpact[]} [impacts] */
 export function visibleSharedTypeImpacts(impacts = []) {
   return impacts.filter(
-    (impact) =>
-      (impact.findingIds?.length ?? 0) > 0 ||
-      (impact.affectedMethodCount ?? 0) > 0,
+    (impact) => (impact.findingIds?.length ?? 0) > 0 || (impact.affectedMethodCount ?? 0) > 0,
   );
 }
 
 /** @param {AssessmentOutput["dimensions"]["downstream"]} dimension */
 export function downstreamTypeCards(dimension) {
-  const findingsById = new Map(
-    (dimension.findings ?? []).map((finding) => [finding.id, finding]),
-  );
+  const findingsById = new Map((dimension.findings ?? []).map((finding) => [finding.id, finding]));
   /** @type {Map<string, DownstreamTypeCard>} */
   const cards = new Map();
-  const impacts =
-    dimension.typeImpacts ?? dimension.sharedTypeImpacts ?? [];
+  const impacts = dimension.typeImpacts ?? dimension.sharedTypeImpacts ?? [];
   for (const impact of visibleSharedTypeImpacts(impacts)) {
-    const types = impact.type
-      ? [impact.type]
-      : [...new Set(impact.types ?? [])].sort();
+    const types = impact.type ? [impact.type] : [...new Set(impact.types ?? [])].sort();
     for (const [index, type] of types.entries()) {
       let card = cards.get(type);
       if (!card) {
@@ -1468,14 +1345,10 @@ export function downstreamTypeCards(dimension) {
       });
       card.findings.push(...matchedFindings);
       card.relatedSemanticIntents.push(
-        ...matchedFindings.flatMap(
-          (finding) => finding.relatedSemanticIntents ?? [],
-        ),
+        ...matchedFindings.flatMap((finding) => finding.relatedSemanticIntents ?? []),
       );
       if (types.length === 1 && !matchedFindings.length) {
-        card.relatedSemanticIntents.push(
-          ...(impact.relatedSemanticIntents ?? []),
-        );
+        card.relatedSemanticIntents.push(...(impact.relatedSemanticIntents ?? []));
       }
       card.affectedMethods.push(...(impact.affectedMethods ?? []));
       card.locations.push(...(impact.locations ?? []));
@@ -1483,10 +1356,7 @@ export function downstreamTypeCards(dimension) {
         if (!id) continue;
         card.rootCauses.push({
           id,
-          kind:
-            typeof impact.rootCause === "string"
-              ? impact.rootCause
-              : undefined,
+          kind: typeof impact.rootCause === "string" ? impact.rootCause : undefined,
           summary: impact.summary,
         });
       }
@@ -1497,22 +1367,14 @@ export function downstreamTypeCards(dimension) {
   const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
   return [...cards.values()]
     .map((card) => {
-      card.findings = [
-        ...new Map(
-          card.findings.map((finding) => [finding.id, finding]),
-        ).values(),
-      ];
+      card.findings = [...new Map(card.findings.map((finding) => [finding.id, finding])).values()];
       card.relatedSemanticIntents = [...new Set(card.relatedSemanticIntents)];
       card.locations = [...new Set(card.locations)].sort();
       card.affectedMethods = [
-        ...new Map(
-          card.affectedMethods.map((method) => [method.symbol, method]),
-        ).values(),
+        ...new Map(card.affectedMethods.map((method) => [method.symbol, method])).values(),
       ];
       card.rootCauses = [
-        ...new Map(
-          card.rootCauses.map((rootCause) => [rootCause.id, rootCause]),
-        ).values(),
+        ...new Map(card.rootCauses.map((rootCause) => [rootCause.id, rootCause])).values(),
       ];
       card.legacyImpactIds = [...new Set(card.legacyImpactIds)];
       card.severity = card.findings.reduce(
@@ -1551,8 +1413,7 @@ function contractSummary(value, field) {
         .join(", ") || "None"
     );
   }
-  if (field === "request")
-    return isRecord(value) ? displayValue(value.kind ?? "present") : "None";
+  if (field === "request") return isRecord(value) ? displayValue(value.kind ?? "present") : "None";
   if (field === "paging" || field === "lro") return value ? "present" : "None";
   return displayValue(value);
 }
@@ -1595,9 +1456,7 @@ function sourceStartLine(source, hunk) {
   if (Number.isFinite(hunkStartLine)) return hunkStartLine;
   const declarationLines = (source.declarations ?? [])
     .flatMap((declaration) =>
-      declaration.hunkIds?.includes(hunk.id)
-        ? [declaration.source?.startLine]
-        : [],
+      declaration.hunkIds?.includes(hunk.id) ? [declaration.source?.startLine] : [],
     )
     .filter(Number.isFinite);
   return Math.min(...declarationLines, Number.MAX_SAFE_INTEGER);
@@ -1607,9 +1466,7 @@ function sourceStartLine(source, hunk) {
 export function representativeSource(item) {
   const operationHunkIds = new Set(
     (item.operations ?? []).flatMap((operation) =>
-      (operation.sources ?? []).flatMap((source) =>
-        (source.hunks ?? []).map((hunk) => hunk.id),
-      ),
+      (operation.sources ?? []).flatMap((source) => (source.hunks ?? []).map((hunk) => hunk.id)),
     ),
   );
   const candidates = (item.sources ?? []).flatMap((source) =>
@@ -1636,9 +1493,7 @@ export function representativeSource(item) {
       }
     }
     return (
-      String(left.source.path ?? "").localeCompare(
-        String(right.source.path ?? ""),
-      ) ||
+      String(left.source.path ?? "").localeCompare(String(right.source.path ?? "")) ||
       left.startLine - right.startLine ||
       String(left.hunk.id ?? "").localeCompare(String(right.hunk.id ?? ""))
     );
@@ -1671,13 +1526,8 @@ ${renderSourceHunks([source])}
  * @param {string} semanticIntentId
  */
 function operationCard(operation, restFindings, semanticIntentId) {
-  const unchangedOutcome =
-    "HTTP signature and represented payload contract unchanged.";
-  const rows = operationContractRows(
-    operation,
-    restFindings,
-    semanticIntentId,
-  );
+  const unchangedOutcome = "HTTP signature and represented payload contract unchanged.";
+  const rows = operationContractRows(operation, restFindings, semanticIntentId);
   const changes = rows.length
     ? `<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody>${renderContractChangeRows(rows)}</tbody></table>`
     : `<p class="good"><strong>${unchangedOutcome}</strong></p>`;
@@ -1699,8 +1549,7 @@ function semanticFindingReferences(item, compliance, downstream) {
     ...(compliance.findings ?? [])
       .filter(
         (finding) =>
-          finding.semanticIntentId === item.id ||
-          finding.relatedSemanticIntents?.includes(item.id),
+          finding.semanticIntentId === item.id || finding.relatedSemanticIntents?.includes(item.id),
       )
       .map((finding) => finding.id),
   ]);
@@ -1800,15 +1649,9 @@ function semanticCard(item, compliance, restFindings, downstream) {
   const all = item.operations ?? [];
   const shown = all.slice(0, 3);
   const operationContent = all.length
-    ? shown
-        .map((operation) => operationCard(operation, restFindings, item.id))
-        .join("\n")
+    ? shown.map((operation) => operationCard(operation, restFindings, item.id)).join("\n")
     : '<p class="empty">No directly affected REST operation.</p>';
-  const findingReferences = semanticFindingReferences(
-    item,
-    compliance,
-    downstream,
-  );
+  const findingReferences = semanticFindingReferences(item, compliance, downstream);
   return `<details class="intent" id="intent-${anchor(item.id)}"><summary><strong><span class="action">${escapeHtml(item.action)}</span> ${escapeHtml(item.title)}</strong>${semanticFindingBadge(findingReferences, item.id)}</summary><div class="intent-body">
 <p>${escapeHtml(item.summary)}</p>
 ${representativeExample(item)}
@@ -1832,8 +1675,7 @@ function downstreamOperationGroups(dimension) {
     client: "Client",
   };
   /** @param {unknown} item */
-  const value = (item) =>
-    typeof item === "string" ? item : (JSON.stringify(item) ?? "");
+  const value = (item) => (typeof item === "string" ? item : (JSON.stringify(item) ?? ""));
   /** @param {AssessmentMethodParameterChanges} changes */
   const parameterSummary = (changes) => {
     const parts = [
@@ -1843,10 +1685,7 @@ function downstreamOperationGroups(dimension) {
       ["reordered", changes.reordered?.length],
       ["unchanged", changes.unchangedCount],
     ].filter(([, count]) => count);
-    return (
-      parts.map(([label, count]) => `${count} ${label}`).join(", ") ||
-      "unchanged"
-    );
+    return parts.map(([label, count]) => `${count} ${label}`).join(", ") || "unchanged";
   };
   /**
    * @param {string} cellValue
@@ -1879,13 +1718,8 @@ function downstreamOperationGroups(dimension) {
         ...(method?.operation?.bodyParam ? [method.operation.bodyParam] : []),
       ];
       for (const parameter of protocolParameters) {
-        const segments = (parameter.methodParameterSegments ?? [])
-          .flat(Infinity)
-          .map(displayValue);
-        if (
-          parameter.name === parameterName ||
-          segments.includes(parameterName)
-        ) {
+        const segments = (parameter.methodParameterSegments ?? []).flat(Infinity).map(displayValue);
+        if (parameter.name === parameterName || segments.includes(parameterName)) {
           if (parameter.kind) locations.add(parameter.kind);
         }
       }
@@ -1899,9 +1733,7 @@ function downstreamOperationGroups(dimension) {
       header: "header",
       body: "body",
     };
-    return labels[location]
-      ? `Request ${labels[location]}`
-      : "Method parameter";
+    return labels[location] ? `Request ${labels[location]}` : "Method parameter";
   };
   /**
    * @param {AssessmentMethodGroup} group
@@ -1959,20 +1791,14 @@ function downstreamOperationGroups(dimension) {
   const groups = methodGroups
     .map((group) => {
       const rows = methodContractRows(group);
-      const parameterDelta = group.deltas.find(
-        (delta) => delta.field === "parameters",
-      );
+      const parameterDelta = group.deltas.find((delta) => delta.field === "parameters");
       const addedParameters = parameterDelta?.changes?.added ?? [];
       const changeSummary =
-        group.deltas.length === 1 &&
-        addedParameters.length === 1 &&
-        rows.length === 1
+        group.deltas.length === 1 && addedParameters.length === 1 && rows.length === 1
           ? `An ${addedParameters[0].parameter.optional ? "optional" : "required"} parameter was added to the generated public method signature`
           : `${rows.length} generated SDK method contract ${rows.length === 1 ? "member changed" : "members changed"}`;
       const rationale = [
-        ...new Set(
-          group.deltas.map((delta) => delta.rationale).filter(Boolean),
-        ),
+        ...new Set(group.deltas.map((delta) => delta.rationale).filter(Boolean)),
       ].join(" ");
       const parameterDetail = parameterDelta
         ? parameterSummary(parameterDelta.changes ?? {})
@@ -1995,9 +1821,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
     })
     .join("\n");
   const groupedFindingIds = new Set(
-    methodGroups.flatMap((group) =>
-      group.deltas.map((delta) => delta.findingId),
-    ),
+    methodGroups.flatMap((group) => group.deltas.map((delta) => delta.findingId)),
   );
   /** @param {string} type */
   const shortTypeName = (type) => type.split(".").at(-1) ?? type;
@@ -2030,21 +1854,13 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
         areaKind: "Enum shape",
         member: shortTypeName(card.type),
         before: enumShape(before),
-        beforeDetail: before.isFixed
-          ? "Only declared values are represented."
-          : undefined,
+        beforeDetail: before.isFixed ? "Only declared values are represented." : undefined,
         after: enumShape(after),
-        afterDetail: after.isUnionAsEnum
-          ? "Unknown service values are accepted."
-          : undefined,
+        afterDetail: after.isUnionAsEnum ? "Unknown service values are accepted." : undefined,
       });
     }
-    const beforeByValue = new Map(
-      (before.values ?? []).map((item) => [String(item.value), item]),
-    );
-    const afterByValue = new Map(
-      (after.values ?? []).map((item) => [String(item.value), item]),
-    );
+    const beforeByValue = new Map((before.values ?? []).map((item) => [String(item.value), item]));
+    const afterByValue = new Map((after.values ?? []).map((item) => [String(item.value), item]));
     for (const [wireValue, previous] of beforeByValue) {
       const current = afterByValue.get(wireValue);
       if (current && current.name !== previous.name) {
@@ -2098,8 +1914,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
   /** @param {AssessmentFinding} finding */
   const typeFacts = (finding) => ({
     before: finding.evidence?.find(
-      (fact) =>
-        fact.factKind === "model" && fact.comparisonRole === "baseline",
+      (fact) => fact.factKind === "model" && fact.comparisonRole === "baseline",
     ),
     after: finding.evidence?.find(
       (fact) => fact.factKind === "model" && fact.comparisonRole === "target",
@@ -2133,12 +1948,8 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       const name = propertyName(finding);
       const { before, after } = typeFacts(finding);
       if (!name || (!before && !after)) return [];
-      const beforeProperty = before?.properties?.find(
-        (property) => property.name === name,
-      );
-      const afterProperty = after?.properties?.find(
-        (property) => property.name === name,
-      );
+      const beforeProperty = before?.properties?.find((property) => property.name === name);
+      const afterProperty = after?.properties?.find((property) => property.name === name);
       return [
         {
           areaKind: typePropertyAreaKind(card),
@@ -2156,12 +1967,8 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
   const publicSurfaceRows = (card, findings) =>
     findings.flatMap((finding) => {
       if (finding.rule !== "public-surface-changed") return [];
-      const before = finding.evidence?.find(
-        (fact) => fact.comparisonRole === "baseline",
-      );
-      const after = finding.evidence?.find(
-        (fact) => fact.comparisonRole === "target",
-      );
+      const before = finding.evidence?.find((fact) => fact.comparisonRole === "baseline");
+      const after = finding.evidence?.find((fact) => fact.comparisonRole === "target");
       /** @param {AssessmentFact | undefined} fact */
       const display = (fact) =>
         fact
@@ -2169,9 +1976,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
               fact.access,
               fact.reachable === true ? "reachable" : undefined,
               fact.reachable === false ? "not reachable" : undefined,
-              fact.usage !== undefined
-                ? `usage ${fact.usage.join(", ")}`
-                : undefined,
+              fact.usage !== undefined ? `usage ${fact.usage.join(", ")}` : undefined,
             ]
               .filter(Boolean)
               .join(" · ")
@@ -2197,8 +2002,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
         finding.actual?.match(/\bunder\s+([A-Za-z0-9_.]+)\b/)?.[1] ??
         finding.actual?.match(/\bto\s+([A-Za-z0-9_.]+)\b/)?.[1] ??
         "changed client";
-      const language =
-        finding.actual?.match(/\bgenerated\s+([A-Za-z0-9+#.]+)\s+client/i)?.[1];
+      const language = finding.actual?.match(/\bgenerated\s+([A-Za-z0-9+#.]+)\s+client/i)?.[1];
       return [
         {
           areaKind: "Client location",
@@ -2233,9 +2037,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       : '<p class="mapping-unavailable"><strong>Affected SDK methods:</strong> mapping unavailable</p>';
   const typeCards = downstreamTypeCards(dimension)
     .map((card) => {
-      const directFindings = card.findings.filter(
-        (finding) => !groupedFindingIds.has(finding.id),
-      );
+      const directFindings = card.findings.filter((finding) => !groupedFindingIds.has(finding.id));
       const enumRows = enumContractRows(card);
       const modelRows = modelContractRows(card, directFindings);
       const structuredRows = [
@@ -2255,9 +2057,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
           ]
         : genericContractRows(card, directFindings);
       const shapeRow = enumRows.find((row) => row.kind === "shape");
-      const memberChangeCount = enumRows.filter(
-        (row) => row.kind === "member",
-      ).length;
+      const memberChangeCount = enumRows.filter((row) => row.kind === "member").length;
       const propertyChangeCount = modelRows.length;
       const changeSummary = shapeRow
         ? `${shapeRow.before} changed to ${/^[aeiou]/i.test(shapeRow.after) ? "an" : "a"} ${shapeRow.after}${memberChangeCount ? `, with ${memberChangeCount} generated member ${memberChangeCount === 1 ? "renamed" : "changes"}` : ""}`
@@ -2267,9 +2067,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
             ? `${propertyChangeCount} SDK type ${propertyChangeCount === 1 ? "property changed" : "properties changed"}`
             : `${contractRows.length} SDK type contract ${contractRows.length === 1 ? "change" : "changes"}`;
       const rationale = [
-        ...new Set(
-          directFindings.map((finding) => finding.rationale).filter(Boolean),
-        ),
+        ...new Set(directFindings.map((finding) => finding.rationale).filter(Boolean)),
       ].join(" ");
       const legacyAnchors = card.legacyImpactIds
         .map((id) => `<span id="downstream-${anchor(id)}"></span>`)
@@ -2290,10 +2088,7 @@ ${affectedMethods(card.affectedMethods)}
 </div></details>`;
     })
     .join("\n");
-  const legacy = legacyFindingCards(
-    directLegacyDownstreamFindings(dimension.legacyFindings),
-    true,
-  );
+  const legacy = legacyFindingCards(directLegacyDownstreamFindings(dimension.legacyFindings), true);
   return `${groups}${typeCards}${legacy}`;
 }
 
@@ -2323,27 +2118,25 @@ function renderCurrent(assessment, options = {}) {
   const report = renderReportSections(assessment, reportHelpers, options);
   summary.restCount = report.restCount;
   summary.downstreamCount = report.downstreamCount;
-  const restStatus = complianceStatus(dimensions.rest.status ?? (summary.restCount ? "failed" : "not-assessed"));
-  const downstreamStatus = complianceStatus(dimensions.downstream.status ?? (summary.downstreamCount ? "failed" : "not-assessed"));
+  const restStatus = complianceStatus(
+    dimensions.rest.status ?? (summary.restCount ? "failed" : "not-assessed"),
+  );
+  const downstreamStatus = complianceStatus(
+    dimensions.downstream.status ?? (summary.downstreamCount ? "failed" : "not-assessed"),
+  );
   const documentQuality = documentQualitySummary(dimensions.documentQuality);
   const documentStatus = complianceStatus(documentQuality.findingStatus);
   /** @type {Map<string, Partial<ArtifactComparison>>} */
   const comparisons = new Map(
-    (assessment.artifactComparisons ?? []).map((item) => [
-      item.projectId,
-      item,
-    ]),
+    (assessment.artifactComparisons ?? []).map((item) => [item.projectId, item]),
   );
   const comparisonHeader = headerComparison(assessment);
   const projects = (assessment.projects ?? [])
     .map((project) => {
       /** @type {Partial<ArtifactComparison>} */
-      const comparison =
-        comparisons.get(project.id) ?? project.artifactComparison ?? {};
-      const baselineArtifact =
-        project.artifacts?.baseline ?? project.artifacts?.base;
-      const targetArtifact =
-        project.artifacts?.target ?? project.artifacts?.current;
+      const comparison = comparisons.get(project.id) ?? project.artifactComparison ?? {};
+      const baselineArtifact = project.artifacts?.baseline ?? project.artifacts?.base;
+      const targetArtifact = project.artifacts?.target ?? project.artifacts?.current;
       return `<tr><td><code>${escapeHtml(project.path)}</code></td><td>${escapeHtml(comparison.mode ?? "legacy")}</td><td><code>${escapeHtml(artifactLabel(comparison.baseline))}</code><br><small>${escapeHtml(comparison.baseline?.sourceRevision ?? "base")} · ${escapeHtml(comparison.baseline?.reason ?? "")}</small></td><td><code>${escapeHtml(artifactLabel(comparison.target))}</code><br><small>${escapeHtml(comparison.target?.sourceRevision ?? "current")} · ${escapeHtml(comparison.target?.reason ?? "")}</small></td><td>${escapeHtml(baselineArtifact?.autorest?.status ?? "n/a")} / ${escapeHtml(baselineArtifact?.tcgc?.status ?? "n/a")}</td><td>${escapeHtml(targetArtifact?.autorest?.status ?? "n/a")} / ${escapeHtml(targetArtifact?.tcgc?.status ?? "n/a")}</td></tr>`;
     })
     .join("");
@@ -2382,7 +2175,9 @@ ${report.html}
 ${complianceEvidenceAppendix(dimensions.compliance)}
 <h3>Changed files</h3><ul>${(assessment.changedFiles ?? []).map((file) => `<li><code>${escapeHtml(file.path)}</code> (${escapeHtml(file.origins.join(", "))})</li>`).join("")}</ul>
 <h3>Timing and model input</h3><pre>${escapeHtml(JSON.stringify({ timings: assessment.timings, inputAccounting: assessment.inputAccounting }, null, 2))}</pre>
-<p><strong>Provenance:</strong> ${Object.values(assessment.provenance ?? {}).map(escapeHtml).join(", ")}</p></div></details></section>
+<p><strong>Provenance:</strong> ${Object.values(assessment.provenance ?? {})
+    .map(escapeHtml)
+    .join(", ")}</p></div></details></section>
 </main>
 <script>
 function revealHashTarget() {
@@ -2425,8 +2220,7 @@ function adaptLegacy(assessment) {
   );
   const legacyProjects = (assessment.projects ?? []).map((projectPath) => {
     const projectDiffs = typeSpecDiffs.filter(
-      (diff) =>
-        diff.path === projectPath || diff.path.startsWith(`${projectPath}/`),
+      (diff) => diff.path === projectPath || diff.path.startsWith(`${projectPath}/`),
     );
     const base = extractApiVersions(
       projectDiffs.map((diff) =>
@@ -2476,13 +2270,9 @@ function adaptLegacy(assessment) {
         : hasCodeSafetyFinding
           ? "failed"
           : "passed";
-  const restFindingIds = new Set(
-    dimensions.restBreakingChanges.findings.map(({ id }) => id),
-  );
+  const restFindingIds = new Set(dimensions.restBreakingChanges.findings.map(({ id }) => id));
   const downstreamFindingIds = new Set(
-    dimensions.restCompatibleDownstreamBreakingChanges.findings.map(
-      ({ id }) => id,
-    ),
+    dimensions.restCompatibleDownstreamBreakingChanges.findings.map(({ id }) => id),
   );
   /** @type {Record<"added" | "modified" | "removed", "add" | "modify" | "remove">} */
   const action = { added: "add", modified: "modify", removed: "remove" };
@@ -2502,12 +2292,7 @@ function adaptLegacy(assessment) {
         (item) =>
           item.path === reference.path &&
           item.revision === reference.revision &&
-          rangesOverlap(
-            item.startLine,
-            item.endLine,
-            reference.startLine,
-            reference.endLine,
-          ),
+          rangesOverlap(item.startLine, item.endLine, reference.startLine, reference.endLine),
       )?.link ?? reference.link
     );
   };
@@ -2521,10 +2306,8 @@ function adaptLegacy(assessment) {
     references.map((reference, index) => {
       const matchingDiff = diffs.find((diff) => {
         if (diff.path !== reference.path) return false;
-        const start =
-          reference.revision === "head" ? diff.newStart : diff.oldStart;
-        const count =
-          reference.revision === "head" ? diff.newCount : diff.oldCount;
+        const start = reference.revision === "head" ? diff.newStart : diff.oldStart;
+        const count = reference.revision === "head" ? diff.newCount : diff.oldCount;
         return (
           typeof start === "number" &&
           Number.isFinite(start) &&
@@ -2576,11 +2359,7 @@ function adaptLegacy(assessment) {
   /** @param {string} findingId */
   const relatedSemanticIntents = (findingId) =>
     semanticItems
-      .filter((item) =>
-        item.changes.some((change) =>
-          change.linkedFindingIds?.includes(findingId),
-        ),
-      )
+      .filter((item) => item.changes.some((change) => change.linkedFindingIds?.includes(findingId)))
       .map(({ id }) => id);
   /**
    * @param {LegacyAssessmentFindingInput[]} findings
@@ -2590,18 +2369,13 @@ function adaptLegacy(assessment) {
     findings.map((finding) => ({
       ...finding,
       relatedSemanticIntents: relatedSemanticIntents(finding.id),
-      sources: toSources(
-        finding.sourceReferences,
-        [],
-        `legacy-finding-${finding.id}`,
-      ),
+      sources: toSources(finding.sourceReferences, [], `legacy-finding-${finding.id}`),
     }));
   /** @type {(ComplianceFinding & {id: string})[]} */
   const legacyComplianceFindings =
     dimensions.azureCompliance.findings?.map((finding) => ({
       ...finding,
-      semanticIntentId:
-        relatedSemanticIntents(finding.id)[0] ?? finding.id,
+      semanticIntentId: relatedSemanticIntents(finding.id)[0] ?? finding.id,
       decision: "applicable-fail",
       actual: finding.summary ?? "",
       gap: finding.summary ?? "",
@@ -2624,9 +2398,7 @@ function adaptLegacy(assessment) {
   return {
     schemaVersion: 1,
     title: assessment.title,
-    pullRequest: assessment.url
-      ? { number: assessment.pr, url: assessment.url }
-      : undefined,
+    pullRequest: assessment.url ? { number: assessment.pr, url: assessment.url } : undefined,
     comparison: {
       baseCommit: assessment.baseline.commit,
       headCommit: assessment.head.commit,
@@ -2657,23 +2429,19 @@ function adaptLegacy(assessment) {
             )?.id ??
             legacyProjects[0]?.id ??
             "legacy";
-          const operationIds = (
-            item.restRepresentation?.operations ?? []
-          ).map((operation) => operation.operationId);
+          const operationIds = (item.restRepresentation?.operations ?? []).map(
+            (operation) => operation.operationId,
+          );
           return {
             id: item.id,
             projectId,
             sourceChangeIds: itemSources.map((itemSource) => itemSource.id),
-            hunkIds: itemSources.flatMap((itemSource) =>
-              itemSource.hunks.map((hunk) => hunk.id),
-            ),
+            hunkIds: itemSources.flatMap((itemSource) => itemSource.hunks.map((hunk) => hunk.id)),
             declarationIds: itemSources.flatMap((itemSource) =>
               itemSource.declarations.map((declaration) => declaration.id),
             ),
             declarationNames: itemSources.flatMap((itemSource) =>
-              itemSource.declarations.map(
-                (declaration) => declaration.qualifiedName,
-              ),
+              itemSource.declarations.map((declaration) => declaration.qualifiedName),
             ),
             ownedOperationIds: operationIds,
             operationIds,
@@ -2682,32 +2450,21 @@ function adaptLegacy(assessment) {
             changedAspects: [],
             action: change.kind ? (action[change.kind] ?? "modify") : "modify",
             title: item.intent,
-            summary:
-              item.restRepresentation?.summary ?? change.summary ?? item.intent,
-            operations: (item.restRepresentation?.operations ?? []).map(
-              (operation) => ({
-                ...operation,
-                sourceChangeIds: [],
-                hunkIds: [],
-                declarationIds: [],
-                matchBasis: "legacy",
-                apiVersion:
-                  operation.apiVersion ??
-                  operation.apiVersions?.join(", ") ??
-                  "",
-                changedAspects: [],
-                outcome:
-                  change.effect ??
-                  item.restRepresentation?.summary ??
-                  change.summary,
-              }),
-            ),
+            summary: item.restRepresentation?.summary ?? change.summary ?? item.intent,
+            operations: (item.restRepresentation?.operations ?? []).map((operation) => ({
+              ...operation,
+              sourceChangeIds: [],
+              hunkIds: [],
+              declarationIds: [],
+              matchBasis: "legacy",
+              apiVersion: operation.apiVersion ?? operation.apiVersions?.join(", ") ?? "",
+              changedAspects: [],
+              outcome: change.effect ?? item.restRepresentation?.summary ?? change.summary,
+            })),
             sources: itemSources,
             relatedFindings: {
               rest: linkedFindingIds.filter((id) => restFindingIds.has(id)),
-              downstream: linkedFindingIds.filter((id) =>
-                downstreamFindingIds.has(id),
-              ),
+              downstream: linkedFindingIds.filter((id) => downstreamFindingIds.has(id)),
               sharedTypeImpact: [],
               compliance: linkedFindingIds.filter((id) =>
                 legacyComplianceFindings.some((finding) => finding.id === id),
@@ -2717,23 +2474,17 @@ function adaptLegacy(assessment) {
         }),
       },
       rest: {
-        status:
-          dimensions.restBreakingChanges.findings.length > 0
-            ? "failed"
-            : "passed",
+        status: dimensions.restBreakingChanges.findings.length > 0 ? "failed" : "passed",
         findings: [],
         legacyFindings: legacyFindings(dimensions.restBreakingChanges.findings),
       },
       downstream: {
         status:
-          dimensions.restCompatibleDownstreamBreakingChanges.findings.length >
-          0
+          dimensions.restCompatibleDownstreamBreakingChanges.findings.length > 0
             ? "failed"
             : "passed",
         findings: [],
-        legacyFindings: legacyFindings(
-          dimensions.restCompatibleDownstreamBreakingChanges.findings,
-        ),
+        legacyFindings: legacyFindings(dimensions.restCompatibleDownstreamBreakingChanges.findings),
         operationGroups: [],
         sharedTypeImpacts: [],
         ...{ impliedByRest: [] },
@@ -2746,8 +2497,7 @@ function adaptLegacy(assessment) {
         coverage: {
           semanticIntentCount: 0,
           assessedIntentCount: 0,
-          selectedDocumentCount:
-            dimensions.azureCompliance.documents?.length ?? 0,
+          selectedDocumentCount: dimensions.azureCompliance.documents?.length ?? 0,
           unassessedIntentIds: [],
         },
         intentAssessments: [],
@@ -2797,10 +2547,7 @@ export function renderAssessmentHtml(assessment, options = {}) {
       };
   const errors = validateAssessment(validationInput);
   if (errors.length) throw new Error(errors.join("\n"));
-  return renderCurrent(
-    current ? assessment : adaptLegacy(assessment),
-    options,
-  );
+  return renderCurrent(current ? assessment : adaptLegacy(assessment), options);
 }
 
 if (isMain(import.meta.url)) {
@@ -2816,10 +2563,7 @@ if (isMain(import.meta.url)) {
     if (!isAssessmentInput(assessment)) {
       throw new Error("Input is not an assessment.");
     }
-    const downstreamInputPath = optionalCliPath(
-      args.downstream_input,
-      "--downstream-input",
-    );
+    const downstreamInputPath = optionalCliPath(args.downstream_input, "--downstream-input");
     const downstreamAssessmentPath = optionalCliPath(
       args.downstream_assessment,
       "--downstream-assessment",
@@ -2835,12 +2579,9 @@ if (isMain(import.meta.url)) {
       : undefined;
     if (
       downstreamAssessment !== undefined &&
-      (!isAssessmentInput(downstreamAssessment) ||
-        !isCurrentAssessment(downstreamAssessment))
+      (!isAssessmentInput(downstreamAssessment) || !isCurrentAssessment(downstreamAssessment))
     ) {
-      throw new Error(
-        "--downstream-assessment is not a current assessment.",
-      );
+      throw new Error("--downstream-assessment is not a current assessment.");
     }
     const html = renderAssessmentHtml(assessment, {
       downstreamInput,

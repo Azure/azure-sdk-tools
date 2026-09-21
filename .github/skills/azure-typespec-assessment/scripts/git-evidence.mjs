@@ -1,6 +1,6 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 
 /**
  * @typedef {{allowFailure?: boolean}} GitOptions
@@ -38,8 +38,7 @@ function git(repo, args, options = {}) {
  * @param {string} [mergeBase]
  */
 export function resolveComparison(repo, baseRef, headRef = "HEAD", mergeBase) {
-  const mergeBaseCommit =
-    mergeBase ?? git(repo, ["merge-base", headRef, baseRef]).stdout.trim();
+  const mergeBaseCommit = mergeBase ?? git(repo, ["merge-base", headRef, baseRef]).stdout.trim();
   const headCommit = git(repo, ["rev-parse", headRef]).stdout.trim();
   const remoteUrl = git(repo, ["remote", "get-url", "origin"], {
     allowFailure: true,
@@ -62,8 +61,7 @@ function nameStatus(repo, args, origin) {
     const rawCurrentPath = fields.at(-1);
     if (!code || !rawCurrentPath) return [];
     const currentPath = rawCurrentPath.replaceAll("\\", "/");
-    const previousPath =
-      fields.length > 2 ? fields[1].replaceAll("\\", "/") : undefined;
+    const previousPath = fields.length > 2 ? fields[1].replaceAll("\\", "/") : undefined;
     /** @param {string | undefined} file */
     const relevant = (file) =>
       file?.endsWith(".tsp") || path.basename(file ?? "") === "tspconfig.yaml";
@@ -71,24 +69,28 @@ function nameStatus(repo, args, origin) {
       const previousRelevant = relevant(previousPath);
       const currentRelevant = relevant(currentPath);
       if (!previousRelevant && !currentRelevant) return [];
-      return [{
-        path: currentPath,
-        previousPath,
-        status:
-          code === "C" || (!previousRelevant && currentRelevant)
-            ? "added"
-            : previousRelevant && !currentRelevant
-              ? "removed"
-              : "modified",
-        origin,
-      }];
+      return [
+        {
+          path: currentPath,
+          previousPath,
+          status:
+            code === "C" || (!previousRelevant && currentRelevant)
+              ? "added"
+              : previousRelevant && !currentRelevant
+                ? "removed"
+                : "modified",
+          origin,
+        },
+      ];
     }
     return relevant(currentPath)
-      ? [{
-          path: currentPath,
-          status: code === "A" ? "added" : code === "D" ? "removed" : "modified",
-          origin,
-        }]
+      ? [
+          {
+            path: currentPath,
+            status: code === "A" ? "added" : code === "D" ? "removed" : "modified",
+            origin,
+          },
+        ]
       : [];
   });
 }
@@ -121,23 +123,14 @@ export function collectChanges(
             ["diff", "--find-renames", "--cached", "--name-status", ...scoped],
             "staged",
           ),
-          ...nameStatus(
-            repo,
-            ["diff", "--find-renames", "--name-status", ...scoped],
-            "unstaged",
-          ),
+          ...nameStatus(repo, ["diff", "--find-renames", "--name-status", ...scoped], "unstaged"),
         ]
       : []),
   ];
   /** @type {ChangeOrigin[]} */
   const untracked = includeWorkingTree
-    ? git(repo, [
-        "ls-files",
-        "--others",
-        "--exclude-standard",
-        ...scoped,
-      ]).stdout
-        .trim()
+    ? git(repo, ["ls-files", "--others", "--exclude-standard", ...scoped])
+        .stdout.trim()
         .split(/\r?\n/)
         .filter(Boolean)
         .map((file) => ({
@@ -200,7 +193,8 @@ export function deriveServiceRoot(specification) {
   const normalized = specification.replaceAll("\\", "/").replace(/^\.?\//, "");
   if (normalized === "specification") return normalized;
   const match = /^(specification\/[^/]+)/.exec(normalized);
-  if (!match) throw new Error(`Specification must be under specification/<service>: ${specification}`);
+  if (!match)
+    throw new Error(`Specification must be under specification/<service>: ${specification}`);
   return match[1];
 }
 
@@ -210,10 +204,9 @@ export function deriveServiceRoot(specification) {
  * @returns {string}
  */
 export function normalizeSpecification(repo, specification) {
-  const relative = path.relative(
-    path.resolve(repo),
-    path.resolve(repo, specification.replaceAll("\\", "/")),
-  ).replaceAll("\\", "/");
+  const relative = path
+    .relative(path.resolve(repo), path.resolve(repo, specification.replaceAll("\\", "/")))
+    .replaceAll("\\", "/");
   deriveServiceRoot(relative);
   return relative;
 }
@@ -236,15 +229,16 @@ export function normalizeSparseRoots(sparseRoots, specification) {
         ) {
           throw new Error("Sparse roots must be under specification/<service>.");
         }
-        return path.posix.normalize(portable).replace(/^(?:\.\/)+/, "").replace(/\/$/, "");
+        return path.posix
+          .normalize(portable)
+          .replace(/^(?:\.\/)+/, "")
+          .replace(/\/$/, "");
       }),
     ),
   ].sort();
   if (
     normalized.some(
-      (root) =>
-        root !== "specification" &&
-        !/^specification\/[^/]+(?:\/.*)?$/.test(root),
+      (root) => root !== "specification" && !/^specification\/[^/]+(?:\/.*)?$/.test(root),
     )
   ) {
     throw new Error("Sparse roots must be under specification/<service>.");
@@ -313,8 +307,8 @@ export function createSparseWorktree(repo, commit, sparseRoots, destination) {
   git(destination, ["sparse-checkout", "init", "--cone"]);
   git(destination, ["sparse-checkout", "set", ...roots]);
   git(destination, ["checkout", "--detach", commit]);
-  const actualRoots = git(destination, ["sparse-checkout", "list"]).stdout
-    .trim()
+  const actualRoots = git(destination, ["sparse-checkout", "list"])
+    .stdout.trim()
     .split(/\r?\n/)
     .filter(Boolean)
     .map((item) => item.replaceAll("\\", "/"))

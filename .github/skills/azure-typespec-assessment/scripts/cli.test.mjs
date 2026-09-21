@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isMain, readJson } from "./cli.mjs";
@@ -35,10 +35,13 @@ void test("detects direct and linked entrypoints without running imported script
   fs.mkdirSync(actual);
   fs.symlinkSync(actual, linked, process.platform === "win32" ? "junction" : "dir");
   const helper = new URL("./cli.mjs", import.meta.url).href;
-  fs.writeFileSync(path.join(actual, "entry.mjs"), [
-    `import { isMain } from ${JSON.stringify(helper)};`,
-    `console.log(isMain(import.meta.url) ? "main" : "imported");`,
-  ].join("\n"));
+  fs.writeFileSync(
+    path.join(actual, "entry.mjs"),
+    [
+      `import { isMain } from ${JSON.stringify(helper)};`,
+      `console.log(isMain(import.meta.url) ? "main" : "imported");`,
+    ].join("\n"),
+  );
   for (const entry of [path.join(actual, "entry.mjs"), path.join(linked, "entry.mjs")]) {
     for (const flags of [[], ["--preserve-symlinks-main"]]) {
       const result = spawnSync(process.execPath, [...flags, entry], { encoding: "utf8" });
@@ -46,10 +49,15 @@ void test("detects direct and linked entrypoints without running imported script
       assert.equal(result.stdout.trim(), "main");
     }
   }
-  const imported = spawnSync(process.execPath, [
-    "--input-type=module", "-e",
-    `await import(${JSON.stringify(pathToFileURL(path.join(linked, "entry.mjs")).href)});`,
-  ], { encoding: "utf8" });
+  const imported = spawnSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      `await import(${JSON.stringify(pathToFileURL(path.join(linked, "entry.mjs")).href)});`,
+    ],
+    { encoding: "utf8" },
+  );
   assert.equal(imported.status, 0, imported.stderr);
   assert.equal(imported.stdout.trim(), "imported");
 });
@@ -82,12 +90,26 @@ void test("linked assessment CLI accepts absolute scope and writes its no-change
   const missing = spawnSync(process.execPath, [script], { encoding: "utf8" });
   assert.equal(missing.status, 1);
   assert.match(missing.stderr, /Missing required argument --output/);
-  for (const [name, specification] of [["absolute", scope], ["relative", "specification/widget"]]) {
+  for (const [name, specification] of [
+    ["absolute", scope],
+    ["relative", "specification/widget"],
+  ]) {
     const output = path.join(root, name);
-    const result = spawnSync(process.execPath, [
-      script, "--repo", repo, "--base", "HEAD",
-      "--specification", specification, "--output", output,
-    ], { cwd: root, encoding: "utf8" });
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        "--repo",
+        repo,
+        "--base",
+        "HEAD",
+        "--specification",
+        specification,
+        "--output",
+        output,
+      ],
+      { cwd: root, encoding: "utf8" },
+    );
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /no-changes:/);
     const manifest = /** @type {NoChangeManifest} */ (
@@ -95,25 +117,17 @@ void test("linked assessment CLI accepts absolute scope and writes its no-change
     );
     assert.equal(manifest.status, "no-changes");
     assert.deepEqual(manifest.sparseCheckout.roots, ["specification/widget"]);
-    const input = /** @type {NoChangeInput} */ (
-      readJson(path.join(output, "model-input.json"))
-    );
+    const input = /** @type {NoChangeInput} */ (readJson(path.join(output, "model-input.json")));
     assert.equal(input.status, "no-changes");
   }
 
   const commit = git(repo, "rev-parse", "HEAD");
   const immutableOutput = path.join(root, "immutable");
-  const immutable = spawnSync(process.execPath, [
-    script,
-    "--repo",
-    repo,
-    "--base",
-    commit,
-    "--head",
-    commit,
-    "--output",
-    immutableOutput,
-  ], { cwd: root, encoding: "utf8" });
+  const immutable = spawnSync(
+    process.execPath,
+    [script, "--repo", repo, "--base", commit, "--head", commit, "--output", immutableOutput],
+    { cwd: root, encoding: "utf8" },
+  );
   assert.equal(immutable.status, 0, immutable.stderr);
   const immutableManifest = /** @type {ImmutableManifest} */ (
     readJson(path.join(immutableOutput, "preparation-manifest.json"))

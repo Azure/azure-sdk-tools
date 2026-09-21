@@ -23,7 +23,8 @@ export function deriveSafety(rest, downstream) {
   }
   return {
     scope: "rest-and-downstream-only",
-    status: (rest.findings ?? []).length || (downstream.findings ?? []).length ? "failed" : "passed",
+    status:
+      (rest.findings ?? []).length || (downstream.findings ?? []).length ? "failed" : "passed",
   };
 }
 

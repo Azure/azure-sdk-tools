@@ -20,7 +20,11 @@ export interface TypeSpecAzureGuidelinesSearchEvidence {
    * @maxItems 4
    */
   rankedDocuments:
-    [] | [Document] | [Document, Document] | [Document, Document, Document] | [Document, Document, Document, Document];
+    | []
+    | [Document]
+    | [Document, Document]
+    | [Document, Document, Document]
+    | [Document, Document, Document, Document];
   retrievalAttempts: RetrievalAttempt[];
   blockers: string[];
   inputAccounting: {

@@ -106,22 +106,19 @@ function fixture() {
     rootCauses: [],
     blockers: [],
   });
-  writeJson(
-    path.join(work, "dimensions", "compliance-search-requests.json"),
-    {
-      schemaVersion: 1,
-      requests: [
-        {
-          requestId: "compliance-search-1",
-          reviewUnitId: "semantic-1",
-          sourceChangeIds: ["source-1"],
-          hunkIds: ["hunk-1"],
-          declarationIds: ["declaration-1"],
-          queryProfile: { servicePlane: "data-plane" },
-        },
-      ],
-    },
-  );
+  writeJson(path.join(work, "dimensions", "compliance-search-requests.json"), {
+    schemaVersion: 1,
+    requests: [
+      {
+        requestId: "compliance-search-1",
+        reviewUnitId: "semantic-1",
+        sourceChangeIds: ["source-1"],
+        hunkIds: ["hunk-1"],
+        declarationIds: ["declaration-1"],
+        queryProfile: { servicePlane: "data-plane" },
+      },
+    ],
+  });
   const semanticEvidence = {
     sourceChangeIds: ["source-1"],
     hunkIds: ["hunk-1"],
@@ -150,8 +147,7 @@ function fixture() {
       semanticReviewUnits: "dimensions/semantic-intents-input.json",
       restCandidates: "dimensions/rest-breaking-input.json",
       downstreamCandidates: "dimensions/downstream-breaking-input.json",
-      complianceSearchRequests:
-        "dimensions/compliance-search-requests.json",
+      complianceSearchRequests: "dimensions/compliance-search-requests.json",
     },
     evidenceSets: {
       "evidence-semantic": semanticEvidence,
@@ -204,34 +200,22 @@ void test("builds a compact complete Agent workspace", () => {
   const { work } = fixture();
   try {
     const result = buildAgentWorkspace({ work });
-    const index = /** @type {AgentWorkspaceIndex} */ (
-      readJson(result.indexPath)
-    );
+    const index = /** @type {AgentWorkspaceIndex} */ (readJson(result.indexPath));
     assert.ok(fs.statSync(result.indexPath).size < 20 * 1024);
     assert.deepEqual(index.coverage.semanticIntentIds, ["semantic-1"]);
     assert.deepEqual(index.coverage.downstreamCandidateIds, ["downstream-1"]);
-    assert.deepEqual(index.coverage.inferenceRequestIds, [
-      "inference-request-1",
-    ]);
+    assert.deepEqual(index.coverage.inferenceRequestIds, ["inference-request-1"]);
     assert.equal(index.input.path, "model-input.json");
     assert.equal(index.input.readExactlyOnce, true);
     assert.equal(index.input.bytes, fs.statSync(path.join(work, "model-input.json")).size);
     assert.equal(index.counts.assessedSemanticIntents, 1);
     assert.equal(index.counts.informationalSemanticIntents, 0);
     const decisionsDraft = /** @type {AgentDecisionsDraft} */ (
-      readJson(
-        path.join(work, "agent-workspace", "agent-decisions.draft.json"),
-      )
+      readJson(path.join(work, "agent-workspace", "agent-decisions.draft.json"))
     );
-    assert.equal(
-      decisionsDraft.inferenceResults[0].decision,
-      "__UNRESOLVED__",
-    );
+    assert.equal(decisionsDraft.inferenceResults[0].decision, "__UNRESOLVED__");
     assert.equal(decisionsDraft.semanticSummaries[0].title, "");
-    assert.equal(
-      decisionsDraft.downstreamDecisions[0].decision,
-      "__UNRESOLVED__",
-    );
+    assert.equal(decisionsDraft.downstreamDecisions[0].decision, "__UNRESOLVED__");
     const state = /** @type {TestWorkflowState} */ (
       readJson(path.join(work, "workflow-state.json"))
     );
@@ -246,14 +230,10 @@ void test("rejects mutated or unresolved canonical evidence", () => {
   const { work } = fixture();
   try {
     const modelInputPath = path.join(work, "model-input.json");
-    const modelInput = /** @type {AssessmentModelInput} */ (
-      readJson(modelInputPath)
-    );
+    const modelInput = /** @type {AssessmentModelInput} */ (readJson(modelInputPath));
     const evidenceSets = modelInput.evidenceSets;
     assert.ok(evidenceSets);
-    evidenceSets["evidence-downstream"].evidenceFactIds = [
-      "sdk-fact-missing",
-    ];
+    evidenceSets["evidence-downstream"].evidenceFactIds = ["sdk-fact-missing"];
     writeJson(modelInputPath, modelInput);
     assert.throws(
       () => buildAgentWorkspace({ work }),
@@ -268,9 +248,7 @@ void test("skips shared guideline search when all semantic intents are informati
   const { work } = fixture();
   try {
     const modelInputPath = path.join(work, "model-input.json");
-    const modelInput = /** @type {AssessmentModelInput} */ (
-      readJson(modelInputPath)
-    );
+    const modelInput = /** @type {AssessmentModelInput} */ (readJson(modelInputPath));
     modelInput.semanticReviewUnits = [];
     modelInput.informationalSemanticIntentIds = ["semantic-1"];
     modelInput.downstreamCandidates = [];
@@ -281,9 +259,7 @@ void test("skips shared guideline search when all semantic intents are informati
     const { indexPath } = buildAgentWorkspace({ work });
     const index = /** @type {AgentWorkspaceIndex} */ (readJson(indexPath));
     const decisionsDraft = /** @type {AgentDecisionsDraft} */ (
-      readJson(
-        path.join(work, "agent-workspace", "agent-decisions.draft.json"),
-      )
+      readJson(path.join(work, "agent-workspace", "agent-decisions.draft.json"))
     );
 
     assert.deepEqual(decisionsDraft.complianceJudgments, []);
@@ -291,11 +267,7 @@ void test("skips shared guideline search when all semantic intents are informati
     assert.equal(index.counts.assessedSemanticIntents, 0);
     assert.equal(index.counts.informationalSemanticIntents, 1);
     assert.equal(index.counts.guidelineRequests, 0);
-    assert.ok(
-      !index.completionChecklist.some((item) =>
-        item.includes("fetch the first four"),
-      ),
-    );
+    assert.ok(!index.completionChecklist.some((item) => item.includes("fetch the first four")));
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }

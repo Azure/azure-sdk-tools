@@ -38,10 +38,19 @@ void test("diffs added, removed, modified, and relatively reordered parameters",
     ],
   );
 
-  assert.deepEqual(changes.added.map((item) => item.parameter.name), ["added"]);
-  assert.deepEqual(changes.removed.map((item) => item.parameter.name), ["removed"]);
+  assert.deepEqual(
+    changes.added.map((item) => item.parameter.name),
+    ["added"],
+  );
+  assert.deepEqual(
+    changes.removed.map((item) => item.parameter.name),
+    ["removed"],
+  );
   assert.deepEqual(changes.modified[0].changedFields, ["optional", "type"]);
-  assert.deepEqual(changes.reordered.map((item) => item.name), ["second", "first"]);
+  assert.deepEqual(
+    changes.reordered.map((item) => item.name),
+    ["second", "first"],
+  );
   assert.equal(changes.unchangedCount, 1);
 });
 
@@ -92,8 +101,5 @@ void test("retains nested array and dictionary parameter type contracts", () => 
       valueType: "Contoso.Widget",
     },
   });
-  assert.deepEqual(
-    diffPublicParameters(before, after).modified[0].changedFields,
-    ["type"],
-  );
+  assert.deepEqual(diffPublicParameters(before, after).modified[0].changedFields, ["type"]);
 });

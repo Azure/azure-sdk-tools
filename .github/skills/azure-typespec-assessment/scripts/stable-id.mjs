@@ -10,7 +10,8 @@ import crypto from "node:crypto";
 function canonicalValue(value, stack) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return value;
   if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new TypeError("Canonical JSON does not support non-finite numbers.");
+    if (!Number.isFinite(value))
+      throw new TypeError("Canonical JSON does not support non-finite numbers.");
     return value === 0 ? 0 : value;
   }
   if (Array.isArray(value)) {

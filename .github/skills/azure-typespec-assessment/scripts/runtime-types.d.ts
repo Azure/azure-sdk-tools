@@ -1135,11 +1135,7 @@ export interface ComplianceDecision {
   sourceChangeIds: string[];
   hunkIds: string[];
   declarationIds: string[];
-  decision:
-    | "applicable-pass"
-    | "applicable-fail"
-    | "no-applicable-guidance"
-    | "not-assessed";
+  decision: "applicable-pass" | "applicable-fail" | "no-applicable-guidance" | "not-assessed";
   title?: string;
   severity?: "high" | "medium" | "low";
   expected?: string;
@@ -1395,11 +1391,7 @@ export interface ComplianceIntentAssessment {
   documents?: ComplianceDocument[];
   catalogRanking?: ComplianceRankedEntry[];
   blockers?: string[];
-  decision:
-    | "applicable-pass"
-    | "applicable-fail"
-    | "no-applicable-guidance"
-    | "not-assessed";
+  decision: "applicable-pass" | "applicable-fail" | "no-applicable-guidance" | "not-assessed";
   actual: string;
   gap: string;
   expected?: string;
@@ -1527,16 +1519,10 @@ export interface AssessmentTypeImpact {
   [key: string]: unknown;
 }
 
-export type AssessmentParameter = NonNullable<
-  AssessmentFact["parameters"]
->[number];
+export type AssessmentParameter = NonNullable<AssessmentFact["parameters"]>[number];
 export type AssessmentRequest = NonNullable<AssessmentFact["request"]>;
-export type AssessmentResponse = NonNullable<
-  AssessmentFact["responses"]
->[number];
-export type AssessmentResponseHeader = NonNullable<
-  AssessmentResponse["headers"]
->[number];
+export type AssessmentResponse = NonNullable<AssessmentFact["responses"]>[number];
+export type AssessmentResponseHeader = NonNullable<AssessmentResponse["headers"]>[number];
 export type AssessmentOperation = AssessmentSemanticItem["operations"][number];
 
 export interface ContractChangeRow {

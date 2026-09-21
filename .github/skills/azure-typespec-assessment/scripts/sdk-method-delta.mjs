@@ -50,11 +50,9 @@ import { canonicalJson } from "./stable-id.mjs";
  */
 export function typeIdentity(value) {
   if (typeof value === "string") return value;
-  return value?.crossLanguageDefinitionId ??
-    value?.identity ??
-    value?.id ??
-    value?.name ??
-    value?.kind;
+  return (
+    value?.crossLanguageDefinitionId ?? value?.identity ?? value?.id ?? value?.name ?? value?.kind
+  );
 }
 
 /**
@@ -144,14 +142,13 @@ export function semanticLroContract(lro) {
 function changedParameterFields(before, after) {
   /** @type {(keyof Omit<PublicParameter, "name">)[]} */
   const fields = ["optional", "onClient", "isApiVersionParam", "type"];
-  return fields
-    .filter((field) => {
-      const left = before[field];
-      const right = after[field];
-      return left === undefined || right === undefined
-        ? left !== right
-        : canonicalJson(left) !== canonicalJson(right);
-    });
+  return fields.filter((field) => {
+    const left = before[field];
+    const right = after[field];
+    return left === undefined || right === undefined
+      ? left !== right
+      : canonicalJson(left) !== canonicalJson(right);
+  });
 }
 
 /**
@@ -161,8 +158,12 @@ function changedParameterFields(before, after) {
 export function diffPublicParameters(beforeParameters = [], afterParameters = []) {
   const before = publicParameterContract(beforeParameters);
   const after = publicParameterContract(afterParameters);
-  const beforeByName = new Map(before.map((parameter, index) => [parameter.name, { parameter, index }]));
-  const afterByName = new Map(after.map((parameter, index) => [parameter.name, { parameter, index }]));
+  const beforeByName = new Map(
+    before.map((parameter, index) => [parameter.name, { parameter, index }]),
+  );
+  const afterByName = new Map(
+    after.map((parameter, index) => [parameter.name, { parameter, index }]),
+  );
   const retainedBefore = before.filter((parameter) => afterByName.has(parameter.name));
   const retainedAfter = after.filter((parameter) => beforeByName.has(parameter.name));
   const retainedBeforePositions = new Map(
@@ -173,9 +174,11 @@ export function diffPublicParameters(beforeParameters = [], afterParameters = []
   );
 
   const added = after.flatMap((parameter, index) =>
-    beforeByName.has(parameter.name) ? [] : [{ parameter, index }]);
+    beforeByName.has(parameter.name) ? [] : [{ parameter, index }],
+  );
   const removed = before.flatMap((parameter, index) =>
-    afterByName.has(parameter.name) ? [] : [{ parameter, index }]);
+    afterByName.has(parameter.name) ? [] : [{ parameter, index }],
+  );
   const modified = retainedAfter.flatMap((parameter) => {
     const previous = beforeByName.get(parameter.name)?.parameter;
     if (!previous) return [];
@@ -187,14 +190,13 @@ export function diffPublicParameters(beforeParameters = [], afterParameters = []
   const reordered = retainedAfter.flatMap((parameter) => {
     const beforeIndex = retainedBeforePositions.get(parameter.name);
     const afterIndex = retainedAfterPositions.get(parameter.name);
-    return beforeIndex === afterIndex
-      ? []
-      : [{ name: parameter.name, beforeIndex, afterIndex }];
+    return beforeIndex === afterIndex ? [] : [{ name: parameter.name, beforeIndex, afterIndex }];
   });
   const modifiedNames = new Set(modified.map((item) => item.name));
   const reorderedNames = new Set(reordered.map((item) => item.name));
-  const unchangedCount = retainedAfter.filter((parameter) =>
-    !modifiedNames.has(parameter.name) && !reorderedNames.has(parameter.name)).length;
+  const unchangedCount = retainedAfter.filter(
+    (parameter) => !modifiedNames.has(parameter.name) && !reorderedNames.has(parameter.name),
+  ).length;
 
   return { added, removed, modified, reordered, unchangedCount };
 }

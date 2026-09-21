@@ -3,10 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import {
-  analyzeSemanticIntents,
-  dedupePublicationHunks,
-} from "./analyze-semantic-intents.mjs";
+import { analyzeSemanticIntents, dedupePublicationHunks } from "./analyze-semantic-intents.mjs";
 
 /** @typedef {import("node:test").TestContext} TestContext */
 /** @typedef {import("./runtime-types.js").InternalSemanticUnit} InternalSemanticUnit */
@@ -202,9 +199,15 @@ function mappedOperationFixture(context) {
   /** @type {FixtureOperation} */
   const operation = {
     operationId: "OutboundRules_Post",
-    responses: { 202: { description: "accepted", schema: {
-      type: "object", properties: { value: { type: "array", items: { type: "string" } } },
-    } } },
+    responses: {
+      202: {
+        description: "accepted",
+        schema: {
+          type: "object",
+          properties: { value: { type: "array", items: { type: "string" } } },
+        },
+      },
+    },
     "x-ms-long-running-operation": true,
   };
   /** @type {FixtureDocument} */
@@ -218,13 +221,21 @@ function mappedOperationFixture(context) {
     crossLanguagePackageId: "Microsoft.CognitiveServices",
     crossLanguageVersion: "1.0",
     metadata: { apiVersions: ["v1"] },
-    clients: [{ kind: "client", name: "OutboundRules", methods: [{
-      kind: "lro",
-      name: "post",
-      crossLanguageDefinitionId: `Microsoft.CognitiveServices.${qualifiedName}`,
-      apiVersions: ["v1"],
-      operation: { kind: "http", verb: "post", path: route },
-    }] }],
+    clients: [
+      {
+        kind: "client",
+        name: "OutboundRules",
+        methods: [
+          {
+            kind: "lro",
+            name: "post",
+            crossLanguageDefinitionId: `Microsoft.CognitiveServices.${qualifiedName}`,
+            apiVersions: ["v1"],
+            operation: { kind: "http", verb: "post", path: route },
+          },
+        ],
+      },
+    ],
   };
   /** @type {FixtureProject} */
   const project = {
@@ -248,24 +259,31 @@ function mappedOperationFixture(context) {
   };
   /** @type {FixtureSource} */
   const source = {
-    id: "source-mapping", path: "specification/cognitive/main.tsp", status: "modified",
+    id: "source-mapping",
+    path: "specification/cognitive/main.tsp",
+    status: "modified",
     hunks: [{ id: "hunk-mapping", lines: ["+@list"] }],
     declarations: ["base", "current"].map((revision) => ({
-      id: `declaration-${revision}`, kind: "operation", qualifiedName,
-      hunkIds: ["hunk-mapping"], source: { revision },
+      id: `declaration-${revision}`,
+      kind: "operation",
+      qualifiedName,
+      hunkIds: ["hunk-mapping"],
+      source: { revision },
     })),
   };
   /** @type {FixtureInputs} */
-  const inputs = { workRoot, manifest: { projects: [project] }, sourceIndex: { sourceChanges: [source] } };
+  const inputs = {
+    workRoot,
+    manifest: { projects: [project] },
+    sourceIndex: { sourceChanges: [source] },
+  };
   for (const role of /** @type {const} */ (["baseline", "target"])) {
     writeJson(path.join(workRoot, `${role}.json`), document);
     writeJson(path.join(workRoot, `${role}.yaml`), sdk);
   }
   /** @param {string} file @param {unknown} value */
-  const write = (file, value) =>
-    writeJson(path.join(workRoot, file), value);
-  return { inputs, project, source, document, sdk, route,
-    write };
+  const write = (file, value) => writeJson(path.join(workRoot, file), value);
+  return { inputs, project, source, document, sdk, route, write };
 }
 
 void test("maps renamed compiler operations through TCGC HTTP identity without changing compatible wire facts", (context) => {
@@ -292,7 +310,10 @@ void test("maps renamed compiler operations through TCGC HTTP identity without c
   assert.equal(result.facts[operation.afterFactId].sourceRevision, "current");
   assert.equal(result.facts[operation.afterFactId].operationId, "OutboundRules_Post");
   assert.equal(result.facts[operation.beforeFactId].paging, undefined);
-  assert.deepEqual(result.facts[operation.afterFactId].paging, { itemName: "value", nextLinkName: null });
+  assert.deepEqual(result.facts[operation.afterFactId].paging, {
+    itemName: "value",
+    nextLinkName: null,
+  });
 });
 
 void test("retains wire changes when a renamed operation also gains paging", (context) => {
@@ -314,7 +335,7 @@ void test("maps renamed operations with exactly unchanged REST contracts", (cont
 
 void test("reuses TCGC normalization across hunks and repeated semantic analyses", (context) => {
   const { inputs, source } = mappedOperationFixture(context);
-  source.hunks.push({ id: "another-hunk", lines: ["+@doc(\"Changed\")"] });
+  source.hunks.push({ id: "another-hunk", lines: ['+@doc("Changed")'] });
   for (const declaration of source.declarations) declaration.hunkIds.push("another-hunk");
   const read = context.mock.method(fs, "readFileSync");
   const first = analyzeFixture(inputs);
@@ -327,9 +348,12 @@ void test("retains direct REST operations absent from the convenience SDK withou
   const { inputs, source, document, sdk, write } = mappedOperationFixture(context);
   for (const declaration of source.declarations) declaration.qualifiedName = "OutboundRules.post";
   sdk.clients[0].methods = [];
-  document.paths["/unrelated"] = { get: {
-    operationId: "AAA_Get", responses: { 200: { description: "ok" } },
-  } };
+  document.paths["/unrelated"] = {
+    get: {
+      operationId: "AAA_Get",
+      responses: { 200: { description: "ok" } },
+    },
+  };
   for (const role of /** @type {const} */ (["baseline", "target"])) {
     write(`${role}.json`, document);
     write(`${role}.yaml`, sdk);
@@ -340,7 +364,10 @@ void test("retains direct REST operations absent from the convenience SDK withou
   assert.equal(result.reviewUnits[0].operations.length, 1);
   assert.equal(result.reviewUnits[0].operations[0].matchBasis, "operation-identity");
   assert.deepEqual(result.reviewUnits[0].ownedOperationIds, ["OutboundRules_Post"]);
-  assert.equal(read.mock.calls.filter((call) => String(call.arguments[0]).endsWith(".yaml")).length, 0);
+  assert.equal(
+    read.mock.calls.filter((call) => String(call.arguments[0]).endsWith(".yaml")).length,
+    0,
+  );
 });
 
 void test("preserves AutoRest overload identities without consulting different TCGC query paths", (context) => {
@@ -350,14 +377,23 @@ void test("preserves AutoRest overload identities without consulting different T
     ["File.listHandles", "File_ListHandles", "?comp=listhandles", "listHandles"],
   ];
   document.paths = {};
-  document["x-ms-paths"] = Object.fromEntries(operations.map(([, operationId, route, name]) => [
-    `${route}&_overload=${name}`, { get: { operationId, responses: { 200: { description: "ok" } } } },
-  ]));
-  source.declarations = source.declarations.flatMap((declaration) => operations.map(([qualifiedName]) => ({
-    ...declaration, qualifiedName, id: `${declaration.id}-${qualifiedName}`,
-  })));
+  document["x-ms-paths"] = Object.fromEntries(
+    operations.map(([, operationId, route, name]) => [
+      `${route}&_overload=${name}`,
+      { get: { operationId, responses: { 200: { description: "ok" } } } },
+    ]),
+  );
+  source.declarations = source.declarations.flatMap((declaration) =>
+    operations.map(([qualifiedName]) => ({
+      ...declaration,
+      qualifiedName,
+      id: `${declaration.id}-${qualifiedName}`,
+    })),
+  );
   sdk.clients[0].methods = operations.map(([identity, , route, name]) => ({
-    name, kind: "basic", crossLanguageDefinitionId: `Storage.File.${identity}`,
+    name,
+    kind: "basic",
+    crossLanguageDefinitionId: `Storage.File.${identity}`,
     operation: { kind: "http", verb: "get", path: route },
   }));
   for (const role of ["baseline", "target"]) {
@@ -368,31 +404,55 @@ void test("preserves AutoRest overload identities without consulting different T
   const result = analyzeFixture(inputs);
   assert.deepEqual(result.blockers, []);
   assert.equal(result.reviewUnits[0].operations.length, 2);
-  assert.deepEqual(result.reviewUnits[0].ownedOperationIds, operations.map((item) => item[1]));
-  assert.ok(Object.values(result.facts).every((fact) => fact.path?.includes("&_overload=") === true));
-  assert.equal(read.mock.calls.filter((call) => String(call.arguments[0]).endsWith(".yaml")).length, 0);
+  assert.deepEqual(
+    result.reviewUnits[0].ownedOperationIds,
+    operations.map((item) => item[1]),
+  );
+  assert.ok(
+    Object.values(result.facts).every((fact) => fact.path?.includes("&_overload=") === true),
+  );
+  assert.equal(
+    read.mock.calls.filter((call) => String(call.arguments[0]).endsWith(".yaml")).length,
+    0,
+  );
 });
 
 void test("does not read TCGC for non-operation declarations or unmatched generic operation references", (context) => {
   const { inputs, source, document, route, write } = mappedOperationFixture(context);
   source.declarations = source.declarations.map((declaration) => ({
-    ...declaration, kind: "model", qualifiedName: "Payload",
+    ...declaration,
+    kind: "model",
+    qualifiedName: "Payload",
   }));
   document.paths[route].post.responses[202].schema = { $ref: "#/definitions/Payload" };
   document.definitions = { Payload: { type: "object", properties: { value: { type: "string" } } } };
   for (const role of ["baseline", "target"]) write(`${role}.json`, document);
   inputs.sourceIndex.referencedDeclarations = {
-    generic: { id: "generic", kind: "operation", qualifiedName: "StorageOperationResponseBody",
-      compilerEvidence: { referencedNames: ["Payload"] }, source: { revision: "current" } },
+    generic: {
+      id: "generic",
+      kind: "operation",
+      qualifiedName: "StorageOperationResponseBody",
+      compilerEvidence: { referencedNames: ["Payload"] },
+      source: { revision: "current" },
+    },
   };
   const read = context.mock.method(fs, "readFileSync");
   const result = analyzeFixture(inputs);
   assert.equal(result.reviewUnits[0].operations.length, 1);
   assert.equal(result.reviewUnits[0].operations[0].matchBasis, "compiled-contract-containment");
-  assert.equal(read.mock.calls.filter((call) => String(call.arguments[0]).endsWith(".yaml")).length, 0);
+  assert.equal(
+    read.mock.calls.filter((call) => String(call.arguments[0]).endsWith(".yaml")).length,
+    0,
+  );
 });
 
-for (const scenario of ["missing-identity", "missing-route", "ambiguous-identity", "ambiguous-method-route", "ambiguous-rest-route"]) {
+for (const scenario of [
+  "missing-identity",
+  "missing-route",
+  "ambiguous-identity",
+  "ambiguous-method-route",
+  "ambiguous-rest-route",
+]) {
   void test(`does not guess a TCGC operation mapping: ${scenario}`, (context) => {
     const { inputs, source, document, sdk, route, write } = mappedOperationFixture(context);
     source.declarations = source.declarations.filter((item) => item.source.revision === "current");
@@ -400,16 +460,26 @@ for (const scenario of ["missing-identity", "missing-route", "ambiguous-identity
     if (scenario === "missing-identity") method.crossLanguageDefinitionId += "Similar";
     if (scenario === "missing-route") method.operation.verb = "get";
     if (scenario === "ambiguous-identity") {
-      sdk.clients[0].methods.push({ ...method, crossLanguageDefinitionId:
-        method.crossLanguageDefinitionId.replace("Microsoft", "Another") });
+      sdk.clients[0].methods.push({
+        ...method,
+        crossLanguageDefinitionId: method.crossLanguageDefinitionId.replace("Microsoft", "Another"),
+      });
     }
     if (scenario === "ambiguous-method-route") {
-      sdk.clients[0].methods.push({ ...method, operation: { ...method.operation, path: "/another" } });
+      sdk.clients[0].methods.push({
+        ...method,
+        operation: { ...method.operation, path: "/another" },
+      });
     }
     if (scenario === "ambiguous-rest-route") {
-      document["x-ms-paths"] = { [route]: { post: {
-        ...document.paths[route].post, operationId: "Other_Post",
-      } } };
+      document["x-ms-paths"] = {
+        [route]: {
+          post: {
+            ...document.paths[route].post,
+            operationId: "Other_Post",
+          },
+        },
+      };
       write("target.json", document);
     }
     write("target.yaml", sdk);
@@ -421,8 +491,12 @@ for (const scenario of ["missing-identity", "missing-route", "ambiguous-identity
       assert.equal(result.blockers.length, 1);
       const blocker = result.blockers[0];
       assertRecord(blocker);
-      assert.equal(blocker.code, scenario.startsWith("ambiguous")
-        ? "tcgc-operation-mapping-ambiguous" : "tcgc-operation-route-unresolved");
+      assert.equal(
+        blocker.code,
+        scenario.startsWith("ambiguous")
+          ? "tcgc-operation-mapping-ambiguous"
+          : "tcgc-operation-route-unresolved",
+      );
       assert.equal(blocker.comparisonRole, "target");
     }
   });
@@ -489,11 +563,16 @@ void test("keeps API-version and project-specific method indexes separate", (con
     otherProject.artifacts[role].autorest = artifact("v2.json");
   }
   document.info.version = "v2";
-  document.paths = { "/different": { post: { ...document.paths[route].post, operationId: "Other_Post" } } };
+  document.paths = {
+    "/different": { post: { ...document.paths[route].post, operationId: "Other_Post" } },
+  };
   write("v2.json", document);
   sdk.metadata.apiVersions = ["v1", "v2"];
-  sdk.clients[0].methods.push({ ...sdk.clients[0].methods[0], apiVersions: ["v2"],
-    operation: { kind: "http", verb: "post", path: "/different" } });
+  sdk.clients[0].methods.push({
+    ...sdk.clients[0].methods[0],
+    apiVersions: ["v2"],
+    operation: { kind: "http", verb: "post", path: "/different" },
+  });
   write("baseline.yaml", sdk);
   write("target.yaml", sdk);
   inputs.manifest.projects.push(otherProject);
@@ -526,12 +605,21 @@ void test("selects only the requested REST version from a multi-version artifact
 void test("does not import compiler-reference operations from another project", (context) => {
   const { inputs, source } = mappedOperationFixture(context);
   const declaration = source.declarations[1];
-  source.declarations = [{
-    id: "model", kind: "model", qualifiedName: "Polling",
-    hunkIds: ["hunk-mapping"], source: { revision: "current" },
-  }];
+  source.declarations = [
+    {
+      id: "model",
+      kind: "model",
+      qualifiedName: "Polling",
+      hunkIds: ["hunk-mapping"],
+      source: { revision: "current" },
+    },
+  ];
   inputs.sourceIndex.referencedDeclarations = {
-    other: { ...declaration, project: "specification/other", compilerEvidence: { referencedNames: ["Polling"] } },
+    other: {
+      ...declaration,
+      project: "specification/other",
+      compilerEvidence: { referencedNames: ["Polling"] },
+    },
   };
   assert.deepEqual(analyzeFixture(inputs).reviewUnits[0].operations, []);
 });
@@ -552,42 +640,52 @@ for (const missing of ["absent", "invalid"]) {
 }
 
 void test("keeps shared hunks only in their specific semantic unit", () => {
-  const units = [{
-    id: "semantic-publication",
-    sourceChangeIds: ["source-version", "source-client"],
-    hunkIds: ["hunk-version", "hunk-client"],
-    declarationIds: ["declaration-version", "declaration-client"],
-    operations: [],
-    groupingEvidence: {
-      reasons: ["cross-project:api-version-publication"],
-      memberHunkIds: ["hunk-version", "hunk-client"],
+  const units = [
+    {
+      id: "semantic-publication",
+      sourceChangeIds: ["source-version", "source-client"],
+      hunkIds: ["hunk-version", "hunk-client"],
+      declarationIds: ["declaration-version", "declaration-client"],
+      operations: [],
+      groupingEvidence: {
+        reasons: ["cross-project:api-version-publication"],
+        memberHunkIds: ["hunk-version", "hunk-client"],
+      },
     },
-  }, {
-    id: "semantic-client",
-    sourceChangeIds: ["source-client"],
-    hunkIds: ["hunk-client"],
-    declarationIds: ["declaration-client"],
-    operations: [],
-    groupingEvidence: {
-      reasons: ["sdk-compatibility"],
-      memberHunkIds: ["hunk-client"],
-    },
-  }];
-  const sources = [{
-    id: "source-version",
-    hunks: [{ id: "hunk-version" }],
-    declarations: [{
-      id: "declaration-version",
-      hunkIds: ["hunk-version"],
-    }],
-  }, {
-    id: "source-client",
-    hunks: [{ id: "hunk-client" }],
-    declarations: [{
-      id: "declaration-client",
+    {
+      id: "semantic-client",
+      sourceChangeIds: ["source-client"],
       hunkIds: ["hunk-client"],
-    }],
-  }];
+      declarationIds: ["declaration-client"],
+      operations: [],
+      groupingEvidence: {
+        reasons: ["sdk-compatibility"],
+        memberHunkIds: ["hunk-client"],
+      },
+    },
+  ];
+  const sources = [
+    {
+      id: "source-version",
+      hunks: [{ id: "hunk-version" }],
+      declarations: [
+        {
+          id: "declaration-version",
+          hunkIds: ["hunk-version"],
+        },
+      ],
+    },
+    {
+      id: "source-client",
+      hunks: [{ id: "hunk-client" }],
+      declarations: [
+        {
+          id: "declaration-client",
+          hunkIds: ["hunk-client"],
+        },
+      ],
+    },
+  ];
 
   const result = dedupeFixture(units, sources);
 
@@ -620,37 +718,41 @@ void test("creates source-first semantic units and retains unchanged REST operat
   const result = analyzeFixture({
     workRoot: work,
     manifest: {
-      projects: [{
-        id: "project-kept",
-        sourceChangeIds: ["source-kept"],
-        artifacts: {
-          base: { autorest: artifact("base.json") },
-          current: { autorest: artifact("current.json") },
+      projects: [
+        {
+          id: "project-kept",
+          sourceChangeIds: ["source-kept"],
+          artifacts: {
+            base: { autorest: artifact("base.json") },
+            current: { autorest: artifact("current.json") },
+          },
         },
-      }],
+      ],
     },
     sourceIndex: {
-      sourceChanges: [{
-        id: "source-kept",
-        status: "modified",
-        hunks: [{ id: "hunk-kept" }],
-        declarations: [
-          {
-            id: "declaration-base",
-            kind: "operation",
-            qualifiedName: "Widgets.cancel",
-            hunkIds: ["hunk-kept"],
-            source: { revision: "base" },
-          },
-          {
-            id: "declaration-current",
-            kind: "operation",
-            qualifiedName: "Widgets.cancel",
-            hunkIds: ["hunk-kept"],
-            source: { revision: "current" },
-          },
-        ],
-      }],
+      sourceChanges: [
+        {
+          id: "source-kept",
+          status: "modified",
+          hunks: [{ id: "hunk-kept" }],
+          declarations: [
+            {
+              id: "declaration-base",
+              kind: "operation",
+              qualifiedName: "Widgets.cancel",
+              hunkIds: ["hunk-kept"],
+              source: { revision: "base" },
+            },
+            {
+              id: "declaration-current",
+              kind: "operation",
+              qualifiedName: "Widgets.cancel",
+              hunkIds: ["hunk-kept"],
+              source: { revision: "current" },
+            },
+          ],
+        },
+      ],
     },
   });
 
@@ -685,37 +787,41 @@ void test("maps a top-level TypeSpec operation to its AutoRest operation ID", (c
   const result = analyzeFixture({
     workRoot: work,
     manifest: {
-      projects: [{
-        id: "project-ledger",
-        sourceChangeIds: ["source-ledger"],
-        artifacts: {
-          base: { autorest: artifact("base.json") },
-          current: { autorest: artifact("current.json") },
+      projects: [
+        {
+          id: "project-ledger",
+          sourceChangeIds: ["source-ledger"],
+          artifacts: {
+            base: { autorest: artifact("base.json") },
+            current: { autorest: artifact("current.json") },
+          },
         },
-      }],
+      ],
     },
     sourceIndex: {
-      sourceChanges: [{
-        id: "source-ledger",
-        status: "modified",
-        hunks: [{ id: "hunk-ledger" }],
-        declarations: [
-          {
-            id: "declaration-base",
-            kind: "operation",
-            qualifiedName: "createLedgerEntry",
-            hunkIds: ["hunk-ledger"],
-            source: { revision: "base" },
-          },
-          {
-            id: "declaration-current",
-            kind: "operation",
-            qualifiedName: "createLedgerEntry",
-            hunkIds: ["hunk-ledger"],
-            source: { revision: "current" },
-          },
-        ],
-      }],
+      sourceChanges: [
+        {
+          id: "source-ledger",
+          status: "modified",
+          hunks: [{ id: "hunk-ledger" }],
+          declarations: [
+            {
+              id: "declaration-base",
+              kind: "operation",
+              qualifiedName: "createLedgerEntry",
+              hunkIds: ["hunk-ledger"],
+              source: { revision: "base" },
+            },
+            {
+              id: "declaration-current",
+              kind: "operation",
+              qualifiedName: "createLedgerEntry",
+              hunkIds: ["hunk-ledger"],
+              source: { revision: "current" },
+            },
+          ],
+        },
+      ],
     },
   });
 
@@ -737,28 +843,34 @@ void test("retains a semantic unit when changed TypeSpec has no REST operation",
   const result = analyzeFixture({
     workRoot: work,
     manifest: {
-      projects: [{
-        id: "project-kept",
-        sourceChangeIds: ["source-kept"],
-        artifacts: {
-          base: { autorest: artifact("base.json") },
-          current: { autorest: artifact("current.json") },
+      projects: [
+        {
+          id: "project-kept",
+          sourceChangeIds: ["source-kept"],
+          artifacts: {
+            base: { autorest: artifact("base.json") },
+            current: { autorest: artifact("current.json") },
+          },
         },
-      }],
+      ],
     },
     sourceIndex: {
-      sourceChanges: [{
-        id: "source-kept",
-        status: "added",
-        hunks: [{ id: "hunk-kept" }],
-        declarations: [{
-          id: "declaration-current",
-          kind: "alias",
-          qualifiedName: "InternalName",
-          hunkIds: ["hunk-kept"],
-          source: { revision: "current" },
-        }],
-      }],
+      sourceChanges: [
+        {
+          id: "source-kept",
+          status: "added",
+          hunks: [{ id: "hunk-kept" }],
+          declarations: [
+            {
+              id: "declaration-current",
+              kind: "alias",
+              qualifiedName: "InternalName",
+              hunkIds: ["hunk-kept"],
+              source: { revision: "current" },
+            },
+          ],
+        },
+      ],
     },
   });
 
@@ -787,46 +899,59 @@ void test("maps a changed model to an operation through changed TypeSpec referen
   const result = analyzeFixture({
     workRoot: work,
     manifest: {
-      projects: [{
-        id: "project-kept",
-        sourceChangeIds: ["model-source", "operation-source"],
-        artifacts: {
-          base: { autorest: artifact("base.json") },
-          current: { autorest: artifact("current.json") },
+      projects: [
+        {
+          id: "project-kept",
+          sourceChangeIds: ["model-source", "operation-source"],
+          artifacts: {
+            base: { autorest: artifact("base.json") },
+            current: { autorest: artifact("current.json") },
+          },
         },
-      }],
+      ],
     },
     sourceIndex: {
-      sourceChanges: [{
-        id: "model-source",
-        status: "added",
-        hunks: [{ id: "model-hunk", lines: ["+model PollingResponse {}"] }],
-        declarations: [{
-          id: "model",
-          kind: "model",
-          qualifiedName: "PollingResponse",
-          hunkIds: ["model-hunk"],
-          source: { revision: "current" },
-        }],
-      }, {
-        id: "operation-source",
-        status: "modified",
-        hunks: [{
-          id: "operation-hunk",
-          lines: ["+  get is ArmResourceRead<Widget, Response = PollingResponse>;"],
-        }],
-        declarations: [{
-          id: "operation",
-          kind: "operation",
-          qualifiedName: "Widgets.get",
-          hunkIds: ["operation-hunk"],
-          compilerEvidence: { referencedNames: ["PollingResponse"] },
-          source: { revision: "current" },
-        }],
-      }],
+      sourceChanges: [
+        {
+          id: "model-source",
+          status: "added",
+          hunks: [{ id: "model-hunk", lines: ["+model PollingResponse {}"] }],
+          declarations: [
+            {
+              id: "model",
+              kind: "model",
+              qualifiedName: "PollingResponse",
+              hunkIds: ["model-hunk"],
+              source: { revision: "current" },
+            },
+          ],
+        },
+        {
+          id: "operation-source",
+          status: "modified",
+          hunks: [
+            {
+              id: "operation-hunk",
+              lines: ["+  get is ArmResourceRead<Widget, Response = PollingResponse>;"],
+            },
+          ],
+          declarations: [
+            {
+              id: "operation",
+              kind: "operation",
+              qualifiedName: "Widgets.get",
+              hunkIds: ["operation-hunk"],
+              compilerEvidence: { referencedNames: ["PollingResponse"] },
+              source: { revision: "current" },
+            },
+          ],
+        },
+      ],
     },
   });
-  const modelUnit = result.reviewUnits.find((item) => item.sourceChangeIds.includes("model-source"));
+  const modelUnit = result.reviewUnits.find((item) =>
+    item.sourceChangeIds.includes("model-source"),
+  );
   assert.ok(modelUnit, JSON.stringify(result));
   assert.equal(modelUnit.operations[0].operationId, "Widgets_Get");
   assert.equal(modelUnit.operations[0].matchBasis, "operation-identity");
@@ -855,48 +980,58 @@ void test("classifies a new API surface as add despite modified registration cod
   const result = analyzeFixture({
     workRoot: work,
     manifest: {
-      projects: [{
-        id: "project-widgets",
-        sourceChangeIds: ["feature-source", "main-source"],
-        artifactComparison: { mode: "new-api-version" },
-        artifacts: {
-          base: { autorest: artifact("base.json") },
-          current: { autorest: artifact("current.json") },
+      projects: [
+        {
+          id: "project-widgets",
+          sourceChangeIds: ["feature-source", "main-source"],
+          artifactComparison: { mode: "new-api-version" },
+          artifacts: {
+            base: { autorest: artifact("base.json") },
+            current: { autorest: artifact("current.json") },
+          },
         },
-      }],
+      ],
     },
     sourceIndex: {
-      sourceChanges: [{
-        id: "feature-source",
-        path: "specification/widgets/Widget.tsp",
-        status: "added",
-        hunks: [{ id: "feature-hunk", lines: ["+op create(): void;"] }],
-        declarations: [{
-          id: "feature-operation",
-          kind: "operation",
-          qualifiedName: "Widgets.create",
-          hunkIds: ["feature-hunk"],
-          source: { revision: "current" },
-        }],
-      }, {
-        id: "main-source",
-        path: "specification/widgets/main.tsp",
-        status: "modified",
-        hunks: [{ id: "main-hunk", lines: ['+import "./Widget.tsp";'] }],
-        declarations: [{
-          id: "main-base",
-          kind: "namespace",
-          qualifiedName: "Widgets",
-          hunkIds: ["main-hunk"],
-          source: { revision: "base" },
-        }, {
-          id: "main-current",
-          kind: "namespace",
-          qualifiedName: "Widgets",
-          hunkIds: ["main-hunk"],
-          source: { revision: "current" },
-        }],
-      }],
+      sourceChanges: [
+        {
+          id: "feature-source",
+          path: "specification/widgets/Widget.tsp",
+          status: "added",
+          hunks: [{ id: "feature-hunk", lines: ["+op create(): void;"] }],
+          declarations: [
+            {
+              id: "feature-operation",
+              kind: "operation",
+              qualifiedName: "Widgets.create",
+              hunkIds: ["feature-hunk"],
+              source: { revision: "current" },
+            },
+          ],
+        },
+        {
+          id: "main-source",
+          path: "specification/widgets/main.tsp",
+          status: "modified",
+          hunks: [{ id: "main-hunk", lines: ['+import "./Widget.tsp";'] }],
+          declarations: [
+            {
+              id: "main-base",
+              kind: "namespace",
+              qualifiedName: "Widgets",
+              hunkIds: ["main-hunk"],
+              source: { revision: "base" },
+            },
+            {
+              id: "main-current",
+              kind: "namespace",
+              qualifiedName: "Widgets",
+              hunkIds: ["main-hunk"],
+              source: { revision: "current" },
+            },
+          ],
+        },
+      ],
     },
   });
 
@@ -944,48 +1079,58 @@ void test("keeps mixed added and changed operations classified as modify", (cont
   const result = analyzeFixture({
     workRoot: work,
     manifest: {
-      projects: [{
-        id: "project-widgets",
-        sourceChangeIds: ["feature-source", "main-source"],
-        artifactComparison: { mode: "new-api-version" },
-        artifacts: {
-          base: { autorest: artifact("base.json") },
-          current: { autorest: artifact("current.json") },
+      projects: [
+        {
+          id: "project-widgets",
+          sourceChangeIds: ["feature-source", "main-source"],
+          artifactComparison: { mode: "new-api-version" },
+          artifacts: {
+            base: { autorest: artifact("base.json") },
+            current: { autorest: artifact("current.json") },
+          },
         },
-      }],
+      ],
     },
     sourceIndex: {
-      sourceChanges: [{
-        id: "feature-source",
-        path: "specification/widgets/Widget.tsp",
-        status: "added",
-        hunks: [{ id: "feature-hunk", lines: ["+op create(): void;"] }],
-        declarations: [{
-          id: "feature-operation",
-          kind: "operation",
-          qualifiedName: "Widgets.create",
-          hunkIds: ["feature-hunk"],
-          source: { revision: "current" },
-        }],
-      }, {
-        id: "main-source",
-        path: "specification/widgets/main.tsp",
-        status: "added",
-        hunks: [{ id: "main-hunk", lines: ["-op get(): Widget;", "+op get(): CreatedWidget;"] }],
-        declarations: [{
-          id: "get-base",
-          kind: "operation",
-          qualifiedName: "Widgets.get",
-          hunkIds: ["main-hunk"],
-          source: { revision: "base" },
-        }, {
-          id: "get-current",
-          kind: "operation",
-          qualifiedName: "Widgets.get",
-          hunkIds: ["main-hunk"],
-          source: { revision: "current" },
-        }],
-      }],
+      sourceChanges: [
+        {
+          id: "feature-source",
+          path: "specification/widgets/Widget.tsp",
+          status: "added",
+          hunks: [{ id: "feature-hunk", lines: ["+op create(): void;"] }],
+          declarations: [
+            {
+              id: "feature-operation",
+              kind: "operation",
+              qualifiedName: "Widgets.create",
+              hunkIds: ["feature-hunk"],
+              source: { revision: "current" },
+            },
+          ],
+        },
+        {
+          id: "main-source",
+          path: "specification/widgets/main.tsp",
+          status: "added",
+          hunks: [{ id: "main-hunk", lines: ["-op get(): Widget;", "+op get(): CreatedWidget;"] }],
+          declarations: [
+            {
+              id: "get-base",
+              kind: "operation",
+              qualifiedName: "Widgets.get",
+              hunkIds: ["main-hunk"],
+              source: { revision: "base" },
+            },
+            {
+              id: "get-current",
+              kind: "operation",
+              qualifiedName: "Widgets.get",
+              hunkIds: ["main-hunk"],
+              source: { revision: "current" },
+            },
+          ],
+        },
+      ],
     },
   });
 

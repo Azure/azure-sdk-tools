@@ -36,16 +36,13 @@ void test("detects npm without changing the existing undeclared-manager contract
   const root = fixture();
   write(root, "package.json", packageManifest());
   write(root, "package-lock.json", JSON.stringify({ lockfileVersion: 3, packages: {} }));
-  assert.deepEqual(
-    detectPackageManager(root),
-    {
-      name: "npm",
-      version: null,
-      lockFile: "package-lock.json",
-      lockPath: path.join(root, "package-lock.json"),
-      packagePath: path.join(root, "package.json"),
-    },
-  );
+  assert.deepEqual(detectPackageManager(root), {
+    name: "npm",
+    version: null,
+    lockFile: "package-lock.json",
+    lockPath: path.join(root, "package-lock.json"),
+    packagePath: path.join(root, "package.json"),
+  });
 });
 
 void test("detects an exact pnpm declaration and lockfile", () => {
@@ -89,10 +86,7 @@ void test("builds frozen installs with lifecycle scripts disabled", () => {
   const npm = dependencyInstallCommand({ name: "npm" });
   assert.deepEqual(npm.args, ["ci", "--ignore-scripts", "--no-audit", "--no-fund"]);
 
-  const pnpm = dependencyInstallCommand(
-    { name: "pnpm", version: "11.8.0" },
-    { storeDir: "store" },
-  );
+  const pnpm = dependencyInstallCommand({ name: "pnpm", version: "11.8.0" }, { storeDir: "store" });
   assert.deepEqual(pnpm.args, [
     "--yes",
     "pnpm@11.8.0",
@@ -162,7 +156,9 @@ void test("preflights a multi-document pnpm lockfile", () => {
   write(
     root,
     "pnpm-lock.yaml",
-    `lockfileVersion: '9.0'\nimporters:\n  .: {}\n---\nlockfileVersion: '9.0'\nimporters:\n  .:\n    devDependencies:\n${Object.entries(dependencies)
+    `lockfileVersion: '9.0'\nimporters:\n  .: {}\n---\nlockfileVersion: '9.0'\nimporters:\n  .:\n    devDependencies:\n${Object.entries(
+      dependencies,
+    )
       .map(
         ([name, value]) =>
           `      '${name}':\n        specifier: '${value.specifier}'\n        version: ${value.version}`,

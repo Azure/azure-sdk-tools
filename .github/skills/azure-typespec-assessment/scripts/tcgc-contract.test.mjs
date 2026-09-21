@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import { indexTcgcOperations, normalizeTcgcContract, normalizeTcgcPackage, parseTcgcYaml } from "./tcgc-contract.mjs";
+import {
+  indexTcgcOperations,
+  normalizeTcgcContract,
+  normalizeTcgcPackage,
+  parseTcgcYaml,
+} from "./tcgc-contract.mjs";
 
 /**
  * @template T
@@ -48,18 +53,28 @@ void test("reuses normalized TCGC artifacts while invalidating changed files and
 
 void test("indexes compiler identities once per normalized contract and selected version", () => {
   let scans = 0;
-  const method = { crossLanguageDefinitionId: "Service.Owner.post", apiVersions: ["v1"],
-    operation: { verb: "POST", path: "/one" } };
+  const method = {
+    crossLanguageDefinitionId: "Service.Owner.post",
+    apiVersions: ["v1"],
+    operation: { verb: "POST", path: "/one" },
+  };
   const contract = {
     get methods() {
       scans += 1;
-      return [method, { ...method, apiVersions: ["v2"], operation: { verb: "post", path: "/two" } }];
+      return [
+        method,
+        { ...method, apiVersions: ["v2"], operation: { verb: "post", path: "/two" } },
+      ];
     },
   };
-  const normalizedContract =
-    /** @type {import("./runtime-types.js").NormalizedTcgcContract} */ (/** @type {unknown} */ (contract));
+  const normalizedContract = /** @type {import("./runtime-types.js").NormalizedTcgcContract} */ (
+    /** @type {unknown} */ (contract)
+  );
   const first = indexTcgcOperations(normalizedContract, "v1");
-  assert.deepEqual([...required(required(first.get("Owner.post")).get("Service.Owner.post"))], ["post\0/one"]);
+  assert.deepEqual(
+    [...required(required(first.get("Owner.post")).get("Service.Owner.post"))],
+    ["post\0/one"],
+  );
   assert.equal(
     required(first.get("Owner.post")).get("Service.Owner.post"),
     required(first.get("post")).get("Service.Owner.post"),
@@ -74,7 +89,10 @@ void test("indexes compiler identities once per normalized contract and selected
   }
   assert.equal(scans, 1);
   const second = indexTcgcOperations(normalizedContract, "v2");
-  assert.deepEqual([...required(required(second.get("Owner.post")).get("Service.Owner.post"))], ["post\0/two"]);
+  assert.deepEqual(
+    [...required(required(second.get("Owner.post")).get("Service.Owner.post"))],
+    ["post\0/two"],
+  );
   assert.equal(scans, 2);
 });
 
@@ -233,13 +251,19 @@ namespaces:
     clients: [*client]
 `);
   const contract = normalizeTcgcPackage(root);
-  assert.deepEqual(contract.methods.map((item) => item.kind), ["lro", "lropaging", "basic", "paging"]);
+  assert.deepEqual(
+    contract.methods.map((item) => item.kind),
+    ["lro", "lropaging", "basic", "paging"],
+  );
   const get = required(contract.methods.find((item) => item.name === "get"));
   const operation = required(get.operation);
   assert.equal(required(required(operation.parameters)[0]).kind, "path");
   assert.equal(required(operation.bodyParam).kind, "body");
   assert.equal(required(operation.bodyParam).type.kind, "dictionary");
-  assert.deepEqual(required(required(operation.responses)[0]).statusCodes, { start: 200, end: 299 });
+  assert.deepEqual(required(required(operation.responses)[0]).statusCodes, {
+    start: 200,
+    end: 299,
+  });
   assert.equal(required(required(operation.exceptions)[0]).statusCodes, "*");
   assert.equal(contract.clients.length, 1);
   const model = required(contract.models[0]);
@@ -253,10 +277,10 @@ namespaces:
   assert.ok(isRecord(union.discriminatedOptions));
   assert.equal(union.discriminatedOptions.envelope, "object");
   assert.deepEqual(contract.package.apiVersions, [{ service: "Contoso", version: "v2" }]);
-  assert.deepEqual(contract.conflicts.map((item) => item.code), [
-    "api-version-conflict",
-    "method-parameter-segments-conflict",
-  ]);
+  assert.deepEqual(
+    contract.conflicts.map((item) => item.code),
+    ["api-version-conflict", "method-parameter-segments-conflict"],
+  );
 });
 
 void test("rejects invalid normal response status arrays", () => {
@@ -266,22 +290,26 @@ void test("rejects invalid normal response status arrays", () => {
         crossLanguagePackageId: "Contoso",
         crossLanguageVersion: "1",
         metadata: { apiVersions: ["v1"] },
-        clients: [{
-          kind: "client",
-          name: "Client",
-          methods: [{
-            kind: "basic",
-            name: "get",
-            parameters: [],
-            operation: {
-              kind: "http",
-              parameters: [],
-              responses: [{ statusCodes: [200, 201] }],
-              exceptions: [],
-            },
-          }],
-          children: [],
-        }],
+        clients: [
+          {
+            kind: "client",
+            name: "Client",
+            methods: [
+              {
+                kind: "basic",
+                name: "get",
+                parameters: [],
+                operation: {
+                  kind: "http",
+                  parameters: [],
+                  responses: [{ statusCodes: [200, 201] }],
+                  exceptions: [],
+                },
+              },
+            ],
+            children: [],
+          },
+        ],
         models: [],
         enums: [],
         unions: [],

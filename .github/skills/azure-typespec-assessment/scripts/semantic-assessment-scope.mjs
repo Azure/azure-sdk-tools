@@ -1,7 +1,4 @@
-const VERSION_MATCH_BASES = new Set([
-  "direct-version-governance",
-  "version-transition-change",
-]);
+const VERSION_MATCH_BASES = new Set(["direct-version-governance", "version-transition-change"]);
 
 /**
  * @typedef {{
@@ -20,8 +17,7 @@ const VERSION_MATCH_BASES = new Set([
 function hasPublicationReason(unit) {
   const reasons = unit.groupingEvidence?.reasons ?? [];
   return (
-    reasons.includes("publication") ||
-    reasons.includes("cross-project:api-version-publication")
+    reasons.includes("publication") || reasons.includes("cross-project:api-version-publication")
   );
 }
 
@@ -39,12 +35,8 @@ export function isApiVersionWideChangeIntent(unit) {
     operations.length > 0 &&
     (unit.ownedOperationIds?.length ?? 0) === 0 &&
     declarationNames.length > 0 &&
-    declarationNames.every(
-      (name) => name === "Versions" || name.endsWith(".Versions"),
-    ) &&
-    operations.every((operation) =>
-      VERSION_MATCH_BASES.has(operation.matchBasis),
-    )
+    declarationNames.every((name) => name === "Versions" || name.endsWith(".Versions")) &&
+    operations.every((operation) => VERSION_MATCH_BASES.has(operation.matchBasis))
   );
 }
 
@@ -60,10 +52,7 @@ export function semanticIntentType(unit) {
 
 /** @param {SemanticUnit} unit */
 export function isInformationalIntent(unit) {
-  return (
-    isApiVersionWideChangeIntent(unit) ||
-    isInformationalPublicationIntent(unit)
-  );
+  return isApiVersionWideChangeIntent(unit) || isInformationalPublicationIntent(unit);
 }
 
 /**
@@ -77,9 +66,7 @@ export function partitionSemanticIntents(units) {
   /** @type {T[]} */
   const informational = [];
   for (const unit of units ?? []) {
-    (isInformationalIntent(unit) ? informational : assessed).push(
-      unit,
-    );
+    (isInformationalIntent(unit) ? informational : assessed).push(unit);
   }
   return { assessed, informational };
 }

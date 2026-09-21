@@ -114,8 +114,7 @@ function graphSize(root, limit) {
     if (count > limit) throw unsupported(`object graph exceeds the ${limit} resource limit`);
     if (Array.isArray(value)) {
       for (const item of /** @type {unknown[]} */ (value)) pending.push(item);
-    }
-    else if (value instanceof Map) {
+    } else if (value instanceof Map) {
       for (const [key, item] of /** @type {Map<unknown, unknown>} */ (value)) {
         pending.push(key, item);
       }
@@ -205,7 +204,11 @@ function segmentIdentity(item, index) {
  * @param {unknown} deprecated
  */
 function conflict(context, code, location, current, deprecated) {
-  if (current === undefined || deprecated === undefined || canonicalJson(current) === canonicalJson(deprecated)) {
+  if (
+    current === undefined ||
+    deprecated === undefined ||
+    canonicalJson(current) === canonicalJson(deprecated)
+  ) {
     return;
   }
   context.conflicts.push({ code, path: location, current, deprecated });
@@ -263,25 +266,26 @@ function normalizeSerializationOptions(value) {
  */
 function normalizeSerialization(raw, context, location) {
   const current = normalizeSerializationOptions(raw.serializationOptions);
-  const deprecated = raw.serializedName === undefined &&
-      raw.multipartOptions === undefined &&
-      raw.isMultipartFileInput === undefined
-    ? undefined
-    : {
-        serializedName: raw.serializedName,
-        multipartOptions: raw.multipartOptions
-          ? {
-              name: raw.multipartOptions.name,
-              isFilePart: raw.multipartOptions.isFilePart,
-              isMulti: raw.multipartOptions.isMulti,
-              filename: normalizedPropertyIdentity(raw.multipartOptions.filename),
-              contentType: normalizedPropertyIdentity(raw.multipartOptions.contentType),
-              defaultContentTypes: raw.multipartOptions.defaultContentTypes ?? [],
-              headers: (raw.multipartOptions.headers ?? []).map(normalizedPropertyIdentity),
-            }
-          : undefined,
-        isMultipartFileInput: raw.isMultipartFileInput,
-      };
+  const deprecated =
+    raw.serializedName === undefined &&
+    raw.multipartOptions === undefined &&
+    raw.isMultipartFileInput === undefined
+      ? undefined
+      : {
+          serializedName: raw.serializedName,
+          multipartOptions: raw.multipartOptions
+            ? {
+                name: raw.multipartOptions.name,
+                isFilePart: raw.multipartOptions.isFilePart,
+                isMulti: raw.multipartOptions.isMulti,
+                filename: normalizedPropertyIdentity(raw.multipartOptions.filename),
+                contentType: normalizedPropertyIdentity(raw.multipartOptions.contentType),
+                defaultContentTypes: raw.multipartOptions.defaultContentTypes ?? [],
+                headers: (raw.multipartOptions.headers ?? []).map(normalizedPropertyIdentity),
+              }
+            : undefined,
+          isMultipartFileInput: raw.isMultipartFileInput,
+        };
   if (current !== undefined && deprecated !== undefined) {
     const currentName = current.json?.name ?? current.multipart?.name;
     if (raw.serializedName !== undefined) {
@@ -337,13 +341,19 @@ function normalizeDiscriminatedOptions(value, context, location) {
  * @param {WeakSet<object>} [stack]
  * @returns {NormalizedTcgcType}
  */
-export function normalizeType(raw, context = { conflicts: [] }, location = "type", stack = new WeakSet()) {
+export function normalizeType(
+  raw,
+  context = { conflicts: [] },
+  location = "type",
+  stack = new WeakSet(),
+) {
   assertObject(raw, location);
   if (!raw.kind || typeof raw.kind !== "string") throw unsupported(`${location} is missing kind`);
   if (stack.has(raw)) {
     return {
       kind: "reference",
-      id: referenceName(raw) ?? stableId("tcgc-cycle", { location, kind: raw.kind, name: raw.name }),
+      id:
+        referenceName(raw) ?? stableId("tcgc-cycle", { location, kind: raw.kind, name: raw.name }),
       cycle: true,
     };
   }
@@ -436,9 +446,8 @@ export function normalizeType(raw, context = { conflicts: [] }, location = "type
       case "credential":
         result = {
           kind: "credential",
-          scheme: typeof raw.scheme === "object" && raw.scheme !== null
-            ? raw.scheme.type
-            : raw.scheme,
+          scheme:
+            typeof raw.scheme === "object" && raw.scheme !== null ? raw.scheme.type : raw.scheme,
         };
         break;
       case "endpoint":
@@ -446,7 +455,14 @@ export function normalizeType(raw, context = { conflicts: [] }, location = "type
           kind: "endpoint",
           serverUrl: raw.serverUrl,
           templateArguments: array(raw.templateArguments, `${location}.templateArguments`).map(
-            (item, index) => normalizeParameter(item, context, `${location}.templateArguments[${index}]`, index, stack),
+            (item, index) =>
+              normalizeParameter(
+                item,
+                context,
+                `${location}.templateArguments[${index}]`,
+                index,
+                stack,
+              ),
           ),
         };
         break;
@@ -498,12 +514,14 @@ function normalizeParameter(raw, context, location, position, stack = new WeakSe
   assertObject(raw, location);
   const currentSegments = raw.methodParameterSegments;
   const deprecatedSegments = raw.correspondingMethodParams;
-  const normalizedCurrentSegments = currentSegments === undefined
-    ? undefined
-    : normalizeSegments(currentSegments, `${location}.methodParameterSegments`);
-  const normalizedDeprecatedSegments = deprecatedSegments === undefined
-    ? undefined
-    : normalizeSegments(deprecatedSegments, `${location}.correspondingMethodParams`);
+  const normalizedCurrentSegments =
+    currentSegments === undefined
+      ? undefined
+      : normalizeSegments(currentSegments, `${location}.methodParameterSegments`);
+  const normalizedDeprecatedSegments =
+    deprecatedSegments === undefined
+      ? undefined
+      : normalizeSegments(deprecatedSegments, `${location}.correspondingMethodParams`);
   conflict(
     context,
     "method-parameter-segments-conflict",
@@ -535,7 +553,13 @@ function normalizeParameter(raw, context, location, position, stack = new WeakSe
   if (raw.allowReserved !== undefined) result.allowReserved = raw.allowReserved;
   if (raw.kind === "endpoint" && raw.serializedName !== undefined) {
     const currentName = result.type.templateArguments?.[0]?.serializedName;
-    conflict(context, "endpoint-serialized-name-conflict", location, currentName, raw.serializedName);
+    conflict(
+      context,
+      "endpoint-serialized-name-conflict",
+      location,
+      currentName,
+      raw.serializedName,
+    );
   }
   return result;
 }
@@ -548,11 +572,7 @@ function normalizeParameter(raw, context, location, position, stack = new WeakSe
 function normalizeStatusCodes(value, exception, location) {
   if (value === "*" && exception) return "*";
   if (Number.isInteger(value)) return value;
-  if (
-    value &&
-    typeof value === "object" &&
-    !Array.isArray(value)
-  ) {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
     const range = /** @type {Record<string, unknown>} */ (value);
     if (
       Number.isInteger(range.start) &&
@@ -675,20 +695,19 @@ function normalizeOperationReference(raw, location) {
     : undefined;
   return {
     kind: "reference",
-    operation: raw.operation
-      ? referenceName(raw.operation) ?? operationName
-      : undefined,
+    operation: raw.operation ? (referenceName(raw.operation) ?? operationName) : undefined,
     parameterMap: entries(raw.parameterMap)
       .sort(([left], [right]) => String(left).localeCompare(String(right)))
       .map(([name, source]) => ({
         name: String(name),
-        source: typeof source === "string"
-          ? source
-          : {
-              kind: source?.kind,
-              name: source?.name,
-              property: normalizedPropertyIdentity(source?.property),
-            },
+        source:
+          typeof source === "string"
+            ? source
+            : {
+                kind: source?.kind,
+                name: source?.name,
+                property: normalizedPropertyIdentity(source?.property),
+              },
       })),
     parameters: entries(
       /** @type {import("./runtime-types.js").TcgcCollection<TcgcNode>} */ (raw.parameters),
@@ -712,7 +731,8 @@ function normalizeOperationReference(raw, location) {
 function normalizeLroStep(raw, context, location) {
   if (raw === undefined) return undefined;
   assertObject(raw, location);
-  if (!raw.kind || typeof raw.kind !== "string") throw unsupported(`${location} is missing step kind`);
+  if (!raw.kind || typeof raw.kind !== "string")
+    throw unsupported(`${location} is missing step kind`);
   const responseModel = normalizeLroResult(raw.responseModel, context, `${location}.responseModel`);
   switch (raw.kind) {
     case "nextOperationReference":
@@ -841,7 +861,11 @@ function normalizeLroMetadata(raw, context, location) {
   if (raw.finalResponse) {
     const finalResponse = {
       envelopeResult: raw.finalResponse.envelopeResult
-        ? normalizeType(raw.finalResponse.envelopeResult, context, `${location}.finalResponse.envelopeResult`)
+        ? normalizeType(
+            raw.finalResponse.envelopeResult,
+            context,
+            `${location}.finalResponse.envelopeResult`,
+          )
         : undefined,
       result: raw.finalResponse.result
         ? normalizeType(raw.finalResponse.result, context, `${location}.finalResponse.result`)
@@ -888,7 +912,12 @@ function normalizeMethod(raw, client, context, index) {
     kind: raw.kind,
     access: raw.access,
     parameters: array(raw.parameters, `${location}.parameters`).map((item, parameterIndex) =>
-      normalizeParameter(item, context, `${location}.parameters[${parameterIndex}]`, parameterIndex),
+      normalizeParameter(
+        item,
+        context,
+        `${location}.parameters[${parameterIndex}]`,
+        parameterIndex,
+      ),
     ),
     responseType,
     apiVersions: array(raw.apiVersions, `${location}.apiVersions`),
@@ -947,12 +976,16 @@ function normalizeModel(raw, context, index) {
     access: raw.access,
     usage: raw.usage,
     properties: [],
-    baseModel: raw.baseModel ? referenceName(raw.baseModel) ?? raw.baseModel.name : undefined,
+    baseModel: raw.baseModel ? (referenceName(raw.baseModel) ?? raw.baseModel.name) : undefined,
     additionalProperties: raw.additionalProperties
-      ? normalizeType(raw.additionalProperties, context, `model:${modelIdentity}.additionalProperties`)
+      ? normalizeType(
+          raw.additionalProperties,
+          context,
+          `model:${modelIdentity}.additionalProperties`,
+        )
       : undefined,
     discriminatorProperty: raw.discriminatorProperty
-      ? referenceName(raw.discriminatorProperty) ?? raw.discriminatorProperty.name
+      ? (referenceName(raw.discriminatorProperty) ?? raw.discriminatorProperty.name)
       : undefined,
     discriminatorValue: raw.discriminatorValue,
     discriminatedSubtypes: entries(raw.discriminatedSubtypes)
@@ -960,8 +993,8 @@ function normalizeModel(raw, context, index) {
       .map(([name, item]) => ({ name: String(name), type: referenceName(item) ?? item?.name })),
     serialization: normalizeSerialization(raw, context, `model:${modelIdentity}`),
   };
-  model.properties = array(raw.properties, `model:${modelIdentity}.properties`).map((item, propertyIndex) =>
-    normalizeProperty(item, model, context, propertyIndex),
+  model.properties = array(raw.properties, `model:${modelIdentity}.properties`).map(
+    (item, propertyIndex) => normalizeProperty(item, model, context, propertyIndex),
   );
   return model;
 }
@@ -1028,8 +1061,9 @@ function normalizeUnion(raw, context, index) {
     name: raw.name,
     access: raw.access,
     usage: raw.usage,
-    variantTypes: array(raw.variantTypes, `union:${unionIdentity}.variantTypes`).map((item, variantIndex) =>
-      normalizeType(item, context, `union:${unionIdentity}.variantTypes[${variantIndex}]`),
+    variantTypes: array(raw.variantTypes, `union:${unionIdentity}.variantTypes`).map(
+      (item, variantIndex) =>
+        normalizeType(item, context, `union:${unionIdentity}.variantTypes[${variantIndex}]`),
     ),
     discriminatedOptions: normalizeDiscriminatedOptions(
       raw.discriminatedOptions,
@@ -1087,7 +1121,8 @@ function uniqueObjects(values) {
  */
 function collectTypeReferences(type, result) {
   if (!type) return;
-  if (["model", "enum", "union", "external", "reference"].includes(type.kind) && type.id) result.add(type.id);
+  if (["model", "enum", "union", "external", "reference"].includes(type.kind) && type.id)
+    result.add(type.id);
   if (type.valueType) collectTypeReferences(type.valueType, result);
   if (type.keyType) collectTypeReferences(type.keyType, result);
   if (type.type) collectTypeReferences(type.type, result);
@@ -1096,10 +1131,7 @@ function collectTypeReferences(type, result) {
   if (Array.isArray(type.discriminatedOptions)) {
     for (const item of /** @type {unknown[]} */ (type.discriminatedOptions)) {
       if (item && typeof item === "object" && !Array.isArray(item)) {
-        collectTypeReferences(
-          /** @type {{type?: NormalizedTcgcType}} */ (item).type,
-          result,
-        );
+        collectTypeReferences(/** @type {{type?: NormalizedTcgcType}} */ (item).type, result);
       }
     }
   }
@@ -1109,7 +1141,10 @@ function collectTypeReferences(type, result) {
 function markReachable(contract) {
   /** @type {Map<string, import("./runtime-types.js").NormalizedTcgcNamedType>} */
   const named = new Map(
-    [...contract.models, ...contract.enums, ...contract.unions].map((item) => [item.identity, item]),
+    [...contract.models, ...contract.enums, ...contract.unions].map((item) => [
+      item.identity,
+      item,
+    ]),
   );
   /** @type {Set<string>} */
   const reachable = new Set();
@@ -1129,7 +1164,8 @@ function markReachable(contract) {
       if (current.baseModel) reachable.add(current.baseModel);
       collectTypeReferences(current.additionalProperties, reachable);
     }
-    if (current.variantTypes) for (const type of current.variantTypes) collectTypeReferences(type, reachable);
+    if (current.variantTypes)
+      for (const type of current.variantTypes) collectTypeReferences(type, reachable);
     if (current.valueType) collectTypeReferences(current.valueType, reachable);
     if (reachable.size !== before) {
       for (const item of reachable) if (!named.get(item)?.reachable) pending.push(item);
@@ -1155,13 +1191,14 @@ export function normalizeTcgcPackage(root) {
   const context = { conflicts: [] };
   const currentVersions = root.metadata.apiVersions;
   const deprecatedVersion = root.metadata.apiVersion;
-  const normalizedCurrentVersions = currentVersions === undefined
-    ? undefined
-    : Array.isArray(currentVersions)
-      ? [...currentVersions]
-      : entries(currentVersions)
-          .sort(([left], [right]) => String(left).localeCompare(String(right)))
-          .map(([service, version]) => ({ service: String(service), version }));
+  const normalizedCurrentVersions =
+    currentVersions === undefined
+      ? undefined
+      : Array.isArray(currentVersions)
+        ? [...currentVersions]
+        : entries(currentVersions)
+            .sort(([left], [right]) => String(left).localeCompare(String(right)))
+            .map(([service, version]) => ({ service: String(service), version }));
   const deprecatedVersions = deprecatedVersion === undefined ? undefined : [deprecatedVersion];
   const currentVersionValues = normalizedCurrentVersions?.map((item) =>
     typeof item === "string"
@@ -1199,7 +1236,8 @@ export function normalizeTcgcPackage(root) {
     if (!raw || typeof raw !== "object" || clientVisited.has(raw)) return;
     clientVisited.add(raw);
     const item = /** @type {TcgcNode} */ (raw);
-    if (item.kind !== "client") throw unsupported(`client ${item.name ?? "unknown"} has kind ${item.kind}`);
+    if (item.kind !== "client")
+      throw unsupported(`client ${item.name ?? "unknown"} has kind ${item.kind}`);
     const clientIdentity = item.name
       ? `${item.crossLanguageDefinitionId ?? owner ?? "client"}.${item.name}`
       : identity(item, `${owner ? `${owner}.` : ""}client`);
@@ -1208,12 +1246,15 @@ export function normalizeTcgcPackage(root) {
       identity: clientIdentity,
       crossLanguageDefinitionId: item.crossLanguageDefinitionId,
       name: item.name,
-      parent: item.parent ? referenceName(item.parent) ?? item.parent.name : undefined,
+      parent: item.parent ? (referenceName(item.parent) ?? item.parent.name) : undefined,
       owner,
       access: item.access,
     };
     clients.push(client);
-    for (const [index, method] of array(item.methods, `client:${clientIdentity}.methods`).entries()) {
+    for (const [index, method] of array(
+      item.methods,
+      `client:${clientIdentity}.methods`,
+    ).entries()) {
       methods.push(normalizeMethod(method, client, context, index));
     }
     for (const child of array(item.children, `client:${clientIdentity}.children`)) {
@@ -1271,8 +1312,13 @@ export function normalizeTcgcPackage(root) {
  * @param {{workRoot?: string, artifact: TcgcArtifact, maxAliasCount?: number, maxObjects?: number}} options
  * @returns {NormalizedTcgcContract}
  */
-export function normalizeTcgcContract({ workRoot = process.cwd(), artifact, maxAliasCount, maxObjects }) {
-  if (!artifact || artifact.format && artifact.format !== "tcgc-yaml") {
+export function normalizeTcgcContract({
+  workRoot = process.cwd(),
+  artifact,
+  maxAliasCount,
+  maxObjects,
+}) {
+  if (!artifact || (artifact.format && artifact.format !== "tcgc-yaml")) {
     throw unsupported(`expected format tcgc-yaml, received ${artifact?.format ?? "none"}`);
   }
   const files = (artifact.files ?? [])
@@ -1283,7 +1329,9 @@ export function normalizeTcgcContract({ workRoot = process.cwd(), artifact, maxA
   }
   if (!fs.existsSync(files[0])) throw unsupported(`${files[0]} does not exist`);
   const stat = fs.statSync(files[0], { bigint: true });
-  const key = [files[0], stat.size, stat.mtimeNs, stat.ctimeNs, maxAliasCount, maxObjects].join("\0");
+  const key = [files[0], stat.size, stat.mtimeNs, stat.ctimeNs, maxAliasCount, maxObjects].join(
+    "\0",
+  );
   const cached = contractCache.get(artifact);
   if (cached?.key === key) return cached.contract;
   const contract = normalizeTcgcPackage(
@@ -1310,9 +1358,10 @@ export function indexTcgcOperations(contract, apiVersion) {
   const byIdentity = new Map();
   for (const method of contract.methods) {
     const identity = method.crossLanguageDefinitionId;
-    if (!identity || method.apiVersions.length && !method.apiVersions.includes(apiVersion)) continue;
+    if (!identity || (method.apiVersions.length && !method.apiVersions.includes(apiVersion)))
+      continue;
     let routes = byIdentity.get(identity);
-    if (!routes) byIdentity.set(identity, routes = new Set());
+    if (!routes) byIdentity.set(identity, (routes = new Set()));
     const { verb, path: route } = method.operation ?? {};
     if (verb && route) routes.add(`${verb.toLowerCase()}\0${route}`);
   }
@@ -1322,8 +1371,9 @@ export function indexTcgcOperations(contract, apiVersion) {
     // Source indexes use owner.member or top-level names. Share route sets
     // between these exact identities instead of copying the method graph.
     const segments = identity.split(".");
-    const names = [identity, segments.slice(-2).join("."), segments.at(-1)]
-      .filter((item) => item !== undefined);
+    const names = [identity, segments.slice(-2).join("."), segments.at(-1)].filter(
+      (item) => item !== undefined,
+    );
     for (const name of new Set(names)) {
       let identities = index.get(name);
       if (!identities) {

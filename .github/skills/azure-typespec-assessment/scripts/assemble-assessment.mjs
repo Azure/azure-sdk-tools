@@ -1,22 +1,25 @@
-import path from "node:path";
 import fs from "node:fs";
-import { parseArgs, isMain, readJsonObject, runMain, writeJson } from "./cli.mjs";
+import path from "node:path";
 import { deriveSafety, dimensionStatus } from "./assessment-display.mjs";
-import { canonicalJson, stableId } from "./stable-id.mjs";
+import { sameAutorestContract } from "./autorest-contract.mjs";
+import { isMain, parseArgs, readJsonObject, runMain, writeJson } from "./cli.mjs";
+import { assembleCompliance } from "./compliance-assessment.mjs";
+import {
+  assembleDocumentQuality,
+  DOCUMENT_QUALITY_ARTIFACT,
+} from "./document-quality-assessment.mjs";
 import {
   diffPublicParameters,
   publicParameterContract,
   semanticLroContract,
   typeIdentity,
 } from "./sdk-method-delta.mjs";
-import { assembleCompliance } from "./compliance-assessment.mjs";
-import { assembleDocumentQuality, DOCUMENT_QUALITY_ARTIFACT } from "./document-quality-assessment.mjs";
-import { sameAutorestContract } from "./autorest-contract.mjs";
 import {
   informationalIntentText,
   partitionSemanticIntents,
   semanticIntentType,
 } from "./semantic-assessment-scope.mjs";
+import { canonicalJson, stableId } from "./stable-id.mjs";
 
 /** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
 /** @typedef {import("./runtime-types.js").AssessmentInference} AssessmentInference */
@@ -89,9 +92,7 @@ import {
 function duplicates(values) {
   /** @type {Set<T>} */
   const seen = new Set();
-  return values.filter((value) =>
-    seen.has(value) ? true : (seen.add(value), false),
-  );
+  return values.filter((value) => (seen.has(value) ? true : (seen.add(value), false)));
 }
 
 /**
@@ -102,9 +103,7 @@ function duplicates(values) {
 function exactCoverage(expected, actual, label) {
   const duplicate = duplicates(actual);
   if (duplicate.length)
-    throw new Error(
-      `Duplicate ${label} IDs: ${[...new Set(duplicate)].join(", ")}`,
-    );
+    throw new Error(`Duplicate ${label} IDs: ${[...new Set(duplicate)].join(", ")}`);
   const expectedSet = new Set(expected);
   const unknown = actual.filter((item) => !expectedSet.has(item));
   const missing = expected.filter((item) => !actual.includes(item));
@@ -123,17 +122,14 @@ function validateDecision(decision, candidate) {
   if (!["approve", "reject"].includes(decision.decision)) {
     throw new Error(`Invalid decision for ${candidate.id}.`);
   }
-  if (!decision.rationale?.trim())
-    throw new Error(`Missing rationale for ${candidate.id}.`);
+  if (!decision.rationale?.trim()) throw new Error(`Missing rationale for ${candidate.id}.`);
   if (
     decision.decision === "approve" &&
     decision.severity !== "high" &&
     decision.severity !== "medium" &&
     decision.severity !== "low"
   ) {
-    throw new Error(
-      `An approve decision for candidate ${candidate.id} requires severity.`,
-    );
+    throw new Error(`An approve decision for candidate ${candidate.id} requires severity.`);
   }
   if (decision.decision === "reject" && decision.severity !== undefined) {
     throw new Error(`Rejected candidate ${candidate.id} must omit severity.`);
@@ -147,8 +143,7 @@ function validateDecision(decision, candidate) {
  */
 function assertKeys(value, allowed, label) {
   const unknown = Object.keys(value).filter((key) => !allowed.includes(key));
-  if (unknown.length)
-    throw new Error(`${label} contains unknown fields: ${unknown.join(", ")}.`);
+  if (unknown.length) throw new Error(`${label} contains unknown fields: ${unknown.join(", ")}.`);
 }
 
 /** @param {AssessmentJudgment} answer */
@@ -169,8 +164,7 @@ function validateJudgment(answer) {
     ],
     "Judgment",
   );
-  if (answer.schemaVersion !== 1)
-    throw new Error("Unsupported judgment schemaVersion.");
+  if (answer.schemaVersion !== 1) throw new Error("Unsupported judgment schemaVersion.");
   /** @type {[string, unknown][]} */
   const arrayFields = [
     ["semanticIntents", answer.semanticIntents],
@@ -180,8 +174,7 @@ function validateJudgment(answer) {
     ["blockers", answer.blockers],
   ];
   for (const [field, value] of arrayFields) {
-    if (!Array.isArray(value))
-      throw new Error(`Judgment.${field} must be an array.`);
+    if (!Array.isArray(value)) throw new Error(`Judgment.${field} must be an array.`);
   }
   if (!["high", "medium", "low"].includes(answer.overallConfidence)) {
     throw new Error("Judgment.overallConfidence is invalid.");
@@ -196,15 +189,10 @@ function validateJudgment(answer) {
       `Semantic intent ${intent.reviewUnitId ?? "<unknown>"}`,
     );
     if (!intent.title?.trim() || !intent.summary?.trim()) {
-      throw new Error(
-        `Semantic intent ${intent.reviewUnitId ?? "<unknown>"} is incomplete.`,
-      );
+      throw new Error(`Semantic intent ${intent.reviewUnitId ?? "<unknown>"} is incomplete.`);
     }
   }
-  for (const decision of [
-    ...answer.restDecisions,
-    ...answer.downstreamDecisions,
-  ]) {
+  for (const decision of [...answer.restDecisions, ...answer.downstreamDecisions]) {
     assertKeys(
       decision,
       ["candidateId", "decision", "severity", "rationale"],
@@ -242,69 +230,43 @@ function validateInference(inference, requests, modelInput) {
     throw new Error("Inference must be an object.");
   }
   assertKeys(inference, ["schemaVersion", "results"], "Inference");
-  if (inference.schemaVersion !== 1)
-    throw new Error("Unsupported inference schemaVersion.");
-  if (!Array.isArray(inference.results))
-    throw new Error("Inference.results must be an array.");
+  if (inference.schemaVersion !== 1) throw new Error("Unsupported inference schemaVersion.");
+  if (!Array.isArray(inference.results)) throw new Error("Inference.results must be an array.");
   exactCoverage(
     requests.map((item) => item.requestId),
     inference.results.map((item) => item.requestId),
     "inference request",
   );
-  const requestsById = new Map(
-    requests.map((request) => [request.requestId, request]),
-  );
+  const requestsById = new Map(requests.map((request) => [request.requestId, request]));
   /** @type {Map<string, InferenceCandidate>} */
   const candidatesById = new Map();
   for (const result of inference.results) {
     assertKeys(
       result,
-      [
-        "requestId",
-        "reviewUnitId",
-        "hunkId",
-        "decision",
-        "rationale",
-        "candidates",
-      ],
+      ["requestId", "reviewUnitId", "hunkId", "decision", "rationale", "candidates"],
       `Inference result ${result.requestId ?? "<unknown>"}`,
     );
     const request = requestsById.get(result.requestId);
     if (!request) {
       throw new Error(`Inference result ${result.requestId} is unknown.`);
     }
-    if (
-      result.reviewUnitId !== request.reviewUnitId ||
-      result.hunkId !== request.hunkId
-    ) {
-      throw new Error(
-        `Inference result ${result.requestId} does not match its request.`,
-      );
+    if (result.reviewUnitId !== request.reviewUnitId || result.hunkId !== request.hunkId) {
+      throw new Error(`Inference result ${result.requestId} does not match its request.`);
     }
     if (!["candidates", "no-impact", "blocked"].includes(result.decision)) {
-      throw new Error(
-        `Inference result ${result.requestId} has an invalid decision.`,
-      );
+      throw new Error(`Inference result ${result.requestId} has an invalid decision.`);
     }
     if (!result.rationale?.trim()) {
-      throw new Error(
-        `Inference result ${result.requestId} requires a rationale.`,
-      );
+      throw new Error(`Inference result ${result.requestId} requires a rationale.`);
     }
     if (!Array.isArray(result.candidates)) {
-      throw new Error(
-        `Inference result ${result.requestId}.candidates must be an array.`,
-      );
+      throw new Error(`Inference result ${result.requestId}.candidates must be an array.`);
     }
     if (result.decision === "candidates" && !result.candidates.length) {
-      throw new Error(
-        `Inference result ${result.requestId} requires candidates.`,
-      );
+      throw new Error(`Inference result ${result.requestId} requires candidates.`);
     }
     if (result.decision !== "candidates" && result.candidates.length) {
-      throw new Error(
-        `Inference result ${result.requestId} must not contain candidates.`,
-      );
+      throw new Error(`Inference result ${result.requestId} must not contain candidates.`);
     }
     for (const candidate of result.candidates) {
       assertKeys(
@@ -326,31 +288,19 @@ function validateInference(inference, requests, modelInput) {
         `Inferred candidate ${candidate.id ?? "<unknown>"}`,
       );
       if (!request.allowedDimensions.includes(candidate.dimension)) {
-        throw new Error(
-          `Inferred candidate ${candidate.id} uses a disallowed dimension.`,
-        );
+        throw new Error(`Inferred candidate ${candidate.id} uses a disallowed dimension.`);
       }
       if (!candidate.id?.startsWith(`inferred-${candidate.dimension}-`)) {
-        throw new Error(
-          `Inferred candidate ${candidate.id ?? "<unknown>"} has an invalid ID.`,
-        );
+        throw new Error(`Inferred candidate ${candidate.id ?? "<unknown>"} has an invalid ID.`);
       }
-      if (
-        !candidate.rule?.trim() ||
-        !candidate.actual?.trim() ||
-        !candidate.expected?.trim()
-      ) {
+      if (!candidate.rule?.trim() || !candidate.actual?.trim() || !candidate.expected?.trim()) {
         throw new Error(`Inferred candidate ${candidate.id} is incomplete.`);
       }
       if (!["high", "medium", "low"].includes(candidate.defaultSeverity)) {
-        throw new Error(
-          `Inferred candidate ${candidate.id} has an invalid default severity.`,
-        );
+        throw new Error(`Inferred candidate ${candidate.id} has an invalid default severity.`);
       }
       if (candidate.reviewRequired !== true) {
-        throw new Error(
-          `Inferred candidate ${candidate.id} must require review.`,
-        );
+        throw new Error(`Inferred candidate ${candidate.id} must require review.`);
       }
       const allowedHunkIds = new Set(
         requests
@@ -367,41 +317,20 @@ function validateInference(inference, requests, modelInput) {
         !candidate.hunkIds.includes(request.hunkId) ||
         candidate.hunkIds.some((id) => !allowedHunkIds.has(id))
       ) {
-        throw new Error(
-          `Inferred candidate ${candidate.id} is outside its source request.`,
-        );
+        throw new Error(`Inferred candidate ${candidate.id} is outside its source request.`);
       }
-      if (
-        (candidate.operationIds ?? []).some(
-          (id) => !request.relatedOperationIds.includes(id),
-        )
-      ) {
-        throw new Error(
-          `Inferred candidate ${candidate.id} uses an unknown operation.`,
-        );
+      if ((candidate.operationIds ?? []).some((id) => !request.relatedOperationIds.includes(id))) {
+        throw new Error(`Inferred candidate ${candidate.id} uses an unknown operation.`);
       }
-      if (
-        (candidate.evidenceFactIds ?? []).some(
-          (id) => modelInput.facts?.[id] === undefined,
-        )
-      ) {
-        throw new Error(
-          `Inferred candidate ${candidate.id} uses an unknown fact.`,
-        );
+      if ((candidate.evidenceFactIds ?? []).some((id) => modelInput.facts?.[id] === undefined)) {
+        throw new Error(`Inferred candidate ${candidate.id} uses an unknown fact.`);
       }
-      if (
-        candidate.dimension === "downstream" &&
-        !candidate.crossLanguageDefinitionId?.trim()
-      ) {
-        throw new Error(
-          `Inferred downstream candidate ${candidate.id} requires an SDK symbol.`,
-        );
+      if (candidate.dimension === "downstream" && !candidate.crossLanguageDefinitionId?.trim()) {
+        throw new Error(`Inferred downstream candidate ${candidate.id} requires an SDK symbol.`);
       }
       const existing = candidatesById.get(candidate.id);
       if (existing && canonicalJson(existing) !== canonicalJson(candidate)) {
-        throw new Error(
-          `Inferred candidate ${candidate.id} has conflicting definitions.`,
-        );
+        throw new Error(`Inferred candidate ${candidate.id} has conflicting definitions.`);
       }
       candidatesById.set(candidate.id, candidate);
     }
@@ -417,9 +346,7 @@ function validateInferenceRequests(modelInput) {
       (hunkId) => `${unit.reviewUnitId}\u0000${hunkId}`,
     ),
   );
-  const actual = requests.map(
-    (request) => `${request.reviewUnitId}\u0000${request.hunkId}`,
-  );
+  const actual = requests.map((request) => `${request.reviewUnitId}\u0000${request.hunkId}`);
   exactCoverage(expected, actual, "inference request target");
   const unitsById = new Map(units.map((unit) => [unit.reviewUnitId, unit]));
   for (const request of requests) {
@@ -431,14 +358,10 @@ function validateInferenceRequests(modelInput) {
       evidenceRef.sourceChangeId !== request.sourceChangeId ||
       evidenceRef.hunkId !== request.hunkId
     ) {
-      throw new Error(
-        `Inference request ${request.requestId} has unknown source evidence.`,
-      );
+      throw new Error(`Inference request ${request.requestId} has unknown source evidence.`);
     }
     if (!request.sourceExcerpt?.trim()) {
-      throw new Error(
-        `Inference request ${request.requestId} has no source excerpt.`,
-      );
+      throw new Error(`Inference request ${request.requestId} has no source excerpt.`);
     }
   }
 }
@@ -448,9 +371,7 @@ function validateInferenceRequests(modelInput) {
  * @returns {Record<string, SourceChange>}
  */
 function sourceMap(sourceIndex) {
-  return Object.fromEntries(
-    sourceIndex.sourceChanges.map((source) => [source.id, source]),
-  );
+  return Object.fromEntries(sourceIndex.sourceChanges.map((source) => [source.id, source]));
 }
 
 /**
@@ -462,9 +383,7 @@ function sourceMap(sourceIndex) {
  * @returns {(T & JoinedFindingFields)[]}
  */
 function joinFindings(candidates, decisions, facts, sources) {
-  const decisionMap = new Map(
-    decisions.map((decision) => [decision.candidateId, decision]),
-  );
+  const decisionMap = new Map(decisions.map((decision) => [decision.candidateId, decision]));
   return candidates.flatMap((candidate) => {
     const decision = decisionMap.get(candidate.id);
     if (!decision) {
@@ -480,9 +399,7 @@ function joinFindings(candidates, decisions, facts, sources) {
         ...candidate,
         severity: decision.severity,
         rationale: decision.rationale,
-        evidence: candidate.evidenceFactIds
-          .map((id) => facts[id])
-          .filter(Boolean),
+        evidence: candidate.evidenceFactIds.map((id) => facts[id]).filter(Boolean),
         sources: candidate.sourceChangeIds
           .map((id) => {
             const source = sources[id];
@@ -502,9 +419,7 @@ function joinFindings(candidates, decisions, facts, sources) {
  * @param {string[]} fields
  */
 function changedFields(before, after, fields) {
-  return fields.filter(
-    (field) => !sameAutorestContract(before?.[field], after?.[field]),
-  );
+  return fields.filter((field) => !sameAutorestContract(before?.[field], after?.[field]));
 }
 
 /**
@@ -512,12 +427,8 @@ function changedFields(before, after, fields) {
  * @param {Record<string, AssessmentFact>} facts
  */
 function operationPresentation(operation, facts) {
-  const before = operation.beforeFactId
-    ? facts[operation.beforeFactId]
-    : undefined;
-  const after = operation.afterFactId
-    ? facts[operation.afterFactId]
-    : undefined;
+  const before = operation.beforeFactId ? facts[operation.beforeFactId] : undefined;
+  const after = operation.afterFactId ? facts[operation.afterFactId] : undefined;
   const current = after ?? before;
   const changed = changedFields(before, after, [
     "method",
@@ -544,7 +455,7 @@ function operationPresentation(operation, facts) {
       ? `REST contract changed: ${wireChanges.join(", ")}.`
       : changed.includes("paging")
         ? "HTTP signature and represented payload contract unchanged; SDK paging metadata changed."
-      : "HTTP signature and represented payload contract unchanged.",
+        : "HTTP signature and represented payload contract unchanged.",
   };
 }
 
@@ -555,17 +466,13 @@ function operationPresentation(operation, facts) {
 function semanticAction(unit, operations) {
   if (
     operations.length &&
-    operations.every(
-      (operation) => !operation.beforeFactId && operation.afterFactId,
-    )
+    operations.every((operation) => !operation.beforeFactId && operation.afterFactId)
   ) {
     return "add";
   }
   if (
     operations.length &&
-    operations.every(
-      (operation) => operation.beforeFactId && !operation.afterFactId,
-    )
+    operations.every((operation) => operation.beforeFactId && !operation.afterFactId)
   ) {
     return "remove";
   }
@@ -601,24 +508,17 @@ function sourcesForOperation(operation, unit, sources, facts, projectsById) {
   let sourceChangeIds = operation.sourceChangeIds ?? [];
   let hunkIds = operation.hunkIds ?? [];
   const publication = (unit.groupingEvidence?.reasons ?? []).some(
-    (reason) =>
-      reason === "publication" || reason.includes("api-version-publication"),
+    (reason) => reason === "publication" || reason.includes("api-version-publication"),
   );
   if (!sourceChangeIds.length && publication) {
     const unitHunkIds = new Set(unit.hunkIds ?? []);
     const operationFactId = operation.afterFactId ?? operation.beforeFactId;
-    const operationFact = operationFactId
-      ? facts[operationFactId]
-      : undefined;
+    const operationFact = operationFactId ? facts[operationFactId] : undefined;
     const projectId = operationFact?.projectId;
-    const projectPath = projectId
-      ? projectsById.get(projectId)?.path
-      : undefined;
+    const projectPath = projectId ? projectsById.get(projectId)?.path : undefined;
     /** @param {SourceChange | undefined} source */
     const inProject = (source) =>
-      !projectPath ||
-      source?.path === projectPath ||
-      source?.path?.startsWith(`${projectPath}/`);
+      !projectPath || source?.path === projectPath || source?.path?.startsWith(`${projectPath}/`);
     const governance = (unit.sourceChangeIds ?? []).flatMap((sourceId) => {
       const source = sources[sourceId];
       if (!inProject(source)) return [];
@@ -630,9 +530,7 @@ function sourcesForOperation(operation, unit, sources, facts, projectsById) {
         )
         .flatMap((declaration) => declaration.hunkIds ?? [])
         .filter((hunkId) => unitHunkIds.has(hunkId));
-      return versionHunkIds.length
-        ? [{ sourceId, hunkIds: versionHunkIds }]
-        : [];
+      return versionHunkIds.length ? [{ sourceId, hunkIds: versionHunkIds }] : [];
     });
     sourceChangeIds = governance.map((item) => item.sourceId);
     hunkIds = [...new Set(governance.flatMap((item) => item.hunkIds))];
@@ -651,18 +549,12 @@ function methodFacts(finding) {
   /** @param {AssessmentFact} fact */
   const role = (fact) =>
     fact.comparisonRole ??
-    (fact.revision === "base"
-      ? "baseline"
-      : fact.revision === "current"
-        ? "target"
-        : undefined);
+    (fact.revision === "base" ? "baseline" : fact.revision === "current" ? "target" : undefined);
   return {
     before: finding.evidence.find(
       (fact) => fact.factKind === "method" && role(fact) === "baseline",
     ),
-    after: finding.evidence.find(
-      (fact) => fact.factKind === "method" && role(fact) === "target",
-    ),
+    after: finding.evidence.find((fact) => fact.factKind === "method" && role(fact) === "target"),
   };
 }
 
@@ -680,9 +572,7 @@ function methodDeltaValue(fact, field) {
     return {
       finalStateVia: semantic.finalStateVia,
       logicalResult: typeIdentity(semantic.logicalResult),
-      pollingStep:
-        semantic.pollingStep?.kind ??
-        semantic.pollingStep?.responseBody?.kind,
+      pollingStep: semantic.pollingStep?.kind ?? semantic.pollingStep?.responseBody?.kind,
       finalStep: semantic.finalStep?.kind,
       statusMonitorStep: semantic.statusMonitorStep?.kind,
     };
@@ -704,9 +594,7 @@ function methodDeltaValue(fact, field) {
  * @returns {SdkMethodParameter[] | undefined}
  */
 function sdkMethodParameters(parameters) {
-  return /** @type {SdkMethodParameter[] | undefined} */ (
-    /** @type {unknown} */ (parameters)
-  );
+  return /** @type {SdkMethodParameter[] | undefined} */ (/** @type {unknown} */ (parameters));
 }
 
 /** @type {Record<string, string | undefined>} */
@@ -728,25 +616,15 @@ function meaningfulDownstreamFinding(finding) {
   if (!before && !after) return true;
   if (field === "parameters") {
     return (
-      canonicalJson(
-        publicParameterContract(sdkMethodParameters(before?.parameters)),
-      ) !==
-      canonicalJson(
-        publicParameterContract(sdkMethodParameters(after?.parameters)),
-      )
+      canonicalJson(publicParameterContract(sdkMethodParameters(before?.parameters))) !==
+      canonicalJson(publicParameterContract(sdkMethodParameters(after?.parameters)))
     );
   }
   const beforeValue =
-    field === "lro"
-      ? semanticLroContract(before?.lro)
-      : methodDeltaValue(before, field);
+    field === "lro" ? semanticLroContract(before?.lro) : methodDeltaValue(before, field);
   const afterValue =
-    field === "lro"
-      ? semanticLroContract(after?.lro)
-      : methodDeltaValue(after, field);
-  return (
-    canonicalJson(beforeValue ?? null) !== canonicalJson(afterValue ?? null)
-  );
+    field === "lro" ? semanticLroContract(after?.lro) : methodDeltaValue(after, field);
+  return canonicalJson(beforeValue ?? null) !== canonicalJson(afterValue ?? null);
 }
 
 /** @param {SemanticItem[]} semanticItems */
@@ -799,9 +677,7 @@ function findingRelations(restFindings, downstreamFindings, semanticItems) {
     const matches = semanticOperations.filter(({ operation }) =>
       finding.operationIds.includes(operation.operationId),
     );
-    finding.relatedSemanticIntents = [
-      ...new Set(matches.map(({ intent }) => intent.id)),
-    ];
+    finding.relatedSemanticIntents = [...new Set(matches.map(({ intent }) => intent.id))];
     finding.semanticMatchBasis = finding.relatedSemanticIntents.length
       ? "operation-identity"
       : undefined;
@@ -809,9 +685,7 @@ function findingRelations(restFindings, downstreamFindings, semanticItems) {
   for (const finding of downstreamFindings) {
     const declarationMatches = matchTypeFindingIntents(finding, semanticItems);
     if (declarationMatches.length) {
-      finding.relatedSemanticIntents = declarationMatches.map(
-        (intent) => intent.id,
-      );
+      finding.relatedSemanticIntents = declarationMatches.map((intent) => intent.id);
       finding.semanticMatchBasis = "declaration-identity";
       continue;
     }
@@ -819,10 +693,8 @@ function findingRelations(restFindings, downstreamFindings, semanticItems) {
     const sourceMatches = semanticItems.filter((intent) =>
       intent.sourceChangeIds.some((id) => sourceIds.has(id)),
     );
-    finding.relatedSemanticIntents =
-      sourceMatches.length === 1 ? [sourceMatches[0].id] : [];
-    finding.semanticMatchBasis =
-      sourceMatches.length === 1 ? "unique-source" : undefined;
+    finding.relatedSemanticIntents = sourceMatches.length === 1 ? [sourceMatches[0].id] : [];
+    finding.semanticMatchBasis = sourceMatches.length === 1 ? "unique-source" : undefined;
   }
 }
 
@@ -831,11 +703,7 @@ function findingRelations(restFindings, downstreamFindings, semanticItems) {
  * @param {DownstreamRootCause[]} [rootCauses]
  * @param {Record<string, AssessmentFact>} [facts]
  */
-function downstreamGroups(
-  downstreamFindings,
-  rootCauses = [],
-  facts = {},
-) {
+function downstreamGroups(downstreamFindings, rootCauses = [], facts = {}) {
   /** @type {Map<string, {
    *   id: string,
    *   projectId?: string,
@@ -879,16 +747,8 @@ function downstreamGroups(
         ...group,
         apiVersion: (group.after ?? group.before)?.apiVersion,
         parametersUnchanged:
-          canonicalJson(
-            publicParameterContract(
-              sdkMethodParameters(group.before?.parameters),
-            ),
-          ) ===
-          canonicalJson(
-            publicParameterContract(
-              sdkMethodParameters(group.after?.parameters),
-            ),
-          ),
+          canonicalJson(publicParameterContract(sdkMethodParameters(group.before?.parameters))) ===
+          canonicalJson(publicParameterContract(sdkMethodParameters(group.after?.parameters))),
         deltas: group.findings.map((finding) => {
           const field = METHOD_RULE_FIELDS[finding.rule];
           /** @type {Record<string, unknown> & {
@@ -921,9 +781,7 @@ function downstreamGroups(
           return delta;
         }),
         rootCauseIds: [
-          ...new Set(
-            group.findings.flatMap((finding) => finding.rootCauseIds ?? []),
-          ),
+          ...new Set(group.findings.flatMap((finding) => finding.rootCauseIds ?? [])),
         ].sort(),
         relatedSemanticIntents: representative.relatedSemanticIntents ?? [],
       };
@@ -976,17 +834,15 @@ function downstreamGroups(
         ].sort();
         const referenceFactIds = [
           ...new Set(
-            (root.referenceEvidence ?? []).flatMap((edge) => [
-              edge.fromFactId,
-              edge.toFactId,
-            ]).filter((id) => id !== undefined),
+            (root.referenceEvidence ?? [])
+              .flatMap((edge) => [edge.fromFactId, edge.toFactId])
+              .filter((id) => id !== undefined),
           ),
         ].sort();
         for (const methodFactId of root.methodFactIds ?? []) {
           const method = facts[methodFactId];
           if (!method || method.factKind !== "method") continue;
-          const symbol =
-            method.crossLanguageDefinitionId ?? method.identity ?? method.name;
+          const symbol = method.crossLanguageDefinitionId ?? method.identity ?? method.name;
           if (!symbol) continue;
           const current = affectedMethods.get(symbol) ?? {
             symbol,
@@ -1005,15 +861,9 @@ function downstreamGroups(
           referenceFactIds: [...method.referenceFactIds].sort(),
         }))
         .sort((left, right) => left.symbol.localeCompare(right.symbol));
-      const locations = [
-        ...new Set(methods.flatMap((method) => method.locations)),
-      ].sort();
+      const locations = [...new Set(methods.flatMap((method) => method.locations))].sort();
       const relatedSemanticIntents = [
-        ...new Set(
-          group.findings.flatMap(
-            (finding) => finding.relatedSemanticIntents ?? [],
-          ),
-        ),
+        ...new Set(group.findings.flatMap((finding) => finding.relatedSemanticIntents ?? [])),
       ].sort();
       return {
         id: stableId("sdk-type-impact", {
@@ -1051,9 +901,7 @@ function addReciprocalRelations(semanticItems, restFindings, downstream) {
   for (const intent of semanticItems) {
     intent.relatedFindings = {
       rest: restFindings
-        .filter((finding) =>
-          finding.relatedSemanticIntents?.includes(intent.id),
-        )
+        .filter((finding) => finding.relatedSemanticIntents?.includes(intent.id))
         .map((finding) => finding.id)
         .sort(),
       downstream: downstream.methodGroups
@@ -1072,47 +920,30 @@ function addReciprocalRelations(semanticItems, restFindings, downstream) {
  * @param {{work: string, judgment: string | AssessmentJudgment}} options
  */
 export function assembleAssessment({ work, judgment }) {
-  const manifest =
-    /** @type {PreparationManifest} */ (
-      /** @type {unknown} */ (
-        readJsonObject(path.join(work, "preparation-manifest.json"))
-      )
-    );
-  const sourceIndex =
-    /** @type {SourceIndex} */ (
-      /** @type {unknown} */ (
-        readJsonObject(path.join(work, "source", "source-index.json"))
-      )
-    );
-  const semantic =
-    /** @type {SemanticAnalysis} */ (
-      /** @type {unknown} */ (
-        readJsonObject(
-          path.join(work, "dimensions", "semantic-intents-input.json"),
-        )
-      )
-    );
-  const rest =
-    /** @type {BreakingAnalysis} */ (
-      /** @type {unknown} */ (
-        readJsonObject(
-          path.join(work, "dimensions", "rest-breaking-input.json"),
-        )
-      )
-    );
-  const downstream =
-    /** @type {DownstreamAnalysis} */ (
-      /** @type {unknown} */ (
-        readJsonObject(
-          path.join(work, "dimensions", "downstream-breaking-input.json"),
-        )
-      )
-    );
+  const manifest = /** @type {PreparationManifest} */ (
+    /** @type {unknown} */ (readJsonObject(path.join(work, "preparation-manifest.json")))
+  );
+  const sourceIndex = /** @type {SourceIndex} */ (
+    /** @type {unknown} */ (readJsonObject(path.join(work, "source", "source-index.json")))
+  );
+  const semantic = /** @type {SemanticAnalysis} */ (
+    /** @type {unknown} */ (
+      readJsonObject(path.join(work, "dimensions", "semantic-intents-input.json"))
+    )
+  );
+  const rest = /** @type {BreakingAnalysis} */ (
+    /** @type {unknown} */ (
+      readJsonObject(path.join(work, "dimensions", "rest-breaking-input.json"))
+    )
+  );
+  const downstream = /** @type {DownstreamAnalysis} */ (
+    /** @type {unknown} */ (
+      readJsonObject(path.join(work, "dimensions", "downstream-breaking-input.json"))
+    )
+  );
   const answer =
     typeof judgment === "string"
-      ? /** @type {AssessmentJudgment} */ (
-          /** @type {unknown} */ (readJsonObject(judgment))
-        )
+      ? /** @type {AssessmentJudgment} */ (/** @type {unknown} */ (readJsonObject(judgment)))
       : judgment;
   const modelInputPath = path.join(work, "model-input.json");
   /** @type {Partial<AssessmentModelInput>} */
@@ -1167,9 +998,7 @@ export function assembleAssessment({ work, judgment }) {
     throw new Error("Unexpected inference.json without inference requests.");
   }
   const inference = inferenceRequests.length
-    ? /** @type {AssessmentInference} */ (
-        /** @type {unknown} */ (readJsonObject(inferencePath))
-      )
+    ? /** @type {AssessmentInference} */ (/** @type {unknown} */ (readJsonObject(inferencePath)))
     : undefined;
   if (inference) validateInference(inference, inferenceRequests, modelInput);
   const inferredCandidates = [
@@ -1181,9 +1010,7 @@ export function assembleAssessment({ work, judgment }) {
             ...candidate,
             inferred: true,
             inferenceRequestIds: (inference?.results ?? [])
-              .filter((item) =>
-                item.candidates.some((value) => value.id === candidate.id),
-              )
+              .filter((item) => item.candidates.some((value) => value.id === candidate.id))
               .map((item) => item.requestId)
               .sort(),
           },
@@ -1197,9 +1024,7 @@ export function assembleAssessment({ work, judgment }) {
   ];
   const downstreamCandidates = [
     ...assessedDownstreamCandidates,
-    ...inferredCandidates.filter(
-      (candidate) => candidate.dimension === "downstream",
-    ),
+    ...inferredCandidates.filter((candidate) => candidate.dimension === "downstream"),
   ];
   const deterministicCandidateIds = new Set([
     ...rest.candidates.map((candidate) => candidate.id),
@@ -1231,19 +1056,12 @@ export function assembleAssessment({ work, judgment }) {
         message: result.rationale,
       };
     });
-  const complianceEvidencePath = path.join(
-    work,
-    "compliance-search-evidence.json",
-  );
+  const complianceEvidencePath = path.join(work, "compliance-search-evidence.json");
   const modelComplianceRequests = modelInput.complianceSearchRequests;
   const hasComplianceContract = Array.isArray(modelComplianceRequests);
-  const scopedComplianceRequests = hasComplianceContract
-    ? modelComplianceRequests
-    : [];
-  const hasComplianceInput =
-    hasComplianceContract && scopedComplianceRequests.length > 0;
-  const complianceRequestArtifact =
-    modelInput.artifactReferences?.complianceSearchRequests;
+  const scopedComplianceRequests = hasComplianceContract ? modelComplianceRequests : [];
+  const hasComplianceInput = hasComplianceContract && scopedComplianceRequests.length > 0;
+  const complianceRequestArtifact = modelInput.artifactReferences?.complianceSearchRequests;
   const complianceRequests =
     hasComplianceInput && complianceRequestArtifact
       ? /** @type {{requests: ComplianceSearchRequest[]}} */ (
@@ -1274,12 +1092,8 @@ export function assembleAssessment({ work, judgment }) {
   const scopedSemantic = partitionSemanticIntents(semantic.reviewUnits);
   const modelSemanticReviewUnits = modelInput.semanticReviewUnits;
   const hasScopedSemanticInput = Array.isArray(modelSemanticReviewUnits);
-  const scopedModelSemanticUnits = hasScopedSemanticInput
-    ? modelSemanticReviewUnits
-    : [];
-  const informationalSemanticIntentIds = new Set(
-    modelInput.informationalSemanticIntentIds ?? [],
-  );
+  const scopedModelSemanticUnits = hasScopedSemanticInput ? modelSemanticReviewUnits : [];
+  const informationalSemanticIntentIds = new Set(modelInput.informationalSemanticIntentIds ?? []);
   if (hasScopedSemanticInput) {
     exactCoverage(
       scopedSemantic.informational.map((item) => item.id),
@@ -1311,17 +1125,10 @@ export function assembleAssessment({ work, judgment }) {
     "downstream candidate",
   );
   const sources = sourceMap(sourceIndex);
-  const projectsById = new Map(
-    (manifest.projects ?? []).map((project) => [project.id, project]),
-  );
-  const semanticUnits = new Map(
-    semantic.reviewUnits.map((unit) => [unit.id, unit]),
-  );
+  const projectsById = new Map((manifest.projects ?? []).map((project) => [project.id, project]));
+  const semanticUnits = new Map(semantic.reviewUnits.map((unit) => [unit.id, unit]));
   const modelSemanticUnits = new Map(
-    scopedModelSemanticUnits.map((unit) => [
-      unit.reviewUnitId,
-      unit,
-    ]),
+    scopedModelSemanticUnits.map((unit) => [unit.reviewUnitId, unit]),
   );
   /** @type {Map<string, import("./runtime-types.js").InferenceResult[]>} */
   const inferenceResultsByUnit = new Map();
@@ -1354,31 +1161,20 @@ export function assembleAssessment({ work, judgment }) {
       unit.operationIds.map((id) => ({
         operationId: semantic.facts[id]?.operationId,
         beforeFactId: unit.beforeFactIds?.find(
-          (factId) =>
-            semantic.facts[factId]?.operationId ===
-            semantic.facts[id]?.operationId,
+          (factId) => semantic.facts[factId]?.operationId === semantic.facts[id]?.operationId,
         ),
         afterFactId:
           unit.afterFactIds?.find(
-            (factId) =>
-              semantic.facts[factId]?.operationId ===
-              semantic.facts[id]?.operationId,
+            (factId) => semantic.facts[factId]?.operationId === semantic.facts[id]?.operationId,
           ) ??
-          ((semantic.facts[id]?.comparisonRole ??
-            semantic.facts[id]?.revision) === "baseline" ||
+          ((semantic.facts[id]?.comparisonRole ?? semantic.facts[id]?.revision) === "baseline" ||
           semantic.facts[id]?.revision === "base"
             ? undefined
             : id),
       }))
     ).map((operation) => ({
       ...operationPresentation(operation, semantic.facts),
-      sources: sourcesForOperation(
-        operation,
-        unit,
-        sources,
-        semantic.facts,
-        projectsById,
-      ),
+      sources: sourcesForOperation(operation, unit, sources, semantic.facts, projectsById),
     }));
     const action = semanticAction(unit, operations);
     return {
@@ -1397,17 +1193,15 @@ export function assembleAssessment({ work, judgment }) {
         : {}),
       ...(inferenceResultsByUnit.has(intent.reviewUnitId)
         ? {
-            inferenceResults: (inferenceResultsByUnit
-              .get(intent.reviewUnitId) ?? [])
-              .map((result) => ({
+            inferenceResults: (inferenceResultsByUnit.get(intent.reviewUnitId) ?? []).map(
+              (result) => ({
                 requestId: result.requestId,
                 hunkId: result.hunkId,
                 decision: result.decision,
                 rationale: result.rationale,
-                candidateIds: result.candidates.map(
-                  (candidate) => candidate.id,
-                ),
-              })),
+                candidateIds: result.candidates.map((candidate) => candidate.id),
+              }),
+            ),
           }
         : {}),
       operations,
@@ -1415,10 +1209,7 @@ export function assembleAssessment({ work, judgment }) {
         .map(
           (id) =>
             sources[id] &&
-            sourceForUnit(
-              sources[id],
-              unit.hunkIds ?? sources[id].hunks.map((hunk) => hunk.id),
-            ),
+            sourceForUnit(sources[id], unit.hunkIds ?? sources[id].hunks.map((hunk) => hunk.id)),
         )
         .filter(Boolean),
     };
@@ -1440,74 +1231,59 @@ export function assembleAssessment({ work, judgment }) {
     downstreamFindings,
     semanticItems.filter((intent) => !intent.informational),
   );
-  const downstreamAggregation = downstreamGroups(
-    downstreamFindings,
-    downstream.rootCauses,
-    { ...modelInput.facts, ...downstream.facts },
-  );
+  const downstreamAggregation = downstreamGroups(downstreamFindings, downstream.rootCauses, {
+    ...modelInput.facts,
+    ...downstream.facts,
+  });
   addReciprocalRelations(semanticItems, restFindings, downstreamAggregation);
   const restDimension = {
     status: dimensionStatus(
       rest.status === "blocked" ||
-        inferenceBlockers.some((blocker) =>
-          blocker.allowedDimensions.includes("rest"),
-        ),
+        inferenceBlockers.some((blocker) => blocker.allowedDimensions.includes("rest")),
       restFindings,
     ),
     findings: restFindings,
-    rejectedCandidateCount: answer.restDecisions.filter(
-      (item) => item.decision === "reject",
-    ).length,
+    rejectedCandidateCount: answer.restDecisions.filter((item) => item.decision === "reject")
+      .length,
     blockers: [
       ...rest.blockers,
-      ...inferenceBlockers.filter((blocker) =>
-        blocker.allowedDimensions.includes("rest"),
-      ),
+      ...inferenceBlockers.filter((blocker) => blocker.allowedDimensions.includes("rest")),
     ],
   };
   const downstreamDimension = {
     status: dimensionStatus(
       downstream.status === "blocked" ||
-        inferenceBlockers.some((blocker) =>
-          blocker.allowedDimensions.includes("downstream"),
-        ),
+        inferenceBlockers.some((blocker) => blocker.allowedDimensions.includes("downstream")),
       downstreamFindings,
     ),
     findings: downstreamFindings,
     methodGroups: downstreamAggregation.methodGroups,
     typeImpacts: downstreamAggregation.typeImpacts,
     rootCauses: downstream.rootCauses ?? [],
-    rejectedCandidateCount: answer.downstreamDecisions.filter(
-      (item) => item.decision === "reject",
-    ).length,
+    rejectedCandidateCount: answer.downstreamDecisions.filter((item) => item.decision === "reject")
+      .length,
     blockers: [
       ...downstream.blockers,
-      ...inferenceBlockers.filter((blocker) =>
-        blocker.allowedDimensions.includes("downstream"),
-      ),
+      ...inferenceBlockers.filter((blocker) => blocker.allowedDimensions.includes("downstream")),
     ],
   };
   const complianceDimension = hasComplianceInput
     ? assembleCompliance({
         requests: complianceRequests,
-        evidence:
-          /** @type {ComplianceSearchEvidence} */ (complianceEvidence),
+        evidence: /** @type {ComplianceSearchEvidence} */ (complianceEvidence),
         decisions: answer.complianceDecisions,
         sourceChanges: sourceIndex.sourceChanges,
         initialBlockers:
           semantic.status === "blocked"
             ? semantic.blockers.length
               ? semantic.blockers
-              : [
-                  "semantic-analysis-blocked: Azure Guidelines requires Semantic intents.",
-                ]
+              : ["semantic-analysis-blocked: Azure Guidelines requires Semantic intents."]
             : [],
       })
     : hasComplianceContract
       ? {
           status: "passed",
-          summary:
-            "No assessed Semantic intents require Azure Guidelines review.",
+          summary: "No assessed Semantic intents require Azure Guidelines review.",
           coverage: {
             semanticIntentCount: 0,
             assessedIntentCount: 0,
@@ -1520,23 +1296,22 @@ export function assembleAssessment({ work, judgment }) {
           blockers: [],
         }
       : {
-        status: "not-assessed",
-        summary: "Azure Guidelines search input was not available.",
-        coverage: {
-          semanticIntentCount: 0,
-          assessedIntentCount: 0,
-          selectedDocumentCount: 0,
-          unassessedIntentIds: [],
-        },
-        intentAssessments: [],
-        findings: [],
-        retrievalFailures: [],
-        blockers: [
-          {
-            message:
-              "compliance-search-input-missing: rerun deterministic analysis.",
+          status: "not-assessed",
+          summary: "Azure Guidelines search input was not available.",
+          coverage: {
+            semanticIntentCount: 0,
+            assessedIntentCount: 0,
+            selectedDocumentCount: 0,
+            unassessedIntentIds: [],
           },
-        ],
+          intentAssessments: [],
+          findings: [],
+          retrievalFailures: [],
+          blockers: [
+            {
+              message: "compliance-search-input-missing: rerun deterministic analysis.",
+            },
+          ],
         };
   const documentQualityPath = path.join(work, DOCUMENT_QUALITY_ARTIFACT);
   const documentQualityDimension = assembleDocumentQuality({
@@ -1602,9 +1377,7 @@ export function assembleAssessment({ work, judgment }) {
     blockers: [...manifest.blockers, ...answer.blockers, ...inferenceBlockers],
     provenance: {
       modelInput: "model-input.json",
-      ...(fs.existsSync(documentQualityPath)
-        ? { documentQuality: DOCUMENT_QUALITY_ARTIFACT }
-        : {}),
+      ...(fs.existsSync(documentQualityPath) ? { documentQuality: DOCUMENT_QUALITY_ARTIFACT } : {}),
       ...(inference ? { inference: "inference.json" } : {}),
       ...(hasComplianceInput
         ? { complianceSearchEvidence: "compliance-search-evidence.json" }
@@ -1619,20 +1392,17 @@ export function assembleAssessment({ work, judgment }) {
             inference: {
               requestCount: inferenceRequests.length,
               inferredCandidateCount: inferredCandidates.length,
-              noImpactCount: inference.results.filter(
-                (result) => result.decision === "no-impact",
-              ).length,
-              blockedCount: inference.results.filter(
-                (result) => result.decision === "blocked",
-              ).length,
+              noImpactCount: inference.results.filter((result) => result.decision === "no-impact")
+                .length,
+              blockedCount: inference.results.filter((result) => result.decision === "blocked")
+                .length,
             },
           }
         : {}),
       ...(hasComplianceInput
         ? {
-            compliance:
-              /** @type {ComplianceSearchEvidence} */ (complianceEvidence)
-                .inputAccounting,
+            compliance: /** @type {ComplianceSearchEvidence} */ (complianceEvidence)
+              .inputAccounting,
           }
         : {}),
     },
@@ -1648,11 +1418,7 @@ if (isMain(import.meta.url)) {
     const work = args.work;
     const judgment = args.judgment;
     const output = args.output;
-    if (
-      typeof work !== "string" ||
-      typeof judgment !== "string" ||
-      typeof output !== "string"
-    ) {
+    if (typeof work !== "string" || typeof judgment !== "string" || typeof output !== "string") {
       throw new Error("--work, --judgment, and --output must be paths.");
     }
     const assessment = assembleAssessment({

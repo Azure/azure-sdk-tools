@@ -1,7 +1,7 @@
+import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import YAML from "yaml";
 import { isRecord } from "./cli.mjs";
 import { dependencyProcessCommand } from "./npm-command.mjs";
@@ -122,11 +122,12 @@ export function dependencyFingerprint(root, manager = detectPackageManager(root)
 
 /** @param {unknown} value */
 function resolvedVersion(value) {
-  const raw = typeof value === "string"
-    ? value
-    : isRecord(value) && typeof value.version === "string"
-      ? value.version
-      : undefined;
+  const raw =
+    typeof value === "string"
+      ? value
+      : isRecord(value) && typeof value.version === "string"
+        ? value.version
+        : undefined;
   return /^(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)/.exec(raw ?? "")?.[1];
 }
 
@@ -337,9 +338,10 @@ export function ensureDependencies({ worktree, work, reuseRoot }) {
   const started = performance.now();
   const manager = detectPackageManager(worktree);
   const fingerprint = dependencyFingerprint(worktree, manager);
-  const result = manager.name === "npm"
-    ? ensureNpmDependencies({ worktree, work, reuseRoot, manager, fingerprint })
-    : ensurePnpmDependencies({ worktree, work, manager });
+  const result =
+    manager.name === "npm"
+      ? ensureNpmDependencies({ worktree, work, reuseRoot, manager, fingerprint })
+      : ensurePnpmDependencies({ worktree, work, manager });
   return {
     manager: manager.name,
     managerVersion: manager.version,

@@ -1,19 +1,19 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { parseArgs, isMain, runMain, writeJson } from "./cli.mjs";
+import { resolveProjectApiVersions } from "./api-version-selection.mjs";
+import { isMain, parseArgs, runMain, writeJson } from "./cli.mjs";
+import { runProjectCompilers } from "./compiler-runner.mjs";
 import {
   collectChanges,
   createSparseWorktree,
   discoverProjects,
-  normalizeSpecification,
   normalizeSparseRoots,
+  normalizeSpecification,
   resolveComparison,
 } from "./git-evidence.mjs";
-import { addCompilerEvidence, buildSourceIndex } from "./source-index.mjs";
-import { runProjectCompilers } from "./compiler-runner.mjs";
-import { resolveProjectApiVersions } from "./api-version-selection.mjs";
 import { ensureDependencies } from "./package-manager.mjs";
+import { addCompilerEvidence, buildSourceIndex } from "./source-index.mjs";
 
 /** @typedef {import("./runtime-types.js").ChangedFile} ChangedFile */
 /** @typedef {import("./runtime-types.js").PreparationBlocker} PreparationBlocker */
@@ -46,23 +46,27 @@ function changeTouchesRoot(change, root) {
  * @returns {ChangedFile[]}
  */
 export function typeSpecChangesForAnalysis(changes) {
-  return changes.flatMap(/** @returns {ChangedFile[]} */ (change) => {
-    if (!change.previousPath || change.previousPath === change.path) return [change];
-    const previousRelevant = isTypeSpecPath(change.previousPath);
-    const currentRelevant = isTypeSpecPath(change.path);
-    return [
-      ...(previousRelevant && change.status !== "added"
-        ? [{
-            ...change,
-            path: change.previousPath,
-            status: /** @type {const} */ ("removed"),
-          }]
-        : []),
-      ...(currentRelevant
-        ? [{ ...change, status: /** @type {const} */ ("added") }]
-        : []),
-    ];
-  }).sort((left, right) => left.path.localeCompare(right.path));
+  return changes
+    .flatMap(
+      /** @returns {ChangedFile[]} */ (change) => {
+        if (!change.previousPath || change.previousPath === change.path) return [change];
+        const previousRelevant = isTypeSpecPath(change.previousPath);
+        const currentRelevant = isTypeSpecPath(change.path);
+        return [
+          ...(previousRelevant && change.status !== "added"
+            ? [
+                {
+                  ...change,
+                  path: change.previousPath,
+                  status: /** @type {const} */ ("removed"),
+                },
+              ]
+            : []),
+          ...(currentRelevant ? [{ ...change, status: /** @type {const} */ ("added") }] : []),
+        ];
+      },
+    )
+    .sort((left, right) => left.path.localeCompare(right.path));
 }
 
 /**
@@ -104,8 +108,7 @@ export function prepareProjectRecords({
           change.path.startsWith(`${project}/`) ||
           change.path === project ||
           !projects.some(
-            (candidate) =>
-              change.path.startsWith(`${candidate}/`) || change.path === candidate,
+            (candidate) => change.path.startsWith(`${candidate}/`) || change.path === candidate,
           ),
       )
       .map((change) => change.id);
@@ -301,18 +304,11 @@ export async function prepareAssessment({
     scope,
   );
   const changeDiscoveryStarted = performance.now();
-  const changedFiles = collectChanges(
-    repository,
-    comparison.mergeBaseCommit,
-    sparseRoots,
-    {
-      headRef: comparison.headCommit,
-      includeWorkingTree,
-    },
-  ).filter((file) => sparseRoots.some((root) => changeTouchesRoot(file, root)));
-  const changeDiscoveryMs = Math.round(
-    performance.now() - changeDiscoveryStarted,
-  );
+  const changedFiles = collectChanges(repository, comparison.mergeBaseCommit, sparseRoots, {
+    headRef: comparison.headCommit,
+    includeWorkingTree,
+  }).filter((file) => sparseRoots.some((root) => changeTouchesRoot(file, root)));
+  const changeDiscoveryMs = Math.round(performance.now() - changeDiscoveryStarted);
   /** @type {PreparationBlocker[]} */
   const blockers = [];
   /** @type {PreparationManifest} */
@@ -343,9 +339,7 @@ export async function prepareAssessment({
     },
   };
   manifest.timings.setupExcludingFetchMs =
-    (manifest.timings.setupExcludingFetchMs ?? 0) +
-    comparisonMs +
-    changeDiscoveryMs;
+    (manifest.timings.setupExcludingFetchMs ?? 0) + comparisonMs + changeDiscoveryMs;
   if (!changedFiles.length) {
     manifest.status = "no-changes";
     manifest.timings.totalMs = Math.round(performance.now() - started);
@@ -385,9 +379,7 @@ export async function prepareAssessment({
       message: error instanceof Error ? error.message : String(error),
     });
   }
-  manifest.timings.workspacePreparationMs = Math.round(
-    performance.now() - workspaceStarted,
-  );
+  manifest.timings.workspacePreparationMs = Math.round(performance.now() - workspaceStarted);
 
   const projectDiscoveryStarted = performance.now();
   const discoveredProjects = [
@@ -395,28 +387,25 @@ export async function prepareAssessment({
       sparseRoots.flatMap((root) =>
         discoverProjects(
           currentWorktree,
-          analysisFiles.filter(
-            (file) => file.path === root || file.path.startsWith(`${root}/`),
-          ),
+          analysisFiles.filter((file) => file.path === root || file.path.startsWith(`${root}/`)),
           root,
         ),
       ),
     ),
   ].sort();
-  const projects = discoveredProjects.filter((project) =>
-    !discoveredProjects.some((candidate) =>
-      candidate !== project && candidate.startsWith(`${project}/`)));
+  const projects = discoveredProjects.filter(
+    (project) =>
+      !discoveredProjects.some(
+        (candidate) => candidate !== project && candidate.startsWith(`${project}/`),
+      ),
+  );
   if (!projects.length) {
     blockers.push({
       code: "project-not-found",
       message: `No affected tspconfig.yaml was found under ${scope}.`,
     });
   }
-  const externalImports = findExternalLocalImports(
-    currentWorktree,
-    projects,
-    sparseRoots,
-  );
+  const externalImports = findExternalLocalImports(currentWorktree, projects, sparseRoots);
   if (externalImports.length) {
     blockers.push({
       code: "unsupported-import-outside-service",
@@ -425,9 +414,7 @@ export async function prepareAssessment({
         .join(", ")}`,
     });
   }
-  manifest.timings.projectDiscoveryMs = Math.round(
-    performance.now() - projectDiscoveryStarted,
-  );
+  manifest.timings.projectDiscoveryMs = Math.round(performance.now() - projectDiscoveryStarted);
   manifest.timings.setupExcludingFetchMs =
     (manifest.timings.setupExcludingFetchMs ?? 0) +
     manifest.timings.workspacePreparationMs +
@@ -462,17 +449,19 @@ export async function prepareAssessment({
     });
     writeJson(path.join(work, "source", "source-index.json"), sourceIndex);
   }
-  manifest.projects.push(...prepareProjectRecords({
-    projects,
-    sourceIndex,
-    blockers,
-    baseWorktree,
-    currentWorktree,
-    baseCommit: comparison.mergeBaseCommit,
-    headCommit: comparison.headCommit,
-    workRoot: work,
-    enabled: !blockers.length,
-  }));
+  manifest.projects.push(
+    ...prepareProjectRecords({
+      projects,
+      sourceIndex,
+      blockers,
+      baseWorktree,
+      currentWorktree,
+      baseCommit: comparison.mergeBaseCommit,
+      headCommit: comparison.headCommit,
+      workRoot: work,
+      enabled: !blockers.length,
+    }),
+  );
   manifest.status = blockers.length ? "blocked" : "ready";
   manifest.timings.totalMs = Math.round(performance.now() - started);
   writeJson(path.join(work, "preparation-manifest.json"), manifest);

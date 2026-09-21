@@ -1,6 +1,6 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { isRecord, readJsonObject } from "./cli.mjs";
 import { dependencyProcessCommand } from "./npm-command.mjs";
@@ -20,9 +20,7 @@ function expectedVersion(root) {
   }
   const lock = readJsonObject(lockPath);
   const packages = lock.packages;
-  const dependency = isRecord(packages)
-    ? packages[`node_modules/${REQUIRED_PACKAGE}`]
-    : undefined;
+  const dependency = isRecord(packages) ? packages[`node_modules/${REQUIRED_PACKAGE}`] : undefined;
   const version = isRecord(dependency) ? dependency.version : undefined;
   if (typeof version !== "string" || !version) {
     throw new Error(`${REQUIRED_PACKAGE} is absent from ${lockPath}.`);
@@ -49,9 +47,7 @@ function installedVersion(root) {
  * @param {{platform?: NodeJS.Platform}} [options]
  * @returns {{executable: string, args: string[]}}
  */
-export function skillDependencyInstallCommand(
-  { platform = process.platform } = {},
-) {
+export function skillDependencyInstallCommand({ platform = process.platform } = {}) {
   return {
     executable: platform === "win32" ? "npm.cmd" : "npm",
     args: ["ci", "--ignore-scripts", "--no-audit", "--no-fund"],
@@ -80,8 +76,8 @@ function installSkillDependencies(root) {
       .slice(-20)
       .join("\n");
     throw new Error(
-      `Assessment skill dependency installation failed with exit code ${result.status ?? "unknown"}.`
-      + (detail ? `\n${detail}` : ""),
+      `Assessment skill dependency installation failed with exit code ${result.status ?? "unknown"}.` +
+        (detail ? `\n${detail}` : ""),
     );
   }
 }

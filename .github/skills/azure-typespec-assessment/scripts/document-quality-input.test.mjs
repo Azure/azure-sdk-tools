@@ -39,25 +39,29 @@ function fixture(documentationPresent = true) {
     path: "main.tsp",
     status: "modified",
     origins: [],
-    hunks: [{
-      id: "hunk-1",
-      base: { startLine: 1, endLine: 1 },
-      current: { startLine: 1, endLine: 1 },
-      lines: [],
-    }],
+    hunks: [
+      {
+        id: "hunk-1",
+        base: { startLine: 1, endLine: 1 },
+        current: { startLine: 1, endLine: 1 },
+        lines: [],
+      },
+    ],
     declarations: [declaration],
     documentEvidence: {
       schemaVersion: 4,
       status: "ready",
       blockers: [],
-      declarations: [{
-        declarationId: declaration.id,
-        qualifiedName: declaration.qualifiedName,
-        kind: declaration.kind,
-        newDeclaration: true,
-        documentationPresent,
-        source: declaration.source,
-      }],
+      declarations: [
+        {
+          declarationId: declaration.id,
+          qualifiedName: declaration.qualifiedName,
+          kind: declaration.kind,
+          newDeclaration: true,
+          documentationPresent,
+          source: declaration.source,
+        },
+      ],
     },
   };
   /** @type {DocumentQualityArguments} */
@@ -65,12 +69,14 @@ function fixture(documentationPresent = true) {
     sourceIndex: { sourceChanges: [source] },
     semantic: {
       status: "ready",
-      reviewUnits: [{
-        id: "semantic-1",
-        sourceChangeIds: [source.id],
-        hunkIds: ["hunk-1"],
-        declarationIds: [declaration.id],
-      }],
+      reviewUnits: [
+        {
+          id: "semantic-1",
+          sourceChangeIds: [source.id],
+          hunkIds: ["hunk-1"],
+          declarationIds: [declaration.id],
+        },
+      ],
     },
   };
   return args;
@@ -85,14 +91,16 @@ void test("compiler-resolved documentation presence is retained without document
   assert.equal(result.schemaVersion, 5);
   assert.equal(result.status, "ready");
   assert.equal(result.reviewUnits[0].status, "ready");
-  assert.deepEqual(result.reviewUnits[0].declarations, [{
-    declarationId: "declaration-1",
-    qualifiedName: "Widget",
-    kind: "model",
-    documentationPresent: true,
-    source: { revision: "current", startLine: 1, endLine: 1 },
-    sourceChangeId: "source-1",
-  }]);
+  assert.deepEqual(result.reviewUnits[0].declarations, [
+    {
+      declarationId: "declaration-1",
+      qualifiedName: "Widget",
+      kind: "model",
+      documentationPresent: true,
+      source: { revision: "current", startLine: 1, endLine: 1 },
+      sourceChangeId: "source-1",
+    },
+  ]);
   assert.doesNotMatch(JSON.stringify(result), /docQuote|declaration source|description text/i);
 });
 
@@ -111,22 +119,32 @@ void test("v5 checks only newly added operation, model, enum, and interface decl
     { id: "new-model", kind: "model", qualifiedName: "NewModel", revision: "current" },
     { id: "new-enum", kind: "enum", qualifiedName: "NewEnum", revision: "current" },
     { id: "new-interface", kind: "interface", qualifiedName: "NewInterface", revision: "current" },
-    { id: "new-operation", kind: "operation", qualifiedName: "NewInterface.read", revision: "current" },
-    { id: "modified-interface-base", kind: "interface", qualifiedName: "Existing", revision: "base" },
+    {
+      id: "new-operation",
+      kind: "operation",
+      qualifiedName: "NewInterface.read",
+      revision: "current",
+    },
+    {
+      id: "modified-interface-base",
+      kind: "interface",
+      qualifiedName: "Existing",
+      revision: "base",
+    },
     { id: "modified-interface", kind: "interface", qualifiedName: "Existing", revision: "current" },
     { id: "new-property", kind: "property", qualifiedName: "NewModel.value", revision: "current" },
     { id: "new-namespace", kind: "namespace", qualifiedName: "Contoso", revision: "current" },
   ];
   const declarations = declarationDefinitions.map(
     /** @returns {SourceDeclaration} */ (item) => ({
-    id: item.id,
-    kind: item.kind,
-    qualifiedName: item.qualifiedName,
-    decorators: [],
-    versionedMembers: [],
-    documentationPresent: false,
-    hunkIds: ["hunk-1"],
-    source: { revision: item.revision, startLine: 1, endLine: 1 },
+      id: item.id,
+      kind: item.kind,
+      qualifiedName: item.qualifiedName,
+      decorators: [],
+      versionedMembers: [],
+      documentationPresent: false,
+      hunkIds: ["hunk-1"],
+      source: { revision: item.revision, startLine: 1, endLine: 1 },
     }),
   );
   source.declarations = declarations;
@@ -158,29 +176,34 @@ void test("v5 ignores compiler blockers on sources without eligible new declarat
     path: "client.tsp",
     status: "modified",
     origins: [],
-    hunks: [{
-      id: "hunk-unrelated",
-      base: { startLine: 1, endLine: 1 },
-      current: { startLine: 1, endLine: 1 },
-      lines: [],
-    }],
-    declarations: [{
-      id: "existing-current",
-      kind: "interface",
-      qualifiedName: "Existing",
-      decorators: [],
-      versionedMembers: [],
-      hunkIds: ["hunk-unrelated"],
-      source: { revision: "current", startLine: 1, endLine: 1 },
-    }, {
-      id: "existing-base",
-      kind: "interface",
-      qualifiedName: "Existing",
-      decorators: [],
-      versionedMembers: [],
-      hunkIds: ["hunk-unrelated"],
-      source: { revision: "base", startLine: 1, endLine: 1 },
-    }],
+    hunks: [
+      {
+        id: "hunk-unrelated",
+        base: { startLine: 1, endLine: 1 },
+        current: { startLine: 1, endLine: 1 },
+        lines: [],
+      },
+    ],
+    declarations: [
+      {
+        id: "existing-current",
+        kind: "interface",
+        qualifiedName: "Existing",
+        decorators: [],
+        versionedMembers: [],
+        hunkIds: ["hunk-unrelated"],
+        source: { revision: "current", startLine: 1, endLine: 1 },
+      },
+      {
+        id: "existing-base",
+        kind: "interface",
+        qualifiedName: "Existing",
+        decorators: [],
+        versionedMembers: [],
+        hunkIds: ["hunk-unrelated"],
+        source: { revision: "base", startLine: 1, endLine: 1 },
+      },
+    ],
     documentEvidence: {
       schemaVersion: 4,
       status: "blocked",
@@ -196,8 +219,7 @@ void test("v5 ignores compiler blockers on sources without eligible new declarat
   const result = buildDocumentQualityInput(args);
   assert.equal(result.status, "ready");
   assert.deepEqual(
-    required(required(result.reviewUnits[0]).declarations)
-      .map((item) => item.qualifiedName),
+    required(required(result.reviewUnits[0]).declarations).map((item) => item.qualifiedName),
     ["Widget"],
   );
 });

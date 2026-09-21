@@ -20,17 +20,13 @@ export function normalizeRecordedAssessment(assessment) {
     return normalized;
   }
   const catalog = readComplianceCatalog();
-  const catalogByUrl = new Map(
-    catalog.map((entry) => [entry.canonicalUrl, entry]),
-  );
+  const catalogByUrl = new Map(catalog.map((entry) => [entry.canonicalUrl, entry]));
   const recordedUrls = new Set(
     compliance.intentAssessments.flatMap((intent) =>
       (intent.documents ?? []).map((document) => document.canonicalUrl),
     ),
   );
-  const availableEntries = catalog.filter(
-    (entry) => !recordedUrls.has(entry.canonicalUrl),
-  );
+  const availableEntries = catalog.filter((entry) => !recordedUrls.has(entry.canonicalUrl));
   /** @type {Map<string, string>} */
   const replacements = new Map();
   for (const url of recordedUrls) {
@@ -54,21 +50,17 @@ export function normalizeRecordedAssessment(assessment) {
       ]),
     );
   };
-  normalized.dimensions.compliance =
-    /** @type {FinalComplianceAssessment} */ (replaceUrls(compliance));
+  normalized.dimensions.compliance = /** @type {FinalComplianceAssessment} */ (
+    replaceUrls(compliance)
+  );
   const normalizedCompliance = normalized.dimensions.compliance;
   for (const intent of normalizedCompliance.intentAssessments) {
     if (intent.catalogRanking?.length === catalog.length) continue;
-    const selectedUrls = (intent.documents ?? []).map(
-      (document) => document.canonicalUrl,
-    );
+    const selectedUrls = (intent.documents ?? []).map((document) => document.canonicalUrl);
     const ordered = [
       ...selectedUrls
         .map((url) => catalogByUrl.get(url))
-        .filter(
-          /** @returns {entry is CatalogEntry} */ (entry) =>
-            entry !== undefined,
-        ),
+        .filter(/** @returns {entry is CatalogEntry} */ (entry) => entry !== undefined),
       ...catalog.filter((entry) => !selectedUrls.includes(entry.canonicalUrl)),
     ];
     intent.catalogRanking = ordered.map((entry, index) => {

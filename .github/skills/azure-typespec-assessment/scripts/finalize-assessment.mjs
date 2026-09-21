@@ -42,21 +42,13 @@ function compactError(error) {
  *   agentShellCommands?: string | number
  * }} options
  */
-export function finalizeAssessment({
-  work,
-  agentFileReads,
-  agentShellCommands,
-}) {
+export function finalizeAssessment({ work, agentFileReads, agentShellCommands }) {
   const root = path.resolve(work);
   const started = performance.now();
   try {
     const inferenceArtifactAt = fileTimestamp(path.join(root, "inference.json"));
-    const guidelineEvidenceAt = fileTimestamp(
-      path.join(root, "compliance-search-evidence.json"),
-    );
-    const judgmentArtifactAt = fileTimestamp(
-      path.join(root, "assessment-judgment.json"),
-    );
+    const guidelineEvidenceAt = fileTimestamp(path.join(root, "compliance-search-evidence.json"));
+    const judgmentArtifactAt = fileTimestamp(path.join(root, "assessment-judgment.json"));
     const firstAgentArtifactAt = earliestTimestamp([
       inferenceArtifactAt,
       guidelineEvidenceAt,
@@ -77,16 +69,11 @@ export function finalizeAssessment({
           ? {
               observableWaitBeforeFirstAgentArtifactMs: Math.max(
                 0,
-                new Date(firstAgentArtifactAt).getTime() -
-                  new Date(
-                    deterministicReadyAt,
-                  ).getTime(),
+                new Date(firstAgentArtifactAt).getTime() - new Date(deterministicReadyAt).getTime(),
               ),
             }
           : {}),
-        ...(agentFileReads === undefined
-          ? {}
-          : { agentFileReads: Number(agentFileReads) }),
+        ...(agentFileReads === undefined ? {} : { agentFileReads: Number(agentFileReads) }),
         ...(agentShellCommands === undefined
           ? {}
           : { agentShellCommands: Number(agentShellCommands) }),
@@ -103,29 +90,23 @@ export function finalizeAssessment({
     if (!fs.existsSync(judgmentPath)) {
       throw new Error("Missing assessment-judgment.json.");
     }
-    const assessment =
-      /** @type {AssessmentOutput} */ (
-        /** @type {unknown} */ (
-          assembleAssessment({
-            work: root,
-            judgment: judgmentPath,
-          })
-        )
-      );
+    const assessment = /** @type {AssessmentOutput} */ (
+      /** @type {unknown} */ (
+        assembleAssessment({
+          work: root,
+          judgment: judgmentPath,
+        })
+      )
+    );
     const errors = validateAssessment(assessment);
     if (errors.length) throw new Error(errors.join("\n"));
-    const downstreamPath = path.join(
-      root,
-      "dimensions",
-      "downstream-breaking-input.json",
-    );
+    const downstreamPath = path.join(root, "dimensions", "downstream-breaking-input.json");
     const html = renderAssessmentHtml(assessment, {
       ...(fs.existsSync(downstreamPath)
         ? {
-            downstreamInput:
-              /** @type {DownstreamAnalysis} */ (
-                /** @type {unknown} */ (readJsonObject(downstreamPath))
-              ),
+            downstreamInput: /** @type {DownstreamAnalysis} */ (
+              /** @type {unknown} */ (readJsonObject(downstreamPath))
+            ),
           }
         : {}),
     });
@@ -141,10 +122,7 @@ export function finalizeAssessment({
         structuredResult: "assessment.json",
         report: "assessment.html",
       },
-      resultHashes: hashArtifacts(root, [
-        "assessment.json",
-        "assessment.html",
-      ]),
+      resultHashes: hashArtifacts(root, ["assessment.json", "assessment.html"]),
       failure: undefined,
       telemetry: { finalizationMs },
     });

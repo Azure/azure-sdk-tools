@@ -1,9 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  prepareProjectRecords,
-  typeSpecChangesForAnalysis,
-} from "./prepare-assessment.mjs";
+import { prepareProjectRecords, typeSpecChangesForAnalysis } from "./prepare-assessment.mjs";
 
 /** @typedef {import("./runtime-types.js").PreparationBlocker} PreparationBlocker */
 /** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
@@ -108,9 +105,7 @@ void test("compiler blockers remain scoped to their project", () => {
     runCompilers: ({ project, comparisonRole }) => {
       compilerCalls.push([project, comparisonRole]);
       const status =
-        project === "specification/one" && comparisonRole === "baseline"
-          ? "failed"
-          : "succeeded";
+        project === "specification/one" && comparisonRole === "baseline" ? "failed" : "succeeded";
       return /** @type {ReturnType<NonNullable<Parameters<typeof prepareProjectRecords>[0]["runCompilers"]>>} */ (
         /** @type {unknown} */ ({
           autorest: { status },

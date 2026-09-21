@@ -16,11 +16,8 @@ function fixtureDirectory() {
 void test("ignores version-specific document prefixes in equivalent schema references", () => {
   const before = {
     kind: "object",
-    reference:
-      "stable/2026-02-23/confidentialledger.json#/definitions/LedgerUser",
-    references: [
-      "stable/2026-02-23/confidentialledger.json#/definitions/LedgerUser",
-    ],
+    reference: "stable/2026-02-23/confidentialledger.json#/definitions/LedgerUser",
+    references: ["stable/2026-02-23/confidentialledger.json#/definitions/LedgerUser"],
     properties: [
       {
         name: "userId",
@@ -31,11 +28,8 @@ void test("ignores version-specific document prefixes in equivalent schema refer
   };
   const after = {
     kind: "object",
-    reference:
-      "preview/2026-07-31-preview/confidentialledger.json#/definitions/LedgerUser",
-    references: [
-      "preview/2026-07-31-preview/confidentialledger.json#/definitions/LedgerUser",
-    ],
+    reference: "preview/2026-07-31-preview/confidentialledger.json#/definitions/LedgerUser",
+    references: ["preview/2026-07-31-preview/confidentialledger.json#/definitions/LedgerUser"],
     properties: [
       {
         name: "userId",
@@ -166,15 +160,20 @@ void test("normalizes Swagger 2 paths, x-ms-paths, refs, allOf, multipart, and r
   const createProperties = createSchema.properties;
   assert.ok(createProperties);
   assert.equal(createSchema.kind, "object");
-  assert.deepEqual(createProperties.map((item) => item.name), ["id", "note", "state"]);
+  assert.deepEqual(
+    createProperties.map((item) => item.name),
+    ["id", "note", "state"],
+  );
   const note = createProperties.find((item) => item.name === "note");
   assert.ok(note);
   assert.equal(note.schema.nullable, true);
-  assert.deepEqual(create.responses.map((item) => item.status), ["200", "4XX", "default"]);
+  assert.deepEqual(
+    create.responses.map((item) => item.status),
+    ["200", "4XX", "default"],
+  );
   assert.ok(create.lro);
   assert.equal(
-    /** @type {{options: Record<string, unknown>}} */ (create.lro)
-      .options["final-state-via"],
+    /** @type {{options: Record<string, unknown>}} */ (create.lro).options["final-state-via"],
     "location",
   );
   const upload = contract.operations.find((item) => item.operationId === "Widgets_Upload");
@@ -211,10 +210,10 @@ void test("discovers configurable multi-file output from service manifest and re
     workRoot: root,
     artifact: { format: "swagger-2.0", files: [], serviceManifestPath: "service.yaml" },
   });
-  assert.deepEqual(documents.map((item) => item.path), [
-    "generated/common.json",
-    "generated/feature.json",
-  ]);
+  assert.deepEqual(
+    documents.map((item) => item.path),
+    ["generated/common.json", "generated/feature.json"],
+  );
   assert.throws(
     () => normalizeAutorestDocuments([{ path: "openapi.json", document: { openapi: "3.0.0" } }]),
     /Swagger 2.0|OpenAPI 3/,
@@ -240,12 +239,15 @@ void test("keeps resolved reference identities stable across base and current ar
     },
   };
   /** @param {string} revision */
-  const normalize = (revision) => normalizeAutorestDocuments([{
-    path: `projects/widgets/${revision}/autorest/stable/2026-01-01/openapi.json`,
-    absolutePath: path.resolve("virtual-autorest", revision, "openapi.json"),
-    documentRole: "primary",
-    document,
-  }]).operations[0].responses[0].schema;
+  const normalize = (revision) =>
+    normalizeAutorestDocuments([
+      {
+        path: `projects/widgets/${revision}/autorest/stable/2026-01-01/openapi.json`,
+        absolutePath: path.resolve("virtual-autorest", revision, "openapi.json"),
+        documentRole: "primary",
+        document,
+      },
+    ]).operations[0].responses[0].schema;
 
   assert.deepEqual(normalize("base"), normalize("current"));
 });

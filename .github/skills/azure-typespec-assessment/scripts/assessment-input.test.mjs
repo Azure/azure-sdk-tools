@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import test from "node:test";
 import {
   commonSpecificationRoot,
@@ -23,10 +23,7 @@ function git(repo, ...args) {
 
 void test("parses supported pull request identifiers", () => {
   assert.deepEqual(
-    parsePullRequest(
-      "https://github.com/Azure/azure-rest-api-specs/pull/43718",
-      "",
-    ),
+    parsePullRequest("https://github.com/Azure/azure-rest-api-specs/pull/43718", ""),
     {
       owner: "Azure",
       repository: "azure-rest-api-specs",
@@ -38,23 +35,15 @@ void test("parses supported pull request identifiers", () => {
     repository: "azure-rest-api-specs",
     number: 43718,
   });
-  assert.deepEqual(
-    parsePullRequest(
-      "43718",
-      "git@github.com:Azure/azure-rest-api-specs.git",
-    ),
-    {
-      owner: "Azure",
-      repository: "azure-rest-api-specs",
-      number: 43718,
-    },
-  );
-  assert.deepEqual(
-    parseGitHubRepository(
-      "https://github.com/Azure/azure-rest-api-specs.git",
-    ),
-    { owner: "Azure", repository: "azure-rest-api-specs" },
-  );
+  assert.deepEqual(parsePullRequest("43718", "git@github.com:Azure/azure-rest-api-specs.git"), {
+    owner: "Azure",
+    repository: "azure-rest-api-specs",
+    number: 43718,
+  });
+  assert.deepEqual(parseGitHubRepository("https://github.com/Azure/azure-rest-api-specs.git"), {
+    owner: "Azure",
+    repository: "azure-rest-api-specs",
+  });
 });
 
 void test("derives sparse and common specification roots", () => {
@@ -64,15 +53,9 @@ void test("derives sparse and common specification roots", () => {
     "specification/storage/Storage/tspconfig.yaml",
     "README.md",
   ]);
-  assert.deepEqual(roots, [
-    "specification/network",
-    "specification/storage",
-  ]);
+  assert.deepEqual(roots, ["specification/network", "specification/storage"]);
   assert.equal(commonSpecificationRoot(roots), "specification");
-  assert.equal(
-    commonSpecificationRoot(["specification/network"]),
-    "specification/network",
-  );
+  assert.equal(commonSpecificationRoot(["specification/network"]), "specification/network");
 });
 
 void test("resolves an explicit head without changing the current checkout", (t) => {
@@ -127,12 +110,7 @@ void test("discovers both service roots for a cross-service TypeSpec rename", (t
   git(repo, "commit", "-qm", "base");
   const base = git(repo, "rev-parse", "HEAD");
   fs.mkdirSync(destination, { recursive: true });
-  git(
-    repo,
-    "mv",
-    "specification/alpha/Widget/main.tsp",
-    "specification/beta/Widget/main.tsp",
-  );
+  git(repo, "mv", "specification/alpha/Widget/main.tsp", "specification/beta/Widget/main.tsp");
   git(repo, "commit", "-qm", "move service");
   const head = git(repo, "rev-parse", "HEAD");
 
@@ -143,10 +121,7 @@ void test("discovers both service roots for a cross-service TypeSpec rename", (t
     output: path.join(repo, "output"),
   });
 
-  assert.deepEqual(resolved.sparseRoots, [
-    "specification/alpha",
-    "specification/beta",
-  ]);
+  assert.deepEqual(resolved.sparseRoots, ["specification/alpha", "specification/beta"]);
   assert.equal(resolved.specification, "specification");
 });
 

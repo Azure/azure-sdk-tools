@@ -85,16 +85,12 @@ function comparableReference(value) {
 function comparableContractValue(value, key) {
   if (Array.isArray(value)) {
     const items = value.map((item) =>
-      key === "references"
-        ? comparableReference(item)
-        : comparableContractValue(item),
+      key === "references" ? comparableReference(item) : comparableContractValue(item),
     );
     return key === "references" ? [...new Set(items)].sort() : items;
   }
   if (!value || typeof value !== "object") {
-    return key === "reference" || key === "ref"
-      ? comparableReference(value)
-      : value;
+    return key === "reference" || key === "ref" ? comparableReference(value) : value;
   }
   return Object.fromEntries(
     Object.entries(value).map(([childKey, childValue]) => [
@@ -173,7 +169,7 @@ function roleFor(file, suppliedRole) {
  * @returns {AutorestDocument[]}
  */
 export function discoverAutorestDocuments({ workRoot = process.cwd(), artifact }) {
-  if (!artifact || artifact.format && artifact.format !== "swagger-2.0") {
+  if (!artifact || (artifact.format && artifact.format !== "swagger-2.0")) {
     throw unsupported(`expected format swagger-2.0, received ${artifact?.format ?? "none"}`);
   }
   /** @type {Map<string, {absolutePath: string, documentRole: string}>} */
@@ -185,7 +181,10 @@ export function discoverAutorestDocuments({ workRoot = process.cwd(), artifact }
   const add = (file, documentRole) => {
     const absolute = path.resolve(workRoot, file);
     if (fs.existsSync(absolute) && path.extname(absolute).toLowerCase() === ".json") {
-      candidates.set(absolute, { absolutePath: absolute, documentRole: roleFor(absolute, documentRole) });
+      candidates.set(absolute, {
+        absolutePath: absolute,
+        documentRole: roleFor(absolute, documentRole),
+      });
     }
   };
 
@@ -197,7 +196,8 @@ export function discoverAutorestDocuments({ workRoot = process.cwd(), artifact }
       const content = /** @type {unknown} */ (
         parseYaml(fs.readFileSync(serviceManifest, "utf8"), { maxAliasCount: 100 })
       );
-      for (const item of yamlJsonPaths(content)) add(path.resolve(path.dirname(serviceManifest), item));
+      for (const item of yamlJsonPaths(content))
+        add(path.resolve(path.dirname(serviceManifest), item));
     }
   }
 
@@ -207,7 +207,8 @@ export function discoverAutorestDocuments({ workRoot = process.cwd(), artifact }
       : artifact.serviceManifestPath
         ? path.dirname(path.resolve(workRoot, artifact.serviceManifestPath))
         : workRoot;
-    for (const file of walkFiles(searchRoot, (item) => item.toLowerCase().endsWith(".json"))) add(file);
+    for (const file of walkFiles(searchRoot, (item) => item.toLowerCase().endsWith(".json")))
+      add(file);
   }
 
   return [...candidates.values()]
@@ -220,11 +221,15 @@ export function discoverAutorestDocuments({ workRoot = process.cwd(), artifact }
         document = /** @type {OpenApiDocument} */ (value);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        throw unsupported(`${slash(path.relative(workRoot, item.absolutePath))} is not valid JSON: ${message}`);
+        throw unsupported(
+          `${slash(path.relative(workRoot, item.absolutePath))} is not valid JSON: ${message}`,
+        );
       }
       if (document.swagger !== "2.0") {
         const version = document.openapi ?? document.swagger ?? "missing";
-        throw unsupported(`${slash(path.relative(workRoot, item.absolutePath))} uses OpenAPI ${version}; Swagger 2.0 is required`);
+        throw unsupported(
+          `${slash(path.relative(workRoot, item.absolutePath))} uses OpenAPI ${version}; Swagger 2.0 is required`,
+        );
       }
       return {
         path: slash(path.relative(workRoot, item.absolutePath)),
@@ -268,7 +273,8 @@ function referenceIdentity(targetDocument, pointer, rawRef) {
   const normalized = slash(targetDocument.path);
   const marker = "/autorest/";
   const index = normalized.lastIndexOf(marker);
-  const documentPath = index >= 0 ? normalized.slice(index + marker.length) : path.basename(normalized);
+  const documentPath =
+    index >= 0 ? normalized.slice(index + marker.length) : path.basename(normalized);
   return `${documentPath}${pointer}`;
 }
 
@@ -351,9 +357,12 @@ function isEnumValue(value) {
 function ownSchema(schema, context, stack) {
   /** @type {NormalizedSchema} */
   const result = { kind: "any" };
-  const type = schema.type ?? (schema.properties || schema.required ? "object" : schema.enum ? "string" : undefined);
+  const type =
+    schema.type ??
+    (schema.properties || schema.required ? "object" : schema.enum ? "string" : undefined);
   if (schema.enum) {
-    if (!Array.isArray(schema.enum)) throw unsupported(`enum at ${context.pointer} must be an array`);
+    if (!Array.isArray(schema.enum))
+      throw unsupported(`enum at ${context.pointer} must be an array`);
     const values = schema.enum.filter(isEnumValue);
     if (values.length !== schema.enum.length) {
       throw unsupported(`enum at ${context.pointer} must contain only scalar values`);
@@ -364,7 +373,11 @@ function ownSchema(schema, context, stack) {
   } else if (type === "array") {
     if (!schema.items) throw unsupported(`array at ${context.pointer} is missing items`);
     result.kind = "array";
-    result.items = normalizeSchema(schema.items, { ...context, pointer: `${context.pointer}/items` }, stack);
+    result.items = normalizeSchema(
+      schema.items,
+      { ...context, pointer: `${context.pointer}/items` },
+      stack,
+    );
     if (schema.collectionFormat !== undefined) result.collectionFormat = schema.collectionFormat;
   } else if (type === "object" || schema.properties || schema.additionalProperties !== undefined) {
     result.kind = "object";
@@ -374,20 +387,29 @@ function ownSchema(schema, context, stack) {
       .map(([name, property]) => ({
         name,
         required: required.has(name),
-        schema: normalizeSchema(property, {
-          ...context,
-          pointer: `${context.pointer}/properties/${name.replaceAll("~", "~0").replaceAll("/", "~1")}`,
-        }, stack),
+        schema: normalizeSchema(
+          property,
+          {
+            ...context,
+            pointer: `${context.pointer}/properties/${name.replaceAll("~", "~0").replaceAll("/", "~1")}`,
+          },
+          stack,
+        ),
       }));
     if (schema.additionalProperties !== undefined) {
-      result.additionalProperties = schema.additionalProperties === true
-        ? { kind: "any" }
-        : schema.additionalProperties === false
-          ? false
-          : normalizeSchema(schema.additionalProperties, {
-              ...context,
-              pointer: `${context.pointer}/additionalProperties`,
-            }, stack);
+      result.additionalProperties =
+        schema.additionalProperties === true
+          ? { kind: "any" }
+          : schema.additionalProperties === false
+            ? false
+            : normalizeSchema(
+                schema.additionalProperties,
+                {
+                  ...context,
+                  pointer: `${context.pointer}/additionalProperties`,
+                },
+                stack,
+              );
     }
   } else if (type) {
     result.kind = "scalar";
@@ -446,7 +468,9 @@ function mergeAllOf(parts, own) {
     const result = {
       ...own,
       kind: "object",
-      properties: [...properties.values()].sort((left, right) => left.name.localeCompare(right.name)),
+      properties: [...properties.values()].sort((left, right) =>
+        left.name.localeCompare(right.name),
+      ),
     };
     if (additionalProperties !== undefined) result.additionalProperties = additionalProperties;
     if (references.size) result.references = [...references].sort();
@@ -471,20 +495,26 @@ export function normalizeSchema(schema, context, stack = new Set()) {
   if (schemaObject.$ref) {
     const resolved = resolveReference(schemaObject.$ref, context.document, context.registry);
     if (resolved.unresolved) return { kind: "reference", ref: resolved.identity, unresolved: true };
-    if (stack.has(resolved.identity)) return { kind: "reference", ref: resolved.identity, cycle: true };
+    if (stack.has(resolved.identity))
+      return { kind: "reference", ref: resolved.identity, cycle: true };
     stack.add(resolved.identity);
-    const normalized = normalizeSchema(resolved.value, {
-      ...context,
-      document: resolved.document,
-      pointer: resolved.pointer,
-    }, stack);
+    const normalized = normalizeSchema(
+      resolved.value,
+      {
+        ...context,
+        document: resolved.document,
+        pointer: resolved.pointer,
+      },
+      stack,
+    );
     stack.delete(resolved.identity);
     const sibling = { ...schemaObject };
     delete sibling.$ref;
     const siblingSchema = ownSchema(sibling, context, stack);
-    const siblingFields = siblingSchema.kind === "any"
-      ? Object.fromEntries(Object.entries(siblingSchema).filter(([key]) => key !== "kind"))
-      : siblingSchema;
+    const siblingFields =
+      siblingSchema.kind === "any"
+        ? Object.fromEntries(Object.entries(siblingSchema).filter(([key]) => key !== "kind"))
+        : siblingSchema;
     return {
       ...normalized,
       ...siblingFields,
@@ -494,7 +524,8 @@ export function normalizeSchema(schema, context, stack = new Set()) {
   }
   const own = ownSchema(schemaObject, context, stack);
   if (!schemaObject.allOf) return own;
-  if (!Array.isArray(schemaObject.allOf)) throw unsupported(`allOf at ${context.pointer} must be an array`);
+  if (!Array.isArray(schemaObject.allOf))
+    throw unsupported(`allOf at ${context.pointer} must be an array`);
   const parts = schemaObject.allOf.map((part, index) =>
     normalizeSchema(part, { ...context, pointer: `${context.pointer}/allOf/${index}` }, stack),
   );
@@ -577,15 +608,18 @@ function normalizeHeaders(headers, context) {
       /** @type {{name: string, schema: NormalizedSchema, collectionFormat?: unknown}} */
       const result = {
         name,
-        schema: normalizeSchema({
-        type: header.type,
-        format: header.format,
-        items: header.items,
-        enum: header.enum,
-        default: header.default,
-        "x-nullable": header["x-nullable"],
-        "x-ms-enum": header["x-ms-enum"],
-        }, { ...context, pointer: `${context.pointer}/${name}` }),
+        schema: normalizeSchema(
+          {
+            type: header.type,
+            format: header.format,
+            items: header.items,
+            enum: header.enum,
+            default: header.default,
+            "x-nullable": header["x-nullable"],
+            "x-ms-enum": header["x-ms-enum"],
+          },
+          { ...context, pointer: `${context.pointer}/${name}` },
+        ),
       };
       if (header.collectionFormat !== undefined) result.collectionFormat = header.collectionFormat;
       return result;
@@ -655,7 +689,11 @@ function normalizeOperation(operation, operationContext, inheritedParameters) {
         pointer: `${operationContext.pointer}/responses/${status}`,
       };
       if (rawResponse?.$ref) {
-        const resolved = resolveReference(rawResponse.$ref, operationContext.document, operationContext.registry);
+        const resolved = resolveReference(
+          rawResponse.$ref,
+          operationContext.document,
+          operationContext.registry,
+        );
         if (resolved.unresolved) {
           return {
             status,
@@ -665,7 +703,9 @@ function normalizeOperation(operation, operationContext, inheritedParameters) {
           };
         }
         if (!isRecord(resolved.value)) {
-          throw unsupported(`response ${status} for ${operation.operationId} must resolve to an object`);
+          throw unsupported(
+            `response ${status} for ${operation.operationId} must resolve to an object`,
+          );
         }
         response = /** @type {OpenApiResponse} */ (resolved.value);
         responseContext = {
@@ -685,9 +725,8 @@ function normalizeOperation(operation, operationContext, inheritedParameters) {
        * }} */
       const normalized = {
         status,
-        statusKind: response["x-ms-error-response"] === true
-          ? "exception"
-          : responseStatusKind(status),
+        statusKind:
+          response["x-ms-error-response"] === true ? "exception" : responseStatusKind(status),
         headers: normalizeHeaders(response.headers, {
           ...responseContext,
           pointer: `${responseContext.pointer}/headers`,
@@ -769,10 +808,13 @@ export function normalizeAutorestDocuments(entries) {
   /** @type {ReturnType<typeof normalizeOperation>[]} */
   const operations = [];
   for (const document of documents.sort((left, right) => left.path.localeCompare(right.path))) {
-    if (!document.document.info?.version) throw unsupported(`${document.path} is missing info.version`);
+    if (!document.document.info?.version)
+      throw unsupported(`${document.path} is missing info.version`);
     for (const routeSource of /** @type {const} */ (["paths", "x-ms-paths"])) {
       const routes = document.document[routeSource] ?? {};
-      for (const [route, pathItem] of Object.entries(routes).sort(([left], [right]) => left.localeCompare(right))) {
+      for (const [route, pathItem] of Object.entries(routes).sort(([left], [right]) =>
+        left.localeCompare(right),
+      )) {
         if (!isRecord(pathItem)) throw unsupported(`${routeSource}.${route} must be an object`);
         const typedPathItem = /** @type {OpenApiPathItem} */ (pathItem);
         for (const [method, operation] of Object.entries(pathItem)
@@ -781,21 +823,28 @@ export function normalizeAutorestDocuments(entries) {
           if (!isRecord(operation)) {
             throw unsupported(`${routeSource}.${route}.${method} must be an object`);
           }
-          operations.push(normalizeOperation(/** @type {OpenApiOperation} */ (operation), {
-            document,
-            registry,
-            route,
-            routeSource,
-            method: method.toLowerCase(),
-            pointer: `#/${routeSource}/${route.replaceAll("~", "~0").replaceAll("/", "~1")}/${method}`,
-          }, typedPathItem.parameters));
+          operations.push(
+            normalizeOperation(
+              /** @type {OpenApiOperation} */ (operation),
+              {
+                document,
+                registry,
+                route,
+                routeSource,
+                method: method.toLowerCase(),
+                pointer: `#/${routeSource}/${route.replaceAll("~", "~0").replaceAll("/", "~1")}/${method}`,
+              },
+              typedPathItem.parameters,
+            ),
+          );
         }
       }
     }
   }
   operations.sort((left, right) =>
-    `${left.apiVersion}:${left.operationId}:${left.method}:${left.path}:${left.documentId}`
-      .localeCompare(`${right.apiVersion}:${right.operationId}:${right.method}:${right.path}:${right.documentId}`),
+    `${left.apiVersion}:${left.operationId}:${left.method}:${left.path}:${left.documentId}`.localeCompare(
+      `${right.apiVersion}:${right.operationId}:${right.method}:${right.path}:${right.documentId}`,
+    ),
   );
   return {
     schemaVersion: 1,

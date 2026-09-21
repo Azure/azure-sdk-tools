@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import test from "node:test";
 import {
   collectChanges,
   createSparseWorktree,
   deriveServiceRoot,
-  normalizeSpecification,
   normalizeSparseRoots,
+  normalizeSpecification,
   resolveComparison,
 } from "./git-evidence.mjs";
 
@@ -77,12 +77,10 @@ void test("collectChanges compares an explicit head without local overlays", () 
     fs.writeFileSync(path.join(root, "untracked.tsp"), "model Untracked {}\n");
 
     const comparison = resolveComparison(repo, base, head);
-    const changes = collectChanges(
-      repo,
-      comparison.mergeBaseCommit,
-      "specification/widget",
-      { headRef: head, includeWorkingTree: false },
-    );
+    const changes = collectChanges(repo, comparison.mergeBaseCommit, "specification/widget", {
+      headRef: head,
+      includeWorkingTree: false,
+    });
 
     assert.deepEqual(
       changes.map((item) => [item.path, item.origins]),
@@ -132,17 +130,11 @@ void test("normalizes explicit sparse roots without collapsing them", () => {
     ["specification/recoveryservices", "specification/recoveryservicesbackup"],
   );
   assert.deepEqual(
-    normalizeSparseRoots(
-      undefined,
-      "specification/widget/resource-manager/Widget",
-    ),
+    normalizeSparseRoots(undefined, "specification/widget/resource-manager/Widget"),
     ["specification/widget"],
   );
   assert.deepEqual(
-    normalizeSparseRoots(
-      ["./specification//widget/./resource-manager/"],
-      "specification/widget",
-    ),
+    normalizeSparseRoots(["./specification//widget/./resource-manager/"], "specification/widget"),
     ["specification/widget/resource-manager"],
   );
   for (const root of [
@@ -182,12 +174,10 @@ void test("collectChanges classifies both sides of TypeSpec renames across spars
     git(repo, "commit", "-qam", "rename files");
     const head = git(repo, "rev-parse", "HEAD");
 
-    const changes = collectChanges(
-      repo,
-      base,
-      ["specification/one", "specification/two"],
-      { headRef: head, includeWorkingTree: false },
-    );
+    const changes = collectChanges(repo, base, ["specification/one", "specification/two"], {
+      headRef: head,
+      includeWorkingTree: false,
+    });
 
     assert.deepEqual(
       changes.map(({ path: file, previousPath, status }) => ({
@@ -219,12 +209,8 @@ void test("collectChanges classifies both sides of TypeSpec renames across spars
 });
 
 void test("creates a worktree with multiple sparse roots", () => {
-  const repo = fs.mkdtempSync(
-    path.join(os.tmpdir(), "typespec-sparse-source-"),
-  );
-  const worktreeRoot = fs.mkdtempSync(
-    path.join(os.tmpdir(), "typespec-sparse-worktree-"),
-  );
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-sparse-source-"));
+  const worktreeRoot = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-sparse-worktree-"));
   const destination = path.join(worktreeRoot, "checkout");
   try {
     git(repo, "init", "-q");
@@ -233,10 +219,7 @@ void test("creates a worktree with multiple sparse roots", () => {
     for (const service of ["one", "two", "excluded"]) {
       const directory = path.join(repo, "specification", service);
       fs.mkdirSync(directory, { recursive: true });
-      fs.writeFileSync(
-        path.join(directory, "main.tsp"),
-        `namespace ${service};\n`,
-      );
+      fs.writeFileSync(path.join(directory, "main.tsp"), `namespace ${service};\n`);
     }
     git(repo, "add", ".");
     git(repo, "commit", "-qm", "base");
@@ -250,29 +233,14 @@ void test("creates a worktree with multiple sparse roots", () => {
     );
 
     assert.deepEqual(roots, ["specification/one", "specification/two"]);
+    assert.equal(fs.existsSync(path.join(destination, "specification", "one", "main.tsp")), true);
+    assert.equal(fs.existsSync(path.join(destination, "specification", "two", "main.tsp")), true);
     assert.equal(
-      fs.existsSync(path.join(destination, "specification", "one", "main.tsp")),
-      true,
-    );
-    assert.equal(
-      fs.existsSync(path.join(destination, "specification", "two", "main.tsp")),
-      true,
-    );
-    assert.equal(
-      fs.existsSync(
-        path.join(destination, "specification", "excluded", "main.tsp"),
-      ),
+      fs.existsSync(path.join(destination, "specification", "excluded", "main.tsp")),
       false,
     );
   } finally {
-    spawnSync("git", [
-      "-C",
-      repo,
-      "worktree",
-      "remove",
-      "--force",
-      destination,
-    ]);
+    spawnSync("git", ["-C", repo, "worktree", "remove", "--force", destination]);
     fs.rmSync(repo, { recursive: true, force: true });
     fs.rmSync(worktreeRoot, { recursive: true, force: true });
   }

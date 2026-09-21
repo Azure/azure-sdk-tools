@@ -163,7 +163,9 @@ export function selectApiVersionPair({ base, current, baseCommit, headCommit }) 
 
   const baseSet = new Set(base.versions);
   const addedCurrentVersions = current.versions.filter((version) => !baseSet.has(version));
-  const currentVersion = latest(addedCurrentVersions.length ? addedCurrentVersions : current.versions);
+  const currentVersion = latest(
+    addedCurrentVersions.length ? addedCurrentVersions : current.versions,
+  );
   if (!currentVersion) throw new Error("Unable to select the current API version.");
   const stableBaseVersions = base.versions.filter((version) => !isPreview(version));
   const useSameVersion = !addedCurrentVersions.length && baseSet.has(currentVersion);

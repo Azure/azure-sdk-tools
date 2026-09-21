@@ -21,9 +21,7 @@ function resolveWindowsNpmCli(executable, env = process.env) {
     : (env.PATH ?? "").split(path.delimiter);
   for (const directory of directories) {
     const normalized = directory.replace(/^"(.*)"$/, "$1");
-    const shim = path.isAbsolute(executable)
-      ? executable
-      : path.join(normalized, executable);
+    const shim = path.isAbsolute(executable) ? executable : path.join(normalized, executable);
     if (!fs.existsSync(shim)) continue;
     const cli = path.join(path.dirname(shim), "node_modules", "npm", "bin", cliName);
     if (fs.existsSync(cli)) return cli;
@@ -42,7 +40,5 @@ export function dependencyProcessCommand(
 ) {
   if (platform !== "win32") return command;
   const cli = resolveWindowsNpmCli(command.executable, env);
-  return cli
-    ? { executable: execPath, args: [cli, ...command.args] }
-    : command;
+  return cli ? { executable: execPath, args: [cli, ...command.args] } : command;
 }

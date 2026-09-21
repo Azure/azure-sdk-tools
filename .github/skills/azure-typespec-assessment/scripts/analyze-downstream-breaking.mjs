@@ -1,10 +1,8 @@
 import path from "node:path";
-import { normalizeTcgcContract } from "./tcgc-contract.mjs";
-import { isRecord, parseArgs, isMain, readJsonObject, runMain, writeJson } from "./cli.mjs";
+import { isMain, isRecord, parseArgs, readJsonObject, runMain, writeJson } from "./cli.mjs";
+import { typeIdentity } from "./sdk-method-delta.mjs";
 import { canonicalJson, stableId } from "./stable-id.mjs";
-import {
-  typeIdentity,
-} from "./sdk-method-delta.mjs";
+import { normalizeTcgcContract } from "./tcgc-contract.mjs";
 
 /** @typedef {import("./runtime-types.js").ArtifactComparison} ArtifactComparison */
 /** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
@@ -72,13 +70,17 @@ function stringField(value, field) {
  * @returns {value is PreparationManifest}
  */
 function isPreparationManifest(value) {
-  return isRecord(value) &&
+  return (
+    isRecord(value) &&
     Array.isArray(value.projects) &&
-    value.projects.every((project) =>
-      isRecord(project) &&
-      typeof project.id === "string" &&
-      Array.isArray(project.sourceChangeIds) &&
-      isRecord(project.artifacts));
+    value.projects.every(
+      (project) =>
+        isRecord(project) &&
+        typeof project.id === "string" &&
+        Array.isArray(project.sourceChangeIds) &&
+        isRecord(project.artifacts),
+    )
+  );
 }
 
 /**
@@ -86,12 +88,16 @@ function isPreparationManifest(value) {
  * @returns {value is SourceIndex}
  */
 function isSourceIndex(value) {
-  return isRecord(value) &&
+  return (
+    isRecord(value) &&
     Array.isArray(value.sourceChanges) &&
-    value.sourceChanges.every((sourceChange) =>
-      isRecord(sourceChange) &&
-      typeof sourceChange.id === "string" &&
-      Array.isArray(sourceChange.declarations));
+    value.sourceChanges.every(
+      (sourceChange) =>
+        isRecord(sourceChange) &&
+        typeof sourceChange.id === "string" &&
+        Array.isArray(sourceChange.declarations),
+    )
+  );
 }
 
 /**
@@ -120,9 +126,7 @@ function readSourceIndex(file) {
 
 /** @param {unknown} value */
 function textValue(value) {
-  return typeof value === "string" ||
-    typeof value === "number" ||
-    typeof value === "boolean"
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
     ? String(value)
     : canonicalJson(value);
 }
@@ -139,21 +143,26 @@ function textValue(value) {
 function loadInputs(options) {
   const manifestPath =
     typeof options.manifest === "string" ? path.resolve(options.manifest) : undefined;
-  const workRoot = path.resolve(options.workRoot ?? (manifestPath ? path.dirname(manifestPath) : process.cwd()));
-  const manifest = typeof options.manifest === "string"
-    ? readPreparationManifest(path.resolve(options.manifest))
-    : options.manifest;
+  const workRoot = path.resolve(
+    options.workRoot ?? (manifestPath ? path.dirname(manifestPath) : process.cwd()),
+  );
+  const manifest =
+    typeof options.manifest === "string"
+      ? readPreparationManifest(path.resolve(options.manifest))
+      : options.manifest;
   return {
     workRoot,
     manifest,
-    sourceIndex: options.sourceIndex ??
-      readSourceIndex(path.join(workRoot, "source", "source-index.json")),
+    sourceIndex:
+      options.sourceIndex ?? readSourceIndex(path.join(workRoot, "source", "source-index.json")),
   };
 }
 
 /** @param {(TcgcArtifact & {status?: string}) | undefined} artifact */
 function artifactReady(artifact) {
-  return artifact && (!artifact.status || artifact.status === "succeeded") && artifact.files?.length;
+  return (
+    artifact && (!artifact.status || artifact.status === "succeeded") && artifact.files?.length
+  );
 }
 
 /**
@@ -171,7 +180,10 @@ function evidence(project, sourceIndex) {
   const declarations = sources.flatMap((item) => item.declarations);
   return {
     sourceChangeIds,
-    declarationIds: declarations.map((item) => item.id).filter(Boolean).sort(),
+    declarationIds: declarations
+      .map((item) => item.id)
+      .filter(Boolean)
+      .sort(),
     declarations,
     sources,
   };
@@ -228,16 +240,18 @@ function candidateEvidence(source, symbol, before, after, kind, detail) {
    */
   const matchesName = (qualifiedName, expectedNames) => {
     if (!qualifiedName) return false;
-    return [...expectedNames].some((name) =>
-      qualifiedName === name ||
-      qualifiedName.endsWith(`.${name}`) ||
-      name.endsWith(`.${qualifiedName}`));
+    return [...expectedNames].some(
+      (name) =>
+        qualifiedName === name ||
+        qualifiedName.endsWith(`.${name}`) ||
+        name.endsWith(`.${qualifiedName}`),
+    );
   };
   let declarations = source.declarations.filter((item) =>
-    matchesName(item.qualifiedName, memberNames.size ? memberNames : names));
+    matchesName(item.qualifiedName, memberNames.size ? memberNames : names),
+  );
   if (!declarations.length && memberNames.size) {
-    declarations = source.declarations.filter((item) =>
-      matchesName(item.qualifiedName, names));
+    declarations = source.declarations.filter((item) => matchesName(item.qualifiedName, names));
   }
   if (!declarations.length) {
     return {
@@ -249,8 +263,9 @@ function candidateEvidence(source, symbol, before, after, kind, detail) {
   const declarationIds = new Set(declarations.map((item) => item.id).filter(Boolean));
   return {
     sourceChangeIds: source.sources
-      .filter((item) => (item.declarations ?? []).some((declaration) =>
-        declarationIds.has(declaration.id)))
+      .filter((item) =>
+        (item.declarations ?? []).some((declaration) => declarationIds.has(declaration.id)),
+      )
       .map((item) => item.id)
       .sort(),
     declarationIds: [...declarationIds].sort(),
@@ -273,37 +288,35 @@ function addFact(facts, projectId, comparisonRole, kind, value, artifactComparis
     {
       projectId,
       comparisonRole,
-      sourceRevision: selection?.sourceRevision ??
-        (comparisonRole === "baseline" ? "base" : "current"),
+      sourceRevision:
+        selection?.sourceRevision ?? (comparisonRole === "baseline" ? "base" : "current"),
       sourceCommit: selection?.commit,
       apiVersion: selection?.apiVersion,
       factKind: kind,
     },
     value,
   );
-  const operation = kind === "method"
-    ? /** @type {NormalizedTcgcMethod} */ (value).operation
-    : undefined;
+  const operation =
+    kind === "method" ? /** @type {NormalizedTcgcMethod} */ (value).operation : undefined;
   // Response headers are new graph evidence, not part of the established fact identity.
-  const identityFact =
-    operation
-      ? {
-          ...fact,
-          operation: {
-            ...operation,
-            responses: (operation.responses ?? []).map((response) => {
-              const bounded = { ...response };
-              delete bounded.headers;
-              return bounded;
-            }),
-            exceptions: (operation.exceptions ?? []).map((response) => {
-              const bounded = { ...response };
-              delete bounded.headers;
-              return bounded;
-            }),
-          },
-        }
-      : fact;
+  const identityFact = operation
+    ? {
+        ...fact,
+        operation: {
+          ...operation,
+          responses: (operation.responses ?? []).map((response) => {
+            const bounded = { ...response };
+            delete bounded.headers;
+            return bounded;
+          }),
+          exceptions: (operation.exceptions ?? []).map((response) => {
+            const bounded = { ...response };
+            delete bounded.headers;
+            return bounded;
+          }),
+        },
+      }
+    : fact;
   const id = stableId("sdk-fact", identityFact);
   facts[id] = { ...fact, id };
   return id;
@@ -429,35 +442,64 @@ function severity(rule) {
 function candidateText(rule, symbol, detail) {
   let actual;
   switch (rule) {
-    case "method-removed": actual = `${symbol} is no longer generated.`; break;
-    case "method-identity-changed": actual = `${symbol} changed its generated SDK method name or identity.`; break;
-    case "method-location-changed": actual = `${symbol} moved to a different client.`; break;
+    case "method-removed":
+      actual = `${symbol} is no longer generated.`;
+      break;
+    case "method-identity-changed":
+      actual = `${symbol} changed its generated SDK method name or identity.`;
+      break;
+    case "method-location-changed":
+      actual = `${symbol} moved to a different client.`;
+      break;
     case "method-kind-changed":
       actual = `${symbol} changed method kind${
-        detail
-          ? ` from ${textValue(detail.before)} to ${textValue(detail.after)}`
-          : ""
+        detail ? ` from ${textValue(detail.before)} to ${textValue(detail.after)}` : ""
       }.`;
       break;
-    case "method-parameters-changed": actual = `${symbol} has a different ordered public parameter list.`; break;
-    case "method-response-changed": actual = `${symbol} has a different response type.`; break;
-    case "method-access-changed": actual = `${symbol} is no longer public.`; break;
-    case "method-paging-changed": actual = `${symbol} changed paging behavior.`; break;
-    case "method-lro-changed": actual = `${symbol} changed long-running behavior.`; break;
-    case "model-property-removed": actual = `${symbol} no longer exposes property ${detail?.name}.`; break;
+    case "method-parameters-changed":
+      actual = `${symbol} has a different ordered public parameter list.`;
+      break;
+    case "method-response-changed":
+      actual = `${symbol} has a different response type.`;
+      break;
+    case "method-access-changed":
+      actual = `${symbol} is no longer public.`;
+      break;
+    case "method-paging-changed":
+      actual = `${symbol} changed paging behavior.`;
+      break;
+    case "method-lro-changed":
+      actual = `${symbol} changed long-running behavior.`;
+      break;
+    case "model-property-removed":
+      actual = `${symbol} no longer exposes property ${detail?.name}.`;
+      break;
     case "model-property-changed":
       actual = `${symbol}.${detail?.name} changed type, optionality, flattening, or access.`;
       break;
-    case "model-property-added-required": actual = `${symbol} added required property ${detail?.name}.`; break;
-    case "model-hierarchy-changed": actual = `${symbol} changed its base model or discriminator hierarchy.`; break;
+    case "model-property-added-required":
+      actual = `${symbol} added required property ${detail?.name}.`;
+      break;
+    case "model-hierarchy-changed":
+      actual = `${symbol} changed its base model or discriminator hierarchy.`;
+      break;
     case "enum-values-removed":
       actual = `${symbol} removed enum values: ${(detail?.values ?? []).join(", ")}.`;
       break;
-    case "enum-extensibility-changed": actual = `${symbol} changed enum extensibility.`; break;
-    case "public-surface-changed": actual = `${symbol} changed public access, usage, or reachability.`; break;
-    case "client-location-changed": actual = `${symbol} changed client ownership or name.`; break;
-    case "customization-changed": actual = `${symbol} changed SDK customization decorators.`; break;
-    default: throw new Error(`Unsupported downstream rule: ${rule}`);
+    case "enum-extensibility-changed":
+      actual = `${symbol} changed enum extensibility.`;
+      break;
+    case "public-surface-changed":
+      actual = `${symbol} changed public access, usage, or reachability.`;
+      break;
+    case "client-location-changed":
+      actual = `${symbol} changed client ownership or name.`;
+      break;
+    case "customization-changed":
+      actual = `${symbol} changed SDK customization decorators.`;
+      break;
+    default:
+      throw new Error(`Unsupported downstream rule: ${rule}`);
   }
   return {
     actual,
@@ -477,7 +519,18 @@ function candidateText(rule, symbol, detail) {
  * @param {string} kind
  * @param {CandidateDetail} [detail]
  */
-function pushCandidate(candidates, facts, source, projectId, rule, symbol, before, after, kind, detail) {
+function pushCandidate(
+  candidates,
+  facts,
+  source,
+  projectId,
+  rule,
+  symbol,
+  before,
+  after,
+  kind,
+  detail,
+) {
   const beforeFactId = before
     ? addFact(facts, projectId, "baseline", kind, before, source.artifactComparison)
     : undefined;
@@ -496,9 +549,7 @@ function pushCandidate(candidates, facts, source, projectId, rule, symbol, befor
     sourceChangeIds: ownership.sourceChangeIds,
     declarationIds: ownership.declarationIds,
     hunkIds: ownership.hunkIds,
-    evidenceFactIds: [beforeFactId, afterFactId].filter(
-      (id) => id !== undefined,
-    ),
+    evidenceFactIds: [beforeFactId, afterFactId].filter((id) => id !== undefined),
     reviewRequired: true,
   };
   candidates.push({ id: stableId("downstream", candidate), ...candidate });
@@ -527,22 +578,50 @@ function compareMethods(projectId, base, current, source, facts, candidates) {
   for (const before of base.methods) {
     let after = currentMethods.get(before.identity);
     if (!after && before.operation?.verb && before.operation?.path) {
-      const matches = currentByHttp.get(`${before.operation.verb}\u0000${before.operation.path}`) ?? [];
+      const matches =
+        currentByHttp.get(`${before.operation.verb}\u0000${before.operation.path}`) ?? [];
       if (matches.length === 1) after = matches[0];
     }
     const symbol = before.crossLanguageDefinitionId ?? before.identity;
     if (!after) {
-      pushCandidate(candidates, facts, source, projectId, "method-removed", symbol, before, undefined, "method");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "method-removed",
+        symbol,
+        before,
+        undefined,
+        "method",
+      );
       continue;
     }
-    if (
-      before.identity !== after.identity ||
-      before.name !== after.name
-    ) {
-      pushCandidate(candidates, facts, source, projectId, "method-identity-changed", symbol, before, after, "method");
+    if (before.identity !== after.identity || before.name !== after.name) {
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "method-identity-changed",
+        symbol,
+        before,
+        after,
+        "method",
+      );
     }
     if (before.client !== after.client) {
-      pushCandidate(candidates, facts, source, projectId, "method-location-changed", symbol, before, after, "method");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "method-location-changed",
+        symbol,
+        before,
+        after,
+        "method",
+      );
     }
     if (before.kind !== after.kind) {
       pushCandidate(
@@ -558,26 +637,77 @@ function compareMethods(projectId, base, current, source, facts, candidates) {
         { before: before.kind, after: after.kind },
       );
     }
-    if (!same(
-      normalizedPublicParameterContract(before.parameters),
-      normalizedPublicParameterContract(after.parameters),
-    )) {
-      pushCandidate(candidates, facts, source, projectId, "method-parameters-changed", symbol, before, after, "method");
+    if (
+      !same(
+        normalizedPublicParameterContract(before.parameters),
+        normalizedPublicParameterContract(after.parameters),
+      )
+    ) {
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "method-parameters-changed",
+        symbol,
+        before,
+        after,
+        "method",
+      );
     }
     if (!same(before.responseType, after.responseType)) {
-      pushCandidate(candidates, facts, source, projectId, "method-response-changed", symbol, before, after, "method");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "method-response-changed",
+        symbol,
+        before,
+        after,
+        "method",
+      );
     }
     if (before.access === "public" && after.access !== "public") {
-      pushCandidate(candidates, facts, source, projectId, "method-access-changed", symbol, before, after, "method");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "method-access-changed",
+        symbol,
+        before,
+        after,
+        "method",
+      );
     }
     if (!same(before.paging, after.paging)) {
-      pushCandidate(candidates, facts, source, projectId, "method-paging-changed", symbol, before, after, "method");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "method-paging-changed",
+        symbol,
+        before,
+        after,
+        "method",
+      );
     }
-    if (!same(
-      normalizedSemanticLroContract(before.lro),
-      normalizedSemanticLroContract(after.lro),
-    )) {
-      pushCandidate(candidates, facts, source, projectId, "method-lro-changed", symbol, before, after, "method");
+    if (
+      !same(normalizedSemanticLroContract(before.lro), normalizedSemanticLroContract(after.lro))
+    ) {
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "method-lro-changed",
+        symbol,
+        before,
+        after,
+        "method",
+      );
     }
   }
 }
@@ -596,7 +726,17 @@ function compareModels(projectId, base, current, source, facts, candidates) {
     const after = currentModels.get(before.identity);
     const symbol = before.crossLanguageDefinitionId ?? before.identity;
     if (!after) {
-      pushCandidate(candidates, facts, source, projectId, "public-surface-changed", symbol, before, undefined, "model");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "public-surface-changed",
+        symbol,
+        before,
+        undefined,
+        "model",
+      );
       continue;
     }
     if (
@@ -604,7 +744,17 @@ function compareModels(projectId, base, current, source, facts, candidates) {
       before.usage !== after.usage ||
       before.reachable !== after.reachable
     ) {
-      pushCandidate(candidates, facts, source, projectId, "public-surface-changed", symbol, before, after, "model");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "public-surface-changed",
+        symbol,
+        before,
+        after,
+        "model",
+      );
     }
     if (
       !same(before.baseModel, after.baseModel) ||
@@ -612,7 +762,17 @@ function compareModels(projectId, base, current, source, facts, candidates) {
       !same(before.discriminatorValue, after.discriminatorValue) ||
       !same(before.discriminatedSubtypes, after.discriminatedSubtypes)
     ) {
-      pushCandidate(candidates, facts, source, projectId, "model-hierarchy-changed", symbol, before, after, "model");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "model-hierarchy-changed",
+        symbol,
+        before,
+        after,
+        "model",
+      );
     }
     const afterProperties = new Map((after.properties ?? []).map((item) => [item.name, item]));
     const beforeProperties = new Set((before.properties ?? []).map((item) => item.name));
@@ -680,7 +840,17 @@ function compareEnums(projectId, base, current, source, facts, candidates) {
     const after = currentEnums.get(before.identity);
     const symbol = before.crossLanguageDefinitionId ?? before.identity;
     if (!after) {
-      pushCandidate(candidates, facts, source, projectId, "public-surface-changed", symbol, before, undefined, "enum");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "public-surface-changed",
+        symbol,
+        before,
+        undefined,
+        "enum",
+      );
       continue;
     }
     const currentValues = new Set((after.values ?? []).map((item) => canonicalJson(item)));
@@ -700,10 +870,34 @@ function compareEnums(projectId, base, current, source, facts, candidates) {
       );
     }
     if (before.isFixed !== after.isFixed || before.isUnionAsEnum !== after.isUnionAsEnum) {
-      pushCandidate(candidates, facts, source, projectId, "enum-extensibility-changed", symbol, before, after, "enum");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "enum-extensibility-changed",
+        symbol,
+        before,
+        after,
+        "enum",
+      );
     }
-    if (before.access !== after.access || before.usage !== after.usage || before.reachable !== after.reachable) {
-      pushCandidate(candidates, facts, source, projectId, "public-surface-changed", symbol, before, after, "enum");
+    if (
+      before.access !== after.access ||
+      before.usage !== after.usage ||
+      before.reachable !== after.reachable
+    ) {
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "public-surface-changed",
+        symbol,
+        before,
+        after,
+        "enum",
+      );
     }
   }
 }
@@ -750,9 +944,23 @@ function compareClients(projectId, base, current, source, facts, candidates) {
   for (const before of base.clients) {
     const after = currentClients.get(before.identity);
     if (!after) continue;
-    if (before.name !== after.name || before.owner !== after.owner || before.parent !== after.parent) {
+    if (
+      before.name !== after.name ||
+      before.owner !== after.owner ||
+      before.parent !== after.parent
+    ) {
       const symbol = before.crossLanguageDefinitionId ?? before.identity;
-      pushCandidate(candidates, facts, source, projectId, "client-location-changed", symbol, before, after, "client");
+      pushCandidate(
+        candidates,
+        facts,
+        source,
+        projectId,
+        "client-location-changed",
+        symbol,
+        before,
+        after,
+        "client",
+      );
     }
   }
 }
@@ -770,9 +978,9 @@ function compareCustomizations(projectId, source, facts, candidates) {
   const byDeclaration = new Map();
   for (const declaration of source.declarations) {
     const selected = (declaration.decorators ?? [])
-        .filter((item) => typeof item === "string")
-        .filter((item) => relevant.test(item))
-        .sort();
+      .filter((item) => typeof item === "string")
+      .filter((item) => relevant.test(item))
+      .sort();
     if (!selected.length) continue;
     const record = byDeclaration.get(declaration.qualifiedName) ?? {};
     record[declaration.source?.revision ?? "current"] = selected;
@@ -799,8 +1007,10 @@ function compareCustomizations(projectId, source, facts, candidates) {
 
 /** @param {AssessmentFact | undefined} fact */
 function factRole(fact) {
-  return fact?.comparisonRole ??
-    (fact?.revision === "base" ? "baseline" : fact?.revision === "current" ? "target" : undefined);
+  return (
+    fact?.comparisonRole ??
+    (fact?.revision === "base" ? "baseline" : fact?.revision === "current" ? "target" : undefined)
+  );
 }
 
 /**
@@ -833,11 +1043,13 @@ function parameterLocation(method, parameter) {
   ];
   const matches = protocolParameters.filter((item) => {
     const segments = (item.methodParameterSegments ?? []).flat(Infinity).map(String);
-    return item.name === parameter.name ||
+    return (
+      item.name === parameter.name ||
       item.crossLanguageDefinitionId === parameter.crossLanguageDefinitionId ||
       (parameter.name !== undefined && segments.includes(parameter.name)) ||
       (parameter.crossLanguageDefinitionId !== undefined &&
-        segments.includes(parameter.crossLanguageDefinitionId));
+        segments.includes(parameter.crossLanguageDefinitionId))
+    );
   });
   const kinds = new Set(matches.map((item) => item.kind));
   if (kinds.size !== 1) return undefined;
@@ -1040,25 +1252,18 @@ function buildRootCauses(candidates, facts, graphs) {
    * @param {DownstreamCandidate} candidate
    * @param {"baseline" | "target"} role
    */
-  const candidateFact = (candidate, role) => candidate.evidenceFactIds
-    .map((id) => facts[id])
-    .find((fact) => factRole(fact) === role);
-  const methodCandidates = candidates.filter((candidate) =>
-    {
-      const factKind =
-        (candidateFact(candidate, "target") ??
-          candidateFact(candidate, "baseline"))?.factKind;
-      return typeof factKind === "string" &&
-        ["method", "client", "customization"].includes(factKind);
-    });
-  const typeCandidates = candidates.filter((candidate) =>
-    {
-      const factKind =
-        (candidateFact(candidate, "target") ??
-          candidateFact(candidate, "baseline"))?.factKind;
-      return typeof factKind === "string" &&
-        ["model", "enum", "union"].includes(factKind);
-    });
+  const candidateFact = (candidate, role) =>
+    candidate.evidenceFactIds.map((id) => facts[id]).find((fact) => factRole(fact) === role);
+  const methodCandidates = candidates.filter((candidate) => {
+    const factKind = (candidateFact(candidate, "target") ?? candidateFact(candidate, "baseline"))
+      ?.factKind;
+    return typeof factKind === "string" && ["method", "client", "customization"].includes(factKind);
+  });
+  const typeCandidates = candidates.filter((candidate) => {
+    const factKind = (candidateFact(candidate, "target") ?? candidateFact(candidate, "baseline"))
+      ?.factKind;
+    return typeof factKind === "string" && ["model", "enum", "union"].includes(factKind);
+  });
   /** @type {DownstreamRootCause[]} */
   const roots = [];
   /** @type {Map<string, DownstreamCandidate[]>} */
@@ -1096,19 +1301,18 @@ function buildRootCauses(candidates, facts, graphs) {
     const firstCandidate = direct[0];
     if (!firstCandidate) continue;
     const fact =
-      candidateFact(firstCandidate, "target") ??
-      candidateFact(firstCandidate, "baseline");
+      candidateFact(firstCandidate, "target") ?? candidateFact(firstCandidate, "baseline");
     const identity = typeIdentity(fact) ?? "undefined";
     const projectGraphs = graphs.filter((graph) => graph.projectId === fact?.projectId);
     /** @type {Map<string, {graph: ReferenceGraph, result: ReturnType<typeof shortestMethodPaths>[number], methodIdentity: string | undefined}>} */
     const pathsByMethod = new Map();
     for (const graph of projectGraphs.sort((left, right) =>
-      right.comparisonRole.localeCompare(left.comparisonRole))) {
+      right.comparisonRole.localeCompare(left.comparisonRole),
+    )) {
       for (const result of shortestMethodPaths(graph, identity)) {
         const method = graph.nodes.get(result.methodKey)?.value;
         const methodIdentity =
-          stringField(method, "crossLanguageDefinitionId") ??
-          stringField(method, "identity");
+          stringField(method, "crossLanguageDefinitionId") ?? stringField(method, "identity");
         const key = `${methodIdentity ?? result.methodKey}:${result.location ?? ""}`;
         if (!pathsByMethod.has(key)) pathsByMethod.set(key, { graph, result, methodIdentity });
       }
@@ -1136,9 +1340,8 @@ function buildRootCauses(candidates, facts, graphs) {
         });
       }
     }
-    const kind = fact?.factKind === "model"
-      ? "type-contract-propagation"
-      : "enum-union-propagation";
+    const kind =
+      fact?.factKind === "model" ? "type-contract-propagation" : "enum-union-propagation";
     const root = {
       kind: methodFactIds.length ? kind : "unresolved",
       directCandidateIds: unique(direct.map((item) => item.id)),
@@ -1146,9 +1349,7 @@ function buildRootCauses(candidates, facts, graphs) {
       methodFactIds: unique(methodFactIds),
       typeFactIds: unique(typeFactIds),
       referenceEvidence: [
-        ...new Map(
-          referenceEvidence.map((item) => [canonicalJson(item), item]),
-        ).values(),
+        ...new Map(referenceEvidence.map((item) => [canonicalJson(item), item])).values(),
       ],
       rootKey,
     };
@@ -1156,9 +1357,11 @@ function buildRootCauses(candidates, facts, graphs) {
   }
   for (const candidate of candidates) {
     candidate.rootCauseIds = roots
-      .filter((root) =>
-        root.directCandidateIds.includes(candidate.id) ||
-        root.propagatedCandidateIds.includes(candidate.id))
+      .filter(
+        (root) =>
+          root.directCandidateIds.includes(candidate.id) ||
+          root.propagatedCandidateIds.includes(candidate.id),
+      )
       .map((root) => root.id);
   }
   return roots.sort((left, right) => left.id.localeCompare(right.id));
@@ -1185,7 +1388,9 @@ export function analyzeDownstreamBreaking(options) {
   /** @type {PreparationBlocker[]} */
   const blockers = [];
   let analyzedProjects = 0;
-  for (const project of [...(manifest.projects ?? [])].sort((left, right) => left.id.localeCompare(right.id))) {
+  for (const project of [...(manifest.projects ?? [])].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  )) {
     const baseArtifact = project.artifacts?.baseline?.tcgc ?? project.artifacts?.base?.tcgc;
     const currentArtifact = project.artifacts?.target?.tcgc ?? project.artifacts?.current?.tcgc;
     if (!artifactReady(baseArtifact) || !artifactReady(currentArtifact)) {
@@ -1211,9 +1416,10 @@ export function analyzeDownstreamBreaking(options) {
       const requiresTypeReachability = candidates
         .slice(candidateStart)
         .some((candidate) =>
-          candidate.evidenceFactIds.some((id) =>
-            typeof facts[id]?.factKind === "string" &&
-            ["model", "enum", "union"].includes(facts[id].factKind),
+          candidate.evidenceFactIds.some(
+            (id) =>
+              typeof facts[id]?.factKind === "string" &&
+              ["model", "enum", "union"].includes(facts[id].factKind),
           ),
         );
       if (requiresTypeReachability) {
@@ -1232,14 +1438,17 @@ export function analyzeDownstreamBreaking(options) {
     }
   }
   const uniqueCandidates = new Map(candidates.map((item) => [item.id, item]));
-  const normalizedCandidates = [...uniqueCandidates.values()]
-    .sort((left, right) => left.id.localeCompare(right.id));
+  const normalizedCandidates = [...uniqueCandidates.values()].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  );
   const rootCauses = buildRootCauses(normalizedCandidates, facts, graphs);
   /** @type {DownstreamAnalysis} */
   const result = {
     schemaVersion: 1,
     status: analyzedProjects ? "ready" : "blocked",
-    facts: Object.fromEntries(Object.entries(facts).sort(([left], [right]) => left.localeCompare(right))),
+    facts: Object.fromEntries(
+      Object.entries(facts).sort(([left], [right]) => left.localeCompare(right)),
+    ),
     rootCauses,
     candidates: normalizedCandidates,
     blockers,

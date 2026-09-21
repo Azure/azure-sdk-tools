@@ -138,7 +138,7 @@ export interface DocumentFinding {
   sources: [
     {
       [k: string]: unknown;
-    }
+    },
   ];
   document: Document;
 }
@@ -240,7 +240,7 @@ export interface DocumentCompletenessFinding {
   sources: [
     {
       [k: string]: unknown;
-    }
+    },
   ];
   declaration: DocumentationDeclaration;
 }

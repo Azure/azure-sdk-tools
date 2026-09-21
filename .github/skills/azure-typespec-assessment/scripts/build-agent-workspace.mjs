@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { isMain, parseArgs, readJsonObject, runMain } from "./cli.mjs";
+import { readComplianceCatalog } from "./compliance-assessment.mjs";
 import {
   atomicWriteJson,
   comparisonIdentity,
@@ -8,7 +9,6 @@ import {
   resolveWorkPath,
   transitionWorkflowState,
 } from "./workflow-state.mjs";
-import { readComplianceCatalog } from "./compliance-assessment.mjs";
 
 /** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
 /** @typedef {import("./runtime-types.js").ComplianceSearchRequest} ComplianceSearchRequest */
@@ -23,11 +23,7 @@ const DECISIONS_FILE = "agent-workspace/agent-decisions.json";
 /** @param {(string | undefined)[]} values */
 function unique(values) {
   return [
-    ...new Set(
-      values.filter(
-        /** @returns {value is string} */ (value) => value !== undefined,
-      ),
-    ),
+    ...new Set(values.filter(/** @returns {value is string} */ (value) => value !== undefined)),
   ].sort();
 }
 
@@ -37,9 +33,7 @@ function unique(values) {
  * @returns {EvidenceSet}
  */
 function evidenceFor(modelInput, item) {
-  const evidence = item.evidenceSetId
-    ? modelInput.evidenceSets?.[item.evidenceSetId]
-    : undefined;
+  const evidence = item.evidenceSetId ? modelInput.evidenceSets?.[item.evidenceSetId] : undefined;
   if (!evidence) {
     throw new Error(
       `Missing evidence set ${item.evidenceSetId ?? "<missing>"} for ${item.id ?? item.reviewUnitId ?? item.requestId}.`,
@@ -73,10 +67,7 @@ function validateBoundedEvidence(modelInput) {
 function declarationNamesByIntent(root, modelInput) {
   if (!modelInput.complianceSearchRequests.length) return new Map();
   const requestsValue = readJsonObject(
-    resolveWorkPath(
-      root,
-      modelInput.artifactReferences.complianceSearchRequests,
-    ),
+    resolveWorkPath(root, modelInput.artifactReferences.complianceSearchRequests),
   ).requests;
   if (!Array.isArray(requestsValue)) {
     throw new Error("Compliance search requests must contain a requests array.");
@@ -84,15 +75,11 @@ function declarationNamesByIntent(root, modelInput) {
   const requests = /** @type {ComplianceSearchRequest[]} */ (requestsValue);
   const sourceIndex = /** @type {SourceIndex} */ (
     /** @type {unknown} */ (
-      readJsonObject(
-        resolveWorkPath(root, modelInput.artifactReferences.sourceIndex),
-      )
+      readJsonObject(resolveWorkPath(root, modelInput.artifactReferences.sourceIndex))
     )
   );
   const sourceChanges = sourceIndex.sourceChanges;
-  const sourcesById = new Map(
-    sourceChanges.map((source) => [source.id, source]),
-  );
+  const sourcesById = new Map(sourceChanges.map((source) => [source.id, source]));
   return new Map(
     requests.map((request) => {
       const declarationIds = new Set(request.declarationIds);
@@ -120,9 +107,7 @@ function declarationNamesByIntent(root, modelInput) {
       }
       const unnamed = declarations
         .filter(
-          (declaration) =>
-            declarationIds.has(declaration.id) &&
-            !declaration.qualifiedName?.trim(),
+          (declaration) => declarationIds.has(declaration.id) && !declaration.qualifiedName?.trim(),
         )
         .map((declaration) => declaration.id);
       if (unnamed.length) {
@@ -214,10 +199,9 @@ export function buildAgentWorkspace({ work }) {
   fs.rmSync(resolveWorkPath(root, "agent-workspace/inference.draft.json"), {
     force: true,
   });
-  fs.rmSync(
-    resolveWorkPath(root, "agent-workspace/assessment-judgment.draft.json"),
-    { force: true },
-  );
+  fs.rmSync(resolveWorkPath(root, "agent-workspace/assessment-judgment.draft.json"), {
+    force: true,
+  });
   atomicWriteJson(
     resolveWorkPath(root, DECISIONS_DRAFT),
     decisionsDraft(modelInput, declarationNamesByIntent(root, modelInput)),
@@ -238,8 +222,7 @@ export function buildAgentWorkspace({ work }) {
     },
     counts: {
       assessedSemanticIntents: modelInput.semanticReviewUnits.length,
-      informationalSemanticIntents:
-        modelInput.informationalSemanticIntentIds?.length ?? 0,
+      informationalSemanticIntents: modelInput.informationalSemanticIntentIds?.length ?? 0,
       restCandidates: modelInput.restCandidates.length,
       downstreamCandidates: modelInput.downstreamCandidates.length,
       inferenceRequests: modelInput.inferenceRequests.length,
@@ -248,8 +231,7 @@ export function buildAgentWorkspace({ work }) {
     requiredOutputs: {
       agentDecisions: DECISIONS_FILE,
       materialized: {
-        inference:
-          modelInput.inferenceRequests.length > 0 ? "inference.json" : null,
+        inference: modelInput.inferenceRequests.length > 0 ? "inference.json" : null,
         guidelineEvidence: "compliance-search-evidence.json",
         judgment: "assessment-judgment.json",
       },
@@ -271,21 +253,12 @@ export function buildAgentWorkspace({ work }) {
         "node <skill-directory>\\scripts\\materialize-assessment-results.mjs --work <work-directory>",
     },
     coverage: {
-      semanticIntentIds: modelInput.semanticReviewUnits.map(
-        (unit) => unit.reviewUnitId,
-      ),
-      informationalSemanticIntentIds:
-        modelInput.informationalSemanticIntentIds ?? [],
+      semanticIntentIds: modelInput.semanticReviewUnits.map((unit) => unit.reviewUnitId),
+      informationalSemanticIntentIds: modelInput.informationalSemanticIntentIds ?? [],
       restCandidateIds: modelInput.restCandidates.map((candidate) => candidate.id),
-      downstreamCandidateIds: modelInput.downstreamCandidates.map(
-        (candidate) => candidate.id,
-      ),
-      inferenceRequestIds: modelInput.inferenceRequests.map(
-        (request) => request.requestId,
-      ),
-      guidelineRequestIds: modelInput.complianceSearchRequests.map(
-        (request) => request.requestId,
-      ),
+      downstreamCandidateIds: modelInput.downstreamCandidates.map((candidate) => candidate.id),
+      inferenceRequestIds: modelInput.inferenceRequests.map((request) => request.requestId),
+      guidelineRequestIds: modelInput.complianceSearchRequests.map((request) => request.requestId),
     },
     completionChecklist: [
       "Read model-input.json exactly once.",

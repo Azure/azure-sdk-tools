@@ -1,17 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { isMain, parseArgs, readJsonObject, runMain } from "./cli.mjs";
-import {
-  assembleCompliance,
-  readComplianceCatalog,
-} from "./compliance-assessment.mjs";
+import { assembleCompliance, readComplianceCatalog } from "./compliance-assessment.mjs";
+import { canonicalJson } from "./stable-id.mjs";
 import {
   readWorkflowState,
   resolveWorkPath,
   transitionWorkflowState,
   verifyArtifactHashes,
 } from "./workflow-state.mjs";
-import { canonicalJson } from "./stable-id.mjs";
 
 /** @typedef {import("./agent-decisions.schema.js").CandidateDecision} CompactCandidateDecision */
 /** @typedef {import("./agent-decisions.schema.js").Guidance} CompactGuidance */
@@ -87,11 +84,7 @@ const SCORE_VALUES = {
  * @returns {value is "high" | "medium" | "low"}
  */
 function isSeverity(value) {
-  return (
-    value === "high" ||
-    value === "medium" ||
-    value === "low"
-  );
+  return value === "high" || value === "medium" || value === "low";
 }
 
 /**
@@ -148,11 +141,7 @@ function duplicates(values) {
   /** @type {Set<T>} */
   const seen = new Set();
   return [
-    ...new Set(
-      values.filter((value) =>
-        seen.has(value) ? true : (seen.add(value), false),
-      ),
-    ),
+    ...new Set(values.filter((value) => (seen.has(value) ? true : (seen.add(value), false)))),
   ];
 }
 
@@ -181,10 +170,7 @@ function exactCoverage(expected, actual, label) {
  */
 function subset(actual, expected, label) {
   requireArray(actual, label);
-  if (
-    duplicates(actual).length ||
-    actual.some((item) => !expected.includes(item))
-  ) {
+  if (duplicates(actual).length || actual.some((item) => !expected.includes(item))) {
     throw new Error(`${label} contains an unknown or duplicate ID.`);
   }
 }
@@ -194,20 +180,13 @@ function subset(actual, expected, label) {
  * @param {string} label
  */
 function validateCandidateDecision(decision, label) {
-  assertKeys(
-    decision,
-    ["candidateId", "decision", "severity", "rationale"],
-    label,
-  );
+  assertKeys(decision, ["candidateId", "decision", "severity", "rationale"], label);
   requireText(decision.candidateId, `${label}.candidateId`);
   requireText(decision.rationale, `${label}.rationale`);
   if (!["approve", "reject"].includes(decision.decision)) {
     throw new Error(`${label} has an invalid decision.`);
   }
-  if (
-    decision.decision === "approve" &&
-    !isSeverity(decision.severity)
-  ) {
+  if (decision.decision === "approve" && !isSeverity(decision.severity)) {
     throw new Error(`${label} approve requires a severity.`);
   }
   if (decision.decision === "reject" && decision.severity !== undefined) {
@@ -235,9 +214,7 @@ function materializeInference(decisions, modelInput) {
     compact.map((item) => item.requestId),
     "Inference result",
   );
-  const requestsById = new Map(
-    requests.map((request) => [request.requestId, request]),
-  );
+  const requestsById = new Map(requests.map((request) => [request.requestId, request]));
   /** @type {string[]} */
   const candidateIds = [];
   /** @type {InferenceCandidate[]} */
@@ -257,9 +234,7 @@ function materializeInference(decisions, modelInput) {
     if (!["candidates", "no-impact", "blocked"].includes(result.decision)) {
       throw new Error(`Inference result ${result.requestId} has an invalid decision.`);
     }
-    if (
-      (result.decision === "candidates") !== (result.candidates.length > 0)
-    ) {
+    if ((result.decision === "candidates") !== result.candidates.length > 0) {
       throw new Error(
         `Inference result ${result.requestId} candidate count does not match its decision.`,
       );
@@ -292,10 +267,7 @@ function materializeInference(decisions, modelInput) {
       if (!["high", "medium", "low"].includes(candidate.defaultSeverity)) {
         throw new Error(`Inferred candidate ${candidate.id} has an invalid severity.`);
       }
-      if (
-        candidate.dimension === "downstream" &&
-        !candidate.crossLanguageDefinitionId?.trim()
-      ) {
+      if (candidate.dimension === "downstream" && !candidate.crossLanguageDefinitionId?.trim()) {
         throw new Error(`Inferred candidate ${candidate.id} requires an SDK symbol.`);
       }
       subset(
@@ -349,8 +321,7 @@ function canonicalRequests(modelInput, artifacts) {
   const artifact = artifacts.get(artifactPath.replaceAll("\\", "/"));
   const artifactRequests = artifact?.requests;
   requireArray(artifactRequests, "Canonical compliance search requests");
-  const requests =
-    /** @type {ComplianceSearchRequest[]} */ (artifactRequests);
+  const requests = /** @type {ComplianceSearchRequest[]} */ (artifactRequests);
   exactCoverage(
     compactRequests.map((item) => item.requestId),
     requests.map((item) => item.requestId),
@@ -360,19 +331,13 @@ function canonicalRequests(modelInput, artifacts) {
     duplicates(requests.map((item) => item.requestId)).length ||
     duplicates(requests.map((item) => item.reviewUnitId)).length
   ) {
-    throw new Error(
-      "Canonical compliance search requests contain duplicate ownership.",
-    );
+    throw new Error("Canonical compliance search requests contain duplicate ownership.");
   }
-  const compactById = new Map(
-    compactRequests.map((item) => [item.requestId, item]),
-  );
+  const compactById = new Map(compactRequests.map((item) => [item.requestId, item]));
   for (const request of requests) {
     const compact = compactById.get(request.requestId);
     if (!compact) {
-      throw new Error(
-        `Canonical compliance request ${request.requestId} is unknown.`,
-      );
+      throw new Error(`Canonical compliance request ${request.requestId} is unknown.`);
     }
     if (request.reviewUnitId !== compact.reviewUnitId) {
       throw new Error(
@@ -390,13 +355,7 @@ function canonicalRequests(modelInput, artifacts) {
 function validateGuidance(guidance, label) {
   assertKeys(
     guidance,
-    [
-      "section",
-      "excerpt",
-      "queryTerms",
-      "examples",
-      "applicableDeclarationIds",
-    ],
+    ["section", "excerpt", "queryTerms", "examples", "applicableDeclarationIds"],
     label,
   );
   requireText(guidance.section, `${label}.section`);
@@ -413,10 +372,7 @@ function validateGuidance(guidance, label) {
     }
   }
   if (guidance.applicableDeclarationIds !== undefined) {
-    requireArray(
-      guidance.applicableDeclarationIds,
-      `${label}.applicableDeclarationIds`,
-    );
+    requireArray(guidance.applicableDeclarationIds, `${label}.applicableDeclarationIds`);
   }
 }
 
@@ -426,22 +382,14 @@ function validateGuidance(guidance, label) {
  * @param {SourceChange[]} sourceChanges
  * @returns {Map<string, string[]>}
  */
-function resolveComplianceJudgmentDeclarations(
-  decisions,
-  requests,
-  sourceChanges,
-) {
+function resolveComplianceJudgmentDeclarations(decisions, requests, sourceChanges) {
   exactCoverage(
     requests.map((item) => item.reviewUnitId),
     decisions.complianceJudgments.map((item) => item.reviewUnitId),
     "Compliance judgment",
   );
-  const requestsByIntent = new Map(
-    requests.map((request) => [request.reviewUnitId, request]),
-  );
-  const sourcesById = new Map(
-    sourceChanges.map((source) => [source.id, source]),
-  );
+  const requestsByIntent = new Map(requests.map((request) => [request.reviewUnitId, request]));
+  const sourcesById = new Map(sourceChanges.map((source) => [source.id, source]));
   /** @type {Map<string, Map<string, string[]>>} */
   const declarationsByIntent = new Map();
   /** @type {Map<string, Set<string>>} */
@@ -469,8 +417,7 @@ function resolveComplianceJudgmentDeclarations(
       const matches = byName.get(declaration.qualifiedName) ?? [];
       matches.push(declaration.id);
       byName.set(declaration.qualifiedName, matches);
-      const owners =
-        intentsByName.get(declaration.qualifiedName) ?? new Set();
+      const owners = intentsByName.get(declaration.qualifiedName) ?? new Set();
       owners.add(request.reviewUnitId);
       intentsByName.set(declaration.qualifiedName, owners);
     }
@@ -486,9 +433,7 @@ function resolveComplianceJudgmentDeclarations(
     );
     const request = requestsByIntent.get(judgment.reviewUnitId);
     if (!request) {
-      throw new Error(
-        `Compliance judgment ${judgment.reviewUnitId} is unknown.`,
-      );
+      throw new Error(`Compliance judgment ${judgment.reviewUnitId} is unknown.`);
     }
     const declarationNames = judgment.declarationNames;
     const declarationIds = judgment.declarationIds;
@@ -508,10 +453,7 @@ function resolveComplianceJudgmentDeclarations(
       resolved.set(judgment.reviewUnitId, [...declarationIds].sort());
       continue;
     }
-    requireArray(
-      declarationNames,
-      `Compliance judgment ${judgment.reviewUnitId}.declarationNames`,
-    );
+    requireArray(declarationNames, `Compliance judgment ${judgment.reviewUnitId}.declarationNames`);
     const duplicateNames = duplicates(declarationNames);
     if (duplicateNames.length) {
       throw new Error(
@@ -520,15 +462,10 @@ function resolveComplianceJudgmentDeclarations(
     }
     const ownDeclarations = declarationsByIntent.get(judgment.reviewUnitId);
     if (!ownDeclarations) {
-      throw new Error(
-        `Compliance judgment ${judgment.reviewUnitId} has no declarations.`,
-      );
+      throw new Error(`Compliance judgment ${judgment.reviewUnitId} has no declarations.`);
     }
     const resolvedIds = declarationNames.map((name) => {
-      requireText(
-        name,
-        `Compliance judgment ${judgment.reviewUnitId}.declarationNames`,
-      );
+      requireText(name, `Compliance judgment ${judgment.reviewUnitId}.declarationNames`);
       const matches = ownDeclarations.get(name) ?? [];
       if (matches.length > 1) {
         throw new Error(
@@ -570,9 +507,7 @@ function citedGuidanceDeclarations(decisions, requests, resolvedDeclarations) {
   for (const request of requests) {
     const judgment = judgmentsByIntent.get(request.reviewUnitId);
     if (!judgment) {
-      throw new Error(
-        `Compliance request ${request.requestId} has no judgment.`,
-      );
+      throw new Error(`Compliance request ${request.requestId} has no judgment.`);
     }
     for (const reference of judgment.applicableGuidance) {
       assertKeys(
@@ -590,18 +525,14 @@ function citedGuidanceDeclarations(decisions, requests, resolvedDeclarations) {
       );
       const key = `${reference.catalogId}\u0000${reference.guidanceSection}`;
       const declarationIds = declarationsByGuidance.get(key) ?? new Set();
-      for (const declarationId of
-        resolvedDeclarations.get(judgment.reviewUnitId) ?? []) {
+      for (const declarationId of resolvedDeclarations.get(judgment.reviewUnitId) ?? []) {
         declarationIds.add(declarationId);
       }
       declarationsByGuidance.set(key, declarationIds);
     }
   }
   return new Map(
-    [...declarationsByGuidance].map(([key, declarationIds]) => [
-      key,
-      [...declarationIds].sort(),
-    ]),
+    [...declarationsByGuidance].map(([key, declarationIds]) => [key, [...declarationIds].sort()]),
   );
 }
 
@@ -612,12 +543,7 @@ function citedGuidanceDeclarations(decisions, requests, resolvedDeclarations) {
  * @param {Map<string, string[]>} resolvedDeclarations
  * @returns {MaterializedSearchResult}
  */
-function materializeSearch(
-  decisions,
-  requests,
-  catalog,
-  resolvedDeclarations,
-) {
+function materializeSearch(decisions, requests, catalog, resolvedDeclarations) {
   if (!requests.length) {
     exactCoverage(
       [],
@@ -707,15 +633,11 @@ function materializeSearch(
     })
     .sort(
       (left, right) =>
-        right.score.total - left.score.total ||
-        left.catalogOrder - right.catalogOrder,
+        right.score.total - left.score.total || left.catalogOrder - right.catalogOrder,
     )
     .map((entry, index) => ({ rank: index + 1, ...entry }));
   const rankingById = new Map(
-    ranking.map((entry) => [
-      catalogEntryByUrl(entry.canonicalUrl).catalogId,
-      entry,
-    ]),
+    ranking.map((entry) => [catalogEntryByUrl(entry.canonicalUrl).catalogId, entry]),
   );
 
   const failedIds = decisions.failedRetrievals.map((item) => item.catalogId);
@@ -755,9 +677,9 @@ function materializeSearch(
     );
   }
   const attemptedIds = new Set([...failedIds, ...fetchedIds]);
-  const attemptedPrefix = ranking.slice(0, attemptedIds.size).map(
-    (entry) => catalogEntryByUrl(entry.canonicalUrl).catalogId,
-  );
+  const attemptedPrefix = ranking
+    .slice(0, attemptedIds.size)
+    .map((entry) => catalogEntryByUrl(entry.canonicalUrl).catalogId);
   if (
     attemptedPrefix.some((id) => !attemptedIds.has(id)) ||
     attemptedPrefix.length !== attemptedIds.size
@@ -774,10 +696,7 @@ function materializeSearch(
   const hasExhaustionBlocker = decisions.searchBlockers.some((item) =>
     item.startsWith("catalog-exhausted:"),
   );
-  if (
-    exhausted &&
-    (attemptedIds.size !== catalog.length || !hasExhaustionBlocker)
-  ) {
+  if (exhausted && (attemptedIds.size !== catalog.length || !hasExhaustionBlocker)) {
     throw new Error(
       "Fewer than four fetched documents requires catalog exhaustion and an explicit blocker.",
     );
@@ -790,14 +709,7 @@ function materializeSearch(
   const rankedDocuments = decisions.fetchedDocuments.map((document, index) => {
     assertKeys(
       document,
-      [
-        "catalogId",
-        "retrievedAt",
-        "contentHash",
-        "bytes",
-        "guidance",
-        "noRelevantGuidance",
-      ],
+      ["catalogId", "retrievedAt", "contentHash", "bytes", "guidance", "noRelevantGuidance"],
       `Fetched document ${document.catalogId ?? index}`,
     );
     if (!catalogById.has(document.catalogId)) {
@@ -816,7 +728,7 @@ function materializeSearch(
     if (typeof document.noRelevantGuidance !== "boolean") {
       throw new Error(`Fetched document ${document.catalogId} requires noRelevantGuidance.`);
     }
-    if (document.noRelevantGuidance === (document.guidance.length > 0)) {
+    if (document.noRelevantGuidance === document.guidance.length > 0) {
       throw new Error(
         `Fetched document ${document.catalogId} must contain guidance or declare none, not both.`,
       );
@@ -842,9 +754,7 @@ function materializeSearch(
     });
     const ranked = expectedDocuments[index];
     if (!ranked) {
-      throw new Error(
-        `Fetched document ${document.catalogId} has no ranked catalog entry.`,
-      );
+      throw new Error(`Fetched document ${document.catalogId} has no ranked catalog entry.`);
     }
     return {
       ...ranked,
@@ -862,9 +772,7 @@ function materializeSearch(
       const ranked = rankingById.get(item.catalogId);
       const catalogEntry = catalogById.get(item.catalogId);
       if (!ranked || !catalogEntry) {
-        throw new Error(
-          `Failed retrieval uses unranked catalog ID ${item.catalogId}.`,
-        );
+        throw new Error(`Failed retrieval uses unranked catalog ID ${item.catalogId}.`);
       }
       return {
         rank: ranked.rank,
@@ -902,10 +810,7 @@ function materializeSearch(
     },
     catalogById,
     fetchedById: new Map(
-      decisions.fetchedDocuments.map((item, index) => [
-        item.catalogId,
-        rankedDocuments[index],
-      ]),
+      decisions.fetchedDocuments.map((item, index) => [item.catalogId, rankedDocuments[index]]),
     ),
   };
 }
@@ -935,7 +840,11 @@ function materializeJudgment(
     "Semantic summary",
   );
   for (const summary of decisions.semanticSummaries) {
-    assertKeys(summary, ["reviewUnitId", "title", "summary"], `Semantic summary ${summary.reviewUnitId}`);
+    assertKeys(
+      summary,
+      ["reviewUnitId", "title", "summary"],
+      `Semantic summary ${summary.reviewUnitId}`,
+    );
     requireText(summary.title, `Semantic summary ${summary.reviewUnitId}.title`);
     requireText(summary.summary, `Semantic summary ${summary.reviewUnitId}.summary`);
   }
@@ -951,10 +860,7 @@ function materializeJudgment(
     "REST decision",
   );
   exactCoverage(
-    [
-      ...modelInput.downstreamCandidates.map((item) => item.id),
-      ...inferredDownstreamIds,
-    ],
+    [...modelInput.downstreamCandidates.map((item) => item.id), ...inferredDownstreamIds],
     decisions.downstreamDecisions.map((item) => item.candidateId),
     "Downstream decision",
   );
@@ -970,9 +876,7 @@ function materializeJudgment(
     decisions.complianceJudgments.map((item) => item.reviewUnitId),
     "Compliance judgment",
   );
-  const requestsByIntent = new Map(
-    requests.map((request) => [request.reviewUnitId, request]),
-  );
+  const requestsByIntent = new Map(requests.map((request) => [request.reviewUnitId, request]));
   const complianceDecisions = decisions.complianceJudgments.map((judgment) => {
     assertKeys(
       judgment,
@@ -990,12 +894,13 @@ function materializeJudgment(
       ],
       `Compliance judgment ${judgment.reviewUnitId}`,
     );
-    requireArray(judgment.applicableGuidance, `Compliance judgment ${judgment.reviewUnitId}.applicableGuidance`);
+    requireArray(
+      judgment.applicableGuidance,
+      `Compliance judgment ${judgment.reviewUnitId}.applicableGuidance`,
+    );
     if (
       duplicates(
-        judgment.applicableGuidance.map(
-          (item) => `${item.catalogId}\u0000${item.guidanceSection}`,
-        ),
+        judgment.applicableGuidance.map((item) => `${item.catalogId}\u0000${item.guidanceSection}`),
       ).length
     ) {
       throw new Error(
@@ -1005,26 +910,20 @@ function materializeJudgment(
     const request = requestsByIntent.get(judgment.reviewUnitId);
     const declarationIds = resolvedDeclarations.get(judgment.reviewUnitId);
     if (!request || !declarationIds) {
-      throw new Error(
-        `Compliance judgment ${judgment.reviewUnitId} has no canonical request.`,
-      );
+      throw new Error(`Compliance judgment ${judgment.reviewUnitId} has no canonical request.`);
     }
     requireText(judgment.actual, `Compliance judgment ${judgment.reviewUnitId}.actual`);
     requireText(judgment.rationale, `Compliance judgment ${judgment.reviewUnitId}.rationale`);
     if (
-      ![
-        "applicable-pass",
-        "applicable-fail",
-        "no-applicable-guidance",
-        "not-assessed",
-      ].includes(judgment.decision)
+      !["applicable-pass", "applicable-fail", "no-applicable-guidance", "not-assessed"].includes(
+        judgment.decision,
+      )
     ) {
       throw new Error(`Compliance judgment ${judgment.reviewUnitId} has an invalid decision.`);
     }
     if (
       judgment.decision === "applicable-fail" &&
-      (!judgment.title?.trim() ||
-        !isSeverity(judgment.severity))
+      (!judgment.title?.trim() || !isSeverity(judgment.severity))
     ) {
       throw new Error(`Compliance judgment ${judgment.reviewUnitId} lacks finding presentation.`);
     }
@@ -1032,13 +931,13 @@ function materializeJudgment(
       judgment.decision !== "applicable-fail" &&
       (judgment.title !== undefined || judgment.severity !== undefined)
     ) {
-      throw new Error(`Compliance judgment ${judgment.reviewUnitId} has unexpected finding presentation.`);
+      throw new Error(
+        `Compliance judgment ${judgment.reviewUnitId} has unexpected finding presentation.`,
+      );
     }
     if (
       judgment.decision.startsWith("applicable-") &&
-      (!judgment.expected?.trim() ||
-        !judgment.applicableGuidance.length ||
-      !declarationIds.length)
+      (!judgment.expected?.trim() || !judgment.applicableGuidance.length || !declarationIds.length)
     ) {
       throw new Error(`Compliance judgment ${judgment.reviewUnitId} lacks applicable evidence.`);
     }
@@ -1061,18 +960,12 @@ function materializeJudgment(
           `Compliance judgment ${judgment.reviewUnitId} cites an unfetched catalog entry.`,
         );
       }
-      const guidance = document.guidance.find(
-        (item) => item.section === reference.guidanceSection,
-      );
+      const guidance = document.guidance.find((item) => item.section === reference.guidanceSection);
       if (
         !guidance ||
-        !guidance.applicableDeclarationIds.some((id) =>
-          declarationIds.includes(id),
-        )
+        !guidance.applicableDeclarationIds.some((id) => declarationIds.includes(id))
       ) {
-        throw new Error(
-          `Compliance judgment ${judgment.reviewUnitId} cites unowned guidance.`,
-        );
+        throw new Error(`Compliance judgment ${judgment.reviewUnitId} cites unowned guidance.`);
       }
       return {
         canonicalDocumentUrl: catalog.canonicalUrl,
@@ -1153,9 +1046,7 @@ export function validateCompactDecisions(decisions) {
   for (const field of /** @type {const} */ (["searchBlockers", "blockers"])) {
     const items = decisions[field];
     requireArray(items, `Agent decisions.${field}`);
-    items.forEach((item, index) =>
-      requireText(item, `Agent decisions.${field}[${index}]`),
-    );
+    items.forEach((item, index) => requireText(item, `Agent decisions.${field}[${index}]`));
   }
 }
 
@@ -1165,21 +1056,15 @@ export function validateCompactDecisions(decisions) {
  */
 function assertSearchEvidence(evidence) {
   if (!evidence.catalogRanking.length) {
-    throw new Error(
-      "Azure Guidelines search evidence requires a ranked catalog.",
-    );
+    throw new Error("Azure Guidelines search evidence requires a ranked catalog.");
   }
   if (evidence.rankedDocuments.length > 4) {
-    throw new Error(
-      "Azure Guidelines search evidence contains too many ranked documents.",
-    );
+    throw new Error("Azure Guidelines search evidence contains too many ranked documents.");
   }
   for (const document of evidence.rankedDocuments) {
     for (const guidance of document.guidance) {
       if (!guidance.applicableDeclarationIds.length) {
-        throw new Error(
-          `Guidance ${guidance.section} requires an applicable declaration.`,
-        );
+        throw new Error(`Guidance ${guidance.section} requires an applicable declaration.`);
       }
     }
   }
@@ -1223,14 +1108,10 @@ function validateIndexCoverage(index, modelInput) {
     index.requiredOutputs?.agentDecisions !== DECISIONS_FILE ||
     index.requiredOutputs?.materialized?.inference !==
       (modelInput.inferenceRequests.length ? "inference.json" : null) ||
-    index.requiredOutputs?.materialized?.guidelineEvidence !==
-      "compliance-search-evidence.json" ||
-    index.requiredOutputs?.materialized?.judgment !==
-      "assessment-judgment.json" ||
-    index.requiredOutputs?.schemas?.agentDecisions !==
-      "scripts/agent-decisions.schema.json" ||
-    index.materialization?.script !==
-      "scripts/materialize-assessment-results.mjs"
+    index.requiredOutputs?.materialized?.guidelineEvidence !== "compliance-search-evidence.json" ||
+    index.requiredOutputs?.materialized?.judgment !== "assessment-judgment.json" ||
+    index.requiredOutputs?.schemas?.agentDecisions !== "scripts/agent-decisions.schema.json" ||
+    index.materialization?.script !== "scripts/materialize-assessment-results.mjs"
   ) {
     throw new Error("Agent index does not advertise the materializer contract.");
   }
@@ -1299,30 +1180,19 @@ function compactError(error) {
 /**
  * @param {{work: string, decisions?: string}} options
  */
-export function materializeAssessmentResults({
-  work,
-  decisions: decisionsPath = DECISIONS_FILE,
-}) {
+export function materializeAssessmentResults({ work, decisions: decisionsPath = DECISIONS_FILE }) {
   const root = path.resolve(work);
   const started = performance.now();
   try {
-    const index =
-      /** @type {AgentIndex} */ (
-        readJsonObject(resolveWorkPath(root, INDEX_FILE))
-      );
+    const index = /** @type {AgentIndex} */ (readJsonObject(resolveWorkPath(root, INDEX_FILE)));
     const workflowState = readWorkflowState(root);
     if (
       canonicalJson(index.canonicalArtifactHashes ?? {}) !==
       canonicalJson(workflowState?.artifactHashes ?? {})
     ) {
-      throw new Error(
-        "Agent index canonical hashes do not match workflow-state.json.",
-      );
+      throw new Error("Agent index canonical hashes do not match workflow-state.json.");
     }
-    const hashErrors = verifyArtifactHashes(
-      root,
-      index.canonicalArtifactHashes,
-    );
+    const hashErrors = verifyArtifactHashes(root, index.canonicalArtifactHashes);
     if (hashErrors.length) {
       throw new Error(
         `Canonical assessment inputs changed; rerun deterministic analysis.\n${hashErrors.join("\n")}`,
@@ -1334,31 +1204,24 @@ export function materializeAssessmentResults({
     if (!index.input?.path) {
       throw new Error("Agent index must declare its model input path.");
     }
-    const modelInput =
-      /** @type {AssessmentModelInput} */ (
-        readJsonObject(resolveWorkPath(root, index.input.path))
-      );
+    const modelInput = /** @type {AssessmentModelInput} */ (
+      readJsonObject(resolveWorkPath(root, index.input.path))
+    );
     validateIndexCoverage(index, modelInput);
     /** @type {Map<string, Record<string, unknown>>} */
     const artifacts = new Map();
-    for (const relativePath of Object.values(
-      modelInput.artifactReferences ?? {},
-    )) {
+    for (const relativePath of Object.values(modelInput.artifactReferences ?? {})) {
       artifacts.set(
         relativePath.replaceAll("\\", "/"),
         readJsonObject(resolveWorkPath(root, relativePath)),
       );
     }
-    const agentDecisions = readJsonObject(
-      resolveWorkPath(root, decisionsPath),
-    );
+    const agentDecisions = readJsonObject(resolveWorkPath(root, decisionsPath));
     validateCompactDecisions(agentDecisions);
     const requests = canonicalRequests(modelInput, artifacts);
     const catalog = readComplianceCatalog();
-    const sourceArtifact =
-      modelInput.artifactReferences?.sourceIndex ?? "source/source-index.json";
-    const rawSourceChanges =
-      artifacts.get(sourceArtifact.replaceAll("\\", "/"))?.sourceChanges;
+    const sourceArtifact = modelInput.artifactReferences?.sourceIndex ?? "source/source-index.json";
+    const rawSourceChanges = artifacts.get(sourceArtifact.replaceAll("\\", "/"))?.sourceChanges;
     requireArray(rawSourceChanges, "Canonical source changes");
     const sourceChanges = /** @type {SourceChange[]} */ (rawSourceChanges);
     const resolvedDeclarations = resolveComplianceJudgmentDeclarations(
@@ -1366,10 +1229,7 @@ export function materializeAssessmentResults({
       requests,
       sourceChanges,
     );
-    const { inference, candidates } = materializeInference(
-      agentDecisions,
-      modelInput,
-    );
+    const { inference, candidates } = materializeInference(agentDecisions, modelInput);
     const { evidence, catalogById, fetchedById } = materializeSearch(
       agentDecisions,
       requests,
@@ -1420,19 +1280,12 @@ export function materializeAssessmentResults({
         materializedAt: new Date().toISOString(),
         materializationMs,
         materializedOutputBytes: outputBytes,
-        agentDecisionBytes: fs.statSync(
-          resolveWorkPath(root, decisionsPath),
-        ).size,
+        agentDecisionBytes: fs.statSync(resolveWorkPath(root, decisionsPath)).size,
       },
     });
     return {
-      inferencePath: inference
-        ? resolveWorkPath(root, "inference.json")
-        : null,
-      guidelineEvidencePath: resolveWorkPath(
-        root,
-        "compliance-search-evidence.json",
-      ),
+      inferencePath: inference ? resolveWorkPath(root, "inference.json") : null,
+      guidelineEvidencePath: resolveWorkPath(root, "compliance-search-evidence.json"),
       judgmentPath: resolveWorkPath(root, "assessment-judgment.json"),
       materializationMs,
       outputBytes,

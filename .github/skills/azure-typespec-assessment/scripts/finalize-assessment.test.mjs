@@ -97,22 +97,16 @@ void test("guarded finalization writes only validated complete artifacts", () =>
     assert.ok(fs.existsSync(first.reportPath));
     assert.equal(Number.isInteger(first.finalizationMs), true);
     assert.ok(first.finalizationMs >= 0);
-    const assessment = /** @type {FinalAssessment} */ (
-      readJson(first.assessmentPath)
-    );
+    const assessment = /** @type {FinalAssessment} */ (readJson(first.assessmentPath));
     assert.equal(assessment.dimensions.semantic.items.length, 1);
     assert.equal(
-      /** @type {TestWorkflowState} */ (
-        readJson(path.join(work, "workflow-state.json"))
-      ).state,
+      /** @type {TestWorkflowState} */ (readJson(path.join(work, "workflow-state.json"))).state,
       "complete",
     );
     const second = finalizeAssessment({ work });
     assert.ok(fs.existsSync(second.assessmentPath));
     assert.equal(
-      /** @type {TestWorkflowState} */ (
-        readJson(path.join(work, "workflow-state.json"))
-      ).state,
+      /** @type {TestWorkflowState} */ (readJson(path.join(work, "workflow-state.json"))).state,
       "complete",
     );
   } finally {
@@ -124,9 +118,7 @@ void test("invalid Agent output leaves a correction-ready workflow state", () =>
   const work = fixture();
   try {
     const judgmentPath = path.join(work, "assessment-judgment.json");
-    const judgment = /** @type {AssessmentJudgment} */ (
-      readJson(judgmentPath)
-    );
+    const judgment = /** @type {AssessmentJudgment} */ (readJson(judgmentPath));
     judgment.semanticIntents[0].title = "";
     writeJson(judgmentPath, judgment);
     assert.throws(() => finalizeAssessment({ work }), /incomplete/);

@@ -1,5 +1,5 @@
-import path from "node:path";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 import { isRecord } from "./cli.mjs";
 
 /**
@@ -39,9 +39,7 @@ function run(command, args, options = {}) {
     maxBuffer: 64 * 1024 * 1024,
   });
   if (result.status !== 0 && !options.allowFailure) {
-    throw new Error(
-      `${command} ${args.join(" ")} failed: ${result.stderr.trim()}`,
-    );
+    throw new Error(`${command} ${args.join(" ")} failed: ${result.stderr.trim()}`);
   }
   return result;
 }
@@ -70,9 +68,7 @@ function elapsed(started) {
  */
 export function parsePullRequest(value, remoteUrl) {
   const input = String(value ?? "").trim();
-  let match = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)(?:\/.*)?$/i.exec(
-    input,
-  );
+  let match = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)(?:\/.*)?$/i.exec(input);
   if (match) {
     return { owner: match[1], repository: match[2], number: Number(match[3]) };
   }
@@ -83,9 +79,7 @@ export function parsePullRequest(value, remoteUrl) {
   if (/^\d+$/.test(input)) {
     const repository = parseGitHubRepository(remoteUrl);
     if (!repository) {
-      throw new Error(
-        `Cannot resolve PR ${input}: origin is not a GitHub repository.`,
-      );
+      throw new Error(`Cannot resolve PR ${input}: origin is not a GitHub repository.`);
     }
     return { ...repository, number: Number(input) };
   }
@@ -100,9 +94,7 @@ export function parsePullRequest(value, remoteUrl) {
  */
 export function parseGitHubRepository(remoteUrl) {
   const match = /github\.com[/:]([^/]+)\/([^/]+)$/i.exec(remoteUrl ?? "");
-  return match
-    ? { owner: match[1], repository: match[2].replace(/\.git$/i, "") }
-    : undefined;
+  return match ? { owner: match[1], repository: match[2].replace(/\.git$/i, "") } : undefined;
 }
 
 /**
@@ -155,9 +147,7 @@ function ensureMergeBase(repo, base, head, deepen) {
     allowFailure: true,
   });
   if (result.status !== 0) {
-    throw new Error(
-      `Unable to resolve a merge base between ${base} and ${head}.`,
-    );
+    throw new Error(`Unable to resolve a merge base between ${base} and ${head}.`);
   }
   return result.stdout.trim();
 }
@@ -188,9 +178,7 @@ function changedTypeSpecPaths(repo, mergeBase, head) {
         : files.slice(0, 1);
     })
     .map((file) => file.replaceAll("\\", "/"))
-    .filter(
-      (file) => file.endsWith(".tsp") || path.posix.basename(file) === "tspconfig.yaml",
-    );
+    .filter((file) => file.endsWith(".tsp") || path.posix.basename(file) === "tspconfig.yaml");
 }
 
 /**
@@ -237,15 +225,15 @@ function getPullRequest(repo, value) {
   ]);
   const data = /** @type {unknown} */ (JSON.parse(response.stdout));
   if (
-    !isRecord(data)
-    || typeof data.html_url !== "string"
-    || !isRecord(data.base)
-    || !isRecord(data.base.repo)
-    || typeof data.base.repo.clone_url !== "string"
-    || typeof data.base.ref !== "string"
-    || typeof data.base.sha !== "string"
-    || !isRecord(data.head)
-    || typeof data.head.sha !== "string"
+    !isRecord(data) ||
+    typeof data.html_url !== "string" ||
+    !isRecord(data.base) ||
+    !isRecord(data.base.repo) ||
+    typeof data.base.repo.clone_url !== "string" ||
+    typeof data.base.ref !== "string" ||
+    typeof data.base.sha !== "string" ||
+    !isRecord(data.head) ||
+    typeof data.head.sha !== "string"
   ) {
     throw new Error(`GitHub returned incomplete metadata for PR ${identity.number}.`);
   }
@@ -307,10 +295,7 @@ export function resolveAssessmentInput(options, dependencies = {}) {
     const pr = options.pr;
     if (pr === undefined) throw new Error("--pr requires a value.");
     const metadataStarted = performance.now();
-    pullRequest = (dependencies.getPullRequest ?? getPullRequest)(
-      repo,
-      pr,
-    );
+    pullRequest = (dependencies.getPullRequest ?? getPullRequest)(repo, pr);
     timings.metadataMs = elapsed(metadataStarted);
     if (!pullRequest.baseCommit || !pullRequest.headCommit || !pullRequest.cloneUrl) {
       throw new Error(`PR metadata is incomplete for ${options.pr}.`);
@@ -324,9 +309,7 @@ export function resolveAssessmentInput(options, dependencies = {}) {
       refspecs.push(`+${base}:${refRoot}/base`);
     }
     if (!resolveCommit(repo, head)) {
-      refspecs.push(
-        `+refs/pull/${pullRequest.number}/head:${refRoot}/head`,
-      );
+      refspecs.push(`+refs/pull/${pullRequest.number}/head:${refRoot}/head`);
     }
     if (refspecs.length) {
       fetch(repo, pullRequest.cloneUrl, refspecs, ["--depth=1"]);
@@ -368,8 +351,7 @@ export function resolveAssessmentInput(options, dependencies = {}) {
     timings.scopeDiscoveryMs = elapsed(scopeStarted);
   }
 
-  timings.setupExcludingFetchMs =
-    elapsed(started) - timings.fetchMs;
+  timings.setupExcludingFetchMs = elapsed(started) - timings.fetchMs;
   return {
     ...options,
     repo,

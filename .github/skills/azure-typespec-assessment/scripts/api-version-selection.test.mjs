@@ -11,59 +11,70 @@ ${members}
 }`;
 
 void test("selects a newly added head version and the latest stable base version", () => {
-  const base = extractApiVersions([source(`
+  const base = extractApiVersions([
+    source(`
   v2025_01_01: "2025-01-01",
   @Azure.Core.previewVersion
   v2025_06_01_preview: "2025-06-01-preview",
-  `)]);
-  const current = extractApiVersions([source(`
+  `),
+  ]);
+  const current = extractApiVersions([
+    source(`
   v2025_01_01: "2025-01-01",
   @Azure.Core.previewVersion
   v2025_06_01_preview: "2025-06-01-preview",
   @Azure.Core.previewVersion
   v2026_01_01_preview: "2026-01-01-preview",
-  `)]);
+  `),
+  ]);
 
-  assert.deepEqual(selectApiVersionPair({
-    base,
-    current,
-    baseCommit: "base-sha",
-    headCommit: "head-sha",
-  }), {
-    mode: "new-api-version",
-    baseline: {
-      sourceRevision: "current",
-      commit: "head-sha",
-      apiVersion: "2025-01-01",
-      reason: "previous-latest-stable",
+  assert.deepEqual(
+    selectApiVersionPair({
+      base,
+      current,
+      baseCommit: "base-sha",
+      headCommit: "head-sha",
+    }),
+    {
+      mode: "new-api-version",
+      baseline: {
+        sourceRevision: "current",
+        commit: "head-sha",
+        apiVersion: "2025-01-01",
+        reason: "previous-latest-stable",
+      },
+      target: {
+        sourceRevision: "current",
+        commit: "head-sha",
+        apiVersion: "2026-01-01-preview",
+        reason: "newest-added-version",
+      },
+      base: "2025-01-01",
+      current: "2026-01-01-preview",
+      baseReason: "previous-latest-stable",
+      currentReason: "new-version-added",
+      addedCurrentVersions: ["2026-01-01-preview"],
+      available: {
+        base: ["2025-01-01", "2025-06-01-preview"],
+        current: ["2025-01-01", "2025-06-01-preview", "2026-01-01-preview"],
+      },
     },
-    target: {
-      sourceRevision: "current",
-      commit: "head-sha",
-      apiVersion: "2026-01-01-preview",
-      reason: "newest-added-version",
-    },
-    base: "2025-01-01",
-    current: "2026-01-01-preview",
-    baseReason: "previous-latest-stable",
-    currentReason: "new-version-added",
-    addedCurrentVersions: ["2026-01-01-preview"],
-    available: {
-      base: ["2025-01-01", "2025-06-01-preview"],
-      current: ["2025-01-01", "2025-06-01-preview", "2026-01-01-preview"],
-    },
-  });
+  );
 });
 
 void test("uses the latest head version and latest preview base when no stable exists", () => {
-  const base = extractApiVersions([source(`
+  const base = extractApiVersions([
+    source(`
   v2024_01_01_preview: "2024-01-01-preview",
   v2025_01_01_preview: "2025-01-01-preview",
-  `)]);
-  const current = extractApiVersions([source(`
+  `),
+  ]);
+  const current = extractApiVersions([
+    source(`
   v2024_01_01_preview: "2024-01-01-preview",
   v2025_01_01_preview: "2025-01-01-preview",
-  `)]);
+  `),
+  ]);
   const pair = selectApiVersionPair({ base, current });
 
   assert.equal(pair.base, "2025-01-01-preview");
@@ -75,10 +86,12 @@ void test("uses the latest head version and latest preview base when no stable e
 });
 
 void test("uses the same latest preview on both sides when the PR adds no version", () => {
-  const versions = extractApiVersions([source(`
+  const versions = extractApiVersions([
+    source(`
   v2025_01_01: "2025-01-01",
   v2026_05_01_preview: "2026-05-01-preview",
-  `)]);
+  `),
+  ]);
   const pair = selectApiVersionPair({ base: versions, current: versions });
 
   assert.equal(pair.base, "2026-05-01-preview");
@@ -102,10 +115,12 @@ void test("does not select a version for an unversioned project", () => {
 void test("compares an unversioned base with a versioned target", () => {
   const pair = selectApiVersionPair({
     base: extractApiVersions(["namespace Contoso;"]),
-    current: extractApiVersions([source(`
+    current: extractApiVersions([
+      source(`
   v2025_01_01: "2025-01-01",
   v2026_01_01_preview: "2026-01-01-preview",
-  `)]),
+  `),
+    ]),
     baseCommit: "base-sha",
     headCommit: "head-sha",
   });
@@ -116,18 +131,17 @@ void test("compares an unversioned base with a versioned target", () => {
   assert.equal(pair.baseline.apiVersion, undefined);
   assert.equal(pair.target.sourceRevision, "current");
   assert.equal(pair.target.apiVersion, "2026-01-01-preview");
-  assert.deepEqual(pair.addedCurrentVersions, [
-    "2025-01-01",
-    "2026-01-01-preview",
-  ]);
+  assert.deepEqual(pair.addedCurrentVersions, ["2025-01-01", "2026-01-01-preview"]);
 });
 
 void test("compares a versioned base with an unversioned target", () => {
   const pair = selectApiVersionPair({
-    base: extractApiVersions([source(`
+    base: extractApiVersions([
+      source(`
   v2025_01_01: "2025-01-01",
   v2026_01_01_preview: "2026-01-01-preview",
-  `)]),
+  `),
+    ]),
     current: extractApiVersions(["namespace Contoso;"]),
     baseCommit: "base-sha",
     headCommit: "head-sha",

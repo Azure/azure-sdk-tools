@@ -7,7 +7,7 @@
     "moduleResolution": "NodeNext",
     "noEmit": true,
     "strict": true,
-    "types": ["node"]
+    "types": ["node"],
   },
-  "include": ["eslint.config.js", "scripts/**/*.d.ts", "scripts/**/*.mjs"]
+  "include": ["eslint.config.js", "scripts/**/*.d.ts", "scripts/**/*.mjs"],
 }

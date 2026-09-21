@@ -99,18 +99,13 @@ function assessmentFact(input, factId) {
 }
 
 void test("requires a fresh assessment output directory", () => {
-  const root = fs.mkdtempSync(
-    path.join(os.tmpdir(), "typespec-assessment-output-"),
-  );
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-assessment-output-"));
   const missing = path.join(root, "new");
   try {
     assert.doesNotThrow(() => assertFreshOutput(missing));
     assert.doesNotThrow(() => assertFreshOutput(root));
     fs.writeFileSync(path.join(root, "workflow-state.json"), "{}");
-    assert.throws(
-      () => assertFreshOutput(root),
-      /Assessment output directory must be empty/,
-    );
+    assert.throws(() => assertFreshOutput(root), /Assessment output directory must be empty/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -215,9 +210,7 @@ void test("model input references canonical evidence without embedding sources",
   assert.equal(Object.keys(input.evidenceSets).length, 1);
   assert.deepEqual(Object.keys(input.facts), []);
   assert.equal(input.semanticReviewUnits[0].affectedOperationCount, 1);
-  assert.deepEqual(input.semanticReviewUnits[0].representativeOperationIds, [
-    "operation-1",
-  ]);
+  assert.deepEqual(input.semanticReviewUnits[0].representativeOperationIds, ["operation-1"]);
   assert.equal(input.complianceSearchRequests.length, 1);
   assert.equal(input.complianceSearchRequests[0].reviewUnitId, "semantic-1");
   assert.equal(
@@ -226,33 +219,18 @@ void test("model input references canonical evidence without embedding sources",
   );
   assert.equal(input.complianceSearchRequests[0].declarationIds, undefined);
   assert.equal(input.complianceSearchRequests[0].queryProfile, undefined);
-  assert.equal(
-    input.complianceSearchRequests[0].querySummary.qualifiedNameCount,
-    1,
-  );
-  assert.match(
-    input.complianceSearchRequests[0].requestId,
-    /^compliance-search-/,
-  );
+  assert.equal(input.complianceSearchRequests[0].querySummary.qualifiedNameCount, 1);
+  assert.match(input.complianceSearchRequests[0].requestId, /^compliance-search-/);
   const coverage = deterministicCoverage(input.semanticReviewUnits[0]);
-  assert.deepEqual(
-    coverage.coveredHunkIds,
-    ["hunk-1"],
-  );
-  assert.deepEqual(
-    coverage.uncoveredHunkIds,
-    [],
-  );
+  assert.deepEqual(coverage.coveredHunkIds, ["hunk-1"]);
+  assert.deepEqual(coverage.uncoveredHunkIds, []);
   assert.equal(input.semanticReviewUnits[0].inferenceRequired, false);
   assert.deepEqual(input.inferenceRequests, []);
   assert.equal(input.deferredDimensions, undefined);
   assert.equal(input.documentQualityReviewUnits, undefined);
   assert.equal(input.documentQualityCriterion, undefined);
   assert.equal(input.inputAccounting.budgetTier, "small");
-  assert.equal(
-    input.inputAccounting.omittedRedundant.rawEmitterArtifacts,
-    true,
-  );
+  assert.equal(input.inputAccounting.omittedRedundant.rawEmitterArtifacts, true);
   assert.equal(input.inputAccounting.omittedRedundant.sourceChanges, true);
 });
 
@@ -322,16 +300,14 @@ void test("model input retains facts referenced by REST candidates", () => {
 });
 
 void test("model input excludes API-version-wide intents and their candidates", () => {
-  const operations = ["Widgets_Get", "Widgets_List"].map(
-    (operationId, index) => ({
-      operationId,
-      beforeFactId: `before-${index}`,
-      afterFactId: `after-${index}`,
-      matchBasis: "version-transition-change",
-      sourceChangeIds: ["source-1"],
-      hunkIds: ["hunk-1"],
-    }),
-  );
+  const operations = ["Widgets_Get", "Widgets_List"].map((operationId, index) => ({
+    operationId,
+    beforeFactId: `before-${index}`,
+    afterFactId: `after-${index}`,
+    matchBasis: "version-transition-change",
+    sourceChangeIds: ["source-1"],
+    hunkIds: ["hunk-1"],
+  }));
   const input = buildModelInputFromFixture({
     manifest: {
       comparison: {
@@ -405,9 +381,7 @@ void test("model input excludes API-version-wide intents and their candidates", 
   });
 
   assert.deepEqual(input.semanticReviewUnits, []);
-  assert.deepEqual(input.informationalSemanticIntentIds, [
-    "semantic-version-wide",
-  ]);
+  assert.deepEqual(input.informationalSemanticIntentIds, ["semantic-version-wide"]);
   assert.deepEqual(input.restCandidates, []);
   assert.deepEqual(input.downstreamCandidates, []);
   assert.deepEqual(input.facts, {});
@@ -578,10 +552,7 @@ void test("model input requests inference only for unknown hunks", () => {
 
   assert.equal(input.semanticReviewUnits[0].inferenceRequired, true);
   const coverage = deterministicCoverage(input.semanticReviewUnits[0]);
-  assert.deepEqual(
-    coverage.uncoveredHunkIds,
-    ["hunk-1"],
-  );
+  assert.deepEqual(coverage.uncoveredHunkIds, ["hunk-1"]);
   assert.equal(input.inferenceRequests.length, 1);
   assert.match(input.inferenceRequests[0].requestId, /^inference-request-/);
   assert.equal(input.inferenceRequests[0].hunkId, "hunk-1");
@@ -590,17 +561,11 @@ void test("model input requests inference only for unknown hunks", () => {
     sourceChangeId: "source-1",
     hunkId: "hunk-1",
   });
-  assert.deepEqual(input.inferenceRequests[0].allowedDimensions, [
-    "rest",
-    "downstream",
-  ]);
+  assert.deepEqual(input.inferenceRequests[0].allowedDimensions, ["rest", "downstream"]);
 });
 
 void test("model input bounds repeated review evidence and retains downstream facts", () => {
-  const declarationIds = Array.from(
-    { length: 100 },
-    (_, index) => `declaration-${index}`,
-  );
+  const declarationIds = Array.from({ length: 100 }, (_, index) => `declaration-${index}`);
   const declarations = declarationIds.map((id, index) => ({
     id,
     kind: "model",
@@ -686,8 +651,7 @@ void test("model input bounds repeated review evidence and retains downstream fa
   assert.deepEqual(Object.keys(input.facts), ["sdk-fact-1"]);
   assert.ok(input.downstreamCandidates[0].evidenceSetId);
   assert.equal(
-    input.evidenceSets[input.downstreamCandidates[0].evidenceSetId]
-      .declarationCount,
+    input.evidenceSets[input.downstreamCandidates[0].evidenceSetId].declarationCount,
     100,
   );
 });
@@ -766,21 +730,13 @@ void test("model input retains downstream method and bridge path facts", () => {
     },
   });
 
-  assert.deepEqual(Object.keys(input.facts), [
-    "sdk-method",
-    "sdk-type",
-    "sdk-wrapper",
-  ]);
+  assert.deepEqual(Object.keys(input.facts), ["sdk-method", "sdk-type", "sdk-wrapper"]);
   assert.ok(
-    input.downstreamRootCauses[0].referenceEvidence.every(
-      (edge) => {
-        assert.ok(edge.fromFactId);
-        assert.ok(edge.toFactId);
-        return Boolean(
-          input.facts[edge.fromFactId] && input.facts[edge.toFactId],
-        );
-      },
-    ),
+    input.downstreamRootCauses[0].referenceEvidence.every((edge) => {
+      assert.ok(edge.fromFactId);
+      assert.ok(edge.toFactId);
+      return Boolean(input.facts[edge.fromFactId] && input.facts[edge.toFactId]);
+    }),
   );
 });
 
@@ -804,10 +760,7 @@ void test("model input keeps unsupported unmapped decorators unknown", () => {
           hunks: [
             {
               id: "hunk-1",
-              lines: [
-                "-@@access(Widget, Access.public);",
-                "+@@access(Widget, Access.internal);",
-              ],
+              lines: ["-@@access(Widget, Access.public);", "+@@access(Widget, Access.internal);"],
             },
           ],
           declarations: [],
@@ -834,26 +787,14 @@ void test("model input keeps unsupported unmapped decorators unknown", () => {
 
   assert.equal(input.semanticReviewUnits[0].inferenceRequired, true);
   const coverage = deterministicCoverage(input.semanticReviewUnits[0]);
-  assert.equal(
-    coverage.classifications[0].reason,
-    "unsupported-customization-not-represented",
-  );
+  assert.equal(coverage.classifications[0].reason, "unsupported-customization-not-represented");
 });
 
 void test("known decorators do not mask unsupported changes in the same hunk", () => {
   for (const lines of [
-    [
-      '+@@operationId(Widgets.get, "Widgets_Get");',
-      "+@@access(Widget, Access.internal);",
-    ],
-    [
-      ' @@operationId(Widgets.get, "Widgets_Get");',
-      "+@@access(Widget, Access.internal);",
-    ],
-    [
-      '+@@clientName(Widget, "RenamedWidget");',
-      "+@@access(Widget, Access.internal);",
-    ],
+    ['+@@operationId(Widgets.get, "Widgets_Get");', "+@@access(Widget, Access.internal);"],
+    [' @@operationId(Widgets.get, "Widgets_Get");', "+@@access(Widget, Access.internal);"],
+    ['+@@clientName(Widget, "RenamedWidget");', "+@@access(Widget, Access.internal);"],
   ]) {
     const input = buildModelInputFromFixture({
       manifest: {
@@ -897,21 +838,13 @@ void test("known decorators do not mask unsupported changes in the same hunk", (
     assert.equal(input.semanticReviewUnits[0].inferenceRequired, true);
     assert.equal(input.inferenceRequests.length, 1);
     const coverage = deterministicCoverage(input.semanticReviewUnits[0]);
-    assert.equal(
-      coverage.classifications[0].reason,
-      "unsupported-customization-not-represented",
-    );
+    assert.equal(coverage.classifications[0].reason, "unsupported-customization-not-represented");
   }
 });
 
 void test("multiline decorator bodies remain inference-visible", () => {
   for (const lines of [
-    [
-      " @@clientName(Widget,",
-      '-  "GoWidget",',
-      '+  "RenamedWidget",',
-      '   "go")',
-    ],
+    [" @@clientName(Widget,", '-  "GoWidget",', '+  "RenamedWidget",', '   "go")'],
     [" @pattern(", '-  "old"', '+  "new"', " )"],
   ]) {
     const input = buildModelInputFromFixture({
@@ -1125,10 +1058,7 @@ void test("direct doc decorator changes remain semantic-only", () => {
 
   assert.equal(input.semanticReviewUnits[0].inferenceRequired, false);
   const coverage = deterministicCoverage(input.semanticReviewUnits[0]);
-  assert.equal(
-    coverage.classifications[0].status,
-    "semantic-only",
-  );
+  assert.equal(coverage.classifications[0].status, "semantic-only");
 });
 
 void test("direct unsupported decorators remain inference-visible", () => {
@@ -1151,11 +1081,7 @@ void test("direct unsupported decorators remain inference-visible", () => {
           hunks: [
             {
               id: "hunk-1",
-              lines: [
-                '-@myCustom("old")',
-                '+@myCustom("new")',
-                " model Widget {}",
-              ],
+              lines: ['-@myCustom("old")', '+@myCustom("new")', " model Widget {}"],
             },
           ],
           declarations: [
@@ -1189,10 +1115,7 @@ void test("direct unsupported decorators remain inference-visible", () => {
 
   assert.equal(input.semanticReviewUnits[0].inferenceRequired, true);
   const coverage = deterministicCoverage(input.semanticReviewUnits[0]);
-  assert.equal(
-    coverage.classifications[0].reason,
-    "unsupported-customization-not-represented",
-  );
+  assert.equal(coverage.classifications[0].reason, "unsupported-customization-not-represented");
 });
 
 void test("mapped hunks remain blocked when deterministic analysis is blocked", () => {
@@ -1241,10 +1164,7 @@ void test("mapped hunks remain blocked when deterministic analysis is blocked", 
   });
 
   const coverage = deterministicCoverage(input.semanticReviewUnits[0]);
-  assert.equal(
-    coverage.classifications[0].status,
-    "blocked",
-  );
+  assert.equal(coverage.classifications[0].status, "blocked");
   assert.equal(input.semanticReviewUnits[0].inferenceRequired, false);
 });
 
@@ -1292,10 +1212,7 @@ void test("model input retains facts relevant to inference hunks", () => {
           hunks: [
             {
               id: "hunk-1",
-              lines: [
-                "-@@access(Widget, Access.public);",
-                "+@@access(Widget, Access.internal);",
-              ],
+              lines: ["-@@access(Widget, Access.public);", "+@@access(Widget, Access.internal);"],
             },
           ],
           declarations: [],

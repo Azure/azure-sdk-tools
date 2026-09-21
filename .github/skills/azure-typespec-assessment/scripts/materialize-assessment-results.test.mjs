@@ -105,24 +105,20 @@ function fixture({ inference = false } = {}) {
 /** @param {string} work */
 function completedDecisions(work) {
   const decisions = /** @type {TestAgentDecisions} */ (
-    readJson(
-      path.join(work, "agent-workspace", "agent-decisions.draft.json"),
-    )
+    readJson(path.join(work, "agent-workspace", "agent-decisions.draft.json"))
   );
   decisions.catalogScores = decisions.catalogScores.map((score) => ({
     ...score,
     rationale: "No changed semantic intent requires this document.",
   }));
-  decisions.fetchedDocuments = decisions.catalogScores
-    .slice(0, 4)
-    .map(({ catalogId }) => ({
-      catalogId,
-      retrievedAt: "2026-09-18T00:00:00.000Z",
-      contentHash: `sha256:${"0".repeat(64)}`,
-      bytes: 0,
-      guidance: [],
-      noRelevantGuidance: true,
-    }));
+  decisions.fetchedDocuments = decisions.catalogScores.slice(0, 4).map(({ catalogId }) => ({
+    catalogId,
+    retrievedAt: "2026-09-18T00:00:00.000Z",
+    contentHash: `sha256:${"0".repeat(64)}`,
+    bytes: 0,
+    guidance: [],
+    noRelevantGuidance: true,
+  }));
   decisions.overallConfidence = "high";
   return decisions;
 }
@@ -130,19 +126,11 @@ function completedDecisions(work) {
 void test("materializes guideline evidence and judgment without inference", () => {
   const work = fixture();
   try {
-    writeJson(
-      path.join(work, "agent-workspace", "agent-decisions.json"),
-      completedDecisions(work),
-    );
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), completedDecisions(work));
     const result = materializeAssessmentResults({ work });
     assert.equal(result.inferencePath, null);
-    assert.equal(
-      fs.existsSync(path.join(work, "compliance-search-evidence.json")),
-      true,
-    );
-    const judgment = /** @type {AssessmentJudgment} */ (
-      readJson(result.judgmentPath)
-    );
+    assert.equal(fs.existsSync(path.join(work, "compliance-search-evidence.json")), true);
+    const judgment = /** @type {AssessmentJudgment} */ (readJson(result.judgmentPath));
     assert.equal(judgment.schemaVersion, 1);
     assert.deepEqual(judgment.complianceDecisions, []);
     const evidence = /** @type {ComplianceSearchEvidence} */ (
@@ -152,9 +140,7 @@ void test("materializes guideline evidence and judgment without inference", () =
     assert.deepEqual(evidence.rankedDocuments, []);
     assert.equal(evidence.inputAccounting.catalogEntriesScored, 0);
     assert.equal(
-      JSON.stringify(readJson(path.join(work, "workflow-state.json"))).includes(
-        "guideline",
-      ),
+      JSON.stringify(readJson(path.join(work, "workflow-state.json"))).includes("guideline"),
       true,
     );
   } finally {
@@ -186,10 +172,7 @@ void test("rejects unknown fields in compact decisions", () => {
 void test("rejects changed canonical input before materialization", () => {
   const work = fixture();
   try {
-    writeJson(
-      path.join(work, "agent-workspace", "agent-decisions.json"),
-      completedDecisions(work),
-    );
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), completedDecisions(work));
     const input = /** @type {AssessmentModelInput} */ (
       readJson(path.join(work, "model-input.json"))
     );

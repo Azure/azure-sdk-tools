@@ -3,10 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import {
-  assembleAssessment,
-  matchTypeFindingIntents,
-} from "./assemble-assessment.mjs";
+import { assembleAssessment, matchTypeFindingIntents } from "./assemble-assessment.mjs";
 import { readJson, writeJson } from "./cli.mjs";
 import { readComplianceCatalog } from "./compliance-assessment.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
@@ -25,9 +22,7 @@ import { validateAssessment } from "./validate-assessment.mjs";
  * @returns {AssessmentOutput}
  */
 function assembleTestAssessment(options) {
-  return /** @type {AssessmentOutput} */ (
-    /** @type {unknown} */ (assembleAssessment(options))
-  );
+  return /** @type {AssessmentOutput} */ (/** @type {unknown} */ (assembleAssessment(options)));
 }
 
 void test("validator rejects passed dimensions with blockers", () => {
@@ -60,9 +55,7 @@ void test("validator rejects passed dimensions with blockers", () => {
     blockers: [],
   };
   const errors = validateAssessment(
-    /** @type {AssessmentOutput} */ (
-      /** @type {unknown} */ (malformedAssessment)
-    ),
+    /** @type {AssessmentOutput} */ (/** @type {unknown} */ (malformedAssessment)),
   );
 
   assert.ok(errors.includes("REST status must be not-assessed."));
@@ -167,33 +160,69 @@ void test("assembly retains mapped operations without treating paging metadata a
     const work = fixture();
     try {
       const before = {
-        id: "before", operationId: "OutboundRules_Post", method: "post",
-        path: "/managedNetworks/{name}/batchOutboundRules", apiVersion: "v1",
+        id: "before",
+        operationId: "OutboundRules_Post",
+        method: "post",
+        path: "/managedNetworks/{name}/batchOutboundRules",
+        apiVersion: "v1",
         responses: [{ statusCode: "200", schema: { type: "object" } }],
         produces: ["application/json"],
       };
-      const after = { ...structuredClone(before), id: "after", paging: { nextLinkName: "nextLink" } };
+      const after = {
+        ...structuredClone(before),
+        id: "after",
+        paging: { nextLinkName: "nextLink" },
+      };
       if (wireField === "responses") after.responses[0].schema.type = "array";
       if (wireField === "produces") after.produces = ["text/plain"];
       writeJson(path.join(work, "dimensions", "semantic-intents-input.json"), {
-        status: "ready", blockers: [], facts: { before, after },
-        reviewUnits: [{
-          id: "semantic-1", action: "modify", sourceChangeIds: ["source-1"], hunkIds: ["hunk-1"],
-          ownedOperationIds: ["OutboundRules_Post"], operationIds: ["after"],
-          operations: [{
-            operationId: "OutboundRules_Post", beforeFactId: "before", afterFactId: "after",
-            restChanged: Boolean(wireField), matchBasis: "operation-identity",
-          }],
-        }],
+        status: "ready",
+        blockers: [],
+        facts: { before, after },
+        reviewUnits: [
+          {
+            id: "semantic-1",
+            action: "modify",
+            sourceChangeIds: ["source-1"],
+            hunkIds: ["hunk-1"],
+            ownedOperationIds: ["OutboundRules_Post"],
+            operationIds: ["after"],
+            operations: [
+              {
+                operationId: "OutboundRules_Post",
+                beforeFactId: "before",
+                afterFactId: "after",
+                restChanged: Boolean(wireField),
+                matchBasis: "operation-identity",
+              },
+            ],
+          },
+        ],
       });
       writeJson(path.join(work, "dimensions", "rest-breaking-input.json"), {
-        status: "ready", facts: {}, candidates: [], blockers: [],
+        status: "ready",
+        facts: {},
+        candidates: [],
+        blockers: [],
       });
-      const result = assembleTestAssessment({ work, judgment: {
-        schemaVersion: 1, overallConfidence: "high", blockers: [],
-        semanticIntents: [{ reviewUnitId: "semantic-1", title: "Mark outbound rules as paged", summary: "Add SDK paging metadata." }],
-        restDecisions: [], downstreamDecisions: [], complianceDecisions: [],
-      } });
+      const result = assembleTestAssessment({
+        work,
+        judgment: {
+          schemaVersion: 1,
+          overallConfidence: "high",
+          blockers: [],
+          semanticIntents: [
+            {
+              reviewUnitId: "semantic-1",
+              title: "Mark outbound rules as paged",
+              summary: "Add SDK paging metadata.",
+            },
+          ],
+          restDecisions: [],
+          downstreamDecisions: [],
+          complianceDecisions: [],
+        },
+      });
       const operations = result.dimensions.semantic.items[0].operations;
       assert.equal(operations.length, 1);
       const operation = operations[0];
@@ -204,7 +233,10 @@ void test("assembly retains mapped operations without treating paging metadata a
       assert.ok(operation.outcome);
       if (wireField) assert.match(operation.outcome, /REST contract changed:/);
       else {
-        assert.match(operation.outcome, /HTTP signature and represented payload contract unchanged; SDK paging metadata changed/);
+        assert.match(
+          operation.outcome,
+          /HTTP signature and represented payload contract unchanged; SDK paging metadata changed/,
+        );
         const html = renderAssessmentHtml(result);
         assert.match(html, /Affected operations \(1\)/);
         assert.match(html, /OutboundRules_Post/);
@@ -219,15 +251,10 @@ void test("assembly retains mapped operations without treating paging metadata a
 void test("assembler restores API-version-wide intents without candidate decisions", () => {
   const work = fixture();
   try {
-    const semanticPath = path.join(
-      work,
-      "dimensions",
-      "semantic-intents-input.json",
+    const semanticPath = path.join(work, "dimensions", "semantic-intents-input.json");
+    const semantic = /** @type {{reviewUnits: Record<string, unknown>[]}} */ (
+      readJson(semanticPath)
     );
-    const semantic =
-      /** @type {{reviewUnits: Record<string, unknown>[]}} */ (
-        readJson(semanticPath)
-      );
     semantic.reviewUnits = [
       {
         id: "semantic-version-wide",
@@ -278,10 +305,7 @@ void test("assembler restores API-version-wide intents without candidate decisio
     });
 
     assert.equal(result.dimensions.semantic.items.length, 1);
-    assert.equal(
-      result.dimensions.semantic.items[0].intentType,
-      "api-version-wide-change",
-    );
+    assert.equal(result.dimensions.semantic.items[0].intentType, "api-version-wide-change");
     assert.equal(result.dimensions.semantic.items[0].informational, true);
     assert.equal(result.dimensions.semantic.items[0].operations.length, 2);
     assert.deepEqual(result.dimensions.rest.findings, []);
@@ -341,9 +365,7 @@ function addComplianceInput(work) {
             total: 0,
           },
     selectionRationale:
-      index < 4
-        ? "Relevant to the changed model."
-        : "Lower relevance to the changed model.",
+      index < 4 ? "Relevant to the changed model." : "Lower relevance to the changed model.",
   }));
   const documents = catalogRanking.slice(0, 4).map((item, index) => ({
     ...item,
@@ -486,9 +508,7 @@ void test("assembler joins confirmed evidence and derives scoped safety", () => 
   assert.equal(assessment.dimensions.semantic.items[0].action, "add");
   assert.equal(assessment.dimensions.semantic.items[0].changeKind, "add");
   assert.deepEqual(
-    assessment.dimensions.semantic.items[0].operations.map(
-      (operation) => operation.operationId,
-    ),
+    assessment.dimensions.semantic.items[0].operations.map((operation) => operation.operationId),
     ["Widgets_Get", "Widgets_List"],
   );
   assert.equal(assessment.dimensions.rest.findings.length, 1);
@@ -499,12 +519,20 @@ void test("assembler joins confirmed evidence and derives scoped safety", () => 
 function documentJudgment() {
   return {
     schemaVersion: 1,
-    semanticIntents: [{
-      reviewUnitId: "semantic-1", title: "Update Widget", summary: "Update the Widget source documentation.",
-    }],
-    restDecisions: [{
-      candidateId: "rest-1", decision: "reject", rationale: "No confirmed REST break.",
-    }],
+    semanticIntents: [
+      {
+        reviewUnitId: "semantic-1",
+        title: "Update Widget",
+        summary: "Update the Widget source documentation.",
+      },
+    ],
+    restDecisions: [
+      {
+        candidateId: "rest-1",
+        decision: "reject",
+        rationale: "No confirmed REST break.",
+      },
+    ],
     downstreamDecisions: [],
     complianceDecisions: [],
     overallConfidence: "high",
@@ -515,10 +543,9 @@ function documentJudgment() {
 /** @param {string} work @param {boolean} documentationPresent */
 function addDocumentInput(work, documentationPresent) {
   const semanticPath = path.join(work, "dimensions", "semantic-intents-input.json");
-  const semantic =
-    /** @type {{reviewUnits: {declarationIds: string[]}[]}} */ (
-      readJson(semanticPath)
-    );
+  const semantic = /** @type {{reviewUnits: {declarationIds: string[]}[]}} */ (
+    readJson(semanticPath)
+  );
   semantic.reviewUnits[0].declarationIds = ["declaration-1"];
   writeJson(semanticPath, semantic);
   const declaration = {
@@ -534,14 +561,16 @@ function addDocumentInput(work, documentationPresent) {
     /** @type {{sourceChanges: {declarations: unknown[], documentEvidence?: unknown}[]}} */ (
       readJson(sourceIndexPath)
     );
-  sourceIndex.sourceChanges[0].declarations = [{
-    id: "declaration-1",
-    qualifiedName: "Contoso.Widget",
-    kind: "model",
-    documentationPresent,
-    hunkIds: ["hunk-1"],
-    source: declaration.source,
-  }];
+  sourceIndex.sourceChanges[0].declarations = [
+    {
+      id: "declaration-1",
+      qualifiedName: "Contoso.Widget",
+      kind: "model",
+      documentationPresent,
+      hunkIds: ["hunk-1"],
+      source: declaration.source,
+    },
+  ];
   sourceIndex.sourceChanges[0].documentEvidence = {
     schemaVersion: 4,
     status: "ready",
@@ -558,12 +587,19 @@ function addDocumentInput(work, documentationPresent) {
   };
   writeJson(sourceIndexPath, sourceIndex);
   writeJson(path.join(work, "dimensions", "document-quality-input.json"), {
-    schemaVersion: 4, status: "ready", blockers: [],
-    reviewUnits: [{
-      reviewUnitId: "semantic-1", status: "ready",
-      sourceChangeIds: ["source-1"], hunkIds: ["hunk-1"], declarationIds: ["declaration-1"],
-      declarations: [declaration],
-    }],
+    schemaVersion: 4,
+    status: "ready",
+    blockers: [],
+    reviewUnits: [
+      {
+        reviewUnitId: "semantic-1",
+        status: "ready",
+        sourceChangeIds: ["source-1"],
+        hunkIds: ["hunk-1"],
+        declarationIds: ["declaration-1"],
+        declarations: [declaration],
+      },
+    ],
   });
 }
 
@@ -586,8 +622,13 @@ void test("assembler derives missing documentation without changing REST/downstr
     assert.deepEqual(validateAssessment(assessment), []);
     documentQuality.findings = [];
     assert.ok(validateAssessment(assessment).some((error) => error.includes("Document Quality")));
-    assessment.dimensions.documentQuality = { status: "not-assessed", summary: "Pretend legacy input." };
-    assert.ok(validateAssessment(assessment).some((error) => error.includes("canonical provenance")));
+    assessment.dimensions.documentQuality = {
+      status: "not-assessed",
+      summary: "Pretend legacy input.",
+    };
+    assert.ok(
+      validateAssessment(assessment).some((error) => error.includes("canonical provenance")),
+    );
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
@@ -597,18 +638,20 @@ void test("assembler rejects Agent-authored documentation decisions", () => {
   const work = fixture();
   try {
     const judgment = documentJudgment();
-    assert.equal(assembleTestAssessment({ work, judgment }).dimensions.documentQuality.status, "not-assessed");
+    assert.equal(
+      assembleTestAssessment({ work, judgment }).dimensions.documentQuality.status,
+      "not-assessed",
+    );
     const malformedJudgment = {
       ...judgment,
       documentQualityDecisions: [],
     };
     assert.throws(
-      () => assembleTestAssessment({
-        work,
-        judgment: /** @type {AssessmentJudgment} */ (
-          /** @type {unknown} */ (malformedJudgment)
-        ),
-      }),
+      () =>
+        assembleTestAssessment({
+          work,
+          judgment: /** @type {AssessmentJudgment} */ (/** @type {unknown} */ (malformedJudgment)),
+        }),
       /unknown fields: documentQualityDecisions/,
     );
   } finally {
@@ -626,7 +669,8 @@ void test("compiler documentation presence flows through assembly, validation, a
       delete pass.title;
       delete pass.severity;
       return {
-        ...pass, decision: "applicable-pass",
+        ...pass,
+        decision: "applicable-pass",
         actual: "The source model satisfies the selected model guidance.",
         rationale: "The applicable model guidance is satisfied.",
       };
@@ -638,8 +682,11 @@ void test("compiler documentation presence flows through assembly, validation, a
       writeJson(path.join(work, "inference.json"), {
         schemaVersion: 1,
         results: modelInput.inferenceRequests.map((request) => ({
-          requestId: request.requestId, reviewUnitId: request.reviewUnitId, hunkId: request.hunkId,
-          decision: "no-impact", rationale: "The source documentation change has no REST or downstream impact.",
+          requestId: request.requestId,
+          reviewUnitId: request.reviewUnitId,
+          hunkId: request.hunkId,
+          decision: "no-impact",
+          rationale: "The source documentation change has no REST or downstream impact.",
           candidates: [],
         })),
       });
@@ -718,8 +765,7 @@ void test("assembler requires inference output for uncovered hunk requests", () 
             {
               reviewUnitId: "semantic-1",
               title: "Change Go client placement",
-              summary:
-                "The customization changes generated Go client placement.",
+              summary: "The customization changes generated Go client placement.",
             },
           ],
           restDecisions: [
@@ -757,8 +803,7 @@ void test("assembler validates and joins inferred candidates", () => {
             dimension: "downstream",
             rule: "client-location-changed",
             defaultSeverity: "high",
-            actual:
-              "Widgets operations move to a different generated Go client.",
+            actual: "Widgets operations move to a different generated Go client.",
             expected: "Existing generated Go client placement remains stable.",
             crossLanguageDefinitionId: "Contoso.Widgets",
             sourceChangeIds: ["source-1"],
@@ -794,8 +839,7 @@ void test("assembler validates and joins inferred candidates", () => {
           candidateId: "inferred-downstream-1",
           decision: "approve",
           severity: "high",
-          rationale:
-            "Existing Go callers resolve the operation from a different client.",
+          rationale: "Existing Go callers resolve the operation from a different client.",
         },
       ],
       complianceDecisions: [],
@@ -805,15 +849,11 @@ void test("assembler validates and joins inferred candidates", () => {
   });
 
   assert.equal(assessment.dimensions.downstream.findings.length, 1);
-  assert.equal(
-    assessment.dimensions.downstream.findings[0].id,
-    "inferred-downstream-1",
-  );
+  assert.equal(assessment.dimensions.downstream.findings[0].id, "inferred-downstream-1");
   assert.equal(assessment.dimensions.downstream.findings[0].inferred, true);
-  assert.deepEqual(
-    assessment.dimensions.downstream.findings[0].inferenceRequestIds,
-    ["inference-request-1"],
-  );
+  assert.deepEqual(assessment.dimensions.downstream.findings[0].inferenceRequestIds, [
+    "inference-request-1",
+  ]);
   assert.equal(assessment.dimensions.downstream.findings[0].evidence.length, 1);
   assert.ok(assessment.provenance);
   assert.equal(assessment.provenance.inference, "inference.json");
@@ -902,10 +942,7 @@ void test("assembler requires and joins active Azure Guidelines evidence", () =>
   const compliance = assessment.dimensions.compliance;
   assert.equal(compliance.sharedSearch?.documents?.length, 4);
   assert.ok(assessment.provenance);
-  assert.equal(
-    assessment.provenance.complianceSearchEvidence,
-    "compliance-search-evidence.json",
-  );
+  assert.equal(assessment.provenance.complianceSearchEvidence, "compliance-search-evidence.json");
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
@@ -960,14 +997,8 @@ void test("assembler treats no applicable guidance as assessed and links its int
   });
 
   assert.equal(assessment.dimensions.compliance.status, "passed");
-  assert.equal(
-    assessment.dimensions.compliance.coverage.assessedIntentCount,
-    1,
-  );
-  assert.deepEqual(
-    assessment.dimensions.compliance.coverage.unassessedIntentIds,
-    [],
-  );
+  assert.equal(assessment.dimensions.compliance.coverage.assessedIntentCount, 1);
+  assert.deepEqual(assessment.dimensions.compliance.coverage.unassessedIntentIds, []);
   assert.deepEqual(assessment.dimensions.compliance.blockers, []);
   assert.deepEqual(validateAssessment(assessment), []);
   const html = renderAssessmentHtml(assessment);
@@ -1074,29 +1105,13 @@ void test("aggregates direct SDK deltas by method without REST operation links",
   assert.equal(methodGroups.length, 1);
   const group = methodGroups[0];
   assert.ok(group);
-  assert.equal(
-    group.deltas.length,
-    3,
-  );
-  assert.equal(
-    group.parametersUnchanged,
-    true,
-  );
-  assert.equal(
-    group.deltas[0].before,
-    "basic",
-  );
-  assert.equal(
-    group.deltas[0].after,
-    "lro",
-  );
-  const relatedFindings =
-    assessment.dimensions.semantic.items[0].relatedFindings;
+  assert.equal(group.deltas.length, 3);
+  assert.equal(group.parametersUnchanged, true);
+  assert.equal(group.deltas[0].before, "basic");
+  assert.equal(group.deltas[0].after, "lro");
+  const relatedFindings = assessment.dimensions.semantic.items[0].relatedFindings;
   assert.ok(relatedFindings);
-  assert.deepEqual(
-    relatedFindings.downstream,
-    [group.id],
-  );
+  assert.deepEqual(relatedFindings.downstream, [group.id]);
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
@@ -1139,10 +1154,7 @@ void test("assembles changed-only parameters and suppresses URI-template-only LR
     ...before,
     id: "sdk-after",
     revision: "current",
-    parameters: [
-      ...before.parameters,
-      parameter("afcManagedSync", "boolean", true),
-    ],
+    parameters: [...before.parameters, parameter("afcManagedSync", "boolean", true)],
     lro: {
       ...before.lro,
       operation: {
@@ -1352,13 +1364,9 @@ void test("assembles SDK type impacts from deterministic method paths", () => {
     impact.affectedMethods.map((item) => item.symbol),
     ["Contoso.Widgets.get"],
   );
-  const relatedFindings =
-    assessment.dimensions.semantic.items[0].relatedFindings;
+  const relatedFindings = assessment.dimensions.semantic.items[0].relatedFindings;
   assert.ok(relatedFindings);
-  assert.deepEqual(
-    relatedFindings.typeImpact,
-    [impact.id],
-  );
+  assert.deepEqual(relatedFindings.typeImpact, [impact.id]);
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
@@ -1411,11 +1419,7 @@ void test("uses only version-governance hunks for legacy publication operations"
     ],
   });
   writeJson(sourceIndexPath, sourceIndex);
-  const semanticPath = path.join(
-    work,
-    "dimensions",
-    "semantic-intents-input.json",
-  );
+  const semanticPath = path.join(work, "dimensions", "semantic-intents-input.json");
   const semantic =
     /** @type {{facts: Record<string, {projectId?: string}>, reviewUnits: {sourceChangeIds: string[], hunkIds: string[], groupingEvidence?: {reasons: string[]}}[]}} */ (
       readJson(semanticPath)
@@ -1453,8 +1457,7 @@ void test("uses only version-governance hunks for legacy publication operations"
     },
   });
 
-  const operationSources =
-    assessment.dimensions.semantic.items[0].operations[0].sources;
+  const operationSources = assessment.dimensions.semantic.items[0].operations[0].sources;
   assert.ok(operationSources);
   assert.deepEqual(
     operationSources.map((source) => source.id),
@@ -1495,21 +1498,16 @@ void test("matches type findings to semantic intents by changed declaration iden
     },
   ];
 
-  const finding =
-    /** @type {Parameters<typeof matchTypeFindingIntents>[0]} */ (
-      /** @type {unknown} */ ({
-        crossLanguageDefinitionId: "Storage.File.FileItem",
-        evidence: [],
-      })
-    );
-  const semanticItemFixtures =
-    /** @type {Parameters<typeof matchTypeFindingIntents>[1]} */ (
-      /** @type {unknown} */ (semanticItems)
-    );
-  const matches = matchTypeFindingIntents(
-    finding,
-    semanticItemFixtures,
+  const finding = /** @type {Parameters<typeof matchTypeFindingIntents>[0]} */ (
+    /** @type {unknown} */ ({
+      crossLanguageDefinitionId: "Storage.File.FileItem",
+      evidence: [],
+    })
   );
+  const semanticItemFixtures = /** @type {Parameters<typeof matchTypeFindingIntents>[1]} */ (
+    /** @type {unknown} */ (semanticItems)
+  );
+  const matches = matchTypeFindingIntents(finding, semanticItemFixtures);
 
   assert.deepEqual(
     matches.map((intent) => intent.id),

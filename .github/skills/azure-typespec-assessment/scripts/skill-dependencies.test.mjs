@@ -3,14 +3,14 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import {
-  ensureSkillDependencies,
-  skillDependencyInstallCommand,
-} from "./skill-dependencies.mjs";
+import { ensureSkillDependencies, skillDependencyInstallCommand } from "./skill-dependencies.mjs";
 
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "assessment-skill-dependencies-"));
-  fs.writeFileSync(path.join(root, "package.json"), JSON.stringify({ dependencies: { yaml: "^2.9.0" } }));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({ dependencies: { yaml: "^2.9.0" } }),
+  );
   fs.writeFileSync(
     path.join(root, "package-lock.json"),
     JSON.stringify({
@@ -28,10 +28,7 @@ function fixture() {
 function installYaml(root, version = "2.9.0") {
   const directory = path.join(root, "node_modules", "yaml");
   fs.mkdirSync(directory, { recursive: true });
-  fs.writeFileSync(
-    path.join(directory, "package.json"),
-    JSON.stringify({ name: "yaml", version }),
-  );
+  fs.writeFileSync(path.join(directory, "package.json"), JSON.stringify({ name: "yaml", version }));
 }
 
 void test("skips installation when locked skill dependencies are ready", async () => {
@@ -118,11 +115,8 @@ void test("cleans the installation lock after failure", async () => {
 });
 
 void test("builds a deterministic lifecycle-script-free skill install", () => {
-  assert.deepEqual(
-    skillDependencyInstallCommand({ platform: "win32" }),
-    {
-      executable: "npm.cmd",
-      args: ["ci", "--ignore-scripts", "--no-audit", "--no-fund"],
-    },
-  );
+  assert.deepEqual(skillDependencyInstallCommand({ platform: "win32" }), {
+    executable: "npm.cmd",
+    args: ["ci", "--ignore-scripts", "--no-audit", "--no-fund"],
+  });
 });

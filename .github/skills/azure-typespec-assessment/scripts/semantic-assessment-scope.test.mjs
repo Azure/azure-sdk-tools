@@ -66,8 +66,5 @@ void test("classifies version-wide changes without an operation threshold", () =
   assert.equal(isInformationalIntent(versionWide), true);
   assert.equal(semanticIntentType(versionWide), "api-version-wide-change");
   assert.equal(isInformationalIntent(normal), false);
-  assert.match(
-    informationalIntentText(versionWide).summary,
-    /2 affected operations/,
-  );
+  assert.match(informationalIntentText(versionWide).summary, /2 affected operations/);
 });

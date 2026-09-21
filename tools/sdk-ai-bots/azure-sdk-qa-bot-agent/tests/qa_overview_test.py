@@ -801,6 +801,7 @@ def test_metric_descriptions_keep_cards_short_and_define_counts_in_notes():
     assert all(len(note.split()) <= 25 for items in limitations for note in items)
     accuracy, interaction, answer, resolution = notes
     assert all(" / " in note for note in (accuracy, answer, resolution))
+    assert "All conversations excluding missing-documentation and out-of-scope cases" in accuracy
     assert "Missing-documentation and out-of-scope cases are excluded" in html
     assert "expert follow-up after a bot reply" in interaction
     assert "adds guidance beyond the bot's answer" in html

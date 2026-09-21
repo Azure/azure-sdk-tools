@@ -20,6 +20,7 @@ public interface IApiReviewHubService
         string language,
         string packageName,
         string packageVersion,
+        string packageType,
         string apiHash,
         string repoOwner,
         CancellationToken ct);
@@ -120,6 +121,7 @@ public class ApiReviewHubService(
         string language,
         string packageName,
         string packageVersion,
+        string packageType,
         string apiHash,
         string repoOwner,
         CancellationToken ct)
@@ -133,7 +135,8 @@ public class ApiReviewHubService(
         {
             $"language={Uri.EscapeDataString(language)}",
             $"packageName={Uri.EscapeDataString(packageName)}",
-            $"version={Uri.EscapeDataString(packageVersion)}"
+            $"version={Uri.EscapeDataString(packageVersion)}",
+            $"packageType={Uri.EscapeDataString(packageType.ToLowerInvariant())}"
         };
         if (!string.IsNullOrWhiteSpace(apiHash))
         {

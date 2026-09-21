@@ -16,6 +16,7 @@ public class PackageApprovalStatusTool(
     ILogger<PackageApprovalStatusTool> logger) : MCPTool
 {
     private static readonly string[] SupportedLanguages = [.. ApiReviewHubTool.DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
+    private static readonly string[] SupportedPackageTypes = ["mgmt", "client"];
     private const string GetApprovalStatusToolName = "azsdk_package_get_approval_status";
     internal const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 
@@ -24,6 +25,7 @@ public class PackageApprovalStatusTool(
     private readonly Option<string> languageOption = CreateLanguageOption();
     private readonly Option<string> packageNameOption = RequiredOption("--package-name", "The package name.");
     private readonly Option<string> packageVersionOption = RequiredOption("--package-version", "The package version to check.");
+    private readonly Option<string> packageTypeOption = CreatePackageTypeOption();
     private readonly Option<string> apiHashOption = new("--api-hash")
     {
         Description = "The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned."
@@ -40,6 +42,7 @@ public class PackageApprovalStatusTool(
         languageOption,
         packageNameOption,
         packageVersionOption,
+        packageTypeOption,
         apiHashOption,
         repoOwnerOption
     };
@@ -50,6 +53,7 @@ public class PackageApprovalStatusTool(
             parseResult.GetValue(languageOption) ?? string.Empty,
             parseResult.GetValue(packageNameOption) ?? string.Empty,
             parseResult.GetValue(packageVersionOption) ?? string.Empty,
+            parseResult.GetValue(packageTypeOption) ?? string.Empty,
             parseResult.GetValue(apiHashOption) ?? string.Empty,
             parseResult.GetValue(repoOwnerOption) ?? string.Empty,
             ct);
@@ -67,6 +71,7 @@ public class PackageApprovalStatusTool(
         [Description("The SDK language. Common aliases such as .NET, dotnet, C#, JavaScript, TypeScript, and C++ are accepted. Ask the user to select a supported language if no high-confidence match exists.")] string language,
         [Description("The package name.")] string packageName,
         [Description("The package version to check.")] string packageVersion,
+        [Description("The package type. Supported values: mgmt, client.")] string packageType,
         [Description("The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned.")] string apiHash = "",
         [Description("The GitHub repository owner to query in API Review Hub. Optional; when omitted, the service default is used.")] string repoOwner = "",
         CancellationToken ct = default)
@@ -75,7 +80,7 @@ public class PackageApprovalStatusTool(
         {
             string canonicalLanguage = ApiReviewHubTool.ResolveLanguage(language)
                 ?? throw new ArgumentException($"Unsupported SDK language '{language}'.", nameof(language));
-            var result = await packageReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, canonicalLanguage, packageName, packageVersion, apiHash, repoOwner, ct);
+            var result = await packageReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, canonicalLanguage, packageName, packageVersion, packageType, apiHash, repoOwner, ct);
             var response = new PackageReleaseStatusResponse
             {
                 Result = result,
@@ -266,6 +271,20 @@ public class PackageApprovalStatusTool(
             if (!string.IsNullOrWhiteSpace(value) && ApiReviewHubTool.ResolveLanguage(value) is null)
             {
                 result.AddError($"Invalid language '{value}'. Supported canonical values: {string.Join(", ", SupportedLanguages)}.");
+            }
+        });
+        return option;
+    }
+
+    private static Option<string> CreatePackageTypeOption()
+    {
+        var option = RequiredOption("--package-type", $"The package type. Supported values: {string.Join(", ", SupportedPackageTypes)}.");
+        option.Validators.Add(result =>
+        {
+            string? value = result.GetValueOrDefault<string>();
+            if (!string.IsNullOrWhiteSpace(value) && !SupportedPackageTypes.Contains(value, StringComparer.OrdinalIgnoreCase))
+            {
+                result.AddError($"Invalid package type '{value}'. Supported values: {string.Join(", ", SupportedPackageTypes)}.");
             }
         });
         return option;

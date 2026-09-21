@@ -121,7 +121,8 @@ class OverviewRow(OverviewCounts):
     @computed_field
     @property
     def resolved_rate(self) -> OverviewMetric:
-        return _metric(self.resolved_cases, self.issue_cases)
+        eligible = self.issue_cases - self.validation_skipped_cases
+        return _metric(self.resolved_cases, eligible)
 
     @computed_field
     @property

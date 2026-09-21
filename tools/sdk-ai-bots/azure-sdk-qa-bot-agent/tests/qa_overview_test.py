@@ -383,7 +383,7 @@ def test_expert_assessment_requires_added_value_not_technical_confirmation():
     assert "confirmation or repetition alone does not count, even when technically substantive" in instruction
     assert "identifying what was added beyond the bot's answer when `true`" in instruction
     html = (root / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
-    assert "not just confirmation or thanks" in html
+    assert "Expert follow-up adds guidance beyond the bot's answer" in html
     assert "adds guidance beyond the bot's answer" in html
 
 
@@ -441,7 +441,7 @@ async def test_issue_resolution_is_case_based_and_globally_deduplicated(storage)
     assert total.tracked_issues == 6  # Shared issue 1 is counted only once globally.
     assert sum(row.tracked_issues for row in report.rows) == 7
     assert total.resolved_cases == 9 and total.unresolved_cases == 5
-    assert total.resolved_rate.model_dump() == {"numerator": 9, "denominator": 15, "rate": 60}
+    assert total.resolved_rate.model_dump() == {"numerator": 9, "denominator": 14, "rate": pytest.approx(900 / 14)}
     assert [row.resolved_rate.rate for row in report.rows] == [100, 0]
     assert total.pending_validation_cases == total.validation_failed_cases == 1
     assert total.validation_skipped_cases == total.processing_error_cases == 1
@@ -452,6 +452,8 @@ async def test_issue_resolution_is_case_based_and_globally_deduplicated(storage)
     ))
     for row in [*report.rows, total]:
         assert row.issue_cases == row.resolved_cases + row.validation_skipped_cases + row.unresolved_cases
+        assert row.resolved_rate.denominator == row.resolved_cases + row.unresolved_cases
+    assert total.resolved_rate.denominator == sum(row.resolved_rate.denominator for row in report.rows)
     assert total.root_causes == {"reasoning_gap": 15, "missing_content": 1}
     query = records.calls[0]["query"]
     assert "c.feedback.issue_url AS issue_url" in query
@@ -471,8 +473,9 @@ async def test_only_explicit_passed_validation_is_resolved(storage, status, reso
     assert total.findings == 0  # A linked case does not require a classification.
     assert total.issue_cases == total.tracked_issues == 1
     assert total.resolved_cases == resolved
-    assert total.resolved_rate.rate == 100 * resolved
     skipped = int(status == "validation_skipped")
+    assert total.resolved_rate.denominator == 1 - skipped
+    assert total.resolved_rate.rate == (None if skipped else 100 * resolved)
     assert total.validation_skipped_cases == skipped
     assert total.unresolved_cases == 1 - resolved - skipped
     assert total.other_issue_cases == other
@@ -481,6 +484,8 @@ async def test_only_explicit_passed_validation_is_resolved(storage, status, reso
 @pytest.mark.parametrize("statuses, resolved, skipped, unresolved", [
     ([], 0, 0, 0),
     (["validation_skipped", "validation_skipped"], 0, 2, 0),
+    (["validation_passed", "validation_skipped"], 1, 1, 0),
+    (["validation_passed"] * 6 + ["validation_skipped"] * 2 + ["pending_validation"] * 2, 6, 2, 2),
     (["validation_passed", "validation_skipped", "pending_validation", "validation_failed"], 1, 1, 2),
 ])
 @pytest.mark.asyncio
@@ -501,9 +506,10 @@ async def test_overview_api_partitions_issue_cases_without_counting_skipped_as_r
         assert row["validation_skipped_cases"] == skipped
         assert row["unresolved_cases"] == unresolved
         assert row["issue_cases"] == resolved + skipped + unresolved
+        eligible = len(statuses) - skipped
         assert row["resolved_rate"] == {
-            "numerator": resolved, "denominator": len(statuses),
-            "rate": 100 * resolved / len(statuses) if statuses else None,
+            "numerator": resolved, "denominator": eligible,
+            "rate": 100 * resolved / eligible if eligible else None,
         }
 
 
@@ -572,11 +578,17 @@ async def test_issue_scope_uses_conversation_cohort_and_current_status(storage):
 def test_resolution_tables_keep_skipped_separate_from_unresolved():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     assert "data.totals.resolved_rate" in html
-    assert "Skipped cases have no validated fix and still count in the total" in html
+    assert "Issues includes all issue-linked cases, including skipped cases" not in html
     assert "row.resolved_rate.numerator} / ${row.resolved_rate.denominator}" in html
-    assert "Resolved rate = cases with passed validation / all issue-linked cases" in html
+    assert "Resolved rate = resolved cases / (issues − skipped cases)" in html
     summary = html.split('title: "Issue findings",', 1)[1].split("function reportRowValues", 1)[0]
-    assert "row.resolved_cases, row.validation_skipped_cases, row.unresolved_cases" in summary
+    assert "limitations:" not in summary
+    assert "values: row => [row.issue_cases," in summary
+    assert "row.issues" not in summary
+    assert "row.findings" not in summary
+    assert "row.tracked_issues" not in summary
+    assert "row.resolved_cases, row.validation_skipped_cases," in summary
+    assert "row.unresolved_cases" not in summary
     assert 'title: "Unresolved cases"' not in html
     assert 'title: "Root-cause findings"' not in html
 
@@ -711,7 +723,7 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
         ["Channel", "Conversations", "Incorrect", "Excluded", "Accuracy"],
         ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
-        ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Skipped", "Unresolved", "Resolved rate"],
+        ["Channel", "Issues", "Resolved", "Skipped", "Resolved rate"],
     ]
     for removed in ("undated_conversations", ".coverage"):
         assert removed not in tables
@@ -720,7 +732,7 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
     assert "row.correct" not in accuracy_table
     assert "${percent(row.accuracy.rate)} (${row.accuracy.numerator} / ${row.accuracy.denominator})" in accuracy_table
     assert tables.count("description:") == 4
-    assert tables.count("limitations:") == 4
+    assert tables.count("limitations:") == 3
     assert "Missing-documentation and out-of-scope cases are excluded" in tables
     assert "eligible conversations not marked incorrect / all eligible conversations" in tables
     # Both visible/printed tables and the copied Markdown use these definitions.
@@ -768,19 +780,21 @@ def test_metric_descriptions_keep_cards_short_and_define_counts_in_notes():
     tables = html.split("const reportTables = [", 1)[1].split("function reportRowValues", 1)[0]
     descriptions = re.findall(r'description: "([^"]+)"', tables)
     limitations = [json.loads(value) for value in re.findall(r"limitations: (\[[^\n]+\])", tables)]
-    assert len(descriptions) == len(limitations) == 4
+    assert len(descriptions) == 4
+    assert len(limitations) == 3
     assert all(len(description.split()) <= 20 for description in descriptions)
     assert all(len(items) <= 1 for items in limitations)
     assert all(len(note.split()) <= 25 for items in limitations for note in items)
     accuracy, interaction, answer, resolution = notes
     assert all(" / " in note for note in (accuracy, answer, resolution))
-    assert "Missing-documentation and out-of-scope cases are excluded from both counts" in html
+    assert "Missing-documentation and out-of-scope cases are excluded" in html
     assert "expert follow-up after a bot reply" in interaction
-    assert "adds guidance beyond the bot's answer, not just confirmation or thanks" in html
+    assert "adds guidance beyond the bot's answer" in html
     assert "bot replies / user questions" in answer.lower()
     assert "In-scope messages need a reply or mention the bot" in html
-    assert "passed validation / all issue-linked cases" in tables
-    assert "Skipped cases have no validated fix and still count in the total" in html
+    assert "resolved cases / (issues − skipped cases)" in tables
+    assert "skipped" in resolution.lower()
+    assert "Issues includes all issue-linked cases, including skipped cases" not in html
     for misleading in ("count as successful", "excluded conversations as successful", "terminal"):
         assert misleading not in visual
 
@@ -795,10 +809,12 @@ def test_overview_keeps_collapsible_notes_in_display_copy_and_print_without_docu
     assert "metric-help" not in html
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
     assert "definition.limitations.map(note => node(\"li\", \"\", note))" in rendering
+    assert "if (definition.limitations?.length)" in rendering
     copying = html.split("function buildOverviewReport(data)", 1)[1].split("function invalidateOverview", 1)[0]
     assert 'const lines = ["# Weekly Status Report", ""];' in copying
     assert "### Notes" in copying
     assert "definition.limitations" in copying
+    assert "(definition.limitations ?? []).map" in copying
     assert 'window.addEventListener("beforeprint"' in html
     assert "notes => ({notes, open: notes.open})" in html
     assert "notes.open = true" in html

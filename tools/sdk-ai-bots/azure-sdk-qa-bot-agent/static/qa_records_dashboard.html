@@ -1256,7 +1256,7 @@
       {
         title: "Accuracy",
         description: "Accuracy = eligible conversations not marked incorrect / all eligible conversations.",
-        limitations: ["Missing-documentation and out-of-scope cases are excluded."],
+        limitations: ["Missing-documentation and out-of-scope cases are excluded from the accuracy calculation."],
         headings: ["Channel", "Conversations", "Incorrect", "Excluded", "Accuracy"],
         values: row => [row.conversations, row.incorrect, row.accuracy_excluded,
           `${percent(row.accuracy.rate)} (${row.accuracy.numerator} / ${row.accuracy.denominator})`]
@@ -1264,7 +1264,7 @@
       {
         title: "Interaction rate",
         description: "Interaction rate = conversations with expert follow-up / all conversations.",
-        limitations: ["Expert follow-up adds guidance beyond the bot's answer, not just confirmation or thanks."],
+        limitations: ["Expert follow-up adds guidance beyond the bot's answer."],
         headings: ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
         values: row => [row.conversations, row.expert_yes, percent(row.expert_interaction.rate)]
       },
@@ -1277,11 +1277,10 @@
       },
       {
         title: "Issue findings",
-        description: "Resolved rate = cases with passed validation / all issue-linked cases.",
-        limitations: ["Skipped cases have no validated fix and still count in the total."],
-        headings: ["Channel", "Findings", "Tracked issues", "Issue-linked cases", "Validated resolved", "Skipped", "Unresolved", "Resolved rate"],
-        values: row => [row.findings, row.tracked_issues, row.issue_cases,
-          row.resolved_cases, row.validation_skipped_cases, row.unresolved_cases,
+        description: "Resolved rate = resolved cases / (issues − skipped cases).",
+        headings: ["Channel", "Issues", "Resolved", "Skipped", "Resolved rate"],
+        values: row => [row.issue_cases,
+          row.resolved_cases, row.validation_skipped_cases,
           `${percent(row.resolved_rate.rate)} (${row.resolved_rate.numerator} / ${row.resolved_rate.denominator})`]
       }
     ];
@@ -1324,8 +1323,8 @@
           labels: ["Bot replies", "User questions"],
           note: "Bot replies / User questions"},
         {title: "Resolved rate", style: "resolution", metric: data.totals.resolved_rate,
-          labels: ["Validated resolved issues", "All issues"],
-          note: "Validated passed issues / All finding cases."}
+          labels: ["Validated resolved issues", "All finding issues"],
+          note: "Validated passed issues / All finding issues excluded skipped issues."}
       ];
       for (const {title, style, metric, labels, note} of metrics) {
         const card = node("article", `overview-card ${style}`);
@@ -1383,10 +1382,13 @@
         wrap.append(table);
         section.append(wrap);
         const notes = node("details", "report-notes");
-        const limitations = node("ul");
-        limitations.append(...definition.limitations.map(note => node("li", "", note)));
         notes.append(node("summary", "", "Notes"),
-          node("p", "", definition.description), limitations);
+          node("p", "", definition.description));
+        if (definition.limitations?.length) {
+          const limitations = node("ul");
+          limitations.append(...definition.limitations.map(note => node("li", "", note)));
+          notes.append(limitations);
+        }
         section.append(notes);
         report.tables.append(section);
       }
@@ -1417,7 +1419,7 @@
           lines.push(`| ${values.join(" | ")} |`);
         }
         lines.push("", "### Notes", "", definition.description,
-          "", ...definition.limitations.map(note => `- ${note}`), "");
+          "", ...(definition.limitations ?? []).map(note => `- ${note}`), "");
       }
       return lines.join("\n");
     }

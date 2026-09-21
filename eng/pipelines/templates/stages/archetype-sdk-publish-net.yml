@@ -85,6 +85,18 @@ stages:
             BuildScriptsPath: $(BuildToolScripts)
             ExeMatrix: ${{ parameters.ExeMatrix }}
 
+      - ${{ each target in parameters.ExeMatrix }}:
+        - task: DownloadPipelineArtifact@2
+          displayName: Download ${{ target.rid }} Binary
+          inputs:
+            artifact: standalone-${{ target.rid }}
+            path: $(Binaries)
+      - template: ../steps/platform-specific-signing.yml
+        parameters:
+          BinariesPath: $(Binaries)
+          BuildScriptsPath: $(BuildToolScripts)
+          ExeMatrix: ${{ parameters.ExeMatrix }}
+
       - task: PowerShell@2
         displayName: 'Post to azuresdkartifacts'
         condition: and(succeeded(), eq(${{ parameters.ShouldPublishToAzsdkArtifacts }}, true))

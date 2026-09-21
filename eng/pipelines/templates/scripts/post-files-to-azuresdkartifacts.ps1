@@ -23,7 +23,7 @@ $filesForPublish = Get-ChildItem -Path $SearchPath -Include "$FileFilter"
 #$releaseId = GetReleaseId -ReleaseName $TargetRelease
 $releaseId = "azsdk_0.6.47"
 
-Connect-AzAccount -Subscription "Azure SDK Engineering System"
+Connect-AzAccount -Identity
 $context = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
 
 foreach ($artifact in $filesForPublish) {

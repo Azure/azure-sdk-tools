@@ -11,7 +11,7 @@
 ### Bugs Fixed
 
 - Release plan creation and target-month updates now reject malformed or past target months, while allowing the current UTC month and future months.
-- SDK generation now retries stale `In progress` or `Pending` statuses when the release plan has no corresponding pipeline URL.
+- Linking a spec PR now marks SDKs awaiting generation as `Pending` instead of `In progress`, while preserving recorded in-progress runs. SDK generation checks the saved pipeline's current status, allowing retries after it finishes or when no pipeline link exists, and avoiding duplicate active runs.
 
 ### Other Changes
 

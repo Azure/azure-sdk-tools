@@ -4,6 +4,9 @@
 
 ### Features Added
 
+- Added monthly cleanup and state-specific reminders for inactive overdue release plans, with a one-calendar-month grace period and protection for active release work.
+- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
+
 ### Breaking Changes
 
 - Release plan JSON/MCP responses no longer include `SDKInfo.PullRequestStatus`, which was sourced from potentially stale Azure DevOps data. SDK PR URLs and the dashboard link remain available for checking current PR status; generation and release statuses are unchanged.

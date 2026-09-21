@@ -102,6 +102,105 @@ public class NotificationServiceTests
     }
 
     [Test]
+    public void PastDueReleasePlanEmail_ConstructsIssueMessage_FromReleasePlan()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            WorkItemId = 100,
+            ReleasePlanId = 42,
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKReleaseMonth = "September 2026",
+            Owner = "Test Owner",
+            ReleasePlanSubmittedByEmail = "owner@microsoft.com"
+        };
+
+        var template = new PastDueReleasePlanEmail(releasePlan);
+
+        Assert.That(template.EmailTo, Is.EqualTo(new[] { "owner@microsoft.com" }));
+        Assert.That(template.Subject, Is.EqualTo("Your release plan (42) is now past due"));
+        Assert.That(template.Body, Does.Contain($"<a href=\"{releasePlan.ReleasePlanLink}\">42</a>"));
+        Assert.That(template.Body, Does.Contain("Hi Test Owner,"));
+        Assert.That(template.Body, Does.Contain("has been marked as abandoned because there are no active SDK PRs associated with it"));
+        Assert.That(template.Body, Does.Contain("more than one month"));
+        Assert.That(template.Body, Does.Contain("please create a new release plan with an updated SDK target release month"));
+        Assert.That(template.Body, Does.Not.Contain("reopen"));
+        Assert.That(template.Body, Does.Contain("reaches either Completed or Closed status by the end of its target release month"));
+    }
+
+    [TestCase(ApiReleaseType.GA)]
+    [TestCase(ApiReleaseType.PublicPreview)]
+    [TestCase(ApiReleaseType.PrivatePreview)]
+    public void PastDueReleasePlanEmail_ContinuingReleaseRequiresNewPlan(ApiReleaseType releaseType)
+    {
+        var plan = new ReleasePlanWorkItem { WorkItemId = 100, ApiReleaseType = releaseType };
+
+        var body = new PastDueReleasePlanEmail(plan).Body;
+
+        Assert.That(body, Does.Contain("create a new release plan with an updated SDK target release month"));
+        Assert.That(body, Does.Not.Contain("reopen"));
+    }
+
+    [Test]
+    public void PastDueReleasePlanEmail_PrivatePreview_ExplainsSpecStateAndEncodesOwner()
+    {
+        var plan = new ReleasePlanWorkItem
+        {
+            WorkItemId = 100, ApiReleaseType = ApiReleaseType.PrivatePreview,
+            SDKReleaseMonth = "September 2026", Owner = "Owner <test>"
+        };
+
+        var template = new PastDueReleasePlanEmail(plan);
+
+        Assert.That(template.Body, Does.Contain("spec PR is missing or has not been merged"));
+        Assert.That(template.Body, Does.Not.Contain("no active SDK PRs"));
+        Assert.That(template.Body, Does.Contain("Owner &lt;test&gt;"));
+        Assert.That(template.Subject, Does.Contain("100"));
+    }
+
+    [TestCase(ApiReleaseType.GA, true, "Abandon the release plan")]
+    [TestCase(ApiReleaseType.PublicPreview, false, "Complete remaining SDK release activities")]
+    [TestCase(ApiReleaseType.PrivatePreview, true, "Merge the spec PR")]
+    public void OverdueReleasePlanEmail_ContainsStateSpecificGuidance(ApiReleaseType releaseType, bool inactive, string action)
+    {
+        var plan = new ReleasePlanWorkItem
+        {
+            WorkItemId = 100, ApiReleaseType = releaseType, Owner = "Owner <test>",
+            SDKReleaseMonth = "September 2026", ReleasePlanSubmittedByEmail = "owner@microsoft.com"
+        };
+
+        var template = new OverdueReleasePlanEmail(plan, inactive);
+
+        Assert.That(template.EmailTo, Is.EqualTo(new[] { "owner@microsoft.com" }));
+        Assert.That(template.Body, Does.Contain(action));
+        Assert.That(template.Body, Does.Contain("Update the Target Release Month"));
+        Assert.That(template.Body, Does.Contain("Owner &lt;test&gt;"));
+        Assert.That(template.Body, Does.Not.Contain("has been marked as abandoned"));
+    }
+
+    [TestCase(ApiReleaseType.GA)]
+    [TestCase(ApiReleaseType.PublicPreview)]
+    [TestCase(ApiReleaseType.PrivatePreview)]
+    [TestCase(ApiReleaseType.Unknown)]
+    public void OverdueReleasePlanEmail_UnknownActivity_UsesNeutralGuidance(ApiReleaseType releaseType)
+    {
+        var plan = new ReleasePlanWorkItem
+        {
+            WorkItemId = 100, ApiReleaseType = releaseType, Owner = "Owner <test>",
+            SDKReleaseMonth = "September 2026", ReleasePlanSubmittedByEmail = "owner@microsoft.com"
+        };
+
+        var template = new OverdueReleasePlanEmail(plan, hasInactiveWork: null);
+
+        Assert.That(template.EmailTo, Is.EqualTo(new[] { "owner@microsoft.com" }));
+        Assert.That(template.Subject, Is.EqualTo("Your release plan (100) is now past due"));
+        Assert.That(template.Body, Does.Contain("Owner &lt;test&gt;").And.Contain(plan.ReleasePlanLink));
+        Assert.That(template.Body, Does.Contain("Current release activity could not be verified").And.Contain("Update the Target Release Month"));
+        Assert.That(template.Body, Does.Not.Contain("automatically abandoned").And.Not.Contain("has been marked as abandoned"));
+        Assert.That(template.Body, Does.Not.Contain("Abandon the release plan").And.Not.Contain("Merge the spec PR"));
+        Assert.That(template.Body, Does.Not.Contain("Complete remaining SDK release activities").And.Not.Contain("SDKs not yet published"));
+    }
+
+    [Test]
     public async Task SendEmailNotification_NoRecipients_SilentlyCompletes()
     {
         var (service, captured) = CreateService(url: ServiceUrl);

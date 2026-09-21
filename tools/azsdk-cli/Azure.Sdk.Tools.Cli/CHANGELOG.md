@@ -6,6 +6,7 @@
 
 ### Breaking Changes
 
+- `package get-approval-status` and `azsdk_package_get_approval_status` now require a package type (`mgmt` or `client`) for API Review Hub approval checks.
 - Release plan JSON/MCP responses no longer include `SDKInfo.PullRequestStatus`, which was sourced from potentially stale Azure DevOps data. SDK PR URLs and the dashboard link remain available for checking current PR status; generation and release statuses are unchanged.
 
 ### Bugs Fixed

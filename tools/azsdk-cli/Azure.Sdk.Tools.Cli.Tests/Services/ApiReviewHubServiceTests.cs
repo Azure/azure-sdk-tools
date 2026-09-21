@@ -128,7 +128,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", language, "pkg", packageVersion, "hash", "", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", language, "pkg", packageVersion, "client", "hash", "", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.StatusCode, Is.EqualTo(200));
@@ -137,6 +137,7 @@ public class ApiReviewHubServiceTests
         Assert.That(capturedRequest, Is.Not.Null);
         Assert.That(capturedRequest!.RequestUri, Is.Not.Null);
         Assert.That(capturedRequest.RequestUri!.Query, Does.Contain($"version={Uri.EscapeDataString(packageVersion)}"));
+        Assert.That(capturedRequest.RequestUri.Query, Does.Contain("packageType=client"));
     }
 
     [Test]
@@ -179,7 +180,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "4.12.0b3", "hash", "", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "4.12.0b3", "client", "hash", "", CancellationToken.None);
 
         Assert.That(result.AppliedInheritanceRule, Is.EqualTo("prereleaseToStable"));
         Assert.That(result.Approvals, Is.Not.Null);
@@ -217,7 +218,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "client", "hash", "", CancellationToken.None);
 
         Assert.That(result.StatusCode, Is.EqualTo(202));
     }
@@ -253,7 +254,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        _ = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+        _ = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "client", "hash", "", CancellationToken.None);
 
         Assert.That(capturedRequest, Is.Not.Null);
         Assert.That(capturedRequest!.Headers.Authorization, Is.Not.Null);
@@ -290,7 +291,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "client", "hash", "", CancellationToken.None);
 
         Assert.That(result.StatusCode, Is.EqualTo(200));
         Assert.That(result.Reason, Is.EqualTo("repositoryNotSupported"));
@@ -302,7 +303,7 @@ public class ApiReviewHubServiceTests
     public void GetReleaseGateStatusAsync_WithDisallowedHost_ThrowsInvalidOperationException()
     {
         var exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await service.GetReleaseGateStatusAsync("https://api-review-hub.evil.example", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None));
+            await service.GetReleaseGateStatusAsync("https://api-review-hub.evil.example", "python", "pkg", "1.0.0", "client", "hash", "", CancellationToken.None));
 
         Assert.That(exception!.Message, Does.Contain("endpoint host is not allowed"));
     }
@@ -591,6 +592,7 @@ public class ApiReviewHubServiceTests
             "python",
             "pkg",
             "1.0.0",
+            "mgmt",
             "hash",
             "Contoso",
             CancellationToken.None);
@@ -598,6 +600,7 @@ public class ApiReviewHubServiceTests
         Assert.That(capturedRequest, Is.Not.Null);
         Assert.That(capturedRequest!.RequestUri, Is.Not.Null);
         Assert.That(capturedRequest.RequestUri!.Query, Does.Contain("repoOwner=Contoso"));
+        Assert.That(capturedRequest.RequestUri.Query, Does.Contain("packageType=mgmt"));
     }
 
     private sealed class SteppingTimeProvider(DateTimeOffset initial, TimeSpan step) : TimeProvider

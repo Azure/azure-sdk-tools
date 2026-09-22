@@ -1,7 +1,11 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
@@ -11,11 +15,12 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class BodyKeySanitizer : RecordedTestSanitizer
     {
-        private string _jsonPath;
-        private string _newValue;
-        private string _regexValue = null;
-        private string _groupForReplace = null;
+        private readonly string _jsonPath;
+        private readonly string _newValue;
+        private readonly string _regexValue = null;
+        private readonly string _groupForReplace = null;
         private readonly Regex _regex;
+        private readonly List<BodyKeySanitizer> _batchedSanitizers;
 
         /// <summary>
         /// This sanitizer offers regex update of a specific JTokenPath. EG: "TableName" within a json response body having its value replaced by
@@ -43,12 +48,52 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             _regex = GetRegex(regex);
         }
 
+        private BodyKeySanitizer(List<BodyKeySanitizer> sanitizers)
+        {
+            _scope = SanitizerScope.Body;
+            _batchedSanitizers = sanitizers;
+        }
+
+        internal static IEnumerable<RecordedTestSanitizer> Batch(IEnumerable<RecordedTestSanitizer> sanitizers)
+        {
+            List<BodyKeySanitizer> batch = null;
+            foreach (var sanitizer in sanitizers)
+            {
+                if (sanitizer.GetType() == typeof(BodyKeySanitizer) &&
+                    sanitizer.Condition == null && !sanitizer.LegacyConvertJsonDateTokens &&
+                    ((BodyKeySanitizer)sanitizer)._batchedSanitizers == null)
+                {
+                    batch ??= [];
+                    batch.Add((BodyKeySanitizer)sanitizer);
+                    continue;
+                }
+
+                if (batch != null)
+                {
+                    yield return batch.Count == 1 ? batch[0] : new BodyKeySanitizer(batch);
+                    batch = null;
+                }
+
+                yield return sanitizer;
+            }
+
+            if (batch != null)
+            {
+                yield return batch.Count == 1 ? batch[0] : new BodyKeySanitizer(batch);
+            }
+        }
+
         public override string SanitizeTextBody(string contentType, string body)
         {
+            if (_batchedSanitizers != null)
+            {
+                return SanitizeTextBodyBatch(contentType, body);
+            }
+
             bool sanitized = false;
             JToken jsonO = null;
 
-            if (contentType.ToLower().Contains("json"))
+            if (contentType.Contains("json", StringComparison.CurrentCultureIgnoreCase))
             {
                 try
                 {
@@ -73,31 +118,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             {
                 try
                 {
-                    foreach (JToken token in jsonO.SelectTokens(_jsonPath))
-                    {
-                        // HasValues is false for tokens with children. We will not apply sanitization if that is the case.
-                        if (!token.HasValues)
-                        {
-                            var originalValue = token.Value<string>();
-
-                            // regex replacement does not support null
-                            if (originalValue == null)
-                            {
-                                continue;
-                            }
-
-                            var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regex, _groupForReplace);
-
-                            // this sanitizer should only apply to actual values
-                            // if we attempt to apply a regex update to a jtoken that has a more complex type, throw
-                            token.Replace(JToken.FromObject(replacement));
-
-                            if (originalValue != replacement)
-                            {
-                                sanitized = true;
-                            }
-                        }
-                    }
+                    sanitized = SanitizeJsonBody(jsonO);
                 }
                 catch(Exception e)
                 {
@@ -109,6 +130,104 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             return sanitized ? JsonConvert.SerializeObject(jsonO, SerializerSettings) : body;
         }
 
+        private bool SanitizeJsonBody(JToken body, List<(JToken Original, JToken Replacement)> replacements = null)
+        {
+            bool sanitized = false;
+            foreach (JToken token in body.SelectTokens(_jsonPath))
+            {
+                if (!token.HasValues)
+                {
+                    var originalValue = token.Value<string>();
+                    if (originalValue == null)
+                    {
+                        continue;
+                    }
+
+                    var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regex, _groupForReplace);
+                    var replacementToken = JToken.FromObject(replacement);
+                    token.Replace(replacementToken);
+                    if (replacementToken.Parent != null)
+                    {
+                        replacements?.Add((token, replacementToken));
+                    }
+                    sanitized |= originalValue != replacement;
+                }
+            }
+
+            return sanitized;
+        }
+
+        private string SanitizeTextBodyBatch(string contentType, string body)
+        {
+            if (!contentType.Contains("json", StringComparison.CurrentCultureIgnoreCase))
+            {
+                return body;
+            }
+
+            JToken json;
+            try
+            {
+                json = JsonConvert.DeserializeObject<JToken>(body, SerializerSettings);
+            }
+            catch (JsonReaderException)
+            {
+                return body;
+            }
+
+            if (json == null)
+            {
+                return body;
+            }
+
+            if (json is JContainer container)
+            {
+                foreach (var token in container.Descendants())
+                {
+                    if (token.Type == JTokenType.Float && !double.IsFinite(token.Value<double>()))
+                    {
+                        return SanitizeTextBodySequentially(contentType, body);
+                    }
+                }
+            }
+
+            bool sanitized = false;
+            var replacements = new List<(JToken Original, JToken Replacement)>();
+            try
+            {
+                foreach (var sanitizer in _batchedSanitizers)
+                {
+                    if (sanitizer.SanitizeJsonBody(json, replacements))
+                    {
+                        sanitized = true;
+                    }
+                    else
+                    {
+                        for (int index = replacements.Count - 1; index >= 0; index--)
+                        {
+                            replacements[index].Replacement.Replace(replacements[index].Original);
+                        }
+                    }
+
+                    replacements.Clear();
+                }
+            }
+            catch (Exception)
+            {
+                return SanitizeTextBodySequentially(contentType, body);
+            }
+
+            return sanitized ? JsonConvert.SerializeObject(json, SerializerSettings) : body;
+        }
+
+        private string SanitizeTextBodySequentially(string contentType, string body)
+        {
+            foreach (var sanitizer in _batchedSanitizers)
+            {
+                body = sanitizer.SanitizeTextBody(contentType, body);
+            }
+
+            return body;
+        }
 
         public override byte[] SanitizeBody(string contentType, byte[] body)
         {

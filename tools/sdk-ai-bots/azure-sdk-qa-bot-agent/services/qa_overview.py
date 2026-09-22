@@ -9,6 +9,14 @@ from models.qa_dashboard import OverviewCounts, OverviewRow, QAOverview
 from utils.channel_policy import is_testing_channel
 
 
+_ACCURACY_EXCLUDED_CLASSIFICATIONS = (
+    RootCauseClassification.missing_content,
+    RootCauseClassification.outdated_content,
+    RootCauseClassification.insufficient_content,
+    RootCauseClassification.out_of_scope,
+)
+
+
 _BOT_MENTION = re.compile(
     r"<at\b[^>]*>Azure SDK Q(?:&amp;|&)A Bot</at>", re.IGNORECASE
 )
@@ -106,7 +114,7 @@ async def aggregate_overview(
         if row is None:
             continue
         row.conversations += 1
-        if document.get("classification") in ("missing_content", "out_of_scope"):
+        if document.get("classification") in _ACCURACY_EXCLUDED_CLASSIFICATIONS:
             row.accuracy_excluded += 1
         elif document.get("verdict") == "correct":
             row.correct += 1

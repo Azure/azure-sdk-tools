@@ -120,10 +120,10 @@ async def test_unknowns_exclusions_and_legacy_are_not_inferred(storage):
     result = await QADashboardService().get_overview(start=START, end=END)
     total = result.totals
     assert total.conversations == 6
-    assert total.accuracy_excluded == 2
-    assert total.correct == 1 and total.incorrect == 1
-    assert total.accuracy.numerator == 3 and total.accuracy.denominator == 4
-    assert total.accuracy.rate == 75
+    assert total.accuracy_excluded == 3
+    assert total.correct == 1 and total.incorrect == 0
+    assert total.accuracy.numerator == 3 and total.accuracy.denominator == 3
+    assert total.accuracy.rate == 100
     assert total.expert_interaction.denominator == 6
     assert total.expert_interaction.rate == pytest.approx(100 / 6)
     assert total.expert_yes == 1
@@ -306,11 +306,12 @@ def test_accuracy_removes_exclusions_from_numerator_and_denominator(changes, num
 
 
 @pytest.mark.parametrize("verdict", ["correct", "incorrect", "unknown", None])
+@pytest.mark.parametrize("classification", ["missing_content", "outdated_content", "insufficient_content", "out_of_scope"])
 @pytest.mark.asyncio
-async def test_excluded_only_channels_have_na_accuracy_without_hiding_other_metrics(storage, verdict):
+async def test_excluded_only_channels_have_na_accuracy_without_hiding_other_metrics(storage, verdict, classification):
     storage[0].documents = [
-        qa("a", verdict=verdict, expert=True, feedback=issue_feedback(classification="missing_content")),
-        qa("b", verdict=verdict, feedback=issue_feedback(classification="out_of_scope")),
+        qa("a", verdict=verdict, expert=True, feedback=issue_feedback(classification=classification)),
+        qa("b", verdict=verdict, feedback=issue_feedback(classification=classification)),
     ]
     report = await QADashboardService().get_overview(start=START, end=END)
     for row in [*report.rows, report.totals]:
@@ -325,7 +326,9 @@ async def test_excluded_only_channels_have_na_accuracy_without_hiding_other_metr
 async def test_accuracy_totals_weight_eligible_conversations_not_channel_rates(storage):
     storage[0].documents = [qa("a") for _ in range(3)] + [
         qa("a", verdict="incorrect", classification="missing_content"),
+        qa("a", verdict="incorrect", classification="outdated_content"),
         qa("b", verdict="incorrect"),
+        qa("b", verdict="incorrect", classification="insufficient_content"),
         qa("b", verdict="incorrect", classification="out_of_scope"),
     ]
     report = await QADashboardService().get_overview(start=START, end=END)
@@ -551,7 +554,9 @@ async def test_findings_include_all_known_causes_without_inference(storage):
     assert total.findings == len(RootCauseClassification)
     assert total.root_causes == {cause: 1 for cause in RootCauseClassification}
     assert sum(total.root_causes.values()) == total.findings
-    assert total.accuracy_excluded == 2
+    assert total.accuracy_excluded == 4
+    assert total.incorrect == 2  # Retrieval mismatch and reasoning gap remain eligible.
+    assert total.accuracy.model_dump() == {"numerator": 3, "denominator": 5, "rate": 60}
     assert total.issue_cases == 0
     assert total.model_dump(mode="json")["root_causes"]["missing_content"] == 1
 
@@ -747,7 +752,7 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
     assert "${percent(row.accuracy.rate)} (${row.accuracy.numerator} / ${row.accuracy.denominator})" in accuracy_table
     assert tables.count("description:") == 4
     assert tables.count("limitations:") == 3
-    assert "Missing-documentation and out-of-scope cases are excluded" in tables
+    assert "Missing, outdated, or insufficient documentation and out-of-scope cases are excluded" in tables
     assert "Accuracy = correct answered conversations / (conversations − excluded)." in tables
     # Both visible/printed tables and the copied Markdown use these definitions.
     rendering = html.split("function renderOverview(data)", 1)[1].split("function markdownValue", 1)[0]
@@ -815,8 +820,8 @@ def test_metric_descriptions_keep_cards_short_and_define_counts_in_notes():
     assert all(len(note.split()) <= 25 for items in limitations for note in items)
     accuracy, interaction, answer, resolution = notes
     assert all(" / " in note for note in (accuracy, answer, resolution))
-    assert "All conversations excluding missing-documentation and out-of-scope cases" in accuracy
-    assert "Missing-documentation and out-of-scope cases are excluded" in html
+    assert "All conversations excluding documentation issues and out-of-scope cases" in accuracy
+    assert "Missing, outdated, or insufficient documentation and out-of-scope cases are excluded" in html
     assert "expert follow-up after a bot reply" in interaction
     assert "adds guidance beyond the bot's answer" in html
     assert "bot replies / user questions" in answer.lower()

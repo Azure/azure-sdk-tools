@@ -1254,7 +1254,7 @@
       {
         title: "Accuracy",
         description: "Accuracy = correct answered conversations / (conversations − excluded).",
-        limitations: ["Missing-documentation and out-of-scope cases are excluded from the accuracy calculation."],
+        limitations: ["Missing, outdated, or insufficient documentation and out-of-scope cases are excluded from the accuracy calculation."],
         headings: ["Channel", "Conversations", "Incorrect", "Excluded", "Accuracy"],
         values: row => [row.conversations, row.incorrect, row.accuracy_excluded,
           `${percent(row.accuracy.rate)} (${row.accuracy.numerator} / ${row.accuracy.denominator})`]
@@ -1315,7 +1315,7 @@
       const metrics = [
         {title: "Accuracy", style: "accuracy", metric: data.totals.accuracy,
           labels: ["Not counted incorrect", "Eligible conversations"],
-          note: "Correctly answered conversations / All conversations excluding missing-documentation and out-of-scope cases"},
+          note: "Correctly answered conversations / All conversations excluding documentation issues and out-of-scope cases"},
         {title: "Interaction rate", style: "interaction", metric: data.totals.expert_interaction,
           labels: ["Expert interactions", "Conversations"],
           note: "Meaningful expert follow-up after a bot reply / All conversations"},

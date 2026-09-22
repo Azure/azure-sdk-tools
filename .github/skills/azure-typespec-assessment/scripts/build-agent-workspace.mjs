@@ -250,7 +250,7 @@ export function buildAgentWorkspace({ work }) {
     materialization: {
       script: "scripts/materialize-assessment-results.mjs",
       command:
-        "node <skill-directory>\\scripts\\materialize-assessment-results.mjs --work <work-directory>",
+        "node <skill-directory>/scripts/materialize-assessment-results.mjs --work <work-directory>",
     },
     serving: {
       script: "scripts/serve-assessment.mjs",

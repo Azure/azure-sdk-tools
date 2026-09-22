@@ -17,7 +17,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     {
         private readonly string _jsonPath;
         private readonly string _newValue;
-        private readonly string _regexValue = null;
         private readonly string _groupForReplace = null;
         private readonly Regex _regex;
         private readonly List<BodyKeySanitizer> _batchedSanitizers;
@@ -36,16 +35,15 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains various configuration keys.
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
         /// </param>
-        public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".+", string groupForReplace = null, ApplyCondition condition = null)
+        public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = null, string groupForReplace = null, ApplyCondition condition = null)
         {
             _scope = SanitizerScope.Body;
             _jsonPath = jsonPath;
             _newValue = value;
-            _regexValue = regex;
             _groupForReplace = groupForReplace;
             Condition = condition;
 
-            _regex = GetRegex(regex);
+            _regex = regex == null ? SharedRegexes.DotAll() : GetRegex(regex);
         }
 
         private BodyKeySanitizer(List<BodyKeySanitizer> sanitizers)
@@ -120,9 +118,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 {
                     sanitized = SanitizeJsonBody(jsonO);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
-                    DebugLogger.LogError($"Ran into exception \"{e.Message}\" while attempting to run regex \"{_regexValue}\" against body value \"{body}\"");
+                    DebugLogger.LogError($"Ran into exception \"{e.Message}\" while attempting to run regex \"{_regex}\" against body value \"{body}\"");
                     return body;
                 }
             }
@@ -135,16 +133,23 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             bool sanitized = false;
             foreach (JToken token in body.SelectTokens(_jsonPath))
             {
-                if (!token.HasValues)
+                if (token.Parent != null && !token.HasValues)
                 {
                     var originalValue = token.Value<string>();
                     if (originalValue == null)
                     {
+                        // No value to replace.
                         continue;
                     }
 
                     var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regex, _groupForReplace);
-                    var replacementToken = JToken.FromObject(replacement);
+                    if (token.Type == JTokenType.String && originalValue == replacement)
+                    {
+                        // Nothing to change, skip further work.
+                        continue;
+                    }
+
+                    var replacementToken = new JValue(replacement);
                     token.Replace(replacementToken);
                     if (replacementToken.Parent != null)
                     {

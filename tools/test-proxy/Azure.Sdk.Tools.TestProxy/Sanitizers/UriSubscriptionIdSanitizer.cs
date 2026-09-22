@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
@@ -11,7 +14,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public static string _regex = @"/subscriptions/(?<subid>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})";
         public static string _groupForReplace = "subid";
-        private string _value;
 
         /// <summary>
         /// This sanitizer is targeted using the regex "/subscriptions/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})". This is not a setting
@@ -23,11 +25,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys. 
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
         /// </param>
-        public UriSubscriptionIdSanitizer(string value = "00000000-0000-0000-0000-000000000000", ApplyCondition condition = null): base(value: value, regex: _regex, groupForReplace: _groupForReplace)
+        public UriSubscriptionIdSanitizer(string value = "00000000-0000-0000-0000-000000000000", ApplyCondition condition = null) : base(value: value, regex: _regex, groupForReplace: _groupForReplace)
         {
             Condition = condition;
-
-            _value = value;
         }
     }
 }

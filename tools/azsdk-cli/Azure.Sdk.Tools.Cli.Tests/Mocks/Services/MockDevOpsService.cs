@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public ReleasePlanWorkItem? ConfiguredReleasePlanForTypeSpecPathAndApiVersion { get; set; }
         public string? ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey { get; set; }
         public string? ConfiguredApiVersionForTypeSpecPathAndApiVersion { get; set; }
+        public ApiReleaseType? LastApiReleaseTypeForTypeSpecPathAndApiVersion { get; private set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
@@ -381,8 +382,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(ConfiguredActiveReleasePlansForTypeSpecPath);
         }
 
-        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct)
+        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
+            LastApiReleaseTypeForTypeSpecPathAndApiVersion = apiReleaseType;
             if (ConfiguredReleasePlanForTypeSpecPathAndApiVersion != null 
                 && typeSpecProjectPath == ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey
                 && apiVersion == ConfiguredApiVersionForTypeSpecPathAndApiVersion)
@@ -463,4 +465,3 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         }
     }
 }
-

@@ -128,6 +128,8 @@ export interface RagApiError {
 export interface FeedbackRequestPayload {
   channel_id?: string;
   tenant_id: string;
+  conversation_id?: string;
+  conversation_type?: 'teams_channel';
   reaction: Reaction;
   comment?: string;
   reasons?: string[];
@@ -178,6 +180,7 @@ export async function sendFeedback(payload: FeedbackRequestPayload, options: RAG
     { meta }
   );
   try {
+    logger.info('Feedback payload:', { payload, meta });
     let headers = {
         'Content-Type': 'application/json; charset=utf-8',
     };

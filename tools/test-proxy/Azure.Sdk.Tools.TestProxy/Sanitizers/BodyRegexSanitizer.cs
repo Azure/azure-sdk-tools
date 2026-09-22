@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
         }
 
-        public BodyRegexSanitizer(Regex regex, string value = "Sanitized", string groupForReplace = null, ApplyCondition condition = null)
+        internal BodyRegexSanitizer(Regex regex, string value = "Sanitized", string groupForReplace = null, ApplyCondition condition = null)
         {
             _scope = SanitizerScope.Body;
             _newValue = value;

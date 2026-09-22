@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
         }
 
-        public UriRegexSanitizer(Regex regex, string value = "Sanitized", string groupForReplace = null, ApplyCondition condition = null)
+        internal UriRegexSanitizer(Regex regex, string value = "Sanitized", string groupForReplace = null, ApplyCondition condition = null)
         {
             _scope = SanitizerScope.Uri;
             _newValue = value;

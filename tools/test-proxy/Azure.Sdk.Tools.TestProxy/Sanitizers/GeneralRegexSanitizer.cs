@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
         }
 
-        public GeneralRegexSanitizer(Regex regex, string value = "Sanitized", string groupForReplace = null, ApplyCondition condition = null)
+        internal GeneralRegexSanitizer(Regex regex, string value = "Sanitized", string groupForReplace = null, ApplyCondition condition = null)
         {
             _scope = SanitizerScope.All;
             _newValue = value;

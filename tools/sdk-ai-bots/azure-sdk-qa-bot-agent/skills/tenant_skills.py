@@ -128,8 +128,9 @@ def build_skill_content(tenant_id: TenantID) -> str:
     if config.code_repositories:
         parts.append("\n[skill_code_repositories]")
         for repository in config.code_repositories:
-            prefixes = ", ".join(repository.path_prefixes)
-            parts.append(f"- {_repository_name(repository.git_url)}: {prefixes}")
+            repository_name = _repository_name(repository.git_url)
+            for prefix in repository.path_prefixes:
+                parts.append(f"- {repository_name}/{prefix.strip('/')}")
     else:
         parts.append("\n[skill_code_repositories]: none")
 

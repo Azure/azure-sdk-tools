@@ -67,8 +67,8 @@ def test_typespec_skill_declares_repository_scope() -> None:
     content = build_skill_content(TenantID.TYPESPEC_CHANNEL_QA_BOT)
 
     assert "[skill_code_repositories]" in content
-    assert "- Azure/typespec-azure: packages" in content
-    assert "- microsoft/typespec: packages" in content
+    assert "- Azure/typespec-azure/packages" in content
+    assert "- microsoft/typespec/packages" in content
 
 
 def test_repository_scope_is_limited_to_implementation_skills() -> None:
@@ -102,6 +102,8 @@ def test_chat_agent_instruction_gates_repository_search() -> None:
     assert "requires exact implementation evidence" in instruction
     assert "`file_access_grep` is required in the first retrieval batch" in instruction
     assert "read the most relevant file with `file_access_read` before composing" in instruction
+    assert "Use at most two repository grep calls and two repository read calls" in instruction
+    assert "never search an empty directory or a generic suffix" in instruction
     assert "Do not use repository search for policy, process, permissions" in instruction
     assert "do not add it merely to confirm" in instruction
     assert "Apply implementation evidence completely" in instruction

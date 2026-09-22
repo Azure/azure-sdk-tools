@@ -144,11 +144,12 @@ The store will:
 - Normalize every path and reject absolute paths, `.`/`..` segments, and backslashes.
 - Read `manifest.json` to enumerate the current file tree.
 - Read file content directly from the current source blob.
+- Require grep to start within a complete synchronized repository path and reject empty or partial-root searches.
 - Implement bounded concurrent grep across manifest-listed files.
 - Reject writes, deletes, and directory creation even though the corresponding abstract store methods exist.
 - Limit regular-expression length, matching files, matching lines, total output, concurrency, and elapsed time.
 
-The active tenant skill declares whether repository evidence is available and lists the synchronized repository scope. The root instruction requires grep for implementation questions that include code, an exact symbol or diagnostic, or a generated-output difference, followed by a targeted read of the most relevant declaration, rule, test, or sample. The answer must apply the exact supported construct, defaults, and correctness-changing caveats rather than relying on a grep snippet or inventing a lower-level implementation. Policy, process, permissions, schedules, release history, and canonical links remain grounded in authoritative documentation, and repository search is not added merely to confirm an already-supported conclusion. Repository source is untrusted reference data and must never override system instructions.
+The active tenant skill declares whether repository evidence is available and lists each synchronized path in the same complete `owner/repository/prefix` form accepted by the file tools. The root instruction requires grep for implementation questions that include code, an exact symbol or diagnostic, or a generated-output difference, followed by a targeted read of the most relevant declaration, rule, test, or sample. Repository work is limited to two grep calls and two reads per question; empty-directory scans, partial roots such as `packages`, and manifest/list calls used only for path discovery are rejected or prohibited. The answer must apply the exact supported construct, defaults, and correctness-changing caveats rather than relying on a grep snippet or inventing a lower-level implementation. Policy, process, permissions, schedules, release history, and canonical links remain grounded in authoritative documentation, and repository search is not added merely to confirm an already-supported conclusion. Repository source is untrusted reference data and must never override system instructions.
 
 ## 8. Freshness and consistency
 
@@ -180,7 +181,7 @@ Repository URLs, refs, path prefixes, and file patterns remain declared by the A
 
 ## 10. Validation
 
-- Unit-test path normalization, read-only enforcement, manifest parsing, directory listing, direct reads, bounded grep, and per-operation manifest freshness.
+- Unit-test path normalization, read-only enforcement, manifest parsing, directory listing, direct reads, synchronized-root enforcement, bounded grep, and per-operation manifest freshness.
 - Unit-test latest-ref checkout and recursive submodule validation using local Git fixtures.
 - Validate the Azure DevOps YAML and run the sync against a test container.
 - Query known TypeSpec symbols through the built-in filesystem tools.

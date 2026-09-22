@@ -50,7 +50,14 @@ def _store() -> AzureBlobAgentFileStore:
     ]
     blobs = {
         "mirror/manifest.json": json.dumps(
-            {"schema_version": 1, "files": files, "repositories": []}
+            {
+                "schema_version": 1,
+                "files": files,
+                "repositories": [
+                    {"name": "Azure/typespec-azure"},
+                    {"name": "microsoft/typespec"},
+                ],
+            }
         ).encode(),
         "mirror/Azure/typespec-azure/packages/core/main.tsp": (
             b"model Widget {\n  name: string;\n}\n"
@@ -89,7 +96,7 @@ def test_searches_current_manifest_files_with_bounds() -> None:
 
     results = asyncio.run(
         store.search(
-            "",
+            "Azure/typespec-azure/packages",
             "widget",
             glob_pattern="*.tsp",
             recursive=True,
@@ -97,10 +104,7 @@ def test_searches_current_manifest_files_with_bounds() -> None:
     )
 
     assert len(results) == 1
-    assert (
-        results[0].file_name
-        == "Azure/typespec-azure/packages/core/main.tsp"
-    )
+    assert results[0].file_name == "core/main.tsp"
     assert [match.line_number for match in results[0].matching_lines] == [1]
     assert [match.line for match in results[0].matching_lines] == [
         "model Widget {"
@@ -118,6 +122,10 @@ def test_rejects_unsafe_paths_and_invalid_regex() -> None:
         asyncio.run(store.read(r"Azure\typespec-azure\packages\main.tsp"))
     with pytest.raises(re.error):
         asyncio.run(store.search("", "[", recursive=True))
+    with pytest.raises(ValueError, match="requires a directory"):
+        asyncio.run(store.search("", "widget", recursive=True))
+    with pytest.raises(ValueError, match="within a synchronized repository"):
+        asyncio.run(store.search("packages", "widget", recursive=True))
 
 
 def test_rejects_unsafe_blob_prefix() -> None:
@@ -143,6 +151,12 @@ def test_provider_instructions_limit_repository_search_to_implementation_evidenc
     )
     assert "exact implementation evidence" in REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
     assert "read the most relevant declaration, rule, test, or sample" in (
+        REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
+    )
+    assert "empty directories and generic suffixes such as packages are invalid" in (
+        REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
+    )
+    assert "no more than two grep calls and two read calls" in (
         REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
     )
     assert "Do not rely on grep snippets alone" in REPOSITORY_FILE_PROVIDER_INSTRUCTIONS

@@ -155,11 +155,14 @@ class AzureBlobAgentFileStore(AgentFileStore):
                 "repository search directory must be within a synchronized "
                 f"repository: {', '.join(repository_roots)}"
             )
-        candidates = _candidate_files(
-            manifest["files"],
-            normalized_directory,
-            glob_pattern,
-            recursive,
+        candidates = sorted(
+            _candidate_files(
+                manifest["files"],
+                normalized_directory,
+                glob_pattern,
+                recursive,
+            ),
+            key=_repository_evidence_sort_key,
         )
         semaphore = asyncio.Semaphore(self._read_concurrency)
 
@@ -197,7 +200,10 @@ class AzureBlobAgentFileStore(AgentFileStore):
                 "or glob pattern"
             ) from exc
         return _limit_search_output(
-            sorted(results, key=lambda result: result.file_name)[
+            sorted(
+                results,
+                key=lambda result: _repository_evidence_sort_key(result.file_name),
+            )[
                 : self._max_search_files
             ]
         )
@@ -304,6 +310,19 @@ def _manifest_repository_roots(manifest: dict[str, Any]) -> tuple[str, ...]:
     if not roots:
         raise RuntimeError("repository manifest must contain at least one repository")
     return tuple(sorted(set(roots)))
+
+
+def _repository_evidence_sort_key(path: str) -> tuple[int, str]:
+    segments = set(PurePosixPath(path.casefold()).parts)
+    if segments.intersection({"example", "examples", "sample", "samples"}):
+        rank = 3
+    elif segments.intersection({"test", "tests"}):
+        rank = 1
+    elif segments.intersection({"lib", "src"}):
+        rank = 0
+    else:
+        rank = 2
+    return rank, path.casefold()
 
 
 def _relative_to_directory(path: str, directory: str) -> str:

@@ -46,6 +46,8 @@ class _ContainerClient:
 def _store() -> AzureBlobAgentFileStore:
     files = [
         "Azure/typespec-azure/packages/core/main.tsp",
+        "Azure/typespec-azure/packages/core/lib/operations.tsp",
+        "Azure/typespec-azure/packages/samples/delete.tsp",
         "microsoft/typespec/packages/compiler/src/checker.ts",
     ]
     blobs = {
@@ -61,6 +63,12 @@ def _store() -> AzureBlobAgentFileStore:
         ).encode(),
         "mirror/Azure/typespec-azure/packages/core/main.tsp": (
             b"model Widget {\n  name: string;\n}\n"
+        ),
+        "mirror/Azure/typespec-azure/packages/core/lib/operations.tsp": (
+            b"op deleteResource(): void;\n"
+        ),
+        "mirror/Azure/typespec-azure/packages/samples/delete.tsp": (
+            b"op deleteSample(): void;\n"
         ),
         "mirror/microsoft/typespec/packages/compiler/src/checker.ts": (
             b"export function checkWidget() {}\n"
@@ -108,6 +116,24 @@ def test_searches_current_manifest_files_with_bounds() -> None:
     assert [match.line_number for match in results[0].matching_lines] == [1]
     assert [match.line for match in results[0].matching_lines] == [
         "model Widget {"
+    ]
+
+
+def test_search_prioritizes_library_declarations_over_samples() -> None:
+    store = _store()
+
+    results = asyncio.run(
+        store.search(
+            "Azure/typespec-azure/packages",
+            "delete",
+            glob_pattern="*.tsp",
+            recursive=True,
+        )
+    )
+
+    assert [result.file_name for result in results] == [
+        "core/lib/operations.tsp",
+        "samples/delete.tsp",
     ]
 
 

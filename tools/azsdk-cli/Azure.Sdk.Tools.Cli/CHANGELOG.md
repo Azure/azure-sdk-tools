@@ -2,12 +2,15 @@
 
 ## 0.6.49 (2026-09-21)
 
+- Added `--max-attempts` / `maxAttempts` to customized-update for bounded custom-code repairs in one retained conversation, with `attemptsUsed` in the existing response.
+
 ### Breaking Changes
 
 - Release plan JSON/MCP responses no longer include `SDKInfo.PullRequestStatus`, which was sourced from potentially stale Azure DevOps data. SDK PR URLs and the dashboard link remain available for checking current PR status; generation and release statuses are unchanged.
 
 ### Bugs Fixed
 
+- Customized-code repairs validate classifier no-op results and retain final build/regeneration diagnostics when attempts are exhausted.
 - Release plan creation and target-month updates now reject malformed or past target months, while allowing the current UTC month and future months.
 - Linking a spec PR now sets idle SDK generation to `Not applicable` instead of `In progress`, while preserving recorded in-progress runs. `Pending` still blocks duplicate requests; stale `In progress` states can be retried when the pipeline is finished, missing, invalid, or inaccessible.
 

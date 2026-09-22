@@ -199,14 +199,12 @@ class AzureBlobAgentFileStore(AgentFileStore):
                 f"{self._search_timeout_seconds:g} seconds; narrow the directory "
                 "or glob pattern"
             ) from exc
-        return _limit_search_output(
-            sorted(
-                results,
-                key=lambda result: _repository_evidence_sort_key(result.file_name),
-            )[
-                : self._max_search_files
-            ]
+        ranked_results = sorted(
+            results,
+            key=lambda result: _repository_evidence_sort_key(result.file_name),
         )
+        preferred_results = _prefer_authoritative_results(ranked_results)
+        return _limit_search_output(preferred_results[: self._max_search_files])
 
     async def _load_manifest(self) -> dict[str, Any]:
         content = await self._read_blob(_MANIFEST_NAME)
@@ -323,6 +321,18 @@ def _repository_evidence_sort_key(path: str) -> tuple[int, str]:
     else:
         rank = 2
     return rank, path.casefold()
+
+
+def _prefer_authoritative_results(
+    results: list[FileSearchResult],
+) -> list[FileSearchResult]:
+    if any(_repository_evidence_sort_key(result.file_name)[0] == 0 for result in results):
+        return [
+            result
+            for result in results
+            if _repository_evidence_sort_key(result.file_name)[0] <= 1
+        ]
+    return results
 
 
 def _relative_to_directory(path: str, directory: str) -> str:

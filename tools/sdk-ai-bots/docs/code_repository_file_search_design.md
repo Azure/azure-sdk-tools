@@ -146,7 +146,7 @@ The store will:
 - Read file content directly from the current source blob.
 - Require grep to start within a complete synchronized repository path and reject empty or partial-root searches.
 - Implement bounded concurrent grep across manifest-listed files.
-- Rank library and source declarations before tests and samples so bounded results expose authoritative implementation contracts first.
+- Prefer library/source declarations and tests when the same grep also matches samples; return samples as a fallback when no authoritative implementation match exists.
 - Reject writes, deletes, and directory creation even though the corresponding abstract store methods exist.
 - Limit regular-expression length, matching files, matching lines, total output, concurrency, and elapsed time.
 
@@ -182,7 +182,7 @@ Repository URLs, refs, path prefixes, and file patterns remain declared by the A
 
 ## 10. Validation
 
-- Unit-test path normalization, read-only enforcement, manifest parsing, directory listing, direct reads, synchronized-root enforcement, declaration-first grep ranking, bounded grep, and per-operation manifest freshness.
+- Unit-test path normalization, read-only enforcement, manifest parsing, directory listing, direct reads, synchronized-root enforcement, declaration-first grep filtering, bounded grep, and per-operation manifest freshness.
 - Unit-test latest-ref checkout and recursive submodule validation using local Git fixtures.
 - Validate the Azure DevOps YAML and run the sync against a test container.
 - Query known TypeSpec symbols through the built-in filesystem tools.

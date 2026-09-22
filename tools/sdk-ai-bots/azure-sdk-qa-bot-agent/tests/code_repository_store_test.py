@@ -119,7 +119,7 @@ def test_searches_current_manifest_files_with_bounds() -> None:
     ]
 
 
-def test_search_prioritizes_library_declarations_over_samples() -> None:
+def test_search_prefers_library_declarations_over_samples() -> None:
     store = _store()
 
     results = asyncio.run(
@@ -133,7 +133,6 @@ def test_search_prioritizes_library_declarations_over_samples() -> None:
 
     assert [result.file_name for result in results] == [
         "core/lib/operations.tsp",
-        "samples/delete.tsp",
     ]
 
 

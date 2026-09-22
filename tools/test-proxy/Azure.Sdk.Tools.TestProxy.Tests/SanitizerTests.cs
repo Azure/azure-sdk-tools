@@ -184,8 +184,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(sanitizer is RegexEntrySanitizer);
 
 
-            var sanitizerTarget = (string)typeof(RegexEntrySanitizer).GetField("section", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
-            var regex = (Regex)typeof(RegexEntrySanitizer).GetField("rx", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
+            var sanitizerTarget = (string)typeof(RegexEntrySanitizer).GetField("_section", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
+            var regex = (Regex)typeof(RegexEntrySanitizer).GetField("_rx", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
         }
 
 

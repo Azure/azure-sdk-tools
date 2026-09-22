@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
@@ -7,8 +10,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class UriStringSanitizer : RecordedTestSanitizer
     {
-        private string _newValue;
-        private string _targetValue;
+        private readonly string _newValue;
+        private readonly string _targetValue;
 
         /// <summary>
         /// Runs a simple string replacement against the request/response URIs.

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
 
@@ -9,11 +12,11 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class GeneralStringSanitizer : RecordedTestSanitizer
     {
-        private string _newValue;
-        private string _targetValue;
+        private readonly string _newValue;
+        private readonly string _targetValue;
 
-        private BodyStringSanitizer _bodySanitizer;
-        private UriStringSanitizer _uriSanitizer;
+        private readonly BodyStringSanitizer _bodySanitizer;
+        private readonly UriStringSanitizer _uriSanitizer;
 
         /// <summary>
         /// This sanitizer offers a value replace across request/response Body, Headers, and URI. For the body, this means a string replacement applied directly to the raw JSON.

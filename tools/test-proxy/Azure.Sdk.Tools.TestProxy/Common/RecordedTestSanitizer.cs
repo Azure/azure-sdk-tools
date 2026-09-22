@@ -4,12 +4,10 @@
 using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.CommandLine.Parsing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -58,15 +56,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public List<string> SanitizedHeaders { get; } = new List<string> { "Authorization" };
 
+        private static readonly Dictionary<string, Regex> s_regexCache = [];
+
         /// <summary>
         /// Abstraction for getting a compiled Regex from a string. Used by derived classes to cache their compiled regexes.
         /// </summary>
         /// <param name="regex">The regular expression pattern to compile.</param>
         public static Regex GetRegex(string regex)
         {
+            if (s_regexCache.TryGetValue(regex, out Regex value))
+            {
+                return value;
+            }
+
             try
             {
-                return new Regex(regex, RegexOptions.Compiled);
+                var compiledRegex = new Regex(regex, RegexOptions.Compiled);
+                s_regexCache[regex] = compiledRegex;
+                return compiledRegex;
             }
             catch (Exception e)
             {

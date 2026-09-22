@@ -3,5 +3,9 @@
   "private": true,
   "dependencies": {
     "yaml": "^2.9.0"
-  }
+  },
+  "scripts": {
+    "test": "node --test scripts/*.test.mjs"
+  },
+  "type": "module"
 }

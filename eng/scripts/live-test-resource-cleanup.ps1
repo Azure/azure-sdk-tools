@@ -462,6 +462,38 @@ function Remove-DependencyResources() {
   return $errors
 }
 
+function Break-EventHubGeoDisasterRecoveryPairs() {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$ResourceGroupName
+  )
+
+  $errors = @()
+  $apiVersion = '2024-01-01'
+  try {
+    $aliases = @(
+      Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction Stop |
+        Where-Object { $_.ResourceType -ieq 'Microsoft.EventHub/namespaces/disasterRecoveryConfigs' }
+    )
+  } catch {
+    return @("Failed enumerating Event Hubs GeoDR pairings in '$ResourceGroupName': $($_.Exception.Message)")
+  }
+
+  foreach ($alias in $aliases) {
+    Write-Host "Breaking Event Hubs GeoDR pairing '$($alias.Name)' in resource group '$ResourceGroupName'"
+    try {
+      $response = Invoke-AzRestMethod -Method POST -Path "$($alias.ResourceId)/breakPairing?api-version=$apiVersion" -ErrorAction Stop
+      if ($response.StatusCode -ge 400) {
+        throw "Request failed with status $($response.StatusCode): $($response.Content)"
+      }
+    } catch {
+      $errors += "Failed breaking Event Hubs GeoDR pairing '$($alias.Name)' in '$ResourceGroupName': $($_.Exception.Message)"
+    }
+  }
+
+  return $errors
+}
+
 function Remove-RecoveryServicesVaults() {
   param(
     [Parameter(Mandatory = $true)]
@@ -869,6 +901,7 @@ function Invoke-PreDeleteResourceCleanup() {
   $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.Search/searchServices/sharedPrivateLinkResources' -Description 'Azure AI Search shared private link resource')
   $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.Cache/Redis/linkedServers' -Description 'Azure Cache for Redis linked server')
   $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.DevCenter/projects' -Description 'DevCenter project')
+  $errors += @(Break-EventHubGeoDisasterRecoveryPairs -ResourceGroupName $resourceGroupName)
 
   if ($resources | Where-Object { $_.ResourceType -ieq 'Microsoft.RecoveryServices/vaults' }) {
     $errors += @(Remove-RecoveryServicesVaults -ResourceGroupName $resourceGroupName)
@@ -879,10 +912,6 @@ function Invoke-PreDeleteResourceCleanup() {
   }
 
   $knownBlockers = @(
-    @{
-      ResourceType = 'Microsoft.EventHub/namespaces/disasterRecoveryConfigs'
-      Message = 'contains Event Hubs GeoDR configuration resources that must be broken or failed over before the resource group can be deleted'
-    },
     @{
       ResourceType = 'Microsoft.Migrate/moveCollections'
       Message = 'contains Azure Resource Mover collections that must be cleaned up before the resource group can be deleted'

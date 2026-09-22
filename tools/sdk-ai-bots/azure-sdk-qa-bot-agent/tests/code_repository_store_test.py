@@ -142,7 +142,10 @@ def test_provider_instructions_limit_repository_search_to_implementation_evidenc
         REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
     )
     assert "exact implementation evidence" in REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
-    assert "Do not use it for policy, process, permissions" in (
+    assert "read the most relevant declaration, rule, test, or sample" in (
         REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
     )
-    assert "or redundant confirmation" in REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
+    assert "Do not rely on grep snippets alone" in REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
+    assert "Do not use repository access for policy, process" in (
+        REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
+    )

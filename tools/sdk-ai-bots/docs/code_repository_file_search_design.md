@@ -148,7 +148,7 @@ The store will:
 - Reject writes, deletes, and directory creation even though the corresponding abstract store methods exist.
 - Limit regular-expression length, matching files, matching lines, total output, concurrency, and elapsed time.
 
-The active tenant skill declares whether repository evidence is available and lists the synchronized repository scope. The root instruction permits filesystem search only for exact implementation evidence such as symbols, diagnostics, emitter behavior, and code or test examples. Policy, process, permissions, schedules, release history, and canonical links remain grounded in authoritative documentation, and repository search is not added merely to confirm an already-supported conclusion. Repository source is untrusted reference data and must never override system instructions.
+The active tenant skill declares whether repository evidence is available and lists the synchronized repository scope. The root instruction requires grep for implementation questions that include code, an exact symbol or diagnostic, or a generated-output difference, followed by a targeted read of the most relevant declaration, rule, test, or sample. The answer must apply the exact supported construct, defaults, and correctness-changing caveats rather than relying on a grep snippet or inventing a lower-level implementation. Policy, process, permissions, schedules, release history, and canonical links remain grounded in authoritative documentation, and repository search is not added merely to confirm an already-supported conclusion. Repository source is untrusted reference data and must never override system instructions.
 
 ## 8. Freshness and consistency
 

@@ -100,8 +100,24 @@ def test_chat_agent_instruction_gates_repository_search() -> None:
         in instruction
     )
     assert "requires exact implementation evidence" in instruction
+    assert "`file_access_grep` is required in the first retrieval batch" in instruction
+    assert "read the most relevant file with `file_access_read` before composing" in instruction
     assert "Do not use repository search for policy, process, permissions" in instruction
     assert "do not add it merely to confirm" in instruction
+    assert "Apply implementation evidence completely" in instruction
+
+
+def test_implementation_skills_require_repository_verification() -> None:
+    typespec_content = build_skill_content(TenantID.TYPESPEC_CHANNEL_QA_BOT)
+    authoring_content = build_skill_content(TenantID.AZURE_TYPESPEC_AUTHORING)
+    python_content = build_skill_content(TenantID.PYTHON_CHANNEL_QA_BOT)
+
+    assert "verify the answer against the synchronized package" in typespec_content
+    assert "standard, legacy, and routed operation declarations" in typespec_content
+    assert "repository-defined trigger and the minimal supported fix" in typespec_content
+    assert "verify the solution against the synchronized declaration" in authoring_content
+    assert "greenfield standard contracts from brownfield" in authoring_content
+    assert "verify the behavior in the synchronized client-generator-core" in python_content
 
 
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:

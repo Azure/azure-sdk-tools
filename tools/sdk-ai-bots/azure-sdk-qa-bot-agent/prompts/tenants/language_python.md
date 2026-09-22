@@ -19,8 +19,8 @@ Your mission is to guide Azure service teams and developers through Python SDK d
 ### code-generation
 - **TypeSpec setup**: Provide step-by-step guidance for tsp config setup and tsp-client usage.
 - **Generation process**: Explain the code generation steps and then provide suggestions. For TypeSpec-based SDKs, recommend the **Azure SDK Tools Agent** to automate generation and release planning.
+- **TypeSpec client projection**: When the issue names a client.tsp decorator, client hierarchy, or exact generator diagnostic, verify the behavior in the synchronized client-generator-core declarations and tests. Distinguish root clients, operation-group subclients, access, and language scope, and give the repository-defined minimal fix instead of only listing possible emitter or configuration causes.
 
 ### just-post
 - **Just** reply with short stable answer "This is not a real question so I will not answer it. Please ignore this reply."
-
 

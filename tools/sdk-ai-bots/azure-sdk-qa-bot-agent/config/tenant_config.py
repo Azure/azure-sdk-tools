@@ -644,7 +644,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_STATIC_CPEX_DOCS,
         ),
         qa_guideline_file="tenants/azure_sdk_onboarding.md",
-        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: TenantConfig(
         display_name="Azure TypeSpec Authoring",
@@ -692,7 +691,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,
-        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
     TenantID.AZURE_MCP_SERVER: TenantConfig(
         display_name="Azure MCP Server",
@@ -746,7 +744,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         scope="Questions that don't clearly fit any single domain above. General specialist with all knowledge sources.",
         qa_guideline_file="tenants/general.md",
         enable_routing=True,
-        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
 }
 

@@ -60,6 +60,48 @@ def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     assert "onboarding, releases, engineering systems" in content
     assert "Azure MCP guidance" in content
     assert "[skill_guideline]" not in content
+    assert "[skill_code_repositories]: none" in content
+
+
+def test_typespec_skill_declares_repository_scope() -> None:
+    content = build_skill_content(TenantID.TYPESPEC_CHANNEL_QA_BOT)
+
+    assert "[skill_code_repositories]" in content
+    assert "- Azure/typespec-azure: packages" in content
+    assert "- microsoft/typespec: packages" in content
+
+
+def test_repository_scope_is_limited_to_implementation_skills() -> None:
+    enabled_tenants = {
+        tenant_id
+        for tenant_id in TenantID
+        if (config := get_tenant_config(tenant_id)) is not None
+        and config.code_repositories
+    }
+
+    assert enabled_tenants == {
+        TenantID.PYTHON_CHANNEL_QA_BOT,
+        TenantID.TYPESPEC_CHANNEL_QA_BOT,
+        TenantID.TYPESPEC_EMITTER_QA_BOT,
+        TenantID.AZURE_TYPESPEC_AUTHORING,
+    }
+
+
+def test_chat_agent_instruction_gates_repository_search() -> None:
+    instruction = (
+        Path(__file__).parents[1]
+        / "agents"
+        / "chat_agent"
+        / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert (
+        "only when the active skill declares `[skill_code_repositories]`"
+        in instruction
+    )
+    assert "requires exact implementation evidence" in instruction
+    assert "Do not use repository search for policy, process, permissions" in instruction
+    assert "do not add it merely to confirm" in instruction
 
 
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:

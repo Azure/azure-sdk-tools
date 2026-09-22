@@ -8,7 +8,10 @@ import re
 
 import pytest
 
-from utils.code_repository_store import AzureBlobAgentFileStore
+from utils.code_repository_store import (
+    REPOSITORY_FILE_PROVIDER_INSTRUCTIONS,
+    AzureBlobAgentFileStore,
+)
 
 
 class _Downloader:
@@ -132,3 +135,14 @@ def test_rejects_mutations() -> None:
         asyncio.run(store.write("file.tsp", "model A {}"))
     with pytest.raises(PermissionError, match="read-only"):
         asyncio.run(store.delete("file.tsp"))
+
+
+def test_provider_instructions_limit_repository_search_to_implementation_evidence() -> None:
+    assert "only when the active skill declares repositories" in (
+        REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
+    )
+    assert "exact implementation evidence" in REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
+    assert "Do not use it for policy, process, permissions" in (
+        REPOSITORY_FILE_PROVIDER_INSTRUCTIONS
+    )
+    assert "or redundant confirmation" in REPOSITORY_FILE_PROVIDER_INSTRUCTIONS

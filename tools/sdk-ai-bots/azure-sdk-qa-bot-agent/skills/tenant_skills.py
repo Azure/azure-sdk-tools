@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from urllib.parse import urlparse
 
 from agent_framework import InlineSkill, Skill, SkillFrontmatter
 
@@ -25,6 +26,12 @@ logger = logging.getLogger(__name__)
 
 # Derive skill name mapping from centralized tenant config
 _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
+
+
+def _repository_name(git_url: str) -> str:
+    path = urlparse(git_url).path.strip("/")
+    return path.removesuffix(".git")
+
 
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
@@ -117,6 +124,14 @@ def build_skill_content(tenant_id: TenantID) -> str:
         parts.append("\n[skill_knowledge_sources]")
         for src in config.sources:
             parts.append(f"- {src.name}: {src.description}")
+
+    if config.code_repositories:
+        parts.append("\n[skill_code_repositories]")
+        for repository in config.code_repositories:
+            prefixes = ", ".join(repository.path_prefixes)
+            parts.append(f"- {_repository_name(repository.git_url)}: {prefixes}")
+    else:
+        parts.append("\n[skill_code_repositories]: none")
 
     # Full guideline
     guideline = load_tenant_qa_guideline(tenant_id)

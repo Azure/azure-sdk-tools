@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
@@ -557,6 +560,21 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(sequentialEntry.Request.Headers["Content-Length"], entry.Request.Headers["Content-Length"]);
         }
 
+        [Fact]
+        public void BodyKeySanitizerBatchCorrectlyHandlesDuplicates()
+        {
+            var secretSanitizer = new BodyKeySanitizer("$.secret", value: "SANITIZED");
+            var batched = BodyKeySanitizer.Batch([secretSanitizer, secretSanitizer]);
+            var body = "{\"secret\":\"foo-bar\"}";
+
+            foreach (var sanitizer in batched)
+            {
+                body = sanitizer.SanitizeTextBody("application/json", body);
+            }
+
+            Assert.Equal("{\"secret\":\"SANITIZED\"}", body);
+        }
+
         [Theory]
         [InlineData("NaN")]
         [InlineData("Infinity")]
@@ -565,7 +583,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void BodyKeySanitizerBatchPreservesJsonRoundTrips(string number)
         {
             var body = $"[{{\"number\":{number},\"secret\":\"initial\"}}]";
-            var sanitizers = new RecordedTestSanitizer[]
+            var sanitizers = new BodyKeySanitizer[]
             {
                 new BodyKeySanitizer("$..secret", value: "intermediate"),
                 new BodyKeySanitizer("$[?(@.number === 'NaN' || @.number === 'Infinity' || @.number === '-Infinity')].secret", value: "final")
@@ -723,15 +741,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(compareBodies ? "{\"secret\":\"final\"}" : "{\"secret\":\"original\"}", Encoding.UTF8.GetString(request.Request.Body));
         }
 
-        [Fact]
-        public void BodyKeySanitizerBatchReducesAllocations()
+        [Theory]
+        [InlineData("access_token", "Sanitized")]
+        [InlineData("sasUri", "https://example.com/no-signature")]
+        public void BodyKeySanitizerBatchReducesAllocationsForMatchedNoOp(string key, string value)
         {
-            var sanitizers = Enumerable.Range(0, 96)
-                .Select(index => new BodyKeySanitizer($"$..absent{index}"))
+            var sanitizers = new SanitizerDictionary().DefaultSanitizerList
+                .Select(registered => registered.Sanitizer)
+                .OfType<BodyKeySanitizer>()
                 .ToArray();
             var batched = BodyKeySanitizer.Batch(sanitizers).ToArray();
             Assert.Single(batched);
-            var body = "{\"payload\":\"" + new string('a', 4096) + "\"}";
+            var body = $"{{\"{key}\":\"{value}\",\"payload\":\"{new string('a', 4096)}\"}}";
             var entry = new RecordEntry();
             entry.Request.Headers.Add("Content-Type", new[] { "application/json" });
             entry.Request.Body = Encoding.UTF8.GetBytes(body);
@@ -758,7 +779,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var sequentialResult = Measure(sanitizers);
             var batchedResult = Measure(batched);
 
-            _output.WriteLine($"96 rules, {Encoding.UTF8.GetByteCount(body)}-byte JSON body, {iterations} iterations:");
+            _output.WriteLine($"{sanitizers.Length} rules, {Encoding.UTF8.GetByteCount(body)}-byte JSON body, {iterations} iterations:");
             _output.WriteLine($"Sequential: {sequentialResult.AllocatedBytes / iterations:N0} bytes/op, {sequentialResult.Milliseconds / iterations:F3} ms/op");
             _output.WriteLine($"Batched: {batchedResult.AllocatedBytes / iterations:N0} bytes/op, {batchedResult.Milliseconds / iterations:F3} ms/op");
             Assert.Equal(body, Encoding.UTF8.GetString(entry.Request.Body));

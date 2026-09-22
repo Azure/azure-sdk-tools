@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,12 +15,12 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class BodyKeySanitizer : RecordedTestSanitizer
     {
-        private readonly string jsonPath;
-        private readonly string newValue;
-        private readonly string regexValue = null;
-        private readonly string groupForReplace = null;
-        private readonly Regex regex;
-        private readonly List<BodyKeySanitizer> batchedSanitizers;
+        private readonly string _jsonPath;
+        private readonly string _newValue;
+        private readonly string _regexValue = null;
+        private readonly string _groupForReplace = null;
+        private readonly Regex _regex;
+        private readonly List<BodyKeySanitizer> _batchedSanitizers;
 
         /// <summary>
         /// This sanitizer offers regex update of a specific JTokenPath. EG: "TableName" within a json response body having its value replaced by
@@ -36,19 +39,19 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".+", string groupForReplace = null, ApplyCondition condition = null)
         {
             _scope = SanitizerScope.Body;
-            this.jsonPath = jsonPath;
-            newValue = value;
-            regexValue = regex;
-            this.groupForReplace = groupForReplace;
+            _jsonPath = jsonPath;
+            _newValue = value;
+            _regexValue = regex;
+            _groupForReplace = groupForReplace;
             Condition = condition;
 
-            this.regex = GetRegex(regex);
+            _regex = GetRegex(regex);
         }
 
         private BodyKeySanitizer(List<BodyKeySanitizer> sanitizers)
         {
             _scope = SanitizerScope.Body;
-            batchedSanitizers = sanitizers;
+            _batchedSanitizers = sanitizers;
         }
 
         internal static IEnumerable<RecordedTestSanitizer> Batch(IEnumerable<RecordedTestSanitizer> sanitizers)
@@ -58,9 +61,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             {
                 if (sanitizer.GetType() == typeof(BodyKeySanitizer) &&
                     sanitizer.Condition == null && !sanitizer.LegacyConvertJsonDateTokens &&
-                    ((BodyKeySanitizer)sanitizer).batchedSanitizers == null)
+                    ((BodyKeySanitizer)sanitizer)._batchedSanitizers == null)
                 {
-                    batch ??= new List<BodyKeySanitizer>();
+                    batch ??= [];
                     batch.Add((BodyKeySanitizer)sanitizer);
                     continue;
                 }
@@ -82,7 +85,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override string SanitizeTextBody(string contentType, string body)
         {
-            if (batchedSanitizers != null)
+            if (_batchedSanitizers != null)
             {
                 return SanitizeTextBodyBatch(contentType, body);
             }
@@ -119,7 +122,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 }
                 catch(Exception e)
                 {
-                    DebugLogger.LogError($"Ran into exception \"{e.Message}\" while attempting to run regex \"{regexValue}\" against body value \"{body}\"");
+                    DebugLogger.LogError($"Ran into exception \"{e.Message}\" while attempting to run regex \"{_regexValue}\" against body value \"{body}\"");
                     return body;
                 }
             }
@@ -130,7 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         private bool SanitizeJsonBody(JToken body, List<(JToken Original, JToken Replacement)> replacements = null)
         {
             bool sanitized = false;
-            foreach (JToken token in body.SelectTokens(jsonPath))
+            foreach (JToken token in body.SelectTokens(_jsonPath))
             {
                 if (!token.HasValues)
                 {
@@ -140,10 +143,13 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                         continue;
                     }
 
-                    var replacement = StringSanitizer.SanitizeValue(originalValue, newValue, regex, groupForReplace);
+                    var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regex, _groupForReplace);
                     var replacementToken = JToken.FromObject(replacement);
                     token.Replace(replacementToken);
-                    replacements?.Add((token, replacementToken));
+                    if (replacementToken.Parent != null)
+                    {
+                        replacements?.Add((token, replacementToken));
+                    }
                     sanitized |= originalValue != replacement;
                 }
             }
@@ -188,7 +194,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             var replacements = new List<(JToken Original, JToken Replacement)>();
             try
             {
-                foreach (var sanitizer in batchedSanitizers)
+                foreach (var sanitizer in _batchedSanitizers)
                 {
                     if (sanitizer.SanitizeJsonBody(json, replacements))
                     {
@@ -215,7 +221,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         private string SanitizeTextBodySequentially(string contentType, string body)
         {
-            foreach (var sanitizer in batchedSanitizers)
+            foreach (var sanitizer in _batchedSanitizers)
             {
                 body = sanitizer.SanitizeTextBody(contentType, body);
             }

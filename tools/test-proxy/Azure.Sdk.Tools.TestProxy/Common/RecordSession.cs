@@ -105,6 +105,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             if (!DebugLogger.CheckLogLevel(LogLevel.Debug))
             {
+                // Only apply batch sanitization if we're not debug logging during execution.
+                // Debug logging uses sequential processing so a clearer view of modifications is available.
                 sanitizers = BodyKeySanitizer.Batch(sanitizers);
             }
 
@@ -187,7 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     else
                     {
                         for (int i = 0; i < entriesPreSanitize.Length; i++)
-                        { 
+                        {
                             LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
                         }
                     }
@@ -213,6 +215,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 if (!DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
+                    // Only apply batch sanitization if we're not debug logging during execution.
+                    // Debug logging uses sequential processing so a clearer view of modifications is available.
                     sanitizers = BodyKeySanitizer.Batch(sanitizers);
                 }
 

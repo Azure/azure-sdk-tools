@@ -44,6 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     ) : MCPMultiCommandTool
     {
         private const int ScheduleRiskWarningWindowDays = 7;
+        private const string TargetReleaseMonthDescription = "SDK release target month in 'Month YYYY' format (full English month name and four-digit year). Must be the current month or later (UTC).";
         private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -104,7 +105,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string> targetReleaseOpt = new("--release-month")
         {
-            Description = "SDK release target month(Month YYYY)",
+            Description = TargetReleaseMonthDescription,
             Required = true,
         };
 
@@ -414,7 +415,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
 
-        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type.")]
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type. SDK PR status is omitted; check the linked GitHub PRs or release plan dashboard for current PR status. SDK generation status describes pipeline history, not PR status.")]
         public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, string? apiReleaseType = null, string? apiVersion = null, CancellationToken ct = default)
         {
             try
@@ -515,6 +516,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             }
                         }
                     }
+                }
+
+                if (releasePlan.SDKInfo.Any(sdk => !string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl)))
+                {
+                    (response.NextSteps ??= []).Add("SDK PR status is not included in release plan details. Check the linked GitHub PRs or release plan dashboard for current PR status. SDK generation status describes pipeline history, not current PR status.");
                 }
 
                 await AddReleasePlanScheduleRiskGuidanceAsync(response, ct);
@@ -1021,6 +1027,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return userProfile?.Aad?.EmailAddress ?? string.Empty;
         }
 
+        private string? ValidateTargetReleaseMonth(string? targetReleaseMonthYear)
+        {
+            if (string.IsNullOrWhiteSpace(targetReleaseMonthYear))
+            {
+                return "SDK release target month is required.";
+            }
+
+            if (!DateTime.TryParseExact(targetReleaseMonthYear, "MMMM yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var targetMonth))
+            {
+                return $"Invalid SDK release target month '{targetReleaseMonthYear}'. Use 'Month YYYY' with a full English month name and a four-digit year.";
+            }
+
+            var now = _timeProvider.GetUtcNow();
+            var currentMonth = new DateTime(now.Year, now.Month, 1);
+            if (targetMonth < currentMonth)
+            {
+                return $"SDK release target month '{targetReleaseMonthYear}' is in the past. Choose {currentMonth.ToString("MMMM yyyy", CultureInfo.InvariantCulture)} or later (UTC).";
+            }
+
+            return null;
+        }
+
         private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
             if (!string.IsNullOrEmpty(specPullRequestUrl))
@@ -1088,7 +1116,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available.")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, CancellationToken ct = default)
+        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, [Description(TargetReleaseMonthDescription)] string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, CancellationToken ct = default)
         {
             try
             {         
@@ -1096,6 +1124,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (!ApiReleaseTypeExtensions.TryParseFromUserInput(apiReleaseType, out var parsedApiReleaseType))
                 {
                     return new ReleasePlanResponse { ResponseError = $"Invalid API release type '{apiReleaseType}'. Supported values are: Private Preview, Public Preview, GA" };
+                }
+
+                var targetMonthError = ValidateTargetReleaseMonth(targetReleaseMonthYear);
+                if (targetMonthError != null)
+                {
+                    return new ReleasePlanResponse { ResponseError = targetMonthError };
                 }
 
                 // SDK release type is always derived from the API release type to prevent
@@ -2176,7 +2210,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = UpdateReleasePlanTargetToolName), Description("Update the SDK release target month on an existing release plan.")]
-        public async Task<ReleasePlanResponse> UpdateReleasePlanTarget(int workItemId, string targetReleaseMonthYear, CancellationToken ct = default)
+        public async Task<ReleasePlanResponse> UpdateReleasePlanTarget(int workItemId, [Description(TargetReleaseMonthDescription)] string targetReleaseMonthYear, CancellationToken ct = default)
         {
             try
             {
@@ -2185,9 +2219,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleasePlanResponse { ResponseError = "A valid work item ID must be provided." };
                 }
 
-                if (string.IsNullOrWhiteSpace(targetReleaseMonthYear))
+                var targetMonthError = ValidateTargetReleaseMonth(targetReleaseMonthYear);
+                if (targetMonthError != null)
                 {
-                    return new ReleasePlanResponse { ResponseError = "SDK release target month is required." };
+                    return new ReleasePlanResponse { ResponseError = targetMonthError };
                 }
 
                 // The resolver accepts either a Release Plan ID or a work item ID.

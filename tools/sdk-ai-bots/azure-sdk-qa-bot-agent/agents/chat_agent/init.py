@@ -159,7 +159,11 @@ async def main() -> None:
 
     # Init Skills
     skills = create_tenant_skills(agent_name)
-    skills_provider = SkillsProvider(skills)
+    skills_provider = SkillsProvider(
+        skills,
+        disable_load_skill_approval=True,
+        disable_read_skill_resource_approval=True,
+    )
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
     if reasoning_effort not in ("none", "low", "medium", "high", "xhigh"):

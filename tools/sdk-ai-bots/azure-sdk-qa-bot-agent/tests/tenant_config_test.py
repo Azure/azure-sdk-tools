@@ -225,3 +225,17 @@ def test_azure_mcp_server_agent_registers_wiki_search() -> None:
 
     assert "knowledge_tools.search_knowledge_base" in agent_source
     assert "knowledge_tools.wiki_search" in agent_source
+
+
+def test_chat_agent_allows_unattended_read_only_skill_loading() -> None:
+    init_path = (
+        Path(__file__).parents[1]
+        / "agents"
+        / "chat_agent"
+        / "init.py"
+    )
+    agent_source = init_path.read_text(encoding="utf-8")
+
+    assert "disable_load_skill_approval=True" in agent_source
+    assert "disable_read_skill_resource_approval=True" in agent_source
+    assert "disable_run_skill_script_approval=True" not in agent_source

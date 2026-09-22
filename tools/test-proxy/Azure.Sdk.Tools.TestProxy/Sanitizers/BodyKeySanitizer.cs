@@ -133,7 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             bool sanitized = false;
             foreach (JToken token in body.SelectTokens(_jsonPath))
             {
-                if (!token.HasValues)
+                if (token.Parent != null && !token.HasValues)
                 {
                     var originalValue = token.Value<string>();
                     if (originalValue == null)

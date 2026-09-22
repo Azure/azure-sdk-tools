@@ -209,7 +209,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 else if (message.TryGetBodyAsText(out string text))
                 {
-                    message.Body = Encoding.UTF8.GetBytes(SanitizeTextBody(contentType, text));
+                    var sanitizedText = SanitizeTextBody(contentType, text);
+                    if (!ReferenceEquals(text, sanitizedText))
+                    {
+                        message.Body = Encoding.UTF8.GetBytes(sanitizedText);
+                    }
                 }
                 else
                 {

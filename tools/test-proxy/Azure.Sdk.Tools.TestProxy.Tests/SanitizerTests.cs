@@ -575,6 +575,28 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal("{\"secret\":\"SANITIZED\"}", body);
         }
 
+        [Fact]
+        public void BodyKeySanitizerBatchPreservesUnchangedBodyBytes()
+        {
+            var requestBody = Encoding.UTF8.GetBytes("{\"secret\":\"Sanitized\"}");
+            var responseBody = Encoding.UTF8.GetBytes("{\"secret\":\"Sanitized\"}");
+            var entry = new RecordEntry { RequestMethod = Core.RequestMethod.Post };
+            entry.Request.Headers.Add("Content-Type", ["application/json"]);
+            entry.Request.Body = requestBody;
+            entry.Response.Headers.Add("Content-Type", ["application/json"]);
+            entry.Response.Body = responseBody;
+            var sanitizer = Assert.Single(BodyKeySanitizer.Batch(
+            [
+                new BodyKeySanitizer("$.secret"),
+                new BodyKeySanitizer("$.missing")
+            ]));
+
+            sanitizer.Sanitize(entry);
+
+            Assert.Same(requestBody, entry.Request.Body);
+            Assert.Same(responseBody, entry.Response.Body);
+        }
+
         [Theory]
         [InlineData("NaN")]
         [InlineData("Infinity")]

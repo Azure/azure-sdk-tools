@@ -835,13 +835,24 @@ function Invoke-PreDeleteResourceCleanup() {
     }
   }
 
-  $groupLocks = @(Get-AzResourceLock -ResourceGroupName $resourceGroupName -AtScope -ErrorAction SilentlyContinue)
-  foreach ($groupLock in $groupLocks) {
-    Write-Host "Removing resource group lock '$($groupLock.Name)' from '$resourceGroupName'"
+  $resourceGroupId = $ResourceGroup.ResourceId.TrimEnd('/')
+  try {
+    $locks = @(
+      Get-AzResourceLock -ResourceGroupName $resourceGroupName -ErrorAction Stop |
+        Where-Object { $_.LockId.StartsWith("$resourceGroupId/", [System.StringComparison]::OrdinalIgnoreCase) } |
+        Sort-Object { $_.LockId.Length } -Descending
+    )
+  } catch {
+    $errors += "Failed enumerating locks in resource group '$resourceGroupName': $($_.Exception.Message)"
+    return $errors
+  }
+
+  foreach ($lock in $locks) {
+    Write-Host "Removing resource lock '$($lock.Name)' from '$($lock.LockId)'"
     try {
-      Remove-AzResourceLock -LockId $groupLock.LockId -Force -ErrorAction Stop
+      Remove-AzResourceLock -LockId $lock.LockId -Force -ErrorAction Stop
     } catch {
-      $errors += "Failed removing lock '$($groupLock.Name)' from resource group '$resourceGroupName': $($_.Exception.Message)"
+      $errors += "Failed removing lock '$($lock.Name)' from '$($lock.LockId)': $($_.Exception.Message)"
     }
   }
 
@@ -849,18 +860,6 @@ function Invoke-PreDeleteResourceCleanup() {
 
   if (!$resources) {
     return $errors
-  }
-
-  foreach ($resource in $resources) {
-    $locks = @(Get-AzResourceLock -Scope $resource.ResourceId -AtScope -ErrorAction SilentlyContinue)
-    foreach ($lock in $locks) {
-      Write-Host "Removing resource lock '$($lock.Name)' from '$($resource.ResourceId)'"
-      try {
-        Remove-AzResourceLock -LockId $lock.LockId -Force -ErrorAction Stop
-      } catch {
-        $errors += "Failed removing lock '$($lock.Name)' from '$($resource.ResourceId)': $($_.Exception.Message)"
-      }
-    }
   }
 
   if ($errors.Count -ne 0) {
@@ -1020,7 +1019,7 @@ function DeleteAndPurgeGroups {
 
         # For storage tests specifically, if they are aborted then blobs with immutability policies
         # can be left around which prevent deletion.
-        # These helpers throw in CI when the group prefix doesn't start with 'rg-' or 'SSS3PT_rg-'
+        # These helpers throw in CI when the group prefix doesn't start with 'rg-' or 'SSS3PT_'
         # (a safety guard against wildcard-matching non-live-test resources). We still want the
         # resource group delete to be attempted even if the helpers fail/throw for that reason,
         # so wrap each call in its own try/catch and continue.
@@ -1029,10 +1028,10 @@ function DeleteAndPurgeGroups {
           try { SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:$ci }
           catch { Write-Warning "SetStorageNetworkAccessRules failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
 
-          try { Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:$ci }
+          try { Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:$ci -CheckPrefix:$CheckPrefix }
           catch { Write-Warning "Remove-WormStorageAccounts failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
         }
-        try { Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:$ci }
+        try { Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:$ci -CheckPrefix:$CheckPrefix }
         catch { Write-Warning "Remove-StorageSyncServices failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
 
         $verifyDeleted = {

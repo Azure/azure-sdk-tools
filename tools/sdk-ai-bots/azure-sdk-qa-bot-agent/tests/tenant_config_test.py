@@ -118,12 +118,14 @@ def test_implementation_skills_require_repository_verification() -> None:
     assert "standard, legacy, and routed operation declarations" in typespec_content
     assert "evaluate the new operation's required route and wire contract independently" in typespec_content
     assert "Treat a newly introduced endpoint as greenfield" in typespec_content
+    assert "Verify and reuse an existing polling/status operation" in typespec_content
     assert "declaration files by semantic operation kind and behavior" in typespec_content
     assert "repository-defined trigger and the minimal supported fix" in typespec_content
     assert "verify the solution against the synchronized declaration" in authoring_content
     assert "greenfield standard contracts from brownfield" in authoring_content
     assert "evaluate the new operation's required route and wire contract independently" in authoring_content
     assert "A neighboring custom operation is not a backward-compatibility requirement" in authoring_content
+    assert "include the exact namespace or alias required" in authoring_content
     assert "Treat a sample as supporting evidence" in authoring_content
     assert "verify the behavior in the synchronized client-generator-core" in python_content
 

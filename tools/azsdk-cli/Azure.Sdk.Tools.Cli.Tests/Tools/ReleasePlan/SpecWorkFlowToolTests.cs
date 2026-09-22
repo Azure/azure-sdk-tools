@@ -307,8 +307,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test, Combinatorial]
-        public async Task GenerateSDK_WhenPreviousPipelineIsActive_SkipsNewRun(
-            [Values("Pending", "PENDING", "In progress", "Completed", "Failed", "")] string generationStatus,
+        public async Task GenerateSDK_WhenPending_SkipsNewRunWithoutLookingUpPipeline(
+            [Values("Pending", "PENDING", "pending")] string generationStatus,
+            [Values(null, "", " \t", "not-a-url", PreviousGenerationPipelineUrl)] string? pipelineUrl)
+        {
+            var devOpsService = SetupSdkGenerationToolWithPipeline(generationStatus, pipelineUrl);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", workItemId: 456);
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains("Pending"));
+            Assert.That(result.Details, Has.Some.Contains("was not triggered to avoid duplicate generation"));
+            devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test, Combinatorial]
+        public async Task GenerateSDK_WhenInProgressAndPreviousPipelineIsActive_SkipsNewRun(
+            [Values("In progress", "IN PROGRESS")] string generationStatus,
             [Values(BuildStatus.NotStarted, BuildStatus.InProgress, BuildStatus.Postponed, BuildStatus.Cancelling)] BuildStatus pipelineStatus)
         {
             var devOpsService = SetupSdkGenerationToolWithPipeline(generationStatus);
@@ -334,8 +354,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test, Combinatorial]
-        public async Task GenerateSDK_WhenActiveStatusHasNoPipelineUrl_RetriesGeneration(
-            [Values("In progress", "Pending", "PENDING")] string generationStatus,
+        public async Task GenerateSDK_WhenInProgressHasNoPipelineUrl_RetriesGeneration(
+            [Values("In progress", "IN PROGRESS")] string generationStatus,
             [Values(null, "", " \t")] string? pipelineUrl)
         {
             var devOpsService = SetupSdkGenerationToolWithPipeline(generationStatus, pipelineUrl);
@@ -357,8 +377,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test, Combinatorial]
-        public async Task GenerateSDK_WhenPreviousPipelineCompleted_AllowsGeneration(
-            [Values("Pending", "In progress")] string generationStatus,
+        public async Task GenerateSDK_WhenInProgressAndPreviousPipelineCompleted_AllowsGeneration(
+            [Values("In progress", "IN PROGRESS")] string generationStatus,
             [Values(BuildResult.Succeeded, BuildResult.PartiallySucceeded, BuildResult.Failed, BuildResult.Canceled)] BuildResult pipelineResult)
         {
             var devOpsService = SetupSdkGenerationToolWithPipeline(generationStatus);
@@ -381,7 +401,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?view=results&buildId=99")]
         public async Task GenerateSDK_WhenPipelineLinkHasOtherQueryParameters_ChecksCorrectBuild(string pipelineUrl)
         {
-            var devOpsService = SetupSdkGenerationToolWithPipeline("Pending", pipelineUrl);
+            var devOpsService = SetupSdkGenerationToolWithPipeline("In progress", pipelineUrl);
             devOpsService.Setup(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Build { Id = 99, Status = BuildStatus.Completed });
 
@@ -401,83 +421,117 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99&buildId=100")]
         [TestCase("https://dev.azure.com/another-org/internal/_build/results?buildId=99")]
         [TestCase("https://dev.azure.com/azure-sdk/public/_build/results?buildId=99")]
-        public async Task GenerateSDK_WhenRecordedPipelineLinkIsInvalid_DoesNotQueue(string pipelineUrl)
+        public async Task GenerateSDK_WhenInProgressPipelineLinkIsInvalid_AllowsGeneration(string pipelineUrl)
         {
-            var devOpsService = SetupSdkGenerationToolWithPipeline("Pending", pipelineUrl);
+            var devOpsService = SetupSdkGenerationToolWithPipeline("In progress", pipelineUrl);
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", workItemId: 456);
 
-            Assert.That(result.Status, Is.EqualTo("Failed"));
-            Assert.That(result.ResponseErrors, Is.Not.Empty);
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(null)]
         [TestCase(BuildStatus.None)]
         [TestCase(BuildStatus.All)]
         [TestCase((BuildStatus)1024)]
-        public async Task GenerateSDK_WhenPipelineStatusIsUnknown_DoesNotQueue(BuildStatus? status)
+        public async Task GenerateSDK_WhenInProgressPipelineStatusIsUnknown_AllowsGeneration(BuildStatus? status)
         {
-            var devOpsService = SetupSdkGenerationToolWithPipeline("Pending");
+            var devOpsService = SetupSdkGenerationToolWithPipeline("In progress");
             devOpsService.Setup(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Build { Id = 99, Status = status });
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", workItemId: 456);
 
-            Assert.That(result.Status, Is.EqualTo("Failed"));
-            Assert.That(result.ResponseErrors, Is.Not.Empty);
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
+            devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(true)]
         [TestCase(false)]
-        public async Task GenerateSDK_WhenPipelineIsMissingOrMismatched_DoesNotQueue(bool isMissing)
+        public async Task GenerateSDK_WhenInProgressPipelineIsMissingOrMismatched_AllowsGeneration(bool isMissing)
         {
-            var devOpsService = SetupSdkGenerationToolWithPipeline("Pending");
+            var devOpsService = SetupSdkGenerationToolWithPipeline("In progress");
             devOpsService.Setup(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(isMissing ? null! : new Build { Id = 98, Status = BuildStatus.Completed });
+                .ReturnsAsync(isMissing ? null! : new Build { Id = 98, Status = BuildStatus.InProgress });
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", workItemId: 456);
 
-            Assert.That(result.Status, Is.EqualTo("Failed"));
-            Assert.That(result.ResponseErrors, Is.Not.Empty);
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
+            devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public async Task GenerateSDK_WhenPipelineLookupFails_DoesNotQueue(bool isTimeout)
+        [TestCase("archived")]
+        [TestCase("inaccessible")]
+        [TestCase("timeout")]
+        public async Task GenerateSDK_WhenInProgressPipelineLookupFails_AllowsGeneration(string failureKind)
         {
-            var devOpsService = SetupSdkGenerationToolWithPipeline("Pending");
-            Exception failure = isTimeout ? new TaskCanceledException("Lookup timed out") : new HttpRequestException("Build lookup failed");
+            var devOpsService = SetupSdkGenerationToolWithPipeline("In progress");
+            Exception failure = failureKind switch
+            {
+                "archived" => new HttpRequestException("Build has been archived", null, System.Net.HttpStatusCode.NotFound),
+                "inaccessible" => new HttpRequestException("Build is not accessible", null, System.Net.HttpStatusCode.Forbidden),
+                _ => new TaskCanceledException("Lookup timed out")
+            };
             devOpsService.Setup(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()))
                 .ThrowsAsync(failure);
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", workItemId: 456);
 
-            Assert.That(result.Status, Is.EqualTo("Failed"));
-            Assert.That(result.ResponseErrors, Is.Not.Empty);
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("Not applicable")]
+        [TestCase("not applicable")]
+        [TestCase("Completed")]
+        [TestCase("Failed")]
+        public async Task GenerateSDK_WhenStatusIsNotPendingOrInProgress_DoesNotCheckOldPipeline(string? generationStatus)
+        {
+            var devOpsService = SetupSdkGenerationToolWithPipeline(generationStatus!);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", workItemId: 456);
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
+            devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
         public async Task GenerateSDK_WhenPipelineLookupIsCanceled_DoesNotQueue()
         {
-            var devOpsService = SetupSdkGenerationToolWithPipeline("Pending");
+            var devOpsService = SetupSdkGenerationToolWithPipeline("In progress");
             using var cancellation = new CancellationTokenSource();
             var lookup = new TaskCompletionSource<Build>(TaskCreationOptions.RunContinuationsAsynchronously);
             devOpsService.Setup(x => x.GetPipelineRunAsync(99, cancellation.Token)).Returns(lookup.Task);
@@ -503,7 +557,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task GenerateSDK_WhenAllLanguagesArePending_AllowsEachLanguage()
+        public async Task GenerateSDK_WhenAllLanguagesAreNotApplicable_AllowsEachLanguage()
         {
             string[] languages = [".NET", "Java", "JavaScript", "Go", "Python"];
             var releasePlan = new ReleasePlanWorkItem
@@ -513,7 +567,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 {
                     Language = language,
                     PackageName = "azure-test",
-                    GenerationStatus = "Pending"
+                    GenerationStatus = "Not applicable"
                 }).ToList()
             };
             var devOpsService = SetupSdkGenerationTool(releasePlan);
@@ -532,12 +586,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }
         }
 
-        [Test]
-        public async Task GenerateSDK_WhenPreviousPipelineCompleted_StillChecksConflictingReleasePlans()
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GenerateSDK_WhenPreviousPipelineIsFinishedOrMissing_StillChecksConflictingReleasePlans(bool lookupFails)
         {
-            var devOpsService = SetupSdkGenerationToolWithPipeline("Pending");
-            devOpsService.Setup(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Build { Id = 99, Status = BuildStatus.Completed });
+            var devOpsService = SetupSdkGenerationToolWithPipeline("In progress");
+            if (lookupFails)
+            {
+                devOpsService.Setup(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new HttpRequestException("Build has been archived", null, System.Net.HttpStatusCode.NotFound));
+            }
+            else
+            {
+                devOpsService.Setup(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new Build { Id = 99, Status = BuildStatus.Completed });
+            }
             devOpsService.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
                 It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(

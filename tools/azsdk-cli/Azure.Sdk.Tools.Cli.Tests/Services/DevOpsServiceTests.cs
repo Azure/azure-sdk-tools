@@ -423,7 +423,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         [TestCase("Completed", "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=90")]
         [TestCase("In progress", "")]
         [TestCase("In progress", " \t")]
-        public async Task UpdateSpecPullRequestAsync_NewSpec_MarksWaitingLanguagesPending(string generationStatus, string pipelineUrl)
+        public async Task UpdateSpecPullRequestAsync_NewSpec_MarksWaitingLanguagesNotApplicable(string generationStatus, string pipelineUrl)
         {
             const string oldSpec = "https://github.com/Azure/azure-rest-api-specs/pull/123";
             const string newSpec = "https://github.com/Azure/azure-rest-api-specs/pull/456";
@@ -452,7 +452,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(statusPatch, Has.Count.EqualTo(languages.Length));
             foreach (var language in languages)
             {
-                Assert.That(statusPatch.Single(op => op.Path == $"/fields/Custom.GenerationStatusFor{language}").Value, Is.EqualTo("Pending"));
+                Assert.That(statusPatch.Single(op => op.Path == $"/fields/Custom.GenerationStatusFor{language}").Value, Is.EqualTo("Not applicable"));
             }
             Assert.That(statusPatch.All(op => op.Path.StartsWith("/fields/Custom.GenerationStatusFor", StringComparison.Ordinal)), Is.True,
                 "Linking a spec must not remove pipeline or SDK PR links, or change release/exclusion state.");
@@ -475,7 +475,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var patch = _connection.CapturedPatches.Single(p => p.WorkItemId == 100).Document;
             Assert.That(patch, Has.Count.EqualTo(4));
             Assert.That(patch.Any(op => op.Path == "/fields/Custom.GenerationStatusForJava"), Is.False);
-            Assert.That(patch.All(op => Equals(op.Value, "Pending")), Is.True);
+            Assert.That(patch.All(op => Equals(op.Value, "Not applicable")), Is.True);
         }
 
         [Test]

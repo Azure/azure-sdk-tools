@@ -1,8 +1,6 @@
 # Release History
 
-## 0.6.49 (Unreleased)
-
-### Features Added
+## 0.6.49 (2026-09-21)
 
 ### Breaking Changes
 
@@ -11,9 +9,7 @@
 ### Bugs Fixed
 
 - Release plan creation and target-month updates now reject malformed or past target months, while allowing the current UTC month and future months.
-- Linking a spec PR now marks SDKs awaiting generation as `Pending` instead of `In progress`, while preserving recorded in-progress runs. SDK generation checks the saved pipeline's current status, allowing retries after it finishes or when no pipeline link exists, and avoiding duplicate active runs.
-
-### Other Changes
+- Linking a spec PR now sets idle SDK generation to `Not applicable` instead of `In progress`, while preserving recorded in-progress runs. `Pending` still blocks duplicate requests; stale `In progress` states can be retried when the pipeline is finished, missing, invalid, or inaccessible.
 
 ## 0.6.47 (2026-09-16)
 

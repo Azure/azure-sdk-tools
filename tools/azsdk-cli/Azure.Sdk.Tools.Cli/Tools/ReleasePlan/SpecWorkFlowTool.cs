@@ -301,46 +301,46 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                // Pending means the spec needs generation, not that a job is queued.
-                // A saved link may refer to an older run, so check the actual job before blocking a retry.
-                if (!string.IsNullOrWhiteSpace(sdkInfo?.GenerationPipelineUrl))
+                // A pending generation request may not have a pipeline URL yet; do not queue another one.
+                if (string.Equals(sdkInfo?.GenerationStatus, "Pending", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation("SDK generation for {Language} is Pending for release plan work item {WorkItemId}. Skipping a duplicate request.", language, workItemId);
+                    response.Details.Add($"SDK generation for {language} is Pending for release plan work item {workItemId}. A new SDK generation run was not triggered to avoid duplicate generation.");
+                    return response;
+                }
+
+                // In-progress labels can be stale. Only block when the saved pipeline is still active.
+                // Old pipeline runs may have been archived and must not prevent regeneration.
+                if (string.Equals(sdkInfo?.GenerationStatus, "In progress", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(sdkInfo?.GenerationPipelineUrl))
                 {
                     var pipelineUrl = sdkInfo.GenerationPipelineUrl;
-                    if (!TryGetGenerationPipelineBuildId(pipelineUrl, out var buildId))
+                    if (TryGetGenerationPipelineBuildId(pipelineUrl, out var buildId))
                     {
-                        response.Status = "Failed";
-                        response.ResponseErrors.Add($"Cannot verify the recorded SDK generation pipeline for {language}: {pipelineUrl}. Check the pipeline link before retrying. No new run was started.");
-                        return response;
-                    }
+                        Build? previousRun = null;
+                        try
+                        {
+                            previousRun = await devopsService.GetPipelineRunAsync(buildId, ct).WaitAsync(ct);
+                        }
+                        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                        {
+                            logger.LogWarning(ex, "Could not read SDK generation pipeline {PipelineUrl}; it may have been archived. Allowing generation for {Language}.", pipelineUrl, language);
+                        }
 
-                    Build previousRun;
-                    try
-                    {
-                        previousRun = await devopsService.GetPipelineRunAsync(buildId, ct).WaitAsync(ct);
-                    }
-                    catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
-                    {
-                        response.Status = "Failed";
-                        response.ResponseErrors.Add($"Could not check the recorded SDK generation pipeline {pipelineUrl}. No new run was started. Check pipeline access and retry. Details: {ex.Message}");
-                        return response;
-                    }
+                        var isRunning = previousRun?.Status is BuildStatus.NotStarted or BuildStatus.InProgress or BuildStatus.Postponed or BuildStatus.Cancelling;
+                        if (previousRun != null && previousRun.Id == buildId && isRunning)
+                        {
+                            logger.LogInformation("SDK generation pipeline {PipelineUrl} is {Status}. Skipping a duplicate run for {Language}.", pipelineUrl, previousRun.Status, language);
+                            response.Details.Add($"SDK generation for {language} already has a pipeline in status '{previousRun.Status}' for release plan work item {workItemId}. A new SDK generation run was not triggered to avoid duplicate generation. Previous SDK generation pipeline: {pipelineUrl}.");
+                            return response;
+                        }
 
-                    var isRunning = previousRun?.Status is BuildStatus.NotStarted or BuildStatus.InProgress or BuildStatus.Postponed or BuildStatus.Cancelling;
-                    if (previousRun == null || previousRun.Id != buildId || (!isRunning && previousRun.Status != BuildStatus.Completed))
-                    {
-                        response.Status = "Failed";
-                        response.ResponseErrors.Add($"Cannot determine the status of the recorded SDK generation pipeline {pipelineUrl}. Check the pipeline before retrying. No new run was started.");
-                        return response;
+                        logger.LogInformation("No active SDK generation run was confirmed at {PipelineUrl}. Allowing generation for {Language}.", pipelineUrl, language);
                     }
-
-                    if (isRunning)
+                    else
                     {
-                        logger.LogInformation("SDK generation pipeline {PipelineUrl} is {Status}. Skipping a duplicate run for {Language}.", pipelineUrl, previousRun.Status, language);
-                        response.Details.Add($"SDK generation for {language} already has a pipeline in status '{previousRun.Status}' for release plan work item {workItemId}. A new SDK generation run was not triggered to avoid duplicate generation. Previous SDK generation pipeline: {pipelineUrl}.");
-                        return response;
+                        logger.LogWarning("The recorded SDK generation pipeline URL {PipelineUrl} is invalid. Allowing generation for {Language}.", pipelineUrl, language);
                     }
-
-                    logger.LogInformation("Previous SDK generation pipeline {PipelineUrl} has completed. Allowing generation for {Language}.", pipelineUrl, language);
                 }
 
                 // Check if another active (in progress) release plan exists for the same TypeSpec project that already

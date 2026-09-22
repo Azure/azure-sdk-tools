@@ -1440,7 +1440,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 };
                 await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(jsonLinkDocument, apiSpecWorkItemId, cancellationToken: ct);
 
-                // A new spec needs generation, but linking it does not start any pipelines.
+                // Linking a spec does not request or start SDK generation, so do not mark it Pending or In progress.
                 // Preserve recorded in-progress runs; the generation tool checks their live status before retrying.
                 var releasePlanWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlanWorkItemId, cancellationToken: ct);
                 var releasePlanUpdateDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
@@ -1459,7 +1459,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                             Path = $"/fields/Custom.GenerationStatusFor{lang}",
-                            Value = "Pending"
+                            Value = "Not applicable"
                         }
                     );
                 }

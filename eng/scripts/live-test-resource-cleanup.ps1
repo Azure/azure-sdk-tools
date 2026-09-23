@@ -954,6 +954,9 @@ function DeleteOrUpdateResourceGroups() {
       Write-Warning "No resource groups found"
       return
   }
+  if ($allGroups.Count -gt 1) {
+    $allGroups = @($allGroups | Get-Random -Count $allGroups.Count)
+  }
   $toDelete = @()
   $toClean = @()
   $toDeleteSoon = @()

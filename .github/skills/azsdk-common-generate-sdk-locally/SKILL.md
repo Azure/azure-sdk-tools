@@ -53,7 +53,7 @@ Prerequisites: azure-sdk-mcp server must be running. Without MCP, use `npx tsp-c
    - From an SDK language repo: use path to `tsp-location.yaml`.
 4. **Verify setup** — Run `azure-sdk-mcp:azsdk_verify_setup` to confirm environment.
 5. **Generate** — Run `azure-sdk-mcp:azsdk_package_generate_code` with the config file path.
-6. **Build** — Run `azure-sdk-mcp:azsdk_package_build_code`. For .NET, use the `additionalArguments: "/p:RunApiCompat=false "` to skip API compatibility checks if user requests to skip API compatibility check.
+6. **Build** — Run `azure-sdk-mcp:azsdk_package_build_code`. For .NET, use the `additionalArguments: "/p:RunApiCompat=false"` to skip API compatibility checks if user requests to skip API compatibility check.
 7. **Customize** — If build fails, or if user requests SDK modifications, run `azure-sdk-mcp:azsdk_customized_code_update` with the build errors or user request. The tool handles the full workflow internally: it classifies the issue, applies TypeSpec decorators and/or code patches, regenerates the SDK, and builds — all in one call. See [customization workflow](references/customization-workflow.md). _(If the user requested "generate only", stop here — skip steps 8–11.)_
 8. **Commit checkpoint** — Prompt the user to commit generated changes before proceeding. See [commit checkpoint details](references/detailed-workflow.md).
 9. **Validate** — Run `azure-sdk-mcp:azsdk_package_run_check` and `azure-sdk-mcp:azsdk_package_run_tests`.

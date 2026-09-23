@@ -12,6 +12,15 @@ import { readJson, writeJson } from "./cli.mjs";
  *   coverage: {semanticIntentIds: string[], downstreamCandidateIds: string[], inferenceRequestIds: string[]},
  *   input: {path: string, readExactlyOnce: boolean, bytes: number},
  *   counts: {assessedSemanticIntents: number, informationalSemanticIntents: number, guidelineRequests: number},
+ *   materialization: {script: string, command: string},
+ *   serving: {
+ *     script: string,
+ *     command: string,
+ *     requiredOutput: string,
+ *     longLived: boolean,
+ *     readStartupOutputImmediately: boolean,
+ *     waitForProcessCompletion: boolean
+ *   },
  *   completionChecklist: string[]
  * }} AgentWorkspaceIndex
  * @typedef {{
@@ -210,6 +219,29 @@ void test("builds a compact complete Agent workspace", () => {
     assert.equal(index.input.bytes, fs.statSync(path.join(work, "model-input.json")).size);
     assert.equal(index.counts.assessedSemanticIntents, 1);
     assert.equal(index.counts.informationalSemanticIntents, 0);
+    assert.equal(index.materialization.script, "scripts/materialize-assessment-results.mjs");
+    assert.equal(
+      index.materialization.command,
+      "node <skill-directory>/scripts/materialize-assessment-results.mjs --work <work-directory>",
+    );
+    assert.equal(index.serving.script, "scripts/serve-assessment.mjs");
+    assert.equal(
+      index.serving.command,
+      "node <skill-directory>/scripts/serve-assessment.mjs --file <work-directory>/assessment.html",
+    );
+    assert.equal(index.serving.requiredOutput, "http://127.0.0.1:<port>/assessment.html");
+    assert.equal(index.serving.longLived, true);
+    assert.equal(index.serving.readStartupOutputImmediately, true);
+    assert.equal(index.serving.waitForProcessCompletion, false);
+    assert.ok(
+      index.completionChecklist.some(
+        (item) =>
+          item.includes("attached long-lived process") &&
+          item.includes("immediately read its startup output") &&
+          item.includes("without waiting for process completion") &&
+          item.includes("clickable Assessment report link"),
+      ),
+    );
     const decisionsDraft = /** @type {AgentDecisionsDraft} */ (
       readJson(path.join(work, "agent-workspace", "agent-decisions.draft.json"))
     );

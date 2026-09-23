@@ -29,8 +29,8 @@ const onTurnErrorHandler = async (context, error) => {
   // response is already sent before TurnState.save() fails, so surfacing this
   // error to the user is misleading — suppress it and log as a warning instead.
   const isETagConflict =
-    error &&
-    'message' in error &&
+    error !== null &&
+    (typeof error === 'object' || typeof error === 'function') &&
     typeof error.message === 'string' &&
     (error.message as string).includes('eTag conflict');
   if (isETagConflict) {

@@ -23,6 +23,9 @@ parameters:
   - name: EnvVars
     type: object
     default: {}
+  - name: RemovePaths
+    type: object
+    default: []
 
 steps:
 
@@ -41,4 +44,6 @@ steps:
           -TargetRepo '${{ target.key }}'
           -TargetBranch '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
           -Rebase '${{ target.value.Rebase }}'
-      env: ${{ parameters.EnvVars }}
+      env:
+        ${{ insert }}: ${{ parameters.EnvVars }}
+        SYNC_REMOVE_PATHS: ${{ convertToJson(parameters.RemovePaths) }}

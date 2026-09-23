@@ -19,6 +19,9 @@ The branch of Target GitHub repository will synced.
 .PARAMETER Rebase
 Keep the commit record when syning.
 
+.PARAMETER RemovePathsJson
+A JSON array of repository-relative paths that must not exist in the target repository.
+
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
@@ -35,7 +38,10 @@ param(
   [string] $TargetBranch,
 
   [Parameter(Mandatory = $false)]
-  [string] $Rebase
+  [string] $Rebase,
+
+  [Parameter(Mandatory = $false)]
+  [string] $RemovePathsJson = $env:SYNC_REMOVE_PATHS
 )
 
 . (Join-Path $PSScriptRoot ../common/scripts/common.ps1)
@@ -67,6 +73,20 @@ Function FailOnError([string]$ErrorMessage, $CleanUpScripts = 0) {
       exit $failedCode
     }
   }
+
+$RemovePaths = @()
+if ($RemovePathsJson) {
+  $RemovePaths = @($RemovePathsJson | ConvertFrom-Json)
+  foreach ($path in $RemovePaths) {
+    if (!$path -or [System.IO.Path]::IsPathRooted($path) -or $path -match '(^|[\\/])\.\.([\\/]|$)' -or $path -eq '.') {
+      throw "RemovePaths entries must be repository-relative paths without parent directory traversal. Invalid path: '$path'"
+    }
+  }
+}
+
+if ($RemovePaths.Count -gt 0 -and $Rebase) {
+  throw 'RemovePaths cannot be combined with Rebase.'
+}
 
 if (-not (Test-Path $SourceRepo)) {
   New-Item -Path $SourceRepo -ItemType Directory -Force
@@ -100,7 +120,40 @@ try {
     $TargetBranch = $defaultBranch
   }
 
-  if (-not $($Rebase)) {
+  if ($RemovePaths.Count -gt 0) {
+    git fetch --no-tags Target $TargetBranch
+    FailOnError "Failed to fetch TargetBranch $($TargetBranch)."
+
+    $targetRef = "refs/remotes/Target/$TargetBranch"
+    git checkout -B target_branch $targetRef
+    FailOnError "Failed to check out TargetBranch $($TargetBranch)."
+
+    git merge --strategy=ours --no-ff --no-commit $SourceBranch
+    FailOnError "Failed to merge $($SourceRepo):$($SourceBranch) into $($TargetRepo):$($TargetBranch)" {
+      git merge --abort
+    }
+
+    git read-tree --reset -u $SourceBranch
+    FailOnError "Failed to update the target tree from $($SourceRepo):$($SourceBranch)."
+
+    git rm -r -f --ignore-unmatch -- $RemovePaths
+    FailOnError "Failed to remove configured paths from $($TargetRepo):$($TargetBranch)."
+
+    $gitDirectory = git rev-parse --git-dir
+    FailOnError 'Failed to find the Git directory.'
+    $mergeInProgress = Test-Path (Join-Path $gitDirectory 'MERGE_HEAD')
+    git diff --cached --quiet
+    $hasChanges = $LASTEXITCODE -ne 0
+
+    if ($mergeInProgress -or $hasChanges) {
+      git -c user.name=$user -c user.email=$Email commit -m "Sync $SourceRepo excluding configured paths"
+      FailOnError "Failed to commit filtered sync for $($TargetRepo):$($TargetBranch)."
+    }
+
+    git push Target "target_branch:refs/heads/$($TargetBranch)"
+    FailOnError "Failed to push to $($TargetRepo):$($TargetBranch)"
+
+  } elseif (-not $($Rebase)) {
     git checkout -B target_branch $($SourceBranch)
     git push Target "target_branch:refs/heads/$($TargetBranch)"
     FailOnError "Failed to push to $($TargetRepo):$($TargetBranch)"

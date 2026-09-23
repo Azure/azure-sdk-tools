@@ -24,7 +24,7 @@ public class PackageApprovalStatusToolTests
     {
         var releaseStatusService = new Mock<IPackageReleaseStatusService>();
         releaseStatusService
-            .Setup(x => x.GetApprovalStatusAsync(It.IsAny<string>(), "python", "azure-test", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetApprovalStatusAsync(It.IsAny<string>(), "python", "azure-test", "1.0.0", "client", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PackageReleaseStatusResult
             {
                 IsApproved = true,
@@ -49,7 +49,7 @@ public class PackageApprovalStatusToolTests
             });
         var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
 
-        var response = await packageTool.GetApprovalStatus("python", "azure-test", "1.0.0", "hash");
+        var response = await packageTool.GetApprovalStatus("python", "azure-test", "1.0.0", "client", "hash");
 
         Assert.That(response.ToString(), Does.Contain("Approval record ID: approval-record-id"));
         Assert.That(response.Result!.ReviewHub.Approvals![0].Id, Is.EqualTo("approval-record-id"));

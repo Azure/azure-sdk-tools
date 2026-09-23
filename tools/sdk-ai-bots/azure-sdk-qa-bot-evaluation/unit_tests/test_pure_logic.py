@@ -399,6 +399,7 @@ def test_output_items_to_rows_completion_item_response():
                 "response": "collected answer",
                 "context": context,
                 "response_id": "response-1",
+                "latency": 12.5,
                 "references": [{"title": "R", "link": "http://r"}],
                 "knowledges": [{"title": "K", "link": "http://k"}],
             },
@@ -420,6 +421,7 @@ def test_output_items_to_rows_completion_item_response():
     }
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
+    assert rows[0]["inputs.latency"] == 12.5
 
 
 def test_record_run_result_preserves_local_tool_calls():
@@ -475,6 +477,36 @@ def test_failed_row_counts_as_failure_in_gate():
     assert summary["total_evals"] == 1
     assert summary["bot_evals_fail_rate"] == 1
     assert summary["groundedness_fail_rate"] == 1
+    assert recorded[0]["latency"] is None
+    assert "latency_avg" not in summary
+
+
+def test_record_run_result_latency_stats():
+    from _evals_result import EvalsResult
+
+    er = EvalsResult(metrics={"similarity": None}, suppressions=None)
+    rows = [
+        {
+            "inputs.testcase": f"t{i}",
+            "inputs.ground_truth": "gt",
+            "inputs.expected_references": [],
+            "inputs.expected_knowledges": [],
+            "inputs.response": "answer",
+            "inputs.references": [],
+            "inputs.knowledges": [],
+            "inputs.latency": latency,
+            "outputs.similarity.similarity": 5.0,
+            "outputs.similarity.similarity_result": "pass",
+        }
+        for i, latency in enumerate([40.0, 10.0, 30.0, 20.0, None])
+    ]
+    recorded = er.record_run_result({"rows": rows})
+    assert [r["latency"] for r in recorded[:-1]] == [40.0, 10.0, 30.0, 20.0, None]
+    summary = recorded[-1]
+    assert summary["latency_avg"] == 25.0
+    assert summary["latency_p50"] == 20.0
+    assert summary["latency_p95"] == 40.0
+    assert summary["latency_max"] == 40.0
 
 
 def test_record_run_result_empty_rows_no_crash():

@@ -65,6 +65,7 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
         "response": {"type": "string"},
         "context": {"type": "string"},
         "response_id": {"type": "string"},
+        "latency": {"type": "number"},
         "expected_references": {"type": "array", "items": {"type": "object"}},
         "expected_knowledges": {"type": "array", "items": {"type": "object"}},
         "references": {"type": "array", "items": {"type": "object"}},
@@ -83,6 +84,7 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "response": it.get("response", ""),
         "context": it.get("context", "") or "",
         "response_id": it.get("response_id", "") or "",
+        "latency": it.get("latency", 0.0),
         "expected_references": it.get("expected_references", []),
         "expected_knowledges": it.get("expected_knowledges", []),
         "references": it.get("references", []),
@@ -392,6 +394,7 @@ def output_items_to_rows(
             },
             "inputs.references": item.get("references", []) or [],
             "inputs.knowledges": item.get("knowledges", []) or [],
+            "inputs.latency": item.get("latency"),
         }
 
         per_metric: dict[str, float] = {}
@@ -533,6 +536,7 @@ class FoundryEvalsRunner:
             "inputs.execution": {"response_id": "", "tool_calls": []},
             "inputs.references": [],
             "inputs.knowledges": [],
+            "inputs.latency": None,
         }
         for name in self._evaluators:
             row[f"outputs.{name}.{name}"] = 0.0

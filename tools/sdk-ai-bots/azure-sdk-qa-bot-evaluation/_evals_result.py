@@ -70,6 +70,8 @@ class EvalsResult:
                 "context": row.get("inputs.context", ""),
             }
             row_result["execution"] = row.get("inputs.execution", {})
+            # Seconds for the /completion call, including client retries; None if never collected.
+            row_result["latency"] = row.get("inputs.latency")
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
                 match = re.match(pattern, key)
@@ -101,6 +103,13 @@ class EvalsResult:
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):
             summary_result[f"{key}_fail_rate"] = value
+
+        latencies = sorted(r["latency"] for r in run_result if isinstance(r.get("latency"), (int, float)))
+        if latencies:
+            summary_result["latency_avg"] = sum(latencies) / len(latencies)
+            summary_result["latency_p50"] = latencies[(len(latencies) - 1) // 2]
+            summary_result["latency_p95"] = latencies[max(0, -(-len(latencies) * 95 // 100) - 1)]
+            summary_result["latency_max"] = latencies[-1]
 
         run_result.append(summary_result)
         return run_result
@@ -300,7 +309,12 @@ class EvalsResult:
                         "reference_match_missing_refs",
                         "knowledges",
                         "context",
-                        "execution"]
+                        "execution",
+                        "latency",
+                        "latency_avg",
+                        "latency_p50",
+                        "latency_p95",
+                        "latency_max"]
         if is_ci is False:
             establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
             if establish_baseline.lower() == "y":

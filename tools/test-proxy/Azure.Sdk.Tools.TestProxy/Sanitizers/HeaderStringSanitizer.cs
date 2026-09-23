@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +13,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class HeaderStringSanitizer : RecordedTestSanitizer
     {
-        private string _targetKey;
-        private string _newValue;
-        private string _targetValue;
+        private readonly string _targetKey;
+        private readonly string _newValue;
+        private readonly string _targetValue;
 
         /// <summary>
         /// Applies a simple value replacement for a target header key. If it does not exist, no actions will be taken.
@@ -35,13 +38,13 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override void SanitizeHeaders(IDictionary<string, string[]> headers)
         {
-            if (headers.ContainsKey(_targetKey))
+            if (headers.TryGetValue(_targetKey, out string[] value))
             {
                 // Accessing 0th key safe due to the fact that we force header values in without splitting them on ;.
                 // We do this because letting .NET split and then reassemble header values introduces a space into the header itself
                 // Ex: "application/json;odata=minimalmetadata" with .NET default header parsing becomes "application/json; odata=minimalmetadata"
                 // Given this breaks signature verification, we have to avoid it.
-                headers[_targetKey] = headers[_targetKey].Select(x => StringSanitizer.ReplaceValue(inputValue: x, targetValue: _targetValue, replacementValue: _newValue)).ToArray();
+                headers[_targetKey] = value.Select(x => StringSanitizer.ReplaceValue(inputValue: x, targetValue: _targetValue, replacementValue: _newValue)).ToArray();
             }
         }
     }

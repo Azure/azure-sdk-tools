@@ -4,12 +4,11 @@
 using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.CommandLine.Parsing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -58,6 +57,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public List<string> SanitizedHeaders { get; } = new List<string> { "Authorization" };
 
+        private static readonly ConcurrentDictionary<string, Regex> s_regexCache = [];
+
         /// <summary>
         /// Abstraction for getting a compiled Regex from a string. Used by derived classes to cache their compiled regexes.
         /// </summary>
@@ -66,7 +67,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             try
             {
-                return new Regex(regex, RegexOptions.Compiled);
+                return s_regexCache.GetOrAdd(regex, value => new Regex(value, RegexOptions.Compiled));
             }
             catch (Exception e)
             {
@@ -202,7 +203,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 else if (message.TryGetBodyAsText(out string text))
                 {
-                    message.Body = Encoding.UTF8.GetBytes(SanitizeTextBody(contentType, text));
+                    var sanitizedText = SanitizeTextBody(contentType, text);
+                    if (!ReferenceEquals(text, sanitizedText))
+                    {
+                        message.Body = Encoding.UTF8.GetBytes(sanitizedText);
+                    }
                 }
                 else
                 {

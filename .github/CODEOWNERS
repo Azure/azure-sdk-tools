@@ -52,7 +52,6 @@
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @zedy-wj
 /tools/perf-regression-finder/          @jsquire
-/tools/release-plan-dashboard/          @praveenkuttappan
 
 #####################
 # Attestation

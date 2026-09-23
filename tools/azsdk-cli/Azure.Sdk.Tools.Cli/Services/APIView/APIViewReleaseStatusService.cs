@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
@@ -24,7 +25,18 @@ public class APIViewReleaseStatusService(
         logger.LogInformation("Querying APIView release status for {packageName} {packageVersion}", packageName, packageVersion);
 
         var (_, statusCode) = await apiViewHttpService.GetAsync(endpoint, ct);
-        return CreateResult(statusCode, packageName, packageVersion);
+        var result = CreateResult(statusCode, packageName, packageVersion);
+
+        // Workaround preserving the legacy release-pipeline behavior until API Review Hub
+        // owns release gating: beta releases require package-name approval, but not API approval.
+        if (IsBetaVersion(apiViewLanguage, packageVersion) && result.PackageNameApproved && !result.IsApproved)
+        {
+            result.IsApproved = true;
+            result.Reason = "reviewNotRequired";
+            result.Details = [$"APIView review is not required for beta package {packageName} {packageVersion}; package-name approval is complete."];
+        }
+
+        return result;
     }
 
     private static ApiViewReleaseStatusResult CreateResult(int statusCode, string packageName, string packageVersion)
@@ -71,5 +83,24 @@ public class APIViewReleaseStatusService(
             "rust" => "Rust",
             _ => null
         };
+    }
+
+    private static bool IsBetaVersion(string language, string packageVersion)
+    {
+        var publicVersion = packageVersion.Split('+', 2)[0];
+        if (publicVersion.Contains("-beta", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!language.Equals("Python", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return Regex.IsMatch(
+            publicVersion,
+            @"\Av?(?:[0-9]+!)?[0-9]+(?:\.[0-9]+)*[-_.]?(?:beta|b)[-_.]?[0-9]+",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 }

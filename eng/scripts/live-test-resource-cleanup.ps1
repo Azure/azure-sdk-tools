@@ -344,15 +344,18 @@ function DeleteArmDeployments([object]$ResourceGroup) {
   if (!$DeleteArmDeployments -or !$ResourceGroup) {
     return
   }
-  $toDelete = @()
+  $deployments = @()
   try {
-    $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName `
-                | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
+    $deployments = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName)
   } catch {}
+
+  $sensitiveDeployments = @($deployments | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
+  $oldestDeployments = @($deployments | Where-Object { $_ } | Sort-Object Timestamp | Select-Object -First 50)
+  $toDelete = @(($sensitiveDeployments + $oldestDeployments) | Sort-Object DeploymentName -Unique)
   if (!$toDelete -or !$toDelete.Count) {
     return
   }
-  Write-Host "Deleting $($toDelete.Count) ARM deployments for group $($ResourceGroup.ResourceGroupName) as they may contain output secrets. Deployed resources will not be affected."
+  Write-Host "Deleting $($toDelete.Count) ARM deployments for group $($ResourceGroup.ResourceGroupName), including the oldest $($oldestDeployments.Count) and any that may contain output secrets. Deployed resources will not be affected."
   $null = $toDelete | Remove-AzResourceGroupDeployment
 }
 

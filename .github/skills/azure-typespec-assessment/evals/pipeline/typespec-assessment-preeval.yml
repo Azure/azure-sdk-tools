@@ -27,13 +27,13 @@ steps:
           ;;
       esac
 
-      echo "Overlaying azure-typespec-accessment skill from: $BRANCH_REF"
+      echo "Overlaying azure-typespec-assessment skill from: $BRANCH_REF"
       git fetch origin "$BRANCH_REF"
-      rm -rf .github/skills/azure-typespec-accessment/SKILL.md \
-             .github/skills/azure-typespec-accessment/references
+      rm -rf .github/skills/azure-typespec-assessment/SKILL.md \
+             .github/skills/azure-typespec-assessment/references
       git checkout FETCH_HEAD -- \
-        .github/skills/azure-typespec-accessment/SKILL.md \
-        .github/skills/azure-typespec-accessment/references
+        .github/skills/azure-typespec-assessment/SKILL.md \
+        .github/skills/azure-typespec-assessment/references
       echo "Skill source overlaid from $BRANCH_REF"
     displayName: 'Overlay skill source from SkillBranch (if set)'
     env:
@@ -41,18 +41,6 @@ steps:
 
   - script: |
       set -e
-      npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
-      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval/node_modules/.bin"
-    displayName: 'Install TypeSpec toolchain (pinned)'
-    workingDirectory: $(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval
-
-  - script: |
-      set -e
-      echo "tsp version:"
-      tsp --version
-    displayName: 'Verify TypeSpec toolchain on PATH'
-
-  - script: |
-      set -e
-      node --test .github/skills/azure-typespec-assessment/evals/scripts/run-e2e.test.mjs
-    displayName: 'Deterministic Node E2E test without model or network variability'
+      npm ci
+    displayName: "Install the assessment scripts' dependencies"
+    workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-assessment

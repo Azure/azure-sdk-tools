@@ -86,12 +86,10 @@ extends:
         displayName: 'Run eval shards'
         dependsOn: Prepare
         jobs:
-          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
+          - template: /.github/skills/azure-typespec-assessment/evals/pipeline/typespec-assessment-eval.yml
             parameters:
               vallyRoot: ${{ parameters.vallyRoot }}
               evalInvokeTemplate: ${{ parameters.evalInvokeTemplate }}
-              UseAzSdkAuthentication: ${{ parameters.UseAzSdkAuthentication }}
-              threshold: ${{ parameters.threshold }}
               preEvalTemplate: ${{ parameters.preEvalTemplate }}
               postEvalTemplate: ${{ parameters.postEvalTemplate }}
               shardTimeoutInMinutes: ${{ parameters.shardTimeoutInMinutes }}

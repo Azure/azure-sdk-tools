@@ -1,5 +1,9 @@
-# Deployment pipeline for the Azure SDK QA Bot Logic App.
-# Deploys the Logic App ARM template with environment-specific parameters.
+# Deployment pipeline for the Azure SDK QA Bot Logic Apps.
+# Deploys a Logic App ARM template with environment-specific parameters.
+#
+# The teams-collection workflow needs the collection agent's principal ID, so
+# deploy that agent through agent-cd.yml (agentName: teams_collection_agent)
+# before running this pipeline for it.
 
 name: Deploy Azure SDK QA Bot Logic App
 
@@ -7,8 +11,15 @@ trigger: none
 pr: none
 
 parameters:
+  - name: workflow
+    displayName: 'Logic App Workflow'
+    type: string
+    default: chat
+    values:
+      - chat
+      - teams-collection
   - name: team
-    displayName: 'Teams Team'
+    displayName: 'Teams Team (chat workflow only)'
     type: string
     default: azure_sdk
     values:
@@ -34,6 +45,8 @@ variables:
     - group: 'Azure SDK QA Bot Prod Variables'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: PythonIndexUrl
+    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -41,7 +54,10 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: DeployLogicApp
-        displayName: 'Deploy ${{ parameters.team }} Logic App (${{ parameters.environment }})'
+        ${{ if eq(parameters.workflow, 'chat') }}:
+          displayName: 'Deploy ${{ parameters.team }} Logic App (${{ parameters.environment }})'
+        ${{ else }}:
+          displayName: 'Deploy Teams Collection Logic App (${{ parameters.environment }})'
         jobs:
           - job: Deploy
             displayName: 'ARM Template Deployment'
@@ -53,28 +69,71 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
 
-              - task: AzureCLI@2
-                displayName: 'Deploy Logic App'
-                inputs:
-                  azureSubscription: $(SERVICE_CONNECTION)
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  workingDirectory: $(workingDirectory)
-                  inlineScript: |
-                    set -euo pipefail
+              - ${{ if eq(parameters.workflow, 'chat') }}:
+                - task: AzureCLI@2
+                  displayName: 'Deploy Logic App'
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    workingDirectory: $(workingDirectory)
+                    inlineScript: |
+                      set -euo pipefail
 
-                    TEMPLATE_FILE="pipelines/logicapp/template.json"
-                    PARAMS_FILE="pipelines/logicapp/parameters.${{ parameters.team }}.${{ parameters.environment }}.json"
+                      TEMPLATE_FILE="pipelines/logicapp/template.json"
+                      PARAMS_FILE="pipelines/logicapp/parameters.${{ parameters.team }}.${{ parameters.environment }}.json"
 
-                    echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"
-                    echo "Template: $TEMPLATE_FILE"
-                    echo "Parameters: $PARAMS_FILE"
+                      echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"
+                      echo "Template: $TEMPLATE_FILE"
+                      echo "Parameters: $PARAMS_FILE"
 
-                    az deployment group create \
-                      --resource-group "$(RESOURCE_GROUP)" \
-                      --template-file "$TEMPLATE_FILE" \
-                      --parameters "@$PARAMS_FILE" \
-                      --name "logicapp-${{ parameters.team }}-$(Build.BuildId)" \
-                      --verbose
+                      az deployment group create \
+                        --resource-group "$(RESOURCE_GROUP)" \
+                        --template-file "$TEMPLATE_FILE" \
+                        --parameters "@$PARAMS_FILE" \
+                        --name "logicapp-${{ parameters.team }}-$(Build.BuildId)" \
+                        --verbose
 
-                    echo "Logic App deployment completed successfully."
+                      echo "Logic App deployment completed successfully."
+
+              - ${{ if eq(parameters.workflow, 'teams-collection') }}:
+                - task: PipAuthenticate@1
+                  displayName: 'Authenticate pip to Azure Artifacts'
+                  inputs:
+                    artifactFeeds: 'public/azure-sdk-for-python'
+
+                - task: AzureCLI@2
+                  displayName: 'Deploy Teams Collection Logic App'
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    workingDirectory: $(workingDirectory)
+                    inlineScript: |
+                      set -euo pipefail
+
+                      if [ "${{ parameters.team }}" != "azure_sdk" ]; then
+                        echo "The teams-collection workflow is only defined for azure_sdk."
+                        exit 1
+                      fi
+
+                      # Suppress Azure CLI welcome banner on fresh CI agents.
+                      export AZURE_CORE_WELCOME_MESSAGE=false
+                      az version > /dev/null 2>&1 || true
+                      az config set core.welcome_message=false 2>/dev/null || true
+
+                      python -m pip install --upgrade pip
+                      python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+                      python -m pip config set global.index-url "$PIP_INDEX_URL"
+                      pip install -r requirements.txt --retries 5 --timeout 60
+
+                      # Resolves the collection agent's principal ID, so that agent
+                      # must already be deployed through agent-cd.yml.
+                      python scripts/deploy_teams_collection.py deploy \
+                        --environment "${{ parameters.environment }}" \
+                        --resource-group "$(RESOURCE_GROUP)" \
+                        --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
+                  env:
+                    AZURE_CORE_WELCOME_MESSAGE: 'false'
+                    AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                    SYSTEM_ACCESSTOKEN: $(System.AccessToken)

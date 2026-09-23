@@ -18,16 +18,16 @@
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
       "apiVersion": "2024-05-15",
-      "name": "[concat(parameters('cosmosAccountName'), '/azure-sdk-qa-bot/teams-channel-posts')]",
+      "name": "[concat(parameters('cosmosAccountName'), '/azure-sdk-qa-bot/teams-qa-summaries')]",
       "properties": {
         "resource": {
-          "id": "teams-channel-posts",
-          "partitionKey": { "paths": ["/channel_key"], "kind": "Hash", "version": 2 },
+          "id": "teams-qa-summaries",
+          "partitionKey": { "paths": ["/channel_id"], "kind": "Hash", "version": 2 },
           "indexingPolicy": {
             "indexingMode": "consistent",
             "automatic": true,
             "includedPaths": [ { "path": "/*" } ],
-            "excludedPaths": [ { "path": "/post/*" }, { "path": "/replies/*" } ]
+            "excludedPaths": [ { "path": "/qa/*" }, { "path": "/resources/*" } ]
           }
         },
         "options": {}
@@ -248,14 +248,24 @@
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
       "apiVersion": "2024-05-15",
-      "name": "[concat(parameters('cosmosAccountName'), '/', guid(variables('cosmosAccountResourceId'), parameters('collectorPrincipalId'), 'teams-collection-archive'))]",
+      "name": "[concat(parameters('cosmosAccountName'), '/', guid(variables('cosmosAccountResourceId'), parameters('collectorPrincipalId'), 'teams-collection-summaries'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', parameters('cosmosAccountName'), 'azure-sdk-qa-bot', 'teams-channel-posts')]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', parameters('cosmosAccountName'), 'azure-sdk-qa-bot', 'teams-qa-summaries')]"
       ],
       "properties": {
         "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosAccountName'), '00000000-0000-0000-0000-000000000002')]",
         "principalId": "[parameters('collectorPrincipalId')]",
-        "scope": "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/teams-channel-posts')]"
+        "scope": "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/teams-qa-summaries')]"
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(parameters('cosmosAccountName'), '/', guid(variables('cosmosAccountResourceId'), parameters('collectorPrincipalId'), 'teams-collection-messages'))]",
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosAccountName'), '00000000-0000-0000-0000-000000000002')]",
+        "principalId": "[parameters('collectorPrincipalId')]",
+        "scope": "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/conversation-messages')]"
       }
     }
   ],

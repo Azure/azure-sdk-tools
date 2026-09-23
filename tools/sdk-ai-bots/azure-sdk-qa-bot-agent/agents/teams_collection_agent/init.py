@@ -1,4 +1,4 @@
-"""Hosted Teams collector with versioned Q&A processing and Cosmos reprocessing."""
+"""Hosted Teams agent: one-off history backfill and scheduled Q&A summarization."""
 
 import asyncio
 import json
@@ -18,22 +18,22 @@ if str(PROJECT) not in sys.path:
     sys.path.insert(0, str(PROJECT))
 
 from config import app_config
-from services.teams_collection_service import validate_channels
+from services.teams_collection_service import backfill_configured_channels, validate_channels
+from services.teams_operations import BACKFILL, SUMMARIZE, operation_input, parse_operation
+from services.teams_qa_summary_service import summarize_configured_channels
 from services.teams_thread_processor import TeamsThreadProcessor
 from tools.web_tools import WebTools
 from utils.azure_ai_foundry import close_clients, get_agent_client
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
-from utils.teams_collection import collect_configured_channels, reprocess_configured_channels
 from utils.tool_security import ToolOutputSecurityMiddleware
 
 
-COLLECT_REQUEST = "Collect configured Teams channels."
-REPROCESS_REQUEST = "Reprocess stored Teams threads."
+logger = logging.getLogger(__name__)
 
 
 class BackgroundCollectionRequests:
-    """Use SDK-managed background Responses so Routine delivery does not wait for a full scan."""
+    """Use SDK-managed background Responses so Routine delivery does not wait for a full run."""
 
     def __init__(self, app):
         self.app = app
@@ -54,12 +54,12 @@ class BackgroundCollectionRequests:
         try:
             payload = json.loads(body)
             if not isinstance(payload, dict):
-                raise ValueError
-        except ValueError:
-            return await JSONResponse({"error": "Expected a JSON object"}, status_code=400)(scope, receive, send)
-        requested_input = payload.get("input")
-        operation = REPROCESS_REQUEST if requested_input == REPROCESS_REQUEST else COLLECT_REQUEST
-        payload.update({"background": True, "stream": False, "store": True, "input": operation})
+                raise ValueError("Expected a JSON object")
+            request = parse_operation(payload.get("input"))
+        except ValueError as error:
+            return await JSONResponse({"error": str(error)}, status_code=400)(scope, receive, send)
+        payload.update({"background": True, "stream": False, "store": True,
+                        "input": operation_input(request)})
         encoded = json.dumps(payload).encode("utf-8")
         forwarded = dict(scope)
         forwarded["headers"] = [(key, value) for key, value in scope["headers"] if key.lower() != b"content-length"]
@@ -84,47 +84,42 @@ def create_server(agent):
 
 
 class TeamsCollectionAgent(BaseAgent):
-    def __init__(self, collect, reprocess=None):
+    def __init__(self, backfill, summarize):
         super().__init__(name="azure-sdk-teams-collection-agent")
-        self._collect = collect
-        self._reprocess = reprocess
+        self._operations = {BACKFILL: backfill, SUMMARIZE: summarize}
         self._lock = asyncio.Lock()
 
     def run(self, messages=None, *, stream=False, **kwargs):
-        operation = self._operation(messages)
+        request = parse_operation(self._text(messages))
         if stream:
-            return self._stream(operation)
-        return self._run(operation)
+            return self._stream(request)
+        return self._run(request)
 
-    def _operation(self, messages):
+    @staticmethod
+    def _text(messages):
         if isinstance(messages, str):
-            text = messages
-        elif isinstance(messages, Message):
-            text = messages.text
-        elif isinstance(messages, list):
-            text = " ".join(message.text for message in messages if isinstance(message, Message))
-        else:
-            text = ""
-        if text.strip() == REPROCESS_REQUEST:
-            if self._reprocess is None:
-                raise RuntimeError("Teams reprocessing is not configured.")
-            return self._reprocess
-        return self._collect
+            return messages
+        if isinstance(messages, Message):
+            return messages.text
+        if isinstance(messages, list):
+            return " ".join(message.text for message in messages if isinstance(message, Message))
+        return ""
 
-    async def _run(self, operation):
+    async def _run(self, request):
         if self._lock.locked():
             raise RuntimeError("A Teams archive operation is already running in this agent instance.")
         async with self._lock:
             try:
-                result = await operation()
+                result = await self._operations[request["operation"]](request)
             except Exception:
+                logger.exception("Teams %s operation failed.", request["operation"])
                 raise RuntimeError(
-                    "Teams archive operation failed; inspect the Cosmos collection-run record."
+                    f"Teams {request['operation']} operation failed; inspect the agent logs."
                 ) from None
         return AgentResponse(messages=[Message("assistant", [json.dumps(result)])], agent_id=self.id)
 
-    async def _stream(self, operation):
-        response = await self._run(operation)
+    async def _stream(self, request):
+        response = await self._run(request)
         yield AgentResponseUpdate(
             role="assistant", contents=[Content.from_text(response.text)], agent_id=self.id,
             message_id="collection-summary", finish_reason="stop",
@@ -169,8 +164,12 @@ async def main():
     validate_channels(config["channels"])
     processor = create_thread_processor(config)
     agent = TeamsCollectionAgent(
-        lambda: collect_configured_channels(config, app_config.get, processor),
-        lambda: reprocess_configured_channels(config, processor),
+        lambda request: backfill_configured_channels(
+            config, app_config.get, request.get("channelId"), request.get("startTime"),
+        ),
+        lambda request: summarize_configured_channels(
+            config, processor, request.get("channelId"),
+        ),
     )
     try:
         await create_server(agent).run_async()

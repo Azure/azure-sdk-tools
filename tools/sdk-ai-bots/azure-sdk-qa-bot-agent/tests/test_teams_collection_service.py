@@ -3,17 +3,24 @@ import copy
 import json
 import sys
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from services.teams_collection_service import TeamsCollectionService, continuation_token
+from services.teams_collection_service import (
+    TeamsCollectionService,
+    continuation_token,
+    thread_partition,
+)
 
 
 TENANT = "72f988bf-86f1-41af-91ab-2d7cd011db47"
-CHANNEL = {"teamId": "7ccc31f0-b371-450b-a73c-48f5a31a9b96", "channelId": "19:test@thread.tacv2"}
+TENANT_KEY = "typespec_channel_qa_bot"
+CHANNEL = {"teamId": "7ccc31f0-b371-450b-a73c-48f5a31a9b96",
+           "channelId": "19:test@thread.tacv2", "tenantKey": TENANT_KEY}
 CONNECTION = "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/test/providers/Microsoft.Web/connections/teams"
 
 
@@ -27,34 +34,141 @@ def next_link(channel, message_id=None, token="next"):
 
 
 def graph_message(values):
-    return {"messageType": "message", **values}
+    message = {
+        "messageType": "message",
+        "createdDateTime": "2026-09-01T00:00:00Z",
+        "from": {"user": {"id": "user-id", "displayName": "Test User"}},
+        "body": {"contentType": "html", "content": "<p>body</p>"},
+        "webUrl": "https://teams.microsoft.com/l/message/thread/id",
+        **values,
+    }
+    return message
+
+
+def config_with(**overrides):
+    return {"channels": [CHANNEL], "tenantId": TENANT, "maxPages": 100, **overrides}
+
+
+async def _aiter(rows):
+    for row in rows:
+        yield copy.deepcopy(row)
 
 
 class MemoryStore:
+    """Stand-in for CosmosMessageStore with the same create/update contract."""
+
     def __init__(self):
         self.items = {}
-        self.checkpoints = {}
-        self.writes = 0
+        self.creates = 0
+        self.updates = 0
+        self.validated = 0
+        self.conflicts = set()
+        self.races = set()
 
-    async def read(self, document_id, partition):
-        if document_id == "channel-checkpoint":
-            return copy.deepcopy(self.checkpoints.get(partition))
-        return copy.deepcopy(self.items.get((document_id, partition)))
+    def seed(self, document):
+        self.items[(document["conversation_partition"], document["id"])] = copy.deepcopy(document)
 
-    async def read_channel_index(self, partition):
-        return {document_id: copy.deepcopy(document)
-                for (document_id, channel), document in self.items.items() if channel == partition}
+    async def validate(self):
+        self.validated += 1
 
-    async def read_channel_documents(self, partition):
-        return [copy.deepcopy(document)
-                for (_document_id, channel), document in self.items.items() if channel == partition]
+    async def read_thread(self, partition):
+        return {document_id: {"id": document_id, "content": document["content"]}
+                for (stored, document_id), document in self.items.items() if stored == partition}
 
-    async def write(self, document, previous):
-        if document.get("type") == "channel-checkpoint":
-            self.checkpoints[document["channel_key"]] = copy.deepcopy(document)
-            return
-        self.items[(document["id"], document["channel_key"])] = copy.deepcopy(document)
-        self.writes += 1
+    async def create(self, document):
+        key = (document["conversation_partition"], document["id"])
+        if document["id"] in self.conflicts or key in self.items:
+            return False
+        self.items[key] = copy.deepcopy(document)
+        self.creates += 1
+        return True
+
+    async def update_content(self, document_id, partition, content):
+        key = (partition, document_id)
+        if document_id in self.races or key not in self.items:
+            return False
+        self.items[key]["content"] = content
+        self.updates += 1
+        return True
+
+
+class FakeMessageContainer:
+    def __init__(self, documents):
+        self.documents = [copy.deepcopy(document) for document in documents]
+
+    def query_items(self, query, parameters=None, partition_key=None):
+        values = {parameter["name"]: parameter["value"] for parameter in (parameters or [])}
+        if "STARTSWITH" in query:
+            return _aiter([
+                {"partition": document["conversation_partition"], "ts": document["_ts"]}
+                for document in self.documents
+                if document["conversation_partition"].startswith(values["@prefix"])
+            ])
+        return _aiter([document for document in self.documents
+                       if document["conversation_partition"] == partition_key])
+
+
+class FakeSummaryContainer:
+    def __init__(self, documents=None):
+        self.documents = [copy.deepcopy(document) for document in (documents or [])]
+        self.upserts = []
+        self.deletes = []
+
+    def query_items(self, query, parameters=None, partition_key=None):
+        return _aiter([document for document in self.documents
+                       if document["channel_id"] == partition_key])
+
+    async def upsert_item(self, body):
+        self.upserts.append(copy.deepcopy(body))
+        self.documents = [document for document in self.documents
+                          if document["id"] != body["id"]] + [copy.deepcopy(body)]
+
+    async def delete_item(self, item, partition_key):
+        from azure.cosmos import exceptions
+
+        remaining = [document for document in self.documents
+                     if not (document["id"] == item
+                             and document["channel_id"] == partition_key)]
+        if len(remaining) == len(self.documents):
+            raise exceptions.CosmosResourceNotFoundError(status_code=404)
+        self.deletes.append((item, partition_key))
+        self.documents = remaining
+
+
+class FakeProcessor:
+    version = "v1"
+
+    def __init__(self, decision=None):
+        self.calls = []
+        self.decision = decision or {
+            "status": "included", "exclusion_reason": None,
+            "qa": {"title": "Question", "question": "How?", "answer": "Do this."},
+        }
+
+    def is_current(self, processing, digest):
+        return bool(
+            isinstance(processing, dict)
+            and processing.get("processor") == "teams-channel-qa-summary"
+            and processing.get("processor_version") == self.version
+            and processing.get("source_content_hash") == digest
+        )
+
+    async def process(self, channel, post, replies, digest):
+        self.calls.append((channel, post, replies, digest))
+        # The real processor stamps an offset-style time, so the fake does too.
+        return {"processor": "teams-channel-qa-summary", "processor_version": self.version,
+                "source_content_hash": digest, "schema_version": 1,
+                "processed_at": datetime.now(timezone.utc).isoformat(), **self.decision}
+
+
+def stored_message(partition, message_id, content, *, ts=1, role="user",
+                   created_at="2026-09-01T00:00:00Z", link=None):
+    return {"id": message_id, "tenant_id": TENANT_KEY, "sender_role": role,
+            "sender_id": "user-id", "sender_name": "Test User", "content": content,
+            "created_at": created_at, "conversation_type": "teams_channel",
+            "conversation_partition": partition, "document_type": "conversation_message",
+            "extra_info": {"channel_id": CHANNEL["channelId"], "message_link": link},
+            "_ts": ts}
 
 
 class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
@@ -97,19 +211,17 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                     successful_client.__aexit__.assert_awaited_once_with(None, None, None)
                     self.assertIsNone(azure_cosmosdb._client)
 
-    async def test_collection_reaches_service_and_store_through_logic_app(self):
+    async def test_backfill_reaches_service_and_store_through_logic_app(self):
         import httpx
         from types import SimpleNamespace
         from unittest.mock import Mock
-        from utils.teams_collection import collect_configured_channels
+        from services.teams_collection_service import backfill_configured_channels
 
         store = MemoryStore()
-        store.validate = AsyncMock()
-        store.record_run = AsyncMock()
         client = AsyncMock()
         client.post.return_value = httpx.Response(200, json={"operation": "messages", "data": {
             "value": [graph_message({
-                "id": "root",
+                "id": "root", "subject": "Need help",
                 "replies": [graph_message({"id": "reply", "replyToId": "root"})],
             })],
         }})
@@ -118,29 +230,36 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         credential.get_token.return_value = SimpleNamespace(token="secret")
         url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
         settings = Mock(return_value=url)
-        with patch("utils.azure_cosmosdb.get_teams_channel_posts_container", new=AsyncMock()), \
-                patch("utils.teams_collection.CosmosThreadStore", return_value=store), \
+        with patch("utils.azure_cosmosdb.get_conversation_message_container", new=AsyncMock()), \
+                patch("services.teams_collection_service.CosmosMessageStore", return_value=store), \
                 patch("utils.azure_credential.get_credential", return_value=credential), \
-            patch("utils.teams_collection.httpx.AsyncClient", return_value=client):
-            result = await collect_configured_channels(
-                {"channels": [CHANNEL], "tenantId": TENANT, "maxPages": 100}, settings,
-            )
-        self.assertEqual(result["postsWritten"], 1)
-        self.assertEqual(result["repliesRead"], 1)
-        self.assertEqual(next(iter(store.items.values()))["replies"][0]["id"], "reply")
-        self.assertEqual(len(store.checkpoints), 1)
-        self.assertEqual(store.record_run.await_count, 2)
-        self.assertEqual(store.record_run.call_args.args[0]["status"], "succeeded")
+                patch("services.teams_collection_service.httpx.AsyncClient", return_value=client):
+            result = await backfill_configured_channels(config_with(), settings)
+        self.assertEqual(result["messagesCreated"], 2)
+        self.assertEqual(result["threadsRead"], 1)
+        self.assertEqual(store.validated, 1)
         settings.assert_called_once_with("TEAMS_COLLECTION_LOGIC_APP_URL", "")
         self.assertEqual(client.post.call_args.args[0], url)
-        self.assertEqual(client.post.call_args.kwargs["json"], {**CHANNEL, "operation": "messages"})
+        self.assertEqual(client.post.call_args.kwargs["json"], {
+            "teamId": CHANNEL["teamId"], "channelId": CHANNEL["channelId"],
+            "operation": "messages"})
         credential.get_token.assert_awaited_once_with("https://management.core.windows.net/.default")
+
+    async def test_backfill_can_target_one_channel_and_override_start_time(self):
+        from services.teams_collection_service import select_channels
+
+        second = {**CHANNEL, "channelId": "19:second@thread.tacv2"}
+        channels = [CHANNEL, second]
+        self.assertEqual(select_channels(channels, None), channels)
+        self.assertEqual(select_channels(channels, second["channelId"]), [second])
+        with self.assertRaisesRegex(ValueError, "allowlist"):
+            select_channels(channels, "19:unknown@thread.tacv2")
 
     async def test_cli_dispatches_remote_routine_and_closes_credential(self):
         from types import SimpleNamespace
         from scripts.deploy_teams_collection import execute_routine
 
-        config = {"channels": [CHANNEL], "tenantId": TENANT, "maxPages": 100}
+        config = config_with()
         endpoint = "https://account.services.ai.azure.com/api/projects/project"
         arguments = SimpleNamespace(
             command="routine-dispatch",
@@ -168,47 +287,36 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(dispatch.call_args.args[:3], (config, "routine-dispatch", endpoint))
             close_credential.assert_awaited_once()
 
-    async def test_failed_collection_records_failure_without_raw_error_content(self):
-        from utils.teams_collection import collect_configured_channels
+    async def test_backfill_failure_propagates_without_raw_error_content(self):
+        from agents.teams_collection_agent.init import TeamsCollectionAgent
 
-        config = {"channels": [CHANNEL], "tenantId": TENANT, "maxPages": 100}
-        store = AsyncMock()
-        recorded = []
+        backfill = AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
+        agent = TeamsCollectionAgent(backfill, AsyncMock())
+        with self.assertRaises(RuntimeError) as failure, self.assertLogs(
+            "agents.teams_collection_agent.init", level="ERROR"
+        ):
+            await agent.run('{"operation": "backfill"}')
+        self.assertNotIn("DO_NOT_LOG", str(failure.exception))
+        self.assertIn("backfill", str(failure.exception))
 
-        async def capture_run(document):
-            recorded.append(copy.deepcopy(document))
-
-        store.record_run.side_effect = capture_run
-        with patch("utils.azure_cosmosdb.get_teams_channel_posts_container", new=AsyncMock()), \
-                patch("utils.teams_collection.CosmosThreadStore", return_value=store), \
-                patch("utils.azure_credential.get_credential"), \
-                patch("utils.teams_collection.TeamsCollectionService") as service:
-            service.return_value.collect = AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
-            with self.assertRaises(RuntimeError):
-                await collect_configured_channels(config, lambda key, default: (
-                    "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"))
-        self.assertEqual([run["status"] for run in recorded], ["running", "failed"])
-        self.assertEqual(recorded[-1]["error_type"], "RuntimeError")
-        self.assertIn("ended_at", recorded[-1])
-        self.assertNotIn("DO_NOT_LOG", json.dumps(recorded))
-
-    async def test_hosted_http_returns_before_collection_and_exposes_final_response(self):
+    async def test_hosted_http_returns_before_work_and_exposes_final_response(self):
         import httpx
         from agents.teams_collection_agent.init import TeamsCollectionAgent, create_server
 
         release = asyncio.Event()
         completed = asyncio.Event()
 
-        async def collect():
+        async def summarize(request):
             await release.wait()
             completed.set()
-            return {"postsWritten": 2}
+            return {"threadsSummarized": 2}
 
-        server = create_server(TeamsCollectionAgent(collect))
+        server = create_server(TeamsCollectionAgent(AsyncMock(), summarize))
         async with server.router.lifespan_context(server):
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server), base_url="http://test") as client:
                 try:
-                    response = await asyncio.wait_for(client.post("/responses", json={"input": "collect"}), 5)
+                    response = await asyncio.wait_for(client.post(
+                        "/responses", json={"input": {"operation": "summarize"}}), 5)
                     self.assertEqual(response.status_code, 200, response.text)
                     self.assertIn(response.json()["status"], ("queued", "in_progress"))
                     self.assertTrue(response.json()["id"].startswith("caresp_"))
@@ -216,31 +324,53 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 finally:
                     release.set()
                 await asyncio.wait_for(completed.wait(), 5)
-        self.assertTrue(completed.is_set())
+                rejected = await client.post("/responses", json={"input": "collect everything"})
+                self.assertEqual(rejected.status_code, 400)
+                self.assertNotIn("collect everything", rejected.text)
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server), base_url="http://test") as client:
             final = await client.get("/responses/" + response.json()["id"])
             self.assertEqual(final.status_code, 200)
             self.assertEqual(final.json()["status"], "completed")
-            self.assertEqual(json.loads(final.json()["output"][0]["content"][0]["text"]), {"postsWritten": 2})
+            self.assertEqual(json.loads(final.json()["output"][0]["content"][0]["text"]),
+                             {"threadsSummarized": 2})
 
-    async def test_hosted_agent_dispatches_collect_and_reprocess_operations(self):
-        from agents.teams_collection_agent.init import REPROCESS_REQUEST, TeamsCollectionAgent
+    async def test_hosted_agent_dispatches_backfill_and_summarize_requests(self):
+        from agents.teams_collection_agent.init import TeamsCollectionAgent
         from agent_framework_foundry_hosting import ResponsesHostServer
 
-        collect = AsyncMock(return_value={"postsWritten": 2, "repliesRead": 3})
-        reprocess = AsyncMock(return_value={"postsReprocessed": 4})
-        agent = TeamsCollectionAgent(collect, reprocess)
-        response = await agent.run("Read another channel instead")
-        self.assertEqual(json.loads(response.text), {"postsWritten": 2, "repliesRead": 3})
-        updates = [update async for update in agent.run("Collect", stream=True)]
-        self.assertEqual(json.loads(updates[0].text)["postsWritten"], 2)
-        self.assertEqual(collect.await_count, 2)
-        response = await agent.run(REPROCESS_REQUEST)
-        self.assertEqual(json.loads(response.text), {"postsReprocessed": 4})
-        reprocess.assert_awaited_once()
+        backfill = AsyncMock(return_value={"messagesCreated": 2})
+        summarize = AsyncMock(return_value={"threadsSummarized": 4})
+        agent = TeamsCollectionAgent(backfill, summarize)
+
+        response = await agent.run('{"operation": "summarize"}')
+        self.assertEqual(json.loads(response.text), {"threadsSummarized": 4})
+        updates = [update async for update in agent.run(
+            '{"operation": "backfill", "channelId": "19:test@thread.tacv2",'
+            ' "startTime": "2026-01-01T00:00:00Z"}', stream=True)]
+        self.assertEqual(json.loads(updates[0].text), {"messagesCreated": 2})
+        self.assertEqual(backfill.await_args.args[0], {
+            "operation": "backfill", "channelId": "19:test@thread.tacv2",
+            "startTime": "2026-01-01T00:00:00Z"})
+        summarize.assert_awaited_once()
         self.assertIsNotNone(ResponsesHostServer(agent))
 
-    async def test_routine_creation_is_paused_and_dispatch_uses_public_endpoint(self):
+    def test_operation_requests_reject_free_text_and_unknown_fields(self):
+        from services.teams_operations import operation_input, parse_operation
+
+        self.assertEqual(parse_operation({"operation": "summarize"}), {"operation": "summarize"})
+        self.assertEqual(
+            operation_input({"startTime": "2026-01-01T00:00:00Z", "operation": "backfill"}),
+            '{"operation":"backfill","startTime":"2026-01-01T00:00:00Z"}',
+        )
+        for value in (None, "", "collect", "[]", {"operation": "delete"},
+                      {"operation": "summarize", "startTime": "2026-01-01T00:00:00Z"},
+                      {"operation": "backfill", "startTime": "2026-01-01"},
+                      {"operation": "backfill", "channelId": " "},
+                      {"operation": "backfill", "unexpected": 1}):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                parse_operation(value)
+
+    async def test_only_summarization_is_scheduled_and_the_routine_starts_paused(self):
         import httpx
         from types import SimpleNamespace
         from scripts.deploy_teams_collection import routine_request, routine_definition
@@ -248,18 +378,24 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         config = json.loads(
             (Path(__file__).resolve().parents[1] / "config/teams_collection_config.json").read_text()
         )
+        self.assertNotIn("routines", config)
+        self.assertEqual(config["routine"]["name"], "teams-channel-qa-summary")
         definition = routine_definition(config)
         self.assertFalse(definition["enabled"])
         self.assertEqual(definition["authorization"], {"identity": "agent"})
         self.assertEqual(definition["triggers"]["schedule"]["cron_expression"], "0 0 * * 0")
+        self.assertEqual(definition["action"]["input"], '{"operation":"summarize"}')
+        with self.assertRaisesRegex(ValueError, "No summarization routine"):
+            routine_definition({"channels": []})
+
         client = AsyncMock()
         client.get.return_value = httpx.Response(404)
-        client.put.return_value = httpx.Response(201, json={"name": "teams-channel-collection", "enabled": False})
+        client.put.return_value = httpx.Response(201, json={"name": "teams-channel-qa-summary", "enabled": False})
         credential = AsyncMock()
         credential.get_token.return_value = SimpleNamespace(token="secret")
         endpoint = "https://account.services.ai.azure.com/api/projects/project"
         await routine_request(config, "routine-create", endpoint, credential, client)
-        self.assertEqual(client.put.call_args.args[0], endpoint + "/routines/teams-channel-collection")
+        self.assertEqual(client.put.call_args.args[0], endpoint + "/routines/teams-channel-qa-summary")
         self.assertEqual(client.put.call_args.kwargs["json"], definition)
         self.assertEqual(client.put.call_args.kwargs["params"], {"api-version": "v1"})
         self.assertEqual(
@@ -274,6 +410,89 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "different agent"):
             await routine_request(config, "routine-enable", endpoint, credential, client)
 
+    async def test_backfill_invokes_the_agent_responses_api_instead_of_a_routine(self):
+        from types import SimpleNamespace
+        from scripts.deploy_teams_collection import execute_backfill
+
+        endpoint = "https://account.services.ai.azure.com/api/projects/project"
+        channel = "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype"
+        project = MagicMock()
+        project.__enter__.return_value = project
+        project.agents.get.return_value = SimpleNamespace(
+            name="azure-sdk-teams-collection-agent", version="7"
+        )
+        responses = project.get_openai_client.return_value.__enter__.return_value.responses
+        responses.create.return_value = SimpleNamespace(
+            id="resp_1", status="queued", error=None, output_text=None
+        )
+        responses.retrieve.return_value = SimpleNamespace(
+            id="resp_1", status="completed", error=None,
+            output_text='{"messagesCreated": 19}',
+        )
+        arguments = SimpleNamespace(
+            command="backfill",
+            project_endpoint=endpoint,
+            appconfig_endpoint=None,
+            channel=channel,
+            start_time="2026-01-01T00:00:00Z",
+            response_id=None,
+        )
+        with patch("scripts.deploy_teams_collection.AIProjectClient", return_value=project), \
+                patch("scripts.deploy_teams_collection.AzureCliCredential") as credential, \
+                patch("config.app_config.init", new=AsyncMock()) as initialize, \
+                patch("utils.azure_credential.close_credential", new=AsyncMock()):
+            started = await execute_backfill(arguments)
+            status = await execute_backfill(SimpleNamespace(
+                **{**vars(arguments), "command": "backfill-status", "response_id": "resp_1"}
+            ))
+
+        initialize.assert_not_awaited()
+        self.assertEqual(started, {"responseId": "resp_1", "status": "queued"})
+        self.assertEqual(status, {"responseId": "resp_1", "status": "completed",
+                                  "result": {"messagesCreated": 19}})
+        create = responses.create
+        self.assertEqual(json.loads(create.call_args.kwargs["input"]), {
+            "operation": "backfill", "channelId": channel,
+            "startTime": "2026-01-01T00:00:00Z"})
+        self.assertTrue(create.call_args.kwargs["store"])
+        self.assertFalse(create.call_args.kwargs["stream"])
+        self.assertEqual(create.call_args.kwargs["extra_body"], {"agent_reference": {
+            "type": "agent_reference", "name": "azure-sdk-teams-collection-agent",
+            "version": "7"}})
+        self.assertEqual(project.__exit__.call_count, 2)
+        self.assertEqual(project.get_openai_client.return_value.__exit__.call_count, 2)
+        self.assertEqual(credential.return_value.__exit__.call_count, 2)
+
+    def test_backfill_status_reports_failures_without_echoing_raw_content(self):
+        from types import SimpleNamespace
+        from scripts.deploy_teams_collection import _response_result
+
+        failed = _response_result(SimpleNamespace(
+            id="resp_2", status="failed", output_text="",
+            error=SimpleNamespace(code="server_error", message="backfill failed"),
+        ))
+        self.assertEqual(failed, {"responseId": "resp_2", "status": "failed",
+                                  "error": {"code": "server_error",
+                                            "message": "backfill failed"}})
+        self.assertNotIn("result", failed)
+        unspecified = _response_result(SimpleNamespace(
+            id="resp_3", status="failed", output_text=None,
+            error=SimpleNamespace(code=None, message=None),
+        ))
+        self.assertEqual(unspecified["error"],
+                         {"message": "The agent reported an unspecified failure."})
+
+    async def test_backfill_rejects_an_untrusted_project_endpoint(self):
+        from scripts.deploy_teams_collection import start_backfill
+
+        for endpoint in ("http://account.services.ai.azure.com/api/projects/project",
+                         "https://account.example.com/api/projects/project",
+                         "https://account.services.ai.azure.com/api/projects/project/routines"):
+            with self.subTest(endpoint=endpoint), self.assertRaisesRegex(
+                ValueError, "Foundry project endpoint"
+            ):
+                start_backfill(endpoint)
+
     def test_template_enforces_identity_channel_allowlist_and_read_only_actions(self):
         project = Path(__file__).resolve().parents[1]
         template = json.loads((project / "pipelines/teams-collection/template.json").read_text())
@@ -281,7 +500,8 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                          if resource["type"].endswith("/containers"))
         workflow = next(resource for resource in template["resources"]
                         if resource["type"] == "Microsoft.Logic/workflows")
-        self.assertEqual(container["properties"]["resource"]["partitionKey"]["paths"], ["/channel_key"])
+        self.assertEqual(container["properties"]["resource"]["id"], "teams-qa-summaries")
+        self.assertEqual(container["properties"]["resource"]["partitionKey"]["paths"], ["/channel_id"])
         access = workflow["properties"]["accessControl"]["triggers"]
         self.assertEqual(access["sasAuthenticationPolicy"]["state"], "Disabled")
         self.assertEqual({claim["name"] for claim in access["openAuthenticationPolicies"]["policies"]["collector"]["claims"]},
@@ -354,7 +574,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(parameters["cosmosAccountName"]["value"], cosmos_account)
                 self.assertNotIn("collectorPrincipalId", parameters)
 
-    def test_template_grants_collector_metadata_and_only_archive_data_access(self):
+    def test_template_grants_metadata_message_and_summary_data_access(self):
         project = Path(__file__).resolve().parents[1]
         template = json.loads((project / "pipelines/teams-collection/template.json").read_text())
         definitions = [resource for resource in template["resources"]
@@ -367,17 +587,20 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             {"dataActions": ["Microsoft.DocumentDB/databaseAccounts/readMetadata"]}])
         assignments = [resource for resource in template["resources"]
                        if resource["type"].endswith("/sqlRoleAssignments")]
-        self.assertEqual(len(assignments), 2)
-        metadata, archive = assignments
+        self.assertEqual(len(assignments), 3)
+        metadata, summaries, messages = assignments
         self.assertEqual(metadata["properties"]["scope"], "[variables('cosmosAccountResourceId')]")
         self.assertIn("variables('metadataRoleName')", metadata["properties"]["roleDefinitionId"])
-        self.assertEqual(archive["properties"]["scope"],
-                         "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/teams-channel-posts')]")
-        self.assertIn("00000000-0000-0000-0000-000000000002", archive["properties"]["roleDefinitionId"])
+        self.assertEqual(summaries["properties"]["scope"],
+                         "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/teams-qa-summaries')]")
+        self.assertEqual(messages["properties"]["scope"],
+                         "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/conversation-messages')]")
+        for assignment in (summaries, messages):
+            self.assertIn("00000000-0000-0000-0000-000000000002",
+                          assignment["properties"]["roleDefinitionId"])
         for assignment in assignments:
             self.assertEqual(assignment["properties"]["principalId"], "[parameters('collectorPrincipalId')]")
             self.assertIn("guid(", assignment["name"])
-            self.assertTrue(assignment["dependsOn"])
 
     def test_collection_deployment_resolves_identity_and_sanitizes_callback_url(self):
         from types import SimpleNamespace
@@ -414,253 +637,654 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 _sas_free_callback_url(value)
 
-    def test_collection_cd_deploys_agent_and_dedicated_infrastructure(self):
+    def test_collection_reuses_the_shared_agent_and_logic_app_pipelines(self):
+        """Collection has no pipeline of its own; it extends the two shared ones."""
         project = Path(__file__).resolve().parents[1]
-        pipeline = (project / "pipelines/teams-collection-cd.yml").read_text()
-        generic_pipeline = (project / "pipelines/agent-cd.yml").read_text()
+        agent_pipeline = (project / "pipelines/agent-cd.yml").read_text()
+        logicapp_pipeline = (project / "pipelines/logicapp-cd.yml").read_text()
 
-        self.assertIn("python scripts/deploy_hosted_agent.py", pipeline)
-        self.assertIn("teams_collection_agent", pipeline)
-        self.assertIn("python scripts/deploy_teams_collection.py", pipeline)
-        self.assertIn("--appconfig-endpoint \"$(AZURE_APPCONFIG_ENDPOINT)\"", pipeline)
-        self.assertNotIn("pipelines/logicapp/template.json", pipeline)
-        self.assertNotIn("- teams_collection_agent", generic_pipeline)
+        self.assertFalse((project / "pipelines/teams-collection-cd.yml").exists())
 
-    async def test_cosmos_reads_only_hash_index_in_one_channel_partition(self):
-        from unittest.mock import Mock
-        from utils.teams_collection import CosmosThreadStore
+        self.assertIn("- teams_collection_agent", agent_pipeline)
+        self.assertIn("python scripts/deploy_hosted_agent.py", agent_pipeline)
+        self.assertNotIn("deploy_teams_collection.py", agent_pipeline)
 
-        async def items():
-            yield {"id": "thread", "content_hash": "hash", "_etag": "version1"}
-
-        container = AsyncMock()
-        container.query_items = Mock(return_value=items())
-        index = await CosmosThreadStore(container).read_channel_index("channel")
-        self.assertEqual(index, {"thread": {"id": "thread", "content_hash": "hash", "_etag": "version1"}})
-        container.query_items.assert_called_once_with(
-            query=("SELECT c.id, c.content_hash, c.processing, c._etag "
-                   "FROM c WHERE IS_DEFINED(c.post_id)"),
-            partition_key="channel",
+        self.assertIn("- teams-collection", logicapp_pipeline)
+        self.assertIn("python scripts/deploy_teams_collection.py deploy", logicapp_pipeline)
+        self.assertIn(
+            "--appconfig-endpoint \"$(AZURE_APPCONFIG_ENDPOINT)\"", logicapp_pipeline
         )
-        container.read_item.assert_not_awaited()
+        # The chat template must stay behind its own branch of the selector.
+        self.assertIn(
+            "${{ if eq(parameters.workflow, 'chat') }}", logicapp_pipeline
+        )
+        self.assertIn(
+            "${{ if eq(parameters.workflow, 'teams-collection') }}", logicapp_pipeline
+        )
+        self.assertNotIn("deploy_hosted_agent.py", logicapp_pipeline)
 
-    async def test_expanded_replies_only_write_new_or_changed_threads(self):
+    def test_normalization_matches_the_realtime_workflow(self):
+        from services.teams_collection_service import normalized_content, split_subject
+
+        forwarded = graph_message({
+            "id": "root", "subject": "  Need help  ",
+            "body": {"content": '<p>See <attachment id="a1"></attachment></p>'},
+            "attachments": [
+                {"id": "a1", "contentType": "forwardedMessageReference",
+                 "content": json.dumps({"body": {"content": "<p>forwarded</p>"}})},
+                {"id": "a2", "contentType": "reference", "content": "ignored"},
+            ],
+        })
+        self.assertEqual(normalized_content(forwarded),
+                         "title: Need help\n\n<p>See <p>forwarded</p></p>")
+        self.assertEqual(split_subject(normalized_content(forwarded)),
+                         ("Need help", "<p>See <p>forwarded</p></p>"))
+        self.assertEqual(
+            normalized_content(graph_message({
+                "id": "reply", "body": {"content": "<p>plain</p>"}})),
+            "<p>plain</p>",
+        )
+        self.assertEqual(split_subject("<p>plain</p>"), (None, "<p>plain</p>"))
+        unparsable = graph_message({
+            "id": "root", "subject": None,
+            "body": {"content": '<attachment id="a1"></attachment>'},
+            "attachments": [{"id": "a1", "contentType": "forwardedMessageReference",
+                             "content": "not json"}],
+        })
+        self.assertEqual(normalized_content(unparsable), "not json")
+
+    async def test_backfill_writes_one_document_per_message_in_the_bot_shape(self):
+        fetch = AsyncMock(return_value={"value": [graph_message({
+            "id": "root", "subject": "Need help",
+            "replies": [graph_message({
+                "id": "reply", "replyToId": "root",
+                "createdDateTime": "2026-09-01T01:00:00Z",
+                "from": {"application": {"id": "bot-id", "displayName": "QA Bot"}},
+            })],
+        })]})
+        store = MemoryStore()
+
+        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL])
+
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        self.assertEqual(result, {"channelsCompleted": 1, "threadsRead": 1, "messagesRead": 2,
+                                  "messagesCreated": 2, "messagesUpdated": 0,
+                                  "messagesUnchanged": 0, "messagesSkipped": 0})
+        root = store.items[(partition, "root")]
+        reply = store.items[(partition, "reply")]
+        self.assertEqual(root, {
+            "id": "root", "tenant_id": TENANT_KEY, "sender_role": "user",
+            "sender_id": "user-id", "sender_name": "Test User",
+            "content": "title: Need help\n\n<p>body</p>",
+            "created_at": "2026-09-01T00:00:00Z",
+            "conversation_id": f"{CHANNEL['channelId']};messageid=root",
+            "conversation_type": "teams_channel",
+            "extra_info": {"channel_id": CHANNEL["channelId"],
+                           "message_link": "https://teams.microsoft.com/l/message/thread/id"},
+            "conversation_partition": partition,
+            "document_type": "conversation_message",
+        })
+        self.assertEqual(reply["conversation_partition"], partition)
+        self.assertEqual(reply["conversation_id"], root["conversation_id"])
+        self.assertEqual(reply["sender_role"], "system")
+        self.assertEqual(reply["sender_name"], "QA Bot")
+        self.assertEqual(reply["content"], "<p>body</p>")
+        self.assertNotIn("should_reply", root)
+        self.assertNotIn("trace_id", root)
+
+    async def test_existing_messages_are_kept_and_only_edited_content_is_updated(self):
         root = graph_message({
-            "id": "root", "createdDateTime": "2026-09-01T00:00:00Z",
-            "lastModifiedDateTime": "2026-09-01T00:00:00Z",
+            "id": "root", "subject": "Need help",
+            "body": {"content": '<p>See <attachment id="a1"></attachment></p>'},
+            "attachments": [{"id": "a1", "contentType": "forwardedMessageReference",
+                             "content": json.dumps({"body": {"content": "<p>quoted</p>"}})}],
         })
-        quiet = graph_message({
-            "id": "quiet", "createdDateTime": "2026-09-01T00:00:00Z", "replies": [],
-        })
-        reply = graph_message({
-            "id": "reply", "replyToId": "root", "createdDateTime": "2026-09-01T01:00:00Z",
-            "body": {"content": "original"},
-        })
-        edited = {**reply, "lastModifiedDateTime": "2026-09-10T00:00:00Z", "body": {"content": "edited"}}
-        new_post = graph_message({
-            "id": "new", "createdDateTime": "2026-09-10T00:00:00Z", "replies": [],
-        })
+        reply = graph_message({"id": "reply", "replyToId": "root",
+                               "body": {"content": "<p>original</p>"}})
+        edited = {**reply, "body": {"content": "<p>edited</p>"}}
+        edited_root = {**root, "body": {"content": "<p>updated</p>"}}
         fetch = AsyncMock(side_effect=[
-            {"value": [{**root, "replies": [reply]}, quiet]},
-            {"value": [{**root, "replies": [edited]}, quiet, new_post]},
-            {"value": [{**root, "replies": [edited]}, quiet, new_post]},
+            {"value": [{**root, "replies": [reply]}]},
+            {"value": [{**root, "replies": [reply]}]},
+            {"value": [{**edited_root, "replies": [edited]}]},
         ])
         store = MemoryStore()
-        service = TeamsCollectionService(fetch, store, TENANT)
-        first = await service.collect([CHANNEL])
-        quiet_before = next(copy.deepcopy(document) for document in store.items.values() if document["post_id"] == "quiet")
-        changed = await service.collect([CHANNEL])
-        unchanged = await service.collect([CHANNEL])
-        self.assertEqual(first["postsWritten"], 2)
-        self.assertEqual(changed["postsWritten"], 2)
-        self.assertEqual(changed["postsUnchanged"], 1)
-        self.assertEqual(unchanged["postsWritten"], 0)
-        self.assertEqual(unchanged["postsUnchanged"], 3)
-        self.assertEqual(store.writes, 4)
-        self.assertEqual(fetch.await_count, 3)
-        self.assertTrue(all(call.args == (CHANNEL, None, None) for call in fetch.call_args_list))
-        self.assertEqual(quiet_before, next(document for document in store.items.values() if document["post_id"] == "quiet"))
-        self.assertEqual(len(store.checkpoints), 1)
+        service = TeamsCollectionService(fetch, store)
 
-    async def test_non_message_posts_and_replies_are_not_archived(self):
-        reply = graph_message({"id": "reply", "replyToId": "root"})
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        created = await service.backfill([CHANNEL])
+        imported = store.items[(partition, "root")]["content"]
+        unchanged = await service.backfill([CHANNEL])
+        updated = await service.backfill([CHANNEL])
+
+        self.assertEqual(created["messagesCreated"], 2)
+        self.assertEqual(imported, "title: Need help\n\n<p>See <p>quoted</p></p>")
+        self.assertEqual(unchanged["messagesUnchanged"], 2)
+        self.assertEqual(unchanged["messagesCreated"], 0)
+        self.assertEqual(updated["messagesUpdated"], 2)
+        self.assertEqual(store.creates, 2)
+        self.assertEqual(store.updates, 2)
+        self.assertEqual(store.items[(partition, "reply")]["content"], "<p>edited</p>")
+        self.assertEqual(store.items[(partition, "root")]["content"],
+                         "title: Need help\n\n<p>updated</p>")
+
+    async def test_bot_messages_and_concurrent_writes_are_never_overwritten(self):
+        root = graph_message({"id": "root", "body": {"content": "<p>edited</p>"}})
+        fetch = AsyncMock(return_value={"value": [{**root, "replies": []}]})
+        store = MemoryStore()
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        store.seed(stored_message(partition, "bot-answer", "<p>bot answer</p>", role="system"))
+        store.seed({**stored_message(partition, "root", "<p>original</p>"),
+                    "should_reply": True, "trace_id": "trace"})
+        store.races.add("root")
+
+        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL])
+
+        self.assertEqual(result["messagesRead"], 1)
+        self.assertEqual(result["messagesSkipped"], 1)
+        self.assertEqual(result["messagesUpdated"], 0)
+        self.assertEqual(store.items[(partition, "bot-answer")]["content"], "<p>bot answer</p>")
+        self.assertEqual(store.items[(partition, "root")]["content"], "<p>original</p>")
+        self.assertTrue(store.items[(partition, "root")]["should_reply"])
+
+    async def test_cosmos_store_creates_updates_and_yields_to_concurrent_writers(self):
+        from unittest.mock import Mock
+        from azure.core import MatchConditions
+        from azure.cosmos.exceptions import (
+            CosmosAccessConditionFailedError,
+            CosmosResourceExistsError,
+            CosmosResourceNotFoundError,
+        )
+        from services.teams_collection_service import CosmosMessageStore
+
+        container = AsyncMock()
+        container.read.return_value = {"partitionKey": {"paths": ["/conversation_partition"]}}
+        store = CosmosMessageStore(container)
+        await store.validate()
+        container.read.return_value = {"partitionKey": {"paths": ["/channel_key"]}}
+        with self.assertRaisesRegex(ValueError, "/conversation_partition"):
+            await store.validate()
+
+        document = {"id": "message", "conversation_partition": "partition"}
+        self.assertTrue(await store.create(document))
+        container.create_item.assert_awaited_once_with(body=document)
+        container.create_item.side_effect = CosmosResourceExistsError(status_code=409, message="exists")
+        self.assertFalse(await store.create(document))
+
+        container.read_item.return_value = {
+            "id": "message", "conversation_partition": "partition",
+            "content": "old", "should_reply": True, "_etag": "version1",
+        }
+        self.assertTrue(await store.update_content("message", "partition", "new"))
+        replaced = container.replace_item.call_args.kwargs
+        self.assertEqual(replaced["body"]["content"], "new")
+        self.assertTrue(replaced["body"]["should_reply"])
+        self.assertEqual(replaced["etag"], "version1")
+        self.assertEqual(replaced["match_condition"], MatchConditions.IfNotModified)
+        container.replace_item.reset_mock()
+        self.assertFalse(await store.update_content("message", "partition", "new"))
+        container.replace_item.assert_not_awaited()
+        container.replace_item.side_effect = CosmosAccessConditionFailedError(
+            status_code=412, message="conflict")
+        self.assertFalse(await store.update_content("message", "partition", "newer"))
+        container.read_item.side_effect = CosmosResourceNotFoundError(status_code=404, message="gone")
+        self.assertFalse(await store.update_content("message", "partition", "newer"))
+
+        async def items():
+            yield {"id": "message", "content": "stored"}
+
+        container.query_items = Mock(return_value=items())
+        self.assertEqual(await store.read_thread("partition"),
+                         {"message": {"id": "message", "content": "stored"}})
+        self.assertEqual(container.query_items.call_args.kwargs["partition_key"], "partition")
+        self.assertIn("c.content", container.query_items.call_args.kwargs["query"])
+
+    async def test_start_time_skips_older_posts_and_stops_after_the_activity_cutoff(self):
+        channel = {**CHANNEL, "startTime": "2026-09-01T08:00:00+08:00"}
+        fetch = AsyncMock(side_effect=[
+            {"value": [
+                graph_message({
+                    "id": "old-but-active", "createdDateTime": "2026-08-31T23:59:59Z",
+                    "lastModifiedDateTime": "2026-09-10T00:00:00Z", "replies": [],
+                }),
+                graph_message({
+                    "id": "boundary", "createdDateTime": "2026-09-01T00:00:00Z",
+                    "replies": [graph_message({
+                        "id": "reply", "replyToId": "boundary",
+                        "createdDateTime": "2026-09-02T00:00:00Z"})],
+                }),
+             ],
+             "@odata.nextLink": next_link(channel)},
+            {"value": [
+                graph_message({"id": "quiet", "createdDateTime": "2026-08-01T00:00:00Z",
+                               "lastModifiedDateTime": "2026-08-01T00:00:00Z", "replies": []}),
+                graph_message({"id": "never-read", "replies": []}),
+             ]},
+        ])
+        store = MemoryStore()
+
+        result = await TeamsCollectionService(fetch, store).backfill([channel])
+
+        self.assertEqual(result["threadsRead"], 1)
+        self.assertEqual(result["messagesCreated"], 2)
+        self.assertEqual(fetch.await_count, 2)
+        self.assertEqual({document_id for _partition, document_id in store.items},
+                         {"boundary", "reply"})
+
+    async def test_invalid_start_time_and_missing_tenant_key_fail_before_fetch(self):
+        for value in ("", "invalid", "2026-09-01", "2026-09-01T00:00:00", 123, False):
+            with self.subTest(startTime=value):
+                fetch = AsyncMock()
+                store = MemoryStore()
+                with self.assertRaisesRegex(ValueError, "startTime"):
+                    await TeamsCollectionService(fetch, store).backfill(
+                        [{**CHANNEL, "startTime": value}])
+                fetch.assert_not_awaited()
+                self.assertFalse(store.items)
+        for value in (None, "", "  ", 7):
+            with self.subTest(tenantKey=value):
+                fetch = AsyncMock()
+                with self.assertRaisesRegex(ValueError, "tenantKey"):
+                    await TeamsCollectionService(fetch, MemoryStore()).backfill(
+                        [{**CHANNEL, "tenantKey": value}])
+                fetch.assert_not_awaited()
+
+    async def test_post_without_a_creation_time_is_rejected(self):
+        channel = {**CHANNEL, "startTime": "2026-09-01T00:00:00Z"}
+        for value in (None, "invalid", "2026-09-02T00:00:00"):
+            with self.subTest(value=value):
+                root = graph_message({"id": "root", "replies": []})
+                root["createdDateTime"] = value
+                fetch = AsyncMock(return_value={"value": [root]})
+                store = MemoryStore()
+                with self.assertRaisesRegex(ValueError, "createdDateTime"):
+                    await TeamsCollectionService(fetch, store).backfill([channel])
+                self.assertFalse(store.items)
+
+    async def test_non_message_posts_and_replies_are_not_stored(self):
         fetch = AsyncMock(return_value={"value": [
             {"id": "system-root", "messageType": "systemEventMessage"},
             graph_message({
                 "id": "root",
                 "replies": [
                     {"id": "system-reply", "messageType": "systemEventMessage"},
-                    reply,
+                    graph_message({"id": "reply", "replyToId": "root"}),
                 ],
             }),
         ]})
         store = MemoryStore()
 
-        result = await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])
+        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL])
 
-        self.assertEqual(result["postsRead"], 1)
-        self.assertEqual(result["repliesRead"], 1)
-        self.assertEqual(next(iter(store.items.values()))["replies"], [reply])
-
-    async def test_expanded_reply_without_reply_to_id_uses_root_context(self):
-        reply = graph_message({"id": "reply"})
-        fetch = AsyncMock(return_value={"value": [
-            graph_message({"id": "root", "replies": [reply]}),
-        ]})
-        store = MemoryStore()
-
-        result = await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])
-
-        self.assertEqual(result["repliesRead"], 1)
-        self.assertEqual(next(iter(store.items.values()))["replies"], [reply])
+        self.assertEqual(result["threadsRead"], 1)
+        self.assertEqual(result["messagesCreated"], 2)
+        self.assertEqual({document_id for _partition, document_id in store.items},
+                         {"root", "reply"})
 
     async def test_partial_expansion_falls_back_to_full_reply_paging(self):
         root = graph_message({"id": "root"})
-        reply1 = graph_message({"id": "reply1", "replyToId": "root"})
-        reply2 = graph_message({"id": "reply2", "replyToId": "root"})
+        reply1 = graph_message({"id": "reply1", "replyToId": "root",
+                                "createdDateTime": "2026-09-01T01:00:00Z"})
+        reply2 = graph_message({"id": "reply2", "replyToId": "root",
+                                "createdDateTime": "2026-09-01T02:00:00Z"})
         fetch = AsyncMock(side_effect=[
             {"value": [{**root, "replies": [reply1], "replies@odata.count": 1,
                         "replies@odata.nextLink": next_link(CHANNEL, "root")}]},
             {"value": [reply1], "@odata.nextLink": next_link(CHANNEL, "root")},
             {"value": [reply2]},
-            {"value": [{**root, "replies": [reply2, reply1], "replies@odata.count": 2}]},
         ])
         store = MemoryStore()
-        service = TeamsCollectionService(fetch, store, TENANT)
-        await service.collect([CHANNEL])
-        unchanged = await service.collect([CHANNEL])
-        document = next(iter(store.items.values()))
-        self.assertEqual(document["post"], root)
-        self.assertEqual(document["replies"], [reply1, reply2])
-        self.assertEqual(unchanged["postsUnchanged"], 1)
-        self.assertEqual(store.writes, 1)
+
+        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL])
+
+        self.assertEqual(result["messagesCreated"], 3)
         self.assertEqual(fetch.call_args_list[1].args, (CHANNEL, "root", None))
         self.assertEqual(fetch.call_args_list[2].args, (CHANNEL, "root", "next"))
 
-    async def test_failed_scan_preserves_checkpoint_and_retries_completed_threads(self):
-        from datetime import datetime, timezone
-
-        root = graph_message({"id": "root", "replies": []})
-        changed = {**root, "body": {"content": "updated"}}
+    async def test_collects_multiple_channels_and_all_root_and_reply_pages(self):
+        second = {**CHANNEL, "channelId": "19:second@thread.tacv2"}
         fetch = AsyncMock(side_effect=[
-            {"value": [root]},
-            {"value": [changed], "@odata.nextLink": next_link(CHANNEL)}, RuntimeError("page failed"),
-            {"value": [changed]},
+            {"value": [graph_message({"id": "root"})], "@odata.nextLink": next_link(CHANNEL)},
+            {"value": [graph_message({"id": "reply1", "replyToId": "root"})],
+             "@odata.nextLink": next_link(CHANNEL, "root")},
+            {"value": [graph_message({"id": "reply2", "replyToId": "root"})]},
+            {"value": [graph_message({"id": "older"})]}, {"value": []},
+            {"value": [graph_message({"id": "root"})]}, {"value": []},
         ])
         store = MemoryStore()
-        service = TeamsCollectionService(fetch, store, TENANT)
-        with patch("services.teams_collection_service.datetime", wraps=datetime) as clock:
-            clock.now.side_effect = [datetime(2026, 9, 10, hour, tzinfo=timezone.utc) for hour in range(7)]
-            await service.collect([CHANNEL])
-            checkpoint = copy.deepcopy(store.checkpoints)
-            with self.assertRaisesRegex(RuntimeError, "page failed"):
-                await service.collect([CHANNEL])
-            self.assertEqual(store.checkpoints, checkpoint)
-            retried = await service.collect([CHANNEL])
-        self.assertEqual(retried["postsWritten"], 0)
-        self.assertEqual(retried["postsUnchanged"], 1)
-        self.assertEqual(store.writes, 2)
-        self.assertNotEqual(store.checkpoints, checkpoint)
 
-    async def test_backfills_processing_before_replacing_and_skips_current_result(self):
-        channel = {
-            **CHANNEL,
-            "processingScope": {"name": "general", "description": "Azure developer experience."},
-        }
-        root = graph_message({
-            "id": "root", "subject": "Question", "body": {"content": "How?"},
-            "replies": [graph_message({
-                "id": "reply", "replyToId": "root", "body": {"content": "Do this."},
-            })],
-        })
+        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL, second])
 
-        class Processor:
-            def __init__(self):
-                self.calls = []
+        self.assertEqual(result["channelsCompleted"], 2)
+        self.assertEqual(result["threadsRead"], 3)
+        self.assertEqual(result["messagesCreated"], 5)
+        self.assertEqual(fetch.call_args_list[2].args, (CHANNEL, "root", "next"))
+        self.assertEqual(fetch.call_args_list[3].args, (CHANNEL, None, "next"))
+        self.assertEqual(
+            store.items[(thread_partition(second["channelId"], "root"), "root")]
+            ["conversation_partition"],
+            thread_partition(second["channelId"], "root"),
+        )
 
-            def is_current(self, processing, digest):
-                return bool(processing and processing["source_content_hash"] == digest)
-
-            async def process(self, configured_channel, post, replies, digest):
-                self.calls.append((configured_channel, post, replies, digest))
-                return {
-                    "processor": "teams-channel-qa-summary",
-                    "processor_version": "v1",
-                    "source_content_hash": digest,
-                    "status": "included",
-                    "qa": {"title": "Question", "question": "How?", "answer": "Do this."},
-                }
-
-        processor = Processor()
+    async def test_reply_failure_never_writes_a_partial_thread(self):
         fetch = AsyncMock(side_effect=[
-            {"value": [root]}, {"value": [root]}, {"value": [root]},
+            {"value": [graph_message({"id": "root"})]},
+            {"value": [], "@odata.nextLink": next_link(CHANNEL, "root")},
+            RuntimeError("unavailable"),
         ])
         store = MemoryStore()
-        await TeamsCollectionService(fetch, store, TENANT).collect([channel])
-        self.assertNotIn("processing", next(iter(store.items.values())))
-        service = TeamsCollectionService(fetch, store, TENANT, processor=processor)
-        first = await service.collect([channel])
-        second = await service.collect([channel])
-
-        self.assertEqual(first["postsWritten"], 1)
-        self.assertEqual(second["postsUnchanged"], 1)
-        self.assertEqual(len(processor.calls), 1)
-        self.assertEqual(store.writes, 2)
-        document = next(iter(store.items.values()))
-        self.assertEqual(document["processing"]["qa"]["answer"], "Do this.")
-        self.assertNotIn("replies", processor.calls[0][1])
-        self.assertEqual(processor.calls[0][2][0]["id"], "reply")
-
-    async def test_processing_failure_does_not_write_thread_or_checkpoint(self):
-        class Processor:
-            def is_current(self, processing, digest):
-                return False
-
-            async def process(self, channel, post, replies, digest):
-                raise RuntimeError("processing failed")
-
-        fetch = AsyncMock(return_value={"value": [
-            graph_message({"id": "root", "replies": []}),
-        ]})
-        store = MemoryStore()
-        with self.assertRaisesRegex(RuntimeError, "processing failed"):
-            await TeamsCollectionService(
-                fetch, store, TENANT, processor=Processor()
-            ).collect([CHANNEL])
+        with self.assertRaisesRegex(RuntimeError, "unavailable"):
+            await TeamsCollectionService(fetch, store).backfill([CHANNEL])
         self.assertFalse(store.items)
-        self.assertFalse(store.checkpoints)
 
-    async def test_reprocessing_uses_stored_raw_thread_without_fetching_teams(self):
-        root = graph_message({"id": "root", "body": {"content": "Question"}, "replies": []})
+    async def test_reply_page_limit_and_wrong_parent_do_not_save_partial_thread(self):
+        for page in ({"value": [], "@odata.nextLink": next_link(CHANNEL, "root")},
+                     {"value": [graph_message({"id": "reply", "replyToId": "other"})]}):
+            store = MemoryStore()
+            fetch = AsyncMock(side_effect=[{"value": [graph_message({"id": "root"})]}, page])
+            with self.assertRaises((RuntimeError, ValueError)):
+                await TeamsCollectionService(fetch, store, max_pages=1).backfill([CHANNEL])
+            self.assertFalse(store.items)
+
+    async def test_repeated_continuation_fails_without_writing_partial_replies(self):
+        page = {"value": [], "@odata.nextLink": next_link(CHANNEL, "root")}
+        fetch = AsyncMock(side_effect=[{"value": [graph_message({"id": "root"})]}, page, page])
         store = MemoryStore()
-        await TeamsCollectionService(
-            AsyncMock(return_value={"value": [root]}), store, TENANT
-        ).collect([CHANNEL])
+        with self.assertRaisesRegex(RuntimeError, "repeated"):
+            await TeamsCollectionService(fetch, store).backfill([CHANNEL])
+        self.assertFalse(store.items)
 
-        class Processor:
-            def is_current(self, processing, digest):
-                return False
+    def test_continuation_is_parsed_without_following_untrusted_urls(self):
+        self.assertEqual(continuation_token(next_link(CHANNEL, token="a+b/=c"), CHANNEL, None), "a+b/=c")
+        self.assertEqual(continuation_token(next_link(CHANNEL) + "&$expand=replies", CHANNEL, None), "next")
+        replies_link = next_link(CHANNEL, "root").replace(
+            "logic-apis-westus2.azure-apim.net/apim/teams/connection", "graph.microsoft.com")
+        self.assertEqual(continuation_token(replies_link, CHANNEL, "root"), "next")
+        for link in (next_link(CHANNEL).replace("logic-apis-westus2.azure-apim.net", "example.com"),
+                     next_link(CHANNEL).replace("/messages?", "/other?"), replies_link,
+                     next_link(CHANNEL) + "&$expand=unexpected",
+                     next_link(CHANNEL) + "&$expand=replies&$expand=replies"):
+            with self.assertRaises(ValueError):
+                continuation_token(link, CHANNEL, None)
 
-            async def process(self, channel, post, replies, digest):
-                return {
-                    "processor": "teams-channel-qa-summary",
-                    "processor_version": "v2",
-                    "source_content_hash": digest,
-                    "status": "excluded",
-                    "exclusion_reason": "No human answer.",
-                    "qa": None,
-                }
+    async def test_logic_app_passes_only_configured_channel_and_continuation(self):
+        import httpx
+        from types import SimpleNamespace
+        from services.teams_collection_service import LogicAppPageClient
 
-        fetch = AsyncMock()
-        result = await TeamsCollectionService(
-            fetch, store, TENANT, processor=Processor()
-        ).reprocess([CHANNEL])
+        client = AsyncMock()
+        client.post.return_value = httpx.Response(200, json={"operation": "replies", "data": {"value": []}})
+        credential = AsyncMock()
+        credential.get_token.return_value = SimpleNamespace(token="secret")
+        url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
+        channel = {**CHANNEL, "startTime": "2026-09-01T00:00:00Z"}
+        pages = LogicAppPageClient(client, credential, url, "https://management.core.windows.net/", [channel])
+        self.assertEqual(await pages.fetch_page(channel, "root", "continuation"), {"value": []})
+        self.assertEqual(client.post.call_args.kwargs["json"], {
+            "teamId": CHANNEL["teamId"], "channelId": CHANNEL["channelId"],
+            "operation": "replies", "messageId": "root", "skipToken": "continuation"})
+        self.assertFalse(client.post.call_args.kwargs["follow_redirects"])
+        with self.assertRaises(ValueError):
+            await pages.fetch_page({**CHANNEL, "channelId": "unapproved"}, None, None)
+        with self.assertRaises(ValueError):
+            LogicAppPageClient(client, credential, url + "&sig=secret", "https://management.core.windows.net/", [CHANNEL])
+        client.post.return_value = httpx.Response(403, json={"error": "secret"})
+        with self.assertRaisesRegex(RuntimeError, "HTTP 403") as failure:
+            await pages.fetch_page(channel, None, None)
+        self.assertNotIn("secret", str(failure.exception))
 
-        self.assertEqual(result, {
-            "channelsCompleted": 1, "postsRead": 1, "postsReprocessed": 1,
+    async def test_logic_app_retries_transient_failures(self):
+        import httpx
+        from types import SimpleNamespace
+        from services.teams_collection_service import LogicAppPageClient
+
+        url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
+        credential = AsyncMock()
+        credential.get_token.return_value = SimpleNamespace(token="secret")
+        success = httpx.Response(200, json={"operation": "messages", "data": {"value": []}})
+        for transient in (httpx.ReadTimeout("timed out"), httpx.Response(503)):
+            with self.subTest(transient=type(transient).__name__):
+                client = AsyncMock()
+                client.post.side_effect = [transient, success]
+                pages = LogicAppPageClient(
+                    client, credential, url, "https://management.core.windows.net/", [CHANNEL]
+                )
+                with patch("services.teams_collection_service.asyncio.sleep", new=AsyncMock()) as sleep:
+                    self.assertEqual(await pages.fetch_page(CHANNEL, None, None), {"value": []})
+                self.assertEqual(client.post.await_count, 2)
+                sleep.assert_awaited_once_with(1)
+
+    async def test_summary_runs_the_model_once_per_meaningful_thread_change(self):
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        channel = {**CHANNEL, "processingScope": {"name": "general", "description": "Scope."}}
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        other = thread_partition("19:other@thread.tacv2", "root")
+        messages = FakeMessageContainer([
+            stored_message(partition, "root", "title: Question\n\n<p>How?</p>", ts=10),
+            stored_message(partition, "reply", "<p>Do this.</p>", ts=11,
+                           created_at="2026-09-01T01:00:00Z"),
+            stored_message(other, "root", "<p>another channel</p>", ts=12),
+        ])
+        summaries = FakeSummaryContainer()
+        processor = FakeProcessor()
+        service = TeamsQASummaryService(messages, summaries, processor)
+
+        first = await service.summarize([channel])
+        second = await service.summarize([channel])
+
+        self.assertEqual(first["threadsScanned"], 1)
+        self.assertEqual(first["threadsSummarized"], 1)
+        self.assertEqual(second["threadsUnchanged"], 1)
+        self.assertEqual(len(processor.calls), 1)
+        _channel, post, replies, _digest = processor.calls[0]
+        self.assertEqual(post["subject"], "Question")
+        self.assertEqual(post["content"], "<p>How?</p>")
+        self.assertEqual([reply["id"] for reply in replies], ["reply"])
+        document = summaries.upserts[0]
+        self.assertEqual(document["id"], "root")
+        self.assertEqual(document["channel_id"], CHANNEL["channelId"])
+        self.assertEqual(document["document_type"], "teams_thread_qa_summary")
+        self.assertEqual(document["message_count"], 2)
+        self.assertEqual(document["last_write_ts"], 11)
+        self.assertEqual(document["qa"]["answer"], "Do this.")
+
+        messages.documents.append(stored_message(
+            partition, "late", "<p>and this.</p>", ts=20,
+            created_at="2026-09-01T02:00:00Z"))
+        third = await service.summarize([channel])
+        self.assertEqual(third["threadsSummarized"], 1)
+        self.assertEqual(len(processor.calls), 2)
+        self.assertEqual(summaries.upserts[-1]["message_count"], 3)
+
+    async def test_summary_timestamps_survive_a_string_range_filter(self):
+        """Cosmos compares timestamps as strings, so the spelling has to be stable.
+
+        ``conversation-messages`` holds whatever the bot serialized, and a message
+        whose microseconds land on zero is stored without a fractional part. ``Z``
+        sorts after ``.``, so mixing both spellings in one container drops the short
+        form out of a ``>=`` filter. Summaries normalize instead of inheriting.
+        """
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        channel = {**CHANNEL, "processingScope": {"name": "general", "description": "Scope."}}
+        whole_second = thread_partition(CHANNEL["channelId"], "whole")
+        fractional = thread_partition(CHANNEL["channelId"], "fraction")
+        messages = FakeMessageContainer([
+            stored_message(whole_second, "whole", "<p>How?</p>", ts=10,
+                           created_at="2026-09-15T00:00:00Z"),
+            stored_message(fractional, "fraction", "<p>How?</p>", ts=11,
+                           created_at="2026-09-15T00:00:00.500000Z"),
+        ])
+        service = TeamsQASummaryService(messages, FakeSummaryContainer(), FakeProcessor())
+
+        result = await service.summarize([channel])
+        documents = service._summaries.upserts
+
+        self.assertEqual(result["threadsSummarized"], 2)
+        started = sorted(document["thread_started_at"] for document in documents)
+        self.assertEqual(started, ["2026-09-15T00:00:00.000000Z",
+                                   "2026-09-15T00:00:00.500000Z"])
+        for document in documents:
+            self.assertEqual(document["last_message_at"], document["thread_started_at"])
+            # The processor hands back an offset-style stamp; the container restates it.
+            self.assertTrue(document["processed_at"].endswith("Z"), document["processed_at"])
+            self.assertEqual(len(document["processed_at"]), len(started[0]))
+        # The boundary a caller would naturally write now selects both threads.
+        window = [document for document in documents
+                  if "2026-09-15T00:00:00.000000Z" <= document["thread_started_at"]
+                  <= "2026-09-15T00:00:01.000000Z"]
+        self.assertEqual(len(window), 2)
+
+    def test_thread_messages_are_ordered_by_instant_not_spelling(self):
+        from services.teams_qa_summary_service import _ordered
+
+        ordered = _ordered([
+            {"id": "second", "created_at": "2026-09-15T00:00:00.500000Z"},
+            {"id": "first", "created_at": "2026-09-15T00:00:00Z"},
+            {"id": "third", "created_at": "2026-09-15T00:00:01Z"},
+            {"id": "unparseable", "created_at": "not a timestamp"},
+        ])
+
+        self.assertEqual([message["id"] for message in ordered],
+                         ["unparseable", "first", "second", "third"])
+
+    async def test_summary_refreshes_the_gate_without_rerunning_the_model(self):
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        channel = {**CHANNEL, "processingScope": {"name": "general", "description": "Scope."}}
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        messages = FakeMessageContainer([
+            stored_message(partition, "root", "<p>How?</p>", ts=10),
+        ])
+        summaries = FakeSummaryContainer()
+        processor = FakeProcessor()
+        service = TeamsQASummaryService(messages, summaries, processor)
+        await service.summarize([channel])
+
+        # A bot backfilling should_reply moves _ts without changing any content.
+        messages.documents[0]["_ts"] = 99
+        result = await service.summarize([channel])
+
+        self.assertEqual(result["threadsRefreshed"], 1)
+        self.assertEqual(result["threadsSummarized"], 0)
+        self.assertEqual(len(processor.calls), 1)
+        self.assertEqual(summaries.upserts[-1]["last_write_ts"], 99)
+        self.assertEqual(await service.summarize([channel]), {
+            "channelsCompleted": 1, "threadsScanned": 1, "threadsSummarized": 0,
+            "threadsUnchanged": 1, "threadsRefreshed": 0, "threadsExcluded": 0,
+            "threadsSkipped": 0})
+
+    async def test_summary_stores_nothing_for_a_thread_without_reusable_qa(self):
+        """A rejected thread leaves no document, so every stored one is an answer."""
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        channel = {**CHANNEL, "processingScope": {"name": "general", "description": "Scope."}}
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        messages = FakeMessageContainer([
+            stored_message(partition, "root", "<p>How?</p>", ts=10),
+            stored_message(partition, "bot", "<p>Bot guess.</p>", ts=11, role="system",
+                           created_at="2026-09-01T01:00:00Z"),
+        ])
+        summaries = FakeSummaryContainer()
+        processor = FakeProcessor({
+            "status": "excluded", "exclusion_reason": "No human reply.", "qa": None,
         })
-        fetch.assert_not_awaited()
-        self.assertEqual(next(iter(store.items.values()))["processing"]["processor_version"], "v2")
+        service = TeamsQASummaryService(messages, summaries, processor)
+
+        result = await service.summarize([channel])
+
+        self.assertEqual(result["threadsExcluded"], 1)
+        self.assertEqual(result["threadsSummarized"], 0)
+        self.assertFalse(summaries.upserts)
+        self.assertFalse(summaries.documents)
+        self.assertFalse(summaries.deletes)
+        # Nothing was stored, so the gate cannot spare the model on the next run.
+        self.assertEqual((await service.summarize([channel]))["threadsExcluded"], 1)
+        self.assertEqual(len(processor.calls), 2)
+
+    async def test_summary_removes_an_answer_the_thread_no_longer_supports(self):
+        """An accepted thread that later fails the rules must not keep its answer."""
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        channel = {**CHANNEL, "processingScope": {"name": "general", "description": "Scope."}}
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        messages = FakeMessageContainer([
+            stored_message(partition, "root", "<p>How?</p>", ts=10),
+        ])
+        summaries = FakeSummaryContainer()
+        processor = FakeProcessor()
+        service = TeamsQASummaryService(messages, summaries, processor)
+        await service.summarize([channel])
+        self.assertEqual(len(summaries.documents), 1)
+
+        # The thread grows a correction that takes it out of scope.
+        messages.documents.append(stored_message(
+            partition, "retraction", "<p>Wrong channel.</p>", ts=20,
+            created_at="2026-09-01T02:00:00Z"))
+        processor.decision = {"status": "excluded", "exclusion_reason": "Out of scope.",
+                              "qa": None}
+        result = await service.summarize([channel])
+
+        self.assertEqual(result["threadsExcluded"], 1)
+        self.assertEqual(summaries.deletes, [("root", CHANNEL["channelId"])])
+        self.assertFalse(summaries.documents)
+
+    async def test_summary_omits_the_fields_that_only_routed_the_decision(self):
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        channel = {**CHANNEL, "processingScope": {"name": "general", "description": "Scope."}}
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        messages = FakeMessageContainer([stored_message(partition, "root", "<p>How?</p>", ts=10)])
+        summaries = FakeSummaryContainer()
+
+        await TeamsQASummaryService(messages, summaries, FakeProcessor()).summarize([channel])
+
+        document = summaries.upserts[0]
+        self.assertNotIn("status", document)
+        self.assertNotIn("exclusion_reason", document)
+        self.assertEqual(document["qa"]["answer"], "Do this.")
+
+    async def test_summary_reprocesses_when_the_processor_version_changes(self):
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        channel = {**CHANNEL, "processingScope": {"name": "general", "description": "Scope."}}
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        messages = FakeMessageContainer([stored_message(partition, "root", "<p>How?</p>", ts=10)])
+        summaries = FakeSummaryContainer()
+        processor = FakeProcessor()
+        await TeamsQASummaryService(messages, summaries, processor).summarize([channel])
+
+        processor.version = "v2"
+        result = await TeamsQASummaryService(messages, summaries, processor).summarize([channel])
+
+        self.assertEqual(result["threadsSummarized"], 1)
+        self.assertEqual(len(processor.calls), 2)
+        self.assertEqual(summaries.upserts[-1]["processor_version"], "v2")
+
+    async def test_summary_skips_a_thread_whose_root_post_is_missing(self):
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        channel = {**CHANNEL, "processingScope": {"name": "general", "description": "Scope."}}
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        messages = FakeMessageContainer([
+            stored_message(partition, "bot-answer", "<p>bot only</p>", ts=10, role="system"),
+        ])
+        summaries = FakeSummaryContainer()
+        processor = FakeProcessor()
+
+        result = await TeamsQASummaryService(messages, summaries, processor).summarize([channel])
+
+        self.assertEqual(result["threadsSkipped"], 1)
+        self.assertEqual(result["threadsSummarized"], 0)
+        self.assertFalse(processor.calls)
+        self.assertFalse(summaries.upserts)
+
+    async def test_summary_service_requires_a_processor(self):
+        from services.teams_qa_summary_service import TeamsQASummaryService
+
+        with self.assertRaisesRegex(RuntimeError, "processor"):
+            TeamsQASummaryService(FakeMessageContainer([]), FakeSummaryContainer(), None)
 
     async def test_thread_processor_validates_and_versions_model_output(self):
         from types import SimpleNamespace
@@ -692,346 +1316,10 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["channel"], {
             "name": "general", "scope": "Azure developer experience.",
         })
-
-    async def test_first_scan_is_full_even_with_a_lookback_window(self):
-        from datetime import datetime, timezone
-
-        first = graph_message({
-            "id": "first", "createdDateTime": "2020-01-01T00:00:00Z", "replies": [],
-        })
-        second = graph_message({
-            "id": "second", "createdDateTime": "2019-01-01T00:00:00Z", "replies": [],
-        })
-        fetch = AsyncMock(side_effect=[
-            {"value": [first], "@odata.nextLink": next_link(CHANNEL)},
-            {"value": [second]},
-        ])
-        store = MemoryStore()
-        with patch("services.teams_collection_service.datetime", wraps=datetime) as clock:
-            clock.now.return_value = datetime(2026, 9, 18, tzinfo=timezone.utc)
-            result = await TeamsCollectionService(
-                fetch, store, TENANT, lookback_days=7
-            ).collect([CHANNEL])
-
-        self.assertEqual(result["postsRead"], 2)
-        self.assertEqual(fetch.await_count, 2)
-        checkpoint = next(iter(store.checkpoints.values()))
-        self.assertEqual(checkpoint["scan_mode"], "full")
-        self.assertIsNone(checkpoint["lookback_cutoff"])
-
-    async def test_incremental_scan_stops_after_the_reply_chain_activity_cutoff(self):
-        import hashlib
-        from datetime import datetime, timezone
-
-        key = hashlib.sha256(json.dumps(
-            [TENANT, CHANNEL["teamId"], CHANNEL["channelId"]]
-        ).encode()).hexdigest()
-        store = MemoryStore()
-        store.checkpoints[key] = {
-            "id": "channel-checkpoint",
-            "channel_key": key,
-            "last_successful_scan_started_at": "2026-09-11T00:00:00+00:00",
-        }
-        recent_reply = graph_message({
-            "id": "recent-reply", "replyToId": "recent-thread",
-            "createdDateTime": "2026-09-15T00:00:00Z",
-        })
-        recent_thread = graph_message({
-            "id": "recent-thread", "createdDateTime": "2020-01-01T00:00:00Z",
-            "lastModifiedDateTime": "2020-01-01T00:00:00Z",
-            "replies": [recent_reply],
-        })
-        cutoff_thread = graph_message({
-            "id": "cutoff", "createdDateTime": "2026-09-10T23:59:59Z",
-            "replies": [],
-        })
-        older_thread = graph_message({
-            "id": "older", "createdDateTime": "2019-01-01T00:00:00Z",
-            "replies": [],
-        })
-        fetch = AsyncMock(return_value={
-            "value": [recent_thread, cutoff_thread, older_thread],
-            "@odata.nextLink": next_link(CHANNEL),
-        })
-        with patch("services.teams_collection_service.datetime", wraps=datetime) as clock:
-            clock.now.return_value = datetime(2026, 9, 18, tzinfo=timezone.utc)
-            result = await TeamsCollectionService(
-                fetch, store, TENANT, lookback_days=7
-            ).collect([CHANNEL])
-
-        self.assertEqual(result, {
-            "channelsCompleted": 1, "postsRead": 1, "postsWritten": 1,
-            "postsUnchanged": 0, "repliesRead": 1,
-        })
-        fetch.assert_awaited_once_with(CHANNEL, None, None)
-        self.assertEqual({document["post_id"] for document in store.items.values()},
-                         {"recent-thread"})
-        checkpoint = store.checkpoints[key]
-        self.assertEqual(checkpoint["scan_mode"], "incremental")
-        self.assertEqual(checkpoint["lookback_cutoff"], "2026-09-11T00:00:00+00:00")
-
-    def test_rejects_invalid_lookback_window(self):
-        for value in (True, 0, 31, 1.5, "7"):
-            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "lookback_days"):
-                TeamsCollectionService(AsyncMock(), MemoryStore(), TENANT, lookback_days=value)
-
-    async def test_invalid_expanded_replies_do_not_write_or_checkpoint(self):
-        for replies in (None, {}, [graph_message({"id": "reply", "replyToId": "another-root"})]):
-            with self.subTest(replies=replies):
-                fetch = AsyncMock(return_value={
-                    "value": [graph_message({"id": "root", "replies": replies})],
-                })
-                store = MemoryStore()
-                with self.assertRaises(ValueError):
-                    await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])
-                self.assertFalse(store.items)
-                self.assertFalse(store.checkpoints)
-
-    async def test_cosmos_uses_conditional_replace_and_does_not_retry_conflicts(self):
-        from azure.core import MatchConditions
-        from azure.cosmos.exceptions import CosmosHttpResponseError
-        from utils.teams_collection import CosmosThreadStore
-
-        container = AsyncMock()
-        store = CosmosThreadStore(container)
-        document = {"id": "thread", "channel_key": "channel"}
-        await store.write(document, None)
-        container.create_item.assert_awaited_once_with(body=document)
-        await store.write(document, {"_etag": "version1"})
-        container.replace_item.assert_awaited_once_with(
-            item="thread", body=document, etag="version1", match_condition=MatchConditions.IfNotModified)
-        container.replace_item.side_effect = CosmosHttpResponseError(status_code=412, message="conflict")
-        with self.assertRaisesRegex(RuntimeError, "Concurrent"):
-            await store.write(document, {"_etag": "version1"})
-        container.upsert_item.assert_not_called()
-
-    async def test_logic_app_passes_only_configured_channel_and_continuation(self):
-        import httpx
-        from types import SimpleNamespace
-        from utils.teams_collection import LogicAppPageClient
-
-        client = AsyncMock()
-        client.post.return_value = httpx.Response(200, json={"operation": "replies", "data": {"value": []}})
-        credential = AsyncMock()
-        credential.get_token.return_value = SimpleNamespace(token="secret")
-        url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
-        channel = {**CHANNEL, "startTime": "2026-09-01T00:00:00Z"}
-        pages = LogicAppPageClient(client, credential, url, "https://management.core.windows.net/", [channel])
-        self.assertEqual(await pages.fetch_page(channel, "root", "continuation"), {"value": []})
-        self.assertEqual(client.post.call_args.kwargs["json"], {
-            **CHANNEL, "operation": "replies", "messageId": "root", "skipToken": "continuation"})
-        self.assertFalse(client.post.call_args.kwargs["follow_redirects"])
-        with self.assertRaises(ValueError):
-            await pages.fetch_page({**CHANNEL, "channelId": "unapproved"}, None, None)
-        with self.assertRaises(ValueError):
-            LogicAppPageClient(client, credential, url + "&sig=secret", "https://management.core.windows.net/", [CHANNEL])
-        client.post.return_value = httpx.Response(403, json={"error": "secret"})
-        with self.assertRaisesRegex(RuntimeError, "HTTP 403") as failure:
-            await pages.fetch_page(channel, None, None)
-        self.assertNotIn("secret", str(failure.exception))
-
-    async def test_logic_app_retries_transient_failures(self):
-        import httpx
-        from types import SimpleNamespace
-        from utils.teams_collection import LogicAppPageClient
-
-        url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
-        credential = AsyncMock()
-        credential.get_token.return_value = SimpleNamespace(token="secret")
-        success = httpx.Response(200, json={"operation": "messages", "data": {"value": []}})
-        for transient in (httpx.ReadTimeout("timed out"), httpx.Response(503)):
-            with self.subTest(transient=type(transient).__name__):
-                client = AsyncMock()
-                client.post.side_effect = [transient, success]
-                pages = LogicAppPageClient(
-                    client, credential, url, "https://management.core.windows.net/", [CHANNEL]
-                )
-                with patch("utils.teams_collection.asyncio.sleep", new=AsyncMock()) as sleep:
-                    self.assertEqual(await pages.fetch_page(CHANNEL, None, None), {"value": []})
-                self.assertEqual(client.post.await_count, 2)
-                sleep.assert_awaited_once_with(1)
-
-    async def test_start_time_filters_root_creation_inclusively_and_keeps_paging(self):
-        channel = {**CHANNEL, "startTime": "2026-09-01T08:00:00+08:00"}
-        second = {**CHANNEL, "channelId": "19:second@thread.tacv2", "startTime": "2026-09-02T00:00:00Z"}
-        fetch = AsyncMock(side_effect=[
-            {"value": [graph_message({
-                "id": "old", "createdDateTime": "2026-08-31T23:59:59Z",
-                "lastModifiedDateTime": "2026-09-10T00:00:00Z",
-            })],
-             "@odata.nextLink": next_link(channel)},
-            {"value": [
-                graph_message({"id": "boundary", "createdDateTime": "2026-09-01T00:00:00Z"}),
-                graph_message({"id": "later", "createdDateTime": "2026-09-03T09:00:00+08:00"}),
-            ]},
-            {"value": [graph_message({
-                "id": "reply1", "replyToId": "boundary",
-                "createdDateTime": "2026-09-01T01:00:00Z",
-            })],
-             "@odata.nextLink": next_link(channel, "boundary")},
-            {"value": [graph_message({
-                "id": "reply2", "replyToId": "boundary",
-                "createdDateTime": "2026-09-10T00:00:00Z",
-            })]},
-            {"value": []},
-            {"value": [
-                graph_message({"id": "before-second", "createdDateTime": "2026-09-01T00:00:00Z"}),
-                graph_message({"id": "second-boundary", "createdDateTime": "2026-09-02T00:00:00Z"}),
-            ]},
-            {"value": []},
-        ])
-        store = MemoryStore()
-        result = await TeamsCollectionService(fetch, store, TENANT).collect([channel, second])
-        self.assertEqual(result, {"channelsCompleted": 2, "postsRead": 3, "postsWritten": 3,
-                                  "postsUnchanged": 0, "repliesRead": 2})
-        self.assertEqual({document["post_id"] for document in store.items.values()},
-                         {"boundary", "later", "second-boundary"})
-        self.assertEqual(fetch.call_args_list[1].args, (channel, None, "next"))
-        self.assertEqual(fetch.call_args_list[3].args, (channel, "boundary", "next"))
-        thread = next(document for document in store.items.values() if document["post_id"] == "boundary")
-        self.assertEqual([reply["id"] for reply in thread["replies"]], ["reply1", "reply2"])
-
-    async def test_invalid_start_time_fails_before_fetch(self):
-        for value in ("", "invalid", "2026-09-01", "2026-09-01T00:00:00", 123, False):
-            with self.subTest(value=value):
-                fetch = AsyncMock()
-                store = MemoryStore()
-                with self.assertRaisesRegex(ValueError, "startTime"):
-                    await TeamsCollectionService(fetch, store, TENANT).collect([{**CHANNEL, "startTime": value}])
-                fetch.assert_not_awaited()
-                self.assertFalse(store.items)
-
-    async def test_start_time_rejects_missing_or_invalid_post_creation_time(self):
-        channel = {**CHANNEL, "startTime": "2026-09-01T00:00:00Z"}
-        for value in (None, "invalid", "2026-09-02T00:00:00"):
-            with self.subTest(value=value):
-                root = graph_message({"id": "root"})
-                if value is not None:
-                    root["createdDateTime"] = value
-                fetch = AsyncMock(return_value={"value": [root]})
-                store = MemoryStore()
-                with self.assertRaisesRegex(ValueError, "Post createdDateTime"):
-                    await TeamsCollectionService(fetch, store, TENANT).collect([channel])
-                fetch.assert_awaited_once_with(channel, None, None)
-                self.assertFalse(store.items)
-
-    async def test_start_time_is_optional_and_does_not_change_thread_identity(self):
-        root = graph_message({"id": "root", "createdDateTime": "2026-08-01T00:00:00Z"})
-        fetch = AsyncMock(side_effect=[{"value": [root]}, {"value": []}] * 3)
-        store = MemoryStore()
-        service = TeamsCollectionService(fetch, store, TENANT)
-        await service.collect([CHANNEL])
-        for value in (None, "2026-08-01T00:00:00Z"):
-            result = await service.collect([{**CHANNEL, "startTime": value}])
-            self.assertEqual(result["postsUnchanged"], 1)
-        self.assertEqual(len(store.items), 1)
-        self.assertEqual(store.writes, 1)
-
-    async def test_collects_multiple_channels_and_all_root_and_reply_pages(self):
-        second = {**CHANNEL, "channelId": "19:second@thread.tacv2"}
-        fetch = AsyncMock(side_effect=[
-            {"value": [graph_message({"id": "root"})], "@odata.nextLink": next_link(CHANNEL)},
-            {"value": [graph_message({"id": "reply1", "replyToId": "root"})],
-             "@odata.nextLink": next_link(CHANNEL, "root")},
-            {"value": [graph_message({"id": "reply2", "replyToId": "root"})]},
-            {"value": [graph_message({"id": "older"})]}, {"value": []},
-            {"value": [graph_message({"id": "root"})]}, {"value": []},
-        ])
-        store = MemoryStore()
-        result = await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL, second])
-        self.assertEqual(result, {"channelsCompleted": 2, "postsRead": 3, "postsWritten": 3,
-                                  "postsUnchanged": 0, "repliesRead": 2})
-        self.assertEqual(len(store.items), 3)
-        self.assertEqual(fetch.call_args_list[2].args, (CHANNEL, "root", "next"))
-        self.assertEqual(fetch.call_args_list[3].args, (CHANNEL, None, "next"))
-        self.assertEqual(len(next(iter(store.items.values()))["replies"]), 2)
-
-    async def test_reply_changes_update_existing_post_even_when_root_is_unchanged(self):
-        root = graph_message({"id": "old", "lastModifiedDateTime": "2020-01-01T00:00:00Z"})
-        fetch = AsyncMock(side_effect=[
-            {"value": [root]}, {"value": []},
-            {"value": [root]}, {"value": []},
-            {"value": [root]}, {"value": [graph_message({"id": "new", "replyToId": "old"})]},
-        ])
-        store = MemoryStore()
-        service = TeamsCollectionService(fetch, store, TENANT)
-        await service.collect([CHANNEL])
-        unchanged = await service.collect([CHANNEL])
-        self.assertEqual(unchanged["postsUnchanged"], 1)
-        await service.collect([CHANNEL])
-        self.assertEqual(len(store.items), 1)
-        self.assertEqual(store.writes, 2)
-        self.assertEqual(next(iter(store.items.values()))["replies"][0]["id"], "new")
-
-    async def test_old_reply_edit_is_detected_without_a_root_timestamp_change(self):
-        root = graph_message({
-            "id": "root", "lastModifiedDateTime": "2026-09-01T00:00:00Z",
-            "etag": "root-version",
-        })
-        reply = graph_message({
-            "id": "reply", "replyToId": "root", "createdDateTime": "2026-09-01T01:00:00Z",
-            "lastModifiedDateTime": "2026-09-01T01:00:00Z", "body": {"content": "original"},
-        })
-        edited = {**reply, "lastModifiedDateTime": "2026-09-10T00:00:00Z", "body": {"content": "edited"}}
-        fetch = AsyncMock(side_effect=[
-            {"value": [root]}, {"value": [reply]},
-            {"value": [root]}, {"value": [edited]},
-            {"value": [root]}, {"value": [edited]},
-        ])
-        store = MemoryStore()
-        service = TeamsCollectionService(fetch, store, TENANT)
-        await service.collect([CHANNEL])
-        changed = await service.collect([CHANNEL])
-        unchanged = await service.collect([CHANNEL])
-        self.assertEqual(changed["postsWritten"], 1)
-        self.assertEqual(unchanged["postsUnchanged"], 1)
-        self.assertEqual(store.writes, 2)
-        self.assertEqual(next(iter(store.items.values()))["replies"][0]["body"]["content"], "edited")
-
-    async def test_reply_failure_never_overwrites_existing_thread(self):
-        fetch = AsyncMock(side_effect=[
-            {"value": [graph_message({"id": "root"})]},
-            {"value": [graph_message({"id": "original", "replyToId": "root"})]},
-            {"value": [graph_message({"id": "root"})]},
-            {"value": [], "@odata.nextLink": next_link(CHANNEL, "root")}, RuntimeError("unavailable"),
-        ])
-        store = MemoryStore()
-        service = TeamsCollectionService(fetch, store, TENANT)
-        await service.collect([CHANNEL])
-        with self.assertRaisesRegex(RuntimeError, "unavailable"):
-            await service.collect([CHANNEL])
-        self.assertEqual(store.writes, 1)
-        self.assertEqual(next(iter(store.items.values()))["replies"][0]["id"], "original")
-
-    async def test_reply_page_limit_and_wrong_parent_do_not_save_partial_thread(self):
-        for page in ({"value": [], "@odata.nextLink": next_link(CHANNEL, "root")},
-                     {"value": [graph_message({"id": "reply", "replyToId": "other"})]}):
-            store = MemoryStore()
-            fetch = AsyncMock(side_effect=[{"value": [graph_message({"id": "root"})]}, page])
-            with self.assertRaises((RuntimeError, ValueError)):
-                await TeamsCollectionService(fetch, store, TENANT, max_pages=1).collect([CHANNEL])
-            self.assertFalse(store.items)
-
-    async def test_repeated_continuation_fails_without_writing_partial_replies(self):
-        page = {"value": [], "@odata.nextLink": next_link(CHANNEL, "root")}
-        fetch = AsyncMock(side_effect=[{"value": [graph_message({"id": "root"})]}, page, page])
-        store = MemoryStore()
-        with self.assertRaisesRegex(RuntimeError, "repeated"):
-            await TeamsCollectionService(fetch, store, TENANT).collect([CHANNEL])
-        self.assertFalse(store.items)
-
-    def test_continuation_is_parsed_without_following_untrusted_urls(self):
-        self.assertEqual(continuation_token(next_link(CHANNEL, token="a+b/=c"), CHANNEL, None), "a+b/=c")
-        self.assertEqual(continuation_token(next_link(CHANNEL) + "&$expand=replies", CHANNEL, None), "next")
-        replies_link = next_link(CHANNEL, "root").replace(
-            "logic-apis-westus2.azure-apim.net/apim/teams/connection", "graph.microsoft.com")
-        self.assertEqual(continuation_token(replies_link, CHANNEL, "root"), "next")
-        for link in (next_link(CHANNEL).replace("logic-apis-westus2.azure-apim.net", "example.com"),
-                     next_link(CHANNEL).replace("/messages?", "/other?"), replies_link,
-                     next_link(CHANNEL) + "&$expand=unexpected",
-                     next_link(CHANNEL) + "&$expand=replies&$expand=replies"):
-            with self.assertRaises(ValueError):
-                continuation_token(link, CHANNEL, None)
+        with self.assertRaisesRegex(ValueError, "subject"):
+            await TeamsThreadProcessor(agent, "v3").process(
+                channel, {"id": "root", "subject": "Different"}, [], "content-hash"
+            )
 
 
 if __name__ == "__main__":

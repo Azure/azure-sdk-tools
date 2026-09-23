@@ -59,7 +59,8 @@ def get_agent_client() -> FoundryChatClient:
     if _agent_client is None:
         _agent_client = FoundryChatClient(
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
-            model=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
+            # Temporary: hard-coded for gpt-6-astra evaluation.
+            model="gpt-6-astra",
             credential=get_credential(),
             compaction_strategy=TruncationStrategy(
                 max_n=COMPACTION_TRIGGER_TOKENS,

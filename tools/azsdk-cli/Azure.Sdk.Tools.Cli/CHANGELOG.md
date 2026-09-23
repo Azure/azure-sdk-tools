@@ -6,7 +6,11 @@
 
 ### Breaking Changes
 
+- Release-plan SDK generation requires a linked public spec PR and an immutable spec commit pin. Legacy plans are pinned from their linked merged PR before generation; missing, unmerged, or invalid spec inputs no longer fall back to `main`.
+
 ### Bugs Fixed
+
+- Release plans save the merged spec commit SHA on creation and spec PR updates. SDK generation and regeneration use that SHA and retain the plan's API version, including calls from automation.
 
 ### Other Changes
 

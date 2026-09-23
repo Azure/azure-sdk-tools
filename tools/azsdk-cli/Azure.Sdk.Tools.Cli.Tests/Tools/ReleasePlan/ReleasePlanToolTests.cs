@@ -1606,7 +1606,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(response);
             Assert.That(response.Status, Is.EqualTo("Success"));
             Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
-            Assert.That(response.NextSteps, Has.Some.Contains("SDK generation should be triggered"));
+            Assert.That(response.NextSteps, Has.Some.Contains("After the linked spec PR is merged"));
         }
 
         [Test]
@@ -1616,7 +1616,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(response);
             Assert.That(response.Status, Is.EqualTo("Success"));
             Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
-            Assert.That(response.NextSteps, Has.Some.Contains("SDK generation should be triggered"));
+            Assert.That(response.NextSteps, Has.Some.Contains("After the linked spec PR is merged"));
         }
 
         [Test]
@@ -2161,7 +2161,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     Assert.That(fields["Custom.ProductLifecycle"], Is.EqualTo("GA"));
                 })
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 200 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync("22222222-2222-2222-2222-222222222222", It.IsAny<CancellationToken>()))
@@ -2181,7 +2181,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
 
             mockDevOps.Verify(x => x.UpdateWorkItemAsync(200, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Once);
-            mockDevOps.Verify(x => x.UpdateSpecPullRequestAsync(200, "https://github.com/Azure/azure-rest-api-specs/pull/35446", It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.UpdateSpecPullRequestAsync(200, "https://github.com/Azure/azure-rest-api-specs/pull/35446", "", "", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -2272,7 +2272,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     Assert.That(fields.ContainsKey("Custom.ProductServiceTreeID"), Is.False);
                 })
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 300 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
@@ -2303,7 +2303,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetReleasePlanAsync("https://github.com/Azure/azure-rest-api-specs/pull/99999", It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 500 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(500, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
 
@@ -2523,7 +2523,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(400, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 400 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
@@ -2572,7 +2572,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(600, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 600 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, failingTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
@@ -2697,6 +2697,239 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Message, Does.Contain("GA"));
         }
       
+        [TestCase(true)]
+        [TestCase(false)]
+        public async Task CreateReleasePlan_CapturesOnlyMergedSpecCommit(bool merged)
+        {
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequestMerged = merged;
+
+            var response = await releasePlanTool.CreateReleasePlan(null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview", specPullRequestUrl: specPr);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails!.SpecCommitSha, Is.EqualTo(merged ? github.ConfiguredMergeCommitSha : ""));
+            Assert.That(response.ReleasePlanDetails.ActiveSpecPullRequest, Is.EqualTo(specPr));
+            Assert.That(response.ReleasePlanDetails.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public async Task CreateReleasePlan_ReusesSameVersionAndAdvancesPinOnlyAfterMerge(bool merged)
+        {
+            const string newSpecPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            const string oldSpecPr = "https://github.com/Azure/azure-rest-api-specs/pull/123";
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequestMerged = merged;
+            var devops = (MockDevOpsService)devOpsService;
+            var oldCommit = new string('a', 40);
+            var existing = new ReleasePlanWorkItem
+            {
+                WorkItemId = 200,
+                ReleasePlanId = 20,
+                ApiReleaseType = ApiReleaseType.PublicPreview,
+                SpecAPIVersion = "2026-05-02-preview",
+                SpecCommitSha = oldCommit,
+                ActiveSpecPullRequest = oldSpecPr
+            };
+            devops.ConfiguredReleasePlanForTypeSpecPathAndApiVersion = existing;
+            devops.ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey = "specification/testcontoso/Contoso.Management";
+            devops.ConfiguredApiVersionForTypeSpecPathAndApiVersion = existing.SpecAPIVersion;
+            github.ConfiguredPullRequests[123] = CreateMergedSpecPullRequest(oldCommit, "2026-09-01T00:00:00Z");
+            if (merged)
+            {
+                github.ConfiguredPullRequests[35446] = CreateMergedSpecPullRequest(github.ConfiguredMergeCommitSha, "2026-09-02T00:00:00Z");
+            }
+
+            var response = await releasePlanTool.CreateReleasePlan(null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview", specPullRequestUrl: newSpecPr);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails, Is.SameAs(existing));
+            Assert.That(existing.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
+            Assert.That(existing.SpecCommitSha, Is.EqualTo(merged ? github.ConfiguredMergeCommitSha : oldCommit));
+            Assert.That(existing.ActiveSpecPullRequest, Is.EqualTo(merged ? newSpecPr : oldSpecPr));
+            if (merged)
+            {
+                Assert.That(devops.LastSpecUpdate, Is.EqualTo((200, newSpecPr, github.ConfiguredMergeCommitSha)));
+            }
+            else
+            {
+                Assert.That(devops.LastSpecUpdate, Is.Null);
+            }
+        }
+
+        [Test]
+        public async Task CreateReleasePlan_DifferentVersionKeepsExistingPlanPin()
+        {
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequestMerged = true;
+            var devops = (MockDevOpsService)devOpsService;
+            var oldPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 200,
+                SpecAPIVersion = "2026-01-01-preview",
+                SpecCommitSha = new string('a', 40)
+            };
+            devops.ConfiguredActiveReleasePlansForTypeSpecPath = [oldPlan];
+
+            var response = await releasePlanTool.CreateReleasePlan(null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446");
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails!.WorkItemId, Is.Not.EqualTo(oldPlan.WorkItemId));
+            Assert.That(response.ReleasePlanDetails.SpecCommitSha, Is.EqualTo(github.ConfiguredMergeCommitSha));
+            Assert.That(oldPlan.SpecCommitSha, Is.EqualTo(new string('a', 40)));
+            Assert.That(devops.LastSpecUpdate, Is.Null);
+        }
+
+        [TestCase(true, false)]
+        [TestCase(false, false)]
+        [TestCase(true, true)]
+        [TestCase(false, true)]
+        public async Task UpdateSpecPullRequest_SavesOrClearsPinWithLink(bool merged, bool useReleasePlanId)
+        {
+            const string newSpecPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequestMerged = merged;
+            var devops = (MockDevOpsService)devOpsService;
+            devops.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
+            {
+                WorkItemId = 200,
+                SpecCommitSha = new string('a', 40),
+                SpecAPIVersion = "2026-05-02-preview",
+                ApiReleaseType = ApiReleaseType.PublicPreview
+            };
+
+            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan(newSpecPr,
+                workItemId: useReleasePlanId ? 0 : 200, releasePlanId: useReleasePlanId ? 20 : 0);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(devops.LastSpecUpdate, Is.EqualTo((useReleasePlanId ? 1 : 200, newSpecPr, merged ? github.ConfiguredMergeCommitSha : "")));
+            Assert.That(response.Details, Has.Some.Contains(merged ? github.ConfiguredMergeCommitSha : "previous commit pin was cleared"));
+        }
+
+        [Test]
+        public async Task UpdateReleasePlan_SameLinkedPrPinsCommitAfterMerge()
+        {
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequestMerged = true;
+            var devops = (MockDevOpsService)devOpsService;
+            devops.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
+            {
+                WorkItemId = 200,
+                ActiveSpecPullRequest = specPr,
+                SpecAPIVersion = "2026-05-02-preview",
+                ApiReleaseType = ApiReleaseType.PublicPreview
+            };
+
+            var response = await releasePlanTool.UpdateReleasePlan(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", specPr, "beta", workItemId: 200);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(devops.LastSpecUpdate, Is.EqualTo((200, specPr, github.ConfiguredMergeCommitSha)));
+        }
+
+        [TestCase("create")]
+        [TestCase("update")]
+        [TestCase("link")]
+        public async Task ReleasePlanSpecPin_WhenGitHubLookupFails_DoesNotWrite(string operation)
+        {
+            var github = (MockGitHubService)gitHubService;
+            github.ThrowOnGetPullRequest = true;
+            var devops = new Mock<IDevOpsService>();
+            var plan = new ReleasePlanWorkItem { WorkItemId = 200, ApiReleaseType = ApiReleaseType.PublicPreview };
+            devops.Setup(x => x.ResolveReleasePlanByIdAsync(200, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            devops.Setup(x => x.GetReleasePlanForWorkItemAsync(200, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            var tool = new ReleasePlanTool(devops.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService,
+                environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            const string project = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+
+            var error = operation switch
+            {
+                "create" => (await tool.CreateReleasePlan(null, project, "July 2025", "Public Preview", specPr)).ResponseError,
+                "update" => (await tool.UpdateReleasePlan(project, specPr, "beta", workItemId: 200)).ResponseError,
+                _ => (await tool.UpdateSpecPullRequestInReleasePlan(specPr, workItemId: 200)).ResponseError
+            };
+
+            Assert.That(error, Does.Contain("Simulated GitHub lookup failure"));
+            devops.Verify(x => x.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase("2026-09-01T00:00:00Z")]
+        [TestCase("2026-09-02T00:00:00Z")]
+        public async Task CreateReleasePlan_OlderOrSameTimeSpecDoesNotRollBackPin(string requestedMergeTime)
+        {
+            var github = (MockGitHubService)gitHubService;
+            var existingCommit = new string('b', 40);
+            github.ConfiguredPullRequests[123] = CreateMergedSpecPullRequest(existingCommit, "2026-09-02T00:00:00Z");
+            github.ConfiguredPullRequests[35446] = CreateMergedSpecPullRequest(new string('a', 40), requestedMergeTime);
+            var devops = (MockDevOpsService)devOpsService;
+            var existing = new ReleasePlanWorkItem
+            {
+                WorkItemId = 200,
+                ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/123",
+                SpecAPIVersion = "2026-05-02-preview",
+                SpecCommitSha = existingCommit
+            };
+            devops.ConfiguredReleasePlanForTypeSpecPathAndApiVersion = existing;
+            devops.ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey = "specification/testcontoso/Contoso.Management";
+            devops.ConfiguredApiVersionForTypeSpecPathAndApiVersion = existing.SpecAPIVersion;
+
+            var result = await releasePlanTool.CreateReleasePlan(null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446");
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanDetails, Is.SameAs(existing));
+            Assert.That(existing.SpecCommitSha, Is.EqualTo(existingCommit));
+            Assert.That(result.Warnings, Has.Some.Contains("not newer"));
+            Assert.That(devops.LastSpecUpdate, Is.Null);
+        }
+
+        [Test]
+        public async Task UpdateSpecPullRequest_PrivatePreviewDoesNotRequireGitHubLookup()
+        {
+            ((MockGitHubService)gitHubService).ThrowOnGetPullRequest = true;
+            var devops = (MockDevOpsService)devOpsService;
+            devops.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem { WorkItemId = 200, ApiReleaseType = ApiReleaseType.PrivatePreview };
+            const string privatePr = "https://github.com/Azure/azure-rest-api-specs-pr/pull/123";
+
+            var result = await releasePlanTool.UpdateSpecPullRequestInReleasePlan(privatePr, workItemId: 200);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(devops.LastSpecUpdate, Is.EqualTo((200, privatePr, "")));
+            Assert.That(result.Details, Has.Some.Contains("do not require an SDK generation commit pin"));
+        }
+
+        [Test]
+        public async Task UpdateReleasePlan_PrivatePreviewStillLinksBeforeExistingReadinessCheck()
+        {
+            ((MockGitHubService)gitHubService).ThrowOnGetPullRequest = true;
+            var devops = (MockDevOpsService)devOpsService;
+            devops.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem { WorkItemId = 200, ApiReleaseType = ApiReleaseType.PrivatePreview };
+            const string privatePr = "https://github.com/Azure/azure-rest-api-specs-pr/pull/123";
+
+            await releasePlanTool.UpdateReleasePlan(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", privatePr, "beta", workItemId: 200);
+
+            Assert.That(devops.LastSpecUpdate, Is.EqualTo((200, privatePr, "")), "Pin resolution must not prevent linking a private-preview PR before the existing readiness check.");
+        }
+
+        private static Octokit.PullRequest CreateMergedSpecPullRequest(string commitSha, string mergedAt) =>
+            new Octokit.Internal.SimpleJsonSerializer().Deserialize<Octokit.PullRequest>(JsonSerializer.Serialize(new
+            {
+                state = "closed",
+                merged_at = mergedAt,
+                merge_commit_sha = commitSha
+            }));
+
         private ReleasePlanTool CreateReleasePlanToolWithMockedTypeSpec(string typeSpecPath, TypeSpecProject typeSpecProject)
         {
             var mockTypeSpecHelper = new Mock<ITypeSpecHelper>();

@@ -39,6 +39,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.APISpecversion")]
         public string SpecAPIVersion { get; set; } = string.Empty;
 
+        // Stored only on the API Spec child, together with its active PR and API version.
+        public string SpecCommitSha { get; set; } = string.Empty;
+
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
 
@@ -123,6 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
                 Tag = Tag,
                 Owner = Owner,
                 SpecAPIVersion = SpecAPIVersion,
+                SpecCommitSha = SpecCommitSha,
                 SpecType = SpecType,
                 SpecPullRequests = SpecPullRequests,
                 ActiveSpecPullRequest = ActiveSpecPullRequest

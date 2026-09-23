@@ -16,6 +16,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
     [TestFixture]
     public class DevOpsServiceTests
     {
+        private const string SpecCommit = "0123456789abcdef0123456789abcdef01234567";
+        private const string SpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/123";
         private TestDevOpsConnection _connection = null!;
         private TestLogger<DevOpsService> _logger = null!;
         private DevOpsService _devOpsService = null!;
@@ -417,6 +419,179 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #region UpdateSpecPullRequestAsync Tests
 
+        [TestCase("Pending")]
+        [TestCase("In progress")]
+        [TestCase("Completed")]
+        public async Task UpdateSpecPullRequestAsync_SameLinkPinUpdatePreservesGenerationState(string status)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.GenerationStatusForJava"] = status;
+            var spec = CreateApiSpecWorkItem(200, SpecPullRequest, "Active");
+            var existingLink = $"<a href=\"{SpecPullRequest}\">{SpecPullRequest}</a>";
+            spec.Fields["Custom.RESTAPIReviews"] = existingLink;
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+
+            Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(100, SpecPullRequest, SpecCommit, "", CancellationToken.None), Is.True);
+
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1), "A pin-only update must not write generation statuses.");
+            var patch = _connection.CapturedPatches.Single();
+            Assert.That(patch.WorkItemId, Is.EqualTo(200));
+            Assert.That(patch.Document.Single(p => p.Path == "/fields/Custom.RESTAPIReviews").Value, Is.EqualTo(existingLink));
+            Assert.That(patch.Document.Single(p => p.Path == $"/fields/{ApiSpecWorkItem.SpecCommitShaField}").Value, Is.EqualTo(SpecCommit));
+        }
+
+        [Test]
+        public void UpdateSpecPullRequestAsync_RejectsStalePinBeforeAnyWrite()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var spec = CreateApiSpecWorkItem(200, SpecPullRequest, "Active");
+            spec.Fields[ApiSpecWorkItem.SpecCommitShaField] = new string('b', 40);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+
+            var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", SpecCommit, new string('a', 40), CancellationToken.None));
+
+            Assert.That(error!.Message, Does.Contain("spec commit changed"));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
+        }
+
+        [Test]
+        public void UpdateSpecPullRequestAsync_RevisionConflictDoesNotResetGenerationOrRetry()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, SpecPullRequest, "Active"));
+            _connection.UpdateException = new InvalidOperationException("Revision test failed");
+
+            Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(100, SpecPullRequest, SpecCommit, "", CancellationToken.None));
+
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+            Assert.That(_connection.CapturedPatches[0].WorkItemId, Is.EqualTo(200));
+            Assert.That(_connection.CapturedPatches[0].Document[0].Path, Is.EqualTo("/rev"));
+        }
+
+        [TestCase("")]
+        [TestCase(SpecCommit)]
+        public async Task UpdateSpecPullRequestAsync_UpdatesLinkAndPinTogether(string commitSha)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var spec = CreateApiSpecWorkItemWithVersion(200, SpecPullRequest, "Active", "2026-01-01-preview");
+            spec.Fields[ApiSpecWorkItem.SpecCommitShaField] = new string('a', 40);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+            const string newSpec = "https://github.com/Azure/azure-rest-api-specs/pull/456";
+
+            Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(100, newSpec, commitSha, new string('a', 40), CancellationToken.None), Is.True);
+
+            var patch = _connection.CapturedPatches.Single(p => p.WorkItemId == 200).Document;
+            Assert.That(patch[0].Path, Is.EqualTo("/rev"));
+            Assert.That(patch[0].Operation, Is.EqualTo(Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test));
+            Assert.That(patch.Single(p => p.Path == "/fields/Custom.ActiveSpecPullRequestUrl").Value, Is.EqualTo(newSpec));
+            Assert.That(patch.Single(p => p.Path == $"/fields/{ApiSpecWorkItem.SpecCommitShaField}").Value, Is.EqualTo(commitSha));
+            Assert.That(patch.Any(p => p.Path == "/fields/Custom.APISpecversion"), Is.False, "A new spec commit must not silently retarget the API version.");
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase(SpecCommit)]
+        public async Task GetReleasePlanForWorkItemAsync_ReadsPinFromApiSpecChild(string? commitSha)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields[ApiSpecWorkItem.SpecCommitShaField] = "not-the-source-of-truth";
+            var spec = CreateApiSpecWorkItemWithVersion(200, SpecPullRequest, "Active", "2026-01-01-preview");
+            if (commitSha != null)
+            {
+                spec.Fields[ApiSpecWorkItem.SpecCommitShaField] = commitSha;
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+
+            var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
+
+            Assert.That(result.SpecCommitSha, Is.EqualTo(commitSha ?? ""));
+            Assert.That(result.SpecAPIVersion, Is.EqualTo("2026-01-01-preview"));
+            Assert.That(result.ActiveSpecPullRequest, Is.EqualTo(SpecPullRequest));
+        }
+
+        [Test]
+        public void ReleasePlanSpecCommit_IsWrittenOnlyOnApiSpecChild()
+        {
+            var plan = new ReleasePlanWorkItem { SpecCommitSha = SpecCommit, SpecAPIVersion = "2026-01-01-preview", ActiveSpecPullRequest = SpecPullRequest };
+
+            Assert.That(plan.GetPatchDocument().Any(p => p.Path == $"/fields/{ApiSpecWorkItem.SpecCommitShaField}"), Is.False);
+            var spec = plan.ToApiSpecWorkItem();
+            Assert.That(spec.SpecCommitSha, Is.EqualTo(SpecCommit));
+            Assert.That(spec.GetPatchDocument().Single(p => p.Path == $"/fields/{ApiSpecWorkItem.SpecCommitShaField}").Value, Is.EqualTo(SpecCommit));
+            Assert.That(System.Text.Json.JsonSerializer.Serialize(plan), Does.Contain($"\"SpecCommitSha\":\"{SpecCommit}\""));
+        }
+
+        [Test]
+        public async Task UpdateSpecCommitShaAsync_BackfillsWithRevisionGuardWithoutResettingGeneration()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.GenerationStatusForJava"] = "Pending";
+            var spec = CreateApiSpecWorkItem(200, SpecPullRequest, "Active");
+            spec.Rev = 7;
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+
+            Assert.That(await _devOpsService.UpdateSpecCommitShaAsync(100, SpecPullRequest, SpecCommit, CancellationToken.None), Is.True);
+
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+            var patch = _connection.CapturedPatches.Single();
+            Assert.That(patch.WorkItemId, Is.EqualTo(200));
+            Assert.That(patch.Document, Has.Count.EqualTo(2));
+            Assert.That(patch.Document[0].Operation, Is.EqualTo(Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test));
+            Assert.That(patch.Document[0].Path, Is.EqualTo("/rev"));
+            Assert.That(patch.Document[0].Value, Is.EqualTo(7));
+            Assert.That(patch.Document[1].Path, Is.EqualTo($"/fields/{ApiSpecWorkItem.SpecCommitShaField}"));
+            Assert.That(patch.Document[1].Value, Is.EqualTo(SpecCommit));
+        }
+
+        [TestCase(SpecCommit, true)]
+        [TestCase("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false)]
+        public async Task UpdateSpecCommitShaAsync_DoesNotOverwriteAnExistingPin(string currentCommit, bool expected)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var spec = CreateApiSpecWorkItem(200, SpecPullRequest, "Active");
+            spec.Fields[ApiSpecWorkItem.SpecCommitShaField] = currentCommit;
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+
+            Assert.That(await _devOpsService.UpdateSpecCommitShaAsync(100, SpecPullRequest, SpecCommit, CancellationToken.None), Is.EqualTo(expected));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
+        }
+
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/pull/456", 7)]
+        [TestCase(SpecPullRequest, 0)]
+        public void UpdateSpecCommitShaAsync_RejectsChangedPrOrMissingRevision(string currentPr, int revision)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var spec = CreateApiSpecWorkItem(200, currentPr, "Active");
+            spec.Rev = revision;
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+
+            Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.UpdateSpecCommitShaAsync(100, SpecPullRequest, SpecCommit, CancellationToken.None));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
+        }
+
+        [Test]
+        public void UpdateSpecCommitShaAsync_PropagatesRevisionConflictWithoutRetry()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var spec = CreateApiSpecWorkItem(200, SpecPullRequest, "Active");
+            spec.Rev = 7;
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+            _connection.UpdateException = new InvalidOperationException("Revision test failed");
+
+            Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.UpdateSpecCommitShaAsync(100, SpecPullRequest, SpecCommit, CancellationToken.None));
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+        }
+
         [TestCase("Not applicable", "")]
         [TestCase("Pending", "")]
         [TestCase("Failed", "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=90")]
@@ -440,7 +615,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(plan);
             _connection.AddWorkItem(apiSpec);
 
-            var result = await _devOpsService.UpdateSpecPullRequestAsync(100, newSpec, CancellationToken.None);
+            var result = await _devOpsService.UpdateSpecPullRequestAsync(100, newSpec, "", "", CancellationToken.None);
 
             Assert.That(result, Is.True);
             Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(2));
@@ -469,7 +644,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
 
             var result = await _devOpsService.UpdateSpecPullRequestAsync(
-                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", CancellationToken.None);
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", "", "", CancellationToken.None);
 
             Assert.That(result, Is.True);
             var patch = _connection.CapturedPatches.Single(p => p.WorkItemId == 100).Document;
@@ -491,7 +666,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
 
             var result = await _devOpsService.UpdateSpecPullRequestAsync(
-                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", CancellationToken.None);
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", "", "", CancellationToken.None);
 
             Assert.That(result, Is.True);
             Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
@@ -524,6 +699,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var workItem = new WorkItem
             {
                 Id = id,
+                Rev = 1,
                 Fields = new Dictionary<string, object>
                 {
                     { "System.WorkItemType", "API Spec" },
@@ -836,8 +1012,65 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #region RunSDKGenerationPipelineAsync Tests
 
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("main")]
+        [TestCase("refs/pull/123/merge")]
+        [TestCase("abc123")]
+        [TestCase("gggggggggggggggggggggggggggggggggggggggg")]
+        public void RunSDKGenerationPipelineAsync_RejectsMutableOrInvalidSource(string? source)
+        {
+            Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.RunSDKGenerationPipelineAsync(
+                source!, "specification/test/service", "2026-01-01-preview", "beta", "Java", 0));
+        }
+
+        [TestCase("Java", 7421, false)]
+        [TestCase("Java", 7421, true)]
+        [TestCase("Python", 7423, true)]
+        [TestCase(".NET", 7412, true)]
+        [TestCase("JavaScript", 7422, true)]
+        [TestCase("Go", 7426, true)]
+        [NonParallelizable]
+        public async Task RunSDKGenerationPipelineAsync_QueuesPinnedSourceVersion(string language, int definitionId, bool inPipeline)
+        {
+            var buildClient = new Mock<BuildHttpClient>(new Uri("https://dev.azure.com/test"), new Microsoft.VisualStudio.Services.Common.VssCredentials());
+            var projectClient = new Mock<ProjectHttpClient>(new Uri("https://dev.azure.com/test"), new Microsoft.VisualStudio.Services.Common.VssCredentials());
+            var connection = new Mock<IDevOpsConnection>();
+            connection.Setup(x => x.GetBuildClient(It.IsAny<CancellationToken>())).Returns(buildClient.Object);
+            connection.Setup(x => x.GetProjectClient(It.IsAny<CancellationToken>())).Returns(projectClient.Object);
+            buildClient.Setup(x => x.GetDefinitionAsync("internal", definitionId, null, null, null, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new BuildDefinition { Id = definitionId, Name = "SDK generation" });
+            projectClient.Setup(x => x.GetProject("internal", null, false, null))
+                .ReturnsAsync(new TeamProject { Id = Guid.NewGuid(), Name = "internal" });
+            Build? queuedBuild = null;
+            buildClient.Setup(x => x.QueueBuildAsync(It.IsAny<Build>(), null, null, null, null, null, It.IsAny<CancellationToken>()))
+                .Callback(new InvocationAction(invocation => queuedBuild = (Build)invocation.Arguments[0]))
+                .ReturnsAsync(new Build { Id = 99 });
+            var service = new DevOpsService(_logger, connection.Object);
+            var originalTeamProject = Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID");
+            try
+            {
+                Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", inPipeline ? "test-project" : null);
+
+                await service.RunSDKGenerationPipelineAsync(SpecCommit, "specification/test/service", "2026-01-01-preview", "beta", language, 0, "feature/existing-sdk");
+
+                Assert.That(queuedBuild, Is.Not.Null);
+                Assert.That(queuedBuild!.SourceBranch, Is.EqualTo("main"), "A commit SHA belongs in SourceVersion, not SourceBranch.");
+                Assert.That(queuedBuild.SourceVersion, Is.EqualTo(SpecCommit));
+                Assert.That(queuedBuild.TemplateParameters["ApiVersion"], Is.EqualTo("2026-01-01-preview"));
+                Assert.That(queuedBuild.TemplateParameters["SdkRepoBranch"], Is.EqualTo("feature/existing-sdk"));
+                Assert.That(queuedBuild.TemplateParameters["ConfigPath"], Is.EqualTo("specification/test/service/tspconfig.yaml"));
+                Assert.That(queuedBuild.TemplateParameters.ContainsKey("SpecCommitSha"), Is.False, "The pipeline has no such template parameter.");
+                Assert.That(queuedBuild.TemplateParameters.ContainsKey("SdkReleaseType"), Is.EqualTo(!inPipeline));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", originalTeamProject);
+            }
+        }
+
         [Test]
-        public void RunSDKGenerationPipelineAsync_WhenRunningInAzurePipelines_DoesNotIncludeSdkReleaseTypeOrApiVersionTemplateParams()
+        public void RunSDKGenerationPipelineAsync_WhenRunningInAzurePipelines_PreservesApiVersion()
         {
             // Arrange
             var method = typeof(DevOpsService).GetMethod("BuildSdkGenerationTemplateParams", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
@@ -855,7 +1088,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(templateParams, Contains.Key("SdkRepoBranch"));
             Assert.That(templateParams["SdkRepoBranch"], Is.EqualTo("feature/sdk-branch"));
             Assert.That(templateParams, Does.Not.ContainKey("SdkReleaseType"));
-            Assert.That(templateParams, Does.Not.ContainKey("ApiVersion"));
+            Assert.That(templateParams["ApiVersion"], Is.EqualTo("v1"));
         }
 
         #endregion
@@ -1132,6 +1365,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches => _workItemClient.CapturedPatches;
 
+            public Exception? UpdateException
+            {
+                get => _workItemClient.UpdateException;
+                set => _workItemClient.UpdateException = value;
+            }
+
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
@@ -1192,6 +1431,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public bool CancelQuery { get; set; }
 
             public bool CancelBulkFetch { get; set; }
+
+            public Exception? UpdateException { get; set; }
 
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
@@ -1302,6 +1543,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             {
                 LastCapturedPatchDocument = document;
                 CapturedPatches.Add((id, document));
+                if (UpdateException != null)
+                {
+                    throw UpdateException;
+                }
                 _workItems.TryGetValue(id, out var workItem);
                 return Task.FromResult(workItem ?? new WorkItem { Id = id });
             }

@@ -8,8 +8,13 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class ApiSpecWorkItem : WorkItemBase
     {
+        public const string SpecCommitShaField = "Custom.SpecCommitSha";
+
         [FieldName("Custom.APISpecversion")]
         public string SpecAPIVersion { get; set; } = string.Empty;
+
+        [FieldName(SpecCommitShaField)]
+        public string SpecCommitSha { get; set; } = string.Empty;
 
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;

@@ -783,6 +783,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ApiReleaseType);
                 }
 
+                // Resolve before any writes so a failed GitHub lookup cannot partially retarget the plan.
+                var specCommitSha = string.IsNullOrEmpty(specPullRequestUrl)
+                    ? releasePlan.SpecCommitSha
+                    : releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
+                        ? string.Empty
+                        : await ReleasePlanSpecHelper.GetMergedCommitShaAsync(githubService, specPullRequestUrl, ct);
+
                 // Update release plan fields
                 var fieldsToUpdate = new Dictionary<string, string>
                 {
@@ -839,11 +846,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
                 logger.LogInformation("Updated release plan fields for work item {WorkItemId}", releasePlan.WorkItemId);
 
-                // Update spec PR on the API spec child work item only if provided and different from current
+                // Also pin a previously unmerged PR when updating the same link after it merges.
                 if (!string.IsNullOrEmpty(specPullRequestUrl) &&
-                    (string.IsNullOrEmpty(releasePlan.ActiveSpecPullRequest) || !releasePlan.ActiveSpecPullRequest.Equals(specPullRequestUrl, StringComparison.OrdinalIgnoreCase)))
+                    (!string.Equals(releasePlan.ActiveSpecPullRequest, specPullRequestUrl, StringComparison.OrdinalIgnoreCase) ||
+                     !string.Equals(releasePlan.SpecCommitSha, specCommitSha, StringComparison.OrdinalIgnoreCase)))
                 {
-                    await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId, specPullRequestUrl, ct);
+                    if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId, specPullRequestUrl, specCommitSha, releasePlan.SpecCommitSha, ct))
+                    {
+                        return new ReleasePlanResponse { ResponseError = "Failed to update the linked spec PR and commit SHA." };
+                    }
                     logger.LogInformation("Updated spec PR URL in release plan {WorkItemId}", releasePlan.WorkItemId);
                 }
 
@@ -913,6 +924,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     TypeSpecProject = specProject,
                     PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane
                 };
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -1193,6 +1208,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 // Extract API version from the parsed metadata
                 var apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata?.Packages);
+                // Private-preview plans track spec approval only; their existing best-effort merge check is unchanged.
+                var specPullRequest = string.IsNullOrEmpty(specPullRequestUrl) || parsedApiReleaseType == ApiReleaseType.PrivatePreview
+                    ? null
+                    : await ReleasePlanSpecHelper.GetPullRequestAsync(githubService, specPullRequestUrl, ct);
+                var specCommitSha = specPullRequest?.Merged == true ? specPullRequest.MergeCommitSha : string.Empty;
+
                 // Check if a release plan already exists with the same TypeSpec project path and API version
                 if (!string.IsNullOrEmpty(apiVersion))
                 {
@@ -1202,13 +1223,41 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) with the same TypeSpec project path and API version. Returning existing plan instead of creating a new one.",
                             existingReleasePlanWithSameVersion.ReleasePlanId, existingReleasePlanWithSameVersion.WorkItemId);
-                        
+
+                        // A merged same-version follow-up updates this plan, not a newer version's plan.
+                        // An unmerged PR must not replace an existing pin during a create/reuse request.
+                        string? pinWarning = null;
+                        if (!string.IsNullOrEmpty(specCommitSha) &&
+                            (!string.Equals(existingReleasePlanWithSameVersion.ActiveSpecPullRequest, specPullRequestUrl, StringComparison.OrdinalIgnoreCase) ||
+                             !string.Equals(existingReleasePlanWithSameVersion.SpecCommitSha, specCommitSha, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            if (!string.IsNullOrEmpty(existingReleasePlanWithSameVersion.ActiveSpecPullRequest) &&
+                                !string.Equals(existingReleasePlanWithSameVersion.ActiveSpecPullRequest, specPullRequestUrl, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var previousPr = await ReleasePlanSpecHelper.GetPullRequestAsync(githubService, existingReleasePlanWithSameVersion.ActiveSpecPullRequest, ct);
+                                if (previousPr.Merged && previousPr.MergedAt >= specPullRequest!.MergedAt)
+                                {
+                                    pinWarning = "The supplied spec PR is not newer than the release plan's linked merged PR. The existing spec pin was preserved.";
+                                }
+                            }
+                            if (pinWarning == null)
+                            {
+                                if (!await devOpsService.UpdateSpecPullRequestAsync(existingReleasePlanWithSameVersion.WorkItemId, specPullRequestUrl, specCommitSha, existingReleasePlanWithSameVersion.SpecCommitSha, ct))
+                                {
+                                    return new ReleasePlanResponse { ResponseError = "Failed to update the existing release plan's spec PR and commit SHA. Retrieve the plan and retry." };
+                                }
+                                existingReleasePlanWithSameVersion.ActiveSpecPullRequest = specPullRequestUrl;
+                                existingReleasePlanWithSameVersion.SpecCommitSha = specCommitSha;
+                            }
+                        }
+
                         return await AddCreateReleasePlanScheduleRiskGuidanceAsync(
                             new ReleasePlanResponse
                             {
                                 ReleasePlanDetails = existingReleasePlanWithSameVersion,
                                 Message = $"An existing release plan (ID: {existingReleasePlanWithSameVersion.ReleasePlanId}) was found for TypeSpec project '{specProject}' with API version '{apiVersion}'. No new release plan was created.",
                                 TypeSpecProject = specProject,
+                                Warnings = pinWarning == null ? null : [pinWarning],
                                 NextSteps = ["Review the existing release plan and use it for your SDK release."]
                             },
                             specPullRequestUrl,
@@ -1338,7 +1387,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ProductType = productType,
                     ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType,
-                    SpecAPIVersion = apiVersion
+                    SpecAPIVersion = apiVersion,
+                    ActiveSpecPullRequest = specPullRequestUrl,
+                    SpecCommitSha = specCommitSha
                 };
 
                 var reporter = new ProgressReporter(progress, logger, totalSteps: 2, outputHelper);
@@ -2138,7 +2189,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = UpdateApiSpecPullRequestToolName), Description("Update TypeSpec pull request URL in a release plan using work item id or release plan id.")]
+        [McpServerTool(Name = UpdateApiSpecPullRequestToolName), Description("Update TypeSpec pull request URL in a release plan using work item id or release plan id. Pins the merged spec commit SHA for subsequent SDK generation; an unmerged PR clears any previous pin until it merges. Use the release plan for the intended API version.")]
         public async Task<ReleaseWorkflowResponse> UpdateSpecPullRequestInReleasePlan(string specPullRequestUrl, int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default)
         {
             try
@@ -2167,15 +2218,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
                 }
+                if (releasePlan == null)
+                {
+                    return new ReleaseWorkflowResponse { ResponseError = $"Release plan with work item ID {workItemId} not found." };
+                }
 
                 // Validate spec PR against release type
-                if (releasePlan != null && releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
+                if (releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
                 {
                     ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ApiReleaseType);
                 }
 
-                // Update the spec pull request in the release plan
-                var updated = await devOpsService.UpdateSpecPullRequestAsync(workItemId, specPullRequestUrl, ct);
+                // Save the linked PR and its pin in a single API Spec work item patch.
+                var specCommitSha = releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
+                    ? string.Empty
+                    : await ReleasePlanSpecHelper.GetMergedCommitShaAsync(githubService, specPullRequestUrl, ct);
+                var updated = await devOpsService.UpdateSpecPullRequestAsync(workItemId, specPullRequestUrl, specCommitSha, releasePlan.SpecCommitSha, ct);
 
                 if (!updated)
                 {
@@ -2190,14 +2248,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     Status = "Success",
                     Details =
                     [
-                        $"Successfully updated spec pull request URL to {specPullRequestUrl} in release plan."
+                        $"Successfully updated spec pull request URL to {specPullRequestUrl} in release plan.",
+                        releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
+                            ? "Private-preview release plans do not require an SDK generation commit pin."
+                            : string.IsNullOrEmpty(specCommitSha)
+                            ? "The spec PR is not merged. The previous commit pin was cleared; SDK generation must wait for merge."
+                            : $"Pinned spec commit SHA: {specCommitSha}."
                     ],
-                    NextSteps =
+                    NextSteps = releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
+                    ? ["Merge the linked spec PR to complete the private-preview release plan."]
+                    :
                     [
-                        "SDK generation should be triggered to regenerate SDK using the new spec pull request.",
+                        "After the linked spec PR is merged, trigger SDK generation using the release plan's pinned spec commit.",
                         "Generate SDK for each language listed in the release plan."
                     ]
                 };
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

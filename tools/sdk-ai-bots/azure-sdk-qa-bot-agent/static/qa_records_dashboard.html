@@ -1269,10 +1269,10 @@
       },
       {
         title: "Answer rate",
-        description: "Answer rate = bot replies / in-scope user messages.",
-        limitations: ["In-scope messages need a reply or mention the bot."],
-        headings: ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
-        values: row => [row.questions, row.bot_replies,
+        description: "Answer rate = answered in-scope questions / all in-scope questions.",
+        limitations: ["Scope: needs reply or mentions bot. Answered: inferred once from subsequent same-thread bot replies to latest in-scope question, within selected period."],
+        headings: ["Channel", "In-scope questions", "Answered questions", "Answer rate"],
+        values: row => [row.questions, row.answered_questions,
           `${percent(row.answer_rate.rate)} (${row.answer_rate.numerator} / ${row.answer_rate.denominator})`]
       },
       {
@@ -1320,8 +1320,8 @@
           labels: ["Expert interactions", "Conversations"],
           note: "Meaningful expert follow-up after a bot reply / All conversations"},
         {title: "Answer rate", style: "answer", metric: data.totals.answer_rate,
-          labels: ["Bot replies", "User questions"],
-          note: "Bot replies / User questions"},
+          labels: ["Answered in-scope questions", "All in-scope questions"],
+          note: "Answered in-scope questions / All in-scope questions"},
         {title: "Resolved rate", style: "resolution", metric: data.totals.resolved_rate,
           labels: ["Validated resolved issues", "All finding issues"],
           note: "Validated passed issues / All finding issues excluded skipped issues."}

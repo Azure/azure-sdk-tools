@@ -91,7 +91,7 @@ class OverviewCounts(BaseModel):
     accuracy_excluded: int = Field(default=0, ge=0)
     expert_yes: int = Field(default=0, ge=0)
     questions: int = Field(default=0, ge=0)
-    bot_replies: int = Field(default=0, ge=0)
+    answered_questions: int = Field(default=0, ge=0)
     findings: int = Field(default=0, ge=0)
     issue_cases: int = Field(default=0, ge=0)
     resolved_cases: int = Field(default=0, ge=0)
@@ -138,7 +138,7 @@ class OverviewRow(OverviewCounts):
     @computed_field
     @property
     def answer_rate(self) -> OverviewMetric:
-        return _metric(self.bot_replies, self.questions)
+        return _metric(self.answered_questions, self.questions)
 
 
 class QAOverview(BaseModel):

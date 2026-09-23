@@ -29,7 +29,10 @@ class Container:
         params = {p["name"]: p["value"] for p in kwargs["parameters"]}
         start = datetime.fromisoformat(params["@start"])
         end = datetime.fromisoformat(params["@end"])
-        for doc in self.documents:
+        documents = self.documents
+        if self.messages and "ORDER BY c.created_at ASC" in kwargs["query"]:
+            documents = sorted(documents, key=lambda doc: doc.get("created_at") or "")
+        for doc in documents:
             if self.messages and (
                 doc.get("document_type") != "conversation_message"
                 or doc.get("sender_role") not in ("user", "assistant", "system")
@@ -60,7 +63,9 @@ def qa(channel="a", verdict="correct", expert=False, **changes):
 def message(channel="a", role="user", should_reply=True, **changes):
     return {
         "tenant_id": "tenant", "extra_info": {"channel_id": channel},
-        "created_at": START.isoformat(), "sender_role": role,
+        "conversation_id": f"{channel};messageid=thread",
+        "created_at": (START + timedelta(seconds=int(role in ("assistant", "system")))).isoformat(),
+        "sender_role": role,
         "document_type": "conversation_message", "should_reply": should_reply,
         **changes,
     }
@@ -84,7 +89,9 @@ async def test_full_aggregation_and_weighted_totals(storage):
     records, messages = storage
     # >50 documents ensures no dependence on the list's page size.
     records.documents = [qa() for _ in range(90)] + [qa("b", "incorrect", True) for _ in range(10)]
-    messages.documents = [message() for _ in range(100)] + [message(role="assistant") for _ in range(98)]
+    messages.documents = [message(conversation_id=f"a;messageid={i}") for i in range(100)] + [
+        message(role="assistant", conversation_id=f"a;messageid={i}") for i in range(98)
+    ]
     result = await QADashboardService().get_overview(start=START, end=END)
     assert len(result.rows) == 2
     assert result.totals.conversations == 100
@@ -160,21 +167,102 @@ async def test_dates_are_half_open_and_based_on_creation_not_updates(storage):
 
 
 @pytest.mark.asyncio
-async def test_questions_count_without_threads_and_replies_are_not_paired(storage):
+async def test_answer_rate_counts_questions_once_not_bot_replies(storage):
     records, messages = storage
     messages.documents = [
         message("unanswered"), message("unanswered"), message("unanswered", should_reply=False),
-        message("a", role="assistant"), message("a", role="system"),
+        message("a", role="assistant", created_at=START.isoformat()),
+        message("a", role="system", created_at=START.isoformat()),
         message("a", role="developer"), message("a", document_type="conversation_mapping"),
-        message("a"), message("a", role="assistant"),
+        message("a", created_at=(START + timedelta(seconds=1)).isoformat()),
+        message("a", role="assistant", created_at=(START + timedelta(seconds=2)).isoformat()),
+        message("a", role="system", created_at=(START + timedelta(seconds=3)).isoformat()),
     ]
     result = await QADashboardService().get_overview(start=START, end=END)
     assert result.totals.conversations == 0
     unanswered = next(row for row in result.rows if row.channel_id == "unanswered")
     assert unanswered.questions == 2 and unanswered.answer_rate.rate == 0
     answered = next(row for row in result.rows if row.channel_id == "a")
-    assert answered.bot_replies == 3 and answered.answer_rate.rate == 300
-    assert result.totals.answer_rate.rate == 100
+    assert answered.answered_questions == 1 and answered.answer_rate.rate == 100
+    assert result.totals.answer_rate.model_dump() == {
+        "numerator": 1, "denominator": 3, "rate": pytest.approx(100 / 3),
+    }
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.asyncio
+async def test_answer_rate_matches_latest_eligible_question_in_each_thread(storage, reverse):
+    def turn(second, *, thread="one", role="user", **changes):
+        return message(role=role, conversation_id=thread,
+                       created_at=(START + timedelta(seconds=second)).isoformat(), **changes)
+
+    documents = [
+        turn(0, role="assistant"),  # An orphan reply cannot answer a future question.
+        turn(1), turn(2),  # One response must not credit both questions.
+        turn(3, thread="two"),
+        turn(4, should_reply=False),  # A non-question does not replace the pending question.
+        turn(5, role="assistant"), turn(6, role="system"),
+        turn(7), turn(8, role="system"),
+        turn(9, thread="other", role="assistant"),
+    ]
+    storage[1].documents = documents[::-1] if reverse else documents
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.questions == 4
+    assert total.answered_questions == 2
+    assert total.answer_rate.model_dump() == {"numerator": 2, "denominator": 4, "rate": 50}
+    assert "ORDER BY c.created_at ASC" in storage[1].calls[0]["query"]
+
+
+@pytest.mark.asyncio
+async def test_answer_rate_does_not_pair_missing_or_different_thread_identities(storage):
+    storage[1].documents = [
+        message(conversation_id=None), message(role="assistant", conversation_id=None),
+        message(conversation_id="same", conversation_partition="partition-one"),
+        message(role="assistant", conversation_id="same", conversation_partition="partition-two"),
+        message("b", conversation_id="same", conversation_partition="partition-one", role="assistant"),
+        message(conversation_id="typed", conversation_type="one"),
+        message(role="assistant", conversation_id="typed", conversation_type="two"),
+        message(conversation_id=None, conversation_partition="valid"),
+        message(role="assistant", conversation_id=None, conversation_partition="valid"),
+    ]
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.answer_rate.model_dump() == {"numerator": 1, "denominator": 4, "rate": 25}
+
+
+@pytest.mark.asyncio
+async def test_answer_rate_only_matches_questions_and_replies_inside_window(storage):
+    storage[1].documents = [
+        message(conversation_id="before", created_at=(START - timedelta(seconds=1)).isoformat()),
+        message(role="assistant", conversation_id="before", created_at=START.isoformat()),
+        message(conversation_id="after", created_at=(END - timedelta(seconds=1)).isoformat()),
+        message(role="assistant", conversation_id="after", created_at=END.isoformat()),
+        message(conversation_id="inside", created_at=START.isoformat()),
+        message(role="system", conversation_id="inside", created_at=(END - timedelta(seconds=1)).isoformat()),
+        message(conversation_id="tie", created_at=START.isoformat()),
+        message(role="assistant", conversation_id="tie", created_at=START.isoformat()),
+    ]
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.answer_rate.model_dump() == {
+        "numerator": 1, "denominator": 3, "rate": pytest.approx(100 / 3),
+    }
+
+
+@pytest.mark.parametrize("questions,answered,rate", [(0, 0, None), (2, 0, 0), (4, 3, 75), (1, 1, 100)])
+def test_answer_rate_uses_answered_questions_not_raw_reply_count(questions, answered, rate):
+    row = OverviewRow(channel_name="Test", questions=questions, answered_questions=answered)
+    assert "bot_replies" not in OverviewCounts.model_fields
+    assert "bot_replies" not in row.model_dump()
+    assert row.answer_rate.model_dump() == {"numerator": answered, "denominator": questions, "rate": rate}
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.asyncio
+async def test_answer_rate_timestamp_ties_do_not_depend_on_storage_order(storage, reverse):
+    same_time = (START + timedelta(seconds=1)).isoformat()
+    documents = [message(), message(created_at=same_time), message(role="assistant", created_at=same_time)]
+    storage[1].documents = documents[::-1] if reverse else documents
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+    assert total.answer_rate.model_dump() == {"numerator": 0, "denominator": 2, "rate": 0}
 
 
 @pytest.mark.asyncio
@@ -235,7 +323,7 @@ async def test_rows_sort_by_channel_name_then_id(storage, monkeypatch):
 async def test_unknown_channel_messages_remain_visible_without_dated_conversations(storage):
     records, messages = storage
     records.documents = [qa(None, conversation_created_at=None)]
-    messages.documents = [message(extra_info=None)]
+    messages.documents = [message(extra_info=None, conversation_id=None)]
     result = await QADashboardService().get_overview(start=START, end=END)
     assert len(result.rows) == 1
     assert result.rows[0].channel_name == "Unknown channel"
@@ -348,9 +436,9 @@ async def test_unassessed_conversations_produce_full_accuracy_without_expert_int
 
 @pytest.mark.parametrize("changes", [
     {},
-    {"conversations": 10, "correct": 9, "incorrect": 1, "expert_yes": 1, "questions": 100, "bot_replies": 98},
+    {"conversations": 10, "correct": 9, "incorrect": 1, "expert_yes": 1, "questions": 100, "answered_questions": 98},
     {"conversations": 1},
-    {"conversations": 1, "correct": 1, "questions": 1, "bot_replies": 3},
+    {"conversations": 1, "correct": 1, "questions": 1, "answered_questions": 1},
 ])
 def test_serialized_metrics_have_no_goal(changes):
     data = OverviewRow(channel_name="Test", **changes).model_dump(mode="json")
@@ -741,7 +829,7 @@ def test_overview_tables_have_no_goal_columns_or_threshold_titles():
     assert headings == [
         ["Channel", "Conversations", "Incorrect", "Excluded", "Accuracy"],
         ["Channel", "Conversations", "Expert interactions", "Interaction rate"],
-        ["Channel", "In-scope questions", "Bot replies", "Answer rate"],
+        ["Channel", "In-scope questions", "Answered questions", "Answer rate"],
         ["Channel", "Issues", "Resolved", "Skipped", "Resolved rate"],
     ]
     for removed in ("undated_conversations", ".coverage"):
@@ -774,7 +862,9 @@ def test_interaction_rate_table_shows_percentage_and_counts():
 def test_answer_rate_table_shows_percentage_and_counts():
     html = (Path(__file__).resolve().parent.parent / "static/qa_records_dashboard.html").read_text(encoding="utf-8")
     answer = html.split('title: "Answer rate",', 1)[1].split('title: "Issue findings",', 1)[0]
-    assert "values: row => [row.questions, row.bot_replies," in answer
+    assert "values: row => [row.questions, row.answered_questions," in answer
+    assert "Answer rate = answered in-scope questions / all in-scope questions." in answer
+    assert "row.bot_replies" not in answer
     assert "${percent(row.answer_rate.rate)} (${row.answer_rate.numerator} / ${row.answer_rate.denominator})" in answer
 
 
@@ -824,8 +914,9 @@ def test_metric_descriptions_keep_cards_short_and_define_counts_in_notes():
     assert "Missing, outdated, or insufficient documentation and out-of-scope cases are excluded" in html
     assert "expert follow-up after a bot reply" in interaction
     assert "adds guidance beyond the bot's answer" in html
-    assert "bot replies / user questions" in answer.lower()
-    assert "In-scope messages need a reply or mention the bot" in html
+    assert "answered in-scope questions / all in-scope questions" in answer.lower()
+    assert "Scope: needs reply or mentions bot" in html
+    assert "inferred once" in html
     assert "resolved cases / (issues − skipped cases)" in tables
     assert "skipped" in resolution.lower()
     assert "Issues includes all issue-linked cases, including skipped cases" not in html
@@ -888,7 +979,7 @@ async def test_explicit_bot_mentions_count_once_regardless_of_reply_flag(storage
     messages.documents = [question, message(role="system")]
     result = await QADashboardService().get_overview(start=START, end=END)
     assert result.totals.questions == 1
-    assert result.totals.bot_replies == 1
+    assert result.totals.answered_questions == 1
     assert result.totals.answer_rate.rate == 100
     assert result.totals.answer_rate.denominator == 1
     assert "c.content" in messages.calls[0]["query"]
@@ -919,4 +1010,4 @@ async def test_only_users_are_questions_and_mention_dates_remain_half_open(stora
     ]
     result = await QADashboardService().get_overview(start=START, end=END)
     assert result.totals.questions == 1
-    assert result.totals.bot_replies == 2
+    assert result.totals.answered_questions == 1

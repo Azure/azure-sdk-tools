@@ -149,11 +149,30 @@ async def aggregate_overview(
                 row.other_issue_cases += 1
 
     # Do not join to QA records: unanswered questions have no QA record.
+    # Replies have no originating question ID. Infer an answer to the
+    # latest eligible question in the same thread, once, within this window.
+    # Keep only one pending question per thread, never the message transcripts.
+    pending_questions: dict[tuple[str | None, str], tuple[str, OverviewRow]] = {}
+    reply_threads: set[tuple[str | None, str]] = set()
+    batch_timestamp: str | None = None
+
+    def count_answered_questions() -> None:
+        # Cosmos does not guarantee order among equal timestamps. Defer replies
+        # until all questions at that timestamp are known; never pair a tie.
+        for key in reply_threads:
+            pending = pending_questions.get(key)
+            if pending is not None and batch_timestamp is not None and pending[0] < batch_timestamp:
+                pending_questions.pop(key)
+                pending[1].answered_questions += 1
+        reply_threads.clear()
+
     message_query = (
-        "SELECT c.extra_info, c.conversation_id, c.sender_role, c.should_reply, c.content "
+        "SELECT c.extra_info, c.conversation_id, c.conversation_partition, "
+        "c.conversation_type, c.created_at, c.sender_role, c.should_reply, c.content "
         "FROM c WHERE c.document_type = 'conversation_message' "
         "AND c.created_at >= @start AND c.created_at < @end "
-        "AND c.sender_role IN ('user', 'assistant', 'system')"
+        "AND c.sender_role IN ('user', 'assistant', 'system') "
+        "ORDER BY c.created_at ASC"
     )
     async for document in message_container.query_items(
         query=message_query, parameters=parameters,
@@ -164,10 +183,26 @@ async def aggregate_overview(
         row = row_for(document, message=True)
         if row is None:
             continue
-        if is_bot_reply:
-            row.bot_replies += 1
-        else:
+        if not is_bot_reply:
             row.questions += 1
+
+        thread = document.get("conversation_partition")
+        if not thread and document.get("conversation_id"):
+            thread = f"{document.get('conversation_type') or 'teams_channel'}:{document['conversation_id']}"
+        created_at = document.get("created_at")
+        if not isinstance(thread, str) or not thread or not isinstance(created_at, str):
+            # Keep unmatchable questions in the denominator, but do not guess
+            # their answers by grouping unrelated messages at channel level.
+            continue
+        if created_at != batch_timestamp:
+            count_answered_questions()
+            batch_timestamp = created_at
+        key = (row.channel_id, thread)
+        if not is_bot_reply:
+            pending_questions[key] = (created_at, row)
+        else:
+            reply_threads.add(key)
+    count_answered_questions()
 
     rows = sorted(groups.values(), key=lambda row: (
         row.channel_name.casefold(), row.channel_id or "",

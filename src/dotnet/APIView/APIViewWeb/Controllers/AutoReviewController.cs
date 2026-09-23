@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
@@ -73,6 +74,12 @@ public class AutoReviewController : Controller
 
             if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
             {
+                // APIView workaround: beta releases require namespace/package-name approval, but not API approval.
+                if (IsBetaVersion(language, packageVersion))
+                {
+                    return Ok();
+                }
+
                 return StatusCode(StatusCodes.Status201Created);
             }
 
@@ -90,5 +97,29 @@ public class AutoReviewController : Controller
                     details = new { packageName, language, packageVersion, reviewId }
                 });
         }
+    }
+
+    private static bool IsBetaVersion(string language, string packageVersion)
+    {
+        if (string.IsNullOrEmpty(packageVersion))
+        {
+            return false;
+        }
+
+        var publicVersion = packageVersion.Split('+', 2)[0];
+        if (publicVersion.Contains("-beta", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!string.Equals(language, "Python", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return Regex.IsMatch(
+            publicVersion,
+            @"\Av?(?:[0-9]+!)?[0-9]+(?:\.[0-9]+)*[-_.]?(?:beta|b)[-_.]?[0-9]+",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 }

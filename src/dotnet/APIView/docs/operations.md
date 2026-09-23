@@ -1,6 +1,6 @@
 # APIView — Operations Guide
 
-This document covers deployment, test environments, configuration, and troubleshooting for the APIView engineering team. For contributor setup, see [CONTRIBUTING.md](../CONTRIBUTING.md). For architecture, see [overview.md](overview.md).
+This document covers deployment, test environments, configuration, and troubleshooting for the APIView engineering team. For contributor setup, see [CONTRIBUTING.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/CONTRIBUTING.md). For architecture, see [overview.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/docs/overview.md).
 
 ---
 
@@ -17,7 +17,7 @@ This document covers deployment, test environments, configuration, and troublesh
 
 ## Deployment
 
-APIView runs as an Azure App Service in the Azure SDK Engineering Systems subscription. For deployment steps, see [APIViewWeb/CONTRIBUTING.md](../APIViewWeb/CONTRIBUTING.md#deployment-to-production).
+APIView runs as an Azure App Service in the Azure SDK Engineering Systems subscription. For deployment steps, see [APIViewWeb/CONTRIBUTING.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/CONTRIBUTING.md#deployment-to-production).
 
 ### C# parser and analyzer updates
 
@@ -29,8 +29,8 @@ For example, AZC0015 uses `Azure.SdkAnalyzers.ClientMethodReturnTypeAnalyzer` to
 
 To roll out a C# analyzer change:
 
-1. Build and publish a `Microsoft.ApiView.CsharpParser` package containing the change using [the C# parser pipeline](../../../../tools/apiview/parsers/csharp-api-parser/ci.yml). Its path trigger covers the parser directory, so a change only under `src/dotnet/APIView` does not automatically publish a new parser package.
-2. Select that published package using the `CSharpAPIParserVersion` parameter in [the APIView deployment pipeline](../apiview.yml). Deploying the web project alone with an unchanged parser package does not roll out the analyzer change.
+1. Build and publish a `Microsoft.ApiView.CsharpParser` package containing the change using [the C# parser pipeline](https://github.com/Azure/azure-sdk-tools/blob/main/tools/apiview/parsers/csharp-api-parser/ci.yml). Its path trigger covers the parser directory, so a change only under `src/dotnet/APIView` does not automatically publish a new parser package.
+2. Select that published package using the `CSharpAPIParserVersion` parameter in [the APIView deployment pipeline](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/apiview.yml). Deploying the web project alone with an unchanged parser package does not roll out the analyzer change.
 3. Coordinate a `CSharpLanguageService.VersionString` increment with the updated parser deployment to make existing revisions eligible for background reprocessing. The web service stamps this version on parsed files; the parser's `CodeFileBuilder.CurrentVersion` is separate.
 4. Reprocess affected reviews from their original `.dll` or `.nupkg` artifacts. Background updates are not immediate and require the original artifact; pre-generated JSON must be regenerated with the updated parser before uploading.
 
@@ -80,4 +80,4 @@ To configure which languages require Copilot Review:
 
 ## Troubleshooting
 
-See [troubleshooting.md](troubleshooting.md) for the full FAQ covering access issues, upload failures, CI/revision questions, release blocking, and engineering team diagnostics.
+See [troubleshooting.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/docs/troubleshooting.md) for the full FAQ covering access issues, upload failures, CI/revision questions, release blocking, and engineering team diagnostics.

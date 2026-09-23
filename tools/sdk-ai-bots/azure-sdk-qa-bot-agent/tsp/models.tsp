@@ -55,6 +55,63 @@ union ConversationType {
   TeamsChannel: "teams_channel",
 }
 
+/** Confidence in addressing the whole current request, not a correctness grade. */
+union ConfidenceLevel {
+  /** Confident the guidance addresses the request. */
+  High: "high",
+  /** Useful guidance with unresolved needs. */
+  Medium: "medium",
+  /** Unsure how to address the main request. */
+  Low: "low",
+}
+
+/** A configured expert's Teams mention identity. */
+model ExpertIdentity {
+  /** Entra object ID or UPN accepted by Teams mentions. */
+  @minLength(1)
+  id: string;
+
+  /** Display name used in the mention. */
+  @minLength(1)
+  name: string;
+}
+
+/** Individual channel feature opt-ins; absent settings preserve existing behavior. */
+model BotSettings {
+  /** Opt in to displaying confidence labels. */
+  show_confidence_label?: boolean = false;
+
+  /** Opt in to answering independent questions after humans join. */
+  allow_replies_after_humans?: boolean = false;
+
+  /** Opt in to policy-approved expert notification attempts. */
+  allow_notify_experts?: boolean = false;
+
+  /** Notify below this confidence level or for explicit expert need; not an opt-in itself. */
+  expert_help_threshold?: ConfidenceLevel = "high";
+
+  /** Approved notification recipients; a roster alone does not enable notifications. */
+  experts?: ExpertIdentity[] = #[];
+}
+
+/** Channel routing and participation settings resolved by the backend. */
+model ChannelConfigResponse {
+  /** Teams channel identifier. */
+  channel_id: string;
+
+  /** Tenant to which the channel is routed, when configured. */
+  tenant_id?: string | null;
+
+  /** Defaults keep participation disabled for existing channels. */
+  bot_settings?: BotSettings = #{
+    show_confidence_label: false,
+    allow_replies_after_humans: false,
+    allow_notify_experts: false,
+    expert_help_threshold: "high",
+    experts: #[],
+  };
+}
+
 // ── Chat Models ──────────────────────────────────────────────
 
 @doc("A message in the conversation")
@@ -113,6 +170,9 @@ model ChatRequest {
   @doc("The conversation type")
   conversation_type?: ConversationType;
 
+  /** Teams channel used to resolve participation settings. */
+  channel_id?: string | null;
+
   @doc("The message to send to the agent")
   message: Message;
 
@@ -142,6 +202,34 @@ model ChatResponse {
 
   @doc("The tenant ID the question is routed to")
   route_tenant?: string;
+
+  /** Agent conversation identifier, when available. */
+  agent_conversation_id?: string | null;
+
+  /** Trace identifier for diagnostics, when available. */
+  trace_id?: string | null;
+
+  /** Assessment produced with the answer, never by a separate evaluator. */
+  confidence?: ConfidenceAssessment | null;
+
+  /** True only when this response reserves the post's single expert-notification attempt. */
+  notify_experts?: boolean = false;
+}
+
+/** The answering model's confidence in its guidance and independent need for expert help. */
+model ConfidenceAssessment {
+  /** Self-assessed confidence in the provided guidance, not verified correctness or complete resolution. */
+  level: ConfidenceLevel;
+
+  /** Brief explanation of the assessment and its limits. */
+  @minLength(1)
+  summary: string;
+
+  /** Needs the answer cannot resolve. */
+  unresolved_needs: string[];
+
+  /** Whether specialized human knowledge, investigation, or authorized action is needed, independently of confidence. */
+  needs_expert_help: boolean;
 }
 
 // ── Feedback Models ──────────────────────────────────────────

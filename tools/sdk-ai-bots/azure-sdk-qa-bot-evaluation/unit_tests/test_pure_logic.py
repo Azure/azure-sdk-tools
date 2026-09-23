@@ -517,6 +517,28 @@ def test_record_run_result_empty_rows_no_crash():
     assert recorded[-1]["total_evals"] == 0
 
 
+def test_collector_retries_uncollected_cases_in_later_round():
+    from _evals_runner import CompletionCollector
+
+    calls: dict[str, int] = {}
+
+    class FlakyCollector(CompletionCollector):
+        async def _call_bot_api(self, question, tenant_id, session):
+            calls[question] = calls.get(question, 0) + 1
+            if question == "flaky" and calls[question] == 1:
+                raise Exception("API request failed with status 500")
+            if question == "broken":
+                raise Exception("API request failed with status 500")
+            return {"id": f"resp-{question}", "answer": f"answer to {question}"}
+
+    collector = FlakyCollector(api_url="http://unused", access_token=None, retry_rounds=2, retry_delay_seconds=0)
+    records = [{"testcase": q, "query": q} for q in ("ok", "flaky", "broken")]
+    items = collector.collect(records, tenant_id=None)
+
+    assert [it["testcase"] for it in items] == ["ok", "flaky"]
+    assert calls == {"ok": 1, "flaky": 2, "broken": 3}
+
+
 def _run_all() -> int:
     funcs = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

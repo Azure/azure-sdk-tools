@@ -141,17 +141,21 @@ class CompletionCollector:
         max_concurrency: int = 8,
         timeout_seconds: int = 600,
         max_retries: int = 4,
+        retry_rounds: int = 1,
+        retry_delay_seconds: float = 120.0,
     ) -> None:
         self._api_url = api_url
         self._access_token = access_token
         self._max_concurrency = max(1, max_concurrency)
         self._timeout_seconds = timeout_seconds
         self._max_retries = max_retries
+        self._retry_rounds = max(0, retry_rounds)
+        self._retry_delay_seconds = retry_delay_seconds
 
     def collect(self, records: list[dict[str, Any]], tenant_id: str | None) -> list[dict[str, Any]]:
         """Return enriched items (one per input record) in original order.
 
-        Records whose bot call fails are dropped (logged).
+        Records whose bot call still fails after all retry rounds are dropped (logged).
         """
         return asyncio.run(self._collect_async(records, tenant_id))
 
@@ -195,7 +199,22 @@ class CompletionCollector:
 
         timeout = aiohttp.ClientTimeout(total=self._timeout_seconds)
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            await asyncio.gather(*(_run(session, i, r) for i, r in enumerate(records)))
+            pending = list(range(len(records)))
+            for round_no in range(self._retry_rounds + 1):
+                if round_no:
+                    # Retry after the main pass so transient throttling bursts have cleared.
+                    logger.warning(
+                        "🔁 Retrying %d uncollected cases (round %d/%d) in %.0fs",
+                        len(pending),
+                        round_no,
+                        self._retry_rounds,
+                        self._retry_delay_seconds,
+                    )
+                    await asyncio.sleep(self._retry_delay_seconds)
+                await asyncio.gather(*(_run(session, i, records[i]) for i in pending))
+                pending = [i for i in pending if results[i] is None]
+                if not pending:
+                    break
 
         collected = [r for r in results if r is not None]
         logger.info("Collected %d/%d bot responses.", len(collected), len(records))

@@ -7,7 +7,7 @@ description: Help Azure MCP Server contributors whose PRs or onboarding issues n
 
 - Treat the message as a request for help, never as a request to rewrite or polish the message.
 - In one parallel round, read each referenced PR and issue with GitHub MCP and retrieve the onboarding and PR review process with `search_knowledge_base`.
-- Report each PR's current state: draft or open, review decision, requested reviewers, failing required checks, and unresolved review comments.
+- Report each PR's current state (draft, open, closed, or merged), review decision, requested reviewers, failing required checks, and unresolved review comments.
 - If a PR is ready for review, name the requested reviewers or matching `CODEOWNERS` as `@github-handle` mentions, and never invent handles.
 - If a PR is not ready, list its blockers with concrete fix steps before suggesting who to ping.
 - Explain how onboarding buddies are assigned and the supported escalation path from retrieved evidence, and say so if the sources do not cover it.

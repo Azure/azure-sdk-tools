@@ -643,7 +643,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService
                 });
             }
-            var initialBuild = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+            var initialBuild = await languageService.BuildAsync(packagePath, null, CommandTimeoutInMinutes, ct);
             ct.ThrowIfCancellationRequested();
             buildSucceeded = initialBuild.Success;
             buildError = initialBuild.ErrorMessage ?? (buildSucceeded ? null : "Build failed without diagnostics.");
@@ -958,7 +958,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 phase = "Build";
                 failureCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed;
                 failureMessage = "Code customization patches applied but build still failing.";
-                var build = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                var build = await languageService.BuildAsync(packagePath, null, CommandTimeoutInMinutes, ct);
                 ct.ThrowIfCancellationRequested();
                 finalBuildSuccess = build.Success;
                 lastRepairError = build.ErrorMessage ?? (build.Success ? null : "Build failed without diagnostics.");

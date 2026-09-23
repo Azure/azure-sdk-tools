@@ -21,4 +21,4 @@ description: Help Azure MCP Server contributors whose PRs or onboarding issues n
 - Name at most three people to ping, preferring code owners of the changed area.
 - Put onboarding-buddy guidance in its own short section after the PR status.
 - Mention an unreadable PR or issue in one short line, not as the opening.
-- Use bold only for the verdict.
+- Use bold only for each verdict and the required **References** heading.

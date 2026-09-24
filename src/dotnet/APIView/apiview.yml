@@ -315,6 +315,7 @@ extends:
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                     echo Installing JavaScript parser
                     call npm ci --prefix D:\home\site\wwwroot\js-parser --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                    if errorlevel 1 exit /b %errorlevel%
                     echo Installing Rust parser
                     call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                   enableCustomDeployment: true
@@ -373,6 +374,7 @@ extends:
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                     echo Installing JavaScript parser
                     call npm ci --prefix D:\home\site\wwwroot\js-parser --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                    if errorlevel 1 exit /b %errorlevel%
                     echo Installing Rust parser
                     call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                   enableCustomDeployment: true
@@ -440,6 +442,7 @@ extends:
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                           echo Installing JavaScript parser
                           call npm ci --prefix D:\home\site\wwwroot\js-parser --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                          if errorlevel 1 exit /b %errorlevel%
                           echo Installing Rust parser
                           call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                         enableCustomDeployment: true

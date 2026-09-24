@@ -66,6 +66,7 @@
   <ItemGroup>
     <Content Include="$(GoProcessor)" Condition="Exists($(GoProcessor))" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="$(JavaProcessor)" Condition="Exists($(JavaProcessor))" CopyToOutputDirectory="PreserveNewest" />
+    <Content Update="Deployment\js-parser\package*.json" Link="js-parser\%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="EmailTemplates\**\*.cshtml" />
   </ItemGroup>
 

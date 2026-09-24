@@ -28,6 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         // Commands
         private const string generateSdkCommandName = "generate-sdk";
         private const string getSdkPullRequestCommandName = "get-sdk-pr";
+        private const string validateSdkRunCommandName = "validate-sdk-run";
+        private const string completeSdkRunCommandName = "complete-sdk-run";
 
         // MCP Tool Names
         private const string RunGenerateSdkToolName = "azsdk_run_generate_sdk";
@@ -36,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")
         {
-            Description = "Path to typespec project",
+            Description = "TypeSpec project path matching the stored target. Use the plan's repository-relative path to generate without a local clone.",
             Required = true,
         };
 
@@ -48,13 +50,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string> apiVersionOpt = new("--api-version")
         {
-            Description = "API version; defaults to the release plan's version and cannot override a stored version",
+            Description = "Expected stored API version; defaults to the plan's version and cannot override it. Forwarded in both interactive and automated runs.",
             Required = false,
+        };
+
+        private readonly Option<bool> requireMergedSpecOpt = new("--require-merged-spec")
+        {
+            Description = "Opt in to sdk-release auto-release generation; the linked public PR must be merged at the stored SHA. Default is sdk-review: draft PRs without auto-release labels.",
+        };
+
+        private readonly Option<string> expectedSpecCommitShaOpt = new("--spec-commit-sha")
+        {
+            Description = "Expected stored SpecCommitSHA, not a new pin. Reject a changed target; generation never configures or backfills one.",
         };
 
         private readonly Option<string> sdkReleaseTypeOpt = new("--release-type")
         {
-            Description = "SDK release type: beta or stable",
+            Description = "SDK release type: beta or stable; must match the stored target. Forwarded in both interactive and automated runs.",
             Required = true,
         };
 
@@ -76,6 +88,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
+        private readonly Option<string> completedSdkPrOpt = new("--sdk-pr") { Description = "Generated SDK PR URL; may be empty for 'No changes' or 'Failed to generate SDK.'." };
+        private readonly Option<string> completedStatusOpt = new("--status") { Description = "draft, ready for review, No changes, or Failed to generate SDK. Ready for review requires a saved sdk-release run.", Required = true };
+
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         public static readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
 
@@ -92,11 +107,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [
             new McpCommand(generateSdkCommandName, "Generate SDK for a TypeSpec project", RunGenerateSdkToolName)
             {
-                typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt,
+                typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt, requireMergedSpecOpt, expectedSpecCommitShaOpt,
             },
             new McpCommand(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline", GetSdkPullRequestLinkToolName)
             {
                 languageOpt, pipelineRunIdOpt, workItemIdOpt,
+            },
+            new Command(validateSdkRunCommandName, "Check a generation job's saved inputs and build ID against the current release target")
+            {
+                languageOpt, pipelineRunIdOpt, workItemIdOpt,
+            },
+            new Command(completeSdkRunCommandName, "Record generation results only if the job is still current")
+            {
+                languageOpt, pipelineRunIdOpt, workItemIdOpt, completedSdkPrOpt, completedStatusOpt,
             },
         ];
 
@@ -112,10 +135,44 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                         commandParser.GetValue(pullRequestNumberOpt),
                                         commandParser.GetValue(workItemIdOpt),                                     
                                         commandParser.GetValue(apiVersionOpt),
+                                        commandParser.GetValue(requireMergedSpecOpt),
+                                        commandParser.GetValue(expectedSpecCommitShaOpt) ?? "",
                                         ct),
                 getSdkPullRequestCommandName => await GetSDKPullRequestDetails(commandParser.GetValue(languageOpt), workItemId: commandParser.GetValue(workItemIdOpt), buildId: commandParser.GetValue(pipelineRunIdOpt), ct: ct),
+                validateSdkRunCommandName => await ValidateOrCompleteSdkRunAsync(commandParser.GetValue(workItemIdOpt), commandParser.GetValue(pipelineRunIdOpt), commandParser.GetValue(languageOpt)!, ct: ct),
+                completeSdkRunCommandName => await ValidateOrCompleteSdkRunAsync(commandParser.GetValue(workItemIdOpt), commandParser.GetValue(pipelineRunIdOpt), commandParser.GetValue(languageOpt)!,
+                    commandParser.GetValue(completedSdkPrOpt) ?? "", commandParser.GetValue(completedStatusOpt), ct),
                 _ => new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" },
             };
+        }
+
+        public async Task<ReleaseWorkflowResponse> ValidateOrCompleteSdkRunAsync(int workItemId, int buildId, string language, string sdkPrUrl = "", string? status = null, CancellationToken ct = default)
+        {
+            try
+            {
+                if (status != null)
+                {
+                    if (!await devopsService.CompleteSdkGenerationAsync(workItemId, buildId, language, sdkPrUrl, status, ct))
+                    {
+                        throw new InvalidOperationException("The SDK generation result was not recorded.");
+                    }
+                    return new ReleaseWorkflowResponse { Status = "Success", Details = [$"Recorded SDK generation result for build {buildId}. Its saved snapshot still matches release plan {workItemId}."] };
+                }
+                var build = await devopsService.ValidateSdkGenerationRunAsync(workItemId, buildId, language, ct);
+                return new ReleaseWorkflowResponse
+                {
+                    Status = "Success",
+                    Details = [$"Build {build.Id}: spec commit {build.SourceVersion}, API version {build.TemplateParameters["ApiVersion"]}, SDK release type {build.TemplateParameters["SdkReleaseType"]}. The job is still current for release plan {workItemId}. This validates job provenance, not generated-code correctness."]
+                };
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return new ReleaseWorkflowResponse { Status = "Failed", ResponseError = ex.Message };
+            }
         }
 
         private async Task<ReleaseWorkflowResponse> IsSdkDetailsPresentInReleasePlanAsync(int workItemId, string language, CancellationToken ct)
@@ -178,8 +235,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = RunGenerateSdkToolName), Description("Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). Uses the release plan's stored spec commit SHA and API version, never the latest main branch. An unpinned plan must have a linked, merged public spec PR so its merge commit can be saved before generation. To change the spec input, update the release plan's linked spec PR first. It generates one language per call, so to generate for all languages call this tool once per language. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK.")]
-        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
+        [McpServerTool(Name = RunGenerateSdkToolName), Description("Run pipeline SDK generation for a release plan, including no-local-clone and all-language requests (one call per language). " +
+            "Read the plan first; pass its project path, SDK release type (beta or stable), language and plan/work item ID. Uses stored SpecAPIVersion and SpecCommitSHA without retargeting, backfilling or rerunning compiler validation; use the stored repository-relative path without a local clone. " +
+            "Optional apiVersion and specCommitSha guard the stored target, not override it. Missing targets require preview and confirmation through release-plan update tools. API version and SDK release type are forwarded for interactive and automated runs. " +
+            "Default sdk-review creates draft SDK PRs without auto-release labels. requireMergedSpec=true opts in to sdk-release and verifies the linked public PR's merge SHA matches the pin. Supported pre-merge review uses the confirmed PR HEAD SHA, never a synthetic merge commit. Private Preview is spec-only. " +
+            "Do not use azsdk_release_sdk (package publishing) or azsdk_get_sdk_pull_request_link (link retrieval) to generate SDKs.")]
+        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", bool requireMergedSpec = false, string specCommitSha = "", CancellationToken ct = default)
         {
             try
             {
@@ -238,7 +299,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 response.SetLanguage(language);
                 string typeSpecProjectPath = "";
                 // Is valid typespec project path
-                if (!TypeSpecProject.IsValidTypeSpecProjectPath(typespecProjectRoot))
+                var requestedProject = typespecProjectRoot?.Replace('\\', '/').TrimEnd('/') ?? string.Empty;
+                var storedProject = releasePlan.APISpecProjectPath.Replace('\\', '/').TrimEnd('/');
+                if (!string.IsNullOrWhiteSpace(storedProject) && string.Equals(requestedProject, storedProject, StringComparison.Ordinal))
+                {
+                    // The confirmed plan already identifies the remote project. Regeneration
+                    // need not compile or check out the spec locally again.
+                    typeSpecProjectPath = storedProject;
+                    response.TypeSpecProject = storedProject;
+                }
+                else if (!TypeSpecProject.IsValidTypeSpecProjectPath(typespecProjectRoot))
                 {
                     response.ResponseErrors.Add($"Invalid TypeSpec project root path [{typespecProjectRoot}].");
                     response.Status = "Failed";
@@ -254,6 +324,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (string.IsNullOrEmpty(sdkReleaseType) || !validReleaseTypes.Contains(sdkReleaseType))
                 {
                     response.ResponseErrors.Add("SDK release type must be set as either beta or stable to generate SDK.");
+                    response.Status = "Failed";
+                }
+                if (!string.IsNullOrWhiteSpace(releasePlan.SDKReleaseType) &&
+                    !string.Equals(sdkReleaseType, releasePlan.SDKReleaseType, StringComparison.OrdinalIgnoreCase))
+                {
+                    response.ResponseErrors.Add("SDK release type does not match the release plan's confirmed target.");
+                    response.Status = "Failed";
+                }
+                if (!string.IsNullOrEmpty(specCommitSha) && !string.Equals(specCommitSha, releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
+                {
+                    response.ResponseErrors.Add("The release plan's spec commit changed. Retrieve and review the current target before generating.");
                     response.Status = "Failed";
                 }
 
@@ -407,30 +488,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                var specCommitSha = releasePlan.SpecCommitSha;
-                if (string.IsNullOrWhiteSpace(specCommitSha))
-                {
-                    specCommitSha = await ReleasePlanSpecHelper.GetMergedCommitShaAsync(githubService, releasePlan.ActiveSpecPullRequest, ct);
-                    if (string.IsNullOrEmpty(specCommitSha))
-                    {
-                        response.Status = "Failed";
-                        response.ResponseErrors.Add("The linked spec PR must be merged before SDK generation. Generate locally for validation while the PR is open.");
-                        return response;
-                    }
-
-                    // Save the pin before queueing. A failed or concurrent update must not fall back to main.
-                    if (!await devopsService.UpdateSpecCommitShaAsync(workItemId, releasePlan.ActiveSpecPullRequest, specCommitSha, ct))
-                    {
-                        response.Status = "Failed";
-                        response.ResponseErrors.Add("Failed to save the release plan's spec commit SHA, or the spec pin changed. Retrieve the release plan and retry; no SDK generation was queued.");
-                        return response;
-                    }
-                }
-                else if (!ReleasePlanSpecHelper.IsValidCommitSha(specCommitSha))
+                specCommitSha = releasePlan.SpecCommitSHA;
+                if (!ReleasePlanSpecHelper.IsValidCommitSha(specCommitSha) || string.IsNullOrWhiteSpace(releasePlan.SpecAPIVersion))
                 {
                     response.Status = "Failed";
-                    response.ResponseErrors.Add("The release plan has an invalid spec commit SHA. Update its spec PR to a merged PR before generating SDKs.");
+                    response.ResponseErrors.Add("The release plan has a missing or invalid spec commit SHA or API version. Preview and confirm the release target with update-spec-pr before generating SDKs; generation never chooses a new target implicitly.");
                     return response;
+                }
+                if (requireMergedSpec)
+                {
+                    var specPr = await ReleasePlanSpecHelper.GetPullRequestAsync(githubService, releasePlan.ActiveSpecPullRequest, ct);
+                    if (!specPr.Merged || !string.Equals(specPr.MergeCommitSha, specCommitSha, StringComparison.OrdinalIgnoreCase))
+                    {
+                        response.Status = "Failed";
+                        response.ResponseErrors.Add("Auto-release generation requires the confirmed target to use the linked PR's merge commit. Update the release target after merge. Pre-merge draft SDK review remains available without --require-merged-spec.");
+                        return response;
+                    }
                 }
 
                 string sdkRepoBranch = "";                
@@ -447,7 +520,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 logger.LogInformation("Running SDK generation pipeline");
                 ct.ThrowIfCancellationRequested();
-                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(specCommitSha, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch, ct);
+                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(specCommitSha, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch, requireMergedSpec, ct);
                 response.Status = "Success";
                 response.Details.Add($"SDK generation uses pinned spec commit {specCommitSha} and API version '{apiVersion}'.");
                 response.Details.Add($"Azure DevOps pipeline {DevOpsService.GetPipelineUrl(pipelineRun.Id)} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created.");

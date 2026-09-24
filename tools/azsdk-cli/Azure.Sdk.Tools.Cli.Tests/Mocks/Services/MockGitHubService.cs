@@ -9,6 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         // When set, controls whether pull requests returned by GetPullRequestAsync report as merged.
         public bool ConfiguredPullRequestMerged { get; set; }
         public string ConfiguredMergeCommitSha { get; set; } = "0123456789abcdef0123456789abcdef01234567";
+        public string ConfiguredHeadSha { get; set; } = "0123456789abcdef0123456789abcdef01234567";
         public Dictionary<int, PullRequest> ConfiguredPullRequests { get; } = [];
 
         // When set, GetPullRequestAsync throws to simulate a GitHub lookup failure.
@@ -207,7 +208,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 diffUrl: $"https://github.com/{repoOwner}/{repoName}/pull/{pullRequestNumber}.diff",
                 patchUrl: $"https://github.com/{repoOwner}/{repoName}/pull/{pullRequestNumber}.patch",
                 issueUrl: $"https://api.github.com/repos/{repoOwner}/{repoName}/issues/{pullRequestNumber}",
-                statusesUrl: $"https://api.github.com/repos/{repoOwner}/{repoName}/statuses/abc123",
+                statusesUrl: $"https://api.github.com/repos/{repoOwner}/{repoName}/statuses/{ConfiguredHeadSha}",
                 number: pullRequestNumber,
                 state: ItemState.Open,
                 title: "Test Pull Request",
@@ -216,7 +217,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 updatedAt: DateTimeOffset.Now,
                 closedAt: ConfiguredPullRequestMerged ? DateTimeOffset.Now : (DateTimeOffset?)null,
                 mergedAt: ConfiguredPullRequestMerged ? DateTimeOffset.Now : (DateTimeOffset?)null,
-                head: CreateMockGitReference($"{repoOwner}:feature-branch", "feature-branch", "abc123", user),
+                head: CreateMockGitReference($"{repoOwner}:feature-branch", "feature-branch", ConfiguredHeadSha, user),
                 @base: CreateMockGitReference($"{repoOwner}:main", "main", "def456", user),
                 user: user,
                 assignee: null,
@@ -355,7 +356,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
             // Return a mock SHA
-            return Task.FromResult<string?>("abc123def456");
+            return Task.FromResult<string?>(ConfiguredHeadSha);
         }
 
         public Task<string?> GetFileFromPullRequest(string repoOwner, string repoName, int pullRequestNumber, string filePath, CancellationToken ct)

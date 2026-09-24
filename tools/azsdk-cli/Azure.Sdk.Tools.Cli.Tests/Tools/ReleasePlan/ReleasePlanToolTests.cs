@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 
@@ -17,6 +18,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
     internal class ReleasePlanToolTests
     {
+        private const string TestTypeSpecProjectPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+        private const string TestSpecProjectRelativePath = "specification/testcontoso/Contoso.Management";
+        private const string TestSpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+        private const string DefaultSpecCommitSha = "0123456789abcdef0123456789abcdef01234567";
+        private const string StableApiVersion = "2026-05-02";
+        private const string PreviewApiVersion = "2026-05-02-preview";
+
         private TestLogger<ReleasePlanTool> logger;
         private IDevOpsService devOpsService;
         private IGitHelper gitHelper;
@@ -74,6 +82,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             typeSpecHelperMock.Setup(x => x.IsRepoPathForSpecRepoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns((string p, CancellationToken ct) => realTypeSpecHelper.IsRepoPathForSpecRepoAsync(p, ct));
             typeSpecHelperMock.Setup(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateDummyTypeSpecProject());
+            // Git cleanliness and compiler validation have their own helper tests. Keep these tool
+            // tests hermetic while retaining the snapshot validator's local-project requirement.
+            typeSpecHelperMock.Setup(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string path, string commitSha, INpxHelper npx, ILogger log, CancellationToken ct) =>
+                {
+                    if (realTypeSpecHelper.IsUrl(path) || !realTypeSpecHelper.IsValidTypeSpecProjectPath(path))
+                    {
+                        throw new ArgumentException("To set a release target, provide a local TypeSpec project in a clean checkout of the selected commit. A previously confirmed plan can generate remotely without a clone.");
+                    }
+                    return CreateDummyTypeSpecProject();
+                });
             typeSpecHelper = typeSpecHelperMock.Object;
 
             releasePlanTool = new ReleasePlanTool(
@@ -96,7 +115,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_for_existing_product()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
             Assert.IsNotNull(releaseplan);
 
             //Verify service ID and product ID in response. It should have values from previous release plans.
@@ -128,7 +148,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "October 2026",
                 "GA",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                isTestReleasePlan: true);
+                isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.That(response.ResponseError, Is.Null);
             Assert.That(response.ReleasePlanDetails, Is.Not.Null);
@@ -140,7 +161,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_copies_product_details_from_previous_release_plan()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
 
@@ -159,7 +181,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .Callback<ProgressNotificationValue>(v => reported.Add(v));
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(progressMock.Object, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(progressMock.Object, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
@@ -185,7 +208,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            await tool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            await tool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.IsNotNull(captured);
             Assert.That(captured!.CC, Is.Empty, "Test release plans must not CC sdkowners or azsdk support.");
@@ -205,7 +229,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            await tool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: false);
+            await tool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: false,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.IsNotNull(captured);
             Assert.That(captured!.CC, Does.Contain("sdkowners@microsoft.com"));
@@ -292,7 +317,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "GA", "", "")]
         [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "Public Preview", "", "")]
         [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35448", "Private Preview", "", "")]
-        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management", "January 2026", "https://github.com/Azure/azure-rest-api-specs/pull/39310", "GA", "12345678-1234-5678-9012-123456789012", "87654321-4321-8765-1234-210987654321")]
         [Test]
         public async Task Test_Create_releasePlan_with_valid_inputs(string typeSpecPath, string targetMonth, string prUrl, string apiType, string serviceId, string productId)
         {
@@ -303,13 +327,33 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 specPullRequestUrl: prUrl,
                 serviceTreeId: serviceId,
                 productTreeId: productId,
-                isTestReleasePlan: true);
+                isTestReleasePlan: true,
+                apiVersion: apiType == "Private Preview" ? "" : apiType == "GA" ? StableApiVersion : PreviewApiVersion,
+                specCommitSha: apiType == "Private Preview" ? "" : DefaultSpecCommitSha,
+                confirmTarget: apiType != "Private Preview");
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.IsNotNull(result.ReleasePlanDetails);
             Assert.IsNotNull(result.ReleasePlanDetails.WorkItemId);
             Assert.IsNotNull(result.ReleasePlanDetails.ReleasePlanId);
             Assert.IsNotNull(result.ReleasePlanDetails.ReleasePlanLink);
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_with_url_based_target_requires_local_checkout()
+        {
+            var result = await releasePlanTool.CreateReleasePlan(null,
+                "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management",
+                "January 2026", "GA",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/39310",
+                serviceTreeId: "12345678-1234-5678-9012-123456789012",
+                productTreeId: "87654321-4321-8765-1234-210987654321",
+                isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
+
+            Assert.That(result.ResponseError, Does.Contain("provide a local TypeSpec project"));
+            Assert.That(result.ReleasePlanDetails, Is.Null);
+            Assert.That(((MockDevOpsService)devOpsService).LastSpecUpdate, Is.Null);
         }
 
         [Test]
@@ -339,7 +383,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "July 2025",
                 "GA",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                isTestReleasePlan: false); // This should be overridden to true by environment variable
+                isTestReleasePlan: false, // This should be overridden to true by environment variable
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             // Assert
             var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
@@ -379,7 +424,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "July 2025",
                 "GA",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                isTestReleasePlan: false);
+                isTestReleasePlan: false,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             // Assert
             var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
@@ -392,14 +438,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             environmentHelperMock.Verify(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false), Times.Once);
         }
         
-        [Test]
-        public async Task Test_Create_releasePlan_private_preview_accepts_azure_rest_api_specs_pr_repo()
+        [TestCase(TestTypeSpecProjectPath)]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/testcontoso/Contoso.Management")]
+        public async Task Test_Create_releasePlan_private_preview_accepts_azure_rest_api_specs_pr_repo(string testCodeFilePath)
         {
-            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
             Assert.IsNotNull(releaseplan.ReleasePlanDetails);
+            Assert.That(releaseplan.RequiresConfirmation, Is.False);
+            Assert.That(releaseplan.ReleasePlanDetails!.SpecCommitSHA, Is.Empty);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -487,7 +536,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_defaults_sdk_type_to_beta_for_preview()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Public Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Public Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true,
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
             var details = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
@@ -499,7 +549,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_defaults_sdk_type_to_stable_for_ga()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
             var details = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
@@ -559,17 +610,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 ServiceTreeId = "87654321-4321-8765-1234-210987654321",
                 ProductTreeId = "12345678-1234-5678-9012-123456789012",
                 APISpecProjectPath = "specification/testcontoso/Contoso.Management",
-                SpecAPIVersion = "2024-01-01",
+                SpecAPIVersion = StableApiVersion,
                 ApiReleaseType = ApiReleaseType.GA,
                 Status = "In Progress",
                 SDKReleaseMonth = "August 2026"
             };
 
-            // The API version must match what CreateDummyTypeSpecProject returns ("2026-05-02-preview")
-            existingReleasePlan.SpecAPIVersion = "2026-05-02-preview";
+            // Explicit selection, not the emitter's configured preview version, identifies the GA plan.
             ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForTypeSpecPathAndApiVersion = existingReleasePlan;
             ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey = "specification/testcontoso/Contoso.Management";
-            ((MockDevOpsService)devOpsService).ConfiguredApiVersionForTypeSpecPathAndApiVersion = "2026-05-02-preview";
+            ((MockDevOpsService)devOpsService).ConfiguredApiVersionForTypeSpecPathAndApiVersion = StableApiVersion;
             ((MockDevOpsService)devOpsService).ConfiguredActiveReleasePlansForTypeSpecPath = [existingReleasePlan];
             var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, 25, 0, 0, 0, TimeSpan.Zero));
             var tool = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), timeProvider);
@@ -580,7 +630,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "October 2026",
                 "GA", 
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", 
-                isTestReleasePlan: true);
+                isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             // Assert
             Assert.IsNotNull(releaseplan);
@@ -589,7 +640,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(releasePlanDetails);
             Assert.That(releasePlanDetails.WorkItemId, Is.EqualTo(999), "Should return existing release plan");
             Assert.That(releasePlanDetails.ReleasePlanId, Is.EqualTo(50001));
-            Assert.That(releasePlanDetails.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
+            Assert.That(releasePlanDetails.SpecAPIVersion, Is.EqualTo(StableApiVersion));
             Assert.IsNotNull(releaseplan.Message, "Response should contain a message about existing plan");
             Assert.That(releaseplan.Message, Does.Contain("existing release plan"), "Message should indicate plan already exists");
             Assert.That(releaseplan.Warnings, Has.Some.Contains("Release plan 50001").And.Contains("past due"));
@@ -619,12 +670,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "July 2025",
                 "GA",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                isTestReleasePlan: true);
+                isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.That(releaseplan.ResponseError, Is.Null);
             Assert.That(releaseplan.ReleasePlanDetails, Is.Not.Null);
             Assert.That(releaseplan.ReleasePlanDetails?.WorkItemId, Is.EqualTo(1), "A new release plan should be created.");
-            Assert.That(releaseplan.ReleasePlanDetails?.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
+            Assert.That(releaseplan.ReleasePlanDetails?.SpecAPIVersion, Is.EqualTo(StableApiVersion));
         }
 
         [Test]
@@ -647,26 +699,38 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var releasePlanDetails = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
             Assert.IsNotNull(releasePlanDetails);
             Assert.That(releasePlanDetails.SpecPullRequests, Is.Empty);
+            Assert.That(releasePlanDetails.SpecCommitSHA, Is.Empty);
+            Assert.That(releaseplan.RequiresConfirmation, Is.False);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
             Assert.That(releaseplan.Warnings, Is.Null);
         }
 
         [Test]
         public async Task Test_Create_releasePlan_allows_different_release_type_for_same_spec_pr()
         {
-            // Arrange: configure the mock to return an existing GA release plan for the spec PR
-            var mockDevOpsService = new MockDevOpsService
+            // Match the service's release-type filtering; an existing GA plan must not be
+            // returned by the Public Preview lookup and mistaken for a successful create.
+            var existingGaPlan = new ReleasePlanWorkItem
             {
-                ConfiguredReleasePlanForSpecPrUrl = new ReleasePlanWorkItem
-                {
-                    WorkItemId = 42,
-                    ReleasePlanId = 10,
-                    Title = "Existing GA Release Plan",
-                    ReleasePlanType = "GA" // ApiReleaseType.GA
-                }
+                WorkItemId = 42,
+                ReleasePlanId = 10,
+                Title = "Existing GA Release Plan",
+                ApiReleaseType = ApiReleaseType.GA
             };
+            var mockDevOpsService = new Mock<IDevOpsService>();
+            mockDevOpsService.Setup(x => x.GetReleasePlanAsync(It.IsAny<string>(), ApiReleaseType.GA, It.IsAny<CancellationToken>())).ReturnsAsync(existingGaPlan);
+            mockDevOpsService.Setup(x => x.GetReleasePlanAsync(It.IsAny<string>(), ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>())).ReturnsAsync((ReleasePlanWorkItem)null!);
+            ReleasePlanWorkItem? createdPlan = null;
+            mockDevOpsService.Setup(x => x.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), It.IsAny<CancellationToken>()))
+                .Callback<ReleasePlanWorkItem, CancellationToken>((plan, _) => createdPlan = plan)
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 1, Fields = new Dictionary<string, object>() });
+            mockDevOpsService.Setup(x => x.GetReleasePlanForWorkItemAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(() => createdPlan!);
+            mockDevOpsService.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(1, It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOpsService.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem>());
 
             var tool = new ReleasePlanTool(
-                mockDevOpsService,
+                mockDevOpsService.Object,
                 gitHelper,
                 typeSpecHelper,
                 logger,
@@ -686,13 +750,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "July 2025",
                 "Public Preview",
                 specPullRequestUrl: specPrUrl,
-                isTestReleasePlan: true);
+                isTestReleasePlan: true,
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             // Assert: creation succeeds
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
             Assert.IsNotNull(releaseplan.ReleasePlanDetails);
-            Assert.Greater(releaseplan.ReleasePlanDetails.WorkItemId, 0);
+            Assert.That(releaseplan.ReleasePlanDetails.WorkItemId, Is.EqualTo(1));
+            Assert.That(releaseplan.ReleasePlanDetails.ApiReleaseType, Is.EqualTo(ApiReleaseType.PublicPreview));
+            mockDevOpsService.Verify(x => x.GetReleasePlanAsync(specPrUrl, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOpsService.Verify(x => x.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -731,7 +799,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "July 2025",
                 "GA",
                 specPullRequestUrl: specPrUrl,
-                isTestReleasePlan: true);
+                isTestReleasePlan: true,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             // Assert: returns existing plan with a message instead of creating a new one
             Assert.IsNotNull(releaseplan);
@@ -1415,6 +1484,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(capturedFields, Has.Count.EqualTo(5));
             Assert.That(capturedFields!.Values, Has.All.EqualTo("MissingEmitterConfig"));
             mockDevOps.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(mockDevOps);
         }
 
         [Test]
@@ -1535,6 +1605,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Verify(x => x.ResolveReleasePlanByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             mockDevOps.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
             mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(mockDevOps);
         }
         
         [Test]
@@ -1602,21 +1673,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_update_spec_pull_request_with_work_item_id()
         {
-            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("https://github.com/Azure/azure-rest-api-specs/pull/12345", workItemId: 100);
+            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("https://github.com/Azure/azure-rest-api-specs/pull/12345", workItemId: 100,
+                typeSpecProjectPath: TestTypeSpecProjectPath, apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
             Assert.IsNotNull(response);
             Assert.That(response.Status, Is.EqualTo("Success"));
             Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
-            Assert.That(response.NextSteps, Has.Some.Contains("After the linked spec PR is merged"));
+            Assert.That(response.NextSteps, Has.Some.Contains("saved API version and spec commit").And.Contains("draft SDK review"));
+            var devops = (MockDevOpsService)devOpsService;
+            Assert.That(devops.LastSpecUpdate, Is.EqualTo((100, "https://github.com/Azure/azure-rest-api-specs/pull/12345", DefaultSpecCommitSha)));
+            Assert.That(devops.LastSpecUpdateApiVersion, Is.EqualTo(PreviewApiVersion));
+            Assert.That(devops.LastSpecUpdateExpectedCommitSha, Is.Empty);
         }
 
         [Test]
         public async Task Test_update_spec_pull_request_with_release_plan_id()
         {
-            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("https://github.com/Azure/azure-rest-api-specs/pull/12345", releasePlanId: 1);
+            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("https://github.com/Azure/azure-rest-api-specs/pull/12345", releasePlanId: 1,
+                typeSpecProjectPath: TestTypeSpecProjectPath, apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
             Assert.IsNotNull(response);
             Assert.That(response.Status, Is.EqualTo("Success"));
             Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
-            Assert.That(response.NextSteps, Has.Some.Contains("After the linked spec PR is merged"));
+            Assert.That(response.NextSteps, Has.Some.Contains("saved API version and spec commit").And.Contains("draft SDK review"));
         }
 
         [Test]
@@ -2042,13 +2119,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 typeSpecProjectPath: relativeConfigPath,
                 sdkReleaseType: "beta",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                workItemId: 100);
+                workItemId: 100,
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             var absoluteResult = await releasePlanTool.UpdateReleasePlan(
                 typeSpecProjectPath: absoluteConfigPath,
                 sdkReleaseType: "beta",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                workItemId: 100);
+                workItemId: 100,
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.Multiple(() =>
             {
@@ -2094,7 +2173,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 sdkReleaseType: "beta",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                workItemId: 100);
+                workItemId: 100,
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
@@ -2127,7 +2207,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 sdkReleaseType: inputType,
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                workItemId: 100);
+                workItemId: 100,
+                apiVersion: expectedMapped == "stable" ? StableApiVersion : PreviewApiVersion,
+                specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
@@ -2146,24 +2228,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(200, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(200, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .Callback<int, Dictionary<string, string>, CancellationToken>((id, fields, _) =>
-                {
-                    // Verify the service and product IDs are included
-                    Assert.That(fields.ContainsKey("Custom.ServiceTreeID"));
-                    Assert.That(fields["Custom.ServiceTreeID"], Is.EqualTo("11111111-1111-1111-1111-111111111111"));
-                    Assert.That(fields.ContainsKey("Custom.ProductServiceTreeID"));
-                    Assert.That(fields["Custom.ProductServiceTreeID"], Is.EqualTo("22222222-2222-2222-2222-222222222222"));
-                    Assert.That(fields.ContainsKey("Custom.ApiSpecProjectPath"));
-                    // Verify product details copied from the triage work item
-                    Assert.That(fields["Custom.ProductName"], Is.EqualTo("Contoso Product"));
-                    Assert.That(fields["Custom.ProductType"], Is.EqualTo("Offering"));
-                    Assert.That(fields["Custom.ProductLifecycle"], Is.EqualTo("GA"));
-                })
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 200 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-            mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-            mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            Dictionary<string, string>? capturedFields = null;
+            mockDevOps.Setup(x => x.UpdateConfirmedReleaseTargetAsync(200, It.IsAny<ReleasePlanSpecTarget>(), "",
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, ReleasePlanSpecTarget, string, Dictionary<string, string>, List<SDKInfo>, CancellationToken>(
+                    (_, _, _, fields, _, _) => capturedFields = new Dictionary<string, string>(fields))
+                .ReturnsAsync(true);
             mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync("22222222-2222-2222-2222-222222222222", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProductInfo { ProductServiceTreeId = "22222222-2222-2222-2222-222222222222", ProductName = "Contoso Product", ProductType = "Offering", ProductLifecycle = "GA" });
 
@@ -2175,13 +2245,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
                 workItemId: 200,
                 serviceTreeId: "11111111-1111-1111-1111-111111111111",
-                productTreeId: "22222222-2222-2222-2222-222222222222");
+                productTreeId: "22222222-2222-2222-2222-222222222222",
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
 
-            mockDevOps.Verify(x => x.UpdateWorkItemAsync(200, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Once);
-            mockDevOps.Verify(x => x.UpdateSpecPullRequestAsync(200, "https://github.com/Azure/azure-rest-api-specs/pull/35446", "", "", It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(capturedFields, Is.EquivalentTo(new Dictionary<string, string>
+            {
+                ["Custom.SDKtypetobereleased"] = "beta",
+                ["Custom.ApiSpecProjectPath"] = TestSpecProjectRelativePath,
+                ["Custom.ServiceTreeID"] = "11111111-1111-1111-1111-111111111111",
+                ["Custom.ProductServiceTreeID"] = "22222222-2222-2222-2222-222222222222",
+                ["Custom.ProductName"] = "Contoso Product",
+                ["Custom.ProductType"] = "Offering",
+                ["Custom.ProductLifecycle"] = "GA"
+            }));
+            AssertConfirmedTargetUpdate(mockDevOps, 200, "", PreviewApiVersion, "beta");
         }
 
         [Test]
@@ -2213,6 +2293,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ResponseError, Does.Contain("Product type could not be determined"));
             // The release plan should not be updated until the product type is provided
             mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(mockDevOps);
         }
 
         [Test]
@@ -2265,16 +2346,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(300, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(300, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .Callback<int, Dictionary<string, string>, CancellationToken>((id, fields, _) =>
-                {
-                    Assert.That(fields.ContainsKey("Custom.ServiceTreeID"), Is.False);
-                    Assert.That(fields.ContainsKey("Custom.ProductServiceTreeID"), Is.False);
-                })
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 300 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-            mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-            mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            Dictionary<string, string>? capturedFields = null;
+            mockDevOps.Setup(x => x.UpdateConfirmedReleaseTargetAsync(300, It.IsAny<ReleasePlanSpecTarget>(), "",
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, ReleasePlanSpecTarget, string, Dictionary<string, string>, List<SDKInfo>, CancellationToken>(
+                    (_, _, _, fields, _, _) => capturedFields = new Dictionary<string, string>(fields))
+                .ReturnsAsync(true);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
@@ -2282,10 +2359,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 sdkReleaseType: "stable",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                workItemId: 300);
+                workItemId: 300,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
-            mockDevOps.Verify(x => x.UpdateWorkItemAsync(300, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(capturedFields, Is.EquivalentTo(new Dictionary<string, string>
+            {
+                ["Custom.SDKtypetobereleased"] = "stable",
+                ["Custom.ApiSpecProjectPath"] = TestSpecProjectRelativePath
+            }), "Unspecified service and product metadata must not be included in the guarded update.");
+            AssertConfirmedTargetUpdate(mockDevOps, 300, "", StableApiVersion, "stable");
         }
 
         [Test]
@@ -2301,10 +2384,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Work item ID not provided (0), TypeSpec path lookup returns null, PR URL lookup returns the plan
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>())).ReturnsAsync((ReleasePlanWorkItem?)null);
             mockDevOps.Setup(x => x.GetReleasePlanAsync("https://github.com/Azure/azure-rest-api-specs/pull/99999", It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 500 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-            mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(x => x.UpdateConfirmedReleaseTargetAsync(500, It.IsAny<ReleasePlanSpecTarget>(), "",
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(500, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
 
             var mockNpxHelper = new Mock<INpxHelper>();
@@ -2317,7 +2399,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 sdkReleaseType: "beta",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/99999",
-                workItemId: 0);
+                workItemId: 0,
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated release plan 500"));
@@ -2325,20 +2408,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
             mockDevOps.Verify(x => x.GetReleasePlanAsync("https://github.com/Azure/azure-rest-api-specs/pull/99999", It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Once);
+            AssertConfirmedTargetUpdate(mockDevOps, 500, "", PreviewApiVersion, "beta", "https://github.com/Azure/azure-rest-api-specs/pull/99999");
         }
 
         [Test]
-        public async Task Test_UpdateReleasePlan_with_url_based_typespec_path()
+        public async Task Test_UpdateReleasePlan_with_url_based_target_requires_local_checkout()
         {
             var result = await releasePlanTool.UpdateReleasePlan(
                 typeSpecProjectPath: "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management",
                 sdkReleaseType: "stable",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/39310",
-                workItemId: 100);
+                workItemId: 100,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
 
-            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
-            Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
-            Assert.IsNotNull(result.TypeSpecProject);
+            Assert.That(result.ResponseError, Does.Contain("provide a local TypeSpec project"));
+            Assert.That(result.ReleasePlanDetails, Is.Null);
+            Assert.That(((MockDevOpsService)devOpsService).LastSpecUpdate, Is.Null);
         }
 
         // ======================== Target Month Validation Tests ========================
@@ -2503,6 +2588,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(result.ResponseError);
             Assert.That(result.ResponseError, Does.Contain("No release plan found"));
             mockDevOps.Verify(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(mockDevOps);
         }
 
         // ======================== RunTypeSpecMetadataEmitterAsync Tests ========================
@@ -2510,8 +2596,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_UpdateReleasePlan_url_path_skips_emitter()
         {
-            // When TypeSpec path is a URL, the emitter should be skipped (returns null)
-            // but the update should still succeed
+            // A URL is still valid for a metadata-only update, but cannot set a spec target.
             var mockDevOps = new Mock<IDevOpsService>();
             var releasePlan = new ReleasePlanWorkItem
             {
@@ -2523,27 +2608,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(400, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 400 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-            mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contoso/Contoso.Management",
                 sdkReleaseType: "beta",
-                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
                 workItemId: 400);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             // Emitter not called, so UpdateReleasePlanSDKDetailsAsync should not be called
             mockDevOps.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOps.Verify(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(mockDevOps);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
-        public async Task Test_UpdateReleasePlan_emitter_failure_still_succeeds()
+        public async Task Test_UpdateReleasePlan_metadata_only_emitter_failure_still_succeeds()
         {
-            // When the emitter fails (ParseTypeSpecProjectAsync returns null), the update should still
-            // succeed but UpdateReleasePlanSDKDetailsAsync must not be called (no packages to update).
+            // Emitter failure remains best-effort for metadata-only updates, not confirmed spec targets.
             var mockNpxHelper = new Mock<INpxHelper>();
             mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1 });
@@ -2572,21 +2656,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(600, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 600 });
-            mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-            mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, failingTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 sdkReleaseType: "beta",
-                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
                 workItemId: 600);
 
             // Update should still succeed even though emitter failed
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
             mockDevOps.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(mockDevOps);
         }
 
         [TestCase(true)]
@@ -2699,65 +2781,62 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
       
         [TestCase(true)]
         [TestCase(false)]
-        public async Task CreateReleasePlan_CapturesOnlyMergedSpecCommit(bool merged)
+        public async Task CreateReleasePlan_CapturesConfirmedSourceCommit(bool merged)
         {
             const string specPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
             var github = (MockGitHubService)gitHubService;
             github.ConfiguredPullRequestMerged = merged;
+            github.ConfiguredHeadSha = new string('b', 40);
+            github.ConfiguredMergeCommitSha = new string('c', 40);
+            var selectedSha = merged ? github.ConfiguredMergeCommitSha : github.ConfiguredHeadSha;
+            using var cancellation = new CancellationTokenSource();
 
             var response = await releasePlanTool.CreateReleasePlan(null,
-                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview", specPullRequestUrl: specPr);
+                TestTypeSpecProjectPath, "July 2025", "Public Preview", specPullRequestUrl: specPr,
+                apiVersion: PreviewApiVersion, specCommitSha: selectedSha, confirmTarget: true, ct: cancellation.Token);
 
             Assert.That(response.ResponseError, Is.Null);
-            Assert.That(response.ReleasePlanDetails!.SpecCommitSha, Is.EqualTo(merged ? github.ConfiguredMergeCommitSha : ""));
+            Assert.That(response.RequiresConfirmation, Is.False);
+            Assert.That(response.ReleasePlanDetails!.SpecCommitSHA, Is.EqualTo(selectedSha));
             Assert.That(response.ReleasePlanDetails.ActiveSpecPullRequest, Is.EqualTo(specPr));
-            Assert.That(response.ReleasePlanDetails.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
+            Assert.That(response.ReleasePlanDetails.SpecAPIVersion, Is.EqualTo(PreviewApiVersion));
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(TestTypeSpecProjectPath, selectedSha, It.IsAny<INpxHelper>(), logger, cancellation.Token), Times.Once);
         }
 
         [TestCase(true)]
         [TestCase(false)]
-        public async Task CreateReleasePlan_ReusesSameVersionAndAdvancesPinOnlyAfterMerge(bool merged)
+        public async Task CreateReleasePlan_ReusesSameVersionWithoutRetargetingAcrossRequests(bool merged)
         {
-            const string newSpecPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
-            const string oldSpecPr = "https://github.com/Azure/azure-rest-api-specs/pull/123";
             var github = (MockGitHubService)gitHubService;
             github.ConfiguredPullRequestMerged = merged;
-            var devops = (MockDevOpsService)devOpsService;
-            var oldCommit = new string('a', 40);
-            var existing = new ReleasePlanWorkItem
+            var existing = CreatePinnedReleasePlan();
+            var original = JsonSerializer.Serialize(existing);
+            var devops = CreateTargetDevOpsMock(existing);
+            devops.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(TestSpecProjectRelativePath, PreviewApiVersion, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(existing);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            foreach (var prNumber in new[] { 35446, 35447 })
             {
-                WorkItemId = 200,
-                ReleasePlanId = 20,
-                ApiReleaseType = ApiReleaseType.PublicPreview,
-                SpecAPIVersion = "2026-05-02-preview",
-                SpecCommitSha = oldCommit,
-                ActiveSpecPullRequest = oldSpecPr
-            };
-            devops.ConfiguredReleasePlanForTypeSpecPathAndApiVersion = existing;
-            devops.ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey = "specification/testcontoso/Contoso.Management";
-            devops.ConfiguredApiVersionForTypeSpecPathAndApiVersion = existing.SpecAPIVersion;
-            github.ConfiguredPullRequests[123] = CreateMergedSpecPullRequest(oldCommit, "2026-09-01T00:00:00Z");
-            if (merged)
-            {
-                github.ConfiguredPullRequests[35446] = CreateMergedSpecPullRequest(github.ConfiguredMergeCommitSha, "2026-09-02T00:00:00Z");
+                github.ConfiguredHeadSha = new string(prNumber == 35446 ? 'b' : 'c', 40);
+                github.ConfiguredMergeCommitSha = new string(prNumber == 35446 ? 'd' : 'e', 40);
+                var selectedSha = merged ? github.ConfiguredMergeCommitSha : github.ConfiguredHeadSha;
+
+                var response = await tool.CreateReleasePlan(progress.Object,
+                    TestTypeSpecProjectPath, "July 2025", "Public Preview",
+                    specPullRequestUrl: $"https://github.com/Azure/azure-rest-api-specs/pull/{prNumber}",
+                    apiVersion: PreviewApiVersion, specCommitSha: selectedSha, confirmTarget: true);
+
+                Assert.That(response.ResponseError, Is.Null);
+                Assert.That(response.ReleasePlanDetails, Is.SameAs(existing));
+                Assert.That(response.NextSteps, Has.Some.Contains("existing release target was not changed").And.Contains("update-spec-pr"));
+                Assert.That(JsonSerializer.Serialize(existing), Is.EqualTo(original), "Create must never retarget the same-version plan, even for a newly merged PR.");
             }
 
-            var response = await releasePlanTool.CreateReleasePlan(null,
-                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview", specPullRequestUrl: newSpecPr);
-
-            Assert.That(response.ResponseError, Is.Null);
-            Assert.That(response.ReleasePlanDetails, Is.SameAs(existing));
-            Assert.That(existing.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
-            Assert.That(existing.SpecCommitSha, Is.EqualTo(merged ? github.ConfiguredMergeCommitSha : oldCommit));
-            Assert.That(existing.ActiveSpecPullRequest, Is.EqualTo(merged ? newSpecPr : oldSpecPr));
-            if (merged)
-            {
-                Assert.That(devops.LastSpecUpdate, Is.EqualTo((200, newSpecPr, github.ConfiguredMergeCommitSha)));
-            }
-            else
-            {
-                Assert.That(devops.LastSpecUpdate, Is.Null);
-            }
+            devops.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(TestSpecProjectRelativePath, PreviewApiVersion, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>()), Times.Exactly(2));
+            AssertNoTargetSideEffects(devops, notification, progress);
         }
 
         [Test]
@@ -2770,18 +2849,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 WorkItemId = 200,
                 SpecAPIVersion = "2026-01-01-preview",
-                SpecCommitSha = new string('a', 40)
+                SpecCommitSHA = new string('a', 40)
             };
             devops.ConfiguredActiveReleasePlansForTypeSpecPath = [oldPlan];
 
             var response = await releasePlanTool.CreateReleasePlan(null,
                 "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview",
-                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446");
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                apiVersion: PreviewApiVersion, specCommitSha: github.ConfiguredMergeCommitSha, confirmTarget: true);
 
             Assert.That(response.ResponseError, Is.Null);
             Assert.That(response.ReleasePlanDetails!.WorkItemId, Is.Not.EqualTo(oldPlan.WorkItemId));
-            Assert.That(response.ReleasePlanDetails.SpecCommitSha, Is.EqualTo(github.ConfiguredMergeCommitSha));
-            Assert.That(oldPlan.SpecCommitSha, Is.EqualTo(new string('a', 40)));
+            Assert.That(response.ReleasePlanDetails.SpecCommitSHA, Is.EqualTo(github.ConfiguredMergeCommitSha));
+            Assert.That(oldPlan.SpecCommitSHA, Is.EqualTo(new string('a', 40)));
             Assert.That(devops.LastSpecUpdate, Is.Null);
         }
 
@@ -2789,26 +2869,35 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase(false, false)]
         [TestCase(true, true)]
         [TestCase(false, true)]
-        public async Task UpdateSpecPullRequest_SavesOrClearsPinWithLink(bool merged, bool useReleasePlanId)
+        public async Task UpdateSpecPullRequest_SavesConfirmedSourceCommitWithLink(bool merged, bool useReleasePlanId)
         {
             const string newSpecPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
             var github = (MockGitHubService)gitHubService;
             github.ConfiguredPullRequestMerged = merged;
-            var devops = (MockDevOpsService)devOpsService;
-            devops.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
-            {
-                WorkItemId = 200,
-                SpecCommitSha = new string('a', 40),
-                SpecAPIVersion = "2026-05-02-preview",
-                ApiReleaseType = ApiReleaseType.PublicPreview
-            };
+            github.ConfiguredHeadSha = new string('b', 40);
+            github.ConfiguredMergeCommitSha = new string('c', 40);
+            var selectedSha = merged ? github.ConfiguredMergeCommitSha : github.ConfiguredHeadSha;
+            var plan = CreatePinnedReleasePlan();
+            var previousSha = plan.SpecCommitSHA;
+            var devops = CreateTargetDevOpsMock(plan);
+            devops.Setup(x => x.UpdateSpecPullRequestAsync(200, newSpecPr, selectedSha, previousSha, PreviewApiVersion, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+            var tool = CreateSpecTargetTool(devops.Object, Mock.Of<INotificationService>());
 
-            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan(newSpecPr,
-                workItemId: useReleasePlanId ? 0 : 200, releasePlanId: useReleasePlanId ? 20 : 0);
+            var response = await tool.UpdateSpecPullRequestInReleasePlan(newSpecPr,
+                workItemId: useReleasePlanId ? 0 : 200, releasePlanId: useReleasePlanId ? 20 : 0,
+                typeSpecProjectPath: TestTypeSpecProjectPath, apiVersion: PreviewApiVersion,
+                specCommitSha: selectedSha, confirmTarget: true);
 
             Assert.That(response.ResponseError, Is.Null);
-            Assert.That(devops.LastSpecUpdate, Is.EqualTo((useReleasePlanId ? 1 : 200, newSpecPr, merged ? github.ConfiguredMergeCommitSha : "")));
-            Assert.That(response.Details, Has.Some.Contains(merged ? github.ConfiguredMergeCommitSha : "previous commit pin was cleared"));
+            Assert.That(response.RequiresConfirmation, Is.False);
+            Assert.That(response.Details, Has.Some.Contains(selectedSha));
+            Assert.That(response.ProposedSpecTarget!.SpecCommitSHA, Is.EqualTo(selectedSha));
+            Assert.That(response.ProposedSpecTarget.IsSpecMerged, Is.EqualTo(merged));
+            devops.Verify(x => x.UpdateSpecPullRequestAsync(200, newSpecPr, selectedSha, previousSha, PreviewApiVersion, It.IsAny<CancellationToken>()), Times.Once);
+            devops.Verify(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never(),
+                "Version and pin must be sent together with the expected previous SHA, not as separate writes.");
+            AssertNoConfirmedTargetUpdate(devops);
         }
 
         [Test]
@@ -2817,20 +2906,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             const string specPr = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
             var github = (MockGitHubService)gitHubService;
             github.ConfiguredPullRequestMerged = true;
-            var devops = (MockDevOpsService)devOpsService;
-            devops.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
-            {
-                WorkItemId = 200,
-                ActiveSpecPullRequest = specPr,
-                SpecAPIVersion = "2026-05-02-preview",
-                ApiReleaseType = ApiReleaseType.PublicPreview
-            };
+            var plan = CreatePinnedReleasePlan();
+            plan.ActiveSpecPullRequest = specPr;
+            var previousSha = plan.SpecCommitSHA;
+            var devops = CreateTargetDevOpsMock(plan);
+            devops.Setup(x => x.UpdateConfirmedReleaseTargetAsync(200, It.IsAny<ReleasePlanSpecTarget>(), previousSha,
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+            var tool = CreateSpecTargetTool(devops.Object, Mock.Of<INotificationService>());
 
-            var response = await releasePlanTool.UpdateReleasePlan(
-                "TypeSpecTestData/specification/testcontoso/Contoso.Management", specPr, "beta", workItemId: 200);
+            var response = await tool.UpdateReleasePlan(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", specPr, "beta", workItemId: 200,
+                apiVersion: PreviewApiVersion, specCommitSha: github.ConfiguredMergeCommitSha, confirmTarget: true);
 
             Assert.That(response.ResponseError, Is.Null);
-            Assert.That(devops.LastSpecUpdate, Is.EqualTo((200, specPr, github.ConfiguredMergeCommitSha)));
+            AssertConfirmedTargetUpdate(devops, 200, previousSha, PreviewApiVersion, "beta", specPr,
+                github.ConfiguredMergeCommitSha, isSpecMerged: true);
         }
 
         [TestCase("create")]
@@ -2851,20 +2942,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var error = operation switch
             {
-                "create" => (await tool.CreateReleasePlan(null, project, "July 2025", "Public Preview", specPr)).ResponseError,
-                "update" => (await tool.UpdateReleasePlan(project, specPr, "beta", workItemId: 200)).ResponseError,
-                _ => (await tool.UpdateSpecPullRequestInReleasePlan(specPr, workItemId: 200)).ResponseError
+                "create" => (await tool.CreateReleasePlan(null, project, "July 2025", "Public Preview", specPr,
+                    apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true)).ResponseError,
+                "update" => (await tool.UpdateReleasePlan(project, specPr, "beta", workItemId: 200,
+                    apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true)).ResponseError,
+                _ => (await tool.UpdateSpecPullRequestInReleasePlan(specPr, workItemId: 200, typeSpecProjectPath: project,
+                    apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true)).ResponseError
             };
 
             Assert.That(error, Does.Contain("Simulated GitHub lookup failure"));
             devops.Verify(x => x.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), It.IsAny<CancellationToken>()), Times.Never);
             devops.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
-            devops.Verify(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(devops);
         }
 
         [TestCase("2026-09-01T00:00:00Z")]
         [TestCase("2026-09-02T00:00:00Z")]
-        public async Task CreateReleasePlan_OlderOrSameTimeSpecDoesNotRollBackPin(string requestedMergeTime)
+        [TestCase("2026-09-03T00:00:00Z")]
+        public async Task CreateReleasePlan_DoesNotRetargetExistingVersionForAnyMergeTime(string requestedMergeTime)
         {
             var github = (MockGitHubService)gitHubService;
             var existingCommit = new string('b', 40);
@@ -2876,7 +2972,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 WorkItemId = 200,
                 ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/123",
                 SpecAPIVersion = "2026-05-02-preview",
-                SpecCommitSha = existingCommit
+                SpecCommitSHA = existingCommit
             };
             devops.ConfiguredReleasePlanForTypeSpecPathAndApiVersion = existing;
             devops.ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey = "specification/testcontoso/Contoso.Management";
@@ -2884,12 +2980,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var result = await releasePlanTool.CreateReleasePlan(null,
                 "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview",
-                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446");
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                apiVersion: PreviewApiVersion, specCommitSha: new string('a', 40), confirmTarget: true);
 
             Assert.That(result.ResponseError, Is.Null);
             Assert.That(result.ReleasePlanDetails, Is.SameAs(existing));
-            Assert.That(existing.SpecCommitSha, Is.EqualTo(existingCommit));
-            Assert.That(result.Warnings, Has.Some.Contains("not newer"));
+            Assert.That(existing.SpecCommitSHA, Is.EqualTo(existingCommit));
+            Assert.That(existing.ActiveSpecPullRequest, Is.EqualTo("https://github.com/Azure/azure-rest-api-specs/pull/123"));
+            Assert.That(result.NextSteps, Has.Some.Contains("existing release target was not changed"));
             Assert.That(devops.LastSpecUpdate, Is.Null);
         }
 
@@ -2906,6 +3004,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ResponseError, Is.Null);
             Assert.That(devops.LastSpecUpdate, Is.EqualTo((200, privatePr, "")));
             Assert.That(result.Details, Has.Some.Contains("do not require an SDK generation commit pin"));
+            Assert.That(result.RequiresConfirmation, Is.False);
+            Assert.That(devops.LastSpecUpdateApiVersion, Is.Empty);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -2920,6 +3021,676 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "TypeSpecTestData/specification/testcontoso/Contoso.Management", privatePr, "beta", workItemId: 200);
 
             Assert.That(devops.LastSpecUpdate, Is.EqualTo((200, privatePr, "")), "Pin resolution must not prevent linking a private-preview PR before the existing readiness check.");
+        }
+
+        [TestCase("create", "", "", false)]
+        [TestCase("create", PreviewApiVersion, DefaultSpecCommitSha, false)]
+        [TestCase("create", "", DefaultSpecCommitSha, true)]
+        [TestCase("create", PreviewApiVersion, "", true)]
+        [TestCase("update", "", "", false)]
+        [TestCase("update", PreviewApiVersion, DefaultSpecCommitSha, false)]
+        [TestCase("update", "", DefaultSpecCommitSha, true)]
+        [TestCase("update", PreviewApiVersion, "", true)]
+        [TestCase("link", "", "", false)]
+        [TestCase("link", PreviewApiVersion, DefaultSpecCommitSha, false)]
+        [TestCase("link", "", DefaultSpecCommitSha, true)]
+        [TestCase("link", PreviewApiVersion, "", true)]
+        public async Task ReleasePlanTarget_IncompleteConfirmation_ReturnsPreviewWithoutSideEffects(string operation, string apiVersion, string specCommitSha, bool confirmTarget)
+        {
+            var plan = CreatePinnedReleasePlan();
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var response = await InvokeSpecTargetOperationAsync(tool, operation, apiVersion, specCommitSha, confirmTarget, progress.Object);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.RequiresConfirmation, Is.True, "All three explicit consent inputs are required, even when metadata proposes a unique API version.");
+            var target = response.ProposedSpecTarget;
+            Assert.That(target, Is.Not.Null);
+            Assert.That(target!.TypeSpecProjectPath, Is.EqualTo(TestSpecProjectRelativePath));
+            Assert.That(target.ApiVersion, Is.EqualTo(PreviewApiVersion));
+            Assert.That(target.SpecCommitSHA, Is.EqualTo(DefaultSpecCommitSha));
+            Assert.That(target.SpecPullRequestUrl, Is.EqualTo(TestSpecPullRequestUrl));
+            Assert.That(target.CommitUrl, Is.EqualTo($"https://github.com/Azure/azure-rest-api-specs/commit/{DefaultSpecCommitSha}"));
+            Assert.That(target.SDKReleaseType, Is.EqualTo("beta"));
+            Assert.That(target.IsSpecMerged, Is.False);
+            Assert.That(target.AvailableApiVersions, Is.EquivalentTo(new[] { StableApiVersion, PreviewApiVersion }));
+            Assert.That(target.Packages, Has.Count.EqualTo(5));
+            Assert.That(target.Packages.Select(package => package.ApiVersion), Is.All.EqualTo(PreviewApiVersion));
+            Assert.That(response.NextSteps, Has.Some.Contains("apiVersion").And.Contains("specCommitSha").And.Contains("confirmTarget=true"));
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(TestTypeSpecProjectPath, DefaultSpecCommitSha, It.IsAny<INpxHelper>(), logger, It.IsAny<CancellationToken>()), Times.Once);
+            Mock.Get(typeSpecHelper).Verify(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
+            Mock.Get(userHelper).Verify(x => x.GetUserEmail(It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase("create")]
+        [TestCase("update")]
+        [TestCase("link")]
+        public async Task ReleasePlanTarget_InvalidSha_DoesNotValidateOrWrite(string operation)
+        {
+            var plan = CreatePinnedReleasePlan();
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            foreach (var invalidSha in new[] { "abc123", " ", new string('a', 39), new string('a', 41), new string('g', 40) })
+            {
+                var response = await InvokeSpecTargetOperationAsync(tool, operation, PreviewApiVersion, invalidSha, true, progress.Object);
+
+                Assert.That(response.ResponseError, Does.Contain("supplied SHA does not match"), $"Invalid SHA: '{invalidSha}'");
+                Assert.That(response.RequiresConfirmation, Is.False);
+                Assert.That(response.ProposedSpecTarget, Is.Null);
+            }
+
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase("create")]
+        [TestCase("update")]
+        [TestCase("link")]
+        public async Task ReleasePlanTarget_UndeclaredApiVersion_DoesNotWrite(string operation)
+        {
+            const string wrongVersion = "2099-01-01-preview";
+            var plan = CreatePinnedReleasePlan();
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var response = await InvokeSpecTargetOperationAsync(tool, operation, wrongVersion, DefaultSpecCommitSha, true, progress.Object);
+
+            Assert.That(response.ResponseError, Does.Contain(wrongVersion).And.Contains("not declared at commit").And.Contains(DefaultSpecCommitSha));
+            Assert.That(response.ResponseError, Does.Contain(StableApiVersion).And.Contains(PreviewApiVersion));
+            Assert.That(response.ProposedSpecTarget, Is.Null);
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+        }
+
+        [TestCase("create")]
+        [TestCase("update")]
+        [TestCase("link")]
+        public async Task ReleasePlanTarget_StableSdkRejectsPreviewApiEvenWhenConfirmed(string operation)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.ApiReleaseType = ApiReleaseType.GA;
+            plan.SDKReleaseType = "stable";
+            plan.SpecAPIVersion = StableApiVersion;
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var response = await InvokeSpecTargetOperationAsync(tool, operation, PreviewApiVersion, DefaultSpecCommitSha, true, progress.Object, sdkReleaseType: "stable");
+
+            Assert.That(response.ResponseError, Does.Contain("stable SDK release cannot target a preview API version"));
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+        }
+
+        [TestCase("create", "dirty")]
+        [TestCase("update", "dirty")]
+        [TestCase("link", "dirty")]
+        [TestCase("create", "HEAD")]
+        [TestCase("update", "HEAD")]
+        [TestCase("link", "HEAD")]
+        [TestCase("create", "compile")]
+        [TestCase("update", "compile")]
+        [TestCase("link", "compile")]
+        public async Task ReleasePlanTarget_SnapshotValidationFailure_DoesNotWrite(string operation, string failure)
+        {
+            var error = failure switch
+            {
+                "dirty" => "Spec snapshot validation requires a clean checkout. Commit or isolate local changes first; no files were stashed or changed.",
+                "HEAD" => $"Validate the TypeSpec project in a clean checkout of spec commit {DefaultSpecCommitSha}. The current checkout has a different HEAD; no files were switched or changed.",
+                _ => "Could not compile the selected spec snapshot."
+            };
+            Mock.Get(typeSpecHelper).Setup(x => x.ValidateReleasePlanSnapshotAsync(TestTypeSpecProjectPath, DefaultSpecCommitSha, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException(error));
+            var plan = CreatePinnedReleasePlan();
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var response = await InvokeSpecTargetOperationAsync(tool, operation, PreviewApiVersion, DefaultSpecCommitSha, true, progress.Object);
+
+            Assert.That(response.ResponseError, Does.Contain(error));
+            Assert.That(response.ProposedSpecTarget, Is.Null);
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(TestTypeSpecProjectPath, DefaultSpecCommitSha, It.IsAny<INpxHelper>(), logger, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase("create", false)]
+        [TestCase("update", false)]
+        [TestCase("link", false)]
+        [TestCase("create", true)]
+        [TestCase("update", true)]
+        [TestCase("link", true)]
+        public async Task ReleasePlanTarget_PrChangesBetweenPreviewAndConfirmation_RejectsOldSha(string operation, bool mergedAfterPreview)
+        {
+            var plan = CreatePinnedReleasePlan();
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var preview = await InvokeSpecTargetOperationAsync(tool, operation, PreviewApiVersion, progress: progress.Object);
+            Assert.That(preview.ResponseError, Is.Null);
+            Assert.That(preview.RequiresConfirmation, Is.True);
+            var proposedSha = preview.ProposedSpecTarget!.SpecCommitSHA;
+            var github = (MockGitHubService)gitHubService;
+            var changedSha = new string('b', 40);
+            github.ConfiguredPullRequestMerged = mergedAfterPreview;
+            github.ConfiguredHeadSha = changedSha;
+            github.ConfiguredMergeCommitSha = changedSha;
+
+            var response = await InvokeSpecTargetOperationAsync(tool, operation, PreviewApiVersion, proposedSha, true, progress.Object);
+
+            Assert.That(response.ResponseError, Does.Contain("Spec PR source changed").And.Contains(changedSha).And.Contains("confirm the intended target again"));
+            Assert.That(response.ProposedSpecTarget, Is.Null);
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Once(),
+                "The changed PR must be rejected before validating a second snapshot or writing any target.");
+        }
+
+        [TestCase("create", true)]
+        [TestCase("update", true)]
+        [TestCase("link", true)]
+        [TestCase("create", false)]
+        [TestCase("update", false)]
+        [TestCase("link", false)]
+        public async Task ReleasePlanTarget_AmbiguousOrMissingMetadataVersion_RequiresExplicitChoice(string operation, bool mixedVersions)
+        {
+            var project = CreateDummyTypeSpecProject();
+            if (mixedVersions)
+            {
+                project.Packages[0].ApiVersion = StableApiVersion;
+            }
+            else
+            {
+                foreach (var package in project.Packages)
+                {
+                    package.ApiVersion = null;
+                }
+            }
+            Mock.Get(typeSpecHelper).Setup(x => x.ValidateReleasePlanSnapshotAsync(TestTypeSpecProjectPath, DefaultSpecCommitSha, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(project);
+            Mock.Get(typeSpecHelper).Setup(x => x.ParseTypeSpecProjectAsync(TestTypeSpecProjectPath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(project);
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecAPIVersion = "";
+            plan.SpecCommitSHA = "";
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var preview = await InvokeSpecTargetOperationAsync(tool, operation, specCommitSha: DefaultSpecCommitSha, confirmTarget: true, progress: progress.Object);
+
+            Assert.That(preview.ResponseError, Is.Null);
+            Assert.That(preview.RequiresConfirmation, Is.True);
+            Assert.That(preview.ProposedSpecTarget!.ApiVersion, Is.Empty, "Do not select the first, latest, or majority emitter version.");
+            Assert.That(preview.ProposedSpecTarget.AvailableApiVersions, Is.EquivalentTo(new[] { StableApiVersion, PreviewApiVersion }));
+            AssertNoTargetSideEffects(devops, notification, progress);
+
+            ReleasePlanWorkItem? createdPlan = null;
+            if (operation == "create")
+            {
+                devops.Setup(x => x.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), It.IsAny<CancellationToken>()))
+                    .Callback<ReleasePlanWorkItem, CancellationToken>((created, _) => createdPlan = created)
+                    .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem
+                    {
+                        Id = 201,
+                        Fields = new Dictionary<string, object> { ["Custom.ReleasePlanID"] = 21 }
+                    });
+                devops.Setup(x => x.GetReleasePlanForWorkItemAsync(201, It.IsAny<CancellationToken>())).ReturnsAsync(() => createdPlan!);
+                devops.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(201, It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            }
+            else if (operation == "update")
+            {
+                devops.Setup(x => x.UpdateConfirmedReleaseTargetAsync(200, It.IsAny<ReleasePlanSpecTarget>(), "",
+                        It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(true);
+            }
+            else
+            {
+                devops.Setup(x => x.UpdateSpecPullRequestAsync(200, TestSpecPullRequestUrl, DefaultSpecCommitSha, "", PreviewApiVersion, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            }
+
+            var confirmed = await InvokeSpecTargetOperationAsync(tool, operation, PreviewApiVersion, DefaultSpecCommitSha, true, progress.Object);
+
+            Assert.That(confirmed.ResponseError, Is.Null);
+            Assert.That(confirmed.RequiresConfirmation, Is.False);
+            if (operation == "create")
+            {
+                Assert.That(createdPlan, Is.Not.Null);
+                Assert.That(createdPlan!.SpecAPIVersion, Is.EqualTo(PreviewApiVersion));
+                Assert.That(createdPlan.SpecCommitSHA, Is.EqualTo(DefaultSpecCommitSha));
+                devops.Verify(x => x.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), It.IsAny<CancellationToken>()), Times.Once);
+                AssertNoConfirmedTargetUpdate(devops);
+            }
+            else if (operation == "update")
+            {
+                AssertConfirmedTargetUpdate(devops, 200, "", PreviewApiVersion, "beta");
+            }
+            else
+            {
+                devops.Verify(x => x.UpdateSpecPullRequestAsync(200, TestSpecPullRequestUrl, DefaultSpecCommitSha, "", PreviewApiVersion, It.IsAny<CancellationToken>()), Times.Once);
+                AssertNoConfirmedTargetUpdate(devops);
+            }
+        }
+
+        [TestCase("update")]
+        [TestCase("link")]
+        public async Task ReleasePlanTarget_DifferentStoredApiVersion_RejectsRetargeting(string operation)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecAPIVersion = "2025-01-01-preview";
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var response = await InvokeSpecTargetOperationAsync(tool, operation, PreviewApiVersion, DefaultSpecCommitSha, true, progress.Object);
+
+            Assert.That(response.ResponseError, Does.Contain(PreviewApiVersion).And.Contains(plan.SpecAPIVersion).And.Contains("Use a separate release plan"));
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+        }
+
+        [TestCase("update", false)]
+        [TestCase("update", true)]
+        [TestCase("link", false)]
+        [TestCase("link", true)]
+        public async Task ReleasePlanTarget_DifferentStoredProject_RejectsRetargeting(string operation, bool confirmTarget)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.APISpecProjectPath = "specification/other/Other.Management";
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var response = await InvokeSpecTargetOperationAsync(tool, operation, PreviewApiVersion, DefaultSpecCommitSha, confirmTarget, progress.Object);
+
+            Assert.That(response.ResponseError, Does.Contain("TypeSpec project").And.Contains("release plan"));
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+        }
+
+        [TestCase("")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/testcontoso/Contoso.Management")]
+        public async Task UpdateSpecPullRequest_RequiresLocalProjectForSnapshotValidation(string projectPath)
+        {
+            var plan = CreatePinnedReleasePlan();
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var response = await tool.UpdateSpecPullRequestInReleasePlan(TestSpecPullRequestUrl, workItemId: 200,
+                typeSpecProjectPath: projectPath, apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true);
+
+            Assert.That(response.ResponseError, Does.Contain("provide a local TypeSpec project"));
+            AssertNoTargetSideEffects(devops, notification, progress);
+        }
+
+        [TestCase("create")]
+        [TestCase("update")]
+        [TestCase("link")]
+        public async Task ReleasePlanTarget_PreviewIsVisibleInPlainAndJsonOutput(string operation)
+        {
+            var devops = CreateTargetDevOpsMock(CreatePinnedReleasePlan());
+            var tool = CreateSpecTargetTool(devops.Object, Mock.Of<INotificationService>());
+            var response = await InvokeSpecTargetOperationAsync(tool, operation);
+
+            Assert.That(response.ResponseError, Is.Null);
+            var plain = new OutputHelper(OutputHelper.OutputModes.Plain).Format(response);
+            Assert.That(plain, Does.Contain("Confirmation required. No release plan was changed."));
+            Assert.That(plain, Does.Contain(TestSpecProjectRelativePath).And.Contains(TestSpecPullRequestUrl));
+            Assert.That(plain, Does.Contain($"API version: {PreviewApiVersion}").And.Contains("SDK release type: beta"));
+            Assert.That(plain, Does.Contain($"https://github.com/Azure/azure-rest-api-specs/commit/{DefaultSpecCommitSha}"));
+            Assert.That(plain, Does.Contain($"Available API versions: {StableApiVersion}, {PreviewApiVersion}"));
+            foreach (var package in CreateDummyTypeSpecProject().Packages)
+            {
+                Assert.That(plain, Does.Contain(package.PackageName));
+            }
+
+            foreach (var outputMode in new[] { OutputHelper.OutputModes.Json, OutputHelper.OutputModes.Mcp })
+            {
+                using var document = JsonDocument.Parse(new OutputHelper(outputMode).Format(response));
+                Assert.That(document.RootElement.GetProperty("requires_confirmation").GetBoolean(), Is.True);
+                var target = document.RootElement.GetProperty("proposed_spec_target");
+                Assert.That(target.GetProperty("TypeSpecProjectPath").GetString(), Is.EqualTo(TestSpecProjectRelativePath));
+                Assert.That(target.GetProperty("ApiVersion").GetString(), Is.EqualTo(PreviewApiVersion));
+                Assert.That(target.GetProperty("SpecCommitSHA").GetString(), Is.EqualTo(DefaultSpecCommitSha));
+                Assert.That(target.GetProperty("SpecPullRequestUrl").GetString(), Is.EqualTo(TestSpecPullRequestUrl));
+                Assert.That(target.GetProperty("CommitUrl").GetString(), Is.EqualTo(response.ProposedSpecTarget!.CommitUrl));
+                Assert.That(target.GetProperty("SDKReleaseType").GetString(), Is.EqualTo("beta"));
+                Assert.That(target.GetProperty("AvailableApiVersions").EnumerateArray().Select(version => version.GetString()), Is.EquivalentTo(new[] { StableApiVersion, PreviewApiVersion }));
+                Assert.That(target.GetProperty("Packages").EnumerateArray().Select(package => package.GetProperty("Name").GetString()),
+                    Is.EquivalentTo(CreateDummyTypeSpecProject().Packages.Select(package => package.PackageName)));
+            }
+        }
+
+        [TestCase("beta", "stable", false)]
+        [TestCase("beta", "stable", true)]
+        [TestCase("stable", "beta", false)]
+        [TestCase("stable", "beta", true)]
+        public async Task UpdateReleasePlan_MetadataOnlySameShaSdkTypeChangeRequiresConfirmedTarget(string storedType, string requestedType, bool supplyConsent)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SDKReleaseType = storedType;
+            plan.SpecAPIVersion = StableApiVersion;
+            plan.SpecCommitSHA = DefaultSpecCommitSha;
+            plan.ActiveSpecPullRequest = TestSpecPullRequestUrl;
+            plan.ApiReleaseType = requestedType == "stable" ? ApiReleaseType.GA : ApiReleaseType.PublicPreview;
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var progress = new Mock<IProgress<ProgressNotificationValue>>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            // Consent fields without a public spec PR must not turn a metadata-only update into a target change.
+            var response = await tool.UpdateReleasePlan(TestTypeSpecProjectPath, sdkReleaseType: requestedType, workItemId: 200,
+                apiVersion: supplyConsent ? StableApiVersion : "", specCommitSha: supplyConsent ? DefaultSpecCommitSha : "", confirmTarget: supplyConsent);
+
+            Assert.That(response.ResponseError, Does.Contain("Changing the SDK release type requires previewing and confirming the spec target"),
+                "An unchanged SHA does not authorize a metadata-only SDK release type change.");
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertNoTargetSideEffects(devops, notification, progress);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase("", "beta")]
+        [TestCase("", "stable")]
+        [TestCase("beta", "beta")]
+        [TestCase("stable", "stable")]
+        public async Task UpdateReleasePlan_MetadataOnlyUnchangedOrUnsetSdkTypePreservesTarget(string storedType, string requestedType)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SDKReleaseType = storedType;
+            plan.SpecAPIVersion = StableApiVersion;
+            plan.ApiReleaseType = requestedType == "stable" ? ApiReleaseType.GA : ApiReleaseType.PublicPreview;
+            var originalTarget = (plan.SpecAPIVersion, plan.SpecCommitSHA, plan.ActiveSpecPullRequest, plan.APISpecProjectPath);
+            var devops = CreateTargetDevOpsMock(plan);
+            devops.Setup(x => x.UpdateWorkItemAsync(200, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 200 });
+            devops.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(200, It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            var tool = CreateSpecTargetTool(devops.Object, Mock.Of<INotificationService>());
+
+            var response = await tool.UpdateReleasePlan(TestTypeSpecProjectPath, sdkReleaseType: requestedType, workItemId: 200);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.RequiresConfirmation, Is.False);
+            Assert.That((plan.SpecAPIVersion, plan.SpecCommitSHA, plan.ActiveSpecPullRequest, plan.APISpecProjectPath), Is.EqualTo(originalTarget),
+                "Emitter metadata must not replace the saved stable API version, pin, PR, or project.");
+            devops.Verify(x => x.UpdateWorkItemAsync(200,
+                It.Is<Dictionary<string, string>>(fields => fields.Count == 2 && fields["Custom.SDKtypetobereleased"] == requestedType && fields["Custom.ApiSpecProjectPath"] == TestSpecProjectRelativePath),
+                It.IsAny<CancellationToken>()), Times.Once);
+            devops.Verify(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(devops);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase("beta", "stable", ApiReleaseType.GA, false)]
+        [TestCase("stable", "beta", ApiReleaseType.PublicPreview, false)]
+        [TestCase("beta", "stable", ApiReleaseType.GA, true)]
+        [TestCase("stable", "beta", ApiReleaseType.PublicPreview, true)]
+        public async Task UpdateReleasePlan_ConfirmedTargetAllowsSdkTypeChangeConsistentWithApiReleaseType(string storedType, string requestedType, ApiReleaseType apiReleaseType, bool sameTarget)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SDKReleaseType = storedType;
+            plan.SpecAPIVersion = StableApiVersion;
+            plan.ApiReleaseType = apiReleaseType;
+            if (sameTarget)
+            {
+                plan.SpecCommitSHA = DefaultSpecCommitSha;
+                plan.ActiveSpecPullRequest = TestSpecPullRequestUrl;
+            }
+            var previousSha = plan.SpecCommitSHA;
+            var devops = CreateTargetDevOpsMock(plan);
+            devops.Setup(x => x.UpdateConfirmedReleaseTargetAsync(200, It.IsAny<ReleasePlanSpecTarget>(), previousSha,
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+            var tool = CreateSpecTargetTool(devops.Object, Mock.Of<INotificationService>());
+
+            var response = await tool.UpdateReleasePlan(TestTypeSpecProjectPath, TestSpecPullRequestUrl, requestedType, workItemId: 200,
+                apiVersion: StableApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true, expectedSpecCommitSha: previousSha);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.RequiresConfirmation, Is.False);
+            AssertConfirmedTargetUpdate(devops, 200, previousSha, StableApiVersion, requestedType);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(TestTypeSpecProjectPath, DefaultSpecCommitSha, It.IsAny<INpxHelper>(), logger, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase("beta", PreviewApiVersion)]
+        [TestCase("stable", StableApiVersion)]
+        public async Task UpdateReleasePlan_SameTargetStillGuardsMetadataAndSdkPackageUpdates(string sdkReleaseType, string apiVersion)
+        {
+            using var cancellation = new CancellationTokenSource();
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecCommitSHA = DefaultSpecCommitSha;
+            plan.ActiveSpecPullRequest = TestSpecPullRequestUrl;
+            plan.SpecAPIVersion = apiVersion;
+            plan.SDKReleaseType = sdkReleaseType;
+            plan.ApiReleaseType = sdkReleaseType == "stable" ? ApiReleaseType.GA : ApiReleaseType.PublicPreview;
+            var devops = CreateTargetDevOpsMock(plan);
+            devops.Setup(x => x.UpdateConfirmedReleaseTargetAsync(200, It.IsAny<ReleasePlanSpecTarget>(), DefaultSpecCommitSha,
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), cancellation.Token))
+                .ReturnsAsync(true);
+            var tool = CreateSpecTargetTool(devops.Object, Mock.Of<INotificationService>());
+
+            var response = await tool.UpdateReleasePlan(TestTypeSpecProjectPath, TestSpecPullRequestUrl, sdkReleaseType, workItemId: 200,
+                apiVersion: apiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true,
+                expectedSpecCommitSha: DefaultSpecCommitSha, ct: cancellation.Token);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.RequiresConfirmation, Is.False);
+            AssertConfirmedTargetUpdate(devops, 200, DefaultSpecCommitSha, apiVersion, sdkReleaseType);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(TestTypeSpecProjectPath, DefaultSpecCommitSha,
+                It.IsAny<INpxHelper>(), logger, cancellation.Token), Times.Once);
+            Mock.Get(typeSpecHelper).Verify(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(),
+                It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never, "Use the already validated package snapshot.");
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task UpdateReleasePlan_SameTargetFailureDoesNotFallBackToUnguardedWrites(bool throws)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecCommitSHA = DefaultSpecCommitSha;
+            plan.ActiveSpecPullRequest = TestSpecPullRequestUrl;
+            var original = JsonSerializer.Serialize(plan);
+            var devops = CreateTargetDevOpsMock(plan);
+            var update = devops.Setup(x => x.UpdateConfirmedReleaseTargetAsync(200, It.IsAny<ReleasePlanSpecTarget>(), DefaultSpecCommitSha,
+                It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()));
+            if (throws)
+            {
+                update.ThrowsAsync(new InvalidOperationException("The release plan's spec commit changed."));
+            }
+            else
+            {
+                update.ReturnsAsync(false);
+            }
+            var tool = CreateSpecTargetTool(devops.Object, Mock.Of<INotificationService>());
+
+            var response = await tool.UpdateReleasePlan(TestTypeSpecProjectPath, TestSpecPullRequestUrl, "beta", workItemId: 200,
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true, expectedSpecCommitSha: DefaultSpecCommitSha);
+
+            Assert.That(response.ResponseError, Does.Contain(throws ? "spec commit changed" : "Failed to save the confirmed release target"));
+            Assert.That(response.ReleasePlanDetails, Is.Null);
+            Assert.That(JsonSerializer.Serialize(plan), Is.EqualTo(original));
+            AssertConfirmedTargetUpdate(devops, 200, DefaultSpecCommitSha, PreviewApiVersion, "beta");
+            devops.Verify(x => x.GetReleasePlanForWorkItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        private static void AssertConfirmedTargetUpdate(Mock<IDevOpsService> devops, int workItemId, string expectedPin,
+            string apiVersion, string sdkReleaseType, string specPullRequestUrl = TestSpecPullRequestUrl,
+            string specCommitSha = DefaultSpecCommitSha, bool isSpecMerged = false)
+        {
+            devops.Verify(x => x.UpdateConfirmedReleaseTargetAsync(It.IsAny<int>(), It.IsAny<ReleasePlanSpecTarget>(), It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Once);
+            var arguments = devops.Invocations.Single(invocation => invocation.Method.Name == nameof(IDevOpsService.UpdateConfirmedReleaseTargetAsync)).Arguments;
+            var target = (ReleasePlanSpecTarget)arguments[1];
+            var fields = (Dictionary<string, string>)arguments[3];
+            var sdkInfos = (List<SDKInfo>)arguments[4];
+            var expectedPackages = CreateDummyTypeSpecProject().Packages.Select(package => (package.Language.ToWorkItemString(), package.PackageName)).ToList();
+            Assert.Multiple(() =>
+            {
+                Assert.That(arguments[0], Is.EqualTo(workItemId));
+                Assert.That(arguments[2], Is.EqualTo(expectedPin));
+                Assert.That(target.TypeSpecProjectPath, Is.EqualTo(TestSpecProjectRelativePath));
+                Assert.That(target.ApiVersion, Is.EqualTo(apiVersion));
+                Assert.That(target.SpecCommitSHA, Is.EqualTo(specCommitSha));
+                Assert.That(target.SpecPullRequestUrl, Is.EqualTo(specPullRequestUrl));
+                Assert.That(target.SDKReleaseType, Is.EqualTo(sdkReleaseType));
+                Assert.That(target.ExpectedPreviousSpecCommitSHA, Is.EqualTo(string.IsNullOrEmpty(expectedPin) ? "none" : expectedPin));
+                Assert.That(target.IsSpecMerged, Is.EqualTo(isSpecMerged));
+                Assert.That(target.CommitUrl, Is.EqualTo($"https://github.com/Azure/azure-rest-api-specs/commit/{specCommitSha}"));
+                Assert.That(target.Packages.Select(package => (package.Language.ToWorkItemString(), package.PackageName)), Is.EquivalentTo(expectedPackages));
+                Assert.That(sdkInfos.Select(sdk => (sdk.Language, sdk.PackageName)), Is.EquivalentTo(expectedPackages));
+                Assert.That(fields["Custom.SDKtypetobereleased"], Is.EqualTo(sdkReleaseType));
+                Assert.That(fields["Custom.ApiSpecProjectPath"], Is.EqualTo(TestSpecProjectRelativePath));
+                Assert.That(fields.ContainsKey(ReleasePlanWorkItem.SpecCommitSHAField), Is.False, "The target, not metadata, controls the published pin.");
+            });
+            AssertNoSeparateTargetWrites(devops);
+        }
+
+        private static void AssertNoSeparateTargetWrites(Mock<IDevOpsService> devops)
+        {
+            devops.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        private static void AssertNoConfirmedTargetUpdate(Mock<IDevOpsService> devops) =>
+            devops.Verify(x => x.UpdateConfirmedReleaseTargetAsync(It.IsAny<int>(), It.IsAny<ReleasePlanSpecTarget>(), It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        private static ReleasePlanWorkItem CreatePinnedReleasePlan() => new()
+        {
+            WorkItemId = 200,
+            ReleasePlanId = 20,
+            APISpecProjectPath = TestSpecProjectRelativePath,
+            ApiReleaseType = ApiReleaseType.PublicPreview,
+            SDKReleaseType = "beta",
+            SpecAPIVersion = PreviewApiVersion,
+            SpecCommitSHA = new string('a', 40),
+            ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/123",
+            SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/123"],
+            SDKInfo = [new SDKInfo { Language = "Python", PackageName = "azure-mgmt-existing" }]
+        };
+
+        private static Mock<IDevOpsService> CreateTargetDevOpsMock(ReleasePlanWorkItem plan)
+        {
+            var devops = new Mock<IDevOpsService>();
+            devops.Setup(x => x.ResolveReleasePlanByIdAsync(plan.WorkItemId, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            devops.Setup(x => x.GetReleasePlanForWorkItemAsync(plan.WorkItemId, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            devops.Setup(x => x.GetReleasePlanAsync(plan.ReleasePlanId, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            devops.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem>());
+            return devops;
+        }
+
+        private ReleasePlanTool CreateSpecTargetTool(IDevOpsService devops, INotificationService notification) =>
+            new(devops, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer,
+                httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notification, _timeProvider);
+
+        // Defaults intentionally exercise preview, never silently grant consent to old or new tests.
+        private static async Task<ReleasePlanBaseResponse> InvokeSpecTargetOperationAsync(
+            ReleasePlanTool tool, string operation, string apiVersion = "", string specCommitSha = "", bool confirmTarget = false,
+            IProgress<ProgressNotificationValue>? progress = null, string sdkReleaseType = "beta") => operation switch
+            {
+                "create" => await tool.CreateReleasePlan(progress, TestTypeSpecProjectPath, "July 2025", sdkReleaseType == "stable" ? "GA" : "Public Preview",
+                    specPullRequestUrl: TestSpecPullRequestUrl, isTestReleasePlan: true, apiVersion: apiVersion, specCommitSha: specCommitSha, confirmTarget: confirmTarget),
+                "update" => await tool.UpdateReleasePlan(TestTypeSpecProjectPath, TestSpecPullRequestUrl, sdkReleaseType, workItemId: 200,
+                    apiVersion: apiVersion, specCommitSha: specCommitSha, confirmTarget: confirmTarget),
+                "link" => await tool.UpdateSpecPullRequestInReleasePlan(TestSpecPullRequestUrl, workItemId: 200, typeSpecProjectPath: TestTypeSpecProjectPath,
+                    apiVersion: apiVersion, specCommitSha: specCommitSha, confirmTarget: confirmTarget),
+                _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, "Unsupported spec-target operation.")
+            };
+
+        private static void AssertNoTargetSideEffects(Mock<IDevOpsService> devops, Mock<INotificationService> notification, Mock<IProgress<ProgressNotificationValue>> progress)
+        {
+            AssertNoConfirmedTargetUpdate(devops);
+            Assert.Multiple(() =>
+            {
+                Assert.That(devops.Invocations.Select(invocation => invocation.Method.Name).Distinct(StringComparer.Ordinal), Is.SubsetOf(new[]
+                {
+                    nameof(IDevOpsService.ResolveReleasePlanByIdAsync),
+                    nameof(IDevOpsService.GetReleasePlanForWorkItemAsync),
+                    nameof(IDevOpsService.GetReleasePlanAsync),
+                    nameof(IDevOpsService.GetReleasePlanByTypeSpecProjectPathAsync),
+                    nameof(IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync),
+                    nameof(IDevOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync)
+                }), "Preview, rejected targets, and same-version create reuse must not perform any DevOps writes.");
+                Assert.That(notification.Invocations, Is.Empty, "No notification may be sent before a target is confirmed.");
+                Assert.That(progress.Invocations, Is.Empty, "No creation progress may be reported for a preview or rejected target.");
+            });
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task ConfirmTarget_RejectsAnObservedPinThatChangedBeforeTheCall(bool generalUpdate)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecCommitSHA = new string('c', 40);
+            var devops = CreateTargetDevOpsMock(plan);
+            var notification = new Mock<INotificationService>();
+            var tool = CreateSpecTargetTool(devops.Object, notification.Object);
+
+            var response = generalUpdate
+                ? (ReleasePlanBaseResponse)await tool.UpdateReleasePlan(TestTypeSpecProjectPath, TestSpecPullRequestUrl, "beta", 200,
+                    apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true, expectedSpecCommitSha: new string('a', 40))
+                : await tool.UpdateSpecPullRequestInReleasePlan(TestSpecPullRequestUrl, workItemId: 200, typeSpecProjectPath: TestTypeSpecProjectPath,
+                    apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true, expectedSpecCommitSha: new string('a', 40));
+
+            Assert.That(response.ResponseError, Does.Contain("changed since it was inspected"));
+            devops.Verify(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            devops.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoConfirmedTargetUpdate(devops);
+            Mock.Get(typeSpecHelper).Verify(x => x.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ConfirmTarget_SamePrAndShaRepairsMissingApiVersion()
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.ActiveSpecPullRequest = TestSpecPullRequestUrl;
+            plan.SpecCommitSHA = DefaultSpecCommitSha;
+            plan.SpecAPIVersion = "";
+            var devops = CreateTargetDevOpsMock(plan);
+            devops.Setup(x => x.UpdateConfirmedReleaseTargetAsync(200, It.IsAny<ReleasePlanSpecTarget>(), DefaultSpecCommitSha,
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+            var tool = CreateSpecTargetTool(devops.Object, Mock.Of<INotificationService>());
+
+            var result = await tool.UpdateReleasePlan(TestTypeSpecProjectPath, TestSpecPullRequestUrl, "beta", 200,
+                apiVersion: PreviewApiVersion, specCommitSha: DefaultSpecCommitSha, confirmTarget: true, expectedSpecCommitSha: DefaultSpecCommitSha);
+
+            Assert.That(result.ResponseError, Is.Null);
+            AssertConfirmedTargetUpdate(devops, 200, DefaultSpecCommitSha, PreviewApiVersion, "beta");
         }
 
         private static Octokit.PullRequest CreateMergedSpecPullRequest(string commitSha, string mergedAt) =>
@@ -2951,6 +3722,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private static TypeSpecProject CreateDummyTypeSpecProject()
         {
             var project = TypeSpecProject.ParseTypeSpecConfig("TypeSpecTestData/specification/testcontoso/Contoso.Management");
+            project.AvailableApiVersions = [StableApiVersion, PreviewApiVersion];
             project.Packages =
             [
                 new PackageInfo { PackageName = "azure-mgmt-widgetservice", Language = SdkLanguage.Python, ApiVersion = "2026-05-02-preview", TypeSpecSdkType = "preview" },

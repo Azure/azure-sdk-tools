@@ -21,10 +21,21 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 ## Rules
 
 - Do not display Azure DevOps work item URLs; only provide the Release Plan Link and ID.
-- Require an API spec PR link or a TypeSpec project path before creating or updating a plan.
+- Configuring a public SDK target requires a local TypeSpec project path and a public spec PR. Creation before a PR exists is tracking-only; Private Preview remains spec-only and cannot generate SDKs via the pipeline.
 - Validate that the spec PR repository matches the requested API release type before creation.
 - Release plan tools accept **either** a Release Plan ID or an Azure DevOps work item ID — pass whichever the user provides. Each tool resolves the value automatically (trying it as a Release Plan ID first, then as a work item ID), so you do not need to call `azure-sdk-mcp:azsdk_get_release_plan` first just to translate one ID into the other.
 - Always relay schedule-risk `warnings` and `next_steps` returned by release plan tools. For each past-due plan, show its Release Plan ID and dashboard link, then present both choices: update its target release month or abandon it and record the reason in the dashboard.
+
+## Confirm a Public SDK Target
+
+Use this flow for create, update, and spec-PR updates that configure a Public Preview or GA SDK target:
+
+1. **Validate the snapshot** — Supply a local `typeSpecProjectPath` with the project's compiler installed. The clean checkout's `HEAD` must match the selected PR HEAD or merge SHA before and after compilation, and the API version must exist at that SHA. Target validation emits metadata outside the checkout in a temporary directory, not SDK code. Tools do not check out commits or stash user work.
+2. **Preview** — Read the existing plan before an update, then call the operation with `confirmTarget: false` (the default). A response with `requires_confirmation: true` and `proposed_spec_target` means **no work items were written**. Show the project, packages, API version, SDK release type, spec PR, SHA and commit URL, `IsSpecMerged`, and available API versions. For updates, retain **`proposedTarget.ExpectedPreviousSpecCommitSHA`** (`ExpectedPreviousSpecCommitSHA` on the returned target): the observed stored SHA or `none` if unpinned.
+3. **Ask for approval** — Ask the user to approve that exact target. If the version is missing or ambiguous, ask them to choose from the available versions; never silently choose the first or latest.
+4. **Confirm** — Repeat the same operation with the exact approved `apiVersion` and `specCommitSha`, plus `confirmTarget: true`, preserving the other approved inputs. For update and update-spec-pr, also pass `expectedSpecCommitSha` from the preview's **previous pin**, not the proposed new SHA. Create does not accept this parameter. If the PR, target, expected pin, or revision changes, read and preview again and obtain fresh approval; never silently replace the precondition. Verify the saved `SpecAPIVersion` and `SpecCommitSHA` match the approval.
+
+`confirmTarget` is a caller-supplied boolean, not an external or cryptographic approval record. Authorized callers can confirm explicit valid inputs directly, but the agent should follow the approval flow above. Although the expected-pin parameter is optional, preserve it on updates to guard the preview/confirmation interval.
 
 ## MCP Tools
 
@@ -50,21 +61,20 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 **Steps**:
 
-1. **Get TypeSpec Project Path** — Ask the user for the relative TypeSpec project path (directory containing `tspconfig.yaml`, e.g. `specification/contosowidgetmanager/Contoso.WidgetManager`). Always use the relative path from the repo root, not an absolute path.
-2. **Check Existing** — Run `azure-sdk-mcp:azsdk_get_release_plan` with the relative `typeSpecProjectPath` to check if a release plan already exists.
-   - If a release plan exists with the **same API release type** the user requested: inform the user that a release plan already exists, show the Release Plan ID, status, and API release type. Suggest the user use the existing release plan. Do NOT create a new one.
-   - If a release plan exists but for a **different API release type**: inform the user about the existing plan and its API release type, then proceed to create a new release plan using `forceCreateReleasePlan: true` for the user's requested API release type. Do NOT attempt to update the existing release plan's API release type.
-   - If no release plan exists, proceed to step 3.
-3. **Gather Info** — Collect required details from the user. See [details](references/release-plan-details.md):
+1. **Get TypeSpec Project Path** — Confirm the local project path for public target validation; use its repository-relative path for lookups (e.g. `specification/contosowidgetmanager/Contoso.WidgetManager`).
+2. **Gather Info** — Collect required details from the user. See [details](references/release-plan-details.md):
    - Target release month/year (format: "Month YYYY", e.g. "June 2026"). Do NOT use formats like "2026-06" or "06/2026" — these are invalid.
    - API release type: Value must be one of the following: "Private Preview", "Public Preview", or "GA"
    - Spec PR URL (optional)
+   - API version (if known; otherwise select from the target preview)
    - Service Tree ID (GUID) — optional if previously created
    - Product Tree ID (GUID) — optional if previously created
-4. **Create** — Run `azure-sdk-mcp:azsdk_create_release_plan` with the collected parameters. Use `forceCreateReleasePlan: true` only if an existing release plan was found for a different API release type.
-5. **Namespace** — For first management plane releases, link namespace approval issue using `azure-sdk-mcp:azsdk_link_namespace_approval_issue`.
+3. **Preview Target** — With a public spec PR, call `azure-sdk-mcp:azsdk_create_release_plan` with `confirmTarget: false` and review/select the proposed target as above.
+4. **Check Existing** — Query `azure-sdk-mcp:azsdk_get_release_plan` with the relative `typeSpecProjectPath`, `apiReleaseType`, and selected `apiVersion` when known. Reuse a plan matching the project, API version, and API release type, not merely the release type. Do not silently choose among multiple targets. Create/get never retarget an existing plan; use the explicit update flow for a same-version follow-up PR.
+5. **Create** — For a new public SDK target, repeat creation after approval with the exact version/SHA and `confirmTarget: true`. Creation derives SDK release type from `apiReleaseType` (`Public Preview` → `beta`, `GA` → `stable`); do not pass a `sdkReleaseType` argument. Without a PR, omit version/SHA inputs to create a tracking-only plan: it has no commit pin and cannot generate SDKs.
+6. **Namespace** — For first management plane releases, link namespace approval issue using `azure-sdk-mcp:azsdk_link_namespace_approval_issue`.
 
-> **IMPORTANT**: Do NOT update an existing release plan to change its API release type. If a release plan exists for a different API release type, force-create a new one instead.
+> **IMPORTANT**: Use separate plans for different API versions or API release types; do not retarget an existing plan.
 
 **Tool**: `azure-sdk-mcp:azsdk_create_release_plan`
 
@@ -81,7 +91,7 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
    - Relative TypeSpec project path (e.g. `specification/contosowidgetmanager/Contoso.WidgetManager`)
    - Spec PR URL
 2. **Query** — Run `azure-sdk-mcp:azsdk_get_release_plan` with the provided identifier. Always use a relative path for `typeSpecProjectPath`; use `specPullRequestUrl` when the user provides only a spec PR URL.
-3. **Display** — Show the release plan ID, status, linked PRs, and SDK details. Always relay schedule-risk warnings and recommended actions from the response.
+3. **Display** — Show the release plan ID, status, linked PRs, `SpecAPIVersion`, `SpecCommitSHA`, and SDK details. Ask which target the user means if multiple versions match. Always relay schedule-risk warnings and recommended actions from the response.
 
 **Tool**: `azure-sdk-mcp:azsdk_get_release_plan`
 
@@ -93,7 +103,7 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 **Steps**:
 
-1. **Identify Plan** — Get the work item ID or TypeSpec project path from the user.
+1. **Identify Plan** — Identify the intended plan by ID; if resolving by path, distinguish its API version and release type before updating.
 2. **Update Metadata** — Run `azure-sdk-mcp:azsdk_update_release_plan` with:
    - `typeSpecProjectPath` (required)
    - `workItemId` (optional — resolved from TypeSpec path or spec PR if not provided)
@@ -104,6 +114,8 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 3. **Update API Spec PR** — If only the spec PR URL needs updating, run `azure-sdk-mcp:azsdk_update_api_spec_pull_request_in_release_plan` with:
    - `specPullRequestUrl` (required)
    - `workItemId` or `releasePlanId`
+   - `typeSpecProjectPath` (local path required for public SDK target validation)
+4. **Confirm Public Target** — For either operation, use the preview/approval flow above, then repeat with explicit `apiVersion`, `specCommitSha`, `confirmTarget: true`, and the preview's `expectedSpecCommitSha` precondition. This also applies when the same PR gains commits or merges. Same-version follow-ups require this explicit update; a different API version needs a separate plan.
 
 **Tools**: `azure-sdk-mcp:azsdk_update_release_plan`, `azure-sdk-mcp:azsdk_update_api_spec_pull_request_in_release_plan`
 
@@ -112,6 +124,8 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 ### 4. Update SDK/Package Details in Release Plan
 
 **When**: User needs to update SDK language and package name details in the release plan after code generation or configuration changes.
+
+SDK info `apiVersion` identifies the spec API version, not the SDK package's semantic version.
 
 **Steps**:
 

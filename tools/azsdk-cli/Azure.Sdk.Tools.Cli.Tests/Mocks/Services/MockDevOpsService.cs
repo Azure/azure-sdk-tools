@@ -27,7 +27,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string? LastGenerationSpecCommitSha { get; private set; }
+        public string? LastGenerationApiVersion { get; private set; }
+        public string? LastGenerationSdkReleaseType { get; private set; }
+        public bool? LastGenerationAutoRelease { get; private set; }
         public (int WorkItemId, string PullRequest, string CommitSha)? LastSpecUpdate { get; private set; }
+        public string? LastSpecUpdateApiVersion { get; private set; }
+        public string? LastSpecUpdateExpectedCommitSha { get; private set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
         public string ConfiguredPackageVersion { get; set; } = "1.0.0";
         public SdkType ConfiguredPackageType { get; set; } = SdkType.Unknown;
@@ -103,6 +108,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         }
 
         public Dictionary<string, string>? LastRunPipelineTemplateParams { get; private set; }
+
+        public Task<Build> ValidateSdkGenerationRunAsync(int workItemId, int buildId, string language, CancellationToken ct) =>
+            Task.FromResult(ConfiguredPipelineRun ?? throw new InvalidOperationException("Configure the generation build for this test."));
+
+        public Task<bool> CompleteSdkGenerationAsync(int workItemId, int buildId, string language, string sdkPrUrl, string status, CancellationToken ct) => Task.FromResult(true);
 
         Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus, CancellationToken ct)
         {
@@ -240,9 +250,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, CancellationToken ct)
+        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, bool autoRelease, CancellationToken ct)
         {
             LastGenerationSpecCommitSha = specCommitSha;
+            LastGenerationApiVersion = apiVersion;
+            LastGenerationSdkReleaseType = sdkReleaseType;
+            LastGenerationAutoRelease = autoRelease;
             if (ConfiguredRunSDKGenerationPipeline != null)
             {
                 return Task.FromResult(ConfiguredRunSDKGenerationPipeline);
@@ -260,15 +273,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, string expectedSpecCommitSha, CancellationToken ct)
-        {
-            LastSpecUpdate = (releasePlanWorkItemId, specPullRequest, specCommitSha);
-            return Task.FromResult(true);
-        }
+        public Task<bool> UpdateConfirmedReleaseTargetAsync(int workItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct) =>
+            ((IDevOpsService)this).UpdateSpecPullRequestAsync(workItemId, target.SpecPullRequestUrl, target.SpecCommitSHA, expectedSpecCommitSha, target.ApiVersion, ct);
 
-        Task<bool> IDevOpsService.UpdateSpecCommitShaAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, CancellationToken ct)
+        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, string expectedSpecCommitSha, string apiVersion, CancellationToken ct)
         {
             LastSpecUpdate = (releasePlanWorkItemId, specPullRequest, specCommitSha);
+            LastSpecUpdateApiVersion = apiVersion;
+            LastSpecUpdateExpectedCommitSha = expectedSpecCommitSha;
             return Task.FromResult(true);
         }
 

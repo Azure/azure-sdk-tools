@@ -22,6 +22,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         protected override string Format()
         {
             var result = new StringBuilder();
+            if (ProposedSpecTarget != null)
+            {
+                result.AppendLine(ProposedSpecTarget.ToString());
+                result.AppendLine(RequiresConfirmation ? "Confirmation required. No release plan was changed." : "Release target confirmed.");
+            }
             if (ReleasePlanDetails != null)
             {
                 result.AppendLine($"Release Plan ID: {ReleasePlanDetails.ReleasePlanId}");
@@ -31,6 +36,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
                 result.AppendLine($"SDK Release Month: {ReleasePlanDetails.SDKReleaseMonth}");
                 result.AppendLine($"Release Plan Link: {ReleasePlanLink}");
                 result.AppendLine($"Is API spec approved: {ReleasePlanDetails.IsSpecApproved}");
+                result.AppendLine($"API version: {ReleasePlanDetails.SpecAPIVersion}");
+                result.AppendLine($"Spec commit SHA: {ReleasePlanDetails.SpecCommitSHA}");
             }
             else
             {

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
@@ -20,6 +21,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// Returns a fully populated <see cref="TypeSpecProject"/> with TypeSpec info and package list.
         /// </summary>
         public Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct);
+
+        public Task<TypeSpecProject> ValidateReleasePlanSnapshotAsync(string typeSpecProjectPath, string commitSha, INpxHelper npxHelper, ILogger logger, CancellationToken ct);
 
         /// <summary>
         /// Checks if the path is within either the azure-rest-api-specs repo.
@@ -99,6 +102,52 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return typeSpecObject?.IsManagementPlane ?? false;
         }
 
+        public async Task<TypeSpecProject> ValidateReleasePlanSnapshotAsync(string typeSpecProjectPath, string commitSha, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
+        {
+            if (IsUrl(typeSpecProjectPath) || !IsValidTypeSpecProjectPath(typeSpecProjectPath))
+            {
+                throw new ArgumentException("To set a release target, provide a local TypeSpec project in a clean checkout of the selected commit. A previously confirmed plan can generate remotely without a clone.");
+            }
+            await _gitHelper.VerifyCleanSnapshotAsync(typeSpecProjectPath, commitSha, ct);
+            var metadataDirectory = Path.Combine(Path.GetTempPath(), $"azsdk-spec-metadata-{Guid.NewGuid():N}");
+            var scriptPath = Path.Combine(Path.GetTempPath(), $"azsdk-spec-versions-{Guid.NewGuid():N}.mjs");
+            try
+            {
+                var project = await ParseTypeSpecProjectCoreAsync(typeSpecProjectPath, npxHelper, logger, ct, metadataDirectory)
+                    ?? throw new InvalidOperationException("Could not compile the selected spec snapshot.");
+                if (project.Packages.Count == 0)
+                {
+                    throw new InvalidOperationException("Could not validate SDK package metadata for the selected spec snapshot. Fix compilation or emitter configuration before confirming a release target.");
+                }
+                using var resource = typeof(TypeSpecHelper).Assembly.GetManifestResourceStream("Azure.Sdk.Tools.Cli.Helpers.Scripts.inspect-spec-versions.mjs")
+                    ?? throw new InvalidOperationException("Spec version validation script is missing from the CLI package.");
+                using var reader = new StreamReader(resource);
+                await File.WriteAllTextAsync(scriptPath, await reader.ReadToEndAsync(ct), ct);
+                var result = await _processHelper.Run(new ProcessOptions("node", [scriptPath, Path.GetFullPath(project.ProjectRootPath)],
+                    workingDirectory: project.ProjectRootPath, logOutputStream: false, timeout: TimeSpan.FromMinutes(5)), ct);
+                if (result.ExitCode != 0)
+                {
+                    throw new InvalidOperationException($"Could not validate API versions at spec commit {commitSha}: {result.Output}");
+                }
+                project.AvailableApiVersions = JsonSerializer.Deserialize<List<string>>(result.Stdout.Trim())
+                    ?? throw new InvalidOperationException("Spec version validation returned no versions.");
+                if (project.AvailableApiVersions.Count == 0 || project.AvailableApiVersions.Any(string.IsNullOrWhiteSpace))
+                {
+                    throw new InvalidOperationException("Spec version validation returned no valid API versions.");
+                }
+                await _gitHelper.VerifyCleanSnapshotAsync(typeSpecProjectPath, commitSha, ct);
+                return project;
+            }
+            finally
+            {
+                File.Delete(scriptPath);
+                if (Directory.Exists(metadataDirectory))
+                {
+                    Directory.Delete(metadataDirectory, recursive: true);
+                }
+            }
+        }
+
         private bool IsTypeParserExecutablePresent(string repoRoot)
         {
             var tspExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "tsp.cmd" : "tsp";
@@ -107,6 +156,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         /// <inheritdoc/>
         public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
+            => await ParseTypeSpecProjectCoreAsync(typeSpecProjectPath, npxHelper, logger, ct);
+
+        private async Task<TypeSpecProject?> ParseTypeSpecProjectCoreAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct, string? metadataDirectory = null)
         {
             try
             {
@@ -171,7 +223,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 var npxOptions = new NpxOptions(
                     package: "@typespec/compiler",
-                    args: ["tsp", "compile", entrypoint, "--emit", "@azure-tools/typespec-metadata", "--output-dir", "./tsp-output"],
+                    args: ["tsp", "compile", entrypoint, "--emit", "@azure-tools/typespec-metadata", "--output-dir", metadataDirectory ?? "./tsp-output"],
                     logOutputStream: true,
                     workingDirectory: project.ProjectRootPath,
                     timeout: TimeSpan.FromMinutes(5)
@@ -184,7 +236,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     return project;
                 }
 
-                var metadataFilePath = Path.Combine(project.ProjectRootPath, "tsp-output", "@azure-tools", "typespec-metadata", "typespec-metadata.yaml");
+                var metadataFilePath = Path.Combine(metadataDirectory ?? Path.Combine(project.ProjectRootPath, "tsp-output"), "@azure-tools", "typespec-metadata", "typespec-metadata.yaml");
                 if (!File.Exists(metadataFilePath))
                 {
                     logger.LogWarning("typespec-metadata.yaml not found at expected path: {metadataFilePath}", metadataFilePath);
@@ -200,6 +252,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     project.Packages = packages;
                 }
                 return project;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

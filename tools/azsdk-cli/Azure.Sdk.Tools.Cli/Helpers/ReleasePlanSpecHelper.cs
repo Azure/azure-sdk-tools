@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
@@ -23,11 +24,57 @@ internal static partial class ReleasePlanSpecHelper
         return (match.Groups["repository"].Value.ToLowerInvariant(), number);
     }
 
-    public static async Task<string> GetMergedCommitShaAsync(IGitHubService githubService, string pullRequestUrl, CancellationToken ct)
+    public static async Task<ReleasePlanSpecTarget> ResolveTargetAsync(
+        IGitHubService githubService, ITypeSpecHelper typeSpecHelper, INpxHelper npxHelper, ILogger logger,
+        string projectPath, string pullRequestUrl, string apiVersion, string commitSha, string sdkReleaseType, CancellationToken ct)
     {
         var pullRequest = await GetPullRequestAsync(githubService, pullRequestUrl, ct);
-        return pullRequest.Merged ? pullRequest.MergeCommitSha : string.Empty;
+        if (!pullRequest.Merged && pullRequest.State == Octokit.ItemState.Closed)
+        {
+            throw new InvalidOperationException("The selected spec PR was closed without merging. Select the intended active or merged spec PR.");
+        }
+        // Draft validation uses the PR's exact source commit, never its moving merge ref.
+        var resolvedCommit = pullRequest.Merged ? pullRequest.MergeCommitSha : pullRequest.Head?.Sha;
+        if (!IsValidCommitSha(resolvedCommit))
+        {
+            throw new InvalidOperationException("The spec PR has no valid source commit SHA.");
+        }
+        if (!string.IsNullOrEmpty(commitSha) && !string.Equals(commitSha, resolvedCommit, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Spec PR source changed or the supplied SHA does not match it. Review commit {resolvedCommit} and confirm the intended target again.");
+        }
+        var project = await typeSpecHelper.ValidateReleasePlanSnapshotAsync(projectPath, resolvedCommit!, npxHelper, logger, ct);
+        var selectedVersion = apiVersion?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(selectedVersion))
+        {
+            var configuredVersions = project.Packages.Select(p => p.ApiVersion).Where(v => !string.IsNullOrWhiteSpace(v)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            selectedVersion = configuredVersions.Count == 1 ? configuredVersions[0]! : string.Empty;
+        }
+        if (!string.IsNullOrEmpty(selectedVersion) && !project.AvailableApiVersions.Contains(selectedVersion, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"API version '{selectedVersion}' is not declared at commit {resolvedCommit}. Available versions: {string.Join(", ", project.AvailableApiVersions)}.");
+        }
+        if (sdkReleaseType == "stable" && selectedVersion.Contains("preview", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("A stable SDK release cannot target a preview API version. Confirm a beta release or choose a stable API version.");
+        }
+        var (repository, _) = ParsePullRequest(pullRequestUrl);
+        return new ReleasePlanSpecTarget
+        {
+            TypeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(projectPath).TrimEnd('/'),
+            ApiVersion = selectedVersion,
+            SpecCommitSHA = resolvedCommit!,
+            SpecPullRequestUrl = pullRequestUrl,
+            CommitUrl = $"https://github.com/Azure/{repository}/commit/{resolvedCommit}",
+            SDKReleaseType = sdkReleaseType,
+            IsSpecMerged = pullRequest.Merged,
+            AvailableApiVersions = project.AvailableApiVersions,
+            Packages = project.Packages
+        };
     }
+
+    public static bool NeedsConfirmation(string apiVersion, string commitSha, bool confirm) =>
+        !confirm || string.IsNullOrWhiteSpace(apiVersion) || !IsValidCommitSha(commitSha);
 
     public static async Task<Octokit.PullRequest> GetPullRequestAsync(IGitHubService githubService, string pullRequestUrl, CancellationToken ct)
     {

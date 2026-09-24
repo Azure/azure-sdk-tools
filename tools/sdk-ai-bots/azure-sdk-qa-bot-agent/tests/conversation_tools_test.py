@@ -53,6 +53,7 @@ async def test_fetch_conversation_preserves_complete_message_content():
     assert result.truncated is False
     assert result.tenant_id == "azure_typespec_authoring"
     assert result.messages[0].content == expert_correction
+    assert result.messages[0].sender_id == "expert"
 
 
 @pytest.mark.asyncio

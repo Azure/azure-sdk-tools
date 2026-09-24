@@ -94,7 +94,11 @@ async def _get_client() -> CosmosClient:
                     )
                 ),
             )
-            await client.__aenter__()
+            try:
+                await client.__aenter__()
+            except BaseException:
+                await client.close()
+                raise
             _client = client
             logger.info("Initialized Azure Cosmos DB client for %s", _get_endpoint())
 
@@ -133,6 +137,11 @@ async def _get_container(
         raise
 
     return container
+
+
+async def get_teams_channel_posts_container() -> ContainerProxy:
+    """Return the pre-provisioned archive container, separate from bot conversations."""
+    return await _get_container(container_name="teams-channel-posts")
 
 
 async def get_conversation_mapping_container() -> ContainerProxy:

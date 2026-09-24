@@ -1,0 +1,89 @@
+# Deployment pipeline for the complete Teams channel collection workflow.
+# Deploys the hosted agent first, then its Logic App, Cosmos access,
+# App Configuration setting/RBAC, and a disabled Foundry Routine.
+
+name: Deploy Azure SDK QA Bot Teams Collection
+
+trigger: none
+pr: none
+
+parameters:
+  - name: environment
+    displayName: 'Target Environment'
+    type: string
+    default: dev
+    values:
+      - dev
+      - prod
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - ${{ if eq(parameters.environment, 'dev') }}:
+    - group: 'Azure SDK QA Bot Dev Variables'
+  - ${{ if eq(parameters.environment, 'prod') }}:
+    - group: 'Azure SDK QA Bot Prod Variables'
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: PythonIndexUrl
+    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: DeployTeamsCollection
+        displayName: 'Deploy Teams Collection (${{ parameters.environment }})'
+        jobs:
+          - job: BuildAndDeploy
+            displayName: 'Build Agent & Deploy Collection Infrastructure'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+
+              - task: AzureCLI@2
+                displayName: 'Deploy Teams Collection'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+
+                    export AZURE_CORE_WELCOME_MESSAGE=false
+                    az version > /dev/null 2>&1 || true
+                    az config set core.welcome_message=false 2>/dev/null || true
+
+                    python -m pip install --upgrade pip
+                    python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+                    python -m pip config set global.index-url "$PIP_INDEX_URL"
+                    pip install -r requirements.txt --retries 5 --timeout 60
+
+                    python scripts/deploy_hosted_agent.py \
+                      teams_collection_agent \
+                      --tag "$(Build.BuildId)" \
+                      --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
+
+                    python scripts/deploy_teams_collection.py deploy \
+                      --environment "${{ parameters.environment }}" \
+                      --resource-group "$(RESOURCE_GROUP)" \
+                      --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
+                env:
+                  AZURE_CORE_WELCOME_MESSAGE: 'false'
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                  AI_FOUNDRY_RAI_POLICY_ID: $(AI_FOUNDRY_RAI_POLICY_ID)
+                  AI_FOUNDRY_PROJECT_NAME: $(AI_FOUNDRY_PROJECT_NAME)
+                  ACR_NAME: $(ACR_NAME)
+                  ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)

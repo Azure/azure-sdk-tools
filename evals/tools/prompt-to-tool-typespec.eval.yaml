@@ -24,19 +24,21 @@ scoring:
 stimuli:
   # ==== azsdk_convert_swagger_to_typespec triggers ====
   - name: invoke-azsdk-convert-swagger-to-typespec-1
-    prompt: "Convert the Azure Swagger described by specification/contosowidgetmanager/resource-manager/readme.md to TypeSpec in the existing empty output directory specification/contosowidgetmanager/Contoso.WidgetManager. This is a data-plane API and full compatibility is false. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Convert the Azure Swagger described by specification/contosowidgetmanager/resource-manager/readme.md to TypeSpec in the existing empty output directory specification/contosowidgetmanager/Contoso.WidgetManager. This is an ARM API and full compatibility is false. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_convert_swagger_to_typespec"
+              pattern: '"isAzureResourceManagement":true'
   - name: invoke-azsdk-convert-swagger-to-typespec-2
-    prompt: "Migrate my data-plane API from Swagger to TypeSpec using specification/contosowidgetmanager/resource-manager/readme.md, writing to the existing empty directory specification/contosowidgetmanager/Contoso.WidgetManager with full compatibility disabled. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Migrate my ARM API from Swagger to TypeSpec using specification/contosowidgetmanager/resource-manager/readme.md, writing to the existing empty directory specification/contosowidgetmanager/Contoso.WidgetManager with full compatibility disabled. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_convert_swagger_to_typespec"
+              pattern: '"isAzureResourceManagement":true'
 
   # ==== azsdk_customized_code_update triggers ====
   - name: invoke-azsdk-customized-code-update-1

@@ -4,6 +4,9 @@
 
 ### Features Added
 
+- Completing a management-plane release plan now queues pipeline 8254 for the nearest newer In Progress Public Preview or GA release plan for the same TypeSpec project, passing `ReleasePlanId`. The pending plan is related to the completed plan, and its submitter and SDK support aliases are notified after the run is queued.
+- If follow-up SDK generation cannot be queued for an identified pending plan, its notification directs the submitter to use the azsdk agent to generate SDKs and consult the release plan dashboard. Automation responses include queued plan/run details, metadata warnings, and failure guidance.
+
 ### Breaking Changes
 
 ### Bugs Fixed
@@ -13,8 +16,6 @@
 ## 0.6.49 (2026-09-21)
 
 - Added `--max-attempts` / `maxAttempts` to customized-update for bounded custom-code repairs in one retained conversation, with `attemptsUsed` in the existing response.
-- Completing a management-plane release plan now queues pipeline 8254 for the nearest newer In Progress Public Preview or GA release plan for the same TypeSpec project, passing `ReleasePlanId`. The pending plan is related to the completed plan, and its submitter and SDK support aliases are notified after the run is queued.
-- If follow-up SDK generation cannot be queued for an identified pending plan, its notification directs the submitter to use the azsdk agent to generate SDKs and consult the release plan dashboard. Automation responses include queued plan/run details, metadata warnings, and failure guidance.
 
 ### Breaking Changes
 

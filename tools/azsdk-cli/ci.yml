@@ -62,8 +62,3 @@ extends:
       - rid: win-x64
         framework: net8.0
         assembly: azsdk
-    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-      CustomReleaseJobs:
-      - template: /tools/azsdk-cli/auto-documentation.yml
-        parameters:
-          ToolDirectory: $(ToolDir)

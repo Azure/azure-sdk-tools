@@ -75,13 +75,6 @@ jobs:
             BuildToolsPath: $(BuildToolPath)
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
 
-      - ${{ if eq(parameters.ShouldPublishSymbols, true) }}:
-        - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
-          parameters:
-            BuildToolsRepositoryPath: $(BuildToolPath)
-            PackagesPath: $(Artifacts)
-            StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
-
   - ${{ if eq(parameters.ShouldPublish, true) }}:
     - deployment: PublishPackage
       displayName: Publish package to ${{ parameters.Feed }}
@@ -105,18 +98,3 @@ jobs:
           - input: pipelineArtifact
             artifactName: ${{ parameters.ArtifactName }}-signed
             targetPath: $(Artifacts)
-
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-              - task: 1ES.PublishNuget@1
-                displayName: Publish to ${{ parameters.Feed }}
-                inputs:
-                  packageParentPath: '$(Pipeline.Workspace)'
-                  packagesToPush: '$(Artifacts)/**/*.nupkg;!$(Artifacts)/**/*.symbols.nupkg'
-                  ${{ if eq(parameters.Feed, 'Nuget.org') }}:
-                    nuGetFeedType: external
-                    publishFeedCredentials: Nuget.org
-                  ${{ if ne(parameters.Feed, 'Nuget.org') }}:
-                    publishVstsFeed: ${{ parameters.Feed }}

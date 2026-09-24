@@ -239,16 +239,18 @@ extends:
           parameters:
             Feed: 'public/azure-sdk-for-net'
             ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
-            ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
-            ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
+            ShouldPublishExecutables: false
+            ShouldPublishToAzsdkArtifacts: true
+            ShouldPublishSymbols: false
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
             ${{ if parameters.PublishEnvironment }}:
               PublishEnvironment: ${{ parameters.PublishEnvironment }}
             dependsOn: BuildTestAndPackage
-            VerifyChangelog: ${{ parameters.VerifyChangelog }}
+            VerifyChangelog: false
             ToolDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
             CustomReleaseJobs: ${{ parameters.CustomReleaseJobs }}
-            ForceCreate: ${{ parameters.ForceCreate }}
+            ForceCreate: false
+            ShouldTag: false
 
       - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

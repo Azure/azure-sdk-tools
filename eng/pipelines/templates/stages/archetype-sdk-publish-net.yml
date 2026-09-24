@@ -3,6 +3,7 @@ parameters:
   ShouldTag: true
   Feed: 'public/azure-sdk-for-net'
   ShouldPublishExecutables: false
+  ShouldPublishToAzsdkArtifacts: false
   RequireStrongNames: true
   PublishEnvironment: ''
   ExeMatrix: []
@@ -84,62 +85,26 @@ stages:
             BuildScriptsPath: $(BuildToolScripts)
             ExeMatrix: ${{ parameters.ExeMatrix }}
 
-      - ${{ if eq(parameters.ShouldTag, 'true') }}:
-        # sets output variable $(release)
-        - task: PowerShell@2
-          displayName: 'Verify Package Tags and Create Git Releases'
+      - ${{ each target in parameters.ExeMatrix }}:
+        - task: DownloadPipelineArtifact@2
+          displayName: Download ${{ target.rid }} Binary
           inputs:
-            targetType: filePath
-            # This script is different from the azure-sdk-tools repo in that it A) doesn't need the eng/common $Language variable set
-            # AND it sets an output variable for all the release names that were created. The output variable should be added to the eng/common
-            # version and a basic override of $Language should be supported before we can remove this build-tools repo script.
-            filePath: '$(BuildToolScripts)/create-tags-and-git-release.ps1'
-            arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id) -forceCreate:$${{ parameters.ForceCreate }}'
-          env:
-            GH_TOKEN: $(GH_TOKEN_Azure)
+            artifact: standalone-${{ target.rid }}
+            path: $(Binaries)
+      - template: ../steps/platform-specific-signing.yml
+        parameters:
+          BinariesPath: $(Binaries)
+          BuildScriptsPath: $(BuildToolScripts)
+          ExeMatrix: ${{ parameters.ExeMatrix }}
 
-        - task: PowerShell@2
-          displayName: 'Post to github release'
-          condition: and(succeeded(), eq(${{ parameters.ShouldPublishExecutables }}, true))
-          inputs:
-            targetType: filePath
-            # todo, move this local script from the build tools repo as well
-            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-git-release.ps1'
-            arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
-            pwsh: true
-          env:
-            GH_TOKEN: $(GH_TOKEN_Azure)
-
-      # if we are verifying the changelog, we should definitely submit an increment version + changelog update PR
-      - ${{ if eq(parameters.VerifyChangelog, true) }}:
-        - task: PowerShell@2 # will set runtime variable $(NewVersion)
-          displayName: 'Increment version in csproj'
-          inputs:
-            targetType: filePath
-            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/scripts/Increment-dotnet-package.ps1'
-            arguments: '-ToolDirectory "$(Build.SourcesDirectory)/azure-sdk-tools/${{ parameters.ToolDirectory }}"'
-            pwsh: true
-
-        - task: PowerShell@2
-          displayName: 'Update Changelog'
-          inputs:
-            workingDirectory: '$(Build.SourcesDirectory)/azure-sdk-tools/'
-            targetType: filePath
-            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/Update-Changelog.ps1'
-            # run this locally and figure out what the inputs should be
-            arguments: '-Version $(NewVersion) -ChangelogPath "${{ parameters.ToolDirectory }}/CHANGELOG.md"'
-            pwsh: true
-
-        - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
-          parameters:
-            RepoName: azure-sdk-tools
-            PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
-            CommitMsg: "Increment package version after release of ${{ parameters.ToolDirectory }}"
-            PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
-            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
-            ScriptDirectory: azure-sdk-tools/eng/common/scripts/
-            AuthToken: '$(GH_TOKEN_Azure)'
-            PushAuthToken: '$(GH_TOKEN_azure-sdk)'
+      - task: PowerShell@2
+        displayName: 'Post to azuresdkartifacts'
+        condition: and(succeeded(), eq(${{ parameters.ShouldPublishToAzsdkArtifacts }}, true))
+        inputs:
+          targetType: filePath
+          filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-azuresdkartifacts.ps1'
+          arguments: '-TargetRelease "azsdk_0.6.48" -BinariesDirectory "$(Binaries)"'
+          pwsh: true
 
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'

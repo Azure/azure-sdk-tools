@@ -16,6 +16,13 @@ To help keep the content of the `eng/common` directory as small as possible we s
 - Assign the function name to a variable in the `eng/common/scripts/common.ps1` file.
 - Call the function using the variable name like so `&$VariableName`.
 
+### ExcludePaths
+
+`ExcludePaths` values are case-insensitive, literal repository-relative paths that use `/` as the directory separator.
+An entry ending in `/` matches that directory's descendants. An entry without a trailing `/` matches only that exact
+file or path. For example, `docs/` matches `docs/guide.md` but not `docs-tools/build.ps1`, and `README.md` does not match
+`README.md.template`. Glob syntax is not supported.
+
 ## Updating
 
 Any updates to files in the `eng/common` directory should be made in the [azure-sdk-tools](https://github.com/azure/azure-sdk-tools) repo.

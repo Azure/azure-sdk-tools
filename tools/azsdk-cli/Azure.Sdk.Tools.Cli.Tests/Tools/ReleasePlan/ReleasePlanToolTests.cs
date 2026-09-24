@@ -208,7 +208,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             await tool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: false);
 
             Assert.IsNotNull(captured);
-            Assert.That(captured!.CC, Does.Contain("sdkowners@microsoft.com"));
+            Assert.That(captured!.CC, Does.Contain("sdkreleaseowners@microsoft.com"));
             Assert.That(captured.CC, Does.Contain("azsdkexp@microsoft.com"));
         }
 

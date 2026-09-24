@@ -31,18 +31,21 @@ public class NpmOptions : ProcessOptions, IProcessOptions
     /// <param name="logOutputStream">Whether to log the output stream. Defaults to true.</param>
     /// <param name="workingDirectory">The working directory for the command. Defaults to current directory.</param>
     /// <param name="timeout">The timeout for the command. Defaults to 2 minutes.</param>
+    /// <param name="environmentVariables">Optional environment variables for the npm process and its child processes.</param>
     public NpmOptions(
         string? prefix,
         string[] args,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null
+        TimeSpan? timeout = null,
+        IDictionary<string, string>? environmentVariables = null
     ) : base(
         ResolveBinCommand(prefix, args) ?? NPM,
         ResolveBinArgs(prefix, args),
         logOutputStream,
         workingDirectory,
-        timeout)
+        timeout,
+        environmentVariables)
     {
         Prefix = prefix;
     }

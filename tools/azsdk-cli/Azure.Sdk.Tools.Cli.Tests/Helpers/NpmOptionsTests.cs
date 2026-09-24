@@ -246,4 +246,5 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Assert.That(options.Args, Has.No.Member("exec"));
         }
     }
+
 }

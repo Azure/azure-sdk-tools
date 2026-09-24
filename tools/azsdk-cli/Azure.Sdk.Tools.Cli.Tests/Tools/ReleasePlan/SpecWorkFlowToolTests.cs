@@ -54,6 +54,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public void Commands_ExposeGenerationAndPullRequestLookupOnly()
+        {
+            Assert.That(specWorkflowTool.GetCommandInstances().Select(command => command.Name),
+                Is.EquivalentTo(new[] { "generate-sdk", "get-sdk-pr" }));
+        }
+
+        [Test]
         public async Task GenerateSDK_WhenPackageNameEmpty()
         {
             var releasePlan = new ReleasePlanWorkItem

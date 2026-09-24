@@ -75,8 +75,6 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_upgrade | `azsdk upgrade` | Upgrade the MCP server to the latest version. IMPORTANT: After upgrade completes, the MCP server must be restarted to use the new version. |
 | azsdk_verify_setup | `azsdk verify setup check` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, the packagePath of the repo to check, and an optional list of requirement names to try installing. To auto-install, call with `requirementsToInstall` containing the exact requirement names the user wants to install. |
 |  | `azsdk apiview get-content` | Get content by APIView URL |
-|  | `azsdk spec-workflow validate-sdk-run` | Check a generation job's saved inputs and build ID against the current release target |
-|  | `azsdk spec-workflow complete-sdk-run` | Record generation results only if the job is still current |
 |  | `azsdk release-plan update-release-status` |  |
 |  | `azsdk release-plan list-overdue` |  |
 |  | `azsdk quokka` |  |

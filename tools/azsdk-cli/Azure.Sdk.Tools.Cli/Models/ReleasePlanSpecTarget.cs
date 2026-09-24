@@ -17,5 +17,8 @@ public class ReleasePlanSpecTarget
     public List<PackageInfo> Packages { get; set; } = [];
 
     public override string ToString() =>
-        $"Project: {TypeSpecProjectPath}\nAPI version: {ApiVersion}\nSDK release type: {SDKReleaseType}\nSpec PR: {SpecPullRequestUrl}\nSpec commit: {CommitUrl}\nPackages: {string.Join(", ", Packages.Select(p => p.PackageName))}\nAvailable API versions: {string.Join(", ", AvailableApiVersions)}";
+        $"Project: {TypeSpecProjectPath}\nAPI version: {ApiVersion}\nSDK release type: {SDKReleaseType}\nSpec PR: {SpecPullRequestUrl}\n" +
+        $"Spec commit SHA: {SpecCommitSHA}\nSpec commit: {CommitUrl}\nSpec merged: {IsSpecMerged}\n" +
+        $"Expected previous spec commit: {ExpectedPreviousSpecCommitSHA ?? "not applicable (new plan)"}\n" +
+        $"Packages: {string.Join(", ", Packages.Select(p => p.PackageName))}\nAvailable API versions: {string.Join(", ", AvailableApiVersions)}";
 }

@@ -5,7 +5,6 @@
 ### Features Added
 
 - Public SDK target previews validate available API versions at the exact spec PR HEAD or merge SHA. Confirmation requires an explicit API version, SHA, and `confirmTarget`; updates expose the previously observed pin for the `expectedSpecCommitSha` precondition.
-- Added CLI-only `spec-workflow validate-sdk-run` and `complete-sdk-run` commands to compare saved build inputs with the current target and conditionally record completion. Compatible specs templates validate before pushing and record guarded completion before auto-release labeling, rejecting older jobs even at the same SHA.
 
 ### Breaking Changes
 
@@ -18,7 +17,7 @@
 
 ### Other Changes
 
-- Target-validation metadata is emitted to a temporary directory outside the checkout; validation does not generate SDK code. Pinned SHAs also select pipeline YAML, so protective rollout requires compatible templates/helpers at that SHA or an explicitly confirmed new target. Saved-job validation is not generated-code API/version/type verification, which remains deferred; queueing and publishing are not atomic or exactly-once.
+- Target-validation metadata is emitted to a temporary directory outside the checkout; validation does not generate SDK code. Pinned SHAs also select pipeline YAML, so the pipeline and generator must remain compatible with that snapshot. Generated-code API/version/type verification is outside this change.
 
 ## 0.6.49 (2026-09-21)
 

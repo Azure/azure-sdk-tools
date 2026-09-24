@@ -151,8 +151,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", bool autoRelease = false, CancellationToken ct = default);
         public Task<Build> GetPipelineRunAsync(int buildId, CancellationToken ct);
-        public Task<Build> ValidateSdkGenerationRunAsync(int workItemId, int buildId, string language, CancellationToken ct);
-        public Task<bool> CompleteSdkGenerationAsync(int workItemId, int buildId, string language, string sdkPrUrl, string status, CancellationToken ct);
         public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct);
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default);
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages, CancellationToken ct);
@@ -1529,13 +1527,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 };
                 if (fields != null)
                 {
-                    foreach (var (field, value) in fields)
+                    foreach (var (field, fieldValue) in fields)
                     {
                         if (field == ReleasePlanWorkItem.SpecCommitSHAField)
                         {
                             throw new ArgumentException("The pin is controlled by the validated release target, not metadata fields.", nameof(fields));
                         }
-                        releasePlanUpdateDocument.Add(new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/{field}", Value = value });
+                        releasePlanUpdateDocument.Add(new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/{field}", Value = fieldValue });
                     }
                 }
                 if (sdkInfos is { Count: > 0 })

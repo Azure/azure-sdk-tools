@@ -110,50 +110,15 @@ item ID, and the selected review/release `TriggerSource`.
 This pins spec inputs, not the entire SDK toolchain or all dependencies. The
 pipeline and generator must remain compatible with the pinned spec snapshot.
 
-### Saved-job validation and guarded completion
+## Scope and limitations
 
-Two **CLI-only** commands support the companion specs template; they are not MCP
-tools:
+This change configures the release target and pins generation inputs. It does not
+add worker-side validation, guarded job completion, or verification of the
+generated SDK's API version and release type. Queueing, file pushes, PR creation,
+and labeling are not atomic with target updates.
 
-- `azsdk spec-workflow validate-sdk-run` takes `--workitem-id`, `--pipeline-run`,
-  and `--language`. It compares the actual saved build's `SourceVersion` and
-  `TemplateParameters` (project, API version, SDK release type, and plan work item
-  ID) with the current target. It also checks the language's pipeline definition
-  and the plan's recorded generation build URL. An older job is rejected even
-  when its SHA matches a newer job's SHA.
-- `azsdk spec-workflow complete-sdk-run` accepts the same identifiers plus
-  `--sdk-pr` and `--status`. It repeats validation and conditionally records the
-  result using `/rev`, parent-pin, and latest-generation-URL checks. A conflict
-  is not automatically retried. Supported statuses include `draft`, `ready for
-  review`, `No changes`, and `Failed to generate SDK.`; `ready for review` requires
-  a saved `sdk-release` run.
-
-The companion template validates before pushing SDK changes, then uses guarded
-completion after PR creation and before auto-release labeling. Validation logs
-the job's **actual saved snapshot**, not a claim about generated output. Universal
-verification of the generated SDK's API version and release type is **deferred**:
-generator output does not expose a uniform cross-language contract for it.
-
-Queueing, file pushes, PR creation, and labeling are not atomic with target
-updates. A target can change after the pre-push check and before a later publishing
-action. Completion guards protect stored results; they do not undo a push or
-provide exactly-once queueing or publishing.
-
-## Companion automation and rollout
-
-The companion specs automation change is implemented: it explicitly configures
-the selected same-version plan's target before generation and requires the linked
-merged commit. It passes the observed pin (or `none`) as
-`--expected-spec-commit-sha`, then reads back and checks the saved target. Lookup
-and generation alone do not advance a pin.
-
-Publish the new CLI and upgrade the CLI used by automation **before** rolling out
-the companion automation. **An old pinned spec SHA also selects old pipeline
-YAML.** Protective rollout requires a compatible pipeline template and helper at
-the selected commit, or new target inputs explicitly previewed and confirmed by
-the caller. A new CLI alone does not protect all historical pinned pipelines;
-never silently advance a pin to obtain newer safeguards.
-
-No schema provisioning or automatic legacy backfill is part of rollout. This
-change adds no persisted `Queued` state or automatic resumer; it does not by
-itself complete the broader parallel-release workflow.
+Existing callers must explicitly confirm a valid target before generating; lookup
+and generation alone do not advance a pin. No schema provisioning or automatic
+legacy backfill is included. This change adds no persisted `Queued` state or
+automatic resumer and does not by itself complete the broader parallel-release
+workflow.

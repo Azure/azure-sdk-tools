@@ -109,11 +109,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public Dictionary<string, string>? LastRunPipelineTemplateParams { get; private set; }
 
-        public Task<Build> ValidateSdkGenerationRunAsync(int workItemId, int buildId, string language, CancellationToken ct) =>
-            Task.FromResult(ConfiguredPipelineRun ?? throw new InvalidOperationException("Configure the generation build for this test."));
-
-        public Task<bool> CompleteSdkGenerationAsync(int workItemId, int buildId, string language, string sdkPrUrl, string status, CancellationToken ct) => Task.FromResult(true);
-
         Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus, CancellationToken ct)
         {
             return Task.FromResult(true);

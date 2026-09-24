@@ -28,8 +28,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         // Commands
         private const string generateSdkCommandName = "generate-sdk";
         private const string getSdkPullRequestCommandName = "get-sdk-pr";
-        private const string validateSdkRunCommandName = "validate-sdk-run";
-        private const string completeSdkRunCommandName = "complete-sdk-run";
 
         // MCP Tool Names
         private const string RunGenerateSdkToolName = "azsdk_run_generate_sdk";
@@ -88,9 +86,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<string> completedSdkPrOpt = new("--sdk-pr") { Description = "Generated SDK PR URL; may be empty for 'No changes' or 'Failed to generate SDK.'." };
-        private readonly Option<string> completedStatusOpt = new("--status") { Description = "draft, ready for review, No changes, or Failed to generate SDK. Ready for review requires a saved sdk-release run.", Required = true };
-
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         public static readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
 
@@ -113,14 +108,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 languageOpt, pipelineRunIdOpt, workItemIdOpt,
             },
-            new Command(validateSdkRunCommandName, "Check a generation job's saved inputs and build ID against the current release target")
-            {
-                languageOpt, pipelineRunIdOpt, workItemIdOpt,
-            },
-            new Command(completeSdkRunCommandName, "Record generation results only if the job is still current")
-            {
-                languageOpt, pipelineRunIdOpt, workItemIdOpt, completedSdkPrOpt, completedStatusOpt,
-            },
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -139,40 +126,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                         commandParser.GetValue(expectedSpecCommitShaOpt) ?? "",
                                         ct),
                 getSdkPullRequestCommandName => await GetSDKPullRequestDetails(commandParser.GetValue(languageOpt), workItemId: commandParser.GetValue(workItemIdOpt), buildId: commandParser.GetValue(pipelineRunIdOpt), ct: ct),
-                validateSdkRunCommandName => await ValidateOrCompleteSdkRunAsync(commandParser.GetValue(workItemIdOpt), commandParser.GetValue(pipelineRunIdOpt), commandParser.GetValue(languageOpt)!, ct: ct),
-                completeSdkRunCommandName => await ValidateOrCompleteSdkRunAsync(commandParser.GetValue(workItemIdOpt), commandParser.GetValue(pipelineRunIdOpt), commandParser.GetValue(languageOpt)!,
-                    commandParser.GetValue(completedSdkPrOpt) ?? "", commandParser.GetValue(completedStatusOpt), ct),
                 _ => new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" },
             };
-        }
-
-        public async Task<ReleaseWorkflowResponse> ValidateOrCompleteSdkRunAsync(int workItemId, int buildId, string language, string sdkPrUrl = "", string? status = null, CancellationToken ct = default)
-        {
-            try
-            {
-                if (status != null)
-                {
-                    if (!await devopsService.CompleteSdkGenerationAsync(workItemId, buildId, language, sdkPrUrl, status, ct))
-                    {
-                        throw new InvalidOperationException("The SDK generation result was not recorded.");
-                    }
-                    return new ReleaseWorkflowResponse { Status = "Success", Details = [$"Recorded SDK generation result for build {buildId}. Its saved snapshot still matches release plan {workItemId}."] };
-                }
-                var build = await devopsService.ValidateSdkGenerationRunAsync(workItemId, buildId, language, ct);
-                return new ReleaseWorkflowResponse
-                {
-                    Status = "Success",
-                    Details = [$"Build {build.Id}: spec commit {build.SourceVersion}, API version {build.TemplateParameters["ApiVersion"]}, SDK release type {build.TemplateParameters["SdkReleaseType"]}. The job is still current for release plan {workItemId}. This validates job provenance, not generated-code correctness."]
-                };
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                return new ReleaseWorkflowResponse { Status = "Failed", ResponseError = ex.Message };
-            }
         }
 
         private async Task<ReleaseWorkflowResponse> IsSdkDetailsPresentInReleasePlanAsync(int workItemId, string language, CancellationToken ct)

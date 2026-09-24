@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj" />
+    <ProjectReference Include="../Azure.Sdk.Tools.Mock/Azure.Sdk.Tools.Mock.csproj" Aliases="MockServer" />
   </ItemGroup>
 
   <ItemGroup>

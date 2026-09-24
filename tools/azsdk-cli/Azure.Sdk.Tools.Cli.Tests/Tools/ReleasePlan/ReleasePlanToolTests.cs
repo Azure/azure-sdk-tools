@@ -3367,6 +3367,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(plain, Does.Contain(TestSpecProjectRelativePath).And.Contains(TestSpecPullRequestUrl));
             Assert.That(plain, Does.Contain($"API version: {PreviewApiVersion}").And.Contains("SDK release type: beta"));
             Assert.That(plain, Does.Contain($"https://github.com/Azure/azure-rest-api-specs/commit/{DefaultSpecCommitSha}"));
+            Assert.That(plain, Does.Contain($"Spec commit SHA: {response.ProposedSpecTarget!.SpecCommitSHA}"));
+            Assert.That(plain, Does.Contain($"Spec merged: {response.ProposedSpecTarget.IsSpecMerged}"));
+            Assert.That(plain, Does.Contain($"Expected previous spec commit: {response.ProposedSpecTarget.ExpectedPreviousSpecCommitSHA ?? "not applicable (new plan)"}"));
             Assert.That(plain, Does.Contain($"Available API versions: {StableApiVersion}, {PreviewApiVersion}"));
             foreach (var package in CreateDummyTypeSpecProject().Packages)
             {
@@ -3388,6 +3391,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Assert.That(target.GetProperty("Packages").EnumerateArray().Select(package => package.GetProperty("Name").GetString()),
                     Is.EquivalentTo(CreateDummyTypeSpecProject().Packages.Select(package => package.PackageName)));
             }
+        }
+
+        [TestCase("none")]
+        [TestCase(DefaultSpecCommitSha)]
+        public void ReleasePlanTarget_PlainPreviewDistinguishesPreviousAndProposedPins(string previousPin)
+        {
+            var target = new ReleasePlanSpecTarget
+            {
+                SpecCommitSHA = new string('b', 40),
+                ExpectedPreviousSpecCommitSHA = previousPin,
+                IsSpecMerged = false
+            };
+            var response = new ReleaseWorkflowResponse { ProposedSpecTarget = target, RequiresConfirmation = true };
+
+            var plain = new OutputHelper(OutputHelper.OutputModes.Plain).Format(response);
+
+            Assert.That(plain, Does.Contain($"Spec commit SHA: {target.SpecCommitSHA}"));
+            Assert.That(plain, Does.Contain($"Expected previous spec commit: {previousPin}"));
+            Assert.That(plain, Does.Contain("Spec merged: False"));
         }
 
         [TestCase("beta", "stable", false)]

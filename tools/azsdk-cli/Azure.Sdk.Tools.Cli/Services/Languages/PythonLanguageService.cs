@@ -333,7 +333,7 @@ public sealed partial class PythonLanguageService : LanguageService
     /// Runs pylint and mypy as the "build" step for Python packages (Python has no compiler).
     /// </summary>
     public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(
-        string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        string packagePath, string? additionalArguments = null, int timeoutMinutes = 30, CancellationToken ct = default)
     {
         var packageInfo = await GetPackageInfo(packagePath, ct);
         var check = await LintCode(packagePath, cancellationToken: ct);

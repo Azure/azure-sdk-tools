@@ -33,13 +33,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const string BuildSdkToolName = "azsdk_package_build_code";
         private const int CommandTimeoutInMinutes = 30;
 
+        private readonly Option<string> additionalArgumentsOption = new("--additional-arguments")
+        {
+            Description = "Additional arguments to pass to the build command.",
+            Required = false,
+        };
+
         protected override Command GetCommand() =>
-            new McpCommand(BuildSdkCommandName, "Builds SDK source code for a specified language and project", BuildSdkToolName) { SharedOptions.PackagePath };
+            new McpCommand(BuildSdkCommandName, "Builds SDK source code for a specified language and project", BuildSdkToolName) { SharedOptions.PackagePath, additionalArgumentsOption };
 
         public async override Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-            return await BuildSdkAsync(null, packagePath, ct);
+            var additionalArguments = parseResult.GetValue(additionalArgumentsOption);
+            return await BuildSdkAsync(null, packagePath, additionalArguments, ct);
         }
 
         [McpServerTool(Name = BuildSdkToolName), Description("Build/compile SDK code for a specified project locally.")]
@@ -47,6 +54,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             IProgress<ProgressNotificationValue>? progress,
             [Description("Absolute path to the SDK project.")]
             string packagePath,
+            [Description("Additional arguments to pass to the build command.")]
+            string? additionalArguments = null,
             CancellationToken ct = default)
         {
             try
@@ -79,7 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 PackageInfo? packageInfo;
                 await using (reporter.StartHeartbeat($"Building {languageService.Language} SDK project", ct))
                 {
-                    (success, errorMessage, packageInfo) = await languageService.BuildAsync(fullPath, CommandTimeoutInMinutes, ct);
+                    (success, errorMessage, packageInfo) = await languageService.BuildAsync(fullPath, additionalArguments, CommandTimeoutInMinutes, ct);
                 }
 
                 reporter.NextStep(success ? "Build completed successfully" : "Build failed");

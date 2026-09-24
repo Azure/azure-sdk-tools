@@ -14,6 +14,8 @@
 
 - Added `--max-attempts` / `maxAttempts` to customized-update for bounded custom-code repairs in one retained conversation, with `attemptsUsed` in the existing response.
 
+- Added optional `--additional-arguments` support to `package build` (and `azsdk_package_build_code`) for passing additional arguments to the build command.
+
 ### Breaking Changes
 
 - Release plan JSON/MCP responses no longer include `SDKInfo.PullRequestStatus`, which was sourced from potentially stale Azure DevOps data. SDK PR URLs and the dashboard link remain available for checking current PR status; generation and release statuses are unchanged.

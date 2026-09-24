@@ -196,7 +196,7 @@ public sealed class RustLanguageService : LanguageService
     /// Builds Rust SDK code by executing the hardcoded build script at eng/scripts/build-sdk.ps1.
     /// </summary>
     public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(
-        string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        string packagePath, string? additionalArguments = null, int timeoutMinutes = 30, CancellationToken ct = default)
     {
         try
         {

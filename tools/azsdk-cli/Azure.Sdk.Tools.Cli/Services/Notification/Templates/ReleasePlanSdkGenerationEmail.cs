@@ -45,7 +45,7 @@ public class ReleasePlanSdkGenerationEmail : EmailPayload
         <body>
             <p>Hello,</p>
             <p><a href="{DashboardLink(_completedPlan)}">Release plan {_completedPlan.ReleasePlanId}</a> is now complete (Finished).</p>
-            <p>We identified your pending <a href="{DashboardLink(_pendingPlan)}">release plan {_pendingPlan.ReleasePlanId}</a>
+            <p>We identified your pending <a href="{DashboardLink(_pendingPlan)}"> release plan {_pendingPlan.ReleasePlanId}</a>
             for API version <strong>{WebUtility.HtmlEncode(_pendingPlan.SpecAPIVersion)}</strong>.</p>
             {QueueStatusContent}
             <p>The generated SDK pull requests will appear on the

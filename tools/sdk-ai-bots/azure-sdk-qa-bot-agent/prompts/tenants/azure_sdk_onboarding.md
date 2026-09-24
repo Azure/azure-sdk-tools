@@ -23,7 +23,7 @@ For questions about current state, outcomes, correctness, failures, or required 
 
 ## Knowledge Sources & Tools
 
-Use `azsdk_get_release_plan` for live release-plan data in the `azure-sdk` organization. Pass `releasePlanId` for a dashboard link such as `?releasePlan=35199`, `workItem` for an Azure DevOps work-item ID, or `specPullRequestUrl` for an API spec pull request link. Lookups by `releasePlanId` or spec PR only find active plans; if a numeric ID is not found, retry it as a work-item ID and state that the plan may be closed. The result includes each language's SDK details and SDK pull request link.
+Use `azsdk_get_release_plan` for live release-plan data in the `azure-sdk` organization. Pass `releasePlanId` for a dashboard link such as `?releasePlan=35199`, `workItemId` for an Azure DevOps work-item ID, or `specPullRequestUrl` for an API spec pull request link. Lookups by `releasePlanId` or spec PR only find active plans; if a numeric ID is not found, retry it as a work-item ID and state that the plan may be closed. The result includes each language's SDK details and SDK pull request link.
 
 ## Specific Answer Guidelines
 

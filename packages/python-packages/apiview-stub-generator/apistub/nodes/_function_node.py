@@ -101,7 +101,7 @@ class FunctionNode(NodeEntityBase):
                             self.name,
                         )
                         candidate = None
-                except OSError:
+                except (OSError, TypeError):
                     candidate = None
                 if obj_id is not None:
                     _FUNC_ASTROID_CACHE[obj_id] = candidate

@@ -350,11 +350,23 @@ def test_retrieve_and_normalize_stored_response_tool_calls():
         responses = FakeResponses()
 
     items = [
-        {"testcase": "traceable", "response_id": "response-1", "context": "documents"},
+        {
+            "testcase": "traceable",
+            "response_id": "response-1",
+            "agent_name": "azure-mcp-server-agent",
+            "context": "documents",
+        },
         {"testcase": "blocked", "response_id": "content-filter", "context": ""},
     ]
-    tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(FakeClient(), items)
+    requested_agents: list[str] = []
 
+    def response_client_for(agent_name):
+        requested_agents.append(agent_name)
+        return FakeClient()
+
+    tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(response_client_for, items)
+
+    assert requested_agents == ["azure-mcp-server-agent"]
     assert tool_calls_by_response_id["content-filter"] == []
     assert tool_calls_by_response_id["response-1"] == [
         {
@@ -372,6 +384,33 @@ def test_retrieve_and_normalize_stored_response_tool_calls():
         },
     ]
     assert items[0]["context"] == "documents"
+
+
+def test_retrieve_tool_calls_agent_fallback(monkeypatch):
+    class FakeClient:
+        class responses:
+            @staticmethod
+            def retrieve(response_id, *, include):
+                return {"output": []}
+
+    requested_agents: list[str] = []
+
+    def response_client_for(agent_name):
+        requested_agents.append(agent_name)
+        return FakeClient()
+
+    items = [
+        {"testcase": "legacy", "response_id": "r1"},
+        {"testcase": "mcp", "response_id": "r2", "agent_name": "azure-mcp-server-agent"},
+    ]
+    monkeypatch.delenv("AI_FOUNDRY_AGENT_NAME", raising=False)
+    FoundryEvalsRunner._retrieve_tool_calls(response_client_for, items)
+    assert requested_agents == ["azure-sdk-chat-agent", "azure-mcp-server-agent"]
+
+    requested_agents.clear()
+    monkeypatch.setenv("AI_FOUNDRY_AGENT_NAME", "custom-agent")
+    FoundryEvalsRunner._retrieve_tool_calls(response_client_for, items)
+    assert requested_agents == ["custom-agent", "azure-mcp-server-agent"]
 
 
 def test_resolve_tenant_for_scenario():

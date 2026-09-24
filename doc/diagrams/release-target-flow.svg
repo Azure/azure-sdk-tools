@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="596" viewBox="0 0 400 596" role="img" aria-labelledby="flow-title flow-description">
+  <title id="flow-title">Keep the saved release target with the work</title>
+  <desc id="flow-description">Confirm the inputs from the ADO release plan and save target A-1. Generate the SDK, build the package, then publish and record the result. Each step keeps its association with the same saved target.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="#52627a" />
+    </marker>
+  </defs>
+  <rect width="400" height="596" fill="#ffffff" />
+  <g fill="none" stroke="#52627a" stroke-width="1.5" marker-end="url(#arrow)">
+    <path d="M 200 84 V 142" />
+    <path d="M 200 234 V 264" />
+    <path d="M 200 356 V 386" />
+    <path d="M 200 478 V 508" />
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="400" fill="#17243b" text-anchor="middle">
+    <text x="216" y="118" text-anchor="start">Confirm inputs</text>
+    <g data-node="plan">
+      <rect x="48" y="16" width="304" height="68" rx="8" fill="#edf2ff" stroke="#8196ce" stroke-width="1.5" />
+      <text x="200" y="42" font-weight="600">ADO release plan</text>
+      <text x="200" y="64">Current intended release</text>
+    </g>
+    <g data-node="target">
+      <rect x="48" y="146" width="304" height="88" rx="8" fill="#edf2ff" stroke="#8196ce" stroke-width="1.5" />
+      <text x="200" y="172" font-weight="600">Save target A-1</text>
+      <text x="200" y="194">Fixed selection of</text>
+      <text x="200" y="214">relevant inputs</text>
+    </g>
+    <g data-node="generation">
+      <rect x="48" y="268" width="304" height="88" rx="8" fill="#edf2ff" stroke="#8196ce" stroke-width="1.5" />
+      <text x="200" y="294" font-weight="600">Generate SDK</text>
+      <text x="200" y="316">Record target used</text>
+      <text x="200" y="336">and SDK output</text>
+    </g>
+    <g data-node="build">
+      <rect x="48" y="390" width="304" height="88" rx="8" fill="#edf2ff" stroke="#8196ce" stroke-width="1.5" />
+      <text x="200" y="416" font-weight="600">Build package</text>
+      <text x="200" y="438">Keep target association</text>
+      <text x="200" y="458">and actual version</text>
+    </g>
+    <g data-node="publication">
+      <rect x="48" y="512" width="304" height="68" rx="8" fill="#e9f7f1" stroke="#78ad99" stroke-width="1.5" />
+      <text x="200" y="538" font-weight="600">Publish and record result</text>
+      <text x="200" y="560">Update the matching release</text>
+    </g>
+  </g>
+</svg>

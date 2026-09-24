@@ -24,7 +24,7 @@ stimuli:
       - type: skill-invocation
         config:
           required: ["azsdk-common-generate-sdk-locally"]
-  
+
   # Should NOT trigger
   - name: anti-trigger-mitigate-breaking-change
     prompt: "Fix the SDK breaking changes"

@@ -23,24 +23,6 @@ const onTurnErrorHandler = async (context, error) => {
   //       application insights.
   const meta = getTurnContextLogMeta(context);
   const stack = 'stack' in error ? (error.stack as string).replace(/\n/g, ' ') : '';
-
-  // MemoryStorage eTag conflicts are benign race conditions that occur when two
-  // messages in the same conversation are processed concurrently. The bot's
-  // response is already sent before TurnState.save() fails, so surfacing this
-  // error to the user is misleading — suppress it and log as a warning instead.
-  const isETagConflict =
-    error !== null &&
-    (typeof error === 'object' || typeof error === 'function') &&
-    typeof error.message === 'string' &&
-    (error.message as string).includes('eTag conflict');
-  if (isETagConflict) {
-    logger.warn(
-      `[onTurnError] MemoryStorage eTag conflict (benign, response already sent): ${error}`,
-      { meta }
-    );
-    return;
-  }
-
   logger.error(`\n [onTurnError] unhandled error: ${error}, call stack: ${stack}`, { meta });
 
   // Only send error message for user messages, not for other message types so the bot doesn't spam a channel or chat.

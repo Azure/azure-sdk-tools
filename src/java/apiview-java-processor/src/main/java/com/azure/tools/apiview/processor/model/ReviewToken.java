@@ -127,6 +127,22 @@ public class ReviewToken implements JsonSerializable<ReviewToken> {
         return tokenKind;
     }
 
+    public String getValue() {
+        return value;
+    }
+
+    public boolean hasPrefixSpace() {
+        return hasPrefixSpace;
+    }
+
+    public boolean hasSuffixSpace() {
+        return hasSuffixSpace;
+    }
+
+    public boolean isDocumentation() {
+        return isDocumentation;
+    }
+
     //    public ReviewToken addProperty(String key, String value) {
 //        properties.put(Objects.requireNonNull(key), Objects.requireNonNull(value));
 //        return this;

@@ -11,13 +11,13 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
 [TestFixture]
-public class DotnetLanguageServicePatchTests
+public class DotNetLanguageServicePatchTests
 {
     private Mock<IProcessHelper> _processHelper = null!;
     private Mock<IPowershellHelper> _powershellHelper = null!;
     private Mock<ICopilotAgentRunner> _copilotAgentRunner = null!;
     private Mock<IGitHelper> _gitHelper = null!;
-    private DotnetLanguageService _service = null!;
+    private DotNetLanguageService _service = null!;
     private TempDirectory _tempDir = null!;
 
     [SetUp]
@@ -29,12 +29,12 @@ public class DotnetLanguageServicePatchTests
         _gitHelper = new Mock<IGitHelper>();
         _tempDir = TempDirectory.Create("dotnet-patch-tests");
 
-        _service = new DotnetLanguageService(
+        _service = new DotNetLanguageService(
             _processHelper.Object,
             _powershellHelper.Object,
             _copilotAgentRunner.Object,
             _gitHelper.Object,
-            new TestLogger<DotnetLanguageService>(),
+            new TestLogger<DotNetLanguageService>(),
             Mock.Of<ICommonValidationHelpers>(),
             Mock.Of<IPackageInfoHelper>(),
             Mock.Of<IFileHelper>(),

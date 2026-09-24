@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Linq;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
@@ -30,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             try
             {
-                if (string.IsNullOrEmpty(sdkBreakingPattern))
+                if (string.IsNullOrWhiteSpace(sdkBreakingPattern))
                 {
                     _logger.LogWarning("SDK breaking pattern is null or empty. The agent will classify breaking changes without using breaking patterns, which may reduce classification accuracy.");
                 }
@@ -57,11 +56,15 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     return JsonSerializer.Deserialize<SdkBreakingChangeDetectionResult>(result);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is JsonException or ArgumentException)
                 {
                     _logger.LogError(ex, "Failed to deserialize classification result: {Result}, SdkBreakingChangeClassificationTemplate version: {Version}", result, template.Version);
                     return null;
                 }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -71,4 +74,3 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
     }
 }
-

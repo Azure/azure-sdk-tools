@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// <summary>
 /// Produces <see cref="PackageInfo"/> for .NET packages.
 /// </summary>
-public sealed partial class DotnetLanguageService: LanguageService
+public sealed partial class DotNetLanguageService: LanguageService
 {
     private const string DotNetCommand = "dotnet";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
@@ -29,7 +29,7 @@ public sealed partial class DotnetLanguageService: LanguageService
     private readonly IPowershellHelper powershellHelper;
     private readonly ICopilotAgentRunner copilotAgentRunner;
 
-    public DotnetLanguageService(
+    public DotNetLanguageService(
         IProcessHelper processHelper,
         IPowershellHelper powershellHelper,
         ICopilotAgentRunner copilotAgentRunner,
@@ -315,11 +315,11 @@ public sealed partial class DotnetLanguageService: LanguageService
 
         switch (testFramework)
         {
-            case DotnetTestFramework.AzureCoreTestFramework:
+            case DotNetTestFramework.AzureCoreTestFramework:
                 logger.LogInformation("Detected Azure.Core.TestFramework, setting AZURE_TEST_MODE={testMode}", testModeValue);
                 envVars["AZURE_TEST_MODE"] = testModeValue;
                 break;
-            case DotnetTestFramework.ClientModelTestFramework:
+            case DotNetTestFramework.ClientModelTestFramework:
                 logger.LogInformation("Detected Microsoft.ClientModel.TestFramework, setting CLIENTMODEL_TEST_MODE={testMode}", testModeValue);
                 envVars["CLIENTMODEL_TEST_MODE"] = testModeValue;
                 break;
@@ -370,7 +370,7 @@ public sealed partial class DotnetLanguageService: LanguageService
     ///
     /// Microsoft.ClientModel.TestFramework is a released NuGet package referenced via PackageReference.
     /// </remarks>
-    internal DotnetTestFramework DetectTestFramework(string packagePath)
+    internal DotNetTestFramework DetectTestFramework(string packagePath)
     {
         try
         {
@@ -380,14 +380,14 @@ public sealed partial class DotnetLanguageService: LanguageService
             if (!Directory.Exists(searchDir))
             {
                 logger.LogDebug("Directory {searchDir} does not exist, cannot detect test framework", searchDir);
-                return DotnetTestFramework.Unknown;
+                return DotNetTestFramework.Unknown;
             }
 
             var csprojFiles = Directory.GetFiles(searchDir, "*.csproj", SearchOption.AllDirectories);
             if (csprojFiles.Length == 0)
             {
                 logger.LogDebug("No .csproj files found in {searchDir}, cannot detect test framework", searchDir);
-                return DotnetTestFramework.Unknown;
+                return DotNetTestFramework.Unknown;
             }
 
             foreach (var csprojFile in csprojFiles)
@@ -408,7 +408,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                         refValue.Contains("AzureCoreTestFramework", StringComparison.OrdinalIgnoreCase))
                     {
                         logger.LogDebug("Found Azure.Core.TestFramework reference in {csproj}: {ref}", csprojFile, refValue);
-                        return DotnetTestFramework.AzureCoreTestFramework;
+                        return DotNetTestFramework.AzureCoreTestFramework;
                     }
                 }
 
@@ -423,22 +423,22 @@ public sealed partial class DotnetLanguageService: LanguageService
                     if (refValue.Equals("Microsoft.ClientModel.TestFramework", StringComparison.OrdinalIgnoreCase))
                     {
                         logger.LogDebug("Found Microsoft.ClientModel.TestFramework reference in {csproj}: {ref}", csprojFile, refValue);
-                        return DotnetTestFramework.ClientModelTestFramework;
+                        return DotNetTestFramework.ClientModelTestFramework;
                     }
                 }
             }
 
             logger.LogDebug("No known test framework reference found in {searchDir}", searchDir);
-            return DotnetTestFramework.Unknown;
+            return DotNetTestFramework.Unknown;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to detect test framework from .csproj files in {packagePath}", packagePath);
-            return DotnetTestFramework.Unknown;
+            return DotNetTestFramework.Unknown;
         }
     }
 
-    internal enum DotnetTestFramework
+    internal enum DotNetTestFramework
     {
         Unknown,
         AzureCoreTestFramework,
@@ -539,8 +539,8 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     protected override void ApplyLanguageCiParameters(PackageInfo packageInfo)
     {
-        var parameters = packageInfoHelper.GetLanguageCiParameters<DotnetCiPipelineYamlParameters>(packageInfo)
-            ?? new DotnetCiPipelineYamlParameters();
+        var parameters = packageInfoHelper.GetLanguageCiParameters<DotNetCiPipelineYamlParameters>(packageInfo)
+            ?? new DotNetCiPipelineYamlParameters();
 
         packageInfo.CiParameters.BuildSnippets = parameters.BuildSnippets;
     }
@@ -810,7 +810,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         }
     }
 
-    internal sealed class DotnetCiPipelineYamlParameters : CiPipelineYamlParametersBase
+    internal sealed class DotNetCiPipelineYamlParameters : CiPipelineYamlParametersBase
     {
         [YamlMember(Alias = "BuildSnippets")]
         public bool? BuildSnippets { get; set; } = true;
@@ -870,7 +870,7 @@ public sealed partial class DotnetLanguageService: LanguageService
             }
 
             // Build error-driven prompt for patch agent
-            var prompt = new DotnetErrorDrivenPatchTemplate(
+            var prompt = new DotNetErrorDrivenPatchTemplate(
                 buildContext,
                 packagePath,
                 customizationRoot,

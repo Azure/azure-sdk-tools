@@ -6,7 +6,7 @@ using Azure.Sdk.Tools.Cli.Prompts.Templates;
 namespace Azure.Sdk.Tools.Cli.Tests.Prompts.Templates;
 
 [TestFixture]
-public class DotnetErrorDrivenPatchTemplateTests
+public class DotNetErrorDrivenPatchTemplateTests
 {
     private const string SampleBuildContext = """
         error CS0117: 'WidgetClient' does not contain a definition for 'GetWidgetAsync'
@@ -28,12 +28,12 @@ public class DotnetErrorDrivenPatchTemplateTests
         "Customized/WidgetOptionsHelper.cs"
     ];
 
-    private DotnetErrorDrivenPatchTemplate CreateTemplate() =>
+    private DotNetErrorDrivenPatchTemplate CreateTemplate() =>
         new(SampleBuildContext, SamplePackagePath, SampleCustomizationRoot,
             SampleCustomizationFiles, SamplePatchFilePaths);
 
     [Test]
-    public void TemplateId_IsDotnetErrorDrivenPatch()
+    public void TemplateId_IsDotNetErrorDrivenPatch()
     {
         var template = CreateTemplate();
         Assert.That(template.TemplateId, Is.EqualTo("dotnet-error-driven-patch"));
@@ -87,7 +87,7 @@ public class DotnetErrorDrivenPatchTemplateTests
     }
 
     [Test]
-    public void BuildPrompt_ContainsDotnetSpecificGuidance()
+    public void BuildPrompt_ContainsDotNetSpecificGuidance()
     {
         var prompt = CreateTemplate().BuildPrompt();
         Assert.Multiple(() =>

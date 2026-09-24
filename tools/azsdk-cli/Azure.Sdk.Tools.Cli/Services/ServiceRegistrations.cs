@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IApiReviewHubService, ApiReviewHubService>();
             services.AddSingleton<IPackageReleaseStatusService, PackageReleaseStatusService>();
 
-            services.AddScoped<LanguageService, DotnetLanguageService>();
+            services.AddScoped<LanguageService, DotNetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();
             services.AddScoped<LanguageService, JavaScriptLanguageService>();
             services.AddScoped<LanguageService, PythonLanguageService>();

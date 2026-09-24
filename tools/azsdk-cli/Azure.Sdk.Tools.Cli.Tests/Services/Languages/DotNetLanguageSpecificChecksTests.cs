@@ -18,7 +18,7 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
     private Mock<ICommonValidationHelpers> _commonValidationHelperMock = null!;
     private Mock<IPackageInfoHelper> _packageInfoHelperMock = null!;
-    private DotnetLanguageService _languageChecks = null!;
+    private DotNetLanguageService _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
     private const string RequiredDotNetVersion = "9.0.102";
@@ -33,12 +33,12 @@ internal class DotNetLanguageSpecificChecksTests
         _commonValidationHelperMock = new Mock<ICommonValidationHelpers>();
         _packageInfoHelperMock = new Mock<IPackageInfoHelper>();
 
-        _languageChecks = new DotnetLanguageService(
+        _languageChecks = new DotNetLanguageService(
             _processHelperMock.Object,
             _powerShellHelperMock.Object,
             Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
-            NullLogger<DotnetLanguageService>.Instance,
+            NullLogger<DotNetLanguageService>.Instance,
             _commonValidationHelperMock.Object,
             _packageInfoHelperMock.Object,
             Mock.Of<IFileHelper>(),

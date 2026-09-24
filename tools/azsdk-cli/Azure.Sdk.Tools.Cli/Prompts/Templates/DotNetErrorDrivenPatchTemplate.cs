@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 /// Error-driven template for .NET customization patching.
 /// Grounded in Azure SDK for .NET partial-class customization patterns, it applies safe structural patches based on build errors.
 /// </summary>
-public class DotnetErrorDrivenPatchTemplate(
+public class DotNetErrorDrivenPatchTemplate(
     string buildContext,
     string packagePath,
     string customizationRoot,

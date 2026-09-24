@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages
@@ -56,6 +58,9 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;
+
+        /// <summary>Whether classification requires a catalog to produce language-specific mitigation guidance.</summary>
+        public virtual bool RequiresBreakingChangePatternCatalog => false;
 
 #pragma warning disable CS1998
         public async virtual Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken cancellationToken = default)
@@ -494,13 +499,30 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     result: "noop"));
         }
 
+        /// <summary>
+        /// Validates classification of known breaking changes before returning actionable results.
+        /// Languages can add requirements without coupling the classifier to individual languages.
+        /// </summary>
+        /// <returns>An error message, or null when the classification is valid.</returns>
+        public virtual string? ValidateBreakingChangeClassification(SdkBreakingChangeDetectionResult classification)
+        {
+            if (!classification.HasBreakingChange || classification.BreakingChanges is not { Count: > 0 } ||
+                classification.BreakingChanges.Any(change => change == null))
+            {
+                return "No valid SDK breaking changes were classified from the detected SDK changes.";
+            }
+            return null;
+        }
+
         public virtual Task<PackageOperationResponse> DetectSdkBreakingChangeAsync(string packagePath, CancellationToken ct)
         {
             return Task.FromResult(
                 new PackageOperationResponse
                 {
-                        ResponseError = $"SDK Breaking Change Detection is not implemented for language {this.Language}.",
-                        NextSteps = ["Manually detect the sdk breaking changes."],
+                    ResponseError = $"SDK Breaking Change Detection is not implemented for language {Language}. Configure packageOptions.getSdkChangesScript in eng/swagger_to_sdk_config.json or supply a local SDK change report.",
+                    BreakingChangeStatus = SdkBreakingChangeStatus.Blocked,
+                    Language = Language,
+                    NextSteps = ["Configure the repository's SDK change detector or manually detect the SDK breaking changes."],
                 });
         }
 
@@ -510,15 +532,13 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="sdkRepoRoot">The root directory of the SDK repository.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns>
-        /// The content of the breaking change pattern file if it exists, or an empty string if:
-        /// - <see cref="SDKBreakingPatternFilePath"/> is not overridden (returns empty string)
-        /// - The pattern file does not exist at the specified path
-        /// - An error occurs while reading the file
+        /// The configured pattern file content, or an empty string when the catalog is unavailable.
+        /// Expected configuration and read failures are logged; cancellation still propagates.
         /// </returns>
         /// <remarks>
         /// <para>
-        /// This method constructs the full file path by combining <paramref name="sdkRepoRoot"/> 
-        /// with <see cref="SDKBreakingPatternFilePath"/>. The pattern file contains language-specific
+        /// This method combines <paramref name="sdkRepoRoot"/> with the configured
+        /// packageOptions.sdkBreakingChangePatternFile. The pattern file contains language-specific
         /// rules that define what TypeSpec/API changes constitute breaking changes in the generated SDK.
         /// </para>
         /// <para>
@@ -533,39 +553,33 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// for usage examples where this pattern content is used in AI-powered classification.
         /// </para>
         /// </remarks>
-        /// <example>
-        /// Example usage in a language service:
-        /// <code>
-        /// protected override string SDKBreakingPatternFilePath => "eng/common/breaking-change-patterns/go-patterns.md";
-        /// 
-        /// var pattern = await GetSDKBreakingPattern(repoRoot, ct);
-        /// // pattern contains the markdown content describing Go-specific breaking changes
-        /// </code>
-        /// </example>
         public virtual async Task<string> GetSdkBreakingPattern(string sdkRepoRoot, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             try
             {
-                var sdkBreakingPatternFilePath = await specGenSdkConfigHelper.GetSdkBreakingChangePatternFileConfigurationAsync(sdkRepoRoot, ct);
-                if (string.IsNullOrEmpty(sdkBreakingPatternFilePath))
+                var configuredPath = await specGenSdkConfigHelper.GetSdkBreakingChangePatternFileConfigurationAsync(sdkRepoRoot, ct);
+                ct.ThrowIfCancellationRequested();
+                if (string.IsNullOrWhiteSpace(configuredPath))
                 {
-                    logger.LogWarning("Failed to retrieve the SDK breaking change pattern file path for language '{language}' from swagger_to_sdk_config.json. Please verify the configuration. No pattern file will be loaded.", Language);
+                    logger.LogWarning("No SDK breaking change pattern catalog is configured for language {Language}.", Language);
                     return string.Empty;
                 }
-                var patternFilePath = Path.Combine(sdkRepoRoot, sdkBreakingPatternFilePath);
-                if (File.Exists(patternFilePath))
+                var path = Path.Combine(sdkRepoRoot, configuredPath);
+                logger.LogInformation("Loading SDK breaking change patterns from {Path}", path);
+                var patterns = await File.ReadAllTextAsync(path, ct);
+                ct.ThrowIfCancellationRequested();
+                if (string.IsNullOrWhiteSpace(patterns))
                 {
-                    return await File.ReadAllTextAsync(patternFilePath, ct);
-                }
-                else
-                {
-                    logger.LogWarning("SDK breaking change pattern file not found at expected path: {PatternFilePath}", patternFilePath);
+                    logger.LogWarning("The SDK breaking change pattern catalog is empty: {Path}", path);
                     return string.Empty;
                 }
+                return patterns;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or ArgumentException)
             {
-                logger.LogError(ex, "Error reading SDK breaking change pattern file for language {Language}", Language);
+                ct.ThrowIfCancellationRequested();
+                logger.LogError(ex, "Unable to load SDK breaking change patterns for language {Language}.", Language);
                 return string.Empty;
             }
         }

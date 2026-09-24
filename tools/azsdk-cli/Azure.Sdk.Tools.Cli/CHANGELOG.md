@@ -4,9 +4,13 @@
 
 ### Features Added
 
+- Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
+
 ### Breaking Changes
 
 ### Bugs Fixed
+
+- Preserve detected SDK changes when classification or catalog loading fails, and reject invalid detector reports instead of silently falling back.
 
 ### Other Changes
 

@@ -1,0 +1,10 @@
+{
+  "name": "apiview-js-parser-runtime",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@azure-tools/ts-genapi": "2.0.11"
+  }
+}

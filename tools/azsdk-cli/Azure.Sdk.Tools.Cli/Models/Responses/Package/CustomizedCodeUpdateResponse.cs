@@ -24,6 +24,12 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonPropertyName("success")]
     public bool Success { get; set; }
 
+    /// <summary>
+    /// Patch proposals evaluated by host validation, excluding the initial build and agent Exit reminders.
+    /// </summary>
+    [JsonPropertyName("attemptsUsed")]
+    public int AttemptsUsed { get; set; }
+
     [JsonPropertyName("appliedPatches")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<AppliedPatch>? AppliedPatches { get; set; }

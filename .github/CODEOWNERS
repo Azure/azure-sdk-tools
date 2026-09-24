@@ -22,12 +22,12 @@
 ###########
 # Files used to manage spelling version and installation
 ###########
-/eng/common/spelling/ @danieljurek @mikeharder
+/eng/common/spelling/ @danieljurek
 
 ###########
 # Files used to manage tsp-client version and installation
 ###########
-/eng/**/tsp-client/ @catalinaperalta @mikeharder
+/eng/**/tsp-client/ @catalinaperalta
 
 ###########
 # Eng Sys Tools
@@ -37,7 +37,7 @@
 /tools/codeowners-utils/                @danieljurek
 /tools/fxlister/                        @KrzysztofCwalina
 /tools/github/                          @jsquire @lmazuel
-/tools/github-event-processor/          @benbp @jsquire
+/tools/github-event-processor/          @jsquire
 /tools/github-team-user-store/          @danieljurek
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
 /tools/keyvault-mock-attestation/       @maorleger
@@ -47,23 +47,22 @@
 /tools/pipeline-witness/                @hallipr
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
-/tools/test-proxy/                      @scbedd @mikeharder @benbp
-/tools/tsp-client/                      @catalinaperalta @mikeharder
+/tools/test-proxy/                      @antkmsft
+/tools/tsp-client/                      @catalinaperalta
 /tools/typespec-bump-deps/              @weidongxu-microsoft
-/tools/content-validation/              @xiangyan99 @zedy-wj
-/tools/perf-regression-finder/          @m-redding @jsquire
-/tools/release-plan-dashboard/          @praveenkuttappan
+/tools/content-validation/              @zedy-wj
+/tools/perf-regression-finder/          @jsquire
 
 #####################
 # Attestation
 #####################              
-/eng/pipelines/cpex-attestation.yml     @praveenkuttappan @maririos 
-/eng/scripts/Attest-CPEX-KPIs.ps1       @praveenkuttappan @maririos 
+/eng/pipelines/cpex-attestation.yml     @praveenkuttappan 
+/eng/scripts/Attest-CPEX-KPIs.ps1       @praveenkuttappan 
 
 #####################
 # Azure SDK Tools MCP
 #####################
-/eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
+/eng/common/instructions/azsdk-tools/   @praveenkuttappan @MrJustinB 
 # PRLabel: %azsdk-cli
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion
@@ -82,8 +81,8 @@
 ###########
 # Stress
 ###########
-/eng/common/scripts/stress-testing/     @benbp @richardpark-msft
-/tools/stress-cluster/                  @benbp @richardpark-msft
+/eng/common/scripts/stress-testing/     @richardpark-msft
+/tools/stress-cluster/                  @richardpark-msft
 
 ###########
 # .NET Client Tools
@@ -96,16 +95,17 @@
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @tjprescott @praveenkuttappan
-/tools/apiview/emitters/typespec-apiview/ @timotheeguerin
-/tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
-/tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
-/tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
-/src/swift/                               @tjprescott
-/src/java/apiview-java-processor/         @JonathanGiles @alzimmermsft @srnagar
-/packages/python-packages/apiview-copilot/ @tjprescott
-/packages/python-packages/*stub*/         @l0lawrence
-/src/go/                                  @jhendrixMSFT @RickWinter
+/tools/apiview/                                     @tjprescott @praveenkuttappan
+/tools/apiview/emitters/typespec-apiview/           @timotheeguerin
+/tools/apiview/parsers/cpp-api-parser/              @LarryOsterman
+/tools/apiview/parsers/csharp-api-parser/           @azure/azsdknet @jsquire
+/tools/apiview/parsers/js-api-parser/               @jeremymeng @maorleger
+/src/swift/                                         @tjprescott
+/src/java/apiview-java-processor/                   @JonathanGiles @alzimmermsft
+/packages/java-packages/codesnippet-maven-plugin/   @alzimmermsft
+/packages/python-packages/apiview-copilot/          @tjprescott
+/packages/python-packages/*stub*/                   @l0lawrence
+/src/go/                                            @jhendrixMSFT @RickWinter
 
 ###########
 # Pylint checkers
@@ -127,4 +127,4 @@
 /eng/pipelines/pipeline-owners-extraction.yml      @danieljurek
 
 # EngSys should own all package-lock.json under eng/common
-/eng/common/**/package-lock.json                    @mikeharder @danieljurek
+/eng/common/**/package-lock.json                   @danieljurek

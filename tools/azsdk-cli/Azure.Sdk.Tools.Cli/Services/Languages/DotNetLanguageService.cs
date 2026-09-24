@@ -820,11 +820,20 @@ public sealed partial class DotNetLanguageService: LanguageService
     /// Applies patches to customization files based on build errors.
     /// This is a mechanical worker - the Classifier does the thinking and routing.
     /// </summary>
-    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+    public override Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
         string buildContext,
         CancellationToken ct)
+        => ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct, 1, null);
+
+    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+        string customizationRoot,
+        string packagePath,
+        string buildContext,
+        CancellationToken ct,
+        int maxAttempts,
+        Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
     {
         try
         {
@@ -868,11 +877,12 @@ public sealed partial class DotNetLanguageService: LanguageService
                 customizationFiles,
                 patchFilePaths).BuildPrompt();
 
-            // Single-pass agent: applies all patches it can in one run
+            // Validation retries retain the same agent session and cumulative patch log.
             var agentDefinition = new CopilotAgent<string>
             {
                 Instructions = prompt,
-                MaxIterations = 10,
+                MaxIterations = 10 + maxAttempts - 1,
+                ValidateResult = validateResult == null ? null : _ => validateResult(patchLog.ToList()),
                 Tools =
                 [
                     FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,

@@ -9,6 +9,7 @@ using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
+using DevOpsJsonPatchDocument = Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
@@ -410,6 +411,91 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var resetOp = patch!.FirstOrDefault(op => op.Path == "/fields/Custom.ReleaseExclusionStatusForPython");
             Assert.IsNotNull(resetOp, "MissingEmitterConfig comparison must be case-insensitive");
             Assert.That(resetOp!.Value, Is.EqualTo("Not applicable"));
+        }
+
+        #endregion
+
+        #region UpdateSpecPullRequestAsync Tests
+
+        [TestCase("Not applicable", "")]
+        [TestCase("Pending", "")]
+        [TestCase("Failed", "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=90")]
+        [TestCase("Completed", "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=90")]
+        [TestCase("In progress", "")]
+        [TestCase("In progress", " \t")]
+        public async Task UpdateSpecPullRequestAsync_NewSpec_MarksWaitingLanguagesNotApplicable(string generationStatus, string pipelineUrl)
+        {
+            const string oldSpec = "https://github.com/Azure/azure-rest-api-specs/pull/123";
+            const string newSpec = "https://github.com/Azure/azure-rest-api-specs/pull/456";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var apiSpec = CreateApiSpecWorkItem(200, oldSpec, "Active");
+            apiSpec.Fields["Custom.RESTAPIReviews"] = $"<a href=\"{oldSpec}\">{oldSpec}</a>";
+            string[] languages = ["Dotnet", "Java", "JavaScript", "Go", "Python"];
+            foreach (var language in languages)
+            {
+                plan.Fields[$"Custom.GenerationStatusFor{language}"] = generationStatus;
+                plan.Fields[$"Custom.SDKGenerationPipelineFor{language}"] = pipelineUrl;
+                plan.Fields[$"Custom.SDKPullRequestFor{language}"] = "existing-sdk-pr";
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(apiSpec);
+
+            var result = await _devOpsService.UpdateSpecPullRequestAsync(100, newSpec, CancellationToken.None);
+
+            Assert.That(result, Is.True);
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(2));
+            var specPatch = _connection.CapturedPatches.Single(p => p.WorkItemId == 200).Document;
+            Assert.That(specPatch.Single(op => op.Path == "/fields/Custom.ActiveSpecPullRequestUrl").Value, Is.EqualTo(newSpec));
+            Assert.That(specPatch.Single(op => op.Path == "/fields/Custom.RESTAPIReviews").Value,
+                Is.EqualTo($"<a href=\"{oldSpec}\">{oldSpec}</a><br><a href=\"{newSpec}\">{newSpec}</a>"));
+            var statusPatch = _connection.CapturedPatches.Single(p => p.WorkItemId == 100).Document;
+            Assert.That(statusPatch, Has.Count.EqualTo(languages.Length));
+            foreach (var language in languages)
+            {
+                Assert.That(statusPatch.Single(op => op.Path == $"/fields/Custom.GenerationStatusFor{language}").Value, Is.EqualTo("Not applicable"));
+            }
+            Assert.That(statusPatch.All(op => op.Path.StartsWith("/fields/Custom.GenerationStatusFor", StringComparison.Ordinal)), Is.True,
+                "Linking a spec must not remove pipeline or SDK PR links, or change release/exclusion state.");
+        }
+
+        [TestCase("In progress")]
+        [TestCase("IN PROGRESS")]
+        public async Task UpdateSpecPullRequestAsync_PreservesRecordedInProgressRun(string generationStatus)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.GenerationStatusForJava"] = generationStatus;
+            plan.Fields["Custom.SDKGenerationPipelineForJava"] = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99";
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
+
+            var result = await _devOpsService.UpdateSpecPullRequestAsync(
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", CancellationToken.None);
+
+            Assert.That(result, Is.True);
+            var patch = _connection.CapturedPatches.Single(p => p.WorkItemId == 100).Document;
+            Assert.That(patch, Has.Count.EqualTo(4));
+            Assert.That(patch.Any(op => op.Path == "/fields/Custom.GenerationStatusForJava"), Is.False);
+            Assert.That(patch.All(op => Equals(op.Value, "Not applicable")), Is.True);
+        }
+
+        [Test]
+        public async Task UpdateSpecPullRequestAsync_AllLanguagesHaveRecordedRuns_DoesNotSendEmptyStatusPatch()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            foreach (var language in new[] { "Dotnet", "Java", "JavaScript", "Go", "Python" })
+            {
+                plan.Fields[$"Custom.GenerationStatusFor{language}"] = "In progress";
+                plan.Fields[$"Custom.SDKGenerationPipelineFor{language}"] = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99";
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
+
+            var result = await _devOpsService.UpdateSpecPullRequestAsync(
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", CancellationToken.None);
+
+            Assert.That(result, Is.True);
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+            Assert.That(_connection.CapturedPatches[0].WorkItemId, Is.EqualTo(200));
         }
 
         #endregion
@@ -1045,6 +1131,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument => _workItemClient.LastCapturedPatchDocument;
 
+            public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches => _workItemClient.CapturedPatches;
+
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
@@ -1099,6 +1187,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public string? LastCapturedQuery { get; private set; }
 
             public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument { get; private set; }
+
+            public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches { get; } = [];
 
             public bool CancelQuery { get; set; }
 
@@ -1212,6 +1302,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 CancellationToken cancellationToken = default)
             {
                 LastCapturedPatchDocument = document;
+                CapturedPatches.Add((id, document));
                 _workItems.TryGetValue(id, out var workItem);
                 return Task.FromResult(workItem ?? new WorkItem { Id = id });
             }

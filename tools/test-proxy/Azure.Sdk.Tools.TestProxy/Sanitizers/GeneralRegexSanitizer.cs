@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -10,12 +13,12 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class GeneralRegexSanitizer : RecordedTestSanitizer
     {
-        private string _newValue;
+        private readonly string _newValue;
         private readonly Regex _regex;
-        private string _groupForReplace = null;
+        private readonly string _groupForReplace = null;
 
-        private BodyRegexSanitizer _bodySanitizer;
-        private UriRegexSanitizer _uriSanitizer;
+        private readonly BodyRegexSanitizer _bodySanitizer;
+        private readonly UriRegexSanitizer _uriSanitizer;
 
         /// <summary>
         /// This sanitizer offers a general regex replace across request/response Body, Headers, and URI. For the body, this means regex applying to the raw JSON.
@@ -28,17 +31,22 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys.
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
         /// </param>
-        public GeneralRegexSanitizer(string value = "Sanitized", string regex = ".+", string groupForReplace = null, ApplyCondition condition = null)
+        public GeneralRegexSanitizer(string value = "Sanitized", string regex = null, string groupForReplace = null, ApplyCondition condition = null)
+            : this(regex == null ? SharedRegexes.DotAll() : GetRegex(regex), value, groupForReplace, condition)
+        {
+        }
+
+        internal GeneralRegexSanitizer(Regex regex, string value = "Sanitized", string groupForReplace = null, ApplyCondition condition = null)
         {
             _scope = SanitizerScope.All;
             _newValue = value;
             _groupForReplace = groupForReplace;
             Condition = condition;
 
-            _regex = GetRegex(regex);
+            _regex = regex;
 
-            _bodySanitizer = new BodyRegexSanitizer(value, regex, groupForReplace);
-            _uriSanitizer = new UriRegexSanitizer(value, regex, groupForReplace);
+            _bodySanitizer = new BodyRegexSanitizer(regex, value, groupForReplace);
+            _uriSanitizer = new UriRegexSanitizer(regex, value, groupForReplace);
         }
 
         public override void SanitizeHeaders(IDictionary<string, string[]> headers)

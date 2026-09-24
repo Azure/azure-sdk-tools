@@ -1441,20 +1441,33 @@ namespace Azure.Sdk.Tools.Cli.Services
                 };
                 await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(jsonLinkDocument, apiSpecWorkItemId, cancellationToken: ct);
 
-                // Reset SDK generation status for all languages to "In progress" in the release plan work item
+                // Linking a spec does not request or start SDK generation, so do not mark it Pending or In progress.
+                // Preserve recorded in-progress runs; the generation tool checks their live status before retrying.
+                var releasePlanWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlanWorkItemId, cancellationToken: ct);
                 var releasePlanUpdateDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
                 foreach (var lang in SUPPORTED_SDK_LANGUAGES)
                 {
+                    releasePlanWorkItem.Fields.TryGetValue($"Custom.GenerationStatusFor{lang}", out var generationStatus);
+                    releasePlanWorkItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out var pipelineUrl);
+                    if (string.Equals(generationStatus?.ToString(), "In progress", StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrWhiteSpace(pipelineUrl?.ToString()))
+                    {
+                        continue;
+                    }
+
                     releasePlanUpdateDocument.Add(
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                             Path = $"/fields/Custom.GenerationStatusFor{lang}",
-                            Value = "In progress"
+                            Value = "Not applicable"
                         }
                     );
                 }
-                await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(releasePlanUpdateDocument, releasePlanWorkItemId, cancellationToken: ct);
+                if (releasePlanUpdateDocument.Count > 0)
+                {
+                    await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(releasePlanUpdateDocument, releasePlanWorkItemId, cancellationToken: ct);
+                }
 
                 return true;
             }

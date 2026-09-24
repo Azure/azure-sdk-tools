@@ -23,7 +23,7 @@
 
 ## Overview
 
-Scenario 2 extends **[Scenario 1](./0-scenario-1.spec.md#overview)** by adding: automated environment remediation, customization (TypeSpec + code), and live / recorded testing. All Scenario 1 stages (environment setup, generation, package metadata & docs updates, validation) remain.
+Scenario 2 extends **[Scenario 1](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#overview)** by adding: automated environment remediation, customization (TypeSpec + code), and live / recorded testing. All Scenario 1 stages (environment setup, generation, package metadata & docs updates, validation) remain.
 
 **Tool Automation Strategy**: Scenario 2 rounds out deterministic inner-loop tooling while introducing AI-powered tools and features that assist with authoring tasks such as TypeSpec specification creation and modification. Future scenarios will layer additional AI assistance onto judgment-heavy tasks (for example, README authoring and broader doc updates).
 
@@ -34,7 +34,7 @@ Scenario 2 extends **[Scenario 1](./0-scenario-1.spec.md#overview)** by adding: 
 - [Health Deidentification Data Plane Spec](https://github.com/Azure/azure-rest-api-specs/tree/ded7abde9c48ba84df36b53dfcaef48a2c134097/specification/healthdataaiservices/HealthDataAIServices.DeidServices)
 - [Health Deidentification MGMT Plane Spec](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/healthdataaiservices/HealthDataAIServices.Management)
 
-**Modes**: Works in both [Agent Mode](./0-scenario-1.spec.md#agent-mode) and [CLI Mode](./0-scenario-1.spec.md#cli-mode)
+**Modes**: Works in both [Agent Mode](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#agent-mode) and [CLI Mode](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#cli-mode)
 
 Scenario 2 validates:
 
@@ -48,7 +48,7 @@ Scenario 2 validates:
 
 ## Definitions
 
-The terminology from [Scenario 1 Definitions](./0-scenario-1.spec.md#definitions) still applies. Scenario 2 introduces the following additional concepts:
+The terminology from [Scenario 1 Definitions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#definitions) still applies. Scenario 2 introduces the following additional concepts:
 
 <!-- markdownlint-disable MD033 -->
 - **<a id="agent"></a>Agent**: GitHub Copilot running in a Copilot-enabled editor (VS Code, Visual Studio, or IntelliJ) with access to the Azure SDK Tools Model Context Protocol (MCP) server, enabling AI-assisted SDK development workflows.
@@ -85,7 +85,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
 
 ### In Scope for Scenario 2
 
-- **All [Scenario 1 activities](./0-scenario-1.spec.md#workflow) are included**
+- **All [Scenario 1 activities](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#workflow) are included**
 - All five languages: .NET, Java, JavaScript, Python, Go
 - **Both [Brand New Packages](#brand-new-package) and existing SDKs**
 - TypeSpec-based generation for the Health Deidentification service
@@ -126,7 +126,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
 ## Workflow
 
 1. **Environment Setup** → `azsdk_verify_setup`
-   - Verify tools and versions (see [Scenario 1 – Environment Setup](./0-scenario-1.spec.md#1-environment-setup))
+   - Verify tools and versions (see [Scenario 1 – Environment Setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#1-environment-setup))
    - Optionally remediate missing or out-of-date tools by using `install` subcommand instead of `check`
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
@@ -138,7 +138,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - **Checkpoint**: Create a git commit after TypeSpec changes are applied
 
 3. **Generating** → `azsdk_package_generate_code` (local), `azsdk_run_generate_sdk` (pipeline)
-   - Generate SDK code, tests, and samples (see [Scenario 1 – Generating](./0-scenario-1.spec.md#2-generating))
+   - Generate SDK code, tests, and samples (see [Scenario 1 – Generating](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#2-generating))
    - Generation tooling now handles library project bootstrapping for [Brand New Packages](#brand-new-package)
    - Both pipeline-based generation (`azsdk_run_generate_sdk`) and local generation (`azsdk_package_generate_code`) workflows are fully supported and should work seamlessly
    - **Checkpoint**: Create a git commit after SDK code generation completes
@@ -166,12 +166,12 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - **Checkpoint**: Create a git commit after samples are generated or translated
 
 7. **Update Package/Docs/Metadata** → `azsdk_package_update_metadata`, `azsdk_package_update_version`, `azsdk_package_update_changelog_content`
-   - Update package metadata, docs, and changelogs (see [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata))
+   - Update package metadata, docs, and changelogs (see [Scenario 1 – Update Package/Docs/Metadata](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#3-update-packagedocsmetadata))
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
    - **Checkpoint**: Create a git commit after metadata, version, and changelog updates are complete
 
 8. **Validating** → `azsdk_package_run_check`
-   - Run final validation checks across languages and stages (see [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating))
+   - Run final validation checks across languages and stages (see [Scenario 1 – Validating](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#4-validating))
    - **Note**: Some validation issue fixing may fall under other stages (for example, build errors caused by customizations would be addressed in the Customizations stage; generation issues would be addressed in the Generating stage)
 
 ⚠️  STOP: Test scenario only. Do NOT commit or create release PRs.
@@ -182,7 +182,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
 
 ### 1. Environment Setup
 
-The **environment verification requirements** for this stage are unchanged from Scenario 1. Refer to [Scenario 1 – Environment Setup](./0-scenario-1.spec.md#1-environment-setup) for the definition of required tools, checks, and success criteria for verification.
+The **environment verification requirements** for this stage are unchanged from Scenario 1. Refer to [Scenario 1 – Environment Setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#1-environment-setup) for the definition of required tools, checks, and success criteria for verification.
 
 Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** that **offers to install or upgrade missing or out-of-date tooling when automation is not complex**.
 
@@ -427,7 +427,7 @@ This stage uses a unified testing tool that handles all test modes and automatic
 
 ### 7. Update Package/Docs/Metadata
 
-Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata) for complete details.
+Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#3-update-packagedocsmetadata) for complete details.
 
 **Enhancements for [Brand New Packages](#brand-new-package):**
 
@@ -444,7 +444,7 @@ Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata
 
 ### 8. Validating
 
-Unchanged from Scenario 1. Refer to [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating) for validation steps and success criteria.
+Unchanged from Scenario 1. Refer to [Scenario 1 – Validating](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#4-validating) for validation steps and success criteria.
 
 **Success (additional for Scenario 2):**
 
@@ -831,7 +831,7 @@ Translate all Java samples for Health Deidentification to .NET.
 
 ## CLI Commands
 
-*Direct command-line interface usage for [CLI mode](./0-scenario-1.spec.md#cli-mode):*
+*Direct command-line interface usage for [CLI mode](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md#cli-mode):*
 
 ### 1. Verify and Setup Environment
 
@@ -1156,10 +1156,10 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 
 ## Related Links
 
-- [Scenario 1 Spec](./0-scenario-1.spec.md)
+- [Scenario 1 Spec](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/0-scenario-1.spec.md)
 - [TypeSpec Requirement](https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement)
 - [TypeSpec Validation](https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation)
-- [Specs README](./README.md)
-- [Spec Template](./spec-template.md)
+- [Specs README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/README.md)
+- [Spec Template](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/spec-template.md)
 
 ---

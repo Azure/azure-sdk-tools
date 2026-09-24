@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
@@ -16,6 +17,36 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     [Collection(nameof(LoggingCollection))]
     public class LoggingTests
     {
+        [Fact]
+        public async Task BodyKeySanitizersKeepIndividualDebugLogs()
+        {
+            var logger = new TestLogger();
+            DebugLogger.Logger = logger;
+            try
+            {
+                var entry = new RecordEntry();
+                entry.Request.Headers.Add("Content-Type", ["application/json"]);
+                entry.Request.Body = Encoding.UTF8.GetBytes("{\"secret\":\"original\"}");
+                var session = new RecordSession();
+                session.Entries.Add(entry);
+
+                await session.Sanitize(
+                [
+                    new BodyKeySanitizer("$.secret", value: "first") { SanitizerId = "first" },
+                    new BodyKeySanitizer("$.secret", value: "second") { SanitizerId = "second" }
+                ]);
+
+                Assert.Equal(2, logger.Logs.Count);
+                Assert.Contains("rule first modified the entry", logger.Logs[0].ToString());
+                Assert.Contains("rule second modified the entry", logger.Logs[1].ToString());
+                Assert.Equal("{\"secret\":\"second\"}", Encoding.UTF8.GetString(entry.Request.Body));
+            }
+            finally
+            {
+                DebugLogger.Logger = null;
+            }
+        }
+
         [Fact]
         public async Task PlaybackLogsSanitizedRequest()
         {

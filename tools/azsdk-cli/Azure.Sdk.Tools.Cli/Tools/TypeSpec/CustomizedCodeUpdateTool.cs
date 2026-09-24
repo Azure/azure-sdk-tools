@@ -113,6 +113,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         DefaultValueFactory = _ => EditScope.All
     };
 
+    private readonly Option<int> maxAttemptsOption = new("--max-attempts")
+    {
+        Description = "Maximum custom-code repair attempts in one retained conversation (1..10, default 1). Values above 1 require CustomCode scope.",
+        DefaultValueFactory = _ => 1
+    };
+
     protected override Command GetCommand() =>
         new McpCommand("customized-update", "Apply TypeSpec and SDK code customizations with AI-assisted analysis.", CustomizedCodeUpdateToolName)
         {
@@ -120,6 +126,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             typespecProjectPath,
             customizationRequestOption,
             editScopeOption,
+            maxAttemptsOption,
         };
 
     /// <inheritdoc />
@@ -136,7 +143,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         try
         {
             logger.LogInformation("Starting customized code update for {PackagePath} (editScope: {EditScope})", packagePath, editScope);
-            return await RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, ct);
+            return await RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, ct,
+                parseResult.GetValue(maxAttemptsOption));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -161,8 +173,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory. Optional for custom-code-only scope.</param>
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
+    /// <param name="maxAttempts">Maximum custom-code repair attempts in one conversation (1..10).</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
-    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (C# and Java), builds, and returns success/failure with build result.")]
+    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies customizations and validates regeneration/build. CustomCode supports maxAttempts (1..10, default 1) in one retained conversation; returns attemptsUsed and final failure diagnostics in the existing response.")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(
         [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
         string customizationRequest,
@@ -172,8 +185,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? tspProjectPath = null,
         [Description("Which source categories the tool may edit (flags: CustomCode, SpecInputs, or All). All (default): both custom code and spec inputs may be edited, regenerate, and patch custom code. CustomCode: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ from the unchanged pinned commit is always allowed.")]
         EditScope editScope = EditScope.All,
-        CancellationToken ct = default)
-        => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, ct);
+        CancellationToken ct = default,
+        [Description("Maximum custom-code repair attempts in one retained conversation (1..10, default 1). Values above 1 require CustomCode scope.")]
+        int maxAttempts = 1)
+        => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, ct, maxAttempts);
 
     /// <summary>
     /// Executes the update pipeline: classify → patch customizations → regen → build.
@@ -184,8 +199,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string? packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string? packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct, int maxAttempts)
     {
+        if (maxAttempts is < 1 or > 10 || (maxAttempts > 1 && editScope != EditScope.CustomCode))
+        {
+            return CreateInvalidInputResponse("maxAttempts must be between 1 and 10; multiple attempts require CustomCode scope.");
+        }
         // editScope is a non-nullable [Flags] enum bound from a named option (default All), so the
         // empty/whitespace validation used for the string inputs does not apply. Guard only against an
         // undefined value (a stray flag bit outside the All mask, or an empty 0 combination) so every
@@ -375,9 +394,22 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         List<string> customCodeChangeRequired = new();
 
         List<string> changesMade = new();
+        var attemptsUsed = 0;
+        List<AppliedPatch> appliedPatches = [];
+        string? lastRepairError = null;
 
         CustomizedCodeUpdateResponse CreateResponse(CustomizedCodeUpdateResponse response)
         {
+            response.AttemptsUsed = attemptsUsed;
+            if (appliedPatches.Count > 0) { response.AppliedPatches ??= appliedPatches; }
+            if (!response.Success && string.IsNullOrWhiteSpace(response.ResponseError))
+            {
+                response.ResponseError = response.Message ?? "Customized code update did not complete.";
+                if (!string.IsNullOrWhiteSpace(response.BuildResult))
+                {
+                    response.ResponseError += Environment.NewLine + response.BuildResult;
+                }
+            }
             response.PackageName ??= packageInfo?.PackageName; 
             response.Language = packageInfo?.Language ?? languageService?.Language ?? SdkLanguage.Unknown;
             response.PackageType = packageInfo?.SdkType ?? SdkType.Unknown;
@@ -437,6 +469,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 BuildResult = ex.Message
             });
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Feedback classification failed unexpectedly.");
@@ -456,6 +492,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         StringBuilder tspFixFailedReasons = new();
         bool buildSucceeded = false;
         string? buildError = null;
+        string? requiredRegenerationError = null;
 
         if (response.Classifications == null || response.Classifications.Count == 0)
         {
@@ -590,11 +627,34 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Everything was classified as success
         if (tspApplicable == 0 && codeCustomizations == 0 && customCodeChangeRequired.Count == 0 && noChanges > 0)
         {
-            return CreateResponse(new CustomizedCodeUpdateResponse
+            if (!customCodeInScope)
             {
-                Success = true,
-                Message = "No changes needed — the requested customizations are already in place."
-            });
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = true,
+                    Message = "No changes needed — the requested customizations are already in place."
+                });
+            }
+            if (languageService == null)
+            {
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Message = "No language service is available to validate the SDK build.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService
+                });
+            }
+            var initialBuild = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+            ct.ThrowIfCancellationRequested();
+            buildSucceeded = initialBuild.Success;
+            buildError = initialBuild.ErrorMessage ?? (buildSucceeded ? null : "Build failed without diagnostics.");
+            if (buildSucceeded)
+            {
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = true,
+                    Message = "No changes needed — the SDK build passed."
+                });
+            }
         }
         
         //CustomCode out of scope, there is no futher code customization to apply, exit the tool with response
@@ -665,6 +725,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
+                requiredRegenerationError = regenResult.ResponseError ?? "Regeneration failed without diagnostics.";
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
                 // Enrich remaining items with regen failure context for the second classifier pass
                 foreach (var item in feedbackDictionary.Values)
@@ -772,6 +833,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             buildError = e;
         }
 
+        if (requiredRegenerationError != null && codeCustomizations == 0)
+        {
+            return CreateResponse(new CustomizedCodeUpdateResponse
+            {
+                Message = "Required regeneration failed after TypeSpec changes.",
+                BuildResult = requiredRegenerationError,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
+                NextSteps = manualInterventions
+            });
+        }
+
         if (buildSucceeded && codeCustomizations == 0)
         {
             logger.LogInformation("Build passed after TypeSpec customizations.");
@@ -838,71 +910,105 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         // Step 4: Apply patches based on build errors
         var patchContext = BuildPatchContext(customizationRequest, codeCustomizationLog, buildError);
+        var lastValidatedPatchCount = 0;
+        var finalBuildSuccess = false;
+        var failureCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed;
+        var failureMessage = "Code customization patches applied but build still failing.";
+        string? stopReason = null;
+        lastRepairError = buildError;
 
-        logger.LogInformation("Applying patches to fix build errors...");
-        var patches = await languageService.ApplyPatchesAsync(
-            customizationRoot,
-            packagePath,
-            patchContext,
-            ct);
-
-        foreach (var patch in patches)
+        async Task<CopilotAgentValidationResult> ValidatePatchesAsync(IReadOnlyList<AppliedPatch> patches)
         {
-            logger.LogInformation("{Description}", patch.Description);
+            ct.ThrowIfCancellationRequested();
+            if (attemptsUsed >= maxAttempts)
+            {
+                throw new InvalidOperationException("The repair attempt limit was reached.");
+            }
+            attemptsUsed++;
+            finalBuildSuccess = false;
+            appliedPatches = [.. patches];
+            if (patches.Count <= lastValidatedPatchCount)
+            {
+                failureCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed;
+                failureMessage = "No patches could be applied - automated repair made no further progress.";
+                stopReason = "No additional patches were applied.";
+                throw new InvalidOperationException(stopReason);
+            }
+            lastValidatedPatchCount = patches.Count;
+            var phase = "Preparation";
+            try
+            {
+                // Keep preparation's existing fallback policy and the unchanged pinned/local spec inputs.
+                if (languageService.Language is SdkLanguage.Java or SdkLanguage.DotNet)
+                {
+                    failureCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed;
+                    if (repoRoot != null) { await languageService.PreGenerateAsync(repoRoot, ct); }
+                    ct.ThrowIfCancellationRequested();
+                    phase = "Regeneration";
+                    var localSpec = string.IsNullOrWhiteSpace(tspProjectPath) ? null : Path.GetFullPath(tspProjectPath);
+                    var generated = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpec, isCli: false, ct: ct);
+                    ct.ThrowIfCancellationRequested();
+                    if (!generated.IsSuccessful)
+                    {
+                        lastRepairError = generated.ResponseError ?? "Regeneration failed without diagnostics.";
+                        failureMessage = "Regeneration failed after patches.";
+                        return FailedValidation();
+                    }
+                }
+                phase = "Build";
+                failureCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed;
+                failureMessage = "Code customization patches applied but build still failing.";
+                var build = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                ct.ThrowIfCancellationRequested();
+                finalBuildSuccess = build.Success;
+                lastRepairError = build.ErrorMessage ?? (build.Success ? null : "Build failed without diagnostics.");
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex) when (stopReason == null)
+            {
+                logger.LogError(ex, "{Phase} failed during repair attempt {Attempt}", phase, attemptsUsed);
+                lastRepairError = ex.Message;
+                failureCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError;
+                failureMessage = $"{phase} failed after patches.";
+            }
+            return finalBuildSuccess ? new() { Success = true } : FailedValidation();
         }
 
-        if (patches.Count == 0)
+        CopilotAgentValidationResult FailedValidation()
         {
-            logger.LogInformation("No patches applied.");
-            return CreateResponse(new CustomizedCodeUpdateResponse
+            if (attemptsUsed >= maxAttempts)
+            {
+                stopReason = $"Repair attempt limit ({maxAttempts}) reached.";
+                throw new InvalidOperationException($"{stopReason}\n{lastRepairError}");
+            }
+            return new()
             {
                 Success = false,
-                ResponseError = string.IsNullOrWhiteSpace(buildError)
-                    ? "No patches could be applied - automated repair found nothing to fix."
-                    : $"No patches could be applied - automated repair found nothing to fix.\n{buildError}",
-                Message = "No patches could be applied - automated repair found nothing to fix.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
-                BuildResult = buildError
-            });
+                Reason = $"Attempt {attemptsUsed}/{maxAttempts}: {failureMessage}\n{lastRepairError}\n" +
+                    "Continue from the existing edits and conversation; do not repeat an unsuccessful patch."
+            };
         }
 
-        // C# partial customizations affect generated declarations; Java customizations run during generation.
-        if (languageService.Language is SdkLanguage.Java or SdkLanguage.DotNet)
+        var patches = await languageService.ApplyPatchesAsync(
+            customizationRoot, packagePath, patchContext, ct, maxAttempts, ValidatePatchesAsync);
+        ct.ThrowIfCancellationRequested();
+        appliedPatches = patches;
+        if (attemptsUsed == maxAttempts && patches.Count != lastValidatedPatchCount)
         {
-            logger.LogInformation("Regenerating code after patches ({Language})...", languageService.Language);
-
-            // tspProjectPath is optional in custom-code-only scope. When supplied, regenerate from the
-            // local spec project; when omitted, pass no local spec repo so tsp-client regenerates from the
-            // pinned commit recorded in the package's tsp-location.yaml (no local spec checkout required).
-            string? localSpecProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? null : Path.GetFullPath(tspProjectPath);
-
-            logger.LogDebug("Regeneration local spec source: {localSpecProjectPath}",
-                localSpecProjectPath ?? "(pinned commit from tsp-location.yaml)");
-            if (repoRoot != null)
-            {
-                await languageService.PreGenerateAsync(repoRoot, ct);
-            }
-            
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
-            if (!regenResult.IsSuccessful)
-            {
-                logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
-                return CreateResponse(new CustomizedCodeUpdateResponse
-                {
-                    Success = false,
-                    ResponseError = $"Regeneration failed after patches: {regenResult.ResponseError}",
-                    Message = $"Regeneration failed after patches: {regenResult.ResponseError}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
-                    BuildResult = regenResult.ResponseError,
-                    TypeSpecChangesSummary = changesMade,
-                    AppliedPatches = patches
-                });
-            }
+            finalBuildSuccess = false;
+            stopReason = "Additional patches were not validated within the repair attempt limit.";
         }
-
-        // Step 6: Final build to validate patches
-        logger.LogInformation("Running final build to validate code customization patches...");
-        var (finalBuildSuccess, finalBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+        // A session may terminate without Exit after applying tools. Validate that final batch too.
+        if (patches.Count > lastValidatedPatchCount && attemptsUsed < maxAttempts)
+        {
+            try { await ValidatePatchesAsync(patches); }
+            catch (InvalidOperationException) when (stopReason != null) { }
+        }
+        if (attemptsUsed == 0 && patches.Count == 0)
+        {
+            failureCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed;
+            failureMessage = "No patches could be applied - the agent returned no patch proposal for validation.";
+        }
 
         if (finalBuildSuccess)
         {
@@ -914,7 +1020,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     ? "Build passed after code customization patches."
                     : "Build passed after code customization patches, but some items require manual intervention.",
                 TypeSpecChangesSummary = changesMade,
-                AppliedPatches = patches,
+                AppliedPatches = appliedPatches,
                 SpecChangeRequired = specChangeRequired.Count > 0 ? specChangeRequired : null,
                 NextSteps = manualInterventions,
                 ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
@@ -922,16 +1028,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         // Build still failing after patches
-        logger.LogInformation("Build still failing after code customization patches.");
+        logger.LogInformation("Customized code repair did not complete after {AttemptsUsed} attempts.", attemptsUsed);
         return CreateResponse(new CustomizedCodeUpdateResponse
         {
             Success = false,
-            ResponseError = string.IsNullOrWhiteSpace(finalBuildError)
-                ? "Code customization patches applied but build still failing."
-                : $"Code customization patches applied but build still failing.\n{finalBuildError}",
-            Message = "Code customization patches applied but build still failing.",
-            ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
-            BuildResult = finalBuildError,
+            ResponseError = $"{failureMessage} {stopReason ?? "The patch agent stopped before validation succeeded."} " +
+                $"Attempts used: {attemptsUsed}.\n{lastRepairError}",
+            Message = failureMessage,
+            ErrorCode = failureCode,
+            BuildResult = lastRepairError,
             TypeSpecChangesSummary = changesMade,
             AppliedPatches = patches,
             SpecChangeRequired = specChangeRequired.Count > 0 ? specChangeRequired : null,

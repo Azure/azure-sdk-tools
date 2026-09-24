@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.47.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.49.
 
 ## Tools list
 
@@ -20,7 +20,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_create_pull_request |  | Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch. |
 | azsdk_create_release_plan | `azsdk release-plan create` | Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available. |
 | azsdk_create_service_label |  | Creates a pull request to add a new service label |
-| azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (C# and Java), builds, and returns success/failure with build result. |
+| azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies customizations and validates regeneration/build. CustomCode supports maxAttempts (1..10, default 1) in one retained conversation; returns attemptsUsed and final failure diagnostics in the existing response. |
 | azsdk_engsys_codeowner_add_label_owner |  | Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. A 3-segment path (e.g. sdk/<service>/<package>) is rejected because it targets a package directory; add owners to the package by name instead, or set force=true to create the path anyway. |
 | azsdk_engsys_codeowner_add_package_label |  | Add PR label(s) to a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_add_package_owner |  | Add source owner(s) to a package in CODEOWNERS work items. |
@@ -41,7 +41,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_get_pr_checks | `azsdk ci checks` | Get pipeline and CI check results from a GitHub Pull Request link or PR number |
 | azsdk_get_pull_request |  | This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews. |
 | azsdk_get_pull_request_link_for_current_branch |  | Get pull request link for current branch in the repo. Provide absolute path to repository root as param. This tool call GetPullRequest to get pull request details. |
-| azsdk_get_release_plan | `azsdk release-plan get` | Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type. |
+| azsdk_get_release_plan | `azsdk release-plan get` | Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. Optionally filter by API release type (allowed values: Private Preview, Public Preview, GA). API version lookup requires both TypeSpec project path and API release type. SDK PR status is omitted; check the linked GitHub PRs or release plan dashboard for current PR status. SDK generation status describes pipeline history, not PR status. |
 | azsdk_get_sdk_pull_request_link | `azsdk spec-workflow get-sdk-pr` | Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item. |
 | azsdk_get_service_details_by_typespec_path | `azsdk release-plan get-service-details` | Get service and service tree product details for a product using TypeSpec project path: Get service tree product details (service tree ID, service ID, package display name, product service tree link). |
 | azsdk_link_namespace_approval_issue | `azsdk release-plan link-namespace-approval` | Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id. |
@@ -104,4 +104,3 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file |
 |  | `azsdk list` |  |
-

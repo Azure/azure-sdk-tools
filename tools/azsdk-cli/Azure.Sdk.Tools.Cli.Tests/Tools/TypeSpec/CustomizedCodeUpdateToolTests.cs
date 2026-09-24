@@ -15,7 +15,7 @@ using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec;
 
 [TestFixture]
-public class CustomizedCodeUpdateToolAutoTests
+public partial class CustomizedCodeUpdateToolAutoTests
 {
     // --- Shared helpers ---
 
@@ -2455,6 +2455,9 @@ public class CustomizedCodeUpdateToolAutoTests
 
         public override SdkLanguage Language { get; }
         public override bool IsCustomizedCodeUpdateSupported => _isCustomizedCodeUpdateSupported;
+        public int RepairSessions { get; private set; }
+        public List<string> ValidationReasons { get; } = [];
+        public bool SkipAgentValidation { get; set; }
 
         public ConfigurableLanguageService(
             Func<(bool, string?, PackageInfo?)>? buildFunc = null,
@@ -2483,6 +2486,27 @@ public class CustomizedCodeUpdateToolAutoTests
 
         public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct)
             => Task.FromResult(_patchesFunc?.Invoke() ?? new List<AppliedPatch>());
+
+        public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+            string customizationRoot, string packagePath, string buildContext, CancellationToken ct,
+            int maxAttempts, Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
+        {
+            RepairSessions++;
+            List<AppliedPatch> patches = [];
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                patches.AddRange(await ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct));
+                if (SkipAgentValidation || validateResult == null) { return patches; }
+                try
+                {
+                    var validation = await validateResult(patches);
+                    if (validation.Success) { return patches; }
+                    ValidationReasons.Add(validation.Reason?.ToString() ?? "");
+                }
+                catch (InvalidOperationException) { return patches; }
+            }
+            return patches;
+        }
 
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
             => Task.FromResult(ValidationResult.CreateSuccess());

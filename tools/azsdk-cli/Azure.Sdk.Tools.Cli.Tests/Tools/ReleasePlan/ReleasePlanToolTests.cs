@@ -1,3 +1,4 @@
+using System.Globalization;
 using Moq;
 using Moq.Protected;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -26,6 +27,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private ReleasePlanTool releasePlanTool;
         private IInputSanitizer inputSanitizer;
         private HttpClient httpClient;
+        // Keep existing historical target-month fixtures independent of the wall clock.
+        private readonly TimeProvider _timeProvider = new FixedTimeProvider(new DateTimeOffset(2025, 6, 15, 0, 0, 0, TimeSpan.Zero));
 
         [SetUp]
         public void Setup()
@@ -85,7 +88,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 httpClient,
                 Mock.Of<INpxHelper>(),
                 Mock.Of<IRawOutputHelper>(),
-                Mock.Of<INotificationService>());
+                Mock.Of<INotificationService>(),
+                _timeProvider);
         }
 
         [Test]
@@ -274,7 +278,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelper,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var releaseplan = await languageRepoReleasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
@@ -325,7 +329,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelperMock.Object,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -365,7 +369,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelperMock.Object,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -573,7 +577,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Act
             var releaseplan = await tool.CreateReleasePlan(null,
                 testCodeFilePath, 
-                "July 2025", 
+                "October 2026",
                 "GA", 
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", 
                 isTestReleasePlan: true);
@@ -671,7 +675,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelper,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
@@ -716,7 +720,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelper,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
@@ -745,6 +749,110 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNull(releaseplan.ResponseError);
             Assert.IsNotNull(releaseplan.ReleasePlanDetails);
             Assert.That(releaseplan.Message, Does.Contain("Successfully retrieved release plan"));
+        }
+
+        [TestCase("work-item")]
+        [TestCase("release-plan")]
+        [TestCase("spec-pr")]
+        [TestCase("typespec")]
+        [TestCase("api-version")]
+        public async Task Test_Get_Release_Plan_omits_sdk_pr_status_without_fetching_github_for_each_identifier(string identifier)
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            const string specPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            const string apiVersion = "2026-07-03-preview";
+            (string Language, string Repository, string StoredStatus)[] sdks =
+            [
+                (".NET", "azure-sdk-for-net", "Merged"),
+                ("JavaScript", "azure-sdk-for-js", "Ready for review"),
+                ("Python", "azure-sdk-for-python", "Failed to generate SDK"),
+                ("Java", "azure-sdk-for-java", "Closed"),
+                ("Go", "azure-sdk-for-go", "")
+            ];
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 777,
+                ReleasePlanId = 77,
+                // The missing project path produces existing spec guidance that must be retained.
+                ActiveSpecPullRequest = specPullRequestUrl,
+                SDKInfo = sdks.Select(sdk => new SDKInfo
+                {
+                    Language = sdk.Language,
+                    SdkPullRequestUrl = $"https://github.com/Azure/{sdk.Repository}/pull/1",
+                    PullRequestStatus = sdk.StoredStatus,
+                    GenerationStatus = "Completed",
+                    ReleaseStatus = "Pending"
+                }).ToList()
+            };
+            var mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
+            mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(777, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, It.IsAny<bool>(), ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            var mockGitHub = new Mock<IGitHubService>(MockBehavior.Strict);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, mockGitHub.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = identifier switch
+            {
+                "work-item" => await tool.GetReleasePlan(workItemId: 777),
+                "release-plan" => await tool.GetReleasePlan(releasePlanId: 77),
+                "spec-pr" => await tool.GetReleasePlan(specPullRequestUrl: specPullRequestUrl),
+                "typespec" => await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath),
+                _ => await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath, apiReleaseType: "Public Preview", apiVersion: apiVersion)
+            };
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.Warnings, Is.Null);
+            Assert.That(response.NextSteps, Has.Some.Contains("set the TypeSpec project path"));
+            Assert.That(response.NextSteps, Has.Some.Contains("release plan dashboard").And.Contains("not current PR status"));
+            Assert.That(new OutputHelper(OutputHelper.OutputModes.Plain).Format(response), Does.Contain("release plan dashboard").And.Contain(response.ReleasePlanLink));
+
+            using var document = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Json).Format(response));
+            var sdkDetails = document.RootElement.GetProperty("release_plan_details").GetProperty("SDKInfo");
+            Assert.That(sdkDetails.GetArrayLength(), Is.EqualTo(sdks.Length));
+            for (var index = 0; index < sdks.Length; index++)
+            {
+                Assert.That(sdkDetails[index].TryGetProperty("PullRequestStatus", out _), Is.False);
+                Assert.That(sdkDetails[index].GetProperty("SdkPullRequestUrl").GetString(), Is.EqualTo(releasePlan.SDKInfo[index].SdkPullRequestUrl));
+                Assert.That(sdkDetails[index].GetProperty("GenerationStatus").GetString(), Is.EqualTo("Completed"));
+                Assert.That(sdkDetails[index].GetProperty("ReleaseStatus").GetString(), Is.EqualTo("Pending"));
+                Assert.That(response.ReleasePlanDetails!.SDKInfo[index].PullRequestStatus, Is.EqualTo(sdks[index].StoredStatus), "Stored PR status remains available to internal release-plan selection.");
+            }
+            Assert.That(mockDevOps.Invocations, Has.Count.EqualTo(1), "Reading the plan must not write SDK PR status back to Azure DevOps.");
+            mockGitHub.VerifyNoOtherCalls();
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("  ")]
+        public async Task Test_Get_Release_Plan_omits_stored_pr_status_even_without_pr_url(string? prUrl)
+        {
+            var sdk = new SDKInfo
+            {
+                Language = "Python",
+                SdkPullRequestUrl = prUrl!,
+                PullRequestStatus = "Failed to generate SDK",
+                GenerationStatus = "Completed"
+            };
+            var mockGitHub = new Mock<IGitHubService>(MockBehavior.Strict);
+            var mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ReleasePlanWorkItem { ReleasePlanId = 77, SDKInfo = [sdk] });
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, mockGitHub.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.GetReleasePlan(releasePlanId: 77);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.Warnings, Is.Null);
+            Assert.That(response.NextSteps, Is.Null);
+            Assert.That(response.ReleasePlanDetails!.SDKInfo.Single().PullRequestStatus, Is.EqualTo("Failed to generate SDK"));
+            Assert.That(response.ReleasePlanDetails.SDKInfo.Single().GenerationStatus, Is.EqualTo("Completed"));
+            using var document = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Mcp).Format(response));
+            Assert.That(document.RootElement.GetProperty("release_plan_details").GetProperty("SDKInfo")[0].TryGetProperty("PullRequestStatus", out _), Is.False);
+            mockGitHub.VerifyNoOtherCalls();
+            mockDevOps.Verify(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -1047,11 +1155,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ResponseError, Does.Contain("Failed to get release plan details"));
         }
 
-        private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
+        private sealed class FixedTimeProvider(DateTimeOffset now, TimeZoneInfo? localTimeZone = null) : TimeProvider
         {
             public override DateTimeOffset GetUtcNow() => now;
 
-            public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
+            public override TimeZoneInfo LocalTimeZone => localTimeZone ?? TimeZoneInfo.Utc;
         }
 
         [Test]
@@ -2234,6 +2342,122 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(result.TypeSpecProject);
         }
 
+        // ======================== Target Month Validation Tests ========================
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase(" \t ")]
+        [TestCase("2026-10")]
+        [TestCase("10/2026")]
+        [TestCase("September")]
+        [TestCase("September 26")]
+        [TestCase("September 0000")]
+        [TestCase("September 10000")]
+        [TestCase("NotAMonth 2026")]
+        [TestCase("Sep 2026")]
+        [TestCase("September 17, 2026")]
+        [TestCase("2026-09-17")]
+        [TestCase("September 2026 extra")]
+        public async Task Test_ReleasePlanTools_reject_malformed_target_month_before_side_effects(string? targetMonth)
+        {
+            var now = new DateTimeOffset(2026, 9, 17, 12, 0, 0, TimeSpan.Zero);
+            var expectedError = string.IsNullOrWhiteSpace(targetMonth) ? "SDK release target month is required" : "Month YYYY";
+
+            await AssertTargetReleaseMonthRejected(targetMonth, now, expectedError);
+        }
+
+        [TestCase("2026-09-17T12:00:00Z", "September 2025")]
+        [TestCase("2026-09-17T12:00:00Z", "August 2026")]
+        [TestCase("2026-09-01T00:00:00Z", "August 2026")]
+        [TestCase("2027-01-01T00:00:00Z", "December 2026")]
+        [TestCase("2026-12-31T23:59:59Z", "January 2026")]
+        [TestCase("2028-02-29T23:59:59Z", "January 2028")]
+        [SetCulture("fr-FR")]
+        public async Task Test_ReleasePlanTools_reject_past_target_month_before_side_effects(string utcNow, string targetMonth)
+        {
+            var now = DateTimeOffset.Parse(utcNow, CultureInfo.InvariantCulture);
+            var expectedError = $"{now.ToString("MMMM yyyy", CultureInfo.InvariantCulture)} or later";
+
+            await AssertTargetReleaseMonthRejected(targetMonth, now, expectedError);
+        }
+
+        private async Task AssertTargetReleaseMonthRejected(string? targetMonth, DateTimeOffset now, string expectedError)
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var mockTypeSpec = new Mock<ITypeSpecHelper>();
+            var mockNotification = new Mock<INotificationService>();
+            var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+            var localTimeZone = TimeZoneInfo.CreateCustomTimeZone("UTC-08", TimeSpan.FromHours(-8), "UTC-08", "UTC-08");
+            var clock = new FixedTimeProvider(now, localTimeZone);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpec.Object, logger, userHelper, gitHubService,
+                environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), mockNotification.Object, clock);
+
+            var createResponse = await tool.CreateReleasePlan(mockProgress.Object,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", targetMonth!, "GA");
+            var testCreateResponse = await tool.CreateReleasePlan(mockProgress.Object,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", targetMonth!, "GA", isTestReleasePlan: true);
+            var updateResponse = await tool.UpdateReleasePlanTarget(36557, targetMonth!);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(createResponse.ResponseError, Does.Contain(expectedError), "Create must reject the target month.");
+                Assert.That(testCreateResponse.ResponseError, Does.Contain(expectedError), "Test plans must use the same validation.");
+                Assert.That(updateResponse.ResponseError, Does.Contain(expectedError), "Update must reject the target month.");
+                Assert.That(createResponse.ReleasePlanDetails, Is.Null);
+                Assert.That(testCreateResponse.ReleasePlanDetails, Is.Null);
+                Assert.That(updateResponse.ReleasePlanDetails, Is.Null);
+                Assert.That(mockDevOps.Invocations, Is.Empty, "Invalid targets must not trigger work-item reads or writes.");
+                Assert.That(mockTypeSpec.Invocations, Is.Empty, "Invalid targets must not trigger TypeSpec processing.");
+                Assert.That(mockNotification.Invocations, Is.Empty, "Invalid targets must not send notifications.");
+                Assert.That(mockProgress.Invocations, Is.Empty, "Invalid targets must not report creation progress.");
+                Assert.That(Mock.Get(userHelper).Invocations, Is.Empty, "Invalid targets must not require authentication.");
+            });
+        }
+
+        [TestCase("2026-09-01T00:00:00Z", "September 2026")]
+        [TestCase("2026-09-17T12:00:00Z", "October 2026")]
+        [TestCase("2026-09-30T23:59:59Z", "September 2026")]
+        [TestCase("2026-09-30T23:59:59Z", "October 2026")]
+        [TestCase("2026-12-31T23:59:59Z", "December 2026")]
+        [TestCase("2026-12-31T23:59:59Z", "January 2027")]
+        [TestCase("2027-01-01T00:00:00Z", "January 2027")]
+        [TestCase("2027-01-01T00:00:00Z", "December 2027")]
+        [TestCase("2028-02-29T23:59:59Z", "February 2028")]
+        [TestCase("2028-02-29T23:59:59Z", "March 2028")]
+        [SetCulture("fr-FR")]
+        public async Task Test_ReleasePlanTools_accept_current_or_future_target_month(string utcNow, string targetMonth)
+        {
+            var now = DateTimeOffset.Parse(utcNow, CultureInfo.InvariantCulture);
+            var localTimeZone = TimeZoneInfo.CreateCustomTimeZone("UTC+14", TimeSpan.FromHours(14), "UTC+14", "UTC+14");
+            var clock = new FixedTimeProvider(now, localTimeZone);
+            var createTool = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService,
+                environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), clock);
+
+            var createResponse = await createTool.CreateReleasePlan(null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", targetMonth, "GA", isTestReleasePlan: true);
+
+            Assert.That(createResponse.ResponseError, Is.Null);
+            Assert.That(createResponse.ReleasePlanDetails?.SDKReleaseMonth, Is.EqualTo(targetMonth), "Creation must preserve the requested target.");
+
+            var mockDevOps = new Mock<IDevOpsService>();
+            var existingPlan = new ReleasePlanWorkItem { WorkItemId = 36557, ReleasePlanId = 57, SDKReleaseMonth = "September 2025" };
+            mockDevOps.Setup(s => s.ResolveReleasePlanByIdAsync(57, It.IsAny<CancellationToken>())).ReturnsAsync(existingPlan);
+            mockDevOps.Setup(s => s.UpdateWorkItemAsync(36557, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) => existingPlan.SDKReleaseMonth = fields["Custom.SDKReleasemonth"])
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 36557 });
+            mockDevOps.Setup(s => s.GetReleasePlanForWorkItemAsync(36557, It.IsAny<CancellationToken>())).ReturnsAsync(existingPlan);
+            var updateTool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService,
+                environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), clock);
+
+            var updateResponse = await updateTool.UpdateReleasePlanTarget(57, targetMonth);
+
+            Assert.That(updateResponse.ResponseError, Is.Null);
+            Assert.That(updateResponse.ReleasePlanDetails?.SDKReleaseMonth, Is.EqualTo(targetMonth), "An existing past-due plan must be repairable.");
+            mockDevOps.Verify(s => s.UpdateWorkItemAsync(36557,
+                It.Is<Dictionary<string, string>>(fields => fields.Count == 1 && fields["Custom.SDKReleasemonth"] == targetMonth),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
         // ======================== UpdateReleasePlanTarget Tests ========================
 
         [Test]
@@ -2273,7 +2497,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var tool = new ReleasePlanTool(
                 mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper,
-                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
 
             var result = await tool.UpdateReleasePlanTarget(workItemId: 999, targetReleaseMonthYear: "January 2026");
 
@@ -2485,7 +2709,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
         private ReleasePlanTool CreateReleasePlanToolWithNotificationService(INotificationService notificationService)
         {
-            return new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationService);
+            return new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationService, _timeProvider);
         }
 
         /// <summary>

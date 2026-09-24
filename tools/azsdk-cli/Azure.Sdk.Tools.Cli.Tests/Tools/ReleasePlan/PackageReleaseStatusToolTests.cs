@@ -1,11 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Notification;
+using Azure.Sdk.Tools.Cli.Services.Notification.Templates;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
@@ -14,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
     internal class PackageReleaseStatusToolTests
     {
         private Mock<IDevOpsService> mockDevOpsService;
+        private Mock<INotificationService> mockNotificationService;
         private TestLogger<PackageReleaseStatusTool> logger;
         private PackageReleaseStatusTool packageReleaseStatusTool;
 
@@ -21,8 +26,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public void Setup()
         {
             mockDevOpsService = new Mock<IDevOpsService>();
+            mockDevOpsService
+                .Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
             logger = new TestLogger<PackageReleaseStatusTool>();
-            packageReleaseStatusTool = new PackageReleaseStatusTool(mockDevOpsService.Object, logger);
+            mockNotificationService = new Mock<INotificationService>();
+            packageReleaseStatusTool = new PackageReleaseStatusTool(mockDevOpsService.Object, logger, mockNotificationService.Object);
         }
 
         [Test]
@@ -1179,6 +1189,488 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
             Assert.That(result.ReleasePlanFinished, Is.False);
             Assert.That(result.Message, Does.Contain("failed to auto-finish"));
+            mockDevOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+            VerifyNoAutomation();
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_FinishedManagementPlan_QueuesNearestNewerReleasePlan()
+        {
+            var finishedReleasePlan = CreateCompleteManagementPlaneReleasePlan("2025-01-01-preview");
+            var nearestNewerPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 200,
+                ReleasePlanId = 200,
+                Status = "In Progress",
+                APISpecProjectPath = finishedReleasePlan.APISpecProjectPath,
+                SpecAPIVersion = "2025-01-01",
+                ApiReleaseType = ApiReleaseType.GA
+            };
+            var laterPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 300,
+                ReleasePlanId = 300,
+                Status = "In Progress",
+                APISpecProjectPath = finishedReleasePlan.APISpecProjectPath,
+                SpecAPIVersion = "2025-06-01-preview",
+                ApiReleaseType = ApiReleaseType.PublicPreview
+            };
+
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansForPackageAsync(
+                    "azure-test", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([finishedReleasePlan]);
+            mockDevOpsService
+                .Setup(x => x.UpdateWorkItemAsync(
+                    finishedReleasePlan.WorkItemId,
+                    It.IsAny<Dictionary<string, string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = finishedReleasePlan.WorkItemId });
+            mockDevOpsService
+                .Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    finishedReleasePlan.APISpecProjectPath,
+                    ApiReleaseType.Unknown,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync([laterPlan, nearestNewerPlan]);
+            mockDevOpsService
+                .Setup(x => x.RunPipelineAsync(
+                    8254,
+                    It.IsAny<Dictionary<string, string>>(),
+                    "main",
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Build { Id = 9876 });
+
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
+                "azure-test", "python", "Released", null, ct: CancellationToken.None);
+
+            Assert.That(result.ReleasePlanFinished, Is.True);
+            Assert.That(result.ReleasePlanAutomationTriggered, Is.True);
+            Assert.That(result.QueuedReleasePlanId, Is.EqualTo(200));
+            Assert.That(result.ReleasePlanAutomationPipelineUrl, Does.Contain("buildId=9876"));
+            mockDevOpsService.Verify(x => x.EnsureReleasePlanAutomationRelationAsync(
+                nearestNewerPlan.WorkItemId, finishedReleasePlan.WorkItemId, It.IsAny<CancellationToken>()), Times.Once);
+            mockNotificationService.Verify(x => x.SendEmailNotificationAsync(
+                It.Is<EmailPayload>(email => email is ReleasePlanSdkGenerationEmail
+                    && email.Body.Contains("?releasePlan=100")
+                    && email.Body.Contains("?releasePlan=200")),
+                It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOpsService.Verify(x => x.RunPipelineAsync(
+                8254,
+                It.Is<Dictionary<string, string>>(parameters =>
+                    parameters.Count == 1 && parameters["ReleasePlanId"] == "200"),
+                "main",
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_FinishedDataPlane_DoesNotQueueAutomation()
+        {
+            var releasePlan = CreateCompleteManagementPlaneReleasePlan("2025-01-01");
+            releasePlan.IsManagementPlane = false;
+            releasePlan.IsDataPlane = true;
+
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansForPackageAsync(
+                    "azure-test", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([releasePlan]);
+            mockDevOpsService
+                .Setup(x => x.UpdateWorkItemAsync(
+                    releasePlan.WorkItemId,
+                    It.IsAny<Dictionary<string, string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = releasePlan.WorkItemId });
+
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
+                "azure-test", "python", "Released", null, ct: CancellationToken.None);
+
+            Assert.That(result.ReleasePlanFinished, Is.True);
+            Assert.That(result.ReleasePlanAutomationTriggered, Is.False);
+            mockDevOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOpsService.Verify(x => x.RunPipelineAsync(
+                It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_AutomationFailure_PreservesFinishedResult()
+        {
+            var finishedReleasePlan = CreateCompleteManagementPlaneReleasePlan("2025-01-01");
+            var newerPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 200,
+                ReleasePlanId = 200,
+                Status = "In Progress",
+                SpecAPIVersion = "2025-02-01-preview",
+                ApiReleaseType = ApiReleaseType.PublicPreview
+            };
+
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansForPackageAsync(
+                    "azure-test", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([finishedReleasePlan]);
+            mockDevOpsService
+                .Setup(x => x.UpdateWorkItemAsync(
+                    finishedReleasePlan.WorkItemId,
+                    It.IsAny<Dictionary<string, string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = finishedReleasePlan.WorkItemId });
+            mockDevOpsService
+                .Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    finishedReleasePlan.APISpecProjectPath,
+                    ApiReleaseType.Unknown,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync([newerPlan]);
+            mockDevOpsService
+                .Setup(x => x.RunPipelineAsync(
+                    8254,
+                    It.IsAny<Dictionary<string, string>>(),
+                    "main",
+                    It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Pipeline unavailable"));
+
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
+                "azure-test", "python", "Released", null, ct: CancellationToken.None);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanFinished, Is.True);
+            Assert.That(result.ReleasePlanAutomationTriggered, Is.False);
+            Assert.That(result.Message, Does.Contain("could not be queued"));
+            Assert.That(result.NextSteps, Has.Some.Contains("azsdk agent"));
+            mockNotificationService.Verify(x => x.SendEmailNotificationAsync(
+                It.Is<EmailPayload>(email => email.Subject.Contains("Action required")
+                    && email.Body.Contains("unable to queue")
+                    && email.Body.Contains("azsdk agent")
+                    && email.Body.Contains("?releasePlan=200")),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_RejectsIneligibleAndInvalidCandidates()
+        {
+            var finishedReleasePlan = CreateCompleteManagementPlaneReleasePlan("2025-01-01");
+            var candidates = new[]
+            {
+                new ReleasePlanWorkItem { WorkItemId = 101, ReleasePlanId = 101, Status = "Not Started", SpecAPIVersion = "2025-02-01", ApiReleaseType = ApiReleaseType.GA },
+                new ReleasePlanWorkItem { WorkItemId = 102, ReleasePlanId = 102, Status = "In Progress", SpecAPIVersion = "2025-02-01", ApiReleaseType = ApiReleaseType.PrivatePreview },
+                new ReleasePlanWorkItem { WorkItemId = 103, ReleasePlanId = 103, Status = "In Progress", SpecAPIVersion = "invalid", ApiReleaseType = ApiReleaseType.GA },
+                new ReleasePlanWorkItem { WorkItemId = 104, ReleasePlanId = 104, Status = "In Progress", SpecAPIVersion = "2024-12-01", ApiReleaseType = ApiReleaseType.GA }
+            };
+
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansForPackageAsync(
+                    "azure-test", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([finishedReleasePlan]);
+            mockDevOpsService
+                .Setup(x => x.UpdateWorkItemAsync(
+                    finishedReleasePlan.WorkItemId,
+                    It.IsAny<Dictionary<string, string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = finishedReleasePlan.WorkItemId });
+            mockDevOpsService
+                .Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    finishedReleasePlan.APISpecProjectPath,
+                    ApiReleaseType.Unknown,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync([.. candidates]);
+
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
+                "azure-test", "python", "Released", null, ct: CancellationToken.None);
+
+            Assert.That(result.ReleasePlanFinished, Is.True);
+            Assert.That(result.ReleasePlanAutomationTriggered, Is.False);
+            Assert.That(result.Warnings, Has.Some.Contains("103"));
+            Assert.That(result.Message, Does.Contain("valid metadata"));
+            mockDevOpsService.Verify(x => x.RunPipelineAsync(
+                It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        private static ReleasePlanWorkItem CreateCompleteManagementPlaneReleasePlan(string apiVersion)
+        {
+            return new ReleasePlanWorkItem
+            {
+                WorkItemId = 12345,
+                ReleasePlanId = 100,
+                Status = "In Progress",
+                IsManagementPlane = true,
+                APISpecProjectPath = "specification/test/Contoso.Management",
+                SpecAPIVersion = apiVersion,
+                SDKInfo =
+                [
+                    new SDKInfo { Language = ".NET", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Java", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Python", ReleaseStatus = "", PullRequestStatus = "Merged" },
+                    new SDKInfo { Language = "JavaScript", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Go", ReleaseStatus = "Released" }
+                ]
+            };
+        }
+
+        private ReleasePlanWorkItem ConfigureAutomation(string currentVersion = "2025-01-01", string nextVersion = "2025-02-01")
+        {
+            var completed = CreateCompleteManagementPlaneReleasePlan(currentVersion);
+            completed.IsTestReleasePlan = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var testing) && testing;
+            var next = new ReleasePlanWorkItem
+            {
+                WorkItemId = 23456,
+                ReleasePlanId = 200,
+                Status = "In Progress",
+                IsManagementPlane = true,
+                IsTestReleasePlan = completed.IsTestReleasePlan,
+                APISpecProjectPath = completed.APISpecProjectPath,
+                ApiReleaseType = ApiReleaseType.PublicPreview,
+                SpecAPIVersion = nextVersion,
+                ReleasePlanSubmittedByEmail = "submitter@microsoft.com"
+            };
+            mockDevOpsService.Setup(x => x.GetReleasePlansForPackageAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([completed]);
+            mockDevOpsService.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                completed.APISpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>()))
+                .ReturnsAsync([next]);
+            mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(
+                completed.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = completed.WorkItemId });
+            mockDevOpsService.Setup(x => x.RunPipelineAsync(
+                8254, It.IsAny<Dictionary<string, string>>(), "main", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Build { Id = 9876 });
+            return completed;
+        }
+
+        private void VerifyNoAutomation()
+        {
+            mockDevOpsService.Verify(x => x.RunPipelineAsync(
+                It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockNotificationService.Verify(x => x.SendEmailNotificationAsync(
+                It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase(false, false)]
+        [TestCase(false, true)]
+        public async Task UpdatePackageReleaseStatus_DisabledPlane_DoesNotQueue(bool management, bool data)
+        {
+            var completed = ConfigureAutomation();
+            completed.IsManagementPlane = management;
+            completed.IsDataPlane = data;
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.ReleasePlanFinished, Is.True);
+            Assert.That(response.Message, Does.Contain("only for management-plane"));
+            VerifyNoAutomation();
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_LinksBeforeQueueingAndNotifiesAfterQueueing()
+        {
+            var completed = ConfigureAutomation();
+            var calls = new List<string>();
+            mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(
+                completed.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) =>
+                    calls.Add(fields.ContainsKey("System.State") ? "finish" : "release"))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = completed.WorkItemId });
+            mockDevOpsService.Setup(x => x.EnsureReleasePlanAutomationRelationAsync(
+                23456, completed.WorkItemId, It.IsAny<CancellationToken>()))
+                .Callback(() => calls.Add("relate")).Returns(Task.CompletedTask);
+            mockDevOpsService.Setup(x => x.RunPipelineAsync(
+                8254, It.IsAny<Dictionary<string, string>>(), "main", It.IsAny<CancellationToken>()))
+                .Callback(() => calls.Add("queue")).ReturnsAsync(new Build { Id = 9876 });
+            mockNotificationService.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .Callback(() => calls.Add("notify")).Returns(Task.CompletedTask);
+
+            await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(calls, Is.EqualTo(new[] { "release", "finish", "relate", "queue", "notify" }));
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_RelationFailure_NotifiesWithoutQueueing()
+        {
+            ConfigureAutomation();
+            mockDevOpsService.Setup(x => x.EnsureReleasePlanAutomationRelationAsync(
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Relation denied"));
+
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.ReleasePlanFinished, Is.True);
+            Assert.That(response.Message, Does.Contain("Relation denied"));
+            Assert.That(response.NextSteps, Has.Some.Contains("azsdk agent"));
+            mockDevOpsService.Verify(x => x.RunPipelineAsync(
+                It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockNotificationService.Verify(x => x.SendEmailNotificationAsync(
+                It.Is<EmailPayload>(email => email.Subject.Contains("Action required")
+                    && email.Body.Contains("unable to queue")),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_LookupFailure_ReportsFailureWithoutQueueing()
+        {
+            ConfigureAutomation();
+            mockDevOpsService.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Lookup unavailable"));
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.ReleasePlanFinished, Is.True);
+            Assert.That(response.Message, Does.Contain("Lookup unavailable"));
+            Assert.That(response.NextSteps, Has.Some.Contains("azsdk agent"));
+            VerifyNoAutomation();
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_NoCandidates_IsSuccessfulNoOp()
+        {
+            ConfigureAutomation();
+            mockDevOpsService.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.Message, Does.Contain("No newer"));
+            Assert.That(response.Warnings, Is.Null);
+            Assert.That(response.NextSteps, Is.Null);
+            VerifyNoAutomation();
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_NotificationFailure_DoesNotMisreportQueueFailure()
+        {
+            ConfigureAutomation();
+            mockNotificationService.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Email unavailable"));
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.ReleasePlanAutomationTriggered, Is.True);
+            Assert.That(response.ReleasePlanAutomationPipelineUrl, Does.Contain("buildId=9876"));
+            Assert.That(response.Warnings, Has.Some.Contains("notification failed"));
+            Assert.That(response.NextSteps, Is.Null);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public async Task UpdatePackageReleaseStatus_QueueOutcome_IsAccurateInPlainAndJson(bool queued)
+        {
+            ConfigureAutomation();
+            if (!queued)
+            {
+                mockDevOpsService.Setup(x => x.RunPipelineAsync(
+                    8254, It.IsAny<Dictionary<string, string>>(), "main", It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new InvalidOperationException("Queue unavailable"));
+            }
+
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
+            Assert.That(json.RootElement.GetProperty("release_plan_finished").GetBoolean(), Is.True);
+            if (queued)
+            {
+                Assert.That(json.RootElement.GetProperty("release_plan_automation_triggered").GetBoolean(), Is.True);
+                Assert.That(json.RootElement.GetProperty("queued_release_plan_id").GetInt32(), Is.EqualTo(200));
+                Assert.That(json.RootElement.GetProperty("release_plan_automation_pipeline_url").GetString(), Does.Contain("buildId=9876"));
+                Assert.That(response.ToString(), Does.Contain("Queued release plan 200"));
+            }
+            else
+            {
+                Assert.That(json.RootElement.TryGetProperty("release_plan_automation_triggered", out _), Is.False);
+                Assert.That(json.RootElement.TryGetProperty("queued_release_plan_id", out _), Is.False);
+                Assert.That(json.RootElement.TryGetProperty("release_plan_automation_pipeline_url", out _), Is.False);
+                Assert.That(response.ToString(), Does.Contain("Queue unavailable").And.Contain("azsdk agent"));
+                Assert.That(response.ToString(), Does.Not.Contain("Queued release plan"));
+            }
+            mockNotificationService.Verify(x => x.SendEmailNotificationAsync(
+                It.Is<EmailPayload>(email => email.Subject.StartsWith("Action required") == !queued),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_MissingProjectPath_ReportsMetadataError()
+        {
+            var completed = ConfigureAutomation();
+            completed.APISpecProjectPath = "";
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.ReleasePlanFinished, Is.True);
+            Assert.That(response.Message, Does.Contain("no TypeSpec project path"));
+            mockDevOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+            VerifyNoAutomation();
+        }
+
+        [TestCase("2025-01-01", "2025-02-01", true)]
+        [TestCase("2025-02-01", "2025-01-01", false)]
+        [TestCase("2025-01-01-preview", "2025-01-01", true)]
+        [TestCase("2025-01-01", "2025-01-01-preview", false)]
+        [TestCase("2025-01-01", "2025-01-01", false)]
+        [TestCase("2025-01-01-preview", "2025-01-01-preview", false)]
+        [TestCase("2025-01-01", "2025-02-01-preview", true)]
+        [TestCase("2024-12-31", "2025-01-01-preview", true)]
+        [TestCase("2024-02-28", "2024-02-29", true)]
+        public async Task UpdatePackageReleaseStatus_VersionOrdering(string current, string next, bool expected)
+        {
+            ConfigureAutomation(current, next);
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.ReleasePlanAutomationTriggered, Is.EqualTo(expected));
+            if (!expected)
+            {
+                VerifyNoAutomation();
+            }
+        }
+
+        [TestCase("")]
+        [TestCase(null)]
+        [TestCase("invalid")]
+        [TestCase("2025-02-29")]
+        [TestCase("2025-2-01")]
+        [TestCase("2025-02-01-beta")]
+        public async Task UpdatePackageReleaseStatus_InvalidCandidateVersion_IsVisibleInPlainAndJson(string? version)
+        {
+            ConfigureAutomation(nextVersion: version!);
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.Warnings, Has.Some.Contains("Skipped release plan 200"));
+            Assert.That(response.ToString(), Does.Contain("[WARNING]"));
+            using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
+            Assert.That(json.RootElement.GetProperty("warnings").GetArrayLength(), Is.EqualTo(1));
+            Assert.That(response.Message, Does.Contain("correct the release plan metadata"));
+            VerifyNoAutomation();
+        }
+
+        [TestCase("")]
+        [TestCase("invalid")]
+        [TestCase("2025-02-29")]
+        public async Task UpdatePackageReleaseStatus_InvalidCompletedVersion_ReportsMetadataError(string version)
+        {
+            ConfigureAutomation(currentVersion: version);
+            var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+            Assert.That(response.ReleasePlanFinished, Is.True);
+            Assert.That(response.Message, Does.Contain("invalid API version"));
+            Assert.That(response.Message, Does.Not.Contain("No newer"));
+            Assert.That(response.NextSteps, Has.Some.Contains("azsdk agent"));
+            VerifyNoAutomation();
+        }
+
+        [TestCase("finish")]
+        [TestCase("lookup")]
+        [TestCase("queue")]
+        public void UpdatePackageReleaseStatus_Cancellation_Propagates(string stage)
+        {
+            var completed = ConfigureAutomation();
+            using var cts = new CancellationTokenSource();
+            if (stage == "finish")
+            {
+                mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(
+                    completed.WorkItemId, It.Is<Dictionary<string, string>>(d => d.ContainsKey("System.State")), cts.Token))
+                    .Callback(() => cts.Cancel()).ThrowsAsync(new OperationCanceledException(cts.Token));
+            }
+            else if (stage == "lookup")
+            {
+                mockDevOpsService.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    completed.APISpecProjectPath, ApiReleaseType.Unknown, cts.Token))
+                    .Callback(() => cts.Cancel()).ThrowsAsync(new OperationCanceledException(cts.Token));
+            }
+            else
+            {
+                mockDevOpsService.Setup(x => x.RunPipelineAsync(
+                    8254, It.IsAny<Dictionary<string, string>>(), "main", cts.Token))
+                    .Callback(() => cts.Cancel()).ThrowsAsync(new OperationCanceledException(cts.Token));
+            }
+            Assert.ThrowsAsync<OperationCanceledException>(() =>
+                packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null, ct: cts.Token));
+            mockNotificationService.Verify(x => x.SendEmailNotificationAsync(
+                It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -1275,6 +1767,3 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
     }
 }
-
-
-

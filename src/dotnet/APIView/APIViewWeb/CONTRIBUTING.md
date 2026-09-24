@@ -93,7 +93,7 @@ Create following Azure resources in your Azure subscription.
 ### Clone source code repo 
 - Create a new fork of GitHub repo [azure-sdk-tools](https://github.com/Azure/azure-sdk-tools)
 - Clone forked repo to development machine.
-- Create a new branch from `main` branch of cloned source repo.
+- Create a new branch from the `apiview/main` branch of the cloned source repo.
 
 
 ### Setup debugging instance using Visual Studio
@@ -211,7 +211,7 @@ Happy coding!!!!
 
  Parser version should always be incremented if change is at parser level and if that change is required to be reflected on existing reviews as well. Existing reviews are refreshed to reflect the changes as a backend task if parser version is changed. So, this won't reflect immediately.
 
- Create a GitHub pull request for the changes to merge it to main branch if code changes are ready and tested thoroughly.
+ Create a GitHub pull request targeting the `apiview/main` branch if code changes are ready and tested thoroughly.
  
 
 ## Deployment to Production

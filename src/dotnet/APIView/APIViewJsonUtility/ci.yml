@@ -13,7 +13,7 @@ trigger:
 pr:
   branches:
     include:
-      - main
+      - apiview/main
       - feature/*
       - release/*
       - hotfix/*

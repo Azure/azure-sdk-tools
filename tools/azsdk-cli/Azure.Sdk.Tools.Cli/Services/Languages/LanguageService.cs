@@ -809,7 +809,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
                 if (!string.IsNullOrEmpty(additionalArguments))
                 {
-                    processOptions.Args.Add(additionalArguments);
+                    var additionalArgs = specGenSdkConfigHelper.ParseCommand(additionalArguments);
+                    processOptions.Args.AddRange(additionalArgs);
                 }
 
                 // Execute the build process directly

@@ -3,6 +3,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Notification;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
@@ -705,6 +706,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(result.SpecCommitSHA, Is.EqualTo(commitSha ?? ""));
             Assert.That(result.SpecAPIVersion, Is.EqualTo(SpecApiVersion));
             Assert.That(result.ActiveSpecPullRequest, Is.EqualTo(SpecPullRequest));
+            Assert.That(result.TargetRevision, Is.EqualTo("100:1:200:1"), "The preview precondition must include both record identities and revisions, even when the pin is missing.");
             Assert.That(_connection.CapturedPatches, Is.Empty);
         }
 
@@ -896,6 +898,99 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #endregion
 
         #region UpdateConfirmedReleaseTargetAsync Tests
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase(" ")]
+        public void UpdateConfirmedReleaseTargetAsync_RequiresPreviewRevision(string? expectedRevision)
+        {
+            var target = CreateConfirmedReleaseTarget(SpecPullRequest);
+            target.ExpectedTargetRevision = expectedRevision;
+
+            var error = Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.UpdateConfirmedReleaseTargetAsync(
+                100, target, SpecCommit, [], [], CancellationToken.None));
+
+            Assert.That(error!.Message, Does.Contain("ExpectedTargetRevision"));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
+        }
+
+        [TestCase("parent-type")]
+        [TestCase("parent-project")]
+        [TestCase("parent-package")]
+        [TestCase("parent-aba")]
+        [TestCase("child-link")]
+        [TestCase("child-version")]
+        [TestCase("child-identity")]
+        public async Task UpdateConfirmedReleaseTargetAsync_RejectsSamePinChangesBeforeAnyWrite(string change)
+        {
+            var plan = CreateReleasePlanForConfirmedUpdate(SpecCommit);
+            var spec = CreateApiSpecWorkItemWithVersion(200, SpecPullRequest, "Active", ConfirmedApiVersion);
+            spec.Rev = 7;
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+            var inspected = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
+            var target = CreateConfirmedReleaseTarget(SpecPullRequest);
+            target.ExpectedTargetRevision = inspected.TargetRevision;
+            Assert.That(target.ExpectedTargetRevision, Is.EqualTo("100:4:200:7"));
+
+            switch (change)
+            {
+                case "parent-type": plan.Fields["Custom.SDKtypetobereleased"] = "stable"; plan.Rev++; break;
+                case "parent-project": plan.Fields["Custom.ApiSpecProjectPath"] = "specification/other/Other.Management"; plan.Rev++; break;
+                case "parent-package": plan.Fields["Custom.PythonPackageName"] = "azure-mgmt-other"; plan.Rev++; break;
+                case "parent-aba": plan.Rev += 2; break; // A -> B -> A still invalidates approval.
+                case "child-link": spec.Fields["Custom.ActiveSpecPullRequestUrl"] = NewSpecPullRequest; spec.Rev++; break;
+                case "child-version": spec.Fields["Custom.APISpecversion"] = "2026-02-01"; spec.Rev++; break;
+                case "child-identity":
+                    spec.Id = 201;
+                    plan.Relations.Single().Url = "https://dev.azure.com/azure-sdk/internal/_apis/wit/workItems/201";
+                    plan.Rev++;
+                    break;
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+
+            var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateConfirmedReleaseTargetAsync(
+                100, target, SpecCommit, CreateConfirmedParentFields(target), CreateConfirmedSdkInfos(target), CancellationToken.None));
+
+            Assert.That(error!.Message, Does.Contain("changed since the target was previewed"));
+            Assert.That(_connection.CapturedPatches, Is.Empty, "Detect drift before clearing even the existing pin.");
+            Assert.That(_connection.UpdatedWorkItems, Is.Empty);
+            Assert.That(_connection.GetStoredWorkItem(100).Fields, Is.EquivalentTo(plan.Fields));
+            Assert.That(_connection.GetStoredWorkItem(spec.Id!.Value).Fields, Is.EquivalentTo(spec.Fields));
+        }
+
+        [TestCase(100)]
+        [TestCase(200)]
+        public async Task GetReleasePlanForWorkItemAsync_ConcurrentReadDoesNotRefreshApprovalRevision(int changedId)
+        {
+            var plan = CreateReleasePlanForConfirmedUpdate(SpecCommit);
+            var spec = CreateApiSpecWorkItemWithVersion(200, SpecPullRequest, "Active", ConfirmedApiVersion);
+            spec.Rev = 7;
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+            _connection.BeforeRead = (count, item) =>
+            {
+                if (item.Id == 100 && count == 3)
+                {
+                    var changed = _connection.GetStoredWorkItem(changedId);
+                    changed.Rev++;
+                    _connection.AddWorkItem(changed);
+                }
+            };
+
+            var inspected = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
+            Assert.That(inspected.TargetRevision, Is.EqualTo("100:4:200:7"));
+            _connection.BeforeRead = null;
+            var target = CreateConfirmedReleaseTarget(SpecPullRequest);
+            target.ExpectedTargetRevision = inspected.TargetRevision;
+
+            var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateConfirmedReleaseTargetAsync(
+                100, target, SpecCommit, [], [], CancellationToken.None));
+
+            Assert.That(error!.Message, Does.Contain("changed since the target was previewed"));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
+        }
 
         [TestCase(false)]
         [TestCase(true)]
@@ -1092,9 +1187,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(_connection.GetStoredWorkItem(200).Fields, Is.EquivalentTo(spec.Fields));
         }
 
-        [TestCase("beta", "stable")]
-        [TestCase("stable", "beta")]
-        public async Task UpdateReleasePlan_SameShaPinChangesDuringMetadataValidation_RejectsAllParentWrites(string storedType, string requestedType)
+        [TestCase("beta", "stable", "pin", false)]
+        [TestCase("stable", "beta", "pin", false)]
+        [TestCase("beta", "stable", "parent", false)]
+        [TestCase("beta", "stable", "child", false)]
+        [TestCase("beta", "beta", "parent", true)]
+        [TestCase("beta", "beta", "child", true)]
+        public async Task UpdateTarget_DriftDuringMetadataValidation_RejectsAllParentWrites(string storedType, string requestedType, string change, bool linkOnly)
         {
             using var cancellation = new CancellationTokenSource();
             var ct = cancellation.Token;
@@ -1105,12 +1204,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var plan = CreateReleasePlanForConfirmedUpdate(SpecCommit);
             plan.Fields["Custom.SDKtypetobereleased"] = storedType;
             var spec = CreateApiSpecWorkItemWithVersion(200, SpecPullRequest, "Active", ConfirmedApiVersion);
+            spec.Rev = 7;
             _connection.AddWorkItem(plan);
             _connection.AddWorkItem(spec);
 
             ReleasePlanWorkItem? observedPlan = null;
             var devops = new Mock<IDevOpsService>(MockBehavior.Strict);
             devops.Setup(service => service.ResolveReleasePlanByIdAsync(100, ct)).Returns(async () =>
+            {
+                observedPlan = await _devOpsService.GetReleasePlanForWorkItemAsync(100, ct);
+                return observedPlan;
+            });
+            devops.Setup(service => service.GetReleasePlanForWorkItemAsync(100, ct)).Returns(async () =>
             {
                 observedPlan = await _devOpsService.GetReleasePlanForWorkItemAsync(100, ct);
                 return observedPlan;
@@ -1130,11 +1235,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             typeSpec.Setup(helper => helper.ValidateReleasePlanSnapshotAsync(projectPath, SpecCommit, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), ct))
                 .Callback(() =>
                 {
-                    // The resolved tool snapshot still has A, but another writer saves B while compilation runs.
-                    var concurrentParent = _connection.GetStoredWorkItem(100);
-                    concurrentParent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = changedPin;
-                    concurrentParent.Rev++;
-                    _connection.AddWorkItem(concurrentParent);
+                    // Change the actual store after the tool read/approval check and before its guarded write.
+                    var concurrent = _connection.GetStoredWorkItem(change == "child" ? 200 : 100);
+                    if (change == "pin") { concurrent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = changedPin; }
+                    else if (change == "parent") { concurrent.Fields["Custom.SDKtypetobereleased"] = "stable"; }
+                    else { concurrent.Fields["Custom.ActiveSpecPullRequestUrl"] = NewSpecPullRequest; }
+                    concurrent.Rev++;
+                    _connection.AddWorkItem(concurrent);
                 })
                 .ReturnsAsync(metadata);
             var npx = new Mock<INpxHelper>(MockBehavior.Strict);
@@ -1144,29 +1251,35 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Mock.Of<IUserHelper>(), github, Mock.Of<IEnvironmentHelper>(), new InputSanitizer(), httpClient,
                 npx.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
-            var response = await tool.UpdateReleasePlan(projectPath, SpecPullRequest, requestedType, workItemId: 100,
-                serviceTreeId: "11111111-1111-1111-1111-111111111111", apiVersion: ConfirmedApiVersion,
-                specCommitSha: SpecCommit, confirmTarget: true, expectedSpecCommitSha: SpecCommit, ct: ct);
+            var response = linkOnly
+                ? (ReleasePlanBaseResponse)await tool.UpdateSpecPullRequestInReleasePlan(SpecPullRequest, workItemId: 100,
+                    typeSpecProjectPath: projectPath, apiVersion: ConfirmedApiVersion, specCommitSha: SpecCommit, confirmTarget: true,
+                    expectedSpecCommitSha: SpecCommit, expectedTargetRevision: "100:4:200:7", ct: ct)
+                : await tool.UpdateReleasePlan(projectPath, SpecPullRequest, requestedType, workItemId: 100,
+                    serviceTreeId: "11111111-1111-1111-1111-111111111111", apiVersion: ConfirmedApiVersion,
+                    specCommitSha: SpecCommit, confirmTarget: true, expectedSpecCommitSha: SpecCommit, expectedTargetRevision: "100:4:200:7", ct: ct);
 
-            Assert.That(response.ResponseError, Does.Contain("spec commit changed"));
-            Assert.That(response.ReleasePlanDetails, Is.Null);
+            Assert.That(response.ResponseError, Does.Contain(change == "pin" ? "spec commit changed" : "changed since the target was previewed"));
             Assert.That(observedPlan, Is.Not.Null);
             Assert.That(observedPlan!.SpecCommitSHA, Is.EqualTo(SpecCommit), "The resolved plan must be a snapshot, not a reference to mutable storage.");
             Assert.That(_connection.CapturedPatches, Is.Empty, "Even an unchanged proposed SHA must be checked before SDK type or package metadata is written.");
             Assert.That(_connection.UpdatedWorkItems, Is.Empty);
             var expectedParent = new Dictionary<string, object>(plan.Fields)
             {
-                [ReleasePlanWorkItem.SpecCommitSHAField] = changedPin
+                [ReleasePlanWorkItem.SpecCommitSHAField] = change == "pin" ? changedPin : SpecCommit
             };
+            if (change == "parent") { expectedParent["Custom.SDKtypetobereleased"] = "stable"; }
             Assert.That(_connection.GetStoredWorkItem(100).Fields, Is.EquivalentTo(expectedParent));
-            Assert.That(_connection.GetStoredWorkItem(200).Fields, Is.EquivalentTo(spec.Fields));
+            var expectedChild = new Dictionary<string, object>(spec.Fields);
+            if (change == "child") { expectedChild["Custom.ActiveSpecPullRequestUrl"] = NewSpecPullRequest; }
+            Assert.That(_connection.GetStoredWorkItem(200).Fields, Is.EquivalentTo(expectedChild));
             devops.Verify(service => service.UpdateConfirmedReleaseTargetAsync(100,
                 It.Is<ReleasePlanSpecTarget>(proposed => proposed.SpecCommitSHA == SpecCommit && proposed.ApiVersion == ConfirmedApiVersion &&
                     proposed.SpecPullRequestUrl == SpecPullRequest && proposed.TypeSpecProjectPath == ConfirmedProjectPath &&
-                    proposed.SDKReleaseType == requestedType && proposed.ExpectedPreviousSpecCommitSHA == SpecCommit), SpecCommit,
-                It.Is<Dictionary<string, string>>(fields => fields.Count == 3 && fields["Custom.SDKtypetobereleased"] == requestedType &&
+                    proposed.SDKReleaseType == requestedType && proposed.ExpectedPreviousSpecCommitSHA == SpecCommit && proposed.ExpectedTargetRevision == "100:4:200:7"), SpecCommit,
+                It.Is<Dictionary<string, string>>(fields => linkOnly ? fields.Count == 0 : fields.Count == 3 && fields["Custom.SDKtypetobereleased"] == requestedType &&
                     fields["Custom.ApiSpecProjectPath"] == ConfirmedProjectPath && fields["Custom.ServiceTreeID"] == "11111111-1111-1111-1111-111111111111"),
-                It.Is<List<SDKInfo>>(sdkInfos => sdkInfos.Count == 4 && sdkInfos.Any(sdk => sdk.Language == "Python" && sdk.PackageName == "azure-mgmt-contoso") &&
+                It.Is<List<SDKInfo>>(sdkInfos => linkOnly ? sdkInfos.Count == 0 : sdkInfos.Count == 4 && sdkInfos.Any(sdk => sdk.Language == "Python" && sdk.PackageName == "azure-mgmt-contoso") &&
                     sdkInfos.Any(sdk => sdk.Language == ".NET" && sdk.PackageName == "Azure.ResourceManager.Contoso") &&
                     sdkInfos.Any(sdk => sdk.Language == "Java" && sdk.PackageName == "com.azure.contoso") &&
                     sdkInfos.Any(sdk => sdk.Language == "Go" && sdk.PackageName == "sdk/contoso/armcontoso")), ct), Times.Once);
@@ -1191,6 +1304,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             SpecCommitSHA = SpecCommit,
             SpecPullRequestUrl = pullRequestUrl,
             SDKReleaseType = "stable",
+            ExpectedTargetRevision = "100:4:200:7",
             Packages =
             [
                 new PackageInfo { Language = SdkLanguage.Python, PackageName = "azure-mgmt-contoso", ApiVersion = ConfirmedApiVersion },

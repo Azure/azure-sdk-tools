@@ -31,11 +31,11 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 Use this flow for create, update, and spec-PR updates that configure a Public Preview or GA SDK target:
 
 1. **Validate the snapshot** — Supply a local `typeSpecProjectPath` with the project's compiler installed. The clean checkout's `HEAD` must match the selected PR HEAD or merge SHA before and after compilation, and the API version must exist at that SHA. Target validation emits metadata outside the checkout in a temporary directory, not SDK code. Tools do not check out commits or stash user work.
-2. **Preview** — Read the existing plan before an update, then call the operation with `confirmTarget: false` (the default). A response with `requires_confirmation: true` and `proposed_spec_target` means **no work items were written**. Show the project, packages, API version, SDK release type, spec PR, SHA and commit URL, `IsSpecMerged`, and available API versions. For updates, retain **`proposedTarget.ExpectedPreviousSpecCommitSHA`** (`ExpectedPreviousSpecCommitSHA` on the returned target): the observed stored SHA or `none` if unpinned.
-3. **Ask for approval** — Ask the user to approve that exact target. If the version is missing or ambiguous, ask them to choose from the available versions; never silently choose the first or latest.
-4. **Confirm** — Repeat the same operation with the exact approved `apiVersion` and `specCommitSha`, plus `confirmTarget: true`, preserving the other approved inputs. For update and update-spec-pr, also pass `expectedSpecCommitSha` from the preview's **previous pin**, not the proposed new SHA. Create does not accept this parameter. If the PR, target, expected pin, or revision changes, read and preview again and obtain fresh approval; never silently replace the precondition. Verify the saved `SpecAPIVersion` and `SpecCommitSHA` match the approval.
+2. **Preview** — Read the existing plan before an update, then call the operation with `confirmTarget: false` (the default). A response with `requires_confirmation: true` and `proposed_spec_target` means **no work items were written**. Show the project, packages, API version, SDK release type, spec PR, SHA and commit URL, `IsSpecMerged`, and available API versions. For updates, retain **`ExpectedTargetRevision`** from the returned target verbatim. Also retain `ExpectedPreviousSpecCommitSHA` (the observed stored SHA or `none` if unpinned) if using the optional previous-pin guard.
+3. **Ask for approval** — Ask the user to approve that exact target. Unambiguous snapshot metadata supplies the API version; explicit `apiVersion` is optional. If metadata is missing or ambiguous, the selected version remains empty until the user chooses from compiler-declared `AvailableApiVersions`. Never silently choose the first/latest or invent a freeform version.
+4. **Confirm** — Repeat the same operation with the exact approved `specCommitSha` and `confirmTarget: true`, preserving the other approved inputs and any explicit `apiVersion` selection. For public update and update-spec-pr, **require `expectedTargetRevision` copied verbatim from the preview**. Optionally pass `expectedSpecCommitSha` from the preview's **previous pin**, not the proposed new SHA. Create accepts neither update guard. If the PR, target, or either record's revision changes, preview again and obtain fresh approval; never fetch a replacement token at confirmation and silently reuse the old approval. Verify the saved `SpecAPIVersion` and `SpecCommitSHA` match the approval.
 
-`confirmTarget` is a caller-supplied boolean, not an external or cryptographic approval record. Authorized callers can confirm explicit valid inputs directly, but the agent should follow the approval flow above. Although the expected-pin parameter is optional, preserve it on updates to guard the preview/confirmation interval.
+`confirmTarget` is a caller-supplied boolean, not an external or cryptographic approval record. An authorized caller can use an explicitly inspected plan's `TargetRevision`, but the agent should follow the preview/approval flow above. Treat the revision as opaque: it covers the parent and API Spec record IDs and revisions, so **any** parent/child revision change requires a new preview and approval, including same-SHA SDK type or metadata changes. Missing `expectedTargetRevision` returns a no-write preview even with SHA and `confirmTarget: true`; a supplied blank or mismatched token rejects before compiler validation or writes. The previous-pin guard remains optional. These guards do not make cross-record writes atomic. Private Preview and tracking-only creation do not require a revision token.
 
 ## MCP Tools
 
@@ -66,12 +66,12 @@ Use this flow for create, update, and spec-PR updates that configure a Public Pr
    - Target release month/year (format: "Month YYYY", e.g. "June 2026"). Do NOT use formats like "2026-06" or "06/2026" — these are invalid.
    - API release type: Value must be one of the following: "Private Preview", "Public Preview", or "GA"
    - Spec PR URL (optional)
-   - API version (if known; otherwise select from the target preview)
+   - API version (optional when metadata resolves it; otherwise choose from the preview's declared versions)
    - Service Tree ID (GUID) — optional if previously created
    - Product Tree ID (GUID) — optional if previously created
 3. **Preview Target** — With a public spec PR, call `azure-sdk-mcp:azsdk_create_release_plan` with `confirmTarget: false` and review/select the proposed target as above.
 4. **Check Existing** — Query `azure-sdk-mcp:azsdk_get_release_plan` with the relative `typeSpecProjectPath`, `apiReleaseType`, and selected `apiVersion` when known. Reuse a plan matching the project, API version, and API release type, not merely the release type. Do not silently choose among multiple targets. Create/get never retarget an existing plan; use the explicit update flow for a same-version follow-up PR.
-5. **Create** — For a new public SDK target, repeat creation after approval with the exact version/SHA and `confirmTarget: true`. Creation derives SDK release type from `apiReleaseType` (`Public Preview` → `beta`, `GA` → `stable`); do not pass a `sdkReleaseType` argument. Without a PR, omit version/SHA inputs to create a tracking-only plan: it has no commit pin and cannot generate SDKs.
+5. **Create** — For a new public SDK target, repeat creation after approval with the exact SHA and `confirmTarget: true`; `apiVersion` may be omitted when metadata unambiguously resolves the approved version. Creation derives SDK release type from `apiReleaseType` (`Public Preview` → `beta`, `GA` → `stable`); do not pass a `sdkReleaseType` argument or update guards. Without a PR, omit version/SHA inputs to create a tracking-only plan: it has no commit pin and cannot generate SDKs.
 6. **Namespace** — For first management plane releases, link namespace approval issue using `azure-sdk-mcp:azsdk_link_namespace_approval_issue`.
 
 > **IMPORTANT**: Use separate plans for different API versions or API release types; do not retarget an existing plan.
@@ -91,7 +91,7 @@ Use this flow for create, update, and spec-PR updates that configure a Public Pr
    - Relative TypeSpec project path (e.g. `specification/contosowidgetmanager/Contoso.WidgetManager`)
    - Spec PR URL
 2. **Query** — Run `azure-sdk-mcp:azsdk_get_release_plan` with the provided identifier. Always use a relative path for `typeSpecProjectPath`; use `specPullRequestUrl` when the user provides only a spec PR URL.
-3. **Display** — Show the release plan ID, status, linked PRs, `SpecAPIVersion`, `SpecCommitSHA`, and SDK details. Ask which target the user means if multiple versions match. Always relay schedule-risk warnings and recommended actions from the response.
+3. **Display** — Show the release plan ID, status, linked PRs, `SpecAPIVersion`, `SpecCommitSHA`, `TargetRevision`, and SDK details. Ask which target the user means if multiple versions match. Always relay schedule-risk warnings and recommended actions from the response.
 
 **Tool**: `azure-sdk-mcp:azsdk_get_release_plan`
 
@@ -115,7 +115,7 @@ Use this flow for create, update, and spec-PR updates that configure a Public Pr
    - `specPullRequestUrl` (required)
    - `workItemId` or `releasePlanId`
    - `typeSpecProjectPath` (local path required for public SDK target validation)
-4. **Confirm Public Target** — For either operation, use the preview/approval flow above, then repeat with explicit `apiVersion`, `specCommitSha`, `confirmTarget: true`, and the preview's `expectedSpecCommitSha` precondition. This also applies when the same PR gains commits or merges. Same-version follow-ups require this explicit update; a different API version needs a separate plan.
+4. **Confirm Public Target** — For either operation, use the preview/approval flow above, then repeat with `specCommitSha`, `confirmTarget: true`, and the preview's required `expectedTargetRevision`. `apiVersion` is optional when metadata unambiguously resolves the approved version; `expectedSpecCommitSha` is an optional extra guard. This also applies when the same PR gains commits or merges. Same-version follow-ups require this explicit update; a different API version needs a separate plan.
 
 **Tools**: `azure-sdk-mcp:azsdk_update_release_plan`, `azure-sdk-mcp:azsdk_update_api_spec_pull_request_in_release_plan`
 

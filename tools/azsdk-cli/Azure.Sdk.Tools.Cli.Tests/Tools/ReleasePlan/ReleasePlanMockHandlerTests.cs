@@ -19,6 +19,7 @@ internal class ReleasePlanMockHandlerTests
     private const string SpecCommitSha = "0123456789abcdef0123456789abcdef01234567";
     private const string OtherCommitSha = "fedcba9876543210fedcba9876543210fedcba98";
     private const string SpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/38387";
+    private const string TargetRevision = "35000:2:45000:3";
 
     [TestCase("create", null)]
     [TestCase("create", false)]
@@ -46,44 +47,49 @@ internal class ReleasePlanMockHandlerTests
         {
             Assert.That(json.RootElement.GetProperty("requires_confirmation").GetBoolean(), Is.True);
             Assert.That(json.RootElement.GetProperty("proposed_spec_target").GetProperty("SpecCommitSHA").GetString(), Is.EqualTo(SpecCommitSha));
+            Assert.That(json.RootElement.GetProperty("proposed_spec_target").GetProperty("ExpectedTargetRevision").GetString(), Is.EqualTo(operation == "create" ? null : TargetRevision));
             Assert.That(json.RootElement.GetProperty("proposed_spec_target").GetProperty("Packages")[0].GetProperty("Name").GetString(), Is.EqualTo("Azure.Template.Contoso"));
         });
     }
 
-    [TestCase("create", "apiVersion")]
     [TestCase("create", "specCommitSha")]
     [TestCase("create", "both")]
-    [TestCase("update", "apiVersion")]
     [TestCase("update", "specCommitSha")]
     [TestCase("update", "both")]
-    [TestCase("link", "apiVersion")]
     [TestCase("link", "specCommitSha")]
     [TestCase("link", "both")]
-    public void PublicMutation_TrueFlagDoesNotSubstituteForExplicitTarget(string operation, string missing)
+    public void PublicMutation_TrueFlagDoesNotSubstituteForExplicitSha(string operation, string missing)
     {
         var arguments = TargetArguments(operation);
-        if (missing is "apiVersion" or "both")
+        if (missing == "both")
         {
             arguments.Remove("apiVersion");
         }
-        if (missing is "specCommitSha" or "both")
-        {
-            arguments.Remove("specCommitSha");
-        }
+        arguments.Remove("specCommitSha");
 
         AssertPreview(HandleTarget(operation, arguments), operation);
     }
 
-    [TestCase("create", false)]
-    [TestCase("create", true)]
-    [TestCase("update", false)]
-    [TestCase("update", true)]
-    [TestCase("link", false)]
-    [TestCase("link", true)]
-    public void PublicMutation_ConfirmsMatchingExplicitTargetIncludingMcpJsonArguments(string operation, bool jsonArguments)
+    [TestCase("create", false, false)]
+    [TestCase("create", true, false)]
+    [TestCase("create", false, true)]
+    [TestCase("create", true, true)]
+    [TestCase("update", false, false)]
+    [TestCase("update", true, false)]
+    [TestCase("update", false, true)]
+    [TestCase("update", true, true)]
+    [TestCase("link", false, false)]
+    [TestCase("link", true, false)]
+    [TestCase("link", false, true)]
+    [TestCase("link", true, true)]
+    public void PublicMutation_ConfirmsExplicitOrMetadataDerivedVersionIncludingMcpJsonArguments(string operation, bool jsonArguments, bool omitApiVersion)
     {
         var arguments = TargetArguments(operation);
         arguments["specCommitSha"] = SpecCommitSha.ToUpperInvariant();
+        if (omitApiVersion)
+        {
+            arguments.Remove("apiVersion");
+        }
         if (jsonArguments)
         {
             if (operation == "link")
@@ -104,6 +110,7 @@ internal class ReleasePlanMockHandlerTests
             Assert.That(response.ProposedSpecTarget?.ApiVersion, Is.EqualTo(ApiVersion));
             Assert.That(response.ProposedSpecTarget?.SpecCommitSHA, Is.EqualTo(SpecCommitSha));
             Assert.That(response.ProposedSpecTarget?.SDKReleaseType, Is.EqualTo("beta"));
+            Assert.That(response.ProposedSpecTarget?.ExpectedTargetRevision, Is.EqualTo(operation == "create" ? null : TargetRevision));
         });
         if (response is ReleasePlanResponse planResponse)
         {
@@ -112,7 +119,10 @@ internal class ReleasePlanMockHandlerTests
             {
                 Assert.That(planResponse.ReleasePlanDetails?.WorkItemId, Is.EqualTo(35000));
                 Assert.That(planResponse.ReleasePlanDetails?.ReleasePlanId, Is.EqualTo(50001));
+                Assert.That(planResponse.ReleasePlanDetails?.ApiSpecWorkItemId, Is.EqualTo(45000));
+                Assert.That(planResponse.ReleasePlanDetails?.TargetRevision, Is.EqualTo(readPlan.ReleasePlanDetails?.TargetRevision));
                 Assert.That(planResponse.ReleasePlanDetails?.SpecCommitSHA, Is.EqualTo(readPlan.ReleasePlanDetails?.SpecCommitSHA));
+                    Assert.That(planResponse.ReleasePlanDetails?.SDKReleaseMonth, Is.EqualTo(readPlan.ReleasePlanDetails?.SDKReleaseMonth));
                 Assert.That(planResponse.ReleasePlanDetails?.SpecAPIVersion, Is.EqualTo(readPlan.ReleasePlanDetails?.SpecAPIVersion));
                 Assert.That(planResponse.ReleasePlanDetails?.SDKReleaseType, Is.EqualTo(readPlan.ReleasePlanDetails?.SDKReleaseType));
                 Assert.That(planResponse.ReleasePlanDetails?.ActiveSpecPullRequest, Is.EqualTo(readPlan.ReleasePlanDetails?.ActiveSpecPullRequest));
@@ -164,6 +174,123 @@ internal class ReleasePlanMockHandlerTests
 
     [TestCase("update")]
     [TestCase("link")]
+    public void PublicUpdate_MissingExpectedRevisionReturnsPreviewEvenWithShaAndConfirmation(string operation)
+    {
+        var arguments = TargetArguments(operation);
+        arguments.Remove("expectedTargetRevision");
+
+        AssertPreview(HandleTarget(operation, arguments), operation);
+    }
+
+    [TestCase("update", "")]
+    [TestCase("link", "")]
+    [TestCase("update", " ")]
+    [TestCase("link", " ")]
+    [TestCase("update", "35000:1:45000:3")]
+    [TestCase("link", "35000:1:45000:3")]
+    [TestCase("update", "35000:2:45000:2")]
+    [TestCase("link", "35000:2:45000:2")]
+    [TestCase("update", "35001:2:45000:3")]
+    [TestCase("link", "35001:2:45000:3")]
+    [TestCase("update", "35000:2:45001:3")]
+    [TestCase("link", "35000:2:45001:3")]
+    [TestCase("update", "35000:0:45000:3")]
+    [TestCase("link", "35000:0:45000:3")]
+    [TestCase("update", " " + TargetRevision)]
+    [TestCase("link", " " + TargetRevision)]
+    public void PublicUpdate_RejectsBlankOrMismatchedRevisionEvenWhenShaMatches(string operation, string expectedRevision)
+    {
+        var arguments = TargetArguments(operation);
+        arguments["expectedTargetRevision"] = expectedRevision;
+
+        var response = HandleTarget(operation, arguments);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.ResponseError, Does.Contain("release plan or API Spec changed").And.Contains("no changes were saved"));
+            Assert.That(response.ProposedSpecTarget, Is.Null);
+            Assert.That(response.RequiresConfirmation, Is.False);
+            Assert.That(response.OperationStatus, Is.EqualTo(Status.Failed));
+        });
+    }
+
+    [TestCase("update", false)]
+    [TestCase("update", true)]
+    [TestCase("link", false)]
+    [TestCase("link", true)]
+    public void PublicUpdate_RejectsStaleRevisionBeforeResolvingTheTarget(string operation, bool confirm)
+    {
+        var arguments = TargetArguments(operation);
+        arguments["expectedTargetRevision"] = "35000:1:45000:3";
+        arguments["apiVersion"] = "2099-01-01-preview";
+        arguments["specCommitSha"] = OtherCommitSha;
+        arguments["confirmTarget"] = confirm;
+
+        var response = HandleTarget(operation, arguments);
+
+        Assert.That(response.ResponseError, Does.Contain("release plan or API Spec changed"));
+        Assert.That(response.ProposedSpecTarget, Is.Null);
+    }
+
+    [TestCase("update")]
+    [TestCase("link")]
+    public void PublicUpdate_ConfirmsWithCarriedPreviewRevisionWithoutOptionalPreviousPin(string operation)
+    {
+        var arguments = TargetArguments(operation);
+        arguments.Remove("expectedTargetRevision");
+        arguments.Remove("expectedSpecCommitSha");
+        arguments.Remove("apiVersion");
+        var preview = HandleTarget(operation, arguments);
+        AssertPreview(preview, operation);
+
+        arguments["expectedTargetRevision"] = preview.ProposedSpecTarget!.ExpectedTargetRevision;
+        var confirmed = HandleTarget(operation, arguments);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(confirmed.ResponseError, Is.Null);
+            Assert.That(confirmed.RequiresConfirmation, Is.False);
+            Assert.That(confirmed.ProposedSpecTarget?.ApiVersion, Is.EqualTo(ApiVersion));
+            Assert.That(confirmed.ProposedSpecTarget?.ExpectedTargetRevision, Is.EqualTo(TargetRevision));
+        });
+    }
+
+    [TestCase("update", 35000)]
+    [TestCase("link", 35000)]
+    [TestCase("update", 29262)]
+    [TestCase("link", 29262)]
+    [TestCase("update", 35001)]
+    [TestCase("link", 35001)]
+    public void PublicUpdate_ConfirmsWithMatchingInspectedFixtureRevision(string operation, int workItemId)
+    {
+        var inspected = (ReleasePlanResponse)new MockHandlers.GetReleasePlanHandler().Handle(new() { ["workItemId"] = workItemId });
+        var plan = inspected.ReleasePlanDetails!;
+        var arguments = TargetArguments(operation);
+        arguments["workItemId"] = plan.WorkItemId;
+        arguments["specPullRequestUrl"] = plan.ActiveSpecPullRequest;
+        arguments["specCommitSha"] = plan.SpecCommitSHA;
+        arguments["expectedTargetRevision"] = plan.TargetRevision;
+        arguments.Remove("expectedSpecCommitSha");
+        arguments.Remove("apiVersion");
+        if (operation == "update")
+        {
+            arguments["sdkReleaseType"] = plan.SDKReleaseType;
+        }
+
+        var response = HandleTarget(operation, arguments);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.RequiresConfirmation, Is.False);
+            Assert.That(response.ProposedSpecTarget?.ApiVersion, Is.EqualTo(plan.SpecAPIVersion));
+            Assert.That(response.ProposedSpecTarget?.SpecCommitSHA, Is.EqualTo(plan.SpecCommitSHA));
+            Assert.That(response.ProposedSpecTarget?.ExpectedTargetRevision, Is.EqualTo(plan.TargetRevision));
+        });
+    }
+
+    [TestCase("update")]
+    [TestCase("link")]
     public void PublicUpdate_RejectsAnotherApiVersionEvenWhenDeclaredInTheNewSnapshot(string operation)
     {
         var arguments = TargetArguments(operation);
@@ -191,6 +318,7 @@ internal class ReleasePlanMockHandlerTests
         arguments.Remove("apiVersion");
         arguments.Remove("specCommitSha");
         arguments.Remove("expectedSpecCommitSha");
+        arguments.Remove("expectedTargetRevision");
         arguments.Remove("confirmTarget");
 
         var response = HandleTarget(operation, arguments);
@@ -242,16 +370,19 @@ internal class ReleasePlanMockHandlerTests
         var arguments = TargetArguments(operation);
         arguments["workItemId"] = 35003;
         arguments["expectedSpecCommitSha"] = "none";
+        arguments.Remove("expectedTargetRevision");
         arguments["confirmTarget"] = false;
 
         var preview = HandleTarget(operation, arguments);
         Assert.That(preview.RequiresConfirmation, Is.True);
         Assert.That(preview.ProposedSpecTarget?.ExpectedPreviousSpecCommitSHA, Is.EqualTo("none"));
+        Assert.That(preview.ProposedSpecTarget?.ExpectedTargetRevision, Is.EqualTo("35003:2:45003:3"));
         if (preview is ReleasePlanResponse planResponse)
         {
             Assert.That(planResponse.ReleasePlanDetails?.SpecCommitSHA, Is.Empty);
         }
 
+        arguments["expectedTargetRevision"] = preview.ProposedSpecTarget!.ExpectedTargetRevision;
         arguments["confirmTarget"] = true;
         var confirmed = HandleTarget(operation, arguments);
         Assert.That(confirmed.ResponseError, Is.Null);
@@ -273,11 +404,12 @@ internal class ReleasePlanMockHandlerTests
     }
 
     [Test]
-    public void MetadataOnlyUpdate_PreservesPinWithoutConfirmation()
+    public void MetadataOnlyUpdate_PreservesPinWithoutTargetConfirmationOrRevision()
     {
         var arguments = TargetArguments("update");
         arguments.Remove("specPullRequestUrl");
         arguments.Remove("confirmTarget");
+        arguments.Remove("expectedTargetRevision");
 
         var response = (ReleasePlanResponse)HandleTarget("update", arguments);
 
@@ -321,10 +453,36 @@ internal class ReleasePlanMockHandlerTests
 
         Assert.That(response.ReleasePlanDetails?.SpecCommitSHA, Is.EqualTo(SpecCommitSha));
         Assert.That(response.ReleasePlanDetails?.SpecAPIVersion, Is.EqualTo(ApiVersion));
-        Assert.That(response.ReleasePlanDetails?.SDKReleaseMonth, Is.EqualTo("June 2026"));
+        Assert.That(response.ReleasePlanDetails?.TargetRevision, Is.EqualTo(TargetRevision));
+        Assert.That(response.ReleasePlanDetails?.SDKReleaseMonth, Is.EqualTo("December 2026"));
         response.ReleasePlanDetails!.SpecCommitSHA = OtherCommitSha;
+        response.ReleasePlanDetails.TargetRevision = "35000:4:45000:5";
         var second = (ReleasePlanResponse)handler.Handle(new() { [key] = value });
         Assert.That(second.ReleasePlanDetails?.SpecCommitSHA, Is.EqualTo(SpecCommitSha), "No mutable fixture state may leak between calls or evals.");
+        Assert.That(second.ReleasePlanDetails?.TargetRevision, Is.EqualTo(TargetRevision));
+    }
+
+    [TestCase(35000, 50001, 45000, TargetRevision)]
+    [TestCase(29262, 29262, 39262, "29262:2:39262:3")]
+    [TestCase(35001, 50002, 45001, "35001:2:45001:3")]
+    [TestCase(35002, 50003, 45002, "35002:2:45002:3")]
+    [TestCase(35003, 50004, 45003, "35003:2:45003:3")]
+    public void Get_AllFixturesExposeConsistentParentAndChildRevisions(int workItemId, int releasePlanId, int apiSpecWorkItemId, string expectedRevision)
+    {
+        var handler = new MockHandlers.GetReleasePlanHandler();
+        var byWorkItem = (ReleasePlanResponse)handler.Handle(new() { ["workItemId"] = workItemId });
+        var byPlanId = (ReleasePlanResponse)handler.Handle(new() { ["releasePlanId"] = releasePlanId });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(byWorkItem.ReleasePlanDetails?.WorkItemId, Is.EqualTo(workItemId));
+            Assert.That(byWorkItem.ReleasePlanDetails?.ApiSpecWorkItemId, Is.EqualTo(apiSpecWorkItemId));
+            Assert.That(byWorkItem.ReleasePlanDetails?.TargetRevision, Is.EqualTo(expectedRevision));
+            Assert.That(byPlanId.ReleasePlanDetails?.TargetRevision, Is.EqualTo(expectedRevision));
+            Assert.That(expectedRevision, Does.Match(@"^[1-9]\d*:[1-9]\d*:[1-9]\d*:[1-9]\d*$"));
+        });
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(byWorkItem.ReleasePlanDetails));
+        Assert.That(json.RootElement.GetProperty("TargetRevision").GetString(), Is.EqualTo(expectedRevision));
     }
 
     [TestCase("Public Preview", ApiVersion, 35000, SpecCommitSha)]
@@ -429,12 +587,13 @@ internal class ReleasePlanMockHandlerTests
         if (operation == "create")
         {
             arguments["apiReleaseType"] = "Public Preview";
-            arguments["targetReleaseMonthYear"] = "June 2026";
+            arguments["targetReleaseMonthYear"] = "December 2026";
         }
         else
         {
             arguments["workItemId"] = 35000;
             arguments["expectedSpecCommitSha"] = SpecCommitSha;
+            arguments["expectedTargetRevision"] = TargetRevision;
         }
         if (operation == "update")
         {
@@ -470,6 +629,8 @@ internal class ReleasePlanMockHandlerTests
                 "Azure.Template.Contoso", "azure-contoso-widgetmanager", "@azure/contoso-widgetmanager", "azure-contoso-widgetmanager"
             }));
             Assert.That(response.ProposedSpecTarget?.ExpectedPreviousSpecCommitSHA, Is.EqualTo(operation == "create" ? null : SpecCommitSha));
+            Assert.That(response.ProposedSpecTarget?.ExpectedTargetRevision, Is.EqualTo(operation == "create" ? null : TargetRevision));
+            Assert.That(response.ProposedSpecTarget?.ToString(), Does.Contain($"Expected target revision: {(operation == "create" ? "not applicable (new plan)" : TargetRevision)}"));
             Assert.That(response.NextSteps, Has.Some.Contains("confirmTarget=true"));
         });
         if (operation == "create")

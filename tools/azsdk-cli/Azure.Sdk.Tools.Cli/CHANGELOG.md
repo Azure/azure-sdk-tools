@@ -4,16 +4,18 @@
 
 ### Features Added
 
-- Public SDK target previews validate available API versions at the exact spec PR HEAD or merge SHA. Confirmation requires an explicit API version, SHA, and `confirmTarget`; updates expose the previously observed pin for the `expectedSpecCommitSha` precondition.
+- Public SDK target previews validate available API versions at the exact spec PR HEAD or merge SHA. Confirmation requires an explicit SHA and `confirmTarget`; unambiguous metadata supplies the API version, and an optional `apiVersion` selection must be compiler-declared. Updates expose `ExpectedTargetRevision` and retain `ExpectedPreviousSpecCommitSHA` for the optional `expectedSpecCommitSha` guard.
 
 ### Breaking Changes
 
 - Configuring a public SDK target requires a clean local checkout at the selected PR SHA and the project's compiler. Preview first, then explicitly confirm the target; legacy and tracking-only plans are never automatically pinned during lookup or generation, and missing/invalid targets never fall back to `main`.
+- Public update and update-spec-pr confirmation require `expectedTargetRevision` / `--expected-target-revision` carried verbatim from the approved preview or explicitly inspected plan. An omitted token returns a no-write preview even with SHA and `confirmTarget`; blank or mismatched tokens reject before compiler validation or writes. Create accepts neither update guard; Private Preview and tracking-only creation are unchanged.
 - Pipeline generation defaults to `sdk-review`, producing draft SDK PRs without auto-release labels. Opt in with `requireMergedSpec: true` / `--require-merged-spec` for `sdk-release`; the linked public PR must be merged at the stored SHA.
 
 ### Bugs Fixed
 
 - Release targets use the existing parent `Custom.SpecCommitSHA` field. Generation and regeneration independently consume the stored target, forwarding both API version and SDK release type for interactive and automated calls; a matching repository-relative project path needs no local clone.
+- Public updates detect any parent or API Spec revision change since preview, including same-SHA SDK type or metadata changes. Both update paths check the revision before clearing the pin and use revision-guarded patches; conflicts require a fresh preview and approval, not a silently refreshed token. Cross-record writes are not atomic.
 
 ### Other Changes
 

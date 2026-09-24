@@ -12,36 +12,55 @@ Public SDK target configuration requires a local `typeSpecProjectPath` in a clea
 specs checkout with the project's TypeSpec compiler installed. This also applies
 to `update-spec-pr`. Local `HEAD` must match the selected PR HEAD SHA (unmerged) or
 merge commit SHA (merged), both before and after compiler validation. The API
-version must be declared at that exact SHA. The tools do not check out commits or
-stash user work. Target validation emits metadata to a temporary directory outside
-the checkout and inspects compiler-declared API versions; it does not generate SDK
-code.
+version must be declared at that exact SHA. Unambiguous snapshot metadata supplies
+the version; `apiVersion` / `--api-version` is an optional selection from
+compiler-declared `AvailableApiVersions`, not a freeform override. An undeclared
+version is rejected before any write. The tools do not check out commits or stash
+user work. Target validation emits metadata to a temporary directory outside the
+checkout and inspects compiler-declared API versions; it does not generate SDK code.
 
 1. Read the current plan before updating or reusing it. Preview with create,
    update, or update-spec-pr, leaving `confirmTarget` false
    (the default). `requires_confirmation: true` means no work items were written.
    Show `proposed_spec_target`: project, packages, API version, SDK release type,
    spec PR, `SpecCommitSHA`, commit URL, `IsSpecMerged`, and available API versions.
-2. Ask the user to approve the exact target. If a version is missing or ambiguous,
-   ask them to choose from the available versions; never choose the first/latest.
-3. Repeat the same operation with the exact explicit `apiVersion`, `specCommitSha`,
-   and `confirmTarget: true`, retaining the other approved inputs. For updates,
-   also pass `expectedSpecCommitSha` / `--expected-spec-commit-sha` from the preview's
-   **`proposedTarget.ExpectedPreviousSpecCommitSHA`** (the
-   `ExpectedPreviousSpecCommitSHA` field on the returned `proposed_spec_target`).
-   This is the **previously observed stored pin**, or `none` for an unpinned plan,
-   **not the proposed new SHA**. Preserve it across preview and confirmation. If
-   the PR, target, expected pin, or work-item revision changes, read and preview
-   again and obtain fresh approval; do not silently replace the precondition.
+  For updates, retain the returned target's **`ExpectedTargetRevision`** verbatim.
+2. Ask the user to approve the exact target, including the metadata-derived API
+  version. If metadata is missing or ambiguous, the selected version remains
+  empty until the user chooses from available versions; never choose the
+  first/latest or invent a version.
+3. Repeat the same operation with the exact explicit `specCommitSha` and
+  `confirmTarget: true`, retaining the other approved inputs. `apiVersion` can be
+  omitted when metadata unambiguously resolves the approved version; otherwise
+  preserve the user's declared-version selection. Both public update and
+  update-spec-pr confirmation **require `expectedTargetRevision` /
+  `--expected-target-revision` copied verbatim from the preview's
+  `ExpectedTargetRevision`**. Optionally pass `expectedSpecCommitSha` /
+  `--expected-spec-commit-sha` from `ExpectedPreviousSpecCommitSHA`: the
+  **previously observed stored pin**, or `none` for an unpinned plan, **not the
+  proposed new SHA**. Preserve supplied guards across preview and confirmation.
+  If the PR, target, or either work-item revision changes, preview again and
+  obtain fresh approval; never fetch a replacement token at confirmation and
+  silently reuse the old approval.
 4. Read back the saved plan and verify `SpecAPIVersion` and `SpecCommitSHA` against
    the approval before generating.
 
 `confirmTarget` / `--confirm-target` is a caller-supplied boolean, not an external
 or cryptographic approval record. Authorized callers can confirm explicit valid
-inputs directly without a prior preview call. Interactive agents should still
-follow the preview/approval flow. The expected-previous-pin parameter is optional
-in the API, but callers should supply it on updates to preserve the preview's
-precondition. Create does not accept this update-only parameter.
+inputs using an explicitly inspected plan's `TargetRevision` without a prior
+preview call. Interactive agents should still follow the preview/approval flow.
+Treat the revision token as opaque: it represents positive parent ID, parent
+revision, API Spec ID, and API Spec revision, formatted invariantly as
+`parentID:parentRevision:apiSpecID:apiSpecRevision`. Do not construct or normalize
+it. Any parent or child revision change invalidates the precondition, including
+same-SHA SDK release type, metadata, or child changes.
+
+`expectedTargetRevision` is optional for preview but required for a confirmed
+public update. Omitting it returns a no-write preview even with a valid SHA and
+`confirmTarget: true`; a supplied blank or mismatched token rejects before
+compiler validation or writes. `expectedSpecCommitSha` remains an optional extra
+guard. Public create accepts neither update guard because there are no previous
+records. Private Preview and tracking-only creation do not require a token.
 
 Creation derives SDK release type from `apiReleaseType`: Public Preview becomes
 `beta`, GA becomes `stable`. Do not pass `sdkReleaseType` to create. A plan can be
@@ -60,7 +79,8 @@ validation. A previously confirmed plan needs no local clone: pass its stored
 repository-relative project path. Pass the stored API version and SHA explicitly
 to detect a changed target; caller inputs cannot override the plan. Generation's
 `specCommitSha` / `--spec-commit-sha` is an **expected stored pin**, not a new pin.
-Do not confuse it with the update-only `--expected-spec-commit-sha` precondition.
+Do not confuse it with the update-only `--expected-spec-commit-sha` and
+`--expected-target-revision` preconditions.
 
 - The default `requireMergedSpec: false` queues `TriggerSource: sdk-review` for
   manual review. New SDK PRs are drafts and receive no `auto-release` label, even
@@ -85,16 +105,16 @@ Do not confuse it with the update-only `--expected-spec-commit-sha` precondition
 
 Use the **existing parent Release Plan field `Custom.SpecCommitSHA`** for the full
 40-character SHA; no new Azure DevOps field or child-field migration is required.
-This aligns with the parent-field storage in
-[PR #17000](https://github.com/Azure/azure-sdk-tools/pull/17000); coordinate the
-overlapping changes.
 
-Target updates check the expected pin and work-item revisions, then **clear the
-parent pin → update the API Spec child's PR link/API version → publish the parent
-pin** using revision guards. Once the old pin is cleared, a partial failure leaves
-the plan unpinned and generation blocked. Do not restore the old pin or blindly
-retry a revision conflict; retrieve the current plan and review the target again.
-These are not atomic cross-work-item writes.
+Both public update paths use the confirmed-target writer. It checks the carried
+parent/child revision token against the current records **before clearing the
+pin**, then **clears the parent pin → updates the API Spec child's PR link/API
+version → publishes the parent pin** with `/rev` tests on every patch. The link-only
+path passes no additional parent metadata or SDK package changes. An incomplete
+update does not restore the old pin; generation is blocked while the plan is
+unpinned. Do not restore the old pin or blindly retry a revision conflict;
+retrieve the current plan, preview, and obtain fresh approval. These are not
+atomic cross-work-item writes.
 
 ## Pipeline contract
 

@@ -12,6 +12,7 @@ public class ReleasePlanSpecTarget
     public string CommitUrl { get; set; } = string.Empty;
     public string SDKReleaseType { get; set; } = string.Empty;
     public string? ExpectedPreviousSpecCommitSHA { get; set; }
+    public string? ExpectedTargetRevision { get; set; }
     public bool IsSpecMerged { get; set; }
     public List<string> AvailableApiVersions { get; set; } = [];
     public List<PackageInfo> Packages { get; set; } = [];
@@ -20,5 +21,6 @@ public class ReleasePlanSpecTarget
         $"Project: {TypeSpecProjectPath}\nAPI version: {ApiVersion}\nSDK release type: {SDKReleaseType}\nSpec PR: {SpecPullRequestUrl}\n" +
         $"Spec commit SHA: {SpecCommitSHA}\nSpec commit: {CommitUrl}\nSpec merged: {IsSpecMerged}\n" +
         $"Expected previous spec commit: {ExpectedPreviousSpecCommitSHA ?? "not applicable (new plan)"}\n" +
+        $"Expected target revision: {ExpectedTargetRevision ?? "not applicable (new plan)"}\n" +
         $"Packages: {string.Join(", ", Packages.Select(p => p.PackageName))}\nAvailable API versions: {string.Join(", ", AvailableApiVersions)}";
 }

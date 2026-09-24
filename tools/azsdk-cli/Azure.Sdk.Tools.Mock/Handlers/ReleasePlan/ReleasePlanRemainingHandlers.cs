@@ -43,7 +43,8 @@ public class UpdateReleasePlanHandler : IMockToolHandler
             return new ReleasePlanResponse { ResponseError = "The selected TypeSpec project does not match the release plan." };
         }
         var pr = ReleasePlanMockResponses.Argument(arguments, "specPullRequestUrl");
-        var error = ReleasePlanMockResponses.ValidateExpectedPin(arguments, plan) ?? plan.ApiReleaseType.ValidateSpecPullRequest(pr);
+        var error = ReleasePlanMockResponses.ValidateExpectedPin(arguments, plan) ??
+            ReleasePlanMockResponses.ValidateExpectedRevision(arguments, plan) ?? plan.ApiReleaseType.ValidateSpecPullRequest(pr);
         if (error != null)
         {
             return new ReleasePlanResponse { ResponseError = error };
@@ -56,7 +57,8 @@ public class UpdateReleasePlanHandler : IMockToolHandler
             {
                 return new ReleasePlanResponse { ResponseError = error };
             }
-            if (ReleasePlanMockResponses.NeedsConfirmation(arguments))
+            if (ReleasePlanMockResponses.NeedsConfirmation(arguments, target!) ||
+                string.IsNullOrWhiteSpace(ReleasePlanMockResponses.Argument(arguments, "expectedTargetRevision")))
             {
                 return ReleasePlanMockResponses.Preview(target!, plan);
             }
@@ -134,7 +136,8 @@ public class UpdateApiSpecPullRequestInReleasePlanHandler : IMockToolHandler
             return new ReleaseWorkflowResponse { Status = "Failed", ResponseError = "Provide a known release plan work item ID or release plan ID." };
         }
         var pr = ReleasePlanMockResponses.Argument(arguments, "specPullRequestUrl");
-        var error = ReleasePlanMockResponses.ValidateExpectedPin(arguments, plan) ?? plan.ApiReleaseType.ValidateSpecPullRequest(pr);
+        var error = ReleasePlanMockResponses.ValidateExpectedPin(arguments, plan) ??
+            ReleasePlanMockResponses.ValidateExpectedRevision(arguments, plan) ?? plan.ApiReleaseType.ValidateSpecPullRequest(pr);
         if (error != null || string.IsNullOrWhiteSpace(pr))
         {
             return new ReleaseWorkflowResponse { Status = "Failed", ResponseError = error ?? "A spec pull request URL is required." };
@@ -148,7 +151,8 @@ public class UpdateApiSpecPullRequestInReleasePlanHandler : IMockToolHandler
         {
             return new ReleaseWorkflowResponse { Status = "Failed", ResponseError = error };
         }
-        if (ReleasePlanMockResponses.NeedsConfirmation(arguments))
+        if (ReleasePlanMockResponses.NeedsConfirmation(arguments, target!) ||
+            string.IsNullOrWhiteSpace(ReleasePlanMockResponses.Argument(arguments, "expectedTargetRevision")))
         {
             return new ReleaseWorkflowResponse
             {

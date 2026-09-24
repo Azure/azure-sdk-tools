@@ -15,7 +15,7 @@ internal static class ReleasePlanMockResponses
     public const string SpecCommitSha = "0123456789abcdef0123456789abcdef01234567";
     public const string MergedSpecCommitSha = "fedcba9876543210fedcba9876543210fedcba98";
     public const string SpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/38387";
-    public const string ConfirmationNextStep = "Show the proposed project, packages, API version, SDK release type, spec PR, commit URL, merge status and available API versions. After approval, repeat with the exact apiVersion and specCommitSha and confirmTarget=true. For updates, also pass ExpectedPreviousSpecCommitSHA as expectedSpecCommitSha.";
+    public const string ConfirmationNextStep = "Show the proposed project, packages, API version, SDK release type, spec PR, commit URL, merge status and available API versions. After approval, repeat with the exact specCommitSha and confirmTarget=true. API version is derived from unambiguous metadata; select only from availableApiVersions if missing or conflicting. For public updates, preserve ExpectedTargetRevision verbatim as expectedTargetRevision and optionally retain ExpectedPreviousSpecCommitSHA as expectedSpecCommitSha. Any parent or API Spec revision change requires a fresh preview and approval, even at the same SHA.";
 
     public static string Argument(Dictionary<string, object?>? arguments, string name) =>
         arguments?.GetValueOrDefault(name)?.ToString() ?? string.Empty;
@@ -34,10 +34,12 @@ internal static class ReleasePlanMockResponses
     {
         WorkItemId = 35000,
         ReleasePlanId = 50001,
+        ApiSpecWorkItemId = 45000,
+        TargetRevision = "35000:2:45000:3",
         Title = "Release Plan - Contoso.WidgetManager",
         Status = "Active",
         Owner = "testuser@microsoft.com",
-        SDKReleaseMonth = releaseMonth ?? "June 2026",
+        SDKReleaseMonth = releaseMonth ?? "December 2026",
         ApiReleaseType = ApiReleaseType.PublicPreview,
         IsDataPlane = true,
         SpecType = "TypeSpec",
@@ -65,6 +67,8 @@ internal static class ReleasePlanMockResponses
                 return plan;
             case "29262": // Existing pipeline-generation scenarios use this merged preview snapshot.
                 plan.WorkItemId = plan.ReleasePlanId = 29262;
+                plan.ApiSpecWorkItemId = 39262;
+                plan.TargetRevision = "29262:2:39262:3";
                 plan.SpecAPIVersion = "2024-01-01-preview";
                 plan.SpecCommitSHA = MergedSpecCommitSha;
                 plan.ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/38500";
@@ -73,6 +77,8 @@ internal static class ReleasePlanMockResponses
             case "50002":
                 plan.WorkItemId = 35001;
                 plan.ReleasePlanId = 50002;
+                plan.ApiSpecWorkItemId = 45001;
+                plan.TargetRevision = "35001:2:45001:3";
                 plan.ApiReleaseType = ApiReleaseType.GA;
                 plan.SDKReleaseType = "stable";
                 plan.SpecAPIVersion = "2024-01-01";
@@ -83,6 +89,8 @@ internal static class ReleasePlanMockResponses
             case "50003":
                 plan.WorkItemId = 35002;
                 plan.ReleasePlanId = 50003;
+                plan.ApiSpecWorkItemId = 45002;
+                plan.TargetRevision = "35002:2:45002:3";
                 plan.ApiReleaseType = ApiReleaseType.PrivatePreview;
                 plan.ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs-pr/pull/12345";
                 plan.SpecAPIVersion = plan.SpecCommitSHA = string.Empty;
@@ -92,6 +100,8 @@ internal static class ReleasePlanMockResponses
             case "50004": // Tracking-only: metadata is known, but no public target has been confirmed.
                 plan.WorkItemId = 35003;
                 plan.ReleasePlanId = 50004;
+                plan.ApiSpecWorkItemId = 45003;
+                plan.TargetRevision = "35003:2:45003:3";
                 plan.ActiveSpecPullRequest = plan.SpecCommitSHA = string.Empty;
                 return plan;
             default:
@@ -141,6 +151,14 @@ internal static class ReleasePlanMockResponses
             : null;
     }
 
+    public static string? ValidateExpectedRevision(Dictionary<string, object?>? arguments, ReleasePlanWorkItem plan)
+    {
+        var expected = arguments?.GetValueOrDefault("expectedTargetRevision")?.ToString();
+        return expected != null && (string.IsNullOrWhiteSpace(expected) || !string.Equals(plan.TargetRevision, expected, StringComparison.Ordinal))
+            ? "The release plan or API Spec changed since the target was previewed. Preview again and obtain fresh approval; no changes were saved."
+            : null;
+    }
+
     public static string? GetTarget(Dictionary<string, object?>? arguments, string sdkReleaseType, ReleasePlanWorkItem? existingPlan, out ReleasePlanSpecTarget? target)
     {
         target = null;
@@ -181,6 +199,7 @@ internal static class ReleasePlanMockResponses
             SDKReleaseType = sdkReleaseType,
             IsSpecMerged = snapshot.SpecCommitSHA == MergedSpecCommitSha,
             ExpectedPreviousSpecCommitSHA = existingPlan == null ? null : string.IsNullOrEmpty(existingPlan.SpecCommitSHA) ? "none" : existingPlan.SpecCommitSHA,
+            ExpectedTargetRevision = existingPlan?.TargetRevision,
             AvailableApiVersions = [snapshot.SpecAPIVersion],
             Packages = snapshot.SDKInfo.Select(sdk => new PackageInfo
             {
@@ -192,8 +211,8 @@ internal static class ReleasePlanMockResponses
         return null;
     }
 
-    public static bool NeedsConfirmation(Dictionary<string, object?>? arguments) =>
-        !Flag(arguments, "confirmTarget") || string.IsNullOrWhiteSpace(Argument(arguments, "apiVersion")) || string.IsNullOrWhiteSpace(Argument(arguments, "specCommitSha"));
+    public static bool NeedsConfirmation(Dictionary<string, object?>? arguments, ReleasePlanSpecTarget target) =>
+        !Flag(arguments, "confirmTarget") || string.IsNullOrWhiteSpace(target.ApiVersion) || string.IsNullOrWhiteSpace(Argument(arguments, "specCommitSha"));
 
     public static void ApplyTarget(ReleasePlanWorkItem plan, ReleasePlanSpecTarget target)
     {

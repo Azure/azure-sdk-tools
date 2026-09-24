@@ -39,7 +39,7 @@ public class CreateReleasePlanHandler : IMockToolHandler
             {
                 return new ReleasePlanResponse { ResponseError = error };
             }
-            if (ReleasePlanMockResponses.NeedsConfirmation(arguments))
+            if (ReleasePlanMockResponses.NeedsConfirmation(arguments, target!))
             {
                 return ReleasePlanMockResponses.Preview(target!);
             }

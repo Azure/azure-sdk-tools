@@ -465,6 +465,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
                 if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
                 {
+                    releasePlan.TargetRevision = ReleasePlanSpecHelper.GetTargetRevision(workItem.Id, workItem.Rev, apiSpecWorkItem.Id, apiSpecWorkItem.Rev);
                     releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
@@ -1419,10 +1420,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             => await UpdateSpecPullRequestCoreAsync(releasePlanWorkItemId, specPullRequest, specCommitSha, expectedSpecCommitSha, apiVersion, ct);
 
         public async Task<bool> UpdateConfirmedReleaseTargetAsync(int workItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
-            => await UpdateSpecPullRequestCoreAsync(workItemId, target.SpecPullRequestUrl, target.SpecCommitSHA, expectedSpecCommitSha, target.ApiVersion, ct, fields, sdkInfos);
+        {
+            if (string.IsNullOrWhiteSpace(target.ExpectedTargetRevision))
+            {
+                throw new InvalidOperationException("Preview the release target and preserve its ExpectedTargetRevision before confirming an update.");
+            }
+            return await UpdateSpecPullRequestCoreAsync(workItemId, target.SpecPullRequestUrl, target.SpecCommitSHA, expectedSpecCommitSha,
+                target.ApiVersion, ct, fields, sdkInfos, target.ExpectedTargetRevision);
+        }
 
         private async Task<bool> UpdateSpecPullRequestCoreAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, string expectedSpecCommitSha, string apiVersion, CancellationToken ct,
-            Dictionary<string, string>? fields = null, List<SDKInfo>? sdkInfos = null)
+            Dictionary<string, string>? fields = null, List<SDKInfo>? sdkInfos = null, string? expectedTargetRevision = null)
         {
             // Update Active spec PR and add link to spec pr list
             try
@@ -1453,6 +1461,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (apiSpecWorkItem.Rev is not > 0 || releasePlanWorkItem.Rev is not > 0)
                 {
                     throw new InvalidOperationException("Cannot update the spec input without valid release plan and API Spec work item revisions.");
+                }
+                if (expectedTargetRevision != null && !string.Equals(expectedTargetRevision,
+                    ReleasePlanSpecHelper.GetTargetRevision(releasePlanWorkItem.Id, releasePlanWorkItem.Rev, apiSpecWorkItem.Id, apiSpecWorkItem.Rev), StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException("The release plan or API Spec changed since the target was previewed. Preview again and obtain fresh approval; no changes were saved.");
                 }
                 apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out var currentApiVersion);
                 if (!string.IsNullOrWhiteSpace(apiVersion) && !string.IsNullOrWhiteSpace(currentApiVersion?.ToString()) &&

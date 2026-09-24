@@ -13,6 +13,12 @@ internal static partial class ReleasePlanSpecHelper
     public static bool IsValidCommitSha(string? commitSha) =>
         commitSha is { Length: 40 } && commitSha.All(Uri.IsHexDigit);
 
+    // An opaque, caller-carried precondition over both records, not an approval token.
+    public static string GetTargetRevision(int? planId, int? planRevision, int? specId, int? specRevision) =>
+        planId is > 0 && planRevision is > 0 && specId is > 0 && specRevision is > 0
+            ? FormattableString.Invariant($"{planId}:{planRevision}:{specId}:{specRevision}")
+            : string.Empty;
+
     public static (string Repository, int Number) ParsePullRequest(string pullRequestUrl)
     {
         var match = SpecPullRequestRegex().Match(pullRequestUrl ?? string.Empty);
@@ -73,8 +79,8 @@ internal static partial class ReleasePlanSpecHelper
         };
     }
 
-    public static bool NeedsConfirmation(string apiVersion, string commitSha, bool confirm) =>
-        !confirm || string.IsNullOrWhiteSpace(apiVersion) || !IsValidCommitSha(commitSha);
+    public static bool NeedsConfirmation(string resolvedApiVersion, string commitSha, bool confirm) =>
+        !confirm || string.IsNullOrWhiteSpace(resolvedApiVersion) || !IsValidCommitSha(commitSha);
 
     public static async Task<Octokit.PullRequest> GetPullRequestAsync(IGitHubService githubService, string pullRequestUrl, CancellationToken ct)
     {

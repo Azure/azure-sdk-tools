@@ -141,6 +141,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 1,
+                ApiSpecWorkItemId = 2,
+                TargetRevision = "1:4:2:7",
                 ReleasePlanId = releasePlanId,
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
@@ -195,6 +197,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = workItemId,
+                ApiSpecWorkItemId = workItemId + 1,
+                TargetRevision = FormattableString.Invariant($"{workItemId}:4:{workItemId + 1}:7"),
                 ReleasePlanId = 1,
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
@@ -220,6 +224,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = id,
+                ApiSpecWorkItemId = id + 1,
+                TargetRevision = FormattableString.Invariant($"{id}:4:{id + 1}:7"),
                 ReleasePlanId = 1,
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."

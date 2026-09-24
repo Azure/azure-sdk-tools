@@ -304,18 +304,18 @@ async def handle_intention(req: IntentionRequest):
 
 @app.post("/conversation/save", response_model=SaveConversationMessageResponse)
 async def save_conversation(req: ConversationMessage):
-    """Save a conversation message and trigger background tenant memory update."""
+    """Attempt a message save and update tenant memory after a confirmed write."""
     logger.info(
         "Save conversation request: tenant=%s, conversation=%s, message=%s",
         req.tenant_id,
         req.conversation_id,
         req.content[:200],
     )
-    await _conversation_service.save_conversation(req)
-    # Fire-and-forget background task to feed the thread to tenant memory
-    BackgroundTaskTracker.instance().track(
-        asyncio.create_task(_update_thread_memory(req))
-    )
+    if await _conversation_service.save_conversation(req):
+        # Fire-and-forget background task to feed the thread to tenant memory
+        BackgroundTaskTracker.instance().track(
+            asyncio.create_task(_update_thread_memory(req))
+        )
     return SaveConversationMessageResponse()
 
 @app.post("/knowledge/retrieve", response_model=KnowledgeRetrieveResponse)

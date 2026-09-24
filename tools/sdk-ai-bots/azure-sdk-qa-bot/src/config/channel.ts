@@ -4,11 +4,23 @@ import { logger } from '../logging/logger.js';
 import { BlobClientManager } from './blobClient.js';
 import config from './config.js';
 
+export interface Expert {
+  id: string;
+  name: string;
+}
+
+export interface ChannelBotSettings {
+  show_confidence_label: boolean;
+  allow_notify_experts: boolean;
+  experts: Expert[];
+}
+
 export interface ChannelItem {
   name: string;
   id: string;
   tenant?: string;
   endpoint?: string;
+  bot_settings?: Partial<ChannelBotSettings> | null;
 }
 
 export interface ChannelConfig {
@@ -57,6 +69,7 @@ class ChannelConfigManager {
         id: channelId,
         tenant: config.localRagTenant,
         endpoint: config.localBackendEndpoint,
+        bot_settings: this.config?.channels.find((ch) => ch.id === channelId)?.bot_settings,
       };
     }
 
@@ -70,6 +83,7 @@ class ChannelConfigManager {
         id: channel.id,
         tenant: channel.tenant ?? channelConfig.default.tenant,
         endpoint: channel.endpoint ?? channelConfig.default.endpoint,
+        bot_settings: channel.bot_settings,
       };
     }
 
@@ -79,6 +93,18 @@ class ChannelConfigManager {
       id: channelId, // Use the requested channelId
       tenant: channelConfig.default.tenant,
       endpoint: channelConfig.default.endpoint,
+    };
+  }
+
+  /**
+   * Get frontend settings with defaults for omitted fields.
+   */
+  public getBotSettings(channelId: string): ChannelBotSettings {
+    const settings = this.config?.channels.find((ch) => ch.id === channelId)?.bot_settings;
+    return {
+      show_confidence_label: settings?.show_confidence_label ?? false,
+      allow_notify_experts: settings?.allow_notify_experts ?? false,
+      experts: settings?.experts?.map(({ id, name }) => ({ id, name })) ?? [],
     };
   }
 

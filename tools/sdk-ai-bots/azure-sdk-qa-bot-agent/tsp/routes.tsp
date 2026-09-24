@@ -10,7 +10,7 @@ interface Health {
 
 @route("/agent")
 interface Agent {
-  /** Process a chat request through the chat agent. */
+  /** Generate an answer, apply reply policy, and reserve eligible expert-notification attempts. */
   @route("/chat")
   @post
   chat(@body body: ChatRequest): ChatResponse;
@@ -21,9 +21,19 @@ interface Agent {
   feedback(@body body: FeedbackRequest): FeedbackResponse;
 }
 
+/** Channel routing and participation policy lookup. */
+@route("/config")
+interface Config {
+  /** Resolve channel settings with backward-compatible defaults. */
+  @route("/channel")
+  @get
+  channel(@query channel_id: string): ChannelConfigResponse;
+}
+
 @route("/message")
-interface Message {
+interface MessageOperations {
   /** Classify whether the bot should auto-reply to a message. */
+  @TypeSpec.OpenAPI.operationId("Message_intention")
   @route("/intention")
   @post
   intention(@body body: IntentionRequest): IntentionResponse;
@@ -48,7 +58,7 @@ interface Knowledge {
 /** Legacy endpoints kept for backward compatibility. */
 @route("/")
 interface Legacy {
-  /** Legacy chat endpoint (use /agent/chat instead). */
+  /** Alias of /agent/chat, including confidence and participation decisions. */
   @route("completion")
   @post
   completion(@body body: ChatRequest): ChatResponse;

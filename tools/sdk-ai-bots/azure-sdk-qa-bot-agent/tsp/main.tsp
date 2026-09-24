@@ -1,5 +1,6 @@
 import "@typespec/http";
 import "@typespec/rest";
+import "@typespec/openapi";
 import "@typespec/openapi3";
 import "@typespec/versioning";
 import "./models.tsp";
@@ -9,7 +10,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 using TypeSpec.Versioning;
 
-@service({
+@service(#{
   title: "Azure SDK QA Bot Agent Service",
 })
 @server("http://localhost:8089", "Local development server")

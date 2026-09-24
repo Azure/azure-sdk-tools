@@ -79,6 +79,15 @@ export interface CompletionResponsePayload {
   ReasoningProgress?: string;
   route_tenant?: string;
   trace_id?: string;
+  confidence?: Confidence | null;
+  notify_experts?: boolean;
+}
+
+export interface Confidence {
+  level: 'high' | 'medium' | 'low';
+  summary: string;
+  unresolved_needs: string[];
+  needs_expert_help: boolean;
 }
 
 export function isCompletionResponsePayload(
@@ -86,8 +95,8 @@ export function isCompletionResponsePayload(
 ): response is CompletionResponsePayload {
   const completionResponse = response as CompletionResponsePayload;
   return (
-    completionResponse.id !== undefined &&
-    completionResponse.answer !== undefined
+    typeof completionResponse?.id === 'string' &&
+    typeof completionResponse?.answer === 'string'
   );
 }
 

@@ -76,7 +76,7 @@ describe('ThinkingHandler', () => {
       expect(result.answer).toBe(
         "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Request validation failed."
       );
-      expect(result.isError).toBe(true);
+      expect(result.mentions).toEqual([]);
     });
 
     it('should return error message for authentication error', () => {
@@ -91,7 +91,7 @@ describe('ThinkingHandler', () => {
       expect(result.answer).toBe(
         "🚫Sorry, I'm having some authentication issues right now and can't answer your question. Error: Authentication failed."
       );
-      expect(result.isError).toBe(true);
+      expect(result.mentions).toEqual([]);
     });
 
     it('should return error message for service error', () => {
@@ -106,7 +106,7 @@ describe('ThinkingHandler', () => {
       expect(result.answer).toBe(
         "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM service is temporarily unavailable."
       );
-      expect(result.isError).toBe(true);
+      expect(result.mentions).toEqual([]);
     });
 
     it('should return error message for internal error', () => {
@@ -121,7 +121,7 @@ describe('ThinkingHandler', () => {
       expect(result.answer).toBe(
         "🚫Sorry, I'm having some internal issues right now and can't answer your question. Error: An unexpected error occurred."
       );
-      expect(result.isError).toBe(true);
+      expect(result.mentions).toEqual([]);
     });
 
     it('should return formatted answer with references for successful response', () => {
@@ -144,7 +144,7 @@ describe('ThinkingHandler', () => {
       expect(result.answer).toContain('This is a test answer');
       expect(result.answer).toContain('**References**');
       expect(result.answer).toContain('[Test Reference | Test Source](https://example.com/test)');
-      expect(result.isError).toBe(false);
+      expect(result.mentions).toEqual([]);
     });
 
     it('should return answer without references when no references provided', () => {
@@ -159,7 +159,7 @@ describe('ThinkingHandler', () => {
 
       expect(result.answer).toBe('This is a test answer without references');
       expect(result.answer).not.toContain('**References**');
-      expect(result.isError).toBe(false);
+      expect(result.mentions).toEqual([]);
     });
   });
 

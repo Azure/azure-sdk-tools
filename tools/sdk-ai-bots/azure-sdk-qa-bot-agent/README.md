@@ -104,6 +104,46 @@ Ensure your Azure identity has:
 
 ## Running and Debugging Locally
 
+### Confidence-aware Teams replies
+
+Configure features per channel in Blob Storage's `bot-configs/channel.yaml` (overridable with `STORAGE_CONFIG_CONTAINER` and `CHANNEL_CONFIG_BLOB`):
+
+```yaml
+channels:
+  - id: "<Teams channel ID>"
+    tenant: typespec_channel_qa_bot
+    bot_settings:
+      show_confidence_label: true
+      allow_replies_after_humans: true
+      allow_notify_experts: true
+      expert_help_threshold: high
+      experts:
+        - id: "<Entra object ID or UPN>"
+          name: "<Expert display name>"
+```
+
+Features are independently opt-in:
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `show_confidence_label` | `false` | Display the model's confidence label. |
+| `allow_replies_after_humans` | `false` | Let intention classification approve new questions after humans join. |
+| `allow_notify_experts` | `false` | Allow eligible expert mentions. |
+| `expert_help_threshold` | `high` | Notify below this confidence level (`low < medium < high`), or when `needs_expert_help=true`. |
+| `experts` | `[]` | Approved mention recipients; an empty roster prevents notification. |
+
+The answering model supplies confidence; no separate evaluator runs. Confidence describes the provided guidance, not verified correctness. `needs_expert_help` separately identifies a need for human expertise or action. Intention decides whether to answer automatic requests before generation; low confidence does not suppress an answer.
+
+Enabling labels or notifications selects assessed answers for **new posts only**. Each post keeps its answer format across replies, while labels and notification permissions follow channel settings. Older conversations remain plain.
+
+Missing settings use the defaults above. Retrieval failures are logged and disable optional features without caching the fallback; invalid settings are rejected. Configuration is normally cached for 300 seconds.
+
+Expert notification requires opt-in, a nonempty roster, and **one reserved attempt per root post and all its replies**. Failed delivery still consumes that attempt. A missing root or reservation failure prevents mentions, not the answer. Keep root message records while their threads remain active.
+
+Completion returns the answer, optional `confidence`, and `notify_experts`. Invalid assessment output is logged and returned as available answer text without confidence or mentions. Message-storage failures are logged without failing the request; a successful `/conversation/save` response does not guarantee persistence.
+
+Deploy the backend and frontend before enabling features. Agree on expert rosters with channel owners. See the [design document](../docs/confidence-aware-participation-design.md) for storage, concurrency, and delivery details.
+
 ### Debugging the Chat Agent
 
 Use this to develop and test the AI agent itself (prompt tuning, tool integration, etc.).

@@ -2,12 +2,15 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Globalization;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Notification;
+using Azure.Sdk.Tools.Cli.Services.Notification.Templates;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
@@ -17,9 +20,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     [McpServerToolType]
     public class PackageReleaseStatusTool(
         IDevOpsService devOpsService,
-        ILogger<PackageReleaseStatusTool> logger
+        ILogger<PackageReleaseStatusTool> logger,
+        INotificationService notificationService
     ) : MCPTool
     {
+        private const int ReleasePlanAutomationPipelineDefinitionId = 8254;
+
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
 
         // Commands
@@ -228,20 +234,218 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             }, ct);
                             response.ReleasePlanFinished = true;
                         }
+                        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                        {
+                            throw;
+                        }
                         catch (Exception ex)
                         {
                             logger.LogWarning(ex, "Failed to mark release plan {workItemId} as Finished", releasePlan.WorkItemId);
                             response.Message = "Release status updated successfully but failed to auto-finish the release plan.";
+                        }
+
+                        if (response.ReleasePlanFinished)
+                        {
+                            await QueueNextReleasePlanAsync(releasePlan, response, ct);
                         }
                     }
                 }
 
                 return response;
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to update release status for package {packageName}", packageName);
                 return new ReleaseStatusUpdateResponse { PackageName = packageName, ResponseError = $"Failed to update release status: {ex.Message}" };
+            }
+        }
+
+        private async Task QueueNextReleasePlanAsync(ReleasePlanWorkItem finishedReleasePlan, ReleaseStatusUpdateResponse response, CancellationToken ct)
+        {
+            if (!IsReleasePlanAutomationEnabled(finishedReleasePlan))
+            {
+                response.Message = "Follow-up SDK generation automation is enabled only for management-plane release plans.";
+                return;
+            }
+
+            ReleasePlanWorkItem? nextReleasePlan = null;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(finishedReleasePlan.APISpecProjectPath))
+                {
+                    throw new InvalidOperationException($"Release plan {finishedReleasePlan.ReleasePlanId} has no TypeSpec project path. Correct its metadata.");
+                }
+
+                var activeReleasePlans = await devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    finishedReleasePlan.APISpecProjectPath,
+                    ct: ct);
+
+                nextReleasePlan = SelectNextReleasePlan(finishedReleasePlan, activeReleasePlans, response);
+                if (nextReleasePlan == null)
+                {
+                    response.Message = response.Warnings?.Count > 0
+                        ? "No eligible newer release plan with valid metadata was found. Review the warnings and correct the release plan metadata."
+                        : "No newer release plan eligible for SDK generation automation was found.";
+                    logger.LogInformation(
+                        "No newer release plan eligible for automation was found after release plan {releasePlanId}.",
+                        finishedReleasePlan.ReleasePlanId);
+                    return;
+                }
+
+                await devOpsService.EnsureReleasePlanAutomationRelationAsync(
+                    nextReleasePlan.WorkItemId, finishedReleasePlan.WorkItemId, ct);
+
+                var pipelineRun = await devOpsService.RunPipelineAsync(
+                    ReleasePlanAutomationPipelineDefinitionId,
+                    new Dictionary<string, string>
+                    {
+                        ["ReleasePlanId"] = nextReleasePlan.ReleasePlanId.ToString(CultureInfo.InvariantCulture)
+                    },
+                    ct: ct);
+
+                response.ReleasePlanAutomationTriggered = true;
+                response.QueuedReleasePlanId = nextReleasePlan.ReleasePlanId;
+                response.ReleasePlanAutomationPipelineUrl = DevOpsService.GetPipelineUrl(pipelineRun.Id);
+                logger.LogInformation(
+                    "Queued release plan automation pipeline {pipelineUrl} for release plan {releasePlanId} after release plan {finishedReleasePlanId} finished.",
+                    response.ReleasePlanAutomationPipelineUrl,
+                    nextReleasePlan.ReleasePlanId,
+                    finishedReleasePlan.ReleasePlanId);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Release plan {releasePlanId} was marked as Finished, but the next release plan automation pipeline could not be queued.",
+                    finishedReleasePlan.ReleasePlanId);
+                response.Message = $"Release plan is Finished, but the next release plan automation pipeline could not be queued: {ex.Message}";
+                response.NextSteps =
+                [
+                    nextReleasePlan == null
+                        ? "Review the release plan metadata and use the azsdk agent to identify the pending release plan and generate its SDK."
+                        : $"Use the azsdk agent to generate SDKs for release plan {nextReleasePlan.ReleasePlanId}. More information is available on the release plan dashboard: {nextReleasePlan.ReleasePlanLink}"
+                ];
+            }
+
+            if (nextReleasePlan == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await notificationService.SendEmailNotificationAsync(
+                    new ReleasePlanSdkGenerationEmail(finishedReleasePlan, nextReleasePlan, response.ReleasePlanAutomationTriggered), ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to send the SDK generation automation notification for release plan {releasePlanId}.", nextReleasePlan.ReleasePlanId);
+                (response.Warnings ??= []).Add("The SDK generation notification failed. Check the release plan dashboard for status and next steps.");
+            }
+        }
+
+        internal static bool IsReleasePlanAutomationEnabled(ReleasePlanWorkItem releasePlan)
+        {
+            return releasePlan.IsManagementPlane;
+        }
+
+        private ReleasePlanWorkItem? SelectNextReleasePlan(
+            ReleasePlanWorkItem finishedReleasePlan,
+            IEnumerable<ReleasePlanWorkItem> activeReleasePlans,
+            ReleaseStatusUpdateResponse response)
+        {
+            if (!TryParseApiVersion(finishedReleasePlan.SpecAPIVersion, out var finishedVersion))
+            {
+                throw new InvalidOperationException(
+                    $"Release plan {finishedReleasePlan.ReleasePlanId} has missing or invalid API version '{finishedReleasePlan.SpecAPIVersion}'. Expected YYYY-MM-DD or YYYY-MM-DD-preview. Correct its metadata.");
+            }
+
+            ReleasePlanWorkItem? nextReleasePlan = null;
+            ApiVersion? nextVersion = null;
+            foreach (var candidate in activeReleasePlans.Where(candidate =>
+                candidate.WorkItemId != finishedReleasePlan.WorkItemId
+                && string.Equals(candidate.Status, "In Progress", StringComparison.OrdinalIgnoreCase)
+                && candidate.ApiReleaseType is ApiReleaseType.PublicPreview or ApiReleaseType.GA
+                && candidate.ReleasePlanId > 0))
+            {
+                if (!TryParseApiVersion(candidate.SpecAPIVersion, out var candidateVersion))
+                {
+                    logger.LogWarning(
+                        "Release plan {releasePlanId} has invalid API version '{apiVersion}' and is not eligible for automation.",
+                        candidate.ReleasePlanId,
+                        candidate.SpecAPIVersion);
+                    (response.Warnings ??= []).Add(
+                        $"Skipped release plan {candidate.ReleasePlanId}: missing or invalid API version '{candidate.SpecAPIVersion}'. Expected YYYY-MM-DD or YYYY-MM-DD-preview.");
+                    continue;
+                }
+
+                if (candidateVersion.CompareTo(finishedVersion) <= 0)
+                {
+                    continue;
+                }
+
+                if (!nextVersion.HasValue
+                    || candidateVersion.CompareTo(nextVersion.Value) < 0
+                    || (candidateVersion.CompareTo(nextVersion.Value) == 0
+                        && candidate.ReleasePlanId < nextReleasePlan!.ReleasePlanId))
+                {
+                    nextReleasePlan = candidate;
+                    nextVersion = candidateVersion;
+                }
+            }
+
+            return nextReleasePlan;
+        }
+
+        private static bool TryParseApiVersion(string? apiVersion, out ApiVersion parsedVersion)
+        {
+            parsedVersion = default;
+            if (string.IsNullOrWhiteSpace(apiVersion))
+            {
+                return false;
+            }
+
+            const string previewSuffix = "-preview";
+            var isPreview = apiVersion.EndsWith(previewSuffix, StringComparison.OrdinalIgnoreCase);
+            var dateText = isPreview ? apiVersion[..^previewSuffix.Length] : apiVersion;
+
+            if (DateOnly.TryParseExact(
+                dateText,
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var date))
+            {
+                parsedVersion = new ApiVersion(date, isPreview);
+                return true;
+            }
+
+            return false;
+        }
+
+        private readonly record struct ApiVersion(DateOnly Date, bool IsPreview) : IComparable<ApiVersion>
+        {
+            public int CompareTo(ApiVersion other)
+            {
+                var dateComparison = Date.CompareTo(other.Date);
+                if (dateComparison != 0)
+                {
+                    return dateComparison;
+                }
+
+                return other.IsPreview.CompareTo(IsPreview);
             }
         }
 

@@ -179,6 +179,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
+        Task EnsureReleasePlanAutomationRelationAsync(int releasePlanWorkItemId, int completedReleasePlanWorkItemId, CancellationToken ct);
         Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct);
         Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
         Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest);
@@ -713,6 +714,57 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             return await workItemClient.UpdateWorkItemAsync(patchDocument, id, cancellationToken: ct);
+        }
+
+        public async Task EnsureReleasePlanAutomationRelationAsync(int releasePlanWorkItemId, int completedReleasePlanWorkItemId, CancellationToken ct)
+        {
+            const string relatedRelation = "System.LinkTypes.Related";
+            var client = connection.GetWorkItemClient(ct);
+            var completedPlan = await client.GetWorkItemAsync(completedReleasePlanWorkItemId, cancellationToken: ct);
+            var pendingPlan = await client.GetWorkItemAsync(releasePlanWorkItemId, expand: WorkItemExpand.Relations, cancellationToken: ct);
+
+            bool HasRelation(WorkItem plan) => plan.Relations?.Any(relation =>
+                relation.Rel == relatedRelation
+                && string.Equals(relation.Url, completedPlan.Url, StringComparison.OrdinalIgnoreCase)) == true;
+
+            if (HasRelation(pendingPlan))
+            {
+                return;
+            }
+
+            var patch = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            {
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/relations/-",
+                    Value = new WorkItemRelation
+                    {
+                        Rel = relatedRelation,
+                        Url = completedPlan.Url,
+                        Attributes = new Dictionary<string, object>
+                        {
+                            ["comment"] = "Automatic SDK generation requested after this related release plan completed."
+                        }
+                    }
+                }
+            };
+
+            try
+            {
+                await client.UpdateWorkItemAsync(patch, releasePlanWorkItemId, cancellationToken: ct);
+            }
+            catch (VssServiceException ex)
+            {
+                // Concurrent completion callbacks may have already added the same relation.
+                pendingPlan = await client.GetWorkItemAsync(releasePlanWorkItemId, expand: WorkItemExpand.Relations, cancellationToken: ct);
+                if (!HasRelation(pendingPlan))
+                {
+                    throw;
+                }
+                logger.LogInformation(ex, "Release plan {releasePlanWorkItemId} is already related to completed plan {completedReleasePlanWorkItemId}.",
+                    releasePlanWorkItemId, completedReleasePlanWorkItemId);
+            }
         }
 
         public async Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct = default)

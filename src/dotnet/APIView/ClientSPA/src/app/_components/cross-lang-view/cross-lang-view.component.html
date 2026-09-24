@@ -1,0 +1,48 @@
+<div class="d-flex align-items-center my-2">
+  <div class="me-2">
+      <button type="button" class="btn-close" aria-label="Close" (click)="closeCrossLanguageViewEmitter.emit([
+          codePanelRowData?.nodeIdHashed!, codePanelRowData?.type!])"></button>
+  </div>
+  <div class="p-1 cross-language-view-container">
+    <div class="d-flex align-items-start">
+      <div class="nav flex-column nav-pills pe-2" id="{{ codePanelRowData?.nodeIdHashed }}-tab" role="tablist" aria-orientation="vertical">
+        <a *ngFor="let key of getAvailableLanguages(); let i = index"
+          class="nav-link"
+          [ngClass]="{ 'active': i === activeTabIndex }" 
+          [id]="getTabId(key)"
+          data-bs-toggle="pill"
+          [attr.data-bs-target]="getTabPaneId(key, true)"
+          role="tab"
+          [attr.aria-controls]="getTabId(key)"
+          [attr.aria-selected]="i === activeTabIndex ? 'true' : 'false'"
+          (click)="setActiveTab(i)">
+          <img src="{{assetsPath}}/images/{{ key | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
+        </a>
+      </div>
+      <div class="tab-content border-start pe-4" id="{{ codePanelRowData?.nodeIdHashed }}-tabContent">
+        <div *ngFor="let key of getAvailableLanguages(); let i = index"
+          class="tab-pane fade"
+          [ngClass]="{ 'show active': i === activeTabIndex }" 
+          [id]="getTabPaneId(key)"
+          role="tabpanel"
+          [attr.aria-labelledby]="getTabId(key)"
+          tabindex="0">
+          <div *ngFor="let item of getCodeLines(key)" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
+          [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
+            <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine">
+              <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+                  <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)">{{token.value}}</span>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="item.type === CodePanelRowDatatype.Separator">
+              <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+                  <span ><i class="bi bi-three-dots"></i></span>
+              </div>
+            </ng-container>
+          </div>
+          <span class="lang-link mb-2 ms-3 py-1 px-2 border rounded small"><a [href]="getCodeLineUrl(key)" target="_blank"><i class="bi bi-box-arrow-up-right"></i>{{ getCodeLineUrlText(key)}} </a></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

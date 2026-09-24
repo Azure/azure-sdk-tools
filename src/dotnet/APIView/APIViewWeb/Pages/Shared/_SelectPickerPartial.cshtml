@@ -1,0 +1,20 @@
+
+@model (IEnumerable<string> All, IEnumerable<string> Selected)
+
+@if (Model.All.Any())
+{
+    @foreach (var item in Model.All.OrderBy(x => x))
+    {
+        if (!String.IsNullOrWhiteSpace(item))
+        {
+            if (Model.Selected != null && Model.Selected.Contains(item))
+            {
+                <option value="@item" selected>@item</option>
+            }
+            else
+            {
+                <option value="@item">@item</option>
+            }
+        }
+    }
+}

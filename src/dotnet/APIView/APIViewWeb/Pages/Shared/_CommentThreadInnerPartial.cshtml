@@ -1,0 +1,102 @@
+@using APIViewWeb.LeanModels;
+@model CommentItemModel
+
+<div id="@Model.Id" class="review-comment" data-comment-id="@Model.Id">
+    <div class="d-flex">
+        <div class="flex-shrink-0">
+            <a username="@Model.CreatedBy" title="Github Profile of Commenter">
+                <img username="@Model.CreatedBy" size="28" class="comment-icon align-self-start me-3" height="28" width="28" aria-label="User Avatar of Commenter" />
+            </a>
+        </div>
+        <div class="flex-grow-1 comment-contents">
+            <span>
+                <a username="@Model.CreatedBy" class="fw-bold mt-0">@Model.CreatedBy</a>
+                <a date="@Model.CreatedOn.ToLocalTime()" href="#@Model.Id" class="small"></a>
+
+                <div class="dropup float-end">
+                    <a class="btn btn-xs p-1 border" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
+                        <i class="fa-solid fa-ellipsis"></i>
+                    </a>
+
+                    <div class="dropdown-menu dropdown-menu-right">
+                        @if (Model.CreatedBy == User.GetGitHubLogin())
+                        {
+                            <a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>
+                            <a href="#" class="dropdown-item js-edit-comment">Edit</a>
+                            <li><hr class="dropdown-divider"></li>
+                        }
+                        <li><h4 class="dropdown-header">Create GitHub Issue</h4></li>
+                        <div class="px-4">
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-net" data-repo-language="c#">.NET</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-java" data-repo-language="java">Java</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-python" data-repo-language="python">Python</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-c" data-repo-language="c">C</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-js" data-repo-language="javascript">JavaScript</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-go" data-repo-language="go">Go</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-cpp" data-repo-language="c++">C++</a>
+                        </div>
+                    </div>
+                </div>
+
+                <form class="float-end me-1" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
+                    <input type="hidden" name="commentId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-xs btn-upvote border" title="@string.Join(", ", Model.Upvotes)" active-if="@Model.Upvotes.Contains(User.GetGitHubLogin())">
+                        @{
+                             <span active-if="@Model.Upvotes.Any()">👍</span>
+                            if (Model.Upvotes.Any())
+                            {
+                                <small class="me-1">@Model.Upvotes.Count</small>
+                            }
+                        }
+                    </button>
+                </form>
+            </span>
+            <textarea class="js-comment-raw d-none">@Model.CommentText</textarea>
+            @if (!string.IsNullOrEmpty(Model.CommentText) && Model.CommentText.Contains("\r\n"))
+            {
+                var cmt = Model.CommentText.Split("\r\n");
+                string codeBlockString = "";
+                bool codeBlock = false;
+                bool newLineAdded = true;
+                foreach (var line in cmt)
+                {
+                    @* Preserves code block formatting *@
+                    if (line.Contains("```"))
+                    {
+                        codeBlock = !codeBlock;
+                        codeBlockString += line + "\n";
+                        if (!codeBlock)
+                        {
+                            if (!newLineAdded)
+                            {
+                                <br />
+                            }
+                            @Html.FormatAsMarkdown(codeBlockString)
+                            codeBlockString = "";
+                            newLineAdded = true;
+                        }
+                    }
+                    else if (codeBlock)
+                    {
+                        codeBlockString += line + "\n";
+                    }
+                    @* Adds new lines where needed, otherwise breaks up parsing to be line by line *@
+                    else if (line.Equals("") && !newLineAdded)
+                    {
+                        <br />
+                        newLineAdded = true;
+                    }
+                    else if (!line.Equals(""))
+                    {
+                        @Html.FormatAsMarkdown(line)
+                        newLineAdded = false;
+                    }
+                }
+            }
+            else
+            {
+                @Html.FormatAsMarkdown(Model.CommentText)
+            }
+        </div>
+    </div>
+</div>

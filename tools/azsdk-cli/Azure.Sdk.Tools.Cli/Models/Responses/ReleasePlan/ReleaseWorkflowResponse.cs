@@ -21,6 +21,11 @@ public class ReleaseWorkflowResponse : ReleasePlanBaseResponse
     {
         var result = new StringBuilder();
         result.AppendLine($"Status: {Status}");
+        if (ProposedSpecTarget != null)
+        {
+            result.AppendLine(ProposedSpecTarget.ToString());
+            result.AppendLine(RequiresConfirmation ? "Confirmation required. No release plan was changed." : "Release target confirmed.");
+        }
         foreach (var detail in Details)
         {
             result.AppendLine($"- {detail}");

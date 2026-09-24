@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranch, CancellationToken ct);
         public Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct);
         public Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct);
+        public Task VerifyCleanSnapshotAsync(string pathInRepo, string commitSha, CancellationToken ct);
         public Task<List<string>> GetChangedFilesAsync(string repoRoot, string targetCommitish, string? sourceCommitish, string? diffPath, string diffFilterType, CancellationToken ct);
     }
 
@@ -24,6 +25,25 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
         private readonly IGitCommandHelper gitCommandHelper = gitCommandHelper;
+
+        public async Task VerifyCleanSnapshotAsync(string pathInRepo, string commitSha, CancellationToken ct)
+        {
+            if (!ReleasePlanSpecHelper.IsValidCommitSha(commitSha))
+            {
+                throw new ArgumentException("A full 40-character spec commit SHA is required.", nameof(commitSha));
+            }
+            var root = await DiscoverRepoRootAsync(pathInRepo, ct);
+            var head = await gitCommandHelper.Run(new GitOptions(["rev-parse", "HEAD"], root), ct);
+            if (head.ExitCode != 0 || !string.Equals(head.Stdout.Trim(), commitSha, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"Validate the TypeSpec project in a clean checkout of spec commit {commitSha}. The current checkout has a different HEAD; no files were switched or changed.");
+            }
+            var status = await gitCommandHelper.Run(new GitOptions(["status", "--porcelain", "--untracked-files=normal"], root), ct);
+            if (status.ExitCode != 0 || !string.IsNullOrWhiteSpace(status.Stdout))
+            {
+                throw new InvalidOperationException("Spec snapshot validation requires a clean checkout. Commit or isolate local changes first; no files were stashed or changed.");
+            }
+        }
 
         /// <summary>
         /// Gets the SHA of the merge base (common ancestor) between the current branch and the target branch.

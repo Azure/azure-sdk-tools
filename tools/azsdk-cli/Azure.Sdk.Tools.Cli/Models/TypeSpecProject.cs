@@ -16,6 +16,8 @@ namespace Azure.Sdk.Tools.Cli.Models
 
         public List<PackageInfo> Packages { get; set; } = [];
 
+        public List<string> AvailableApiVersions { get; set; } = [];
+
         public SdkType SdkType {
             get
             {

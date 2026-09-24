@@ -2,14 +2,13 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 
 namespace Azure.Sdk.Tools.Mock.Handlers.ReleasePlan;
 
 /// <summary>
 /// Mock handler for azsdk_create_release_plan.
-/// Switches on typespec project path — returns a Contoso release plan for the expected path, default otherwise.
+/// Previews a fixed public spec snapshot before accepting an explicitly confirmed target.
 /// </summary>
 public class CreateReleasePlanHandler : IMockToolHandler
 {
@@ -17,51 +16,60 @@ public class CreateReleasePlanHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var typespecPath = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "";
-
-        return typespecPath.ToLowerInvariant() switch
+        if (!ReleasePlanMockResponses.IsContosoProject(ReleasePlanMockResponses.Argument(arguments, "typeSpecProjectPath")))
         {
-            "specification/contosowidgetmanager/contoso.widgetmanager" => ContosoReleasePlanResponse(typespecPath, arguments),
-            _ => MockToolFactory.GetDefaultResponse()
-        };
-    }
-
-    private static ReleasePlanResponse ContosoReleasePlanResponse(string typespecPath, Dictionary<string, object?>? arguments)
-    {
-        var hasSpecPullRequest = !string.IsNullOrWhiteSpace(arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString());
-        return new ReleasePlanResponse
+            return new ReleasePlanResponse { ResponseError = "No release plan fixture exists for this TypeSpec project." };
+        }
+        if (!ApiReleaseTypeExtensions.TryParseFromUserInput(ReleasePlanMockResponses.Argument(arguments, "apiReleaseType"), out var releaseType))
         {
-            TypeSpecProject = typespecPath,
-            PackageType = SdkType.Dataplane,
-            Message = "Release plan created successfully",
-            Warnings = hasSpecPullRequest
-                ? [$"Release plan 49999 ({ReleasePlanWorkItem.DashboardBaseUrl}49999) is past due. Its target release month was May 2026."]
-                : null,
-            NextSteps = hasSpecPullRequest
-                ? ["Either postpone the past-due plan by updating its target release month, or abandon it and record the reason in the release plan dashboard."]
-                : null,
-            ReleasePlanDetails = new ReleasePlanWorkItem
+            return new ReleasePlanResponse { ResponseError = "Invalid API release type. Supported values are: Private Preview, Public Preview, GA" };
+        }
+        var pr = ReleasePlanMockResponses.Argument(arguments, "specPullRequestUrl");
+        var error = releaseType.ValidateSpecPullRequest(pr);
+        if (error != null)
+        {
+            return new ReleasePlanResponse { ResponseError = error };
+        }
+        var sdkReleaseType = releaseType.GetDefaultSdkReleaseType();
+        ReleasePlanSpecTarget? target = null;
+        if (!string.IsNullOrWhiteSpace(pr) && releaseType != ApiReleaseType.PrivatePreview)
+        {
+            error = ReleasePlanMockResponses.GetTarget(arguments, sdkReleaseType, null, out target);
+            if (error != null)
             {
-                WorkItemId = 35000,
-                Title = "Release Plan - Contoso.WidgetManager",
-                Status = "Active",
-                Owner = "testuser@microsoft.com",
-                SDKReleaseMonth = arguments?.GetValueOrDefault("targetReleaseMonthYear")?.ToString() ?? "06/2026",
-                ReleasePlanId = 50001,
-                IsDataPlane = true,
-                SpecType = "TypeSpec",
-                ActiveSpecPullRequest = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()
-                    ?? "https://github.com/Azure/azure-rest-api-specs/pull/12345",
-                APISpecProjectPath = typespecPath,
-                SDKReleaseType = "beta",
-                SDKInfo =
-                [
-                    new SDKInfo { Language = ".NET", PackageName = "Azure.Template.Contoso" },
-                    new SDKInfo { Language = "Python", PackageName = "azure-contoso-widgetmanager" },
-                    new SDKInfo { Language = "JavaScript", PackageName = "@azure/contoso-widgetmanager" },
-                    new SDKInfo { Language = "Java", PackageName = "azure-contoso-widgetmanager" },
-                ]
+                return new ReleasePlanResponse { ResponseError = error };
             }
-        };
+            if (ReleasePlanMockResponses.NeedsConfirmation(arguments, target!))
+            {
+                return ReleasePlanMockResponses.Preview(target!);
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(ReleasePlanMockResponses.Argument(arguments, "apiVersion")) ||
+            !string.IsNullOrWhiteSpace(ReleasePlanMockResponses.Argument(arguments, "specCommitSha")))
+        {
+            return new ReleasePlanResponse { ResponseError = "A public spec PR is required to validate and confirm an SDK release target. Create a tracking-only plan without version/commit inputs until the PR is available." };
+        }
+
+        var plan = releaseType == ApiReleaseType.PrivatePreview ? ReleasePlanMockResponses.PlanForId("35002")! :
+            target == null ? ReleasePlanMockResponses.PlanForId("35003")! : ReleasePlanMockResponses.PlanForPullRequest(pr)!;
+        plan.ApiReleaseType = releaseType;
+        plan.SDKReleaseType = sdkReleaseType;
+        plan.ActiveSpecPullRequest = pr;
+        plan.SDKReleaseMonth = ReleasePlanMockResponses.Argument(arguments, "targetReleaseMonthYear");
+        plan.ServiceTreeId = ReleasePlanMockResponses.Argument(arguments, "serviceTreeId");
+        plan.ProductTreeId = ReleasePlanMockResponses.Argument(arguments, "productTreeId");
+        plan.IsTestReleasePlan = ReleasePlanMockResponses.Flag(arguments, "isTestReleasePlan");
+        if (target != null)
+        {
+            ReleasePlanMockResponses.ApplyTarget(plan, target);
+        }
+        var response = ReleasePlanMockResponses.PlanResponse(plan, "Release plan created successfully (mock)");
+        response.ProposedSpecTarget = target;
+        if (string.IsNullOrWhiteSpace(pr))
+        {
+            response.Warnings = null;
+            response.NextSteps = null;
+        }
+        return response;
     }
 }

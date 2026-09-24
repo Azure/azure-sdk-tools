@@ -39,6 +39,14 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.APISpecversion")]
         public string SpecAPIVersion { get; set; } = string.Empty;
 
+        public const string SpecCommitSHAField = "Custom.SpecCommitSHA";
+
+        [FieldName(SpecCommitSHAField)]
+        public string SpecCommitSHA { get; set; } = string.Empty;
+
+        // Read-only concurrency snapshot of the parent and API Spec child; not an ADO field.
+        public string TargetRevision { get; set; } = string.Empty;
+
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
 

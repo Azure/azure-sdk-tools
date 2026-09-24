@@ -26,6 +26,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public ApiReleaseType? LastApiReleaseTypeForTypeSpecPathAndApiVersion { get; private set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
+        public string? LastGenerationSpecCommitSha { get; private set; }
+        public string? LastGenerationApiVersion { get; private set; }
+        public string? LastGenerationSdkReleaseType { get; private set; }
+        public bool? LastGenerationAutoRelease { get; private set; }
+        public (int WorkItemId, string PullRequest, string CommitSha)? LastSpecUpdate { get; private set; }
+        public string? LastSpecUpdateApiVersion { get; private set; }
+        public string? LastSpecUpdateExpectedCommitSha { get; private set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
         public string ConfiguredPackageVersion { get; set; } = "1.0.0";
         public SdkType ConfiguredPackageType { get; set; } = SdkType.Unknown;
@@ -88,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             );
         }
 
-        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", CancellationToken ct = default)
+        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", string? sourceVersion = null, CancellationToken ct = default)
         {
             LastRunPipelineTemplateParams = templateParams;
             return Task.FromResult(new Build
@@ -134,6 +141,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 1,
+                ApiSpecWorkItemId = 2,
+                TargetRevision = "1:4:2:7",
                 ReleasePlanId = releasePlanId,
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
@@ -188,6 +197,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = workItemId,
+                ApiSpecWorkItemId = workItemId + 1,
+                TargetRevision = FormattableString.Invariant($"{workItemId}:4:{workItemId + 1}:7"),
                 ReleasePlanId = 1,
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
@@ -213,6 +224,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = id,
+                ApiSpecWorkItemId = id + 1,
+                TargetRevision = FormattableString.Invariant($"{id}:4:{id + 1}:7"),
                 ReleasePlanId = 1,
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
@@ -238,8 +251,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, CancellationToken ct)
+        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, bool autoRelease, CancellationToken ct)
         {
+            LastGenerationSpecCommitSha = specCommitSha;
+            LastGenerationApiVersion = apiVersion;
+            LastGenerationSdkReleaseType = sdkReleaseType;
+            LastGenerationAutoRelease = autoRelease;
             if (ConfiguredRunSDKGenerationPipeline != null)
             {
                 return Task.FromResult(ConfiguredRunSDKGenerationPipeline);
@@ -257,8 +274,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, CancellationToken ct)
+        public Task<bool> UpdateConfirmedReleaseTargetAsync(int workItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct) =>
+            ((IDevOpsService)this).UpdateSpecPullRequestAsync(workItemId, target.SpecPullRequestUrl, target.SpecCommitSHA, expectedSpecCommitSha, target.ApiVersion, ct);
+
+        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, string expectedSpecCommitSha, string apiVersion, CancellationToken ct)
         {
+            LastSpecUpdate = (releasePlanWorkItemId, specPullRequest, specCommitSha);
+            LastSpecUpdateApiVersion = apiVersion;
+            LastSpecUpdateExpectedCommitSha = expectedSpecCommitSha;
             return Task.FromResult(true);
         }
 

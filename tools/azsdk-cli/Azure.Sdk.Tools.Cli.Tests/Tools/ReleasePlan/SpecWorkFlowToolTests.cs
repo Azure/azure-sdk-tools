@@ -1,6 +1,8 @@
+using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -9,12 +11,17 @@ using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Moq;
 using Octokit;
+using PullRequest = Octokit.PullRequest;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
     [TestFixture]
     internal class SpecWorkflowToolTests
     {
+        private const string PinnedSpecCommit = "0123456789abcdef0123456789abcdef01234567";
+        private const string DifferentSpecCommit = "fedcba9876543210fedcba9876543210fedcba98";
+        private const string LinkedSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/123";
+        private const string RelativeProjectPath = "specification/testcontoso/Contoso.Management";
         private const string PreviousGenerationPipelineUrl = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99";
         private MockDevOpsService mockDevOpsService;
         private Mock<IGitHubService> mockGitHubService;
@@ -47,10 +54,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public void Commands_ExposeGenerationAndPullRequestLookupOnly()
+        {
+            Assert.That(specWorkflowTool.GetCommandInstances().Select(command => command.Name),
+                Is.EquivalentTo(new[] { "generate-sdk", "get-sdk-pr" }));
+        }
+
+        [Test]
         public async Task GenerateSDK_WhenPackageNameEmpty()
         {
             var releasePlan = new ReleasePlanWorkItem
             {
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -81,6 +98,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Test 1: Different language than requested
             var releasePlan = new ReleasePlanWorkItem
             {
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -107,6 +127,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Test 2: Empty language
             var releasePlanWithEmptyLanguage = new ReleasePlanWorkItem
             {
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -136,6 +159,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             var releasePlan = new ReleasePlanWorkItem
             {
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>() // Empty list - no SDK info at all
             };
 
@@ -159,6 +185,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Test 1: Different language than requested
             var releasePlan = new ReleasePlanWorkItem
             {
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -199,6 +228,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(result.TypeSpecProject, Is.EqualTo("specification/testcontoso/Contoso.Management"));
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+            Assert.That(mockDevOpsService.LastGenerationAutoRelease, Is.False);
         }
 
         [TestCase("Java", "Java", "Released", false, "Completed")]
@@ -251,9 +281,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Assert.That(result.Details, Has.Some.Contains("has already been released for release plan work item 456"));
                 Assert.That(result.Details, Has.Some.Contains("A new SDK generation run was not triggered"));
             });
-            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            VerifyNoGeneration(devOpsService);
             devOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
                 It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -302,8 +330,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ResponseErrors, Is.Empty);
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
-                "Java", 456, "", It.IsAny<CancellationToken>()), Times.Once);
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test, Combinatorial]
@@ -321,9 +349,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("Pending"));
             Assert.That(result.Details, Has.Some.Contains("was not triggered to avoid duplicate generation"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            VerifyNoGeneration(devOpsService);
         }
 
         [Test, Combinatorial]
@@ -347,9 +373,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Contain("was not triggered to avoid duplicate generation"));
             Assert.That(result.ToString(), Does.Contain(PreviousGenerationPipelineUrl));
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
-            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            VerifyNoGeneration(devOpsService);
             mockGitHubService.VerifyNoOtherCalls();
         }
 
@@ -372,8 +396,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
-                "Java", 456, "", It.IsAny<CancellationToken>()), Times.Once);
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test, Combinatorial]
@@ -393,8 +417,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
-                "Java", 456, "", It.IsAny<CancellationToken>()), Times.Once);
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99&view=results")]
@@ -411,6 +435,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Status, Is.EqualTo("Success"));
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase("not-a-url")]
@@ -433,8 +460,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(null)]
@@ -455,8 +482,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(true)]
@@ -475,8 +502,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase("archived")]
@@ -502,8 +529,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(null)]
@@ -524,8 +551,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -545,9 +572,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 Assert.CatchAsync<OperationCanceledException>(async () => await generation.WaitAsync(TimeSpan.FromSeconds(5)));
                 devOpsService.Verify(x => x.GetPipelineRunAsync(99, cancellation.Token), Times.Once);
-                devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                VerifyNoGeneration(devOpsService);
             }
             finally
             {
@@ -581,8 +606,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Assert.That(result.Status, Is.EqualTo("Success"));
                 Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
                 devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                    "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
-                    language, 456, "", It.IsAny<CancellationToken>()), Times.Once);
+                    PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
+                    language, 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
             }
         }
 
@@ -625,9 +650,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Status, Is.EqualTo("Failed"));
             Assert.That(result.ToString(), Does.Contain("Another active release plan"));
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
-            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            VerifyNoGeneration(devOpsService);
         }
 
         [Test]
@@ -647,6 +670,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 456,
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -722,6 +748,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
 
             // Another active release plan whose SDK pull request has already been released should not block generation.
+            releasePlan.SpecCommitSHA = PinnedSpecCommit;
+            releasePlan.SpecAPIVersion = "2023-01-01";
+            releasePlan.ActiveSpecPullRequest = LinkedSpecPullRequest;
             mockDevOpsService.ConfiguredActiveReleasePlansForTypeSpecPath = new List<ReleasePlanWorkItem>
             {
                 releasePlan,
@@ -772,6 +801,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 456,
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -834,6 +866,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var releasePlan = new ReleasePlanWorkItem
             {
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -855,10 +890,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
-        [TestCase("2024-01-01-preview", "2024-01-01")]
-        [TestCase("", "2024-01-01-preview")]
-        [TestCase("none", "2024-01-01-preview")]
-        public async Task GenerateSdk_BlocksStableSdkForPreviewApiVersion(string apiVersion, string releasePlanApiVersion)
+        [TestCase("2024-01-01-preview", "2024-01-01", false)]
+        [TestCase("", "2024-01-01-preview", false)]
+        [TestCase("none", "2024-01-01-preview", false)]
+        [TestCase("2024-01-01-preview", "2024-01-01", true)]
+        [TestCase("", "2024-01-01-preview", true)]
+        [TestCase("none", "2024-01-01-preview", true)]
+        public async Task GenerateSdk_BlocksStableSdkForPreviewApiVersion(string apiVersion, string releasePlanApiVersion, bool requireMergedSpec)
         {
             mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
                 .Returns("specification/testcontoso/Contoso.Management");
@@ -866,6 +904,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
             {
                 SpecAPIVersion = releasePlanApiVersion,
+                SpecCommitSHA = PinnedSpecCommit,
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo =
                 [
                     new SDKInfo
@@ -881,11 +921,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 apiVersion: apiVersion,
                 sdkReleaseType: "stable",
                 language: "Java",
-                workItemId: 456
+                workItemId: 456,
+                requireMergedSpec: requireMergedSpec
             );
 
             Assert.That(result.Status, Is.EqualTo("Failed"));
             Assert.That(result.ResponseErrors, Has.Some.Contains("Stable SDK generation is not allowed from preview API version"));
+            Assert.That(mockDevOpsService.LastGenerationSpecCommitSha, Is.Null);
+            mockGitHubService.VerifyNoOtherCalls();
         }
 
         [TestCase("")]
@@ -902,6 +945,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
             {
                 SpecAPIVersion = "2024-01-01-preview",
+                SpecCommitSHA = PinnedSpecCommit,
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo =
                 [
                     new SDKInfo
@@ -944,6 +989,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var releasePlan = new ReleasePlanWorkItem
             {
+                SpecCommitSHA = PinnedSpecCommit,
+                SpecAPIVersion = "2023-01-01",
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -1102,6 +1150,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GenerateSdk_With_Invalid_TypeSpec_Path()
         {
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecAPIVersion = "2023-01-01";
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "InvalidPath/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
@@ -1112,6 +1164,747 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.TypeSpecProject, Is.EqualTo(""));
             Assert.That(result.Language, Is.EqualTo(SdkLanguage.Java));
             Assert.That(result.ResponseErrors, Does.Contain("Invalid TypeSpec project root path [InvalidPath/specification/testcontoso/Contoso.Management]."));
+            VerifyNoGeneration(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GenerateSdk_WithLegacyUnpinnedLinkedMergedSpec_RequiresConfirmation(bool requireMergedSpec)
+        {
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                ActiveSpecPullRequest = LinkedSpecPullRequest,
+                SpecAPIVersion = "2026-01-01-preview",
+                SDKInfo = [new SDKInfo { Language = "Java", PackageName = "azure-test" }]
+            };
+            var devOpsService = SetupSdkGenerationTool(releasePlan, pinSpec: false);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMergedSpecPullRequest(PinnedSpecCommit));
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: requireMergedSpec);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("update-spec-pr"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("confirm the release target"));
+            Assert.That(releasePlan.SpecCommitSHA, Is.Empty);
+            Assert.That(releasePlan.SpecAPIVersion, Is.EqualTo("2026-01-01-preview"));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(0)]
+        [TestCase(123)]
+        public async Task GenerateSdk_WithoutLinkedSpec_DoesNotFallBackToMain(int pullRequestNumber)
+        {
+            var releasePlan = CreatePinnedReleasePlan();
+            releasePlan.ActiveSpecPullRequest = "";
+            var devOpsService = SetupSdkGenerationTool(releasePlan, pinSpec: false);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                pullRequestNumber: pullRequestNumber, workItemId: 456);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseError, Does.Contain("Link a valid Azure/azure-rest-api-specs pull request"));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task GenerateSdk_WhenMergedSpecRequiredAndSpecPrIsUnavailable_DoesNotQueue()
+        {
+            var devOpsService = SetupSdkGenerationTool(CreatePinnedReleasePlan(), pinSpec: false);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((PullRequest)null!);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: true);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseError, Does.Contain("could not be found"));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase("open")]
+        [TestCase("closed")]
+        public async Task GenerateSdk_WhenMergedSpecRequiredAndSpecPrIsUnmerged_DoesNotQueue(string state)
+        {
+            var devOpsService = SetupSdkGenerationTool(CreatePinnedReleasePlan(), pinSpec: false);
+            // Even a matching synthetic merge SHA is not proof that a PR has merged.
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateUnmergedSpecPullRequest(PinnedSpecCommit, state));
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: true);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("Auto-release generation requires the confirmed target to use the linked PR's merge commit"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("Pre-merge draft SDK review remains available"));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task GenerateSdk_WhenMergedSpecRequiredAndMergeCommitDiffers_DoesNotRetargetOrQueue()
+        {
+            var plan = CreatePinnedReleasePlan();
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMergedSpecPullRequest(DifferentSpecCommit));
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: true);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("Update the release target after merge"));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(PinnedSpecCommit, "2026-01-01-preview", "beta")]
+        [TestCase("0123456789ABCDEF0123456789ABCDEF01234567", "2026-01-01-preview", "beta")]
+        [TestCase(PinnedSpecCommit, "2026-01-01", "stable")]
+        public async Task GenerateSdk_WhenMergedSpecRequiredAndMergeCommitMatches_UsesStoredTarget(
+            string mergeCommitSha, string apiVersion, string sdkReleaseType)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecAPIVersion = apiVersion;
+            plan.SDKReleaseType = sdkReleaseType;
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            using var cancellation = new CancellationTokenSource();
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, cancellation.Token))
+                .ReturnsAsync(CreateMergedSpecPullRequest(mergeCommitSha));
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", sdkReleaseType, "Java",
+                workItemId: 456, requireMergedSpec: true, specCommitSha: PinnedSpecCommit, ct: cancellation.Token);
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains(PinnedSpecCommit));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            Assert.That(plan.SpecAPIVersion, Is.EqualTo(apiVersion));
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", apiVersion, sdkReleaseType,
+                "Java", 456, "", true, cancellation.Token), Times.Once);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, cancellation.Token), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GenerateSdk_Command_RequiresMergedSpecOnlyWhenRequested(bool requireMergedSpec)
+        {
+            var devOpsService = SetupSdkGenerationTool(CreatePinnedReleasePlan(), pinSpec: false);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateUnmergedSpecPullRequest());
+            var command = specWorkflowTool.GetCommandInstances().Single(c => c.Name == "generate-sdk");
+            var arguments = new List<string>
+            {
+                "--typespec-project", "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                "--release-type", "beta", "--language", "Java", "--workitem-id", "456"
+            };
+            if (requireMergedSpec)
+            {
+                arguments.Add("--require-merged-spec");
+            }
+            var parseResult = command.Parse(arguments.ToArray());
+            Assert.That(parseResult.Errors, Is.Empty);
+            using var cancellation = new CancellationTokenSource();
+
+            var result = (ReleaseWorkflowResponse)await specWorkflowTool.HandleCommand(parseResult, cancellation.Token);
+
+            if (requireMergedSpec)
+            {
+                Assert.That(result.Status, Is.EqualTo("Failed"));
+                Assert.That(result.ResponseErrors, Has.Some.Contains("Auto-release generation requires"));
+                VerifyNoGeneration(devOpsService);
+                mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, cancellation.Token), Times.Once);
+            }
+            else
+            {
+                Assert.That(result.Status, Is.EqualTo("Success"));
+                Assert.That(result.ResponseErrors, Is.Empty);
+                devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                    PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2026-01-01-preview", "beta",
+                    "Java", 456, "", false, cancellation.Token), Times.Once);
+            }
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GenerateSdk_WithDifferentExpectedSpecCommit_DoesNotQueueOrWrite(bool requireMergedSpec)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SDKInfo[0].SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/789";
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            using var cancellation = new CancellationTokenSource();
+            var ct = cancellation.Token;
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: requireMergedSpec, specCommitSha: DifferentSpecCommit, ct: ct);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("spec commit changed"));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            Assert.That(plan.SpecAPIVersion, Is.EqualTo("2026-01-01-preview"));
+            Assert.That(plan.SDKReleaseType, Is.EqualTo("beta"));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            devOpsService.Verify(x => x.ResolveReleasePlanByIdAsync(456, ct), Times.Exactly(2));
+            devOpsService.VerifyNoOtherCalls();
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(PinnedSpecCommit, true)]
+        [TestCase("0123456789ABCDEF0123456789ABCDEF01234567", true)]
+        [TestCase(DifferentSpecCommit, false)]
+        public async Task GenerateSdk_Command_ValidatesExpectedSpecCommitBeforeRegeneration(string expectedCommit, bool matchesStoredPin)
+        {
+            var plan = CreatePinnedReleasePlan();
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            var command = specWorkflowTool.GetCommandInstances().Single(c => c.Name == "generate-sdk");
+            var parseResult = command.Parse(new[]
+            {
+                "--typespec-project", RelativeProjectPath,
+                "--release-type", "beta", "--language", "Java", "--workitem-id", "456",
+                "--spec-commit-sha", expectedCommit
+            });
+            Assert.That(parseResult.Errors, Is.Empty);
+            using var cancellation = new CancellationTokenSource();
+            var ct = cancellation.Token;
+
+            var result = (ReleaseWorkflowResponse)await specWorkflowTool.HandleCommand(parseResult, ct: ct);
+
+            Assert.That(result.Status, Is.EqualTo(matchesStoredPin ? "Success" : "Failed"));
+            if (matchesStoredPin)
+            {
+                Assert.That(result.ResponseErrors, Is.Empty);
+                Assert.That(result.Details, Has.Some.Contains(PinnedSpecCommit));
+                devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                    PinnedSpecCommit, RelativeProjectPath, "2026-01-01-preview", "beta", "Java", 456, "", false, ct), Times.Once);
+                devOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    RelativeProjectPath, ApiReleaseType.Unknown, ct), Times.Once);
+            }
+            else
+            {
+                Assert.That(result.ResponseErrors, Has.Some.Contains("spec commit changed"));
+                VerifyNoGeneration(devOpsService);
+            }
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            Assert.That(plan.SpecAPIVersion, Is.EqualTo("2026-01-01-preview"));
+            Assert.That(plan.SDKReleaseType, Is.EqualTo("beta"));
+            VerifyNoSpecTargetUpdate(devOpsService);
+            devOpsService.Verify(x => x.ResolveReleasePlanByIdAsync(456, ct), Times.Exactly(2));
+            devOpsService.VerifyNoOtherCalls();
+            mockGitHubService.VerifyNoOtherCalls();
+            mockTypeSpecHelper.VerifyNoOtherCalls();
+        }
+
+        [TestCase("beta", "stable", false)]
+        [TestCase("beta", "stable", true)]
+        [TestCase("stable", "beta", false)]
+        [TestCase("stable", "beta", true)]
+        public async Task GenerateSdk_WithDifferentSdkReleaseType_DoesNotQueueOrWrite(
+            string storedReleaseType, string requestedReleaseType, bool requireMergedSpec)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecAPIVersion = "2026-01-01";
+            plan.SDKReleaseType = storedReleaseType;
+            plan.SDKInfo[0].SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/789";
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            using var cancellation = new CancellationTokenSource();
+            var ct = cancellation.Token;
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", requestedReleaseType, "Java",
+                workItemId: 456, requireMergedSpec: requireMergedSpec, specCommitSha: PinnedSpecCommit, ct: ct);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("SDK release type does not match the release plan's confirmed target"));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            Assert.That(plan.SpecAPIVersion, Is.EqualTo("2026-01-01"));
+            Assert.That(plan.SDKReleaseType, Is.EqualTo(storedReleaseType));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            devOpsService.Verify(x => x.ResolveReleasePlanByIdAsync(456, ct), Times.Exactly(2));
+            devOpsService.VerifyNoOtherCalls();
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GenerateSdk_WithDifferentApiVersion_DoesNotRetargetReleasePlan(bool requireMergedSpec)
+        {
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SpecAPIVersion = "2026-01-01-preview",
+                SDKInfo = [new SDKInfo { Language = "Java", PackageName = "azure-test" }]
+            };
+            var devOpsService = SetupSdkGenerationTool(releasePlan);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, apiVersion: "2026-07-01", requireMergedSpec: requireMergedSpec);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("API version"));
+            Assert.That(releasePlan.SpecAPIVersion, Is.EqualTo("2026-01-01-preview"));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(".NET")]
+        [TestCase("Java")]
+        [TestCase("JavaScript")]
+        [TestCase("Python")]
+        [TestCase("Go")]
+        public async Task GenerateSdk_WithStoredPin_DoesNotRefreshFromGitHubOrMain(string language)
+        {
+            var plan = CreatePinnedReleasePlan(language);
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new HttpRequestException("Spec repository has changed or is unavailable"));
+
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                var result = await specWorkflowTool.RunGenerateSdkAsync(
+                    "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", language,
+                    workItemId: 456, specCommitSha: PinnedSpecCommit);
+                Assert.That(result.Status, Is.EqualTo("Success"));
+                Assert.That(result.Details, Has.Some.Contains(PinnedSpecCommit));
+            }
+
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2026-01-01-preview", "beta",
+                language, 456, "", false, It.IsAny<CancellationToken>()), Times.Exactly(2));
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task GenerateSdk_WithStoredOpenSpecPrHead_AllowsManualDraftWithoutFetchingSpecPr()
+        {
+            var specPullRequest = CreateUnmergedSpecPullRequest();
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecCommitSHA = specPullRequest.Head.Sha;
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(specPullRequest);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", workItemId: 456);
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            Assert.That(specPullRequest.Merged, Is.False);
+            Assert.That(specPullRequest.MergeCommitSha, Is.Not.EqualTo(plan.SpecCommitSHA));
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2026-01-01-preview", "beta",
+                "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task GenerateSdk_WithExistingSdkBranch_RegeneratesAtStoredPin()
+        {
+            var specPullRequest = CreateUnmergedSpecPullRequest();
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecCommitSHA = specPullRequest.Head.Sha;
+            plan.SDKInfo[0].SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/789";
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(specPullRequest);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-java", 789, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Octokit.Internal.SimpleJsonSerializer().Deserialize<PullRequest>(
+                    """{"number":789,"state":"open","head":{"ref":"feature/existing-sdk"}}"""));
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, specCommitSha: PinnedSpecCommit);
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                PinnedSpecCommit, "specification/testcontoso/Contoso.Management", "2026-01-01-preview", "beta",
+                "Java", 456, "feature/existing-sdk", false, It.IsAny<CancellationToken>()), Times.Once);
+            devOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-java", 789, It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [Test, Combinatorial]
+        public async Task GenerateSdk_WithMissingOrInvalidStoredPin_RequiresConfirmation(
+            [Values(null, "", " \t", "main", "abc123", "gggggggggggggggggggggggggggggggggggggggg", "0123456789abcdef0123456789abcdef012345670")] string? commitSha,
+            [Values(false, true)] bool requireMergedSpec)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecCommitSHA = commitSha!;
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: requireMergedSpec);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("invalid spec commit SHA"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("update-spec-pr"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("confirm the release target"));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(commitSha));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [Test, Combinatorial]
+        public async Task GenerateSdk_WithValidPinButMissingStoredApiVersion_RequiresConfirmation(
+            [Values(null, "", " \t")] string? storedApiVersion,
+            [Values("", "none", "2026-01-01-preview")] string requestedApiVersion,
+            [Values(false, true)] bool requireMergedSpec)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.SpecAPIVersion = storedApiVersion!;
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, apiVersion: requestedApiVersion, requireMergedSpec: requireMergedSpec);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("missing or invalid spec commit SHA or API version"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("update-spec-pr"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("confirm the release target"));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            Assert.That(plan.SpecAPIVersion, Is.EqualTo(storedApiVersion));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase("")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs-pr/pull/123")]
+        [TestCase("https://github.com/another-org/azure-rest-api-specs/pull/123")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-java/pull/123")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/pull/9999999999999999")]
+        public async Task GenerateSdk_WithInvalidOrPrivateLinkedSpec_DoesNotQueue(string specPullRequest)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.ActiveSpecPullRequest = specPullRequest;
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", workItemId: 456);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GenerateSdk_WithPrivatePreviewPlan_ReturnsBeforeTargetValidation(bool requireMergedSpec)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                ApiReleaseType = ApiReleaseType.PrivatePreview,
+                ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs-pr/pull/123"
+            };
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "invalid-path", "invalid-release-type", "invalid-language",
+                workItemId: 456, requireMergedSpec: requireMergedSpec);
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.Details, Has.Some.Contains("Private Preview"));
+            Assert.That(result.Details, Has.Some.Contains("generate the SDK locally only"));
+            Assert.That(plan.SpecCommitSHA, Is.Empty);
+            Assert.That(plan.SpecAPIVersion, Is.Empty);
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            devOpsService.Verify(x => x.ResolveReleasePlanByIdAsync(456, It.IsAny<CancellationToken>()), Times.Once);
+            devOpsService.VerifyNoOtherCalls();
+            mockGitHubService.VerifyNoOtherCalls();
+            mockTypeSpecHelper.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task GenerateSdk_WithDifferentSpecPr_DoesNotOverridePin()
+        {
+            var devOpsService = SetupSdkGenerationTool(CreatePinnedReleasePlan());
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java", pullRequestNumber: 999, workItemId: 456);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("does not match the release plan's linked PR"));
+            VerifyNoGeneration(devOpsService);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase("unavailable")]
+        [TestCase("timeout")]
+        public async Task GenerateSdk_WhenMergedSpecLookupFails_DoesNotQueue(string failureKind)
+        {
+            var plan = CreatePinnedReleasePlan();
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            Exception failure = failureKind == "timeout"
+                ? new TaskCanceledException("Spec lookup timed out")
+                : new HttpRequestException("Spec lookup failed");
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(failure);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: true);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain(failure.Message));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase("")]
+        [TestCase("main")]
+        [TestCase("abc123")]
+        public async Task GenerateSdk_WhenMergedSpecRequiredAndMergedPrHasInvalidCommit_DoesNotQueue(string commitSha)
+        {
+            var plan = CreatePinnedReleasePlan();
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMergedSpecPullRequest(commitSha));
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: true);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseError, Does.Contain("does not have a valid merge commit SHA"));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task GenerateSdk_WhenMergedSpecLookupIsCanceled_DoesNotQueue()
+        {
+            var devOpsService = SetupSdkGenerationTool(CreatePinnedReleasePlan(), pinSpec: false);
+            using var cancellation = new CancellationTokenSource();
+            var lookup = new TaskCompletionSource<PullRequest>(TaskCreationOptions.RunContinuationsAsynchronously);
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, cancellation.Token)).Returns(lookup.Task);
+
+            var generation = specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: true, ct: cancellation.Token);
+            cancellation.Cancel();
+            try
+            {
+                Assert.CatchAsync<OperationCanceledException>(async () => await generation.WaitAsync(TimeSpan.FromSeconds(5)));
+                VerifyNoGeneration(devOpsService);
+                VerifyNoSpecTargetUpdate(devOpsService);
+                mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, cancellation.Token), Times.Once);
+                mockGitHubService.VerifyNoOtherCalls();
+            }
+            finally
+            {
+                lookup.TrySetResult(CreateMergedSpecPullRequest(PinnedSpecCommit));
+                await generation.ContinueWith(_ => { });
+            }
+        }
+
+        [Test]
+        public void GenerateSdk_WhenCanceledAfterMergedSpecLookup_DoesNotQueue()
+        {
+            var devOpsService = SetupSdkGenerationTool(CreatePinnedReleasePlan(), pinSpec: false);
+            using var cancellation = new CancellationTokenSource();
+            mockGitHubService.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, cancellation.Token))
+                .Callback(() => cancellation.Cancel())
+                .ReturnsAsync(CreateMergedSpecPullRequest(PinnedSpecCommit));
+
+            Assert.CatchAsync<OperationCanceledException>(async () => await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, requireMergedSpec: true, ct: cancellation.Token));
+
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, cancellation.Token), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(RelativeProjectPath, RelativeProjectPath)]
+        [TestCase(RelativeProjectPath + "/", RelativeProjectPath)]
+        [TestCase("specification\\testcontoso\\Contoso.Management\\", RelativeProjectPath)]
+        [TestCase(RelativeProjectPath, RelativeProjectPath + "/")]
+        [TestCase(RelativeProjectPath, "specification\\testcontoso\\Contoso.Management\\")]
+        public async Task GenerateSdk_WithConfirmedRelativeProject_DoesNotRequireLocalCheckout(string requestedPath, string storedPath)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.APISpecProjectPath = storedPath;
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            using var cancellation = new CancellationTokenSource();
+            var ct = cancellation.Token;
+            Assert.That(Path.IsPathRooted(requestedPath), Is.False);
+            Assert.That(Directory.Exists(requestedPath), Is.False, "This test must exercise generation without a local spec checkout.");
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                requestedPath, "beta", "Java", workItemId: 456, specCommitSha: PinnedSpecCommit, ct: ct);
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ResponseErrors, Is.Empty);
+            Assert.That(result.TypeSpecProject, Is.EqualTo(RelativeProjectPath));
+            Assert.That(plan.APISpecProjectPath, Is.EqualTo(storedPath));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                PinnedSpecCommit, RelativeProjectPath, "2026-01-01-preview", "beta", "Java", 456, "", false, ct), Times.Once);
+            devOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                RelativeProjectPath, ApiReleaseType.Unknown, ct), Times.Once);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            devOpsService.Verify(x => x.ResolveReleasePlanByIdAsync(456, ct), Times.Exactly(2));
+            devOpsService.VerifyNoOtherCalls();
+            mockTypeSpecHelper.VerifyNoOtherCalls();
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase("specification/other/Other.Management")]
+        [TestCase("specification\\other\\Other.Management\\")]
+        public async Task GenerateSdk_WithDifferentRelativeProject_DoesNotQueueOrWrite(string requestedPath)
+        {
+            var plan = CreatePinnedReleasePlan();
+            var devOpsService = SetupSdkGenerationTool(plan, pinSpec: false);
+            using var cancellation = new CancellationTokenSource();
+            var ct = cancellation.Token;
+            Assert.That(Directory.Exists(requestedPath), Is.False);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                requestedPath, "beta", "Java", workItemId: 456, specCommitSha: PinnedSpecCommit, ct: ct);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("does not match the release plan's project"));
+            Assert.That(plan.APISpecProjectPath, Is.EqualTo(RelativeProjectPath));
+            Assert.That(plan.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            VerifyNoGeneration(devOpsService);
+            VerifyNoSpecTargetUpdate(devOpsService);
+            devOpsService.Verify(x => x.ResolveReleasePlanByIdAsync(456, ct), Times.Once);
+            devOpsService.VerifyNoOtherCalls();
+            mockTypeSpecHelper.VerifyNoOtherCalls();
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase("specification/testcontoso/Contoso.Management/", "specification/testcontoso/Contoso.Management", true)]
+        [TestCase("specification\\testcontoso\\Contoso.Management\\", "specification/testcontoso/Contoso.Management", true)]
+        [TestCase("specification/testcontoso/Contoso.Management", "specification/testcontoso/Contoso.Management/", true)]
+        [TestCase("specification/other/Other.Management", "specification/testcontoso/Contoso.Management", false)]
+        public async Task GenerateSdk_ProjectComparisonNormalizesSeparators(string requestedPath, string storedPath, bool matches)
+        {
+            var plan = CreatePinnedReleasePlan();
+            plan.APISpecProjectPath = storedPath;
+            var devops = SetupSdkGenerationTool(plan, pinSpec: false);
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>())).Returns(requestedPath);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management/", "beta", "Java", workItemId: 456);
+
+            Assert.That(result.Status, Is.EqualTo(matches ? "Success" : "Failed"));
+            if (matches)
+            {
+                devops.Verify(x => x.RunSDKGenerationPipelineAsync(PinnedSpecCommit, "specification/testcontoso/Contoso.Management",
+                    "2026-01-01-preview", "beta", "Java", 456, "", false, It.IsAny<CancellationToken>()), Times.Once);
+            }
+            else
+            {
+                Assert.That(result.ResponseErrors, Has.Some.Contains("does not match the release plan's project"));
+                VerifyNoGeneration(devops);
+            }
+            VerifyNoSpecTargetUpdate(devops);
+            mockTypeSpecHelper.Verify(x => x.GetTypeSpecProjectRelativePath(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management/"), Times.Once);
+            mockTypeSpecHelper.VerifyNoOtherCalls();
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        private static ReleasePlanWorkItem CreatePinnedReleasePlan(string language = "Java") => new()
+        {
+            WorkItemId = 456,
+            ActiveSpecPullRequest = LinkedSpecPullRequest,
+            SpecCommitSHA = PinnedSpecCommit,
+            SpecAPIVersion = "2026-01-01-preview",
+            APISpecProjectPath = RelativeProjectPath,
+            SDKReleaseType = "beta",
+            SDKInfo = [new SDKInfo { Language = language, PackageName = "azure-test" }]
+        };
+
+        private static PullRequest CreateMergedSpecPullRequest(string commitSha) =>
+            new Octokit.Internal.SimpleJsonSerializer().Deserialize<PullRequest>(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                number = 123,
+                state = "closed",
+                merged_at = "2026-09-01T00:00:00Z",
+                merge_commit_sha = commitSha,
+                @base = new { @ref = "main" }
+            }));
+
+        private static PullRequest CreateUnmergedSpecPullRequest(string mergeCommitSha = DifferentSpecCommit, string state = "open") =>
+            new Octokit.Internal.SimpleJsonSerializer().Deserialize<PullRequest>(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                number = 123,
+                state,
+                merge_commit_sha = mergeCommitSha,
+                head = new { @ref = "feature/spec-review", sha = PinnedSpecCommit },
+                @base = new { @ref = "main" }
+            }));
+
+        private static void VerifyNoSpecTargetUpdate(Mock<IDevOpsService> devOpsService)
+        {
+            devOpsService.Verify(x => x.UpdateSpecPullRequestAsync(
+                It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+            devOpsService.Verify(x => x.UpdateApiSpecVersionAsync(
+                It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        private static void VerifyNoGeneration(Mock<IDevOpsService> devOpsService)
+        {
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), false, It.IsAny<CancellationToken>()), Times.Never);
+            devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), true, It.IsAny<CancellationToken>()), Times.Never);
         }
 
         private Mock<IDevOpsService> SetupSdkGenerationToolWithPipeline(string generationStatus, string? pipelineUrl = PreviousGenerationPipelineUrl)
@@ -1132,8 +1925,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             });
         }
 
-        private Mock<IDevOpsService> SetupSdkGenerationTool(ReleasePlanWorkItem releasePlan)
+        private Mock<IDevOpsService> SetupSdkGenerationTool(ReleasePlanWorkItem releasePlan, bool pinSpec = true)
         {
+            if (pinSpec)
+            {
+                // Default existing fixtures to a confirmed target; pinSpec: false preserves negative-test inputs.
+                releasePlan.SpecCommitSHA = PinnedSpecCommit;
+                releasePlan.ActiveSpecPullRequest = LinkedSpecPullRequest;
+                if (string.IsNullOrWhiteSpace(releasePlan.SpecAPIVersion))
+                {
+                    releasePlan.SpecAPIVersion = "2023-01-01";
+                }
+            }
             var devOpsService = new Mock<IDevOpsService>();
             devOpsService.Setup(x => x.ResolveReleasePlanByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(releasePlan);
@@ -1142,7 +1945,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(new List<ReleasePlanWorkItem>());
             devOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Build { Id = 100, Status = BuildStatus.InProgress });
             mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
                 .Returns("specification/testcontoso/Contoso.Management");

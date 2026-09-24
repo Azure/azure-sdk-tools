@@ -13,9 +13,9 @@ description: |
   Plus an end-to-end "create + generate" flow used as the headline demo
   prompt.
 
-  Bound to the mock MCP — these graders only inspect skill routing and tool
-  selection, not real DevOps writes. The full live e2e flow lives in
-  workflows/live/release-planner.eval.yaml.
+  Bound to the stateless mock MCP — graders inspect routing, tool selection,
+  and approved target/revision arguments, not real DevOps writes. The full live
+  e2e flow lives in workflows/live/release-planner.eval.yaml.
 
 version: "1.0"
 type: capability
@@ -33,13 +33,15 @@ defaults:
 
 stimuli:
   # --- Scenario 1: Create release plan ---------------------------------
-  # Natural 2-turn flow (rewritten from a single "here is all the context
-  # you need" prompt — a pre-multi-turn workaround, see microsoft/vally#481):
+  # Natural intent/details/approval flow (rewritten from a single all-context
+  # prompt — a pre-multi-turn workaround, see microsoft/vally#481):
   # turn 0 states intent only; turn 1 supplies the structured details, as a
-  # real user follow-up would. Graders stay session-wide because the skill's
-  # own documented workflow may legitimately check for an existing plan
-  # (azsdk_get_release_plan) before all details arrive.
+  # real user follow-up would; turn 2 approves the target. Creation itself checks
+  # for an existing plan, so a separate lookup is permitted but not required.
+  # The confirmation call belongs to turn 2.
   - name: create-public-preview-release-plan
+    tags:
+      feature: target-confirmation
     # Spec-repo worktree fixture: defined once here and aliased by the stimuli
     # below. CI clones it via eng/common/scripts/eval/init-eval-git-fixtures.js before this suite.
     environment: &specsWorktree
@@ -59,13 +61,23 @@ stimuli:
           - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
           - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
           - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-          - target release timeline: "June 2026"
+          - target release timeline: "December 2026"
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+      - |
+        I approve the previewed public target: project
+        specification/contosowidgetmanager/Contoso.WidgetManager, API version
+        2022-11-01-preview, SDK type beta, PR
+        https://github.com/Azure/azure-rest-api-specs/pull/38387, and SHA
+        0123456789abcdef0123456789abcdef01234567. Confirm creation with the
+        same release month and service/product IDs. Do not generate SDKs.
     constraints:
-      max_turns: 10
-      max_tokens: 12000
+      max_turns: 14
+      max_tokens: 16000
+    rubric:
+      - Before turn 2, the agent obtains and presents a no-write preview of the project, packages, metadata-derived API version 2022-11-01-preview, beta SDK type, PR 38387, and SHA 0123456789abcdef0123456789abcdef01234567; it does not confirm a mutation or generate SDKs before approval.
+      - Turn 2 confirms creation with the approved project, PR, SHA, release month, service/product IDs, apiReleaseType Public Preview, and confirmTarget=true and receives a successful non-preview response. API version may be omitted when metadata derives the approved version; any explicit selection must equal that declared version. Create receives neither expectedTargetRevision nor expectedSpecCommitSha.
     graders:
       - type: skill-invocation
         config:
@@ -74,37 +86,74 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azsdk_get_release_plan
             - azsdk_create_release_plan
+      - type: tool-calls
+        turn: 2
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_create_release_plan$"
+          disallowed:
+            - name: "^azure-sdk-mcp-azsdk_run_generate_sdk$"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Inspect the complete trajectory against every rubric item. Require
+            the preview before approval and the confirmed response afterward;
+            merely calling the tool again or narrating success does not pass.
+            An omitted or empty apiVersion is valid because the fixed snapshot
+            metadata derives the approved version. An undeclared selection is
+            invalid. Create accepts neither update guard. Missing evidence fails.
 
-  # --- End-to-end demo: create, then (in a separate turn) generate -----
-  # Rewritten from a single "create X, then generate SDK" compound prompt
-  # into two turns: create is atomic (its structured data is a natural
-  # single paste), but "then generate" is a distinct follow-up decision a
-  # real user makes only after seeing the create result — so it gets its
-  # own turn. Turn-pinning also gives ordering coverage (create must not
-  # generate; generate must not re-create) without the sequence: grader
-  # this file's TODO wanted (still blocked upstream).
+  # --- End-to-end demo: preview, confirm, then generate ----------------
+  # Public creation is no longer a one-call write. Keep this older demo in
+  # sync with the explicit approval flow; the multi-turn suite also grades
+  # the exact confirmation arguments and the returned work-item/plan IDs.
   - name: create-release-plan-and-generate-sdk
-    environment: *specsWorktree
+    tags:
+      feature: target-confirmation
+    environment:
+      skills:
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
+        - ../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../.github/skills/azsdk-common-sdk-release
+      git:
+        type: worktree
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
     turns:
       - |
         Create a public preview release plan for the Contoso Widget Manager:
           - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
           - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
           - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-          - target release timeline: "June 2026"
+          - target release timeline: "December 2026"
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+        Preview this target and ask for approval before confirming creation.
+      - |
+        I approve the target for
+        specification/contosowidgetmanager/Contoso.WidgetManager: API version
+        2022-11-01-preview, SDK type beta, PR
+        https://github.com/Azure/azure-rest-api-specs/pull/38387, and SHA
+        0123456789abcdef0123456789abcdef01234567. Confirm creation using the
+        details above, but do not generate SDKs yet.
       - |
         Now generate SDK for all languages using the work-item ID from the
         release plan you just created.
     constraints:
-      max_turns: 14
-      max_tokens: 18000
+      max_turns: 18
+      max_tokens: 24000
+    rubric:
+      - Turn 0 previews the public target without a confirmed mutation or SDK generation; turn 1 confirms only the approved project, PR 38387, SHA 0123456789abcdef0123456789abcdef01234567, beta SDK type derived from Public Preview, release month, and service/product IDs.
+      - Creation uses confirmTarget=true and succeeds without requires_confirmation or an error before generation. API version may be omitted because metadata derives 2022-11-01-preview; any explicit selection must match. Neither update-only guard is passed to create.
+      - Turn 2 generates for all four returned SDK languages using work item 35000 or accepted release plan alias 50001, never substituting 29262, publishing, or generating locally. Optional generation version/SHA guards must not override the stored target.
     graders:
-      # Turn 0 — create only, never generate yet.
+      # Turn 0 — preview only, never generate yet.
       - type: skill-invocation
         turn: 0
         config:
@@ -114,28 +163,64 @@ stimuli:
         turn: 0
         config:
           required:
-            - azsdk_get_release_plan
             - azsdk_create_release_plan
           disallowed:
             - azsdk_run_generate_sdk
-      # Turn 1 — generate for the plan created in turn 0; never re-create.
-      - type: skill-invocation
+            - azsdk_package_generate_code
+            - azsdk_release_sdk
+      # Turn 1 — explicitly confirm before generation is requested.
+      - type: tool-calls
         turn: 1
         config:
           required:
-            - azsdk-common-prepare-release-plan
-          # generate uses azsdk_run_generate_sdk (a release-planner pipeline
-          # tool); azsdk-common-generate-sdk-locally over-matches "generate" —
-          # see https://github.com/Azure/azure-sdk-tools/issues/15950.
+            - azsdk_create_release_plan
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_package_generate_code
+            - azsdk_release_sdk
+      # Turn 2 — generate for the confirmed plan; never re-create.
+      - type: skill-invocation
+        turn: 2
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
           disallowed:
             - azsdk-common-generate-sdk-locally
       - type: tool-calls
-        turn: 1
+        turn: 2
         config:
           required:
+            - azsdk_get_release_plan
             - azsdk_run_generate_sdk
           disallowed:
             - azsdk_create_release_plan
+            - azsdk_package_generate_code
+            - azsdk_release_sdk
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Require every rubric item in the tool-call trajectory. Target
+            preview is not creation and a boolean without the approved SHA is
+            not confirmation. Allow an omitted API version only when the
+            returned metadata resolves the approved version; create has no
+            prior-record guards. Require successful confirmation before SDK
+            generation and reuse the returned plan's IDs and languages.
+            Turns mean the three original user prompts, not injected skill
+            messages or individual assistant/tool iterations. Decode the JSON
+            text inside MCP results. The response omits requires_confirmation
+            when false; an absent flag is valid success when the result has
+            release_plan_details with the approved target and no error. Do not
+            require the literal false flag or confuse proposed_spec_target
+            (also returned after a successful write) with a preview.
+            WorkItemId 35000 and ReleasePlanId 50001 identify the same created
+            plan. Fetching it by workItemId 35000 before generation is valid
+            and expected, not a switch to another plan. A warning about the
+            separate overdue plan 49999 is not the selected target; judge the
+            returned release_plan_details and generation arguments instead.
+            Missing tool-call or result evidence must fail.
 
   # --- Scenario 2: Generate SDK for an existing release plan -----------
   - name: generate-sdk-for-existing-release-plan
@@ -169,16 +254,31 @@ stimuli:
 
   # --- Scenario 3: Link a different spec PR to an existing release plan
   - name: link-different-spec-pr-to-release-plan
+    tags:
+      feature: target-confirmation
     environment: *specsWorktree
-    prompt: |
-      Using the release-planner
-      flow, update the API spec pull request on an existing Contoso Widget
-      Manager release plan. Here is the context you need:
-        - release plan work item ID: "29262"
-        - new spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38500"
+    turns:
+      - |
+        Using the release-planner flow, preview the API spec pull request update
+        on an existing Contoso Widget Manager release plan. Show the target and
+        ask for approval before confirming. Here is the context you need:
+          - release plan work item ID: "29262"
+          - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38500"
+          - local TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+      - |
+        I approve the previewed target for work item 29262: project
+        specification/contosowidgetmanager/Contoso.WidgetManager, API version
+        2024-01-01-preview, beta SDK type, PR 38500, and commit
+        fedcba9876543210fedcba9876543210fedcba98. Confirm the link update using
+        the revision token from that preview verbatim. Do not refresh the
+        precondition or generate SDKs.
     constraints:
-      max_turns: 6
-      max_tokens: 8000
+      max_turns: 12
+      max_tokens: 14000
+    rubric:
+      - Turn 0 uses the intended work item 29262 and presents a no-write spec-link target preview including its package/source identity, derived API version 2024-01-01-preview, and SHA fedcba9876543210fedcba9876543210fedcba98. It retains ExpectedTargetRevision 29262:2:39262:3 from that tool result for confirmation; the opaque revision need not be printed in the narrative. It does not confirm a mutation.
+      - Turn 1 confirms the approved link with confirmTarget=true, the exact SHA, and expectedTargetRevision carried verbatim from the original preview, and receives a successful non-preview response. API version can be omitted when unambiguously derived; any explicit selection must equal the declared version. The optional expectedSpecCommitSha guard, if supplied, must be the original preview's previous pin.
+      - No precondition is silently refreshed or invented at confirmation. Any parent or child revision change, even at the same SHA, requires a new preview and user approval; generation, publishing, and new-plan creation do not occur.
     graders:
       - type: skill-invocation
         config:
@@ -190,6 +290,106 @@ stimuli:
             - azsdk_update_api_spec_pull_request_in_release_plan
           disallowed:
             - azsdk_create_release_plan
+            - azsdk_run_generate_sdk
+            - azsdk_package_generate_code
+            - azsdk_release_sdk
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_update_api_spec_pull_request_in_release_plan$"
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_update_api_spec_pull_request_in_release_plan$"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Require every rubric item using the calls and results, not only
+            the final response. The fixed fixture revision is 29262:2:39262:3;
+            require it copied from the first preview at confirmation. Missing
+            or blank expectedTargetRevision cannot count as success. The
+            optional previous-pin guard is fedcba9876543210fedcba9876543210fedcba98,
+            equal to the proposed pin here; never invent a different SHA.
+            An omitted or empty apiVersion is valid when metadata derives the
+            approved version. Reject a silent precondition replacement, a
+            confirmation before approval, or a preview/error reported as saved.
+
+  # General public updates carry the same revision guard as spec-link updates.
+  - name: update-public-target-with-metadata-derived-version
+    tags:
+      feature: target-confirmation
+    environment: *specsWorktree
+    turns:
+      - |
+        Preview an update of Contoso Widget Manager release plan work item 35000
+        using local project specification/contosowidgetmanager/Contoso.WidgetManager,
+        spec PR https://github.com/Azure/azure-rest-api-specs/pull/38387, and SDK
+        release type beta. Use the API version resolved from the snapshot
+        metadata rather than supplying apiVersion. Ask before saving anything.
+      - |
+        I approve the previewed target: Contoso.WidgetManager in that project,
+        API version 2022-11-01-preview, SDK release type beta, PR 38387, and SHA
+        0123456789abcdef0123456789abcdef01234567. Confirm the update using the
+        original preview's revision token. Continue deriving the API version
+        from metadata, and omit the optional previous-pin guard. Do not fetch a
+        replacement token or generate SDKs.
+    constraints:
+      max_turns: 12
+      max_tokens: 14000
+    rubric:
+      - Turn 0 obtains the existing plan through lookup or the update preview, and calls azsdk_update_release_plan for work item 35000 without an explicit API version or a confirmed mutation. It presents the target with packages, API version 2022-11-01-preview, beta SDK type, PR 38387, and SHA 0123456789abcdef0123456789abcdef01234567, and retains ExpectedTargetRevision 35000:2:45000:3 from the preview; the opaque revision need not be printed in the narrative.
+      - Only after approval in turn 1 does azsdk_update_release_plan receive confirmTarget=true, the approved SHA, project, PR and SDK type, and expectedTargetRevision copied verbatim from the original preview. The agent omits apiVersion and expectedSpecCommitSha as requested and receives a successful non-preview result whose API version is derived from metadata.
+      - Missing, blank, or mismatched revision tokens must not be reported as saved. Any parent or API Spec revision change needs a new preview and approval, even if the SHA is unchanged; the agent never silently replaces or invents a precondition and does not generate SDKs or create another plan.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^azure-sdk-mcp-azsdk_create_release_plan$"
+            - name: "^azure-sdk-mcp-azsdk_update_api_spec_pull_request_in_release_plan$"
+            - name: "^azure-sdk-mcp-azsdk_run_generate_sdk$"
+            - name: "^azure-sdk-mcp-azsdk_package_generate_code$"
+            - name: "^azure-sdk-mcp-azsdk_release_sdk$"
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_update_release_plan$"
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
+            - name: "^azure-sdk-mcp-azsdk_update_release_plan$"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Inspect every call and result against all rubric items. The
+            required token 35000:2:45000:3 must come from the original preview,
+            not a replacement from a fresh read or a synthesized precondition.
+            Readback to verify the saved target is allowed.
+            Omitted or empty apiVersion uses the fixture's unambiguous metadata;
+            require the returned version to match the approval. The previous-pin
+            guard is optional and omitted here, not replaced by the new SHA.
+            A second preview, rejection, or narrative-only success is not a
+            saved update. Turns refer to the two original user prompts, not
+            injected skill messages or assistant/tool iterations. Decode the
+            JSON text inside MCP results: requires_confirmation is omitted
+            when false. An absent flag plus release_plan_details containing
+            the approved target, a successful update message, and no error is
+            a successful update. proposed_spec_target may also be returned on
+            success and does not alone mean a preview. Missing call or result
+            evidence must fail.
 
   # --- Scenario 4: Update SDK details (package names) ------------------
   - name: update-sdk-details-in-release-plan
@@ -408,7 +608,7 @@ stimuli:
     environment: *bothGenerateSkills
     prompt: |
       Generate the SDK for all languages for my private preview release plan
-      (work item 29262) for the Contoso Widget Manager.
+      (work item 35002) for the Contoso Widget Manager.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -425,6 +625,7 @@ stimuli:
 
 scoring:
   weights:
-    skill-invocation: 0.5
-    tool-calls: 0.5
+    skill-invocation: 0.2
+    tool-calls: 0.3
+    prompt: 0.5
   threshold: 0.8

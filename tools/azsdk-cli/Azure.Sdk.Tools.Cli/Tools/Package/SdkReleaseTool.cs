@@ -199,7 +199,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         branch,
                         System.Text.Json.JsonSerializer.Serialize(templateParams));
 
-                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), templateParams, branch, ct);
+                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), templateParams, branch, ct: ct);
                     if (releasePipelineRun != null)
                     {
                         response.ReleasePipelineRunUrl = DevOpsService.GetPipelineUrl(releasePipelineRun.Id);

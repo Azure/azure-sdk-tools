@@ -145,7 +145,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
-        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansByIdAsync(int releasePlanId, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", CancellationToken ct = default);
@@ -166,6 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Timeline> GetBuildTimelineAsync(string project, int buildId, CancellationToken ct);
         public Task<List<string>> GetBuildLogLinesAsync(string project, int buildId, int logId, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct);
+        public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, int expectedRevision, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct);
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync(CancellationToken ct);
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label, CancellationToken ct);
@@ -361,39 +362,21 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
+        // Status updates must detect duplicate IDs and must not reinterpret a Release Plan ID as a work item ID.
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansByIdAsync(int releasePlanId, bool isTestReleasePlan = false, CancellationToken ct = default)
         {
-            try
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan'";
+            query += $" AND [Custom.ReleasePlanID] = '{releasePlanId}'";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            var workItems = await FetchWorkItemsAsync(query, ct);
+            var plans = new List<ReleasePlanWorkItem>();
+            foreach (var workItem in workItems)
             {
-                var languageId = MapLanguageToId(language);
-                var escapedPackageName = packageName?.Replace("'", "''");
-                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
-                query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
-                query += $" AND [Custom.ReleaseStatusFor{languageId}] <> 'Released'";
-                query += " AND [System.WorkItemType] = 'Release Plan'";
-                query += " AND [System.State] = 'In Progress'";
-                var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
-                if (releasePlanWorkItems.Count == 0)
-                {
-                    logger.LogInformation("No in-progress release plans found for package {packageName} in {language}", packageName, language);
-                    return [];
-                }
-
-                var releasePlans = new List<ReleasePlanWorkItem>();
-                foreach (var workItem in releasePlanWorkItems)
-                {
-                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
-                    releasePlans.Add(releasePlan);
-                }
-
-                return releasePlans;
+                plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to get release plans for package {packageName} in {language}", packageName, language);
-                throw new Exception($"Failed to get release plans for package {packageName} in {language}. Error: {ex.Message}", ex);
-            }
+            return plans;
         }
 
         private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct)
@@ -401,6 +384,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var releasePlan = new ReleasePlanWorkItem()
             {
                 WorkItemId = workItem.Id ?? 0,
+                Revision = workItem.Rev ?? 0,
                 WorkItemUrl = workItem.Url,
                 WorkItemHtmlUrl = workItem.Url?.Replace("_apis/wit/workItems", "_workitems/edit") ?? string.Empty,
                 Title = workItem.Fields.TryGetValue("System.Title", out object? value) ? value?.ToString() ?? string.Empty : string.Empty,
@@ -449,6 +433,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         SdkPullRequestUrl = sdkPullRequestUrl,
                         GenerationStatus = generationStatus,
                         ReleaseStatus = releaseStatus,
+                        ReleasedVersion = workItem.Fields.TryGetValue($"Custom.ReleasedVersionFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                         PullRequestStatus = pullRequestStatus,
                         PackageName = packageName,
                         ReleaseExclusionStatus = exclusionStatus
@@ -1811,9 +1796,29 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await UpdateWorkItemAsync(workItemId, fields, new Dictionary<string, string>(), ct);
         }
 
-        public async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct)
+        public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, int expectedRevision, CancellationToken ct)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision);
+            return UpdateWorkItemAsync(workItemId, fields, new Dictionary<string, string>(), expectedRevision, ct);
+        }
+
+        public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct)
+        {
+            return UpdateWorkItemAsync(workItemId, fields, multilineFieldFormats, null, ct);
+        }
+
+        private async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, int? expectedRevision, CancellationToken ct)
         {
             var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+            if (expectedRevision.HasValue)
+            {
+                jsonLinkDocument.Add(new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test,
+                    Path = "/rev",
+                    Value = expectedRevision.Value
+                });
+            }
             foreach (var item in fields)
             {
                 logger.LogDebug("Updating field {field} to {value}", item.Key, item.Value);

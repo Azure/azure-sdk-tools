@@ -22,6 +22,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         [JsonPropertyName("package_name")]
         public string PackageName { get; set; } = string.Empty;
 
+        [JsonPropertyName("api_version")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ApiVersion { get; set; }
+
         [JsonPropertyName("package_version")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? PackageVersion { get; set; }
@@ -60,6 +64,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
             if (!string.IsNullOrEmpty(PackageName))
             {
                 result.AppendLine($"Package Name: {PackageName}");
+            }
+            if (!string.IsNullOrEmpty(ApiVersion))
+            {
+                result.AppendLine($"API Version: {ApiVersion}");
             }
             if (!string.IsNullOrEmpty(PackageVersion))
             {

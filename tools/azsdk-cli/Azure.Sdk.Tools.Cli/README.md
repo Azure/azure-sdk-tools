@@ -94,6 +94,24 @@ In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
 
+## Release-plan status updates
+
+`azsdk release-plan update-release-status` requires explicit correlation before it writes to Azure DevOps:
+
+- `--release-plan-id`: the release-plan ID associated with this package release, not an interchangeable Azure DevOps work item ID.
+- `--language` and `--package-name`: identify exactly one SDK entry within that plan. Language aliases are normalized; package names must match exactly.
+- `--api-version`: one explicit spec API version from the package being released, matching the plan's saved API version. It is not the SDK package version.
+
+Without a release-plan ID, the command reports a no-op without looking up plans. This is normal for an independent SDK-only release. An unresolved or duplicate ID, missing/ambiguous API version, or mismatched language/package/API produces an error and no writes. There is no first-result, merged-PR, or release-type fallback.
+
+Package version and release pipeline URL remain optional result metadata. When an SDK release type or SDK PR URL is supplied, it must also match the identified plan/SDK entry. An already released SDK is not overwritten; matching retries are no-ops, including after the plan finishes, and a conflicting recorded version is rejected. Status and completion writes check the parent work item's revision; completion rereads all required language statuses and approved exclusions first. A revision conflict is reported rather than retried against changed data.
+
+The shared publication script reads `ReleasePlanId` and a scalar `ApiVersion` from **each package's build-produced package-info JSON** and forwards them with the package name and pipeline language. Missing or invalid correlation skips the status update, not the successful publication. No pipeline-wide ID is applied to every package.
+
+**Rollout prerequisite:** package-info producers must supply the API version using [#16868](https://github.com/Azure/azure-sdk-tools/issues/16868) and preserve the release-plan association for the exact SDK build/artifact. This change implements the receiving command and publication adapter, not that cross-repository producer work. Do not persist an ID as a permanent package setting or copy it into an unrelated bug-fix build. The existing auto-release progress caller also omits these inputs and therefore becomes a safe no-op until it is wired to verified per-package correlation. Publish the updated CLI before rolling out the shared script.
+
+These guards do not prove artifact provenance or distinguish two generation attempts with identical inputs and a copied ID. Parent revision checks also do not make API Spec child reads and parent writes a cross-work-item transaction. Historical incorrect dashboard data is not repaired automatically.
+
 ## Retained customization repair attempts
 
 `azsdk tsp client customized-update` / `azsdk_customized_code_update` accepts `--max-attempts` / `maxAttempts` (1..10, default 1). Multiple attempts currently require `CustomCode`; `All` and `SpecInputs` retain their single-pass behavior.

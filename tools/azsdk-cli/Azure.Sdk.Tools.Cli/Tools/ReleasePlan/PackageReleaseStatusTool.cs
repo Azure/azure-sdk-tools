@@ -34,7 +34,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<int> releasePlanIdOpt = new("--release-plan-id")
         {
-            Description = "Optional release plan ID. If provided, it is used as an additional filter when searching by package name to select the correct release plan.",
+            Description = "Release plan ID associated with this package release (not the Azure DevOps work item ID). No plan is updated when omitted.",
+            Required = false,
+        };
+
+        private readonly Option<string?> apiVersionOpt = new("--api-version")
+        {
+            Description = "Single spec API version from the package being released. Required when a release plan ID is provided; must match the plan exactly.",
             Required = false,
         };
 
@@ -46,13 +52,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string?> sdkReleaseTypeOpt = new("--sdk-release-type")
         {
-            Description = "SDK release type (e.g., beta, stable)",
+            Description = "SDK release type (e.g., beta, stable). When supplied, must match the identified plan; never used to select another plan.",
             Required = false,
         };
 
         private readonly Option<string?> sdkPullRequestOpt = new("--sdk-pull-request")
         {
-            Description = "SDK pull request URL.",
+            Description = "SDK pull request URL. When supplied, must match the identified language/package entry.",
             Required = false,
         };
 
@@ -78,7 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         protected override Command GetCommand() =>
             new McpCommand(updateReleaseStatusCommandName, "Update package release status in the release plan")
             {
-                packageNameOpt, languageOpt, releaseStatusOpt, packageVersionOpt, releasePlanIdOpt, sdkReleaseTypeOpt, sdkPullRequestOpt, releasePipelineOpt
+                packageNameOpt, languageOpt, releaseStatusOpt, packageVersionOpt, releasePlanIdOpt, apiVersionOpt, sdkReleaseTypeOpt, sdkPullRequestOpt, releasePipelineOpt
             };
 
 
@@ -97,7 +103,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var sdkReleaseType = commandParser.GetValue(sdkReleaseTypeOpt);
                     var releasePipelineUrl = commandParser.GetValue(releasePipelineOpt);
                     var sdkPullRequest = commandParser.GetValue(sdkPullRequestOpt);
-                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus, packageVersion, releasePlanId, sdkReleaseType, releasePipelineUrl, sdkPullRequest, ct);
+                    var apiVersion = commandParser.GetValue(apiVersionOpt);
+                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus, packageVersion, releasePlanId, sdkReleaseType, releasePipelineUrl, sdkPullRequest, apiVersion, ct);
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -106,22 +113,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         /// <summary>
-        /// Updates the release status for a given package in the release plan to either Released or Approval pending
+        /// Updates only the SDK entry explicitly correlated with this package release.
         /// </summary>
         /// <param name="packageName">The name of the package.</param>
         /// <param name="language">The language of the package.</param>
         /// <param name="releaseStatus">The release status to set (e.g., Released, Pending).</param>
         /// <param name="packageVersion">The version of the package.</param>
-        /// <param name="releasePlanId">The ID of the release plan work item.</param>
+        /// <param name="releasePlanId">The user-facing release plan ID propagated with this release, not a work item ID.</param>
         /// <param name="sdkReleaseType">The SDK release type (e.g., beta, stable).</param>
         /// <param name="sdkPullRequest">The URL of the SDK pull request associated with the release.</param>
         /// <param name="releasePipelineUrl">The URL of the release pipeline.</param>
+        /// <param name="apiVersion">The single spec API version from the package being released.</param>
         /// <param name="ct">The cancellation token.</param>
         /// <returns>A task that represents the asynchronous operation, containing the response of the update operation.</returns>
-        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus, string? packageVersion, int releasePlanId = 0, string? sdkReleaseType = null, string? releasePipelineUrl = null, string? sdkPullRequest = null, CancellationToken ct = default)
+        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus, string? packageVersion, int releasePlanId = 0, string? sdkReleaseType = null, string? releasePipelineUrl = null, string? sdkPullRequest = null, string? apiVersion = null, CancellationToken ct = default)
         {
             try
             {
+                ct.ThrowIfCancellationRequested();
                 // Validate inputs
                 if (string.IsNullOrWhiteSpace(packageName))
                 {
@@ -135,58 +144,103 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var response = new ReleaseStatusUpdateResponse()
                 {
                     PackageName = packageName,
-                    Language = SdkLanguageHelpers.GetSdkLanguage(language),
-                    ReleaseStatus = releaseStatus,
+                    Language = SdkLanguageHelpers.GetSdkLanguage(language.Trim()),
+                    ReleasePlanId = releasePlanId,
+                    ApiVersion = apiVersion,
                     PackageVersion = packageVersion,
                     ReleasePipelineUrl = releasePipelineUrl,
                     SdkReleaseType = sdkReleaseType,
                     SdkPullRequest = sdkPullRequest
                 };
 
-                if (!ReleasePlanTool.SUPPORTED_LANGUAGES.Contains(language.ToLower()))
+                ReleaseStatusUpdateResponse Reject(string reason)
                 {
-                    response.Message = $"Language '{language}' is not supported. Supported languages: {string.Join(", ", ReleasePlanTool.SUPPORTED_LANGUAGES)}";
+                    response.ResponseError = $"No release plan updated for ID {releasePlanId}, language '{language}', package '{packageName}', API version '{apiVersion}'. {reason}";
                     return response;
                 }
 
-                logger.LogInformation("Searching for in-progress release plans with package {packageName} for {language}", packageName, language);
+                if (response.Language is not (SdkLanguage.DotNet or SdkLanguage.Java or SdkLanguage.JavaScript or SdkLanguage.Python or SdkLanguage.Go))
+                {
+                    return Reject($"Language '{language}' is not supported. Supported languages: .NET, Java, JavaScript, Python, Go.");
+                }
+                if (releasePlanId == 0)
+                {
+                    response.Message = "No release-plan ID was supplied; no release plan was updated. Independent SDK releases do not require a release plan.";
+                    return response;
+                }
+                if (releasePlanId < 0)
+                {
+                    return Reject("The release-plan ID must be a positive integer.");
+                }
+                if (!IsSingleApiVersion(apiVersion))
+                {
+                    return Reject("Provide one explicit API version from this package's metadata, not a list, default, or latest selector.");
+                }
+                if (string.IsNullOrWhiteSpace(releaseStatus))
+                {
+                    return Reject("Release status cannot be empty.");
+                }
+
                 bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
-                // Find all release plans in "In Progress" status with the given package name
-                var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting, ct);
-                if (releasePlans.Count == 0)
+                var releasePlans = await devOpsService.GetReleasePlansByIdAsync(releasePlanId, isAgentTesting, ct);
+                if (releasePlans.Count != 1)
                 {
-                    response.Message = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
+                    return Reject($"Expected exactly one release plan with this ID; found {releasePlans.Count}. Candidate work item IDs: {string.Join(", ", releasePlans.Select(p => p.WorkItemId))}.");
+                }
+
+                var releasePlan = releasePlans[0];
+                if (releasePlan.ReleasePlanId != releasePlanId || releasePlan.WorkItemId <= 0 || releasePlan.IsTestReleasePlan != isAgentTesting)
+                {
+                    return Reject("The resolved work item does not match the supplied release-plan ID and environment.");
+                }
+                var sdkEntries = releasePlan.SDKInfo.Where(s => SdkLanguageHelpers.GetSdkLanguage(s.Language) == response.Language).ToList();
+                if (sdkEntries.Count != 1 || !string.Equals(sdkEntries[0].PackageName, packageName, StringComparison.Ordinal))
+                {
+                    return Reject("The plan must contain exactly one entry for this language, with the exact package name. No other language or package is selected.");
+                }
+                var sdkInfo = sdkEntries[0];
+                if (!string.Equals(releasePlan.SpecAPIVersion, apiVersion, StringComparison.Ordinal))
+                {
+                    return Reject($"The package API version does not match the plan API version '{releasePlan.SpecAPIVersion}'.");
+                }
+                if (!string.IsNullOrWhiteSpace(sdkReleaseType) && !string.Equals(releasePlan.SDKReleaseType, sdkReleaseType, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Reject($"SDK release type does not match the plan's '{releasePlan.SDKReleaseType}' target.");
+                }
+                if (!string.IsNullOrWhiteSpace(sdkPullRequest) && !string.Equals(sdkInfo.SdkPullRequestUrl, sdkPullRequest, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Reject("The SDK pull request does not match this language/package entry.");
+                }
+                var isInProgress = string.Equals(releasePlan.Status, "In Progress", StringComparison.OrdinalIgnoreCase);
+                var isFinished = string.Equals(releasePlan.Status, "Finished", StringComparison.OrdinalIgnoreCase);
+                if (!isInProgress && !isFinished)
+                {
+                    return Reject($"The plan is not in progress (state '{releasePlan.Status}').");
+                }
+
+                // Retries cannot overwrite a recorded release, even after the overall plan has finished.
+                if (string.Equals(sdkInfo.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.Equals(releaseStatus, "Released", StringComparison.OrdinalIgnoreCase) ||
+                        (!string.IsNullOrWhiteSpace(packageVersion) && !string.IsNullOrWhiteSpace(sdkInfo.ReleasedVersion) &&
+                         !string.Equals(packageVersion, sdkInfo.ReleasedVersion, StringComparison.Ordinal)))
+                    {
+                        return Reject($"This SDK is already released with version '{sdkInfo.ReleasedVersion}'; its recorded release cannot be overwritten.");
+                    }
+                    response.ReleaseStatus = sdkInfo.ReleaseStatus;
+                    response.Message = "This SDK is already marked Released; no release plan changes were made.";
                     return response;
                 }
-
-                ReleasePlanWorkItem releasePlan;
-
-                // If release plan ID is provided, use it to select the matching release plan from the results
-                if (releasePlanId > 0)
+                if (!isInProgress || releasePlan.Revision <= 0)
                 {
-                    var matchingPlan = releasePlans.FirstOrDefault(rp => rp.ReleasePlanId == releasePlanId);
-                    if (matchingPlan != null)
-                    {
-                        logger.LogInformation("Found release plan {releasePlanId} matching the provided ID for package {packageName}.", releasePlanId, packageName);
-                        releasePlan = matchingPlan;
-                    }
-                    else
-                    {
-                        response.Message = $"Release plan with ID '{releasePlanId}' not found among in-progress release plans for package '{packageName}' in language '{language}'.";
-                        return response;
-                    }
-                }
-                else
-                {
-                    releasePlan = SelectReleasePlan(releasePlans, packageName, sdkReleaseType, sdkPullRequest);
+                    return Reject("The plan must be in progress and have a valid work item revision before updating status.");
                 }
 
-                response.ReleasePlanId = releasePlan.ReleasePlanId;
                 response.TypeSpecProject = releasePlan.APISpecProjectPath;
                 logger.LogInformation("Updating release status to {releaseStatus} for package {packageName} in release plan work item {workItemId}", releaseStatus, packageName, releasePlan.WorkItemId);
 
                 // Update the release status for the specific language
-                var languageId = DevOpsService.MapLanguageToId(language);
+                var languageId = DevOpsService.MapLanguageToId(response.Language.ToWorkItemString());
                 var fieldsToUpdate = new Dictionary<string, string>
                 {
                     { $"Custom.ReleaseStatusFor{languageId}", releaseStatus }
@@ -202,100 +256,72 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     fieldsToUpdate[$"Custom.ReleasePipelineFor{languageId}"] = releasePipelineUrl;
                 }
 
-                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
+                ct.ThrowIfCancellationRequested();
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, releasePlan.Revision, ct);
                 logger.LogInformation("Successfully updated release status to {releaseStatus} for package {packageName} in release plan {workItemId}", releaseStatus, packageName, releasePlan.WorkItemId);
                 response.ReleaseStatus = releaseStatus;
 
                 // Check if the release plan can be marked as Finished
                 if (string.Equals(releaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Update in-memory SDKInfo to reflect the new status
-                    var currentLanguageName = DevOpsService.MapLanguageIdToName(languageId);
-                    var sdkInfo = releasePlan.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, currentLanguageName, StringComparison.OrdinalIgnoreCase));
-                    if (sdkInfo != null)
+                    try
                     {
-                        sdkInfo.ReleaseStatus = releaseStatus;
-                    }
-
-                    if (IsReleasePlanComplete(releasePlan))
-                    {
-                        try
+                        // Other languages may have completed or the plan may have changed since the first read.
+                        var currentPlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+                        if (currentPlan.ReleasePlanId != releasePlanId || currentPlan.WorkItemId != releasePlan.WorkItemId ||
+                            currentPlan.IsTestReleasePlan != isAgentTesting || currentPlan.Revision <= 0 ||
+                            currentPlan.IsManagementPlane != releasePlan.IsManagementPlane || currentPlan.IsDataPlane != releasePlan.IsDataPlane ||
+                            !string.Equals(currentPlan.APISpecProjectPath, releasePlan.APISpecProjectPath, StringComparison.Ordinal) ||
+                            !string.Equals(currentPlan.SpecAPIVersion, apiVersion, StringComparison.Ordinal) ||
+                            !string.Equals(currentPlan.SDKReleaseType, releasePlan.SDKReleaseType, StringComparison.OrdinalIgnoreCase) ||
+                            currentPlan.SDKInfo.Count != releasePlan.SDKInfo.Count ||
+                            currentPlan.SDKInfo.Any(current => !releasePlan.SDKInfo.Any(original =>
+                                string.Equals(current.Language, original.Language, StringComparison.OrdinalIgnoreCase) &&
+                                string.Equals(current.PackageName, original.PackageName, StringComparison.Ordinal))))
+                        {
+                            response.Message = "Release status updated, but the plan changed before completion could be checked. No completion update was made.";
+                        }
+                        else if (string.Equals(currentPlan.Status, "In Progress", StringComparison.OrdinalIgnoreCase) && IsReleasePlanComplete(currentPlan))
                         {
                             logger.LogInformation("All required languages are complete for release plan {workItemId}. Marking as Finished.", releasePlan.WorkItemId);
                             await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
                             {
                                 { "System.State", "Finished" }
-                            }, ct);
+                            }, currentPlan.Revision, ct);
                             response.ReleasePlanFinished = true;
                         }
-                        catch (Exception ex)
-                        {
-                            logger.LogWarning(ex, "Failed to mark release plan {workItemId} as Finished", releasePlan.WorkItemId);
-                            response.Message = "Release status updated successfully but failed to auto-finish the release plan.";
-                        }
+                    }
+                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Failed to mark release plan {workItemId} as Finished", releasePlan.WorkItemId);
+                        response.Message = "Release status updated successfully but failed to auto-finish the release plan.";
                     }
                 }
 
                 return response;
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to update release status for package {packageName}", packageName);
-                return new ReleaseStatusUpdateResponse { PackageName = packageName, ResponseError = $"Failed to update release status: {ex.Message}" };
+                return new ReleaseStatusUpdateResponse { PackageName = packageName, ReleasePlanId = releasePlanId, ApiVersion = apiVersion, ResponseError = $"Failed to update release status for plan {releasePlanId}, language '{language}', package '{packageName}', API version '{apiVersion}': {ex.Message}" };
             }
         }
 
-        private ReleasePlanWorkItem SelectReleasePlan(List<ReleasePlanWorkItem> releasePlans, string packageName, string? sdkReleaseType, string? sdkPullRequest)
+        private static bool IsSingleApiVersion(string? apiVersion)
         {
-            var releasePlan = releasePlans[0];
-            if (releasePlans.Count > 1)
-            {
-                logger.LogInformation("Multiple active release plans are found for '{packageName}'", packageName);
-                // If an SDK pull request URL is provided, try to select the release plan that matches it.
-                if (!string.IsNullOrWhiteSpace(sdkPullRequest))
-                {
-                    var releasePlanWithSdkPullRequest = releasePlans.FirstOrDefault(rp =>
-                        rp.SDKInfo.Any(s =>
-                            string.Equals(s.PackageName, packageName, StringComparison.OrdinalIgnoreCase)
-                            && !string.IsNullOrWhiteSpace(s.SdkPullRequestUrl)
-                            && string.Equals(s.SdkPullRequestUrl, sdkPullRequest, StringComparison.OrdinalIgnoreCase)));
-                    if (releasePlanWithSdkPullRequest != null)
-                    {
-                        logger.LogInformation("Selected release plan {releasePlanId} with SDK pull request {sdkPullRequest}.", releasePlanWithSdkPullRequest.ReleasePlanId, sdkPullRequest);
-                        releasePlan = releasePlanWithSdkPullRequest;
-                        return releasePlan;
-                    }
-                    logger.LogInformation("No release plan matched the SDK pull request {sdkPullRequest}.", sdkPullRequest);
-                }
-                // If an SDK release type is provided, try to select the release plan that matches it.
-                if (!string.IsNullOrWhiteSpace(sdkReleaseType))
-                {
-                    var releasePlanWithSdkReleaseType = releasePlans.FirstOrDefault(rp => string.Equals(rp.SDKReleaseType, sdkReleaseType, StringComparison.OrdinalIgnoreCase));
-                    if (releasePlanWithSdkReleaseType != null)
-                    {
-                        logger.LogInformation("Selected release plan {releasePlanId} with SDK release type {sdkReleaseType}.", releasePlanWithSdkReleaseType.ReleasePlanId, sdkReleaseType);
-                        releasePlan = releasePlanWithSdkReleaseType;
-                        return releasePlan;
-                    }
-                    logger.LogInformation("No release plan matched the SDK release type {sdkReleaseType}.", sdkReleaseType);
-                }
-                // If no release plan was selected by SDK pull request or SDK release type, try to select the release plan with a merged pull request.
-                var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => string.Equals(s.PackageName, packageName, StringComparison.OrdinalIgnoreCase) && s.PullRequestStatus.Equals("Merged")));
-                if (releasePlanWithPrMerged != null)
-                {
-                    logger.LogInformation("Selected first release plan {releasePlanId} with pull request as merged.", releasePlanWithPrMerged.ReleasePlanId);
-                    releasePlan = releasePlanWithPrMerged;
-                }
-                else
-                {
-                    logger.LogInformation("No release plan with merged pull request status found. Defaulting to first release plan {releasePlanId}.", releasePlan.ReleasePlanId);
-                }
-            }
-            else
-            {
-                logger.LogInformation("Found release plan work item {workItemId} for package {packageName}", releasePlan.WorkItemId, packageName);
-            }
-            return releasePlan;
+            return !string.IsNullOrWhiteSpace(apiVersion) &&
+                !string.Equals(apiVersion, "latest", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(apiVersion, "default", StringComparison.OrdinalIgnoreCase) &&
+                char.IsAsciiLetterOrDigit(apiVersion[0]) &&
+                apiVersion.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.');
         }
 
         internal static bool IsReleasePlanComplete(ReleasePlanWorkItem releasePlan)
@@ -304,7 +330,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 ? ReleasePlanTool.languagesforMgmtplane
                 : ReleasePlanTool.languagesforDataplane;
 
-            var sdkInfoByLanguage = releasePlan.SDKInfo.ToDictionary(i => i.Language, System.StringComparer.OrdinalIgnoreCase);
+            var sdkInfoByLanguage = releasePlan.SDKInfo.ToDictionary(i => i.Language, StringComparer.OrdinalIgnoreCase);
 
             return requiredLanguages.All(lang =>
                 sdkInfoByLanguage.TryGetValue(lang, out var info)

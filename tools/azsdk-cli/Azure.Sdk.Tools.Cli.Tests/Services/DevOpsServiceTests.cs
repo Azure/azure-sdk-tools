@@ -693,147 +693,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
-        #region GetReleasePlansForPackageAsync Tests
-
-        [TestCase("python", "Python")]
-        [TestCase(".net", "Dotnet")]
-        [TestCase("javascript", "JavaScript")]
-        [TestCase("java", "Java")]
-        [TestCase("go", "Go")]
-        public async Task GetReleasePlansForPackageAsync_QueryIncludesReleaseStatusFilter(string language, string expectedLanguageId)
-        {
-            // Arrange
-            var packageName = "azure-test-package";
-            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, language);
-            _connection.AddWorkItemToQuery(releasePlanWorkItem);
-
-            // Act
-            await _devOpsService.GetReleasePlansForPackageAsync(packageName, language, false, CancellationToken.None);
-
-            // Assert - verify query includes the release status filter
-            var capturedQuery = _connection.LastCapturedQuery;
-            Assert.That(capturedQuery, Is.Not.Null, "Expected a WIQL query to be captured");
-            Assert.That(capturedQuery, Does.Contain($"[Custom.ReleaseStatusFor{expectedLanguageId}] <> 'Released'"),
-                $"Query should filter out already-released packages for language '{language}'");
-        }
-
-        [Test]
-        public async Task GetReleasePlansForPackageAsync_QueryIncludesPackageNameFilter()
-        {
-            // Arrange
-            var packageName = "azure-test-package";
-            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
-            _connection.AddWorkItemToQuery(releasePlanWorkItem);
-
-            // Act
-            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", false, CancellationToken.None);
-
-            // Assert
-            var capturedQuery = _connection.LastCapturedQuery;
-            Assert.That(capturedQuery, Does.Contain($"[Custom.PythonPackageName] = '{packageName}'"));
-        }
-
-        [Test]
-        public async Task GetReleasePlansForPackageAsync_QueryIncludesInProgressStateFilter()
-        {
-            // Arrange
-            var packageName = "azure-test-package";
-            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
-            _connection.AddWorkItemToQuery(releasePlanWorkItem);
-
-            // Act
-            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", false, CancellationToken.None);
-
-            // Assert
-            var capturedQuery = _connection.LastCapturedQuery;
-            Assert.That(capturedQuery, Does.Contain("[System.State] = 'In Progress'"));
-        }
-
-        [Test]
-        public async Task GetReleasePlansForPackageAsync_ReturnsEmptyList_WhenNoMatchingWorkItems()
-        {
-            // Arrange - no work items added to query results
-
-            // Act
-            var result = await _devOpsService.GetReleasePlansForPackageAsync("azure-test-package", "python", false, CancellationToken.None);
-
-            // Assert
-            Assert.That(result, Is.Empty);
-        }
-
-        [Test]
-        public async Task GetReleasePlansForPackageAsync_TestReleasePlan_QueryContainsTestTag()
-        {
-            // Arrange
-            var packageName = "azure-test-package";
-            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
-            _connection.AddWorkItemToQuery(releasePlanWorkItem);
-
-            // Act
-            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", isTestReleasePlan: true, CancellationToken.None);
-
-            // Assert
-            var capturedQuery = _connection.LastCapturedQuery;
-            Assert.That(capturedQuery, Does.Contain("[System.Tags] CONTAINS"));
-            Assert.That(capturedQuery, Does.Contain("Release Planner App Test"));
-        }
-
-        [Test]
-        public async Task GetReleasePlansForPackageAsync_NonTestReleasePlan_QueryExcludesTestTag()
-        {
-            // Arrange
-            var packageName = "azure-test-package";
-            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
-            _connection.AddWorkItemToQuery(releasePlanWorkItem);
-
-            // Act
-            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", isTestReleasePlan: false, CancellationToken.None);
-
-            // Assert
-            var capturedQuery = _connection.LastCapturedQuery;
-            Assert.That(capturedQuery, Does.Contain("[System.Tags] NOT CONTAINS"));
-            Assert.That(capturedQuery, Does.Contain("Release Planner App Test"));
-        }
-
-        [Test]
-        public async Task GetReleasePlansForPackageAsync_EscapesSingleQuoteInPackageName()
-        {
-            // Arrange
-            var packageName = "azure-test's-package";
-            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
-            _connection.AddWorkItemToQuery(releasePlanWorkItem);
-
-            // Act
-            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", false, CancellationToken.None);
-
-            // Assert
-            var capturedQuery = _connection.LastCapturedQuery;
-            Assert.That(capturedQuery, Does.Contain("azure-test''s-package"), "Single quotes should be escaped in WIQL query");
-        }
-
-        private WorkItem CreateReleasePlanWorkItemForPackage(int id, string packageName, string language)
-        {
-            var languageId = DevOpsService.MapLanguageToId(language);
-            var workItem = new WorkItem
-            {
-                Id = id,
-                Fields = new Dictionary<string, object>
-                {
-                    { "System.WorkItemType", "Release Plan" },
-                    { "System.State", "In Progress" },
-                    { "System.Title", $"Release Plan {id}" },
-                    { "System.TeamProject", "internal" },
-                    { "Custom.ReleasePlanID", id.ToString() },
-                    { $"Custom.{languageId}PackageName", packageName },
-                    { $"Custom.ReleaseStatusFor{languageId}", "" }
-                },
-                Relations = new List<WorkItemRelation>()
-            };
-            return workItem;
-        }
-
-        #endregion
-
         #region RunSDKGenerationPipelineAsync Tests
 
         [Test]
@@ -1120,6 +979,100 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         #endregion
+        #region Explicit release status correlation
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GetReleasePlansByIdAsync_UsesDisplayIdAndEnvironmentAndMapsSnapshot(bool isTest)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(35000, "In Progress", 35001);
+            plan.Rev = 7;
+            plan.Fields["Custom.ReleasePlanID"] = "100";
+            plan.Fields["System.Tags"] = isTest ? "Release Planner App Test" : "";
+            plan.Fields["Custom.PythonPackageName"] = "azure-test";
+            plan.Fields["Custom.ReleasedVersionForPython"] = "1.2.3";
+            var apiSpec = CreateApiSpecWorkItemWithVersion(35001, "https://github.com/Azure/azure-rest-api-specs/pull/1", "Active", "2026-07-01", 35000);
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(apiSpec);
+
+            var result = await _devOpsService.GetReleasePlansByIdAsync(100, isTest);
+
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.ReleasePlanID] = '100'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.WorkItemType] = 'Release Plan'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[System.Tags] {(isTest ? "CONTAINS" : "NOT CONTAINS")} 'Release Planner App Test'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Not.Contain("PackageName").And.Not.Contain("[System.State]"));
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].ReleasePlanId, Is.EqualTo(100));
+            Assert.That(result[0].WorkItemId, Is.EqualTo(35000));
+            Assert.That(result[0].Revision, Is.EqualTo(7));
+            Assert.That(result[0].IsTestReleasePlan, Is.EqualTo(isTest));
+            Assert.That(result[0].SpecAPIVersion, Is.EqualTo("2026-07-01"));
+            Assert.That(result[0].SDKInfo.Single(s => s.Language == "Python").ReleasedVersion, Is.EqualTo("1.2.3"));
+        }
+
+        [Test]
+        public async Task GetReleasePlansByIdAsync_ReturnsEveryDuplicateInsteadOfSelectingFirst()
+        {
+            var first = CreateReleasePlanWorkItemWithReleasePlanId(11111, 100, "In Progress");
+            var second = CreateReleasePlanWorkItemWithReleasePlanId(22222, 100, "Finished");
+            _connection.AddWorkItemToQuery(first);
+            _connection.AddWorkItemToQuery(second);
+
+            var result = await _devOpsService.GetReleasePlansByIdAsync(100);
+
+            Assert.That(result.Select(p => p.WorkItemId), Is.EquivalentTo(new[] { 11111, 22222 }));
+        }
+
+        [Test]
+        public async Task GetReleasePlansByIdAsync_MissingDisplayId_DoesNotFallBackToWorkItemId()
+        {
+            _connection.AddWorkItem(CreateReleasePlanWorkItemWithReleasePlanId(100, 200, "In Progress"));
+            var result = await _devOpsService.GetReleasePlansByIdAsync(100);
+            Assert.That(result, Is.Empty);
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void GetReleasePlansByIdAsync_InvalidId_DoesNotQuery(int releasePlanId)
+        {
+            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _devOpsService.GetReleasePlansByIdAsync(releasePlanId));
+            Assert.That(_connection.LastCapturedQuery, Is.Null);
+        }
+
+        [Test]
+        public void GetReleasePlansByIdAsync_QueryCancellationPropagates()
+        {
+            _connection.CancelQuery();
+            Assert.CatchAsync<OperationCanceledException>(() => _devOpsService.GetReleasePlansByIdAsync(100));
+        }
+
+        [Test]
+        public async Task UpdateWorkItemAsync_ExpectedRevisionIsTestedBeforeAnyFieldWrite()
+        {
+            await _devOpsService.UpdateWorkItemAsync(12345,
+                new Dictionary<string, string> { ["Custom.ReleaseStatusForPython"] = "Released" }, 7, CancellationToken.None);
+
+            var patch = _connection.LastCapturedPatchDocument!;
+            Assert.That(patch, Has.Count.EqualTo(2));
+            Assert.That(patch[0].Operation, Is.EqualTo(Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test));
+            Assert.That(patch[0].Path, Is.EqualTo("/rev"));
+            Assert.That(patch[0].Value, Is.EqualTo(7));
+            Assert.That(patch[1].Path, Is.EqualTo("/fields/Custom.ReleaseStatusForPython"));
+            Assert.That(patch[1].Value, Is.EqualTo("Released"));
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void UpdateWorkItemAsync_InvalidExpectedRevision_DoesNotWrite(int revision)
+        {
+            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _devOpsService.UpdateWorkItemAsync(12345,
+                new Dictionary<string, string> { ["System.State"] = "Finished" }, revision, CancellationToken.None));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
+        }
+
+        #endregion
+
         #region TestDevOpsConnection
 
         private class TestDevOpsConnection : IDevOpsConnection

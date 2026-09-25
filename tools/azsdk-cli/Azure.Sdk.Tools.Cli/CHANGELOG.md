@@ -6,7 +6,11 @@
 
 ### Breaking Changes
 
+- `release-plan update-release-status` now requires a release-plan ID and an exact package API version before writing status. Calls without an ID are safe no-ops; package/PR/release-type heuristics no longer select a plan.
+
 ### Bugs Fixed
+
+- Release status updates validate the language/package entry and API version, reject duplicate IDs and conflicting recorded releases, and guard writes against concurrent parent work-item changes.
 
 ### Other Changes
 

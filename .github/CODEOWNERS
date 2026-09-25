@@ -17,6 +17,7 @@
 # Eng Sys
 ###########
 /eng/                                  @azure/azure-sdk-eng
+/eng/common/                           @azure/azure-sdk-eng @azure/azure-sdk-eng-common-maintainers
 /.config/1espt/                        @benbp
 
 ###########

@@ -5,9 +5,6 @@ parameters:
   - name: CSharpAPIParserVersion
     type: string
     default: '1.0.0-dev.20260623.4'
-  - name: JavaScriptAPIParser
-    type: string
-    default: '@azure-tools/ts-genapi@2.0.11'
   - name: RustAPIParser
     type: string
     default: '@azure-tools/rust-genapi@1.4.0'
@@ -97,6 +94,12 @@ extends:
                 inputs:
                   versionSpec: '$(NodeVersion)'
                 displayName: 'Use NodeJS $(NodeVersion)'
+
+              - script: |
+                  npm ci --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                  if not exist "node_modules\@azure-tools\ts-genapi\dist\src\export.js" exit /b 1
+                workingDirectory: $(Build.SourcesDirectory)/src/dotnet/APIView/APIViewWeb/Deployment/js-parser
+                displayName: "Install JavaScript parser"
 
               - task: GoTool@0
                 inputs:
@@ -308,6 +311,7 @@ extends:
                   appType: 'webApp'
                   WebAppName: 'apiviewstaging'
                   packageForLinux: '$(Pipeline.Workspace)/APIView/**/APIViewWeb.zip'
+                  AppSettings: '-WEBSITE_NODE_DEFAULT_VERSION "~22"'
                   ScriptType: 'Inline Script'
                   InlineScript: |
                     @echo off
@@ -315,8 +319,8 @@ extends:
                     call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                     call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
-                    echo Installing JavaScript parser
-                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                    echo Verifying JavaScript parser
+                    if not exist "D:\home\site\wwwroot\js-parser\node_modules\@azure-tools\ts-genapi\dist\src\export.js" exit /b 1
                     echo Installing Rust parser
                     call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                   enableCustomDeployment: true
@@ -366,14 +370,15 @@ extends:
                   azureSubscription: 'APIViewUI-Instance-deployment-connection'
                   WebAppName: apiviewuat
                   packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+                  AppSettings: '-WEBSITE_NODE_DEFAULT_VERSION "~22"'
                   InlineScript: |
                     @echo off
                     echo Installing .NET tool
                     call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                     call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
-                    echo Installing JavaScript parser
-                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                    echo Verifying JavaScript parser
+                    if not exist "D:\home\site\wwwroot\js-parser\node_modules\@azure-tools\ts-genapi\dist\src\export.js" exit /b 1
                     echo Installing Rust parser
                     call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                   enableCustomDeployment: true
@@ -432,14 +437,15 @@ extends:
                         SlotName: staging
                         ScriptType: 'Inline Script'
                         packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+                        AppSettings: '-WEBSITE_NODE_DEFAULT_VERSION "~22"'
                         InlineScript: |
                           @echo off
                           echo Installing .NET tool
                           call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
-                          echo Installing JavaScript parser
-                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                          echo Verifying JavaScript parser
+                          if not exist "D:\home\site\wwwroot\js-parser\node_modules\@azure-tools\ts-genapi\dist\src\export.js" exit /b 1
                           echo Installing Rust parser
                           call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                         enableCustomDeployment: true

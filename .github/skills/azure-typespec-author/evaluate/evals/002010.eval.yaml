@@ -7,7 +7,7 @@ area: "armtemplate"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -94,6 +94,10 @@ stimuli:
     prompt: |
       In the Widget project, add a synchronous exportData operation for the Employee resource in API version `2024-10-01-preview`. The operation should take no request body and return an optional exported data string. All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
+    rubric:
+      - Employee has a synchronous resource action named exportData in API version 2024-10-01-preview using ArmResourceActionSync.
+      - The operation has no request body and returns a response model containing optional exported string data.
+      - Changes follow TypeSpec Azure guidelines and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from pytest import MonkeyPatch
 
 from config.tenant_config import (
+    SRC_AZURE_SDK_DOCS_ENG,
     SRC_TYPESPEC_DOCS,
     TenantConfig,
     TenantID,
@@ -102,6 +103,17 @@ def test_unknown_source_still_produces_a_filter():
     # Dropping it would leave the caller with an empty, i.e. unscoped, filter.
     got = _resolve_source_filters(["not_a_registered_source"], _TENANT)
     assert got == {"not_a_registered_source": "context_id eq 'not_a_registered_source'"}
+
+
+def test_azure_mcp_internal_docs_are_scoped_to_mcp_title_tokens():
+    got = _resolve_source_filters(
+        [SRC_AZURE_SDK_DOCS_ENG], TenantID.AZURE_MCP_SERVER.value
+    )
+
+    assert got[SRC_AZURE_SDK_DOCS_ENG] == (
+        "context_id eq 'azure-sdk-docs-eng' and "
+        "(search.ismatch('mcp*', 'title'))"
+    )
 
 
 def test_combined_source_filters_keep_or_clauses_grouped():

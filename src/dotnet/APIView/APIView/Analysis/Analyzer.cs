@@ -25,6 +25,7 @@ namespace APIView.Analysis
             // Analyzers from Azure.SdkAnalyzers (uses SymbolAnalysisContext)
             _sdkAnalyzers.Add(new SdkAnalyzerAdapter(new Azure.SdkAnalyzers.TypeNameAnalyzer()));
             _sdkAnalyzers.Add(new SdkAnalyzerAdapter(new Azure.SdkAnalyzers.ClientConstructorAnalyzer()));
+            _sdkAnalyzers.Add(new SdkAnalyzerAdapter(new Azure.SdkAnalyzers.ClientMethodReturnTypeAnalyzer()));
         }
 
         public override void VisitAssembly(IAssemblySymbol symbol)

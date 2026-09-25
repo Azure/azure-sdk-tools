@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Web;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -287,25 +288,59 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                // Check the current SDK generation status for the language in the release plan.
-                // If a generation is already in progress or pending, skip triggering a new run to avoid duplicate SDK generation.
-                var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => s.Language == language);
-                var currentGenerationStatus = sdkInfo?.GenerationStatus ?? string.Empty;
-                if (currentGenerationStatus.Equals("In progress", StringComparison.OrdinalIgnoreCase) ||
-                    currentGenerationStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                // Do not regenerate an SDK that has already been released for this language.
+                var sdkInfo = releasePlan.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
+                if (string.Equals(sdkInfo?.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
                 {
                     logger.LogInformation(
-                        "SDK generation for {Language} is already in status '{GenerationStatus}'. Skipping new generation run to avoid a duplicate.",
+                        "SDK for {Language} has already been released for release plan work item {WorkItemId}. Skipping SDK generation.",
                         language,
-                        currentGenerationStatus);
+                        workItemId);
                     response.Status = "Success";
-                    var duplicateMessage = $"SDK generation for {language} is already '{currentGenerationStatus}' for release plan work item {workItemId}. A new SDK generation run was not triggered to avoid duplicate generation.";
-                    if (!string.IsNullOrEmpty(sdkInfo?.GenerationPipelineUrl))
-                    {
-                        duplicateMessage += $" Previous SDK generation pipeline: {sdkInfo.GenerationPipelineUrl}.";
-                    }
-                    response.Details.Add(duplicateMessage);
+                    response.Details.Add($"SDK for {language} has already been released for release plan work item {workItemId}. A new SDK generation run was not triggered.");
                     return response;
+                }
+
+                // A pending generation request may not have a pipeline URL yet; do not queue another one.
+                if (string.Equals(sdkInfo?.GenerationStatus, "Pending", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation("SDK generation for {Language} is Pending for release plan work item {WorkItemId}. Skipping a duplicate request.", language, workItemId);
+                    response.Details.Add($"SDK generation for {language} is Pending for release plan work item {workItemId}. A new SDK generation run was not triggered to avoid duplicate generation.");
+                    return response;
+                }
+
+                // In-progress labels can be stale. Only block when the saved pipeline is still active.
+                // Old pipeline runs may have been archived and must not prevent regeneration.
+                if (string.Equals(sdkInfo?.GenerationStatus, "In progress", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(sdkInfo?.GenerationPipelineUrl))
+                {
+                    var pipelineUrl = sdkInfo.GenerationPipelineUrl;
+                    if (TryGetGenerationPipelineBuildId(pipelineUrl, out var buildId))
+                    {
+                        Build? previousRun = null;
+                        try
+                        {
+                            previousRun = await devopsService.GetPipelineRunAsync(buildId, ct).WaitAsync(ct);
+                        }
+                        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                        {
+                            logger.LogWarning(ex, "Could not read SDK generation pipeline {PipelineUrl}; it may have been archived. Allowing generation for {Language}.", pipelineUrl, language);
+                        }
+
+                        var isRunning = previousRun?.Status is BuildStatus.NotStarted or BuildStatus.InProgress or BuildStatus.Postponed or BuildStatus.Cancelling;
+                        if (previousRun != null && previousRun.Id == buildId && isRunning)
+                        {
+                            logger.LogInformation("SDK generation pipeline {PipelineUrl} is {Status}. Skipping a duplicate run for {Language}.", pipelineUrl, previousRun.Status, language);
+                            response.Details.Add($"SDK generation for {language} already has a pipeline in status '{previousRun.Status}' for release plan work item {workItemId}. A new SDK generation run was not triggered to avoid duplicate generation. Previous SDK generation pipeline: {pipelineUrl}.");
+                            return response;
+                        }
+
+                        logger.LogInformation("No active SDK generation run was confirmed at {PipelineUrl}. Allowing generation for {Language}.", pipelineUrl, language);
+                    }
+                    else
+                    {
+                        logger.LogWarning("The recorded SDK generation pipeline URL {PipelineUrl} is invalid. Allowing generation for {Language}.", pipelineUrl, language);
+                    }
                 }
 
                 // Check if another active (in progress) release plan exists for the same TypeSpec project that already
@@ -364,10 +399,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 logger.LogInformation("Running SDK generation pipeline");
+                ct.ThrowIfCancellationRequested();
                 var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(apiSpecBranchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch, ct);
                 response.Status = "Success";
                 response.Details.Add($"Azure DevOps pipeline {DevOpsService.GetPipelineUrl(pipelineRun.Id)} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created.");
                 return response;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -381,6 +421,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
+        private static bool TryGetGenerationPipelineBuildId(string pipelineUrl, out int buildId)
+        {
+            buildId = 0;
+            // SDK generation runs are queued in the internal project. Do not interpret a link
+            // from another organization or project as one of those builds.
+            var expectedPath = new Uri(DevOpsService.GetPipelineUrl(0)).GetLeftPart(UriPartial.Path);
+            return Uri.TryCreate(pipelineUrl, UriKind.Absolute, out var uri) &&
+                string.Equals(uri.GetLeftPart(UriPartial.Path), expectedPath, StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(HttpUtility.ParseQueryString(uri.Query)["buildId"], out buildId) && buildId > 0;
+        }
 
         /// <summary>
         /// Get SDK pull request link from SDK generation pipeline.

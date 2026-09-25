@@ -7,7 +7,7 @@ area: "longrunningoperation"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -61,6 +61,10 @@ stimuli:
     prompt: |
       @azure-typespec-author Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse.
     environment: *shared_environment
+    rubric: &shared_rubric
+      - The implementation adds a POST asynchronous move action for Employee using MoveRequest as the request and MoveResponse as the final response.
+      - The implementation uses ARM long-running-operation headers whose final result is MoveResponse.
+      - Changes are limited to the requested operation and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:
@@ -104,6 +108,7 @@ stimuli:
       mode: "no-skill"
     prompt: "Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse."
     environment: *shared_environment
+    rubric: *shared_rubric
     graders:
       - type: "tool-calls"
         config:

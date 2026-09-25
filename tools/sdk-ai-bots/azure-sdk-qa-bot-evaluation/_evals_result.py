@@ -57,6 +57,7 @@ class EvalsResult:
         for row in result["rows"]:
             row_result: dict[str, Any] = {}
             row_result["testcase"] = row["inputs.testcase"]
+            row_result["query"] = row.get("inputs.query", "")
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "references": row["inputs.expected_references"],
@@ -66,7 +67,9 @@ class EvalsResult:
                 "answer": row["inputs.response"],
                 "references": row["inputs.references"],
                 "knowledges": row["inputs.knowledges"],
+                "context": row.get("inputs.context", ""),
             }
+            row_result["execution"] = row.get("inputs.execution", {})
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
                 match = re.match(pattern, key)
@@ -295,7 +298,9 @@ class EvalsResult:
                         "reference_match_exact_matches",
                         "reference_match_unexpected_refs",
                         "reference_match_missing_refs",
-                        "knowledges"]
+                        "knowledges",
+                        "context",
+                        "execution"]
         if is_ci is False:
             establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
             if establish_baseline.lower() == "y":

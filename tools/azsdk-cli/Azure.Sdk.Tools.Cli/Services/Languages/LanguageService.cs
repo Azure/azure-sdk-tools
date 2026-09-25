@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -394,6 +395,23 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             string packagePath,
             string buildContext,
             CancellationToken ct)
+            => ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct, 1, null);
+
+        /// <summary>
+        /// Applies patches in one agent session, validating the cumulative tool-recorded patches.
+        /// Failed validation feeds diagnostics back into the same conversation.
+        /// </summary>
+        /// <remarks>
+        /// Languages retain their original iteration budget plus maxAttempts - 1. MaxIterations
+        /// also counts missing-Exit reminders, so it is not AttemptsUsed; the caller caps validations.
+        /// </remarks>
+        public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(
+            string customizationRoot,
+            string packagePath,
+            string buildContext,
+            CancellationToken ct,
+            int maxAttempts,
+            Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
         {
             return Task.FromResult(new List<AppliedPatch>());
         }
@@ -727,9 +745,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// </summary>
         /// <param name="packagePath">Absolute path to the SDK package directory.</param>
         /// <param name="timeoutMinutes">Maximum time to wait for the build process to complete.</param>
+        /// <param name="additionalArguments">Additional arguments to pass to the build command.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>A tuple containing: Success (bool), ErrorMessage (string? - null if successful), PackageInfo (PackageInfo? - package metadata if available).</returns>
-        public virtual async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        public virtual async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, string? additionalArguments = null, int timeoutMinutes = 30, CancellationToken ct = default)
         {
             try
             {
@@ -786,6 +805,12 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 if (processOptions == null)
                 {
                     return (false, "Failed to create process options for build command.", packageInfo);
+                }
+
+                if (!string.IsNullOrEmpty(additionalArguments))
+                {
+                    var additionalArgs = specGenSdkConfigHelper.ParseCommand(additionalArguments);
+                    processOptions.Args.AddRange(additionalArgs);
                 }
 
                 // Execute the build process directly

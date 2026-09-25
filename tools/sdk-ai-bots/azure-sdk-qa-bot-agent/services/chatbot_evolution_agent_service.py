@@ -43,6 +43,7 @@ _ALLOWED_OUTCOMES = {
         {
             ChatbotEvolutionAgentOutcome.validation_passed,
             ChatbotEvolutionAgentOutcome.validation_failed,
+            ChatbotEvolutionAgentOutcome.validation_skipped,
             ChatbotEvolutionAgentOutcome.processing_failed,
         }
     ),
@@ -210,6 +211,16 @@ class ChatbotEvolutionAgentService:
             record.reasoning = result.reasoning
             record.confidence = result.confidence
             record.evaluated_at = now
+            assessment_failed = (
+                result.outcome == ChatbotEvolutionAgentOutcome.processing_failed
+            )
+            record.has_expert_interaction = (
+                None if assessment_failed else result.has_expert_interaction
+            )
+            record.expert_interaction_reason = (
+                None if assessment_failed
+                else result.expert_interaction_reason
+            )
 
             if result.outcome == ChatbotEvolutionAgentOutcome.conversation_ongoing:
                 record.qa_status = QAStatus.ongoing
@@ -239,7 +250,7 @@ class ChatbotEvolutionAgentService:
             if result.outcome == ChatbotEvolutionAgentOutcome.no_issue:
                 record.qa_status = QAStatus.finished
                 record.verdict = BotAnswerVerdict.Correct
-                record.feedback.status = FeedbackStatus.done
+                record.feedback = None
                 return
 
             if result.outcome == ChatbotEvolutionAgentOutcome.issue_created:
@@ -266,10 +277,11 @@ class ChatbotEvolutionAgentService:
             return
 
         if result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
-            record.feedback.status = FeedbackStatus.done
+            record.feedback.status = FeedbackStatus.validation_passed
         elif result.outcome == ChatbotEvolutionAgentOutcome.validation_failed:
-            record.feedback.status = FeedbackStatus.failed
-            record.feedback.error = "validation_failed"
+            record.feedback.status = FeedbackStatus.validation_failed
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_skipped:
+            record.feedback.status = FeedbackStatus.validation_skipped
         else:
             raise ValueError(
                 f"Unsupported validation outcome: {result.outcome.value}"
@@ -294,6 +306,8 @@ class ChatbotEvolutionAgentService:
             record.qa_status = QAStatus.failed
             record.verdict = BotAnswerVerdict.Unknown
             record.evaluated_at = now
+            record.has_expert_interaction = None
+            record.expert_interaction_reason = None
         else:
             feedback.validation_reasoning = error
             feedback.validated_at = now

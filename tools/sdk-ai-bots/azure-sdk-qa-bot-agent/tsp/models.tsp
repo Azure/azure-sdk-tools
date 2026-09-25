@@ -154,6 +154,12 @@ model FeedbackRequest {
   @doc("The tenant ID")
   tenant_id?: string;
 
+  @doc("Exact conversation/thread identifier used to store messages")
+  conversation_id?: string;
+
+  @doc("The conversation type")
+  conversation_type?: ConversationType;
+
   @doc("User's reaction to the conversation")
   reaction?: Reaction;
 

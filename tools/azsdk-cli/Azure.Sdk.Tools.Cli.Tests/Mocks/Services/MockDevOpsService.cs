@@ -23,9 +23,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public ReleasePlanWorkItem? ConfiguredReleasePlanForTypeSpecPathAndApiVersion { get; set; }
         public string? ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey { get; set; }
         public string? ConfiguredApiVersionForTypeSpecPathAndApiVersion { get; set; }
+        public ApiReleaseType? LastApiReleaseTypeForTypeSpecPathAndApiVersion { get; private set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
+        public string ConfiguredPackageVersion { get; set; } = "1.0.0";
+        public SdkType ConfiguredPackageType { get; set; } = SdkType.Unknown;
+        public string ConfiguredPackageNameStatus { get; set; } = "Approved";
+        public List<SDKReleaseInfo>? ConfiguredPlannedReleases { get; set; }
 
         // Captures the release plan passed to CreateReleasePlanWorkItemAsync so that a subsequent
         // GetReleasePlanForWorkItemAsync (used to refresh the plan) returns the same details.
@@ -49,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default)
         {
             var sdkLanguage = SdkLanguageHelpers.GetSdkLanguage(language);
-            var version = string.IsNullOrEmpty(packageVersion) ? "1.0.0" : packageVersion;
+            var version = string.IsNullOrEmpty(packageVersion) ? ConfiguredPackageVersion : packageVersion;
 
             return Task.FromResult(
                 new PackageWorkitemResponse
@@ -61,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     WorkItemId = 0,
                     changeLogStatus = "Approved",
                     APIViewStatus = ConfiguredAPIViewStatus,
-                    PackageNameStatus = "Approved",
+                    PackageNameStatus = ConfiguredPackageNameStatus,
                     PackageRepoPath = "template",
                     LatestPipelineRun = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1",
                     LatestPipelineStatus = "Succeeded",
@@ -70,7 +75,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     PlannedReleaseDate = "06/30/2025",
                     DisplayName = packageName,
                     Version = version,
-                    PlannedReleases = new List<SDKReleaseInfo>
+                    PackageType = ConfiguredPackageType,
+                    PlannedReleases = ConfiguredPlannedReleases ?? new List<SDKReleaseInfo>
                     {
                         new() {
                             Version = version,
@@ -376,8 +382,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(ConfiguredActiveReleasePlansForTypeSpecPath);
         }
 
-        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct)
+        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
+            LastApiReleaseTypeForTypeSpecPathAndApiVersion = apiReleaseType;
             if (ConfiguredReleasePlanForTypeSpecPathAndApiVersion != null 
                 && typeSpecProjectPath == ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey
                 && apiVersion == ConfiguredApiVersionForTypeSpecPathAndApiVersion)
@@ -458,4 +465,3 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         }
     }
 }
-

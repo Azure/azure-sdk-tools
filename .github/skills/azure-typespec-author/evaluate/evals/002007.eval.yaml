@@ -7,7 +7,7 @@ area: "armtemplate"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -65,6 +65,10 @@ stimuli:
     prompt: |
       @azure-typespec-author In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
+    rubric: &shared_rubric
+      - Employee has a synchronous POST resource action named notify in API version 2024-10-01-preview.
+      - The request contains string message content and a priority limited to Low, Medium, or High.
+      - The response contains a string notification identifier and status, and changes are limited to the requested action.
     graders:
       - type: "tool-calls"
         config:
@@ -165,6 +169,7 @@ stimuli:
     prompt: |
       In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
+    rubric: *shared_rubric
     graders:
       - type: "tool-calls"
         config:

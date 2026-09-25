@@ -29,13 +29,22 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     TenantID.API_SPEC_REVIEW_BOT: (
-        "Azure REST API specification PR review: validation errors, LintDiff, "
-        "Avocado, breaking changes, merge process in azure-rest-api-specs repos."
+        "Azure REST API specification authoring and PR review: requirements, "
+        "validation errors, LintDiff, Avocado, breaking changes, review status, "
+        "scheduling, blockers, and merge process in azure-rest-api-specs repos. "
+        "Prefer this skill whenever a specification PR, validation check, or "
+        "breaking-change comparison is the primary issue. Use typespec instead "
+        "when the primary task is a language-level model or code transformation, "
+        "even if a PR check exposed it. Do not use this skill for "
+        "repository access or permission requests; use sdk-onboarding instead."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
-        "permissions, Azure SDK Tools Agent usage, and release plan creation, status, "
-        "readiness, lifecycle, and troubleshooting."
+        "repository access and permissions (including specification repositories), "
+        "Azure SDK Tools Agent usage, and release plan creation, status, readiness, "
+        "lifecycle, and troubleshooting. Use typespec instead for specification "
+        "service-folder organization or RPaaS registration paths coupled to that "
+        "folder layout."
     ),
     TenantID.AZSDK_TOOLS_AGENT_QA_BOT: (
         "Azure SDK Tools Agent (azsdk CLI/MCP): agent and MCP server setup and "
@@ -46,11 +55,15 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: (
         "Advanced TypeSpec authoring: ARM and data-plane API design, Azure Templates, "
-        "decorators, code generation, RPC compliance."
+        "decorators, code generation, RPC compliance, and complete transformations "
+        "of supplied TypeSpec code. Keep this preloaded skill for Authoring tenant "
+        "requests, including requests to apply diagnostics or suppressions."
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: (
         "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
-        "migration from OpenAPI, validation, tspconfig."
+        "migration from OpenAPI, validation, tspconfig, specification service-folder "
+        "organization, and RPaaS registration paths coupled to that layout. Do not "
+        "replace a preloaded typespec-authoring skill for Authoring tenant requests."
     ),
     TenantID.TYPESPEC_EMITTER_QA_BOT: (
         "TypeSpec emitter framework (EF v2) and Alloy framework guidance: "
@@ -75,6 +88,10 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     TenantID.GOLANG_CHANNEL_QA_BOT: (
         "Azure Go SDK: code generation, validation, testing, release, "
         "pipeline troubleshooting."
+    ),
+    TenantID.AZURE_MCP_SERVER: (
+        "Azure MCP Server: setup, commands, authentication, remote hosting, "
+        "service onboarding, tool design, troubleshooting, and support."
     ),
     TenantID.GENERAL_QA_BOT: (
         "General Azure SDK guidance: cross-language questions, API design, "
@@ -109,25 +126,31 @@ def build_skill_content(tenant_id: TenantID) -> str:
     return "\n".join(parts)
 
 
-def create_tenant_skills() -> list[Skill]:
-    """Create a Skill for each tenant in the configuration."""
+def create_tenant_skills(agent_name: str) -> list[Skill]:
+    """Create skills assigned to a hosted agent."""
     skills: list[Skill] = []
     for tenant_id, skill_name in _TENANT_SKILL_MAP.items():
-        description = _SKILL_DESCRIPTIONS.get(tenant_id, "")
+        config = get_tenant_config(tenant_id)
+        if config is None or config.agent.name != agent_name:
+            continue
         content = build_skill_content(tenant_id)
         if not content:
-            logger.warning("Skipping skill %s: no content", skill_name)
+            logger.warning("Skipping tenant skill: tenant=%s", tenant_id.value)
             continue
         skills.append(
             InlineSkill(
                 frontmatter=SkillFrontmatter(
                     name=skill_name,
-                    description=description,
+                    description=_SKILL_DESCRIPTIONS.get(tenant_id, ""),
                 ),
                 instructions=content,
             )
         )
-        logger.info("Created skill: %s (tenant=%s)", skill_name, tenant_id.value)
+        logger.info(
+            "Created skill: %s (tenant=%s)",
+            skill_name,
+            tenant_id.value,
+        )
     return skills
 
 

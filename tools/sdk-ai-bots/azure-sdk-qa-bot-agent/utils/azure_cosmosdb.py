@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from azure.cosmos import PartitionKey, exceptions as cosmos_exceptions
@@ -25,6 +26,7 @@ _DEFAULT_MAPPING_CONTAINER_NAME = "conversation-mappings"
 _DEFAULT_MESSAGE_CONTAINER_NAME = "conversation-messages"
 _DEFAULT_EPISODE_CONTAINER_NAME = "experience-episodes"
 _DEFAULT_QA_RECORDS_CONTAINER_NAME = "qa-records"
+_DEFAULT_FEEDBACK_CONTAINER_NAME = "feedback-records"
 
 # Retry defaults for the Cosmos DB client
 _DEFAULT_RETRY_TOTAL = 3  # Maximum number of total retry attempts
@@ -42,6 +44,7 @@ _mapping_container: ContainerProxy | None = None
 _message_container: ContainerProxy | None = None
 _episode_container: ContainerProxy | None = None
 _qa_records_container: ContainerProxy | None = None
+_feedback_container: ContainerProxy | None = None
 _client_lock = asyncio.Lock()
 _container_lock = asyncio.Lock()
 
@@ -172,13 +175,62 @@ async def get_conversation_message_container() -> ContainerProxy:
     return _message_container
 
 
+async def get_feedback_container() -> ContainerProxy:
+    """Return the pre-provisioned feedback container (partition key /tenant_id)."""
+    global _feedback_container
+    if _feedback_container is not None:
+        return _feedback_container
+
+    async with _container_lock:
+        if _feedback_container is None:
+            _feedback_container = await _get_container(
+                container_name=_DEFAULT_FEEDBACK_CONTAINER_NAME,
+            )
+            logger.info(
+                "Using Cosmos DB feedback container: %s",
+                _DEFAULT_FEEDBACK_CONTAINER_NAME,
+            )
+
+    return _feedback_container
+
+
+async def query_conversation_feedback(
+    conversation_id: str,
+    conversation_type: str,
+) -> list[dict[str, Any]]:
+    """Return all feedback for an exact conversation id/type, newest first.
+
+    Query across tenant partitions because these coordinates identify the thread.
+    Missing legacy conversation coordinates do not match this query.
+    """
+    if not conversation_id or not conversation_type:
+        raise ValueError("Conversation coordinates are required")
+    container = await get_feedback_container()
+    query = (
+        "SELECT c.user_name, c.created_at, c.reaction, c.comment, c.reasons "
+        "FROM c WHERE c.conversation_id = @conversation_id "
+        "AND c.conversation_type = @conversation_type "
+        "ORDER BY c.created_at DESC"
+    )
+    return [
+        item async for item in container.query_items(
+            query=query,
+            parameters=[
+                {"name": "@conversation_id", "value": conversation_id},
+                {"name": "@conversation_type", "value": conversation_type},
+            ],
+        )
+    ]
+
+
 async def close_cosmos_client() -> None:
     """Close the shared Cosmos client and reset cached proxies."""
-    global _client, _mapping_container, _message_container, _episode_container, _qa_records_container
+    global _client, _mapping_container, _message_container, _episode_container, _qa_records_container, _feedback_container
     _mapping_container = None
     _message_container = None
     _episode_container = None
     _qa_records_container = None
+    _feedback_container = None
     if _client is not None:
         await _client.__aexit__(None, None, None)
         _client = None
@@ -399,6 +451,38 @@ async def upsert_qa_record(document: dict[str, Any]) -> dict[str, Any]:
     """Upsert a QA-record document into the qa-records container."""
     container = await get_qa_records_container()
     return await container.upsert_item(document)
+
+
+async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> bool:
+    """Requeue a completed no-issue assessment without overwriting active work.
+
+    The predicate is checked atomically by Cosmos, including for duplicate
+    feedback submissions. Missing records and changed states are no-ops;
+    other storage failures propagate so a failed reset is not reported as success.
+    """
+    container = await get_qa_records_container()
+    try:
+        await container.patch_item(
+            item=record_id,
+            partition_key=tenant_id,
+            filter_predicate=(
+                "FROM c WHERE c.qa_status = 'finished' AND c.verdict = 'correct' "
+                "AND (NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback))"
+            ),
+            patch_operations=[
+                {"op": "set", "path": "/qa_status", "value": "ongoing"},
+                {"op": "set", "path": "/verdict", "value": "unknown"},
+                {"op": "set", "path": "/reasoning", "value": None},
+                {"op": "set", "path": "/confidence", "value": None},
+                {"op": "set", "path": "/evaluated_at", "value": None},
+                {"op": "set", "path": "/updated_at", "value": datetime.now(timezone.utc).isoformat()},
+            ],
+        )
+    except cosmos_exceptions.CosmosHttpResponseError as exc:
+        if exc.status_code in (404, 412):
+            return False
+        raise
+    return True
 
 
 async def read_qa_record(*, record_id: str, tenant_id: str) -> dict[str, Any] | None:

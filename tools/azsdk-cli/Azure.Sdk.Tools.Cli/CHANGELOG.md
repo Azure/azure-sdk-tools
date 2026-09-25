@@ -1,5 +1,58 @@
 # Release History
 
+## 0.6.50 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.49 (2026-09-21)
+
+- Added `--max-attempts` / `maxAttempts` to customized-update for bounded custom-code repairs in one retained conversation, with `attemptsUsed` in the existing response.
+
+- Added optional `--additional-arguments` support to `package build` (and `azsdk_package_build_code`) for passing additional arguments to the build command.
+
+### Breaking Changes
+
+- Release plan JSON/MCP responses no longer include `SDKInfo.PullRequestStatus`, which was sourced from potentially stale Azure DevOps data. SDK PR URLs and the dashboard link remain available for checking current PR status; generation and release statuses are unchanged.
+
+### Bugs Fixed
+
+- Customized-code repairs validate classifier no-op results and retain final build/regeneration diagnostics when attempts are exhausted.
+- Release plan creation and target-month updates now reject malformed or past target months, while allowing the current UTC month and future months.
+- Linking a spec PR now sets idle SDK generation to `Not applicable` instead of `In progress`, while preserving recorded in-progress runs. `Pending` still blocks duplicate requests; stale `In progress` states can be retried when the pipeline is finished, missing, invalid, or inaccessible.
+
+## 0.6.47 (2026-09-16)
+
+### Breaking Changes
+
+- Release-plan lookup by TypeSpec project path and API version now also requires and matches the API release type.
+
+### Bugs Fixed
+
+- Release plan updates now use package names emitted from TypeSpec metadata without applying legacy package-prefix validation.
+
+## 0.6.46 (2026-09-15)
+
+### Features Added
+
+- `azsdk release-plan get` and `azsdk_get_release_plan` now accept an optional `--api-version`/`apiVersion` selector with a required TypeSpec project path, matching the version stored on the release plan's child API Spec work item.
+- Implemented the three-edit-scope workflow in the `azsdk_customized_code_update` tool.
+- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
+- Create release plan now checks for an existing plan with the same API version and falls back to matching by TypeSpec project and release-plan type only when the API version is unknown.
+- Create and update release plan tools now automatically mark a private preview release plan as `Finished` when its spec pull request has been merged.
+
+### Bugs Fixed
+
+- Skip SDK generation when the requested language is already marked `Released` in the release plan.
+- Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
+- Ignored release-table headers and separators so packages without planned release dates remain blocked.
+- Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.
+
 ## 0.6.45 (2026-09-08)
 
 ### Bugs Fixed

@@ -29,6 +29,7 @@ from dataset.schema import (  # noqa: E402
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
+    FoundryEvalsRunner,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -307,13 +308,81 @@ def test_extract_context_from_full_context_json():
     assert extract_title_and_link_from_context("not-json") == []
 
 
+def test_retrieve_and_normalize_stored_response_tool_calls():
+    response = {
+        "output": [
+            {"type": "reasoning", "id": "reasoning-1", "summary": []},
+            {
+                "type": "function_call",
+                "id": "function-1",
+                "call_id": "call-1",
+                "name": "search_knowledge_base",
+                "arguments": '{"queries":["q"]}',
+            },
+            {
+                "type": "function_call_output",
+                "id": "output-1",
+                "call_id": "call-1",
+                "output": '{"results":[{"title":"Document"}]}',
+            },
+            {
+                "type": "web_search_call",
+                "id": "web-1",
+                "status": "completed",
+                "action": {
+                    "type": "search",
+                    "query": "Azure SDK",
+                    "sources": [{"url": "https://example.com"}],
+                },
+            },
+            {"type": "message", "id": "message-1", "role": "assistant", "content": []},
+        ]
+    }
+
+    class FakeResponses:
+        @staticmethod
+        def retrieve(response_id, *, include):
+            assert response_id == "response-1"
+            assert include == ["web_search_call.action.sources"]
+            return response
+
+    class FakeClient:
+        responses = FakeResponses()
+
+    items = [
+        {"testcase": "traceable", "response_id": "response-1", "context": "documents"},
+        {"testcase": "blocked", "response_id": "content-filter", "context": ""},
+    ]
+    tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(FakeClient(), items)
+
+    assert tool_calls_by_response_id["content-filter"] == []
+    assert tool_calls_by_response_id["response-1"] == [
+        {
+            "tool_name": "search_knowledge_base",
+            "arguments": {"queries": ["q"]},
+            "output": {"results": [{"title": "Document"}]},
+        },
+        {
+            "tool_name": "web_search",
+            "arguments": {
+                "type": "search",
+                "query": "Azure SDK",
+            },
+            "output": [{"url": "https://example.com"}],
+        },
+    ]
+    assert items[0]["context"] == "documents"
+
+
 def test_resolve_tenant_for_scenario():
     m = {
         "default": "tenant-default",
         "TypeSpec Discussion": "tenant-ts",
+        "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
+    assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
@@ -321,10 +390,15 @@ def test_resolve_tenant_for_scenario():
 
 def test_output_items_to_rows_completion_item_response():
     # In completion mode the answer/references live in the datasource_item.
+    tool_call = {"tool_name": "file_access_read"}
+    context = "grounding context"
     output_items = [
         {
             "datasource_item": {
-                "testcase": "t", "ground_truth": "gt", "response": "collected answer",
+                "testcase": "t", "query": "question", "ground_truth": "gt",
+                "response": "collected answer",
+                "context": context,
+                "response_id": "response-1",
                 "references": [{"title": "R", "link": "http://r"}],
                 "knowledges": [{"title": "K", "link": "http://k"}],
             },
@@ -332,10 +406,56 @@ def test_output_items_to_rows_completion_item_response():
             "sample": None,
         }
     ]
-    rows = output_items_to_rows(output_items, ["similarity"])["rows"]
+    rows = output_items_to_rows(
+        output_items,
+        ["similarity"],
+        tool_calls_by_response_id={"response-1": [tool_call]},
+    )["rows"]
+    assert rows[0]["inputs.query"] == "question"
     assert rows[0]["inputs.response"] == "collected answer"
+    assert rows[0]["inputs.context"] == context
+    assert rows[0]["inputs.execution"] == {
+        "response_id": "response-1",
+        "tool_calls": [tool_call],
+    }
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
+
+
+def test_record_run_result_preserves_local_tool_calls():
+    from _evals_result import EvalsResult
+
+    er = EvalsResult(metrics={"similarity": None}, suppressions=None)
+    recorded = er.record_run_result(
+        {
+            "rows": [
+                {
+                    "inputs.testcase": "traceable",
+                    "inputs.query": "question",
+                    "inputs.ground_truth": "gt",
+                    "inputs.expected_references": [],
+                    "inputs.expected_knowledges": [],
+                    "inputs.response": "answer",
+                    "inputs.context": "context",
+                    "inputs.execution": {
+                        "response_id": "response-1",
+                        "tool_calls": [{"tool_name": "search_knowledge_base"}],
+                    },
+                    "inputs.references": [],
+                    "inputs.knowledges": [],
+                    "outputs.similarity.similarity": 5.0,
+                    "outputs.similarity.similarity_result": "pass",
+                }
+            ]
+        }
+    )
+
+    assert recorded[0]["query"] == "question"
+    assert recorded[0]["actual"]["context"] == "context"
+    assert recorded[0]["execution"] == {
+        "response_id": "response-1",
+        "tool_calls": [{"tool_name": "search_knowledge_base"}],
+    }
 
 
 def test_failed_row_counts_as_failure_in_gate():
@@ -344,8 +464,7 @@ def test_failed_row_counts_as_failure_in_gate():
     from _evals_result import EvalsResult
 
     evaluators = ["bot_evals", "groundedness"]
-    metrics = {e: None for e in evaluators}
-    er = EvalsResult(metrics=metrics, suppressions=None)
+    er = EvalsResult(metrics={e: None for e in evaluators}, suppressions=None)
     runner = FoundryEvalsRunner(evaluators, er, model="m")
     row = runner._failed_row({"testcase": "lost", "ground_truth": "gt"})
     assert row["outputs.bot_evals.bot_evals_result"] == "fail"

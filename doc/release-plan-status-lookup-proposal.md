@@ -4,9 +4,9 @@ Related issues: [#16844](https://github.com/Azure/azure-sdk-tools/issues/16844) 
 
 ## Decision requested
 
-Approve using **SDK language + package name + spec API version** to identify the release plan whose package status should be updated after publication.
+Approve propagating the **release-plan ID** from SDK generation through package publication, then validating it against **SDK language + package name + spec API version** before updating release status.
 
-The status command updates ADO only when those values resolve to exactly one active release plan. It does not select a plan by fallback heuristic when metadata is missing or the result is ambiguous.
+The status command updates ADO only when the ID resolves to exactly one active release plan and all three validation values match. It does not search for a substitute plan when the ID or metadata is missing or inconsistent.
 
 ## Problem
 
@@ -25,13 +25,14 @@ F --> H[Update correct plan]
 
 ## Lookup contract
 
-The lookup requires three inputs:
+Updating a release plan requires four inputs:
 
 | Required input | Source | Purpose |
 | --- | --- | --- |
+| Release-plan ID | SDK generation, propagated through the SDK PR, build, and release pipeline | Directly correlates the package release with the plan that initiated it |
 | SDK language | Release pipeline | Selects the language-specific SDK entry |
 | Package name | Release pipeline | Identifies the published SDK package |
-| Spec API version | Generated SDK metadata defined by [#16868](https://github.com/Azure/azure-sdk-tools/issues/16868) | Distinguishes plans targeting different APIs |
+| Spec API version | Generated SDK metadata defined by [#16868](https://github.com/Azure/azure-sdk-tools/issues/16868) | Validates that the released package targets the plan's API |
 
 The following existing values remain optional result metadata. They are recorded when available but are not lookup keys and do not block an otherwise valid status update.
 
@@ -46,24 +47,26 @@ The spec API version is not the semantic SDK package version. For example, API v
 
 ```mermaid
 sequenceDiagram
+participant Generation as SDK generation
 participant SDK as SDK repository
 participant Pipeline as Release pipeline
 participant CLI as azsdk CLI
 participant ADO as Release plan in ADO
 
-Pipeline->>SDK: Read generated package metadata
-SDK-->>Pipeline: Spec API version
-Pipeline->>CLI: Language, package name, and API version
-CLI->>ADO: Find active plans for language and package
-ADO-->>CLI: Candidate plans
-CLI->>CLI: Filter by exact API version
+Generation->>SDK: Propagate release-plan ID
+Pipeline->>SDK: Read release-plan ID and package metadata
+SDK-->>Pipeline: Release-plan ID and spec API version
+Pipeline->>CLI: ID, language, package name, and API version
+CLI->>ADO: Get the active plan by ID
+ADO-->>CLI: Identified plan
+CLI->>CLI: Validate language, package, and API version
 
-alt Exactly one match
+alt ID resolves and all values match
 CLI->>ADO: Update the published language's release status
 CLI-->>Pipeline: Status updated
-else No match
+else Release-plan ID is absent
 CLI-->>Pipeline: No release plan updated
-else Multiple matches or invalid metadata
+else ID is invalid or validation fails
 CLI-->>Pipeline: Return diagnostic error
 end
 ```
@@ -72,53 +75,56 @@ Existing package-version and pipeline-URL recording and the existing release-pla
 
 ## Matching rules
 
-1. Extract the API version from the exact SDK package being published using the language-specific metadata rules from #16868. Do not infer it from the package version or substitute a default or latest API version.
-2. Require one unambiguous API version. Missing, malformed, or unresolved multiple values prevent the release-plan update.
-3. Find in-progress, not-yet-released entries matching the normalized SDK language, exact package name, and exact saved spec API version.
-4. If a release-plan ID is supplied, require it to identify the same unique match. The ID is a consistency check and does not override conflicting lookup values.
-5. Update only when exactly one plan matches. Never select a plan using SDK release type, merged PR status, newest-plan ordering, or first-result fallback.
-6. When no unique match exists, make no ADO changes and return the lookup values, candidate plan IDs, and reason.
+1. Propagate the release-plan ID associated with SDK generation through the SDK PR, build, and release pipeline. Do not derive or guess an ID during publication.
+2. Extract the API version from the exact SDK package being published using the language-specific metadata rules from #16868. Do not infer it from the package version or substitute a default or latest API version.
+3. Require the ID to resolve to exactly one active, in-progress plan whose language-specific release status is not already `Released`.
+4. Validate that the identified plan contains the normalized SDK language, exact package name, and exact saved spec API version supplied by the release pipeline.
+5. Update only when the ID resolves uniquely and every validation value matches. The ID does not override conflicting package metadata.
+6. Never search for a substitute plan using SDK release type, merged PR status, newest-plan ordering, or first-result fallback.
+7. When the ID is absent, unresolved, duplicated, or inconsistent with the validation values, make no ADO changes and return the ID, validation values, candidate work item IDs when applicable, and reason.
 
 ## Outcomes
 
-| Lookup result | Release-plan action |
+| Correlation result | Release-plan action |
 | --- | --- |
-| Exactly one match | Update the published language's release status in that plan |
-| No match | Make no ADO changes and report that no plan was updated |
-| Multiple matches | Make no ADO changes and report the ambiguity and candidate plan IDs |
+| ID resolves to one active plan and all values match | Update the published language's release status in that plan |
+| No release-plan ID | Make no ADO changes and report that no plan was updated |
+| ID does not resolve to exactly one active plan | Make no ADO changes and report the unresolved or duplicate ID |
 | Missing, malformed, or ambiguous API-version metadata | Make no ADO changes and report the metadata problem |
-| Supplied release-plan ID conflicts with the lookup | Make no ADO changes and report the conflict |
+| Language, package name, or API version conflicts with the identified plan | Make no ADO changes and report the conflict |
 
-A no-match result can be normal for an independent SDK-only bug-fix release that has no release plan. In that case, the command reports that no plan was updated; it does not reinterpret a successful package publication as a publication failure.
+A missing ID can be normal for an independent SDK-only bug-fix release that has no release plan. In that case, the command reports that no plan was updated; it does not reinterpret a successful package publication as a publication failure.
 
 ## Workflow boundaries
 
 ```mermaid
 flowchart LR
-A[Release plan] -->|API version and commit SHA| B[SDK generation]
-B -->|Pinned spec source| C[Generated SDK]
-C -->|API version in metadata| D[Package release]
-D -->|Language, package, API version| E[Release-plan lookup]
+A[Release plan] -->|Plan ID, API version, commit SHA| B[SDK generation]
+B -->|Plan ID and pinned spec source| C[Generated SDK]
+C -->|Plan ID and API version metadata| D[Package release]
+D -->|Plan ID, language, package, API version| E[Release-plan lookup]
 E --> F[Release status update]
 
 G[Commit SHA] -. Generation identity .-> B
-H[API version] -. Publication lookup .-> E
+H[Release-plan ID] -. Publication correlation .-> E
+I[Package metadata] -. Correlation validation .-> E
 ```
 
-The commit-SHA work in [#16848](https://github.com/Azure/azure-sdk-tools/issues/16848) prevents API drift during SDK generation. This proposal addresses a different boundary: after package publication, the SDK-side pipeline uses language, package name, and API version because it does not carry the spec commit SHA.
+The commit-SHA work in [#16848](https://github.com/Azure/azure-sdk-tools/issues/16848) prevents API drift during SDK generation. This proposal addresses a different boundary: the release-plan ID preserves correlation through package publication, while language, package name, and API version verify that the correlated result still matches the plan.
 
-## Limitation and future correlation
+## Why the ID and validation values are both required
 
-The three lookup values identify the likely plan but do not prove that the release originated from it. An unrelated bug-fix release can use the same language, package, and API version as an active plan.
+Language, package name, and API version identify a likely plan but do not prove that the release originated from it. An unrelated bug-fix release can use the same values as an active plan. The propagated release-plan ID provides that direct correlation.
 
-A stronger future solution is to propagate a validated release-plan ID from generation through the SDK PR, build, and publication. Carrying that ID through the workflow would distinguish a planned release from an unrelated release with otherwise identical lookup values. The immediate #16844 solution remains language + package name + API version.
+The ID alone is also insufficient because it can be stale, malformed, or attached to the wrong artifact. Validating language, package name, and API version prevents an incorrect ID from updating an unrelated plan.
 
 ## Acceptance criteria
 
-- A release updates the plan matching its language, package name, and API version when exactly one match exists.
+- A planned release carries its release-plan ID from SDK generation through the release pipeline.
+- A release updates the plan only when the ID resolves to exactly one active plan and its language, package name, and API version all match.
 - Parallel plans for the same package but different API versions update independently.
-- Zero matches produce no ADO writes and do not turn an independent successful package publication into a publication failure.
-- Multiple plans with the same lookup values produce no ADO writes.
+- A release without a release-plan ID produces no ADO writes and does not turn an independent successful package publication into a publication failure.
+- An unresolved or duplicate release-plan ID produces no ADO writes.
 - Missing, malformed, or unresolved multiple API versions produce no ADO writes.
-- A conflicting explicit release-plan ID produces no ADO writes.
+- A language, package-name, or API-version mismatch produces no ADO writes.
 - Missing optional package version or pipeline URL does not block a uniquely matched status update.

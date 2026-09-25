@@ -26,6 +26,20 @@ public class ApiReviewHubTool(
         ["swift"] = "azure-sdk-for-ios",
         ["rust"] = "azure-sdk-for-rust"
     };
+    private static readonly IReadOnlyDictionary<string, string> LanguageAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["net"] = "csharp",
+        [".net"] = "csharp",
+        ["dotnet"] = "csharp",
+        ["c#"] = "csharp",
+        ["cs"] = "csharp",
+        ["c++"] = "cpp",
+        ["javascript"] = "js",
+        ["typescript"] = "js",
+        ["ts"] = "js",
+        ["golang"] = "go",
+        ["py"] = "python"
+    };
 
     private static readonly string[] SupportedLanguages = [.. DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
     private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
@@ -204,6 +218,13 @@ public class ApiReviewHubTool(
         });
 
         return option;
+    }
+
+    internal static string? ResolveLanguage(string language)
+    {
+        string? canonical = DefaultTargetRepos.Keys.FirstOrDefault(
+            value => value.Equals(language, StringComparison.OrdinalIgnoreCase));
+        return canonical ?? LanguageAliases.GetValueOrDefault(language);
     }
 
 }

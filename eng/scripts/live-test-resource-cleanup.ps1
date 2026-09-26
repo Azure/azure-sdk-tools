@@ -332,7 +332,8 @@ function IsChildResource([object]$ResourceGroup) {
 }
 
 function HasDeleteLock([object]$ResourceGroup) {
-  $lock = Get-AzResourceLock -ResourceGroupName $ResourceGroup.ResourceGroupName
+  $lock = Get-AzResourceLock -ResourceGroupName $ResourceGroup.ResourceGroupName -AtScope |
+    Where-Object { $_.Properties.level -eq 'ReadOnly' }
   if ($lock) {
     Write-Host " Skipping locked resource group '$($ResourceGroup.ResourceGroupName)'"
     return $true
@@ -430,6 +431,37 @@ function Wait-DeleteJob() {
   return $null
 }
 
+function Wait-AsrJob() {
+  param(
+    [Parameter(Mandatory = $true)]
+    $Job,
+
+    [Parameter(Mandatory = $true)]
+    [string]$DisplayName,
+
+    [Parameter()]
+    [ValidateRange(1, [int]::MaxValue)]
+    [int]$TimeoutSeconds = 900
+  )
+
+  $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+  $currentJob = $Job
+  while ($currentJob.State -in @('NotStarted', 'InProgress')) {
+    if ([DateTime]::UtcNow -ge $deadline) {
+      return "$DisplayName did not complete within $TimeoutSeconds seconds."
+    }
+
+    Start-Sleep -Seconds 5
+    $currentJob = Get-AzRecoveryServicesAsrJob -Job $currentJob -ErrorAction Stop
+  }
+
+  if ($currentJob.State -ne 'Succeeded') {
+    return "$DisplayName ended in state '$($currentJob.State)'."
+  }
+
+  return $null
+}
+
 function Remove-DependencyResources() {
   param(
     [Parameter(Mandatory = $true)]
@@ -465,7 +497,7 @@ function Remove-DependencyResources() {
   return $errors
 }
 
-function Break-EventHubGeoDisasterRecoveryPairs() {
+function Disable-EventHubGeoDisasterRecoveryPairs() {
   param(
     [Parameter(Mandatory = $true)]
     [string]$ResourceGroupName
@@ -581,49 +613,63 @@ function Remove-RecoveryServicesVaults() {
     }
 
     # Undelete any soft-deleted items and stop protection with recovery-point removal.
-    $backupManagementTypes = @('AzureVM', 'AzureStorage', 'AzureWorkload', 'MAB')
-    foreach ($bmt in $backupManagementTypes) {
+    $backupConfigurations = @(
+      @{ BackupManagementType = 'AzureVM';       ContainerType = 'AzureVM';             WorkloadTypes = @('AzureVM') }
+      @{ BackupManagementType = 'AzureStorage';  ContainerType = 'AzureStorage';        WorkloadTypes = @('AzureFiles') }
+      @{ BackupManagementType = 'AzureWorkload'; ContainerType = 'AzureVMAppContainer'; WorkloadTypes = @('MSSQL', 'SAPHanaDatabase') }
+      @{ BackupManagementType = 'MAB';           ContainerType = 'Windows';             WorkloadTypes = @('FileFolder') }
+    )
+    foreach ($backupConfiguration in $backupConfigurations) {
+      $backupManagementType = $backupConfiguration.BackupManagementType
+      $containerType = $backupConfiguration.ContainerType
+      $workloadTypes = $backupConfiguration.WorkloadTypes
       $containers = @()
       try {
-        $containers = @(Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType $bmt -ErrorAction Stop)
+        $containers = @(Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType $containerType -BackupManagementType $backupManagementType -ErrorAction Stop)
       } catch {
-        $vaultErrors += "Failed enumerating $bmt backup containers in vault '$($vault.Name)': $($_.Exception.Message)"
+        $vaultErrors += "Failed enumerating $backupManagementType backup containers in vault '$($vault.Name)': $($_.Exception.Message)"
         continue
       }
       foreach ($container in $containers) {
         $containerErrors = @()
-        $items = @()
-        try {
-          $items = @(Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType $bmt -VaultId $vault.ID -ErrorAction Stop)
-        } catch {
-          $vaultErrors += "Failed enumerating backup items in container '$($container.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
-          continue
-        }
-        foreach ($item in $items) {
+        foreach ($workloadType in $workloadTypes) {
+          $items = @()
           try {
-            if ($item.PSObject.Properties.Name -contains 'DeleteState' -and $item.DeleteState -eq 'ToBeDeleted') {
-              Undo-AzRecoveryServicesBackupItemDeletion -Item $item -VaultId $vault.ID -Force -ErrorAction SilentlyContinue | Out-Null
-            }
-            Write-Host "Deleting backup item '$($item.Name)' from Recovery Services vault '$($vault.Name)'"
-            $job = Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $vault.ID -RemoveRecoveryPoints -Force -ErrorAction Stop
-            $completedJob = Wait-AzRecoveryServicesBackupJob -Job $job -Timeout 900 -VaultId $vault.ID -ErrorAction Stop
-            if ($completedJob.Status -and $completedJob.Status -notin @('Completed', 'CompletedWithWarnings')) {
-              throw "Backup item delete job ended in state '$($completedJob.Status)'."
-            }
+            $items = @(Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType $workloadType -VaultId $vault.ID -ErrorAction Stop)
           } catch {
-            $containerErrors += "Failed removing backup item '$($item.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+            $containerErrors += "Failed enumerating $workloadType backup items in container '$($container.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+            continue
           }
-        }
-
-        if ($containerErrors.Count -eq 0) {
-          try {
-            $remainingItems = @(Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType $bmt -VaultId $vault.ID -ErrorAction Stop)
-            if ($remainingItems) {
-              $remainingItemNames = $remainingItems | ForEach-Object { $_.Name }
-              $containerErrors += "Backup items still remain in container '$($container.Name)' in vault '$($vault.Name)': $($remainingItemNames -join ', ')"
+          foreach ($item in $items) {
+            try {
+              if ($item.PSObject.Properties.Name -contains 'DeleteState' -and $item.DeleteState -eq 'ToBeDeleted') {
+                $undoJob = Undo-AzRecoveryServicesBackupItemDeletion -Item $item -VaultId $vault.ID -Force -ErrorAction Stop
+                $completedUndoJob = Wait-AzRecoveryServicesBackupJob -Job $undoJob -Timeout 900 -VaultId $vault.ID -ErrorAction Stop
+                if ($completedUndoJob.Status -and $completedUndoJob.Status -notin @('Completed', 'CompletedWithWarnings')) {
+                  throw "Backup item undo-deletion job ended in state '$($completedUndoJob.Status)'."
+                }
+              }
+              Write-Host "Deleting backup item '$($item.Name)' from Recovery Services vault '$($vault.Name)'"
+              $job = Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $vault.ID -RemoveRecoveryPoints -Force -ErrorAction Stop
+              $completedJob = Wait-AzRecoveryServicesBackupJob -Job $job -Timeout 900 -VaultId $vault.ID -ErrorAction Stop
+              if ($completedJob.Status -and $completedJob.Status -notin @('Completed', 'CompletedWithWarnings')) {
+                throw "Backup item delete job ended in state '$($completedJob.Status)'."
+              }
+            } catch {
+              $containerErrors += "Failed removing backup item '$($item.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
             }
-          } catch {
-            $containerErrors += "Failed verifying backup item deletion in container '$($container.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+          }
+
+          if ($containerErrors.Count -eq 0) {
+            try {
+              $remainingItems = @(Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType $workloadType -VaultId $vault.ID -ErrorAction Stop)
+              if ($remainingItems) {
+                $remainingItemNames = $remainingItems | ForEach-Object { $_.Name }
+                $containerErrors += "Backup items still remain in container '$($container.Name)' in vault '$($vault.Name)': $($remainingItemNames -join ', ')"
+              }
+            } catch {
+              $containerErrors += "Failed verifying backup item deletion in container '$($container.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+            }
           }
         }
 
@@ -660,35 +706,57 @@ function Remove-RecoveryServicesVaults() {
       }
     }
 
+    if ($vaultErrors.Count -ne 0) {
+      $errors += $vaultErrors
+      continue
+    }
+
     # Set vault context for ASR cmdlets which are context-scoped rather than -VaultId scoped.
+    $asrContextSet = $false
     try {
       Set-AzRecoveryServicesAsrVaultContext -Vault $vault -ErrorAction Stop | Out-Null
+      $asrContextSet = $true
     } catch {
-      # If ASR isn't in use on this vault, context set may fail; proceed to enumeration which will no-op.
+      $vaultErrors += "Failed setting ASR context for vault '$($vault.Name)': $($_.Exception.Message)"
     }
 
     # Remove Site Recovery (ASR) fabrics first (cascades to protected items, containers, and mappings) then policies.
-    $fabrics = @()
-    try {
-      $fabrics = @(Get-AzRecoveryServicesAsrFabric -ErrorAction Stop)
-    } catch { }
-    foreach ($fabric in $fabrics) {
+    if ($asrContextSet) {
+      $fabricCleanupFailed = $false
+      $fabrics = @()
       try {
-        Remove-AzRecoveryServicesAsrFabric -Fabric $fabric -Force -ErrorAction Stop | Out-Null
-      } catch {
-        $vaultErrors += "Failed removing ASR fabric '$($fabric.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+        $fabrics = @(Get-AzRecoveryServicesAsrFabric -ErrorAction Stop)
+      } catch { }
+      foreach ($fabric in $fabrics) {
+        try {
+          $job = Remove-AzRecoveryServicesAsrFabric -Fabric $fabric -Force -ErrorAction Stop
+          $deleteError = Wait-AsrJob -Job $job -DisplayName "ASR fabric '$($fabric.Name)' delete job"
+          if ($deleteError) {
+            $vaultErrors += $deleteError
+            $fabricCleanupFailed = $true
+          }
+        } catch {
+          $vaultErrors += "Failed removing ASR fabric '$($fabric.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+          $fabricCleanupFailed = $true
+        }
       }
-    }
 
-    $asrPolicies = @()
-    try {
-      $asrPolicies = @(Get-AzRecoveryServicesAsrPolicy -ErrorAction Stop)
-    } catch { }
-    foreach ($asrPolicy in $asrPolicies) {
-      try {
-        Remove-AzRecoveryServicesAsrPolicy -Policy $asrPolicy -ErrorAction Stop | Out-Null
-      } catch {
-        $vaultErrors += "Failed removing ASR policy '$($asrPolicy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+      if (!$fabricCleanupFailed) {
+        $asrPolicies = @()
+        try {
+          $asrPolicies = @(Get-AzRecoveryServicesAsrPolicy -ErrorAction Stop)
+        } catch { }
+        foreach ($asrPolicy in $asrPolicies) {
+          try {
+            $job = Remove-AzRecoveryServicesAsrPolicy -Policy $asrPolicy -ErrorAction Stop
+            $deleteError = Wait-AsrJob -Job $job -DisplayName "ASR policy '$($asrPolicy.Name)' delete job"
+            if ($deleteError) {
+              $vaultErrors += $deleteError
+            }
+          } catch {
+            $vaultErrors += "Failed removing ASR policy '$($asrPolicy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+          }
+        }
       }
     }
 
@@ -852,24 +920,6 @@ function Invoke-PreDeleteResourceCleanup() {
   $errors = @()
   $resourceGroupName = $ResourceGroup.ResourceGroupName
 
-  if ($ResourceGroup.ManagedBy) {
-    Write-Host "Resource group '$resourceGroupName' is managed by '$($ResourceGroup.ManagedBy)'. Attempting to delete the managing resource before deleting the group."
-    try {
-      $managedByResourceId = $ResourceGroup.ManagedBy
-      $verifyManagedResourceDeleted = {
-        $null -eq (Get-AzResource -ResourceId $managedByResourceId -ErrorAction SilentlyContinue)
-      }.GetNewClosure()
-
-      $managedResourceDeleteJob = Remove-AzResource -ResourceId $managedByResourceId -Force -AsJob
-      $managedResourceDeleteError = Wait-DeleteJob -Job $managedResourceDeleteJob -DisplayName "Managing resource '$managedByResourceId'" -VerifyDeleted $verifyManagedResourceDeleted
-      if ($managedResourceDeleteError) {
-        $errors += "Failed deleting managing resource '$managedByResourceId' for group '$resourceGroupName': $managedResourceDeleteError"
-      }
-    } catch {
-      $errors += "Failed deleting managing resource '$($ResourceGroup.ManagedBy)' for group '$resourceGroupName': $($_.Exception.Message)"
-    }
-  }
-
   $resourceGroupId = $ResourceGroup.ResourceId.TrimEnd('/')
   try {
     $locks = @(
@@ -904,7 +954,7 @@ function Invoke-PreDeleteResourceCleanup() {
   $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.Search/searchServices/sharedPrivateLinkResources' -Description 'Azure AI Search shared private link resource')
   $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.Cache/Redis/linkedServers' -Description 'Azure Cache for Redis linked server')
   $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.DevCenter/projects' -Description 'DevCenter project')
-  $errors += @(Break-EventHubGeoDisasterRecoveryPairs -ResourceGroupName $resourceGroupName)
+  $errors += @(Disable-EventHubGeoDisasterRecoveryPairs -ResourceGroupName $resourceGroupName)
 
   if ($resources | Where-Object { $_.ResourceType -ieq 'Microsoft.RecoveryServices/vaults' }) {
     $errors += @(Remove-RecoveryServicesVaults -ResourceGroupName $resourceGroupName)
@@ -967,6 +1017,9 @@ function DeleteOrUpdateResourceGroups() {
     if (HasException $rg) {
       continue
     }
+    if (IsChildResource $rg) {
+      continue
+    }
     $deleteAfter = GetDeleteAfterTag $rg
     if ($deleteAfter) {
       if (HasExpiredDeleteAfterTag $deleteAfter) {
@@ -994,7 +1047,7 @@ function DeleteOrUpdateResourceGroups() {
     FindOrCreateDeleteAfterTag -ResourceGroup $rg -HoursToDelete $DeleteAfterHours
   }
 
-  if ($MaxLifeSpanDeleteAfterHours) {
+  if ($MaxLifespanDeleteAfterHours) {
     foreach ($rg in $toDeleteLater) {
       FindOrCreateDeleteAfterTag -ResourceGroup $rg -HoursToDelete $MaxLifespanDeleteAfterHours
     }

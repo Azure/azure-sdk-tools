@@ -6,7 +6,7 @@
 
 ### 3.1.1 Retrieve knowledge
 
-Choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md):
+For SDK naming, load the profile selected during intake and follow [naming planning](naming-conventions.md#plan). These local references ground the supported naming rules without requiring a linter diagnostic first. For remaining TypeSpec changes, choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md):
 
 1. **Case found in the reference doc → Agentic Search.** Run [agentic search](agentic-search.md) — you **MUST** call `web_fetch` on the matching URLs and follow their steps.
 
@@ -21,6 +21,8 @@ For a request containing both covered and uncovered changes, use the MCP tool fo
 Synthesize the retrieved knowledge in step 3.1.1 into a concrete plan.
 
 Document your final plan with references to supporting documents, and ensure the plan follows the retrieved context above.
+
+Include the naming decision table: TypeSpec target, current/proposed SDK name, language scope, rule or exception, and compatibility evidence. Resolve unknown units, ambiguous domain names, and shipped-name conflicts before applying affected renames. Do not expand the task into cleanup of unrelated existing names.
 
 ---
 

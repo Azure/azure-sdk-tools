@@ -29,10 +29,10 @@ This includes but is not limited to:
 
 ## MCP Tools
 
-| Tool                                              | Purpose                                                                                                                                                                                              |
-| ------------------------------------------------- | -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for requests **not** covered by the eight cases in [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search (`web_fetch`) instead. |
-| `azure-sdk-mcp:azsdk_run_typespec_validation`     | Validate TypeSpec                                                                                                                                                                                    |
+| Tool                                              | Purpose                                                                                                                                                                                                                                 |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for TypeSpec changes **not** covered by [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search; SDK naming uses [local profiles](references/naming-conventions.md). |
+| `azure-sdk-mcp:azsdk_run_typespec_validation`     | Validate TypeSpec                                                                                                                                                                                                                       |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
 
@@ -42,6 +42,7 @@ This includes but is not limited to:
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
 - **Mandatory for ALL `.tsp` edits** — even a single `?` change can be breaking.
 - **Minimal, scoped edits** — only change what the request requires.
+- **Plan SDK names before editing** — confirm SDK targets and select [language-specific naming guidance](references/naming-conventions.md) during intake. Ask about unknown targets; apply only the matching language/service profile. Preserve wire names, other SDK languages, and shipped API names.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
@@ -71,7 +72,7 @@ See [authoring-plan.md](references/authoring-plan.md).
 
 ### Step 4: Apply Changes
 
-Make minimal `.tsp` edits following the plan from Step 3. Confirm uncertainties with the user first.
+Make minimal `.tsp` edits following the plan from Step 3, including the [SDK naming decisions](references/naming-conventions.md#apply). Confirm uncertainties with the user first.
 
 ### Step 5: Validate
 

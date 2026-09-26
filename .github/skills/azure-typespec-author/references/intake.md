@@ -4,8 +4,9 @@
 
 ## 2.1 General Intake (All Cases)
 
-1. Run [agentic search](agentic-search.md) using the Step 1 result and the user's request.
-2. Identify the case from the table below and gather more information if case matches. If no case matches, skip Step 2.2.
+1. Select [SDK naming profiles](naming-conventions.md#select) using the target languages and service type. Ask which SDK languages are targeted if unknown; an OpenAPI emitter does not identify an SDK language. Distinguish missing target information from a known target without a supported profile.
+2. Run [agentic search](agentic-search.md) for the remaining TypeSpec changes using the Step 1 result and the user's request. Supported SDK naming rules are grounded in the selected local profiles.
+3. Identify the case from the table below and gather more information if case matches. If no case matches, skip Step 2.2.
 
 | Case | Name                       | Description                                            | Service Type     |
 | ---- | -------------------------- | ------------------------------------------------------ | ---------------- |
@@ -70,4 +71,6 @@ Case:           [Name]
 Target Version: [version]
 Changes:        [summary]
 Defaults:       [applied defaults]
+SDK targets:    [confirmed languages / unknown]
+Naming profile: [selected profiles / not covered]
 ```

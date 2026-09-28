@@ -177,8 +177,6 @@ internal class ReleasePlanSpecHelperTests
         storage.Verify(service => service.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), ct), Times.Once);
         storage.Verify(service => service.UpdateReleasePlanSDKDetailsAsync(WorkItemId, It.IsAny<List<SDKInfo>>(), ct), Times.Once);
         storage.Verify(service => service.UpdateSpecPullRequestAsync(
-            It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        storage.Verify(service => service.UpdateConfirmedReleaseTargetAsync(
             It.IsAny<int>(), It.IsAny<ReleasePlanSpecTarget>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(),
             It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
         storage.Verify(service => service.UpdateApiSpecVersionAsync(

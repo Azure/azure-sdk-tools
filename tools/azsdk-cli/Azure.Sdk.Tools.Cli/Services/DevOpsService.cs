@@ -155,8 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default);
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages, CancellationToken ct);
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status, CancellationToken ct);
-        public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, string expectedSpecCommitSha, string apiVersion, CancellationToken ct);
-        public Task<bool> UpdateConfirmedReleaseTargetAsync(int workItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct);
+        public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct);
         public Task<bool> UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion, CancellationToken ct);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url, CancellationToken ct);
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default);
@@ -1409,29 +1408,21 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         /// <summary>
-        /// Update the active spec pull request link in API spec work item.
+        /// Updates the spec link and, when supplied, the confirmed SDK target and related fields.
+        /// Link-only updates supply just the PR URL; saving SDK inputs requires the preview's revision.
         /// </summary>
-        /// <param name="releasePlanWorkItemId"></param>
-        /// <param name="specPullRequest"></param>
-        /// <returns>bool</returns>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="Exception"></exception>
-        public async Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, string expectedSpecCommitSha, string apiVersion, CancellationToken ct)
-            => await UpdateSpecPullRequestCoreAsync(releasePlanWorkItemId, specPullRequest, specCommitSha, expectedSpecCommitSha, apiVersion, ct);
-
-        public async Task<bool> UpdateConfirmedReleaseTargetAsync(int workItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
+        public async Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(target.ExpectedTargetRevision))
+            var specPullRequest = target.SpecPullRequestUrl;
+            var specCommitSha = target.SpecCommitSHA;
+            var apiVersion = target.ApiVersion;
+            var expectedTargetRevision = target.ExpectedTargetRevision;
+            if ((!string.IsNullOrEmpty(specCommitSha) || !string.IsNullOrEmpty(apiVersion) ||
+                fields is { Count: > 0 } || sdkInfos is { Count: > 0 }) && string.IsNullOrWhiteSpace(expectedTargetRevision))
             {
                 throw new InvalidOperationException("Preview the release target and preserve its ExpectedTargetRevision before confirming an update.");
             }
-            return await UpdateSpecPullRequestCoreAsync(workItemId, target.SpecPullRequestUrl, target.SpecCommitSHA, expectedSpecCommitSha,
-                target.ApiVersion, ct, fields, sdkInfos, target.ExpectedTargetRevision);
-        }
 
-        private async Task<bool> UpdateSpecPullRequestCoreAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, string expectedSpecCommitSha, string apiVersion, CancellationToken ct,
-            Dictionary<string, string>? fields = null, List<SDKInfo>? sdkInfos = null, string? expectedTargetRevision = null)
-        {
             // Update Active spec PR and add link to spec pr list
             try
             {

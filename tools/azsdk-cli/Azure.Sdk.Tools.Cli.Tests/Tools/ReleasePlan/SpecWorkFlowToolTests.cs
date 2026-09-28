@@ -1762,8 +1762,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private static void VerifyNoSpecTargetUpdate(Mock<IDevOpsService> devOpsService)
         {
             devOpsService.Verify(x => x.UpdateSpecPullRequestAsync(
-                It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<CancellationToken>()), Times.Never);
+                It.IsAny<int>(), It.IsAny<ReleasePlanSpecTarget>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.UpdateApiSpecVersionAsync(
                 It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }

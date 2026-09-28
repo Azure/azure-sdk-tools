@@ -916,7 +916,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var sdkInfos = proposedTarget.Packages
                         .Select(package => new SDKInfo { Language = package.Language.ToWorkItemString(), PackageName = package.PackageName ?? string.Empty })
                         .Where(sdk => supported.Contains(sdk.Language)).ToList();
-                    if (!await devOpsService.UpdateConfirmedReleaseTargetAsync(releasePlan.WorkItemId, proposedTarget, releasePlan.SpecCommitSHA, fieldsToUpdate, sdkInfos, ct))
+                    if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId, proposedTarget, releasePlan.SpecCommitSHA, fieldsToUpdate, sdkInfos, ct))
                     {
                         return new ReleasePlanResponse { ResponseError = "Failed to save the confirmed release target." };
                     }
@@ -927,13 +927,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 logger.LogInformation("Updated release plan fields for work item {WorkItemId}", releasePlan.WorkItemId);
 
-                // Save the explicitly confirmed PR snapshot, including a same-link HEAD or merge update.
+                // Public targets were saved above. Link-only updates leave the parent unpinned.
                 if (proposedTarget == null && !string.IsNullOrEmpty(specPullRequestUrl) &&
                     (!string.Equals(releasePlan.ActiveSpecPullRequest, specPullRequestUrl, StringComparison.OrdinalIgnoreCase) ||
-                     !string.Equals(releasePlan.SpecCommitSHA, specCommitSha, StringComparison.OrdinalIgnoreCase) ||
-                     (proposedTarget != null && string.IsNullOrWhiteSpace(releasePlan.SpecAPIVersion))))
+                     !string.Equals(releasePlan.SpecCommitSHA, specCommitSha, StringComparison.OrdinalIgnoreCase)))
                 {
-                    if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId, specPullRequestUrl, specCommitSha, releasePlan.SpecCommitSHA, proposedTarget?.ApiVersion ?? "", ct))
+                    if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId,
+                        new ReleasePlanSpecTarget { SpecPullRequestUrl = specPullRequestUrl }, releasePlan.SpecCommitSHA, [], [], ct))
                     {
                         return new ReleasePlanResponse { ResponseError = "Failed to update the linked spec PR and commit SHA." };
                     }
@@ -2336,9 +2336,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     specCommitSha = string.Empty;
                 }
-                var updated = proposedTarget == null
-                    ? await devOpsService.UpdateSpecPullRequestAsync(workItemId, specPullRequestUrl, specCommitSha, releasePlan.SpecCommitSHA, "", ct)
-                    : await devOpsService.UpdateConfirmedReleaseTargetAsync(workItemId, proposedTarget, releasePlan.SpecCommitSHA, [], [], ct);
+                var updated = await devOpsService.UpdateSpecPullRequestAsync(workItemId,
+                    proposedTarget ?? new ReleasePlanSpecTarget { SpecPullRequestUrl = specPullRequestUrl },
+                    releasePlan.SpecCommitSHA, [], [], ct);
 
                 if (!updated)
                 {

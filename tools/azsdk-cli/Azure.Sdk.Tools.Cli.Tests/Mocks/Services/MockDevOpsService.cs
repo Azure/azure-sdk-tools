@@ -272,13 +272,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        public Task<bool> UpdateConfirmedReleaseTargetAsync(int workItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct) =>
-            ((IDevOpsService)this).UpdateSpecPullRequestAsync(workItemId, target.SpecPullRequestUrl, target.SpecCommitSHA, expectedSpecCommitSha, target.ApiVersion, ct);
-
-        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, string specCommitSha, string expectedSpecCommitSha, string apiVersion, CancellationToken ct)
+        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
         {
-            LastSpecUpdate = (releasePlanWorkItemId, specPullRequest, specCommitSha);
-            LastSpecUpdateApiVersion = apiVersion;
+            LastSpecUpdate = (releasePlanWorkItemId, target.SpecPullRequestUrl, target.SpecCommitSHA);
+            LastSpecUpdateApiVersion = target.ApiVersion;
             LastSpecUpdateExpectedCommitSha = expectedSpecCommitSha;
             return Task.FromResult(true);
         }

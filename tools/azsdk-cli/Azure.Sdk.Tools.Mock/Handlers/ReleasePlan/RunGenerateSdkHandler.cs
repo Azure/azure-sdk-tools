@@ -58,14 +58,9 @@ public class RunGenerateSdkHandler : IMockToolHandler
         {
             return Failure("Specify one SDK language listed in the release plan per generation call.");
         }
-        var requireMergedSpec = ReleasePlanMockResponses.Flag(arguments, "requireMergedSpec");
-        if (requireMergedSpec && plan.SpecCommitSHA != ReleasePlanMockResponses.MergedSpecCommitSha)
-        {
-            return Failure("Auto-release generation requires the confirmed target to use the linked PR's merge commit. Preview and confirm the target after merge; pre-merge draft SDK review remains available without requireMergedSpec.");
-        }
         var response = ReleasePlanMockResponses.Workflow("Success",
             $"SDK generation uses pinned spec commit {plan.SpecCommitSHA} and API version '{plan.SpecAPIVersion}' for work item {plan.WorkItemId}.",
-            requireMergedSpec ? "SDK release generation pipeline triggered (mock)." : "Draft SDK review generation pipeline triggered (mock); no auto-release labels.",
+            "SDK generation pipeline triggered (mock).",
             "Pipeline build ID: 90001",
             "Monitor status using azsdk_get_pipeline_status");
         response.Language = language;

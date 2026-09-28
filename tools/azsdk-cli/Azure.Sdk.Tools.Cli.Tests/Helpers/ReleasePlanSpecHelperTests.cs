@@ -92,7 +92,7 @@ internal class ReleasePlanSpecHelperTests
         storage.Setup(service => service.GetActiveReleasePlansByTypeSpecProjectPathAsync(RelativeProjectPath, ApiReleaseType.Unknown, ct))
             .ReturnsAsync(new List<ReleasePlanWorkItem>());
         storage.Setup(service => service.RunSDKGenerationPipelineAsync(
-                PinnedCommit, RelativeProjectPath, PreviewApiVersion, "beta", "Java", WorkItemId, "", false, ct))
+            PinnedCommit, RelativeProjectPath, PreviewApiVersion, "beta", "Java", WorkItemId, "", ct))
             .ReturnsAsync(new Build { Id = 100, Status = BuildStatus.Completed });
 
         var user = new Mock<IUserHelper>(MockBehavior.Strict);
@@ -149,7 +149,7 @@ internal class ReleasePlanSpecHelperTests
         Assert.That(firstGeneration.Status, Is.EqualTo("Success"));
         Assert.That(firstGeneration.ResponseErrors, Is.Empty);
         storage.Verify(service => service.RunSDKGenerationPipelineAsync(
-            PinnedCommit, RelativeProjectPath, PreviewApiVersion, "beta", "Java", WorkItemId, "", false, ct), Times.Once);
+            PinnedCommit, RelativeProjectPath, PreviewApiVersion, "beta", "Java", WorkItemId, "", ct), Times.Once);
 
         // Only external spec state advances. Do not rewrite the fixture or the saved release plan.
         metadata = CreateMetadata(projectPath, StableApiVersion, [StableApiVersion]);
@@ -170,10 +170,10 @@ internal class ReleasePlanSpecHelperTests
             Assert.That(storedPlan.SDKReleaseType, Is.EqualTo("beta"));
         });
         storage.Verify(service => service.RunSDKGenerationPipelineAsync(
-            PinnedCommit, RelativeProjectPath, PreviewApiVersion, "beta", "Java", WorkItemId, "", false, ct), Times.Exactly(2));
+            PinnedCommit, RelativeProjectPath, PreviewApiVersion, "beta", "Java", WorkItemId, "", ct), Times.Exactly(2));
         storage.Verify(service => service.RunSDKGenerationPipelineAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), false, It.IsAny<CancellationToken>()), Times.Exactly(2));
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         storage.Verify(service => service.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), ct), Times.Once);
         storage.Verify(service => service.UpdateReleasePlanSDKDetailsAsync(WorkItemId, It.IsAny<List<SDKInfo>>(), ct), Times.Once);
         storage.Verify(service => service.UpdateSpecPullRequestAsync(

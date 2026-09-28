@@ -1688,7 +1688,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(response);
             Assert.That(response.Status, Is.EqualTo("Success"));
             Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
-            Assert.That(response.NextSteps, Has.Some.Contains("saved API version and spec commit").And.Contains("draft SDK review"));
+            Assert.That(response.NextSteps, Has.Member("Regenerate using the saved API version and spec commit."));
             Assert.That(response.RequiresConfirmation, Is.False);
             AssertConfirmedTargetUpdate(devops, 100, "", PreviewApiVersion, "beta", "https://github.com/Azure/azure-rest-api-specs/pull/12345",
                 expectedTargetRevision: "100:4:101:7", linkOnly: true);
@@ -1711,7 +1711,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(response);
             Assert.That(response.Status, Is.EqualTo("Success"));
             Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
-            Assert.That(response.NextSteps, Has.Some.Contains("saved API version and spec commit").And.Contains("draft SDK review"));
+            Assert.That(response.NextSteps, Has.Member("Regenerate using the saved API version and spec commit."));
             Assert.That(response.RequiresConfirmation, Is.False);
             AssertConfirmedTargetUpdate(devops, 1, "", PreviewApiVersion, "beta", "https://github.com/Azure/azure-rest-api-specs/pull/12345",
                 expectedTargetRevision: "1:4:2:7", linkOnly: true);

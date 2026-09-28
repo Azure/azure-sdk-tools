@@ -539,19 +539,17 @@ internal class ReleasePlanMockHandlerTests
         Assert.That(response.ResponseError, Is.Null);
         Assert.That(response.Language, Is.EqualTo(expectedLanguage));
         Assert.That(response.Details, Has.Some.Contains(SpecCommitSha).And.Contains(ApiVersion).And.Contains("35000"));
-        Assert.That(response.Details, Has.Some.Contains("Draft SDK review"));
+        Assert.That(response.Details, Has.Some.Contains("SDK generation pipeline triggered"));
     }
 
     [Test]
-    public void Generate_AutoReleaseRequiresMergedSnapshotAndPrivatePreviewNeverQueues()
+    public void Generate_UsesPinnedOpenOrMergedSnapshotAndPrivatePreviewNeverQueues()
     {
         var handler = new MockHandlers.RunGenerateSdkHandler();
         var arguments = GenerationArguments();
-        arguments["requireMergedSpec"] = JsonSerializer.SerializeToElement(true);
-
-        var preview = (ReleaseWorkflowResponse)handler.Handle(arguments);
-        Assert.That(preview.Status, Is.EqualTo("Failed"));
-        Assert.That(preview.ResponseError, Does.Contain("merge commit"));
+        var unmerged = (ReleaseWorkflowResponse)handler.Handle(arguments);
+        Assert.That(unmerged.Status, Is.EqualTo("Success"));
+        Assert.That(unmerged.Details, Has.Some.Contains(SpecCommitSha).And.Contains(ApiVersion));
 
         arguments["workItemId"] = 29262;
         var merged = (ReleaseWorkflowResponse)handler.Handle(arguments);

@@ -10,7 +10,6 @@
 
 - Configuring a public SDK target requires a clean local checkout at the selected PR SHA and the project's compiler. Preview first, then explicitly confirm the target; legacy and tracking-only plans are never automatically pinned during lookup or generation, and missing/invalid targets never fall back to `main`.
 - Public update and update-spec-pr confirmation require `expectedTargetRevision` / `--expected-target-revision` carried verbatim from the approved preview or explicitly inspected plan. An omitted token returns a no-write preview even with SHA and `confirmTarget`; blank or mismatched tokens reject before compiler validation or writes. Create accepts neither update guard; Private Preview and tracking-only creation are unchanged.
-- Pipeline generation defaults to `sdk-review`, producing draft SDK PRs without auto-release labels. Opt in with `requireMergedSpec: true` / `--require-merged-spec` for `sdk-release`; the linked public PR must be merged at the stored SHA.
 
 ### Bugs Fixed
 

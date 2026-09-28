@@ -29,7 +29,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public string? LastGenerationSpecCommitSha { get; private set; }
         public string? LastGenerationApiVersion { get; private set; }
         public string? LastGenerationSdkReleaseType { get; private set; }
-        public bool? LastGenerationAutoRelease { get; private set; }
         public (int WorkItemId, string PullRequest, string CommitSha)? LastSpecUpdate { get; private set; }
         public string? LastSpecUpdateApiVersion { get; private set; }
         public string? LastSpecUpdateExpectedCommitSha { get; private set; }
@@ -251,12 +250,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, bool autoRelease, CancellationToken ct)
+        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, CancellationToken ct)
         {
             LastGenerationSpecCommitSha = specCommitSha;
             LastGenerationApiVersion = apiVersion;
             LastGenerationSdkReleaseType = sdkReleaseType;
-            LastGenerationAutoRelease = autoRelease;
             if (ConfiguredRunSDKGenerationPipeline != null)
             {
                 return Task.FromResult(ConfiguredRunSDKGenerationPipeline);

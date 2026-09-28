@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
-        public Task<Build> RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", bool autoRelease = false, CancellationToken ct = default);
+        public Task<Build> RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", CancellationToken ct = default);
         public Task<Build> GetPipelineRunAsync(int buildId, CancellationToken ct);
         public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct);
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default);
@@ -1005,7 +1005,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<Build> RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", bool autoRelease = false, CancellationToken ct = default)
+        public async Task<Build> RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", CancellationToken ct = default)
         {
             if (!ReleasePlanSpecHelper.IsValidCommitSha(specCommitSha))
             {
@@ -1018,7 +1018,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
             }
 
-            var templateParams = BuildSdkGenerationTemplateParams(typespecProjectRoot, workItemId, sdkReleaseType, apiVersion, sdkRepoBranch, autoRelease);
+            var templateParams = BuildSdkGenerationTemplateParams(typespecProjectRoot, workItemId, sdkReleaseType, apiVersion, sdkRepoBranch);
 
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, sourceVersion: specCommitSha, ct: ct);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
@@ -1032,7 +1032,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return build;
         }
 
-        private static Dictionary<string, string> BuildSdkGenerationTemplateParams(string typespecProjectRoot, int workItemId, string sdkReleaseType, string apiVersion, string sdkRepoBranch, bool autoRelease)
+        private static Dictionary<string, string> BuildSdkGenerationTemplateParams(string typespecProjectRoot, int workItemId, string sdkReleaseType, string apiVersion, string sdkRepoBranch)
         {
             var templateParams = new Dictionary<string, string>
             {
@@ -1040,7 +1040,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "CreatePullRequest", "true" },
                  { "ReleasePlanWorkItemId", $"{workItemId}"},
-                 { "TriggerSource", autoRelease ? "sdk-release" : "sdk-review" }
+                 { "TriggerSource", "sdk-release" }
             };
 
             // The confirmed target must be honored equally by interactive and automated callers.

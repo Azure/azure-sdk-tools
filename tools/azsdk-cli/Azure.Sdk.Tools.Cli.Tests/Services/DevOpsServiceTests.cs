@@ -1716,9 +1716,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         [Test, Combinatorial]
         [NonParallelizable]
-        public async Task RunSDKGenerationPipelineAsync_QueuesPinnedSourceVersionWithExplicitPolicyRegardlessOfEnvironment(
+        public async Task RunSDKGenerationPipelineAsync_QueuesPinnedSourceVersionWithoutChangingReleaseBehavior(
             [Values("Java", "Python", ".NET", "JavaScript", "Go")] string language,
-            [Values(false, true)] bool autoRelease,
             [Values(false, true)] bool inPipeline)
         {
             var definitionId = language switch
@@ -1753,14 +1752,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
                 await service.RunSDKGenerationPipelineAsync(
                     SpecCommit, "specification/test/service", "2026-01-01-preview", "beta", language, 0,
-                    sdkRepoBranch: "feature/existing-sdk", autoRelease: autoRelease, ct: ct);
+                    sdkRepoBranch: "feature/existing-sdk", ct: ct);
 
                 Assert.That(queuedBuild, Is.Not.Null);
                 Assert.That(queuedBuild!.SourceBranch, Is.EqualTo("main"), "A commit SHA belongs in SourceVersion, not SourceBranch.");
                 Assert.That(queuedBuild.SourceVersion, Is.EqualTo(SpecCommit));
                 Assert.That(queuedBuild.Definition.Id, Is.EqualTo(definitionId));
-                Assert.That(queuedBuild.TemplateParameters["TriggerSource"], Is.EqualTo(autoRelease ? "sdk-release" : "sdk-review"),
-                    "Only the explicit release policy may enable auto-release; the host environment must not change it.");
+                Assert.That(queuedBuild.TemplateParameters["TriggerSource"], Is.EqualTo("sdk-release"),
+                    "Pinning the source must preserve the existing pipeline trigger for interactive and automated calls.");
                 Assert.That(queuedBuild.TemplateParameters["ApiVersion"], Is.EqualTo("2026-01-01-preview"));
                 Assert.That(queuedBuild.TemplateParameters["SdkRepoBranch"], Is.EqualTo("feature/existing-sdk"));
                 Assert.That(queuedBuild.TemplateParameters["ConfigPath"], Is.EqualTo("specification/test/service/tspconfig.yaml"));
@@ -1772,7 +1771,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 {
                     "ConfigType", "ConfigPath", "CreatePullRequest", "ReleasePlanWorkItemId", "TriggerSource",
                     "SdkReleaseType", "ApiVersion", "SdkRepoBranch"
-                }), "Release policy must use the existing TriggerSource parameter, not a new template parameter.");
+                }), "Source pinning must not introduce new release-policy parameters.");
                 buildClient.Verify(x => x.QueueBuildAsync(It.IsAny<Build>(), null, null, null, null, null, ct), Times.Once);
             }
             finally
@@ -1781,16 +1780,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             }
         }
 
-        [TestCase(false, "sdk-review")]
-        [TestCase(true, "sdk-release")]
-        public void BuildSdkGenerationTemplateParams_PreservesConfirmedTargetAndUsesExplicitReleasePolicy(bool autoRelease, string expectedTriggerSource)
+        [Test]
+        public void BuildSdkGenerationTemplateParams_PreservesConfirmedTargetAndExistingTriggerSource()
         {
             // Arrange
             var method = typeof(DevOpsService).GetMethod("BuildSdkGenerationTemplateParams", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             Assert.That(method, Is.Not.Null);
 
             // Act
-            var templateParams = (Dictionary<string, string>)method!.Invoke(null, ["specification/test/service", 0, "stable", "v1", "feature/sdk-branch", autoRelease])!;
+            var templateParams = (Dictionary<string, string>)method!.Invoke(null, ["specification/test/service", 0, "stable", "v1", "feature/sdk-branch"])!;
 
             // Assert
             Assert.That(templateParams, Is.EquivalentTo(new Dictionary<string, string>
@@ -1799,7 +1797,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 ["ConfigPath"] = "specification/test/service/tspconfig.yaml",
                 ["CreatePullRequest"] = "true",
                 ["ReleasePlanWorkItemId"] = "0",
-                ["TriggerSource"] = expectedTriggerSource,
+                ["TriggerSource"] = "sdk-release",
                 ["SdkRepoBranch"] = "feature/sdk-branch",
                 ["SdkReleaseType"] = "stable",
                 ["ApiVersion"] = "v1"

@@ -72,7 +72,7 @@ retarget an existing plan. Same-version follow-up PRs require an explicit update
 and fresh confirmation; a different API version needs a separate plan. SDK info
 `apiVersion` is the spec API version, not a semantic SDK package version.
 
-## Generation: draft review versus auto-release
+## Generation and regeneration
 
 Generation and regeneration consume the stored target without rerunning compiler
 validation. A previously confirmed plan needs no local clone: pass its stored
@@ -82,16 +82,12 @@ to detect a changed target; caller inputs cannot override the plan. Generation's
 Do not confuse it with the update-only `--expected-spec-commit-sha` and
 `--expected-target-revision` preconditions.
 
-- The default `requireMergedSpec: false` queues `TriggerSource: sdk-review` for
-  manual review. New SDK PRs are drafts and receive no `auto-release` label, even
-  when the stored spec target is already merged.
-- Supported manual **data-plane pre-merge draft** generation uses the confirmed
-  PR HEAD SHA, never GitHub's synthetic merge commit or a moving PR merge ref.
-- Auto-release is opt-in: `requireMergedSpec: true` (`--require-merged-spec` in the
-  CLI) queues `TriggerSource: sdk-release`. The linked public PR must be merged
-  and its merge commit must match the stored SHA. After merge, explicitly update
-  and confirm the merged target; a draft pin does not automatically advance or
-  opt in to auto-release. Generation creates SDK PRs, not published packages.
+- Generation uses the confirmed PR HEAD or merge SHA, never a moving PR merge
+  ref. It does not re-resolve the spec PR or advance the pin when that PR merges.
+  A different snapshot requires an explicit target update and confirmation.
+- The existing `TriggerSource: sdk-release` pipeline behavior is preserved.
+  Source pinning adds no release-mode switch or new merged-spec gate; downstream
+  SDK PR and publication policies are unchanged.
 - Legacy, tracking-only, or otherwise unconfigured plans stop before generation.
   The next step is to preview and confirm `update-spec-pr` from the intended local
   snapshot. Generation never backfills a target or falls back to `main` or local
@@ -125,7 +121,7 @@ sets `SpecRepoCommit` from `Build.SourceVersion`, checks out that commit, and
 passes it to the SDK generator. **Both `ApiVersion` and `SdkReleaseType` are
 forwarded for interactive and automation calls.** The saved template parameters
 also include the TypeSpec project (`ConfigPath`), `ConfigType`, release plan work
-item ID, and the selected review/release `TriggerSource`.
+item ID, and the existing `sdk-release` value for `TriggerSource`.
 
 This pins spec inputs, not the entire SDK toolchain or all dependencies. The
 pipeline and generator must remain compatible with the pinned spec snapshot.

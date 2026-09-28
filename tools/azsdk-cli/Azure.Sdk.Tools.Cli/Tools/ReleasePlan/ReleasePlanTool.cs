@@ -2365,7 +2365,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ? ["Merge the linked spec PR to complete the private-preview release plan."]
                     :
                     [
-                        "Regenerate using the saved API version and spec commit. Pre-merge generation is for draft SDK review; auto-release generation requires the merged spec target.",
+                        "Regenerate using the saved API version and spec commit.",
                         "Generate SDK for each language listed in the release plan."
                     ]
                 };

@@ -15,35 +15,20 @@ parameters:
 trigger:
   branches:
     include:
-      - main
-      - feature/*
-      - release/*
-      - hotfix/*
+      - apiview/main
   paths:
     include:
-      - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
-      - src/java/apiview-java-processor
-      - src/go
-      - src/swift
-      - tools/apiview/parsers/js-api-parser
+      - tools/apiview/parsers/csharp-api-parser
 
 pr:
   branches:
     include:
       - apiview/main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
-      - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
-      - src/dotnet/Azure.ClientSdk.Analyzers
-      - src/java/apiview-java-processor
-      - src/go
-      - src/swift
-      - tools/apiview/parsers/js-api-parser
+      - tools/apiview/parsers/csharp-api-parser
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml

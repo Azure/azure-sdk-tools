@@ -135,6 +135,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             {
                 WorkItemId = 1,
                 ReleasePlanId = releasePlanId,
+                TargetRevision = "1:1:2:1",
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
             };
@@ -189,6 +190,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             {
                 WorkItemId = workItemId,
                 ReleasePlanId = 1,
+                TargetRevision = $"{workItemId}:1:2:1",
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
             };
@@ -214,6 +216,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             {
                 WorkItemId = id,
                 ReleasePlanId = 1,
+                TargetRevision = $"{id}:1:2:1",
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
             };
@@ -257,7 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, CancellationToken ct)
+        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
         {
             return Task.FromResult(true);
         }

@@ -28,8 +28,17 @@ public class CreateReleasePlanHandler : IMockToolHandler
 
     private static ReleasePlanResponse ContosoReleasePlanResponse(string typespecPath, Dictionary<string, object?>? arguments)
     {
-        var hasSpecPullRequest = !string.IsNullOrWhiteSpace(arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString());
-        return new ReleasePlanResponse
+        var specPr = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString() ?? string.Empty;
+        var hasSpecPullRequest = !string.IsNullOrWhiteSpace(specPr);
+        if (!ApiReleaseTypeExtensions.TryParseFromUserInput(arguments?.GetValueOrDefault("apiReleaseType")?.ToString() ?? "", out var releaseType))
+        {
+            return new ReleasePlanResponse { ResponseError = "Choose Private Preview, Public Preview, or GA." };
+        }
+        if (releaseType.ValidateSpecPullRequest(specPr) is { } error)
+        {
+            return new ReleasePlanResponse { ResponseError = error };
+        }
+        var response = new ReleasePlanResponse
         {
             TypeSpecProject = typespecPath,
             PackageType = SdkType.Dataplane,
@@ -46,14 +55,14 @@ public class CreateReleasePlanHandler : IMockToolHandler
                 Title = "Release Plan - Contoso.WidgetManager",
                 Status = "Active",
                 Owner = "testuser@microsoft.com",
-                SDKReleaseMonth = arguments?.GetValueOrDefault("targetReleaseMonthYear")?.ToString() ?? "06/2026",
+                SDKReleaseMonth = arguments?.GetValueOrDefault("targetReleaseMonthYear")?.ToString() ?? "December 2026",
                 ReleasePlanId = 50001,
+                ApiReleaseType = releaseType,
                 IsDataPlane = true,
                 SpecType = "TypeSpec",
-                ActiveSpecPullRequest = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()
-                    ?? "https://github.com/Azure/azure-rest-api-specs/pull/12345",
+                ActiveSpecPullRequest = specPr,
                 APISpecProjectPath = typespecPath,
-                SDKReleaseType = "beta",
+                SDKReleaseType = releaseType.GetDefaultSdkReleaseType(),
                 SDKInfo =
                 [
                     new SDKInfo { Language = ".NET", PackageName = "Azure.Template.Contoso" },
@@ -63,5 +72,10 @@ public class CreateReleasePlanHandler : IMockToolHandler
                 ]
             }
         };
+        if (releaseType == ApiReleaseType.PrivatePreview)
+        {
+            return response;
+        }
+        return hasSpecPullRequest ? ReleasePlanMockResponses.ConfigureTarget(arguments, update: false, response: response) : response;
     }
 }

@@ -12,6 +12,7 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.Cli.Attributes;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Pipeline;
@@ -154,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default);
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages, CancellationToken ct);
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status, CancellationToken ct);
-        public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, CancellationToken ct);
+        public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct);
         public Task<bool> UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion, CancellationToken ct);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url, CancellationToken ct);
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default);
@@ -425,6 +426,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 LanguageExclusionRequesterNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionRequestNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 LanguageExclusionApproverNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionApprovalNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 APISpecProjectPath = workItem.Fields.TryGetValue("Custom.ApiSpecProjectPath", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                SpecCommitSHA = workItem.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ReleasePlanType = workItem.Fields.TryGetValue("Custom.ReleasePlanType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
@@ -462,12 +464,26 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
                 if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
                 {
+                    releasePlan.ApiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
+                    releasePlan.TargetRevision = ReleasePlanSpecHelper.GetTargetRevision(workItem.Id, workItem.Rev, apiSpecWorkItem.Id, apiSpecWorkItem.Rev);
                     releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
+                    if (!string.IsNullOrEmpty(releasePlan.SpecCommitSHA))
+                    {
+                        // Do not combine an old parent pin with a concurrently updated child target.
+                        var currentParent = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlan.WorkItemId, cancellationToken: ct);
+                        if (currentParent?.Fields == null ||
+                            !currentParent.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var currentPin) ||
+                            !string.Equals(currentPin?.ToString(), releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
+                        {
+                            releasePlan.SpecCommitSHA = string.Empty;
+                        }
+                    }
                 }
                 else
                 {
+                    releasePlan.SpecCommitSHA = string.Empty;
                     logger.LogWarning("API spec work item not found for release plan work item {workItemId}", releasePlan.WorkItemId);
                 }
             }
@@ -477,6 +493,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
+                releasePlan.SpecCommitSHA = string.Empty;
                 logger.LogError(ex, "Failed to get API spec work item for release plan work item {WorkItemId}", releasePlan.WorkItemId);
             }
 
@@ -1388,43 +1405,99 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         /// <summary>
-        /// Update the active spec pull request link in API spec work item.
+        /// Updates the spec link and, when supplied, the confirmed SDK target and related fields.
+        /// Link-only updates supply just the PR URL; saving SDK inputs requires the preview's revision.
         /// </summary>
-        /// <param name="releasePlanWorkItemId"></param>
-        /// <param name="specPullRequest"></param>
-        /// <returns>bool</returns>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="Exception"></exception>
-        public async Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, CancellationToken ct)
+        public async Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
         {
-            // Update Active spec PR and add link to spec pr list
+            ct.ThrowIfCancellationRequested();
+            var specPullRequest = target.SpecPullRequestUrl;
+            var specCommitSha = target.SpecCommitSHA;
+            var apiVersion = target.ApiVersion;
+            var expectedTargetRevision = target.ExpectedTargetRevision;
+            if ((!string.IsNullOrEmpty(specCommitSha) || !string.IsNullOrEmpty(apiVersion) ||
+                fields.Count > 0 || sdkInfos.Count > 0) && string.IsNullOrWhiteSpace(expectedTargetRevision))
+            {
+                throw new InvalidOperationException("Preview the release target and preserve its ExpectedTargetRevision before confirming an update.");
+            }
+            if (fields.Keys.Any(field => field.Equals(ReleasePlanWorkItem.SpecCommitSHAField, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new ArgumentException("The pin is controlled by the validated release target, not metadata fields.", nameof(fields));
+            }
+
             try
             {
-                if (releasePlanWorkItemId == 0 || string.IsNullOrEmpty(specPullRequest))
+                if (releasePlanWorkItemId <= 0 || string.IsNullOrEmpty(specPullRequest))
                 {
                     throw new ArgumentException("Please provide the work item ID and a spec pull request URL to update the work item.");
                 }
+                if (!string.IsNullOrEmpty(specCommitSha) && !ReleasePlanSpecHelper.IsValidCommitSha(specCommitSha))
+                {
+                    throw new ArgumentException("The spec commit SHA must be empty for an unconfigured target or a full 40-character hexadecimal commit SHA.", nameof(specCommitSha));
+                }
 
-                // Find API spec work item
+                // Read both revisions immediately before writing; never retry a revision conflict.
                 var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlanWorkItemId, ct);
                 int apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
                     throw new Exception($"API spec work item not found for release plan work item {releasePlanWorkItemId}.");
                 }
+                var workItemClient = connection.GetWorkItemClient(ct);
+                var releasePlanWorkItem = await workItemClient.GetWorkItemAsync(releasePlanWorkItemId, cancellationToken: ct);
+                if (apiSpecWorkItem.Rev is not > 0 || releasePlanWorkItem?.Rev is not > 0)
+                {
+                    throw new InvalidOperationException("Cannot update the spec input without valid release plan and API Spec work item revisions.");
+                }
+                if (expectedTargetRevision != null && !string.Equals(expectedTargetRevision,
+                    ReleasePlanSpecHelper.GetTargetRevision(releasePlanWorkItem.Id, releasePlanWorkItem.Rev, apiSpecWorkItem.Id, apiSpecWorkItem.Rev), StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException("The release plan or API Spec changed since the target was previewed. Preview again and obtain fresh approval; no changes were saved.");
+                }
+                apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out var currentApiVersion);
+                if (!string.IsNullOrWhiteSpace(apiVersion) && !string.IsNullOrWhiteSpace(currentApiVersion?.ToString()) &&
+                    !string.Equals(apiVersion, currentApiVersion.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("Use a separate release plan for a different API version; an existing release target cannot be silently retargeted.");
+                }
+                apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out var currentSpecPullRequest);
+                var sameSpecPullRequest = string.Equals(currentSpecPullRequest?.ToString(), specPullRequest, StringComparison.OrdinalIgnoreCase);
+
+                // Parent and child cannot be patched atomically. Clear the pin first, publish it
+                // last, and leave it empty after a partial failure rather than restore a stale pin.
+                var clearPin = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+                {
+                    new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test, Path = "/rev", Value = releasePlanWorkItem.Rev.Value },
+                    new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/{ReleasePlanWorkItem.SpecCommitSHAField}", Value = string.Empty }
+                };
+                ct.ThrowIfCancellationRequested();
+                var clearedPlan = await workItemClient.UpdateWorkItemAsync(clearPin, releasePlanWorkItemId, cancellationToken: ct);
+                if (clearedPlan?.Rev is not > 0)
+                {
+                    throw new InvalidOperationException("Could not safely clear the prior spec pin. No new target was saved.");
+                }
 
                 // Get current REST API review links and append new spec pull request link
                 var currentLinks = apiSpecWorkItem.Fields.TryGetValue("Custom.RESTAPIReviews", out Object? value) ? value?.ToString() ?? string.Empty : string.Empty;
                 StringBuilder sb = new StringBuilder(currentLinks);
-                if (sb.Length > 0)
+                if (!sameSpecPullRequest)
                 {
-                    sb.Append("<br>");
+                    if (sb.Length > 0)
+                    {
+                        sb.Append("<br>");
+                    }
+                    sb.Append($"<a href=\"{specPullRequest}\">{specPullRequest}</a>");
                 }
-                sb.Append($"<a href=\"{specPullRequest}\">{specPullRequest}</a>");
 
                 // Create DevOps patch document
                 var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument()
                 {
+                    new JsonPatchOperation
+                    {
+                        Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test,
+                        Path = "/rev",
+                        Value = apiSpecWorkItem.Rev.Value
+                    },
                     new JsonPatchOperation
                     {
                         Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
@@ -1438,13 +1511,46 @@ namespace Azure.Sdk.Tools.Cli.Services
                         Value = sb.ToString()
                     }
                 };
-                await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(jsonLinkDocument, apiSpecWorkItemId, cancellationToken: ct);
+                if (!string.IsNullOrWhiteSpace(apiVersion))
+                {
+                    jsonLinkDocument.Add(new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = "/fields/Custom.APISpecversion", Value = apiVersion });
+                }
+                ct.ThrowIfCancellationRequested();
+                var updatedSpec = await workItemClient.UpdateWorkItemAsync(jsonLinkDocument, apiSpecWorkItemId, cancellationToken: ct);
+                if (updatedSpec?.Rev is not > 0)
+                {
+                    throw new InvalidOperationException("Could not verify the API Spec update. The release plan remains unpinned.");
+                }
 
                 // Linking a spec does not request or start SDK generation, so do not mark it Pending or In progress.
                 // Preserve recorded in-progress runs; the generation tool checks their live status before retrying.
-                var releasePlanWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlanWorkItemId, cancellationToken: ct);
-                var releasePlanUpdateDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
-                foreach (var lang in SUPPORTED_SDK_LANGUAGES)
+                var releasePlanUpdateDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+                {
+                    new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test, Path = "/rev", Value = clearedPlan.Rev.Value },
+                    new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/{ReleasePlanWorkItem.SpecCommitSHAField}", Value = specCommitSha }
+                };
+                foreach (var (field, fieldValue) in fields)
+                {
+                    releasePlanUpdateDocument.Add(new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/{field}", Value = fieldValue });
+                }
+                if (sdkInfos.Count > 0)
+                {
+                    var languages = new HashSet<string>(sdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
+                    releasePlanWorkItem.Fields.TryGetValue("Custom.SDKLanguages", out var currentLanguages);
+                    languages.UnionWith((currentLanguages?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries));
+                    releasePlanUpdateDocument.Add(new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = "/fields/Custom.SDKLanguages", Value = string.Join(",", languages) });
+                    foreach (var sdk in sdkInfos.Where(sdk => !string.IsNullOrWhiteSpace(sdk.PackageName)))
+                    {
+                        var langId = MapLanguageToId(sdk.Language);
+                        releasePlanUpdateDocument.Add(new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/Custom.{langId}PackageName", Value = sdk.PackageName });
+                        if (releasePlanWorkItem.Fields.TryGetValue($"Custom.ReleaseExclusionStatusFor{langId}", out var exclusion) &&
+                            string.Equals(exclusion?.ToString(), MISSING_EMITTER_CONFIG, StringComparison.OrdinalIgnoreCase))
+                        {
+                            releasePlanUpdateDocument.Add(new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/Custom.ReleaseExclusionStatusFor{langId}", Value = NOT_APPLICABLE });
+                        }
+                    }
+                }
+                foreach (var lang in sameSpecPullRequest ? [] : SUPPORTED_SDK_LANGUAGES)
                 {
                     releasePlanWorkItem.Fields.TryGetValue($"Custom.GenerationStatusFor{lang}", out var generationStatus);
                     releasePlanWorkItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out var pipelineUrl);
@@ -1463,12 +1569,14 @@ namespace Azure.Sdk.Tools.Cli.Services
                         }
                     );
                 }
-                if (releasePlanUpdateDocument.Count > 0)
-                {
-                    await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(releasePlanUpdateDocument, releasePlanWorkItemId, cancellationToken: ct);
-                }
+                ct.ThrowIfCancellationRequested();
+                await workItemClient.UpdateWorkItemAsync(releasePlanUpdateDocument, releasePlanWorkItemId, cancellationToken: ct);
 
                 return true;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

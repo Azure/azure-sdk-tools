@@ -84,10 +84,13 @@ public class GetReleasePlanHandler : IMockToolHandler
             ReleasePlanType = "GA",
             IsDataPlane = true,
             SpecType = "TypeSpec",
+            SpecCommitSHA = "0123456789abcdef0123456789abcdef01234567",
             SpecAPIVersion = ContosoApiVersion,
             ActiveSpecPullRequest = activeSpecPullRequestUrl,
             APISpecProjectPath = ContosoTypeSpecProjectPath,
             SDKReleaseType = "beta",
+            ApiSpecWorkItemId = 45000,
+            TargetRevision = "35000:1:45000:1",
             SDKInfo =
             [
                 new SDKInfo { Language = ".NET", PackageName = "Azure.Template.Contoso", SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-net/pull/45001" },

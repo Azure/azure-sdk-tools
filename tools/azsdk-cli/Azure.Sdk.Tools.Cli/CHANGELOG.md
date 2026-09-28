@@ -4,9 +4,15 @@
 
 ### Features Added
 
+- Release-plan create, update, and spec-link tools preview exact PR source targets before explicit confirmation. API versions and packages come from TypeSpec metadata compiled in a clean checkout; confirmed updates require the preview's parent/child revision token.
+
 ### Breaking Changes
 
+- Public target writes require `specCommitSha` and `confirmTarget=true`; updates also require `expectedTargetRevision`. Reusing create never changes a saved target, and different API versions or projects require separate plans. Private-preview links and tracking-only plans remain unpinned.
+
 ### Bugs Fixed
+
+- Store the spec SHA in the existing parent `Custom.SpecCommitSHA` field. Revision-guarded updates clear the pin before changing the child PR/version and publish it with metadata last; partial failures leave the plan unpinned instead of publishing mismatched inputs.
 
 ### Other Changes
 

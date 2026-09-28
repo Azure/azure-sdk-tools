@@ -50,7 +50,7 @@ public class ReleasePlanSdkGenerationEmail : EmailPayload
             {QueueStatusContent}
             <p>The generated SDK pull requests will appear on the
             <a href="{DashboardLink(_pendingPlan)}">release plan dashboard</a> once they are ready.
-            Please use the dashboard to monitor progress and review the pull requests when they become available.</p>
+            Please use the dashboard to monitor progress and view the pull requests when they become available.</p>
             <p>Best regards,<br>Azure SDK Team</p>
         </body>
         </html>

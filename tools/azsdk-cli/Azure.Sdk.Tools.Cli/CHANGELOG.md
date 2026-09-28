@@ -6,7 +6,11 @@
 
 ### Breaking Changes
 
+- Pipeline SDK generation now requires a stored full spec commit SHA and API version. Project, API version, SDK release type and spec PR inputs only check consistency with the saved target; generation no longer selects `main` or the latest spec PR. Existing plans must have their stored target explicitly configured before generation.
+
 ### Bugs Fixed
+
+- SDK generation passes the pinned commit through the pipeline's native source version and forwards the stored API version and SDK release type for both interactive and automated runs, preserving existing release behavior and SDK PR branch reuse.
 
 ### Other Changes
 

@@ -31,6 +31,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
                 result.AppendLine($"SDK Release Month: {ReleasePlanDetails.SDKReleaseMonth}");
                 result.AppendLine($"Release Plan Link: {ReleasePlanLink}");
                 result.AppendLine($"Is API spec approved: {ReleasePlanDetails.IsSpecApproved}");
+                result.AppendLine($"API version: {ReleasePlanDetails.SpecAPIVersion}");
+                result.AppendLine($"Spec commit SHA: {ReleasePlanDetails.SpecCommitSHA}");
             }
             else
             {

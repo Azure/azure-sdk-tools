@@ -4,7 +4,7 @@ description: |
   support (microsoft/vally#495, available since 0.7.0 and validated on 0.14.0). Each
   stimulus sends its `turns` sequentially to the SAME agent session, so later
   turns must build on context established by earlier turns (e.g. the release
-  plan work item ID created in turn 0 is reused in turn 1).
+  plan's saved target read in turn 0 is reused for generation and regeneration).
 
   These complement the single-turn routing scenarios in
   release-planner-workflows.eval.yaml. Where a turn's routing is unambiguous the
@@ -14,21 +14,21 @@ description: |
   session-wide (no `turn:`), so front-loading or spreading work across turns does
   not cause a false failure:
 
-    1. create-then-generate       — create a release plan, then generate SDKs
-                                     for the plan created in the previous turn.
+    1. read-generate-regenerate   — read an already pinned plan, then generate
+                                     and regenerate from the same saved target.
     2. generate-then-get-pr-link  — generate SDKs, then fetch the generated SDK
                                      pull request link.
-    3. link-spec-pr-then-regenerate — relink the spec PR, then regenerate SDKs.
-    4. vague-then-clarify-generate — a vague first turn must not jump to the
+    3. vague-then-clarify-generate — a vague first turn must not jump to the
                                      wrong tool; the clarifying turn routes to
                                      pipeline generation.
-    5. vague-then-local           — a vague first turn whose clarification reveals
+    4. vague-then-local           — a vague first turn whose clarification reveals
                                      a local clone must route to LOCAL generation.
-    6. local-then-switch-pipeline — a local request, then the user switches to
+    5. local-then-switch-pipeline — a local request, then the user switches to
                                      all-languages pipeline generation mid-session.
 
-  Bound to the mock MCP — graders only inspect skill routing and tool
-  selection, not real DevOps writes.
+  Bound to the mock MCP — graders inspect skill routing, tool selection and
+  the saved target reported by generation, not real DevOps writes. Target
+  configuration is a separate workflow; these fixtures are already pinned.
 
 version: "1.0"
 type: capability
@@ -46,10 +46,10 @@ defaults:
   executor: copilot-sdk
 
 stimuli:
-  # --- Scenario 1: Create a release plan, then generate SDKs for it ----
-  # Turn 1 creates the plan; turn 2 must reuse the work item ID from turn 1's
-  # result (session context) and route to the pipeline generation skill.
-  - name: create-then-generate-conversation
+  # --- Scenario 1: Read a saved target, generate, then regenerate -----
+  - name: read-generate-regenerate-stored-target
+    tags:
+      feature: stored-target-generation
     environment: &multiTurnEnv
       # Load all four candidate skills so the routing choice is genuinely
       # contested across turns. Paths are relative to this eval file
@@ -73,23 +73,21 @@ stimuli:
           dest: azure-sdk-for-python/sdk/contosowidgetmanager/README.md
     turns:
       - |
-        Create a public preview release plan for the Contoso Widget Manager.
-        Here is all the context you need:
-          - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
-          - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
-          - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-          - target release timeline: "June 2026"
-          - API version: "2022-11-01-preview"
-          - SDK release type: "beta"
-          - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+        Read the already configured Contoso Widget Manager release plan,
+        work item 35000. Show its saved spec commit, API version, SDK release
+        type and target languages. Do not change the plan or generate yet.
       - |
-        Now run SDK generation for all languages for the release plan you just
-        created.
+        Generate the .NET SDK for that plan using its stored target and the
+        pipeline. I do not have a local clone.
+      - |
+        The generation pipeline has finished. Regenerate the .NET SDK for the
+        same plan with its saved target again. Report which spec commit and
+        API version the run uses; do not relink or reconfigure the plan.
     constraints:
       max_turns: 16
       max_tokens: 22000
     graders:
-      # Turn 0 — create the release plan.
+      # Turn 0 only reads the existing target.
       - type: skill-invocation
         turn: 0
         config:
@@ -100,8 +98,9 @@ stimuli:
         config:
           required:
             - azsdk_get_release_plan
-            - azsdk_create_release_plan
-      # Turn 1 — generate for the plan created in turn 0 (session context).
+          disallowed:
+            - azsdk_run_generate_sdk
+      # Later turns consume the same saved target without configuration writes.
       - type: skill-invocation
         turn: 1
         config:
@@ -114,9 +113,22 @@ stimuli:
         config:
           required:
             - azsdk_run_generate_sdk
+      - type: tool-calls
+        turn: 2
+        config:
+          required:
+            - azsdk_run_generate_sdk
+      - type: tool-calls
+        config:
           disallowed:
             - azsdk_release_sdk
             - azsdk_create_release_plan
+            - azsdk_update_release_plan
+            - azsdk_update_api_spec_pull_request_in_release_plan
+            - azsdk_package_generate_code
+      - type: output-matches
+        config:
+          pattern: '0123456789abcdef0123456789abcdef01234567[\s\S]{0,500}2024-01-01|2024-01-01[\s\S]{0,500}0123456789abcdef0123456789abcdef01234567'
 
   # --- Scenario 2: Generate SDKs, then fetch the SDK pull request link -
   - name: generate-then-get-pr-link-conversation
@@ -155,46 +167,7 @@ stimuli:
           required:
             - azsdk_get_sdk_pull_request_link
 
-  # --- Scenario 3: Relink the spec PR, then regenerate SDKs -----------
-  - name: link-spec-pr-then-regenerate-conversation
-    environment: *multiTurnEnv
-    turns:
-      - |
-        Update the API spec pull request on the Contoso Widget Manager release
-        plan (work item 29262) to
-        https://github.com/Azure/azure-rest-api-specs/pull/38500.
-      - |
-        Now regenerate the SDKs for all languages for that release plan. It's a
-        beta release. My TypeSpec project is
-        specification/contosowidgetmanager/Contoso.WidgetManager.
-    constraints:
-      max_turns: 14
-      max_tokens: 20000
-    graders:
-      # Session-scoped: the conversation must update the spec PR on the plan and
-      # regenerate via the pipeline, never publishing, creating a new plan, or
-      # generating locally. Turn-pinning is avoided because the agent
-      # may call `azsdk_get_release_plan` during either the update or the
-      # regenerate step.
-      - type: skill-invocation
-        config:
-          required:
-            - azsdk-common-prepare-release-plan
-            - azsdk-common-generate-sdk-pipeline
-          disallowed:
-            - azsdk-common-generate-sdk-locally
-      - type: tool-calls
-        config:
-          required:
-            - azsdk_get_release_plan
-            - azsdk_update_api_spec_pull_request_in_release_plan
-            - azsdk_run_generate_sdk
-          disallowed:
-            - azsdk_release_sdk
-            - azsdk_create_release_plan
-            - azsdk_package_generate_code
-
-  # --- Scenario 4: Vague first turn, then clarify with the release plan
+  # --- Scenario 3: Vague first turn, then clarify with the release plan
   # A vague opening must not jump to azsdk_release_sdk; the clarifying turn
   # carries the release plan and must route to pipeline generation.
   - name: vague-then-clarify-generate-conversation
@@ -229,8 +202,8 @@ stimuli:
             - azsdk_release_sdk
             - azsdk_package_generate_code
 
-  # --- Scenario 5: vague opening, then reveals LOCAL intent (#16226) ---
-  # Counterpart to scenario 4 (which clarifies toward the pipeline): here the
+  # --- Scenario 4: vague opening, then reveals LOCAL intent (#16226) ---
+  # Counterpart to scenario 3 (which clarifies toward the pipeline): here the
   # clarifying turn reveals a local clone + one language and must route to the
   # local skill, not the pipeline. Turn 0 stays vague, so it only asserts the
   # agent does not jump to a wrong tool.
@@ -265,7 +238,7 @@ stimuli:
             - azsdk_run_generate_sdk
             - azsdk_release_sdk
 
-  # --- Scenario 6: local first, then the user switches to pipeline (#16226)
+  # --- Scenario 5: local first, then the user switches to pipeline (#16226)
   # A self-contained local request, then the user changes their mind mid-session
   # and asks for all languages via the pipeline. The session must switch skills.
   - name: local-then-switch-pipeline-conversation
@@ -322,6 +295,7 @@ stimuli:
 
 scoring:
   weights:
-    skill-invocation: 0.5
-    tool-calls: 0.5
+    skill-invocation: 0.35
+    tool-calls: 0.35
+    output-matches: 0.3
   threshold: 0.8

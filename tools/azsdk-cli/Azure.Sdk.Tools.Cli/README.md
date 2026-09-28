@@ -94,6 +94,14 @@ In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
 
+## Manual release-plan ID
+
+`azsdk package release` accepts optional `--release-plan-id`; `azsdk_release_sdk` accepts `releasePlanId`. The requester supplies the release-plan ID directly. Positive values are forwarded unchanged as the pipeline's `ReleasePlanId` template parameter. Omitted/zero values add no plan parameter; negative values are rejected before any service call. Existing readiness checks, approval flow, and Java package selection remain unchanged. `--check-ready` never queues a pipeline.
+
+This input does not look up a plan by package name, request an API version, update ADO status, or create another tracking system. Automatic release correlation uses the triggering SDK PR and existing ADO release-plan links in the separate status-update work.
+
+**Rollout:** the receiving pipeline must declare `ReleasePlanId` before callers supply it. Pilot one template package, then add the input to the remaining CI YAML entry points and release templates, including management-specific files. Coordinate PR trigger controls before broad YAML changes. This CLI-only change does not modify or validate those templates and must not be treated as completion of the pipeline rollout. See [the rollout issue](https://github.com/Azure/azure-sdk-tools/issues/17130).
+
 ## Retained customization repair attempts
 
 `azsdk tsp client customized-update` / `azsdk_customized_code_update` accepts `--max-attempts` / `maxAttempts` (1..10, default 1). Multiple attempts currently require `CustomCode`; `All` and `SpecInputs` retain their single-pass behavior.

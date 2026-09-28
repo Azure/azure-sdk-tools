@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added optional `--release-plan-id` / `releasePlanId` to SDK package release. A supplied positive ID is forwarded as the `ReleasePlanId` release-pipeline parameter; omitted/zero IDs preserve the existing queue payload.
+
 ### Breaking Changes
 
 ### Bugs Fixed

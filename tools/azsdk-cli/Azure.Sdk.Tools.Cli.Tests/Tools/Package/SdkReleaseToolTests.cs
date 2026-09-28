@@ -1,3 +1,4 @@
+using System.CommandLine;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
@@ -49,6 +50,102 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 Assert.That(result.ReleasePipelineRunUrl, Is.EqualTo("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1"));
             });
 
+        }
+
+        [Test]
+        public async Task ReleasePlanId_CliForwardsProvidedId()
+        {
+            var command = sdkReleaseTool.GetCommandInstances().First();
+            var parsed = command.Parse("--package-name azure-template --language Python --branch release/test --release-plan-id 35307");
+            Assert.That(parsed.Errors, Is.Empty);
+
+            var response = (SdkReleaseResponse)await sdkReleaseTool.HandleCommand(parsed, CancellationToken.None);
+
+            Assert.That(response.ReleasePipelineStatus, Is.Not.EqualTo("Failed"));
+            Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Not.Null);
+            Assert.That(devOpsService.LastRunPipelineTemplateParams!["ReleasePlanId"], Is.EqualTo("35307"));
+        }
+
+        [TestCase(".NET")]
+        [TestCase("Java")]
+        [TestCase("JavaScript")]
+        [TestCase("Python")]
+        [TestCase("Go")]
+        public async Task ReleasePlanId_AllLanguagesForwardOnlyTheSuppliedId(string language)
+        {
+            var result = await sdkReleaseTool.ReleasePackageAsync("azure-template", language, releasePlanId: 35307);
+
+            Assert.That(result.ReleasePipelineStatus, Is.Not.EqualTo("Failed"));
+            var parameters = devOpsService.LastRunPipelineTemplateParams!;
+            Assert.That(parameters["ReleasePlanId"], Is.EqualTo("35307"));
+            Assert.That(parameters.Keys, Is.EquivalentTo(language == "Java"
+                ? new[] { "ReleasePlanId", "release_azuretemplate" }
+                : new[] { "ReleasePlanId" }));
+            if (language == "Java")
+            {
+                Assert.That(parameters["release_azuretemplate"], Is.EqualTo("true"));
+            }
+        }
+
+        [TestCase(".NET")]
+        [TestCase("Java")]
+        [TestCase("JavaScript")]
+        [TestCase("Python")]
+        [TestCase("Go")]
+        public async Task ReleasePlanId_ZeroPreservesExistingQueuePayload(string language)
+        {
+            await sdkReleaseTool.ReleasePackageAsync("azure-template", language, releasePlanId: 0);
+
+            var parameters = devOpsService.LastRunPipelineTemplateParams!;
+            Assert.That(parameters, Does.Not.ContainKey("ReleasePlanId"));
+            Assert.That(parameters.Count, Is.EqualTo(language == "Java" ? 1 : 0));
+        }
+
+        [TestCase(-1)]
+        [TestCase(int.MinValue)]
+        public async Task ReleasePlanId_NegativeRejectsBeforeAnyServiceCalls(int releasePlanId)
+        {
+            var strictDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
+            var strictEnvironment = new Mock<IEnvironmentHelper>(MockBehavior.Strict);
+            var tool = new SdkReleaseTool(strictDevOps.Object, mockApiViewService.Object, logger, new InputSanitizer(), strictEnvironment.Object);
+
+            var result = await tool.ReleasePackageAsync("azure-template", "Python", releasePlanId: releasePlanId);
+
+            Assert.That(result.ResponseError, Does.Contain("positive integer"));
+            Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Failed"));
+            strictDevOps.VerifyNoOtherCalls();
+            strictEnvironment.VerifyNoOtherCalls();
+            mockApiViewService.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task ReleasePlanId_CheckReadyNeverQueuesRelease()
+        {
+            var result = await sdkReleaseTool.ReleasePackageAsync("azure-template", "Python", checkReady: true, releasePlanId: 35307);
+
+            Assert.That(result.ReleaseStatusDetails, Does.Contain("ready for release"));
+            Assert.That(result.PipelineBuildId, Is.Zero);
+            Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Null);
+        }
+
+        [Test]
+        public async Task ReleasePlanId_DoesNotBypassReadinessFailure()
+        {
+            devOpsService.ConfiguredPlannedReleases = [];
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("azure-template", "Python", releasePlanId: 35307);
+
+            Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Failed"));
+            Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Null);
+        }
+
+        [TestCase("not-an-id")]
+        [TestCase("2147483648")]
+        public void ReleasePlanId_CliRejectsMalformedValue(string value)
+        {
+            var parsed = sdkReleaseTool.GetCommandInstances().First().Parse($"--package-name azure-template --language Python --release-plan-id {value}");
+            Assert.That(parsed.Errors, Is.Not.Empty);
+            Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Null);
         }
 
         [Test]

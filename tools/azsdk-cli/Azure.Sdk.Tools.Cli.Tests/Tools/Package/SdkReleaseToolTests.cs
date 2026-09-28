@@ -172,6 +172,38 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         }
 
         [Test]
+        public async Task TestCheckReadyWithMissingApiHashAndCurrentApproval_PassesWithWarning()
+        {
+            ConfigureMissingApiHashApproval();
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("is ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("WARNING: API Review Hub has a valid approval for the current package version"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("release pipeline gate must verify that the release artifact matches the approved API hash"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("not ready for release"));
+            });
+        }
+
+        [Test]
+        public async Task TestCheckReadyWithMissingApiHashAndCurrentApproval_PreservesEarlierFailure()
+        {
+            devOpsService.ConfiguredPlannedReleases = [];
+            ConfigureMissingApiHashApproval();
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("No planned release date found"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("not ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("WARNING: API Review Hub has a valid approval for the current package version"));
+            });
+        }
+
+        [Test]
         public async Task TestCheckReadyTreatsPythonPep440PrereleaseAsPreview()
         {
             var packageName = "azure-template";
@@ -331,6 +363,39 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                     IsApproved = isApproved,
                     FinalSource = "ApiReviewHub",
                     Reason = isApproved ? "approved" : "notApproved"
+                });
+        }
+
+        private void ConfigureMissingApiHashApproval()
+        {
+            mockPackageReleaseStatusService
+                .Setup(x => x.GetApprovalStatusAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    "",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageReleaseStatusResult
+                {
+                    IsApproved = false,
+                    FinalSource = "ApiReviewHub",
+                    Reason = "missingApiHash",
+                    ReviewHub = new ApiReviewHubReleaseGateResult
+                    {
+                        IsApproved = false,
+                        Reason = "missingApiHash",
+                        Approvals =
+                        [
+                            new ApiReviewHubApprovalRecord
+                            {
+                                ApiHash = "approved-hash",
+                                Version = devOpsService.ConfiguredPackageVersion,
+                                Status = "approved"
+                            }
+                        ]
+                    }
                 });
         }
     }

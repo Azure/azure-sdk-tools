@@ -67,7 +67,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Images/quokka.ansi" />
-    <EmbeddedResource Include="Helpers/Scripts/inspect-spec-versions.mjs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -458,7 +458,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(spec);
 
             Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(
-                100, CreateSpecUpdateTarget(SpecPullRequest, SpecCommit, SpecApiVersion), PreviousSpecCommit, [], [], CancellationToken.None), Is.True);
+                100, CreateSpecUpdateTarget(SpecPullRequest, SpecCommit, SpecApiVersion), [], [], CancellationToken.None), Is.True);
 
             Assert.That(_connection.CapturedPatches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
             foreach (var patch in _connection.CapturedPatches.Where(p => p.WorkItemId == 100))
@@ -468,26 +468,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             }
             Assert.That(_connection.CapturedPatches[1].Document.Single(p => p.Path == "/fields/Custom.RESTAPIReviews").Value, Is.EqualTo(existingLinks));
             Assert.That(_connection.GetStoredWorkItem(100).Fields, Is.EquivalentTo(expectedParentFields));
-            Assert.That(_connection.GetStoredWorkItem(200).Fields, Is.EquivalentTo(spec.Fields));
-        }
-
-        [TestCase("")]
-        [TestCase(SpecCommit)]
-        [TestCase("not-a-commit")]
-        public void UpdateSpecPullRequestAsync_RejectsStaleExpectedParentPinBeforeAnyWrite(string expectedPin)
-        {
-            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
-            plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = PreviousSpecCommit;
-            var spec = CreateApiSpecWorkItem(200, SpecPullRequest, "Active");
-            _connection.AddWorkItem(plan);
-            _connection.AddWorkItem(spec);
-
-            var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), expectedPin, [], [], CancellationToken.None));
-
-            Assert.That(error!.Message, Does.Contain("spec commit changed"));
-            Assert.That(_connection.CapturedPatches, Is.Empty);
-            Assert.That(_connection.GetStoredWorkItem(100).Fields, Is.EquivalentTo(plan.Fields));
             Assert.That(_connection.GetStoredWorkItem(200).Fields, Is.EquivalentTo(spec.Fields));
         }
 
@@ -502,7 +482,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItem(200, SpecPullRequest, "Active"));
 
             var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, CreateSpecUpdateTarget(NewSpecPullRequest, commitSha, SpecApiVersion), PreviousSpecCommit, [], [], CancellationToken.None));
+                100, CreateSpecUpdateTarget(NewSpecPullRequest, commitSha, SpecApiVersion), [], [], CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("40-character hexadecimal commit SHA"));
             Assert.That(_connection.CapturedPatches, Is.Empty);
@@ -525,7 +505,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(
                 100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion, "100:4:200:7"),
-                PreviousSpecCommit.ToUpperInvariant(), [], [], CancellationToken.None), Is.True);
+                [], [], CancellationToken.None), Is.True);
 
             Assert.That(_connection.CapturedPatches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
             var clearPatch = _connection.CapturedPatches[0].Document;
@@ -574,7 +554,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.RevisionConflictOnUpdate = failedPhase;
 
             var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), PreviousSpecCommit, [], [], CancellationToken.None));
+                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), [], [], CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("Revision test failed"));
             Assert.That(_connection.CapturedPatches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }.Take(failedPhase + 1)),
@@ -605,7 +585,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(spec);
 
             var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), PreviousSpecCommit, [], [], CancellationToken.None));
+                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), [], [], CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("separate release plan for a different API version"));
             Assert.That(_connection.CapturedPatches, Is.Empty);
@@ -628,28 +608,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(spec);
 
             var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), PreviousSpecCommit, [], [], CancellationToken.None));
+                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), [], [], CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("valid release plan and API Spec work item revisions"));
             Assert.That(_connection.CapturedPatches, Is.Empty);
             Assert.That(_connection.GetStoredWorkItem(100).Fields, Is.EquivalentTo(plan.Fields));
         }
 
-        [TestCase(null)]
-        [TestCase("")]
-        public async Task UpdateSpecPullRequestAsync_ExplicitlyConfiguresAnUnpinnedTarget(string? previousPin)
+        [Test]
+        public async Task UpdateSpecPullRequestAsync_ExplicitlyConfiguresAnUnpinnedTarget()
         {
             var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             plan.Fields["Custom.GenerationStatusForJava"] = "Pending";
-            if (previousPin != null)
-            {
-                plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = previousPin;
-            }
             _connection.AddWorkItem(plan);
             _connection.AddWorkItem(CreateApiSpecWorkItem(200, SpecPullRequest, "Active"));
 
             Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(
-                100, CreateSpecUpdateTarget(SpecPullRequest, SpecCommit, SpecApiVersion), "", [], [], CancellationToken.None), Is.True);
+                100, CreateSpecUpdateTarget(SpecPullRequest, SpecCommit, SpecApiVersion), [], [], CancellationToken.None), Is.True);
 
             Assert.That(_connection.CapturedPatches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
             Assert.That(_connection.GetStoredWorkItem(100).Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(SpecCommit));
@@ -670,7 +645,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItemWithVersion(200, SpecPullRequest, "Active", SpecApiVersion));
 
             Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(
-                100, new ReleasePlanSpecTarget { SpecPullRequestUrl = privatePr }, previousPin, [], [], CancellationToken.None), Is.True);
+                100, new ReleasePlanSpecTarget { SpecPullRequestUrl = privatePr }, [], [], CancellationToken.None), Is.True);
 
             Assert.That(_connection.CapturedPatches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
             Assert.That(_connection.CapturedPatches[0].Document.Single(p => p.Path == $"/fields/{ReleasePlanWorkItem.SpecCommitSHAField}").Value, Is.EqualTo(string.Empty));
@@ -825,7 +800,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(apiSpec);
 
             var result = await _devOpsService.UpdateSpecPullRequestAsync(
-                100, new ReleasePlanSpecTarget { SpecPullRequestUrl = newSpec }, "", [], [], CancellationToken.None);
+                100, new ReleasePlanSpecTarget { SpecPullRequestUrl = newSpec }, [], [], CancellationToken.None);
 
             Assert.That(result, Is.True);
             Assert.That(_connection.CapturedPatches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
@@ -856,7 +831,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
 
             var result = await _devOpsService.UpdateSpecPullRequestAsync(
-                100, new ReleasePlanSpecTarget { SpecPullRequestUrl = NewSpecPullRequest }, "", [], [], CancellationToken.None);
+                100, new ReleasePlanSpecTarget { SpecPullRequestUrl = NewSpecPullRequest }, [], [], CancellationToken.None);
 
             Assert.That(result, Is.True);
             Assert.That(_connection.CapturedPatches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
@@ -881,7 +856,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
 
             var result = await _devOpsService.UpdateSpecPullRequestAsync(
-                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), "", [], [], CancellationToken.None);
+                100, CreateSpecUpdateTarget(NewSpecPullRequest, SpecCommit, SpecApiVersion), [], [], CancellationToken.None);
 
             Assert.That(result, Is.True);
             Assert.That(_connection.CapturedPatches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
@@ -910,7 +885,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             target.ExpectedTargetRevision = expectedRevision;
 
             var error = Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, target, SpecCommit, [], [], CancellationToken.None));
+                100, target, [], [], CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("ExpectedTargetRevision"));
             Assert.That(_connection.CapturedPatches, Is.Empty);
@@ -932,7 +907,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             }
 
             var error = Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, target, "", fields, sdkInfos, CancellationToken.None));
+                100, target, fields, sdkInfos, CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("ExpectedTargetRevision"));
             Assert.That(_connection.CapturedPatches, Is.Empty);
@@ -975,7 +950,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(spec);
 
             var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, target, SpecCommit, CreateConfirmedParentFields(target), CreateConfirmedSdkInfos(target), CancellationToken.None));
+                100, target, CreateConfirmedParentFields(target), CreateConfirmedSdkInfos(target), CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("changed since the target was previewed"));
             Assert.That(_connection.CapturedPatches, Is.Empty, "Detect drift before clearing even the existing pin.");
@@ -1010,7 +985,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             target.ExpectedTargetRevision = inspected.TargetRevision;
 
             var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, target, SpecCommit, [], [], CancellationToken.None));
+                100, target, [], [], CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("changed since the target was previewed"));
             Assert.That(_connection.CapturedPatches, Is.Empty);
@@ -1032,7 +1007,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(spec);
 
             Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(
-                100, target, previousPin, fields, sdkInfos, CancellationToken.None), Is.True);
+                100, target, fields, sdkInfos, CancellationToken.None), Is.True);
 
             Assert.That(_connection.CapturedPatches.Select(patch => patch.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
             AssertRevisionGuard(_connection.CapturedPatches[0].Document, 4);
@@ -1131,7 +1106,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.RevisionConflictOnUpdate = failedPhase;
 
             var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, target, previousPin, fields, CreateConfirmedSdkInfos(target), CancellationToken.None));
+                100, target, fields, CreateConfirmedSdkInfos(target), CancellationToken.None));
 
             Assert.That(error!.Message, Does.Contain("Revision test failed"));
             Assert.That(_connection.CapturedPatches.Select(patch => patch.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }.Take(failedPhase + 1)),
@@ -1198,9 +1173,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             };
 
             var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateSpecPullRequestAsync(
-                100, target, previousPin, CreateConfirmedParentFields(target), CreateConfirmedSdkInfos(target), CancellationToken.None));
+                100, target, CreateConfirmedParentFields(target), CreateConfirmedSdkInfos(target), CancellationToken.None));
 
-            Assert.That(error!.Message, Does.Contain("spec commit changed"));
+            Assert.That(error!.Message, Does.Contain("changed since the target was previewed"));
             Assert.That(_connection.CapturedPatches, Is.Empty);
             Assert.That(_connection.UpdatedWorkItems, Is.Empty);
             var expectedParent = new Dictionary<string, object>(plan.Fields)
@@ -1244,13 +1219,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 observedPlan = await _devOpsService.GetReleasePlanForWorkItemAsync(100, ct);
                 return observedPlan;
             });
-                devops.Setup(service => service.UpdateSpecPullRequestAsync(100, It.IsAny<ReleasePlanSpecTarget>(), SpecCommit,
+                devops.Setup(service => service.UpdateSpecPullRequestAsync(100, It.IsAny<ReleasePlanSpecTarget>(),
                     It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), ct))
-                .Returns((int id, ReleasePlanSpecTarget proposed, string expectedPin, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken token) =>
-                    _devOpsService.UpdateSpecPullRequestAsync(id, proposed, expectedPin, fields, sdkInfos, token));
+                .Returns((int id, ReleasePlanSpecTarget proposed, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken token) =>
+                    _devOpsService.UpdateSpecPullRequestAsync(id, proposed, fields, sdkInfos, token));
 
             var metadata = TypeSpecProject.ParseTypeSpecConfig(projectPath);
-            metadata.AvailableApiVersions = [ConfirmedApiVersion];
             metadata.Packages = target.Packages;
             var typeSpec = new Mock<ITypeSpecHelper>(MockBehavior.Strict);
             typeSpec.Setup(helper => helper.IsUrl(projectPath)).Returns(false);
@@ -1278,12 +1252,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var response = linkOnly
                 ? (ReleasePlanBaseResponse)await tool.UpdateSpecPullRequestInReleasePlan(SpecPullRequest, workItemId: 100,
                     typeSpecProjectPath: projectPath, apiVersion: ConfirmedApiVersion, specCommitSha: SpecCommit, confirmTarget: true,
-                    expectedSpecCommitSha: SpecCommit, expectedTargetRevision: "100:4:200:7", ct: ct)
+                    expectedTargetRevision: "100:4:200:7", ct: ct)
                 : await tool.UpdateReleasePlan(projectPath, SpecPullRequest, requestedType, workItemId: 100,
                     serviceTreeId: "11111111-1111-1111-1111-111111111111", apiVersion: ConfirmedApiVersion,
-                    specCommitSha: SpecCommit, confirmTarget: true, expectedSpecCommitSha: SpecCommit, expectedTargetRevision: "100:4:200:7", ct: ct);
+                    specCommitSha: SpecCommit, confirmTarget: true, expectedTargetRevision: "100:4:200:7", ct: ct);
 
-            Assert.That(response.ResponseError, Does.Contain(change == "pin" ? "spec commit changed" : "changed since the target was previewed"));
+            Assert.That(response.ResponseError, Does.Contain("changed since the target was previewed"));
             Assert.That(observedPlan, Is.Not.Null);
             Assert.That(observedPlan!.SpecCommitSHA, Is.EqualTo(SpecCommit), "The resolved plan must be a snapshot, not a reference to mutable storage.");
             Assert.That(_connection.CapturedPatches, Is.Empty, "Even an unchanged proposed SHA must be checked before SDK type or package metadata is written.");
@@ -1300,7 +1274,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             devops.Verify(service => service.UpdateSpecPullRequestAsync(100,
                 It.Is<ReleasePlanSpecTarget>(proposed => proposed.SpecCommitSHA == SpecCommit && proposed.ApiVersion == ConfirmedApiVersion &&
                     proposed.SpecPullRequestUrl == SpecPullRequest && proposed.TypeSpecProjectPath == ConfirmedProjectPath &&
-                    proposed.SDKReleaseType == requestedType && proposed.ExpectedPreviousSpecCommitSHA == SpecCommit && proposed.ExpectedTargetRevision == "100:4:200:7"), SpecCommit,
+                    proposed.SDKReleaseType == requestedType && proposed.ExpectedTargetRevision == "100:4:200:7"),
                 It.Is<Dictionary<string, string>>(fields => linkOnly ? fields.Count == 0 : fields.Count == 3 && fields["Custom.SDKtypetobereleased"] == requestedType &&
                     fields["Custom.ApiSpecProjectPath"] == ConfirmedProjectPath && fields["Custom.ServiceTreeID"] == "11111111-1111-1111-1111-111111111111"),
                 It.Is<List<SDKInfo>>(sdkInfos => linkOnly ? sdkInfos.Count == 0 : sdkInfos.Count == 4 && sdkInfos.Any(sdk => sdk.Language == "Python" && sdk.PackageName == "azure-mgmt-contoso") &&

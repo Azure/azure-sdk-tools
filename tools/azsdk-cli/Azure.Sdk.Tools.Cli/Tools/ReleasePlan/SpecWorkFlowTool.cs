@@ -52,11 +52,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = false,
         };
 
-        private readonly Option<string> expectedSpecCommitShaOpt = new("--spec-commit-sha")
-        {
-            Description = "Expected stored SpecCommitSHA, not a new pin. Reject a changed target; generation never configures or backfills one.",
-        };
-
         private readonly Option<string> sdkReleaseTypeOpt = new("--release-type")
         {
             Description = "SDK release type: beta or stable; must match the stored target. Forwarded in both interactive and automated runs.",
@@ -97,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [
             new McpCommand(generateSdkCommandName, "Generate SDK for a TypeSpec project", RunGenerateSdkToolName)
             {
-                typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt, expectedSpecCommitShaOpt,
+                typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt,
             },
             new McpCommand(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline", GetSdkPullRequestLinkToolName)
             {
@@ -117,7 +112,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                         commandParser.GetValue(pullRequestNumberOpt),
                                         commandParser.GetValue(workItemIdOpt),                                     
                                         commandParser.GetValue(apiVersionOpt),
-                                        commandParser.GetValue(expectedSpecCommitShaOpt) ?? "",
                                         ct),
                 getSdkPullRequestCommandName => await GetSDKPullRequestDetails(commandParser.GetValue(languageOpt), workItemId: commandParser.GetValue(workItemIdOpt), buildId: commandParser.GetValue(pipelineRunIdOpt), ct: ct),
                 _ => new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" },
@@ -185,11 +179,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = RunGenerateSdkToolName), Description("Run pipeline SDK generation for a release plan, including no-local-clone and all-language requests (one call per language). " +
-            "Read the plan first; pass its project path, SDK release type (beta or stable), language and plan/work item ID. Uses stored SpecAPIVersion and SpecCommitSHA without retargeting, backfilling or rerunning compiler validation; use the stored repository-relative path without a local clone. " +
-            "Optional apiVersion and specCommitSha guard the stored target, not override it. Missing targets require preview and confirmation through release-plan update tools. API version and SDK release type are forwarded for interactive and automated runs. " +
-            "Uses the confirmed PR HEAD or merge SHA and preserves the existing pipeline release behavior. Private Preview is spec-only. " +
+            "Read the plan; pass its repository-relative project path, SDK release type (beta or stable), language and plan/work item ID. Uses stored SpecAPIVersion and SpecCommitSHA without selecting a new target or recompiling locally. " +
+            "Caller inputs cannot override the target. Missing targets require preview and confirmation through release-plan update tools. Existing pipeline release behavior is unchanged; Private Preview is spec-only. " +
             "Do not use azsdk_release_sdk (package publishing) or azsdk_get_sdk_pull_request_link (link retrieval) to generate SDKs.")]
-        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", string specCommitSha = "", CancellationToken ct = default)
+        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
         {
             try
             {
@@ -279,11 +272,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     !string.Equals(sdkReleaseType, releasePlan.SDKReleaseType, StringComparison.OrdinalIgnoreCase))
                 {
                     response.ResponseErrors.Add("SDK release type does not match the release plan's confirmed target.");
-                    response.Status = "Failed";
-                }
-                if (!string.IsNullOrEmpty(specCommitSha) && !string.Equals(specCommitSha, releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
-                {
-                    response.ResponseErrors.Add("The release plan's spec commit changed. Retrieve and review the current target before generating.");
                     response.Status = "Failed";
                 }
 
@@ -437,7 +425,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                specCommitSha = releasePlan.SpecCommitSHA;
+                var specCommitSha = releasePlan.SpecCommitSHA;
                 if (!ReleasePlanSpecHelper.IsValidCommitSha(specCommitSha) || string.IsNullOrWhiteSpace(releasePlan.SpecAPIVersion))
                 {
                     response.Status = "Failed";

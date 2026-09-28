@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     {
         private const int ScheduleRiskWarningWindowDays = 7;
         private const string TargetReleaseMonthDescription = "SDK release target month in 'Month YYYY' format (full English month name and four-digit year). Must be the current month or later (UTC).";
-        private const string TargetApiVersionDescription = "Optional selection from compiler-declared API versions at the selected SHA. Derived from unambiguous metadata when omitted; undeclared versions are rejected, never written to the plan.";
+        private const string TargetApiVersionDescription = "Optional API version reported by the selected snapshot's metadata. Omit when metadata reports one version; choose from the preview when it reports multiple versions.";
         private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -239,11 +239,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         };
         private readonly Option<bool> confirmTargetOpt = new("--confirm-target")
         {
-            Description = "Save the approved public SDK target with explicit --spec-commit-sha. Defaults to preview; updates require the preview's --expected-target-revision. API version is derived from metadata unless explicitly selected from declared versions.",
-        };
-        private readonly Option<string> expectedSpecCommitShaOpt = new("--expected-spec-commit-sha")
-        {
-            Description = "Preview's ExpectedPreviousSpecCommitSHA: observed stored SHA or 'none' if unpinned. Preserve it on confirmation to reject concurrent pin changes; this is not the proposed new SHA.",
+            Description = "Save the approved target with --spec-commit-sha; updates also require the preview's --expected-target-revision. Defaults to preview.",
         };
 
         private readonly Option<string> expectedTargetRevisionOpt = new("--expected-target-revision")
@@ -338,7 +334,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
-            new McpCommand(updateApiSpecPullRequestCommandName, "Preview or confirm a release plan's spec target", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, optionalTypeSpecProjectPathOpt, targetApiVersionOpt, specCommitShaOpt, confirmTargetOpt, expectedSpecCommitShaOpt, expectedTargetRevisionOpt, },
+            new McpCommand(updateApiSpecPullRequestCommandName, "Preview or confirm a release plan's spec target", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, optionalTypeSpecProjectPathOpt, targetApiVersionOpt, specCommitShaOpt, confirmTargetOpt, expectedTargetRevisionOpt, },
             new McpCommand(getServiceDetailsCommandName, "Get service and product details (service tree ID, service ID, package display name) in service tree for TypeSpec project", GetServiceDetailsToolName) { typeSpecProjectOpt, },
             new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan", AbandonReleasePlanToolName) { workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(getKpiAttestationStatusCommandName, "Get KPI attestation status for a product by product ID and release plan type", GetKPIAttestationStatusToolName) { kpiProductIdOpt, releasePlanTypeOpt, kpiTypeSpecProjectPathOpt, kpiIsTestReleasePlanOpt, },
@@ -351,7 +347,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 optionalServiceTreeIdOpt,
                 optionalProductTreeIdOpt,
                 productTypeOpt,
-                targetApiVersionOpt, specCommitShaOpt, confirmTargetOpt, expectedSpecCommitShaOpt, expectedTargetRevisionOpt,
+                targetApiVersionOpt, specCommitShaOpt, confirmTargetOpt, expectedTargetRevisionOpt,
             },
             new McpCommand(updateReleasePlanTargetCommandName, "Update the SDK release target month on an existing release plan", UpdateReleasePlanTargetToolName) { workItemIdOpt, targetReleaseOpt, },
         ];
@@ -410,7 +406,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt),
                         typeSpecProjectPath: commandParser.GetValue(optionalTypeSpecProjectPathOpt) ?? "", apiVersion: commandParser.GetValue(targetApiVersionOpt) ?? "",
                         specCommitSha: commandParser.GetValue(specCommitShaOpt) ?? "", confirmTarget: commandParser.GetValue(confirmTargetOpt),
-                        expectedSpecCommitSha: commandParser.GetValue(expectedSpecCommitShaOpt), expectedTargetRevision: commandParser.GetValue(expectedTargetRevisionOpt), ct: ct);
+                        expectedTargetRevision: commandParser.GetValue(expectedTargetRevisionOpt), ct: ct);
 
                 case getServiceDetailsCommandName:
                     return await GetProductByTypeSpecPath(commandParser.GetValue(typeSpecProjectOpt), ct);
@@ -432,7 +428,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         apiVersion: commandParser.GetValue(targetApiVersionOpt) ?? "",
                         specCommitSha: commandParser.GetValue(specCommitShaOpt) ?? "",
                         confirmTarget: commandParser.GetValue(confirmTargetOpt),
-                        expectedSpecCommitSha: commandParser.GetValue(expectedSpecCommitShaOpt),
                         expectedTargetRevision: commandParser.GetValue(expectedTargetRevisionOpt),
                         ct: ct
                     );
@@ -713,16 +708,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// Updates an existing release plan with new details. Finds the release plan by work item ID,
         /// or by TypeSpec project path/spec PR URL if work item ID is not provided.
         /// Public SDK targets are compiler-validated at the selected PR snapshot before preview or confirmation.
-        /// Echo proposedTarget.ExpectedTargetRevision and ExpectedPreviousSpecCommitSHA when confirming an update.
+        /// Echo proposedTarget.ExpectedTargetRevision when confirming an update.
         /// Metadata emission resolves package names; this operation does not generate SDKs.
         /// </summary>
         [McpServerTool(Name = UpdateReleasePlanToolName), Description("Update release-plan metadata, SDK release type (beta or stable), and optional service/product IDs. " +
-            "For public SDK targets, read the plan and preview from a clean local checkout at the selected PR HEAD or merge SHA with the compiler installed; preview writes no work items. " +
-            "After approval, repeat with specCommitSha and confirmTarget=true. API version is derived from unambiguous metadata; an optional apiVersion selection must be declared at that SHA. " +
-            "Confirmation requires expectedTargetRevision from the preview's ExpectedTargetRevision (or the inspected plan's TargetRevision) to reject parent or API Spec changes even at the same SHA. Also preserve expectedSpecCommitSha from ExpectedPreviousSpecCommitSHA (stored SHA or 'none'). " +
-            "Saves SpecCommitSHA on the parent Release Plan; a different project or API version needs a separate plan. Without an ID, resolves by spec PR or project path. " +
-            "Product details resolve from triage; supply productType (Offering, Feature, Sku) if unresolved. Metadata emission updates SDK package details, not generated SDK code.")]
-        public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", int workItemId = 0, string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, [Description(TargetApiVersionDescription)] string apiVersion = "", string specCommitSha = "", bool confirmTarget = false, string? expectedSpecCommitSha = null, string? expectedTargetRevision = null, CancellationToken ct = default)
+            "Public targets require a clean local checkout at the PR HEAD or merge SHA. Preview first; API version and packages come from snapshot metadata. " +
+            "After approval, repeat with specCommitSha, confirmTarget=true, and the preview's expectedTargetRevision; a changed revision requires fresh approval. " +
+            "A different project or API version needs a separate plan. Without an ID, resolves by spec PR or project path. " +
+            "Product details resolve from triage; supply productType (Offering, Feature, Sku) if unresolved. Does not generate SDK code.")]
+        public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", int workItemId = 0, string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, [Description(TargetApiVersionDescription)] string apiVersion = "", string specCommitSha = "", bool confirmTarget = false, string? expectedTargetRevision = null, CancellationToken ct = default)
         {
             try
             {
@@ -819,7 +813,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 logger.LogInformation("Found release plan work item {WorkItemId} to update", releasePlan.WorkItemId);
-                EnsureExpectedSpecCommit(releasePlan, expectedSpecCommitSha);
                 EnsureExpectedTargetRevision(releasePlan, expectedTargetRevision);
 
                 // Validate spec PR against release type if both are available
@@ -844,7 +837,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     proposedTarget = await ReleasePlanSpecHelper.ResolveTargetAsync(githubService, typeSpecHelper, npxHelper, logger,
                         typeSpecProjectPath, specPullRequestUrl, apiVersion, specCommitSha, sdkReleaseType, ct);
                     EnsureSameApiVersion(releasePlan, proposedTarget.ApiVersion);
-                    proposedTarget.ExpectedPreviousSpecCommitSHA = string.IsNullOrEmpty(releasePlan.SpecCommitSHA) ? "none" : releasePlan.SpecCommitSHA;
                     proposedTarget.ExpectedTargetRevision = releasePlan.TargetRevision;
                     if (ReleasePlanSpecHelper.NeedsConfirmation(proposedTarget.ApiVersion, specCommitSha, confirmTarget) || string.IsNullOrWhiteSpace(expectedTargetRevision))
                     {
@@ -916,7 +908,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var sdkInfos = proposedTarget.Packages
                         .Select(package => new SDKInfo { Language = package.Language.ToWorkItemString(), PackageName = package.PackageName ?? string.Empty })
                         .Where(sdk => supported.Contains(sdk.Language)).ToList();
-                    if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId, proposedTarget, releasePlan.SpecCommitSHA, fieldsToUpdate, sdkInfos, ct))
+                    if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId, proposedTarget, fieldsToUpdate, sdkInfos, ct))
                     {
                         return new ReleasePlanResponse { ResponseError = "Failed to save the confirmed release target." };
                     }
@@ -933,7 +925,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                      !string.Equals(releasePlan.SpecCommitSHA, specCommitSha, StringComparison.OrdinalIgnoreCase)))
                 {
                     if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId,
-                        new ReleasePlanSpecTarget { SpecPullRequestUrl = specPullRequestUrl }, releasePlan.SpecCommitSHA, [], [], ct))
+                        new ReleasePlanSpecTarget { SpecPullRequestUrl = specPullRequestUrl }, [], [], ct))
                     {
                         return new ReleasePlanResponse { ResponseError = "Failed to update the linked spec PR and commit SHA." };
                     }
@@ -1213,8 +1205,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = CreateReleasePlanToolName), Description("Create or reuse a release plan for a TypeSpec project and API release type (Private Preview, Public Preview, GA); optional service/product IDs resolve from existing plans. " +
-            "Public SDK targets require a clean local checkout at the selected PR HEAD or merge SHA with the compiler installed. Preview first (confirmTarget=false, no work-item writes), then confirm the approved specCommitSha with confirmTarget=true. API version is derived from unambiguous metadata; an optional apiVersion selection must be declared at that SHA. " +
-            "Stores SpecCommitSHA on the parent Release Plan; create never retargets an existing plan. Public Preview derives beta and GA derives stable. " +
+            "Public targets require a clean local checkout at the PR HEAD or merge SHA. Preview first; API version and packages come from snapshot metadata. Confirm the approved specCommitSha with confirmTarget=true. " +
+            "Create never changes an existing target. Public Preview derives beta and GA derives stable. " +
             "Without a PR, omit version/SHA inputs for tracking only; Private Preview remains spec-only.")]
         public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, [Description(TargetReleaseMonthDescription)] string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, [Description(TargetApiVersionDescription)] string apiVersion = "", string specCommitSha = "", bool confirmTarget = false, CancellationToken ct = default)
         {
@@ -2265,10 +2257,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = UpdateApiSpecPullRequestToolName), Description("Preview or confirm a release plan's linked spec PR and public SDK target using work item ID or release plan ID. " +
-            "Public targets require a clean local TypeSpec checkout at the selected PR HEAD or merge SHA with the compiler installed. Preview first without work-item writes; after approval, supply specCommitSha and confirmTarget=true. API version is derived from unambiguous metadata; an optional apiVersion selection must be declared at that SHA. " +
-            "Confirmation requires expectedTargetRevision from the preview's ExpectedTargetRevision (or the inspected plan's TargetRevision) to reject parent or API Spec changes even at the same SHA. Also preserve expectedSpecCommitSha from ExpectedPreviousSpecCommitSHA (stored SHA or 'none'). " +
-            "Stores SpecCommitSHA on the parent Release Plan; same-version follow-ups need an explicit update, and different API versions need separate plans. Private Preview updates only the spec link, not an SDK target.")]
-        public async Task<ReleaseWorkflowResponse> UpdateSpecPullRequestInReleasePlan(string specPullRequestUrl, int workItemId = 0, int releasePlanId = 0, string typeSpecProjectPath = "", [Description(TargetApiVersionDescription)] string apiVersion = "", string specCommitSha = "", bool confirmTarget = false, string? expectedSpecCommitSha = null, string? expectedTargetRevision = null, CancellationToken ct = default)
+            "Public targets require a clean local checkout at the PR HEAD or merge SHA. API version comes from snapshot metadata. " +
+            "After preview and approval, repeat with specCommitSha, confirmTarget=true, and the preview's expectedTargetRevision; a changed revision requires fresh approval. " +
+            "A different API version needs a separate plan. Private Preview updates only the spec link.")]
+        public async Task<ReleaseWorkflowResponse> UpdateSpecPullRequestInReleasePlan(string specPullRequestUrl, int workItemId = 0, int releasePlanId = 0, string typeSpecProjectPath = "", [Description(TargetApiVersionDescription)] string apiVersion = "", string specCommitSha = "", bool confirmTarget = false, string? expectedTargetRevision = null, CancellationToken ct = default)
         {
             try
             {
@@ -2300,7 +2292,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return new ReleaseWorkflowResponse { ResponseError = $"Release plan with work item ID {workItemId} not found." };
                 }
-                EnsureExpectedSpecCommit(releasePlan, expectedSpecCommitSha);
                 EnsureExpectedTargetRevision(releasePlan, expectedTargetRevision);
 
                 // Validate spec PR against release type
@@ -2315,7 +2306,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     proposedTarget = await ReleasePlanSpecHelper.ResolveTargetAsync(githubService, typeSpecHelper, npxHelper, logger,
                         typeSpecProjectPath, specPullRequestUrl, apiVersion, specCommitSha, releasePlan.SDKReleaseType, ct);
                     EnsureSameApiVersion(releasePlan, proposedTarget.ApiVersion);
-                    proposedTarget.ExpectedPreviousSpecCommitSHA = string.IsNullOrEmpty(releasePlan.SpecCommitSHA) ? "none" : releasePlan.SpecCommitSHA;
                     proposedTarget.ExpectedTargetRevision = releasePlan.TargetRevision;
                     if (!string.IsNullOrWhiteSpace(releasePlan.APISpecProjectPath) &&
                         !string.Equals(proposedTarget.TypeSpecProjectPath, releasePlan.APISpecProjectPath.TrimEnd('/'), StringComparison.Ordinal))
@@ -2338,7 +2328,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 var updated = await devOpsService.UpdateSpecPullRequestAsync(workItemId,
                     proposedTarget ?? new ReleasePlanSpecTarget { SpecPullRequestUrl = specPullRequestUrl },
-                    releasePlan.SpecCommitSHA, [], [], ct);
+                    [], [], ct);
 
                 if (!updated)
                 {
@@ -2356,11 +2346,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         $"Successfully updated spec pull request URL to {specPullRequestUrl} in release plan.",
                         releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
                             ? "Private-preview release plans do not require an SDK generation commit pin."
-                            : string.IsNullOrEmpty(specCommitSha)
-                            ? "The spec PR is not merged. The previous commit pin was cleared; SDK generation must wait for merge."
                             : $"Pinned spec commit SHA: {specCommitSha}."
                     ],
-                            ProposedSpecTarget = proposedTarget,
+                    ProposedSpecTarget = proposedTarget,
                     NextSteps = releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
                     ? ["Merge the linked spec PR to complete the private-preview release plan."]
                     :
@@ -2646,7 +2634,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             throw new InvalidOperationException($"Ambiguous API versions in TypeSpec metadata: {string.Join(", ", apiVersions)}. Specify and confirm the intended API version; no version was selected automatically.");
         }
 
-        private const string ConfirmationNextStep = "Show the proposed project, package names, API version, SDK release type, spec PR and commit link to the user. After approval, repeat with the exact specCommitSha and confirmTarget=true. API version is derived from unambiguous metadata; select only from availableApiVersions if missing or conflicting, never invent a version. For updates, preserve ExpectedTargetRevision as expectedTargetRevision and ExpectedPreviousSpecCommitSHA as expectedSpecCommitSha; a revision change requires a fresh preview and approval.";
+        private const string ConfirmationNextStep = "Show the proposed project, packages, API version, SDK release type, spec PR and commit link. If metadata is ambiguous, choose from availableApiVersions. After approval, repeat with specCommitSha and confirmTarget=true. For updates, copy ExpectedTargetRevision as expectedTargetRevision; a revision change requires a fresh preview and approval.";
 
         private static ReleasePlanResponse PreviewTarget(ReleasePlanSpecTarget target, ReleasePlanWorkItem? existingPlan = null) => new()
         {
@@ -2661,15 +2649,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 !string.Equals(plan.SpecAPIVersion, apiVersion, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException($"API version '{apiVersion}' does not match release plan version '{plan.SpecAPIVersion}'. Use a separate release plan for the new API version.");
-            }
-        }
-
-        private static void EnsureExpectedSpecCommit(ReleasePlanWorkItem plan, string? expectedSpecCommitSha)
-        {
-            if (expectedSpecCommitSha != null &&
-                !string.Equals(plan.SpecCommitSHA, expectedSpecCommitSha == "none" ? string.Empty : expectedSpecCommitSha, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException("The release plan's spec target changed since it was inspected. Retrieve the target and request confirmation again; no changes were saved.");
             }
         }
 

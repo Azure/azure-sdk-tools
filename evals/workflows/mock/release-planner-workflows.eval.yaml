@@ -77,7 +77,7 @@ stimuli:
       max_tokens: 16000
     rubric:
       - Before turn 2, the agent obtains and presents a no-write preview of the project, packages, metadata-derived API version 2022-11-01-preview, beta SDK type, PR 38387, and SHA 0123456789abcdef0123456789abcdef01234567; it does not confirm a mutation or generate SDKs before approval.
-      - Turn 2 confirms creation with the approved project, PR, SHA, release month, service/product IDs, apiReleaseType Public Preview, and confirmTarget=true and receives a successful non-preview response. API version may be omitted when metadata derives the approved version; any explicit selection must equal that declared version. Create receives neither expectedTargetRevision nor expectedSpecCommitSha.
+      - Turn 2 confirms creation with the approved project, PR, SHA, release month, service/product IDs, apiReleaseType Public Preview, and confirmTarget=true and receives a successful non-preview response. API version may be omitted when metadata derives the approved version; any explicit selection must equal that metadata-reported version. Create receives no expectedTargetRevision.
     graders:
       - type: skill-invocation
         config:
@@ -104,8 +104,9 @@ stimuli:
             the preview before approval and the confirmed response afterward;
             merely calling the tool again or narrating success does not pass.
             An omitted or empty apiVersion is valid because the fixed snapshot
-            metadata derives the approved version. An undeclared selection is
-            invalid. Create accepts neither update guard. Missing evidence fails.
+            metadata derives the approved version. A selection absent from that
+            metadata is invalid. Create takes no revision token. Missing
+            evidence fails.
 
   # --- End-to-end demo: preview, confirm, then generate ----------------
   # Public creation is no longer a one-call write. Keep this older demo in
@@ -150,8 +151,8 @@ stimuli:
       max_tokens: 24000
     rubric:
       - Turn 0 previews the public target without a confirmed mutation or SDK generation; turn 1 confirms only the approved project, PR 38387, SHA 0123456789abcdef0123456789abcdef01234567, beta SDK type derived from Public Preview, release month, and service/product IDs.
-      - Creation uses confirmTarget=true and succeeds without requires_confirmation or an error before generation. API version may be omitted because metadata derives 2022-11-01-preview; any explicit selection must match. Neither update-only guard is passed to create.
-      - Turn 2 generates for all four returned SDK languages using work item 35000 or accepted release plan alias 50001, never substituting 29262, publishing, or generating locally. Optional generation version/SHA guards must not override the stored target.
+      - Creation uses confirmTarget=true and succeeds without requires_confirmation or an error before generation. API version may be omitted because metadata derives 2022-11-01-preview; any explicit selection must match. No revision token is passed to create.
+      - Turn 2 generates for all four returned SDK languages using work item 35000 or accepted release plan alias 50001, never substituting 29262, publishing, or generating locally. The project path, SDK type, and any API version or spec PR selection must match the stored target.
     graders:
       # Turn 0 — preview only, never generate yet.
       - type: skill-invocation
@@ -205,8 +206,8 @@ stimuli:
             Require every rubric item in the tool-call trajectory. Target
             preview is not creation and a boolean without the approved SHA is
             not confirmation. Allow an omitted API version only when the
-            returned metadata resolves the approved version; create has no
-            prior-record guards. Require successful confirmation before SDK
+            returned metadata resolves the approved version; create takes no
+            revision token. Require successful confirmation before SDK
             generation and reuse the returned plan's IDs and languages.
             Turns mean the three original user prompts, not injected skill
             messages or individual assistant/tool iterations. Decode the JSON
@@ -277,7 +278,7 @@ stimuli:
       max_tokens: 14000
     rubric:
       - Turn 0 uses the intended work item 29262 and presents a no-write spec-link target preview including its package/source identity, derived API version 2024-01-01-preview, and SHA fedcba9876543210fedcba9876543210fedcba98. It retains ExpectedTargetRevision 29262:2:39262:3 from that tool result for confirmation; the opaque revision need not be printed in the narrative. It does not confirm a mutation.
-      - Turn 1 confirms the approved link with confirmTarget=true, the exact SHA, and expectedTargetRevision carried verbatim from the original preview, and receives a successful non-preview response. API version can be omitted when unambiguously derived; any explicit selection must equal the declared version. The optional expectedSpecCommitSha guard, if supplied, must be the original preview's previous pin.
+      - Turn 1 confirms the approved link with confirmTarget=true, the exact SHA, and expectedTargetRevision carried verbatim from the original preview, and receives a successful non-preview response. API version can be omitted when unambiguously derived; any explicit selection must equal the metadata-reported version.
       - No precondition is silently refreshed or invented at confirmation. Any parent or child revision change, even at the same SHA, requires a new preview and user approval; generation, publishing, and new-plan creation do not occur.
     graders:
       - type: skill-invocation
@@ -312,9 +313,7 @@ stimuli:
             Require every rubric item using the calls and results, not only
             the final response. The fixed fixture revision is 29262:2:39262:3;
             require it copied from the first preview at confirmation. Missing
-            or blank expectedTargetRevision cannot count as success. The
-            optional previous-pin guard is fedcba9876543210fedcba9876543210fedcba98,
-            equal to the proposed pin here; never invent a different SHA.
+            or blank expectedTargetRevision cannot count as success.
             An omitted or empty apiVersion is valid when metadata derives the
             approved version. Reject a silent precondition replacement, a
             confirmation before approval, or a preview/error reported as saved.
@@ -336,14 +335,13 @@ stimuli:
         API version 2022-11-01-preview, SDK release type beta, PR 38387, and SHA
         0123456789abcdef0123456789abcdef01234567. Confirm the update using the
         original preview's revision token. Continue deriving the API version
-        from metadata, and omit the optional previous-pin guard. Do not fetch a
-        replacement token or generate SDKs.
+        from metadata. Do not fetch a replacement token or generate SDKs.
     constraints:
       max_turns: 12
       max_tokens: 14000
     rubric:
       - Turn 0 obtains the existing plan through lookup or the update preview, and calls azsdk_update_release_plan for work item 35000 without an explicit API version or a confirmed mutation. It presents the target with packages, API version 2022-11-01-preview, beta SDK type, PR 38387, and SHA 0123456789abcdef0123456789abcdef01234567, and retains ExpectedTargetRevision 35000:2:45000:3 from the preview; the opaque revision need not be printed in the narrative.
-      - Only after approval in turn 1 does azsdk_update_release_plan receive confirmTarget=true, the approved SHA, project, PR and SDK type, and expectedTargetRevision copied verbatim from the original preview. The agent omits apiVersion and expectedSpecCommitSha as requested and receives a successful non-preview result whose API version is derived from metadata.
+      - Only after approval in turn 1 does azsdk_update_release_plan receive confirmTarget=true, the approved SHA, project, PR and SDK type, and expectedTargetRevision copied verbatim from the original preview. The agent omits apiVersion as requested and receives a successful non-preview result whose API version is derived from metadata.
       - Missing, blank, or mismatched revision tokens must not be reported as saved. Any parent or API Spec revision change needs a new preview and approval, even if the SHA is unchanged; the agent never silently replaces or invents a precondition and does not generate SDKs or create another plan.
     graders:
       - type: skill-invocation
@@ -379,8 +377,7 @@ stimuli:
             not a replacement from a fresh read or a synthesized precondition.
             Readback to verify the saved target is allowed.
             Omitted or empty apiVersion uses the fixture's unambiguous metadata;
-            require the returned version to match the approval. The previous-pin
-            guard is optional and omitted here, not replaced by the new SHA.
+            require the returned version to match the approval.
             A second preview, rejection, or narrative-only success is not a
             saved update. Turns refer to the two original user prompts, not
             injected skill messages or assistant/tool iterations. Decode the

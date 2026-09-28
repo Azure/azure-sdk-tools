@@ -31,7 +31,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public string? LastGenerationSdkReleaseType { get; private set; }
         public (int WorkItemId, string PullRequest, string CommitSha)? LastSpecUpdate { get; private set; }
         public string? LastSpecUpdateApiVersion { get; private set; }
-        public string? LastSpecUpdateExpectedCommitSha { get; private set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
         public string ConfiguredPackageVersion { get; set; } = "1.0.0";
         public SdkType ConfiguredPackageType { get; set; } = SdkType.Unknown;
@@ -272,11 +271,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
+        Task<bool> IDevOpsService.UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
         {
             LastSpecUpdate = (releasePlanWorkItemId, target.SpecPullRequestUrl, target.SpecCommitSHA);
             LastSpecUpdateApiVersion = target.ApiVersion;
-            LastSpecUpdateExpectedCommitSha = expectedSpecCommitSha;
             return Task.FromResult(true);
         }
 

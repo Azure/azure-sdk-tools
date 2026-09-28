@@ -43,11 +43,6 @@ public class RunGenerateSdkHandler : IMockToolHandler
         {
             return Failure("API version does not match the release plan's confirmed target.");
         }
-        var sha = ReleasePlanMockResponses.Argument(arguments, "specCommitSha");
-        if (!string.IsNullOrEmpty(sha) && !string.Equals(sha, plan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
-        {
-            return Failure("The release plan's spec commit changed. Retrieve and review the current target before generating.");
-        }
         var prNumber = ReleasePlanMockResponses.Argument(arguments, "pullRequestNumber");
         if (!string.IsNullOrWhiteSpace(prNumber) && prNumber != "0" && prNumber != new Uri(plan.ActiveSpecPullRequest).Segments.Last())
         {

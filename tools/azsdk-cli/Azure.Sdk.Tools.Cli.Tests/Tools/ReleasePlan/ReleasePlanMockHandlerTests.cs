@@ -158,20 +158,6 @@ internal class ReleasePlanMockHandlerTests
         Assert.That(response.OperationStatus, Is.EqualTo(Status.Failed));
     }
 
-    [TestCase("update", OtherCommitSha)]
-    [TestCase("link", OtherCommitSha)]
-    [TestCase("update", "none")]
-    [TestCase("link", "none")]
-    public void PublicUpdate_RejectsStaleExpectedPin(string operation, string expectedPin)
-    {
-        var arguments = TargetArguments(operation);
-        arguments["expectedSpecCommitSha"] = expectedPin;
-
-        var response = HandleTarget(operation, arguments);
-
-        Assert.That(response.ResponseError, Does.Contain("changed since it was inspected"));
-    }
-
     [TestCase("update")]
     [TestCase("link")]
     public void PublicUpdate_MissingExpectedRevisionReturnsPreviewEvenWithShaAndConfirmation(string operation)
@@ -234,11 +220,10 @@ internal class ReleasePlanMockHandlerTests
 
     [TestCase("update")]
     [TestCase("link")]
-    public void PublicUpdate_ConfirmsWithCarriedPreviewRevisionWithoutOptionalPreviousPin(string operation)
+    public void PublicUpdate_ConfirmsWithCarriedPreviewRevision(string operation)
     {
         var arguments = TargetArguments(operation);
         arguments.Remove("expectedTargetRevision");
-        arguments.Remove("expectedSpecCommitSha");
         arguments.Remove("apiVersion");
         var preview = HandleTarget(operation, arguments);
         AssertPreview(preview, operation);
@@ -270,7 +255,6 @@ internal class ReleasePlanMockHandlerTests
         arguments["specPullRequestUrl"] = plan.ActiveSpecPullRequest;
         arguments["specCommitSha"] = plan.SpecCommitSHA;
         arguments["expectedTargetRevision"] = plan.TargetRevision;
-        arguments.Remove("expectedSpecCommitSha");
         arguments.Remove("apiVersion");
         if (operation == "update")
         {
@@ -317,7 +301,6 @@ internal class ReleasePlanMockHandlerTests
         arguments["specPullRequestUrl"] = "https://github.com/Azure/azure-rest-api-specs-pr/pull/12345";
         arguments.Remove("apiVersion");
         arguments.Remove("specCommitSha");
-        arguments.Remove("expectedSpecCommitSha");
         arguments.Remove("expectedTargetRevision");
         arguments.Remove("confirmTarget");
 
@@ -365,17 +348,15 @@ internal class ReleasePlanMockHandlerTests
 
     [TestCase("update")]
     [TestCase("link")]
-    public void TrackingUpdate_PreviewsPreviousPinAsNoneAndAcceptsExplicitConfirmation(string operation)
+    public void TrackingUpdate_PreviewsAndAcceptsExplicitConfirmation(string operation)
     {
         var arguments = TargetArguments(operation);
         arguments["workItemId"] = 35003;
-        arguments["expectedSpecCommitSha"] = "none";
         arguments.Remove("expectedTargetRevision");
         arguments["confirmTarget"] = false;
 
         var preview = HandleTarget(operation, arguments);
         Assert.That(preview.RequiresConfirmation, Is.True);
-        Assert.That(preview.ProposedSpecTarget?.ExpectedPreviousSpecCommitSHA, Is.EqualTo("none"));
         Assert.That(preview.ProposedSpecTarget?.ExpectedTargetRevision, Is.EqualTo("35003:2:45003:3"));
         if (preview is ReleasePlanResponse planResponse)
         {
@@ -433,7 +414,6 @@ internal class ReleasePlanMockHandlerTests
 
         Assert.That(response.ResponseError, Is.Null);
         Assert.That(response.ProposedSpecTarget?.SDKReleaseType, Is.EqualTo("stable"));
-        Assert.That(response.ProposedSpecTarget?.IsSpecMerged, Is.True);
         Assert.That(response.ReleasePlanDetails?.SpecCommitSHA, Is.EqualTo(OtherCommitSha));
         arguments["specPullRequestUrl"] = SpecPullRequestUrl;
         arguments["apiVersion"] = ApiVersion;
@@ -506,7 +486,6 @@ internal class ReleasePlanMockHandlerTests
     [TestCase("workItemId", "99999")]
     [TestCase("workItemId", "35003")]
     [TestCase("apiVersion", "2024-01-01-preview")]
-    [TestCase("specCommitSha", OtherCommitSha)]
     [TestCase("sdkReleaseType", "stable")]
     [TestCase("typespecProjectRoot", "specification/another/Project")]
     [TestCase("pullRequestNumber", "38500")]
@@ -590,7 +569,6 @@ internal class ReleasePlanMockHandlerTests
         else
         {
             arguments["workItemId"] = 35000;
-            arguments["expectedSpecCommitSha"] = SpecCommitSha;
             arguments["expectedTargetRevision"] = TargetRevision;
         }
         if (operation == "update")
@@ -620,13 +598,11 @@ internal class ReleasePlanMockHandlerTests
             Assert.That(response.ProposedSpecTarget?.TypeSpecProjectPath, Is.EqualTo(ProjectPath));
             Assert.That(response.ProposedSpecTarget?.SpecPullRequestUrl, Is.EqualTo(SpecPullRequestUrl));
             Assert.That(response.ProposedSpecTarget?.CommitUrl, Is.EqualTo($"https://github.com/Azure/azure-rest-api-specs/commit/{SpecCommitSha}"));
-            Assert.That(response.ProposedSpecTarget?.IsSpecMerged, Is.False);
             Assert.That(response.ProposedSpecTarget?.AvailableApiVersions, Is.EquivalentTo(new[] { ApiVersion }));
             Assert.That(response.ProposedSpecTarget?.Packages.Select(package => package.PackageName), Is.EqualTo(new[]
             {
                 "Azure.Template.Contoso", "azure-contoso-widgetmanager", "@azure/contoso-widgetmanager", "azure-contoso-widgetmanager"
             }));
-            Assert.That(response.ProposedSpecTarget?.ExpectedPreviousSpecCommitSHA, Is.EqualTo(operation == "create" ? null : SpecCommitSha));
             Assert.That(response.ProposedSpecTarget?.ExpectedTargetRevision, Is.EqualTo(operation == "create" ? null : TargetRevision));
             Assert.That(response.ProposedSpecTarget?.ToString(), Does.Contain($"Expected target revision: {(operation == "create" ? "not applicable (new plan)" : TargetRevision)}"));
             Assert.That(response.NextSteps, Has.Some.Contains("confirmTarget=true"));

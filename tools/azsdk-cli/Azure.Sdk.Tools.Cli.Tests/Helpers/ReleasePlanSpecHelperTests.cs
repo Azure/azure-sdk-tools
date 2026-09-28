@@ -38,7 +38,7 @@ internal class ReleasePlanSpecHelperTests
         using var cancellation = new CancellationTokenSource();
         var ct = cancellation.Token;
         var projectPath = CopyTypeSpecFixture(directory.DirectoryPath);
-        var metadata = CreateMetadata(projectPath, PreviewApiVersion, [PreviewApiVersion, StableApiVersion]);
+        var metadata = CreateMetadata(projectPath, PreviewApiVersion);
         var git = new Mock<IGitHelper>(MockBehavior.Strict);
         var process = new Mock<IProcessHelper>(MockBehavior.Strict);
         var npx = new Mock<INpxHelper>(MockBehavior.Strict);
@@ -121,7 +121,6 @@ internal class ReleasePlanSpecHelperTests
             Assert.That(preview.ReleasePlanDetails, Is.Null);
             Assert.That(preview.ProposedSpecTarget?.SpecCommitSHA, Is.EqualTo(PinnedCommit));
             Assert.That(preview.ProposedSpecTarget?.ApiVersion, Is.EqualTo(PreviewApiVersion));
-            Assert.That(preview.ProposedSpecTarget?.IsSpecMerged, Is.EqualTo(initiallyMerged));
             Assert.That(storedPlan, Is.Null);
         });
         storage.VerifyNoOtherCalls();
@@ -145,20 +144,20 @@ internal class ReleasePlanSpecHelperTests
         });
 
         var firstGeneration = await generation.RunGenerateSdkAsync(
-            projectPath, "beta", "Java", workItemId: WorkItemId, specCommitSha: PinnedCommit, ct: ct);
+            projectPath, "beta", "Java", workItemId: WorkItemId, ct: ct);
         Assert.That(firstGeneration.Status, Is.EqualTo("Success"));
         Assert.That(firstGeneration.ResponseErrors, Is.Empty);
         storage.Verify(service => service.RunSDKGenerationPipelineAsync(
             PinnedCommit, RelativeProjectPath, PreviewApiVersion, "beta", "Java", WorkItemId, "", ct), Times.Once);
 
         // Only external spec state advances. Do not rewrite the fixture or the saved release plan.
-        metadata = CreateMetadata(projectPath, StableApiVersion, [StableApiVersion]);
+        metadata = CreateMetadata(projectPath, StableApiVersion);
         pullRequests.ConfiguredPullRequestMerged = true;
         pullRequests.ConfiguredHeadSha = NewCommit;
         pullRequests.ConfiguredMergeCommitSha = NewCommit;
 
         var regeneration = await generation.RunGenerateSdkAsync(
-            projectPath, "beta", "Java", workItemId: WorkItemId, specCommitSha: PinnedCommit, ct: ct);
+            projectPath, "beta", "Java", workItemId: WorkItemId, ct: ct);
 
         Assert.Multiple(() =>
         {
@@ -177,7 +176,7 @@ internal class ReleasePlanSpecHelperTests
         storage.Verify(service => service.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), ct), Times.Once);
         storage.Verify(service => service.UpdateReleasePlanSDKDetailsAsync(WorkItemId, It.IsAny<List<SDKInfo>>(), ct), Times.Once);
         storage.Verify(service => service.UpdateSpecPullRequestAsync(
-            It.IsAny<int>(), It.IsAny<ReleasePlanSpecTarget>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<int>(), It.IsAny<ReleasePlanSpecTarget>(), It.IsAny<Dictionary<string, string>>(),
             It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
         storage.Verify(service => service.UpdateApiSpecVersionAsync(
             It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -207,7 +206,7 @@ internal class ReleasePlanSpecHelperTests
         return projectPath;
     }
 
-    private static TypeSpecProject CreateMetadata(string projectPath, string apiVersion, List<string> availableVersions)
+    private static TypeSpecProject CreateMetadata(string projectPath, string apiVersion)
     {
         var project = TypeSpecProject.ParseTypeSpecConfig(projectPath);
         project.Packages =
@@ -220,7 +219,6 @@ internal class ReleasePlanSpecHelperTests
                 TypeSpecSdkType = "management"
             }
         ];
-        project.AvailableApiVersions = availableVersions;
         return project;
     }
 }

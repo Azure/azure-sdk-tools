@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default);
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages, CancellationToken ct);
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status, CancellationToken ct);
-        public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct);
+        public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct);
         public Task<bool> UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion, CancellationToken ct);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url, CancellationToken ct);
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default);
@@ -1411,7 +1411,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// Updates the spec link and, when supplied, the confirmed SDK target and related fields.
         /// Link-only updates supply just the PR URL; saving SDK inputs requires the preview's revision.
         /// </summary>
-        public async Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, string expectedSpecCommitSha, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
+        public async Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
         {
             var specPullRequest = target.SpecPullRequestUrl;
             var specCommitSha = target.SpecCommitSHA;
@@ -1444,11 +1444,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
                 var workItemClient = connection.GetWorkItemClient(ct);
                 var releasePlanWorkItem = await workItemClient.GetWorkItemAsync(releasePlanWorkItemId, cancellationToken: ct);
-                releasePlanWorkItem.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var currentCommitSha);
-                if (!string.Equals(currentCommitSha?.ToString() ?? string.Empty, expectedSpecCommitSha, StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidOperationException("The release plan's spec commit changed. Retrieve the plan and retry the spec update.");
-                }
                 if (apiSpecWorkItem.Rev is not > 0 || releasePlanWorkItem.Rev is not > 0)
                 {
                     throw new InvalidOperationException("Cannot update the spec input without valid release plan and API Spec work item revisions.");

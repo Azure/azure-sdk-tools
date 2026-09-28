@@ -4,21 +4,19 @@
 
 ### Features Added
 
-- Public SDK target previews validate available API versions at the exact spec PR HEAD or merge SHA. Confirmation requires an explicit SHA and `confirmTarget`; unambiguous metadata supplies the API version, and an optional `apiVersion` selection must be compiler-declared. Updates expose `ExpectedTargetRevision` and retain `ExpectedPreviousSpecCommitSHA` for the optional `expectedSpecCommitSha` guard.
+- Public SDK target previews use package API versions from the existing TypeSpec metadata emitter at the selected PR HEAD or merge SHA. One distinct version is selected automatically; an explicit `apiVersion` must be reported by that metadata.
 
 ### Breaking Changes
 
-- Configuring a public SDK target requires a clean local checkout at the selected PR SHA and the project's compiler. Preview first, then explicitly confirm the target; legacy and tracking-only plans are never automatically pinned during lookup or generation, and missing/invalid targets never fall back to `main`.
-- Public update and update-spec-pr confirmation require `expectedTargetRevision` / `--expected-target-revision` carried verbatim from the approved preview or explicitly inspected plan. An omitted token returns a no-write preview even with SHA and `confirmTarget`; blank or mismatched tokens reject before compiler validation or writes. Create accepts neither update guard; Private Preview and tracking-only creation are unchanged.
+- Public SDK target configuration requires a clean local checkout at the selected SHA with the project's compiler installed. Confirm with `specCommitSha` and `confirmTarget`; public updates also require the approved preview's `expectedTargetRevision` / `--expected-target-revision`. Parent or API Spec revision changes require fresh approval, even at the same SHA. Private Preview and tracking-only creation are unchanged.
 
 ### Bugs Fixed
 
-- Release targets use the existing parent `Custom.SpecCommitSHA` field. Generation and regeneration independently consume the stored target, forwarding both API version and SDK release type for interactive and automated calls; a matching repository-relative project path needs no local clone.
-- Public updates detect any parent or API Spec revision change since preview, including same-SHA SDK type or metadata changes. Both update paths check the revision before clearing the pin and use revision-guarded patches; conflicts require a fresh preview and approval, not a silently refreshed token. Cross-record writes are not atomic.
+- Generation and regeneration use only the stored `SpecCommitSHA`, forwarding `SourceVersion`, `ApiVersion`, and `SdkReleaseType` for interactive and automated calls without a local clone. Version, path, SDK type, and PR inputs are consistency checks. Missing or invalid targets stop rather than being automatically pinned or falling back to `main`.
 
 ### Other Changes
 
-- Target-validation metadata is emitted to a temporary directory outside the checkout; validation does not generate SDK code. Pinned SHAs also select pipeline YAML, so the pipeline and generator must remain compatible with that snapshot. Generated-code API/version/type verification is outside this change.
+- Metadata validation writes outside the checkout without a second compiler pass or SDK generation. Pins use the existing parent `Custom.SpecCommitSHA` field with no schema changes. Revision-guarded updates leave partial failures unpinned; cross-record writes are not atomic.
 
 ## 0.6.49 (2026-09-21)
 

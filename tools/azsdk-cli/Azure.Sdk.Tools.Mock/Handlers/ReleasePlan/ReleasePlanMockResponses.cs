@@ -15,7 +15,7 @@ internal static class ReleasePlanMockResponses
     public const string SpecCommitSha = "0123456789abcdef0123456789abcdef01234567";
     public const string MergedSpecCommitSha = "fedcba9876543210fedcba9876543210fedcba98";
     public const string SpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/38387";
-    public const string ConfirmationNextStep = "Show the proposed project, packages, API version, SDK release type, spec PR, commit URL, merge status and available API versions. After approval, repeat with the exact specCommitSha and confirmTarget=true. API version is derived from unambiguous metadata; select only from availableApiVersions if missing or conflicting. For public updates, preserve ExpectedTargetRevision verbatim as expectedTargetRevision and optionally retain ExpectedPreviousSpecCommitSHA as expectedSpecCommitSha. Any parent or API Spec revision change requires a fresh preview and approval, even at the same SHA.";
+    public const string ConfirmationNextStep = "Show the proposed project, packages, API version, SDK release type, spec PR and commit URL. If metadata is ambiguous, choose from availableApiVersions. After approval, repeat with specCommitSha and confirmTarget=true. For updates, copy ExpectedTargetRevision as expectedTargetRevision; a revision change requires a fresh preview and approval.";
 
     public static string Argument(Dictionary<string, object?>? arguments, string name) =>
         arguments?.GetValueOrDefault(name)?.ToString() ?? string.Empty;
@@ -143,14 +143,6 @@ internal static class ReleasePlanMockResponses
             Argument(arguments, "apiVersion") == "2024-01-01-preview" ? PlanForId("29262") : ContosoWorkItem();
     }
 
-    public static string? ValidateExpectedPin(Dictionary<string, object?>? arguments, ReleasePlanWorkItem plan)
-    {
-        var expected = arguments?.GetValueOrDefault("expectedSpecCommitSha")?.ToString();
-        return expected != null && !string.Equals(plan.SpecCommitSHA, expected == "none" ? string.Empty : expected, StringComparison.OrdinalIgnoreCase)
-            ? "The release plan's spec target changed since it was inspected. Retrieve the target and request confirmation again; no changes were saved."
-            : null;
-    }
-
     public static string? ValidateExpectedRevision(Dictionary<string, object?>? arguments, ReleasePlanWorkItem plan)
     {
         var expected = arguments?.GetValueOrDefault("expectedTargetRevision")?.ToString();
@@ -174,7 +166,7 @@ internal static class ReleasePlanMockResponses
         var version = Argument(arguments, "apiVersion");
         if (!string.IsNullOrWhiteSpace(version) && !string.Equals(version.Trim(), snapshot.SpecAPIVersion, StringComparison.OrdinalIgnoreCase))
         {
-            return $"API version '{version}' is not declared at commit {snapshot.SpecCommitSHA}. Available versions: {snapshot.SpecAPIVersion}.";
+            return $"API version '{version}' is not reported by metadata at commit {snapshot.SpecCommitSHA}. Available versions: {snapshot.SpecAPIVersion}.";
         }
         var sha = Argument(arguments, "specCommitSha");
         if (!string.IsNullOrEmpty(sha) && !string.Equals(sha, snapshot.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
@@ -197,8 +189,6 @@ internal static class ReleasePlanMockResponses
             SpecPullRequestUrl = snapshot.ActiveSpecPullRequest,
             CommitUrl = $"https://github.com/Azure/azure-rest-api-specs/commit/{snapshot.SpecCommitSHA}",
             SDKReleaseType = sdkReleaseType,
-            IsSpecMerged = snapshot.SpecCommitSHA == MergedSpecCommitSha,
-            ExpectedPreviousSpecCommitSHA = existingPlan == null ? null : string.IsNullOrEmpty(existingPlan.SpecCommitSHA) ? "none" : existingPlan.SpecCommitSHA,
             ExpectedTargetRevision = existingPlan?.TargetRevision,
             AvailableApiVersions = [snapshot.SpecAPIVersion],
             Packages = snapshot.SDKInfo.Select(sdk => new PackageInfo

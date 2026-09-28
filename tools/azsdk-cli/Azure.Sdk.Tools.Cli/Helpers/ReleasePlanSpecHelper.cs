@@ -34,7 +34,9 @@ internal static partial class ReleasePlanSpecHelper
         IGitHubService githubService, ITypeSpecHelper typeSpecHelper, INpxHelper npxHelper, ILogger logger,
         string projectPath, string pullRequestUrl, string apiVersion, string commitSha, string sdkReleaseType, CancellationToken ct)
     {
-        var pullRequest = await GetPullRequestAsync(githubService, pullRequestUrl, ct);
+        var (repository, number) = ParsePullRequest(pullRequestUrl);
+        var pullRequest = await githubService.GetPullRequestAsync("Azure", repository, number, ct).WaitAsync(ct)
+            ?? throw new InvalidOperationException($"Spec pull request '{pullRequestUrl}' could not be found. No spec commit was pinned.");
         if (!pullRequest.Merged && pullRequest.State == Octokit.ItemState.Closed)
         {
             throw new InvalidOperationException("The selected spec PR was closed without merging. Select the intended active or merged spec PR.");
@@ -50,21 +52,26 @@ internal static partial class ReleasePlanSpecHelper
             throw new InvalidOperationException($"Spec PR source changed or the supplied SHA does not match it. Review commit {resolvedCommit} and confirm the intended target again.");
         }
         var project = await typeSpecHelper.ValidateReleasePlanSnapshotAsync(projectPath, resolvedCommit!, npxHelper, logger, ct);
+        var availableVersions = project.Packages.Select(p => p.ApiVersion)
+            .Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (availableVersions.Count == 0)
+        {
+            throw new InvalidOperationException($"Spec metadata at commit {resolvedCommit} reports no API version. Fix the metadata configuration before confirming a release target.");
+        }
         var selectedVersion = apiVersion?.Trim() ?? string.Empty;
         if (string.IsNullOrEmpty(selectedVersion))
         {
-            var configuredVersions = project.Packages.Select(p => p.ApiVersion).Where(v => !string.IsNullOrWhiteSpace(v)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            selectedVersion = configuredVersions.Count == 1 ? configuredVersions[0]! : string.Empty;
+            selectedVersion = availableVersions.Count == 1 ? availableVersions[0] : string.Empty;
         }
-        if (!string.IsNullOrEmpty(selectedVersion) && !project.AvailableApiVersions.Contains(selectedVersion, StringComparer.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(selectedVersion) && !availableVersions.Contains(selectedVersion, StringComparer.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException($"API version '{selectedVersion}' is not declared at commit {resolvedCommit}. Available versions: {string.Join(", ", project.AvailableApiVersions)}.");
+            throw new InvalidOperationException($"API version '{selectedVersion}' is not reported by metadata at commit {resolvedCommit}. Available versions: {string.Join(", ", availableVersions)}.");
         }
         if (sdkReleaseType == "stable" && selectedVersion.Contains("preview", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("A stable SDK release cannot target a preview API version. Confirm a beta release or choose a stable API version.");
         }
-        var (repository, _) = ParsePullRequest(pullRequestUrl);
         return new ReleasePlanSpecTarget
         {
             TypeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(projectPath).TrimEnd('/'),
@@ -73,37 +80,13 @@ internal static partial class ReleasePlanSpecHelper
             SpecPullRequestUrl = pullRequestUrl,
             CommitUrl = $"https://github.com/Azure/{repository}/commit/{resolvedCommit}",
             SDKReleaseType = sdkReleaseType,
-            IsSpecMerged = pullRequest.Merged,
-            AvailableApiVersions = project.AvailableApiVersions,
+            AvailableApiVersions = availableVersions,
             Packages = project.Packages
         };
     }
 
     public static bool NeedsConfirmation(string resolvedApiVersion, string commitSha, bool confirm) =>
         !confirm || string.IsNullOrWhiteSpace(resolvedApiVersion) || !IsValidCommitSha(commitSha);
-
-    public static async Task<Octokit.PullRequest> GetPullRequestAsync(IGitHubService githubService, string pullRequestUrl, CancellationToken ct)
-    {
-        var (repository, number) = ParsePullRequest(pullRequestUrl);
-        var pullRequest = await githubService.GetPullRequestAsync("Azure", repository, number, ct).WaitAsync(ct);
-        if (pullRequest == null)
-        {
-            throw new InvalidOperationException($"Spec pull request '{pullRequestUrl}' could not be found. No spec commit was pinned.");
-        }
-
-        // GitHub also returns a synthetic merge_commit_sha for an open PR. Never pin that value.
-        if (!pullRequest.Merged)
-        {
-            return pullRequest;
-        }
-
-        if (!IsValidCommitSha(pullRequest.MergeCommitSha))
-        {
-            throw new InvalidOperationException($"Merged spec pull request '{pullRequestUrl}' does not have a valid merge commit SHA.");
-        }
-
-        return pullRequest;
-    }
 
     [GeneratedRegex(@"^https://github\.com/Azure/(?<repository>azure-rest-api-specs(?:-pr)?)/pull/(?<number>\d+)/?$", RegexOptions.IgnoreCase)]
     private static partial Regex SpecPullRequestRegex();

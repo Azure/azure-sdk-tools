@@ -26,10 +26,10 @@ public class ReleasePlanSdkGenerationEmail : EmailPayload
         // Keep test-plan notifications scoped to the submitter, matching other release-plan emails.
         if (!pendingPlan.IsTestReleasePlan)
         {
-            EmailTo.Add("azsdkexp@microsoft.com");
+            EmailTo.Add(AzSdkSupportAlias);
             if (pendingPlan.IsManagementPlane)
             {
-                CC.Add("sdkreleaseowners@microsoft.com");
+                CC.Add(ManagementSdkOwnerAlias);
             }
         }
     }
@@ -44,12 +44,12 @@ public class ReleasePlanSdkGenerationEmail : EmailPayload
         <html>
         <body>
             <p>Hello,</p>
-            <p><a href="{DashboardLink(_completedPlan)}">Release plan {_completedPlan.ReleasePlanId}</a> is now complete (Finished).</p>
-            <p>We identified your pending <a href="{DashboardLink(_pendingPlan)}"> release plan {_pendingPlan.ReleasePlanId}</a>
+            <p><a href="{_completedPlan.ReleasePlanLink}">Release plan {_completedPlan.ReleasePlanId}</a> is now complete (Finished).</p>
+            <p>We identified your pending <a href="{_pendingPlan.ReleasePlanLink}"> release plan {_pendingPlan.ReleasePlanId}</a>
             for API version <strong>{WebUtility.HtmlEncode(_pendingPlan.SpecAPIVersion)}</strong>.</p>
             {QueueStatusContent}
             <p>The generated SDK pull requests will appear on the
-            <a href="{DashboardLink(_pendingPlan)}">release plan dashboard</a> once they are ready.
+            <a href="{_pendingPlan.ReleasePlanLink}">release plan dashboard</a> once they are ready.
             Please use the dashboard to monitor progress and view the pull requests when they become available.</p>
             <p>Best regards,<br>Azure SDK Team</p>
         </body>
@@ -62,14 +62,6 @@ public class ReleasePlanSdkGenerationEmail : EmailPayload
           <p>We were unable to queue SDK generation automatically for this release plan.</p>
           <p>Please use the <a href="https://aka.ms/azsdk/agent">azsdk agent</a> to generate SDKs
           for release plan {_pendingPlan.ReleasePlanId} using API version <strong>{WebUtility.HtmlEncode(_pendingPlan.SpecAPIVersion)}</strong>.
-          For more information and next steps, visit the <a href="{DashboardLink(_pendingPlan)}">release plan dashboard</a>.</p>
+          For more information and next steps, visit the <a href="{_pendingPlan.ReleasePlanLink}">release plan dashboard</a>.</p>
           """;
-
-    private static string DashboardLink(ReleasePlanWorkItem plan)
-    {
-        var dashboard = plan.IsTestReleasePlan
-            ? ReleasePlanWorkItem.DashboardBaseUrlTest
-            : ReleasePlanWorkItem.DashboardBaseUrl;
-        return $"{dashboard[..dashboard.IndexOf('?')]}?releasePlan={plan.ReleasePlanId.ToString(CultureInfo.InvariantCulture)}";
-    }
 }

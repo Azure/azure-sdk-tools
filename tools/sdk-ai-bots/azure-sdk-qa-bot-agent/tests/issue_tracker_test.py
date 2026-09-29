@@ -52,18 +52,13 @@ async def test_evolution_ado_profile_exposes_only_issue_tools() -> None:
             "tools.ado_mcp_tools.MCPStdioTool",
             return_value=mcp_tool,
         ) as constructor,
-        patch(
-            "tools.ado_mcp_tools._ADO_MCP_PACKAGE",
-            "@azure-devops/mcp@2.7.0",
-        ),
     ):
         result = await create_evolution_ado_mcp_tool()
 
     assert result is mcp_tool
     kwargs = constructor.call_args.kwargs
+    assert kwargs["command"] == "mcp-server-azuredevops"
     assert kwargs["args"] == [
-        "-y",
-        "@azure-devops/mcp@2.7.0",
         "azure-sdk",
         "-d",
         "work-items",

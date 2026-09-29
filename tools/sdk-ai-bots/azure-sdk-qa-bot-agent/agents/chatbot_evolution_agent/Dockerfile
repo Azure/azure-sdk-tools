@@ -10,7 +10,8 @@ ARG NODE_VERSION=22.12.0
 ARG ADO_MCP_VERSION=2.7.0
 
 # Install Azure SDK CLI (azsdk) used by `azsdk mcp`.
-# Node.js >=20.19 is required by yargs@18 (transitive dep of ADO MCP).
+# The official Azure DevOps MCP server is an npm package; Node.js >=20.19 is
+# required by its yargs@18 dependency.
 RUN tdnf install -y ca-certificates curl tar gzip icu git \
 	&& curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
 		| tar -xJ --strip-components=1 -C /usr/local \

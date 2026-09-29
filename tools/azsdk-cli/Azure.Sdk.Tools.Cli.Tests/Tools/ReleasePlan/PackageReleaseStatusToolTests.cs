@@ -32,6 +32,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync([]);
             logger = new TestLogger<PackageReleaseStatusTool>();
             mockNotificationService = new Mock<INotificationService>();
+            mockNotificationService
+                .Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new NotificationResult(NotificationStatus.Sent));
             packageReleaseStatusTool = new PackageReleaseStatusTool(mockDevOpsService.Object, logger, mockNotificationService.Object);
         }
 
@@ -1252,8 +1255,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 nearestNewerPlan.WorkItemId, finishedReleasePlan.WorkItemId, It.IsAny<CancellationToken>()), Times.Once);
             mockNotificationService.Verify(x => x.SendEmailNotificationAsync(
                 It.Is<EmailPayload>(email => email is ReleasePlanSdkGenerationEmail
-                    && email.Body.Contains("?releasePlan=100")
-                    && email.Body.Contains("?releasePlan=200")),
+                    && email.Body.Contains("?releaseplan=100")
+                    && email.Body.Contains("?releaseplan=200")),
                 It.IsAny<CancellationToken>()), Times.Once);
             mockDevOpsService.Verify(x => x.RunPipelineAsync(
                 8254,
@@ -1341,7 +1344,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 It.Is<EmailPayload>(email => email.Subject.Contains("Action required")
                     && email.Body.Contains("unable to queue")
                     && email.Body.Contains("azsdk agent")
-                    && email.Body.Contains("?releasePlan=200")),
+                    && email.Body.Contains("?releaseplan=200")),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -1475,7 +1478,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 8254, It.IsAny<Dictionary<string, string>>(), "main", It.IsAny<CancellationToken>()))
                 .Callback(() => calls.Add("queue")).ReturnsAsync(new Build { Id = 9876 });
             mockNotificationService.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
-                .Callback(() => calls.Add("notify")).Returns(Task.CompletedTask);
+                .Callback(() => calls.Add("notify")).ReturnsAsync(new NotificationResult(NotificationStatus.Sent));
 
             await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
             Assert.That(calls, Is.EqualTo(new[] { "release", "finish", "relate", "queue", "notify" }));
@@ -1534,11 +1537,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             ConfigureAutomation();
             mockNotificationService.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new InvalidOperationException("Email unavailable"));
+                .ReturnsAsync(new NotificationResult(NotificationStatus.Failed, "Email unavailable"));
             var response = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
             Assert.That(response.ReleasePlanAutomationTriggered, Is.True);
             Assert.That(response.ReleasePlanAutomationPipelineUrl, Does.Contain("buildId=9876"));
             Assert.That(response.Warnings, Has.Some.Contains("notification failed"));
+            Assert.That(response.Warnings, Has.Some.Contains("Email unavailable"));
             Assert.That(response.NextSteps, Is.Null);
         }
 

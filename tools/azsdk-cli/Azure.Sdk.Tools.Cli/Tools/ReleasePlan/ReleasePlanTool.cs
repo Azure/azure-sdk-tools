@@ -1433,18 +1433,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         }
                     }
 
-                    // Notify the submitter. This is best-effort and must never fail release plan creation,
-                    // so any error here is logged and swallowed.
+                    // Notify the submitter without failing release plan creation.
                     try
                     {
                         // Recipient routing (To/CC) is owned by the email template.
-                        // Silently completes when notifications are disabled.
                         var releasePlanEmail = new NewReleasePlanEmail(releasePlan);
-                        await notificationService.SendEmailNotificationAsync(releasePlanEmail, ct);
+                        var notificationResult = await notificationService.SendEmailNotificationAsync(releasePlanEmail, ct);
+                        if (notificationResult.IsFailure)
+                        {
+                            logger.LogWarning("Failed to send release plan notification: {error}", notificationResult.ErrorMessage);
+                            warnings.Add($"Failed to send release plan notification: {notificationResult.ErrorMessage}");
+                        }
+                    }
+                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                    {
+                        throw;
                     }
                     catch (Exception notifyEx)
                     {
                         logger.LogWarning(notifyEx, "Failed to send release plan notification.");
+                        warnings.Add($"Failed to send release plan notification: {notifyEx.Message}");
                     }
 
                     var response = new ReleasePlanResponse

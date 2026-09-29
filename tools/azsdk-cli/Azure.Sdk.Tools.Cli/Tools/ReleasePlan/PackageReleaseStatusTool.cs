@@ -342,8 +342,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             try
             {
-                await notificationService.SendEmailNotificationAsync(
+                var notificationResult = await notificationService.SendEmailNotificationAsync(
                     new ReleasePlanSdkGenerationEmail(finishedReleasePlan, nextReleasePlan, response.ReleasePlanAutomationTriggered), ct);
+                if (notificationResult.IsFailure)
+                {
+                    logger.LogWarning(
+                        "Failed to send the SDK generation automation notification for release plan {releasePlanId}: {error}",
+                        nextReleasePlan.ReleasePlanId,
+                        notificationResult.ErrorMessage);
+                    (response.Warnings ??= []).Add(
+                        $"The SDK generation notification failed: {notificationResult.ErrorMessage} Check the release plan dashboard for status and next steps.");
+                }
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -352,7 +361,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed to send the SDK generation automation notification for release plan {releasePlanId}.", nextReleasePlan.ReleasePlanId);
-                (response.Warnings ??= []).Add("The SDK generation notification failed. Check the release plan dashboard for status and next steps.");
+                (response.Warnings ??= []).Add($"The SDK generation notification failed: {ex.Message} Check the release plan dashboard for status and next steps.");
             }
         }
 

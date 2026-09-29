@@ -49,9 +49,8 @@ foreach ($issue_number in $issues) {
   $product_lifecycle = ""
   $service_id = ""
   $service_name = ""
-  $needs_sdk_str = ""
-  $data_plane = "N/A"
-  $mgmt_plane = "N/A"
+  $data_plane = ""
+  $mgmt_plane = ""
   $submitter = ""
 
   if ($issue -match "\#\#\#\sProduct\sID.*\n.*\n(?<ProductID>[^\n]+)") {
@@ -84,25 +83,14 @@ foreach ($issue_number in $issues) {
     $service_name = $service_name.Trim()
   }
 
-  if ($issue -match "\#\#\#\s.*Azure\sSDK.*\n.*\n(?<NeedsSDK>[^\n]+)") {
-    $needs_sdk_str = $matches["NeedsSDK"]
-    $needs_sdk_str = $needs_sdk_str.Trim()
-  }
-
   if ($issue -match "\#\#\#\s.*[Dd]ata\s[Pp]lane.*\n.*\n(?<DataPlane>[^\n]+)") {
     $data_plane = $matches["DataPlane"]
     $data_plane = $data_plane.Trim()
-    if ($data_plane -eq "None") {
-      $data_plane = ""
-    }
   }
 
   if ($issue -match "\#\#\#\s.*[Mm]anagement\s[Pp]lane.*\n.*\n(?<MgmtPlane>[^\n]+)") {
     $mgmt_plane = $matches["MgmtPlane"]
     $mgmt_plane = $mgmt_plane.Trim()
-    if ($mgmt_plane -eq "None") {
-      $mgmt_plane = ""
-    }
   }
 
   if ($issue -match "\#\#\#\sSubmitter.*\n.*\n(?<Submitter>[^\n]+)") {
@@ -117,30 +105,35 @@ foreach ($issue_number in $issues) {
     -and ($product_lifecycle -ne "") `
     -and ($service_id        -ne "") `
     -and ($service_name      -ne "") `
-    -and ($needs_sdk_str     -ne "") `
     -and ($data_plane        -ne "") `
     -and ($mgmt_plane        -ne "") `
     -and ($submitter         -ne "") `
   ) {
-    $needs_sdk_bool = ($needs_sdk_str -ieq "Yes")
     Write-Host "Processing issue #$issue_number."
 
     $sync_success = $false
+    $work_item_id = ""
     try {
-      & (Join-Path $PSScriptRoot "Sync-ProductOnboardingStatus.ps1") `
+      $stdout = & (Join-Path $PSScriptRoot "Sync-ProductOnboardingStatus.ps1") `
         -ProductID        "$product_id" `
         -ProductName      "$product_name" `
         -ProductType      "$product_type" `
         -ProductLifecycle "$product_lifecycle" `
         -ServiceID        "$service_id" `
         -ServiceName      "$service_name" `
-        -NeedsSDK          $needs_sdk_bool `
         -DataPlane        "$data_plane" `
         -MgmtPlane        "$mgmt_plane" `
         -Submitter        "$submitter" `
         -IsTest            $IsTest
 
       $sync_success = $true
+
+      $stdout = $stdout -join "`n"
+      Write-Host "`n$stdout"
+
+      if ($stdout -match "Work Item ID:\s(?<WorkItemID>[\d]+)") {
+        $work_item_id = $matches["WorkItemID"]
+      }
     } catch {
       $error_msg = "Error syncing product onboarding status:`n"
       $error_detail = "$_`n" + $_.Exception.StackTrace
@@ -155,7 +148,12 @@ foreach ($issue_number in $issues) {
     }
 
     if ($sync_success) {
-      gh issue comment $issue_number --body "Product onboarding status synced successfully." --repo "$issues_repo"
+      $details = ""
+      if ($work_item_id -ne "" -and $null -ne $work_item_id) {
+        $details = "`n<details><summary>Details</summary><tt>[Work Item: $work_item_id]</tt></details>"
+      }
+
+      gh issue comment $issue_number --body "Product onboarding status synced successfully.$details" --repo "$issues_repo"
       gh issue close $issue_number --repo "$issues_repo"
     }
   } else {

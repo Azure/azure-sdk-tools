@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -250,6 +252,146 @@ public class SdkBuildToolTests
         _mockGitHelper.Verify(x => x.DiscoverRepoRootAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>()), Times.AtMost(2));
         _mockGitHelper.Verify(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>()), Times.AtMost(2));
         _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Additional arguments tests
+    [Test]
+    public async Task AdditionalArgumentsParameterIsNull_NoAdditionalArgument()
+    {
+        // Arrange
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        // Mock the SpecGenSdkConfigHelper
+        SetupMockSpecGenSdkConfigHelper();
+        var expectedOptions = _mockSpecGenSdkConfigHelper.Object.CreateProcessOptions(SpecGenSdkConfigContentType.Command, "dotnet build {packagePath}/src", "c:/azure-sdk-for-net", _tempDirectory.DirectoryPath, new Dictionary<string, string>());
+        _mockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>())).
+        Returns<ProcessOptions, CancellationToken>((processOptions, ct) =>
+        {
+            if (processOptions.Args.Count != expectedOptions?.Args.Count)
+            {
+                return Task.FromResult(new ProcessResult { ExitCode = 1 });
+            }
+            return Task.FromResult(new ProcessResult { ExitCode = 0 });
+        });
+        // Act
+        var result = await _tool.BuildSdkAsync(null, _tempDirectory.DirectoryPath, null);
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+    }
+
+    [Test]
+    public async Task AdditionalArgumentsParameterIsEmpty_NoAdditionalArgument()
+    {
+        // Arrange
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        // Mock the SpecGenSdkConfigHelper
+        SetupMockSpecGenSdkConfigHelper();
+        var expectedOptions = _mockSpecGenSdkConfigHelper.Object.CreateProcessOptions(SpecGenSdkConfigContentType.Command, "dotnet build {packagePath}/src", "c:/azure-sdk-for-net", _tempDirectory.DirectoryPath, new Dictionary<string, string>());
+        _mockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>())).
+        Returns<ProcessOptions, CancellationToken>((processOptions, ct) =>
+        {
+            if (processOptions.Args.Count != expectedOptions?.Args.Count)
+            {
+                return Task.FromResult(new ProcessResult { ExitCode = 1 });
+            }
+            return Task.FromResult(new ProcessResult { ExitCode = 0 });
+        });
+        // Act
+        var result = await _tool.BuildSdkAsync(null, _tempDirectory.DirectoryPath, "");
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+    }
+
+    [Test]
+    public async Task PassOneAdditionalArgument()
+    {
+        // Arrange
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        // Mock the SpecGenSdkConfigHelper
+        SetupMockSpecGenSdkConfigHelper();
+        _mockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>())).
+        Returns<ProcessOptions, CancellationToken>((processOptions, ct) =>
+        {
+            if (!processOptions.Args.Contains("/p:RunApiCompat=false"))
+            {
+                return Task.FromResult(new ProcessResult { ExitCode = 1 });
+            }
+            return Task.FromResult(new ProcessResult { ExitCode = 0 });
+        });
+        // Act
+        var result = await _tool.BuildSdkAsync(null, _tempDirectory.DirectoryPath, "/p:RunApiCompat=false");
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+    }
+
+    [Test]
+    public async Task PassTwoAdditionalArguments()
+    {
+        // Arrange
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        // Mock the SpecGenSdkConfigHelper
+        SetupMockSpecGenSdkConfigHelper();
+        var expectedOptions = _mockSpecGenSdkConfigHelper.Object.CreateProcessOptions(SpecGenSdkConfigContentType.Command, "dotnet build {packagePath}/src", "c:/azure-sdk-for-net", _tempDirectory.DirectoryPath, new Dictionary<string, string>());
+        _mockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>())).
+        Returns<ProcessOptions, CancellationToken>((processOptions, ct) =>
+        {
+            if (!processOptions.Args.Contains("/p:RunApiCompat=false") || !processOptions.Args.Contains("/p:Configuration=Release"))
+            {
+                return Task.FromResult(new ProcessResult { ExitCode = 1 });
+            }
+            return Task.FromResult(new ProcessResult { ExitCode = 0 });
+        });
+        // Act
+        var result = await _tool.BuildSdkAsync(null, _tempDirectory.DirectoryPath, "/p:RunApiCompat=false /p:Configuration=Release");
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+    }
+
+    private void SetupMockSpecGenSdkConfigHelper()
+    {
+        _mockSpecGenSdkConfigHelper
+            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SpecGenSdkConfigContentType.Command, "dotnet build {packagePath}/src"));
+        _mockSpecGenSdkConfigHelper
+            .Setup(x => x.CreateProcessOptions(
+                It.IsAny<SpecGenSdkConfigContentType>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<int>()))
+            .Returns((
+                SpecGenSdkConfigContentType configType,
+                string configValue,
+                string sdkRepoRoot,
+                string workingDirectory,
+                Dictionary<string, string> parameters,
+                int timeoutMinutes) =>
+                new ProcessOptions("dotnet", new[] { "build", "testDir/TestProject/src" }));
+        _mockSpecGenSdkConfigHelper.Setup(x => x.ParseCommand(It.IsAny<string>())).Returns((string command) =>
+        {
+            if (string.IsNullOrWhiteSpace(command))
+            {
+                return Array.Empty<string>();
+            }
+
+            // Use System.CommandLine.CommandLineParser to split respecting quotes
+            var tokens = CommandLineParser.SplitCommandLine(command).ToArray();
+            return tokens;
+        });
     }
 
     #endregion

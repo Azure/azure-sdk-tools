@@ -1,0 +1,54 @@
+{
+  "Language": "Python",
+  "ApiIdentifiers": {
+    "azure.mgmt.apimanagement.models.LLMDiagnosticSettings": 1,
+    "azure.mgmt.apimanagement.models.LlmDiagnosticSettings": 2
+  },
+  "ReviewLines": [
+    {
+      "Tokens": [
+        { "Value": "namespace", "HasPrefixSpace": false, "HasSuffixSpace": true },
+        { "Value": "azure.mgmt.apimanagement.models", "HasPrefixSpace": false, "HasSuffixSpace": false }
+      ],
+      "Children": [
+        {
+          "Tokens": [
+            { "Value": "class", "HasPrefixSpace": false, "HasSuffixSpace": true },
+            { "Value": "LLMDiagnosticSettings:", "HasPrefixSpace": false, "HasSuffixSpace": false }
+          ],
+          "Children": [
+            {
+              "Tokens": [
+                { "Value": "log:", "HasPrefixSpace": false, "HasSuffixSpace": true },
+                { "Value": "LlmDiagnosticSettings", "HasPrefixSpace": false, "HasSuffixSpace": false }
+              ]
+            }
+          ]
+        },
+        { "Tokens": [] },
+        {
+          "Tokens": [
+            { "Value": "enum", "HasPrefixSpace": false, "HasSuffixSpace": true },
+            { "Value": "LlmDiagnosticSettings:", "HasPrefixSpace": false, "HasSuffixSpace": false }
+          ],
+          "Children": [
+            {
+              "Tokens": [
+                { "Value": "ENABLED", "HasPrefixSpace": false, "HasSuffixSpace": false },
+                { "Value": "=", "HasPrefixSpace": true, "HasSuffixSpace": true },
+                { "Value": "\"enabled\"", "HasPrefixSpace": false, "HasSuffixSpace": false }
+              ],
+              "Children": []
+            }
+          ]
+        },
+        {
+          "Tokens": [
+            { "Value": "", "HasPrefixSpace": true, "HasSuffixSpace": true }
+          ],
+          "Children": null
+        }
+      ]
+    }
+  ]
+}

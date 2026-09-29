@@ -248,6 +248,75 @@ internal class CopilotAgentRunnerTests
         Assert.That(ex.Message, Does.Contain("3 iterations"));
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task RunAsync_AwaitsValidationAndRetainsOneSessionForSuccessiveDiagnostics(bool omitFirstExit)
+    {
+        var prompts = new List<string>();
+        var validations = 0;
+        var firstValidation = new TaskCompletionSource<CopilotAgentValidationResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var validationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<MessageOptions, CancellationToken>((options, _) =>
+            {
+                prompts.Add(options.Prompt!);
+                if (omitFirstExit && prompts.Count == 1)
+                {
+                    SimulateSessionIdle();
+                }
+                else
+                {
+                    SimulateExitToolCall("Everything is fixed.");
+                }
+            })
+            .ReturnsAsync("message-id");
+        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
+        var agent = new CopilotAgent<string>
+        {
+            Instructions = "Apply compiler-guided patches.",
+            MaxIterations = 4,
+            ValidateResult = _ =>
+            {
+                validations++;
+                if (validations == 1)
+                {
+                    validationStarted.SetResult();
+                    return firstValidation.Task;
+                }
+                return Task.FromResult(new CopilotAgentValidationResult
+                {
+                    Success = validations == 3,
+                    Reason = "Second awaited build: missing member Beta."
+                });
+            }
+        };
+
+        var run = runner.RunAsync(agent);
+        try
+        {
+            await validationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.That(run.IsCompleted, Is.False, "An Exit success claim must not bypass awaited host validation.");
+            Assert.That(prompts, Has.Count.EqualTo(omitFirstExit ? 2 : 1));
+        }
+        finally
+        {
+            firstValidation.TrySetResult(new CopilotAgentValidationResult
+            {
+                Success = false,
+                Reason = "First awaited build: missing member Alpha."
+            });
+        }
+        var result = await run.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.That(result, Is.EqualTo("Everything is fixed."));
+        Assert.That(validations, Is.EqualTo(3), "A missing Exit consumes an iteration, not a host validation.");
+        Assert.That(prompts, Has.Count.EqualTo(omitFirstExit ? 4 : 3));
+        Assert.That(prompts[^2], Does.Contain("First awaited build: missing member Alpha."));
+        Assert.That(prompts[^1], Does.Contain("Second awaited build: missing member Beta."));
+        clientMock.Verify(c => c.CreateSessionAsync(It.IsAny<SessionConfig>(), It.IsAny<CancellationToken>()), Times.Once);
+        sessionMock.Verify(s => s.DisposeAsync(), Times.Once);
+    }
+
     [Test]
     public void RunAsync_SessionError_ThrowsException()
     {

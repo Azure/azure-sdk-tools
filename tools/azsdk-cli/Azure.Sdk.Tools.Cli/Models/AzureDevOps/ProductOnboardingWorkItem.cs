@@ -72,7 +72,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
             response.ManagementPlane = status.ManagementPlane;
             response.Submitter = status.Submitter;
 
-            response.NeedsSDK = (response.DataPlane == DataPlaneApplicability.Yes || response.ManagementPlane == ManagementPlaneApplicability.Yes);
             return response;
         }
 

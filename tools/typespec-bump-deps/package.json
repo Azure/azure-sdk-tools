@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/typespec-bump-deps#readme",
   "dependencies": {
-    "pacote": "~21.0.0",
+    "pacote": "~21.5.1",
     "semver": "^7.7.1"
   },
   "devDependencies": {

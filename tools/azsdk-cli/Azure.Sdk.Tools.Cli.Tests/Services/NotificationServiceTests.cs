@@ -261,7 +261,7 @@ public class NotificationServiceTests
         var template = new NewReleasePlanEmail(releasePlan);
 
         Assert.That(template.EmailTo, Is.EqualTo(new[] { "author@microsoft.com" }));
-        Assert.That(template.CC, Is.EqualTo(new[] { "azsdkexp@microsoft.com", "sdkowners@microsoft.com" }));
+        Assert.That(template.CC, Is.EqualTo(new[] { "azsdkexp@microsoft.com", "sdkreleaseowners@microsoft.com" }));
     }
 
     [Test]

@@ -4,7 +4,7 @@ version: '1.0'
 type: capability
 area: "dataplane"
 environment: azsdk-mcp
-config:
+defaults:
   runs: 1
   timeout: 660s
   model: gpt-5.6-sol
@@ -49,6 +49,10 @@ stimuli:
     mode: forced
   prompt: '@azure-typespec-author Rename the `color` property to `widgetColor` in the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.'
   environment: *id001
+  rubric: &shared_rubric
+  - WidgetSuite.color is renamed to widgetColor only in API version 2023-06-01-preview using valid TypeSpec versioning.
+  - Version 2023-06-01-preview is added to the Versions enum and the prior property name is preserved for earlier versions.
+  - Changes are limited to the requested versioned rename and contain no unrelated edits.
   graders:
   - *id002
   - type: run-command
@@ -89,6 +93,7 @@ stimuli:
     mode: no-skill
   prompt: Rename the `color` property to `widgetColor` in the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.
   environment: *id001
+  rubric: *shared_rubric
   graders:
   - type: tool-calls
     config:

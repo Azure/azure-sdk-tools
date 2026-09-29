@@ -20,36 +20,44 @@ scoring:
 stimuli:
   - name: trigger-optimize-markdown-for-token-efficiency
     prompt: "optimize markdown for token efficiency"
+    environment: &targetSkill
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
   - name: trigger-reduce-tokens-in-my-skill-md
     prompt: "reduce tokens in my SKILL.md"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
   - name: trigger-my-markdown-file-has-too-many-tokens
     prompt: "my markdown file has too many tokens, can you optimize it?"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
   - name: trigger-reduce-token-count-in-markdown
     prompt: "the token count in my SKILL.md is too high, reduce it"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
   - name: trigger-make-this-markdown-more-concise-for-ai
     prompt: "make this markdown more concise and optimize it for AI token budgets"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
   - name: trigger-shrink-markdown-for-token-budget
     prompt: "shrink my markdown file size to fit the token budget"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
@@ -57,31 +65,52 @@ stimuli:
 
   - name: anti-trigger-deploy-my-azure-function
     prompt: "deploy my Azure Function"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
           disallowed: ["markdown-token-optimizer"]
   - name: anti-trigger-fix-my-pipeline-build-error
     prompt: "fix my pipeline build error"
+    environment:
+      skills:
+        - ..
+        - ../../azsdk-common-pipeline-fixer
     graders:
       - type: skill-invocation
         config:
+          required: ["azsdk-common-pipeline-fixer"]
           disallowed: ["markdown-token-optimizer"]
   - name: anti-trigger-create-a-new-typespec-definition
-    prompt: "create a new TypeSpec definition"
+    prompt: "Add an optional color property to the WidgetSuite model in main.tsp."
+    environment:
+      skills:
+        - ..
+        - ../../azure-typespec-author
     graders:
       - type: skill-invocation
         config:
+          required: ["azure-typespec-author"]
           disallowed: ["markdown-token-optimizer"]
   - name: anti-trigger-how-do-i-release-an-sdk-package
-    prompt: "how do I release an SDK package"
+    prompt: "Check release readiness and trigger the SDK release pipeline for release plan 12345."
+    environment:
+      skills:
+        - ..
+        - ../../azsdk-common-sdk-release
     graders:
       - type: skill-invocation
         config:
+          required: ["azsdk-common-sdk-release"]
           disallowed: ["markdown-token-optimizer"]
-  - name: anti-trigger-review-my-api-design
-    prompt: "review my API design"
+  - name: anti-trigger-review-azsdk-cli-code
+    prompt: "Run a GitHub Copilot code review for my tools/azsdk-cli pull request."
+    environment:
+      skills:
+        - ..
+        - ../../code-review
     graders:
       - type: skill-invocation
         config:
+          required: ["code-review"]
           disallowed: ["markdown-token-optimizer"]

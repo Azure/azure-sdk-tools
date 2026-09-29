@@ -309,7 +309,10 @@ class QARecordService:
         return [
             record
             for record in records
-            if record.feedback and record.feedback.issue_url
+            if record.feedback
+            and record.feedback.issue_url
+            and record.feedback.status
+            in (FeedbackStatus.pending_validation, FeedbackStatus.failed)
         ]
 
 

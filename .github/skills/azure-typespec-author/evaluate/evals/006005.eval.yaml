@@ -4,7 +4,7 @@ version: '1.0'
 type: capability
 area: "dataplane"
 environment: azsdk-mcp
-config:
+defaults:
   runs: 1
   timeout: 660s
   model: gpt-5.6-sol

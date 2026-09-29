@@ -75,7 +75,7 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
         2. Read the existing client.tsp file and any relevant TypeSpec files (main.tsp, tspconfig.yaml) as needed
         3. Apply customizations incrementally to client.tsp only
         4. Compile after each change to verify it works
-        5. If a change fails compilation, rollback and try an alternative approach
+        5. If a change fails compilation, rollback and try an alternative approach if any. If no alternative approach is possible, explain why the requested change cannot be applied
         6. Continue until all requested customizations are successfully applied
         """;
     }
@@ -88,7 +88,7 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
         - Read any files as needed to understand the existing structure
         - Apply changes incrementally, one logical change at a time
         - Compile after each change to verify correctness
-        - If a change causes compilation errors, rollback and try a different approach
+        - If a change causes compilation errors, rollback and try a different approach if any
         - If compilation succeeds but warnings remain, attempt to reduce or resolve the warnings when feasible (warnings are not fatal)
         - Follow the patterns and best practices from the reference documentation
 
@@ -110,7 +110,7 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
            b. Compile the TypeSpec project
            c. If compilation succeeds, proceed to next change
            d. If compilation fails, rollback and try alternative approach
-        4. After changes compile, review any compiler warnings and attempt reasonable fixes without sacrificing required customizations
+        4. After changes are applied and compilation succeeds, review any compiler warnings and attempt reasonable fixes without sacrificing required customizations
         5. Continue until all changes are successfully applied
 
         **Final Output:**

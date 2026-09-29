@@ -55,13 +55,6 @@ async def _make_stream(events, item_delay: float = 0.0):
         yield event
 
 
-async def _malformed_stream(events):
-    """Yield events, then fail as the OpenAI SSE JSON decoder does."""
-    for event in events:
-        yield event
-    raise JSONDecodeError("Extra data", "{}\n{}", 3)
-
-
 def _completed_stream(response: _FakeResponse):
     """A stream that emits a single ``response.completed`` event."""
     return _make_stream([_FakeEvent("response.completed", response)])
@@ -194,6 +187,27 @@ async def test_invoke_retries_when_stream_ends_without_completion() -> None:
 
 
 @pytest.mark.asyncio
+async def test_invoke_retries_when_stream_event_contains_malformed_json() -> None:
+    """A malformed SSE event is abandoned and retried with a fresh stream."""
+
+    async def _malformed_stream():
+        raise JSONDecodeError("Extra data", "{}\n{}", 3)
+        yield
+
+    good = _FakeResponse(output_text="answer", status="completed", id="r2")
+    malformed = _malformed_stream()
+    client = _mock_client([malformed, _completed_stream(good)])
+
+    _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+        conversation_items=[],
+        agent_ref={},
+    )
+
+    assert out is good
+    assert client.responses.create.await_count == 2
+
+
+@pytest.mark.asyncio
 async def test_invoke_retries_on_stream_completion_timeout() -> None:
     """A stream that stalls past ``stream_timeout`` is abandoned and retried."""
     good = _FakeResponse(output_text="answer", status="completed", id="r2")
@@ -235,45 +249,6 @@ async def test_consume_stream_raises_without_completed_event() -> None:
         await HostedAgentClient(AsyncMock())._consume_stream(stream, "conv")
 
 
-@pytest.mark.asyncio
-async def test_invoke_recovers_stored_response_after_malformed_sse() -> None:
-    """Malformed SSE after response creation retrieves the stored result."""
-    created = _FakeResponse(output_text="", status="in_progress", id="r1")
-    stored = _FakeResponse(output_text="answer", status="completed", id="r1")
-    client = _mock_client(
-        [_malformed_stream([_FakeEvent("response.created", created)])]
-    )
-    client.responses.retrieve = AsyncMock(return_value=stored)
-
-    with patch(
-        "utils.azure_ai_foundry_agent.asyncio.sleep", new_callable=AsyncMock
-    ):
-        _, out = await HostedAgentClient(client, retry_delay=0).invoke(
-            conversation_items=[],
-            agent_ref={},
-        )
-
-    assert out is stored
-    assert client.responses.create.await_count == 1
-    client.responses.retrieve.assert_awaited_once_with("r1")
-
-
-@pytest.mark.asyncio
-async def test_invoke_retries_when_malformed_sse_has_no_response_id() -> None:
-    """Malformed SSE before response creation retries with a new stream."""
-    good = _FakeResponse(output_text="answer", status="completed", id="r2")
-    client = _mock_client([_malformed_stream([]), _completed_stream(good)])
-
-    _, out = await HostedAgentClient(client, retry_delay=0).invoke(
-        conversation_items=[],
-        agent_ref={},
-    )
-
-    assert out is good
-    assert client.responses.create.await_count == 2
-    client.responses.retrieve.assert_not_awaited()
-
-
 def _api_error(
     error_cls,
     status_code: int,
@@ -311,14 +286,14 @@ async def test_invoke_drops_rejected_session_and_retries_without_it(
     ) as mock_set:
         _, out = await HostedAgentClient(client, retry_delay=0).invoke(
             conversation_items=[],
-            agent_ref={},
+            agent_ref={"name": "azure-mcp-agent"},
             agent_session_id="stale-session",
         )
 
     assert out is good
     assert client.responses.create.await_count == 2
     # The rejected session is cleared so a fresh one is created next time.
-    mock_set.assert_called_once_with(None)
+    mock_set.assert_called_once_with("azure-mcp-agent", None)
     # First attempt carried the stale session; the retry dropped it.
     assert captured_extra_bodies[0].get("agent_session_id") == "stale-session"
     assert "agent_session_id" not in captured_extra_bodies[1]

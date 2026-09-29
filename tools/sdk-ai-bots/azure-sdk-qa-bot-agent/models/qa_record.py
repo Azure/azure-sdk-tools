@@ -10,8 +10,9 @@ A ``QARecord`` is the durable status row for **one conversation thread**
   answer (i.e. a case worth a feedback analysis).
 * **Layer 2 — Evolution lifecycle** (:class:`FeedbackStatus`, embedded in
   :class:`FeedbackState`): tracks analysis, issue remediation, and validation.
-  An issue moves to ``pending_validation``; successful validation moves to
-    ``done`` and any processing or validation error moves to retryable ``failed``.
+    An issue moves to ``pending_validation``; completed validation moves to
+    ``validation_passed``, ``validation_failed``, or terminal
+    ``validation_skipped``; processing errors move to retryable ``failed``.
 
 Partition key is ``/tenant_id`` (matches the episode and conversation
 conventions). The ``id`` is the thread key
@@ -53,8 +54,12 @@ class FeedbackStatus(str, Enum):
     running = "running"
     #: An issue was created; wait for it to close before validating the fix.
     pending_validation = "pending_validation"
-    #: The agent finished and the result was persisted.
-    done = "done"
+    #: Validation completed and confirmed the remediation.
+    validation_passed = "validation_passed"
+    #: Validation completed but rejected the remediation.
+    validation_failed = "validation_failed"
+    #: Validation was not applicable; no further validation is scheduled.
+    validation_skipped = "validation_skipped"
     #: The agent errored, timed out, or the run was cancelled; retry next run.
     failed = "failed"
 
@@ -99,9 +104,14 @@ class QARecord(BaseModel):
     reasoning: str | None = None
     confidence: float | None = None
     has_expert_reply: bool = False
+    # Semantic assessment from the existing evolution agent, NOT the heuristic.
+    # Missing legacy values are unknown; validation never rewrites this history.
+    has_expert_interaction: bool | None = None
+    expert_interaction_reason: str | None = None
     message_count: int = 0
 
     # -- Layer 2: evolution lifecycle -------------------------------------
+    #: No feedback is retained when analysis finishes with a correct answer.
     feedback: FeedbackState | None = None
 
     # -- Bookkeeping ------------------------------------------------------
@@ -134,6 +144,15 @@ class QARecord(BaseModel):
     def from_cosmos(cls, doc: dict[str, Any]) -> "QARecord":
         """Deserialize a Cosmos document, stripping system (``_``) fields."""
         cleaned = {k: v for k, v in doc.items() if not k.startswith("_")}
+        feedback = cleaned.get("feedback")
+        if isinstance(feedback, dict) and feedback.get("status") == "done":
+            # Older records used done for both no-issue analysis and passed
+            # validation. Preserve issue history without retaining that status.
+            cleaned["feedback"] = (
+                {**feedback, "status": FeedbackStatus.validation_passed.value}
+                if feedback.get("issue_url")
+                else None
+            )
         return cls.model_validate(cleaned)
 
 

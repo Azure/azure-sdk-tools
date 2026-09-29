@@ -1,7 +1,7 @@
 # Azure SDK QA Bot Evaluations
 
 Evaluation for the Azure SDK QA bot, built on the **Azure AI Foundry** evaluation
-framework (`azure-ai-projects >= 2.0`, the OpenAI-evals surface).
+framework (`azure-ai-projects >= 2.1`, the OpenAI-evals surface).
 
 We call the bot `/completion` endpoint **concurrently**, collect each answer +
 retrieved context + references, then grade them inline with the Foundry builtin LLM
@@ -84,9 +84,7 @@ contributors don't re-curate the same cases); `evaluation_datasets/basic/`, `eva
 
 ## Part 2 — Running evaluations
 
-We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default
-8), collect each answer + context, then grade them inline. Reads cases from the local
-`evaluation_datasets/<target>/<scenario>.jsonl`.
+We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached results after grading. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
 
 ```bash
 # Concurrent /completion collection + inline grading:
@@ -100,14 +98,11 @@ python evals_run.py \
 python evals_run.py --dataset evaluation_datasets/basic/typespec.jsonl --is_ci False
 ```
 
-Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE`
-or `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py` locally
-(defaults to `http://localhost:8089`). Tenant routing is resolved from
-`BOT_CONFIG_CONTAINER` / `BOT_CONFIG_CHANNEL_BLOB`.
+Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE` or `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py` locally (defaults to `http://localhost:8089`). `AI_FOUNDRY_AGENT_NAME` selects the Hosted Agent whose stored responses are retrieved and defaults to `azure-sdk-chat-agent`. Tenant routing is resolved from `BOT_CONFIG_CONTAINER` / `BOT_CONFIG_CHANNEL_BLOB`.
 
-Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints
-its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON
-under `cache/`.
+Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`.
+
+Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately. A normal response ID can retrieve the original stored response on demand; synthetic IDs such as `content-filter` have no stored response.
 
 ### Evaluators
 

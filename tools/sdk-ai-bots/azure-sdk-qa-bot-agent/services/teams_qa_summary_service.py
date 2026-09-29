@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from azure.cosmos import exceptions
 
 from models.conversation import ConversationDocumentType
-from services.teams_collection_service import (
+from services.conversation_service import (
     channel_partition_prefix,
     root_id_from_partition,
     select_channels,

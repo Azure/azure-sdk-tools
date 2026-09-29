@@ -22,7 +22,12 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from models.bot_config import ChannelConfigResponse
 from models.chat import ChatRequest, ChatResponse
-from models.conversation import ConversationMessage, SaveConversationMessageResponse
+from models.conversation import (
+    ConversationMessage,
+    SaveConversationMessageResponse,
+    TeamsBackfillJob,
+    TeamsBackfillRequest,
+)
 from models.feedback import FeedbackRequest, FeedbackResponse, RootCauseClassification
 from models.intention import IntentionRequest, IntentionResponse
 from models.knowledge_retrieve import KnowledgeRetrieveResponse, KnowledgeRetrieveRequest
@@ -33,18 +38,17 @@ from models.qa_dashboard import (
     QAOverview,
 )
 from models.qa_record import QAStatus
-from models.teams_backfill import TeamsBackfillJob, TeamsBackfillRequest
 from services.bot_config_service import BotConfigService
 from services.chat_service import ChatService
-from services.conversation_service import ConversationService
+from services.conversation_service import (
+    BackfillInProgressError,
+    ConversationService,
+    TeamsBackfillService,
+)
 from services.feedback_service import FeedbackService
 from services.intention_service import IntentionService
 from services.knowledge_service import KnowledgeService
 from services.qa_dashboard_service import QADashboardService
-from services.teams_backfill_service import (
-    BackfillInProgressError,
-    TeamsBackfillService,
-)
 from services.thread_memory_service import ThreadMemoryService
 from utils.azure_ai_foundry import close_clients
 from utils.azure_cosmosdb import close_cosmos_client

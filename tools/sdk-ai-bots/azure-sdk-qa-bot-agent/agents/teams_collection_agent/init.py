@@ -23,7 +23,7 @@ if str(PROJECT) not in sys.path:
     sys.path.insert(0, str(PROJECT))
 
 from config import app_config
-from services.teams_collection_service import validate_channels
+from services.conversation_service import validate_channels
 from services.teams_operations import operation_input, parse_operation
 from services.teams_qa_summary_service import summarize_configured_channels
 from services.teams_thread_processor import TeamsThreadProcessor

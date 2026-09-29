@@ -32,7 +32,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 if str(PROJECT) not in sys.path:
     sys.path.insert(0, str(PROJECT))
 
-from services.teams_collection_service import validate_channels
+from services.conversation_service import validate_channels
 from services.teams_operations import SUMMARIZE, operation_input
 
 AGENT_NAME = "azure-sdk-teams-collection-agent"

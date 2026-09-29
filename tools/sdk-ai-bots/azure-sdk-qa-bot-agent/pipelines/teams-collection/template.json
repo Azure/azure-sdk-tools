@@ -7,6 +7,7 @@
     "teamsConnectionResourceId": { "type": "string" },
     "tenantId": { "type": "string" },
     "collectorPrincipalId": { "type": "string" },
+    "backfillPrincipalId": { "type": "string" },
     "allowedChannels": { "type": "array", "minLength": 1 },
     "cosmosAccountName": { "type": "string" }
   },
@@ -46,12 +47,12 @@
             "sasAuthenticationPolicy": { "state": "Disabled" },
             "openAuthenticationPolicies": {
               "policies": {
-                "collector": {
+                "backfill": {
                   "type": "AAD",
                   "claims": [
                     { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
                     { "name": "aud", "value": "https://management.core.windows.net" },
-                    { "name": "oid", "value": "[parameters('collectorPrincipalId')]" }
+                    { "name": "oid", "value": "[parameters('backfillPrincipalId')]" }
                   ]
                 }
               }
@@ -263,7 +264,7 @@
       "apiVersion": "2024-05-15",
       "name": "[concat(parameters('cosmosAccountName'), '/', guid(variables('cosmosAccountResourceId'), parameters('collectorPrincipalId'), 'teams-collection-messages'))]",
       "properties": {
-        "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosAccountName'), '00000000-0000-0000-0000-000000000002')]",
+        "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosAccountName'), '00000000-0000-0000-0000-000000000001')]",
         "principalId": "[parameters('collectorPrincipalId')]",
         "scope": "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/conversation-messages')]"
       }

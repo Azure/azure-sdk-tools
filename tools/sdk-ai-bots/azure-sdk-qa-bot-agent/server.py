@@ -33,6 +33,7 @@ from models.qa_dashboard import (
     QAOverview,
 )
 from models.qa_record import QAStatus
+from models.teams_backfill import TeamsBackfillJob, TeamsBackfillRequest
 from services.bot_config_service import BotConfigService
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
@@ -40,6 +41,10 @@ from services.feedback_service import FeedbackService
 from services.intention_service import IntentionService
 from services.knowledge_service import KnowledgeService
 from services.qa_dashboard_service import QADashboardService
+from services.teams_backfill_service import (
+    BackfillInProgressError,
+    TeamsBackfillService,
+)
 from services.thread_memory_service import ThreadMemoryService
 from utils.azure_ai_foundry import close_clients
 from utils.azure_cosmosdb import close_cosmos_client
@@ -152,6 +157,7 @@ _feedback_service = FeedbackService()
 _intention_service = IntentionService()
 _knowledge_service = KnowledgeService()
 _qa_dashboard_service = QADashboardService()
+_teams_backfill_service = TeamsBackfillService()
 _thread_memory_service = ThreadMemoryService()
 _QA_DASHBOARD_PATH = Path(__file__).parent / "static" / "qa_records_dashboard.html"
 
@@ -317,6 +323,38 @@ async def save_conversation(req: ConversationMessage):
         asyncio.create_task(_update_thread_memory(req))
     )
     return SaveConversationMessageResponse()
+
+
+@app.post("/teams/backfill", response_model=TeamsBackfillJob, status_code=202)
+async def start_teams_backfill(req: TeamsBackfillRequest) -> TeamsBackfillJob:
+    """Import historical posts from the configured Teams channels.
+
+    A full channel takes far longer than this request may wait, so the run is
+    accepted here and reported through ``/teams/backfill/{job_id}``.
+    """
+    logger.info(
+        "Teams backfill request: channel=%s, start_time=%s",
+        req.channel_id,
+        req.start_time,
+    )
+    try:
+        job = await _teams_backfill_service.start(req)
+    except BackfillInProgressError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    logger.info("Teams backfill accepted: job=%s", job.job_id)
+    return job
+
+
+@app.get("/teams/backfill/{job_id}", response_model=TeamsBackfillJob)
+async def get_teams_backfill(job_id: str) -> TeamsBackfillJob:
+    """Report how a previously accepted backfill run is doing."""
+    job = _teams_backfill_service.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Teams backfill job not found")
+    return job
+
 
 @app.post("/knowledge/retrieve", response_model=KnowledgeRetrieveResponse)
 async def retrieve_knowledge(req: KnowledgeRetrieveRequest):

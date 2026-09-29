@@ -3,7 +3,8 @@
 #
 # The teams-collection workflow needs the collection agent's principal ID, so
 # deploy that agent through agent-cd.yml (agentName: teams_collection_agent)
-# before running this pipeline for it.
+# before running this pipeline for it. It also reads the backend server's
+# identity from $(APP_NAME), because backfill runs there rather than in the agent.
 
 name: Deploy Azure SDK QA Bot Logic App
 
@@ -127,12 +128,33 @@ extends:
                       python -m pip config set global.index-url "$PIP_INDEX_URL"
                       pip install -r requirements.txt --retries 5 --timeout 60
 
+                      # Backfill runs on the backend server, so the Logic App
+                      # admits that App Service identity and nothing else.
+                      CLIENT_ID=$(az webapp config appsettings list \
+                        --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" \
+                        --query "[?name=='AZURE_CLIENT_ID'].value | [0]" -o tsv)
+                      if [ -n "$CLIENT_ID" ]; then
+                        BACKFILL_PRINCIPAL_ID=$(az webapp identity show \
+                          --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" \
+                          --query "values(userAssignedIdentities)[?clientId=='$CLIENT_ID'].principalId | [0]" \
+                          -o tsv)
+                      else
+                        BACKFILL_PRINCIPAL_ID=$(az webapp identity show \
+                          --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" \
+                          --query principalId -o tsv)
+                      fi
+                      if [ -z "$BACKFILL_PRINCIPAL_ID" ]; then
+                        echo "Could not resolve the backend server identity for $(APP_NAME)."
+                        exit 1
+                      fi
+
                       # Resolves the collection agent's principal ID, so that agent
                       # must already be deployed through agent-cd.yml.
                       python scripts/deploy_teams_collection.py deploy \
                         --environment "${{ parameters.environment }}" \
                         --resource-group "$(RESOURCE_GROUP)" \
-                        --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
+                        --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)" \
+                        --backfill-principal-id "$BACKFILL_PRINCIPAL_ID"
                   env:
                     AZURE_CORE_WELCOME_MESSAGE: 'false'
                     AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

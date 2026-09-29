@@ -2,19 +2,17 @@
 
 The hosted agent dispatches on this parsed request instead of interpreting free
 text, so an unrecognized payload is rejected rather than silently running a
-different operation.
+different operation. Summarization is the only operation the agent hosts;
+backfill is an endpoint on the backend server because it never calls a model.
 """
 
 from __future__ import annotations
 
 import json
 
-from services.teams_collection_service import parse_timestamp
-
-BACKFILL = "backfill"
 SUMMARIZE = "summarize"
-OPERATIONS = (BACKFILL, SUMMARIZE)
-REQUEST_FIELDS = ("channelId", "operation", "startTime")
+OPERATIONS = (SUMMARIZE,)
+REQUEST_FIELDS = ("channelId", "operation")
 
 
 def parse_operation(requested) -> dict:
@@ -37,12 +35,6 @@ def parse_operation(requested) -> dict:
         if not isinstance(channel_id, str) or not channel_id.strip():
             raise ValueError("channelId must be a nonempty string.")
         request["channelId"] = channel_id
-    start_time = value.get("startTime")
-    if start_time is not None:
-        if operation != BACKFILL:
-            raise ValueError("startTime applies only to backfill.")
-        parse_timestamp(start_time, "startTime")
-        request["startTime"] = start_time
     return request
 
 

@@ -1,4 +1,9 @@
-"""Hosted Teams agent: one-off history backfill and scheduled Q&A summarization."""
+"""Hosted Teams agent: scheduled Q&A summarization of stored channel threads.
+
+Importing the threads is not hosted here. Backfill never calls a model, so the
+backend server exposes it as an endpoint and this agent only reads what that
+import already stored.
+"""
 
 import asyncio
 import json
@@ -18,8 +23,8 @@ if str(PROJECT) not in sys.path:
     sys.path.insert(0, str(PROJECT))
 
 from config import app_config
-from services.teams_collection_service import backfill_configured_channels, validate_channels
-from services.teams_operations import BACKFILL, SUMMARIZE, operation_input, parse_operation
+from services.teams_collection_service import validate_channels
+from services.teams_operations import operation_input, parse_operation
 from services.teams_qa_summary_service import summarize_configured_channels
 from services.teams_thread_processor import TeamsThreadProcessor
 from tools.web_tools import WebTools
@@ -84,9 +89,9 @@ def create_server(agent):
 
 
 class TeamsCollectionAgent(BaseAgent):
-    def __init__(self, backfill, summarize):
+    def __init__(self, summarize):
         super().__init__(name="azure-sdk-teams-collection-agent")
-        self._operations = {BACKFILL: backfill, SUMMARIZE: summarize}
+        self._summarize = summarize
         self._lock = asyncio.Lock()
 
     def run(self, messages=None, *, stream=False, **kwargs):
@@ -107,10 +112,10 @@ class TeamsCollectionAgent(BaseAgent):
 
     async def _run(self, request):
         if self._lock.locked():
-            raise RuntimeError("A Teams archive operation is already running in this agent instance.")
+            raise RuntimeError("A Teams summarization run is already active in this agent instance.")
         async with self._lock:
             try:
-                result = await self._operations[request["operation"]](request)
+                result = await self._summarize(request)
             except Exception:
                 logger.exception("Teams %s operation failed.", request["operation"])
                 raise RuntimeError(
@@ -164,9 +169,6 @@ async def main():
     validate_channels(config["channels"])
     processor = create_thread_processor(config)
     agent = TeamsCollectionAgent(
-        lambda request: backfill_configured_channels(
-            config, app_config.get, request.get("channelId"), request.get("startTime"),
-        ),
         lambda request: summarize_configured_channels(
             config, processor, request.get("channelId"),
         ),

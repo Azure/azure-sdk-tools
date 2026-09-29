@@ -427,8 +427,8 @@ class LogicAppPageClient:
         for attempt in range(4):
             try:
                 response = await self._client.post(
-                    self._url, json=payload, headers={"Authorization": f"******"},
-                    follow_redirects=False, timeout=180,
+                    self._url, json=payload, follow_redirects=False, timeout=180,
+                    headers={"Authorization": f"Bearer {token.token}"},
                 )
             except httpx.RequestError:
                 if attempt == 3:

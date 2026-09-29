@@ -5,7 +5,7 @@ import sys
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -255,6 +255,96 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "allowlist"):
             select_channels(channels, "19:unknown@thread.tacv2")
 
+    async def _settled_backfill(self, service, job_id):
+        from models.teams_backfill import TeamsBackfillStatus
+
+        for _ in range(500):
+            job = service.get(job_id)
+            if job is None or job.status is not TeamsBackfillStatus.running:
+                return job
+            await asyncio.sleep(0.01)
+        raise AssertionError("Backfill job never left the running state.")
+
+    async def test_server_accepts_one_backfill_at_a_time_and_reports_its_outcome(self):
+        import httpx
+        import server
+        from services.teams_backfill_service import TeamsBackfillService
+
+        release = asyncio.Event()
+        entered = asyncio.Event()
+        calls = []
+
+        async def runner(config, settings, channel_id, start_time):
+            calls.append((config, settings, channel_id, start_time))
+            entered.set()
+            await release.wait()
+            return {"messagesCreated": 3}
+
+        config_path = (
+            Path(__file__).resolve().parents[1] / "config/teams_collection_config.json"
+        )
+        channel = json.loads(config_path.read_text())["channels"][0]["channelId"]
+        service = TeamsBackfillService(config_path, runner)
+        with patch.object(server, "_teams_backfill_service", service):
+            transport = httpx.ASGITransport(app=server.app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+                accepted = await client.post(
+                    "/teams/backfill",
+                    json={"channel_id": channel, "start_time": "2026-01-01T00:00:00Z"},
+                )
+                self.assertEqual(accepted.status_code, 202, accepted.text)
+                job_id = accepted.json()["job_id"]
+                self.assertEqual(accepted.json()["status"], "running")
+                self.assertIsNone(accepted.json()["summary"])
+                await asyncio.wait_for(entered.wait(), 5)
+
+                busy = await client.post("/teams/backfill", json={})
+                self.assertEqual(busy.status_code, 409)
+
+                release.set()
+                job = await self._settled_backfill(service, job_id)
+                self.assertEqual(job.status.value, "succeeded")
+                finished = await client.get("/teams/backfill/" + job_id)
+                self.assertEqual(finished.status_code, 200)
+                self.assertEqual(finished.json()["summary"], {"messagesCreated": 3})
+                self.assertIsNone(finished.json()["error"])
+                self.assertIsNotNone(finished.json()["completed_at"])
+
+                self.assertEqual(
+                    (await client.get("/teams/backfill/missing-job")).status_code, 404)
+                for payload in ({"channel_id": "19:unknown@thread.tacv2"},
+                                {"start_time": "2026-01-01"}):
+                    with self.subTest(payload=payload):
+                        rejected = await client.post("/teams/backfill", json=payload)
+                        self.assertEqual(rejected.status_code, 422, rejected.text)
+
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][2:], (channel, "2026-01-01T00:00:00Z"))
+        self.assertEqual(calls[0][0]["channels"][0]["channelId"], channel)
+
+    async def test_backfill_job_reports_failure_without_echoing_raw_error_content(self):
+        from models.teams_backfill import TeamsBackfillRequest
+        from services.teams_backfill_service import TeamsBackfillService
+
+        config_path = (
+            Path(__file__).resolve().parents[1] / "config/teams_collection_config.json"
+        )
+        service = TeamsBackfillService(
+            config_path, AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
+        )
+        with self.assertLogs("services.teams_backfill_service", level="ERROR"):
+            accepted = await service.start(TeamsBackfillRequest())
+            job = await self._settled_backfill(service, accepted.job_id)
+            self.assertEqual(job.status.value, "failed")
+            self.assertNotIn("DO_NOT_LOG", job.error)
+            self.assertIsNotNone(job.completed_at)
+            # A failed run releases the single-flight guard for the next one.
+            retried = await service.start(TeamsBackfillRequest())
+            self.assertEqual(retried.status.value, "running")
+            self.assertEqual(
+                (await self._settled_backfill(service, retried.job_id)).status.value, "failed"
+            )
+
     async def test_cli_dispatches_remote_routine_and_closes_credential(self):
         from types import SimpleNamespace
         from scripts.deploy_teams_collection import execute_routine
@@ -287,17 +377,17 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(dispatch.call_args.args[:3], (config, "routine-dispatch", endpoint))
             close_credential.assert_awaited_once()
 
-    async def test_backfill_failure_propagates_without_raw_error_content(self):
+    async def test_summarize_failure_propagates_without_raw_error_content(self):
         from agents.teams_collection_agent.init import TeamsCollectionAgent
 
-        backfill = AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
-        agent = TeamsCollectionAgent(backfill, AsyncMock())
+        summarize = AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
+        agent = TeamsCollectionAgent(summarize)
         with self.assertRaises(RuntimeError) as failure, self.assertLogs(
             "agents.teams_collection_agent.init", level="ERROR"
         ):
-            await agent.run('{"operation": "backfill"}')
+            await agent.run('{"operation": "summarize"}')
         self.assertNotIn("DO_NOT_LOG", str(failure.exception))
-        self.assertIn("backfill", str(failure.exception))
+        self.assertIn("summarize", str(failure.exception))
 
     async def test_hosted_http_returns_before_work_and_exposes_final_response(self):
         import httpx
@@ -311,7 +401,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             completed.set()
             return {"threadsSummarized": 2}
 
-        server = create_server(TeamsCollectionAgent(AsyncMock(), summarize))
+        server = create_server(TeamsCollectionAgent(summarize))
         async with server.router.lifespan_context(server):
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server), base_url="http://test") as client:
                 try:
@@ -334,24 +424,23 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(json.loads(final.json()["output"][0]["content"][0]["text"]),
                              {"threadsSummarized": 2})
 
-    async def test_hosted_agent_dispatches_backfill_and_summarize_requests(self):
+    async def test_hosted_agent_only_dispatches_summarize_requests(self):
         from agents.teams_collection_agent.init import TeamsCollectionAgent
         from agent_framework_foundry_hosting import ResponsesHostServer
 
-        backfill = AsyncMock(return_value={"messagesCreated": 2})
         summarize = AsyncMock(return_value={"threadsSummarized": 4})
-        agent = TeamsCollectionAgent(backfill, summarize)
+        agent = TeamsCollectionAgent(summarize)
 
         response = await agent.run('{"operation": "summarize"}')
         self.assertEqual(json.loads(response.text), {"threadsSummarized": 4})
         updates = [update async for update in agent.run(
-            '{"operation": "backfill", "channelId": "19:test@thread.tacv2",'
-            ' "startTime": "2026-01-01T00:00:00Z"}', stream=True)]
-        self.assertEqual(json.loads(updates[0].text), {"messagesCreated": 2})
-        self.assertEqual(backfill.await_args.args[0], {
-            "operation": "backfill", "channelId": "19:test@thread.tacv2",
-            "startTime": "2026-01-01T00:00:00Z"})
-        summarize.assert_awaited_once()
+            '{"operation": "summarize", "channelId": "19:test@thread.tacv2"}', stream=True)]
+        self.assertEqual(json.loads(updates[0].text), {"threadsSummarized": 4})
+        self.assertEqual(summarize.await_args.args[0], {
+            "operation": "summarize", "channelId": "19:test@thread.tacv2"})
+        with self.assertRaisesRegex(ValueError, "summarize"):
+            await agent.run('{"operation": "backfill"}')
+        self.assertEqual(summarize.await_count, 2)
         self.assertIsNotNone(ResponsesHostServer(agent))
 
     def test_operation_requests_reject_free_text_and_unknown_fields(self):
@@ -359,14 +448,14 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(parse_operation({"operation": "summarize"}), {"operation": "summarize"})
         self.assertEqual(
-            operation_input({"startTime": "2026-01-01T00:00:00Z", "operation": "backfill"}),
-            '{"operation":"backfill","startTime":"2026-01-01T00:00:00Z"}',
+            operation_input({"channelId": "19:test@thread.tacv2", "operation": "summarize"}),
+            '{"channelId":"19:test@thread.tacv2","operation":"summarize"}',
         )
         for value in (None, "", "collect", "[]", {"operation": "delete"},
+                      {"operation": "backfill"},
                       {"operation": "summarize", "startTime": "2026-01-01T00:00:00Z"},
-                      {"operation": "backfill", "startTime": "2026-01-01"},
-                      {"operation": "backfill", "channelId": " "},
-                      {"operation": "backfill", "unexpected": 1}):
+                      {"operation": "summarize", "channelId": " "},
+                      {"operation": "summarize", "unexpected": 1}):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 parse_operation(value)
 
@@ -410,88 +499,29 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "different agent"):
             await routine_request(config, "routine-enable", endpoint, credential, client)
 
-    async def test_backfill_invokes_the_agent_responses_api_instead_of_a_routine(self):
-        from types import SimpleNamespace
-        from scripts.deploy_teams_collection import execute_backfill
+    def test_cli_no_longer_exposes_backfill_and_rejects_untrusted_endpoints(self):
+        import scripts.deploy_teams_collection as cli
 
-        endpoint = "https://account.services.ai.azure.com/api/projects/project"
-        channel = "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype"
-        project = MagicMock()
-        project.__enter__.return_value = project
-        project.agents.get.return_value = SimpleNamespace(
-            name="azure-sdk-teams-collection-agent", version="7"
-        )
-        responses = project.get_openai_client.return_value.__enter__.return_value.responses
-        responses.create.return_value = SimpleNamespace(
-            id="resp_1", status="queued", error=None, output_text=None
-        )
-        responses.retrieve.return_value = SimpleNamespace(
-            id="resp_1", status="completed", error=None,
-            output_text='{"messagesCreated": 19}',
-        )
-        arguments = SimpleNamespace(
-            command="backfill",
-            project_endpoint=endpoint,
-            appconfig_endpoint=None,
-            channel=channel,
-            start_time="2026-01-01T00:00:00Z",
-            response_id=None,
-        )
-        with patch("scripts.deploy_teams_collection.AIProjectClient", return_value=project), \
-                patch("scripts.deploy_teams_collection.AzureCliCredential") as credential, \
-                patch("config.app_config.init", new=AsyncMock()) as initialize, \
-                patch("utils.azure_credential.close_credential", new=AsyncMock()):
-            started = await execute_backfill(arguments)
-            status = await execute_backfill(SimpleNamespace(
-                **{**vars(arguments), "command": "backfill-status", "response_id": "resp_1"}
-            ))
-
-        initialize.assert_not_awaited()
-        self.assertEqual(started, {"responseId": "resp_1", "status": "queued"})
-        self.assertEqual(status, {"responseId": "resp_1", "status": "completed",
-                                  "result": {"messagesCreated": 19}})
-        create = responses.create
-        self.assertEqual(json.loads(create.call_args.kwargs["input"]), {
-            "operation": "backfill", "channelId": channel,
-            "startTime": "2026-01-01T00:00:00Z"})
-        self.assertTrue(create.call_args.kwargs["store"])
-        self.assertFalse(create.call_args.kwargs["stream"])
-        self.assertEqual(create.call_args.kwargs["extra_body"], {"agent_reference": {
-            "type": "agent_reference", "name": "azure-sdk-teams-collection-agent",
-            "version": "7"}})
-        self.assertEqual(project.__exit__.call_count, 2)
-        self.assertEqual(project.get_openai_client.return_value.__exit__.call_count, 2)
-        self.assertEqual(credential.return_value.__exit__.call_count, 2)
-
-    def test_backfill_status_reports_failures_without_echoing_raw_content(self):
-        from types import SimpleNamespace
-        from scripts.deploy_teams_collection import _response_result
-
-        failed = _response_result(SimpleNamespace(
-            id="resp_2", status="failed", output_text="",
-            error=SimpleNamespace(code="server_error", message="backfill failed"),
-        ))
-        self.assertEqual(failed, {"responseId": "resp_2", "status": "failed",
-                                  "error": {"code": "server_error",
-                                            "message": "backfill failed"}})
-        self.assertNotIn("result", failed)
-        unspecified = _response_result(SimpleNamespace(
-            id="resp_3", status="failed", output_text=None,
-            error=SimpleNamespace(code=None, message=None),
-        ))
-        self.assertEqual(unspecified["error"],
-                         {"message": "The agent reported an unspecified failure."})
-
-    async def test_backfill_rejects_an_untrusted_project_endpoint(self):
-        from scripts.deploy_teams_collection import start_backfill
-
+        for removed in ("start_backfill", "backfill_status", "execute_backfill",
+                        "_agent_responses", "_response_result"):
+            with self.subTest(removed=removed):
+                self.assertFalse(hasattr(cli, removed))
         for endpoint in ("http://account.services.ai.azure.com/api/projects/project",
                          "https://account.example.com/api/projects/project",
                          "https://account.services.ai.azure.com/api/projects/project/routines"):
             with self.subTest(endpoint=endpoint), self.assertRaisesRegex(
                 ValueError, "Foundry project endpoint"
             ):
-                start_backfill(endpoint)
+                cli._validate_project_endpoint(endpoint)
+        self.assertEqual(
+            cli._principal_id("F8EC2208-D3C9-4271-B787-07C26651E1C6", "--backfill-principal-id"),
+            "f8ec2208-d3c9-4271-b787-07c26651e1c6",
+        )
+        for value in (None, "", "not-a-guid"):
+            with self.subTest(value=value), self.assertRaisesRegex(
+                ValueError, "--backfill-principal-id"
+            ):
+                cli._principal_id(value, "--backfill-principal-id")
 
     def test_template_enforces_identity_channel_allowlist_and_read_only_actions(self):
         project = Path(__file__).resolve().parents[1]
@@ -504,13 +534,15 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(container["properties"]["resource"]["partitionKey"]["paths"], ["/channel_id"])
         access = workflow["properties"]["accessControl"]["triggers"]
         self.assertEqual(access["sasAuthenticationPolicy"]["state"], "Disabled")
-        self.assertEqual({claim["name"] for claim in access["openAuthenticationPolicies"]["policies"]["collector"]["claims"]},
+        policies = access["openAuthenticationPolicies"]["policies"]
+        self.assertEqual(list(policies), ["backfill"])
+        self.assertEqual({claim["name"] for claim in policies["backfill"]["claims"]},
                          {"iss", "aud", "oid"})
         claims = {
-            claim["name"]: claim["value"]
-            for claim in access["openAuthenticationPolicies"]["policies"]["collector"]["claims"]
+            claim["name"]: claim["value"] for claim in policies["backfill"]["claims"]
         }
         self.assertEqual(claims["aud"], "https://management.core.windows.net")
+        self.assertEqual(claims["oid"], "[parameters('backfillPrincipalId')]")
         definition = workflow["properties"]["definition"]
         self.assertEqual(list(definition["triggers"]), ["manual"])
         self.assertEqual(definition["triggers"]["manual"]["operationOptions"], "EnableSchemaValidation")
@@ -573,6 +605,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(parameters["allowedChannels"]["value"], allowed_channels)
                 self.assertEqual(parameters["cosmosAccountName"]["value"], cosmos_account)
                 self.assertNotIn("collectorPrincipalId", parameters)
+                self.assertNotIn("backfillPrincipalId", parameters)
 
     def test_template_grants_metadata_message_and_summary_data_access(self):
         project = Path(__file__).resolve().parents[1]
@@ -595,9 +628,11 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                          "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/teams-qa-summaries')]")
         self.assertEqual(messages["properties"]["scope"],
                          "[concat(variables('cosmosAccountResourceId'), '/dbs/azure-sdk-qa-bot/colls/conversation-messages')]")
-        for assignment in (summaries, messages):
-            self.assertIn("00000000-0000-0000-0000-000000000002",
-                          assignment["properties"]["roleDefinitionId"])
+        self.assertIn("00000000-0000-0000-0000-000000000002",
+                      summaries["properties"]["roleDefinitionId"])
+        # Backfill moved to the backend server, so the agent only reads messages.
+        self.assertIn("00000000-0000-0000-0000-000000000001",
+                      messages["properties"]["roleDefinitionId"])
         for assignment in assignments:
             self.assertEqual(assignment["properties"]["principalId"], "[parameters('collectorPrincipalId')]")
             self.assertIn("guid(", assignment["name"])
@@ -1024,6 +1059,10 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             "teamId": CHANNEL["teamId"], "channelId": CHANNEL["channelId"],
             "operation": "replies", "messageId": "root", "skipToken": "continuation"})
         self.assertFalse(client.post.call_args.kwargs["follow_redirects"])
+        credential.get_token.assert_awaited_with(
+            "https://management.core.windows.net/.default")
+        self.assertEqual(
+            client.post.call_args.kwargs["headers"], {"Authorization": "Bearer secret"})
         with self.assertRaises(ValueError):
             await pages.fetch_page({**CHANNEL, "channelId": "unapproved"}, None, None)
         with self.assertRaises(ValueError):

@@ -302,6 +302,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public async Task GetReleasePlanForWorkItemAsync_ReadsParentPinAndChildVersionWithoutWriting(string? commitSha)
         {
             var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Rev = 1;
             plan.Fields["Custom.APISpecversion"] = "not-the-child-version";
             plan.Fields["Custom.ActiveSpecPullRequestUrl"] = "not-the-child-pr";
             if (commitSha != null)
@@ -325,15 +326,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(output, Does.Contain($"Spec commit SHA: {commitSha}"));
         }
 
-        [TestCase("", false)]
-        [TestCase("ffffffffffffffffffffffffffffffffffffffff", false)]
-        [TestCase(null, false)]
-        [TestCase(null, true)]
-        public async Task GetReleasePlanForWorkItemAsync_ChangedOrUnreadableParentClearsResponsePin(string? latestPin, bool readFails)
+        [TestCase("", false, 1)]
+        [TestCase("ffffffffffffffffffffffffffffffffffffffff", false, 1)]
+        [TestCase(null, false, 1)]
+        [TestCase(null, true, 1)]
+        [TestCase(PinnedSpecCommit, false, 3)]
+        public async Task GetReleasePlanForWorkItemAsync_ChangedOrUnreadableParentClearsResponsePin(string? latestPin, bool readFails, int latestRevision)
         {
             var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Rev = 1;
             plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = PinnedSpecCommit;
+            plan.Fields["Custom.SDKtypetobereleased"] = "beta";
             var latestParent = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            // Clearing and republishing the same SHA still changes the parent revision.
+            latestParent.Rev = latestRevision;
+            latestParent.Fields["Custom.SDKtypetobereleased"] = "stable";
             if (latestPin != null)
             {
                 latestParent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = latestPin;
@@ -358,6 +365,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             Assert.That(result.SpecCommitSHA, Is.Empty);
             Assert.That(result.SpecAPIVersion, Is.EqualTo("2024-01-01"));
+            Assert.That(result.SDKReleaseType, Is.EqualTo("beta"), "The old parent metadata must not be returned with a runnable pin after an intervening write.");
             Assert.That(plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(PinnedSpecCommit));
             client.Verify(x => x.GetWorkItemAsync(100, null, null, It.IsAny<WorkItemExpand?>(), null, CancellationToken.None), Times.Exactly(3));
             client.Verify(x => x.GetWorkItemAsync(200, null, null, null, null, CancellationToken.None), Times.Once);

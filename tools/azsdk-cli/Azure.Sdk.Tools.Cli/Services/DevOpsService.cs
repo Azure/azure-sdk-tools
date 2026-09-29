@@ -468,9 +468,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
                     if (!string.IsNullOrEmpty(releasePlan.SpecCommitSHA))
                     {
-                        // Do not combine an old parent pin with a concurrently updated child target.
+                        // The revision also detects clearing and republishing the same SHA.
                         var currentParent = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlan.WorkItemId, cancellationToken: ct);
                         if (currentParent?.Fields == null ||
+                            currentParent.Rev != workItem.Rev ||
                             !currentParent.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var currentPin) ||
                             !string.Equals(currentPin?.ToString(), releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
                         {

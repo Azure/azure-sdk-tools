@@ -35,6 +35,7 @@ _ALLOWED_OUTCOMES = {
             ChatbotEvolutionAgentOutcome.conversation_ongoing,
             ChatbotEvolutionAgentOutcome.no_issue,
             ChatbotEvolutionAgentOutcome.issue_created,
+            ChatbotEvolutionAgentOutcome.issue_reused,
             ChatbotEvolutionAgentOutcome.remediation_failed,
             ChatbotEvolutionAgentOutcome.processing_failed,
         }
@@ -253,11 +254,16 @@ class ChatbotEvolutionAgentService:
                 record.feedback = None
                 return
 
-            if result.outcome == ChatbotEvolutionAgentOutcome.issue_created:
+            if result.outcome in (
+                ChatbotEvolutionAgentOutcome.issue_created,
+                ChatbotEvolutionAgentOutcome.issue_reused,
+            ):
+                assert result.issue_url is not None
                 record.qa_status = QAStatus.failed
                 record.verdict = BotAnswerVerdict.Incorrect
                 record.feedback.status = FeedbackStatus.pending_validation
                 record.feedback.issue_url = result.issue_url
+                record.feedback.copilot_assigned = result.copilot_assigned
                 record.feedback.classification = result.classification
                 return
 

@@ -89,11 +89,15 @@ def _record(
 def _result(
     outcome: ChatbotEvolutionAgentOutcome,
 ) -> ChatbotEvolutionAgentResult:
-    if outcome == ChatbotEvolutionAgentOutcome.issue_created:
+    if outcome in (
+        ChatbotEvolutionAgentOutcome.issue_created,
+        ChatbotEvolutionAgentOutcome.issue_reused,
+    ):
         return ChatbotEvolutionAgentResult(
             outcome=outcome,
             classification=RootCauseClassification.retrieval_mismatch,
             issue_url="https://github.com/Azure/azure-sdk-pr/issues/123",
+            copilot_assigned=True,
             reasoning="Grounded result.",
             confidence=0.9,
         )
@@ -195,6 +199,18 @@ def test_validation_input_requires_issue() -> None:
         )
 
 
+def test_validation_input_accepts_ado_work_item() -> None:
+    payload = ChatbotEvolutionAgentInput(
+        conversation_id=_CONVERSATION_ID,
+        conversation_type=ConversationType.teams_channel,
+        evaluation_time=_BASE_TIME,
+        mode=ChatbotEvolutionAgentMode.validation,
+        issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+    )
+
+    assert payload.issue_url.endswith("/456")
+
+
 def test_evolution_input_requires_timezone_aware_evaluation_time() -> None:
     with pytest.raises(ValidationError, match="UTC offset"):
         ChatbotEvolutionAgentInput(
@@ -284,6 +300,66 @@ def test_issue_result_waits_for_validation() -> None:
     assert record.feedback.issue_url == (
         "https://github.com/Azure/azure-sdk-pr/issues/123"
     )
+    assert record.feedback.copilot_assigned is True
+
+
+def test_ado_issue_result_skips_copilot_assignment() -> None:
+    record = _record()
+    result = ChatbotEvolutionAgentResult(
+        outcome=ChatbotEvolutionAgentOutcome.issue_created,
+        classification=RootCauseClassification.missing_content,
+        issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+        copilot_assigned=False,
+        reasoning="Grounded result.",
+        confidence=0.9,
+    )
+
+    ChatbotEvolutionAgentService()._apply_result(record, result)
+
+    assert record.feedback is not None
+    assert record.feedback.status == FeedbackStatus.pending_validation
+    assert record.feedback.copilot_assigned is False
+
+
+def test_github_issue_result_can_skip_copilot_assignment() -> None:
+    record = _record()
+    result = ChatbotEvolutionAgentResult(
+        outcome=ChatbotEvolutionAgentOutcome.issue_created,
+        classification=RootCauseClassification.missing_content,
+        issue_url="https://github.com/Azure/azure-sdk-for-java/issues/456",
+        copilot_assigned=False,
+        reasoning="The source does not support Copilot assignment.",
+        confidence=0.9,
+    )
+
+    ChatbotEvolutionAgentService()._apply_result(record, result)
+
+    assert record.feedback is not None
+    assert record.feedback.copilot_assigned is False
+
+
+def test_ado_issue_result_rejects_copilot_assignment() -> None:
+    with pytest.raises(ValidationError):
+        ChatbotEvolutionAgentResult(
+            outcome=ChatbotEvolutionAgentOutcome.issue_created,
+            classification=RootCauseClassification.missing_content,
+            issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+            copilot_assigned=True,
+            reasoning="Invalid assignment.",
+            confidence=0.9,
+        )
+
+
+def test_reused_issue_waits_for_validation() -> None:
+    record = _record()
+
+    ChatbotEvolutionAgentService()._apply_result(
+        record,
+        _result(ChatbotEvolutionAgentOutcome.issue_reused),
+    )
+
+    assert record.feedback is not None
+    assert record.feedback.status == FeedbackStatus.pending_validation
 
 
 def test_processing_failure_marks_assessment_failed() -> None:

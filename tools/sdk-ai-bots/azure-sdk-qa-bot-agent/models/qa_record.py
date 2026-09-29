@@ -72,6 +72,7 @@ class FeedbackState(BaseModel):
     #: ``None`` while healthy.
     error: str | None = None
     issue_url: str | None = None
+    copilot_assigned: bool | None = None
     classification: RootCauseClassification | None = None
     validation_reasoning: str | None = None
     validated_at: datetime | None = None

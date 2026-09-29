@@ -30,7 +30,7 @@ from tools.knowledge_tools import KnowledgeTools
 import utils.azure_ai_search as azure_ai_search_module
 from utils.azure_ai_search import SearchClient, _raw_chunk_filter
 from utils.azure_storage import BlobContent
-from utils.knowledge_config import KbTarget, _build_targets
+from utils.knowledge_config import KbIssueTarget, KbTarget, _build_targets
 
 
 def test_raw_chunk_filter_excludes_wiki_pages() -> None:
@@ -84,7 +84,21 @@ async def test_resolve_kb_source_rejects_unknown_source(monkeypatch) -> None:
     result = await KnowledgeTools().resolve_kb_source(folder="static_unknown")
 
     assert result.resolved is False
-    assert result.reason == "folder_unmapped_or_non_github"
+    assert result.reason == "folder_unmapped"
+
+
+@pytest.mark.asyncio
+async def test_resolve_kb_source_reports_configuration_failure(monkeypatch) -> None:
+    monkeypatch.setattr(
+        knowledge_tools_module,
+        "get_kb_targets",
+        AsyncMock(side_effect=ValueError("invalid issue tracker")),
+    )
+
+    result = await KnowledgeTools().resolve_kb_source(folder="typespec_docs")
+
+    assert result.resolved is False
+    assert result.reason == "configuration_unavailable"
 
 
 @pytest.mark.asyncio
@@ -109,6 +123,10 @@ def test_build_targets_preserves_duplicate_folder_paths() -> None:
                     "repository": {
                         "url": "https://github.com/Azure/azure-sdk-for-net.git",
                         "branch": "main",
+                        "issueTracker": {
+                            "provider": "github",
+                            "repository": "Azure/azure-sdk-for-net",
+                        },
                     },
                     "paths": [
                         {
@@ -135,6 +153,77 @@ def test_build_targets_preserves_duplicate_folder_paths() -> None:
         target.relative_by_repo_path
         for target in targets["azure_sdk_for_net_docs"]
     )
+    assert all(
+        target.issue_target
+        == KbIssueTarget(
+            provider="github",
+            owner="Azure",
+            repo="azure-sdk-for-net",
+        )
+        for target in targets["azure_sdk_for_net_docs"]
+    )
+
+
+def test_build_targets_maps_github_wiki_to_parent_issue_repo() -> None:
+    targets = _build_targets(
+        {
+            "sources": [
+                {
+                    "repository": {
+                        "url": "https://github.com/Azure/example.wiki.git",
+                        "branch": "master",
+                        "issueTracker": {
+                            "provider": "github",
+                            "repository": "Azure/example",
+                        },
+                    },
+                    "paths": [{"folder": "example_wiki"}],
+                }
+            ]
+        }
+    )
+
+    target = targets["example_wiki"][0]
+    assert target.repo == "example.wiki"
+    assert target.issue_target == KbIssueTarget(
+        provider="github",
+        owner="Azure",
+        repo="example",
+    )
+
+
+def test_build_targets_maps_ado_source_and_issue_project() -> None:
+    targets = _build_targets(
+        {
+            "sources": [
+                {
+                    "repository": {
+                        "url": (
+                            "https://azure-sdk@dev.azure.com/"
+                            "azure-sdk/internal/_git/internal.wiki"
+                        ),
+                        "branch": "wikiMaster",
+                        "issueTracker": {
+                            "provider": "azure-devops",
+                            "organization": "azure-sdk",
+                            "project": "internal",
+                        },
+                    },
+                    "paths": [{"folder": "internal_wiki"}],
+                }
+            ]
+        }
+    )
+
+    target = targets["internal_wiki"][0]
+    assert target.organization == "azure-sdk"
+    assert target.project == "internal"
+    assert target.ado_repository == "internal.wiki"
+    assert target.issue_target == KbIssueTarget(
+        provider="azure-devops",
+        organization="azure-sdk",
+        project="internal",
+    )
 
 
 @pytest.mark.asyncio
@@ -143,6 +232,7 @@ async def test_resolve_kb_source_uses_blob_path_for_duplicate_folder(
 ) -> None:
     targets = (
         KbTarget(
+            source_url="https://github.com/Azure/azure-sdk-for-net.git",
             owner="Azure",
             repo="azure-sdk-for-net",
             branch="main",
@@ -151,6 +241,7 @@ async def test_resolve_kb_source_uses_blob_path_for_duplicate_folder(
             relative_by_repo_path=True,
         ),
         KbTarget(
+            source_url="https://github.com/Azure/azure-sdk-for-net.git",
             owner="Azure",
             repo="azure-sdk-for-net",
             branch="main",
@@ -190,11 +281,12 @@ async def test_resolve_kb_source_uses_blob_path_for_duplicate_folder(
 
 
 @pytest.mark.asyncio
-async def test_resolve_kb_source_requires_blob_path_for_duplicate_folder(
+async def test_resolve_kb_source_without_blob_uses_shared_repository(
     monkeypatch,
 ) -> None:
     targets = (
         KbTarget(
+            source_url="https://github.com/Azure/azure-sdk-for-net.git",
             owner="Azure",
             repo="azure-sdk-for-net",
             branch="main",
@@ -203,6 +295,7 @@ async def test_resolve_kb_source_requires_blob_path_for_duplicate_folder(
             relative_by_repo_path=True,
         ),
         KbTarget(
+            source_url="https://github.com/Azure/azure-sdk-for-net.git",
             owner="Azure",
             repo="azure-sdk-for-net",
             branch="main",
@@ -222,8 +315,9 @@ async def test_resolve_kb_source_requires_blob_path_for_duplicate_folder(
         folder="azure_sdk_for_net_docs",
     )
 
-    assert result.resolved is False
-    assert result.reason == "blob_path_required_for_ambiguous_folder"
+    assert result.resolved is True
+    assert result.source_url == "https://github.com/Azure/azure-sdk-for-net.git"
+    assert result.path is None
 
 
 @pytest.mark.asyncio
@@ -234,6 +328,7 @@ async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
         AsyncMock(
             return_value=(
                 KbTarget(
+                    source_url="https://github.com/Azure/typespec-azure.git",
                     owner="Azure",
                     repo="typespec-azure",
                     branch="main",
@@ -253,8 +348,8 @@ async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
     assert result.repo == "typespec-azure"
     assert result.branch == "main"
     assert result.path == "./website/src/content/docs/docs"
-    assert "upstream_url" not in result.model_fields
-    assert "source_url" not in result.model_fields
+    assert "upstream_url" not in type(result).model_fields
+    assert result.source_url == "https://github.com/Azure/typespec-azure.git"
 
 
 @pytest.mark.asyncio

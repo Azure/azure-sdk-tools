@@ -1,7 +1,7 @@
 {
   "$schema": "./knowledge-config.schema.json",
   "description": "Unified configuration for knowledge sources including repositories and documentation paths",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "sources": [
     {
       "repository": {
@@ -63,7 +63,11 @@
       "repository": {
         "url": "https://github.com/Azure/typespec-azure.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/typespec-azure"
+        }
       },
       "paths": [
         {
@@ -144,7 +148,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-rest-api-specs.wiki.git",
         "branch": "master",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-rest-api-specs"
+        }
       },
       "paths": [
         {
@@ -160,7 +168,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-python.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-python"
+        }
       },
       "paths": [
         {
@@ -219,7 +231,12 @@
         "url": "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms",
         "branch": "main",
         "authType": "local",
-        "localPathEnv": "AZURE_SDK_DOCS_PATH"
+        "localPathEnv": "AZURE_SDK_DOCS_PATH",
+        "issueTracker": {
+          "provider": "azure-devops",
+          "organization": "azure-sdk",
+          "project": "internal"
+        }
       },
       "paths": [
         {
@@ -238,7 +255,12 @@
         "url": "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/internal.wiki",
         "branch": "wikiMaster",
         "authType": "local",
-        "localPathEnv": "AZURE_SDK_WIKI_PATH"
+        "localPathEnv": "AZURE_SDK_WIKI_PATH",
+        "issueTracker": {
+          "provider": "azure-devops",
+          "organization": "azure-sdk",
+          "project": "internal"
+        }
       },
       "paths": [
         {
@@ -265,7 +287,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk"
+        }
       },
       "paths": [
         {
@@ -283,7 +309,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-net.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-net"
+        }
       },
       "paths": [
         {
@@ -310,7 +340,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-go.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-go"
+        }
       },
       "paths": [
         {
@@ -327,7 +361,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-cpp.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-cpp"
+        }
       },
       "paths": [
         {
@@ -418,7 +456,11 @@
         "url": "https://github.com/Azure/typespec-cpp.git",
         "branch": "main",
         "authType": "token",
-        "tokenEnvVar": "AZURE_SDK_GITHUB_PAT"
+        "tokenEnvVar": "AZURE_SDK_GITHUB_PAT",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/typespec-cpp"
+        }
       },
       "paths": [
         {
@@ -445,7 +487,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-rust.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-rust"
+        }
       },
       "paths": [
         {
@@ -535,7 +581,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-java.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-java"
+        }
       },
       "paths": [
         {
@@ -572,7 +622,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-java.wiki.git",
         "branch": "master",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-java"
+        }
       },
       "paths": [
         {
@@ -588,7 +642,11 @@
       "repository": {
         "url": "https://github.com/Azure/autorest.java.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/autorest.java"
+        }
       },
       "paths": [
         {
@@ -606,7 +664,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-js.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-js"
+        }
       },
       "paths": [
         {
@@ -634,7 +696,11 @@
         "url": "https://github.com/Azure/azure-sdk-for-js.wiki.git",
         "path": "azure-sdk-for-js.wiki",
         "branch": "master",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-for-js"
+        }
       },
       "paths": [
         {
@@ -650,7 +716,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-rest-api-specs.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-rest-api-specs"
+        }
       },
       "paths": [
         {
@@ -686,7 +756,11 @@
       "repository": {
         "url": "https://github.com/Azure/openapi-diff.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/openapi-diff"
+        }
       },
       "paths": [
         {
@@ -704,7 +778,11 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-tools.git",
         "branch": "main",
-        "authType": "public"
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/azure-sdk-tools"
+        }
       },
       "paths": [
         {
@@ -786,7 +864,11 @@
         "url": "https://github.com/Azure/typespec-azure-pr.git",
         "branch": "providerhub",
         "authType": "token",
-        "tokenEnvVar": "AZURE_SDK_GITHUB_PAT"
+        "tokenEnvVar": "AZURE_SDK_GITHUB_PAT",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/typespec-azure-pr"
+        }
       },
       "paths": [
         {

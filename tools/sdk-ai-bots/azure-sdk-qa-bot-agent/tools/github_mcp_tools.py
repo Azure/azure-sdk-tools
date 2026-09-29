@@ -24,6 +24,7 @@ import os
 import re
 import time as _time
 from datetime import datetime, timedelta, timezone
+from typing import Annotated
 from urllib.parse import urlparse
 
 import httpx
@@ -33,8 +34,9 @@ from azure.keyvault.keys.crypto import SignatureAlgorithm
 from agent_framework import MCPStreamableHTTPTool
 
 from config.app_config import get as cfg
-from tools import truncating_mcp_parser
+from tools import tool, truncating_mcp_parser
 from utils.azure_credential import get_credential
+from utils.azure_keyvault import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +97,7 @@ def _build_mcp_headers(readonly: bool) -> dict[str, str]:
 # HTTP timeout for MCP endpoint validation and GitHub API calls.
 _MCP_VALIDATION_TIMEOUT_SECS = 10.0
 _GITHUB_API_TIMEOUT_SECS = 10.0
+_COPILOT_TOKEN_SECRET_DEFAULT = "copilot-github-token"
 # JWT timing: clock-skew buffer and expiration (seconds).
 _JWT_CLOCK_SKEW_SECS = 10
 _JWT_EXPIRY_SECS = 600
@@ -407,6 +410,14 @@ class GitHubIssueDetails(BaseModel):
     closed_at: datetime | None = None
 
 
+class CopilotAssignmentResult(BaseModel):
+    """Result of assigning a GitHub issue to Copilot cloud agent."""
+
+    issue_url: str
+    assigned: bool
+    assignee: str
+
+
 async def _get_github_issue_payload(issue_url: str) -> dict:
     parsed = urlparse(issue_url)
     match = (
@@ -468,6 +479,91 @@ async def get_github_issue_state(issue_url: str) -> str:
     return _validated_issue_state(
         await _get_github_issue_payload(issue_url),
         issue_url,
+    )
+
+
+@tool
+async def assign_issue_to_copilot(
+    *,
+    issue_url: Annotated[
+        str,
+        "Canonical GitHub issue URL returned by issue creation or related-issue search.",
+    ],
+    target_repository: Annotated[
+        str,
+        "GitHub owner/repository where Copilot should make the fix.",
+    ],
+    custom_instructions: Annotated[
+        str,
+        "Concise implementation instructions grounded in the validated remediation.",
+    ],
+    base_branch: Annotated[
+        str | None,
+        "Optional base branch. Omit to use the target repository default branch.",
+    ] = None,
+) -> CopilotAssignmentResult:
+    """Assign a GitHub issue to Copilot using a user-authorized token."""
+    parsed = urlparse(issue_url)
+    match = (
+        _ISSUE_PATH_RE.fullmatch(parsed.path)
+        if parsed.scheme == "https" and parsed.netloc.lower() == "github.com"
+        else None
+    )
+    if match is None:
+        raise ValueError(f"Invalid GitHub issue URL: {issue_url}")
+
+    secret_name = (
+        cfg("COPILOT_GITHUB_TOKEN_SECRET_NAME", _COPILOT_TOKEN_SECRET_DEFAULT)
+        or _COPILOT_TOKEN_SECRET_DEFAULT
+    )
+    token = (await get_secret(secret_name) or "").strip()
+    if not token:
+        raise RuntimeError(
+            f"GitHub Copilot assignment token secret '{secret_name}' is empty"
+        )
+
+    owner = match.group("owner")
+    repo = match.group("repo")
+    number = match.group("number")
+    if re.fullmatch(r"[^/]+/[^/]+", target_repository) is None:
+        raise ValueError("target_repository must use owner/repository format")
+    if not custom_instructions.strip():
+        raise ValueError("custom_instructions must not be empty")
+    assignee = "copilot-swe-agent[bot]"
+    assignment = {
+        "target_repo": target_repository,
+        "custom_instructions": custom_instructions,
+    }
+    if base_branch:
+        assignment["base_branch"] = base_branch
+    payload = {
+        "assignees": [assignee],
+        "agent_assignment": assignment,
+    }
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    async with httpx.AsyncClient(timeout=_GITHUB_API_TIMEOUT_SECS) as client:
+        response = await client.post(
+            f"{_GITHUB_API}/repos/{owner}/{repo}/issues/{number}/assignees",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+    response_payload = response.json()
+    assigned_logins = {
+        item.get("login")
+        for item in response_payload.get("assignees", [])
+        if isinstance(item, dict)
+    }
+    if assignee not in assigned_logins and "copilot-swe-agent" not in assigned_logins:
+        raise RuntimeError(f"GitHub did not assign Copilot to {issue_url}")
+    return CopilotAssignmentResult(
+        issue_url=issue_url,
+        assigned=True,
+        assignee=assignee,
     )
 
 

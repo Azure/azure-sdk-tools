@@ -181,6 +181,8 @@ creation. Use its `issue_target` when present. For
 `retrieval_mismatch`, `reasoning_gap`, and `out_of_scope`, use the GitHub
 fallback `Azure/azure-sdk-pr`.
 
+For every KB issue result, return the exact `source_url` from `resolve_kb_source`. The backend re-resolves that URL against the authoritative configuration and accepts only the configured tracker or the explicit `Azure/azure-sdk-pr` fallback.
+
 For `missing_content`, always select the best maintained source even when
 there is no exact document to update. Rank candidate sources by tenant scope,
 verified ownership, related search evidence, expert corrections, and

@@ -181,6 +181,17 @@ def parse_issue_reference(
     raise ValueError("issue_url must identify a GitHub issue or ADO work item")
 
 
+def is_fallback_issue_reference(
+    issue: GitHubIssueReference | AzureDevOpsIssueReference,
+) -> bool:
+    """Return whether an issue belongs to the evolution fallback repository."""
+    return (
+        issue.provider == "github"
+        and issue.owner.casefold() == "azure"
+        and issue.repository.casefold() == "azure-sdk-pr"
+    )
+
+
 class ChatbotEvolutionAgentInput(BaseModel):
     """Structured input sent to the hosted chatbot evolution agent.
 
@@ -272,11 +283,7 @@ class ChatbotEvolutionAgentResult(BaseModel):
             else:
                 if self.source_url is not None:
                     raise ValueError("System issue outcomes cannot include source_url")
-                if (
-                    issue.provider != "github"
-                    or issue.owner.lower() != "azure"
-                    or issue.repository.lower() != "azure-sdk-pr"
-                ):
+                if not is_fallback_issue_reference(issue):
                     raise ValueError(
                         "System issue outcomes require an Azure/azure-sdk-pr issue"
                     )

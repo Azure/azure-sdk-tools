@@ -31,10 +31,37 @@ from models.feedback import (
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
+from utils.knowledge_config import KbIssueTarget, KbTarget
 
 _CONVERSATION_ID = "conv-qa-test"
 _PARTITION = f"{ConversationType.teams_channel.value}:{_CONVERSATION_ID}"
 _BASE_TIME = datetime(2026, 7, 1, 12, 0, 0, tzinfo=timezone.utc)
+_WIKI_SOURCE_URL = "https://github.com/Azure/azure-sdk-for-java.wiki.git"
+_WIKI_SOURCE_TARGET = KbTarget(
+    source_url=_WIKI_SOURCE_URL,
+    branch="master",
+    path="",
+    scope="java_wiki",
+    issue_target=KbIssueTarget(
+        provider="github",
+        owner="Azure",
+        repo="azure-sdk-for-java",
+    ),
+)
+_ADO_SOURCE_URL = (
+    "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/internal.wiki"
+)
+_ADO_SOURCE_TARGET = KbTarget(
+    source_url=_ADO_SOURCE_URL,
+    branch="main",
+    path="",
+    scope="internal_wiki",
+    issue_target=KbIssueTarget(
+        provider="azure-devops",
+        organization="azure-sdk",
+        project="internal",
+    ),
+)
 
 
 def _msg(
@@ -103,6 +130,23 @@ def _result(
         )
     return ChatbotEvolutionAgentResult(
         outcome=outcome,
+        reasoning="Grounded result.",
+        confidence=0.9,
+    )
+
+
+def _kb_issue_result(
+    *,
+    issue_url: str,
+    source_url: str,
+    copilot_assigned: bool,
+) -> ChatbotEvolutionAgentResult:
+    return ChatbotEvolutionAgentResult(
+        outcome=ChatbotEvolutionAgentOutcome.issue_created,
+        classification=RootCauseClassification.missing_content,
+        issue_url=issue_url,
+        source_url=source_url,
+        copilot_assigned=copilot_assigned,
         reasoning="Grounded result.",
         confidence=0.9,
     )
@@ -343,6 +387,97 @@ def test_github_issue_result_can_skip_copilot_assignment() -> None:
     assert record.feedback is not None
     assert record.feedback.source_url == result.source_url
     assert record.feedback.copilot_assigned is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "issue_url",
+    [
+        "https://github.com/Azure/azure-sdk-for-java/issues/456",
+        "https://github.com/Azure/azure-sdk-pr/issues/456",
+    ],
+)
+async def test_wiki_issue_route_accepts_configured_target_or_fallback(
+    issue_url: str,
+) -> None:
+    result = _kb_issue_result(
+        issue_url=issue_url,
+        source_url=_WIKI_SOURCE_URL,
+        copilot_assigned=False,
+    )
+
+    with patch(
+        "services.chatbot_evolution_agent_service.get_kb_targets_by_source_url",
+        new=AsyncMock(return_value=(_WIKI_SOURCE_TARGET,)),
+    ):
+        await ChatbotEvolutionAgentService()._validate_issue_route(result)
+
+
+@pytest.mark.asyncio
+async def test_run_job_rejects_wiki_source_with_unrelated_issue_target() -> None:
+    result = _kb_issue_result(
+        issue_url="https://github.com/Azure/azure-sdk-tools/issues/456",
+        source_url=_WIKI_SOURCE_URL,
+        copilot_assigned=False,
+    )
+
+    record = _record(qa_status=QAStatus.ongoing, feedback_status=None)
+    service = ChatbotEvolutionAgentService()
+    service._load_job = AsyncMock(return_value=record)
+    service._invoke_agent = AsyncMock(return_value=result.model_dump_json())
+    upsert = AsyncMock()
+    with (
+        patch(
+            "services.chatbot_evolution_agent_service.get_kb_targets_by_source_url",
+            new=AsyncMock(return_value=(_WIKI_SOURCE_TARGET,)),
+        ),
+        patch(
+            "services.chatbot_evolution_agent_service.upsert_qa_record",
+            new=upsert,
+        ),
+    ):
+        actual = await service.run_job(record.id, record.tenant_id)
+
+    assert actual is None
+    final_call = upsert.await_args
+    assert final_call is not None
+    persisted = QARecord.from_cosmos(final_call.args[0])
+    assert persisted.feedback is not None
+    assert persisted.feedback.status == FeedbackStatus.failed
+    assert persisted.feedback.issue_url is None
+
+
+@pytest.mark.asyncio
+async def test_wiki_issue_route_rejects_unconfigured_source() -> None:
+    result = _kb_issue_result(
+        issue_url="https://github.com/Azure/unconfigured/issues/456",
+        source_url="https://github.com/Azure/unconfigured.wiki.git",
+        copilot_assigned=False,
+    )
+
+    with (
+        patch(
+            "services.chatbot_evolution_agent_service.get_kb_targets_by_source_url",
+            new=AsyncMock(return_value=()),
+        ),
+        pytest.raises(ValueError, match="authoritative configuration"),
+    ):
+        await ChatbotEvolutionAgentService()._validate_issue_route(result)
+
+
+@pytest.mark.asyncio
+async def test_ado_issue_route_accepts_configured_target() -> None:
+    result = _kb_issue_result(
+        issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+        source_url=_ADO_SOURCE_URL,
+        copilot_assigned=False,
+    )
+
+    with patch(
+        "services.chatbot_evolution_agent_service.get_kb_targets_by_source_url",
+        new=AsyncMock(return_value=(_ADO_SOURCE_TARGET,)),
+    ):
+        await ChatbotEvolutionAgentService()._validate_issue_route(result)
 
 
 def test_non_wiki_github_issue_requires_copilot_assignment() -> None:

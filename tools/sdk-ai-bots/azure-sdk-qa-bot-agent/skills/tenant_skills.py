@@ -126,7 +126,9 @@ def build_skill_content(tenant_id: TenantID) -> str:
     return "\n".join(parts)
 
 
-def create_tenant_skills(agent_name: str) -> list[Skill]:
+def create_tenant_skills(
+    agent_name: str, *, api_spec_study_guidance: str = ""
+) -> list[Skill]:
     """Create skills assigned to a hosted agent."""
     skills: list[Skill] = []
     for tenant_id, skill_name in _TENANT_SKILL_MAP.items():
@@ -134,6 +136,8 @@ def create_tenant_skills(agent_name: str) -> list[Skill]:
         if config is None or config.agent.name != agent_name:
             continue
         content = build_skill_content(tenant_id)
+        if tenant_id == TenantID.API_SPEC_REVIEW_BOT and api_spec_study_guidance:
+            content += "\n\n" + api_spec_study_guidance
         if not content:
             logger.warning("Skipping tenant skill: tenant=%s", tenant_id.value)
             continue

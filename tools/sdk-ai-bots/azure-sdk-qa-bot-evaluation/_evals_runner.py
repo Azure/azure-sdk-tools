@@ -385,6 +385,10 @@ def output_items_to_rows(
 
     for oi in output_items:
         item = _get(oi, "datasource_item", {}) or {}
+        if isinstance(item, dict) and isinstance(item.get("item"), dict):
+            item = item["item"]
+        if not isinstance(item, dict) or not item:
+            raise ValueError("Evaluation output item is missing its datasource item")
         results = _get(oi, "results", []) or []
         context = item.get("context", "") or ""
         response_id = item.get("response_id", "") or ""

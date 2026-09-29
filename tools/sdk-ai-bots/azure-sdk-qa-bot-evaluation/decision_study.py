@@ -17,6 +17,9 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from dataset.schema import iter_jsonl, normalize_query, normalize_review_status, validate_case
 from eval.criteria import DECISION_RUBRICS
@@ -259,6 +262,138 @@ def collect_replay(client: Any, bundle: dict[str, Any], model: str, output: Path
     return rows
 
 
+def make_local_variant(
+    bundle: dict[str, Any], arm: str, root_path: Path, tenant_path: Path, output: Path
+) -> dict[str, Any]:
+    """Write only treatment guidance, never cases, references, or source conversations."""
+    if arm not in ARMS:
+        raise ValueError(f"Unknown arm: {arm}")
+    root_text = root_path.read_text(encoding="utf-8")
+    tenant_text = tenant_path.read_text(encoding="utf-8")
+    if root_text + "\n\n" + tenant_text != bundle["baseline"]:
+        raise ValueError("Local agent prompts differ from the frozen study baseline")
+    root, tenant = root_text.strip(), tenant_text.strip()
+    guide_ids = {key for case in bundle["cases"] for key in case["guide_ids"]}
+    topic = "\n\n".join(bundle["guides"][key] for key in sorted(guide_ids))
+    variant = {
+        "schema_version": 1, "arm": arm, "bundle_sha256": bundle["bundle_sha256"],
+        "root_sha256": hashlib.sha256(root.encode("utf-8")).hexdigest(),
+        "tenant_sha256": hashlib.sha256(tenant.encode("utf-8")).hexdigest(),
+        "root_addendum": (
+            "Experimental general diagnostic guidance (current policy and safety rules "
+            "take precedence):\n" + bundle["general"]
+            if arm in ("general", "combined") else ""
+        ),
+        "tenant_addendum": (
+            "Experimental API Spec Review topic guidance (verify current policy):\n" + topic
+            if arm in ("topic", "combined") else ""
+        ),
+    }
+    write_json(output, variant)
+    return variant
+
+
+def parse_local_response(data: dict[str, Any]) -> tuple[str, str, list[dict[str, Any]], Any]:
+    """Normalize the actual /responses payload; never retrieve a hosted response."""
+    from _evals_runner import _extract_tool_calls
+
+    response_id = data.get("id")
+    output = data.get("output")
+    if data.get("status") not in (None, "completed"):
+        raise ValueError(f"Local agent response status: {data['status']}")
+    if not isinstance(response_id, str) or not response_id or not isinstance(output, list):
+        raise ValueError("Local agent response needs an ID and output array")
+    if not all(isinstance(item, dict) for item in output):
+        raise ValueError("Local agent output contains non-object items")
+    messages = [
+        part["text"] for item in output if item.get("type") == "message"
+        for part in item.get("content", []) if isinstance(part, dict)
+        and part.get("type") == "output_text" and isinstance(part.get("text"), str)
+    ]
+    answer = data.get("output_text") or "".join(messages)
+    if not isinstance(answer, str) or not answer.strip():
+        raise ValueError("Local agent returned no answer text")
+    return response_id, answer, _extract_tool_calls(output), data.get("usage")
+
+
+def local_request(endpoint: str, question: str, evidence: str) -> dict[str, Any]:
+    parsed = urlparse(endpoint)
+    if parsed.scheme != "http" or parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
+        raise ValueError("Local study requires an HTTP loopback agent endpoint")
+    payload = {
+        "input": [
+            {
+                "type": "message", "role": "system",
+                "content": "[tenant_context] original_tenant_id=api_spec_review_bot",
+            },
+            {
+                "type": "message", "role": "user",
+                "content": f"{question}\n\nCase evidence supplied for this study:\n{evidence}",
+            },
+        ]
+    }
+    request = Request(
+        endpoint.rstrip("/") + "/responses",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urlopen(request, timeout=600) as response:
+        data = json.load(response)
+    if not isinstance(data, dict):
+        raise ValueError("Local agent response must be a JSON object")
+    return data
+
+
+def collect_local(
+    bundle: dict[str, Any], arm: str, endpoint: str, journal_path: Path
+) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    cases = {case["testcase"]: case for case in bundle["cases"]}
+    generations: list[dict[str, Any]] = []
+    traces: dict[str, list[dict[str, Any]]] = {}
+    with journal_path.open("x", encoding="utf-8") as journal:
+        for job in (j for j in bundle["jobs"] if j["arm"] == arm):
+            row = {**job, "status": "attempted"}
+            journal.write(json.dumps(row) + "\n")
+            journal.flush()
+            start = time.perf_counter()
+            try:
+                case = cases[job["case_id"]]
+                response_id, answer, trace, usage = parse_local_response(
+                    local_request(endpoint, case["query"], case["evidence"])
+                )
+                # A response ID is local to this agent process; use the sample ID
+                # for the judge join to avoid collisions across fresh processes.
+                traces[job["id"]] = trace
+                row.update(
+                    status="completed", response=answer, response_id=job["id"],
+                    local_response_id=response_id, tool_calls=trace, usage=usage,
+                )
+            except (HTTPError, URLError, TimeoutError, ValueError, KeyError, TypeError) as exc:
+                logging.error("Local collection failed for %s: %s", job["id"], exc)
+                row.update(status="failed", error_type=type(exc).__name__, error=str(exc))
+            row["latency_seconds"] = time.perf_counter() - start
+            journal.write(json.dumps(row, ensure_ascii=False) + "\n")
+            journal.flush()
+            generations.append(row)
+    return generations, traces
+
+
+def verify_local_receipt(
+    bundle: dict[str, Any], variant_path: Path, receipt_path: Path
+) -> str:
+    variant = json.loads(variant_path.read_text(encoding="utf-8"))
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    arm = variant["arm"]
+    if arm not in ARMS or variant["bundle_sha256"] != bundle["bundle_sha256"]:
+        raise ValueError("Study variant does not match prepared bundle")
+    if (receipt.get("arm") != arm or
+        receipt.get("bundle_sha256") != bundle["bundle_sha256"] or
+        receipt.get("variant_sha256") != hashlib.sha256(variant_path.read_bytes()).hexdigest()):
+        raise ValueError("Local agent did not start with the requested study variant")
+    return arm
+
+
 def paired_summary(
     bundle: dict[str, Any], generations: list[dict[str, Any]], graded: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -346,6 +481,97 @@ def paired_summary(
     }
 
 
+def run_local(
+    bundle: dict[str, Any], output: Path, variant_path: Path, receipt_path: Path,
+    local_endpoint: str, project_endpoint: str, judge_model: str
+) -> None:
+    from azure.ai.projects import AIProjectClient
+    from dataset._storage import credential_for
+    from _evals_result import EvalsResult
+    from _evals_runner import FoundryEvalsRunner
+
+    arm = verify_local_receipt(bundle, variant_path, receipt_path)
+    # Refuse an inaccessible or wrong endpoint before creating run artifacts.
+    parsed = urlparse(local_endpoint)
+    if parsed.scheme != "http" or parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
+        raise ValueError("Local study requires an HTTP loopback agent endpoint")
+    output.mkdir(parents=True, exist_ok=False)
+    write_json(output / "run.json", {
+        "bundle_sha256": bundle["bundle_sha256"], "mode": "local-agent",
+        "arm": arm, "variant_sha256": hashlib.sha256(variant_path.read_bytes()).hexdigest(),
+        "project_endpoint": project_endpoint, "judge_model": judge_model,
+        "local_endpoint": local_endpoint, "started_at": datetime.now(timezone.utc).isoformat(),
+        "memory": "disabled", "retrieval": "live tools", "retries": 0,
+    })
+    generations, traces = collect_local(bundle, arm, local_endpoint, output / "generation.jsonl")
+    write_json(output / "generations.json", generations)
+    cases = {case["testcase"]: case for case in bundle["cases"]}
+    metrics: dict[str, list[str] | None] = {key: [key] for key in DECISION_RUBRICS}
+    runner = FoundryEvalsRunner(list(metrics), EvalsResult(metrics, None), model=judge_model)
+    items = []
+    failed = []
+    for row in generations:
+        case = cases[row["case_id"]]
+        if row["status"] != "completed":
+            failed.append(runner._failed_row({"testcase": row["id"], "query": case["query"]}))
+            continue
+        items.append({
+            "testcase": row["id"], "query": case["query"],
+            "ground_truth": case["ground_truth"],
+            "expected_behavior": case["expected_behavior"],
+            "response": row["response"], "response_id": row["response_id"],
+            "context": case["evidence"], "execution": {
+                "latency_seconds": row["latency_seconds"], "usage": row["usage"],
+                "local_response_id": row["local_response_id"],
+            },
+        })
+    random.Random(bundle["seed"] + 1).shuffle(items)
+    with credential_for(False) as credential, AIProjectClient(
+        endpoint=project_endpoint, credential=credential, allow_preview=True
+    ) as project, project.get_openai_client() as client:
+        results = runner.evaluate_collected(
+            client.with_options(max_retries=0, timeout=180), items, "apispec",
+            tool_calls_by_response_id=traces,
+            evaluation_name=f"decision-local-{bundle['bundle_sha256'][:12]}-{arm}",
+            failed_rows=failed,
+        )
+    write_json(output / "graded.json", results)
+    graded = [row for rows in results.values() for row in rows if "testcase" in row]
+    if any(row["status"] != "completed" for row in generations) or len(graded) != len(generations):
+        raise RuntimeError("Local study has collection/grading failures; inspect preserved artifacts")
+
+
+def summarize_local(bundle: dict[str, Any], runs: list[Path], output: Path) -> dict[str, Any]:
+    if len(runs) != len(ARMS):
+        raise ValueError("Exactly four local arm runs are required")
+    seen: set[str] = set()
+    generations: list[dict[str, Any]] = []
+    graded: list[dict[str, Any]] = []
+    for path in runs:
+        info = json.loads((path / "run.json").read_text(encoding="utf-8"))
+        arm = info["arm"]
+        if info["mode"] != "local-agent" or info["bundle_sha256"] != bundle["bundle_sha256"] or (
+            arm not in ARMS or arm in seen
+        ):
+            raise ValueError(f"Duplicate or mismatched local study arm: {path}")
+        seen.add(arm)
+        arm_rows = json.loads((path / "generations.json").read_text(encoding="utf-8"))
+        if {r["id"] for r in arm_rows} != {j["id"] for j in bundle["jobs"] if j["arm"] == arm}:
+            raise ValueError(f"Incomplete local study generation records: {path}")
+        generations.extend(arm_rows)
+        results = json.loads((path / "graded.json").read_text(encoding="utf-8"))
+        graded.extend(row for rows in results.values() for row in rows if "testcase" in row)
+    result = paired_summary(bundle, generations, graded)
+    result["mode"] = "local-agent"
+    result["interpretation"] = (
+        "Exploratory local dev-agent comparison with live tools and no memory. "
+        "Synthetic cases and live retrieval are not independent real-world evidence. "
+        "Missing generations/grades receive zero utility, not a model-quality verdict."
+    )
+    write_json(output, result)
+    return result
+
+
 def run(bundle: dict[str, Any], output: Path, endpoint: str, model: str, judge_model: str) -> None:
     from azure.ai.projects import AIProjectClient
     from dataset._storage import credential_for
@@ -431,6 +657,26 @@ def main(argv: list[str] | None = None) -> int:
     execute.add_argument("--judge-model", required=True)
     execute.add_argument("--execute", action="store_true")
     execute.add_argument("--allow-unreviewed", action="store_true")
+    variant = sub.add_parser("variant", help="Write a private, answer-free local treatment file")
+    variant.add_argument("--bundle", type=Path, required=True)
+    variant.add_argument("--arm", choices=ARMS, required=True)
+    variant.add_argument("--root-instruction", type=Path, required=True)
+    variant.add_argument("--tenant-guideline", type=Path, required=True)
+    variant.add_argument("--output", type=Path, required=True)
+    local = sub.add_parser("run-local", help="Collect one running local dev-agent arm and grade it")
+    local.add_argument("--bundle", type=Path, required=True)
+    local.add_argument("--variant", type=Path, required=True)
+    local.add_argument("--receipt", type=Path, required=True)
+    local.add_argument("--output", type=Path, required=True)
+    local.add_argument("--local-endpoint", default="http://127.0.0.1:8088")
+    local.add_argument("--project-endpoint", required=True)
+    local.add_argument("--judge-model", required=True)
+    local.add_argument("--execute", action="store_true")
+    local.add_argument("--allow-unreviewed", action="store_true")
+    summarize = sub.add_parser("summarize-local", help="Combine exactly four local arm runs")
+    summarize.add_argument("--bundle", type=Path, required=True)
+    summarize.add_argument("--runs", type=Path, nargs=4, required=True)
+    summarize.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO)
     try:
@@ -441,6 +687,13 @@ def main(argv: list[str] | None = None) -> int:
                 baseline_revision=args.baseline_revision,
             )
             print(f"Prepared {len(bundle['jobs'])} responses; no cloud calls. {args.output}")
+        elif args.command == "variant":
+            make_local_variant(
+                load_bundle(args.bundle), args.arm, args.root_instruction,
+                args.tenant_guideline, args.output,
+            )
+        elif args.command == "summarize-local":
+            summarize_local(load_bundle(args.bundle), args.runs, args.output)
         else:
             if not args.execute:
                 raise ValueError("Cloud generation/grading requires explicit --execute")
@@ -449,7 +702,13 @@ def main(argv: list[str] | None = None) -> int:
                 normalize_review_status(c["reviewed"]) != "pass" for c in bundle["cases"]
             ):
                 raise ValueError("Cases need review; --allow-unreviewed is for exploratory runs only")
-            run(bundle, args.output, args.project_endpoint, args.model, args.judge_model)
+            if args.command == "run-local":
+                run_local(
+                    bundle, args.output, args.variant, args.receipt, args.local_endpoint,
+                    args.project_endpoint, args.judge_model,
+                )
+            else:
+                run(bundle, args.output, args.project_endpoint, args.model, args.judge_model)
     except Exception:
         logging.exception("Decision study failed; existing artifacts are preserved and never overwritten")
         return 1

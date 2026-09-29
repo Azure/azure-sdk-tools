@@ -37,6 +37,7 @@ from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.pipeline_tools import PipelineTools
 from skills.tenant_skills import create_tenant_skills
+from agents.chat_agent.study_variant import load_study_variant
 from utils.azure_ai_foundry import (
     get_agent_client,
     get_project_client,
@@ -80,6 +81,9 @@ async def main() -> None:
     )
     agent_dir = Path(__file__).parent
     instructions = _load_instructions(agent_dir / "instruction.md")
+    study_variant = load_study_variant(Path(_project_root), instructions)
+    if study_variant:
+        instructions += "\n\n" + study_variant["root_addendum"] if study_variant["root_addendum"] else ""
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
         agent_config = yaml.safe_load(f)
     agent_name = agent_config["name"]
@@ -121,9 +125,10 @@ async def main() -> None:
 
     # Ensuring the memory store is idempotent and usually a no-op, so run it in
     # the background instead of gating readiness on it.
-    memory_init_task = asyncio.create_task(_init_memory())
-    _background_tasks.add(memory_init_task)
-    memory_init_task.add_done_callback(_background_tasks.discard)
+    if not study_variant:
+        memory_init_task = asyncio.create_task(_init_memory())
+        _background_tasks.add(memory_init_task)
+        memory_init_task.add_done_callback(_background_tasks.discard)
 
     # Only the MCP tools must exist before building the agent; create in
     # parallel (connection is lazy).
@@ -137,7 +142,7 @@ async def main() -> None:
             tools.append(mcp_tool)
 
     # Memory context provider (memory store initializes in background; may not be ready yet)
-    memory_provider = MemoryContextProvider(project_client)
+    memory_provider = MemoryContextProvider(project_client) if not study_variant else None
 
     # Compaction provider — compact history before and after each turn
     compaction_provider = CompactionProvider(
@@ -146,7 +151,10 @@ async def main() -> None:
     )
 
     # Init Skills
-    skills = create_tenant_skills(agent_name)
+    skills = create_tenant_skills(
+        agent_name,
+        api_spec_study_guidance=study_variant["tenant_addendum"] if study_variant else "",
+    )
     skills_provider = SkillsProvider(skills)
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
@@ -156,7 +164,9 @@ async def main() -> None:
         id=agent_id,
         instructions=instructions,
         tools=tools,
-        context_providers=[skills_provider, memory_provider, compaction_provider],
+        context_providers=[
+            skills_provider, *([memory_provider] if memory_provider else []), compaction_provider
+        ],
         middleware=[ToolOutputSecurityMiddleware()],
         default_options={
             "reasoning": {"effort": reasoning_effort},

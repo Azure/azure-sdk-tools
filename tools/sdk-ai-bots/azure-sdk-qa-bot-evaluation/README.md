@@ -203,8 +203,76 @@ historical cutoff cases, exclude related incidents and all previously tuned
 cases, and remove their answers from Q&A/wiki/episode retrieval. Then measure
 the same deltas through isolated, version-pinned hosted agents with native
 retrieval and scripted multi-turn clarification. Today's live PR state is not
-historical evidence. This initial content replay does **not** implement or
-claim those later tracks.
+historical evidence. The replay run does **not** claim those later tracks.
+
+### Local dev-agent comparison (before deployment)
+
+`run-local` calls the actual edited chat agent on `127.0.0.1:8088/responses`,
+not the API server's `/completion` (which uses the deployed agent). It records
+the inline local tool trace, then grades the collected answer with the same
+Foundry decision rubrics. Azure model, tools, search and grading can still incur
+cost. Run the agent from
+`../azure-sdk-qa-bot-agent` using its README's `requirements-dev.txt`,
+Azure login/App Configuration access and `agentdev`/F5 setup first.
+Do not deploy or modify shared App Configuration for this study.
+
+Prepare a **new** bundle against the *currently checked-out* chat-agent root
+instruction and API Spec Review tenant prompt (not an older snapshot). Use the
+`prepare` command above with those two files as `--baseline`. For each arm,
+stop the previous dev agent, then in PowerShell:
+
+```powershell
+# From azure-sdk-qa-bot-evaluation; use a new file and receipt for every arm.
+python decision_study.py variant `
+  --bundle <private-study>\bundle.json --arm baseline `
+  --root-instruction ..\azure-sdk-qa-bot-agent\agents\chat_agent\instruction.md `
+  --tenant-guideline ..\azure-sdk-qa-bot-agent\prompts\tenants\api_spec_review.md `
+  --output <private-study>\baseline-variant.json
+
+# In another PowerShell window, from azure-sdk-qa-bot-agent, with its .venv active:
+$env:SDK_QA_STUDY_VARIANT_FILE = '<private-study>\baseline-variant.json'
+$env:SDK_QA_STUDY_RECEIPT_FILE = '<private-study>\baseline-receipt.json'
+agentdev run agents/chat_agent/init.py --port 8088
+
+# Back in the evaluation window after agent startup; explicit paid grading opt-in:
+python decision_study.py run-local `
+  --bundle <private-study>\bundle.json `
+  --variant <private-study>\baseline-variant.json `
+  --receipt <private-study>\baseline-receipt.json `
+  --output <private-study>\baseline-run `
+  --project-endpoint <authorized-Foundry-project-endpoint> `
+  --judge-model <grading-deployment> --execute --allow-unreviewed
+```
+
+Repeat the same three commands with `general`, `topic`, and `combined`, each
+with a fresh variant/receipt/run path and a **fresh agent process**. The agent
+checks both frozen prompt hashes at startup and writes a receipt; `run-local`
+rejects a different arm or bundle. A pre-existing server on port 8088 must be
+stopped first. Do not change local code, model deployment, search indexes, or
+tool permissions between arms. Remove the two environment variables when
+finished. For reviewed cases omit `--allow-unreviewed`.
+
+```powershell
+python decision_study.py summarize-local `
+  --bundle <private-study>\bundle.json `
+  --runs <private-study>\baseline-run <private-study>\general-run `
+         <private-study>\topic-run <private-study>\combined-run `
+  --output <private-study>\local-summary.json
+```
+
+The variant file contains only general/topic treatment text, **never reference
+answers or cases**. Each arm retains the bot's normal tools and tenant skill;
+study mode omits both tenant episode and personal memory providers (and skips
+memory-store initialization) consistently across arms. It does **not** freeze
+live search, wiki, web or other tool results, nor guarantee that unrelated
+historical Q&A is absent from their indexes. Case evidence is explicitly
+supplied in the user message rather than injected as a tool result. Unlike
+fixed-evidence content replay, all relevant topic guides are available to the
+tenant skill; this track measures end-to-end guide use, not oracle selection.
+Local failures are journaled and retained in paired denominators. The first
+12 synthetic cases are exploratory and unreviewed; the mode does not establish
+real-world superiority. No stored Foundry response retrieval is used for
+local-agent traces. Never commit private variants, bundles, receipts or results.
 
 ### Evaluators
 

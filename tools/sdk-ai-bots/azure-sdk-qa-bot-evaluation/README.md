@@ -104,9 +104,111 @@ Results appear on the Evaluation tab of the Azure AI Foundry portal (each run pr
 
 Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately. A normal response ID can retrieve the original stored response on demand; synthetic IDs such as `content-filter` have no stored response.
 
+### Dev-only decision-guidance study
+
+`decision_study.py` reuses this runner and result adapter to compare **baseline,
+general, topic, and combined** guidance. It does not change the hosted agent,
+tenant routing, production prompts, memory stores, or search indexes.
+
+The first track is **oracle content replay**, not an end-to-end bot benchmark:
+the selected model receives frozen baseline instructions, the applicable guide
+deltas, and identical supplied evidence. No tools or memory are available.
+A common replay instruction replaces the requirement to call tools; this
+necessary deviation is saved in the bundle and applied equally to all arms.
+Judge expectations and reference answers are never sent to the answering model.
+
+The initial 12 cases in `evaluation_datasets/decision-study/apispec.jsonl` form
+six counterfactual pairs (missing versus supplied context, conflicting versus
+consistent evidence, and pending versus confirmed resolution). They are
+**synthetic diagnostic development cases**, not unseen historical holdouts or
+proof of production effectiveness. They remain `reviewed: todo` pending domain
+review. Do not promote them through the canonical curator: study-only metadata
+is intentionally read directly by this harness and is not preserved by
+`CanonicalCase` round-tripping.
+
+Prepare a local bundle (no Azure credentials or cloud calls):
+
+```powershell
+python decision_study.py prepare `
+  --dataset .\evaluation_datasets\decision-study\apispec.jsonl `
+  --baseline <frozen-global-instruction.md> <frozen-api-spec-instruction.md> `
+  --baseline-revision <upstream-commit-sha> `
+  --general <bot_instructions.txt> `
+  --guides <guides.json> `
+  --output <new-private-study-directory> `
+  --repeats 2
+```
+
+`--guides` accepts the extracted decision-guide package (`guides` array with
+IDs, title, lesson, inspect/avoid, context dependencies, conditional actions,
+owner role and stop condition). Guide IDs are selected explicitly in each case,
+so this track measures usefulness **when the right guide is available**, not
+guide retrieval accuracy. Source conversations and guide provenance IDs are
+not inserted into model prompts. Keep private guide packages and bundles
+outside this public repository.
+
+Use a current, reviewed baseline snapshot and retain its upstream commit.
+Preparation hashes all input files, freezes prompts/cases/rubrics, and creates
+a seeded block-randomized schedule with every arm for each case/repeat.
+The evaluation implementation is hashed too; modifying it requires a fresh bundle.
+Treatment instructions explicitly supersede conflicting diagnostic rules only,
+not safety or current policy. The topic overlay specifically reconciles the
+merge-summary rule when supplied evidence proves the summary stale or contradictory.
+That precedence change is part of the treatment, not a silent baseline edit.
+The default seed dataset produces 96 generation requests plus grading.
+Output directories must be new: existing studies are never overwritten.
+
+After selecting authorized dev model deployments, explicitly opt into the
+paid generation and grading run:
+
+```powershell
+python decision_study.py run `
+  --bundle <study-directory>\bundle.json `
+  --output <new-private-run-directory> `
+  --project-endpoint <authorized-Foundry-project-endpoint> `
+  --model <generation-deployment> `
+  --judge-model <grading-deployment> `
+  --execute
+```
+
+The generation deployment must support chat completions and the project must
+support OpenAI-evals `score_model` criteria. Pin deployment/model versions and
+do not update them during the run. These APIs are covered by offline contract
+tests here; service availability still requires a live smoke run in the chosen
+project. No resources are provisioned by this command. It uses `az login`
+through the existing credential helper and disables SDK request retries.
+Unreviewed cases are rejected unless `--allow-unreviewed` explicitly permits an
+exploratory development run. This is not permission to label them validated.
+
+The four opt-in graders score 0–2: `next_action`, `context_discipline`,
+`evidence_discipline`, and `authority_discipline`. The judge sees the answer,
+expected acceptable behavior, frozen evidence, and actual trace (empty in
+content replay), not the arm label or treatment instructions. Necessary
+clarification can receive full credit; unnecessary questions lose credit.
+An evidence/authority score of zero is a hard failure, forcing aggregate
+utility to zero instead of being averaged away.
+
+Artifacts include an integrity-checked bundle, randomized schedule and prompt
+hashes, an append-only attempted/completed/failed generation journal, model IDs,
+usage and latency, raw decision-grader results, and paired win/tie/loss summaries.
+Generation failures and missing/invalid grades stay in the denominator with
+zero utility and separate infrastructure-failure counts. Any such failures
+make the command exit unsuccessfully. Never interpret them as model-quality
+judgments. Group bootstrap intervals resample whole scenario groups, not
+individual repeats; with six synthetic groups they are exploratory only.
+Interrupted/failed runs are preserved and never automatically resumed or retried.
+
+Before claiming practical improvement, add independently selected and reviewed
+historical cutoff cases, exclude related incidents and all previously tuned
+cases, and remove their answers from Q&A/wiki/episode retrieval. Then measure
+the same deltas through isolated, version-pinned hosted agents with native
+retrieval and scripted multi-turn clarification. Today's live PR state is not
+historical evidence. This initial content replay does **not** implement or
+claim those later tracks.
+
 ### Evaluators
 
-All evaluators are builtin LLM evaluators that read the collected bot answer via
+Default evaluators are builtin LLM evaluators that read the collected bot answer via
 `{{item.response}}`:
 
 | Name | Kind | Reads |
@@ -148,6 +250,8 @@ done
 
 ```bash
 python unit_tests/test_pure_logic.py     # offline: schema validation + output-items adapter
+python -m pytest unit_tests -q          # includes decision-study isolation and mocked-run checks
+python -m dataset.validate evaluation_datasets/decision-study/apispec.jsonl
 ```
 
 ## Pre-commit

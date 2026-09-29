@@ -282,6 +282,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var result = await UpdateAsync(version: "1.2.3");
             Assert.That(result.ResponseError, Is.Null);
             Assert.That(result.Message, Does.Contain("already marked Released"));
+            _devOps.Verify(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()),
+                state == "Finished" ? Times.Never() : Times.Once());
             AssertNoWrites();
         }
 
@@ -294,6 +296,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             python.ReleasedVersion = "1.2.3";
             var result = await UpdateAsync(status: status, version: version);
             Assert.That(result.ResponseError, Does.Contain("cannot be overwritten"));
+            _devOps.Verify(s => s.GetReleasePlanForWorkItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             AssertNoWrites();
         }
 
@@ -336,6 +339,110 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Message, Does.Contain("failed to auto-finish"));
             Assert.That(result.ReleasePlanFinished, Is.False);
             Assert.That(_writes, Has.Count.EqualTo(1));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task CompletionRetryRegression_RetriesFinishAfterRefreshFailure(bool automatic)
+        {
+            foreach (var sdk in _plan.SDKInfo.Where(s => s.Language != "Python")) sdk.ReleaseStatus = "Released";
+            _plan.SDKInfo.Single(s => s.Language == "Python").SdkPullRequestUrl = PythonSdkPr;
+            _devOps.SetupSequence(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Temporary refresh failure"))
+                .ReturnsAsync(_plan);
+            var id = automatic ? 0 : 100;
+            var sdkPr = automatic ? PythonSdkPr : null;
+
+            var initial = await UpdateAsync(releasePlanId: id, sdkPr: sdkPr, version: "1.2.3", pipeline: "https://example.test/build/1");
+            var retry = await UpdateAsync(releasePlanId: id, sdkPr: sdkPr, version: "1.2.3", pipeline: "https://example.test/build/2");
+
+            Assert.That(initial.ReleaseStatus, Is.EqualTo("Released"));
+            Assert.That(initial.Message, Does.Contain("failed to auto-finish"));
+            Assert.That(retry.ResponseError, Is.Null);
+            Assert.That(retry.ReleasePlanFinished, Is.True);
+            Assert.That(_writes, Has.Count.EqualTo(2));
+            Assert.That(_writes[0].Fields["Custom.ReleasePipelineForPython"], Is.EqualTo("https://example.test/build/1"));
+            Assert.That(_writes[1].Fields, Is.EquivalentTo(new Dictionary<string, string> { ["System.State"] = "Finished" }));
+            Assert.That(_writes[1].Revision, Is.EqualTo(8));
+            _devOps.Verify(s => s.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(f => f.ContainsKey("Custom.ReleaseStatusForPython")), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        [Test]
+        public async Task CompletionRetry_RetriesFailedFinishedWriteWithoutRewritingReleaseFields()
+        {
+            foreach (var sdk in _plan.SDKInfo.Where(s => s.Language != "Python")) sdk.ReleaseStatus = "Released";
+            _devOps.SetupSequence(s => s.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(f => f.ContainsKey("System.State")), 8, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Temporary Finished write failure"))
+                .ReturnsAsync(new WorkItem { Id = 12345, Rev = 9 });
+
+            var initial = await UpdateAsync(version: "1.2.3");
+            var retry = await UpdateAsync(version: "1.2.3");
+
+            Assert.That(initial.ReleasePlanFinished, Is.False);
+            Assert.That(initial.Message, Does.Contain("failed to auto-finish"));
+            Assert.That(retry.ResponseError, Is.Null);
+            Assert.That(retry.ReleasePlanFinished, Is.True);
+            _devOps.Verify(s => s.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(f => f.ContainsKey("Custom.ReleaseStatusForPython")), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(f => f.Count == 1 && f.ContainsKey("System.State") && f["System.State"] == "Finished"), 8, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        [Test]
+        public async Task CompletionRetry_UsesTheFreshRevision()
+        {
+            foreach (var sdk in _plan.SDKInfo) sdk.ReleaseStatus = "Released";
+            var current = CreatePlan();
+            foreach (var sdk in current.SDKInfo) sdk.ReleaseStatus = "Released";
+            current.Revision = 12;
+            _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>())).ReturnsAsync(current);
+
+            var result = await UpdateAsync();
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanFinished, Is.True);
+            Assert.That(_writes.Single().Revision, Is.EqualTo(12));
+            Assert.That(_writes.Single().Fields, Is.EquivalentTo(new Dictionary<string, string> { ["System.State"] = "Finished" }));
+        }
+
+        [TestCase("package")]
+        [TestCase("id")]
+        [TestCase("revision")]
+        [TestCase("state")]
+        [TestCase("incomplete")]
+        public async Task CompletionRetry_RevalidatesTheFreshPlanBeforeFinishing(string change)
+        {
+            foreach (var sdk in _plan.SDKInfo) sdk.ReleaseStatus = "Released";
+            var current = CreatePlan();
+            foreach (var sdk in current.SDKInfo) sdk.ReleaseStatus = "Released";
+            switch (change)
+            {
+                case "package": current.SDKInfo.Single(s => s.Language == "Python").PackageName = "another-package"; break;
+                case "id": current.ReleasePlanId = 200; break;
+                case "revision": current.Revision = 0; break;
+                case "state": current.Status = "Abandoned"; break;
+                case "incomplete": current.SDKInfo.Single(s => s.Language == "Java").ReleaseStatus = "Pending"; break;
+            }
+            _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>())).ReturnsAsync(current);
+
+            var result = await UpdateAsync();
+
+            Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
+            Assert.That(result.ReleasePlanFinished, Is.False);
+            _devOps.Verify(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()), Times.Once);
+            AssertNoWrites();
+        }
+
+        [Test]
+        public void CompletionRetry_CallerCancellationDuringRefreshPreventsWrite()
+        {
+            foreach (var sdk in _plan.SDKInfo) sdk.ReleaseStatus = "Released";
+            using var cancellation = new CancellationTokenSource();
+            _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(12345, cancellation.Token))
+                .Callback(() => cancellation.Cancel()).ReturnsAsync(_plan);
+
+            Assert.CatchAsync<OperationCanceledException>(() => UpdateAsync(ct: cancellation.Token));
+
+            AssertNoWrites();
         }
 
         [TestCase("release-type")]

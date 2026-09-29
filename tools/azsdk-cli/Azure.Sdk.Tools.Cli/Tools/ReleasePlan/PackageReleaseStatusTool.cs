@@ -237,7 +237,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         return Reject($"This SDK is already released with version '{sdkInfo.ReleasedVersion}'; its recorded release cannot be overwritten.");
                     }
                     response.ReleaseStatus = sdkInfo.ReleaseStatus;
-                    response.Message = "This SDK is already marked Released; no release plan changes were made.";
+                    response.Message = "This SDK is already marked Released; its recorded release fields were not changed.";
+                    if (isInProgress)
+                    {
+                        await TryFinishReleasePlanAsync(releasePlan, response, ct);
+                    }
                     return response;
                 }
                 if (!isInProgress || releasePlan.Revision <= 0)
@@ -273,41 +277,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Check if the release plan can be marked as Finished
                 if (string.Equals(releaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
                 {
-                    try
-                    {
-                        // Other languages may have completed or the plan may have changed since the first read.
-                        var currentPlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
-                        if (currentPlan.ReleasePlanId != releasePlanId || currentPlan.WorkItemId != releasePlan.WorkItemId ||
-                            currentPlan.IsTestReleasePlan != isAgentTesting || currentPlan.Revision <= 0 ||
-                            currentPlan.IsManagementPlane != releasePlan.IsManagementPlane || currentPlan.IsDataPlane != releasePlan.IsDataPlane ||
-                            !string.Equals(currentPlan.APISpecProjectPath, releasePlan.APISpecProjectPath, StringComparison.Ordinal) ||
-                            !string.Equals(currentPlan.SDKReleaseType, releasePlan.SDKReleaseType, StringComparison.OrdinalIgnoreCase) ||
-                            currentPlan.SDKInfo.Count != releasePlan.SDKInfo.Count ||
-                            currentPlan.SDKInfo.Any(current => !releasePlan.SDKInfo.Any(original =>
-                                string.Equals(current.Language, original.Language, StringComparison.OrdinalIgnoreCase) &&
-                                string.Equals(current.PackageName, original.PackageName, StringComparison.Ordinal))))
-                        {
-                            response.Message = "Release status updated, but the plan changed before completion could be checked. No completion update was made.";
-                        }
-                        else if (string.Equals(currentPlan.Status, "In Progress", StringComparison.OrdinalIgnoreCase) && IsReleasePlanComplete(currentPlan))
-                        {
-                            logger.LogInformation("All required languages are complete for release plan {workItemId}. Marking as Finished.", releasePlan.WorkItemId);
-                            await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
-                            {
-                                { "System.State", "Finished" }
-                            }, currentPlan.Revision, ct);
-                            response.ReleasePlanFinished = true;
-                        }
-                    }
-                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Failed to mark release plan {workItemId} as Finished", releasePlan.WorkItemId);
-                        response.Message = "Release status updated successfully but failed to auto-finish the release plan.";
-                    }
+                    await TryFinishReleasePlanAsync(releasePlan, response, ct);
                 }
 
                 return response;
@@ -320,6 +290,47 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Failed to update release status for package {packageName}", packageName);
                 return new ReleaseStatusUpdateResponse { PackageName = packageName, ReleasePlanId = releasePlanId, SdkPullRequest = sdkPullRequest, ResponseError = $"Failed to update release status for plan {releasePlanId}, SDK PR '{sdkPullRequest}', language '{language}', package '{packageName}': {ex.Message}" };
+            }
+        }
+
+        private async Task TryFinishReleasePlanAsync(ReleasePlanWorkItem releasePlan, ReleaseStatusUpdateResponse response, CancellationToken ct)
+        {
+            try
+            {
+                // Share the same fresh-read and revision checks for new releases and completion retries.
+                ct.ThrowIfCancellationRequested();
+                var currentPlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+                if (currentPlan.ReleasePlanId != releasePlan.ReleasePlanId || currentPlan.WorkItemId != releasePlan.WorkItemId ||
+                    currentPlan.IsTestReleasePlan != releasePlan.IsTestReleasePlan || currentPlan.Revision <= 0 ||
+                    currentPlan.IsManagementPlane != releasePlan.IsManagementPlane || currentPlan.IsDataPlane != releasePlan.IsDataPlane ||
+                    !string.Equals(currentPlan.APISpecProjectPath, releasePlan.APISpecProjectPath, StringComparison.Ordinal) ||
+                    !string.Equals(currentPlan.SDKReleaseType, releasePlan.SDKReleaseType, StringComparison.OrdinalIgnoreCase) ||
+                    currentPlan.SDKInfo.Count != releasePlan.SDKInfo.Count ||
+                    currentPlan.SDKInfo.Any(current => !releasePlan.SDKInfo.Any(original =>
+                        string.Equals(current.Language, original.Language, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(current.PackageName, original.PackageName, StringComparison.Ordinal))))
+                {
+                    response.Message = "The SDK is marked Released, but the plan changed before completion could be checked. No completion update was made.";
+                }
+                else if (string.Equals(currentPlan.Status, "In Progress", StringComparison.OrdinalIgnoreCase) && IsReleasePlanComplete(currentPlan))
+                {
+                    logger.LogInformation("All required languages are complete for release plan {workItemId}. Marking as Finished.", releasePlan.WorkItemId);
+                    ct.ThrowIfCancellationRequested();
+                    await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                    {
+                        { "System.State", "Finished" }
+                    }, currentPlan.Revision, ct);
+                    response.ReleasePlanFinished = true;
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to mark release plan {workItemId} as Finished", releasePlan.WorkItemId);
+                response.Message = "The SDK is marked Released but failed to auto-finish the release plan.";
             }
         }
 

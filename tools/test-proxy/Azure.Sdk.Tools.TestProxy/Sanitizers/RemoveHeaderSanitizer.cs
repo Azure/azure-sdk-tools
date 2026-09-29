@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +13,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class RemoveHeaderSanitizer : RecordedTestSanitizer
     {
-        private string[] _keysForRemoval;
+        private readonly string[] _keysForRemoval;
 
         /// <summary>
         /// Removes headers from before saving a recording.
@@ -33,10 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             foreach (var headerKey in _keysForRemoval)
             {
-                if (headers.ContainsKey(headerKey))
-                {
-                    headers.Remove(headerKey);
-                }
+                headers.Remove(headerKey);
             }
         }
     }

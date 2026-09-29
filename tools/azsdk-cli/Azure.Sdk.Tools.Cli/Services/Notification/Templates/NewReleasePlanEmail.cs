@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
 
         private const string AzSdkAgentDocumentationUrl = "https://aka.ms/azsdk/agent";
 
-        private const string ManagementSdkOwnerAlias = "sdkowners@microsoft.com";
+        private const string ManagementSdkOwnerAlias = "sdkreleaseowners@microsoft.com";
 
         private const string AzSdkSupportAlias = "azsdkexp@microsoft.com";
 

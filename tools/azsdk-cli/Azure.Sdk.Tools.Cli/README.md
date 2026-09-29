@@ -94,6 +94,22 @@ In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
 
+## Retained customization repair attempts
+
+`azsdk tsp client customized-update` / `azsdk_customized_code_update` accepts `--max-attempts` / `maxAttempts` (1..10, default 1). Multiple attempts currently require `CustomCode`; `All` and `SpecInputs` retain their single-pass behavior.
+
+```text
+azsdk tsp client customized-update --package-path <package-root> --edit-scope CustomCode --customization-request "Repair the custom-code build failures" --max-attempts 3 --output json
+```
+
+One command invocation keeps the same Copilot session and feeds actual validation failures back into its existing conversation. Earlier tool calls, edits, and feedback remain available. Repeated outer CLI invocations preserve files but start new conversations. A repair attempt is a patch proposal evaluated by host code, not an individual tool call or an Exit reminder; the existing per-language agent-turn allowance is retained.
+
+After each proposal, the command awaits the existing .NET/Java preparation and regeneration, then builds. JavaScript/Python retain their existing build/check behavior. Preparation fallback policy, pinned `tsp-location.yaml` inputs, and optional local spec handling are unchanged. A green build does not skip a requested semantic customization, and a classifier no-op must still pass an SDK build in custom-code scope. The session stops on success, no additional patches, cancellation, or the attempt limit.
+
+The existing response adds only `attemptsUsed` (default 0). Initial builds do not count; evaluated no-progress proposals do. Failures retain the final actual diagnostics in `buildResult` and `response_error`, the stopping reason/error code, known `appliedPatches`, and existing `specChangeRequired` / `next_steps` guidance for useful PR comments. `success` is not set by the agent's claim.
+
+This feature adds no source receipt, artifact/checkpoint format, strict preparation policy, dependency bootstrap, or publication protocol. Existing repository generation prerequisites still apply. It retains existing tool/path restrictions and does not claim whole-repository change attestation or cross-process conversation resume.
+
 ## Telemetry Configuration
 Telemetry collection is on by default.
 

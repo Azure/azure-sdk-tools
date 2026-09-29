@@ -18,12 +18,14 @@ os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
 from agent_framework import Agent
 from agent_framework import CompactionProvider
+from agent_framework import FileSkillsSource
 from agent_framework import SkillsProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
 from config.app_config import get as cfg
+from skills import tenant_skills
 from skills.tenant_skills import create_tenant_skills
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
@@ -101,6 +103,8 @@ async def main() -> None:
     skills = create_tenant_skills(agent_name)
     if not skills:
         raise RuntimeError(f"No tenant skills configured for agent {agent_name!r}")
+    skills_dir = Path(tenant_skills.__file__).parent / "azure_mcp_server"
+    skills.extend(await FileSkillsSource(skills_dir).get_skills())
 
     memory_provider = MemoryContextProvider(project_client)
     compaction_provider = CompactionProvider(

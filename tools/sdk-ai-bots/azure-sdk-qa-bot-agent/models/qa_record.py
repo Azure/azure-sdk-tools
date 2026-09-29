@@ -11,8 +11,8 @@ A ``QARecord`` is the durable status row for **one conversation thread**
 * **Layer 2 — Evolution lifecycle** (:class:`FeedbackStatus`, embedded in
   :class:`FeedbackState`): tracks analysis, issue remediation, and validation.
     An issue moves to ``pending_validation``; completed validation moves to
-    ``validation_passed`` or ``validation_failed``, and processing errors move
-    to retryable ``failed``.
+    ``validation_passed``, ``validation_failed``, or terminal
+    ``validation_skipped``; processing errors move to retryable ``failed``.
 
 Partition key is ``/tenant_id`` (matches the episode and conversation
 conventions). The ``id`` is the thread key
@@ -58,6 +58,8 @@ class FeedbackStatus(str, Enum):
     validation_passed = "validation_passed"
     #: Validation completed but rejected the remediation.
     validation_failed = "validation_failed"
+    #: Validation was not applicable; no further validation is scheduled.
+    validation_skipped = "validation_skipped"
     #: The agent errored, timed out, or the run was cancelled; retry next run.
     failed = "failed"
 
@@ -102,6 +104,10 @@ class QARecord(BaseModel):
     reasoning: str | None = None
     confidence: float | None = None
     has_expert_reply: bool = False
+    # Semantic assessment from the existing evolution agent, NOT the heuristic.
+    # Missing legacy values are unknown; validation never rewrites this history.
+    has_expert_interaction: bool | None = None
+    expert_interaction_reason: str | None = None
     message_count: int = 0
 
     # -- Layer 2: evolution lifecycle -------------------------------------

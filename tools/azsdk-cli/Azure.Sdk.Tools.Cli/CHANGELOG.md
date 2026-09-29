@@ -1,18 +1,14 @@
 # Release History
 
-## 0.6.50 (2026-09-28)
+## 0.6.50 (2026-09-29)
 
 ### Features Added
 
 - `azsdk_package_get_approval_status` now accepts common SDK language aliases.
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - `azsdk_release_sdk` now queries the package approval service for current API review status instead of relying on the Azure DevOps package work item field.
-
-### Other Changes
 
 ## 0.6.49 (2026-09-21)
 

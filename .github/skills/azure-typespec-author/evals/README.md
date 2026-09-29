@@ -1,8 +1,8 @@
-# Naming Skill Evals
+# Authoring Routing Evals
 
-This hermetic suite tests authoring-time naming plans, independently of the [live TypeSpec benchmarks](../evaluate/README.md). It mounts skills only: no MCP server, network source, SDK generator, or TypeSpec installation is required. Inline project facts represent confirmed intake; capability cases stop at the naming plan and do not edit TypeSpec.
+This hermetic suite checks authoring boundaries, including delegation of naming-only `client.tsp` requests to `azsdk-common-typespec-naming`. It mounts skills only and is independent of the [live TypeSpec benchmarks](../evaluate/README.md).
 
-Coverage includes routing and neighboring skills, C# ARM member/model rules, accepted exceptions, HTTP roles, multi-language and wire-name isolation, shipped-name preservation, unknown units/targets, unsupported profiles, and name collisions/synthesized targets. Routing cases use natural prompts; capability cases explicitly invoke the skill to isolate behavior from routing. Deterministic graders require skill loading and a successful naming-reference read, check keyed naming outcomes, and reject network/edit/validation tool calls. They do not claim that planned names have been verified by a real emitter.
+Naming-rule and customization-tool cases live with the shared naming skill, not as copies in the authoring skill. Authoring/assessment handoffs are tested by `evals/workflows/mock/typespec-naming-handoffs.eval.yaml` at the repository root.
 
 From `.github/skills`, using the repository's Vally 0.14 installation:
 
@@ -12,4 +12,4 @@ vally lint -e azure-typespec-author\evals\eval.yaml --strict
 vally eval -e azure-typespec-author\evals\eval.yaml --workers 1 --output jsonl --output-dir ..\..\artifacts\naming-evals
 ```
 
-The eval explicitly mounts the target and the competitors needed for boundary tests; do not add `--skill-dir` pointing at all repository skills. Use `--tag case=smoke` for the member-naming smoke case. Run serially if the local Copilot executor reports `Cannot set session filesystem provider while sessions are active`. The shared skill-eval pipeline discovers this suite; the existing live benchmarks remain separate.
+The eval explicitly mounts relevant skills; do not add `--skill-dir` pointing at all repository skills. Run serially if the local Copilot executor reports `Cannot set session filesystem provider while sessions are active`. The shared skill-eval pipeline discovers this suite.

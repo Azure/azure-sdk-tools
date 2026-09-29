@@ -19,6 +19,8 @@ DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls
 
 The `azure-typespec-author` skill **must** be invoked immediately in all modes (including plan mode) for any task that involves creating and modifying TypeSpec (`.tsp`) files except for `client.tsp` under the specification directory in this repository. **This skill MUST be used regardless of how simple the task appears** — there are no "simple" TypeSpec edits. Even trivial-seeming changes (adding a single enum value, one property, one operation) require the full workflow because versioning decorators, validation, and compliance checks are mandatory.
 
+For naming-only `client.tsp` requests, invoke `azsdk-common-typespec-naming` directly; it applies authorized SDK overrides through the customization tool. Other SDK customizations remain with the existing customization workflow. This exception does not bypass naming guidance.
+
 This includes but is not limited to:
 
 - Adding, bumping, or promoting API versions (preview, stable) for ARM or data-plane services
@@ -29,12 +31,14 @@ This includes but is not limited to:
 
 ## MCP Tools
 
-| Tool                                              | Purpose                                                                                                                                                                                                                                 |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for TypeSpec changes **not** covered by [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search; SDK naming uses [local profiles](references/naming-conventions.md). |
-| `azure-sdk-mcp:azsdk_run_typespec_validation`     | Validate TypeSpec                                                                                                                                                                                                                       |
+| Tool                                              | Purpose                                                                                                                                                                                                     |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for requests **not** covered by [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search; SDK naming uses `azsdk-common-typespec-naming`. |
+| `azure-sdk-mcp:azsdk_run_typespec_validation`     | Validate TypeSpec                                                                                                                                                                                           |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
+
+Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name for naming guidance; do not copy its rules into this skill. If unavailable, report the naming coverage gap rather than inventing a replacement.
 
 ## Rules
 
@@ -42,7 +46,7 @@ This includes but is not limited to:
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
 - **Mandatory for ALL `.tsp` edits** — even a single `?` change can be breaking.
 - **Minimal, scoped edits** — only change what the request requires.
-- **Plan SDK names before editing** — confirm SDK targets and select [language-specific naming guidance](references/naming-conventions.md) during intake. Ask about unknown targets; apply only the matching language/service profile. Preserve wire names, other SDK languages, and shipped API names.
+- **Plan SDK names before editing** — invoke `azsdk-common-typespec-naming` in guidance mode when the request concerns SDK naming or adds/changes names for known SDK targets. Pass the service type, targets, changed declarations and compatibility evidence. Do not require SDK-language intake for unrelated REST work.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
@@ -72,7 +76,7 @@ See [authoring-plan.md](references/authoring-plan.md).
 
 ### Step 4: Apply Changes
 
-Make minimal `.tsp` edits following the plan from Step 3, including the [SDK naming decisions](references/naming-conventions.md#apply). Confirm uncertainties with the user first.
+Make minimal `.tsp` declaration edits following the plan from Step 3. For planned SDK-only naming overrides, use `azsdk-common-typespec-naming` in apply mode; it calls `azsdk_customized_code_update` with `SpecInputs`. Do not edit `client.tsp` directly. Confirm uncertainties with the user first.
 
 ### Step 5: Validate
 

@@ -4,8 +4,8 @@
 
 ## 2.1 General Intake (All Cases)
 
-1. Select [SDK naming profiles](naming-conventions.md#select) using the target languages and service type. Ask which SDK languages are targeted if unknown; an OpenAPI emitter does not identify an SDK language. Distinguish missing target information from a known target without a supported profile.
-2. Run [agentic search](agentic-search.md) for the remaining TypeSpec changes using the Step 1 result and the user's request. Supported SDK naming rules are grounded in the selected local profiles.
+1. For SDK naming requests or new/changed names with known SDK targets, invoke `azsdk-common-typespec-naming` in guidance mode with the service type, target languages and relevant declarations. It selects shared profiles and resolves affected naming questions. Otherwise record SDK naming as not assessed; do not block unrelated TypeSpec work on language selection.
+2. Run [agentic search](agentic-search.md) for the remaining TypeSpec changes using the Step 1 result and the user's request. The shared naming skill grounds supported SDK naming rules.
 3. Identify the case from the table below and gather more information if case matches. If no case matches, skip Step 2.2.
 
 | Case | Name                       | Description                                            | Service Type     |
@@ -72,5 +72,5 @@ Target Version: [version]
 Changes:        [summary]
 Defaults:       [applied defaults]
 SDK targets:    [confirmed languages / unknown]
-Naming profile: [selected profiles / not covered]
+Naming coverage: [shared skill's selected profiles / not covered / not assessed]
 ```

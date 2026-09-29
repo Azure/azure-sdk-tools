@@ -1,6 +1,6 @@
 # C# ARM Model Naming
 
-Load with [C# member naming](csharp-naming.md) for confirmed C# management SDK targets. Apply the [shared scope and compatibility safeguards](naming-conventions.md).
+Load with [C# member naming](csharp-naming.md) for confirmed C# management SDK targets in authoring or read-only review. Apply the [shared scope and compatibility safeguards](naming-conventions.md).
 
 Sources: [.NET management naming conventions](https://github.com/Azure/azure-sdk-for-net/blob/main/doc/dev/Mgmt-Naming-Conventions.md) and [.NET management PR review skill](https://github.com/Azure/azure-sdk-for-net/blob/main/.github/skills/azure-sdk-mgmt-pr-review/SKILL.md).
 

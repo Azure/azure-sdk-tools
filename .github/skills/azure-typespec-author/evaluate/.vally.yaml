@@ -13,7 +13,7 @@
 paths:
   evals: [evals/]
   evalFilenames: ["*.eval.yaml"]
-  skills: [../]
+  skills: [../../../../artifacts/typespec-author-skills]
   results: results/
 
 environments:

@@ -1,6 +1,6 @@
 # C# ARM Member Naming
 
-Load only for confirmed C# management SDK targets via the [naming dispatcher](naming-conventions.md). These rules describe generated C# names, not REST wire names.
+Load only for confirmed C# management SDK targets via the [naming dispatcher](naming-conventions.md), in either authoring or read-only review. These rules describe generated C# names, not REST wire names.
 
 Sources: [.NET management naming conventions](https://github.com/Azure/azure-sdk-for-net/blob/main/doc/dev/Mgmt-Naming-Conventions.md), [.NET management PR review skill](https://github.com/Azure/azure-sdk-for-net/blob/main/.github/skills/azure-sdk-mgmt-pr-review/SKILL.md), and [tracked linter rules](https://github.com/Azure/typespec-azure/issues/4442). The convention document is the primary naming guide; the review skill supplies additional contextual checks and accepted exceptions. Where guidance differs, preserve shipped API and resolve uncertainty rather than enforcing a mechanical rewrite.
 

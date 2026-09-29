@@ -27,7 +27,7 @@ Run `tsp compile .` from the project root. Verify `.json` output under the direc
 
 ### 5.1.3: SDK Naming
 
-Check the planned decisions using [naming validation](naming-conventions.md#validate). Report the selected profiles, exceptions, and any targets without coverage. Verify language scopes and wire-name preservation; compare generated SDK names and compatibility evidence when available. If SDK generation was not run, report effective SDK names as unverified, not as a successful generation check. Run installed, applicable naming linters through the normal validation workflow; do not assume proposed rules are available or suppress diagnostics to make names pass.
+For applicable naming changes, use the decisions and verification guidance from `azsdk-common-typespec-naming`. Report profiles, exceptions, blockers and unassessed targets. Keep 5.1.1 and 5.1.2 after tool-applied customizations; `SpecInputs` does not verify generated SDK names. If SDK generation was not run, report those names as unverified. Naming guidance is independent of linting; installed linters remain part of normal validation.
 
 ---
 

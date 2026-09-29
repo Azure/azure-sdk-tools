@@ -66,7 +66,7 @@ extends:
         displayName: Eval forced track
         dependsOn: PrepareForced
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode=forced --skill-dir ..'
+          TypeSpecAuthorEvalExtraArgs: '--tag mode=forced --skill-dir $(Build.SourcesDirectory)/artifacts/typespec-author-skills'
         jobs:
           - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
             parameters:
@@ -107,7 +107,7 @@ extends:
         displayName: Eval trigger track
         dependsOn: PrepareTrigger
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger --skill-dir ..'
+          TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger --skill-dir $(Build.SourcesDirectory)/artifacts/typespec-author-skills'
         jobs:
           - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
             parameters:

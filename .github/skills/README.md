@@ -15,15 +15,21 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 ### Workflow & Utility Skills
 
-| Skill                                                                                         | Triggers                                               | Description                                                 |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
-| [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md)               | "generate SDK locally", "build SDK", "run SDK tests"   | Generate, build, and test Azure SDKs locally from TypeSpec  |
-| [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md)               | "create release plan", "link SDK PR to plan"           | Create and manage release plan work items                   |
-| [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback"      | Retrieve and resolve APIView review feedback                |
-| [azsdk-common-pipeline-analysis](azsdk-common-pipeline-analysis/SKILL.md)                     | "pipeline failed", "build failure", "CI check failing" | Analyze SDK CI failures and prescribe fixes without editing |
-| [azsdk-common-pipeline-fixer](azsdk-common-pipeline-fixer/SKILL.md)                           | "fix pipeline", "fix CI", "fix failing tests"          | Apply and verify fixes from pipeline analysis               |
-| [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md)                                 | "release SDK", "trigger release pipeline"              | Check release readiness and trigger SDK releases            |
-| [azsdk-common-sdk-breaking-change](azsdk-common-sdk-breaking-change/SKILL.md)                                 | "detect and mitigate SDK breaking changes"              | Detect SDK breaking changes and mitigate the breaking changes            |
+`azsdk-common-typespec-naming` owns the shared naming rules consumed by TypeSpec
+authoring and assessment. Install it alongside either consumer; it is distributed
+by the existing shared-skill sync. Guidance/review are read-only; authorized
+customizations use `azsdk_customized_code_update` with `SpecInputs`.
+
+| Skill                                                                                         | Triggers                                                                      | Description                                                   |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md)               | "generate SDK locally", "build SDK", "run SDK tests"                          | Generate, build, and test Azure SDKs locally from TypeSpec    |
+| [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md)               | "create release plan", "link SDK PR to plan"                                  | Create and manage release plan work items                     |
+| [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback"                             | Retrieve and resolve APIView review feedback                  |
+| [azsdk-common-pipeline-analysis](azsdk-common-pipeline-analysis/SKILL.md)                     | "pipeline failed", "build failure", "CI check failing"                        | Analyze SDK CI failures and prescribe fixes without editing   |
+| [azsdk-common-pipeline-fixer](azsdk-common-pipeline-fixer/SKILL.md)                           | "fix pipeline", "fix CI", "fix failing tests"                                 | Apply and verify fixes from pipeline analysis                 |
+| [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md)                                 | "release SDK", "trigger release pipeline"                                     | Check release readiness and trigger SDK releases              |
+| [azsdk-common-typespec-naming](azsdk-common-typespec-naming/SKILL.md)                         | "plan SDK names", "review SDK naming conventions", "fix naming in client.tsp" | Shared naming guidance and scoped TypeSpec customizations     |
+| [azsdk-common-sdk-breaking-change](azsdk-common-sdk-breaking-change/SKILL.md)                 | "detect and mitigate SDK breaking changes"                                    | Detect SDK breaking changes and mitigate the breaking changes |
 
 ### Development & Meta Skills
 
@@ -31,13 +37,13 @@ These skills help with skill development itself:
 
 The three eval-authoring skills share the repository-local [eval authoring guide](eval-authoring/README.md).
 
-| Skill                                                                                 | Triggers                                            | Description                                                           |
-| ------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
-| [skill-authoring](skill-authoring/SKILL.md)                                           | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
-| [eval-authoring-skill](eval-authoring-skill/SKILL.md)                                 | "write a skill eval", "test skill routing"          | Author repository-local routing and capability evals for Agent Skills |
-| [eval-authoring-tool](eval-authoring-tool/SKILL.md)                                   | "write a tool eval", "add prompt-to-tool coverage"  | Author repository-local hermetic single-tool MCP selection evals      |
-| [eval-authoring-workflow](eval-authoring-workflow/SKILL.md)                           | "write a workflow eval", "create multi-turn eval"   | Author repository-local multi-tool, multi-turn, mock, and live evals  |
-| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md)                         | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
+| Skill                                                         | Triggers                                            | Description                                                           |
+| ------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
+| [skill-authoring](skill-authoring/SKILL.md)                   | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
+| [eval-authoring-skill](eval-authoring-skill/SKILL.md)         | "write a skill eval", "test skill routing"          | Author repository-local routing and capability evals for Agent Skills |
+| [eval-authoring-tool](eval-authoring-tool/SKILL.md)           | "write a tool eval", "add prompt-to-tool coverage"  | Author repository-local hermetic single-tool MCP selection evals      |
+| [eval-authoring-workflow](eval-authoring-workflow/SKILL.md)   | "write a workflow eval", "create multi-turn eval"   | Author repository-local multi-tool, multi-turn, mock, and live evals  |
+| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md) | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
 
 ### Skill Anatomy
 

@@ -1,0 +1,115 @@
+name: typespec-naming-handoffs
+description: Authoring and assessment consume one naming skill without review mutations
+type: capability
+environment:
+  skills:
+    - ../../../.github/skills/azure-typespec-author
+    - ../../../.github/skills/azure-typespec-assessment
+    - ../../../.github/skills/azsdk-common-typespec-naming
+  files:
+    - src: ../../../.github/skills/azsdk-common-typespec-naming/evals/fixtures/customization-mcp.mjs
+      dest: customization-mcp.mjs
+  mcpServers:
+    azure-sdk-mcp:
+      type: stdio
+      command: node
+      args: ["customization-mcp.mjs"]
+tags:
+  area: typespec-naming
+  tier: scenario
+defaults:
+  model: gpt-5.4
+  executor: copilot-sdk
+  runs: 1
+  timeout: "180s"
+scoring:
+  threshold: 1.0
+stimuli:
+  - name: authoring-consults-shared-guidance
+    prompt: |
+      Invoke azure-typespec-author and plan only the SDK naming part of this authoring request.
+      Confirmed intake: new never-shipped C# ARM Widget service, first version
+      2026-01-01-preview, specification/widget/resource-manager/Microsoft.Widget/main.tsp.
+      Add enabled: boolean to WidgetProperties. Use the skill's prescribed naming workflow.
+      These are all needed facts; do not inspect benchmark fixtures, fetch docs, edit,
+      compile or generate. Return JSON "sdkName", "wireName", and "applied".
+    constraints: &bounded
+      max_turns: 14
+      max_tokens: 18000
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-author, azsdk-common-typespec-naming]
+          disallowed: [azure-typespec-assessment]
+      - &readOnly
+        type: tool-calls
+        config:
+          required:
+            - name: "^(view|powershell|bash|rg)$"
+              pattern: "references"
+              result: "SDK Naming Conventions|C# ARM (Member|Model) Naming"
+          disallowed:
+            - name: "azsdk_"
+            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
+      - type: output-matches
+        config:
+          pattern: '"sdkName"\s*:\s*"IsEnabled"'
+      - type: output-matches
+        config:
+          pattern: '"wireName"\s*:\s*"enabled"'
+      - &notApplied
+        type: output-matches
+        config:
+          pattern: '"applied"\s*:\s*false'
+
+  - name: assessment-consults-same-guidance-readonly
+    prompt: |
+      Invoke azure-typespec-assessment and plan its supplementary SDK naming review using
+      the skill's prescribed naming workflow. This is planning, not a fresh full assessment;
+      do not run preparation, materialization, report serving or other assessment scripts.
+      Confirmed bounded evidence: baseline origin/main, new unshipped C# ARM Widget SDK,
+      added WidgetProperties.enabled boolean, emitted C# name Enabled, no clientName override.
+      Only inspect bundled skill guidance and these facts. Do not fetch docs, edit, compile
+      or generate, even though a customization tool is available. Return JSON "sdkName",
+      "wireName", and "applied" for the recommendation.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-assessment, azsdk-common-typespec-naming]
+          disallowed: [azure-typespec-author]
+      - *readOnly
+      - type: output-matches
+        config:
+          pattern: '"sdkName"\s*:\s*"IsEnabled"'
+      - type: output-matches
+        config:
+          pattern: '"wireName"\s*:\s*"enabled"'
+      - *notApplied
+
+  - name: unrelated-authoring-does-not-require-sdk-intake
+    prompt: |
+      Invoke azure-typespec-author. Plan only a documentation edit: add the supplied
+      description "Whether the widget is enabled." to WidgetProperties.enabled in
+      specification/widget/resource-manager/Microsoft.Widget/main.tsp, version 2026-01-01.
+      The property and all names already exist and must remain unchanged.
+      No SDK targets are known. No SDK naming is requested. Do not fetch docs, run tools,
+      or edit files; consult bundled skill guidance only.
+      Return JSON "sdkLanguageRequired" and "namingChangesPlanned" booleans.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-author]
+          disallowed: [azsdk-common-typespec-naming, azure-typespec-assessment]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "azsdk_"
+            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
+      - type: output-matches
+        config:
+          pattern: '"sdkLanguageRequired"\s*:\s*false'
+      - type: output-matches
+        config:
+          pattern: '"namingChangesPlanned"\s*:\s*false'

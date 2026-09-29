@@ -27,6 +27,12 @@ report** link and the absolute `assessment.json` path for structured results.
 Keep the server running while viewed. Do not use relative Markdown or `file:`
 URLs.
 
+If a supplementary SDK naming review was performed during Agent judgment,
+include its findings, exceptions and coverage with the final response. State
+that these are separate from `assessment.json` / `assessment.html`; the current
+report schema does not include them. Naming review must not mutate the spec,
+run customization, or imply verified generated SDK names without evidence.
+
 For an asynchronous or background host process, read its startup output
 immediately with the host's process-output reader. Do not wait for process
 completion or a completion notification: successful report serving is a

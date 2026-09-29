@@ -1,12 +1,12 @@
 # SDK Naming Conventions
 
-Apply SDK naming guidance while authoring, not only after generation or a linter failure. This dispatcher selects language/service-specific references; it is not a universal naming policy.
+Use this single rule source for proactive authoring and read-only review. No linter diagnostic or SDK generation is needed to consult it. This dispatcher selects language/service-specific references; it is not a universal naming policy.
 
 ## Select
 
 Use the user's confirmed targets, `tspconfig.yaml` emitter/options configuration, and SDK project configuration to identify SDK languages and ARM versus data-plane. Normalize `C#`, `.NET`, and `csharp` to `csharp`. An OpenAPI-only configuration does not establish an SDK target. Ask before language-specific edits when the target or service type is unknown.
 
-An unknown SDK target is missing intake information, not an unsupported profile. Ask which languages are targeted; do not silently label it "not covered" and omit naming guidance.
+An unknown SDK target is missing information, not an unsupported profile. Ask which languages are targeted when needed for a naming decision; in read-only review, report missing context without blocking unrelated assessment. Do not require SDK-language intake for unrelated REST authoring.
 
 | Language        | Service type     | Profile                                                                            |
 | --------------- | ---------------- | ---------------------------------------------------------------------------------- |
@@ -24,19 +24,18 @@ For multiple targets, load only matching profiles and record coverage per target
 4. Check the released SDK API or other supplied release evidence before renaming an existing member. A preview API version does not prove an SDK name is unshipped. Preserve shipped names unless an intentional breaking change is explicitly authorized; restore an unintentionally changed shipped name instead of inventing a third name. If release evidence is unavailable, flag that decision as blocked rather than assuming safety.
 5. Do not rename unrelated existing API, redefine common ARM types to satisfy a naming preference, or silently resolve a name collision. Record exceptions and unresolved decisions in the plan.
 
-## Apply
+## Customization Decisions
 
-- For an SDK-only rename of a TypeSpec-defined symbol, use a language-scoped [TCGC `clientName` decorator](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/#clientname). An omitted scope affects all languages.
-- Reuse the project's client customization file, typically `client.tsp`, and confirm that the SDK generation entrypoint loads it. Follow its imports and namespace resolution; avoid circular imports or duplicate/conflicting decorators.
-- For example, with `using Azure.ClientGenerator.Core` and the target in scope: `@@clientName(WidgetProperties.enabled, "IsEnabled", "csharp");`.
-- Keep TypeSpec/wire names, serialized enum values, routes, and other language customizations unchanged for SDK-only naming. Do not use `@encodedName` or rename a source property to fix a C# spelling.
-- Do not hand-edit generated C#. For synthesized artifacts without a targetable TypeSpec declaration, report the limitation and the required emitter/customization follow-up; do not fabricate a decorator target.
+- Propose a language-scoped [TCGC `clientName` decorator](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/#clientname) for SDK-only renames. Omitting the scope affects all languages. Example: `@@clientName(WidgetProperties.enabled, "IsEnabled", "csharp");`.
+- Preserve wire names, serialized enum values, routes, and other language customizations. Do not use `@encodedName` or rename a source property to fix C# spelling.
+- Check target resolution, existing customizations and entrypoint loading. Never fabricate a TypeSpec target for an emitter-synthesized type.
+- Guidance and review only propose changes. For authorized writes follow the [tool-based apply workflow](apply.md), not direct file edits.
 
 ## Validate
 
-Compare edits with every naming decision and exception. Check decorator targets, language scopes, customization loading, name collisions, unchanged wire names, and unaffected SDK languages. Use generated API output and the released baseline when available; distinguish a planned name from a verified generated name.
+Compare evidence with each naming decision and exception: targets, language scopes, customization loading, collisions, wire names and unaffected languages. Use generated API output and the released baseline when available; distinguish a proposed name from a verified generated name. In review, report findings and missing evidence; do not edit, compile, generate, or call mutating tools.
 
-Run normal TypeSpec validation/compilation and installed naming linters. [Azure/typespec-azure#4442](https://github.com/Azure/typespec-azure/issues/4442) tracks the .NET management linter work; it does not establish which rules are installed in a project. Lint success does not replace contextual naming or SDK compatibility checks.
+After writes, follow [apply validation](apply.md). [Azure/typespec-azure#4442](https://github.com/Azure/typespec-azure/issues/4442) tracks complementary linters, not prerequisites or proof that any rule is installed. Lint success does not replace contextual naming or SDK compatibility checks.
 
 ## Extend
 

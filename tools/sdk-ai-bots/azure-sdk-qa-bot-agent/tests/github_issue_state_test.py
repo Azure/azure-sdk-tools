@@ -78,17 +78,34 @@ async def test_get_github_issue_state_rejects_non_issue_url() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("issue_repository", "target_repository", "requested_branch", "target_branch"),
+    [
+        ("Azure/azure-sdk-pr", "Azure/azure-sdk-tools", "ignored", "main"),
+        (
+            "Azure/azure-sdk-for-java",
+            "Azure/azure-sdk-for-java",
+            "main",
+            "main",
+        ),
+    ],
+)
 @pytest.mark.asyncio
-async def test_assign_issue_to_copilot_uses_user_token() -> None:
+async def test_assign_issue_to_copilot_enforces_target_repository(
+    issue_repository: str,
+    target_repository: str,
+    requested_branch: str,
+    target_branch: str,
+) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
-        assert request.url.path == "/repos/Azure/azure-sdk-tools/issues/321/assignees"
+        assert request.url.path == f"/repos/{issue_repository}/issues/321/assignees"
         assert request.headers["Authorization"].startswith("Bearer ")
         assert request.headers["Authorization"].endswith("user-token")
         payload = json.loads(request.content)
         assert payload["assignees"] == ["copilot-swe-agent[bot]"]
         assert payload["agent_assignment"] == {
-            "target_repo": "Azure/azure-sdk-tools",
-            "base_branch": "main",
+            "target_repo": target_repository,
+            "base_branch": target_branch,
             "custom_instructions": "Apply the validated documentation fix.",
         }
         return httpx.Response(
@@ -109,9 +126,8 @@ async def test_assign_issue_to_copilot_uses_user_token() -> None:
         patch("tools.github_mcp_tools.httpx.AsyncClient", return_value=client),
     ):
         result = await assign_issue_to_copilot(
-            issue_url="https://github.com/Azure/azure-sdk-tools/issues/321",
-            base_branch="main",
-            target_repository="Azure/azure-sdk-tools",
+            issue_url=f"https://github.com/{issue_repository}/issues/321",
+            base_branch=requested_branch,
             custom_instructions="Apply the validated documentation fix.",
         )
 

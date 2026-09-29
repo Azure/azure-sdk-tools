@@ -220,18 +220,17 @@ labels as workflow input.
 
 If the authoritative source URL is a GitHub wiki repository ending in
 `.wiki.git`, do not call `assign_issue_to_copilot`; Copilot cannot modify the
-separate wiki repository. Return `copilot_assigned=false`.
+separate wiki repository. Return that URL as `source_url` and
+`copilot_assigned=false`.
 
 For every other GitHub source, call `assign_issue_to_copilot` after creation
-or reuse with the repository that Copilot must modify, its base branch, and
-concise instructions grounded in the validated remediation. For a GitHub KB
-issue filed in its configured source repository, that repository is the
-target; pass the source branch only when it is also a branch in that target,
-otherwise omit the base branch to use the repository default. For every
-fallback or system issue filed in `Azure/azure-sdk-pr`, the target is
-`Azure/azure-sdk-tools` on `main`. Do not return `issue_created` or
+or reuse with the source base branch when it belongs to the issue repository
+and concise instructions grounded in the validated remediation. The tool
+deterministically targets the issue repository, except that issues in
+`Azure/azure-sdk-pr` target `Azure/azure-sdk-tools` on `main`. Do not return `issue_created` or
 `issue_reused` until assignment succeeds, and return
-`copilot_assigned=true`. If assignment fails, return `remediation_failed`; on
+`copilot_assigned=true`. For KB issues, also return the resolved source URL as
+`source_url`; system issues use `null`. If assignment fails, return `remediation_failed`; on
 retry, search and reuse the existing marked issue instead of creating another
 one.
 
@@ -243,7 +242,7 @@ Markdown for the description. Do not set evolution tags and do not assign the
 work item to Copilot. For comments, use `wit_add_work_item_comment`. Return
 the canonical URL
 `https://dev.azure.com/<organization>/<project>/_workitems/edit/<id>` and
-`copilot_assigned=false`.
+the resolved source URL as `source_url`, with `copilot_assigned=false`.
 
 ## Issue format
 
@@ -302,6 +301,7 @@ persists it, so the shape is fixed. Use exactly these keys, in this order:
   "confidence": 0.9,
   "classification": null,
   "issue_url": null,
+  "source_url": null,
   "copilot_assigned": null,
   "has_expert_interaction": null,
   "expert_interaction_reason": "Insufficient evidence to assess expert follow-up."
@@ -312,10 +312,10 @@ Allowed combinations:
 
 | Requested mode | Allowed outcomes | Required metadata |
 | --- | --- | --- |
-| analysis | `conversation_ongoing`, `no_issue`, `issue_created`, `issue_reused` | `issue_created` and `issue_reused` require `classification`, `issue_url`, and boolean `copilot_assigned`; use `false` for ADO and GitHub wiki items. Otherwise all three are `null` |
-| validation | `validation_passed`, `validation_failed`, `validation_skipped` | `classification`, `issue_url`, and `copilot_assigned` are `null` |
-| analysis | `remediation_failed` | A real answer problem was confirmed in a completed conversation or a thread with negative user feedback, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` and `copilot_assigned` null, and put the blocker in `reasoning` |
-| either | `processing_failed` | Failure reason in `reasoning`; `classification`, `issue_url`, and `copilot_assigned` are `null` |
+| analysis | `conversation_ongoing`, `no_issue`, `issue_created`, `issue_reused` | `issue_created` and `issue_reused` require `classification`, `issue_url`, and boolean `copilot_assigned`. KB classifications also require `source_url`; system classifications use `null`. Only ADO and `.wiki.git` sources use `copilot_assigned=false`. Otherwise these fields are `null` |
+| validation | `validation_passed`, `validation_failed`, `validation_skipped` | `classification`, `issue_url`, `source_url`, and `copilot_assigned` are `null` |
+| analysis | `remediation_failed` | A real answer problem was confirmed in a completed conversation or a thread with negative user feedback, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url`, `source_url`, and `copilot_assigned` null, and put the blocker in `reasoning` |
+| either | `processing_failed` | Failure reason in `reasoning`; `classification`, `issue_url`, `source_url`, and `copilot_assigned` are `null` |
 
 Use `processing_failed` only when processing fails before confirming a real
 answer problem and either a completed conversation or negative user feedback,

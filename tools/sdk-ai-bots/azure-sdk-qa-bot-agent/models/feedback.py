@@ -110,6 +110,28 @@ _ADO_WORK_ITEM_PATH = re.compile(
     r"(?P<number>\d+)/?$",
     flags=re.IGNORECASE,
 )
+_GITHUB_WIKI_REPOSITORY_PATH = re.compile(
+    r"^/[^/]+/[^/]+\.wiki(?:\.git)?/?$",
+    flags=re.IGNORECASE,
+)
+_KB_CLASSIFICATIONS = frozenset(
+    {
+        RootCauseClassification.missing_content,
+        RootCauseClassification.outdated_content,
+        RootCauseClassification.insufficient_content,
+    }
+)
+
+
+def _is_github_wiki_source(value: str | None) -> bool:
+    if not value:
+        return False
+    parsed = urlparse(value)
+    return (
+        parsed.scheme == "https"
+        and parsed.netloc.lower() == "github.com"
+        and _GITHUB_WIKI_REPOSITORY_PATH.fullmatch(parsed.path) is not None
+    )
 
 
 def parse_issue_reference(
@@ -214,6 +236,7 @@ class ChatbotEvolutionAgentResult(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     classification: RootCauseClassification | None = None
     issue_url: str | None = None
+    source_url: str | None = None
     copilot_assigned: bool | None = Field(default=None, strict=True)
     has_expert_interaction: bool | None = Field(default=None, strict=True)
     expert_interaction_reason: str | None = Field(
@@ -243,23 +266,42 @@ class ChatbotEvolutionAgentResult(BaseModel):
                     "issue_url, and copilot_assigned"
                 )
             issue = parse_issue_reference(self.issue_url)
+            if self.classification in _KB_CLASSIFICATIONS:
+                if not self.source_url:
+                    raise ValueError("KB issue outcomes require source_url")
+            elif self.source_url is not None:
+                raise ValueError("System issue outcomes cannot include source_url")
             if issue.provider == "azure-devops" and self.copilot_assigned:
                 raise ValueError("ADO work items cannot be assigned to Copilot")
+            if issue.provider == "github":
+                wiki_source = _is_github_wiki_source(self.source_url)
+                if wiki_source and self.copilot_assigned:
+                    raise ValueError("GitHub wiki issues cannot be assigned to Copilot")
+                if not wiki_source and not self.copilot_assigned:
+                    raise ValueError(
+                        "Unassigned GitHub issue outcomes require a GitHub wiki source"
+                    )
         elif self.outcome == ChatbotEvolutionAgentOutcome.remediation_failed:
-            if self.issue_url is not None or self.copilot_assigned is not None:
+            if (
+                self.issue_url is not None
+                or self.source_url is not None
+                or self.copilot_assigned is not None
+            ):
                 raise ValueError(
-                    "remediation_failed cannot include issue_url or copilot_assigned"
+                    "remediation_failed cannot include issue_url, source_url, "
+                    "or copilot_assigned"
                 )
         elif (
             self.issue_url is not None
+            or self.source_url is not None
             or self.classification is not None
             or self.copilot_assigned is not None
         ):
             raise ValueError(
                 "classification is only valid for issue_created, issue_reused, "
                 "or remediation_failed; issue_url is only valid for issue_created "
-                "or issue_reused; copilot_assigned is only valid for issue_created "
-                "or issue_reused"
+                "or issue_reused; source_url and copilot_assigned are only valid "
+                "for issue_created or issue_reused"
             )
         return self
 

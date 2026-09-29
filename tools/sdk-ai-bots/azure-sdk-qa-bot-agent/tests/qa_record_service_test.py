@@ -309,6 +309,10 @@ def test_ado_issue_result_skips_copilot_assignment() -> None:
         outcome=ChatbotEvolutionAgentOutcome.issue_created,
         classification=RootCauseClassification.missing_content,
         issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+        source_url=(
+            "https://azure-sdk@dev.azure.com/"
+            "azure-sdk/internal/_git/internal.wiki"
+        ),
         copilot_assigned=False,
         reasoning="Grounded result.",
         confidence=0.9,
@@ -318,6 +322,7 @@ def test_ado_issue_result_skips_copilot_assignment() -> None:
 
     assert record.feedback is not None
     assert record.feedback.status == FeedbackStatus.pending_validation
+    assert record.feedback.source_url == result.source_url
     assert record.feedback.copilot_assigned is False
 
 
@@ -327,6 +332,7 @@ def test_github_issue_result_can_skip_copilot_assignment() -> None:
         outcome=ChatbotEvolutionAgentOutcome.issue_created,
         classification=RootCauseClassification.missing_content,
         issue_url="https://github.com/Azure/azure-sdk-for-java/issues/456",
+        source_url="https://github.com/Azure/azure-sdk-for-java.wiki.git",
         copilot_assigned=False,
         reasoning="The source does not support Copilot assignment.",
         confidence=0.9,
@@ -335,7 +341,34 @@ def test_github_issue_result_can_skip_copilot_assignment() -> None:
     ChatbotEvolutionAgentService()._apply_result(record, result)
 
     assert record.feedback is not None
+    assert record.feedback.source_url == result.source_url
     assert record.feedback.copilot_assigned is False
+
+
+def test_non_wiki_github_issue_requires_copilot_assignment() -> None:
+    with pytest.raises(ValidationError):
+        ChatbotEvolutionAgentResult(
+            outcome=ChatbotEvolutionAgentOutcome.issue_created,
+            classification=RootCauseClassification.missing_content,
+            issue_url="https://github.com/Azure/azure-sdk-for-java/issues/456",
+            source_url="https://github.com/Azure/azure-sdk-for-java.git",
+            copilot_assigned=False,
+            reasoning="Invalid assignment state.",
+            confidence=0.9,
+        )
+
+
+def test_github_wiki_issue_rejects_copilot_assignment() -> None:
+    with pytest.raises(ValidationError):
+        ChatbotEvolutionAgentResult(
+            outcome=ChatbotEvolutionAgentOutcome.issue_created,
+            classification=RootCauseClassification.missing_content,
+            issue_url="https://github.com/Azure/azure-sdk-for-java/issues/456",
+            source_url="https://github.com/Azure/azure-sdk-for-java.wiki.git",
+            copilot_assigned=True,
+            reasoning="Invalid assignment state.",
+            confidence=0.9,
+        )
 
 
 def test_ado_issue_result_rejects_copilot_assignment() -> None:
@@ -344,6 +377,10 @@ def test_ado_issue_result_rejects_copilot_assignment() -> None:
             outcome=ChatbotEvolutionAgentOutcome.issue_created,
             classification=RootCauseClassification.missing_content,
             issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+            source_url=(
+                "https://azure-sdk@dev.azure.com/"
+                "azure-sdk/internal/_git/internal.wiki"
+            ),
             copilot_assigned=True,
             reasoning="Invalid assignment.",
             confidence=0.9,

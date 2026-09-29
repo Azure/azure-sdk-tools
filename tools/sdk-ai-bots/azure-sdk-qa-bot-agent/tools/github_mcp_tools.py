@@ -98,6 +98,8 @@ def _build_mcp_headers(readonly: bool) -> dict[str, str]:
 _MCP_VALIDATION_TIMEOUT_SECS = 10.0
 _GITHUB_API_TIMEOUT_SECS = 10.0
 _COPILOT_TOKEN_SECRET_DEFAULT = "copilot-github-token"
+_COPILOT_FALLBACK_ISSUE_REPOSITORY = "Azure/azure-sdk-pr"
+_COPILOT_FALLBACK_TARGET_REPOSITORY = "Azure/azure-sdk-tools"
 # JWT timing: clock-skew buffer and expiration (seconds).
 _JWT_CLOCK_SKEW_SECS = 10
 _JWT_EXPIRY_SECS = 600
@@ -489,10 +491,6 @@ async def assign_issue_to_copilot(
         str,
         "Canonical GitHub issue URL returned by issue creation or related-issue search.",
     ],
-    target_repository: Annotated[
-        str,
-        "GitHub owner/repository where Copilot should make the fix.",
-    ],
     custom_instructions: Annotated[
         str,
         "Concise implementation instructions grounded in the validated remediation.",
@@ -525,10 +523,14 @@ async def assign_issue_to_copilot(
     owner = match.group("owner")
     repo = match.group("repo")
     number = match.group("number")
-    if re.fullmatch(r"[^/]+/[^/]+", target_repository) is None:
-        raise ValueError("target_repository must use owner/repository format")
     if not custom_instructions.strip():
         raise ValueError("custom_instructions must not be empty")
+    issue_repository = f"{owner}/{repo}"
+    if issue_repository.casefold() == _COPILOT_FALLBACK_ISSUE_REPOSITORY.casefold():
+        target_repository = _COPILOT_FALLBACK_TARGET_REPOSITORY
+        base_branch = "main"
+    else:
+        target_repository = issue_repository
     assignee = "copilot-swe-agent[bot]"
     assignment = {
         "target_repo": target_repository,

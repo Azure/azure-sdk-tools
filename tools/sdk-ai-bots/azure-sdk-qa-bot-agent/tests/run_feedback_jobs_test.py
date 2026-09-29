@@ -16,6 +16,7 @@ from models.feedback import (
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from scripts import run_feedback_jobs
+from utils.channel_policy import is_testing_channel
 
 
 def _record(
@@ -82,7 +83,7 @@ def _args() -> argparse.Namespace:
     ],
 )
 def test_testing_channel_names_are_excluded(name: str) -> None:
-    assert run_feedback_jobs._is_testing_channel(name)
+    assert is_testing_channel(name)
 
 
 @pytest.mark.parametrize(
@@ -94,7 +95,24 @@ def test_testing_channel_names_are_excluded(name: str) -> None:
     ],
 )
 def test_product_channels_with_test_in_name_are_not_excluded(name: str) -> None:
-    assert not run_feedback_jobs._is_testing_channel(name)
+    assert not is_testing_channel(name)
+
+
+@pytest.mark.asyncio
+async def test_excluded_channels_use_shared_policy() -> None:
+    assert run_feedback_jobs.is_testing_channel is is_testing_channel
+    data = run_feedback_jobs.yaml.safe_dump({"channels": [
+        {"id": "testing", "name": "Stress (testing)"},
+        {"id": "smoke", "name": "Smoke-Tests"},
+        {"id": "product", "name": "Python Test V-Team"},
+        {"id": "unnamed"},
+        {"name": "Stress (testing)"},
+    ]}).encode("utf-8")
+    with (
+        patch.object(run_feedback_jobs.app_config, "get", side_effect=["config", "channel.yaml"]),
+        patch.object(run_feedback_jobs, "download_blob", new=AsyncMock(return_value=data)),
+    ):
+        assert await run_feedback_jobs._load_excluded_channels() == {"testing", "smoke"}
 
 
 @pytest.mark.asyncio
@@ -160,7 +178,20 @@ async def test_run_invokes_agent_for_analysis_without_external_evaluator() -> No
 
 
 @pytest.mark.asyncio
-async def test_run_validates_only_after_issue_closes() -> None:
+@pytest.mark.parametrize(
+    ("outcome", "validated", "failed", "skipped"),
+    [
+        (ChatbotEvolutionAgentOutcome.validation_passed, 1, 0, 0),
+        (ChatbotEvolutionAgentOutcome.validation_failed, 0, 1, 0),
+        (ChatbotEvolutionAgentOutcome.validation_skipped, 0, 0, 1),
+        (ChatbotEvolutionAgentOutcome.processing_failed, 0, 1, 0),
+        (None, 0, 1, 0),
+    ],
+)
+async def test_run_validates_only_after_issue_closes(
+    outcome, validated, failed, skipped, caplog
+) -> None:
+    caplog.set_level("INFO", logger="run_feedback_jobs")
     qa_service = MagicMock()
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
     qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
@@ -175,9 +206,7 @@ async def test_run_validates_only_after_issue_closes() -> None:
     qa_service.list_analyzable = AsyncMock(return_value=[])
     evolution = MagicMock()
     evolution.run_job = AsyncMock(
-        return_value=_result(
-            ChatbotEvolutionAgentOutcome.validation_passed,
-        )
+        return_value=_result(outcome) if outcome is not None else None
     )
 
     with (
@@ -209,3 +238,9 @@ async def test_run_validates_only_after_issue_closes() -> None:
         evolution.run_job.await_args.kwargs["mode"]
         == ChatbotEvolutionAgentMode.validation
     )
+    assert (
+        f"waiting-validation=0 validated={validated} validation-failed={failed} "
+        f"validation-skipped={skipped} evolution-failed=0 skipped=0"
+    ) in caplog.text
+    if skipped:
+        assert "Validation skipped for teams_channel:conversation-1" in caplog.text

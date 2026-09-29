@@ -1,3 +1,0 @@
-# Include the test packages directory (override repository-level .gitignore)
-!CSharpAPIParserTests/packages/
-!CSharpAPIParserTests/packages/**

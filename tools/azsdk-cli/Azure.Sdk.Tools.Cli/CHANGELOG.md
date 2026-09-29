@@ -6,11 +6,12 @@
 
 ### Breaking Changes
 
-- `release-plan update-release-status` now requires a release-plan ID and an exact package API version before writing status. Calls without an ID are safe no-ops; package/PR/release-type heuristics no longer select a plan.
+- `release-plan update-release-status` now requires a requester-supplied release-plan ID or the triggering SDK PR linked to exactly one in-progress ADO plan. Calls without either input are safe no-ops. Package-name, cached-PR-status, and release-type heuristics no longer select a plan; no API version is required.
 
 ### Bugs Fixed
 
-- Release status updates validate the language/package entry and API version, reject duplicate IDs and conflicting recorded releases, and guard writes against concurrent parent work-item changes.
+- Release status updates validate the language/package entry, reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes.
+- Automatic release resolution rejects multiple associated merged PRs and verifies the selected PR's merge commit matches the build before using its link for release-plan correlation.
 
 ### Other Changes
 

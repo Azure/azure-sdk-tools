@@ -981,6 +981,66 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #endregion
         #region Explicit release status correlation
 
+        [TestCase(".NET", "Dotnet", "net")]
+        [TestCase("Java", "Java", "java")]
+        [TestCase("JavaScript", "JavaScript", "js")]
+        [TestCase("Python", "Python", "python")]
+        [TestCase("Go", "Go", "go")]
+        public async Task GetReleasePlansBySdkPullRequestAsync_QueriesExactLanguagePrAndInProgressPlans(string language, string fieldId, string repoSuffix)
+        {
+            var sdkPr = $"https://github.com/Azure/azure-sdk-for-{repoSuffix}/pull/123";
+            var plan = CreateReleasePlanWorkItemWithReleasePlanId(35000, 100, "In Progress");
+            plan.Fields[$"Custom.SDKPullRequestFor{fieldId}"] = sdkPr;
+            _connection.AddWorkItemToQuery(plan);
+
+            var plans = await _devOpsService.GetReleasePlansBySdkPullRequestAsync(sdkPr, language);
+
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[Custom.SDKPullRequestFor{fieldId}] = '{sdkPr}'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.State] = 'In Progress'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.WorkItemType] = 'Release Plan'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.Tags] NOT CONTAINS 'Release Planner App Test'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Not.Contain("PackageName").And.Not.Contain("APISpecversion"));
+            Assert.That(plans.Single().ReleasePlanId, Is.EqualTo(100));
+            Assert.That(plans.Single().WorkItemId, Is.EqualTo(35000));
+        }
+
+        [Test]
+        public async Task GetReleasePlansBySdkPullRequestAsync_ReturnsAllCandidatesInTestScope()
+        {
+            _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(11111, 100, "In Progress"));
+            _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(22222, 200, "In Progress"));
+
+            var plans = await _devOpsService.GetReleasePlansBySdkPullRequestAsync("https://github.com/azure/azure-sdk-for-python/pull/123/", "Python", true);
+
+            Assert.That(plans.Select(p => p.WorkItemId), Is.EquivalentTo(new[] { 11111, 22222 }));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.Tags] CONTAINS 'Release Planner App Test'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("'https://github.com/Azure/azure-sdk-for-python/pull/123'"));
+        }
+
+        [Test]
+        public async Task GetReleasePlansBySdkPullRequestAsync_NoMatchesReturnsEmpty()
+        {
+            var plans = await _devOpsService.GetReleasePlansBySdkPullRequestAsync("https://github.com/Azure/azure-sdk-for-python/pull/123", "Python");
+            Assert.That(plans, Is.Empty);
+        }
+
+        [TestCase("https://github.com/Azure/azure-sdk-for-java/pull/123")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/123' OR '1'='1")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/2147483648")]
+        [TestCase("http://github.com/Azure/azure-sdk-for-python/pull/123")]
+        public void GetReleasePlansBySdkPullRequestAsync_InvalidIdentityDoesNotQuery(string sdkPr)
+        {
+            Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.GetReleasePlansBySdkPullRequestAsync(sdkPr, "Python"));
+            Assert.That(_connection.LastCapturedQuery, Is.Null);
+        }
+
+        [Test]
+        public void GetReleasePlansBySdkPullRequestAsync_QueryCancellationPropagates()
+        {
+            _connection.CancelQuery();
+            Assert.CatchAsync<OperationCanceledException>(() => _devOpsService.GetReleasePlansBySdkPullRequestAsync("https://github.com/Azure/azure-sdk-for-python/pull/123", "Python"));
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public async Task GetReleasePlansByIdAsync_UsesDisplayIdAndEnvironmentAndMapsSnapshot(bool isTest)

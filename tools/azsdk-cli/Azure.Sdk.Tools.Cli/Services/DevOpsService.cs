@@ -146,6 +146,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByIdAsync(int releasePlanId, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", CancellationToken ct = default);
@@ -377,6 +378,41 @@ namespace Azure.Sdk.Tools.Cli.Services
                 plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
             }
             return plans;
+        }
+
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
+        {
+            var normalizedUrl = NormalizeSdkPullRequestUrl(sdkPullRequest, language);
+            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan' AND [System.State] = 'In Progress'";
+            query += $" AND [Custom.SDKPullRequestFor{languageId}] = '{normalizedUrl}'";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            var workItems = await FetchWorkItemsAsync(query, ct);
+            var plans = new List<ReleasePlanWorkItem>();
+            foreach (var workItem in workItems)
+            {
+                plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
+            }
+            return plans;
+        }
+
+        internal static string NormalizeSdkPullRequestUrl(string sdkPullRequest, string language)
+        {
+            var repo = SdkLanguageHelpers.GetRepoName(SdkLanguageHelpers.GetSdkLanguage(language));
+            if (!string.IsNullOrWhiteSpace(sdkPullRequest) && Uri.TryCreate(sdkPullRequest, UriKind.Absolute, out var uri) &&
+                uri.Scheme == Uri.UriSchemeHttps && uri.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase) &&
+                uri.IsDefaultPort && string.IsNullOrEmpty(uri.UserInfo) && string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment))
+            {
+                var parts = uri.AbsolutePath.Trim('/').Split('/');
+                if (parts.Length == 4 && parts[0].Equals("Azure", StringComparison.OrdinalIgnoreCase) &&
+                    repo != null && parts[1].Equals(repo, StringComparison.OrdinalIgnoreCase) && parts[2] == "pull" &&
+                    int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number > 0)
+                {
+                    return $"https://github.com/Azure/{repo}/pull/{number.ToString(CultureInfo.InvariantCulture)}";
+                }
+            }
+            throw new ArgumentException("SDK pull request must be a full HTTPS GitHub PR URL in the Azure SDK repository for the supplied language.", nameof(sdkPullRequest));
         }
 
         private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct)

@@ -96,21 +96,23 @@ This server is intended to run in **local mcp mode only** and will utilize your 
 
 ## Release-plan status updates
 
-`azsdk release-plan update-release-status` requires explicit correlation before it writes to Azure DevOps:
+`azsdk release-plan update-release-status` uses existing Azure DevOps release-plan metadata, with no API-version input or mapping:
 
-- `--release-plan-id`: the release-plan ID associated with this package release, not an interchangeable Azure DevOps work item ID.
-- `--language` and `--package-name`: identify exactly one SDK entry within that plan. Language aliases are normalized; package names must match exactly.
-- `--api-version`: one explicit spec API version from the package being released, matching the plan's saved API version. It is not the SDK package version.
+- **Manual:** supply `--release-plan-id` from the requester. This is the release-plan ID, not an interchangeable ADO work item ID.
+- **Automatic:** supply `--sdk-pull-request` with the full SDK PR URL that triggered the release build. The command finds exactly one in-progress plan linked through `Custom.SDKPullRequestFor{language}`, reads `Custom.ReleasePlanID`, and verifies that ID identifies the same work item uniquely.
+- **Both:** `--language` and `--package-name` identify exactly one SDK entry inside the plan. Language aliases are normalized; package names match exactly. These fields never select a substitute plan.
 
-Without a release-plan ID, the command reports a no-op without looking up plans. This is normal for an independent SDK-only release. An unresolved or duplicate ID, missing/ambiguous API version, or mismatched language/package/API produces an error and no writes. There is no first-result, merged-PR, or release-type fallback.
+No manual ID and no SDK PR means no query or writes. An automatic PR with no matching plan also produces a no-op. Invalid/duplicate IDs, multiple PR matches, or conflicting language/package/PR information produce an error with no writes. A supplied manual ID never falls back to PR lookup. No newest-plan, merged-PR-status, release-type, or first-result tie-breaker is used.
 
-Package version and release pipeline URL remain optional result metadata. When an SDK release type or SDK PR URL is supplied, it must also match the identified plan/SDK entry. An already released SDK is not overwritten; matching retries are no-ops, including after the plan finishes, and a conflicting recorded version is rejected. Status and completion writes check the parent work item's revision; completion rereads all required language statuses and approved exclusions first. A revision conflict is reported rather than retried against changed data.
+Package version and release pipeline URL remain optional result metadata. A supplied SDK release type must match the plan. Already released SDKs are not overwritten: non-conflicting retries by ID are no-ops even after the plan finishes; a conflicting known version is rejected. Parent revision checks guard status writes and the fresh completion check. Revision conflicts are reported, not silently retried against changed data.
 
-The shared publication script reads `ReleasePlanId` and a scalar `ApiVersion` from **each package's build-produced package-info JSON** and forwards them with the package name and pipeline language. Missing or invalid correlation skips the status update, not the successful publication. No pipeline-wide ID is applied to every package.
+The publication script takes `ReleasePlanId` and/or `SdkPullRequest` as explicit parameters and reads only the package name/version from package-info JSON. It does not inherit an old plan ID or require an API version in that JSON. The shared completion-step template forwards both parameters. Status failures are surfaced as warnings without undoing a successful publication.
 
-**Rollout prerequisite:** package-info producers must supply the API version using [#16868](https://github.com/Azure/azure-sdk-tools/issues/16868) and preserve the release-plan association for the exact SDK build/artifact. This change implements the receiving command and publication adapter, not that cross-repository producer work. Do not persist an ID as a permanent package setting or copy it into an unrelated bug-fix build. The existing auto-release progress caller also omits these inputs and therefore becomes a safe no-op until it is wired to verified per-package correlation. Publish the updated CLI before rolling out the shared script.
+For automatic releases, the shared resolver requires one associated merged PR at the build's exact merge commit, with the existing target-branch and auto-release-label checks. Ambiguous PRs are not selected. The progress call already passes that PR to the status command. The resolver also emits `AutoReleaseSdkPullRequestUrl` for the release stage to pass as `SdkPullRequest` to the completion template (output path: `AutoReleasePrepare.ResolveAutoReleasePackages`, step `resolve`).
 
-These guards do not prove artifact provenance or distinguish two generation attempts with identical inputs and a copied ID. Parent revision checks also do not make API Spec child reads and parent writes a cross-work-item transaction. Historical incorrect dashboard data is not repaired automatically.
+**Rollout prerequisite:** wire the manual `ReleasePlanId` and automatic PR output through the language-specific release templates, starting with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130). This PR changes the shared adapters, not every language CI YAML. Until a completion caller forwards one of these inputs, that call is a safe no-op. Publish the supporting CLI before using the updated shared scripts; coordinate activation with caller wiring. API-version extraction in #16868 is not a dependency.
+
+This uses existing ADO metadata, not a new tracking system or immutable generation snapshot. Historical incorrect dashboard data is not repaired automatically.
 
 ## Retained customization repair attempts
 

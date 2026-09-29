@@ -15,8 +15,8 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         Set-Content -LiteralPath $script:stubPath -Value ($stubLines -join [Environment]::NewLine)
 
         function Invoke-CompletionTest {
-            param([string]$Path)
-            & $script:completionScript -PackageInfoFilePath $Path -AzsdkExePath $script:stubPath
+            param([string]$Path, [string]$ReleasePlanId = '100', [string]$SdkPullRequest = '')
+            & $script:completionScript -PackageInfoFilePath $Path -AzsdkExePath $script:stubPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest
         }
 
         function Get-CapturedArgument {
@@ -37,8 +37,6 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         $script:packageInfo = @{
             Name = 'azure-test'
             Version = '1.2.3'
-            ReleasePlanId = 100
-            ApiVersion = '2026-07-01'
         }
         $script:packageInfo | ConvertTo-Json | Set-Content -LiteralPath $script:packageInfoPath
     }
@@ -47,53 +45,54 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         Remove-Variable ReleaseStatusTestCalls, ReleaseStatusTestExitCode, LanguageDisplayName -Scope Global -ErrorAction SilentlyContinue
     }
 
-    It 'passes per-package ID, language, name, API version and optional version' {
+    It 'passes the explicit ID, language, package and optional version without API metadata' {
         Invoke-CompletionTest $script:packageInfoPath
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
         $call = $global:ReleaseStatusTestCalls[0]
         Get-CapturedArgument $call '--release-plan-id' | Should -Be '100'
-        Get-CapturedArgument $call '--api-version' | Should -Be '2026-07-01'
+        Get-CapturedArgument $call '--api-version' | Should -BeNullOrEmpty
         Get-CapturedArgument $call '--package-name' | Should -Be 'azure-test'
         Get-CapturedArgument $call '--language' | Should -Be 'Python'
         Get-CapturedArgument $call '--package-version' | Should -Be '1.2.3'
         Get-CapturedArgument $call '--sdk-release-type' | Should -Be 'stable'
     }
 
-    It 'does not guess a release plan when the ID is missing, empty or zero' -TestCases @(
-        @{ Value = $null }, @{ Value = '' }, @{ Value = 0 }
-    ) {
-        param($Value)
-        $script:packageInfo.ReleasePlanId = $Value
+    It 'does not inherit an ID or API version from a previous package build' {
+        $script:packageInfo.ReleasePlanId = 999
+        $script:packageInfo.ApiVersion = '2026-07-01'
         $script:packageInfo | ConvertTo-Json | Set-Content -LiteralPath $script:packageInfoPath
 
-        Invoke-CompletionTest $script:packageInfoPath
+        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 0
     }
 
-    It 'does not invoke the CLI for a malformed ID' -TestCases @(
-        @{ Value = -1 }, @{ Value = 'invalid' }, @{ Value = @(100, 200) }, @{ Value = '2147483648' }, @{ Value = 100.5 }
+    It 'rejects malformed explicit IDs without rounding them to another plan' -TestCases @(
+        @{ Value = '-1' }, @{ Value = '100.6' }, @{ Value = '0.9' },
+        @{ Value = '2147483648' }, @{ Value = 'not-an-id' }, @{ Value = ' 100' }
     ) {
         param($Value)
-        $script:packageInfo.ReleasePlanId = $Value
-        $script:packageInfo | ConvertTo-Json | Set-Content -LiteralPath $script:packageInfoPath
-
-        Invoke-CompletionTest $script:packageInfoPath
+        { Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId $Value } | Should -Throw
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 0
     }
 
-    It 'does not invoke the CLI for absent or unresolved multiple API versions' -TestCases @(
-        @{ Value = $null }, @{ Value = '' }, @{ Value = @('2026-07-01', '2026-08-01') }, @{ Value = @('2026-07-01') }, @{ Value = 123 }
-    ) {
-        param($Value)
-        $script:packageInfo.ApiVersion = $Value
-        $script:packageInfo | ConvertTo-Json | Set-Content -LiteralPath $script:packageInfoPath
+    It 'accepts the largest valid ID without altering its value' {
+        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId '2147483647'
 
-        Invoke-CompletionTest $script:packageInfoPath
+        $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-plan-id' | Should -Be '2147483647'
+    }
 
-        $global:ReleaseStatusTestCalls.Count | Should -Be 0
+    It 'passes the triggering SDK PR for automatic ADO lookup without a manual ID' {
+        $prUrl = 'https://github.com/Azure/azure-sdk-for-python/pull/100'
+        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0 -SdkPullRequest $prUrl
+
+        $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--sdk-pull-request' | Should -Be $prUrl
+        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-plan-id' | Should -BeNullOrEmpty
+        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--api-version' | Should -BeNullOrEmpty
     }
 
     It 'does not require optional package version metadata' {
@@ -117,24 +116,21 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--sdk-release-type' | Should -Be 'beta'
     }
 
-    It 'keeps correlation isolated for multiple packages, including a package with no plan' {
+    It 'passes each package separately with the triggering SDK PR instead of inherited IDs' {
         @{
             Name = 'azure-other'
             Version = '2.0.0'
             ReleasePlanId = 200
-            ApiVersion = '2026-08-01'
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $script:caseDirectory 'other.json')
-        @{ Name = 'azure-unplanned'; Version = '1.0.1' } |
-            ConvertTo-Json | Set-Content -LiteralPath (Join-Path $script:caseDirectory 'unplanned.json')
 
-        Invoke-CompletionTest $script:caseDirectory
+        Invoke-CompletionTest $script:caseDirectory -ReleasePlanId 0 -SdkPullRequest 'https://github.com/Azure/azure-sdk-for-python/pull/100'
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 2
         $identities = @($global:ReleaseStatusTestCalls | ForEach-Object {
-            '{0}|{1}|{2}' -f (Get-CapturedArgument $_ '--package-name'), (Get-CapturedArgument $_ '--release-plan-id'), (Get-CapturedArgument $_ '--api-version')
+            '{0}|{1}|{2}' -f (Get-CapturedArgument $_ '--package-name'), (Get-CapturedArgument $_ '--release-plan-id'), (Get-CapturedArgument $_ '--sdk-pull-request')
         })
-        $identities | Should -Contain 'azure-test|100|2026-07-01'
-        $identities | Should -Contain 'azure-other|200|2026-08-01'
+        $identities | Should -Contain 'azure-test||https://github.com/Azure/azure-sdk-for-python/pull/100'
+        $identities | Should -Contain 'azure-other||https://github.com/Azure/azure-sdk-for-python/pull/100'
     }
 
     It 'continues after malformed JSON without attempting an uncorrelated update' {
@@ -151,5 +147,14 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         { Invoke-CompletionTest $script:packageInfoPath } | Should -Not -Throw
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
+    }
+
+    It 'declares and forwards both correlation inputs in the shared completion template' {
+        $template = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../common/pipelines/templates/steps/mark-release-completion.yml') -Raw
+        $template | Should -Match 'ReleasePlanId: 0'
+        $template | Should -Match "SdkPullRequest: ''"
+        $template | Should -Match '-ReleasePlanId.+parameters\.ReleasePlanId'
+        $template | Should -Match '-SdkPullRequest.+parameters\.SdkPullRequest'
+        $template | Should -Not -Match 'ApiVersion|api-version'
     }
 }

@@ -15,6 +15,7 @@ Describe "Get-GitHubAutoReleasePullRequestForCommit" -Tag "UnitTest", "AutoRelea
             [pscustomobject]@{
                 number    = 101
                 merged_at = '2024-01-01T00:00:00Z'
+                merge_commit_sha = 'abc'
                 base      = [pscustomobject]@{ ref = 'main' }
                 labels    = @([pscustomobject]@{ name = 'auto-release' })
             }
@@ -45,7 +46,7 @@ Describe "Get-GitHubAutoReleasePullRequestForCommit" -Tag "UnitTest", "AutoRelea
         Should -Invoke Get-GitHubPullRequest -Times 0 -Exactly
     }
 
-    It "selects the most recently merged pull request when several target the branch" {
+    It "rejects multiple associated merged pull requests without selecting the newest" {
         Mock Get-GitHubPullRequestsForCommit {
             @(
                 [pscustomobject]@{ number = 10; merged_at = '2024-01-01T00:00:00Z'; base = [pscustomobject]@{ ref = 'main' } },
@@ -64,8 +65,10 @@ Describe "Get-GitHubAutoReleasePullRequestForCommit" -Tag "UnitTest", "AutoRelea
 
         $result = Get-GitHubAutoReleasePullRequestForCommit -RepoId 'Azure/azure-sdk-for-net' -CommitSha 'abc' -AuthToken 'token'
 
-        $result.PullRequestNumber | Should -Be 20
-        Should -Invoke Get-GitHubPullRequest -Times 1 -Exactly -ParameterFilter { $PullRequestNumber -eq 20 }
+        $result.IsEligible | Should -BeFalse
+        $result.PullRequestNumber | Should -BeNullOrEmpty
+        $result.SkipReason | Should -BeLike '*Multiple merged pull requests*'
+        Should -Invoke Get-GitHubPullRequest -Times 0 -Exactly
     }
 
     It "is not eligible when the required label is missing" {
@@ -76,6 +79,7 @@ Describe "Get-GitHubAutoReleasePullRequestForCommit" -Tag "UnitTest", "AutoRelea
             [pscustomobject]@{
                 number    = 55
                 merged_at = '2024-01-01T00:00:00Z'
+                merge_commit_sha = 'abc'
                 base      = [pscustomobject]@{ ref = 'main' }
                 labels    = @([pscustomobject]@{ name = 'other-label' })
             }
@@ -116,6 +120,7 @@ Describe "Get-GitHubAutoReleasePullRequestForCommit" -Tag "UnitTest", "AutoRelea
             [pscustomobject]@{
                 number    = 88
                 merged_at = '2024-01-01T00:00:00Z'
+                merge_commit_sha = 'abc'
                 base      = [pscustomobject]@{ ref = 'release/2.0' }
                 labels    = @([pscustomobject]@{ name = 'ship-it' })
             }
@@ -125,6 +130,29 @@ Describe "Get-GitHubAutoReleasePullRequestForCommit" -Tag "UnitTest", "AutoRelea
 
         $result.IsEligible | Should -BeTrue
         $result.PullRequestNumber | Should -Be 88
+    }
+
+    It 'rejects an associated PR whose actual merge commit is missing or different' -TestCases @(
+        @{ MergeCommit = $null }, @{ MergeCommit = 'an-older-commit' }
+    ) {
+        param($MergeCommit)
+        Mock Get-GitHubPullRequestsForCommit {
+            @([pscustomobject]@{ number = 101; merged_at = '2024-01-01T00:00:00Z'; base = [pscustomobject]@{ ref = 'main' } })
+        }
+        Mock Get-GitHubPullRequest {
+            [pscustomobject]@{
+                number = 101
+                merged_at = '2024-01-01T00:00:00Z'
+                merge_commit_sha = $MergeCommit
+                base = [pscustomobject]@{ ref = 'main' }
+                labels = @([pscustomobject]@{ name = 'auto-release' })
+            }
+        }
+
+        $result = Get-GitHubAutoReleasePullRequestForCommit -RepoId 'Azure/azure-sdk-for-net' -CommitSha 'abc' -AuthToken 'token'
+
+        $result.IsEligible | Should -BeFalse
+        $result.SkipReason | Should -BeLike '*does not match the build*'
     }
 }
 

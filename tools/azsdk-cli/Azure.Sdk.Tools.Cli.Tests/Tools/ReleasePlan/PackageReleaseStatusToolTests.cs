@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
     [TestFixture]
     internal class PackageReleaseStatusToolTests
     {
-        private const string ApiVersion = "2026-07-01";
+        private const string PythonSdkPr = "https://github.com/Azure/azure-sdk-for-python/pull/100";
         private Mock<IDevOpsService> _devOps = null!;
         private PackageReleaseStatusTool _tool = null!;
         private ReleasePlanWorkItem _plan = null!;
@@ -28,6 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             _plan = CreatePlan();
             _devOps = new Mock<IDevOpsService>();
             _devOps.Setup(s => s.GetReleasePlansByIdAsync(100, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => [_plan]);
+            _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => [_plan]);
             _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => _plan);
@@ -135,36 +137,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(_devOps.Invocations, Is.Empty);
         }
 
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase(" ")]
-        [TestCase("2026-07-01,2026-08-01")]
-        [TestCase("2026-07-01;2026-08-01")]
-        [TestCase("2026-07-01 2026-08-01")]
-        [TestCase("[\"2026-07-01\"]")]
-        [TestCase(" 2026-07-01")]
-        [TestCase("2026-07-01\n")]
-        [TestCase("latest")]
-        [TestCase("DEFAULT")]
-        public async Task MissingOrAmbiguousApiVersion_DoesNotQueryOrWrite(string? apiVersion)
-        {
-            var result = await UpdateAsync(apiVersion: apiVersion);
-            Assert.That(result.ResponseError, Does.Contain("one explicit API version"));
-            Assert.That(_devOps.Invocations, Is.Empty);
-        }
-
-        [TestCase("2026-07-01")]
-        [TestCase("2026-07-01-preview")]
-        [TestCase("v1.0")]
-        public async Task ExplicitApiVersion_MatchesExactlyWithoutAssumingDateFormat(string apiVersion)
-        {
-            _plan.SpecAPIVersion = apiVersion;
-            var result = await UpdateAsync(apiVersion: apiVersion);
-            Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.ApiVersion, Is.EqualTo(apiVersion));
-            Assert.That(_writes, Has.Count.EqualTo(1));
-        }
-
         [TestCase(".NET", "Azure.Test", "Dotnet", SdkLanguage.DotNet)]
         [TestCase("dotnet", "Azure.Test", "Dotnet", SdkLanguage.DotNet)]
         [TestCase("csharp", "Azure.Test", "Dotnet", SdkLanguage.DotNet)]
@@ -196,8 +168,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
         [TestCase("package")]
         [TestCase("package-case")]
-        [TestCase("api")]
-        [TestCase("missing-api")]
         [TestCase("id")]
         [TestCase("work-item-id")]
         [TestCase("environment")]
@@ -213,8 +183,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 case "package": python.PackageName = "azure-other"; break;
                 case "package-case": python.PackageName = "Azure-Test"; break;
-                case "api": _plan.SpecAPIVersion = "2026-08-01"; break;
-                case "missing-api": _plan.SpecAPIVersion = ""; break;
                 case "id": _plan.ReleasePlanId = 200; break;
                 case "work-item-id": _plan.WorkItemId = 0; break;
                 case "environment": _plan.IsTestReleasePlan = true; break;
@@ -426,7 +394,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             _devOps.Setup(s => s.GetReleasePlansByIdAsync(100, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Lookup failed"));
             var result = await UpdateAsync();
-            Assert.That(result.ResponseError, Does.Contain("Lookup failed").And.Contain("100").And.Contain(ApiVersion));
+            Assert.That(result.ResponseError, Does.Contain("Lookup failed").And.Contain("100").And.Contain("azure-test"));
             AssertNoWrites();
         }
 
@@ -450,17 +418,29 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Cli_ForwardsAllCorrelationAndResultInputs()
         {
             var command = _tool.GetCommandInstances().First();
-            var parse = command.Parse("--package-name @azure/test --language JavaScript --release-plan-id 100 --api-version 2026-07-01 --package-version 1.2.3 --sdk-release-type stable --release-pipeline https://example.test/build/1",
+            var parse = command.Parse("--package-name @azure/test --language JavaScript --release-plan-id 100 --package-version 1.2.3 --sdk-release-type stable --release-pipeline https://example.test/build/1",
                 new CommandLineConfiguration(command) { ResponseFileTokenReplacer = null });
             Assert.That(parse.Errors, Is.Empty);
 
             var result = (ReleaseStatusUpdateResponse)await _tool.HandleCommand(parse, CancellationToken.None);
 
             Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.ApiVersion, Is.EqualTo(ApiVersion));
             Assert.That(_writes.Single().Fields["Custom.ReleaseStatusForJavaScript"], Is.EqualTo("Released"));
             Assert.That(_writes.Single().Fields["Custom.ReleasedVersionForJavaScript"], Is.EqualTo("1.2.3"));
             Assert.That(_writes.Single().Fields["Custom.ReleasePipelineForJavaScript"], Is.EqualTo("https://example.test/build/1"));
+        }
+
+        [Test]
+        public async Task IdOnlyRegression_ManualReleaseDoesNotRequireApiVersion()
+        {
+            _plan.SpecAPIVersion = string.Empty;
+            var command = _tool.GetCommandInstances().First();
+            var parse = command.Parse("--package-name azure-test --language Python --release-plan-id 100");
+
+            var result = (ReleaseStatusUpdateResponse)await _tool.HandleCommand(parse, CancellationToken.None);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(_writes.Single().Fields["Custom.ReleaseStatusForPython"], Is.EqualTo("Released"));
         }
 
         [Test]
@@ -475,12 +455,139 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(_devOps.Invocations, Is.Empty);
         }
 
-        private Task<ReleaseStatusUpdateResponse> UpdateAsync(string? apiVersion = ApiVersion, int releasePlanId = 100,
+        [TestCase(".NET", "Azure.Test", "Dotnet")]
+        [TestCase("Java", "azure-test", "Java")]
+        [TestCase("JavaScript", "@azure/test", "JavaScript")]
+        [TestCase("Python", "azure-test", "Python")]
+        [TestCase("Go", "sdk/test/aztest", "Go")]
+        public async Task AutomaticSdkPr_UsesAdoPlanIdAndOnlyTheMatchingLanguage(string language, string packageName, string fieldId)
+        {
+            var sdkPr = $"https://github.com/Azure/{SdkLanguageHelpers.GetRepoName(SdkLanguageHelpers.GetSdkLanguage(language))}/pull/100";
+            _plan.SDKInfo.Single(s => s.Language == language).SdkPullRequestUrl = sdkPr;
+
+            var result = await UpdateAsync(releasePlanId: 0, language: language, packageName: packageName, sdkPr: sdkPr);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanId, Is.EqualTo(100), "Read Custom.ReleasePlanID, not WorkItemId (12345).");
+            _devOps.Verify(s => s.GetReleasePlansBySdkPullRequestAsync(sdkPr, language, It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(_writes.Single().Id, Is.EqualTo(12345));
+            Assert.That(_writes.Single().Fields, Is.EquivalentTo(new Dictionary<string, string> { [$"Custom.ReleaseStatusFor{fieldId}"] = "Released" }));
+        }
+
+        [Test]
+        public async Task AutomaticSdkPr_NoMatchIsNoOp()
+        {
+            _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(PythonSdkPr, "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+            var result = await UpdateAsync(releasePlanId: 0, sdkPr: PythonSdkPr);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.Message, Does.Contain("No in-progress release plan"));
+            Assert.That(result.ReleaseStatus, Is.Empty);
+            _devOps.Verify(s => s.GetReleasePlansByIdAsync(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoWrites();
+        }
+
+        [Test]
+        public async Task AutomaticSdkPr_MultipleMatchesRejectBeforePackageFiltering()
+        {
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            other.SDKInfo.Single(s => s.Language == "Python").PackageName = "another-package";
+            _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(PythonSdkPr, "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([_plan, other]);
+
+            var result = await UpdateAsync(releasePlanId: 0, sdkPr: PythonSdkPr);
+
+            Assert.That(result.ResponseError, Does.Contain("exactly one").And.Contain("12345").And.Contain("22222"));
+            AssertNoWrites();
+        }
+
+        [TestCase("id")]
+        [TestCase("package")]
+        [TestCase("pr")]
+        [TestCase("other-language-pr")]
+        [TestCase("state")]
+        public async Task AutomaticSdkPr_InvalidAdoAssociationDoesNotWrite(string conflict)
+        {
+            var python = _plan.SDKInfo.Single(s => s.Language == "Python");
+            python.SdkPullRequestUrl = PythonSdkPr;
+            switch (conflict)
+            {
+                case "id": _plan.ReleasePlanId = 0; break;
+                case "package": python.PackageName = "another-package"; break;
+                case "pr": python.SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/200"; break;
+                case "other-language-pr": python.SdkPullRequestUrl = ""; _plan.SDKInfo.Single(s => s.Language == "Java").SdkPullRequestUrl = PythonSdkPr; break;
+                case "state": _plan.Status = "Finished"; python.ReleaseStatus = "Released"; break;
+            }
+
+            var result = await UpdateAsync(releasePlanId: 0, sdkPr: PythonSdkPr);
+
+            Assert.That(result.ResponseError, Is.Not.Null);
+            AssertNoWrites();
+        }
+
+        [Test]
+        public async Task AutomaticSdkPr_DuplicateDisplayIdIsNotReinterpreted()
+        {
+            _plan.SDKInfo.Single(s => s.Language == "Python").SdkPullRequestUrl = PythonSdkPr;
+            _devOps.Setup(s => s.GetReleasePlansByIdAsync(100, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([_plan, CreatePlan()]);
+
+            var result = await UpdateAsync(releasePlanId: 0, sdkPr: PythonSdkPr);
+
+            Assert.That(result.ResponseError, Does.Contain("does not resolve uniquely"));
+            AssertNoWrites();
+        }
+
+        [Test]
+        public async Task ExplicitId_NeverFallsBackToSdkPrLookup()
+        {
+            _devOps.Setup(s => s.GetReleasePlansByIdAsync(999, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+            var result = await UpdateAsync(releasePlanId: 999, sdkPr: PythonSdkPr);
+
+            Assert.That(result.ResponseError, Does.Contain("found 0"));
+            _devOps.Verify(s => s.GetReleasePlansBySdkPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoWrites();
+        }
+
+        [TestCase("100")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-java/pull/100")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/pull/100")]
+        [TestCase("https://github.com/Other/azure-sdk-for-python/pull/100")]
+        [TestCase("https://example.test/Azure/azure-sdk-for-python/pull/100")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/0")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/100/files")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/100?x=1")]
+        public async Task AutomaticSdkPr_InvalidIdentityDoesNotQuery(string sdkPr)
+        {
+            var result = await UpdateAsync(releasePlanId: 0, sdkPr: sdkPr);
+            Assert.That(result.ResponseError, Does.Contain("SDK pull request"));
+            Assert.That(_devOps.Invocations, Is.Empty);
+        }
+
+        [Test]
+        public async Task Cli_AutomaticSdkPrNeedsNoApiVersion()
+        {
+            _plan.SDKInfo.Single(s => s.Language == "Python").SdkPullRequestUrl = PythonSdkPr;
+            var command = _tool.GetCommandInstances().First();
+            var parse = command.Parse($"--package-name azure-test --language Python --sdk-pull-request {PythonSdkPr}");
+
+            var result = (ReleaseStatusUpdateResponse)await _tool.HandleCommand(parse, CancellationToken.None);
+
+            Assert.That(parse.Errors, Is.Empty);
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanId, Is.EqualTo(100));
+            Assert.That(_writes, Has.Count.EqualTo(1));
+            Assert.That(command.Parse("--package-name azure-test --language Python --api-version 2026-07-01").Errors, Is.Not.Empty);
+        }
+
+        private Task<ReleaseStatusUpdateResponse> UpdateAsync(int releasePlanId = 100,
             string language = "Python", string packageName = "azure-test", string status = "Released", string? version = null,
             string? pipeline = null, string? sdkReleaseType = null, string? sdkPr = null, CancellationToken ct = default)
         {
             return _tool.UpdatePackageReleaseStatus(packageName, language, status, version, releasePlanId,
-                sdkReleaseType, pipeline, sdkPr, apiVersion, ct);
+                sdkReleaseType, pipeline, sdkPr, ct);
         }
 
         private void AssertNoWrites()
@@ -494,7 +601,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             ReleasePlanId = 100,
             Revision = 7,
             Status = "In Progress",
-            SpecAPIVersion = ApiVersion,
             SDKReleaseType = "stable",
             IsManagementPlane = true,
             APISpecProjectPath = "specification/test/project",

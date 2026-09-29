@@ -33,7 +33,18 @@ public class RunGenerateSdkHandler : IMockToolHandler
         var pullRequestNumber = arguments?.GetValueOrDefault("pullRequestNumber")?.ToString() ?? "0";
         var language = SdkLanguageHelpers.GetSdkLanguage(arguments?.GetValueOrDefault("language")?.ToString() ?? "");
 
-        if (!string.Equals(projectPath.Replace('\\', '/').TrimEnd('/'), plan.APISpecProjectPath, StringComparison.Ordinal) ||
+        projectPath = projectPath.Replace('\\', '/').TrimEnd('/');
+        if (projectPath.EndsWith("/tspconfig.yaml", StringComparison.OrdinalIgnoreCase))
+        {
+            projectPath = projectPath[..^"/tspconfig.yaml".Length];
+        }
+        var specificationIndex = projectPath.IndexOf("/specification/", StringComparison.OrdinalIgnoreCase);
+        if (specificationIndex >= 0 && !projectPath.Contains("://", StringComparison.Ordinal))
+        {
+            projectPath = projectPath[(specificationIndex + 1)..];
+        }
+
+        if (!string.Equals(projectPath, plan.APISpecProjectPath, StringComparison.Ordinal) ||
             !string.Equals(releaseType, plan.SDKReleaseType, StringComparison.OrdinalIgnoreCase) ||
             (!string.IsNullOrWhiteSpace(apiVersion) && !apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase) &&
                 !string.Equals(apiVersion, plan.SpecAPIVersion, StringComparison.OrdinalIgnoreCase)) ||

@@ -429,6 +429,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
+                // A PR lookup classifies release eligibility only; it must never select a new SHA.
+                var specPullRequest = await githubService.GetPullRequestAsync("Azure", "azure-rest-api-specs", linkedPullRequestNumber, ct).WaitAsync(ct)
+                    ?? throw new InvalidOperationException("The linked spec PR could not be read to determine draft generation behavior.");
+                var apiSpecBranchRef = specPullRequest.Merged &&
+                    string.Equals(specPullRequest.Base?.Ref, "main", StringComparison.Ordinal) &&
+                    string.Equals(specPullRequest.MergeCommitSha, specCommitSha, StringComparison.OrdinalIgnoreCase)
+                    ? "refs/heads/main"
+                    : $"refs/pull/{linkedPullRequestNumber}/head";
+
                 string sdkRepoBranch = "";                
                 var sdkPullRequestUrl = sdkInfo?.SdkPullRequestUrl;
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
@@ -443,7 +452,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 logger.LogInformation("Running SDK generation pipeline");
                 ct.ThrowIfCancellationRequested();
-                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(specCommitSha, typeSpecProjectPath, apiVersion, releasePlan.SDKReleaseType.ToLowerInvariant(), language, workItemId, sdkRepoBranch, ct);
+                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(specCommitSha, typeSpecProjectPath, apiVersion, releasePlan.SDKReleaseType.ToLowerInvariant(), language, workItemId, apiSpecBranchRef, sdkRepoBranch, ct);
                 response.Status = "Success";
                 response.Details.Add($"SDK generation uses pinned spec commit {specCommitSha} and API version '{apiVersion}'.");
                 response.Details.Add($"Azure DevOps pipeline {DevOpsService.GetPipelineUrl(pipelineRun.Id)} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created.");

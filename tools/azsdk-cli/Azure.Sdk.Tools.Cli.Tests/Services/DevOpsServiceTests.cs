@@ -938,7 +938,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public void RunSDKGenerationPipelineAsync_RejectsMutableOrInvalidSource(string? source)
         {
             Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.RunSDKGenerationPipelineAsync(
-                source!, "specification/test/service", "2024-01-01", "beta", "Java", 0));
+                source!, "specification/test/service", "2024-01-01", "beta", "Java", 0, "refs/heads/main"));
         }
 
         [TestCase("")]
@@ -946,13 +946,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public void RunSDKGenerationPipelineAsync_RejectsMissingApiVersion(string apiVersion)
         {
             Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.RunSDKGenerationPipelineAsync(
-                PinnedSpecCommit, "specification/test/service", apiVersion, "beta", "Java", 0));
+                PinnedSpecCommit, "specification/test/service", apiVersion, "beta", "Java", 0, "refs/heads/main"));
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
+        [TestCase(false, "refs/heads/main")]
+        [TestCase(true, "refs/heads/main")]
+        [TestCase(false, "refs/pull/123/head")]
+        [TestCase(true, "refs/pull/123/head")]
         [NonParallelizable]
-        public async Task RunSDKGenerationPipelineAsync_PinsSourceAndForwardsTargetWithoutChangingGenericQueue(bool inPipeline)
+        public async Task RunSDKGenerationPipelineAsync_PinsSourceAndForwardsTargetWithoutChangingGenericQueue(bool inPipeline, string sourceBranch)
         {
             using var cancellation = new CancellationTokenSource();
             var ct = cancellation.Token;
@@ -976,11 +978,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", inPipeline ? "test-project" : null);
 
                 await service.RunSDKGenerationPipelineAsync(
-                    PinnedSpecCommit, "specification/test/service", "2024-01-01", "stable", "Java", 0,
+                    PinnedSpecCommit, "specification/test/service", "2024-01-01", "stable", "Java", 0, sourceBranch,
                     sdkRepoBranch: "feature/existing-sdk", ct: ct);
 
                 Assert.That(queuedBuilds, Has.Count.EqualTo(1));
-                Assert.That(queuedBuilds[0].SourceBranch, Is.EqualTo("main"));
+                Assert.That(queuedBuilds[0].SourceBranch, Is.EqualTo(sourceBranch));
                 Assert.That(queuedBuilds[0].SourceVersion, Is.EqualTo(PinnedSpecCommit));
                 Assert.That(queuedBuilds[0].TemplateParameters, Is.EquivalentTo(new Dictionary<string, string>
                 {

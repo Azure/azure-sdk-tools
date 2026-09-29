@@ -11,6 +11,7 @@
 ### Bugs Fixed
 
 - SDK generation passes the pinned commit through the pipeline's native source version and forwards the stored API version and SDK release type for both interactive and automated runs, preserving existing release behavior and SDK PR branch reuse.
+- Preserve draft SDK PRs and suppress auto-release labeling for saved premerge snapshots; only the linked PR's exact merge-to-main SHA is queued as a main-branch release.
 
 ### Other Changes
 

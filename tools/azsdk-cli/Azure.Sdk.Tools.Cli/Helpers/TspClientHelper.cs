@@ -13,6 +13,8 @@ public class TspClientHelper : ITspClientHelper
     private readonly IGitHelper gitHelper;
     private readonly ILogger<TspClientHelper> logger;
     private const int CommandTimeoutInMinutes = 30;
+    // Public Azure Artifacts feed containing the latest @azure-tools TypeSpec packages and upstreaming npmjs.org.
+    private const string AzureSdkNpmRegistry = "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/";
 
     public TspClientHelper(INpmHelper npmHelper, ITypeSpecHelper typeSpecHelper, IGitHelper gitHelper, ILogger<TspClientHelper> logger)
     {
@@ -113,7 +115,8 @@ public class TspClientHelper : ITspClientHelper
             args.ToArray(),
             logOutputStream: true,
             workingDirectory: tspLocationDirectory,
-            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
+            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes),
+            environmentVariables: CreateNpmEnvironmentVariables()
         );
 
         var result = await npmHelper.Run(npmOptions, ct);
@@ -154,7 +157,8 @@ public class TspClientHelper : ITspClientHelper
             arguments.ToArray(),
             logOutputStream: true,
             workingDirectory: workingDirectory,
-            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
+            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes),
+            environmentVariables: CreateNpmEnvironmentVariables()
         );
 
         var result = await npmHelper.Run(npmOptions, ct);
@@ -173,4 +177,12 @@ public class TspClientHelper : ITspClientHelper
             TypeSpecProject = workingDirectory
         };
     }
+
+    private static Dictionary<string, string> CreateNpmEnvironmentVariables() =>
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            // Always use the central Azure Artifacts feed for secure, compliant packages and immediate access to new
+            // @azure-tools releases, avoiding the seven-day delay imposed by the internal package feed proxy.
+            ["npm_config_registry"] = AzureSdkNpmRegistry
+        };
 }

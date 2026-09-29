@@ -387,6 +387,28 @@ def test_ado_issue_result_rejects_copilot_assignment() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("issue_url", "copilot_assigned"),
+    [
+        ("https://dev.azure.com/azure-sdk/internal/_workitems/edit/456", False),
+        ("https://github.com/Azure/azure-sdk-tools/issues/456", True),
+    ],
+)
+def test_system_issue_result_requires_fallback_repository(
+    issue_url: str,
+    copilot_assigned: bool,
+) -> None:
+    with pytest.raises(ValidationError):
+        ChatbotEvolutionAgentResult(
+            outcome=ChatbotEvolutionAgentOutcome.issue_created,
+            classification=RootCauseClassification.retrieval_mismatch,
+            issue_url=issue_url,
+            copilot_assigned=copilot_assigned,
+            reasoning="Invalid issue target.",
+            confidence=0.9,
+        )
+
+
 def test_reused_issue_waits_for_validation() -> None:
     record = _record()
 

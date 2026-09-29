@@ -269,8 +269,17 @@ class ChatbotEvolutionAgentResult(BaseModel):
             if self.classification in _KB_CLASSIFICATIONS:
                 if not self.source_url:
                     raise ValueError("KB issue outcomes require source_url")
-            elif self.source_url is not None:
-                raise ValueError("System issue outcomes cannot include source_url")
+            else:
+                if self.source_url is not None:
+                    raise ValueError("System issue outcomes cannot include source_url")
+                if (
+                    issue.provider != "github"
+                    or issue.owner.lower() != "azure"
+                    or issue.repository.lower() != "azure-sdk-pr"
+                ):
+                    raise ValueError(
+                        "System issue outcomes require an Azure/azure-sdk-pr issue"
+                    )
             if issue.provider == "azure-devops" and self.copilot_assigned:
                 raise ValueError("ADO work items cannot be assigned to Copilot")
             if issue.provider == "github":

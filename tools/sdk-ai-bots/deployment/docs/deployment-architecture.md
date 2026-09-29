@@ -16,9 +16,11 @@ is `tools/sdk-ai-bots/azure.yaml`, the Bicep entry points under
 - **`function-app`:** Containerized Azure Functions workload used by the Logic
   App integration.
 - **`agent`:** Microsoft Foundry hosted chat agent built remotely in ACR.
-- **`logic-app`:** Teams, agent-server, Cosmos DB, and Function App workflow.
-  Bicep creates the workflow shell, and the Function App postdeploy hook
-  installs its definition.
+- **Azure MCP Server agent:** Separate Foundry hosted agent for the Azure MCP
+  Server tenant.
+- **`logic-app`:** Two Teams-group workflows share the agent-server, Function
+  App, Teams connection, and integration account. Bicep creates both workflow
+  shells, and the Function App postdeploy hook installs their definitions.
 - **Evolution agent:** Production-only Foundry hosted agent with scoped access
   to production and candidate-dev resources.
 - **Data jobs:** Scheduled knowledge sync, generated-wiki build, and
@@ -86,17 +88,18 @@ infrastructure apply:
 flowchart LR
   APPLY[Provision applied] --> FUNCTION[Function App]
   APPLY --> AGENT[Chat agent]
-  AGENT --> SERVER[Agent server]
+  AGENT --> MCP[Azure MCP Server agent]
+  MCP --> SERVER[Agent server]
   AGENT --> EVOLUTION[Evolution agent, prod only]
   SERVER --> READY[Authenticated /ping readiness]
   READY --> FRONTEND[Frontend]
 ```
 
-Function App and chat-agent deployment can run in parallel. Agent-server waits
-for the chat agent it invokes, while frontend waits for agent-server readiness.
-The readiness gate retries the Easy Auth-protected `/ping` endpoint before the
-frontend rollout proceeds. The production-only evolution branch does not gate
-frontend deployment.
+Function App and chat-agent deployment can run in parallel. The Azure MCP
+Server agent follows the chat agent, and agent-server waits for both hosted
+agents before frontend readiness. The readiness gate retries the Easy
+Auth-protected `/ping` endpoint before the frontend rollout proceeds. The
+production-only evolution branch does not gate frontend deployment.
 
 `qa-bot-deploy.yml` defaults to `component=all`. Selecting `agent-server`,
 `function-app`, `agent`, or `frontend` provisions that layer and its
@@ -104,7 +107,7 @@ dependencies, then deploys only that component. Selecting `shared-resources` or
 `logic-app` provisions that infrastructure scope without an application deploy.
 Component CI remains separate from provisioning and deployment.
 
-The Logic App calls the authenticated agent-server `/config/channel` endpoint
+Both Logic Apps call the authenticated agent-server `/config/channel` endpoint
 to resolve each channel's tenant. The backend reads
 `bot-configs/channel.yaml` with the shared managed identity and caches the
 parsed configuration. The shared managed identity authenticates the Logic App's
@@ -122,9 +125,10 @@ lifecycle hooks:
 - agent hooks reconcile Foundry settings, hosted identity, RBAC, and Entra
   authorization;
 - frontend postdeploy synchronizes Teams environment values, installs or
-  updates the approved Teams app, and probes `/health`;
-- Function App postdeploy verifies host readiness and installs the complete
-  Logic App workflow.
+  updates the approved Teams app in both configured groups, and probes
+  `/health`;
+- Function App postdeploy verifies host readiness and installs both complete
+  Logic App workflows.
 
 Application images use azd native remote Docker builds. After infrastructure
 apply, the selected application deployment stage establishes runtime state and

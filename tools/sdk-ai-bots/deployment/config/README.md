@@ -7,8 +7,9 @@ blob container by `hooks/postprovision.ts` (via
 [`hooks/lib/upload-bot-configs.ts`](../hooks/lib/upload-bot-configs.ts)).
 
 The agent-server reads `channel.yaml`, caches it for five minutes by default,
-and exposes the authenticated `/config/channel` endpoint. The Logic App uses
-that endpoint to resolve the tenant for each Teams channel.
+and exposes the authenticated `/config/channel` endpoint. The primary and Azure
+MCP Server Logic Apps use that endpoint to resolve the tenant for each Teams
+channel.
 
 ## Layout
 
@@ -42,7 +43,8 @@ uploading an invalid configuration.
     environment.
 3. Keep `${SERVER_BASE_URL}` in `channel.yaml`; do not copy another
     environment's resolved URL.
-4. Make channel and tenant IDs match the environment-suite values.
+4. Make channel and tenant IDs match both Teams-group route sets in the
+    environment suite.
 5. Run `npm run validate-env-suite -- --environment <env>` from `deployment/`.
 6. Run the normal `azd provision` path; postprovision uploads the files after
     infrastructure outputs are available.

@@ -514,6 +514,37 @@ resource qaRecordsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/
   }
 }
 
+resource feedbackRecordsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2026-03-15' = {
+  name: 'feedback-records'
+  parent: sqlDatabase
+  properties: {
+    resource: {
+      id: 'feedback-records'
+      indexingPolicy: {
+        indexingMode: 'consistent'
+        automatic: true
+        includedPaths: [
+          {
+            path: '/*'
+          }
+        ]
+        excludedPaths: [
+          {
+            path: '/"_etag"/?'
+          }
+        ]
+      }
+      partitionKey: {
+        paths: [
+          '/tenant_id'
+        ]
+        kind: 'Hash'
+        version: 2
+      }
+    }
+  }
+}
+
 // ============================================================================
 // Azure RBAC role assignments
 // ----------------------------------------------------------------------------

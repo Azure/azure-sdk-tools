@@ -69,6 +69,9 @@ environments:
             - '19:975533cdd084485ca305739f16b30507@thread.tacv2'
             - '19:453ec446a66446589d764132f5cebb00@thread.tacv2'
             - '19:037246b9968445edb3a23612ea44524d@thread.tacv2'
+        azureMcpTeamsGroupId: '07bb6114-8ffb-4e79-b65a-67f19d23e5bc'
+        azureMcpTeamsChannelIds:
+            - '19:GZ1GJyuOy0b8PWe6XtNxFdiaiT2M-NdiOXDLR5ySXXc1@thread.tacv2'
         location: 'westus2'
         aiLocation: 'swedencentral'
         cosmosDbLocation: 'westus2'
@@ -102,6 +105,7 @@ environments:
             INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-dev-ia'
             TEAMS_CONNECTION_NAME: 'teams'
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-dev-logicapp'
+            AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-dev-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
             AI_RESOURCE_RESTORE: 'false'
         # The shared environment already has runtime RBAC assignments and
@@ -127,10 +131,15 @@ environments:
         teamsChannelIds:
             - '19:de3fce22c2994be18cac50502c55f717@thread.skype'
             - '19:906c1efbbec54dc8949ac736633e6bdf@thread.skype'
+        azureMcpTeamsGroupId: 'aa6955c1-8ef2-4dea-ae63-b5ce6342630a'
+        azureMcpTeamsChannelIds:
+            - '19:LrGMf-oSqw_bSeRtjMh0rGos3Je8-5fpMSdgVjVwX4k1@thread.tacv2'
         location: 'westus2'
         aiLocation: 'westus2'
         cosmosDbLocation: 'westus2'
         chatbotEvolutionAgentEnabled: false
+        bicepOverrides:
+            AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-test-logicapp'
         manageAuthorizationResources: true
         localDeployAllowed: false
 
@@ -164,6 +173,9 @@ environments:
             - '19:084875bb626242ed95f3ac8dddfaa12a@thread.skype'
             - '19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype'
             - '19:6d2c19322c254a80bcc521675134da03@thread.skype'
+        azureMcpTeamsGroupId: '256e3336-e328-4683-a24a-7a36c8a123fc'
+        azureMcpTeamsChannelIds:
+            - '19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2'
         location: 'westus2'
         aiLocation: 'swedencentral'
         cosmosDbLocation: 'westus2'
@@ -198,6 +210,7 @@ environments:
             INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-ia'
             TEAMS_CONNECTION_NAME: 'teams'
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
+            AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
         manageAuthorizationResources: true
         localDeployAllowed: false

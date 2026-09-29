@@ -33,6 +33,8 @@ export interface EnvironmentConfig {
   teamsAppId: string;
   teamsGroupId: string;
   teamsChannelIds: string[];
+  azureMcpTeamsGroupId: string;
+  azureMcpTeamsChannelIds: string[];
   location: string;
   aiLocation: string;
   cosmosDbLocation: string;
@@ -186,6 +188,7 @@ const OVERRIDE_ALIAS_KEYS = new Set([
   "INTEGRATION_ACCOUNT_NAME",
   "TEAMS_CONNECTION_NAME",
   "LOGIC_APP_WORKFLOW_NAME",
+  "AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME",
   "LOGIC_APP_ALERT_NAME",
 ]);
 
@@ -229,6 +232,8 @@ export function buildAzdEnvironmentValues(
     FUNCTION_IMAGE_REPOSITORY: `${imageRepositories["function-app"]}:${environmentName}`,
     TEAMS_GROUP_ID: environment.teamsGroupId,
     TEAMS_CHANNEL_IDS: environment.teamsChannelIds.join(","),
+    AZURE_MCP_TEAMS_GROUP_ID: environment.azureMcpTeamsGroupId,
+    AZURE_MCP_TEAMS_CHANNEL_IDS: environment.azureMcpTeamsChannelIds.join(","),
   };
 
   if (environment.candidateEnvironment) {

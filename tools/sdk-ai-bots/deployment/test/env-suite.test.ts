@@ -52,6 +52,18 @@ test("builds the complete local azd environment mapping", () => {
   assert.equal(values.FRONTEND_IMAGE_REPOSITORY, "azure-sdk-qa-bot:dev");
   assert.equal(values.AGENT_SERVER_IMAGE_REPOSITORY, "azure-sdk-qa-bot-agent-server:dev");
   assert.equal(values.FUNCTION_IMAGE_REPOSITORY, "azure-sdk-qa-bot-function:dev");
+  assert.equal(
+    values.AZURE_MCP_TEAMS_GROUP_ID,
+    suite.environments.dev.azureMcpTeamsGroupId,
+  );
+  assert.equal(
+    values.AZURE_MCP_TEAMS_CHANNEL_IDS,
+    suite.environments.dev.azureMcpTeamsChannelIds.join(","),
+  );
+  assert.equal(
+    values.AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME_OVERRIDE,
+    "azuremcpserver-qabot-dev-logicapp",
+  );
   assert.equal(values.BOT_SERVICE_NAME, "azsdkqabotdev");
   assert.equal(
     values.AGENT_SERVER_LOG_WORKSPACE_RESOURCE_ID,

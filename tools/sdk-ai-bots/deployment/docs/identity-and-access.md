@@ -274,6 +274,15 @@ Failure to grant App Configuration Data Reader fails the hook because the agent
 cannot initialize. Other grant failures are logged and should be investigated
 before considering the deployment healthy.
 
+### Azure MCP Server agent
+
+The shared hosted-agent deployment template writes the deployed
+`AZURE_MCP_SERVER_AGENT_NAME` and `AZURE_MCP_SERVER_AGENT_VERSION` to App
+Configuration, then grants the agent identity the primary access profile
+defined by [`grant-agent-data-access.sh`](../scripts/grant-agent-data-access.sh).
+This includes the application data roles plus GitHub signing-vault and Cosmos
+DB access required by its tools and memory provider.
+
 ### Evolution agent
 
 [`grant-agent-data-access.sh`](../scripts/grant-agent-data-access.sh) defines two

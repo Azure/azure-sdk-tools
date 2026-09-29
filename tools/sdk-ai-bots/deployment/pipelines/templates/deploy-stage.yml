@@ -2,7 +2,7 @@
 #
 # Encapsulates the application deployment graph:
 #   Provision -> FunctionApp
-#   Provision -> Agent -> AgentServer -> Readiness -> Frontend
+#   Provision -> Agent -> AzureMcpServerAgent -> AgentServer -> Readiness -> Frontend
 #                      -> EvolutionAgent (prod)
 # so independent services deploy in parallel without losing runtime ordering.
 #
@@ -37,13 +37,19 @@ stages:
           imageTag: ${{ parameters.imageTag }}
           dependsOn: ${{ parameters.dependsOn }}
 
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azure-mcp-agent-deploy-stage.yml
+      parameters:
+          environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
+          dependsOn: DeployAgent
+
     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
       parameters:
           stageName: DeployAgentServer
           component: agent-server
           environment: ${{ parameters.environment }}
           imageTag: ${{ parameters.imageTag }}
-          dependsOn: DeployAgent
+          dependsOn: DeployAzureMcpServerAgent
 
     - stage: VerifyAgentServer
       displayName: 'Verify agent-server readiness'

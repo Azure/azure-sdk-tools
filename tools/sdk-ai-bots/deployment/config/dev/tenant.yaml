@@ -42,3 +42,7 @@ tenants:
   - tenant: azsdk_tools_agent_qa_bot
     channel_name: AzSDK Tools Agent
     channel_link: https://teams.microsoft.com/l/channel/19%3A037246b9968445edb3a23612ea44524d%40thread.tacv2/AzSDK%20Tools%20Agent?groupId=7ccc31f0-b371-450b-a73c-48f5a31a9b96&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47
+
+  - tenant: azure_mcp_server
+    channel_name: Azure MCP Server General
+    channel_link: https://teams.microsoft.com/l/channel/19%3AGZ1GJyuOy0b8PWe6XtNxFdiaiT2M-NdiOXDLR5ySXXc1%40thread.tacv2/Azure%20MCP%20Server%20General?groupId=07bb6114-8ffb-4e79-b65a-67f19d23e5bc&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47

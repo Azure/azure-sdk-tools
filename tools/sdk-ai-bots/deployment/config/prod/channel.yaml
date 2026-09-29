@@ -42,3 +42,8 @@ channels:
     id: 19:6d2c19322c254a80bcc521675134da03@thread.skype
     endpoint: ${SERVER_BASE_URL}
     tenant: azsdk_tools_agent_qa_bot
+
+  - name: Azure MCP Server General
+    id: 19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azure_mcp_server

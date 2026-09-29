@@ -28,6 +28,7 @@ const REQUIRED_KEYS = [
   "appConfigName",
   "containerRegistryName",
   "teamsGroupId",
+  "azureMcpTeamsGroupId",
   "manageAuthorizationResources",
   "localDeployAllowed",
   "chatbotEvolutionAgentEnabled",
@@ -116,6 +117,15 @@ export function collectEnvironmentSuiteErrors(
         `[${environmentName}] teamsChannelIds is empty or contains a placeholder`,
       );
     }
+    const azureMcpChannelIds = environment.azureMcpTeamsChannelIds ?? [];
+    if (
+      azureMcpChannelIds.length === 0 ||
+      azureMcpChannelIds.some((id) => !id || hasPlaceholder(id))
+    ) {
+      errors.push(
+        `[${environmentName}] azureMcpTeamsChannelIds is empty or contains a placeholder`,
+      );
+    }
 
     if (environment.chatbotEvolutionAgentEnabled && !environment.candidateEnvironment) {
       errors.push(
@@ -146,7 +156,8 @@ export function collectEnvironmentSuiteErrors(
     const routeIds = (channelConfig.channels ?? [])
       .map((channel) => channel.id)
       .filter((id): id is string => !!id);
-    for (const channelId of channelIds) {
+    const monitoredChannelIds = [...channelIds, ...azureMcpChannelIds];
+    for (const channelId of monitoredChannelIds) {
       if (!routeIds.includes(channelId)) {
         errors.push(
           `[${environmentName}] monitored Teams channel '${channelId}' has no route in config/${environmentName}/channel.yaml`,
@@ -154,7 +165,7 @@ export function collectEnvironmentSuiteErrors(
       }
     }
     for (const routeId of routeIds) {
-      if (!channelIds.includes(routeId)) {
+      if (!monitoredChannelIds.includes(routeId)) {
         errors.push(
           `[${environmentName}] config/${environmentName}/channel.yaml contains unmonitored Teams channel '${routeId}'`,
         );
@@ -189,7 +200,10 @@ export function collectEnvironmentSuiteErrors(
         );
         continue;
       }
-      if (groupId !== environment.teamsGroupId) {
+      if (
+        groupId !== environment.teamsGroupId &&
+        groupId !== environment.azureMcpTeamsGroupId
+      ) {
         errors.push(
           `[${environmentName}] tenant channel link targets a different Teams group: '${tenant.channel_link}'`,
         );

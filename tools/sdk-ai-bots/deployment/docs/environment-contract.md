@@ -49,6 +49,8 @@ environments:
         bicepOverrides: Record<string, string>?
         teamsGroupId: string
         teamsChannelIds: string[]
+        azureMcpTeamsGroupId: string
+        azureMcpTeamsChannelIds: string[]
         manageAuthorizationResources: bool
         localDeployAllowed: bool
 
@@ -69,8 +71,9 @@ probe. Release health follows the verification steps in the
 Run `npm run validate-env-suite` to validate all environments, or append
 `-- --environment dev` for an environment-scoped check. In addition to required
 values and placeholders, the validator checks that `config/<env>/channel.yaml`
-exactly matches `teamsChannelIds`, every route tenant is defined, and tenant
-links target the configured Teams group.
+exactly matches the union of `teamsChannelIds` and
+`azureMcpTeamsChannelIds`, every route tenant is defined, and tenant links
+target the corresponding primary or Azure MCP Server Teams group.
 
 ## Local azd sync
 
@@ -94,8 +97,9 @@ an immutable reviewed tag immediately before `azd deploy`.
 
 Teams routing values are suite-owned and copied into the local azd environment:
 `teamsGroupId` → `TEAMS_GROUP_ID`, and the `teamsChannelIds` array →
-comma-separated `TEAMS_CHANNEL_IDS`. Pipelines export the same values directly
-from the suite. `serverApplicationClientId` becomes
+comma-separated `TEAMS_CHANNEL_IDS`. The Azure MCP Server equivalents map to
+`AZURE_MCP_TEAMS_GROUP_ID` and `AZURE_MCP_TEAMS_CHANNEL_IDS`. Pipelines export
+the same values directly from the suite. `serverApplicationClientId` becomes
 `SERVER_APPLICATION_CLIENT_ID` for Easy
 Auth. `serverApplicationIdUri` becomes `SERVER_APPLICATION_ID_URI`, and the
 frontend Bicep adapter derives its scope as `<serverApplicationIdUri>/.default`

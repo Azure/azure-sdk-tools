@@ -109,19 +109,24 @@ function preserveWorkflowDefinition(): void {
     return;
   }
 
-  const configuredName = process.env.LOGIC_APP_WORKFLOW_NAME?.trim();
+  const configuredNames = [
+    process.env.LOGIC_APP_WORKFLOW_NAME?.trim(),
+    process.env.AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME?.trim(),
+  ].filter((name): name is string => !!name);
   let workflowNames: string[] = [];
   try {
-    const query = configuredName
-      ? `name=='${configuredName}'`
-      : "starts_with(name, 'azuresdkqabot-logicapp-')";
     const raw = execSync(
       `az resource list --resource-group "${resourceGroup}" ` +
         `--subscription "${subscriptionId}" --resource-type Microsoft.Logic/workflows ` +
-        `--query "[?${query}].name" -o json`,
+        `--query "[].name" -o json`,
       { encoding: "utf8" },
     );
-    workflowNames = JSON.parse(raw);
+    workflowNames = (JSON.parse(raw) as string[]).filter((name) =>
+      configuredNames.length > 0
+        ? configuredNames.includes(name)
+        : name.startsWith("azuresdkqabot-logicapp-") ||
+          name.startsWith("azuremcpserver-qabot-logicapp-"),
+    );
   } catch (error) {
     if (!isMissingResource(error)) throw error;
   }

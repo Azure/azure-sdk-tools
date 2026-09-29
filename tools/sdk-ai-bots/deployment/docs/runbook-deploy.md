@@ -69,15 +69,17 @@ completed.
 
 After apply, `qa-bot-deploy.yml` deploys the selected application service.
 `shared-resources` and `logic-app` stop after provisioning. With `component=all`,
-Function App and chat-agent deployment begin in parallel. Agent-server and the
-production-only evolution agent then follow the chat agent on independent
-branches. Before frontend deployment, the pipeline acquires an Easy Auth token
+Function App and chat-agent deployment begin in parallel. The Azure MCP Server
+agent follows the chat agent, and agent-server waits for both hosted agents.
+The production-only evolution agent follows the chat agent on an independent
+branch. Before frontend deployment, the pipeline acquires an Easy Auth token
 and retries agent-server `/ping`; a failed readiness probe stops the rollout.
 
-Each service uses an `azd` native remote build. The Function App postdeploy hook
-then installs the final Logic App workflow. The frontend postdeploy hook
-synchronizes Teams values and installs or upgrades an app version only when
-tenant catalog prerequisites are satisfied.
+Each service uses an `azd` native remote build or the shared hosted-agent
+deployment helper. The Function App postdeploy hook then installs both Logic
+App workflows. The frontend postdeploy hook synchronizes Teams values and
+installs or upgrades the app in both configured Teams groups only when tenant
+catalog prerequisites are satisfied.
 
 The rollout deploys directly to each service's production target. Frontend
 postdeploy also probes `/health`; release completion requires the full
@@ -90,11 +92,13 @@ verification sequence below.
 3. Call agent-server `/ping` with an Easy Auth token for the backend
    Application ID URI.
 4. Confirm Function App `/api/health` and recent trigger executions are healthy.
-5. Confirm the Logic App is enabled, its Teams connection is `Connected`, and a
-   test activity reaches the Function App.
+5. Confirm both Logic Apps are enabled, their shared Teams connection is
+   `Connected`, and test activities from both Teams groups reach the Function
+   App.
 6. Send a test Teams message through each newly changed route.
-7. Confirm the hosted chat agent version is active. For production, also confirm
-   the evolution-agent version and its primary/candidate RBAC.
+7. Confirm the hosted chat and Azure MCP Server agent versions are active. For
+   production, also confirm the evolution-agent version and its
+   primary/candidate RBAC.
 8. Inspect Application Insights for new 4xx/5xx, authentication, dependency, or
    startup errors.
 9. Record the source revision and resulting App Service or Foundry versions.

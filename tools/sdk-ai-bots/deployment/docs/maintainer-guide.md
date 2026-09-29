@@ -113,11 +113,12 @@ azd. Removing an `azd env refresh` call can break resource discovery even when
 the resource exists in Azure.
 
 Full-stack application deployment is a graph, not a serial list. `function-app`
-and `agent` start after provisioning. `agent-server` waits for `agent`, and
-`frontend` waits for an authenticated agent-server `/ping` readiness probe. The
-production-only evolution agent also waits for `agent`, but runs independently
-of the agent-server/frontend branch. Preserve these runtime dependencies unless
-the producer-consumer contract changes.
+and `agent` start after provisioning. The Azure MCP Server agent follows
+`agent`; `agent-server` waits for both hosted agents; and `frontend` waits for
+an authenticated agent-server `/ping` readiness probe. The production-only
+evolution agent also waits for `agent`, but runs independently of the
+agent-server/frontend branch. Preserve these runtime dependencies unless the
+producer-consumer contract changes.
 
 The pipeline always publishes a Bicep/configuration preview before apply and
 uses a manual approval stage. The approval task expires after 24 hours and the

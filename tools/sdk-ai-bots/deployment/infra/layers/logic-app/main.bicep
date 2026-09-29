@@ -9,6 +9,12 @@ param teamsGroupId string
 @description('Teams channel IDs to subscribe to.')
 param teamsChannelIds array
 
+@description('Azure MCP Server Teams team (group) ID to monitor. Leave empty with no channel IDs to omit the second workflow.')
+param azureMcpTeamsGroupId string = ''
+
+@description('Azure MCP Server Teams channel IDs to subscribe to.')
+param azureMcpTeamsChannelIds array = []
+
 @description('Base URL of the agent server.')
 param serverBaseUrl string
 
@@ -49,6 +55,9 @@ param teamsConnectionNameOverride string = ''
 @description('Name of the Logic App workflow.')
 param logicAppWorkflowNameOverride string = ''
 
+@description('Name of the Azure MCP Server Logic App workflow.')
+param azureMcpLogicAppWorkflowNameOverride string = ''
+
 @description('Name of the metric alert on the Logic App workflow.')
 param logicAppAlertNameOverride string = ''
 
@@ -59,7 +68,9 @@ var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var integrationAccountName = !empty(integrationAccountNameOverride) ? integrationAccountNameOverride : 'azuresdkqabot-ia-${suffix}'
 var teamsConnectionName = !empty(teamsConnectionNameOverride) ? teamsConnectionNameOverride : 'teams-${suffix}'
 var logicAppWorkflowName = !empty(logicAppWorkflowNameOverride) ? logicAppWorkflowNameOverride : 'azuresdkqabot-logicapp-${suffix}'
+var azureMcpLogicAppWorkflowName = !empty(azureMcpLogicAppWorkflowNameOverride) ? azureMcpLogicAppWorkflowNameOverride : 'azuremcpserver-qabot-logicapp-${suffix}'
 var logicAppAlertName = !empty(logicAppAlertNameOverride) ? logicAppAlertNameOverride : 'azuresdkqabot-logicapp-alert-${suffix}'
+var deployAzureMcpWorkflow = !empty(azureMcpTeamsGroupId) && length(azureMcpTeamsChannelIds) > 0
 
 
 // Resource IDs the workflow authenticates with via managed identity. Computed
@@ -115,6 +126,46 @@ var workflowParameters = {
   }
   teamsChannelIds: {
     value: teamsChannelIds
+  }
+  serverBaseUrl: {
+    value: serverBaseUrl
+  }
+  serverApplicationIdUri: {
+    value: serverApplicationIdUri
+  }
+  serverIdentityResourceId: {
+    value: serverIdentityResourceId
+  }
+  botBaseUrl: {
+    value: botBaseUrl
+  }
+  botAudience: {
+    value: botAudience
+  }
+  botIdentityResourceId: {
+    value: botIdentityResourceId
+  }
+  functionAppResourceId: {
+    value: functionAppResourceId
+  }
+}
+
+var azureMcpWorkflowParameters = {
+  '$connections': {
+    value: {
+      teams: {
+        connectionId: teamsConnectionResourceId
+        connectionName: teamsConnectionName
+        connectionProperties: {}
+        id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/teams'
+      }
+    }
+  }
+  teamsGroupId: {
+    value: azureMcpTeamsGroupId
+  }
+  teamsChannelIds: {
+    value: azureMcpTeamsChannelIds
   }
   serverBaseUrl: {
     value: serverBaseUrl
@@ -198,13 +249,36 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
   }
 }
 
+resource azureMcpWorkflow 'Microsoft.Logic/workflows@2019-05-01' = if (deployAzureMcpWorkflow) {
+  name: azureMcpLogicAppWorkflowName
+  location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${botIdentityResourceId}': {}
+      '${serverIdentityResourceId}': {}
+    }
+  }
+  properties: {
+    state: workflowEnabled ? 'Enabled' : 'Disabled'
+    integrationAccount: {
+      id: integrationAccount.id
+    }
+    definition: includeWorkflowDefinition ? json(workflowDefinitionText) : emptyWorkflowDefinition
+    parameters: includeWorkflowDefinition ? azureMcpWorkflowParameters : {}
+  }
+}
+
 resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
   name: logicAppAlertName
   location: 'global'
   properties: {
     severity: 3
     enabled: true
-    scopes: [
+    scopes: deployAzureMcpWorkflow ? [
+      workflow.id
+      azureMcpWorkflow!.id
+    ] : [
       workflow.id
     ]
     evaluationFrequency: 'PT1M'
@@ -239,3 +313,4 @@ resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
 
 output TEAMS_CONNECTION_NAME string = teamsConnectionName
 output LOGIC_APP_WORKFLOW_NAME string = logicAppWorkflowName
+output AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME string = deployAzureMcpWorkflow ? azureMcpLogicAppWorkflowName : ''

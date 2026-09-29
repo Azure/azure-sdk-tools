@@ -58,6 +58,12 @@ export interface PatchWorkflowOptions {
   skipFunctionHostCheck?: boolean;
 }
 
+interface WorkflowTarget {
+  name: string;
+  teamsGroupId: string;
+  teamsChannelIds: string[];
+}
+
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -186,7 +192,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   const location = requireEnv("AZURE_LOCATION");
 
   // Resource / identity names emitted by main.bicep outputs.
-  const workflowName = requireEnv("LOGIC_APP_WORKFLOW_NAME");
   const teamsConnName = requireEnv("TEAMS_CONNECTION_NAME");
 
   const serverIdentityName = requireEnv("MANAGED_IDENTITY_NAME");
@@ -216,12 +221,37 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     );
   }
 
-  // Workflow parameter values.
-  const teamsGroupId = requireEnv("TEAMS_GROUP_ID");
-  const teamsChannelIds = requireEnv("TEAMS_CHANNEL_IDS")
+  const parseChannelIds = (name: string): string[] => requireEnv(name)
     .split(",")
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
+  const workflowTargets: WorkflowTarget[] = [
+    {
+      name: requireEnv("LOGIC_APP_WORKFLOW_NAME"),
+      teamsGroupId: requireEnv("TEAMS_GROUP_ID"),
+      teamsChannelIds: parseChannelIds("TEAMS_CHANNEL_IDS"),
+    },
+  ];
+  const azureMcpTargetValues = [
+    process.env.AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME?.trim(),
+    process.env.AZURE_MCP_TEAMS_GROUP_ID?.trim(),
+    process.env.AZURE_MCP_TEAMS_CHANNEL_IDS?.trim(),
+  ];
+  if (azureMcpTargetValues.some(Boolean)) {
+    if (!azureMcpTargetValues.every(Boolean)) {
+      throw new Error(
+        "AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME, AZURE_MCP_TEAMS_GROUP_ID, and " +
+          "AZURE_MCP_TEAMS_CHANNEL_IDS must be set together.",
+      );
+    }
+    workflowTargets.push({
+      name: requireEnv("AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME"),
+      teamsGroupId: requireEnv("AZURE_MCP_TEAMS_GROUP_ID"),
+      teamsChannelIds: parseChannelIds("AZURE_MCP_TEAMS_CHANNEL_IDS"),
+    });
+  }
+
+  // Shared workflow parameter values.
   const serverBaseUrl = requireEnv("SERVER_BASE_URL");
   const serverApplicationIdUri = requireEnv("SERVER_APPLICATION_ID_URI");
   const botBaseUrl = `https://${requireEnv("BOT_DOMAIN")}`;
@@ -244,64 +274,66 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   );
   const definition = JSON.parse(rawDefinition);
 
-  const parameters = {
-    $connections: {
-      value: {
-        teams: {
-          connectionId: teamsConnResourceId,
-          connectionName: teamsConnName,
-          connectionProperties: {},
-          id: managedApiId(subscriptionId, location, "teams"),
+  for (const target of workflowTargets) {
+    const parameters = {
+      $connections: {
+        value: {
+          teams: {
+            connectionId: teamsConnResourceId,
+            connectionName: teamsConnName,
+            connectionProperties: {},
+            id: managedApiId(subscriptionId, location, "teams"),
+          },
         },
       },
-    },
-    teamsGroupId: { value: teamsGroupId },
-    teamsChannelIds: { value: teamsChannelIds },
-    serverBaseUrl: { value: serverBaseUrl },
-    serverApplicationIdUri: { value: serverApplicationIdUri },
-    serverIdentityResourceId: { value: serverIdentityResourceId },
-    botBaseUrl: { value: botBaseUrl },
-    botAudience: { value: botAudience },
-    botIdentityResourceId: { value: botIdentityResourceId },
-    functionAppResourceId: { value: functionAppResourceId },
-  };
+      teamsGroupId: { value: target.teamsGroupId },
+      teamsChannelIds: { value: target.teamsChannelIds },
+      serverBaseUrl: { value: serverBaseUrl },
+      serverApplicationIdUri: { value: serverApplicationIdUri },
+      serverIdentityResourceId: { value: serverIdentityResourceId },
+      botBaseUrl: { value: botBaseUrl },
+      botAudience: { value: botAudience },
+      botIdentityResourceId: { value: botIdentityResourceId },
+      functionAppResourceId: { value: functionAppResourceId },
+    };
 
-  const workflowUrl =
-    `https://management.azure.com/subscriptions/${subscriptionId}` +
-    `/resourceGroups/${resourceGroup}/providers/Microsoft.Logic/workflows/${workflowName}` +
-    `?api-version=${WORKFLOW_API_VERSION}`;
+    const workflowUrl =
+      `https://management.azure.com/subscriptions/${subscriptionId}` +
+      `/resourceGroups/${resourceGroup}/providers/Microsoft.Logic/workflows/${target.name}` +
+      `?api-version=${WORKFLOW_API_VERSION}`;
 
-  // Logic Apps reject PATCH on any properties field (only tags can be
-  // patched). GET the current workflow, mutate definition + parameters, then
-  // PUT it back so the identity / integration account / tags set up by
-  // main.bicep survive. State is set explicitly from Teams OAuth readiness.
-  log(`GET workflow ${workflowName}...`);
-  const currentRaw = execSync(`az rest --method GET --url "${workflowUrl}"`, { encoding: "utf8" });
-  const current = JSON.parse(currentRaw);
+    // Logic Apps reject PATCH on any properties field (only tags can be
+    // patched). GET the current workflow, mutate definition + parameters, then
+    // PUT it back so the identity / integration account / tags set up by
+    // main.bicep survive. State is set explicitly from Teams OAuth readiness.
+    log(`GET workflow ${target.name}...`);
+    const currentRaw = execSync(`az rest --method GET --url "${workflowUrl}"`, { encoding: "utf8" });
+    const current = JSON.parse(currentRaw);
 
-  current.properties = current.properties ?? {};
-  current.properties.definition = definition;
-  current.properties.parameters = parameters;
-  current.properties.state = teamsConnected ? "Enabled" : "Disabled";
+    current.properties = current.properties ?? {};
+    current.properties.definition = definition;
+    current.properties.parameters = parameters;
+    current.properties.state = teamsConnected ? "Enabled" : "Disabled";
 
-  // Fields ARM does not accept on PUT — strip them.
-  delete current.properties.provisioningState;
-  delete current.properties.createdTime;
-  delete current.properties.changedTime;
-  delete current.properties.version;
-  delete current.properties.accessEndpoint;
-  delete current.properties.endpointsConfiguration;
+    // Fields ARM does not accept on PUT — strip them.
+    delete current.properties.provisioningState;
+    delete current.properties.createdTime;
+    delete current.properties.changedTime;
+    delete current.properties.version;
+    delete current.properties.accessEndpoint;
+    delete current.properties.endpointsConfiguration;
 
-  // Route the body through a temp file — the workflow JSON is several KB
-  // and would blow past cmd.exe's inline argument limit on Windows.
-  const tmpDir = mkdtempSync(join(tmpdir(), "logicapp-put-"));
-  const bodyPath = join(tmpDir, "workflow.json");
-  writeFileSync(bodyPath, JSON.stringify(current));
+    // Route the body through a temp file — the workflow JSON is several KB
+    // and would blow past cmd.exe's inline argument limit on Windows.
+    const tmpDir = mkdtempSync(join(tmpdir(), "logicapp-put-"));
+    const bodyPath = join(tmpDir, "workflow.json");
+    writeFileSync(bodyPath, JSON.stringify(current));
 
-  log(`PUT workflow ${workflowName} (definition + parameters)...`);
-  execSync(
-    `az rest --method PUT --url "${workflowUrl}" --body @"${bodyPath}" --headers "Content-Type=application/json"`,
-    { stdio: "inherit" },
-  );
-  log(`  ✓ Workflow updated in ${current.properties.state} state.`);
+    log(`PUT workflow ${target.name} (definition + parameters)...`);
+    execSync(
+      `az rest --method PUT --url "${workflowUrl}" --body @"${bodyPath}" --headers "Content-Type=application/json"`,
+      { stdio: "inherit" },
+    );
+    log(`  ✓ Workflow updated in ${current.properties.state} state.`);
+  }
 }

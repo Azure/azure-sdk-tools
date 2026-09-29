@@ -163,42 +163,53 @@ function readGeneratedManifest(): {
 
 async function reconcileTeamsApp(envFile: string): Promise<void> {
   const environmentName = process.env.AZURE_ENV_NAME ?? "dev";
-  const teamId =
+  const primaryTeamId =
     process.env.TEAMS_GROUP_ID?.trim() ||
     getEnvSuiteValue(environmentName, "teamsGroupId");
+  const azureMcpTeamId =
+    process.env.AZURE_MCP_TEAMS_GROUP_ID?.trim() ||
+    getEnvSuiteValue(environmentName, "azureMcpTeamsGroupId");
+  const teamIds = [...new Set([primaryTeamId, azureMcpTeamId].filter((id): id is string => !!id))];
   const tenantId =
     process.env.TEAMS_APP_TENANT_ID?.trim() ||
     readEnvValue(envFile, "TEAMS_APP_TENANT_ID") ||
     getEnvSuiteValue(environmentName, "tenantId");
   const manifest = readGeneratedManifest();
 
-  if (!teamId || !tenantId) {
+  if (teamIds.length === 0 || !tenantId) {
     throw new Error(
-      "Cannot reconcile the Teams app: TEAMS_GROUP_ID or TEAMS_APP_TENANT_ID is missing.",
+      "Cannot reconcile the Teams app: no Teams group ID or TEAMS_APP_TENANT_ID is configured.",
     );
   }
 
-  const options = {
-    teamId,
-    teamsAppExternalId: manifest.externalId,
-    tenantId,
-    expectedBotId: manifest.botId,
-    expectedVersion: manifest.version,
-    log,
-  };
-  const status = await getTeamsAppInstallationStatus(options);
+  const installations = await Promise.all(teamIds.map(async (teamId) => {
+    const options = {
+      teamId,
+      teamsAppExternalId: manifest.externalId,
+      tenantId,
+      expectedBotId: manifest.botId,
+      expectedVersion: manifest.version,
+      log,
+    };
+    return {
+      options,
+      status: await getTeamsAppInstallationStatus(options),
+    };
+  }));
   const explicitPublish = process.env.TEAMS_PUBLISH === "1";
-  const driftRequiresPublish = status.state !== "current";
+  const driftRequiresPublish = installations.some(({ status }) => status.state !== "current");
 
-  if (status.state === "drifted") {
-    log(
-      `Installed Teams app drift detected: version ` +
-        `'${status.installedVersion ?? "unknown"}' / bot ` +
-        `'${status.installedBotId ?? "unknown"}'; expected version ` +
-        `'${manifest.version}' / bot '${manifest.botId}'.`,
-    );
-  } else if (status.state === "not-installed") {
-    log(`Teams app '${manifest.externalId}' is not installed in team '${teamId}'.`);
+  for (const { options, status } of installations) {
+    if (status.state === "drifted") {
+      log(
+        `Installed Teams app drift detected in team '${options.teamId}': version ` +
+          `'${status.installedVersion ?? "unknown"}' / bot ` +
+          `'${status.installedBotId ?? "unknown"}'; expected version ` +
+          `'${manifest.version}' / bot '${manifest.botId}'.`,
+      );
+    } else if (status.state === "not-installed") {
+      log(`Teams app '${manifest.externalId}' is not installed in team '${options.teamId}'.`);
+    }
   }
 
   if (explicitPublish || driftRequiresPublish) {
@@ -210,9 +221,9 @@ async function reconcileTeamsApp(envFile: string): Promise<void> {
     runTeamsapp("publish");
   }
 
-  await installTeamsAppInTeam({
-    ...options,
-  });
+  for (const { options } of installations) {
+    await installTeamsAppInTeam(options);
+  }
 }
 
 /**

@@ -11,11 +11,56 @@ function read(relativePath: string): string {
   return readFileSync(resolve(deploymentRoot, relativePath), "utf8");
 }
 
-test("provisions the chatbot evolution status container", () => {
+test("provisions the chatbot evolution and feedback containers", () => {
   const bicep = read("infra/layers/shared-resources/main.bicep");
 
   assert.match(bicep, /name: 'qa-records'/);
+  assert.match(bicep, /name: 'feedback-records'/);
+  assert.equal((bicep.match(/paths:\s*\[\s*'\/tenant_id'/g) ?? []).length, 2);
   assert.match(bicep, /paths:\s*\[\s*'\/tenant_id'/);
+});
+
+test("deploys the Azure MCP Server agent and its Teams-group workflow", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  const logicApp = read("infra/layers/logic-app/main.bicep");
+  const patchWorkflow = read("hooks/lib/patch-workflow.ts");
+  const frontendPostdeploy = read("hooks/frontend-postdeploy.ts");
+  const hostedAgent = read("pipelines/templates/hosted-agent-deploy-steps.yml");
+  const fullStack = read("pipelines/templates/deploy-stage.yml");
+  const azureMcpStage = read("pipelines/templates/azure-mcp-agent-deploy-stage.yml");
+  const targeted = read("pipelines/templates/provision-and-deploy-component.yml");
+  const devChannels = read("config/dev/channel.yaml");
+
+  assert.match(hostedAgent, /values: \[chat_agent, azure_mcp_server_agent, chatbot_evolution_agent\]/);
+  assert.match(hostedAgent, /AZURE_MCP_SERVER_AGENT_VERSION/);
+  assert.match(hostedAgent, /grant-agent-data-access\.sh" primary/);
+  assert.doesNotThrow(() => parse(azureMcpStage));
+  assert.match(fullStack, /azure-mcp-agent-deploy-stage\.yml/);
+  assert.ok(
+    fullStack.indexOf("stageName: DeployAgent") <
+      fullStack.indexOf("azure-mcp-agent-deploy-stage.yml"),
+  );
+  assert.match(
+    fullStack,
+    /stageName: DeployAgentServer[\s\S]*?dependsOn: DeployAzureMcpServerAgent/,
+  );
+  assert.match(
+    targeted,
+    /eq\(parameters\.component, 'agent'\)[\s\S]*?azure-mcp-agent-deploy-stage\.yml/,
+  );
+  assert.match(logicApp, /resource azureMcpWorkflow /);
+  assert.match(logicApp, /azureMcpTeamsGroupId/);
+  assert.match(patchWorkflow, /AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME/);
+  assert.match(patchWorkflow, /AZURE_MCP_TEAMS_CHANNEL_IDS/);
+  assert.match(frontendPostdeploy, /AZURE_MCP_TEAMS_GROUP_ID/);
+  assert.equal(
+    suite.environments.dev.azureMcpTeamsGroupId,
+    "07bb6114-8ffb-4e79-b65a-67f19d23e5bc",
+  );
+  assert.deepEqual(suite.environments.dev.azureMcpTeamsChannelIds, [
+    "19:GZ1GJyuOy0b8PWe6XtNxFdiaiT2M-NdiOXDLR5ySXXc1@thread.tacv2",
+  ]);
+  assert.match(devChannels, /tenant: azure_mcp_server/);
 });
 
 test("deploys application services according to runtime dependencies", () => {
@@ -37,7 +82,7 @@ test("deploys application services according to runtime dependencies", () => {
 
   assert.match(functionApp, /dependsOn: \$\{\{ parameters\.dependsOn \}\}/);
   assert.match(agent, /dependsOn: \$\{\{ parameters\.dependsOn \}\}/);
-  assert.match(agentServer, /dependsOn: DeployAgent/);
+  assert.match(agentServer, /dependsOn: DeployAzureMcpServerAgent/);
   assert.match(stages, /stage: VerifyAgentServer[\s\S]*?dependsOn: DeployAgentServer/);
   assert.match(stages, /template: .*\/smoke-test\.yml/);
   assert.match(stages, /appName: '\$\(AGENT_SERVER_SITE_NAME\)'/);

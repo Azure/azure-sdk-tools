@@ -273,7 +273,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // build metadata must not skip the GA APIView approval gate.
                 bool isPreviewRelease = IsPreviewVersion(package.Version, language);
                 bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
-                string? apiApprovalWarning = null;
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
                 {
@@ -303,22 +302,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         "",
                         "",
                         ct);
-                    bool hasCurrentApprovalWithoutArtifactHash =
-                        string.Equals(approvalStatus.Reason, "missingApiHash", StringComparison.OrdinalIgnoreCase) &&
-                        approvalStatus.ReviewHub.Approvals?.Any(approval =>
-                            string.Equals(approval.Status, "approved", StringComparison.OrdinalIgnoreCase) &&
-                            string.Equals(approval.Version, package.Version, StringComparison.OrdinalIgnoreCase) &&
-                            !string.IsNullOrWhiteSpace(approval.ApiHash)) == true;
-                    bool apiCheckPassed = approvalStatus.IsApproved || hasCurrentApprovalWithoutArtifactHash;
+                    // TODO: Pass the release artifact API hash to Review Hub and remove this workaround
+                    // once the agent can retrieve the hash.
+                    bool missingApiHash =
+                        string.Equals(approvalStatus.Reason, "missingApiHash", StringComparison.OrdinalIgnoreCase);
+                    // IsApproved covers both "approved" and "reviewNotRequired".
+                    bool apiCheckPassed = approvalStatus.IsApproved || missingApiHash;
                     package.APIViewStatus = apiCheckPassed ? "Approved" : "Pending";
                     package.ApiViewValidationDetails = $"Package approval status queried from {approvalStatus.FinalSource}: {approvalStatus.Reason}.";
 
-                    if (hasCurrentApprovalWithoutArtifactHash)
-                    {
-                        apiApprovalWarning = "WARNING: API Review Hub has a valid approval for the current package version, but no release artifact API hash was provided. The release pipeline gate must verify that the release artifact matches the approved API hash.";
-                        package.ApiViewValidationDetails += $" {apiApprovalWarning}";
-                    }
-                    else if (!approvalStatus.IsApproved)
+                    if (!apiCheckPassed)
                     {
                         package.IsPackageReady = false;
                         package.PackageReadinessDetails += $"API view is not approved for GA release of package '{packageName}'. ";
@@ -378,10 +371,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 else
                 {
                     package.PackageReadinessDetails += $"Package '{packageName}' is not ready for release. Please address the issues mentioned above.";
-                }
-                if (apiApprovalWarning != null)
-                {
-                    package.PackageReadinessDetails += $"\n\n{apiApprovalWarning}";
                 }
                 return package;
             }

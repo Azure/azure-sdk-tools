@@ -172,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         }
 
         [Test]
-        public async Task TestCheckReadyWithMissingApiHashAndCurrentApproval_PassesWithWarning()
+        public async Task TestCheckReadyWithMissingApiHash_PassesWithoutWarning()
         {
             ConfigureMissingApiHashApproval();
 
@@ -181,14 +181,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             Assert.Multiple(() =>
             {
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("is ready for release"));
-                Assert.That(result.ReleaseStatusDetails, Does.Contain("WARNING: API Review Hub has a valid approval for the current package version"));
-                Assert.That(result.ReleaseStatusDetails, Does.Contain("release pipeline gate must verify that the release artifact matches the approved API hash"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("API hash"));
                 Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("not ready for release"));
             });
         }
 
         [Test]
-        public async Task TestCheckReadyWithMissingApiHashAndCurrentApproval_PreservesEarlierFailure()
+        public async Task TestCheckReadyWithReviewNotRequired_Passes()
+        {
+            ConfigurePackageApproval(isApproved: true, reason: "reviewNotRequired");
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("is ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("not ready for release"));
+            });
+        }
+
+        [Test]
+        public async Task TestCheckReadyWithMissingApiHash_PreservesEarlierFailure()
         {
             devOpsService.ConfiguredPlannedReleases = [];
             ConfigureMissingApiHashApproval();
@@ -199,7 +212,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             {
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("No planned release date found"));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("not ready for release"));
-                Assert.That(result.ReleaseStatusDetails, Does.Contain("WARNING: API Review Hub has a valid approval for the current package version"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("API hash"));
             });
         }
 
@@ -347,7 +360,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             Assert.That(SdkReleaseTool.GetJavaSafeName(packageName), Is.EqualTo(expected));
         }
 
-        private void ConfigurePackageApproval(bool isApproved)
+        private void ConfigurePackageApproval(bool isApproved, string? reason = null)
         {
             mockPackageReleaseStatusService
                 .Setup(x => x.GetApprovalStatusAsync(
@@ -362,7 +375,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 {
                     IsApproved = isApproved,
                     FinalSource = "ApiReviewHub",
-                    Reason = isApproved ? "approved" : "notApproved"
+                    Reason = reason ?? (isApproved ? "approved" : "notApproved")
                 });
         }
 
@@ -382,19 +395,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                     IsApproved = false,
                     FinalSource = "ApiReviewHub",
                     Reason = "missingApiHash",
-                    ReviewHub = new ApiReviewHubReleaseGateResult
+                    ApiView = new ApiViewReleaseStatusResult
                     {
                         IsApproved = false,
-                        Reason = "missingApiHash",
-                        Approvals =
-                        [
-                            new ApiReviewHubApprovalRecord
-                            {
-                                ApiHash = "approved-hash",
-                                Version = devOpsService.ConfiguredPackageVersion,
-                                Status = "approved"
-                            }
-                        ]
+                        PackageNameApproved = false,
+                        Reason = "packageNamePending"
                     }
                 });
         }

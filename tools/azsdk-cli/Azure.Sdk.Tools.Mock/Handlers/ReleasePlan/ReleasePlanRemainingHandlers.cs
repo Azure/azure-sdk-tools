@@ -44,8 +44,17 @@ internal static class ReleasePlanMockResponses
     {
         string Argument(string key) => arguments?.GetValueOrDefault(key)?.ToString() ?? string.Empty;
         var plan = response?.ReleasePlanDetails ?? ContosoWorkItem();
-        var path = Argument("typeSpecProjectPath");
-        if (!string.Equals(path.TrimEnd('/'), plan.APISpecProjectPath, StringComparison.OrdinalIgnoreCase))
+        var path = Argument("typeSpecProjectPath").Replace('\\', '/').TrimEnd('/');
+        if (path.EndsWith("/tspconfig.yaml", StringComparison.OrdinalIgnoreCase))
+        {
+            path = path[..^"/tspconfig.yaml".Length];
+        }
+        var specificationIndex = path.IndexOf("/specification/", StringComparison.OrdinalIgnoreCase);
+        if (specificationIndex >= 0 && !path.Contains("://", StringComparison.Ordinal))
+        {
+            path = path[(specificationIndex + 1)..];
+        }
+        if (!string.Equals(path, plan.APISpecProjectPath, StringComparison.OrdinalIgnoreCase))
         {
             return new ReleasePlanResponse { ResponseError = "Provide the local Contoso TypeSpec project at the selected commit." };
         }

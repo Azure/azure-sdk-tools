@@ -1382,13 +1382,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0 &&
                         (proposedTarget == null ||
                          (string.Equals(existingReleasePlan.APISpecProjectPath.TrimEnd('/'), specProject.TrimEnd('/'), StringComparison.Ordinal) &&
-                          string.Equals(existingReleasePlan.SpecAPIVersion, apiVersion, StringComparison.OrdinalIgnoreCase))))
+                                                    (string.IsNullOrWhiteSpace(existingReleasePlan.SpecAPIVersion) ||
+                                                     string.Equals(existingReleasePlan.SpecAPIVersion, apiVersion, StringComparison.OrdinalIgnoreCase)))))
                     {
                         return await AddCreateReleasePlanScheduleRiskGuidanceAsync(
                             new ReleasePlanResponse
                             {
                                 Message = $"A {parsedApiReleaseType.ToDisplayLabel()} release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
-                                ReleasePlanDetails = existingReleasePlan
+                                ReleasePlanDetails = existingReleasePlan,
+                                NextSteps = ["The existing release target was not changed. Use update-spec-pr to configure or advance its saved target."]
                             },
                             specPullRequestUrl,
                             ct);

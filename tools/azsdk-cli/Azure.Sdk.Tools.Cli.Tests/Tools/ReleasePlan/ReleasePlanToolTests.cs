@@ -726,8 +726,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.Greater(releaseplan.ReleasePlanDetails.WorkItemId, 0);
         }
 
-        [Test]
-        public async Task Test_Create_releasePlan_blocks_same_release_type_for_same_spec_pr()
+        [TestCase("2026-05-02")]
+        [TestCase("")]
+        [TestCase(" ")]
+        public async Task Test_Create_releasePlan_blocks_same_release_type_for_same_spec_pr(string storedApiVersion)
         {
             // Arrange: configure the mock to return an existing GA release plan for the spec PR
             var mockDevOpsService = new MockDevOpsService
@@ -738,7 +740,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     ReleasePlanId = 10,
                     Title = "Existing GA Release Plan",
                     APISpecProjectPath = ProjectPath,
-                    SpecAPIVersion = "2026-05-02",
+                    SpecAPIVersion = storedApiVersion,
                     ReleasePlanType = "GA" // ApiReleaseType.GA
                 }
             };
@@ -771,6 +773,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNull(releaseplan.ResponseError);
             Assert.That(releaseplan.Message, Does.Contain("release plan already exists"));
             Assert.That(releaseplan.ReleasePlanDetails?.WorkItemId, Is.EqualTo(42));
+            Assert.That(releaseplan.ReleasePlanDetails?.SpecAPIVersion, Is.EqualTo(storedApiVersion));
+            Assert.That(releaseplan.ReleasePlanDetails?.SpecCommitSHA, Is.Empty);
         }
 
         

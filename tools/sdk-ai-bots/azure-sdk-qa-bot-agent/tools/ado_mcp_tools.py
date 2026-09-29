@@ -40,7 +40,7 @@ _ADO_API_TIMEOUT_SECS = 10.0
 
 # Client-side read-only allow-list: the work-items domain also exposes write
 # tools (wit_update_work_item, pipelines_run_pipeline, ...); restrict to reads.
-_ADO_ALLOWED_TOOLS: list[str] = [
+_ADO_ALLOWED_TOOLS = (
     # core (read-only)
     "core_list_projects",
     "core_list_project_teams",
@@ -63,22 +63,51 @@ _ADO_ALLOWED_TOOLS: list[str] = [
     "wit_get_work_items_batch_by_ids",
     "wit_list_work_item_comments",
     "wit_get_work_item_type",
-]
-_ADO_WRITE_TOOLS = (
+)
+_ADO_EVOLUTION_TOOLS = (
+    "wit_query_by_wiql",
+    "wit_get_work_item",
+    "wit_list_work_item_comments",
     "wit_create_work_item",
     "wit_add_work_item_comment",
 )
 
 
-async def create_ado_mcp_tool(
-    *,
-    allow_issue_writes: bool = False,
-) -> MCPStdioTool:
-    """Create an MCPStdioTool that launches the Azure DevOps MCP server.
+async def create_ado_mcp_tool() -> MCPStdioTool:
+    """Create the general read-only Azure DevOps MCP profile."""
+    return await _create_ado_mcp_tool(
+        allowed_tools=_ADO_ALLOWED_TOOLS,
+        domains=("core", "pipelines", "work-items"),
+        description=(
+            "Read-only Azure DevOps MCP tools. Use to (1) find release/CI "
+            "pipeline definitions by name and get their links, and (2) read "
+            "release plans — work items in the 'Release' project: resolve a "
+            "dashboard release-plan id via WIQL on [Custom.ReleasePlanID], "
+            "then read the work item and its API Spec / Package children."
+        ),
+    )
 
-    Read-only by default. Callers may opt into the narrowly allowed work-item
-    write tools needed by the evolution agent.
-    """
+
+async def create_evolution_ado_mcp_tool() -> MCPStdioTool:
+    """Create the issue-only Azure DevOps MCP profile for evolution."""
+    return await _create_ado_mcp_tool(
+        allowed_tools=_ADO_EVOLUTION_TOOLS,
+        domains=("work-items",),
+        description=(
+            "Azure Boards issue tools for the chatbot evolution workflow. "
+            "May query and read work items, list comments, create Issue work "
+            "items, and add comments. Must not access pipelines, project "
+            "identities, artifacts, tags, or assignments."
+        ),
+    )
+
+
+async def _create_ado_mcp_tool(
+    *,
+    allowed_tools: tuple[str, ...],
+    domains: tuple[str, ...],
+    description: str,
+) -> MCPStdioTool:
     org = cfg("ADO_ORG", _DEFAULT_ADO_ORG) or _DEFAULT_ADO_ORG
     env = {**os.environ}
 
@@ -95,21 +124,6 @@ async def create_ado_mcp_tool(
         )
 
     logger.info("ADO MCP tool configured (org=%s)", org)
-    allowed_tools = list(_ADO_ALLOWED_TOOLS)
-    description = (
-        "Read-only Azure DevOps MCP tools. Use to (1) find release/CI "
-        "pipeline definitions by name and get their links, and (2) read "
-        "release plans — work items in the 'Release' project: resolve a "
-        "dashboard release-plan id via WIQL on [Custom.ReleasePlanID], "
-        "then read the work item and its API Spec / Package children."
-    )
-    if allow_issue_writes:
-        allowed_tools.extend(_ADO_WRITE_TOOLS)
-        description += (
-            " This profile may also create Issue work items and add comments; "
-            "it must not assign work items or update tags."
-        )
-
     return MCPStdioTool(
         name="ado-mcp-tools",
         command="npx",
@@ -118,15 +132,13 @@ async def create_ado_mcp_tool(
             _ADO_MCP_PACKAGE,
             org,
             "-d",
-            "core",
-            "pipelines",
-            "work-items",
+            *domains,
             "-a",
             "envvar",
         ],
         env=env,
         load_prompts=False,
-        allowed_tools=allowed_tools,
+        allowed_tools=list(allowed_tools),
         approval_mode="never_require",
         parse_tool_results=truncating_mcp_parser,
         description=description,

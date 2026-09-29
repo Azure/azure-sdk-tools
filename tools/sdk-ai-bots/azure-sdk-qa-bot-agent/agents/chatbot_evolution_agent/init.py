@@ -37,7 +37,7 @@ import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.chatagent_tools import ChatAgentTools
 from tools.conversation_tools import ConversationTools
-from tools.ado_mcp_tools import create_ado_mcp_tool
+from tools.ado_mcp_tools import create_evolution_ado_mcp_tool
 from tools.github_mcp_tools import assign_issue_to_copilot, create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
@@ -150,12 +150,12 @@ async def main() -> None:
 
     # ADO work-item tools. ADO issues are not assigned to Copilot.
     try:
-        ado_mcp_tool = await create_ado_mcp_tool(
-            allow_issue_writes=True,
-        )
+        ado_mcp_tool = await create_evolution_ado_mcp_tool()
         tools.append(ado_mcp_tool)
     except Exception:
-        logger.exception("create_ado_mcp_tool failed to initialize, skipped")
+        logger.exception(
+            "create_evolution_ado_mcp_tool failed to initialize, skipped"
+        )
 
     # Compaction provider — compact history before and after each turn.
     compaction_provider = CompactionProvider(

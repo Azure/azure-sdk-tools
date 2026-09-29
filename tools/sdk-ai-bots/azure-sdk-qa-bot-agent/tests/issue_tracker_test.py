@@ -7,7 +7,10 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
-from tools.ado_mcp_tools import get_ado_work_item_state
+from tools.ado_mcp_tools import (
+    create_evolution_ado_mcp_tool,
+    get_ado_work_item_state,
+)
 from tools.issue_tracker import get_issue_state
 
 
@@ -34,6 +37,46 @@ async def test_get_ado_work_item_state() -> None:
         )
 
     assert state == "closed"
+
+
+@pytest.mark.asyncio
+async def test_evolution_ado_profile_exposes_only_issue_tools() -> None:
+    mcp_tool = object()
+    with (
+        patch(
+            "tools.ado_mcp_tools.resolve_token",
+            new=AsyncMock(return_value="test-token"),
+        ),
+        patch("tools.ado_mcp_tools.cfg", return_value="azure-sdk"),
+        patch(
+            "tools.ado_mcp_tools.MCPStdioTool",
+            return_value=mcp_tool,
+        ) as constructor,
+        patch(
+            "tools.ado_mcp_tools._ADO_MCP_PACKAGE",
+            "@azure-devops/mcp@2.7.0",
+        ),
+    ):
+        result = await create_evolution_ado_mcp_tool()
+
+    assert result is mcp_tool
+    kwargs = constructor.call_args.kwargs
+    assert kwargs["args"] == [
+        "-y",
+        "@azure-devops/mcp@2.7.0",
+        "azure-sdk",
+        "-d",
+        "work-items",
+        "-a",
+        "envvar",
+    ]
+    assert kwargs["allowed_tools"] == [
+        "wit_query_by_wiql",
+        "wit_get_work_item",
+        "wit_list_work_item_comments",
+        "wit_create_work_item",
+        "wit_add_work_item_comment",
+    ]
 
 
 @pytest.mark.asyncio

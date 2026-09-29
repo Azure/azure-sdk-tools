@@ -1,41 +1,46 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using System.Globalization;
 using System.Net;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
 {
     public class PastDueReleasePlanEmail : EmailPayload
     {
-        private readonly ReleasePlanWorkItem releasePlan;
+        private readonly ReleasePlanEmailContent _content;
+        private readonly string _reason;
 
-        public PastDueReleasePlanEmail(ReleasePlanWorkItem releasePlan)
+        public PastDueReleasePlanEmail(ReleasePlanWorkItem releasePlan, string reason, DateTimeOffset abandonedAt)
         {
-            this.releasePlan = releasePlan ?? throw new ArgumentNullException(nameof(releasePlan));
+            ArgumentNullException.ThrowIfNull(releasePlan);
+            ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+            _content = new ReleasePlanEmailContent(releasePlan, abandonedAt);
+            _reason = reason;
             EmailTo = string.IsNullOrWhiteSpace(releasePlan.ReleasePlanSubmittedByEmail)
                 ? []
                 : [releasePlan.ReleasePlanSubmittedByEmail];
         }
 
-        public override string Subject => $"Your release plan ({ReleasePlanIdentifier}) is now past due";
+        public override string Subject => $"Your Azure SDK Release Plan ({_content.Id}) has been abandoned";
 
         public override string Body =>
             $"""
             <html>
             <body>
-                <p>Hi {WebUtility.HtmlEncode(releasePlan.Owner)},</p>
-                <p>Your release plan (<a href="{WebUtility.HtmlEncode(releasePlan.ReleasePlanLink)}">{ReleasePlanIdentifier}</a>) is more than one month past its target release month ({WebUtility.HtmlEncode(releasePlan.SDKReleaseMonth)}) and has been marked as abandoned because {AbandonmentExplanation}.</p>
-                <p>If you intend to continue the release, please create a new release plan with an updated SDK target release month. Going forward, please ensure that your release plan is actively managed and reaches either Completed or Closed status by the end of its target release month.</p>
-                <p>Thank you.</p>
+                <p>Hello {_content.Owner},</p>
+                <p>Your <a href="{_content.Url}">Azure SDK Release Plan {_content.Id}</a> has been marked <strong>Abandoned</strong> during the {_content.SentOnUtc.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)} monthly cleanup. Its target release month was <strong>{_content.TargetMonth}</strong>, and the {_content.GraceMonth} grace month has ended.</p>
+                {_content.OverviewAndDetails}
+                <p><strong>Why this Release Plan was abandoned:</strong> At the time of cleanup: {WebUtility.HtmlEncode(_reason)}</p>
+                <p><strong>What to do next</strong></p>
+                <ol>
+                    {_content.NewReleasePlanAction}
+                </ol>
+                {ReleasePlanEmailContent.SupportAndSignature}
             </body>
             </html>
             """;
 
-        private string AbandonmentExplanation => releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
-            ? "its spec PR is missing or has not been merged"
-            : "there are no active SDK PRs associated with it";
-
-        private int ReleasePlanIdentifier => releasePlan.ReleasePlanId > 0
-            ? releasePlan.ReleasePlanId
-            : releasePlan.WorkItemId;
     }
 }

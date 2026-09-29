@@ -52,6 +52,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(pr);
         }
 
+        public Task<bool> IsPullRequestApprovedAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult(true);
+        }
+
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName, CancellationToken ct)
         {
             return Task.FromResult($"https://github.com/{owner}/{repoName}");

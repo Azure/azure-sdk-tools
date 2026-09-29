@@ -2157,7 +2157,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.Status = "Abandoned";
                         resultPlans.Add(releasePlan);
                         response.EligibilityReasons[releasePlan.WorkItemId] = reason;
-                        await notificationService.SendEmailNotificationAsync(new PastDueReleasePlanEmail(releasePlan), ct);
+                        await notificationService.SendEmailNotificationAsync(
+                            new PastDueReleasePlanEmail(releasePlan, assessment.Reason, _timeProvider.GetUtcNow()), ct);
                         ct.ThrowIfCancellationRequested();
                         logger.LogInformation("Abandoned overdue release plan {WorkItemId}", releasePlan.WorkItemId);
                     }
@@ -2228,12 +2229,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 if (string.IsNullOrWhiteSpace(releasePlan.ActiveSpecPullRequest))
                 {
-                    return (true, string.Empty, "Private Preview spec PR is missing.");
+                    return (true, string.Empty, "No specification pull request is linked to this Release Plan.");
                 }
-                var specPr = await GetValidatedPullRequestDetailsAsync(releasePlan.ActiveSpecPullRequest, isSpec: true, ct);
+                var (specPr, _) = await GetValidatedPullRequestDetailsAsync(releasePlan.ActiveSpecPullRequest, isSpec: true, ct);
                 return specPr.Merged
-                    ? (false, "spec_pr_merged", "The Private Preview spec PR is merged.")
-                    : (true, string.Empty, "Private Preview spec PR has not been merged.");
+                    ? (false, "spec_pr_merged", "The specification pull request linked to this Private Preview Release Plan has been merged.")
+                    : (true, string.Empty, "The specification pull request linked to this Private Preview Release Plan has not been merged.");
             }
 
             if (releasePlan.ApiReleaseType is not (ApiReleaseType.PublicPreview or ApiReleaseType.GA))
@@ -2243,31 +2244,40 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
             if (releasePlan.SDKInfo.Any(sdk => string.Equals(sdk.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)))
             {
-                return (false, "sdk_released", "At least one SDK is marked Released.");
+                return (false, "sdk_released", "At least one SDK is recorded as released.");
             }
 
             var sdkPullRequests = releasePlan.SDKInfo.Where(sdk => !string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl)).ToList();
-            // Stored PR statuses can be stale or empty. Only current GitHub state authorizes cleanup.
+            var hasOpenPullRequest = false;
+            // Stored PR statuses can be stale. Only current GitHub state and approval authorize cleanup.
             foreach (var url in sdkPullRequests.Select(sdk => sdk.SdkPullRequestUrl).Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                var pr = await GetValidatedPullRequestDetailsAsync(url, isSpec: false, ct);
-                if (pr.Merged || pr.State.Value != ItemState.Closed)
+                var (pr, approved) = await GetValidatedPullRequestDetailsAsync(url, isSpec: false, ct);
+                if (pr.Merged)
                 {
-                    // Active, merged, or unrecognized PR states must not permit abandonment.
-                    return pr.Merged
-                        ? (false, "sdk_pr_merged", "A linked SDK PR is merged.")
-                        : (false, "sdk_pr_not_closed", "A linked SDK PR is not confirmed closed and unmerged on GitHub.");
+                    return (false, "sdk_pr_merged", "A linked SDK pull request has been merged.");
                 }
+                if (approved)
+                {
+                    return (false, "sdk_pr_approved", "A linked SDK pull request is approved but has not yet been merged.");
+                }
+                if (pr.State.Value is not (ItemState.Open or ItemState.Closed))
+                {
+                    throw new InvalidOperationException($"Could not verify the current SDK pull request state for {url}.");
+                }
+                hasOpenPullRequest |= pr.State.Value == ItemState.Open;
             }
             return (true, string.Empty, sdkPullRequests.Count == 0
-                ? "No SDK has been released and no SDK PRs are linked."
-                : "No SDK has been released and all linked SDK PRs are closed without merging.");
+                ? "No SDKs are recorded as released, and no SDK pull requests are linked to this Release Plan."
+                : hasOpenPullRequest
+                    ? "No SDKs are recorded as released, no linked SDK pull request has been merged, and all open SDK pull requests are awaiting approval."
+                    : "No SDKs are recorded as released, and all linked SDK pull requests are closed without being merged.");
         }
 
         /// <summary>
-        /// Validates a release plan's linked PR URL, then delegates to the GitHub service with a cancellable wait.
+        /// Validates a linked PR URL, then reads its state and (for open SDK PRs) current approval.
         /// </summary>
-        private async Task<PullRequest> GetValidatedPullRequestDetailsAsync(string url, bool isSpec, CancellationToken ct)
+        private async Task<(PullRequest PullRequest, bool Approved)> GetValidatedPullRequestDetailsAsync(string url, bool isSpec, CancellationToken ct)
         {
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
                 || uri.Scheme != Uri.UriSchemeHttps
@@ -2289,8 +2299,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
             try
             {
-                return await githubService.GetPullRequestAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct)
+                var pr = await githubService.GetPullRequestAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct)
                     ?? throw new InvalidOperationException($"Could not determine pull request status for {url}");
+                var approved = !isSpec && !pr.Merged && pr.State.Value == ItemState.Open
+                    && await githubService.IsPullRequestApprovedAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct);
+                return (pr, approved);
             }
             catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
             {
@@ -2319,11 +2332,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 try
                 {
                     bool? hasInactiveWork = null;
+                    string? workReason = null;
                     try
                     {
                         if (releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
                         {
-                            hasInactiveWork = (await EvaluateReleasePlanWorkAsync(releasePlan, ct)).IsInactive;
+                            var assessment = await EvaluateReleasePlanWorkAsync(releasePlan, ct);
+                            hasInactiveWork = assessment.IsInactive;
+                            workReason = assessment.Reason;
                         }
                     }
                     catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -2344,7 +2360,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         // Private Preview completes at spec merge; do not request SDK publication.
                         continue;
                     }
-                    var email = new OverdueReleasePlanEmail(releasePlan, hasInactiveWork);
+                    var email = new OverdueReleasePlanEmail(releasePlan, hasInactiveWork, workReason, _timeProvider.GetUtcNow());
                     await SendEmailNotification(emailerUri, releaseOwnerEmail, sdkApexEmail, email.Subject, email.Body, ct);
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)

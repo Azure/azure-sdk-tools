@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Added monthly cleanup and state-specific reminders for inactive overdue release plans, with a one-calendar-month grace period and protection for active release work.
+- Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
 - Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
 
 ### Breaking Changes

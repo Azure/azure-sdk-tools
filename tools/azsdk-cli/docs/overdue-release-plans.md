@@ -22,28 +22,36 @@ the following month, provided the plan also meets the eligibility rules below:
 The grace period is based on the recorded target month, not creation date, last
 modification, or the first reminder. Creation age and SDK generation status are
 not additional eligibility checks. Review incorrect dates before cleanup; the
-scan does not infer or repair them.
+scan does not infer or repair them. A previously delivered warning is not a
+prerequisite: an already-eligible plan can be abandoned on its first scan. The
+emails do not promise a grace month after receipt.
 
 ## Eligibility and reminder policy
 
 The following rules apply after the scope and date checks above. Reminders are
 attempted while overdue; abandonment is allowed only after the grace period.
 
-| Release type and recorded work                                                      | Reminder action                                              | Eligible for abandonment |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------ |
-| Public Preview / GA: any SDK marked `Released`                                      | Update the target month or complete remaining SDK releases   | No                       |
-| Public Preview / GA: no released SDKs and no linked SDK PRs                         | Update the target month or abandon using the Azure SDK Agent | Yes                      |
-| Public Preview / GA: no released SDKs and all linked SDK PRs closed without merging | Update the target month or abandon using the Azure SDK Agent | Yes                      |
-| Public Preview / GA: any active or merged SDK PR                                    | Update the target month or complete remaining SDK releases   | No                       |
-| Private Preview: spec PR missing or unmerged                                        | Merge the spec PR, update the target month, or abandon       | Yes                      |
-| Private Preview: spec PR merged                                                     | No incomplete-spec reminder                                  | No                       |
-| Unknown release type                                                                | Update the target month or review the dashboard              | No                       |
+| Release type and recorded work | Reminder action | Eligible for abandonment |
+| --- | --- | --- |
+| Public Preview / GA: any SDK marked `Released` | Update the target month or complete remaining SDK releases | No |
+| Public Preview / GA: any merged or approved open SDK PR | Update the target month or complete remaining SDK releases | No |
+| Public Preview / GA: no released SDKs and no linked SDK PRs | Update the target month, complete the release, or abandon | Yes |
+| Public Preview / GA: no released SDKs and all linked SDK PRs closed without merging | Update the target month, complete the release, or abandon | Yes |
+| Public Preview / GA: no released SDKs, no merged PRs, and all open SDK PRs unapproved (including drafts or mixed open/closed PRs) | Update the target month, complete reviews, or abandon | Yes |
+| Private Preview: spec PR missing or unmerged | Merge the spec PR, update the target month, or abandon | Yes |
+| Private Preview: spec PR merged | No incomplete-spec reminder | No |
+| Unknown release type or unverifiable PR status/approval | Update the target month or review the dashboard | No |
 
 - SDK release status comes from the release plan. **Any SDK marked `Released`
   protects a Public Preview/GA plan**, even if no PRs are linked or all are closed.
-- For Public Preview/GA, linked SDK PR states come from GitHub, not cached Azure
-  DevOps fields. All linked SDK PRs must be confirmed closed and unmerged to
-  authorize cleanup. Active, merged, or unrecognized SDK PR states protect the plan.
+- For Public Preview/GA, linked SDK PR states and approval come from GitHub, not
+  cached Azure DevOps fields. An open PR alone is not protection. GitHub's current
+  aggregate `reviewDecision` of `APPROVED` protects an open PR; `REVIEW_REQUIRED`
+  and `CHANGES_REQUESTED` do not. Historical or dismissed approvals are not used.
+  Any merged PR still protects the plan. Closed, unmerged PRs do not protect it.
+- A null, missing, or unrecognized review decision, lookup error, or PR that
+  changes state during the approval lookup prevents cleanup and reports an
+  evaluation error. No approval field or new column is stored in Azure DevOps.
 - Private Preview uses the spec PR's merge state, not API approval.
 - Both `GA` and the legacy Azure DevOps value `APEX GA` are read as GA. New
   release-type writes continue to use `GA`.
@@ -88,7 +96,7 @@ can change or its update can fail after the preview.
   linked Private Preview API-spec work item, stops that command before processing
   plans. Unreadable spec data is not treated as a missing spec PR.
 - **GitHub lookup failure:** an invalid, inaccessible, or failed PR lookup skips
-  that plan for cleanup. The reminder command instead attempts a generic overdue
+  that plan for cleanup, including a failed approval lookup. The reminder command instead attempts a generic overdue
   email asking the owner to update the target month or review the dashboard,
   without asserting an activity state or recommending abandonment.
 - **Concurrent updates:** both modes require a valid work-item revision. Actual
@@ -111,6 +119,18 @@ allow reads of linked repositories, including private specs. The CLI supports
 
 Reminders require `--notify-owners true`, a valid `--emailer-uri`, and a valid
 submitter email address. They report lookup and send failures to the caller.
+Reminder and abandonment subjects are distinct. Both emails use the assessment's
+exact reason; missing PRs, closed PRs, unapproved open PRs, merged or approved PRs,
+and released SDKs are not conflated. Unrecognized release types and verification
+failures receive separate neutral guidance. Private Preview retains spec-only
+completion guidance.
+
+Email deadlines are calculated from the target month in UTC; already-eligible
+plans say "eligible now" instead of displaying a past action deadline. Confirmation
+emails use the successful update date, not the scheduled cleanup date. Agent
+examples suggest a future month based on the send date. Both templates preserve
+HTML encoding, dashboard ID fallback, documentation and support links.
+
 Confirmation emails use `AZSDKTOOLS_NOTIFICATION_SERVICE_URL` and the shared
 notification service, which currently accepts only `@microsoft.com` recipients.
 A missing URL or unsupported recipient skips confirmation; delivery failures are

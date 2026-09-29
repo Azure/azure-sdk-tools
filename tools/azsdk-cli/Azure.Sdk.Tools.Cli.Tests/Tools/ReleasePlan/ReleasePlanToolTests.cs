@@ -644,10 +644,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(releaseplan.ReleasePlanDetails?.SpecAPIVersion, Is.EqualTo("2026-05-02"));
         }
 
-        [Test]
-        public async Task Test_Create_releasePlan_without_spec_pr_sets_empty_spec_pull_requests()
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task Test_Create_releasePlan_without_spec_pr_sets_empty_spec_pull_requests(bool multipleVersions)
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            if (multipleVersions)
+            {
+                var metadata = CreateDummyTypeSpecProject();
+                metadata.Packages[0].ApiVersion = "2027-01-01";
+                Mock.Get(typeSpecHelper).Setup(t => t.ParseTypeSpecProjectAsync(testCodeFilePath,
+                    It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+            }
             ((MockDevOpsService)devOpsService).ConfiguredActiveReleasePlansForTypeSpecPath =
             [
                 new ReleasePlanWorkItem { WorkItemId = 801, ReleasePlanId = 81, SDKReleaseMonth = "January 2020" }
@@ -664,6 +672,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var releasePlanDetails = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
             Assert.IsNotNull(releasePlanDetails);
             Assert.That(releasePlanDetails.SpecPullRequests, Is.Empty);
+            Assert.That(releasePlanDetails.SpecCommitSHA, Is.Empty);
+            Assert.That(releasePlanDetails.SpecAPIVersion, Is.EqualTo(multipleVersions ? string.Empty : "2026-05-02"));
+            Assert.That(releaseplan.RequiresConfirmation, Is.False);
+            Assert.That(releaseplan.ProposedSpecTarget, Is.Null);
+            Mock.Get(typeSpecHelper).Verify(t => t.ValidateReleasePlanSnapshotAsync(It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()), Times.Never);
             Assert.That(releaseplan.Warnings, Is.Null);
         }
 

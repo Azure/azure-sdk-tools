@@ -539,16 +539,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(_connection.CapturedPatches, Is.Empty);
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public async Task ReleaseTargetReadFailsClosedWhenChildUnreadableOrPinChanges(bool pinChanges)
+        [TestCase("unreadable")]
+        [TestCase("cleared-pin")]
+        [TestCase("republished-pin")]
+        public async Task ReleaseTargetReadFailsClosedWhenChildUnreadableOrPinChanges(string change)
         {
             var (parent, _, _) = TargetFixture();
             _connection.BeforeRead = id =>
             {
                 if (id != 200) { return; }
-                if (!pinChanges) { throw new InvalidOperationException("API Spec unavailable"); }
-                parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = string.Empty;
+                if (change == "unreadable") { throw new InvalidOperationException("API Spec unavailable"); }
+                var updatedParent = new WorkItem
+                {
+                    Id = parent.Id,
+                    Rev = parent.Rev + 2,
+                    Fields = new Dictionary<string, object>(parent.Fields)
+                };
+                updatedParent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = change == "cleared-pin" ? string.Empty : PriorSha;
+                updatedParent.Fields["Custom.SDKtypetobereleased"] = "stable";
+                _connection.AddWorkItem(updatedParent);
             };
             var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, default);
             Assert.That(result.SpecCommitSHA, Is.Empty);
@@ -586,16 +595,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(_connection.CapturedPatches, Is.Empty);
         }
 
-        [Test]
-        public async Task ReleaseTargetPublishesPinAndMetadataLastWithoutResettingSamePrStatuses()
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task ReleaseTargetPublishesPinAndMetadataLastPreservingStatusesOnlyForSameTarget(bool sameSha)
         {
             var (parent, spec, target) = TargetFixture();
+            if (sameSha) { parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = TargetSha; }
             parent.Fields["Custom.SDKLanguages"] = "Java,Go";
             parent.Fields["Custom.JavaPackageName"] = "existing-java";
             parent.Fields["Custom.GenerationStatusForPython"] = "Pending";
             parent.Fields["Custom.ReleaseStatusForJava"] = "Released";
             parent.Fields["Custom.ReleaseExclusionStatusForJava"] = "Approved";
             parent.Fields["Custom.ReleaseExclusionStatusForPython"] = "MissingEmitterConfig";
+            parent.Fields["Custom.GenerationStatusForJava"] = "In progress";
             parent.Fields["Custom.SDKGenerationPipelineForJava"] = "existing-pipeline";
             spec.Fields["Custom.RESTAPIReviews"] = $"<a href=\"{TargetPr}\">{TargetPr}</a>";
             Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(100, target,
@@ -608,13 +620,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(patches.Select(p => p.Document[0].Value), Is.EqualTo(new object[] { 1, 1, 2 }));
             Assert.That(patches[0].Document[1].Value, Is.EqualTo(string.Empty));
             Assert.That(patches[1].Document.Single(op => op.Path == "/fields/Custom.APISpecversion").Value, Is.EqualTo("2024-01-01"));
-            Assert.That(patches[2].Document.Any(op => op.Path.Contains("GenerationStatusFor")), Is.False);
+            Assert.That(patches[2].Document.Any(op => op.Path.Contains("GenerationStatusFor")), Is.EqualTo(!sameSha));
             Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(TargetSha));
             Assert.That(parent.Fields["Custom.ProductName"], Is.EqualTo("Contoso"));
             Assert.That(parent.Fields["Custom.SDKLanguages"].ToString()!.Split(','), Is.EquivalentTo(new[] { "Python", "Java", "Go" }));
             Assert.That(parent.Fields["Custom.JavaPackageName"], Is.EqualTo("existing-java"));
             Assert.That(parent.Fields["Custom.PythonPackageName"], Is.EqualTo("azure-contoso"));
-            Assert.That(parent.Fields["Custom.GenerationStatusForPython"], Is.EqualTo("Pending"));
+            Assert.That(parent.Fields["Custom.GenerationStatusForPython"], Is.EqualTo(sameSha ? "Pending" : "Not applicable"));
+            Assert.That(parent.Fields["Custom.GenerationStatusForJava"], Is.EqualTo("In progress"), "Keep the recorded run so generation can check whether it is still active.");
             Assert.That(parent.Fields["Custom.ReleaseStatusForJava"], Is.EqualTo("Released"));
             Assert.That(parent.Fields["Custom.ReleaseExclusionStatusForJava"], Is.EqualTo("Approved"));
             Assert.That(parent.Fields["Custom.ReleaseExclusionStatusForPython"], Is.EqualTo("Not applicable"));

@@ -471,9 +471,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
                     if (!string.IsNullOrEmpty(releasePlan.SpecCommitSHA))
                     {
-                        // Do not combine an old parent pin with a concurrently updated child target.
+                        // The revision also detects clearing and republishing the same SHA.
                         var currentParent = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlan.WorkItemId, cancellationToken: ct);
                         if (currentParent?.Fields == null ||
+                            currentParent.Rev != workItem.Rev ||
                             !currentParent.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var currentPin) ||
                             !string.Equals(currentPin?.ToString(), releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
                         {
@@ -1462,6 +1463,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
                 apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out var currentSpecPullRequest);
                 var sameSpecPullRequest = string.Equals(currentSpecPullRequest?.ToString(), specPullRequest, StringComparison.OrdinalIgnoreCase);
+                releasePlanWorkItem.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var currentSpecCommitSha);
+                var sameSpecTarget = sameSpecPullRequest && string.Equals(currentSpecCommitSha?.ToString() ?? string.Empty, specCommitSha, StringComparison.OrdinalIgnoreCase);
 
                 // Parent and child cannot be patched atomically. Clear the pin first, publish it
                 // last, and leave it empty after a partial failure rather than restore a stale pin.
@@ -1550,7 +1553,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         }
                     }
                 }
-                foreach (var lang in sameSpecPullRequest ? [] : SUPPORTED_SDK_LANGUAGES)
+                foreach (var lang in sameSpecTarget ? [] : SUPPORTED_SDK_LANGUAGES)
                 {
                     releasePlanWorkItem.Fields.TryGetValue($"Custom.GenerationStatusFor{lang}", out var generationStatus);
                     releasePlanWorkItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out var pipelineUrl);

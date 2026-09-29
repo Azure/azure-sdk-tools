@@ -2580,7 +2580,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// Rules:
         /// - If any language has "all" or "multiple-versions" as the apiVersion, returns empty string.
         /// - If all languages have the same apiVersion (and it's not empty), returns that version.
-        /// - If apiVersions differ across languages, requires explicit selection instead of choosing a default.
+        /// - If apiVersions differ across languages, returns empty string for an unversioned tracking plan.
         /// - If apiVersion is undefined or empty for all languages, returns empty string.
         /// </summary>
         /// <param name="packages">List of PackageInfo objects containing parsed metadata</param>
@@ -2621,7 +2621,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return version;
             }
 
-            throw new InvalidOperationException($"Ambiguous API versions in TypeSpec metadata: {string.Join(", ", apiVersions)}. Specify and confirm the intended API version; no version was selected automatically.");
+            logger.LogWarning("Multiple API versions in TypeSpec metadata: {versions}. Leaving the tracking plan's API version unset.", string.Join(", ", apiVersions));
+            return string.Empty;
         }
 
         private const string ConfirmationNextStep = "Show the proposed project, packages, API version, SDK release type, spec PR and commit link. If metadata is ambiguous, choose from AvailableApiVersions. After approval, repeat with specCommitSha and confirmTarget=true. For updates, copy ExpectedTargetRevision as expectedTargetRevision; a revision change requires a fresh preview and approval.";

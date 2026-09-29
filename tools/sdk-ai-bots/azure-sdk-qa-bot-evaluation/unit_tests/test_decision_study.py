@@ -454,6 +454,18 @@ def test_local_collection_preserves_failures_and_four_arm_summary(prepared, tmp_
             {**job, "status": "completed", "latency_seconds": 1}
             for job in bundle["jobs"] if job["arm"] == arm
         ]
+        if arm == "topic":
+            rows[0]["tool_calls"] = [{
+                "tool_name": "load_skill",
+                "arguments": {"skill_name": "api-spec-review"},
+                "output": "Experimental API Spec Review topic guidance",
+            }]
+        if arm == "combined":
+            rows[0]["tool_calls"] = [{
+                "tool_name": "load_skill",
+                "arguments": {"skill_name": "sdk-onboarding"},
+                "output": "Experimental API Spec Review topic guidance",
+            }]
         (path / "run.json").write_text(json.dumps({
             "mode": "local-agent", "arm": arm, "bundle_sha256": bundle["bundle_sha256"]
         }))
@@ -466,6 +478,9 @@ def test_local_collection_preserves_failures_and_four_arm_summary(prepared, tmp_
     summary = summarize_local(bundle, runs, tmp / "local-summary.json")
     assert summary["mode"] == "local-agent" and len(summary["samples"]) == 8
     assert summary["comparisons_to_baseline"]["topic"]["ties"] == 2
+    assert summary["arms"]["topic"]["topic_guidance_loaded"] == 1
+    assert summary["arms"]["combined"]["topic_guidance_loaded"] == 0
+    assert sum(sample["topic_guidance_loaded"] for sample in summary["samples"]) == 1
     with pytest.raises(ValueError, match="Duplicate"):
         summarize_local(bundle, runs[:3] + [runs[0]], tmp / "again.json")
 

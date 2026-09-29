@@ -269,6 +269,14 @@ historical Q&A is absent from their indexes. Case evidence is explicitly
 supplied in the user message rather than injected as a tool result. Unlike
 fixed-evidence content replay, all relevant topic guides are available to the
 tenant skill; this track measures end-to-end guide use, not oracle selection.
+The paired summary reports how many topic/combined samples actually called
+`load_skill(api-spec-review)` and received the experimental topic text. Merely
+configuring an arm does not ensure the bot reads that skill: an unrelated
+tenant skill may be selected instead. Arm-level scores are intention-to-treat
+comparisons, **not** direct estimates of the effect of reading a guide.
+Before interpreting differences, review blinded actions and grader reasons;
+historical cases additionally require human review and cutoff evidence that
+cannot be retrieved from present-day live indexes.
 Local failures are journaled and retained in paired denominators. The first
 12 synthetic cases are exploratory and unreviewed; the mode does not establish
 real-world superiority. No stored Foundry response retrieval is used for

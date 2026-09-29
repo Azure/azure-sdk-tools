@@ -379,6 +379,17 @@ def collect_local(
     return generations, traces
 
 
+def topic_guidance_loaded(row: dict[str, Any]) -> bool:
+    """Count actual topic-skill delivery, not merely a configured treatment."""
+    return any(
+        call.get("tool_name") == "load_skill"
+        and isinstance(call.get("arguments"), dict)
+        and call["arguments"].get("skill_name") == "api-spec-review"
+        and "Experimental API Spec Review topic guidance" in str(call.get("output", ""))
+        for call in row.get("tool_calls", [])
+    )
+
+
 def verify_local_receipt(
     bundle: dict[str, Any], variant_path: Path, receipt_path: Path
 ) -> str:
@@ -565,9 +576,19 @@ def summarize_local(bundle: dict[str, Any], runs: list[Path], output: Path) -> d
     result["mode"] = "local-agent"
     result["interpretation"] = (
         "Exploratory local dev-agent comparison with live tools and no memory. "
-        "Synthetic cases and live retrieval are not independent real-world evidence. "
+        "Topic guidance is available in a tenant skill but may never be loaded; "
+        "arm scores are not effects of guidance exposure. Synthetic cases and "
+        "live retrieval are not independent real-world evidence. "
         "Missing generations/grades receive zero utility, not a model-quality verdict."
     )
+    by_id = {row["id"]: row for row in generations}
+    for sample in result["samples"]:
+        sample["topic_guidance_loaded"] = topic_guidance_loaded(by_id[sample["id"]])
+    for arm in ARMS:
+        result["arms"][arm]["topic_guidance_loaded"] = sum(
+            sample["topic_guidance_loaded"] for sample in result["samples"]
+            if sample["arm"] == arm
+        )
     write_json(output, result)
     return result
 

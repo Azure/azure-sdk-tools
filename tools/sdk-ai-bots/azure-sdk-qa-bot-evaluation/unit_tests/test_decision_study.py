@@ -422,6 +422,14 @@ def test_local_request_payload_and_response_trace(monkeypatch):
         {"tool_name": "wiki_search", "arguments": {"query": "q"}, "output": {"found": True}}
     ]
     assert parse_local_response(result)[1] == "Ask actor"
+    history = [
+        {"type": "message", "role": "user", "content": "Original question"},
+        {"type": "message", "role": "assistant", "content": "Which actor?"},
+    ]
+    local_request("http://127.0.0.1:8088", "The pipeline identity", "", history)
+    assert captured["payload"]["input"][1:3] == history
+    assert captured["payload"]["input"][-1]["content"] == "The pipeline identity"
+    assert len(history) == 2
     with pytest.raises(ValueError, match="loopback"):
         local_request("https://example.com", "q", "e")
     with pytest.raises(ValueError, match="status"):
@@ -485,11 +493,15 @@ def test_local_collection_preserves_failures_and_four_arm_summary(prepared, tmp_
         summarize_local(bundle, runs[:3] + [runs[0]], tmp / "again.json")
 
 
-def test_local_run_grades_inline_traces_without_hosted_response_retrieval(prepared, monkeypatch):
+@pytest.mark.parametrize("follow_ups", [[], ["The failing actor is the pipeline identity."]])
+def test_local_run_grades_inline_traces_without_hosted_response_retrieval(
+    prepared, monkeypatch, follow_ups
+):
     import azure.ai.projects
     import dataset._storage
 
     bundle, _, tmp = prepared
+    bundle["cases"][0]["follow_ups"] = follow_ups
     root, tenant = tmp / "root.md", tmp / "tenant.md"
     root.write_text("BASELINE_", encoding="utf-8")
     tenant.write_text("ONLY", encoding="utf-8")
@@ -537,8 +549,117 @@ def test_local_run_grades_inline_traces_without_hosted_response_retrieval(prepar
     assert len(captured["items"]) == 2
     assert all(item["response_id"] == item["testcase"] for item in captured["items"])
     assert all(trace[0]["tool_name"] == "wiki_search" for trace in captured["traces"].values())
+    if follow_ups:
+        assert all(follow_ups[0] in item["query"] for item in captured["items"])
+        assert all(len(json.loads(item["response"])) == 2 for item in captured["items"])
+        assert all(len(trace) == 2 for trace in captured["traces"].values())
     client.responses.retrieve.assert_not_called()
     assert (tmp / "local-run" / "graded.json").exists()
+
+
+@pytest.mark.parametrize("value", [None, "reply", [""], [" "], [1], [{}]])
+def test_invalid_scripted_replies_rejected(prepared, value):
+    bundle, paths, _ = prepared
+    case = {**bundle["cases"][0], "follow_ups": value}
+    paths["apispec.jsonl"].write_text(json.dumps(case) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="follow_ups"):
+        load_cases(paths["apispec.jsonl"])
+
+
+def test_replay_does_not_silently_drop_scripted_turns(prepared):
+    bundle, _, tmp = prepared
+    bundle["cases"][0]["follow_ups"] = ["Scripted reply"]
+    client = Mock()
+    with pytest.raises(ValueError, match="local-agent"):
+        collect_replay(client, bundle, "model", tmp / "no-output.jsonl")
+    assert not (tmp / "no-output.jsonl").exists()
+    client.chat.completions.create.assert_not_called()
+
+
+def test_local_scripted_turns_are_isolated_and_do_not_leak_future_replies(prepared, monkeypatch):
+    bundle, _, tmp = prepared
+    bundle["cases"][0]["follow_ups"] = ["FUTURE_REPLY"]
+    captured = []
+
+    def respond(endpoint, question, evidence, history=None):
+        captured.append(copy.deepcopy((question, evidence, history)))
+        return {"id": f"local-{len(captured)}", "output": [
+            {"type": "message", "content": [{"type": "output_text", "text": "Ask actor"}]},
+        ]}
+
+    monkeypatch.setattr("decision_study.local_request", respond)
+    rows, _ = collect_local(bundle, "baseline", "http://127.0.0.1:8088", tmp / "turns.jsonl")
+    assert len(captured) == 4
+    for first, second in (captured[:2], captured[2:]):
+        assert first[2] is None
+        assert "FUTURE_REPLY" not in json.dumps(first)
+        assert second[0] == "FUTURE_REPLY" and second[1] == ""
+        assert [item["role"] for item in second[2]] == ["user", "assistant"]
+        assert second[2][-1]["content"] == "Ask actor"
+        assert "PRIVATE_" not in json.dumps(second)
+    assert all(len(row["turns"]) == 2 for row in rows)
+    journal = [json.loads(line) for line in (tmp / "turns.jsonl").read_text().splitlines()]
+    assert sum(row["status"] == "turn_completed" for row in journal) == 4
+
+
+def test_failed_follow_up_preserves_prior_turn_and_stops_case(prepared, monkeypatch):
+    bundle, _, tmp = prepared
+    bundle["cases"][0]["follow_ups"] = ["Fail here", "Must not be sent"]
+    calls = []
+
+    def respond(endpoint, question, evidence, history=None):
+        calls.append(question)
+        if question == "Fail here":
+            raise ValueError("failed follow-up")
+        return {"id": "first", "output": [
+            {"type": "message", "content": [{"type": "output_text", "text": "First answer"}]},
+        ]}
+
+    monkeypatch.setattr("decision_study.local_request", respond)
+    rows, _ = collect_local(bundle, "baseline", "http://127.0.0.1:8088", tmp / "failed.jsonl")
+    assert all(row["status"] == "failed" and len(row["turns"]) == 1 for row in rows)
+    assert all(row["turns"][0]["response"] == "First answer" for row in rows)
+    assert "Must not be sent" not in calls
+
+
+@pytest.mark.parametrize("failed", [False, True])
+def test_collection_only_never_calls_grader(prepared, monkeypatch, failed):
+    bundle, _, tmp = prepared
+    (tmp / "v").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr("decision_study.verify_local_receipt", lambda *_: "baseline")
+    row = {"status": "failed" if failed else "completed", "id": "sample", "response": "answer"}
+    monkeypatch.setattr("decision_study.collect_local", lambda *_: ([row], {}))
+    grader = Mock(side_effect=AssertionError("Grading must not run"))
+    monkeypatch.setattr(FoundryEvalsRunner, "evaluate_collected", grader)
+    output = tmp / "collect-only"
+    if failed:
+        with pytest.raises(RuntimeError, match="collection failures"):
+            run_local(bundle, output, tmp / "v", tmp / "r", "http://localhost:8088",
+                      "unused", "unused", collect_only=True)
+    else:
+        run_local(bundle, output, tmp / "v", tmp / "r", "http://localhost:8088",
+                  "unused", "unused", collect_only=True)
+    assert json.loads((output / "run.json").read_text())["grading"] == "not_requested"
+    assert json.loads((output / "generations.json").read_text()) == [row]
+    assert not (output / "graded.json").exists()
+    grader.assert_not_called()
+
+
+def test_collection_only_cli_preserves_explicit_opt_in(prepared, monkeypatch):
+    bundle, _, tmp = prepared
+    monkeypatch.setattr("decision_study.load_bundle", lambda *_: bundle)
+    collect = Mock()
+    monkeypatch.setattr("decision_study.run_local", collect)
+    args = [
+        "run-local", "--bundle", str(tmp / "bundle"), "--variant", str(tmp / "variant"),
+        "--receipt", str(tmp / "receipt"), "--output", str(tmp / "out"),
+        "--project-endpoint", "https://unused.example", "--judge-model", "unused",
+        "--collect-only", "--allow-unreviewed",
+    ]
+    assert main(args) == 1
+    collect.assert_not_called()
+    assert main([*args, "--execute"]) == 0
+    assert collect.call_args.kwargs == {"collect_only": True}
 
 
 def test_seed_cases_are_synthetic_unreviewed_pairs():

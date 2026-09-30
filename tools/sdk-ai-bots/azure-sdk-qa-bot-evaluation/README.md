@@ -282,6 +282,32 @@ Local failures are journaled and retained in paired denominators. The first
 real-world superiority. No stored Foundry response retrieval is used for
 local-agent traces. Never commit private variants, bundles, receipts or results.
 
+#### Scripted follow-ups and collection-only runs
+
+Local study cases may include `follow_ups`, a list of fixed user replies.
+Freeze replies before running either arm; do not generate a helpful user response
+from the candidate's answer. The evaluator sends each reply after the preceding
+answer, retaining the user/assistant text transcript within that case only.
+This is **stateless transcript replay**, not a persistent agent session: prior
+tool outputs are not reinserted, and the bot can retrieve evidence again.
+Replies are supplied even if the bot did not ask the right question, so review
+the first turn separately for useful and unnecessary questions.
+
+Every completed turn is journaled immediately, including its answer, latency,
+usage and tool calls. `generations.json` retains `turns` and the final answer;
+failed later turns retain earlier completed turns without counting the case as
+successful. Grading receives the entire conversation and all turn traces.
+Write `expected_behavior` for both the first response and the final action.
+The top-level `usage` remains the final turn's usage; use per-turn usage for
+conversation totals. Fixed-evidence `run` rejects follow-ups rather than silently
+evaluating only the first question.
+
+Add `--collect-only` to `run-local` to preserve answers without invoking Foundry
+grading, for example while investigating gaps or during a grader outage.
+This still requires `--execute` because the local agent uses paid model/tools.
+The run records `grading: not_requested`; no score or `graded.json` is invented.
+Normal `run-local` behavior is unchanged when the flag is absent.
+
 ### Evaluators
 
 Default evaluators are builtin LLM evaluators that read the collected bot answer via

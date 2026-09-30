@@ -69,6 +69,11 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
         guides = case.get("guide_ids")
         if not isinstance(guides, list) or not all(isinstance(g, str) and g for g in guides):
             raise ValueError(f"{where}: guide_ids must be a list of nonempty IDs")
+        follow_ups = case.get("follow_ups", [])
+        if not isinstance(follow_ups, list) or not all(
+            isinstance(reply, str) and reply.strip() for reply in follow_ups
+        ):
+            raise ValueError(f"{where}: follow_ups must be a list of nonempty scripted replies")
         if case["scenario"] != "apispec":
             raise ValueError(f"{where}: this study requires scenario=apispec")
         if normalize_review_status(case["reviewed"]) == "abandoned":
@@ -228,6 +233,8 @@ def collect_replay(client: Any, bundle: dict[str, Any], model: str, output: Path
     """Journal every attempt, preserving failures; no retries or concurrent arm state."""
     from openai import OpenAIError
 
+    if any(case.get("follow_ups") for case in bundle["cases"]):
+        raise ValueError("Scripted follow_ups require local-agent collection, not content replay")
     cases = {case["testcase"]: case for case in bundle["cases"]}
     rows = []
     with output.open("x", encoding="utf-8") as journal:
@@ -316,7 +323,10 @@ def parse_local_response(data: dict[str, Any]) -> tuple[str, str, list[dict[str,
     return response_id, answer, _extract_tool_calls(output), data.get("usage")
 
 
-def local_request(endpoint: str, question: str, evidence: str) -> dict[str, Any]:
+def local_request(
+    endpoint: str, question: str, evidence: str,
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
     parsed = urlparse(endpoint)
     if parsed.scheme != "http" or parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
         raise ValueError("Local study requires an HTTP loopback agent endpoint")
@@ -326,9 +336,13 @@ def local_request(endpoint: str, question: str, evidence: str) -> dict[str, Any]
                 "type": "message", "role": "system",
                 "content": "[tenant_context] original_tenant_id=api_spec_review_bot",
             },
+            *(history or []),
             {
                 "type": "message", "role": "user",
-                "content": f"{question}\n\nCase evidence supplied for this study:\n{evidence}",
+                "content": (
+                    f"{question}\n\nCase evidence supplied for this study:\n{evidence}"
+                    if evidence else question
+                ),
             },
         ]
     }
@@ -359,9 +373,36 @@ def collect_local(
             start = time.perf_counter()
             try:
                 case = cases[job["case_id"]]
-                response_id, answer, trace, usage = parse_local_response(
-                    local_request(endpoint, case["query"], case["evidence"])
-                )
+                history: list[dict[str, str]] = []
+                turns: list[dict[str, Any]] = []
+                trace: list[dict[str, Any]] = []
+                row["turns"] = turns
+                questions = [case["query"], *case.get("follow_ups", [])]
+                for turn_index, question in enumerate(questions):
+                    evidence = case["evidence"] if turn_index == 0 else ""
+                    turn_start = time.perf_counter()
+                    response_id, answer, turn_trace, usage = parse_local_response(
+                        local_request(endpoint, question, evidence, history) if history
+                        else local_request(endpoint, question, evidence)
+                    )
+                    turns.append({
+                        "turn_index": turn_index, "query": question, "response": answer,
+                        "local_response_id": response_id, "tool_calls": turn_trace,
+                        "usage": usage, "latency_seconds": time.perf_counter() - turn_start,
+                    })
+                    trace.extend(turn_trace)
+                    history.extend([
+                        {"type": "message", "role": "user", "content": (
+                            f"{question}\n\nCase evidence supplied for this study:\n{evidence}"
+                            if evidence else question
+                        )},
+                        {"type": "message", "role": "assistant", "content": answer},
+                    ])
+                    if case.get("follow_ups"):
+                        journal.write(json.dumps({
+                            **job, "status": "turn_completed", **turns[-1],
+                        }, ensure_ascii=False) + "\n")
+                        journal.flush()
                 # A response ID is local to this agent process; use the sample ID
                 # for the judge join to avoid collisions across fresh processes.
                 traces[job["id"]] = trace
@@ -396,7 +437,9 @@ def verify_local_receipt(
     variant = json.loads(variant_path.read_text(encoding="utf-8"))
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     arm = variant["arm"]
-    if arm not in ARMS or variant["bundle_sha256"] != bundle["bundle_sha256"]:
+    if not isinstance(arm, str) or arm not in ARMS or (
+        variant["bundle_sha256"] != bundle["bundle_sha256"]
+    ):
         raise ValueError("Study variant does not match prepared bundle")
     if (receipt.get("arm") != arm or
         receipt.get("bundle_sha256") != bundle["bundle_sha256"] or
@@ -494,13 +537,9 @@ def paired_summary(
 
 def run_local(
     bundle: dict[str, Any], output: Path, variant_path: Path, receipt_path: Path,
-    local_endpoint: str, project_endpoint: str, judge_model: str
+    local_endpoint: str, project_endpoint: str, judge_model: str,
+    *, collect_only: bool = False,
 ) -> None:
-    from azure.ai.projects import AIProjectClient
-    from dataset._storage import credential_for
-    from _evals_result import EvalsResult
-    from _evals_runner import FoundryEvalsRunner
-
     arm = verify_local_receipt(bundle, variant_path, receipt_path)
     # Refuse an inaccessible or wrong endpoint before creating run artifacts.
     parsed = urlparse(local_endpoint)
@@ -513,9 +552,19 @@ def run_local(
         "project_endpoint": project_endpoint, "judge_model": judge_model,
         "local_endpoint": local_endpoint, "started_at": datetime.now(timezone.utc).isoformat(),
         "memory": "disabled", "retrieval": "live tools", "retries": 0,
+        "grading": "not_requested" if collect_only else "requested",
     })
     generations, traces = collect_local(bundle, arm, local_endpoint, output / "generation.jsonl")
     write_json(output / "generations.json", generations)
+    if collect_only:
+        if any(row["status"] != "completed" for row in generations):
+            raise RuntimeError("Local study has collection failures; inspect preserved artifacts")
+        return
+    from azure.ai.projects import AIProjectClient
+    from dataset._storage import credential_for
+    from _evals_result import EvalsResult
+    from _evals_runner import FoundryEvalsRunner
+
     cases = {case["testcase"]: case for case in bundle["cases"]}
     metrics: dict[str, list[str] | None] = {key: [key] for key in DECISION_RUBRICS}
     runner = FoundryEvalsRunner(list(metrics), EvalsResult(metrics, None), model=judge_model)
@@ -526,11 +575,19 @@ def run_local(
         if row["status"] != "completed":
             failed.append(runner._failed_row({"testcase": row["id"], "query": case["query"]}))
             continue
+        response = row["response"]
+        query = case["query"]
+        if case.get("follow_ups"):
+            query = "\n\n".join([case["query"], *case["follow_ups"]])
+            response = json.dumps([
+                {"user": turn["query"], "assistant": turn["response"]}
+                for turn in row["turns"]
+            ], ensure_ascii=False)
         items.append({
-            "testcase": row["id"], "query": case["query"],
+            "testcase": row["id"], "query": query,
             "ground_truth": case["ground_truth"],
             "expected_behavior": case["expected_behavior"],
-            "response": row["response"], "response_id": row["response_id"],
+            "response": response, "response_id": row["response_id"],
             "context": case["evidence"], "execution": {
                 "latency_seconds": row["latency_seconds"], "usage": row["usage"],
                 "local_response_id": row["local_response_id"],
@@ -694,6 +751,8 @@ def main(argv: list[str] | None = None) -> int:
     local.add_argument("--judge-model", required=True)
     local.add_argument("--execute", action="store_true")
     local.add_argument("--allow-unreviewed", action="store_true")
+    local.add_argument("--collect-only", action="store_true",
+                       help="Save local answers and per-turn traces without cloud grading")
     summarize = sub.add_parser("summarize-local", help="Combine exactly four local arm runs")
     summarize.add_argument("--bundle", type=Path, required=True)
     summarize.add_argument("--runs", type=Path, nargs=4, required=True)
@@ -727,6 +786,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_local(
                     bundle, args.output, args.variant, args.receipt, args.local_endpoint,
                     args.project_endpoint, args.judge_model,
+                    collect_only=args.collect_only,
                 )
             else:
                 run(bundle, args.output, args.project_endpoint, args.model, args.judge_model)

@@ -8,6 +8,7 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Microsoft.VisualStudio.Services.Common;
 using Moq;
 using DevOpsJsonPatchDocument = Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument;
 
@@ -128,6 +129,65 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                     new Dictionary<string, string> { ["System.State"] = "Abandoned" }, revision, CancellationToken.None));
 
             Assert.That(_connection.LastCapturedPatchDocument, Is.Null);
+                }
+
+        [Test]
+        public async Task EnsureReleasePlanAutomationRelation_AddsRelatedLinkWithContextAndPreservesOtherLinks()
+        {
+            var previous = new WorkItem { Id = 100, Url = "https://dev.azure.com/test/_apis/wit/workItems/100" };
+            var pending = new WorkItem
+            {
+                Id = 200,
+                Relations = [new WorkItemRelation { Rel = "System.LinkTypes.Related", Url = "https://dev.azure.com/test/_apis/wit/workItems/300" }]
+            };
+            _connection.AddWorkItem(previous);
+            _connection.AddWorkItem(pending);
+
+            await _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, CancellationToken.None);
+            await _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, CancellationToken.None);
+
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+            Assert.That(_connection.CapturedPatches[0].WorkItemId, Is.EqualTo(200));
+            var patch = _connection.CapturedPatches[0].Document.Single();
+            Assert.That(patch.Path, Is.EqualTo("/relations/-"));
+            var relation = (WorkItemRelation)patch.Value;
+            Assert.That(relation.Rel, Is.EqualTo("System.LinkTypes.Related"));
+            Assert.That(relation.Url, Is.EqualTo(previous.Url));
+            Assert.That(relation.Attributes["comment"].ToString(), Does.Contain("Automatic SDK generation"));
+            Assert.That(pending.Relations, Has.Count.EqualTo(2));
+        }
+
+        [Test]
+        public async Task EnsureReleasePlanAutomationRelation_ConcurrentInsert_IsSuccessful()
+        {
+            _connection.AddWorkItem(new WorkItem { Id = 100, Url = "https://dev.azure.com/test/_apis/wit/workItems/100" });
+            _connection.AddWorkItem(new WorkItem { Id = 200, Relations = [] });
+            _connection.FailNextRelationUpdate(addRelationBeforeFailure: true);
+
+            await _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, CancellationToken.None);
+
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void EnsureReleasePlanAutomationRelation_UpdateFailureWithoutLink_Propagates()
+        {
+            _connection.AddWorkItem(new WorkItem { Id = 100, Url = "https://dev.azure.com/test/_apis/wit/workItems/100" });
+            _connection.AddWorkItem(new WorkItem { Id = 200, Relations = [] });
+            _connection.FailNextRelationUpdate(addRelationBeforeFailure: false);
+
+            Assert.ThrowsAsync<VssServiceException>(() =>
+                _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, CancellationToken.None));
+        }
+
+        [Test]
+        public void EnsureReleasePlanAutomationRelation_Cancellation_DoesNotUpdate()
+        {
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            Assert.ThrowsAsync<TaskCanceledException>(() =>
+                _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, cts.Token));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
         }
 
         #region GetReleasePlanAsync(string pullRequestUrl) Tests
@@ -799,6 +859,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         [TestCase("python", "Python")]
         [TestCase(".net", "Dotnet")]
+        [TestCase("csharp", "Dotnet")]
         [TestCase("javascript", "JavaScript")]
         [TestCase("java", "Java")]
         [TestCase("go", "Go")]
@@ -1280,6 +1341,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             {
                 _workItemClient.CancelBulkFetch = true;
             }
+
+            public void FailNextRelationUpdate(bool addRelationBeforeFailure)
+            {
+                _workItemClient.FailRelationUpdate = true;
+                _workItemClient.AddRelationBeforeFailure = addRelationBeforeFailure;
+            }
         }
 
         private class TestWorkItemClient : WorkItemTrackingHttpClient
@@ -1296,6 +1363,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public bool CancelQuery { get; set; }
 
             public bool CancelBulkFetch { get; set; }
+            public bool FailRelationUpdate { get; set; }
+            public bool AddRelationBeforeFailure { get; set; }
 
             public int UpdateCount { get; private set; }
 
@@ -1424,6 +1493,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                         workItem.Fields[operation.Path["/fields/".Length..]] = operation.Value;
                     }
                     workItem.Rev++;
+                }
+                foreach (var operation in document.Where(operation => operation.Path == "/relations/-"))
+                {
+                    if (workItem != null && (!FailRelationUpdate || AddRelationBeforeFailure))
+                    {
+                        workItem.Relations ??= new List<WorkItemRelation>();
+                        workItem.Relations.Add((WorkItemRelation)operation.Value);
+                    }
+                    if (FailRelationUpdate)
+                    {
+                        FailRelationUpdate = false;
+                        throw new VssServiceException("Relation update failed");
+                    }
                 }
                 return Task.FromResult(workItem ?? new WorkItem { Id = id });
             }

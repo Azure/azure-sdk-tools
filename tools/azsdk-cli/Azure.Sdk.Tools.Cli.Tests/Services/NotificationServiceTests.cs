@@ -473,24 +473,87 @@ public class NotificationServiceTests
     }
 
     [Test]
-    public async Task SendEmailNotification_NoRecipients_SilentlyCompletes()
+    public async Task SendEmailNotification_NoRecipients_ReturnsSkipped()
     {
         var (service, captured) = CreateService(url: ServiceUrl);
 
-        await service.SendEmailNotificationAsync(new NewReleasePlanEmail(new ReleasePlanWorkItem { ReleasePlanId = 5 }));
+        var result = await service.SendEmailNotificationAsync(new NewReleasePlanEmail(new ReleasePlanWorkItem { ReleasePlanId = 5 }));
 
+        Assert.That(result.Status, Is.EqualTo(NotificationStatus.SkippedNoRecipients));
         Assert.That(captured, Is.Empty);
     }
 
     [Test]
-    public async Task SendNewReleasePlanNotification_MissingUrl_SilentlyCompletes()
+    public async Task SendNewReleasePlanNotification_MissingUrl_ReturnsDisabled()
     {
         var (service, captured) = CreateService(url: string.Empty);
 
-        await service.SendEmailNotificationAsync(new NewReleasePlanEmail(new ReleasePlanWorkItem { ReleasePlanId = 5 }));
+        var result = await service.SendEmailNotificationAsync(new NewReleasePlanEmail(new ReleasePlanWorkItem { ReleasePlanId = 5 }));
 
+        Assert.That(result.Status, Is.EqualTo(NotificationStatus.Disabled));
         Assert.That(captured, Is.Empty);
         mockHttpClientFactory.Verify(f => f.CreateClient(It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task SendEmailNotification_HttpFailure_ReturnsFailureDetails()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            {
+                Content = new StringContent("service unavailable")
+            });
+        var service = CreateService(mockHandler.Object);
+
+        var result = await service.SendEmailNotificationAsync(CreatePayload());
+
+        Assert.That(result.Status, Is.EqualTo(NotificationStatus.Failed));
+        Assert.That(result.ErrorMessage, Does.Contain("HTTP 500").And.Contain("service unavailable"));
+    }
+
+    [Test]
+    public async Task SendEmailNotification_TransportFailure_ReturnsFailureDetails()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+        var service = CreateService(mockHandler.Object);
+
+        var result = await service.SendEmailNotificationAsync(CreatePayload());
+
+        Assert.That(result.Status, Is.EqualTo(NotificationStatus.Failed));
+        Assert.That(result.ErrorMessage, Is.EqualTo("Connection refused"));
+    }
+
+    [Test]
+    public void SendEmailNotification_RequestedCancellation_Propagates()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Returns<HttpRequestMessage, CancellationToken>((_, ct) => Task.Delay(Timeout.Infinite, ct)
+                .ContinueWith(_ => new HttpResponseMessage(HttpStatusCode.OK), ct));
+        var service = CreateService(mockHandler.Object);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        Assert.CatchAsync<OperationCanceledException>(
+            async () => await service.SendEmailNotificationAsync(CreatePayload(), cts.Token));
     }
 
     [Test]
@@ -517,8 +580,9 @@ public class NotificationServiceTests
         {
             EmailTo = [releasePlan.ReleasePlanSubmittedByEmail, "extra@microsoft.com"]
         };
-        await service.SendEmailNotificationAsync(payload);
+        var result = await service.SendEmailNotificationAsync(payload);
 
+        Assert.That(result.Status, Is.EqualTo(NotificationStatus.Sent));
         Assert.That(captured, Has.Count.EqualTo(1));
         using var doc = JsonDocument.Parse(captured[0]);
         var root = doc.RootElement;
@@ -823,4 +887,19 @@ public class NotificationServiceTests
 
         Assert.That(body, Does.Not.Contain("SDK details are currently missing from the release plan"));
     }
+
+    private NotificationService CreateService(HttpMessageHandler handler)
+    {
+        mockEnvironmentHelper
+            .Setup(e => e.GetStringVariable(Constants.NOTIFICATION_SERVICE_URL_ENV_VAR, It.IsAny<string>()))
+            .Returns(ServiceUrl);
+        mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(new HttpClient(handler));
+        return new NotificationService(mockHttpClientFactory.Object, mockEnvironmentHelper.Object, logger);
+    }
+
+    private static EmailPayload CreatePayload() => new NewReleasePlanEmail(new ReleasePlanWorkItem
+    {
+        ReleasePlanId = 5,
+        ReleasePlanSubmittedByEmail = "owner@microsoft.com"
+    });
 }

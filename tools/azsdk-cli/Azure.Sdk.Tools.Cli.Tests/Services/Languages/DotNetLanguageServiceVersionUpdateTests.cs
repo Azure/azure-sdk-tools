@@ -13,13 +13,13 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
 [TestFixture]
-internal class DotnetLanguageServiceVersionUpdateTests
+internal class DotNetLanguageServiceVersionUpdateTests
 {
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<IPowershellHelper> _powershellHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPackageInfoHelper> _packageInfoHelperMock = null!;
-    private DotnetLanguageService _service = null!;
+    private DotNetLanguageService _service = null!;
 
     [SetUp]
     public void SetUp()
@@ -29,12 +29,12 @@ internal class DotnetLanguageServiceVersionUpdateTests
         _gitHelperMock = new Mock<IGitHelper>();
         _packageInfoHelperMock = new Mock<IPackageInfoHelper>();
 
-        _service = new DotnetLanguageService(
+        _service = new DotNetLanguageService(
             _processHelperMock.Object,
             _powershellHelperMock.Object,
             Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
-            new TestLogger<DotnetLanguageService>(),
+            new TestLogger<DotNetLanguageService>(),
             Mock.Of<ICommonValidationHelpers>(),
             _packageInfoHelperMock.Object,
             Mock.Of<IFileHelper>(),
@@ -302,12 +302,12 @@ internal class DotnetLanguageServiceVersionUpdateTests
 
         // This test exercises the full changelog flow, so use a real ChangelogHelper
         var realChangelogHelper = new ChangelogHelper(new TestLogger<ChangelogHelper>());
-        var serviceWithRealChangelog = new DotnetLanguageService(
+        var serviceWithRealChangelog = new DotNetLanguageService(
             _processHelperMock.Object,
             _powershellHelperMock.Object,
             Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
-            new TestLogger<DotnetLanguageService>(),
+            new TestLogger<DotNetLanguageService>(),
             Mock.Of<ICommonValidationHelpers>(),
             _packageInfoHelperMock.Object,
             Mock.Of<IFileHelper>(),
@@ -362,7 +362,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
     private async Task<PackageOperationResponse> InvokeUpdatePackageVersionInFilesAsync(
         string packagePath, string version, string? releaseType)
     {
-        var method = typeof(DotnetLanguageService)
+        var method = typeof(DotNetLanguageService)
             .GetMethod("UpdatePackageVersionInFilesAsync",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 

@@ -77,6 +77,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(CreateDummyTypeSpecProject());
             typeSpecHelper = typeSpecHelperMock.Object;
 
+            var notificationServiceMock = new Mock<INotificationService>();
+            notificationServiceMock
+                .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new NotificationResult(NotificationStatus.Disabled));
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,
                 gitHelper,
@@ -89,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 httpClient,
                 Mock.Of<INpxHelper>(),
                 Mock.Of<IRawOutputHelper>(),
-                Mock.Of<INotificationService>(),
+                notificationServiceMock.Object,
                 _timeProvider);
         }
 
@@ -181,7 +185,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             notificationMock
                 .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
                 .Callback<EmailPayload, CancellationToken>((p, _) => captured = p)
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(new NotificationResult(NotificationStatus.Sent));
 
             var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
 
@@ -201,7 +205,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             notificationMock
                 .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
                 .Callback<EmailPayload, CancellationToken>((p, _) => captured = p)
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(new NotificationResult(NotificationStatus.Sent));
 
             var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
 
@@ -211,6 +215,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(captured);
             Assert.That(captured!.CC, Does.Contain("sdkreleaseowners@microsoft.com"));
             Assert.That(captured.CC, Does.Contain("azsdkexp@microsoft.com"));
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_notification_failure_is_returned_as_warning()
+        {
+            var notificationMock = new Mock<INotificationService>();
+            notificationMock
+                .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new NotificationResult(NotificationStatus.Failed, "Notification endpoint unavailable"));
+            var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
+
+            var releaseplan = await tool.CreateReleasePlan(
+                null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                "July 2025",
+                "GA",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                isTestReleasePlan: true);
+
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+            Assert.That(releaseplan.Warnings, Has.Some.Contains("Failed to send release plan notification")
+                .And.Contains("Notification endpoint unavailable"));
         }
 
         [Test]
@@ -430,7 +456,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             notificationMock
                 .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
                 .Callback(() => notified = true)
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(new NotificationResult(NotificationStatus.Sent));
 
             var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
 
@@ -1549,6 +1575,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase(".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
         [TestCase("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
         [TestCase("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("DotNet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
         [TestCase("csharp", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
         [TestCase("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345")]
         [TestCase("typescript", "https://github.com/Azure/azure-sdk-for-js/pull/12345")]
@@ -2005,7 +2032,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                         It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Abandoned"), 7, It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
                 notification.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
-                    .Returns(Task.CompletedTask);
+                    .ReturnsAsync(NotificationResult.Sent);
             }
             var tool = CreateOverdueMaintenanceTool(service.Object, notification: notification.Object);
             var command = tool.GetCommandInstances().Single(command => command.Name == "abandon-overdue");
@@ -2412,7 +2439,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                         7, It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
                 notification.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
-                    .Returns(Task.CompletedTask);
+                    .ReturnsAsync(NotificationResult.Sent);
             }
             var github = new Mock<IGitHubService>(MockBehavior.Strict);
             github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, It.IsAny<CancellationToken>()))

@@ -366,6 +366,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
         [TestCase("python", "Custom.ReleaseStatusForPython", "azure-test-package")]
         [TestCase(".net", "Custom.ReleaseStatusForDotnet", "azure-test-package")]
+        [TestCase(".NET", "Custom.ReleaseStatusForDotnet", "azure-test-package")]
         [TestCase("javascript", "Custom.ReleaseStatusForJavaScript", "azure-test-package")]
         [TestCase("java", "Custom.ReleaseStatusForJava", "com.azure:azure-test-package")]
         [TestCase("go", "Custom.ReleaseStatusForGo", "azure-test-package")]
@@ -1275,6 +1276,5 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
     }
 }
-
 
 

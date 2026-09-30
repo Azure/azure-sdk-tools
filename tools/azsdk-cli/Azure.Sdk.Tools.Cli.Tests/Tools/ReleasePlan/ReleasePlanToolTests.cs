@@ -1548,6 +1548,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase(".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
         [TestCase("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
         [TestCase("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("DotNet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
         [TestCase("csharp", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
         [TestCase("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345")]
         [TestCase("typescript", "https://github.com/Azure/azure-sdk-for-js/pull/12345")]

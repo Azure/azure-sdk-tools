@@ -291,6 +291,11 @@ Services account likewise preserve their pre-existing user-assigned
 identities. Fresh environments use the layer defaults instead of inheriting
 these environment-specific identity maps.
 
+The GitHub signing vault still uses legacy Key Vault access policies. Agent
+access reconciliation checks for `Sign` and `Verify` there instead of creating
+an Azure RBAC assignment; RBAC is used only when the target vault has
+`enableRbacAuthorization=true`.
+
 ### Evolution agent
 
 [`grant-agent-data-access.sh`](../scripts/grant-agent-data-access.sh) defines two

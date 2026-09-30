@@ -119,11 +119,13 @@ environments:
             AGENT_APP_INSIGHTS_NAME: 'azuresdkqabot-dev-agent'
             AGENT_APPLICATIONINSIGHTS_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Insights/components/azuresdkqabot-dev-agent'
             CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES: '{"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity":{},"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity":{}}'
+            CONTAINER_REGISTRY_IS_EXISTING: 'true'
             KEY_VAULT_ACCESS_POLICIES: '[{"tenantId":"72f988bf-86f1-41af-91ab-2d7cd011db47","objectId":"0d592d27-c3a0-487b-b5ac-245d9fcea5a7","permissions":{"keys":["Verify","Sign"],"secrets":[],"certificates":[]}},{"tenantId":"72f988bf-86f1-41af-91ab-2d7cd011db47","objectId":"eb14b1bf-9a84-425e-a4bc-1a0c4a4298bf","permissions":{"keys":["Verify","Sign"],"secrets":[],"certificates":[]}}]'
             ACR_NAME: 'azuresdkqabotdevcontainer'
             AZURE_CONTAINER_REGISTRY_ENDPOINT: 'azuresdkqabotdevcontainer.azurecr.io'
             FRONTEND_APP_INSIGHTS_NAME: 'azsdkqabotdev-insights'
             FRONTEND_EMAIL_ACTION_GROUP_NAME: 'azsdkqabotdev-email-alerts'
+            FRONTEND_DIAGNOSTIC_SETTING_NAME: 'azsdkqabotdev-diagnostic'
             FRONTEND_HEALTH_TEST_NAME: 'azsdkqabotdev-health-test'
             FRONTEND_SERVER_ERRORS_ALERT_NAME: 'azsdkqabotdev-server-errors'
             FRONTEND_HEALTH_CHECK_ALERT_NAME: 'azsdkqabotdev-health-check-failure'
@@ -135,6 +137,7 @@ environments:
             AGENT_SERVER_APP_INSIGHTS_REQUEST_SOURCE: 'IbizaAIExtensionEnablementBlade'
             AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-dev-alert'
             SERVER_BASE_URL: 'https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net'
+            AZD_DEPLOY_AGENT_SERVER_SLOT_NAME: 'production'
             FUNCTION_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-dev-functionserviceplan'
             FUNCTION_LOG_WORKSPACE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/DefaultResourceGroup-WUS2/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-a18897a6-7e44-457d-9260-f2854c0aca42-WUS2'
             INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-dev-ia'
@@ -142,6 +145,7 @@ environments:
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-dev-logicapp'
             AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-dev-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
+            AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-dev-logicapp-alert'
             AI_RESOURCE_RESTORE: 'false'
         # The shared environment already has runtime RBAC assignments and
         # delete locks. Local provisioning must not attempt privileged writes.
@@ -260,6 +264,7 @@ environments:
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
             AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
+            AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-logicapp-alert'
         manageAuthorizationResources: true
         localDeployAllowed: false
 
@@ -270,6 +275,6 @@ components:
     frontend:
         healthPath: '/health'
     function-app:
-        healthPath: '/api/health'
+        healthPath: '/'
     agent-server:
         healthPath: '/ping'

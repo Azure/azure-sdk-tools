@@ -60,6 +60,9 @@ param searchUserAssignedIdentities object = {}
 @description('User-assigned identities attached to the container registry, keyed by full resource ID.')
 param containerRegistryUserAssignedIdentities object = {}
 
+@description('Treat the container registry as externally managed. Use this when preserving linked identities that the deployer cannot reassign.')
+param containerRegistryIsExisting bool = false
+
 @description('Cosmos DB account capabilities to preserve, such as EnableServerless and EnableNoSQLVectorSearch.')
 param cosmosCapabilities array = []
 
@@ -174,7 +177,7 @@ resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
   }
 }
 
-resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = {
+resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = if (!containerRegistryIsExisting) {
   name: containerRegistryName
   location: location
   identity: {
@@ -184,6 +187,10 @@ resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = 
   sku: {
     name: 'Standard'
   }
+}
+
+resource existingRegistry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' existing = if (containerRegistryIsExisting) {
+  name: containerRegistryName
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' = {
@@ -406,7 +413,6 @@ resource container6 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
           '/mapping_key'
         ]
         kind: 'Hash'
-        version: 2
       }
     }
   }
@@ -437,7 +443,6 @@ resource container7 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
           '/conversation_partition'
         ]
         kind: 'Hash'
-        version: 2
       }
     }
   }
@@ -594,7 +599,6 @@ resource feedbackRecordsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlData
           '/tenant_id'
         ]
         kind: 'Hash'
-        version: 2
       }
     }
   }
@@ -728,9 +732,9 @@ resource identitySearchIndexContributor 'Microsoft.Authorization/roleAssignments
 }
 
 // Manage the container registry (push/pull/admin).
-resource identityAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  name: guid(registry.id, userAssignedIdentity.id, roleIds.contributor)
-  scope: registry
+resource identityAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !containerRegistryIsExisting) {
+  name: guid(registry!.id, userAssignedIdentity.id, roleIds.contributor)
+  scope: registry!
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.contributor)
     principalId: userAssignedIdentity.properties.principalId
@@ -743,9 +747,9 @@ resource identityAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04
 // registries/pull/read` data action, so an explicit AcrPull is required for
 // managed-identity image pulls (e.g. the Function App container). Without it
 // the container fails to start and the Functions host returns 503.
-resource identityAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  name: guid(registry.id, userAssignedIdentity.id, roleIds.acrPull)
-  scope: registry
+resource identityAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !containerRegistryIsExisting) {
+  name: guid(registry!.id, userAssignedIdentity.id, roleIds.acrPull)
+  scope: registry!
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.acrPull)
     principalId: userAssignedIdentity.properties.principalId
@@ -802,9 +806,9 @@ resource developerKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignment
 }
 
 // Manage the container registry for developers.
-resource developerAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
-  name: guid(registry.id, developerGroupObjectId, roleIds.contributor)
-  scope: registry
+resource developerAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !containerRegistryIsExisting && !empty(developerGroupObjectId)) {
+  name: guid(registry!.id, developerGroupObjectId, roleIds.contributor)
+  scope: registry!
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.contributor)
     principalId: developerGroupObjectId
@@ -857,9 +861,9 @@ resource deploymentKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@
   }
 }
 
-resource deploymentAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
-  name: guid(registry.id, deploymentPrincipalObjectId, roleIds.contributor)
-  scope: registry
+resource deploymentAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !containerRegistryIsExisting && hasDistinctDeploymentPrincipal) {
+  name: guid(registry!.id, deploymentPrincipalObjectId, roleIds.contributor)
+  scope: registry!
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.contributor)
     principalId: deploymentPrincipalObjectId
@@ -898,8 +902,8 @@ resource deploymentCosmosDataContributor 'Microsoft.DocumentDB/databaseAccounts/
 }
 
 // Outputs consumed by downstream azd layers and hooks.
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = registry.properties.loginServer
-output CONTAINER_REGISTRY_NAME string = registry.name
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistryIsExisting ? existingRegistry!.properties.loginServer : registry!.properties.loginServer
+output CONTAINER_REGISTRY_NAME string = containerRegistryName
 output MANAGED_IDENTITY_NAME string = userAssignedIdentity.name
 output STORAGE_ACCOUNT_NAME string = storageAccount.name
 

@@ -433,7 +433,8 @@ resource metricAlert2 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
     severity: 3
     enabled: true
     scopes: [
-      site.id
+      webtest.id
+      component.id
     ]
     evaluationFrequency: 'PT1M'
     actions: [
@@ -443,19 +444,10 @@ resource metricAlert2 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
     ]
     windowSize: 'PT5M'
     criteria: {
-      allOf: [
-        {
-          name: 'HealthCheckFailedCriteria'
-          metricNamespace: 'Microsoft.Web/sites'
-          metricName: 'HealthCheckStatus'
-          dimensions: []
-          timeAggregation: 'Average'
-          operator: 'LessThan'
-          threshold: 100
-          criterionType: 'StaticThresholdCriterion'
-        }
-      ]
-      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      componentId: component.id
+      failedLocationCount: 3
+      webTestId: webtest.id
+      'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria'
     }
   }
 }

@@ -93,7 +93,25 @@ if [[ "$access_profile" == "primary" ]]; then
     echo "GitHub signing vault '$github_key_vault_name' was not found in the primary subscription." >&2
     exit 1
   fi
-  grant_role 12338af0-0e69-4776-bea7-57ae8d297424 "$github_key_vault_scope"
+  github_vault_uses_rbac=$(az resource show \
+    --ids "$github_key_vault_scope" \
+    --api-version 2023-07-01 \
+    --query 'properties.enableRbacAuthorization' \
+    --output tsv)
+  if [[ "$github_vault_uses_rbac" == "true" ]]; then
+    grant_role 12338af0-0e69-4776-bea7-57ae8d297424 "$github_key_vault_scope"
+  else
+    github_key_permissions=$(az resource show \
+      --ids "$github_key_vault_scope" \
+      --api-version 2023-07-01 \
+      --query "properties.accessPolicies[?objectId=='${AGENT_PRINCIPAL_ID}'].permissions.keys[]" \
+      --output tsv)
+    grep -Fqx 'Sign' <<< "$github_key_permissions" &&
+      grep -Fqx 'Verify' <<< "$github_key_permissions" || {
+        echo "Hosted agent identity lacks Sign/Verify access on '$github_key_vault_name'." >&2
+        exit 1
+      }
+  fi
 
   cosmos_endpoint=$(read_setting AZURE_COSMOSDB_ENDPOINT)
   cosmos_account_name=${cosmos_endpoint#https://}

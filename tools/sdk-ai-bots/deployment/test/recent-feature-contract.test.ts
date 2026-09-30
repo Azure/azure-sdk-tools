@@ -37,6 +37,7 @@ test("adopts the existing dev infrastructure contract without losing live state"
   ]);
   assert.equal(JSON.parse(dev.KEY_VAULT_ACCESS_POLICIES).length, 2);
   assert.equal(Object.keys(JSON.parse(dev.CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES)).length, 2);
+  assert.equal(dev.CONTAINER_REGISTRY_IS_EXISTING, "true");
   assert.equal(Object.keys(JSON.parse(dev.SEARCH_USER_ASSIGNED_IDENTITIES)).length, 1);
   assert.equal(Object.keys(JSON.parse(dev.AI_RESOURCE_USER_ASSIGNED_IDENTITIES)).length, 1);
   assert.equal(dev.GPT_4_1_SKU_NAME, "Standard");
@@ -53,6 +54,7 @@ test("adopts the existing dev infrastructure contract without losing live state"
   assert.match(shared, /knowledgeRetrieval: searchKnowledgeRetrieval/);
   assert.match(shared, /type: empty\(searchUserAssignedIdentities\) \? 'SystemAssigned'/);
   assert.match(shared, /type: empty\(containerRegistryUserAssignedIdentities\) \? 'None'/);
+  assert.match(shared, /resource existingRegistry .* existing = if \(containerRegistryIsExisting\)/);
   for (const partitionKey of [
     "/mapping_key",
     "/conversation_partition",
@@ -66,12 +68,17 @@ test("adopts the existing dev infrastructure contract without losing live state"
   assert.match(agent, /raiPolicyName: modelRaiPolicyName/g);
   assert.match(agent, /capacity: gpt51Capacity/);
   assert.match(agent, /retentionInDays: agentLogRetentionInDays/);
+  assert.match(agent, /resource appInsightsConnection[\s\S]*?name: component\.name/);
   for (const parameters of [frontendParameters, agentServerParameters, functionParameters]) {
     assert.match(parameters, /AZURE_CONTAINER_REGISTRY_ENDPOINT/);
   }
   assert.match(frontendParameters, /SERVICE_FRONTEND_IMAGE_NAME/);
   assert.match(agentServerParameters, /SERVICE_AGENT_SERVER_IMAGE_NAME/);
   assert.match(functionParameters, /SERVICE_FUNCTION_APP_IMAGE_NAME/);
+  assert.match(
+    read("infra/layers/frontend/main.bicep"),
+    /Microsoft\.Azure\.Monitor\.WebtestLocationAvailabilityCriteria/,
+  );
 });
 
 test("deploys the Azure MCP Server agent and its Teams-group workflow", () => {
@@ -79,6 +86,7 @@ test("deploys the Azure MCP Server agent and its Teams-group workflow", () => {
   const logicApp = read("infra/layers/logic-app/main.bicep");
   const patchWorkflow = read("hooks/lib/patch-workflow.ts");
   const frontendPostdeploy = read("hooks/frontend-postdeploy.ts");
+  const grantAgentAccess = read("scripts/grant-agent-data-access.sh");
   const hostedAgent = read("pipelines/templates/hosted-agent-deploy-steps.yml");
   const fullStack = read("pipelines/templates/deploy-stage.yml");
   const azureMcpStage = read("pipelines/templates/azure-mcp-agent-deploy-stage.yml");
@@ -103,10 +111,13 @@ test("deploys the Azure MCP Server agent and its Teams-group workflow", () => {
     /eq\(parameters\.component, 'agent'\)[\s\S]*?azure-mcp-agent-deploy-stage\.yml/,
   );
   assert.match(logicApp, /resource azureMcpWorkflow /);
+  assert.match(logicApp, /resource azureMcpMetricAlert /);
   assert.match(logicApp, /azureMcpTeamsGroupId/);
   assert.match(patchWorkflow, /AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME/);
   assert.match(patchWorkflow, /AZURE_MCP_TEAMS_CHANNEL_IDS/);
   assert.match(frontendPostdeploy, /AZURE_MCP_TEAMS_GROUP_ID/);
+  assert.match(grantAgentAccess, /properties\.enableRbacAuthorization/);
+  assert.match(grantAgentAccess, /permissions\.keys\[\]/);
   assert.equal(
     suite.environments.dev.azureMcpTeamsGroupId,
     "07bb6114-8ffb-4e79-b65a-67f19d23e5bc",
@@ -243,8 +254,10 @@ test("deploys the image tag selected by the pipeline", () => {
   const localSync = read("scripts/sync-env-suite.ts");
   const frontend = project.match(/\n    frontend:\n([\s\S]*?)\n    function-app:/)?.[1] ?? "";
   const functionApp = project.match(/\n    function-app:\n([\s\S]*?)\ninfra:/)?.[1] ?? "";
+  const agentServer = project.match(/\n    agent-server:\n([\s\S]*?)\n    frontend:/)?.[1] ?? "";
 
   assert.equal((project.match(/tag: \$\{AZD_IMAGE_TAG\}/g) ?? []).length, 4);
+  assert.doesNotMatch(agentServer, /resourceName:/);
   assert.match(frontend, /language: docker/);
   assert.match(frontend, /image: azure-sdk-qa-bot/);
   assert.match(frontend, /remoteBuild: true/);

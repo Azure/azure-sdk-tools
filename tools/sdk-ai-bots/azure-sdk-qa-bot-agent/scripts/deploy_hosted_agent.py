@@ -20,7 +20,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 os.environ.setdefault("AZURE_CORE_WELCOME_MESSAGE", "false")
@@ -70,6 +70,30 @@ def _git_short_sha() -> str:
         return r.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "latest"
+
+
+def _qualify_rai_policy_id(
+    policy: str,
+    *,
+    subscription_id: str,
+    resource_group: str,
+    project_endpoint: str,
+) -> str:
+    if policy.lower().startswith("/subscriptions/"):
+        return policy
+
+    hostname = urlparse(project_endpoint).hostname or ""
+    ai_resource_name = hostname.split(".", 1)[0]
+    if not subscription_id or not resource_group or not ai_resource_name:
+        raise RuntimeError(
+            "Cannot qualify the RAI policy name; AZURE_SUBSCRIPTION_ID, "
+            "AZURE_RESOURCE_GROUP, and AI Foundry project endpoint are required."
+        )
+    return (
+        f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}"
+        f"/providers/Microsoft.CognitiveServices/accounts/{ai_resource_name}"
+        f"/raiPolicies/{policy}"
+    )
 
 
 def _wait_for_version_active(
@@ -314,11 +338,19 @@ def main() -> None:
             env_vars["CANDIDATE_APPCONFIG_ENDPOINT"] = candidate_appconfig_endpoint
 
         # Ensure Content-safety guardrail.
-        rai_policy_id = cfg("AI_FOUNDRY_RAI_POLICY_ID")
+        rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID") or cfg(
+            "AI_FOUNDRY_RAI_POLICY_ID"
+        )
         if not rai_policy_id:
             raise RuntimeError(
                 "Cannot apply guardrail because AI_FOUNDRY_RAI_POLICY_ID is not set."
             )
+        rai_policy_id = _qualify_rai_policy_id(
+            rai_policy_id,
+            subscription_id=sub_id,
+            resource_group=os.environ.get("AZURE_RESOURCE_GROUP", ""),
+            project_endpoint=project_endpoint,
+        )
         rai_config = RaiConfig(rai_policy_name=rai_policy_id)
         print(f"  Guardrail: {rai_policy_id}")
 

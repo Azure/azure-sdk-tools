@@ -61,6 +61,9 @@ param azureMcpLogicAppWorkflowNameOverride string = ''
 @description('Name of the metric alert on the Logic App workflow.')
 param logicAppAlertNameOverride string = ''
 
+@description('Name of the metric alert on the Azure MCP Server Logic App workflow.')
+param azureMcpLogicAppAlertNameOverride string = ''
+
 @description('Name of the action group receiving Logic App failure alerts. Created by the shared-resources layer.')
 param actionGroupName string = 'qabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
 
@@ -70,6 +73,7 @@ var teamsConnectionName = !empty(teamsConnectionNameOverride) ? teamsConnectionN
 var logicAppWorkflowName = !empty(logicAppWorkflowNameOverride) ? logicAppWorkflowNameOverride : 'azuresdkqabot-logicapp-${suffix}'
 var azureMcpLogicAppWorkflowName = !empty(azureMcpLogicAppWorkflowNameOverride) ? azureMcpLogicAppWorkflowNameOverride : 'azuremcpserver-qabot-logicapp-${suffix}'
 var logicAppAlertName = !empty(logicAppAlertNameOverride) ? logicAppAlertNameOverride : 'azuresdkqabot-logicapp-alert-${suffix}'
+var azureMcpLogicAppAlertName = !empty(azureMcpLogicAppAlertNameOverride) ? azureMcpLogicAppAlertNameOverride : '${azureMcpLogicAppWorkflowName}-alert'
 var deployAzureMcpWorkflow = !empty(azureMcpTeamsGroupId) && length(azureMcpTeamsChannelIds) > 0
 
 
@@ -275,11 +279,47 @@ resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
   properties: {
     severity: 3
     enabled: true
-    scopes: deployAzureMcpWorkflow ? [
+    scopes: [
       workflow.id
+    ]
+    evaluationFrequency: 'PT1M'
+    autoMitigate: true
+    targetResourceType: 'Microsoft.Logic/workflows'
+    targetResourceRegion: location
+    actions: [
+      {
+        actionGroupId: resourceId('Microsoft.Insights/actionGroups', actionGroupName)
+        webHookProperties: {}
+      }
+    ]
+    windowSize: 'PT5M'
+    criteria: {
+      allOf: [
+        {
+          operator: 'GreaterThan'
+          threshold: 0
+          name: 'Metric1'
+          metricNamespace: 'Microsoft.Logic/workflows'
+          metricName: 'RunsFailed'
+          dimensions: []
+          timeAggregation: 'Total'
+          skipMetricValidation: false
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+    }
+  }
+}
+
+resource azureMcpMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = if (deployAzureMcpWorkflow) {
+  name: azureMcpLogicAppAlertName
+  location: 'global'
+  properties: {
+    severity: 3
+    enabled: true
+    scopes: [
       azureMcpWorkflow!.id
-    ] : [
-      workflow.id
     ]
     evaluationFrequency: 'PT1M'
     autoMitigate: true

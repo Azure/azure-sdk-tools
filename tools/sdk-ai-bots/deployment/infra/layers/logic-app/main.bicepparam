@@ -17,6 +17,7 @@ param teamsConnectionNameOverride = readEnvironmentVariable('TEAMS_CONNECTION_NA
 param logicAppWorkflowNameOverride = readEnvironmentVariable('LOGIC_APP_WORKFLOW_NAME_OVERRIDE', '')
 param azureMcpLogicAppWorkflowNameOverride = readEnvironmentVariable('AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME_OVERRIDE', '')
 param logicAppAlertNameOverride = readEnvironmentVariable('LOGIC_APP_ALERT_NAME_OVERRIDE', '')
+param azureMcpLogicAppAlertNameOverride = readEnvironmentVariable('AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME_OVERRIDE', '')
 param actionGroupName = readEnvironmentVariable('ACTION_GROUP_NAME', '')
 param includeWorkflowDefinition = readEnvironmentVariable('INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION', 'false') == 'true'
 param workflowEnabled = readEnvironmentVariable('LOGIC_APP_WORKFLOW_ENABLED', 'false') == 'true'

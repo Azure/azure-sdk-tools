@@ -66,8 +66,8 @@ exception with an owner and due date.
       service.
 - [ ] Frontend availability test and deployment alerts report healthy.
 - [ ] Alert destinations and on-call ownership have been exercised.
-- [ ] Operators can verify frontend `/health`, agent-server `/ping`, and
-      Function App `/api/health` after deployment.
+- [ ] Operators can verify frontend `/health`, agent-server `/ping`, and the
+      Function App host root `/` after deployment.
 - [ ] The Teams message path and Logic App trigger have been tested in the
       target tenant.
 - [ ] Dashboard or saved-query links are recorded in the team's operational

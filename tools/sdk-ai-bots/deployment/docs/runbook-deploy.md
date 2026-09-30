@@ -91,7 +91,7 @@ verification sequence below.
 2. Confirm frontend `/health` is healthy.
 3. Call agent-server `/ping` with an Easy Auth token for the backend
    Application ID URI.
-4. Confirm Function App `/api/health` and recent trigger executions are healthy.
+4. Confirm the Function App host root `/` and recent trigger executions are healthy.
 5. Confirm both Logic Apps are enabled, their shared Teams connection is
    `Connected`, and test activities from both Teams groups reach the Function
    App.

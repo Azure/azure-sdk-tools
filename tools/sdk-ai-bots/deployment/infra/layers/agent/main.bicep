@@ -310,7 +310,7 @@ resource projectStorageConnection 'Microsoft.CognitiveServices/accounts/projects
 // Application Insights connection so the Foundry project emits agent traces and
 // telemetry to the qabot-agent component created above.
 resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = {
-  name: 'qabot-agent-appinsights'
+  name: component.name
   parent: project
   properties: {
     authType: 'ApiKey'

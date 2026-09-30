@@ -125,6 +125,16 @@ matches `AZURE_CONTAINER_REGISTRY_ENDPOINT`. This prevents a retargeted local
 azd environment from provisioning a site with an image or managed identity
 left over from another subscription.
 
+The dev ACR is externally managed by the shared-resources layer because it
+retains a production UAMI that dev-scoped deployers cannot reassign. The layer
+still reads its endpoint and uses its existing role assignments. The existing
+agent-server `digital-avatar` slot also makes an explicit
+`AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=production` mandatory.
+
+Each Logic App workflow has its own `RunsFailed` metric alert. Azure rejects a
+single-resource metric criterion when the alert contains two workflow scopes,
+so do not merge those alerts into one multi-scope resource.
+
 Full-stack application deployment is a graph, not a serial list. `function-app`
 and `agent` start after provisioning. The Azure MCP Server agent follows
 `agent`; `agent-server` waits for both hosted agents; and `frontend` waits for

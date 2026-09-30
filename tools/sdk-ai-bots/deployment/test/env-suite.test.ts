@@ -14,7 +14,7 @@ test("loads typed environment and hyphenated component names", () => {
   const suite = loadEnvironmentSuite();
 
   assert.equal(suite.environments.dev.location, "westus2");
-  assert.equal(getComponentConfig(suite, "function-app").healthPath, "/api/health");
+  assert.equal(getComponentConfig(suite, "function-app").healthPath, "/");
   assert.deepEqual(loadServiceImageRepositories("dev"), {
     agent: "sdk-ai-bots/agent-dev",
     "agent-server": "azure-sdk-qa-bot-agent-server",
@@ -64,6 +64,10 @@ test("builds the complete local azd environment mapping", () => {
     values.AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME_OVERRIDE,
     "azuremcpserver-qabot-dev-logicapp",
   );
+  assert.equal(
+    values.AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME_OVERRIDE,
+    "azuremcpserver-qabot-dev-logicapp-alert",
+  );
   assert.equal(values.BOT_SERVICE_NAME, "azsdkqabotdev");
   assert.equal(
     values.AGENT_SERVER_LOG_WORKSPACE_RESOURCE_ID,
@@ -80,6 +84,7 @@ test("builds the complete local azd environment mapping", () => {
   );
   assert.equal(values.GPT_5_1_CAPACITY, "2000");
   assert.equal(values.SEARCH_KNOWLEDGE_RETRIEVAL, "free");
+  assert.equal(values.AZD_DEPLOY_AGENT_SERVER_SLOT_NAME, "production");
   assert.equal(
     buildAzdEnvironmentValues(suite, "prod").MANAGE_AUTHORIZATION_RESOURCES,
     "true",

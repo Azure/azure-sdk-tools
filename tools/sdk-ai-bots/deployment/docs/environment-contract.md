@@ -131,11 +131,20 @@ layer's `main.bicepparam`. Do not copy these values to a fresh environment:
 first read the target resource state and use preview to prove that no identity,
 policy, immutable partition key, or model capacity will be removed.
 
+The dev registry sets `CONTAINER_REGISTRY_IS_EXISTING=true` because it retains
+identities from both dev and production. A resource-group-scoped developer
+cannot reassign the production identity, so shared-resource provisioning reads
+the registry as an existing resource rather than issuing a registry PUT.
+
 The dev block also pins stable cross-layer outputs because the pre-existing
 resource group has no historical azd layer deployments to refresh. Container
 image outputs remain azd-owned and are deliberately excluded; parameter
 adapters accept a saved image only when it belongs to the selected
 environment's ACR.
+
+The existing agent-server site has a `digital-avatar` slot. Dev therefore sets
+`AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=production` so local and pipeline deployment
+target the main site explicitly and leave the secondary slot untouched.
 
 Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
 needed by that layer. Pipeline preview and apply use the same layer adapters.

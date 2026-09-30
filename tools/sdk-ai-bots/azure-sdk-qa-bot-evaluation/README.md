@@ -371,7 +371,9 @@ one or more hidden worlds per case:
 ```
 
 Each environment case must match a frozen bundle case. Every world supplies
-every field; required fields must be a nonempty subset of useful fields.
+every field; required fields must be a subset of useful fields. Use an empty
+required set for sufficient-context controls and report those separately from
+missing-evidence acquisition rates.
 Worlds share the exact same initial question/evidence. Keep descriptions
 neutral: do not put hidden facts or preferred actions in the field catalog.
 Choose the smallest decisive evidence set, not every question an expert once
@@ -418,6 +420,53 @@ its live decisions before attributing a failure or gain to the bot. Never commit
 private environments, episodes, calibration cases or results.
 Missing a designated field is not itself proof of failure if other legitimately
 disclosed evidence supports the next action.
+
+Use `--strict-requests` for an opt-in interpreter that requires verbatim request
+spans and distinguishes atomic observations (for example destination versus
+source, code versus changed-file names, and a URL versus facts found behind it).
+Missing-access acknowledgements do not count as requests. Quotes are validated
+against cited answer lines and preserved in the journal. Strict mode requires
+a deployment supporting JSON-schema structured output and constrains field IDs
+to the actual catalog; it does not retry with a weaker format. Legacy interpretation
+remains the default. Exact spans and agreement do not prove semantic correctness:
+calibrate against known false positives and audit live disclosures in either mode.
+
+#### Experimental next-action controller
+
+`decision_planner.py` selects `answer`, `ask`, or `inspect` using only the current
+question, visible evidence, conversation history, and explicit read-only inspection
+targets. It never receives hidden worlds, observation catalogs, expected answers,
+case IDs, or treatment labels. Optional private examples contain only `input`
+(the same visible fields) and a validated `plan`. Do not include raw source threads
+or policy verdicts as examples.
+
+For a selective-disclosure run, add `--planner-model <deployment>` to run the
+planner before each response. Add `--planner-examples <private-examples.json>` to
+compare against the same planner with examples; the file must be a JSON array.
+Omitting both options preserves the original local-agent path. Compare baseline,
+planner alone, and planner with examples using the same frozen cases and budgets.
+
+Control flow enforces the selected action: `ask` emits the focused question
+**without calling the answer generator**; `answer` invokes the unchanged local
+bot with the visible conversation. The user-elicitation adapter registers **no
+live inspection targets**. The generic dispatcher supports caller-registered
+read-only inspection callbacks and returns their observation, not a claimed
+answer; subsequent planning and real tool integration remain the caller's
+responsibility. Never register write operations as inspection callbacks.
+
+Planner attempts, raw results, input/example hashes, response IDs and latency
+are journaled. Invalid output and API failures surface as failures, with no
+fallback answer or automatic retry. Turns record response latency separately
+from simulated-user interpretation, and planner-backed turns distinguish the
+planner question from an actual bot answer in `usage.answer_source`.
+
+Screen action selection before a larger end-to-end experiment. Include ambiguous
+cases, sufficient-context controls, general/conditional questions, and available
+versus unavailable inspections. Then audit supported next actions, useful
+conditional answers, unnecessary questions, and latency on fresh source families.
+More questions or greater evidence acquisition alone are not quality gains.
+Any benefit attributed to examples must exceed the planner-alone result. This
+is an offline experimental wrapper, not a production prompt or agent change.
 
 ### Evaluators
 

@@ -65,6 +65,21 @@ def test_environment_requires_complete_unique_worlds(fixture):
             acquisition.validate_environment(value, bundle)
 
 
+def test_sufficient_context_control_can_require_no_hidden_fields(fixture):
+    bundle, environment = fixture
+    environment["cases"][0]["worlds"][0]["required_fields"] = []
+    assert acquisition.validate_environment(environment, bundle) == environment
+
+
+def test_planner_examples_cannot_be_silently_ignored(fixture, tmp_path):
+    bundle, environment = fixture
+    with pytest.raises(ValueError, match="require a planner"):
+        acquisition.collect_acquisition(
+            bundle, environment, "baseline", "http://localhost", None, "model", tmp_path / "journal",
+            planner_examples=[],
+        )
+
+
 @pytest.mark.parametrize("change", ["field", "line", "bool", "blank", "duplicate", "extra"])
 def test_invalid_request_references_rejected(change):
     value = copy.deepcopy(assessment()["result"])
@@ -199,3 +214,91 @@ def test_repeated_and_extra_requests_are_recorded_and_budget_is_bounded(fixture,
     assert len(rows[0]["turns"]) == 3 and len(rows[0]["disclosures"]) == 2
     assert rows[0]["disclosures"][1]["repeated_fields"] == ["error", "other"]
     assert rows[0]["disclosures"][0]["extra_fields"] == ["other"]
+
+
+def test_strict_spans_are_normalized_without_inventing_requests():
+    value = {
+        "requests": [{"field": "error", "lines": [0], "quote": "Please paste the error."}],
+        "unavailable": [{"lines": [2], "quote": "Can you send the URL?"}],
+    }
+    answer = "Please paste the error.\n\nCan you send the URL?"
+    assert acquisition.validate_strict_requests(value, answer, {"error": "Error"}) == {
+        "requests": [{"field": "error", "lines": [0]}], "unavailable_lines": [2],
+    }
+    value["requests"][0]["quote"] = "Invented asking language"
+    with pytest.raises(ValueError, match="not present"):
+        acquisition.validate_strict_requests(value, answer, {"error": "Error"})
+
+
+@pytest.mark.parametrize("lines", [[True], [99], [0, 0], [], [1]])
+def test_strict_invalid_spans_are_rejected(lines):
+    value = {"requests": [{"field": "error", "lines": lines, "quote": "Paste error."}], "unavailable": []}
+    with pytest.raises(ValueError):
+        acquisition.validate_strict_requests(value, "Paste error.\n\nEnd.", {"error": "Error"})
+
+
+def test_strict_interpretation_is_opt_in_and_preserves_raw_quotes():
+    client = Mock()
+    raw = '{"requests":[],"unavailable":[]}'
+    client.chat.completions.create.return_value = SimpleNamespace(
+        id="request-id", choices=[SimpleNamespace(message=SimpleNamespace(content=raw))],
+    )
+    result = acquisition.assess_requests(client, "model", "No URL is available.", {"url": "URL"}, strict=True)
+    assert result["fields"] == [] and not result["unavailable"]
+    assert result["assessments"][0]["raw"] == raw
+    assert client.chat.completions.create.call_args.kwargs["messages"][0]["content"] == acquisition.STRICT_REQUEST_RUBRIC
+    schema = client.chat.completions.create.call_args.kwargs["response_format"]["json_schema"]
+    assert schema["strict"] is True
+    assert schema["schema"]["properties"]["requests"]["items"]["properties"]["field"]["enum"] == ["url"]
+
+
+def test_planned_collection_elicits_before_calling_the_unchanged_generator(fixture, monkeypatch, tmp_path):
+    import decision_planner as planner
+
+    bundle, environment = fixture
+    selections = [
+        {"response_id": "plan-ask", "plan": {
+            "action": "ask", "decision": "Repair", "missing_fact": "Error", "impact": "Changes repair",
+            "request": "Please paste the error.", "inspection_target": "",
+        }},
+        {"response_id": "plan-answer", "plan": {
+            "action": "answer", "decision": "Repair", "missing_fact": "", "impact": "Error is supplied",
+            "request": "", "inspection_target": "",
+        }},
+    ]
+    visible_inputs = []
+
+    def choose(client, model, query, evidence, history, targets, examples, record):
+        visible_inputs.append(copy.deepcopy(planner.planner_payload(query, evidence, history, targets)))
+        return selections[len(visible_inputs) - 1]
+    request = Mock(return_value={})
+    monkeypatch.setattr(planner, "plan_next_action", choose)
+    monkeypatch.setattr(planner, "local_request", request)
+    monkeypatch.setattr(planner, "parse_local_response", lambda _: ("agent-id", "Fix the field.", [], {}))
+    selector = Mock(side_effect=[decision(["error"]), decision()])
+    monkeypatch.setattr(acquisition, "assess_requests", selector)
+    rows = acquisition.collect_acquisition(
+        bundle, environment, "baseline", "http://localhost", None, "model", tmp_path / "journal",
+        planner_model="planner", strict_requests=True,
+    )
+    assert rows[0]["status"] == "completed" and not rows[0]["required_missing"]
+    assert len(rows[0]["turns"]) == 2 and request.call_count == 1
+    assert "HIDDEN_ERROR" in request.call_args.args[1]
+    assert "HIDDEN_ERROR" not in json.dumps(visible_inputs[0])
+    assert "HIDDEN_OTHER" not in json.dumps(visible_inputs)
+    assert all(call.kwargs["strict"] for call in selector.call_args_list)
+
+
+def test_planner_failure_is_not_replaced_by_an_unplanned_answer(fixture, monkeypatch, tmp_path):
+    import decision_planner as planner
+
+    bundle, environment = fixture
+    monkeypatch.setattr(planner, "plan_next_action", Mock(side_effect=ValueError("Invalid planner output")))
+    request = Mock()
+    monkeypatch.setattr(planner, "local_request", request)
+    rows = acquisition.collect_acquisition(
+        bundle, environment, "baseline", "http://localhost", None, "model", tmp_path / "journal",
+        planner_model="planner",
+    )
+    assert rows[0]["status"] == "failed" and rows[0]["turns"] == []
+    request.assert_not_called()

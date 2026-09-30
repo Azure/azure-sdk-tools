@@ -152,6 +152,211 @@ public class SpecGenSdkConfigHelperTests
 
     #endregion
 
+    #region Shared Script Configuration Tests
+
+    private static IEnumerable<TestCaseData> ValidScriptConfigurations()
+    {
+        var configurations = new (string script, SpecGenSdkConfigContentType type, string value)[]
+        {
+            ("""{"command":"detect"}""", SpecGenSdkConfigContentType.Command, "detect"),
+            ("""{"path":"detect.ps1"}""", SpecGenSdkConfigContentType.ScriptPath, "detect.ps1"),
+            ("""{"command":"detect","path":"detect.ps1"}""", SpecGenSdkConfigContentType.Command, "detect"),
+            ("""{"command":"generator sdkchange {packagePath} {outputJsonFile}","path":""}""",
+                SpecGenSdkConfigContentType.Command, "generator sdkchange {packagePath} {outputJsonFile}"),
+            ("""{"command":"detect","path":" \t\n"}""", SpecGenSdkConfigContentType.Command, "detect"),
+            ("""{"command":"detect","path":null}""", SpecGenSdkConfigContentType.Command, "detect"),
+            ("""{"command":"detect","path":42}""", SpecGenSdkConfigContentType.Command, "detect"),
+            ("""{"command":"detect","path":false}""", SpecGenSdkConfigContentType.Command, "detect"),
+            ("""{"command":"detect","path":[]}""", SpecGenSdkConfigContentType.Command, "detect"),
+            ("""{"command":"detect","path":{}}""", SpecGenSdkConfigContentType.Command, "detect"),
+            ("""{"command":"","path":"detect.ps1"}""", SpecGenSdkConfigContentType.ScriptPath, "detect.ps1"),
+            ("""{"command":" \t\n","path":"detect.ps1"}""", SpecGenSdkConfigContentType.ScriptPath, "detect.ps1"),
+            ("""{"command":" detect ","other":null}""", SpecGenSdkConfigContentType.Command, " detect ")
+        };
+
+        foreach (var configType in Enum.GetValues<SpecGenSdkConfigType>())
+        {
+            foreach (var configuration in configurations)
+            {
+                yield return new TestCaseData(configType, configuration.script, configuration.type, configuration.value);
+            }
+        }
+    }
+
+    [TestCaseSource(nameof(ValidScriptConfigurations))]
+    public async Task GetConfigurationAsync_ValidScript_UsesCommandBeforePath(
+        SpecGenSdkConfigType configType, string script, SpecGenSdkConfigContentType type, string value)
+    {
+        await WriteScriptAsync(configType, script);
+
+        Assert.That(await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None),
+            Is.EqualTo((type, value)));
+    }
+
+    [Test, Combinatorial]
+    public async Task GetConfigurationAsync_AbsentScript_ReturnsUnknown(
+        [Values] SpecGenSdkConfigType configType,
+        [Values("{}", """{"packageOptions":{}}""", """{"packageOptions":{"unrelated":null}}""")] string config)
+    {
+        await File.WriteAllTextAsync(_configFilePath, config);
+
+        Assert.That(await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None),
+            Is.EqualTo((SpecGenSdkConfigContentType.Unknown, string.Empty)));
+    }
+
+    [Test, Combinatorial]
+    public async Task GetConfigurationAsync_InvalidSelectedValue_ThrowsJsonException(
+        [Values] SpecGenSdkConfigType configType,
+        [Values(
+            "null", "[]", "\"detect\"", "42", "false",
+            """{"command":null}""",
+            """{"command":42}""",
+            """{"command":false}""",
+            """{"command":[]}""",
+            """{"command":{}}""",
+            """{"path":null}""",
+            """{"path":42}""",
+            """{"path":false}""",
+            """{"path":[]}""",
+            """{"path":{}}""",
+            """{"command":null,"path":"valid.ps1"}""",
+            """{"command":42,"path":"valid.ps1"}""",
+            """{"command":false,"path":"valid.ps1"}""",
+            """{"command":[],"path":"valid.ps1"}""",
+            """{"command":{},"path":"valid.ps1"}""",
+            """{"command":"","path":null}""",
+            """{"command":" \t","path":42}""")] string script)
+    {
+        await WriteScriptAsync(configType, script);
+
+        Assert.ThrowsAsync<JsonException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None));
+    }
+
+    [Test, Combinatorial]
+    public async Task GetConfigurationAsync_PresentScriptWithoutUsableValue_ThrowsInsteadOfReturningUnknown(
+        [Values] SpecGenSdkConfigType configType,
+        [Values(
+            "{}", """{"other":"value"}""",
+            """{"command":""}""",
+            """{"command":" \t"}""",
+            """{"path":""}""",
+            """{"path":" \t"}""",
+            """{"command":"","path":""}""",
+            """{"command":" \t","path":" \n"}""")] string script)
+    {
+        await WriteScriptAsync(configType, script);
+
+        var exception = Assert.ThrowsAsync<JsonException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None));
+
+        Assert.That(exception!.Message,
+            Is.EqualTo($"Configuration property 'packageOptions/{GetScriptPropertyName(configType)}' must contain a nonempty command or path."));
+    }
+
+    [Test, Combinatorial]
+    public void GetConfigurationAsync_MalformedConfiguration_NeverLooksAbsent(
+        [Values] SpecGenSdkConfigType configType,
+        [Values(
+            "", " ", "not json", "{", "null", "[]", "\"config\"", "42", "false",
+            """{"packageOptions":null}""",
+            """{"packageOptions":false}""",
+            """{"packageOptions":42}""",
+            """{"packageOptions":"options"}""",
+            """{"packageOptions":[]}""")] string config)
+    {
+        File.WriteAllText(_configFilePath, config);
+
+        Assert.CatchAsync<JsonException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None));
+    }
+
+    [Test]
+    public async Task GetConfigurationAsync_UnusedInvalidSettings_DoNotAffectSelectedScript(
+        [Values] SpecGenSdkConfigType configType)
+    {
+        var scripts = Enum.GetValues<SpecGenSdkConfigType>()
+            .ToDictionary(GetScriptPropertyName, _ => (object?)null);
+        scripts[GetScriptPropertyName(configType)] = new { command = "detect" };
+        scripts["sdkBreakingChangePatternFile"] = 42;
+        await File.WriteAllTextAsync(_configFilePath, JsonSerializer.Serialize(new { packageOptions = scripts }));
+
+        Assert.That(await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None),
+            Is.EqualTo((SpecGenSdkConfigContentType.Command, "detect")));
+    }
+
+    [Test]
+    public void GetConfigurationAsync_MissingFile_PropagatesReadFailure([Values] SpecGenSdkConfigType configType)
+    {
+        var exception = Assert.ThrowsAsync<FileNotFoundException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None));
+
+        Assert.That(exception!.Message, Does.Contain("Configuration file not found"));
+    }
+
+    [Test]
+    public void GetConfigurationAsync_MissingConfigDirectory_PropagatesReadFailure([Values] SpecGenSdkConfigType configType)
+    {
+        Directory.Delete(Path.GetDirectoryName(_configFilePath)!);
+
+        Assert.ThrowsAsync<FileNotFoundException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None));
+    }
+
+    [Test]
+    public void GetConfigurationAsync_UnreadableFile_PropagatesAccessFailure([Values] SpecGenSdkConfigType configType)
+    {
+        Directory.CreateDirectory(_configFilePath);
+
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None));
+    }
+
+    [Test]
+    public void GetConfigurationAsync_LockedFile_PropagatesIoFailure([Values] SpecGenSdkConfigType configType)
+    {
+        File.WriteAllText(_configFilePath, "{}");
+        using var stream = File.Open(_configFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        Assert.ThrowsAsync<IOException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, CancellationToken.None));
+    }
+
+    [Test]
+    public void GetConfigurationAsync_Cancellation_IsNeverAbsence([Values] SpecGenSdkConfigType configType)
+    {
+        File.WriteAllText(_configFilePath, "{}");
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        Assert.CatchAsync<OperationCanceledException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, configType, cts.Token));
+    }
+
+    [Test]
+    public void GetConfigurationAsync_UnsupportedType_ThrowsArgumentException()
+    {
+        File.WriteAllText(_configFilePath, "{}");
+
+        Assert.ThrowsAsync<ArgumentException>(() =>
+            _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, (SpecGenSdkConfigType)(-1), CancellationToken.None));
+    }
+
+    private Task WriteScriptAsync(SpecGenSdkConfigType configType, string script) =>
+        File.WriteAllTextAsync(_configFilePath, "{\"packageOptions\":{\"" + GetScriptPropertyName(configType) + "\":" + script + "}}");
+
+    private static string GetScriptPropertyName(SpecGenSdkConfigType configType) => configType switch
+    {
+        SpecGenSdkConfigType.Build => "buildScript",
+        SpecGenSdkConfigType.UpdateChangelogContent => "updateChangelogContentScript",
+        SpecGenSdkConfigType.GetSdkChanges => "getSdkChangesScript",
+        SpecGenSdkConfigType.UpdateVersion => "updateVersionScript",
+        SpecGenSdkConfigType.UpdateMetadata => "updateMetadataScript",
+        _ => throw new ArgumentOutOfRangeException(nameof(configType))
+    };
+
+    #endregion
+
     #region Generic Config Value Tests
 
     [Test]
@@ -209,6 +414,86 @@ public class SpecGenSdkConfigHelperTests
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, "nonexistent/path", CancellationToken.None));
         Assert.That(ex.Message, Does.Contain("Property not found at JSON path"));
+    }
+
+    [TestCase("")]
+    [TestCase(" ")]
+    [TestCase("not json")]
+    [TestCase("null")]
+    [TestCase("[]")]
+    [TestCase("""{"packageOptions":null}""")]
+    [TestCase("""{"packageOptions":[]}""")]
+    [TestCase("""{"packageOptions":{"buildScript":42}}""")]
+    [TestCase("""{"packageOptions":{"buildScript":{"command":42}}}""")]
+    public void GetConfigValueFromRepoAsync_MalformedValue_PreservesParsingException(string config)
+    {
+        File.WriteAllText(_configFilePath, config);
+
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath, CancellationToken.None));
+
+        Assert.That(exception!.Message, Does.Contain("Error parsing JSON configuration"));
+        Assert.That(exception.InnerException, Is.InstanceOf<JsonException>());
+    }
+
+    [Test]
+    public async Task GetConfigValueFromRepoAsync_NullValue_PreservesDeserializationFailure()
+    {
+        await WriteScriptAsync(SpecGenSdkConfigType.Build, """{"command":null}""");
+
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath, CancellationToken.None));
+
+        Assert.That(exception!.Message, Does.Contain("Failed to deserialize value"));
+    }
+
+    [TestCase("")]
+    [TestCase(" \t\n")]
+    public async Task GetConfigValueFromRepoAsync_BlankString_RemainsValid(string value)
+    {
+        await WriteScriptAsync(SpecGenSdkConfigType.Build, JsonSerializer.Serialize(new { command = value }));
+
+        Assert.That(await _helper.GetConfigValueFromRepoAsync<string>(
+            _tempDirectory.DirectoryPath, BuildCommandJsonPath, CancellationToken.None), Is.EqualTo(value));
+    }
+
+    [Test]
+    public void GetConfigValueFromRepoAsync_MissingFile_PropagatesReadFailure()
+    {
+        var exception = Assert.ThrowsAsync<FileNotFoundException>(() =>
+            _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath, CancellationToken.None));
+
+        Assert.That(exception!.Message, Does.Contain("Configuration file not found"));
+    }
+
+    [Test]
+    public void GetConfigValueFromRepoAsync_UnreadableFile_PropagatesAccessFailure()
+    {
+        Directory.CreateDirectory(_configFilePath);
+
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath, CancellationToken.None));
+    }
+
+    [Test]
+    public void GetConfigValueFromRepoAsync_LockedFile_PropagatesIoFailure()
+    {
+        File.WriteAllText(_configFilePath, "{}");
+        using var stream = File.Open(_configFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        Assert.ThrowsAsync<IOException>(() =>
+            _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath, CancellationToken.None));
+    }
+
+    [Test]
+    public void GetConfigValueFromRepoAsync_Cancellation_PropagatesCancellation()
+    {
+        File.WriteAllText(_configFilePath, "{}");
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        Assert.CatchAsync<OperationCanceledException>(() =>
+            _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath, cts.Token));
     }
 
     #endregion

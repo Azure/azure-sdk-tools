@@ -345,6 +345,80 @@ before using it to choose a treatment. Repeated agreement and exact citations
 are reliability checks, not independent human validation or proof of factual
 correctness. Keep calibration cases and experimental results private.
 
+#### Selective evidence disclosure
+
+`evidence_acquisition.py` tests whether the local bot requests missing
+observations rather than receiving every scripted follow-up automatically.
+Prepare a normal private study bundle with **initial questions only**. A
+separate private JSON environment supplies neutral field descriptions and
+one or more hidden worlds per case:
+
+```json
+{
+  "schema_version": 1,
+  "cases": [{
+    "case_id": "example-case",
+    "fields": {"diagnostic": "Exact failing check and error output"},
+    "worlds": [{
+      "id": "one",
+      "values": {"diagnostic": "Example checker: input is malformed."},
+      "required_fields": ["diagnostic"],
+      "useful_fields": ["diagnostic"],
+      "expected_behavior": "Investigate the malformed input, not an unrelated stage."
+    }]
+  }]
+}
+```
+
+Each environment case must match a frozen bundle case. Every world supplies
+every field; required fields must be a nonempty subset of useful fields.
+Worlds share the exact same initial question/evidence. Keep descriptions
+neutral: do not put hidden facts or preferred actions in the field catalog.
+Choose the smallest decisive evidence set, not every question an expert once
+asked. Additional helpful observations need not be mandatory.
+Do not name the desired missing fields in the initial evidence: that would
+give away what the agent is supposed to discover. Keep each hidden value
+within its field's promised scope; a changed-file list should not also reveal
+the user's unstated intent or an unseen diagnostic.
+
+```powershell
+python evidence_acquisition.py --bundle <private-study>\bundle.json `
+  --environment <private-study>\environment.json `
+  --variant <private-study>\baseline-variant.json `
+  --receipt <private-study>\baseline-receipt.json `
+  --output <new-private-run> --local-endpoint http://127.0.0.1:8088 `
+  --project-endpoint <authorized-Foundry-project-endpoint> `
+  --selector-model <request-interpretation-deployment> `
+  --max-replies 2 --execute --allow-unreviewed
+```
+
+Start the matching fresh local agent with the existing variant/receipt
+workflow first. As with other study modes, memory is disabled. Two independent
+request interpretations see **only the current answer and field descriptions**,
+never hidden values, expected behavior, world IDs or treatment labels. Both must
+identify the same requested fields and overlapping request lines. Code copies
+only those frozen values into the user reply; it never generates helpful facts.
+Unmapped requests receive a fixed unavailable reply. A bare PR link or generic
+request for context does not disclose the entire case.
+
+No request means no automatic follow-up. The default budget is two user replies
+and at most three agent answers. Request interpretation is still performed on
+the final answer, but the budget is not extended. Invalid/disagreeing selectors
+stop as **selector-inconclusive**, not bot failure. Answers, individual selector
+attempts, actual disclosures and partial failures are journaled immediately.
+The summary retains generation and selector failures separately.
+
+This mode measures **simulated user elicitation**, not live-PR tool acquisition.
+Existing documentation tools remain live, so retrieval contamination is still
+possible. Evidence acquired is not necessarily evidence used correctly: audit
+the resulting action separately. Safe conditional guidance is not automatically
+an incorrect answer. Repeated/extra field counts are descriptive interaction
+costs, not complete quality scores. Calibrate the request selector and audit
+its live decisions before attributing a failure or gain to the bot. Never commit
+private environments, episodes, calibration cases or results.
+Missing a designated field is not itself proof of failure if other legitimately
+disclosed evidence supports the next action.
+
 ### Evaluators
 
 Default evaluators are builtin LLM evaluators that read the collected bot answer via

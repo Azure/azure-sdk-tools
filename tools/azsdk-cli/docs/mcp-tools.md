@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.49.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.50.
 
 ## Tools list
 
@@ -51,7 +51,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_package_detect_breaking_change | `azsdk pkg detect-breaking-change` | Detects breaking changes in the SDK. |
 | azsdk_package_generate_code | `azsdk pkg generate` | Generate SDK code locally or run code generation for a package from TypeSpec. Creates client library code for Azure services. Runs locally, not via pipeline. |
 | azsdk_package_generate_samples |  | Generates sample code for a specified package based on a prompt describing sample scenarios. |
-| azsdk_package_get_approval_status |  | Check API review release approval status using APIView and API Review Hub. |
+| azsdk_package_get_approval_status |  | Check API review release approval status using APIView and API Review Hub. Common language aliases are normalized; ask the user to select a language when the input is unsupported or ambiguous. |
 | azsdk_package_pack | `azsdk pkg pack` | Create distributable artifacts for the specified SDK package. |
 | azsdk_package_run_check | `azsdk pkg validate` | Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. |
 | azsdk_package_run_tests | `azsdk pkg test run` | Run tests for the specified SDK package. Provide package path. |
@@ -105,3 +105,4 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file |
 |  | `azsdk list` |  |
+

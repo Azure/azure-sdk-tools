@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// .NET-specific implementation of language repository service.
 /// Uses tools like dotnet CLI, MSBuild, NuGet, etc. for .NET development workflows.
 /// </summary>
-public partial class DotnetLanguageService : LanguageService
+public partial class DotNetLanguageService : LanguageService
 {
     public override async Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
@@ -16,11 +16,11 @@ public partial class DotnetLanguageService : LanguageService
         {
             logger.LogInformation("Starting generated code checks for .NET project at: {PackagePath}", packagePath);
 
-            var dotnetVersionValidation = await VerifyDotnetVersion(ct);
-            if (dotnetVersionValidation.ExitCode != 0)
+            var dotNetVersionValidation = await VerifyDotNetVersion(ct);
+            if (dotNetVersionValidation.ExitCode != 0)
             {
-                logger.LogError("Dotnet version validation failed for generated code checks");
-                return dotnetVersionValidation;
+                logger.LogError(".NET version validation failed for generated code checks");
+                return dotNetVersionValidation;
             }
 
             var (repoRoot, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
@@ -109,11 +109,11 @@ public partial class DotnetLanguageService : LanguageService
         {
             logger.LogInformation("Starting AOT compatibility check for .NET project at: {PackagePath}", packagePath);
 
-            var dotnetVersionValidation = await VerifyDotnetVersion(ct);
-            if (dotnetVersionValidation.ExitCode != 0)
+            var dotNetVersionValidation = await VerifyDotNetVersion(ct);
+            if (dotNetVersionValidation.ExitCode != 0)
             {
-                logger.LogError("Dotnet version validation failed for AOT compatibility check");
-                return dotnetVersionValidation;
+                logger.LogError(".NET version validation failed for AOT compatibility check");
+                return dotNetVersionValidation;
             }
 
             var (repoRoot, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
@@ -188,13 +188,13 @@ public partial class DotnetLanguageService : LanguageService
         }
     }
 
-    private async ValueTask<PackageCheckResponse> VerifyDotnetVersion(CancellationToken ct)
+    private async ValueTask<PackageCheckResponse> VerifyDotNetVersion(CancellationToken ct)
     {
-        var dotnetSDKCheck = await processHelper.Run(new ProcessOptions(DotNetCommand, ["--list-sdks"]), ct);
-        if (dotnetSDKCheck.ExitCode != 0)
+        var dotNetSDKCheck = await processHelper.Run(new ProcessOptions(DotNetCommand, ["--list-sdks"]), ct);
+        if (dotNetSDKCheck.ExitCode != 0)
         {
             logger.LogError(".NET SDK is not installed or not available in PATH");
-            return new PackageCheckResponse(dotnetSDKCheck.ExitCode, $"dotnet --list-sdks failed with an error: {dotnetSDKCheck.Output}")
+            return new PackageCheckResponse(dotNetSDKCheck.ExitCode, $"dotnet --list-sdks failed with an error: {dotNetSDKCheck.Output}")
             {
                 NextSteps =
                 [
@@ -204,8 +204,8 @@ public partial class DotnetLanguageService : LanguageService
             };
         }
 
-        var dotnetVersions = dotnetSDKCheck.Output.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-        var latestVersionNumber = dotnetVersions[dotnetVersions.Length - 1].Split('[')[0].Trim();
+        var dotNetVersions = dotNetSDKCheck.Output.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+        var latestVersionNumber = dotNetVersions[dotNetVersions.Length - 1].Split('[')[0].Trim();
 
         if (Version.TryParse(latestVersionNumber, out var installedVersion) &&
             Version.TryParse(RequiredDotNetVersion, out var minimumVersion))

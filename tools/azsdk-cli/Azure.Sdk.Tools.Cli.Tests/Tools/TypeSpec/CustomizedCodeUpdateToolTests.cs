@@ -2511,7 +2511,7 @@ public partial class CustomizedCodeUpdateToolAutoTests
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
             => Task.FromResult(ValidationResult.CreateSuccess());
 
-        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, string? additionalArguments = null, int timeoutMinutes = 30, CancellationToken ct = default)
             => Task.FromResult(_buildFunc());
 
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)

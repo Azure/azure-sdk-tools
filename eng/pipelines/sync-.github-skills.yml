@@ -69,6 +69,7 @@ extends:
     AdditionalCheckoutPaths:
       - .github/package.json
       - .github/package-lock.json
+      - .github/.prettierignore
     PreSyncValidationSteps:
       - task: NodeTool@0
         inputs:

@@ -33,7 +33,7 @@ public class PackageApprovalStatusToolTests
         var command = packageTool.GetCommandInstances().Single();
 
         var parseResult = command.Parse(
-            $"--language {language} --package-name azure-test --package-version 1.0.0");
+            $"--language {language} --package-name azure-test --package-version 1.0.0 --package-type client");
 
         Assert.That(parseResult.Errors, Is.Empty);
     }
@@ -47,7 +47,7 @@ public class PackageApprovalStatusToolTests
         var command = packageTool.GetCommandInstances().Single();
 
         var parseResult = command.Parse(
-            "--language unknown --package-name azure-test --package-version 1.0.0");
+            "--language unknown --package-name azure-test --package-version 1.0.0 --package-type client");
 
         Assert.That(parseResult.Errors.Single().Message, Does.Contain("Invalid language 'unknown'"));
     }
@@ -103,13 +103,14 @@ public class PackageApprovalStatusToolTests
                 expectedLanguage,
                 "azure-test",
                 "1.0.0",
+                "client",
                 "",
                 "",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PackageReleaseStatusResult());
         var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
 
-        await packageTool.GetApprovalStatus(language, "azure-test", "1.0.0");
+        await packageTool.GetApprovalStatus(language, "azure-test", "1.0.0", "client");
 
         releaseStatusService.VerifyAll();
     }

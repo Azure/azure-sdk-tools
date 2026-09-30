@@ -30,6 +30,7 @@ public interface IApiReviewHubService
         string packageName,
         string packageVersion,
         string apiHash,
+        string packageType,
         string repositoryOwner,
         CancellationToken ct,
         bool dryRun = false);
@@ -159,6 +160,7 @@ public class ApiReviewHubService(
         string packageName,
         string packageVersion,
         string apiHash,
+        string packageType,
         string repositoryOwner,
         CancellationToken ct,
         bool dryRun = false)
@@ -171,6 +173,7 @@ public class ApiReviewHubService(
             PackageName = packageName,
             Version = packageVersion,
             ApiHash = apiHash,
+            PackageType = packageType.ToLowerInvariant(),
             RepoOwner = repositoryOwner,
             ReleasedOn = _timeProvider.GetUtcNow(),
             DryRun = dryRun

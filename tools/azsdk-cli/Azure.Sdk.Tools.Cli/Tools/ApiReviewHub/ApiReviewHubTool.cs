@@ -43,6 +43,7 @@ public class ApiReviewHubTool(
 
     private static readonly string[] SupportedLanguages = [.. DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
     private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
+    private static readonly string[] SupportedPackageTypes = ["mgmt", "client"];
 
     private const string CreateCommandName = "create";
     private const string RequestReviewPullRequestToolName = "azsdk_apireviewhub_request_review_pr";
@@ -58,6 +59,8 @@ public class ApiReviewHubTool(
         Description = "The package name.",
         Required = true
     };
+
+    private readonly Option<string> packageTypeOption = CreatePackageTypeOption();
 
     private readonly Option<string> baseTagOption = new("--base-tag")
     {
@@ -99,6 +102,7 @@ public class ApiReviewHubTool(
         {
             languageOption,
             packageNameOption,
+            packageTypeOption,
             baseTagOption,
             targetOwnerOption,
             targetRepoOption,
@@ -122,6 +126,7 @@ public class ApiReviewHubTool(
         return await RequestReviewPullRequest(
             parseResult.GetValue(languageOption) ?? string.Empty,
             parseResult.GetValue(packageNameOption) ?? string.Empty,
+            parseResult.GetValue(packageTypeOption) ?? string.Empty,
             parseResult.GetValue(targetOwnerOption) ?? string.Empty,
             ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
             parseResult.GetValue(targetBranchOption) ?? string.Empty,
@@ -135,6 +140,7 @@ public class ApiReviewHubTool(
     public async Task<ApiReviewHubResponse> RequestReviewPullRequest(
         [Description("The SDK language for the review PR request.")] string language,
         [Description("The package name to review.")] string packageName,
+        [Description("The package type. Supported values: mgmt, client.")] string packageType,
         [Description("The GitHub owner for the target working branch.")] string targetOwner,
         [Description("The GitHub repository for the target working branch. By default, the command selects the appropriate repo based on the language.")] string targetRepo,
         [Description("The target working branch name.")] string targetBranch,
@@ -149,6 +155,7 @@ public class ApiReviewHubTool(
             {
                 Language = language,
                 PackageName = packageName,
+                PackageType = packageType.ToLowerInvariant(),
                 BaseTag = baseTag ?? string.Empty,
                 TargetBranch = new GitBranchReference
                 {
@@ -214,6 +221,26 @@ public class ApiReviewHubTool(
             if (!SupportedLanguages.Contains(value, StringComparer.OrdinalIgnoreCase))
             {
                 result.AddError($"Invalid language '{value}'. Supported values: {SupportedLanguagesDescription}.");
+            }
+        });
+
+        return option;
+    }
+
+    private static Option<string> CreatePackageTypeOption()
+    {
+        var option = new Option<string>("--package-type")
+        {
+            Description = $"The package type. Supported values: {string.Join(", ", SupportedPackageTypes)}.",
+            Required = true
+        };
+
+        option.Validators.Add(result =>
+        {
+            string? value = result.GetValueOrDefault<string>();
+            if (!string.IsNullOrWhiteSpace(value) && !SupportedPackageTypes.Contains(value, StringComparer.OrdinalIgnoreCase))
+            {
+                result.AddError($"Invalid package type '{value}'. Supported values: {string.Join(", ", SupportedPackageTypes)}.");
             }
         });
 

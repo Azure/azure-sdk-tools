@@ -25,6 +25,9 @@ public class ReviewPullRequestCreationRequest
     [JsonPropertyName("packageName")]
     public required string PackageName { get; set; }
 
+    [JsonPropertyName("packageType")]
+    public required string PackageType { get; set; }
+
     [JsonPropertyName("baseTag")]
     public string BaseTag { get; set; } = string.Empty;
 
@@ -38,6 +41,7 @@ public class MarkPackageReleasedRequest
     public required string PackageName { get; set; }
     public required string Version { get; set; }
     public required string ApiHash { get; set; }
+    public required string PackageType { get; set; }
     public string RepoOwner { get; set; } = string.Empty;
     public required DateTimeOffset ReleasedOn { get; set; }
     public bool DryRun { get; set; } = true;

@@ -38,6 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new PackageReleaseStatusResult
                 {
@@ -149,6 +150,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 "csharp",
                 packageName,
                 "1.0.0",
+                "mgmt",
                 "",
                 "",
                 It.IsAny<CancellationToken>()), Times.Once);
@@ -370,6 +372,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new PackageReleaseStatusResult
                 {
@@ -383,6 +386,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         {
             mockPackageReleaseStatusService
                 .Setup(x => x.GetApprovalStatusAsync(
+                    It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),

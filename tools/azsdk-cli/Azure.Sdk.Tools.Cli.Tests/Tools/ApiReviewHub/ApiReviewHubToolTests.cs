@@ -1,0 +1,56 @@
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
+using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
+using Moq;
+
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.ApiReviewHub;
+
+[TestFixture]
+public class ApiReviewHubToolTests
+{
+    [Test]
+    public void CreateCommand_RequiresPackageType()
+    {
+        var tool = new ApiReviewHubTool(
+            Mock.Of<IApiReviewHubService>(),
+            new TestLogger<ApiReviewHubTool>());
+        var command = tool.GetCommandInstances().Single();
+
+        var parseResult = command.Parse(
+            "--language python --package-name azure-test --target-branch feature");
+
+        Assert.That(parseResult.Errors.Single().Message, Does.Contain("--package-type"));
+    }
+
+    [TestCase("mgmt")]
+    [TestCase("client")]
+    public async Task RequestReviewPullRequest_IncludesPackageType(string packageType)
+    {
+        ReviewPullRequestCreationRequest? capturedRequest = null;
+        var service = new Mock<IApiReviewHubService>();
+        service
+            .Setup(x => x.RequestReviewPullRequestAsync(
+                It.IsAny<ReviewPullRequestCreationRequest>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<ReviewPullRequestCreationRequest, string, bool, TimeSpan, CancellationToken>(
+                (request, _, _, _, _) => capturedRequest = request)
+            .ReturnsAsync(new OperationStatus { Status = "succeeded" });
+        var tool = new ApiReviewHubTool(service.Object, new TestLogger<ApiReviewHubTool>());
+
+        await tool.RequestReviewPullRequest(
+            "python",
+            "azure-test",
+            packageType,
+            "Azure",
+            "azure-sdk-for-python",
+            "feature");
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.PackageType, Is.EqualTo(packageType));
+    }
+}

@@ -74,7 +74,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.MarkPackageReleasedAsync("python", "azure-test", "1.0.0", "api-hash", "tjprescott", CancellationToken.None);
+        var result = await service.MarkPackageReleasedAsync("python", "azure-test", "1.0.0", "api-hash", "Client", "tjprescott", CancellationToken.None);
 
         Assert.That(method, Is.EqualTo(HttpMethod.Post));
         Assert.That(requestUri?.ToString(), Is.EqualTo("https://api-review-hub.azurewebsites.net/api/releases/mark-released"));
@@ -84,6 +84,7 @@ public class ApiReviewHubServiceTests
         Assert.That(requestBody, Does.Contain("\"packageName\":\"azure-test\""));
         Assert.That(requestBody, Does.Contain("\"version\":\"1.0.0\""));
         Assert.That(requestBody, Does.Contain("\"apiHash\":\"api-hash\""));
+        Assert.That(requestBody, Does.Contain("\"packageType\":\"client\""));
         Assert.That(requestBody, Does.Contain("\"repoOwner\":\"tjprescott\""));
         Assert.That(requestBody, Does.Contain("\"dryRun\":false"));
         Assert.That(result.PackageName, Is.EqualTo("azure-test"));
@@ -367,6 +368,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {
@@ -417,6 +419,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             TargetBranch = new GitBranchReference
             {
                 Owner = "Azure",
@@ -433,6 +436,7 @@ public class ApiReviewHubServiceTests
             CancellationToken.None);
 
         Assert.That(requestBody, Does.Contain("\"baseTag\":\"\""));
+        Assert.That(requestBody, Does.Contain("\"packageType\":\"client\""));
     }
 
     [Test]
@@ -471,6 +475,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {
@@ -527,6 +532,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {

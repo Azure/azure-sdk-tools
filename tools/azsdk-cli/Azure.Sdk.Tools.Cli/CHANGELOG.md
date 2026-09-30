@@ -23,6 +23,11 @@
 
 - `azsdk_package_get_approval_status` now accepts common SDK language aliases.
 
+### Breaking Changes
+
+- `package mark-released` now requires a package type (`mgmt` or `client`) for API Review Hub release requests.
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` now require a package type (`mgmt` or `client`).
+
 ### Bugs Fixed
 
 - `azsdk_release_sdk` now queries the package approval service for current API review status instead of relying on the Azure DevOps package work item field.

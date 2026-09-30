@@ -15,7 +15,6 @@ public class PackageMarkReleasedTool(
     ILogger<PackageMarkReleasedTool> logger) : MCPTool
 {
     private const string CommandName = "mark-released";
-    private static readonly string[] SupportedPackageTypes = ["mgmt", "client"];
     private static readonly JsonSerializerOptions responseSerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -94,7 +93,7 @@ public class PackageMarkReleasedTool(
             {
                 try
                 {
-                    var result = await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, packageType, repoOwner, ct, dryRun);
+                    var result = await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, ApiReviewPackageType.Normalize(packageType), repoOwner, ct, dryRun);
                     reviewHubResponse = JsonSerializer.SerializeToElement(result, responseSerializerOptions);
                     reviewHubSucceeded = true;
                     string reviewHubAction = dryRun ? "Dry run resolved" : "Release request resolved";
@@ -202,13 +201,13 @@ public class PackageMarkReleasedTool(
 
     private static Option<string> CreatePackageTypeOption()
     {
-        var option = RequiredOption("--package-type", $"The package type. Supported values: {string.Join(", ", SupportedPackageTypes)}.");
+        var option = RequiredOption("--package-type", $"The package SDK type. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Spring and functions are treated as client packages.");
         option.Validators.Add(result =>
         {
             string? value = result.GetValueOrDefault<string>();
-            if (!string.IsNullOrWhiteSpace(value) && !SupportedPackageTypes.Contains(value, StringComparer.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(value) && !ApiReviewPackageType.SupportedValues.Contains(value, StringComparer.OrdinalIgnoreCase))
             {
-                result.AddError($"Invalid package type '{value}'. Supported values: {string.Join(", ", SupportedPackageTypes)}.");
+                result.AddError($"Invalid package type '{value}'. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}.");
             }
         });
         return option;

@@ -114,4 +114,47 @@ public class PackageApprovalStatusToolTests
 
         releaseStatusService.VerifyAll();
     }
+
+    [TestCase("spring")]
+    [TestCase("functions")]
+    public async Task GetApprovalStatus_MapsNonManagementSdkTypesToClient(string packageType)
+    {
+        var releaseStatusService = new Mock<IPackageReleaseStatusService>();
+        releaseStatusService
+            .Setup(x => x.GetApprovalStatusAsync(
+                It.IsAny<string>(),
+                "python",
+                "azure-test",
+                "1.0.0",
+                "client",
+                "",
+                "",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PackageReleaseStatusResult());
+        var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
+
+        await packageTool.GetApprovalStatus("python", "azure-test", "1.0.0", packageType);
+
+        releaseStatusService.VerifyAll();
+    }
+
+    [Test]
+    public async Task GetApprovalStatus_RejectsUnsupportedPackageType()
+    {
+        var releaseStatusService = new Mock<IPackageReleaseStatusService>();
+        var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
+
+        var response = await packageTool.GetApprovalStatus("python", "azure-test", "1.0.0", "unsupported");
+
+        Assert.That(response.ResponseError, Does.Contain("Unsupported package type 'unsupported'"));
+        releaseStatusService.Verify(x => x.GetApprovalStatusAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

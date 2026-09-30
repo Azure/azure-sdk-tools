@@ -76,6 +76,29 @@ public class PackageMarkReleasedToolTests
             It.IsAny<CancellationToken>(), false), Times.Once);
     }
 
+    [TestCase("spring")]
+    [TestCase("functions")]
+    public async Task MarkReleasedAsync_MapsNonManagementSdkTypesToClient(string packageType)
+    {
+        await tool.MarkReleasedAsync(
+            "python",
+            "azure-test",
+            "1.0.0",
+            packageType,
+            "hash",
+            "tjprescott");
+
+        apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
+            "python",
+            "azure-test",
+            "1.0.0",
+            "hash",
+            "client",
+            "tjprescott",
+            It.IsAny<CancellationToken>(),
+            false), Times.Once);
+    }
+
     [Test]
     public async Task MarkReleasedAsync_JsonContainsRawBackendResponses()
     {

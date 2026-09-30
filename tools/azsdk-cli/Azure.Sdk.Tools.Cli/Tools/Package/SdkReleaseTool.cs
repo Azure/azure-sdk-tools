@@ -299,7 +299,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         canonicalLanguage,
                         packageName,
                         package.Version,
-                        isDataPlanePackage ? "client" : "mgmt",
+                        package.PackageType.ToApiReviewPackageType(),
                         "",
                         "",
                         ct);

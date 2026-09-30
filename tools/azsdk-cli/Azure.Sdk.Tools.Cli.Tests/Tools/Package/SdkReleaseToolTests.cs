@@ -124,6 +124,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Unknown));
         }
 
+        [TestCase(SdkType.Management, "mgmt")]
+        [TestCase(SdkType.Dataplane, "client")]
+        [TestCase(SdkType.Spring, "client")]
+        [TestCase(SdkType.Functions, "client")]
+        [TestCase(SdkType.Unknown, "mgmt")]
+        public void ToApiReviewPackageType_MapsSdkTypes(SdkType sdkType, string expected)
+        {
+            Assert.That(sdkType.ToApiReviewPackageType(), Is.EqualTo(expected));
+        }
+
         [Test]
         public async Task TestCheckReadyWithApiViewNotApproved_IncludesApiViewUrl()
         {

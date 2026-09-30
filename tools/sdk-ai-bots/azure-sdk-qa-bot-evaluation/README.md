@@ -308,6 +308,43 @@ This still requires `--execute` because the local agent uses paid model/tools.
 The run records `grading: not_requested`; no score or `graded.json` is invented.
 Normal `run-local` behavior is unchanged when the flag is absent.
 
+#### Evidence-linked turn grading
+
+`decision_grading.py` grades a completed collection-only local run without
+regenerating answers. It scores each turn independently for clarification,
+context reuse, next action and evidence discipline. Only current/prior user
+facts and tool outputs are available; future scripted replies, reference
+answers, whole-conversation rubrics and arm labels are excluded.
+
+```powershell
+python decision_grading.py --bundle <private-study>\bundle.json `
+  --run <private-study>\baseline-run --output <new-private-grades> `
+  --project-endpoint <authorized-Foundry-project-endpoint> `
+  --judge-model <grading-deployment> --execute
+```
+
+Each finding must select numbered lines from the current answer and available
+evidence. Retrieved document text is decoded rather than JSON-escaped; the
+tool validates line IDs and copies their original text into the audit record.
+It never accepts a paraphrased quote as evidence. Valid references do **not**
+establish semantic correctness. Initial case evidence is a snapshot, not a
+reason to ignore facts supplied by later replies; user observations precede
+potentially large tool sources in the judge input. Two independently
+requested assessments must agree on pass or fail. A repeated failure must also
+cite at least one common answer line (necessary, not sufficient, for agreement
+on the same claim). Uncertainty, disagreement,
+invalid citations and missing judgments remain **inconclusive**, not failures
+of the bot and not ties between arms. Attempts, raw invalid responses, rubric,
+input hash and implementation hash are retained. Compare corresponding
+case/repeat/turn keys, retain inconclusive denominators, and inspect cited
+reasons before interpreting an apparent gain. Failed/missing conversations
+are rejected rather than dropped from a quality comparison.
+
+Calibrate the rubric against predeclared known-good and known-bad answers
+before using it to choose a treatment. Repeated agreement and exact citations
+are reliability checks, not independent human validation or proof of factual
+correctness. Keep calibration cases and experimental results private.
+
 ### Evaluators
 
 Default evaluators are builtin LLM evaluators that read the collected bot answer via

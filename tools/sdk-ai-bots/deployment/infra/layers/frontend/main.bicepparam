@@ -5,10 +5,13 @@ var envSuffixTitleCase = '${toUpper(substring(env, 0, 1))}${substring(env, 1)}'
 var serverApplicationIdUri = readEnvironmentVariable('SERVER_APPLICATION_ID_URI', '')
 var tableNameOverride = readEnvironmentVariable('AZURE_TABLE_NAME_FOR_CONVERSATION', '')
 var displayNameOverride = readEnvironmentVariable('TEAMS_BOT_FULL_DISPLAY_NAME', '')
+var registryEndpoint = readEnvironmentVariable('AZURE_CONTAINER_REGISTRY_ENDPOINT', '${readEnvironmentVariable('CONTAINER_REGISTRY_NAME', '')}.azurecr.io')
+var deployedImage = readEnvironmentVariable('SERVICE_FRONTEND_IMAGE_NAME', '')
+var deployedImagePrefix = '${registryEndpoint}/'
 
 param storageAccountName = readEnvironmentVariable('STORAGE_ACCOUNT_NAME', '')
 param containerRegistryName = readEnvironmentVariable('CONTAINER_REGISTRY_NAME', '')
-param frontendImageRepository = readEnvironmentVariable('FRONTEND_IMAGE_REPOSITORY', 'azure-sdk-qa-bot:${env}')
+param frontendImageRepository = !empty(deployedImage) && startsWith(deployedImage, deployedImagePrefix) ? replace(deployedImage, deployedImagePrefix, '') : readEnvironmentVariable('FRONTEND_IMAGE_REPOSITORY', 'azure-sdk-qa-bot:${env}')
 param frontendBaseNameOverride = readEnvironmentVariable('FRONTEND_SITE_NAME', '')
 param botServiceNameOverride = readEnvironmentVariable('BOT_SERVICE_NAME', '')
 param frontendAppInsightsNameOverride = readEnvironmentVariable('FRONTEND_APP_INSIGHTS_NAME', '')

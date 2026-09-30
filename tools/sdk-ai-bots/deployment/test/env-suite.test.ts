@@ -42,7 +42,7 @@ test("builds the complete local azd environment mapping", () => {
   assert.equal(values.MANAGE_AUTHORIZATION_RESOURCES, "false");
   assert.equal(values.AGENT_IMAGE_REPOSITORY, "sdk-ai-bots/agent-dev");
   assert.equal(values.AZURE_AI_DEPLOYMENTS_LOCATION, undefined);
-  assert.equal(values.ACR_NAME, undefined);
+  assert.equal(values.ACR_NAME, "azuresdkqabotdevcontainer");
   assert.equal(
     values.SERVER_APPLICATION_CLIENT_ID,
     suite.environments.dev.serverApplicationClientId,
@@ -71,6 +71,16 @@ test("builds the complete local azd environment mapping", () => {
   );
   assert.equal(values.AI_RESOURCE_RESTORE, "false");
   assert.equal(
+    values.MANAGED_IDENTITY_RESOURCE_ID,
+    "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity",
+  );
+  assert.equal(
+    values.AZURE_CONTAINER_REGISTRY_ENDPOINT,
+    "azuresdkqabotdevcontainer.azurecr.io",
+  );
+  assert.equal(values.GPT_5_1_CAPACITY, "2000");
+  assert.equal(values.SEARCH_KNOWLEDGE_RETRIEVAL, "free");
+  assert.equal(
     buildAzdEnvironmentValues(suite, "prod").MANAGE_AUTHORIZATION_RESOURCES,
     "true",
   );
@@ -83,6 +93,8 @@ test("applies production overrides and candidate configuration", () => {
   assert.equal(values.FRONTEND_IMAGE_REPOSITORY, "azure-sdk-qa-bot:latest");
   assert.equal(values.MANAGED_IDENTITY_NAME, "azuresdkqabot-identity");
   assert.equal(values.MANAGED_IDENTITY_NAME_OVERRIDE, "azuresdkqabot-identity");
+  assert.equal(values.AGENT_LOG_WORKSPACE_NAME, "azuresdkqabot-log");
+  assert.equal(values.GPT_4_1_CAPACITY, "200");
   assert.equal(
     values.CANDIDATE_APPCONFIG_ENDPOINT,
     `https://${suite.environments.dev.appConfigName}.azconfig.io`,

@@ -16,8 +16,62 @@ test("provisions the chatbot evolution and feedback containers", () => {
 
   assert.match(bicep, /name: 'qa-records'/);
   assert.match(bicep, /name: 'feedback-records'/);
-  assert.equal((bicep.match(/paths:\s*\[\s*'\/tenant_id'/g) ?? []).length, 2);
+  assert.equal((bicep.match(/paths:\s*\[\s*'\/tenant_id'/g) ?? []).length, 3);
   assert.match(bicep, /paths:\s*\[\s*'\/tenant_id'/);
+});
+
+test("adopts the existing dev infrastructure contract without losing live state", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  const dev = suite.environments.dev.bicepOverrides;
+  const prod = suite.environments.prod.bicepOverrides;
+  const shared = read("infra/layers/shared-resources/main.bicep");
+  const agent = read("infra/layers/agent/main.bicep");
+  const frontendParameters = read("infra/layers/frontend/main.bicepparam");
+  const agentServerParameters = read("infra/layers/agent-server/main.bicepparam");
+  const functionParameters = read("infra/layers/function-app/main.bicepparam");
+
+  assert.equal(dev.SEARCH_KNOWLEDGE_RETRIEVAL, "free");
+  assert.deepEqual(JSON.parse(dev.COSMOS_CAPABILITIES), [
+    { name: "EnableServerless" },
+    { name: "EnableNoSQLVectorSearch" },
+  ]);
+  assert.equal(JSON.parse(dev.KEY_VAULT_ACCESS_POLICIES).length, 2);
+  assert.equal(Object.keys(JSON.parse(dev.CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES)).length, 2);
+  assert.equal(Object.keys(JSON.parse(dev.SEARCH_USER_ASSIGNED_IDENTITIES)).length, 1);
+  assert.equal(Object.keys(JSON.parse(dev.AI_RESOURCE_USER_ASSIGNED_IDENTITIES)).length, 1);
+  assert.equal(dev.GPT_4_1_SKU_NAME, "Standard");
+  assert.equal(dev.GPT_4_1_CAPACITY, "400");
+  assert.equal(dev.GPT_5_1_CAPACITY, "2000");
+  assert.equal(dev.GPT_5_MINI_CAPACITY, "150");
+  assert.equal(dev.TEXT_EMBEDDING_3_SMALL_CAPACITY, "120");
+  assert.equal(dev.AGENT_LOG_RETENTION_IN_DAYS, "365");
+  assert.equal(prod.AGENT_LOG_WORKSPACE_NAME, "azuresdkqabot-log");
+  assert.equal(prod.GPT_4_1_CAPACITY, "200");
+
+  assert.match(shared, /accessPolicies: keyVaultAccessPolicies/);
+  assert.match(shared, /capabilities: cosmosCapabilities/);
+  assert.match(shared, /knowledgeRetrieval: searchKnowledgeRetrieval/);
+  assert.match(shared, /type: empty\(searchUserAssignedIdentities\) \? 'SystemAssigned'/);
+  assert.match(shared, /type: empty\(containerRegistryUserAssignedIdentities\) \? 'None'/);
+  for (const partitionKey of [
+    "/mapping_key",
+    "/conversation_partition",
+    "/tenant_id",
+    "/sourceChannelId",
+  ]) {
+    assert.match(shared, new RegExp(`'${partitionKey}'`));
+  }
+  assert.match(shared, /vectorEmbeddingPolicy/);
+  assert.match(agent, /userAssignedIdentities: aiResourceUserAssignedIdentities/);
+  assert.match(agent, /raiPolicyName: modelRaiPolicyName/g);
+  assert.match(agent, /capacity: gpt51Capacity/);
+  assert.match(agent, /retentionInDays: agentLogRetentionInDays/);
+  for (const parameters of [frontendParameters, agentServerParameters, functionParameters]) {
+    assert.match(parameters, /AZURE_CONTAINER_REGISTRY_ENDPOINT/);
+  }
+  assert.match(frontendParameters, /SERVICE_FRONTEND_IMAGE_NAME/);
+  assert.match(agentServerParameters, /SERVICE_AGENT_SERVER_IMAGE_NAME/);
+  assert.match(functionParameters, /SERVICE_FUNCTION_APP_IMAGE_NAME/);
 });
 
 test("deploys the Azure MCP Server agent and its Teams-group workflow", () => {

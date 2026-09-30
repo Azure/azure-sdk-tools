@@ -47,6 +47,12 @@ param agentServerAppInsightsNameOverride string = ''
 @description('Name of the metric alert on the agent-server site.')
 param agentServerAlertNameOverride string = ''
 
+@description('Application Insights flow metadata retained for existing resources.')
+param agentServerAppInsightsFlowType string = 'Bluefield'
+
+@description('Application Insights request-source metadata retained for existing resources.')
+param agentServerAppInsightsRequestSource string = 'rest'
+
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var agentServerAppServicePlanName = !empty(agentServerAppServicePlanNameOverride) ? agentServerAppServicePlanNameOverride : 'azuresdkqabot-appserviceplan-${suffix}'
 var agentServerLogWorkspaceName = !empty(agentServerLogWorkspaceNameOverride) ? agentServerLogWorkspaceNameOverride : 'azuresdkqabot-log-${suffix}'
@@ -98,8 +104,8 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    Flow_Type: 'Bluefield'
-    Request_Source: 'rest'
+    Flow_Type: agentServerAppInsightsFlowType
+    Request_Source: agentServerAppInsightsRequestSource
     RetentionInDays: 90
     WorkspaceResourceId: createAgentServerLogWorkspace ? workspace!.id : agentServerLogWorkspaceResourceId
   }

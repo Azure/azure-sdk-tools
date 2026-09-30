@@ -15,3 +15,9 @@ param searchServiceNameOverride = readEnvironmentVariable('SEARCH_SERVICE_NAME_O
 param containerRegistryNameOverride = readEnvironmentVariable('CONTAINER_REGISTRY_NAME_OVERRIDE', '')
 param storageAccountNameOverride = readEnvironmentVariable('STORAGE_ACCOUNT_NAME_OVERRIDE', '')
 param cosmosDbAccountNameOverride = readEnvironmentVariable('COSMOS_DB_ACCOUNT_NAME_OVERRIDE', '')
+param keyVaultAccessPolicies = json(readEnvironmentVariable('KEY_VAULT_ACCESS_POLICIES', '[]'))
+param searchUserAssignedIdentities = json(readEnvironmentVariable('SEARCH_USER_ASSIGNED_IDENTITIES', '{}'))
+param containerRegistryUserAssignedIdentities = json(readEnvironmentVariable('CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES', '{}'))
+param cosmosCapabilities = json(readEnvironmentVariable('COSMOS_CAPABILITIES', '[]'))
+param searchKnowledgeRetrieval = readEnvironmentVariable('SEARCH_KNOWLEDGE_RETRIEVAL', 'standard')
+param enableEpisodeVectorIndex = readEnvironmentVariable('ENABLE_EPISODE_VECTOR_INDEX', 'false') == 'true'

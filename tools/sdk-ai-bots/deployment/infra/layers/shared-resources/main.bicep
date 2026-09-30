@@ -51,6 +51,24 @@ param deploymentPrincipalType string = 'ServicePrincipal'
 @description('Whether this deployment manages Azure RBAC assignments. Disable only when an existing environment has equivalent assignments managed outside this deployment.')
 param manageAuthorizationResources bool = true
 
+@description('Existing Key Vault access policies that must survive incremental updates. Hosted-agent platform identities may require key Sign and Verify access.')
+param keyVaultAccessPolicies array = []
+
+@description('User-assigned identities attached to the Search service, keyed by full resource ID.')
+param searchUserAssignedIdentities object = {}
+
+@description('User-assigned identities attached to the container registry, keyed by full resource ID.')
+param containerRegistryUserAssignedIdentities object = {}
+
+@description('Cosmos DB account capabilities to preserve, such as EnableServerless and EnableNoSQLVectorSearch.')
+param cosmosCapabilities array = []
+
+@description('AI Search knowledge retrieval tier.')
+param searchKnowledgeRetrieval string = 'standard'
+
+@description('Whether the experience-episodes container uses the vector embedding and index contract.')
+param enableEpisodeVectorIndex bool = false
+
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var managedIdentityName = !empty(managedIdentityNameOverride) ? managedIdentityNameOverride : 'qabot-identity-${suffix}'
 var actionGroupName = !empty(actionGroupNameOverride) ? actionGroupNameOverride : 'qabot-alert-${suffix}'
@@ -100,7 +118,8 @@ resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
       bypass: 'None'
       defaultAction: 'Allow'
     }
-    accessPolicies: []
+    accessPolicies: keyVaultAccessPolicies
+    enableRbacAuthorization: true
   }
   location: location
 }
@@ -143,19 +162,25 @@ resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
     }
     dataExfiltrationProtections: []
     semanticSearch: 'standard'
-    knowledgeRetrieval: 'standard'
+    knowledgeRetrieval: searchKnowledgeRetrieval
+    disableLocalAuth: false
   }
   sku: {
     name: 'standard'
   }
   identity: {
-    type: 'SystemAssigned'
+    type: empty(searchUserAssignedIdentities) ? 'SystemAssigned' : 'SystemAssigned, UserAssigned'
+    userAssignedIdentities: searchUserAssignedIdentities
   }
 }
 
 resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = {
   name: containerRegistryName
   location: location
+  identity: {
+    type: empty(containerRegistryUserAssignedIdentities) ? 'None' : 'UserAssigned'
+    userAssignedIdentities: containerRegistryUserAssignedIdentities
+  }
   sku: {
     name: 'Standard'
   }
@@ -165,9 +190,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' = {
   name: storageAccountName
   location: location
   properties: {
-    dualStackEndpointPreference: {
-      publishIpv6Endpoint: false
-    }
     dnsEndpointType: 'Standard'
     defaultToOAuthAuthentication: false
     publicNetworkAccess: 'Enabled'
@@ -327,7 +349,7 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2026-03-15' = {
       }
     ]
     cors: []
-    capabilities: []
+    capabilities: cosmosCapabilities
     ipRules: []
     backupPolicy: {
       type: 'Continuous'
@@ -381,7 +403,7 @@ resource container6 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
       }
       partitionKey: {
         paths: [
-          '/conversationId'
+          '/mapping_key'
         ]
         kind: 'Hash'
         version: 2
@@ -412,7 +434,7 @@ resource container7 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
       }
       partitionKey: {
         paths: [
-          '/conversationId'
+          '/conversation_partition'
         ]
         kind: 'Hash'
         version: 2
@@ -425,9 +447,31 @@ resource container8 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
   name: 'experience-episodes'
   parent: sqlDatabase
   properties: {
-    resource: {
+    resource: union({
       id: 'experience-episodes'
-      indexingPolicy: {
+      indexingPolicy: enableEpisodeVectorIndex ? {
+        indexingMode: 'consistent'
+        automatic: true
+        includedPaths: [
+          {
+            path: '/*'
+          }
+        ]
+        excludedPaths: [
+          {
+            path: '/embedding/*'
+          }
+          {
+            path: '/"_etag"/?'
+          }
+        ]
+        vectorIndexes: [
+          {
+            path: '/embedding'
+            type: 'quantizedFlat'
+          }
+        ]
+      } : {
         indexingMode: 'consistent'
         automatic: true
         includedPaths: [
@@ -443,12 +487,23 @@ resource container8 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
       }
       partitionKey: {
         paths: [
-          '/episodeId'
+          '/tenant_id'
         ]
         kind: 'Hash'
         version: 2
       }
-    }
+    }, enableEpisodeVectorIndex ? {
+      vectorEmbeddingPolicy: {
+        vectorEmbeddings: [
+          {
+            path: '/embedding'
+            dataType: 'float32'
+            distanceFunction: 'cosine'
+            dimensions: 1536
+          }
+        ]
+      }
+    } : {})
   }
 }
 
@@ -474,7 +529,7 @@ resource container9 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
       }
       partitionKey: {
         paths: [
-          '/threadId'
+          '/sourceChannelId'
         ]
         kind: 'Hash'
         version: 2

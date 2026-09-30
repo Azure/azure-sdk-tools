@@ -1,9 +1,11 @@
 using './main.bicep'
 
 var env = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
+var deployedImage = readEnvironmentVariable('SERVICE_FUNCTION_APP_IMAGE_NAME', '')
+var registryEndpoint = readEnvironmentVariable('AZURE_CONTAINER_REGISTRY_ENDPOINT', '${readEnvironmentVariable('CONTAINER_REGISTRY_NAME', '')}.azurecr.io')
 
 param location = readEnvironmentVariable('AZURE_LOCATION', 'westus2')
-param containerImage = '${readEnvironmentVariable('AZURE_CONTAINER_REGISTRY_ENDPOINT', '')}/${readEnvironmentVariable('FUNCTION_IMAGE_REPOSITORY', 'azure-sdk-qa-bot-function:${env}')}'
+param containerImage = !empty(deployedImage) && startsWith(deployedImage, '${registryEndpoint}/') ? deployedImage : '${registryEndpoint}/${readEnvironmentVariable('FUNCTION_IMAGE_REPOSITORY', 'azure-sdk-qa-bot-function:${env}')}'
 param managedIdentityClientId = readEnvironmentVariable('MANAGED_IDENTITY_CLIENT_ID', '')
 param botId = readEnvironmentVariable('BOT_ID', '')
 param managedIdentityResourceId = readEnvironmentVariable('MANAGED_IDENTITY_RESOURCE_ID', '')

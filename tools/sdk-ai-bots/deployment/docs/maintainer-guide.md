@@ -112,6 +112,19 @@ create the azd environment, and refresh required layer outputs before invoking
 azd. Removing an `azd env refresh` call can break resource discovery even when
 the resource exists in Azure.
 
+The shared dev resource group predates layered azd deployment state. Its
+environment contract therefore adopts stable live identities, policies,
+Cosmos capabilities and partition keys, model sizing, and resource IDs.
+Whenever the shared environment is changed out of band, update those adopted
+values only after comparing old and new resource state. Never resolve a
+preview by accepting identity removal or model downscaling. API-only
+read-only/default fields should remain unmanaged.
+
+Saved App Service image outputs are trusted only when their registry prefix
+matches `AZURE_CONTAINER_REGISTRY_ENDPOINT`. This prevents a retargeted local
+azd environment from provisioning a site with an image or managed identity
+left over from another subscription.
+
 Full-stack application deployment is a graph, not a serial list. `function-app`
 and `agent` start after provisioning. The Azure MCP Server agent follows
 `agent`; `agent-server` waits for both hosted agents; and `frontend` waits for

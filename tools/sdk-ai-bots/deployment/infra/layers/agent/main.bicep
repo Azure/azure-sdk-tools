@@ -51,6 +51,36 @@ param deploymentPrincipalType string = 'ServicePrincipal'
 @description('Whether this deployment manages Azure RBAC assignments. Disable only when an existing environment has equivalent assignments managed outside this deployment.')
 param manageAuthorizationResources bool = true
 
+@description('User-assigned identities attached to the AI Services account, keyed by full resource ID.')
+param aiResourceUserAssignedIdentities object = {}
+
+@description('Retention period for the agent Log Analytics workspace.')
+param agentLogRetentionInDays int = 30
+
+@description('RAI policy applied to every deployment managed by this layer.')
+param modelRaiPolicyName string = 'Microsoft.DefaultV2'
+
+@description('SKU used by the gpt-4.1 deployment.')
+param gpt41SkuName string = 'GlobalStandard'
+
+@description('Capacity used by the gpt-4.1 deployment.')
+param gpt41Capacity int = 1
+
+@description('Capacity used by the gpt-5.6-sol deployment.')
+param gpt56SolCapacity int = 500
+
+@description('Capacity used by the gpt-5.1 deployment.')
+param gpt51Capacity int = 1
+
+@description('Capacity used by the gpt-5-mini deployment.')
+param gpt5MiniCapacity int = 1
+
+@description('Capacity used by the text-embedding-3-small deployment.')
+param textEmbedding3SmallCapacity int = 1
+
+@description('Version upgrade policy used by text-embedding-3-small.')
+param textEmbedding3SmallVersionUpgradeOption string = 'NoAutoUpgrade'
+
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var agentLogWorkspaceName = !empty(agentLogWorkspaceNameOverride) ? agentLogWorkspaceNameOverride : 'qabot-agent-log-${suffix}'
 var agentAppInsightsName = !empty(agentAppInsightsNameOverride) ? agentAppInsightsNameOverride : 'qabot-agent-${suffix}'
@@ -67,7 +97,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
     sku: {
       name: 'PerGB2018'
     }
-    retentionInDays: 30
+    retentionInDays: agentLogRetentionInDays
   }
 }
 
@@ -86,8 +116,7 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 
 resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
   name: aiResourceName
-  properties: {
-    restore: restoreAiResource
+  properties: union({
     apiProperties: {}
     customSubDomainName: aiResourceName
     networkAcls: {
@@ -102,14 +131,17 @@ resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
     ]
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: true
-  }
+  }, restoreAiResource ? {
+    restore: true
+  } : {})
   location: location
   kind: 'AIServices'
   sku: {
     name: 'S0'
   }
   identity: {
-    type: 'SystemAssigned'
+    type: empty(aiResourceUserAssignedIdentities) ? 'SystemAssigned' : 'SystemAssigned, UserAssigned'
+    userAssignedIdentities: aiResourceUserAssignedIdentities
   }
 }
 
@@ -123,12 +155,13 @@ var modelDeploymentConfigs = [
         version: '2025-04-14'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 1
+      raiPolicyName: modelRaiPolicyName
+      currentCapacity: gpt41Capacity
       deploymentState: 'Running'
     }
     sku: {
-      name: 'GlobalStandard'
-      capacity: 1
+      name: gpt41SkuName
+      capacity: gpt41Capacity
     }
   }
   {
@@ -140,16 +173,16 @@ var modelDeploymentConfigs = [
         version: '2026-07-09'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+      raiPolicyName: modelRaiPolicyName
       // 500 capacity units ≈ 500,000 TPM (GlobalStandard: 1 unit ≈ 1,000 TPM).
-      currentCapacity: 500
-      serviceTier: 'Default'
+      currentCapacity: gpt56SolCapacity
       deploymentState: 'Running'
     }
     sku: {
       name: 'GlobalStandard'
       // 500 units ≈ 500,000 TPM. This consumes the currently available half of
       // the subscription's 1,000-unit GlobalStandard gpt-5.6-sol quota.
-      capacity: 500
+      capacity: gpt56SolCapacity
     }
   }
   {
@@ -161,13 +194,14 @@ var modelDeploymentConfigs = [
         version: '2025-11-13'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 1
+      raiPolicyName: modelRaiPolicyName
+      currentCapacity: gpt51Capacity
       serviceTier: 'Default'
       deploymentState: 'Running'
     }
     sku: {
       name: 'GlobalStandard'
-      capacity: 1
+      capacity: gpt51Capacity
     }
   }
   {
@@ -179,12 +213,13 @@ var modelDeploymentConfigs = [
         version: '2025-08-07'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 1
+      raiPolicyName: modelRaiPolicyName
+      currentCapacity: gpt5MiniCapacity
       deploymentState: 'Running'
     }
     sku: {
       name: 'GlobalStandard'
-      capacity: 1
+      capacity: gpt5MiniCapacity
     }
   }
   {
@@ -195,13 +230,14 @@ var modelDeploymentConfigs = [
         name: 'text-embedding-3-small'
         version: '1'
       }
-      versionUpgradeOption: 'NoAutoUpgrade'
-      currentCapacity: 1
+      versionUpgradeOption: textEmbedding3SmallVersionUpgradeOption
+      raiPolicyName: modelRaiPolicyName
+      currentCapacity: textEmbedding3SmallCapacity
       deploymentState: 'Running'
     }
     sku: {
       name: 'GlobalStandard'
-      capacity: 1
+      capacity: textEmbedding3SmallCapacity
     }
   }
 ]

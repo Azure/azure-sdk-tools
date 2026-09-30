@@ -283,6 +283,14 @@ defined by [`grant-agent-data-access.sh`](../scripts/grant-agent-data-access.sh)
 This includes the application data roles plus GitHub signing-vault and Cosmos
 DB access required by its tools and memory provider.
 
+Foundry also maintains Key Vault `Sign` and `Verify` access policies for the
+hosted Azure MCP Server agent identities. The existing dev environment adopts
+those policies in its environment contract so an incremental Key Vault update
+does not remove them. The dev container registry, Search service, and AI
+Services account likewise preserve their pre-existing user-assigned
+identities. Fresh environments use the layer defaults instead of inheriting
+these environment-specific identity maps.
+
 ### Evolution agent
 
 [`grant-agent-data-access.sh`](../scripts/grant-agent-data-access.sh) defines two

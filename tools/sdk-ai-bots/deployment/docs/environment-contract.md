@@ -122,6 +122,21 @@ while local developers have Contributor access without
 also leaves protected Storage, Key Vault, App Configuration, and Search data
 unchanged.
 
+Existing environments can also carry adopted live-state values in
+`bicepOverrides`. These include stable resource IDs and principal IDs, JSON
+maps of user-assigned identities, Key Vault access policies, Cosmos
+capabilities, Search knowledge-retrieval tier, model capacities, and telemetry
+retention. JSON-valued entries remain strings in YAML and are decoded by the
+layer's `main.bicepparam`. Do not copy these values to a fresh environment:
+first read the target resource state and use preview to prove that no identity,
+policy, immutable partition key, or model capacity will be removed.
+
+The dev block also pins stable cross-layer outputs because the pre-existing
+resource group has no historical azd layer deployments to refresh. Container
+image outputs remain azd-owned and are deliberately excluded; parameter
+adapters accept a saved image only when it belongs to the selected
+environment's ACR.
+
 Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
 needed by that layer. Pipeline preview and apply use the same layer adapters.
 

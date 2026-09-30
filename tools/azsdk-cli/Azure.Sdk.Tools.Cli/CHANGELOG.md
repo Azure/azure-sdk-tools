@@ -17,16 +17,19 @@
 - Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
 - Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
 
+### Breaking Changes
+
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` now require a package type (`mgmt` or `client`).
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.6.50 (2026-09-30)
 
 ### Features Added
 
 - `azsdk_package_get_approval_status` now accepts common SDK language aliases.
-
-### Breaking Changes
-
-- `package mark-released` now requires a package type (`mgmt` or `client`) for API Review Hub release requests.
-- `api-review create` and `azsdk_apireviewhub_request_review_pr` now require a package type (`mgmt` or `client`).
 
 ### Bugs Fixed
 
@@ -44,7 +47,6 @@
 
 ### Breaking Changes
 
-- `package get-approval-status` and `azsdk_package_get_approval_status` now require a package type (`mgmt` or `client`) for API Review Hub approval checks.
 - Release plan JSON/MCP responses no longer include `SDKInfo.PullRequestStatus`, which was sourced from potentially stale Azure DevOps data. SDK PR URLs and the dashboard link remain available for checking current PR status; generation and release statuses are unchanged.
 
 ### Bugs Fixed

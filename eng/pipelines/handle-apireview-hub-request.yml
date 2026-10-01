@@ -48,6 +48,9 @@ resources:
       ref: main
 
 variables:
+  - name: LanguageRepository
+    value: ${{ format('{0}-repo', parameters.language) }}
+    readonly: true
   - name: callbackTokenAudience
     value: 'api://apireviewhub'
     readonly: true
@@ -110,7 +113,7 @@ stages:
           parameters:
             repositoryOwner: ${{ parameters.owner }}
             steps:
-              - pwsh: eng/scripts/Initialize-ApiReviewHubRequest.ps1
+              - pwsh: $(ToolsRepo)/eng/scripts/Initialize-ApiReviewHubRequest.ps1
                 displayName: 'Validate request parameters'
                 env:
                   ARH_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
@@ -146,7 +149,7 @@ stages:
                   # The web service reads this summary to decide whether the operation
                   # succeeded, whether a create request changed API shape, and which build
                   # artifacts to download.
-              - pwsh: eng/scripts/Write-ApiReviewHubResultSummary.ps1
+              - pwsh: $(ToolsRepo)/eng/scripts/Write-ApiReviewHubResultSummary.ps1
                 displayName: 'Compare and write result summary'
                 env:
                   ARH_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
@@ -178,7 +181,7 @@ stages:
 
               # Ensure failed runs still publish an operation result artifact that the
               # web service can surface to callers.
-              - pwsh: eng/scripts/Write-ApiReviewHubResultSummary.ps1
+              - pwsh: $(ToolsRepo)/eng/scripts/Write-ApiReviewHubResultSummary.ps1
                 displayName: 'Write failure result summary'
                 condition: failed()
                 env:
@@ -199,7 +202,7 @@ stages:
                   pathtoPublish: '$(Build.ArtifactStagingDirectory)/result'
                   artifactName: '${{ parameters.resultArtifactName }}'
 
-              - pwsh: eng/scripts/Mask-ApiReviewHubCallbackProofToken.ps1
+              - pwsh: $(ToolsRepo)/eng/scripts/Mask-ApiReviewHubCallbackProofToken.ps1
                 displayName: 'Mask callback proof token'
                 condition: always()
                 env:
@@ -215,7 +218,7 @@ stages:
                   azurePowerShellVersion: latestVersion
                   pwsh: true
                   ScriptType: FilePath
-                  ScriptPath: eng/scripts/Notify-ApiReviewHub.ps1
+                  ScriptPath: $(ToolsRepo)/eng/scripts/Notify-ApiReviewHub.ps1
                 env:
                   ARH_BASE_ARTIFACT_NAME: ${{ parameters.baseArtifactName }}
                   ARH_BASE_REF: ${{ parameters.baseRef }}

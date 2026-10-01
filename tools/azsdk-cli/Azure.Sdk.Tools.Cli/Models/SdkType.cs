@@ -18,10 +18,7 @@ public enum SdkType
 
 public static class SdkTypeExtensions
 {
-    public static string ToApiReviewPackageType(this SdkType sdkType) => sdkType switch
-    {
-        SdkType.Management or SdkType.Unknown => "mgmt",
-        SdkType.Dataplane or SdkType.Spring or SdkType.Functions => "client",
-        _ => throw new ArgumentException($"Unsupported SDK type '{sdkType}'.", nameof(sdkType))
-    };
+    public static bool IsDataPlane(this SdkType sdkType) =>
+        sdkType is SdkType.Dataplane or SdkType.Spring or SdkType.Functions;
+
 }

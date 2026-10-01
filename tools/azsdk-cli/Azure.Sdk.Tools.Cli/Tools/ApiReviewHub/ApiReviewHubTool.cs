@@ -125,10 +125,10 @@ public class ApiReviewHubTool(
         return await RequestReviewPullRequest(
             parseResult.GetValue(languageOption) ?? string.Empty,
             parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(packageTypeOption) ?? string.Empty,
             parseResult.GetValue(targetOwnerOption) ?? string.Empty,
             ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
             parseResult.GetValue(targetBranchOption) ?? string.Empty,
+            parseResult.GetValue(packageTypeOption),
             parseResult.GetValue(baseTagOption),
             !parseResult.GetValue(noWaitOption),
             parseResult.GetValue(pollIntervalSecondsOption),
@@ -139,10 +139,10 @@ public class ApiReviewHubTool(
     public async Task<ApiReviewHubResponse> RequestReviewPullRequest(
         [Description("The SDK language for the review PR request.")] string language,
         [Description("The package name to review.")] string packageName,
-        [Description("The package SDK type. Supported values: mgmt, client, spring, functions. Spring and functions are treated as client packages.")] string packageType,
         [Description("The GitHub owner for the target working branch.")] string targetOwner,
         [Description("The GitHub repository for the target working branch. By default, the command selects the appropriate repo based on the language.")] string targetRepo,
         [Description("The target working branch name.")] string targetBranch,
+        [Description("The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: mgmt, client, spring, functions. Spring and functions are treated as client packages.")] string? packageType = null,
         [Description("The optional release tag or ref used as the base API surface.")] string? baseTag = null,
         [Description("Poll API Review Hub until the operation completes.")] bool waitForCompletion = true,
         [Description("Seconds to wait between API Review Hub operation status polls.")] int pollIntervalSeconds = 10,
@@ -154,7 +154,7 @@ public class ApiReviewHubTool(
             {
                 Language = language,
                 PackageName = packageName,
-                PackageType = ApiReviewPackageType.Normalize(packageType),
+                PackageType = string.IsNullOrWhiteSpace(packageType) ? null : ApiReviewPackageType.Normalize(packageType),
                 BaseTag = baseTag ?? string.Empty,
                 TargetBranch = new GitBranchReference
                 {
@@ -230,8 +230,7 @@ public class ApiReviewHubTool(
     {
         var option = new Option<string>("--package-type")
         {
-            Description = $"The package SDK type. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Spring and functions are treated as client packages.",
-            Required = true
+            Description = $"The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Spring and functions are treated as client packages."
         };
 
         option.Validators.Add(result =>

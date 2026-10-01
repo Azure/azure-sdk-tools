@@ -24,7 +24,7 @@ public class PackageMarkReleasedToolTests
         apiReviewHubService = new Mock<IApiReviewHubService>();
         apiReviewHubService
             .Setup(x => x.MarkPackageReleasedAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
             .ReturnsAsync(new ApiReviewHubMarkReleasedResult
             {
                 PackageId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
@@ -70,33 +70,10 @@ public class PackageMarkReleasedToolTests
         Assert.That(response.ToString(), Does.Contain("API Review Hub: SUCCEEDED - Release request resolved package version"));
         Assert.That(response.ToString(), Does.Contain("APIView: SUCCEEDED - Release request resolved revision revision456"));
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
-            "python", "azure-test", "1.0.0", "hash", "client", "tjprescott", It.IsAny<CancellationToken>(), false), Times.Once);
+            "python", "azure-test", "1.0.0", "hash", "tjprescott", It.IsAny<CancellationToken>(), false), Times.Once);
         apiViewService.Verify(x => x.MarkPackageReleasedAsync(
             "azure-test", "python", "1.0.0",
             It.IsAny<CancellationToken>(), false), Times.Once);
-    }
-
-    [TestCase("spring")]
-    [TestCase("functions")]
-    public async Task MarkReleasedAsync_MapsNonManagementSdkTypesToClient(string packageType)
-    {
-        await tool.MarkReleasedAsync(
-            "python",
-            "azure-test",
-            "1.0.0",
-            packageType,
-            "hash",
-            "tjprescott");
-
-        apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
-            "python",
-            "azure-test",
-            "1.0.0",
-            "hash",
-            "client",
-            "tjprescott",
-            It.IsAny<CancellationToken>(),
-            false), Times.Once);
     }
 
     [Test]
@@ -127,7 +104,7 @@ public class PackageMarkReleasedToolTests
     {
         apiReviewHubService
             .Setup(x => x.MarkPackageReleasedAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
             .ReturnsAsync(new ApiReviewHubMarkReleasedResult
             {
                 PackageId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
@@ -150,7 +127,7 @@ public class PackageMarkReleasedToolTests
     public async Task MarkReleasedAsync_WhenReviewHubFails_StillCallsAPIView()
     {
         apiReviewHubService
-            .Setup(x => x.MarkPackageReleasedAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
+            .Setup(x => x.MarkPackageReleasedAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
             .ThrowsAsync(new InvalidOperationException("ARH failed"));
 
         var response = await MarkReleasedAsync();
@@ -182,7 +159,7 @@ public class PackageMarkReleasedToolTests
         Assert.That(response.ApiView, Is.Null);
         Assert.That(response.ResponseErrors, Is.Empty);
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), false), Times.Once);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), false), Times.Once);
     }
 
     [Test]
@@ -222,7 +199,7 @@ public class PackageMarkReleasedToolTests
     {
         apiReviewHubService
             .Setup(x => x.MarkPackageReleasedAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
             .ThrowsAsync(new InvalidOperationException("ARH failed"));
         apiViewService
             .Setup(x => x.MarkPackageReleasedAsync(
@@ -254,9 +231,20 @@ public class PackageMarkReleasedToolTests
     {
         var command = tool.GetCommandInstances().Single();
 
-        var parseResult = command.Parse("--language python --package-name azure-test --package-version 1.0.0 --package-type client");
+        var parseResult = command.Parse("--language python --package-name azure-test --package-version 1.0.0");
 
         Assert.That(parseResult.Errors, Is.Empty);
+    }
+
+    [Test]
+    public void Command_RejectsPackageType()
+    {
+        var command = tool.GetCommandInstances().Single();
+
+        var parseResult = command.Parse(
+            "--language python --package-name azure-test --package-version 1.0.0 --package-type client");
+
+        Assert.That(parseResult.Errors.Any(error => error.Message.Contains("Unrecognized command or argument '--package-type'", StringComparison.Ordinal)), Is.True);
     }
 
     [Test]
@@ -266,7 +254,6 @@ public class PackageMarkReleasedToolTests
             "python",
             "azure-test",
             "1.0.0",
-            "client",
             string.Empty,
             "tjprescott");
         var output = new OutputHelper(OutputHelper.OutputModes.Json).Format(response);
@@ -284,7 +271,7 @@ public class PackageMarkReleasedToolTests
         Assert.That(document.RootElement.GetProperty("operation_status").GetString(), Is.EqualTo("Succeeded"));
         Assert.That(document.RootElement.GetProperty("response_errors").GetArrayLength(), Is.Zero);
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
         apiViewService.Verify(x => x.MarkPackageReleasedAsync(
             "azure-test", "python", "1.0.0", It.IsAny<CancellationToken>(), false), Times.Once);
     }
@@ -301,7 +288,6 @@ public class PackageMarkReleasedToolTests
             "python",
             "azure-test",
             "1.0.0",
-            "client",
             string.Empty,
             "tjprescott");
 
@@ -310,7 +296,7 @@ public class PackageMarkReleasedToolTests
         Assert.That(response.ApiViewSucceeded, Is.False);
         Assert.That(response.ResponseErrors, Has.One.EqualTo("APIView: APIView revision not found"));
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Test]
@@ -318,7 +304,7 @@ public class PackageMarkReleasedToolTests
     {
         var command = tool.GetCommandInstances().Single();
 
-        var parseResult = command.Parse("--language python --package-name azure-test --package-version 1.0.0 --package-type client --repo-owner tjprescott");
+        var parseResult = command.Parse("--language python --package-name azure-test --package-version 1.0.0 --repo-owner tjprescott");
 
         Assert.That(parseResult.Errors, Is.Empty);
     }
@@ -327,14 +313,14 @@ public class PackageMarkReleasedToolTests
     public async Task Command_DryRun_PassesTrueToBothBackends()
     {
         var command = tool.GetCommandInstances().Single();
-        var parseResult = command.Parse("--language python --package-name azure-test --package-version 1.0.0 --package-type client --api-hash hash --dry-run");
+        var parseResult = command.Parse("--language python --package-name azure-test --package-version 1.0.0 --api-hash hash --dry-run");
 
         var response = await tool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(response.ToString(), Does.Contain("API Review Hub: SUCCEEDED - Dry run resolved package version"));
         Assert.That(response.ToString(), Does.Contain("APIView: SUCCEEDED - Dry run resolved revision revision456"));
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
-            "python", "azure-test", "1.0.0", "hash", "client", string.Empty, It.IsAny<CancellationToken>(), true), Times.Once);
+            "python", "azure-test", "1.0.0", "hash", string.Empty, It.IsAny<CancellationToken>(), true), Times.Once);
         apiViewService.Verify(x => x.MarkPackageReleasedAsync(
             "azure-test", "python", "1.0.0", It.IsAny<CancellationToken>(), true), Times.Once);
     }
@@ -352,7 +338,6 @@ public class PackageMarkReleasedToolTests
             "python",
             "azure-test",
             "1.0.0",
-            "client",
             "hash",
             "tjprescott");
 }

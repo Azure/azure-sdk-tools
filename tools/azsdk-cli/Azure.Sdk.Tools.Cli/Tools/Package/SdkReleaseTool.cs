@@ -272,7 +272,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Classify the version, not the planned-release label. Stable post-releases and
                 // build metadata must not skip the GA APIView approval gate.
                 bool isPreviewRelease = IsPreviewVersion(package.Version, language);
-                bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
+                bool isDataPlanePackage = package.PackageType.IsDataPlane();
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
                 {
@@ -299,7 +299,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         canonicalLanguage,
                         packageName,
                         package.Version,
-                        package.PackageType.ToApiReviewPackageType(),
                         "",
                         "",
                         ct);

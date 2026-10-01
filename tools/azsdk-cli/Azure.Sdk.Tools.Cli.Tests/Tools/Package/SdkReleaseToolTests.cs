@@ -38,7 +38,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
-                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new PackageReleaseStatusResult
                 {
@@ -120,18 +119,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Dataplane));
             result.SetPackageType("spring");
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Spring));
+            result.SetPackageType("functions");
+            Assert.That(result.PackageType, Is.EqualTo(SdkType.Functions));
             result.SetPackageType("data");
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Unknown));
         }
 
-        [TestCase(SdkType.Management, "mgmt")]
-        [TestCase(SdkType.Dataplane, "client")]
-        [TestCase(SdkType.Spring, "client")]
-        [TestCase(SdkType.Functions, "client")]
-        [TestCase(SdkType.Unknown, "mgmt")]
-        public void ToApiReviewPackageType_MapsSdkTypes(SdkType sdkType, string expected)
+        [TestCase(SdkType.Dataplane)]
+        [TestCase(SdkType.Spring)]
+        [TestCase(SdkType.Functions)]
+        public void IsDataPlane_RecognizesDataPlaneSdkTypes(SdkType sdkType)
         {
-            Assert.That(sdkType.ToApiReviewPackageType(), Is.EqualTo(expected));
+            Assert.That(sdkType.IsDataPlane(), Is.True);
         }
 
         [Test]
@@ -160,7 +159,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 "csharp",
                 packageName,
                 "1.0.0",
-                "mgmt",
                 "",
                 "",
                 It.IsAny<CancellationToken>()), Times.Once);
@@ -382,7 +380,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
-                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new PackageReleaseStatusResult
                 {
@@ -396,7 +393,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         {
             mockPackageReleaseStatusService
                 .Setup(x => x.GetApprovalStatusAsync(
-                    It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),

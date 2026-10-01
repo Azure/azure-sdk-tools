@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ApiReviewHub;
 public class ApiReviewHubToolTests
 {
     [Test]
-    public void CreateCommand_RequiresPackageType()
+    public void CreateCommand_AllowsOmittedPackageType()
     {
         var tool = new ApiReviewHubTool(
             Mock.Of<IApiReviewHubService>(),
@@ -21,7 +21,7 @@ public class ApiReviewHubToolTests
         var parseResult = command.Parse(
             "--language python --package-name azure-test --target-branch feature");
 
-        Assert.That(parseResult.Errors.Single().Message, Does.Contain("--package-type"));
+        Assert.That(parseResult.Errors, Is.Empty);
     }
 
     [TestCase("mgmt", "mgmt")]
@@ -47,13 +47,41 @@ public class ApiReviewHubToolTests
         await tool.RequestReviewPullRequest(
             "python",
             "azure-test",
-            packageType,
+            "Azure",
+            "azure-sdk-for-python",
+            "feature",
+            packageType);
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.PackageType, Is.EqualTo(expectedPackageType));
+    }
+
+    [Test]
+    public async Task RequestReviewPullRequest_OmitsPackageTypeWhenNotProvided()
+    {
+        ReviewPullRequestCreationRequest? capturedRequest = null;
+        var service = new Mock<IApiReviewHubService>();
+        service
+            .Setup(x => x.RequestReviewPullRequestAsync(
+                It.IsAny<ReviewPullRequestCreationRequest>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<ReviewPullRequestCreationRequest, string, bool, TimeSpan, CancellationToken>(
+                (request, _, _, _, _) => capturedRequest = request)
+            .ReturnsAsync(new OperationStatus { Status = "succeeded" });
+        var tool = new ApiReviewHubTool(service.Object, new TestLogger<ApiReviewHubTool>());
+
+        await tool.RequestReviewPullRequest(
+            "python",
+            "azure-test",
             "Azure",
             "azure-sdk-for-python",
             "feature");
 
         Assert.That(capturedRequest, Is.Not.Null);
-        Assert.That(capturedRequest!.PackageType, Is.EqualTo(expectedPackageType));
+        Assert.That(capturedRequest!.PackageType, Is.Null);
     }
 
     [Test]
@@ -65,10 +93,10 @@ public class ApiReviewHubToolTests
         var response = await tool.RequestReviewPullRequest(
             "python",
             "azure-test",
-            "unsupported",
             "Azure",
             "azure-sdk-for-python",
-            "feature");
+            "feature",
+            "unsupported");
 
         Assert.That(response.ResponseError, Does.Contain("Unsupported package type 'unsupported'"));
         service.Verify(x => x.RequestReviewPullRequestAsync(

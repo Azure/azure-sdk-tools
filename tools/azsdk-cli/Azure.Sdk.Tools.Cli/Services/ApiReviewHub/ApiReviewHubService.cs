@@ -20,7 +20,6 @@ public interface IApiReviewHubService
         string language,
         string packageName,
         string packageVersion,
-        string packageType,
         string apiHash,
         string repoOwner,
         CancellationToken ct);
@@ -30,7 +29,6 @@ public interface IApiReviewHubService
         string packageName,
         string packageVersion,
         string apiHash,
-        string packageType,
         string repositoryOwner,
         CancellationToken ct,
         bool dryRun = false);
@@ -122,7 +120,6 @@ public class ApiReviewHubService(
         string language,
         string packageName,
         string packageVersion,
-        string packageType,
         string apiHash,
         string repoOwner,
         CancellationToken ct)
@@ -136,8 +133,7 @@ public class ApiReviewHubService(
         {
             $"language={Uri.EscapeDataString(language)}",
             $"packageName={Uri.EscapeDataString(packageName)}",
-            $"version={Uri.EscapeDataString(packageVersion)}",
-            $"packageType={Uri.EscapeDataString(packageType.ToLowerInvariant())}"
+            $"version={Uri.EscapeDataString(packageVersion)}"
         };
         if (!string.IsNullOrWhiteSpace(apiHash))
         {
@@ -160,7 +156,6 @@ public class ApiReviewHubService(
         string packageName,
         string packageVersion,
         string apiHash,
-        string packageType,
         string repositoryOwner,
         CancellationToken ct,
         bool dryRun = false)
@@ -173,7 +168,6 @@ public class ApiReviewHubService(
             PackageName = packageName,
             Version = packageVersion,
             ApiHash = apiHash,
-            PackageType = packageType.ToLowerInvariant(),
             RepoOwner = repositoryOwner,
             ReleasedOn = _timeProvider.GetUtcNow(),
             DryRun = dryRun

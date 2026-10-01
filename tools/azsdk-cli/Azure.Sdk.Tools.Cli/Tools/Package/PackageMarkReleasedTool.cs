@@ -25,7 +25,6 @@ public class PackageMarkReleasedTool(
     private readonly Option<string> languageOption = RequiredOption("--language", "The SDK language.");
     private readonly Option<string> packageNameOption = RequiredOption("--package-name", "The package name.");
     private readonly Option<string> packageVersionOption = RequiredOption("--package-version", "The released package version.");
-    private readonly Option<string> packageTypeOption = CreatePackageTypeOption();
     private readonly Option<string> apiHashOption = new("--api-hash")
     {
         Description = "The API Review Hub hash for the released API artifact."
@@ -46,7 +45,6 @@ public class PackageMarkReleasedTool(
         languageOption,
         packageNameOption,
         packageVersionOption,
-        packageTypeOption,
         apiHashOption,
         repoOwnerOption,
         dryRunOption
@@ -57,7 +55,6 @@ public class PackageMarkReleasedTool(
             parseResult.GetValue(languageOption)!,
             parseResult.GetValue(packageNameOption)!,
             parseResult.GetValue(packageVersionOption)!,
-            parseResult.GetValue(packageTypeOption)!,
             parseResult.GetValue(apiHashOption) ?? string.Empty,
             parseResult.GetValue(repoOwnerOption) ?? string.Empty,
             parseResult.GetValue(dryRunOption),
@@ -67,7 +64,6 @@ public class PackageMarkReleasedTool(
         string language,
         string packageName,
         string packageVersion,
-        string packageType,
         string apiHash,
         string repoOwner,
         bool dryRun = false,
@@ -93,7 +89,7 @@ public class PackageMarkReleasedTool(
             {
                 try
                 {
-                    var result = await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, ApiReviewPackageType.Normalize(packageType), repoOwner, ct, dryRun);
+                    var result = await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, repoOwner, ct, dryRun);
                     reviewHubResponse = JsonSerializer.SerializeToElement(result, responseSerializerOptions);
                     reviewHubSucceeded = true;
                     string reviewHubAction = dryRun ? "Dry run resolved" : "Release request resolved";
@@ -199,17 +195,4 @@ public class PackageMarkReleasedTool(
         Required = true
     };
 
-    private static Option<string> CreatePackageTypeOption()
-    {
-        var option = RequiredOption("--package-type", $"The package SDK type. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Spring and functions are treated as client packages.");
-        option.Validators.Add(result =>
-        {
-            string? value = result.GetValueOrDefault<string>();
-            if (!string.IsNullOrWhiteSpace(value) && !ApiReviewPackageType.SupportedValues.Contains(value, StringComparer.OrdinalIgnoreCase))
-            {
-                result.AddError($"Invalid package type '{value}'. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}.");
-            }
-        });
-        return option;
-    }
 }

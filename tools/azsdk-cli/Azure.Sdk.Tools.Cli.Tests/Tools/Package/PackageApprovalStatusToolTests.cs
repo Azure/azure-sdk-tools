@@ -33,7 +33,7 @@ public class PackageApprovalStatusToolTests
         var command = packageTool.GetCommandInstances().Single();
 
         var parseResult = command.Parse(
-            $"--language {language} --package-name azure-test --package-version 1.0.0 --package-type client");
+            $"--language {language} --package-name azure-test --package-version 1.0.0");
 
         Assert.That(parseResult.Errors, Is.Empty);
     }
@@ -47,7 +47,7 @@ public class PackageApprovalStatusToolTests
         var command = packageTool.GetCommandInstances().Single();
 
         var parseResult = command.Parse(
-            "--language unknown --package-name azure-test --package-version 1.0.0 --package-type client");
+            "--language unknown --package-name azure-test --package-version 1.0.0");
 
         Assert.That(parseResult.Errors.Single().Message, Does.Contain("Invalid language 'unknown'"));
     }
@@ -57,7 +57,7 @@ public class PackageApprovalStatusToolTests
     {
         var releaseStatusService = new Mock<IPackageReleaseStatusService>();
         releaseStatusService
-            .Setup(x => x.GetApprovalStatusAsync(It.IsAny<string>(), "python", "azure-test", "1.0.0", "client", "hash", "", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetApprovalStatusAsync(It.IsAny<string>(), "python", "azure-test", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PackageReleaseStatusResult
             {
                 IsApproved = true,
@@ -82,7 +82,7 @@ public class PackageApprovalStatusToolTests
             });
         var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
 
-        var response = await packageTool.GetApprovalStatus("python", "azure-test", "1.0.0", "client", "hash");
+        var response = await packageTool.GetApprovalStatus("python", "azure-test", "1.0.0", "hash");
 
         Assert.That(response.ToString(), Does.Contain("Approval record ID: approval-record-id"));
         Assert.That(response.Result!.ReviewHub.Approvals![0].Id, Is.EqualTo("approval-record-id"));
@@ -103,58 +103,28 @@ public class PackageApprovalStatusToolTests
                 expectedLanguage,
                 "azure-test",
                 "1.0.0",
-                "client",
                 "",
                 "",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PackageReleaseStatusResult());
         var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
 
-        await packageTool.GetApprovalStatus(language, "azure-test", "1.0.0", "client");
-
-        releaseStatusService.VerifyAll();
-    }
-
-    [TestCase("spring")]
-    [TestCase("functions")]
-    public async Task GetApprovalStatus_MapsNonManagementSdkTypesToClient(string packageType)
-    {
-        var releaseStatusService = new Mock<IPackageReleaseStatusService>();
-        releaseStatusService
-            .Setup(x => x.GetApprovalStatusAsync(
-                It.IsAny<string>(),
-                "python",
-                "azure-test",
-                "1.0.0",
-                "client",
-                "",
-                "",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PackageReleaseStatusResult());
-        var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
-
-        await packageTool.GetApprovalStatus("python", "azure-test", "1.0.0", packageType);
+        await packageTool.GetApprovalStatus(language, "azure-test", "1.0.0");
 
         releaseStatusService.VerifyAll();
     }
 
     [Test]
-    public async Task GetApprovalStatus_RejectsUnsupportedPackageType()
+    public void GetApprovalStatus_CommandRejectsPackageType()
     {
-        var releaseStatusService = new Mock<IPackageReleaseStatusService>();
-        var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
+        var packageTool = new PackageApprovalStatusTool(
+            Mock.Of<IPackageReleaseStatusService>(),
+            new TestLogger<PackageApprovalStatusTool>());
+        var command = packageTool.GetCommandInstances().Single();
 
-        var response = await packageTool.GetApprovalStatus("python", "azure-test", "1.0.0", "unsupported");
+        var parseResult = command.Parse(
+            "--language python --package-name azure-test --package-version 1.0.0 --package-type client");
 
-        Assert.That(response.ResponseError, Does.Contain("Unsupported package type 'unsupported'"));
-        releaseStatusService.Verify(x => x.GetApprovalStatusAsync(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(parseResult.Errors.Any(error => error.Message.Contains("Unrecognized command or argument '--package-type'", StringComparison.Ordinal)), Is.True);
     }
 }

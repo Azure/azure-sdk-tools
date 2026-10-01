@@ -1,17 +1,11 @@
 # Release History
 
-## 0.6.51 (Unreleased)
+## 0.6.51 (2026-10-01)
 
 ### Features Added
 
 - Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
 - Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
-
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
 
 ## 0.6.50 (2026-09-30)
 

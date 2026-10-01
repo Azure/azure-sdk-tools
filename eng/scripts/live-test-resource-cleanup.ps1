@@ -993,7 +993,7 @@ function Invoke-PreDeleteResourceCleanup() {
 # Emits a single structured line per subscription per run. Azure DevOps build logs are
 # ingested into the Pipelines Kusto database by pipeline-witness, where this line is parsed to
 # drive the live test resource cleanup dashboard. Keep the marker and property names in sync with
-# tools/pipeline-witness/infrastructure/kusto/tables/Dashboards/LiveTestResourceGroupSnapshot.kql
+# tools/pipeline-witness/infrastructure/kusto/views/LiveTestResourceGroupSnapshot.kql
 function WriteCleanupMetrics() {
   [CmdletBinding()]
   param(

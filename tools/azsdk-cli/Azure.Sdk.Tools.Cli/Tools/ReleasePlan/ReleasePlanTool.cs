@@ -538,6 +538,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             var specReadiness = await CheckApiReadyForSDKGeneration(releasePlan.APISpecProjectPath, prNumber, releasePlan.WorkItemId, ct);
                             if (specReadiness.Status == "Success")
                             {
+                                if (!releasePlan.IsSpecApproved)
+                                {
+                                    // The approval write changes the revision used to confirm the next update.
+                                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct)
+                                        ?? throw new InvalidOperationException("Failed to refresh the release plan after updating API approval.");
+                                    response.ReleasePlanDetails = releasePlan;
+                                }
                                 releasePlan.IsSpecApproved = true;
                                 // API spec is approved/merged, so the next step is to generate the SDK.
                                 // Surface the pipeline-based generation tool explicitly so the agent does
@@ -977,6 +984,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         var specReadiness = await CheckApiReadyForSDKGeneration(specProject, prNumber, releasePlan.WorkItemId, ct);
                         if (specReadiness.Status == "Success")
                         {
+                            if (!releasePlan.IsSpecApproved)
+                            {
+                                releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct)
+                                    ?? throw new InvalidOperationException("Failed to refresh the release plan after updating API approval.");
+                            }
                             releasePlan.IsSpecApproved = true;
                         }
 
@@ -1890,7 +1902,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                     if (releasePlan != null)
                     {
-                        await devOpsService.UpdateApiSpecStatusAsync(releasePlan.WorkItemId, "Approved", ct);
+                        if (!releasePlan.IsSpecApproved)
+                        {
+                            await devOpsService.UpdateApiSpecStatusAsync(releasePlan.WorkItemId, "Approved", ct);
+                        }
                     }
                     else
                     {

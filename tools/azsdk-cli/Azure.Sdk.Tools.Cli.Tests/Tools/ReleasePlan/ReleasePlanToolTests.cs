@@ -781,11 +781,40 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Get_Release_Plan_by_spec_pull_request_url()
         {
-            var releaseplan = await releasePlanTool.GetReleasePlan(specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446");
+            var (tool, service, plan) = TargetTool();
+            plan.APISpecProjectPath = LocalProject;
+            var approvedPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = plan.WorkItemId, ReleasePlanId = plan.ReleasePlanId,
+                APISpecProjectPath = LocalProject, ActiveSpecPullRequest = SpecPr,
+                TargetRevision = "100:2:200:1", SpecCommitSHA = plan.SpecCommitSHA,
+                SpecAPIVersion = plan.SpecAPIVersion, SDKReleaseType = plan.SDKReleaseType,
+                IsSpecApproved = true
+            };
+            var currentPlan = plan;
+            service.Setup(s => s.GetReleasePlanAsync(SpecPr, ApiReleaseType.Unknown, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => currentPlan);
+            service.Setup(s => s.ResolveReleasePlanByIdAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => currentPlan);
+            service.Setup(s => s.GetReleasePlanForWorkItemAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => currentPlan);
+            service.Setup(s => s.UpdateApiSpecStatusAsync(100, "Approved", It.IsAny<CancellationToken>()))
+                .Callback(() => currentPlan = approvedPlan).ReturnsAsync(true);
+            Mock.Get(gitHubService).Setup(g => g.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(TargetPullRequest(merged: true));
+
+            var releaseplan = await tool.GetReleasePlan(specPullRequestUrl: SpecPr);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError);
             Assert.IsNotNull(releaseplan.ReleasePlanDetails);
             Assert.That(releaseplan.Message, Does.Contain("Successfully retrieved release plan"));
+            Assert.That(releaseplan.ReleasePlanDetails, Is.SameAs(approvedPlan));
+            Assert.That(releaseplan.ReleasePlanDetails!.TargetRevision, Is.EqualTo("100:2:200:1"));
+
+            var repeated = await tool.GetReleasePlan(specPullRequestUrl: SpecPr);
+            Assert.That(repeated.ResponseError, Is.Null);
+            Assert.That(repeated.ReleasePlanDetails!.TargetRevision, Is.EqualTo("100:2:200:1"));
+            service.Verify(s => s.UpdateApiSpecStatusAsync(100, "Approved", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase("work-item")]
@@ -2129,16 +2158,45 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_UpdateReleasePlan_with_work_item_id_success()
         {
-            var result = await releasePlanTool.UpdateReleasePlan(
-                typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+            var (tool, service, plan) = TargetTool();
+            ReleasePlanWorkItem Snapshot(string revision, bool approved) => new()
+            {
+                WorkItemId = plan.WorkItemId, ReleasePlanId = plan.ReleasePlanId,
+                APISpecProjectPath = ProjectPath, ActiveSpecPullRequest = SpecPr,
+                TargetRevision = revision, SpecCommitSHA = OtherSha,
+                SpecAPIVersion = plan.SpecAPIVersion, SDKReleaseType = plan.SDKReleaseType,
+                IsSpecApproved = approved
+            };
+            var savedPlan = Snapshot("100:3:200:2", false);
+            var approvedPlan = Snapshot("100:4:200:2", true);
+            var currentPlan = plan;
+            service.Setup(s => s.ResolveReleasePlanByIdAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => currentPlan);
+            service.Setup(s => s.GetReleasePlanForWorkItemAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => currentPlan);
+            service.Setup(s => s.UpdateSpecPullRequestAsync(100, It.IsAny<ReleasePlanSpecTarget>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .Callback(() => currentPlan = savedPlan).ReturnsAsync(true);
+            service.Setup(s => s.UpdateApiSpecStatusAsync(100, "Approved", It.IsAny<CancellationToken>()))
+                .Callback(() => currentPlan = approvedPlan).ReturnsAsync(true);
+            Mock.Get(gitHubService).Setup(g => g.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(TargetPullRequest(merged: true));
+            Mock.Get(typeSpecHelper).Setup(t => t.IsValidTypeSpecProjectPath(ProjectPath)).Returns(true);
+            Mock.Get(typeSpecHelper).Setup(t => t.GetSpecRepoRootPath(ProjectPath)).Returns("TypeSpecTestData");
+            Mock.Get(typeSpecHelper).Setup(t => t.IsTypeSpecProjectForMgmtPlane(ProjectPath)).Returns(true);
+
+            var result = await tool.UpdateReleasePlan(
+                typeSpecProjectPath: LocalProject,
                 sdkReleaseType: "beta",
-                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                workItemId: 100, specCommitSha: ConfirmedSha, confirmTarget: true, expectedTargetRevision: "100:1:2:1");
+                specPullRequestUrl: SpecPr,
+                workItemId: 100, specCommitSha: OtherSha, confirmTarget: true, expectedTargetRevision: plan.TargetRevision);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
             Assert.IsNotNull(result.ReleasePlanDetails);
             Assert.That(result.TypeSpecProject, Does.Contain("specification/testcontoso/Contoso.Management"));
+            Assert.That(result.ReleasePlanDetails, Is.SameAs(approvedPlan));
+            Assert.That(result.ReleasePlanDetails!.TargetRevision, Is.EqualTo("100:4:200:2"));
+            service.Verify(s => s.UpdateApiSpecStatusAsync(100, "Approved", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]

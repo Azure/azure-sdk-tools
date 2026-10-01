@@ -14,6 +14,7 @@
 
 - Store the spec SHA in the existing parent `Custom.SpecCommitSHA` field. Revision-guarded updates clear the pin before changing the child PR/version and publish it with metadata last; partial failures leave the plan unpinned instead of publishing mismatched inputs.
 - Reuse same-project and same-PR legacy plans with an unset API version rather than creating duplicates; their target remains unchanged until explicitly updated.
+- Return the current release-plan revision after updating API approval, and avoid rewriting approval on later reads.
 
 ### Other Changes
 

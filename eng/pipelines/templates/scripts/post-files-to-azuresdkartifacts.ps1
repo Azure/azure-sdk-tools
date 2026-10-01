@@ -22,7 +22,7 @@ $filesForPublish = Get-ChildItem -Path $SearchPath -Include "$FileFilter"
 
 $releaseId = GetReleaseId -ReleaseName $TargetRelease
 
-$context = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
+$context = New-AzStorageContext -StorageAccountName "$StorageAccountName" -SasToken "$env:AZURESDKARTIFACTS_SAS_TOKEN"
 
 foreach ($artifact in $filesForPublish) {
    $fileName = Split-Path -Path $artifact -Leaf

@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.47.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.50.
 
 ## Tools list
 
@@ -20,7 +20,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_create_pull_request |  | Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch. |
 | azsdk_create_release_plan | `azsdk release-plan create` | Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available. |
 | azsdk_create_service_label |  | Creates a pull request to add a new service label |
-| azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (C# and Java), builds, and returns success/failure with build result. |
+| azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies customizations and validates regeneration/build. CustomCode supports maxAttempts (1..10, default 1) in one retained conversation; returns attemptsUsed and final failure diagnostics in the existing response. |
 | azsdk_engsys_codeowner_add_label_owner |  | Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. A 3-segment path (e.g. sdk/<service>/<package>) is rejected because it targets a package directory; add owners to the package by name instead, or set force=true to create the path anyway. |
 | azsdk_engsys_codeowner_add_package_label |  | Add PR label(s) to a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_add_package_owner |  | Add source owner(s) to a package in CODEOWNERS work items. |
@@ -51,7 +51,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_package_detect_breaking_change | `azsdk pkg detect-breaking-change` | Detects breaking changes in the SDK. |
 | azsdk_package_generate_code | `azsdk pkg generate` | Generate SDK code locally or run code generation for a package from TypeSpec. Creates client library code for Azure services. Runs locally, not via pipeline. |
 | azsdk_package_generate_samples |  | Generates sample code for a specified package based on a prompt describing sample scenarios. |
-| azsdk_package_get_approval_status |  | Check API review release approval status using APIView and API Review Hub. |
+| azsdk_package_get_approval_status |  | Check API review release approval status using APIView and API Review Hub. Common language aliases are normalized; ask the user to select a language when the input is unsupported or ambiguous. |
 | azsdk_package_pack | `azsdk pkg pack` | Create distributable artifacts for the specified SDK package. |
 | azsdk_package_run_check | `azsdk pkg validate` | Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. |
 | azsdk_package_run_tests | `azsdk pkg test run` | Run tests for the specified SDK package. Provide package path. |
@@ -77,6 +77,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk apiview get-content` | Get content by APIView URL |
 |  | `azsdk release-plan update-release-status` |  |
 |  | `azsdk release-plan list-overdue` |  |
+|  | `azsdk release-plan abandon-overdue` | Abandon eligible inactive plans after the grace period. Use `--dry-run` to preview eligible plans and reasons without updates or notifications. |
 |  | `azsdk quokka` |  |
 |  | `azsdk pkg mark-released` | Mark a package as released in API Review Hub and APIView |
 |  | `azsdk pkg get-approval-status` | Check API review release approval status using APIView and API Review Hub |

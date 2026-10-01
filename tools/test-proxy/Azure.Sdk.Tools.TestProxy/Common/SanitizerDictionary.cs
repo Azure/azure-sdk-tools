@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -71,42 +73,42 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         "AZSDK0000"
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.SharedAccessKey(), groupForReplace: "key"),
                         "AZSDK1000"
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;\\\"]+)", value: BASE64ZERO, groupForReplace: "key"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.AccountKey(), value: BASE64ZERO, groupForReplace: "key"),
                         "AZSDK1001"
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.AccessKey(), groupForReplace: "key"),
                         "AZSDK1002"
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.AccessKey2(), groupForReplace: "key"),
                         "AZSDK1003"
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.Secret(), groupForReplace: "key"),
                         "AZSDK1004"
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "common/userrealm/(?<realm>[^/\\.]+)", groupForReplace: "realm"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.UserRealm(), groupForReplace: "realm"),
                         "AZSDK1005",
                         "ACS Identity leverages these strings to store identity information."
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "/identities/(?<realm>[^/?]+)", groupForReplace: "realm"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.Identities(), groupForReplace: "realm"),
                         "AZSDK1006",
                         "ACS Identity leverages these strings to store identity information."
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "(?:[?&](sig|sv)=)(?<secret>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "secret"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.SasToken(), groupForReplace: "secret"),
                         "AZSDK1007",
                         "Common SAS URL Sanitizer. Applies to all headers, URIs, and text bodies."
                     ),
                     new RegisteredSanitizer(
-                        new GeneralRegexSanitizer(regex: "token=(?<token>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "token"),
+                        new GeneralRegexSanitizer(regex: SharedRegexes.Token(), groupForReplace: "token"),
                         "AZSDK1008"
                     ),
                     #endregion
@@ -238,51 +240,51 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     #endregion
                     #region BodyRegex
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "cid"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.ClientId(), groupForReplace: "cid"),
                         "AZSDK3000"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "secret"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.ClientSecret(), groupForReplace: "secret"),
                         "AZSDK3001"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "secret"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.ClientAssertion(), groupForReplace: "secret"),
                         "AZSDK3002"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.PrivateKey(), groupForReplace: "cert"),
                         "AZSDK3004"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<Value>)(?<group>.+)(?:</Value>)", groupForReplace: "group", value: BASE64ZERO),
+                        new BodyRegexSanitizer(regex: SharedRegexes.UserDelegationKeyValue(), groupForReplace: "group", value: BASE64ZERO),
                         "AZSDK3005"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<SignedTid>)(?<group>.+)(?:</SignedTid>)", groupForReplace: "group", value: EMPTYGUID),
+                        new BodyRegexSanitizer(regex: SharedRegexes.UserDelegationKeySignedTid(), groupForReplace: "group", value: EMPTYGUID),
                         "AZSDK3006"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<SignedOid>)(?<group>.+)(?:</SignedOid>)", groupForReplace: "group", value: EMPTYGUID),
+                        new BodyRegexSanitizer(regex: SharedRegexes.UserDelegationKeySignedOid(), groupForReplace: "group", value: EMPTYGUID),
                         "AZSDK3007"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.+?)(?:;)", groupForReplace: "pwd"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.Password(), groupForReplace: "pwd"),
                         "AZSDK3008"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.+?)(?:;)", groupForReplace: "id"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.UserId(), groupForReplace: "id"),
                         "AZSDK3009"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.+)(?:</PrimaryKey>)", groupForReplace: "key"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.PrimaryKey(), groupForReplace: "key"),
                         "AZSDK3010"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.+)(?:</SecondaryKey>)", groupForReplace: "key"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.SecondaryKey(), groupForReplace: "key"),
                         "AZSDK3011"
                     ),
                     new RegisteredSanitizer(
-                        new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
+                        new BodyRegexSanitizer(regex: SharedRegexes.ClientIp(), groupForReplace: "secret"),
                         "AZSDK3012"
                     ),
                     #endregion
@@ -674,11 +676,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     #endregion
                     #region UriRegex
                     new RegisteredSanitizer(
-                        new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
+                        new UriRegexSanitizer(regex: SharedRegexes.Sig(), groupForReplace: "sig"),
                         "AZSDK4000"
                     ),
                     new RegisteredSanitizer(
-                        new UriRegexSanitizer(regex: "(?<=http://|https://)(?<host>[^/?\\.]+)", groupForReplace: "host"),
+                        new UriRegexSanitizer(regex: SharedRegexes.Host(), groupForReplace: "host"),
                         "AZSDK4001"
                     ),
                     #endregion

@@ -8,7 +8,9 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Microsoft.VisualStudio.Services.Common;
 using Moq;
+using DevOpsJsonPatchDocument = Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
@@ -25,6 +27,167 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection = new TestDevOpsConnection();
             _logger = new TestLogger<DevOpsService>();
             _devOpsService = new DevOpsService(_logger, _connection);
+        }
+
+        [TestCase("January 2020")]
+        [TestCase("Jan 2020")]
+        public async Task ListOverdueReleasePlansAsync_PrivatePreviewWithoutSpecChild_IsMissing(string targetMonth)
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = targetMonth;
+            _connection.AddWorkItemToQuery(plan);
+
+            var result = await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None);
+
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].ApiReleaseType, Is.EqualTo(ApiReleaseType.PrivatePreview));
+            Assert.That(result[0].ActiveSpecPullRequest, Is.Empty);
+        }
+
+        [Test]
+        public void ListOverdueReleasePlansAsync_UnreadablePrivateSpecChild_DoesNotBecomeMissing()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = "January 2020";
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+
+            var error = Assert.ThrowsAsync<Exception>(async () =>
+                await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None));
+
+            Assert.That(error!.GetBaseException().Message, Does.Contain("200"));
+            Assert.That(error.Message, Does.Contain("Work item 200 not found"));
+            Assert.That(error.Message, Does.Not.Contain("{ex}"));
+        }
+
+        [Test]
+        public async Task ListOverdueReleasePlansAsync_MapsPrivateSpecPullRequest()
+        {
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs-pr/pull/42";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Rev = 7;
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = "January 2020";
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, specPr, "New"));
+
+            var result = await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None);
+
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].ActiveSpecPullRequest, Is.EqualTo(specPr));
+            Assert.That(result[0].Revision, Is.EqualTo(7));
+        }
+
+        [Test]
+        public async Task UpdateWorkItemAsync_WithExpectedRevision_TestsRevisionBeforeUpdatingState()
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Rev = 7;
+            _connection.AddWorkItem(plan);
+
+            var result = await _devOpsService.UpdateWorkItemAsync(100,
+                new Dictionary<string, string> { ["System.State"] = "Abandoned" }, 7, CancellationToken.None);
+
+            var patch = _connection.LastCapturedPatchDocument!;
+            Assert.That(patch, Has.Count.EqualTo(2));
+            Assert.That(patch[0].Operation, Is.EqualTo(Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test));
+            Assert.That(patch[0].Path, Is.EqualTo("/rev"));
+            Assert.That(patch[0].Value, Is.EqualTo(7));
+            Assert.That(patch[1].Path, Is.EqualTo("/fields/System.State"));
+            Assert.That(patch[1].Value, Is.EqualTo("Abandoned"));
+            Assert.That(result.Fields["System.State"], Is.EqualTo("Abandoned"));
+        }
+
+        [TestCase("Custom.SDKReleasemonth", "December 2026")]
+        [TestCase("Custom.ReleaseStatusForPython", "Released")]
+        [TestCase("System.State", "Finished")]
+        public void UpdateWorkItemAsync_ChangedRevision_RejectsAbandonmentWithoutRetry(string changedField, string value)
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Fields[changedField] = value;
+            plan.Rev = 8; // The owner or release automation changed the plan after revision 7 was scanned.
+            _connection.AddWorkItem(plan);
+
+            Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await _devOpsService.UpdateWorkItemAsync(100,
+                    new Dictionary<string, string> { ["System.State"] = "Abandoned" }, 7, CancellationToken.None));
+
+            Assert.That(plan.Fields[changedField], Is.EqualTo(value));
+            Assert.That(plan.Fields["System.State"], Is.Not.EqualTo("Abandoned"));
+            Assert.That(_connection.WorkItemUpdateCount, Is.EqualTo(1));
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void UpdateWorkItemAsync_InvalidExpectedRevision_DoesNotSendPatch(int revision)
+        {
+            Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+                await _devOpsService.UpdateWorkItemAsync(100,
+                    new Dictionary<string, string> { ["System.State"] = "Abandoned" }, revision, CancellationToken.None));
+
+            Assert.That(_connection.LastCapturedPatchDocument, Is.Null);
+                }
+
+        [Test]
+        public async Task EnsureReleasePlanAutomationRelation_AddsRelatedLinkWithContextAndPreservesOtherLinks()
+        {
+            var previous = new WorkItem { Id = 100, Url = "https://dev.azure.com/test/_apis/wit/workItems/100" };
+            var pending = new WorkItem
+            {
+                Id = 200,
+                Relations = [new WorkItemRelation { Rel = "System.LinkTypes.Related", Url = "https://dev.azure.com/test/_apis/wit/workItems/300" }]
+            };
+            _connection.AddWorkItem(previous);
+            _connection.AddWorkItem(pending);
+
+            await _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, CancellationToken.None);
+            await _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, CancellationToken.None);
+
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+            Assert.That(_connection.CapturedPatches[0].WorkItemId, Is.EqualTo(200));
+            var patch = _connection.CapturedPatches[0].Document.Single();
+            Assert.That(patch.Path, Is.EqualTo("/relations/-"));
+            var relation = (WorkItemRelation)patch.Value;
+            Assert.That(relation.Rel, Is.EqualTo("System.LinkTypes.Related"));
+            Assert.That(relation.Url, Is.EqualTo(previous.Url));
+            Assert.That(relation.Attributes["comment"].ToString(), Does.Contain("Automatic SDK generation"));
+            Assert.That(pending.Relations, Has.Count.EqualTo(2));
+        }
+
+        [Test]
+        public async Task EnsureReleasePlanAutomationRelation_ConcurrentInsert_IsSuccessful()
+        {
+            _connection.AddWorkItem(new WorkItem { Id = 100, Url = "https://dev.azure.com/test/_apis/wit/workItems/100" });
+            _connection.AddWorkItem(new WorkItem { Id = 200, Relations = [] });
+            _connection.FailNextRelationUpdate(addRelationBeforeFailure: true);
+
+            await _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, CancellationToken.None);
+
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void EnsureReleasePlanAutomationRelation_UpdateFailureWithoutLink_Propagates()
+        {
+            _connection.AddWorkItem(new WorkItem { Id = 100, Url = "https://dev.azure.com/test/_apis/wit/workItems/100" });
+            _connection.AddWorkItem(new WorkItem { Id = 200, Relations = [] });
+            _connection.FailNextRelationUpdate(addRelationBeforeFailure: false);
+
+            Assert.ThrowsAsync<VssServiceException>(() =>
+                _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, CancellationToken.None));
+        }
+
+        [Test]
+        public void EnsureReleasePlanAutomationRelation_Cancellation_DoesNotUpdate()
+        {
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            Assert.ThrowsAsync<TaskCanceledException>(() =>
+                _devOpsService.EnsureReleasePlanAutomationRelationAsync(200, 100, cts.Token));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
         }
 
         #region GetReleasePlanAsync(string pullRequestUrl) Tests
@@ -414,6 +577,91 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region UpdateSpecPullRequestAsync Tests
+
+        [TestCase("Not applicable", "")]
+        [TestCase("Pending", "")]
+        [TestCase("Failed", "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=90")]
+        [TestCase("Completed", "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=90")]
+        [TestCase("In progress", "")]
+        [TestCase("In progress", " \t")]
+        public async Task UpdateSpecPullRequestAsync_NewSpec_MarksWaitingLanguagesNotApplicable(string generationStatus, string pipelineUrl)
+        {
+            const string oldSpec = "https://github.com/Azure/azure-rest-api-specs/pull/123";
+            const string newSpec = "https://github.com/Azure/azure-rest-api-specs/pull/456";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var apiSpec = CreateApiSpecWorkItem(200, oldSpec, "Active");
+            apiSpec.Fields["Custom.RESTAPIReviews"] = $"<a href=\"{oldSpec}\">{oldSpec}</a>";
+            string[] languages = ["Dotnet", "Java", "JavaScript", "Go", "Python"];
+            foreach (var language in languages)
+            {
+                plan.Fields[$"Custom.GenerationStatusFor{language}"] = generationStatus;
+                plan.Fields[$"Custom.SDKGenerationPipelineFor{language}"] = pipelineUrl;
+                plan.Fields[$"Custom.SDKPullRequestFor{language}"] = "existing-sdk-pr";
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(apiSpec);
+
+            var result = await _devOpsService.UpdateSpecPullRequestAsync(100, newSpec, CancellationToken.None);
+
+            Assert.That(result, Is.True);
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(2));
+            var specPatch = _connection.CapturedPatches.Single(p => p.WorkItemId == 200).Document;
+            Assert.That(specPatch.Single(op => op.Path == "/fields/Custom.ActiveSpecPullRequestUrl").Value, Is.EqualTo(newSpec));
+            Assert.That(specPatch.Single(op => op.Path == "/fields/Custom.RESTAPIReviews").Value,
+                Is.EqualTo($"<a href=\"{oldSpec}\">{oldSpec}</a><br><a href=\"{newSpec}\">{newSpec}</a>"));
+            var statusPatch = _connection.CapturedPatches.Single(p => p.WorkItemId == 100).Document;
+            Assert.That(statusPatch, Has.Count.EqualTo(languages.Length));
+            foreach (var language in languages)
+            {
+                Assert.That(statusPatch.Single(op => op.Path == $"/fields/Custom.GenerationStatusFor{language}").Value, Is.EqualTo("Not applicable"));
+            }
+            Assert.That(statusPatch.All(op => op.Path.StartsWith("/fields/Custom.GenerationStatusFor", StringComparison.Ordinal)), Is.True,
+                "Linking a spec must not remove pipeline or SDK PR links, or change release/exclusion state.");
+        }
+
+        [TestCase("In progress")]
+        [TestCase("IN PROGRESS")]
+        public async Task UpdateSpecPullRequestAsync_PreservesRecordedInProgressRun(string generationStatus)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.GenerationStatusForJava"] = generationStatus;
+            plan.Fields["Custom.SDKGenerationPipelineForJava"] = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99";
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
+
+            var result = await _devOpsService.UpdateSpecPullRequestAsync(
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", CancellationToken.None);
+
+            Assert.That(result, Is.True);
+            var patch = _connection.CapturedPatches.Single(p => p.WorkItemId == 100).Document;
+            Assert.That(patch, Has.Count.EqualTo(4));
+            Assert.That(patch.Any(op => op.Path == "/fields/Custom.GenerationStatusForJava"), Is.False);
+            Assert.That(patch.All(op => Equals(op.Value, "Not applicable")), Is.True);
+        }
+
+        [Test]
+        public async Task UpdateSpecPullRequestAsync_AllLanguagesHaveRecordedRuns_DoesNotSendEmptyStatusPatch()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            foreach (var language in new[] { "Dotnet", "Java", "JavaScript", "Go", "Python" })
+            {
+                plan.Fields[$"Custom.GenerationStatusFor{language}"] = "In progress";
+                plan.Fields[$"Custom.SDKGenerationPipelineFor{language}"] = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99";
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
+
+            var result = await _devOpsService.UpdateSpecPullRequestAsync(
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", CancellationToken.None);
+
+            Assert.That(result, Is.True);
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+            Assert.That(_connection.CapturedPatches[0].WorkItemId, Is.EqualTo(200));
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private WorkItem CreateReleasePlanWorkItemWithReleasePlanId(int workItemId, int releasePlanId, string state)
@@ -611,6 +859,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         [TestCase("python", "Python")]
         [TestCase(".net", "Dotnet")]
+        [TestCase("csharp", "Dotnet")]
         [TestCase("javascript", "JavaScript")]
         [TestCase("java", "Java")]
         [TestCase("go", "Go")]
@@ -1044,6 +1293,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument => _workItemClient.LastCapturedPatchDocument;
 
+            public int WorkItemUpdateCount => _workItemClient.UpdateCount;
+
+            public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches => _workItemClient.CapturedPatches;
+
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
@@ -1088,6 +1341,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             {
                 _workItemClient.CancelBulkFetch = true;
             }
+
+            public void FailNextRelationUpdate(bool addRelationBeforeFailure)
+            {
+                _workItemClient.FailRelationUpdate = true;
+                _workItemClient.AddRelationBeforeFailure = addRelationBeforeFailure;
+            }
         }
 
         private class TestWorkItemClient : WorkItemTrackingHttpClient
@@ -1099,9 +1358,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument { get; private set; }
 
+            public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches { get; } = [];
+
             public bool CancelQuery { get; set; }
 
             public bool CancelBulkFetch { get; set; }
+            public bool FailRelationUpdate { get; set; }
+            public bool AddRelationBeforeFailure { get; set; }
+
+            public int UpdateCount { get; private set; }
 
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
@@ -1210,8 +1475,38 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 object? userState = null,
                 CancellationToken cancellationToken = default)
             {
+                UpdateCount++;
                 LastCapturedPatchDocument = document;
+                CapturedPatches.Add((id, document));
                 _workItems.TryGetValue(id, out var workItem);
+                var revisionTest = document.FirstOrDefault(operation => operation.Path == "/rev"
+                    && operation.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test);
+                if (revisionTest != null)
+                {
+                    if (workItem == null || workItem.Rev != (int)revisionTest.Value)
+                    {
+                        throw new InvalidOperationException("Work item revision conflict.");
+                    }
+                    foreach (var operation in document.Where(operation => operation.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add
+                        && operation.Path.StartsWith("/fields/", StringComparison.Ordinal)))
+                    {
+                        workItem.Fields[operation.Path["/fields/".Length..]] = operation.Value;
+                    }
+                    workItem.Rev++;
+                }
+                foreach (var operation in document.Where(operation => operation.Path == "/relations/-"))
+                {
+                    if (workItem != null && (!FailRelationUpdate || AddRelationBeforeFailure))
+                    {
+                        workItem.Relations ??= new List<WorkItemRelation>();
+                        workItem.Relations.Add((WorkItemRelation)operation.Value);
+                    }
+                    if (FailRelationUpdate)
+                    {
+                        FailRelationUpdate = false;
+                        throw new VssServiceException("Relation update failed");
+                    }
+                }
                 return Task.FromResult(workItem ?? new WorkItem { Id = id });
             }
 

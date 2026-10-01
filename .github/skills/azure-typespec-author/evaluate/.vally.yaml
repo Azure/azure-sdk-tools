@@ -100,6 +100,12 @@ environments:
   #         AZSDKTOOLS_COLLECT_TELEMETRY: "false"
 
 suites:
+  naming-forced:
+    evals: ["evals/naming/*.eval.yaml"]
+    filter: { suite: naming, mode: forced }
+  naming-trigger:
+    evals: ["evals/naming/*.eval.yaml"]
+    filter: { suite: naming, mode: trigger }
   versioning-forced:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: versioning, mode: forced }
@@ -155,10 +161,10 @@ suites:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: dataplane, mode: no-skill }
   forced:
-    evals: ["evals/*.eval.yaml"]
+    evals: ["evals/*.eval.yaml", "evals/naming/*.eval.yaml"]
     filter: { mode: forced }
   trigger:
-    evals: ["evals/*.eval.yaml"]
+    evals: ["evals/*.eval.yaml", "evals/naming/*.eval.yaml"]
     filter: { mode: trigger }
   no-skill:
     evals: ["evals/*.eval.yaml"]

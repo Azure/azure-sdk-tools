@@ -1,13 +1,16 @@
 name: azure-typespec-author-routing-eval
 description: Authoring boundaries with shared naming available
 type: capability
+area: naming
 environment: &skills
   skills:
-    - ..
-    - ../../azsdk-common-typespec-naming
+    - ../../..
+    - ../../../../azsdk-common-typespec-naming
 tags:
   area: azure-typespec-author
   type: ci-gate
+  suite: naming
+  mode: trigger
 defaults:
   runs: 1
   timeout: "120s"
@@ -50,9 +53,9 @@ stimuli:
   - name: anti-trigger-readonly-typespec-assessment
     environment:
       skills:
-        - ..
-        - ../../azsdk-common-typespec-naming
-        - ../../azure-typespec-assessment
+        - ../../..
+        - ../../../../azsdk-common-typespec-naming
+        - ../../../../azure-typespec-assessment
     prompt: |
       Assess the TypeSpec diff for specification/widget against origin/main for REST breaking changes.
       For now, identify and invoke the applicable skill; do not run the assessment or modify TypeSpec.
@@ -64,9 +67,9 @@ stimuli:
   - name: anti-trigger-generate-csharp-sdk
     environment:
       skills:
-        - ..
-        - ../../azsdk-common-typespec-naming
-        - ../../azsdk-common-generate-sdk-locally
+        - ../../..
+        - ../../../../azsdk-common-typespec-naming
+        - ../../../../azsdk-common-generate-sdk-locally
     prompt: |
       Generate the C# SDK locally from specification/widget/resource-manager/Microsoft.Widget
       into sdk/widget/Azure.ResourceManager.Widget. The TypeSpec is ready.

@@ -13,7 +13,6 @@ paths:
     - eval-authoring-workflow/evals/
     - azsdk-common-sdk-breaking-change/evals/
     - code-review/evals/
-    - azure-typespec-author/evals/
     - azsdk-common-typespec-naming/evals/
   results: results/
   evalFilenames: ["eval.yaml", "*.eval.yaml"]

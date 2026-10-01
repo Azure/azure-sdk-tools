@@ -4,9 +4,8 @@
 
 ## 2.1 General Intake (All Cases)
 
-1. For SDK naming requests or new/changed names with known SDK targets, invoke `azsdk-common-typespec-naming` in guidance mode with the service type, target languages and relevant declarations. It selects shared profiles and resolves affected naming questions. Otherwise record SDK naming as not assessed; do not block unrelated TypeSpec work on language selection.
-2. Run [agentic search](agentic-search.md) for the remaining TypeSpec changes using the Step 1 result and the user's request. The shared naming skill grounds supported SDK naming rules.
-3. Identify the case from the table below and gather more information if case matches. If no case matches, skip Step 2.2.
+1. Run [agentic search](agentic-search.md) using the Step 1 result and the user's request.
+2. Identify the case from the table below and gather more information if case matches. If no case matches, skip Step 2.2.
 
 | Case | Name                       | Description                                            | Service Type     |
 | ---- | -------------------------- | ------------------------------------------------------ | ---------------- |
@@ -71,6 +70,4 @@ Case:           [Name]
 Target Version: [version]
 Changes:        [summary]
 Defaults:       [applied defaults]
-SDK targets:    [confirmed languages / unknown]
-Naming coverage: [shared skill's selected profiles / not covered / not assessed]
 ```

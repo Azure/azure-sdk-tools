@@ -70,8 +70,10 @@ stimuli:
       Confirmed bounded evidence: baseline origin/main, new unshipped C# ARM Widget SDK,
       added WidgetProperties.enabled boolean, emitted C# name Enabled, no clientName override.
       Only inspect bundled skill guidance and these facts. Do not fetch docs, edit, compile
-      or generate, even though a customization tool is available. Return JSON "sdkName",
-      "wireName", and "applied" for the recommendation.
+      or generate, even though a customization tool is available. Return the supplementary
+      SDK naming review in the format prescribed by the assessment's finalization
+      reference. The main assessment.json and assessment.html already exist outside
+      this bounded task; do not modify them or fabricate a served report link.
     constraints: *bounded
     graders:
       - type: skill-invocation
@@ -81,11 +83,83 @@ stimuli:
       - *readOnly
       - type: output-matches
         config:
-          pattern: '"sdkName"\s*:\s*"IsEnabled"'
+          pattern: '(?is)supplementary SDK naming review'
       - type: output-matches
         config:
-          pattern: '"wireName"\s*:\s*"enabled"'
-      - *notApplied
+          pattern: '(?is)WidgetProperties\.enabled[\s\S]{0,400}IsEnabled'
+      - type: output-matches
+        config:
+          pattern: '(?is)(coverage|profile)[\s\S]{0,100}(C#|csharp|\.NET)[\s\S]{0,30}ARM'
+      - type: output-matches
+        config:
+          pattern: '(?is)(wire[\s\S]{0,50}enabled|enabled[\s\S]{0,50}wire)'
+      - type: output-matches
+        config:
+          pattern: '(?is)unshipped|never.shipped'
+      - type: output-matches
+        config:
+          pattern: '(?is)not applied|no (?:changes|edits|customizations)[\s\S]{0,25}(made|applied)'
+      - type: output-matches
+        config:
+          pattern: '(?is)unverified|not (?:generated|verified)'
+      - type: output-matches
+        config:
+          pattern: '(?is)separate[\s\S]{0,100}(assessment|report)'
+
+  - name: assessment-reports-unsupported-profile
+    prompt: |
+      Invoke azure-typespec-assessment for its supplementary SDK naming review only,
+      not preparation or a fresh full assessment. Bounded evidence: a new unshipped
+      Java-only ARM Widget SDK adds WidgetProperties.enabled: boolean. No generated
+      Java API evidence or Java-specific naming guide is supplied.
+      Use bundled guidance and these facts only. Do not inspect repository files,
+      fetch docs, edit, compile, or generate; a customization tool being available
+      does not authorize its use. Return the supplementary SDK naming report using
+      the assessment's finalization format, with coverage and verification limits.
+      The main report is outside this task; do not create or modify it.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-assessment, azsdk-common-typespec-naming]
+          disallowed: [azure-typespec-author]
+      - *readOnly
+      - type: output-matches
+        config:
+          pattern: '(?is)Java[\s\S]{0,120}(not.covered|unsupported|no (?:applicable |Java )?profile)'
+      - type: output-not-matches
+        config:
+          pattern: 'IsEnabled|@@clientName'
+      - type: output-matches
+        config:
+          pattern: '(?is)unverified|not (?:generated|verified)|no generated'
+
+  - name: assessment-reports-missing-naming-evidence
+    prompt: |
+      Invoke azure-typespec-assessment for a bounded review of its naming coverage
+      reporting, not preparation or a fresh full assessment. SDK naming was explicitly
+      requested for a new WidgetProperties.enabled: boolean. The supplied evidence
+      does not identify any SDK language or whether the service is ARM or data-plane.
+      No generated or released API is available. Do not infer C# from the name Widget.
+      Consult bundled guidance only; no scanning, network, edits, compilation,
+      generation or interactive questions. Return the supplementary SDK naming review
+      with the missing context recorded. Do not modify the main assessment report.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-assessment, azsdk-common-typespec-naming]
+          disallowed: [azure-typespec-author]
+      - *readOnly
+      - type: output-matches
+        config:
+          pattern: '(?is)not.assessed'
+      - type: output-matches
+        config:
+          pattern: '(?is)(missing|unknown|not (?:supplied|provided|identified))[\s\S]{0,120}(language|target|service)'
+      - type: output-not-matches
+        config:
+          pattern: 'IsEnabled|@@clientName'
 
   - name: unrelated-authoring-does-not-require-sdk-intake
     prompt: |

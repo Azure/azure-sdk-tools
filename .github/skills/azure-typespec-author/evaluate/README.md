@@ -105,7 +105,11 @@ before with-skill runs:
 node scripts/prepare-skill-bundle.mjs
 ```
 
-The with-skill commands below use that bundle. The pipeline stages the same
+The previous benchmark mounted only `azure-typespec-author`, which cannot discover
+its sibling naming skill. The bundle supplies both skills without mounting every
+repository skill or exposing benchmark fixtures and answer rubrics as skill content.
+The script copies only `SKILL.md` and `references/`; it does not change either source
+skill. The with-skill commands below use that bundle. The pipeline stages the same
 bundle; no-skill runs retain their empty skill directory. `SkillBranch` overlays
 the authoring source; the shared naming dependency comes from the execution
 checkout so all consumers use its canonical guidance.
@@ -126,6 +130,20 @@ vally eval --suite trigger --skill-dir ../../../../artifacts/typespec-author-ski
 ```
 
 ### Which file to use
+
+All authoring evaluations live here under `evaluate/evals/`; there is no separate
+authoring `evals/` tree. `evals/naming/routing.eval.yaml` covers skill boundaries in the
+trigger track. `evals/naming/007001.eval.yaml` covers the supplementary naming-planning case,
+shipped-name compatibility, language isolation, and customization ownership in the
+forced track. The with-skill benchmark includes `evals/naming/*.eval.yaml` alongside
+the existing `evals/*.eval.yaml` cases. The no-skill baseline retains its existing
+root-only glob, so these skill-specific tests neither load skills into that baseline
+nor create an empty naming shard. These bounded cases complement, rather than
+replace, the full authoring compile/validation benchmarks.
+
+The standalone naming skill retains its own naming-rule tests. Cross-consumer
+authoring/assessment handoffs remain in the repository's
+`evals/workflows/mock/typespec-naming-handoffs.eval.yaml`.
 
 Use different entry files depending on your goal:
 
@@ -159,6 +177,8 @@ local entry point.
 | `decorators-trigger`            | Decorator cases — trigger mode                 |
 | `warning-trigger`               | Warning cases — trigger mode                   |
 | `dataplane-trigger`             | Data-plane cases — trigger mode                |
+| `naming-forced`                 | Naming planning and customization ownership   |
+| `naming-trigger`                | Authoring/naming routing boundaries            |
 | `versioning-no-skill`           | Versioning cases — no-skill baseline           |
 | `armtemplate-no-skill`          | ARM template cases — no-skill baseline         |
 | `longrunningoperation-no-skill` | LRO cases — no-skill baseline                  |

@@ -46,7 +46,7 @@ Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name f
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
 - **Mandatory for ALL `.tsp` edits** — even a single `?` change can be breaking.
 - **Minimal, scoped edits** — only change what the request requires.
-- **Plan SDK names before editing** — invoke `azsdk-common-typespec-naming` in guidance mode when the request concerns SDK naming or adds/changes names for known SDK targets. Pass the service type, targets, changed declarations and compatibility evidence. Do not require SDK-language intake for unrelated REST work.
+- **Plan applicable SDK names before editing** — follow the supplementary SDK naming case in [case-specific planning](references/authoring-plan.md#sdk-naming--supplementary-case). General intake does not require SDK-language selection. The authoring skill owns declaration edits; the customization tool owns `client.tsp` edits.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.

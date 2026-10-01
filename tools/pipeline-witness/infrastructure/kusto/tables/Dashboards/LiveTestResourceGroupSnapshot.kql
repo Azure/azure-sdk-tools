@@ -1,0 +1,15 @@
+.create-merge table LiveTestResourceGroupSnapshot (
+    Timestamp: datetime,
+    BuildId: long,
+    JobName: string,
+    SubscriptionId: string,
+    SubscriptionName: string,
+    Environment: string,
+    GroupFilter: string,
+    TotalGroups: int,
+    ToDelete: int,
+    ToClean: int,
+    ToDeleteSoon: int,
+    ToDeleteLater: int,
+    Source: string
+) with (folder='Dashboards', docstring='Per-run live test resource group counts by subscription, derived from automation - live-test-resource-cleanup build logs. Populated by eng/scripts/Update-LiveTestCleanupMetrics.ps1.')

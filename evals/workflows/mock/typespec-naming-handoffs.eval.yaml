@@ -63,6 +63,8 @@ stimuli:
           pattern: '"applied"\s*:\s*false'
 
   - name: assessment-consults-same-guidance-readonly
+    tags:
+      case: assessment-report
     prompt: |
       Invoke azure-typespec-assessment and plan its supplementary SDK naming review using
       the skill's prescribed naming workflow. This is planning, not a fresh full assessment;
@@ -101,12 +103,14 @@ stimuli:
           pattern: '(?is)not applied|no (?:changes|edits|customizations)[\s\S]{0,25}(made|applied)'
       - type: output-matches
         config:
-          pattern: '(?is)unverified|not (?:generated|verified)'
+          pattern: '(?is)unverified|not\s+(?:(?:yet|been)\s+)?(?:generated|verified)|not applied,\s*generated'
       - type: output-matches
         config:
           pattern: '(?is)separate[\s\S]{0,100}(assessment|report)'
 
   - name: assessment-reports-unsupported-profile
+    tags:
+      case: assessment-report
     prompt: |
       Invoke azure-typespec-assessment for its supplementary SDK naming review only,
       not preparation or a fresh full assessment. Bounded evidence: a new unshipped
@@ -135,6 +139,8 @@ stimuli:
           pattern: '(?is)unverified|not (?:generated|verified)|no generated'
 
   - name: assessment-reports-missing-naming-evidence
+    tags:
+      case: assessment-report
     prompt: |
       Invoke azure-typespec-assessment for a bounded review of its naming coverage
       reporting, not preparation or a fresh full assessment. SDK naming was explicitly
@@ -143,7 +149,8 @@ stimuli:
       No generated or released API is available. Do not infer C# from the name Widget.
       Consult bundled guidance only; no scanning, network, edits, compilation,
       generation or interactive questions. Return the supplementary SDK naming review
-      with the missing context recorded. Do not modify the main assessment report.
+      using the assessment's finalization format, with the missing context recorded.
+      Do not modify the main assessment report.
     constraints: *bounded
     graders:
       - type: skill-invocation

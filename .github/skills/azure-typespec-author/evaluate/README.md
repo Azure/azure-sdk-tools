@@ -219,7 +219,8 @@ vally eval --eval-spec evals/001001.eval.yaml --tag mode=no-skill --skill-dir $n
 
 ### Modes (forced / trigger / no-skill)
 
-Each test case has three modes:
+The original compilation cases have three modes. Naming integration cases use
+only forced/trigger modes because their contracts require the supplied skills.
 
 | Mode       | Description                                                                              |
 | ---------- | ---------------------------------------------------------------------------------------- |

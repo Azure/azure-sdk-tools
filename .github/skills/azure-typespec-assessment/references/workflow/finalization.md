@@ -37,7 +37,9 @@ Use this compact supplementary format:
 
 - **Coverage:** each supplied SDK target and applicable profile, or `not-covered`
   (no profile) / `not-assessed` (missing evidence). An empty finding list is not
-  a passing result for uncovered or unassessed targets.
+  a passing result for uncovered or unassessed targets. For those targets, report
+  the missing guidance/evidence only, not hypothetical language-specific names
+  or decorators.
 - **Findings:** TypeSpec declaration and supplied source location, current SDK
   name (or unknown), recommended SDK name and language scope, rule/exception,
   and compatibility evidence or blocker. Do not invent missing source locations

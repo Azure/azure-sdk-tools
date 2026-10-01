@@ -1,10 +1,12 @@
 # Release History
 
-## 0.6.50 (Unreleased)
+## 0.6.51 (Unreleased)
 
 ### Features Added
 
 - Release-plan create, update, and spec-link tools preview exact PR source targets before explicit confirmation. API versions and packages come from TypeSpec metadata compiled in a clean checkout; confirmed updates require the preview's parent/child revision token.
+- Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
+- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
 
 ### Breaking Changes
 
@@ -18,9 +20,25 @@
 
 ### Other Changes
 
+## 0.6.50 (2026-09-30)
+
+### Features Added
+
+- `azsdk_package_get_approval_status` now accepts common SDK language aliases.
+
+### Bugs Fixed
+
+- `azsdk_release_sdk` now queries the package approval service for current API review status instead of relying on the Azure DevOps package work item field.
+- Completing a management-plane release plan now queues pipeline 8254 for the nearest newer In Progress Public Preview or GA release plan for the same TypeSpec project, passing `ReleasePlanId`. The pending plan is related to the completed plan, and its submitter and SDK support aliases are notified after the run is queued.
+- If follow-up SDK generation cannot be queued for an identified pending plan, its notification directs the submitter to use the azsdk agent to generate SDKs and consult the release plan dashboard. Automation responses include queued plan/run details, metadata warnings, and failure guidance.
+- Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
+- Preserve detected SDK changes when classification or catalog loading fails, and reject invalid detector reports instead of silently falling back.
+
 ## 0.6.49 (2026-09-21)
 
 - Added `--max-attempts` / `maxAttempts` to customized-update for bounded custom-code repairs in one retained conversation, with `attemptsUsed` in the existing response.
+
+- Added optional `--additional-arguments` support to `package build` (and `azsdk_package_build_code`) for passing additional arguments to the build command.
 
 ### Breaking Changes
 

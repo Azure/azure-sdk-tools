@@ -3,10 +3,12 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models;
 
@@ -17,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         private TestLogger<SdkReleaseTool> logger;
         private MockDevOpsService devOpsService;
         private Mock<IAPIViewService> mockApiViewService;
+        private Mock<IPackageReleaseStatusService> mockPackageReleaseStatusService;
         private SdkReleaseTool sdkReleaseTool;
 
         [SetUp]
@@ -26,9 +29,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             logger = new TestLogger<SdkReleaseTool>();
             devOpsService = new MockDevOpsService();
             mockApiViewService = new Mock<IAPIViewService>();
+            mockPackageReleaseStatusService = new Mock<IPackageReleaseStatusService>();
+            mockPackageReleaseStatusService
+                .Setup(x => x.GetApprovalStatusAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageReleaseStatusResult
+                {
+                    IsApproved = true,
+                    FinalSource = "ApiReviewHub",
+                    Reason = "approved"
+                });
             sdkReleaseTool = new SdkReleaseTool(
                 devOpsService,
                 mockApiViewService.Object,
+                mockPackageReleaseStatusService.Object,
                 logger,
                 new InputSanitizer(),
                 new Mock<IEnvironmentHelper>().Object);
@@ -110,7 +130,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var language = ".NET";
             var expectedUrl = "https://apiview.dev/review/abc123";
 
-            devOpsService.ConfiguredAPIViewStatus = "Pending";
+            devOpsService.ConfiguredAPIViewStatus = "Approved";
+            ConfigurePackageApproval(isApproved: false);
             mockApiViewService
                 .Setup(x => x.GetReviewUrlByPackageAsync(packageName, "C#", "1.0.0", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedUrl);
@@ -123,6 +144,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("not ready for release"));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain(expectedUrl));
             });
+            mockPackageReleaseStatusService.Verify(x => x.GetApprovalStatusAsync(
+                "https://api-review-hub.azurewebsites.net",
+                "csharp",
+                packageName,
+                "1.0.0",
+                "",
+                "",
+                It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -131,7 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var packageName = "Azure.Security.KeyVault.Secrets";
             var language = ".NET";
 
-            devOpsService.ConfiguredAPIViewStatus = "Pending";
+            ConfigurePackageApproval(isApproved: false);
             mockApiViewService
                 .Setup(x => x.GetReviewUrlByPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((string?)null);
@@ -143,6 +172,51 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         }
 
         [Test]
+        public async Task TestCheckReadyWithMissingApiHash_PassesWithoutWarning()
+        {
+            ConfigureMissingApiHashApproval();
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("is ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("API hash"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("not ready for release"));
+            });
+        }
+
+        [Test]
+        public async Task TestCheckReadyWithReviewNotRequired_Passes()
+        {
+            ConfigurePackageApproval(isApproved: true, reason: "reviewNotRequired");
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("is ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("not ready for release"));
+            });
+        }
+
+        [Test]
+        public async Task TestCheckReadyWithMissingApiHash_PreservesEarlierFailure()
+        {
+            devOpsService.ConfiguredPlannedReleases = [];
+            ConfigureMissingApiHashApproval();
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("No planned release date found"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("not ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("API hash"));
+            });
+        }
+
+        [Test]
         public async Task TestCheckReadyTreatsPythonPep440PrereleaseAsPreview()
         {
             var packageName = "azure-template";
@@ -150,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
 
             devOpsService.ConfiguredPackageVersion = "1.0.0b1";
             devOpsService.ConfiguredPackageType = SdkType.Dataplane;
-            devOpsService.ConfiguredAPIViewStatus = "Pending";
+            ConfigurePackageApproval(isApproved: false);
 
             var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language, "main", checkReady: true);
 
@@ -200,7 +274,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var nameCheck = await sdkReleaseTool.ReleasePackageAsync(packageName, language, checkReady: true);
 
             devOpsService.ConfiguredPackageNameStatus = "Approved";
-            devOpsService.ConfiguredAPIViewStatus = "Pending";
+            ConfigurePackageApproval(isApproved: false);
 
             var apiCheck = await sdkReleaseTool.ReleasePackageAsync(packageName, language, checkReady: true);
 
@@ -284,6 +358,50 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         public void TestGetJavaSafeName(string packageName, string expected)
         {
             Assert.That(SdkReleaseTool.GetJavaSafeName(packageName), Is.EqualTo(expected));
+        }
+
+        private void ConfigurePackageApproval(bool isApproved, string? reason = null)
+        {
+            mockPackageReleaseStatusService
+                .Setup(x => x.GetApprovalStatusAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageReleaseStatusResult
+                {
+                    IsApproved = isApproved,
+                    FinalSource = "ApiReviewHub",
+                    Reason = reason ?? (isApproved ? "approved" : "notApproved")
+                });
+        }
+
+        private void ConfigureMissingApiHashApproval()
+        {
+            mockPackageReleaseStatusService
+                .Setup(x => x.GetApprovalStatusAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    "",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageReleaseStatusResult
+                {
+                    IsApproved = false,
+                    FinalSource = "ApiReviewHub",
+                    Reason = "missingApiHash",
+                    ApiView = new ApiViewReleaseStatusResult
+                    {
+                        IsApproved = false,
+                        PackageNameApproved = false,
+                        Reason = "packageNamePending"
+                    }
+                });
         }
     }
 }

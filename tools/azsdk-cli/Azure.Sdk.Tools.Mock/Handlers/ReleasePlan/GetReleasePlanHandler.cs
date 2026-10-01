@@ -15,7 +15,7 @@ public class GetReleasePlanHandler : IMockToolHandler
 {
     private const string ContosoTypeSpecProjectPath = "specification/contosowidgetmanager/Contoso.WidgetManager";
     private const string ContosoApiVersion = "2024-01-01";
-    private const string DefaultSpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/12345";
+    private const string DefaultSpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/38387";
 
     public string ToolName => "azsdk_get_release_plan";
 
@@ -42,7 +42,7 @@ public class GetReleasePlanHandler : IMockToolHandler
 
         var isKnownSpecPullRequest = string.Equals(
             specPullRequestUrl,
-            "https://github.com/Azure/azure-rest-api-specs/pull/38387",
+            DefaultSpecPullRequestUrl,
             StringComparison.OrdinalIgnoreCase);
         var isKnownTypeSpecProject = string.Equals(typeSpecProjectPath, ContosoTypeSpecProjectPath, StringComparison.OrdinalIgnoreCase)
             && (string.IsNullOrWhiteSpace(apiReleaseType) || string.Equals(apiReleaseType, "GA", StringComparison.OrdinalIgnoreCase));
@@ -58,13 +58,11 @@ public class GetReleasePlanHandler : IMockToolHandler
             || releasePlanId == "29262"
             || isKnownSpecPullRequest
             || isKnownTypeSpecProject)
-            ? ContosoReleasePlanResponse(
-                isKnownSpecPullRequest ? specPullRequestUrl : DefaultSpecPullRequestUrl,
-                workItemId == "29262" || releasePlanId == "29262" ? 29262 : 35000)
+                ? ContosoReleasePlanResponse(workItemId == "29262" || releasePlanId == "29262" ? 29262 : 35000)
             : MockToolFactory.GetDefaultResponse();
     }
 
-    private static ReleasePlanResponse ContosoReleasePlanResponse(string activeSpecPullRequestUrl, int workItemId) => new()
+            private static ReleasePlanResponse ContosoReleasePlanResponse(int workItemId) => new()
     {
         TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
         PackageType = SdkType.Dataplane,
@@ -90,7 +88,7 @@ public class GetReleasePlanHandler : IMockToolHandler
             SpecType = "TypeSpec",
             SpecCommitSHA = "0123456789abcdef0123456789abcdef01234567",
             SpecAPIVersion = ContosoApiVersion,
-            ActiveSpecPullRequest = activeSpecPullRequestUrl,
+            ActiveSpecPullRequest = DefaultSpecPullRequestUrl,
             APISpecProjectPath = ContosoTypeSpecProjectPath,
             SDKReleaseType = "beta",
             SDKInfo =

@@ -10,7 +10,9 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
+using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
@@ -20,6 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public partial class SdkReleaseTool(
         IDevOpsService devopsService,
         IAPIViewService apiViewService,
+        IPackageReleaseStatusService packageReleaseStatusService,
         ILogger<SdkReleaseTool> logger,
         IInputSanitizer inputSanitizer,
         IEnvironmentHelper environmentHelper) : MCPTool
@@ -309,8 +312,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Check if API view is approved if stable version for data plane or .NET
                 if ((isDataPlanePackage || language.Equals(".NET")) && !isPreviewRelease)
                 {
+                    string canonicalLanguage = ApiReviewHubTool.ResolveLanguage(language)
+                        ?? throw new InvalidOperationException($"Unsupported SDK language '{language}' for package approval lookup.");
+                    var approvalStatus = await packageReleaseStatusService.GetApprovalStatusAsync(
+                        PackageApprovalStatusTool.DefaultEndpoint,
+                        canonicalLanguage,
+                        packageName,
+                        package.Version,
+                        "",
+                        "",
+                        ct);
+                    // TODO: Pass the release artifact API hash to Review Hub and remove this workaround
+                    // once the agent can retrieve the hash.
+                    bool missingApiHash =
+                        string.Equals(approvalStatus.Reason, "missingApiHash", StringComparison.OrdinalIgnoreCase);
+                    // IsApproved covers both "approved" and "reviewNotRequired".
+                    bool apiCheckPassed = approvalStatus.IsApproved || missingApiHash;
+                    package.APIViewStatus = apiCheckPassed ? "Approved" : "Pending";
+                    package.ApiViewValidationDetails = $"Package approval status queried from {approvalStatus.FinalSource}: {approvalStatus.Reason}.";
 
-                    if (!package.IsApiViewApproved)
+                    if (!apiCheckPassed)
                     {
                         package.IsPackageReady = false;
                         package.PackageReadinessDetails += $"API view is not approved for GA release of package '{packageName}'. ";

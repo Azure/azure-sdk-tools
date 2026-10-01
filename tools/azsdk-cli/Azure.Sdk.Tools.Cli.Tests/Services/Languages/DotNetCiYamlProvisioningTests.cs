@@ -11,10 +11,10 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
 [TestFixture]
-public class DotnetCiYamlProvisioningTests
+public class DotNetCiYamlProvisioningTests
 {
     private TempDirectory _tempDir = null!;
-    private DotnetLanguageService _service = null!;
+    private DotNetLanguageService _service = null!;
     private Mock<IProcessHelper> _processHelper = null!;
     private Mock<IGitHelper> _gitHelper = null!;
     private Mock<IPackageInfoHelper> _packageInfoHelper = null!;
@@ -35,12 +35,12 @@ public class DotnetCiYamlProvisioningTests
         _gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_repoRoot);
 
-        _service = new DotnetLanguageService(
+        _service = new DotNetLanguageService(
             _processHelper.Object,
             Mock.Of<IPowershellHelper>(),
             Mock.Of<Azure.Sdk.Tools.Cli.CopilotAgents.ICopilotAgentRunner>(),
             _gitHelper.Object,
-            new TestLogger<DotnetLanguageService>(),
+            new TestLogger<DotNetLanguageService>(),
             Mock.Of<ICommonValidationHelpers>(),
             _packageInfoHelper.Object,
             Mock.Of<IFileHelper>(),

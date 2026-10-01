@@ -48,7 +48,8 @@ resources:
       ref: main
 
 variables:
-  - name: LanguageRepository
+  # Resource alias used for checkout; LanguageRepo is the resulting filesystem path.
+  - name: LanguageRepoResource
     value: ${{ format('{0}-repo', parameters.language) }}
     readonly: true
   - name: callbackTokenAudience

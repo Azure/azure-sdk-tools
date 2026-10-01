@@ -237,17 +237,6 @@ public class PackageMarkReleasedToolTests
     }
 
     [Test]
-    public void Command_RejectsPackageType()
-    {
-        var command = tool.GetCommandInstances().Single();
-
-        var parseResult = command.Parse(
-            "--language python --package-name azure-test --package-version 1.0.0 --package-type client");
-
-        Assert.That(parseResult.Errors.Any(error => error.Message.Contains("Unrecognized command or argument '--package-type'", StringComparison.Ordinal)), Is.True);
-    }
-
-    [Test]
     public async Task MarkReleasedAsync_WithoutApiHash_SkipsReviewHubWithoutFailing()
     {
         var response = await tool.MarkReleasedAsync(

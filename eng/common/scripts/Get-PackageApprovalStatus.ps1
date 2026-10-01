@@ -6,7 +6,7 @@ Checks whether a package is approved for release.
 Invokes the centralized Azure SDK CLI API review release gate and fails unless its structured result approves the package.
 
 .PARAMETER PackageInfoFiles
-Package-info JSON files containing the package name, version, SDK type, and optional API hash.
+Package-info JSON files containing the package name, version, and optional API hash.
 
 .PARAMETER RepoOwner
 The optional GitHub repository owner to query in API Review Hub.
@@ -82,14 +82,13 @@ function Write-ApprovalSummary([object] $Response) {
     Write-Host "  Reason: $reason"
 }
 
-function Test-PackageApproval([string] $PackageName, [string] $PackageVersion, [string] $PackageType, [string] $ApiHash) {
+function Test-PackageApproval([string] $PackageName, [string] $PackageVersion, [string] $ApiHash) {
     $arguments = @(
         "package",
         "get-approval-status",
         "--language", $LanguageShort,
         "--package-name", $PackageName,
         "--package-version", $PackageVersion,
-        "--package-type", $PackageType,
         "--output", "json"
     )
 
@@ -102,7 +101,7 @@ function Test-PackageApproval([string] $PackageName, [string] $PackageVersion, [
     }
 
     $hashDescription = if ([string]::IsNullOrWhiteSpace($ApiHash)) { "not provided" } else { $ApiHash }
-    Write-Host "Checking package approval: language=$LanguageShort, package=$PackageName, version=$PackageVersion, packageType=$PackageType, apiHash=$hashDescription"
+    Write-Host "Checking package approval: language=$LanguageShort, package=$PackageName, version=$PackageVersion, apiHash=$hashDescription"
     $formattedArguments = @($arguments | ForEach-Object { Format-CommandArgument $_ })
     Write-Host "Command: azsdk $($formattedArguments -join ' ')"
 
@@ -151,7 +150,7 @@ if ($packageInfoPaths.Count -eq 0) {
     throw "At least one package-info file is required."
 }
 
-Confirm-AzSdkCliMinimumVersion $AzSdkExePath ([version] "0.6.51")
+Confirm-AzSdkCliMinimumVersion $AzSdkExePath ([version] "0.6.38")
 $failures = @()
 foreach ($packageInfoFile in $packageInfoPaths) {
     try {
@@ -162,7 +161,6 @@ foreach ($packageInfoFile in $packageInfoPaths) {
         $packageInfo = Get-Content $packageInfoFile -Raw | ConvertFrom-Json -ErrorAction Stop
         $packageName = if ($packageInfo.PSObject.Properties["Name"]) { [string] $packageInfo.Name } else { "" }
         $packageVersion = if ($packageInfo.PSObject.Properties["Version"]) { [string] $packageInfo.Version } else { "" }
-        $sdkType = if ($packageInfo.PSObject.Properties["SdkType"]) { [string] $packageInfo.SdkType } else { "" }
         $apiHash = if ($packageInfo.PSObject.Properties["ApiHash"]) { [string] $packageInfo.ApiHash } else { "" }
         $releaseStatus = if ($packageInfo.PSObject.Properties["ReleaseStatus"]) { [string] $packageInfo.ReleaseStatus } else { "" }
 
@@ -172,13 +170,9 @@ foreach ($packageInfoFile in $packageInfoPaths) {
         if ([string]::IsNullOrWhiteSpace($packageVersion)) {
             throw "Package-info file does not contain a package Version."
         }
-        if ([string]::IsNullOrWhiteSpace($sdkType)) {
-            throw "Package-info file does not contain an SdkType."
-        }
-        $packageType = ConvertTo-ApiReviewPackageType $sdkType
 
         try {
-            Test-PackageApproval $packageName $packageVersion $packageType $apiHash
+            Test-PackageApproval $packageName $packageVersion $apiHash
         }
         catch {
             if ($releaseStatus -eq "Unreleased") {

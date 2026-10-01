@@ -6,7 +6,7 @@ Marks a published package as released in API Review Hub and APIView.
 Invokes the centralized Azure SDK CLI release-completion command and surfaces each backend result.
 
 .PARAMETER PackageInfoFiles
-Package-info JSON files containing the published package name, version, SDK type, and API hash.
+Package-info JSON files containing the published package name, version, and API hash.
 
 .PARAMETER AzSdkExePath
 The path to the azsdk executable.
@@ -33,14 +33,13 @@ function Write-BackendResult([string] $Name, [object] $Result) {
     Write-Host "  Result: $($Result | ConvertTo-Json -Compress -Depth 20)"
 }
 
-function Set-PackageReleased([string] $PackageName, [string] $PackageVersion, [string] $PackageType, [string] $ApiHash) {
+function Set-PackageReleased([string] $PackageName, [string] $PackageVersion, [string] $ApiHash) {
     $arguments = @(
         "package",
         "mark-released",
         "--language", $LanguageShort,
         "--package-name", $PackageName,
-        "--package-version", $PackageVersion,
-        "--package-type", $PackageType
+        "--package-version", $PackageVersion
     )
 
     if (-not [string]::IsNullOrWhiteSpace($ApiHash)) {
@@ -54,7 +53,7 @@ function Set-PackageReleased([string] $PackageName, [string] $PackageVersion, [s
     }
 
     $hashDescription = if ([string]::IsNullOrWhiteSpace($ApiHash)) { "not provided" } else { $ApiHash }
-    Write-Host "Marking package released: language=$LanguageShort, package=$PackageName, version=$PackageVersion, packageType=$PackageType, apiHash=$hashDescription"
+    Write-Host "Marking package released: language=$LanguageShort, package=$PackageName, version=$PackageVersion, apiHash=$hashDescription"
     $formattedArguments = @($arguments | ForEach-Object { Format-CommandArgument $_ })
     Write-Host "Command: azsdk $($formattedArguments -join ' ')"
 
@@ -90,7 +89,7 @@ if ($packageInfoPaths.Count -eq 0) {
     throw "At least one package-info file is required."
 }
 
-Confirm-AzSdkCliMinimumVersion $AzSdkExePath ([version] "0.6.51")
+Confirm-AzSdkCliMinimumVersion $AzSdkExePath ([version] "0.6.38")
 
 $failures = @()
 foreach ($packageInfoFile in $packageInfoPaths) {
@@ -102,7 +101,6 @@ foreach ($packageInfoFile in $packageInfoPaths) {
         $packageInfo = Get-Content $packageInfoFile -Raw | ConvertFrom-Json -ErrorAction Stop
         $packageName = if ($packageInfo.PSObject.Properties["Name"]) { [string] $packageInfo.Name } else { "" }
         $packageVersion = if ($packageInfo.PSObject.Properties["Version"]) { [string] $packageInfo.Version } else { "" }
-        $sdkType = if ($packageInfo.PSObject.Properties["SdkType"]) { [string] $packageInfo.SdkType } else { "" }
         $apiHash = if ($packageInfo.PSObject.Properties["ApiHash"]) { [string] $packageInfo.ApiHash } else { "" }
 
         if ([string]::IsNullOrWhiteSpace($packageName)) {
@@ -111,12 +109,8 @@ foreach ($packageInfoFile in $packageInfoPaths) {
         if ([string]::IsNullOrWhiteSpace($packageVersion)) {
             throw "Package-info file does not contain a package Version."
         }
-        if ([string]::IsNullOrWhiteSpace($sdkType)) {
-            throw "Package-info file does not contain an SdkType."
-        }
-        $packageType = ConvertTo-ApiReviewPackageType $sdkType
 
-        Set-PackageReleased $packageName $packageVersion $packageType $apiHash
+        Set-PackageReleased $packageName $packageVersion $apiHash
     }
     catch {
         Write-Error "Mark released failed for ${packageInfoFile}: $($_.Exception.Message)" -ErrorAction Continue

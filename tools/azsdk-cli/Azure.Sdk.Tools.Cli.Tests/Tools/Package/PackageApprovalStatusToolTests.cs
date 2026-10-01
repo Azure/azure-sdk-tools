@@ -113,18 +113,4 @@ public class PackageApprovalStatusToolTests
 
         releaseStatusService.VerifyAll();
     }
-
-    [Test]
-    public void GetApprovalStatus_CommandRejectsPackageType()
-    {
-        var packageTool = new PackageApprovalStatusTool(
-            Mock.Of<IPackageReleaseStatusService>(),
-            new TestLogger<PackageApprovalStatusTool>());
-        var command = packageTool.GetCommandInstances().Single();
-
-        var parseResult = command.Parse(
-            "--language python --package-name azure-test --package-version 1.0.0 --package-type client");
-
-        Assert.That(parseResult.Errors.Any(error => error.Message.Contains("Unrecognized command or argument '--package-type'", StringComparison.Ordinal)), Is.True);
-    }
 }

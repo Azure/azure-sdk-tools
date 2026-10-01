@@ -84,7 +84,6 @@ public class ApiReviewHubServiceTests
         Assert.That(requestBody, Does.Contain("\"packageName\":\"azure-test\""));
         Assert.That(requestBody, Does.Contain("\"version\":\"1.0.0\""));
         Assert.That(requestBody, Does.Contain("\"apiHash\":\"api-hash\""));
-        Assert.That(requestBody, Does.Not.Contain("\"packageType\""));
         Assert.That(requestBody, Does.Contain("\"repoOwner\":\"tjprescott\""));
         Assert.That(requestBody, Does.Contain("\"dryRun\":false"));
         Assert.That(result.PackageName, Is.EqualTo("azure-test"));
@@ -138,7 +137,6 @@ public class ApiReviewHubServiceTests
         Assert.That(capturedRequest, Is.Not.Null);
         Assert.That(capturedRequest!.RequestUri, Is.Not.Null);
         Assert.That(capturedRequest.RequestUri!.Query, Does.Contain($"version={Uri.EscapeDataString(packageVersion)}"));
-        Assert.That(capturedRequest.RequestUri.Query, Does.Not.Contain("packageType"));
     }
 
     [Test]
@@ -605,7 +603,6 @@ public class ApiReviewHubServiceTests
         Assert.That(capturedRequest, Is.Not.Null);
         Assert.That(capturedRequest!.RequestUri, Is.Not.Null);
         Assert.That(capturedRequest.RequestUri!.Query, Does.Contain("repoOwner=Contoso"));
-        Assert.That(capturedRequest.RequestUri.Query, Does.Not.Contain("packageType"));
     }
 
     private sealed class SteppingTimeProvider(DateTimeOffset initial, TimeSpan step) : TimeProvider

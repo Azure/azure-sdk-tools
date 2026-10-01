@@ -28,7 +28,7 @@ Describe "Get-PackageApprovalStatus.ps1" {
     BeforeEach {
         $global:LanguageShort = "python"
         $global:AzSdkExitCode = 0
-        $global:AzSdkVersion = "0.6.51"
+        $global:AzSdkVersion = "0.6.38"
         $global:AzSdkOutput = '{"operation_status":"Succeeded","result":{"isApproved":true,"finalSource":"reviewHub","reason":"approved"}}'
         $global:CapturedAzSdkArguments = @()
         $global:CapturedAzSdkInvocations = @()
@@ -36,7 +36,6 @@ Describe "Get-PackageApprovalStatus.ps1" {
         @{
             Name = "azure-test"
             Version = "1.0.0"
-            SdkType = "client"
         } | ConvertTo-Json | Set-Content $packageInfoPath
     }
 
@@ -52,23 +51,10 @@ Describe "Get-PackageApprovalStatus.ps1" {
             "--language", "python",
             "--package-name", "azure-test",
             "--package-version", "1.0.0",
-            "--package-type", "client",
             "--output", "json",
             "--api-hash", "abc123",
             "--repo-owner", "Contoso"
         ) -join "|")
-    }
-
-    It "maps non-management SDK types to the client approval plane" {
-        foreach ($sdkType in @("spring", "functions")) {
-            $packageInfo = Get-Content $packageInfoPath -Raw | ConvertFrom-Json
-            $packageInfo.SdkType = $sdkType
-            $packageInfo | ConvertTo-Json | Set-Content $packageInfoPath
-
-            & $scriptPath -PackageInfoFiles $packageInfoPath
-
-            ($global:CapturedAzSdkArguments -join "|") | Should Match "--package-type\|client"
-        }
     }
 
     It "omits the API hash when it is unavailable" {
@@ -94,7 +80,7 @@ Describe "Get-PackageApprovalStatus.ps1" {
     }
 
     It "fails when the azsdk version is unsupported" {
-        $global:AzSdkVersion = "0.6.50"
+        $global:AzSdkVersion = "0.6.37"
         $caughtError = $null
 
         try {
@@ -104,7 +90,7 @@ Describe "Get-PackageApprovalStatus.ps1" {
             $caughtError = $_
         }
 
-        $caughtError.Exception.Message | Should Match "version 0.6.51 or later is required"
+        $caughtError.Exception.Message | Should Match "version 0.6.38 or later is required"
         $global:CapturedAzSdkInvocations.Count | Should Be 0
     }
 
@@ -130,7 +116,7 @@ Describe "Get-PackageApprovalStatus.ps1" {
         $packageInfo | ConvertTo-Json | Set-Content $packageInfoPath
         $messages = @(& $scriptPath -PackageInfoFiles $packageInfoPath 6>&1)
 
-        ($messages -join [Environment]::NewLine) | Should Match 'Command: azsdk package get-approval-status --language python --package-name "azure test" --package-version 1.0.0 --package-type client --output json'
+        ($messages -join [Environment]::NewLine) | Should Match 'Command: azsdk package get-approval-status --language python --package-name "azure test" --package-version 1.0.0 --output json'
     }
 
     It "shows Review Hub and APIView results before the overall result" {
@@ -206,7 +192,6 @@ Describe "Get-PackageApprovalStatus.ps1" {
         @{
             Name = "azure-test-two"
             Version = "2.0.0"
-            SdkType = "mgmt"
             ApiHash = "def456"
         } | ConvertTo-Json | Set-Content $secondPackageInfoPath
 

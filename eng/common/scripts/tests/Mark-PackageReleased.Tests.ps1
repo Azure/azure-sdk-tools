@@ -28,7 +28,7 @@ Describe "Mark-PackageReleased.ps1" {
     BeforeEach {
         $global:LanguageShort = "python"
         $global:AzSdkExitCode = 0
-        $global:AzSdkVersion = "0.6.51"
+        $global:AzSdkVersion = "0.6.38"
         $global:AzSdkOutput = '{"operation_status":"Succeeded","api_review_hub":{"packageVersionId":"version123","isReleased":true},"api_view":{"revisionId":"revision456","isReleased":true}}'
         $global:CapturedAzSdkArguments = @()
         $global:CapturedAzSdkInvocations = @()
@@ -36,7 +36,6 @@ Describe "Mark-PackageReleased.ps1" {
         @{
             Name = "azure-test"
             Version = "1.0.0"
-            SdkType = "client"
             ApiHash = "abc123"
         } | ConvertTo-Json | Set-Content $packageInfoPath
     }
@@ -49,24 +48,11 @@ Describe "Mark-PackageReleased.ps1" {
             "--language", "python",
             "--package-name", "azure-test",
             "--package-version", "1.0.0",
-            "--package-type", "client",
             "--api-hash", "abc123",
             "--output", "json",
             "--repo-owner", "Azure"
         ) -join "|")
         ($global:CapturedAzSdkArguments -join "|") | Should Not Match "--dry-run"
-    }
-
-    It "maps non-management SDK types to the client approval plane" {
-        foreach ($sdkType in @("spring", "functions")) {
-            $packageInfo = Get-Content $packageInfoPath -Raw | ConvertFrom-Json
-            $packageInfo.SdkType = $sdkType
-            $packageInfo | ConvertTo-Json | Set-Content $packageInfoPath
-
-            & $scriptPath -PackageInfoFiles $packageInfoPath
-
-            ($global:CapturedAzSdkArguments -join "|") | Should Match "--package-type\|client"
-        }
     }
 
     It "omits the optional repository owner" {
@@ -102,7 +88,7 @@ Describe "Mark-PackageReleased.ps1" {
     }
 
     It "fails when the azsdk version is unsupported" {
-        $global:AzSdkVersion = "0.6.50"
+        $global:AzSdkVersion = "0.6.37"
         $caughtError = $null
 
         try {
@@ -112,7 +98,7 @@ Describe "Mark-PackageReleased.ps1" {
             $caughtError = $_
         }
 
-        $caughtError.Exception.Message | Should Match "version 0.6.51 or later is required"
+        $caughtError.Exception.Message | Should Match "version 0.6.38 or later is required"
         $global:CapturedAzSdkInvocations.Count | Should Be 0
     }
 
@@ -168,15 +154,14 @@ Describe "Mark-PackageReleased.ps1" {
         @{
             Name = "azure-test-two"
             Version = "2.0.0"
-            SdkType = "mgmt"
             ApiHash = "def456"
         } | ConvertTo-Json | Set-Content $secondPackageInfoPath
 
         & $scriptPath -PackageInfoFiles @($packageInfoPath, $secondPackageInfoPath)
 
         $global:CapturedAzSdkInvocations.Count | Should Be 2
-        ($global:CapturedAzSdkInvocations[0] -join "|") | Should Match "--package-name\|azure-test\|--package-version\|1.0.0\|--package-type\|client.*--api-hash\|abc123"
-        ($global:CapturedAzSdkInvocations[1] -join "|") | Should Match "--package-name\|azure-test-two\|--package-version\|2.0.0\|--package-type\|mgmt.*--api-hash\|def456"
+        ($global:CapturedAzSdkInvocations[0] -join "|") | Should Match "--package-name\|azure-test\|--package-version\|1.0.0.*--api-hash\|abc123"
+        ($global:CapturedAzSdkInvocations[1] -join "|") | Should Match "--package-name\|azure-test-two\|--package-version\|2.0.0.*--api-hash\|def456"
     }
 
     It "continues marking valid packages after invalid package info" {

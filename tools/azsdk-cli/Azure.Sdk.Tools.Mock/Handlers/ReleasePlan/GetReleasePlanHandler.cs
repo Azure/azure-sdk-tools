@@ -58,11 +58,11 @@ public class GetReleasePlanHandler : IMockToolHandler
             || releasePlanId == "29262"
             || isKnownSpecPullRequest
             || isKnownTypeSpecProject)
-                ? ContosoReleasePlanResponse(workItemId == "29262" || releasePlanId == "29262" ? 29262 : 35000)
+            ? ContosoReleasePlanResponse(workItemId == "29262" || releasePlanId == "29262" ? 29262 : 35000)
             : MockToolFactory.GetDefaultResponse();
     }
 
-            private static ReleasePlanResponse ContosoReleasePlanResponse(int workItemId) => new()
+    private static ReleasePlanResponse ContosoReleasePlanResponse(int workItemId) => new()
     {
         TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
         PackageType = SdkType.Dataplane,

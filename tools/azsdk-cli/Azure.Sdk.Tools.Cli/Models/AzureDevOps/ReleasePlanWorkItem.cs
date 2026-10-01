@@ -12,6 +12,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public const string DashboardBaseUrl = "https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=";
         public const string DashboardBaseUrlTest = "https://releaseplan-dashboard-test.azurewebsites.net/?releaseplan=";
 
+        // Snapshot revision used to reject automatic updates if the plan changed during the scan.
+        public int Revision { get; set; }
+
         [FieldName("Custom.ServiceTreeID")]
         public string ServiceTreeId { get; set; } = string.Empty;
 
@@ -55,9 +58,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public bool IsTestReleasePlan { get; set; } = false;
 
         public int ReleasePlanId { get; set; }
-
-        [JsonIgnore]
-        public int Revision { get; set; }
 
         [FieldName("Custom.SDKtypetobereleased")]
         public string SDKReleaseType { get; set; } = string.Empty;

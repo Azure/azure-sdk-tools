@@ -1,0 +1,20 @@
+.create-or-alter materialized-view with (folder='Dashboards', docstring='Per-subscription live test resource group counts emitted by eng/scripts/live-test-resource-cleanup.ps1') LiveTestResourceGroupSnapshot on table BuildLogLine
+{
+BuildLogLine
+    | where Message has_all ("CLEANUP_METRICS", "subscriptionId", "totalGroups", "timestamp")
+    | where Message startswith "CLEANUP_METRICS"
+    | extend json = todynamic(extract(@"^CLEANUP_METRICS\s+(\{.*\})\s*$", 1, Message))
+    | where not(isnull(json["subscriptionId"]))
+    | extend
+        SnapshotTime = todatetime(json.timestamp),
+        SubscriptionId = tostring(json.subscriptionId),
+        SubscriptionName = tostring(json.subscriptionName),
+        Environment = tostring(json.environment),
+        GroupFilter = tostring(json.groupFilter),
+        TotalGroups = toint(json.totalGroups),
+        ToDelete = toint(json.toDelete),
+        ToClean = toint(json.toClean),
+        ToDeleteSoon = toint(json.toDeleteSoon),
+        ToDeleteLater = toint(json.toDeleteLater)
+    | summarize arg_max(SnapshotTime, LogId, LineNumber, SubscriptionId, SubscriptionName, Environment, GroupFilter, TotalGroups, ToDelete, ToClean, ToDeleteSoon, ToDeleteLater) by OrganizationName, ProjectId, BuildId, Hash=hash_sha1(Message)
+}

@@ -35,7 +35,7 @@ resources:
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-rust
-      ref: main
+      ref: api-review-hub
     - repository: swift-repo
       type: github
       endpoint: Azure

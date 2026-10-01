@@ -5,6 +5,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Notification;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
@@ -33,6 +34,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(() => [_plan]);
             _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => _plan);
+            _devOps.Setup(s => s.GetActiveReleasePlansByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
             _devOps.Setup(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .Callback<int, Dictionary<string, string>, int, CancellationToken>((id, fields, revision, _) =>
                 {
@@ -56,7 +59,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     _plan.Revision++;
                 })
                 .ReturnsAsync(() => new WorkItem { Id = _plan.WorkItemId, Rev = _plan.Revision });
-            _tool = new PackageReleaseStatusTool(_devOps.Object, new TestLogger<PackageReleaseStatusTool>());
+            var notificationService = new Mock<INotificationService>();
+            notificationService.Setup(s => s.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(NotificationResult.Sent);
+            _tool = new PackageReleaseStatusTool(_devOps.Object, new TestLogger<PackageReleaseStatusTool>(), notificationService.Object);
         }
 
         [TearDown]
@@ -676,6 +682,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Cli_AutomaticSdkPrNeedsNoApiVersion()
         {
+            _plan.SpecAPIVersion = string.Empty;
             _plan.SDKInfo.Single(s => s.Language == "Python").SdkPullRequestUrl = PythonSdkPr;
             var command = _tool.GetCommandInstances().First();
             var parse = command.Parse($"--package-name azure-test --language Python --sdk-pull-request {PythonSdkPr}");
@@ -711,6 +718,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             SDKReleaseType = "stable",
             IsManagementPlane = true,
             APISpecProjectPath = "specification/test/project",
+            SpecAPIVersion = "2025-01-01",
             SDKInfo =
             [
                 new SDKInfo { Language = ".NET", PackageName = "Azure.Test", ReleaseStatus = "Pending" },

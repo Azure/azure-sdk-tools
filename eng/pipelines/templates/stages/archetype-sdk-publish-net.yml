@@ -3,6 +3,7 @@ parameters:
   ShouldTag: true
   Feed: 'public/azure-sdk-for-net'
   ShouldPublishExecutables: false
+  ShouldPublishToAzsdkArtifacts: false
   RequireStrongNames: true
   PublishEnvironment: ''
   ExeMatrix: []
@@ -109,6 +110,29 @@ stages:
             pwsh: true
           env:
             GH_TOKEN: $(GH_TOKEN_Azure)
+
+        - task: AzurePowerShell@5
+          displayName: Get azuresdkartifacts write mode token
+          condition: and(succeeded(), eq(${{ parameters.ShouldPublishToAzsdkArtifacts }}, true))
+          inputs:
+            azureSubscription: 'Azure SDK Artifacts'
+            ScriptType: FilePath
+            ScriptPath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/Set-VcpkgWriteModeCache.ps1'
+            ScriptArguments: -StorageContainerName "public-azsdk-cli"
+            azurePowerShellVersion: LatestVersion
+            pwsh: true
+          retryCountOnTaskFailure: 3
+
+        - task: PowerShell@2
+          displayName: 'Post to azuresdkartifacts'
+          condition: and(succeeded(), eq(${{ parameters.ShouldPublishToAzsdkArtifacts }}, true))
+          inputs:
+            targetType: filePath
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-azuresdkartifacts.ps1'
+            arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
+            pwsh: true
+          env:
+            AZURESDKARTIFACTS_SAS_TOKEN: $(VCPKG_BINARY_SAS_TOKEN)
 
       # if we are verifying the changelog, we should definitely submit an increment version + changelog update PR
       - ${{ if eq(parameters.VerifyChangelog, true) }}:

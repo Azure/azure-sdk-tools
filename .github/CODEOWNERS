@@ -43,7 +43,7 @@
 /tools/keyvault-mock-attestation/       @maorleger
 /tools/perf-automation/                 @chidozieononiwu
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
-/tools/pipeline-generator/              @chidozieononiwu
+/tools/pipeline-generator/              @chidozieononiwu @raych1 
 /tools/pipeline-witness/                @chidozieononiwu @raych1 
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu

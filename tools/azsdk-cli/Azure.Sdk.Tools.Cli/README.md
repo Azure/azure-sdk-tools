@@ -94,6 +94,26 @@ In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
 
+## Release-plan status updates
+
+`azsdk release-plan update-release-status` uses existing Azure DevOps release-plan metadata, with no API-version input or mapping:
+
+- **Manual:** supply `--release-plan-id` from the requester. This is the release-plan ID, not an interchangeable ADO work item ID.
+- **Automatic:** supply `--sdk-pull-request` with the full SDK PR URL that triggered the release build. The command finds exactly one in-progress plan linked through `Custom.SDKPullRequestFor{language}`, reads `Custom.ReleasePlanID`, and verifies that ID identifies the same work item uniquely.
+- **Both:** `--language` and `--package-name` identify exactly one SDK entry inside the plan. Language aliases are normalized; package names match exactly. These fields never select a substitute plan.
+
+No manual ID and no SDK PR means no query or writes. An automatic PR with no matching plan also produces a no-op. Invalid/duplicate IDs, multiple PR matches, or conflicting language/package/PR information produce an error with no writes. A supplied manual ID never falls back to PR lookup. No newest-plan, merged-PR-status, release-type, or first-result tie-breaker is used.
+
+Package version and release pipeline URL remain optional result metadata. A supplied SDK release type must match the plan. Already released SDK fields are not overwritten: non-conflicting retries on an in-progress plan repeat the fresh, guarded completion check to recover from a partial failure; retries by ID on a finished plan remain no-ops. A conflicting known version is rejected. Parent revision checks guard status writes and the fresh completion check. Revision conflicts are reported, not silently retried within the same invocation.
+
+The publication script takes `ReleasePlanId` and/or `SdkPullRequest` as explicit parameters and reads only the package name/version from package-info JSON. It does not inherit an old plan ID or require an API version in that JSON. The shared completion-step template forwards both parameters. Status failures are surfaced as warnings without undoing a successful publication.
+
+For automatic releases, the shared resolver re-fetches the associated PRs and requires exactly one authoritative match for the build's merge commit and target branch, then checks its auto-release label. PRs that only contain the commit are not matches; ambiguous exact matches are not selected. The progress call already passes that PR to the status command. The resolver also emits `AutoReleaseSdkPullRequestUrl` for the release stage to pass as `SdkPullRequest` to the completion template (output path: `AutoReleasePrepare.ResolveAutoReleasePackages`, step `resolve`).
+
+**Rollout prerequisite:** wire the manual `ReleasePlanId` and automatic PR output through the language-specific release templates, starting with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130). This PR changes the shared adapters, not every language CI YAML. Until a completion caller forwards one of these inputs, that call is a safe no-op. Publish the supporting CLI before using the updated shared scripts; coordinate activation with caller wiring. API-version extraction in #16868 is not a dependency.
+
+This uses existing ADO metadata, not a new tracking system or immutable generation snapshot. Historical incorrect dashboard data is not repaired automatically.
+
 ## Retained customization repair attempts
 
 `azsdk tsp client customized-update` / `azsdk_customized_code_update` accepts `--max-attempts` / `maxAttempts` (1..10, default 1). Multiple attempts currently require `CustomCode`; `All` and `SpecInputs` retain their single-pass behavior.

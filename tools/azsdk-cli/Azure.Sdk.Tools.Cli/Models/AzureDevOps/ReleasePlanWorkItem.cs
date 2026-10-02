@@ -142,6 +142,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public string GenerationStatus { get; set; } = string.Empty;
         public string ReleaseStatus { get; set; } = string.Empty;
 
+        [JsonIgnore]
+        public string ReleasedVersion { get; set; } = string.Empty;
+
         // Retain the stored ADO value for internal release-plan selection, but do not expose
         // it as current PR status. GitHub and the release plan dashboard provide that information.
         [JsonIgnore]

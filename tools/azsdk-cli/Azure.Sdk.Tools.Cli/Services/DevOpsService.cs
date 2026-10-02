@@ -145,7 +145,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
-        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansByIdAsync(int releasePlanId, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", CancellationToken ct = default);
@@ -369,39 +370,56 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
+        // Status updates must detect duplicate IDs and must not reinterpret a Release Plan ID as a work item ID.
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansByIdAsync(int releasePlanId, bool isTestReleasePlan = false, CancellationToken ct = default)
         {
-            try
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan'";
+            query += $" AND [Custom.ReleasePlanID] = '{releasePlanId}'";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            var workItems = await FetchWorkItemsAsync(query, ct);
+            var plans = new List<ReleasePlanWorkItem>();
+            foreach (var workItem in workItems)
             {
-                var languageId = MapLanguageToId(language);
-                var escapedPackageName = packageName?.Replace("'", "''");
-                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
-                query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
-                query += $" AND [Custom.ReleaseStatusFor{languageId}] <> 'Released'";
-                query += " AND [System.WorkItemType] = 'Release Plan'";
-                query += " AND [System.State] = 'In Progress'";
-                var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
-                if (releasePlanWorkItems.Count == 0)
-                {
-                    logger.LogInformation("No in-progress release plans found for package {packageName} in {language}", packageName, language);
-                    return [];
-                }
-
-                var releasePlans = new List<ReleasePlanWorkItem>();
-                foreach (var workItem in releasePlanWorkItems)
-                {
-                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
-                    releasePlans.Add(releasePlan);
-                }
-
-                return releasePlans;
+                plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
             }
-            catch (Exception ex)
+            return plans;
+        }
+
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
+        {
+            var normalizedUrl = NormalizeSdkPullRequestUrl(sdkPullRequest, language);
+            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan' AND [System.State] = 'In Progress'";
+            query += $" AND [Custom.SDKPullRequestFor{languageId}] = '{normalizedUrl}'";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            var workItems = await FetchWorkItemsAsync(query, ct);
+            var plans = new List<ReleasePlanWorkItem>();
+            foreach (var workItem in workItems)
             {
-                logger.LogError(ex, "Failed to get release plans for package {packageName} in {language}", packageName, language);
-                throw new Exception($"Failed to get release plans for package {packageName} in {language}. Error: {ex.Message}", ex);
+                plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
             }
+            return plans;
+        }
+
+        internal static string NormalizeSdkPullRequestUrl(string sdkPullRequest, string language)
+        {
+            var repo = SdkLanguageHelpers.GetRepoName(SdkLanguageHelpers.GetSdkLanguage(language));
+            if (!string.IsNullOrWhiteSpace(sdkPullRequest) && Uri.TryCreate(sdkPullRequest, UriKind.Absolute, out var uri) &&
+                uri.Scheme == Uri.UriSchemeHttps && uri.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase) &&
+                uri.IsDefaultPort && string.IsNullOrEmpty(uri.UserInfo) && string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment))
+            {
+                var parts = uri.AbsolutePath.Trim('/').Split('/');
+                if (parts.Length == 4 && parts[0].Equals("Azure", StringComparison.OrdinalIgnoreCase) &&
+                    repo != null && parts[1].Equals(repo, StringComparison.OrdinalIgnoreCase) && parts[2] == "pull" &&
+                    int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number > 0)
+                {
+                    return $"https://github.com/Azure/{repo}/pull/{number.ToString(CultureInfo.InvariantCulture)}";
+                }
+            }
+            throw new ArgumentException("SDK pull request must be a full HTTPS GitHub PR URL in the Azure SDK repository for the supplied language.", nameof(sdkPullRequest));
         }
 
         private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct, bool requireSpecDetails = false)
@@ -458,6 +476,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         SdkPullRequestUrl = sdkPullRequestUrl,
                         GenerationStatus = generationStatus,
                         ReleaseStatus = releaseStatus,
+                        ReleasedVersion = workItem.Fields.TryGetValue($"Custom.ReleasedVersionFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                         PullRequestStatus = pullRequestStatus,
                         PackageName = packageName,
                         ReleaseExclusionStatus = exclusionStatus

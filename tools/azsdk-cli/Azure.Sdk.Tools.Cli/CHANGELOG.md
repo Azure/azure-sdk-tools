@@ -1,5 +1,21 @@
 # Release History
 
+## 0.6.52 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+- `release-plan update-release-status` now requires a requester-supplied release-plan ID or the triggering SDK PR linked to exactly one in-progress ADO plan. Calls without either input are safe no-ops. Package-name, cached-PR-status, and release-type heuristics no longer select a plan; no API version is required.
+
+### Bugs Fixed
+
+- Release status updates validate the language/package entry, reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes.
+- Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
+- Automatic release resolution re-fetches associated PRs and rejects multiple authoritative exact-merge-commit matches, not unrelated PRs that merely contain the commit.
+
+### Other Changes
+
 ## 0.6.51 (2026-10-01)
 
 ### Features Added

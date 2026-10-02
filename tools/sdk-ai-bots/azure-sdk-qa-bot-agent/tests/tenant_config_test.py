@@ -52,6 +52,26 @@ def test_tenant_skills_are_partitioned_by_agent() -> None:
     assert mcp_skills[0].frontmatter.name == "azure-mcp-server"
 
 
+def test_study_guidance_only_changes_api_spec_skill() -> None:
+    baseline = {
+        skill.frontmatter.name: skill.instructions
+        for skill in create_tenant_skills("azure-sdk-chat-agent")
+    }
+    treatment = {
+        skill.frontmatter.name: skill.instructions
+        for skill in create_tenant_skills(
+            "azure-sdk-chat-agent", api_spec_study_guidance="STUDY_TOPIC_SENTINEL"
+        )
+    }
+    assert treatment["api-spec-review"] == (
+        baseline["api-spec-review"] + "\n\nSTUDY_TOPIC_SENTINEL"
+    )
+    assert all(
+        treatment[name] == content
+        for name, content in baseline.items() if name != "api-spec-review"
+    )
+
+
 def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     content = build_skill_content(TenantID.AZURE_MCP_SERVER)
 

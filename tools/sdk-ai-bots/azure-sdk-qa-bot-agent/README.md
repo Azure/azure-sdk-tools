@@ -117,6 +117,12 @@ Use this to develop and test the AI agent itself (prompt tuning, tool integratio
 
 This launches the agent via `agentdev run` on `http://localhost:8088/` with `debugpy` attached, and opens the AI Toolkit Agent Inspector for interactive testing.
 
+For a pre-deployment four-arm decision-guidance comparison, use the
+`../azure-sdk-qa-bot-evaluation/README.md` local dev-agent study instructions.
+Its opt-in variant file and startup receipt apply only to the locally launched
+chat agent; restart the agent between arms. Do not set the study environment
+variables for a hosted deployment.
+
 ![Agent Playground](images/agent_playground.png)
 
 ### Debugging the Chatbot Evolution Agent

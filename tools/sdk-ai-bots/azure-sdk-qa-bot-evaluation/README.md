@@ -104,9 +104,373 @@ Results appear on the Evaluation tab of the Azure AI Foundry portal (each run pr
 
 Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately. A normal response ID can retrieve the original stored response on demand; synthetic IDs such as `content-filter` have no stored response.
 
+### Dev-only decision-guidance study
+
+`decision_study.py` reuses this runner and result adapter to compare **baseline,
+general, topic, and combined** guidance. It does not change the hosted agent,
+tenant routing, production prompts, memory stores, or search indexes.
+
+The first track is **oracle content replay**, not an end-to-end bot benchmark:
+the selected model receives frozen baseline instructions, the applicable guide
+deltas, and identical supplied evidence. No tools or memory are available.
+A common replay instruction replaces the requirement to call tools; this
+necessary deviation is saved in the bundle and applied equally to all arms.
+Judge expectations and reference answers are never sent to the answering model.
+
+The initial 12 cases in `evaluation_datasets/decision-study/apispec.jsonl` form
+six counterfactual pairs (missing versus supplied context, conflicting versus
+consistent evidence, and pending versus confirmed resolution). They are
+**synthetic diagnostic development cases**, not unseen historical holdouts or
+proof of production effectiveness. They remain `reviewed: todo` pending domain
+review. Do not promote them through the canonical curator: study-only metadata
+is intentionally read directly by this harness and is not preserved by
+`CanonicalCase` round-tripping.
+
+Prepare a local bundle (no Azure credentials or cloud calls):
+
+```powershell
+python decision_study.py prepare `
+  --dataset .\evaluation_datasets\decision-study\apispec.jsonl `
+  --baseline <frozen-global-instruction.md> <frozen-api-spec-instruction.md> `
+  --baseline-revision <upstream-commit-sha> `
+  --general <bot_instructions.txt> `
+  --guides <guides.json> `
+  --output <new-private-study-directory> `
+  --repeats 2
+```
+
+`--guides` accepts the extracted decision-guide package (`guides` array with
+IDs, title, lesson, inspect/avoid, context dependencies, conditional actions,
+owner role and stop condition). Guide IDs are selected explicitly in each case,
+so this track measures usefulness **when the right guide is available**, not
+guide retrieval accuracy. Source conversations and guide provenance IDs are
+not inserted into model prompts. Keep private guide packages and bundles
+outside this public repository.
+
+Use a current, reviewed baseline snapshot and retain its upstream commit.
+Preparation hashes all input files, freezes prompts/cases/rubrics, and creates
+a seeded block-randomized schedule with every arm for each case/repeat.
+The evaluation implementation is hashed too; modifying it requires a fresh bundle.
+Treatment instructions explicitly supersede conflicting diagnostic rules only,
+not safety or current policy. The topic overlay specifically reconciles the
+merge-summary rule when supplied evidence proves the summary stale or contradictory.
+That precedence change is part of the treatment, not a silent baseline edit.
+The default seed dataset produces 96 generation requests plus grading.
+Output directories must be new: existing studies are never overwritten.
+
+After selecting authorized dev model deployments, explicitly opt into the
+paid generation and grading run:
+
+```powershell
+python decision_study.py run `
+  --bundle <study-directory>\bundle.json `
+  --output <new-private-run-directory> `
+  --project-endpoint <authorized-Foundry-project-endpoint> `
+  --model <generation-deployment> `
+  --judge-model <grading-deployment> `
+  --execute
+```
+
+The generation deployment must support chat completions and the project must
+support OpenAI-evals `score_model` criteria. Pin deployment/model versions and
+do not update them during the run. These APIs are covered by offline contract
+tests here; service availability still requires a live smoke run in the chosen
+project. No resources are provisioned by this command. It uses `az login`
+through the existing credential helper and disables SDK request retries.
+Unreviewed cases are rejected unless `--allow-unreviewed` explicitly permits an
+exploratory development run. This is not permission to label them validated.
+
+The four opt-in graders score 0–2: `next_action`, `context_discipline`,
+`evidence_discipline`, and `authority_discipline`. The judge sees the answer,
+expected acceptable behavior, frozen evidence, and actual trace (empty in
+content replay), not the arm label or treatment instructions. Necessary
+clarification can receive full credit; unnecessary questions lose credit.
+An evidence/authority score of zero is a hard failure, forcing aggregate
+utility to zero instead of being averaged away.
+
+Artifacts include an integrity-checked bundle, randomized schedule and prompt
+hashes, an append-only attempted/completed/failed generation journal, model IDs,
+usage and latency, raw decision-grader results, and paired win/tie/loss summaries.
+Generation failures and missing/invalid grades stay in the denominator with
+zero utility and separate infrastructure-failure counts. Any such failures
+make the command exit unsuccessfully. Never interpret them as model-quality
+judgments. Group bootstrap intervals resample whole scenario groups, not
+individual repeats; with six synthetic groups they are exploratory only.
+Interrupted/failed runs are preserved and never automatically resumed or retried.
+
+Before claiming practical improvement, add independently selected and reviewed
+historical cutoff cases, exclude related incidents and all previously tuned
+cases, and remove their answers from Q&A/wiki/episode retrieval. Then measure
+the same deltas through isolated, version-pinned hosted agents with native
+retrieval and scripted multi-turn clarification. Today's live PR state is not
+historical evidence. The replay run does **not** claim those later tracks.
+
+### Local dev-agent comparison (before deployment)
+
+`run-local` calls the actual edited chat agent on `127.0.0.1:8088/responses`,
+not the API server's `/completion` (which uses the deployed agent). It records
+the inline local tool trace, then grades the collected answer with the same
+Foundry decision rubrics. Azure model, tools, search and grading can still incur
+cost. Run the agent from
+`../azure-sdk-qa-bot-agent` using its README's `requirements-dev.txt`,
+Azure login/App Configuration access and `agentdev`/F5 setup first.
+Do not deploy or modify shared App Configuration for this study.
+
+Prepare a **new** bundle against the *currently checked-out* chat-agent root
+instruction and API Spec Review tenant prompt (not an older snapshot). Use the
+`prepare` command above with those two files as `--baseline`. For each arm,
+stop the previous dev agent, then in PowerShell:
+
+```powershell
+# From azure-sdk-qa-bot-evaluation; use a new file and receipt for every arm.
+python decision_study.py variant `
+  --bundle <private-study>\bundle.json --arm baseline `
+  --root-instruction ..\azure-sdk-qa-bot-agent\agents\chat_agent\instruction.md `
+  --tenant-guideline ..\azure-sdk-qa-bot-agent\prompts\tenants\api_spec_review.md `
+  --output <private-study>\baseline-variant.json
+
+# In another PowerShell window, from azure-sdk-qa-bot-agent, with its .venv active:
+$env:SDK_QA_STUDY_VARIANT_FILE = '<private-study>\baseline-variant.json'
+$env:SDK_QA_STUDY_RECEIPT_FILE = '<private-study>\baseline-receipt.json'
+agentdev run agents/chat_agent/init.py --port 8088
+
+# Back in the evaluation window after agent startup; explicit paid grading opt-in:
+python decision_study.py run-local `
+  --bundle <private-study>\bundle.json `
+  --variant <private-study>\baseline-variant.json `
+  --receipt <private-study>\baseline-receipt.json `
+  --output <private-study>\baseline-run `
+  --project-endpoint <authorized-Foundry-project-endpoint> `
+  --judge-model <grading-deployment> --execute --allow-unreviewed
+```
+
+Repeat the same three commands with `general`, `topic`, and `combined`, each
+with a fresh variant/receipt/run path and a **fresh agent process**. The agent
+checks both frozen prompt hashes at startup and writes a receipt; `run-local`
+rejects a different arm or bundle. A pre-existing server on port 8088 must be
+stopped first. Do not change local code, model deployment, search indexes, or
+tool permissions between arms. Remove the two environment variables when
+finished. For reviewed cases omit `--allow-unreviewed`.
+
+```powershell
+python decision_study.py summarize-local `
+  --bundle <private-study>\bundle.json `
+  --runs <private-study>\baseline-run <private-study>\general-run `
+         <private-study>\topic-run <private-study>\combined-run `
+  --output <private-study>\local-summary.json
+```
+
+The variant file contains only general/topic treatment text, **never reference
+answers or cases**. Each arm retains the bot's normal tools and tenant skill;
+study mode omits both tenant episode and personal memory providers (and skips
+memory-store initialization) consistently across arms. It does **not** freeze
+live search, wiki, web or other tool results, nor guarantee that unrelated
+historical Q&A is absent from their indexes. Case evidence is explicitly
+supplied in the user message rather than injected as a tool result. Unlike
+fixed-evidence content replay, all relevant topic guides are available to the
+tenant skill; this track measures end-to-end guide use, not oracle selection.
+The paired summary reports how many topic/combined samples actually called
+`load_skill(api-spec-review)` and received the experimental topic text. Merely
+configuring an arm does not ensure the bot reads that skill: an unrelated
+tenant skill may be selected instead. Arm-level scores are intention-to-treat
+comparisons, **not** direct estimates of the effect of reading a guide.
+Before interpreting differences, review blinded actions and grader reasons;
+historical cases additionally require human review and cutoff evidence that
+cannot be retrieved from present-day live indexes.
+Local failures are journaled and retained in paired denominators. The first
+12 synthetic cases are exploratory and unreviewed; the mode does not establish
+real-world superiority. No stored Foundry response retrieval is used for
+local-agent traces. Never commit private variants, bundles, receipts or results.
+
+#### Scripted follow-ups and collection-only runs
+
+Local study cases may include `follow_ups`, a list of fixed user replies.
+Freeze replies before running either arm; do not generate a helpful user response
+from the candidate's answer. The evaluator sends each reply after the preceding
+answer, retaining the user/assistant text transcript within that case only.
+This is **stateless transcript replay**, not a persistent agent session: prior
+tool outputs are not reinserted, and the bot can retrieve evidence again.
+Replies are supplied even if the bot did not ask the right question, so review
+the first turn separately for useful and unnecessary questions.
+
+Every completed turn is journaled immediately, including its answer, latency,
+usage and tool calls. `generations.json` retains `turns` and the final answer;
+failed later turns retain earlier completed turns without counting the case as
+successful. Grading receives the entire conversation and all turn traces.
+Write `expected_behavior` for both the first response and the final action.
+The top-level `usage` remains the final turn's usage; use per-turn usage for
+conversation totals. Fixed-evidence `run` rejects follow-ups rather than silently
+evaluating only the first question.
+
+Add `--collect-only` to `run-local` to preserve answers without invoking Foundry
+grading, for example while investigating gaps or during a grader outage.
+This still requires `--execute` because the local agent uses paid model/tools.
+The run records `grading: not_requested`; no score or `graded.json` is invented.
+Normal `run-local` behavior is unchanged when the flag is absent.
+
+#### Evidence-linked turn grading
+
+`decision_grading.py` grades a completed collection-only local run without
+regenerating answers. It scores each turn independently for clarification,
+context reuse, next action and evidence discipline. Only current/prior user
+facts and tool outputs are available; future scripted replies, reference
+answers, whole-conversation rubrics and arm labels are excluded.
+
+```powershell
+python decision_grading.py --bundle <private-study>\bundle.json `
+  --run <private-study>\baseline-run --output <new-private-grades> `
+  --project-endpoint <authorized-Foundry-project-endpoint> `
+  --judge-model <grading-deployment> --execute
+```
+
+Each finding must select numbered lines from the current answer and available
+evidence. Retrieved document text is decoded rather than JSON-escaped; the
+tool validates line IDs and copies their original text into the audit record.
+It never accepts a paraphrased quote as evidence. Valid references do **not**
+establish semantic correctness. Initial case evidence is a snapshot, not a
+reason to ignore facts supplied by later replies; user observations precede
+potentially large tool sources in the judge input. Two independently
+requested assessments must agree on pass or fail. A repeated failure must also
+cite at least one common answer line (necessary, not sufficient, for agreement
+on the same claim). Uncertainty, disagreement,
+invalid citations and missing judgments remain **inconclusive**, not failures
+of the bot and not ties between arms. Attempts, raw invalid responses, rubric,
+input hash and implementation hash are retained. Compare corresponding
+case/repeat/turn keys, retain inconclusive denominators, and inspect cited
+reasons before interpreting an apparent gain. Failed/missing conversations
+are rejected rather than dropped from a quality comparison.
+
+Calibrate the rubric against predeclared known-good and known-bad answers
+before using it to choose a treatment. Repeated agreement and exact citations
+are reliability checks, not independent human validation or proof of factual
+correctness. Keep calibration cases and experimental results private.
+
+#### Selective evidence disclosure
+
+`evidence_acquisition.py` tests whether the local bot requests missing
+observations rather than receiving every scripted follow-up automatically.
+Prepare a normal private study bundle with **initial questions only**. A
+separate private JSON environment supplies neutral field descriptions and
+one or more hidden worlds per case:
+
+```json
+{
+  "schema_version": 1,
+  "cases": [{
+    "case_id": "example-case",
+    "fields": {"diagnostic": "Exact failing check and error output"},
+    "worlds": [{
+      "id": "one",
+      "values": {"diagnostic": "Example checker: input is malformed."},
+      "required_fields": ["diagnostic"],
+      "useful_fields": ["diagnostic"],
+      "expected_behavior": "Investigate the malformed input, not an unrelated stage."
+    }]
+  }]
+}
+```
+
+Each environment case must match a frozen bundle case. Every world supplies
+every field; required fields must be a subset of useful fields. Use an empty
+required set for sufficient-context controls and report those separately from
+missing-evidence acquisition rates.
+Worlds share the exact same initial question/evidence. Keep descriptions
+neutral: do not put hidden facts or preferred actions in the field catalog.
+Choose the smallest decisive evidence set, not every question an expert once
+asked. Additional helpful observations need not be mandatory.
+Do not name the desired missing fields in the initial evidence: that would
+give away what the agent is supposed to discover. Keep each hidden value
+within its field's promised scope; a changed-file list should not also reveal
+the user's unstated intent or an unseen diagnostic.
+
+```powershell
+python evidence_acquisition.py --bundle <private-study>\bundle.json `
+  --environment <private-study>\environment.json `
+  --variant <private-study>\baseline-variant.json `
+  --receipt <private-study>\baseline-receipt.json `
+  --output <new-private-run> --local-endpoint http://127.0.0.1:8088 `
+  --project-endpoint <authorized-Foundry-project-endpoint> `
+  --selector-model <request-interpretation-deployment> `
+  --max-replies 2 --execute --allow-unreviewed
+```
+
+Start the matching fresh local agent with the existing variant/receipt
+workflow first. As with other study modes, memory is disabled. Two independent
+request interpretations see **only the current answer and field descriptions**,
+never hidden values, expected behavior, world IDs or treatment labels. Both must
+identify the same requested fields and overlapping request lines. Code copies
+only those frozen values into the user reply; it never generates helpful facts.
+Unmapped requests receive a fixed unavailable reply. A bare PR link or generic
+request for context does not disclose the entire case.
+
+No request means no automatic follow-up. The default budget is two user replies
+and at most three agent answers. Request interpretation is still performed on
+the final answer, but the budget is not extended. Invalid/disagreeing selectors
+stop as **selector-inconclusive**, not bot failure. Answers, individual selector
+attempts, actual disclosures and partial failures are journaled immediately.
+The summary retains generation and selector failures separately.
+
+This mode measures **simulated user elicitation**, not live-PR tool acquisition.
+Existing documentation tools remain live, so retrieval contamination is still
+possible. Evidence acquired is not necessarily evidence used correctly: audit
+the resulting action separately. Safe conditional guidance is not automatically
+an incorrect answer. Repeated/extra field counts are descriptive interaction
+costs, not complete quality scores. Calibrate the request selector and audit
+its live decisions before attributing a failure or gain to the bot. Never commit
+private environments, episodes, calibration cases or results.
+Missing a designated field is not itself proof of failure if other legitimately
+disclosed evidence supports the next action.
+
+Use `--strict-requests` for an opt-in interpreter that requires verbatim request
+spans and distinguishes atomic observations (for example destination versus
+source, code versus changed-file names, and a URL versus facts found behind it).
+Missing-access acknowledgements do not count as requests. Quotes are validated
+against cited answer lines and preserved in the journal. Strict mode requires
+a deployment supporting JSON-schema structured output and constrains field IDs
+to the actual catalog; it does not retry with a weaker format. Legacy interpretation
+remains the default. Exact spans and agreement do not prove semantic correctness:
+calibrate against known false positives and audit live disclosures in either mode.
+
+#### Experimental next-action controller
+
+`decision_planner.py` selects `answer`, `ask`, or `inspect` using only the current
+question, visible evidence, conversation history, and explicit read-only inspection
+targets. It never receives hidden worlds, observation catalogs, expected answers,
+case IDs, or treatment labels. Optional private examples contain only `input`
+(the same visible fields) and a validated `plan`. Do not include raw source threads
+or policy verdicts as examples.
+
+For a selective-disclosure run, add `--planner-model <deployment>` to run the
+planner before each response. Add `--planner-examples <private-examples.json>` to
+compare against the same planner with examples; the file must be a JSON array.
+Omitting both options preserves the original local-agent path. Compare baseline,
+planner alone, and planner with examples using the same frozen cases and budgets.
+
+Control flow enforces the selected action: `ask` emits the focused question
+**without calling the answer generator**; `answer` invokes the unchanged local
+bot with the visible conversation. The user-elicitation adapter registers **no
+live inspection targets**. The generic dispatcher supports caller-registered
+read-only inspection callbacks and returns their observation, not a claimed
+answer; subsequent planning and real tool integration remain the caller's
+responsibility. Never register write operations as inspection callbacks.
+
+Planner attempts, raw results, input/example hashes, response IDs and latency
+are journaled. Invalid output and API failures surface as failures, with no
+fallback answer or automatic retry. Turns record response latency separately
+from simulated-user interpretation, and planner-backed turns distinguish the
+planner question from an actual bot answer in `usage.answer_source`.
+
+Screen action selection before a larger end-to-end experiment. Include ambiguous
+cases, sufficient-context controls, general/conditional questions, and available
+versus unavailable inspections. Then audit supported next actions, useful
+conditional answers, unnecessary questions, and latency on fresh source families.
+More questions or greater evidence acquisition alone are not quality gains.
+Any benefit attributed to examples must exceed the planner-alone result. This
+is an offline experimental wrapper, not a production prompt or agent change.
+
 ### Evaluators
 
-All evaluators are builtin LLM evaluators that read the collected bot answer via
+Default evaluators are builtin LLM evaluators that read the collected bot answer via
 `{{item.response}}`:
 
 | Name | Kind | Reads |
@@ -148,6 +512,8 @@ done
 
 ```bash
 python unit_tests/test_pure_logic.py     # offline: schema validation + output-items adapter
+python -m pytest unit_tests -q          # includes decision-study isolation and mocked-run checks
+python -m dataset.validate evaluation_datasets/decision-study/apispec.jsonl
 ```
 
 ## Pre-commit

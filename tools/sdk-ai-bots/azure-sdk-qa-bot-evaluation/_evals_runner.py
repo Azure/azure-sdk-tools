@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from _evals_result import EvalsResult
-from eval.criteria import build_testing_criteria
+from eval.criteria import DECISION_RUBRICS, build_testing_criteria
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,9 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
         "expected_knowledges": {"type": "array", "items": {"type": "object"}},
         "references": {"type": "array", "items": {"type": "object"}},
         "knowledges": {"type": "array", "items": {"type": "object"}},
+        "expected_behavior": {"type": "string"},
+        "tool_evidence": {"type": "string"},
+        "execution": {"type": "object"},
     },
     "required": ["query", "response"],
 }
@@ -87,6 +90,9 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "expected_knowledges": it.get("expected_knowledges", []),
         "references": it.get("references", []),
         "knowledges": it.get("knowledges", []),
+        "expected_behavior": it.get("expected_behavior", ""),
+        "tool_evidence": it.get("tool_evidence", ""),
+        "execution": it.get("execution", {}),
     }
 
 
@@ -189,6 +195,11 @@ class CompletionCollector:
                     "references": extract_title_and_link_from_references(references),
                     "expected_knowledges": record.get("expected_knowledges", []),
                     "knowledges": extract_title_and_link_from_context(full_context),
+                    "expected_behavior": record.get("expected_behavior", ""),
+                    "execution": {
+                        "latency_seconds": time.time() - start,
+                        "response_length": len(answer),
+                    },
                 }
 
         timeout = aiohttp.ClientTimeout(total=self._timeout_seconds)
@@ -374,6 +385,10 @@ def output_items_to_rows(
 
     for oi in output_items:
         item = _get(oi, "datasource_item", {}) or {}
+        if isinstance(item, dict) and isinstance(item.get("item"), dict):
+            item = item["item"]
+        if not isinstance(item, dict) or not item:
+            raise ValueError("Evaluation output item is missing its datasource item")
         results = _get(oi, "results", []) or []
         context = item.get("context", "") or ""
         response_id = item.get("response_id", "") or ""
@@ -387,6 +402,7 @@ def output_items_to_rows(
             "inputs.response": item.get("response", ""),
             "inputs.context": context,
             "inputs.execution": {
+                **item.get("execution", {}),
                 "response_id": response_id,
                 "tool_calls": (tool_calls_by_response_id or {}).get(response_id, []),
             },
@@ -399,6 +415,19 @@ def output_items_to_rows(
             name = _get(r, "name", None)
             if not name:
                 continue
+            if name in DECISION_RUBRICS:
+                raw_score = _get(r, "score", None)
+                row["inputs.execution"].setdefault("decision_grader_results", {})[name] = (
+                    _serialize_response_item(r)
+                )
+                if (
+                    _get(oi, "status", "completed") not in ("completed", "pass", "fail")
+                    or not isinstance(raw_score, (float, int))
+                    or isinstance(raw_score, bool)
+                    or not 0 <= raw_score <= 2
+                ):
+                    row["inputs.execution"].setdefault("grading_errors", []).append(name)
+                    continue
             score = _coerce_score(_get(r, "score", 0.0))
             passed = bool(_get(r, "passed", False))
             per_metric[name] = score
@@ -469,7 +498,7 @@ class FoundryEvalsRunner:
         """
         deadline = time.time() + self._poll_timeout
         run = openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id)
-        while run.status not in ("completed", "failed"):
+        while run.status not in ("completed", "failed", "cancelled", "canceled"):
             if time.time() > deadline:
                 raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
             time.sleep(self._poll_interval)
@@ -479,8 +508,8 @@ class FoundryEvalsRunner:
         report_url = getattr(run, "report_url", None)
         if report_url:
             logger.info("Report URL: %s", report_url)
-        if run.status == "failed":
-            raise RuntimeError(f"Eval run {run_id} failed")
+        if run.status != "completed":
+            raise RuntimeError(f"Eval run {run_id} ended with status={run.status}")
 
         output_items = list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id))
         raw = output_items_to_rows(
@@ -489,6 +518,8 @@ class FoundryEvalsRunner:
             threshold=float(self._threshold),
             tool_calls_by_response_id=tool_calls_by_response_id,
         )
+        for row in raw["rows"]:
+            row["inputs.execution"].update(eval_id=eval_id, run_id=run_id, report_url=report_url)
         if extra_failed_rows:
             raw["rows"].extend(extra_failed_rows)
         return {f"{scenario}_{run_id}": self._evals_result.record_run_result(raw)}
@@ -550,13 +581,6 @@ class FoundryEvalsRunner:
         evaluation_name: Optional[str] = None,
     ) -> dict[str, Any]:
         """Completion mode: concurrently collect bot answers, then grade them inline."""
-        from openai.types.eval_create_params import DataSourceConfigCustom
-        from openai.types.evals.create_eval_jsonl_run_data_source_param import (
-            CreateEvalJSONLRunDataSourceParam,
-            SourceFileContent,
-            SourceFileContentContent,
-        )
-
         # 1) Collect bot answers concurrently (the slow, now-parallelized step).
         collector = CompletionCollector(
             api_url=self._completion_url or resolve_completion_url(),
@@ -606,6 +630,63 @@ class FoundryEvalsRunner:
         # 3) Retrieve the exact stored Agent responses. Tool history remains local
         # and is joined back into cached results after Foundry grading.
         tool_calls_by_response_id = self._retrieve_tool_calls(response_client, items)
+
+        return self.evaluate_collected(
+            openai_client,
+            items,
+            scenario,
+            tool_calls_by_response_id=tool_calls_by_response_id,
+            evaluation_name=evaluation_name,
+            failed_rows=failed_rows,
+        )
+
+    def evaluate_collected(
+        self,
+        openai_client: Any,
+        items: list[dict[str, Any]],
+        scenario: str,
+        *,
+        tool_calls_by_response_id: dict[str, list[dict[str, Any]]],
+        evaluation_name: str | None = None,
+        failed_rows: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Grade fixed responses without regenerating them (e.g. content replay).
+
+        Traces are sent to the judge only when decision metrics are requested.
+        Other evaluation runs keep their existing documentation-only context.
+        """
+        from openai.types.eval_create_params import DataSourceConfigCustom
+        from openai.types.evals.create_eval_jsonl_run_data_source_param import (
+            CreateEvalJSONLRunDataSourceParam,
+            SourceFileContent,
+            SourceFileContentContent,
+        )
+        testing_criteria = build_testing_criteria(
+            self._evaluators, model=self._model, threshold=self._threshold
+        )
+        if not testing_criteria:
+            raise ValueError("No evaluation criteria requested")
+        if set(self._evaluators) & DECISION_RUBRICS.keys():
+            for item in items:
+                if not item.get("expected_behavior", "").strip():
+                    raise ValueError("Decision grading requires expected_behavior for every case")
+            items = [
+                {
+                    **item,
+                    "tool_evidence": json.dumps(
+                        tool_calls_by_response_id.get(item.get("response_id", ""), []),
+                        ensure_ascii=False,
+                    ),
+                }
+                for item in items
+            ]
+        if not items:
+            if not failed_rows:
+                raise ValueError("Cannot grade an empty study")
+            return {
+                f"{scenario}_no-responses":
+                    self._evals_result.record_run_result({"rows": failed_rows})
+            }
 
         data_source_config = DataSourceConfigCustom(
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False

@@ -46,7 +46,7 @@ describe("Check diagnostic reporting", () => {
     entrypointFile = await discoverEntrypointFile(
       joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
     );
-    assert.equal(entrypointFile, "client.tsp");
+    assert.equal(entrypointFile, "main.tsp");
     entrypointFile = await discoverEntrypointFile(
       joinPaths(
         process.cwd(),
@@ -57,7 +57,7 @@ describe("Check diagnostic reporting", () => {
         "Contoso.WidgetManager",
       ),
     );
-    assert.equal(entrypointFile, "client.tsp");
+    assert.equal(entrypointFile, "main.tsp");
     // Verify that entrypoint files specified with a forward-slash path in a
     // sub-directory are found, even on Windows where readdir returns paths
     // with back-slash separators.

@@ -47,10 +47,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName(SpecCommitSHAField)]
         public string SpecCommitSHA { get; set; } = string.Empty;
 
-        // A failed or mixed parent/child read must not be treated as an unpinned legacy plan.
-        [JsonIgnore]
-        public bool IsSpecTargetConsistent { get; set; } = true;
-
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
 
@@ -84,15 +80,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public bool IsSpecApproved { get; set; } = false;
 
         public int ApiSpecWorkItemId { get; set; } = 0;
-
-        // Internal concurrency snapshot of the parent and API Spec child; not an ADO field or tool input.
-        [JsonIgnore]
-        public string TargetRevision { get; set; } = string.Empty;
-
-        internal static string GetTargetRevision(int? planId, int? planRevision, int? specId, int? specRevision) =>
-            planId is > 0 && planRevision is > 0 && specId is > 0 && specRevision is > 0
-                ? FormattableString.Invariant($"{planId}:{planRevision}:{specId}:{specRevision}")
-                : string.Empty;
 
         public string LanguageExclusionRequesterNote { get; set; } = string.Empty;
 

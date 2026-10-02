@@ -4,13 +4,13 @@ license: MIT
 metadata:
   version: "1.0.0"
   distribution: shared
-description: 'Manage Azure SDK release plans. WHEN: "create release plan", "get release plan", "update release plan", "update API spec in release plan", "update SDK details in release plan", "update target release month", "abandon release plan", "link SDK PR to plan", "namespace approval", "check release plan status".'
+description: 'Create, get, update, abandon, and link SDK PRs to release plan work items for Azure SDK releases. **UTILITY SKILL**. USE FOR: "create release plan", "get release plan", "update release plan", "update API spec in release plan", "update SDK details in release plan", "abandon release plan", "link SDK PR to plan", "namespace approval", "check release plan status". DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedback. INVOKES: azure-sdk-mcp:azsdk_create_release_plan, azure-sdk-mcp:azsdk_get_release_plan, azure-sdk-mcp:azsdk_update_release_plan, azure-sdk-mcp:azsdk_update_release_plan_target, azure-sdk-mcp:azsdk_update_api_spec_pull_request_in_release_plan, azure-sdk-mcp:azsdk_update_sdk_details_in_release_plan, azure-sdk-mcp:azsdk_abandon_release_plan, azure-sdk-mcp:azsdk_link_sdk_pull_request_to_release_plan, azure-sdk-mcp:azsdk_link_namespace_approval_issue.'
 compatibility: "azure-sdk-mcp server, API spec PR in Azure/azure-rest-api-specs"
 ---
 
 # Prepare Release Plan
 
-Create, get, update, abandon, and link SDK PRs to release plans.
+This skill creates, gets, updates, abandons, and links SDK PRs to release plan work items for Azure SDK releases, helping gather required release data, validate spec inputs, and link related approvals or SDK pull requests without exposing internal work item URLs.
 
 ## Triggers
 
@@ -21,14 +21,10 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 ## Rules
 
 - Do not display Azure DevOps work item URLs; only provide the Release Plan Link and ID.
-- Public Preview and GA spec PRs must be in `Azure/azure-rest-api-specs`; Private Preview spec PRs must be in `Azure/azure-rest-api-specs-pr`.
-- Create and metadata updates derive the API version and packages automatically. `apiVersion` is a lookup selector only, never an input to create, metadata update, or spec-PR update.
-- Public spec pinning uses the PR's source HEAD when open or merge SHA when merged. Optional `specCommitSha` defaults to that commit and must match it when supplied.
-- Public pinning requires a clean local TypeSpec checkout at that commit. Never switch, reset, or stash user files automatically. Valid metadata may report no single API version or no emitters; leave the version unset rather than asking the user to choose one. Compilation failures still stop the update.
-- Create and metadata/spec-PR updates each use one call once required inputs are known, without a target approval roundtrip.
-- After a successful write, report the saved API version, spec commit, SDK release type, and package names returned by the tool, alongside the plan link and ID. Do not describe only the target month.
-- Reusing create leaves the existing target unchanged; advancing it requires a separate update. Never change a Finished, Abandoned, Closed, or Duplicate plan's target. A different project or API version requires a separate plan. No-PR tracking plans and private previews remain unpinned.
-- Metadata and spec-PR updates require the exact Azure DevOps `workItemId`, not a Release Plan ID. Look up other selectors first and use the returned `WorkItemId`; never fall back to project-only resolution inside a write. Reuse a known work item ID without asking again.
+- Require an API spec PR link or a TypeSpec project path before creating or updating a plan.
+- Validate that the spec PR repository matches the requested API release type before creation.
+- Release plan tools accept **either** a Release Plan ID or an Azure DevOps work item ID — pass whichever the user provides. Each tool resolves the value automatically (trying it as a Release Plan ID first, then as a work item ID), so you do not need to call `azure-sdk-mcp:azsdk_get_release_plan` first just to translate one ID into the other.
+- Create/update accept optional `specCommitSha`; when passing it to update, supply the explicit Azure DevOps `workItemId`.
 - Always relay schedule-risk `warnings` and `next_steps` returned by release plan tools. For each past-due plan, show its Release Plan ID and dashboard link, then present both choices: update its target release month or abandon it and record the reason in the dashboard.
 
 ## MCP Tools
@@ -55,18 +51,21 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 **Steps**:
 
-1. **Locate Project** — Obtain the local TypeSpec project directory. Relative paths work from the specs checkout; otherwise use an absolute local path.
-2. **Gather Info** — Collect only missing details:
+1. **Get TypeSpec Project Path** — Ask the user for the relative TypeSpec project path (directory containing `tspconfig.yaml`, e.g. `specification/contosowidgetmanager/Contoso.WidgetManager`). Always use the relative path from the repo root, not an absolute path.
+2. **Check Existing** — Run `azure-sdk-mcp:azsdk_get_release_plan` with the relative `typeSpecProjectPath` to check if a release plan already exists.
+   - If a release plan exists with the **same API release type** the user requested: inform the user that a release plan already exists, show the Release Plan ID, status, and API release type. Suggest the user use the existing release plan. Do NOT create a new one.
+   - If a release plan exists but for a **different API release type**: inform the user about the existing plan and its API release type, then proceed to create a new release plan using `forceCreateReleasePlan: true` for the user's requested API release type. Do NOT attempt to update the existing release plan's API release type.
+   - If no release plan exists, proceed to step 3.
+3. **Gather Info** — Collect required details from the user. See [details](references/release-plan-details.md):
    - Target release month/year (format: "Month YYYY", e.g. "June 2026"). Do NOT use formats like "2026-06" or "06/2026" — these are invalid.
    - API release type: Value must be one of the following: "Private Preview", "Public Preview", or "GA"
    - Spec PR URL (optional)
    - Service Tree ID (GUID) — optional if previously created
    - Product Tree ID (GUID) — optional if previously created
-3. **Create** — Run `azure-sdk-mcp:azsdk_create_release_plan` once. It derives API version and packages from metadata, and SDK type from API release type (preview → beta, GA → stable). Do not pass `sdkReleaseType`. For public PRs, `specCommitSha` is optional and defaults from the PR.
-4. **Reuse Safely** — Let create resolve reuse by project, metadata API version, and API release type. Do not use a project-only lookup or force-create mode. A returned existing plan keeps its target; use a separate update if advancement was requested.
+4. **Create** — Run `azure-sdk-mcp:azsdk_create_release_plan` with the collected parameters. Use `forceCreateReleasePlan: true` only if an existing release plan was found for a different API release type.
 5. **Namespace** — For first management plane releases, link namespace approval issue using `azure-sdk-mcp:azsdk_link_namespace_approval_issue`.
 
-> **IMPORTANT**: Do not change an existing plan's API release type, API version, or project to represent a separate release. Use create for that release. Do not generate or publish SDKs unless separately requested.
+> **IMPORTANT**: Do NOT update an existing release plan to change its API release type. If a release plan exists for a different API release type, force-create a new one instead.
 
 **Tool**: `azure-sdk-mcp:azsdk_create_release_plan`
 
@@ -78,12 +77,11 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 **Steps**:
 
-1. **Identify Plan** — Use an identifier already in context, or obtain one:
-   - Azure DevOps work item ID in `workItemId`
-   - Release Plan ID in `releasePlanId`
-   - Spec PR URL in `specPullRequestUrl`
-   - Relative `typeSpecProjectPath` with `apiVersion` and `apiReleaseType`
-2. **Query** — Run `azure-sdk-mcp:azsdk_get_release_plan` with the matching selector. Use a relative project path for lookup. For a metadata or spec-PR update, use the result's `WorkItemId`, not its `ReleasePlanId`; resolve an ambiguous lookup before writing.
+1. **Identify Plan** — Ask user for one of:
+   - Release plan ID or work item ID
+   - Relative TypeSpec project path (e.g. `specification/contosowidgetmanager/Contoso.WidgetManager`)
+   - Spec PR URL
+2. **Query** — Run `azure-sdk-mcp:azsdk_get_release_plan` with the provided identifier. Always use a relative path for `typeSpecProjectPath`; use `specPullRequestUrl` when the user provides only a spec PR URL.
 3. **Display** — Show the release plan ID, status, linked PRs, and SDK details. Always relay schedule-risk warnings and recommended actions from the response.
 
 **Tool**: `azure-sdk-mcp:azsdk_get_release_plan`
@@ -96,21 +94,17 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 **Steps**:
 
-1. **Identify Plan** — Reuse the exact work item ID if known. Otherwise, get the plan by Release Plan ID, linked spec PR, or project/API version/API release type, and use the returned `WorkItemId`.
+1. **Identify Plan** — Get the work item ID or TypeSpec project path from the user.
 2. **Update Metadata** — Run `azure-sdk-mcp:azsdk_update_release_plan` with:
    - `typeSpecProjectPath` (required)
-   - `workItemId` (required — exact Azure DevOps work item ID)
-   - `specPullRequestUrl` (optional — omission uses the plan's existing spec link)
-   - `sdkReleaseType` (required — preserve the user's explicit choice; otherwise use the plan's `SDKReleaseType`, reading the plan if needed. Do not ask for a new choice or assume a default.)
-   - `specCommitSha` (optional for public pinning — defaults from the PR)
+   - `workItemId` (optional — resolved from TypeSpec path or spec PR if not provided)
+   - `specPullRequestUrl` (optional)
+   - `sdkReleaseType` (required — do NOT default this from API release type; always ask user explicitly)
    - `serviceTreeId` (optional)
    - `productTreeId` (optional)
 3. **Update API Spec PR** — If only the spec PR URL needs updating, run `azure-sdk-mcp:azsdk_update_api_spec_pull_request_in_release_plan` with:
    - `specPullRequestUrl` (required)
-   - `workItemId` (required — exact Azure DevOps work item ID)
-   - `typeSpecProjectPath` (required local checkout for public targets; optional for private previews)
-   - `specCommitSha` (optional for public pinning — defaults from the PR)
-4. **Report** — Call only the needed update tool, once. Report its saved result or configuration error, without an approval roundtrip or automatic SDK generation.
+   - `workItemId` or `releasePlanId`
 
 **Tools**: `azure-sdk-mcp:azsdk_update_release_plan`, `azure-sdk-mcp:azsdk_update_api_spec_pull_request_in_release_plan`
 
@@ -180,5 +174,5 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 - Requires `azure-sdk-mcp` server; no CLI fallback — prompt user to configure MCP if unavailable.
 - If creation fails, verify spec PR URL and Service Tree IDs.
-- If a metadata or spec-PR update fails, verify the exact work item ID and that the plan is not already abandoned.
+- If update fails, ensure the Release Plan ID or work item ID is correct and the plan is not already abandoned.
 - If linking fails, verify the SDK PR URL is valid and the language matches a supported value.

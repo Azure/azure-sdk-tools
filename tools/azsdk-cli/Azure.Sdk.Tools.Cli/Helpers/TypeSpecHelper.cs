@@ -108,7 +108,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <inheritdoc/>
         public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
         {
-            var metadataDirectory = Path.Combine(Path.GetTempPath(), $"azsdk-spec-metadata-{Guid.NewGuid():N}");
             try
             {
                 // Find the typespec project directory
@@ -172,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 var npxOptions = new NpxOptions(
                     package: "@typespec/compiler",
-                    args: ["tsp", "compile", entrypoint, "--emit", "@azure-tools/typespec-metadata", "--output-dir", metadataDirectory],
+                    args: ["tsp", "compile", entrypoint, "--emit", "@azure-tools/typespec-metadata", "--output-dir", "./tsp-output"],
                     logOutputStream: true,
                     workingDirectory: project.ProjectRootPath,
                     timeout: TimeSpan.FromMinutes(5)
@@ -182,42 +181,30 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 if (result.ExitCode != 0)
                 {
                     logger.LogWarning("TypeSpec metadata emitter failed with exit code {ExitCode}. Output: {Output}", result.ExitCode, result.Output);
-                    return null;
+                    return project;
                 }
 
-                var metadataFilePath = Path.Combine(metadataDirectory, "@azure-tools", "typespec-metadata", "typespec-metadata.yaml");
+                var metadataFilePath = Path.Combine(project.ProjectRootPath, "tsp-output", "@azure-tools", "typespec-metadata", "typespec-metadata.yaml");
                 if (!File.Exists(metadataFilePath))
                 {
                     logger.LogWarning("typespec-metadata.yaml not found at expected path: {metadataFilePath}", metadataFilePath);
-                    return null;
+                    return project;
                 }
 
                 var metadataYaml = await File.ReadAllTextAsync(metadataFilePath, ct);
                 logger.LogDebug("TypeSpec metadata YAML: {metadataYaml}", metadataYaml);
 
                 var packages = ParsePackageNamesFromMetadata(metadataYaml);
-                if (packages == null)
+                if (packages != null)
                 {
-                    return null;
+                    project.Packages = packages;
                 }
-                project.Packages = packages;
                 return project;
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                throw;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to run TypeSpec metadata emitter");
                 return null;
-            }
-            finally
-            {
-                if (Directory.Exists(metadataDirectory))
-                {
-                    Directory.Delete(metadataDirectory, recursive: true);
-                }
             }
         }
 
@@ -309,7 +296,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     }
                 }
 
-                return packages;
+                return packages.Count > 0 ? packages : null;
             }
             catch (Exception)
             {

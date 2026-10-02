@@ -177,24 +177,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 packageName: unknown-package
             """;
 
-            string? metadataOutputDirectory = null;
+            // Set up the metadata output directory and file as the emitter would
+            var metadataDir = Path.Combine(testCodeFilePath, "tsp-output", "@azure-tools", "typespec-metadata");
+            Directory.CreateDirectory(metadataDir);
+            var metadataFilePath = Path.Combine(metadataDir, "typespec-metadata.yaml");
+            await File.WriteAllTextAsync(metadataFilePath, metadataYaml);
 
             try
             {
-                // Write metadata to the temporary output directory supplied to the emitter.
+                // Mock npx to return success (emitter ran successfully)
                 var mockNpxHelper = new Mock<INpxHelper>();
                 mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
-                    .Callback<NpxOptions, CancellationToken>((options, _) =>
-                    {
-                        var outputIndex = options.Args.IndexOf("--output-dir");
-                        Assert.That(outputIndex, Is.GreaterThanOrEqualTo(0));
-                        var outputDirectory = options.Args[outputIndex + 1];
-                        Assert.That(Path.GetDirectoryName(outputDirectory), Is.EqualTo(Path.TrimEndingDirectorySeparator(Path.GetTempPath())));
-                        Assert.That(Path.GetFileName(outputDirectory), Does.Match("^azsdk-spec-metadata-[0-9a-f]{32}$"));
-                        metadataOutputDirectory = outputDirectory;
-                        var metadataDir = Directory.CreateDirectory(Path.Combine(outputDirectory, "@azure-tools", "typespec-metadata")).FullName;
-                        File.WriteAllText(Path.Combine(metadataDir, "typespec-metadata.yaml"), metadataYaml);
-                    })
                     .ReturnsAsync(new ProcessResult { ExitCode = 0 });
 
                 var result = await typeSpecHelper.ParseTypeSpecProjectAsync(testCodeFilePath, mockNpxHelper.Object, logger, CancellationToken.None);
@@ -209,15 +202,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.JavaScript && p.PackageName == "@azure/arm-contoso"));
                 Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.Go && p.PackageName == "sdk/resourcemanager/contoso/armcontoso"));
                 Assert.That(result.Packages, Has.None.Matches<PackageInfo>(p => p.Language == SdkLanguage.Unknown));
-                Assert.That(metadataOutputDirectory, Is.Not.Null);
-                Assert.That(Directory.Exists(metadataOutputDirectory), Is.False);
             }
             finally
             {
-                // Avoid leaking temporary output if the cleanup assertion fails.
-                if (metadataOutputDirectory != null && Directory.Exists(metadataOutputDirectory))
+                // Clean up the generated metadata directory
+                var tspOutputDir = Path.Combine(testCodeFilePath, "tsp-output");
+                if (Directory.Exists(tspOutputDir))
                 {
-                    Directory.Delete(metadataOutputDirectory, recursive: true);
+                    Directory.Delete(tspOutputDir, recursive: true);
                 }
             }
         }

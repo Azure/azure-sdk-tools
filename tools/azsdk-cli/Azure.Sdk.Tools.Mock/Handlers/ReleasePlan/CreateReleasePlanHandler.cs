@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Mock.Handlers.ReleasePlan;
 
 /// <summary>
 /// Mock handler for azsdk_create_release_plan.
-/// Creates a Contoso release plan from fixture metadata for the expected local TypeSpec project.
+/// Switches on typespec project path — returns a Contoso release plan for the expected path, default otherwise.
 /// </summary>
 public class CreateReleasePlanHandler : IMockToolHandler
 {
@@ -17,24 +17,19 @@ public class CreateReleasePlanHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var typespecPath = ReleasePlanMockResponses.NormalizeProjectPath(arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "");
-        if (!string.Equals(typespecPath, ReleasePlanMockResponses.ContosoTypeSpecProjectPath, StringComparison.OrdinalIgnoreCase))
-        {
-            return new ReleasePlanResponse { ResponseError = "Provide the local Contoso TypeSpec project at the selected commit." };
-        }
+        var typespecPath = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "";
 
-        return ContosoReleasePlanResponse(ReleasePlanMockResponses.ContosoTypeSpecProjectPath, arguments);
+        return typespecPath.ToLowerInvariant() switch
+        {
+            "specification/contosowidgetmanager/contoso.widgetmanager" => ContosoReleasePlanResponse(typespecPath, arguments),
+            _ => MockToolFactory.GetDefaultResponse()
+        };
     }
 
     private static ReleasePlanResponse ContosoReleasePlanResponse(string typespecPath, Dictionary<string, object?>? arguments)
     {
-        var specPr = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()?.Trim() ?? string.Empty;
-        var hasSpecPullRequest = !string.IsNullOrWhiteSpace(specPr);
-        if (!ApiReleaseTypeExtensions.TryParseFromUserInput(arguments?.GetValueOrDefault("apiReleaseType")?.ToString() ?? "", out var releaseType))
-        {
-            return new ReleasePlanResponse { ResponseError = "Choose Private Preview, Public Preview, or GA." };
-        }
-        var response = new ReleasePlanResponse
+        var hasSpecPullRequest = !string.IsNullOrWhiteSpace(arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString());
+        return new ReleasePlanResponse
         {
             TypeSpecProject = typespecPath,
             PackageType = SdkType.Dataplane,
@@ -51,14 +46,15 @@ public class CreateReleasePlanHandler : IMockToolHandler
                 Title = "Release Plan - Contoso.WidgetManager",
                 Status = "Active",
                 Owner = "testuser@microsoft.com",
-                SDKReleaseMonth = arguments?.GetValueOrDefault("targetReleaseMonthYear")?.ToString() ?? "December 2026",
+                SDKReleaseMonth = arguments?.GetValueOrDefault("targetReleaseMonthYear")?.ToString() ?? "06/2026",
                 ReleasePlanId = 50001,
-                ApiReleaseType = releaseType,
                 IsDataPlane = true,
                 SpecType = "TypeSpec",
-                ActiveSpecPullRequest = specPr,
+                ActiveSpecPullRequest = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()
+                    ?? "https://github.com/Azure/azure-rest-api-specs/pull/12345",
                 APISpecProjectPath = typespecPath,
-                SDKReleaseType = releaseType.GetDefaultSdkReleaseType(),
+                SpecCommitSHA = arguments?.GetValueOrDefault("specCommitSha")?.ToString() ?? "",
+                SDKReleaseType = "beta",
                 SDKInfo =
                 [
                     new SDKInfo { Language = ".NET", PackageName = "Azure.Template.Contoso" },
@@ -68,6 +64,5 @@ public class CreateReleasePlanHandler : IMockToolHandler
                 ]
             }
         };
-        return ReleasePlanMockResponses.SaveTarget(arguments, update: false, response: response);
     }
 }

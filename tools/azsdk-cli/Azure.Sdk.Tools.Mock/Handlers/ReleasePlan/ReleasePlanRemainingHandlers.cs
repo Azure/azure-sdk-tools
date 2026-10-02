@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
@@ -11,130 +10,25 @@ namespace Azure.Sdk.Tools.Mock.Handlers.ReleasePlan;
 
 internal static class ReleasePlanMockResponses
 {
-    internal const string ContosoTypeSpecProjectPath = "specification/contosowidgetmanager/Contoso.WidgetManager";
-    internal const string ContosoApiVersion = "2024-01-01";
-    internal const string DefaultSpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/38387";
-    internal const string SpecSha = "0123456789abcdef0123456789abcdef01234567";
-    internal const int WorkflowWorkItemId = 29262;
-
-    public static ReleasePlanWorkItem ContosoWorkItem(string? typespecPath = null, string? releaseMonth = null, int workItemId = 35000) => new()
+    public static ReleasePlanWorkItem ContosoWorkItem(string? typespecPath = null, string? releaseMonth = null) => new()
     {
-        WorkItemId = workItemId,
+        WorkItemId = 35000,
         Title = "Release Plan - Contoso.WidgetManager",
         Status = "Active",
         Owner = "testuser@microsoft.com",
-        SDKReleaseMonth = releaseMonth ?? "December 2026",
-        ReleasePlanId = workItemId == WorkflowWorkItemId ? WorkflowWorkItemId : 50001,
-        ApiReleaseType = ApiReleaseType.GA,
-        SpecCommitSHA = SpecSha,
-        SpecAPIVersion = ContosoApiVersion,
+        SDKReleaseMonth = releaseMonth ?? "06/2026",
+        ReleasePlanId = 50001,
         IsDataPlane = true,
         SpecType = "TypeSpec",
-        ActiveSpecPullRequest = DefaultSpecPullRequestUrl,
-        APISpecProjectPath = typespecPath ?? ContosoTypeSpecProjectPath,
+        ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/12345",
+        APISpecProjectPath = typespecPath ?? "specification/contosowidgetmanager/Contoso.WidgetManager",
         SDKReleaseType = "beta",
         SDKInfo =
         [
             new SDKInfo { Language = ".NET", PackageName = "Azure.Template.Contoso" },
-            new SDKInfo { Language = "Python", PackageName = "azure-contoso-widgetmanager" },
-            new SDKInfo { Language = "JavaScript", PackageName = "@azure/contoso-widgetmanager" },
-            new SDKInfo { Language = "Java", PackageName = "azure-contoso-widgetmanager" }
+            new SDKInfo { Language = "Python", PackageName = "azure-contoso-widgetmanager" }
         ]
     };
-
-    internal static string NormalizeProjectPath(string path)
-    {
-        path = path.Replace('\\', '/').TrimEnd('/');
-        if (path.EndsWith("/tspconfig.yaml", StringComparison.OrdinalIgnoreCase))
-        {
-            path = path[..^"/tspconfig.yaml".Length];
-        }
-        var specificationIndex = path.IndexOf("/specification/", StringComparison.OrdinalIgnoreCase);
-        if (specificationIndex >= 0 && !path.Contains("://", StringComparison.Ordinal))
-        {
-            path = path[(specificationIndex + 1)..];
-        }
-        return path;
-    }
-
-    // Canned metadata and PR source commit only; writes do not mutate the lookup fixture.
-    public static ReleasePlanResponse SaveTarget(Dictionary<string, object?>? arguments, bool update, ReleasePlanResponse? response = null)
-    {
-        string Argument(string key) => arguments?.GetValueOrDefault(key)?.ToString() ?? string.Empty;
-        var workItemId = 35000;
-        if (update)
-        {
-            if (!int.TryParse(Argument("workItemId"), out workItemId) || workItemId <= 0)
-            {
-                return new ReleasePlanResponse { ResponseError = "A positive work item ID is required. Look up the release plan first and use its WorkItemId." };
-            }
-            if (workItemId != 35000 && workItemId != WorkflowWorkItemId)
-            {
-                return new ReleasePlanResponse { ResponseError = $"No release plan found for work item ID {workItemId}. No other plan was selected." };
-            }
-        }
-
-        var plan = response?.ReleasePlanDetails ?? ContosoWorkItem(workItemId: workItemId);
-        var path = NormalizeProjectPath(Argument("typeSpecProjectPath"));
-        if (!string.Equals(path, plan.APISpecProjectPath, StringComparison.OrdinalIgnoreCase))
-        {
-            return new ReleasePlanResponse { ResponseError = "Provide the local Contoso TypeSpec project at the selected commit." };
-        }
-
-        var specPr = Argument("specPullRequestUrl").Trim();
-        if (string.IsNullOrWhiteSpace(specPr))
-        {
-            specPr = plan.ActiveSpecPullRequest;
-        }
-        if (!string.IsNullOrWhiteSpace(specPr) &&
-            !Regex.IsMatch(specPr, @"^https://github\.com/Azure/azure-rest-api-specs(-pr)?/pull/[1-9][0-9]*/?$", RegexOptions.IgnoreCase))
-        {
-            return new ReleasePlanResponse { ResponseError = "Provide a valid GitHub pull request URL in Azure/azure-rest-api-specs or Azure/azure-rest-api-specs-pr." };
-        }
-        var releaseType = plan.ApiReleaseType == ApiReleaseType.Unknown ? ApiReleaseType.PublicPreview : plan.ApiReleaseType;
-        if (releaseType.ValidateSpecPullRequest(specPr) is { } error)
-        {
-            return new ReleasePlanResponse { ResponseError = error };
-        }
-
-        var saveCommit = !string.IsNullOrWhiteSpace(specPr) && releaseType != ApiReleaseType.PrivatePreview;
-        var sha = Argument("specCommitSha");
-        if (!string.IsNullOrEmpty(sha) && !saveCommit)
-        {
-            return new ReleasePlanResponse { ResponseError = "A public spec PR is required to save an SDK generation commit." };
-        }
-        if (!string.IsNullOrEmpty(sha) && !string.Equals(sha, SpecSha, StringComparison.OrdinalIgnoreCase))
-        {
-            return new ReleasePlanResponse { ResponseError = "The spec commit does not match the fixture PR source commit. Use its source commit or omit specCommitSha." };
-        }
-
-        var sdkReleaseType = plan.SDKReleaseType;
-        if (update && !string.IsNullOrWhiteSpace(Argument("sdkReleaseType")))
-        {
-            sdkReleaseType = Argument("sdkReleaseType").ToLowerInvariant() switch
-            {
-                "ga" => "stable",
-                "preview" => "beta",
-                var value => value
-            };
-            if (sdkReleaseType is not ("beta" or "stable"))
-            {
-                return new ReleasePlanResponse { ResponseError = "Invalid SDK release type. Supported release types are: beta, stable" };
-            }
-        }
-
-        plan.SpecCommitSHA = saveCommit ? SpecSha : string.Empty;
-        if (releaseType != ApiReleaseType.PrivatePreview)
-        {
-            plan.SpecAPIVersion = ContosoApiVersion;
-        }
-        plan.ActiveSpecPullRequest = specPr;
-        plan.SDKReleaseType = sdkReleaseType;
-        response ??= new ReleasePlanResponse { TypeSpecProject = plan.APISpecProjectPath, PackageType = SdkType.Dataplane };
-        response.Message = update ? "Release target saved (mock)." : "Release plan created successfully";
-        response.ReleasePlanDetails = plan;
-        return response;
-    }
 
     public static ReleaseWorkflowResponse Workflow(string status, params string[] details) => new()
     {
@@ -159,11 +53,26 @@ public class UpdateReleasePlanHandler : IMockToolHandler
     public string ToolName => "azsdk_update_release_plan";
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        if (string.IsNullOrWhiteSpace(arguments?.GetValueOrDefault("sdkReleaseType")?.ToString()))
+        var plan = ReleasePlanMockResponses.ContosoWorkItem();
+        plan.SpecCommitSHA = arguments?.GetValueOrDefault("specCommitSha")?.ToString() ?? "";
+        if (!string.IsNullOrEmpty(plan.SpecCommitSHA))
         {
-            return new ReleasePlanResponse { ResponseError = "Invalid SDK release type. Supported release types are: beta, stable" };
+            if (!int.TryParse(arguments?.GetValueOrDefault("workItemId")?.ToString(), out var workItemId) || workItemId <= 0)
+            {
+                return new ReleasePlanResponse { ResponseError = "A positive work item ID is required when providing a spec commit SHA." };
+            }
+            if (workItemId != plan.WorkItemId)
+            {
+                return new ReleasePlanResponse { ResponseError = $"No release plan found for work item ID {workItemId}. No other plan was selected." };
+            }
         }
-        return ReleasePlanMockResponses.SaveTarget(arguments, update: true);
+        return new ReleasePlanResponse
+        {
+            TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
+            PackageType = SdkType.Dataplane,
+            Message = "Release plan updated successfully (mock)",
+            ReleasePlanDetails = plan
+        };
     }
 }
 
@@ -209,21 +118,10 @@ public class GetServiceDetailsByTypeSpecPathHandler : IMockToolHandler
 public class UpdateApiSpecPullRequestInReleasePlanHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_update_api_spec_pull_request_in_release_plan";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments)
-    {
-        if (string.IsNullOrWhiteSpace(arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()))
-        {
-            return new ReleaseWorkflowResponse { ResponseError = "API spec pull request URL is required for this release plan operation." };
-        }
-        var response = ReleasePlanMockResponses.SaveTarget(arguments, update: true);
-        return new ReleaseWorkflowResponse
-        {
-            Status = response.OperationStatus == Status.Failed ? "Failed" : "Success",
-            ResponseError = response.ResponseError,
-            NextSteps = response.NextSteps,
-            Details = [response.Message ?? string.Empty]
-        };
-    }
+    public CommandResponse Handle(Dictionary<string, object?>? arguments) =>
+        ReleasePlanMockResponses.Workflow(
+            "Updated",
+            "API spec pull request URL updated on release plan (mock)");
 }
 
 /// <summary>Mock handler for azsdk_update_language_exclusion_justification.</summary>

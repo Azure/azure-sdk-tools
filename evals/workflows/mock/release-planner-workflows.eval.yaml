@@ -1,9 +1,21 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Mock workflows for release-plan creation, metadata and spec-PR updates,
-  SDK generation, and package-detail refresh. Create and update each use one
-  write call with metadata-derived API version and packages. Graders inspect
-  routing, arguments, and canned results, not real DevOps writes or persistence.
+  Mock-environment workflow scenarios derived from the release-planner
+  replacement test plan (#15835). Each stimulus mirrors one of the four
+  high-level scenarios that release-planner-dashboard must hand off to the
+  agent:
+
+    1. Create a release plan (private preview / public preview / GA)
+    2. Generate SDK for all languages in an existing release plan
+    3. Link a different spec PR to an existing release plan
+    4. Update SDK details (package names) in a release plan
+
+  Plus an end-to-end "create + generate" flow used as the headline demo
+  prompt.
+
+  Bound to the mock MCP — these graders only inspect skill routing and tool
+  selection, not real DevOps writes. The full live e2e flow lives in
+  workflows/live/release-planner.eval.yaml.
 
 version: "1.0"
 type: capability
@@ -21,10 +33,13 @@ defaults:
 
 stimuli:
   # --- Scenario 1: Create release plan ---------------------------------
-  # Intent, then details. Create owns reuse; no preliminary lookup is required.
+  # Natural 2-turn flow (rewritten from a single "here is all the context
+  # you need" prompt — a pre-multi-turn workaround, see microsoft/vally#481):
+  # turn 0 states intent only; turn 1 supplies the structured details, as a
+  # real user follow-up would. Graders stay session-wide because the skill's
+  # own documented workflow may legitimately check for an existing plan
+  # (azsdk_get_release_plan) before all details arrive.
   - name: create-public-preview-release-plan
-    tags:
-      feature: release-target
     # Spec-repo worktree fixture: defined once here and aliased by the stimuli
     # below. CI clones it via eng/common/scripts/eval/init-eval-git-fixtures.js before this suite.
     environment: &specsWorktree
@@ -44,17 +59,13 @@ stimuli:
           - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
           - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
           - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-          - target release timeline: "December 2026"
+          - target release timeline: "June 2026"
+          - API version: "2022-11-01-preview"
+          - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-        The local fixture checkout is clean and matches the PR commit.
-        Create the plan and report the saved target. Do not generate SDKs.
     constraints:
-      max_turns: 14
-      max_tokens: 16000
-      max_duration: 8m
-    rubric:
-      - Create once after receiving the details, without asking for target approval or an API-version choice.
-      - Report the saved metadata API version, packages, SDK type and PR-derived commit. Do not generate or publish SDKs.
+      max_turns: 10
+      max_tokens: 12000
     graders:
       - type: skill-invocation
         config:
@@ -62,37 +73,69 @@ stimuli:
             - azsdk-common-prepare-release-plan
       - type: tool-calls
         config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
+
+  # --- End-to-end demo: create, then (in a separate turn) generate -----
+  # Rewritten from a single "create X, then generate SDK" compound prompt
+  # into two turns: create is atomic (its structured data is a natural
+  # single paste), but "then generate" is a distinct follow-up decision a
+  # real user makes only after seeing the create result — so it gets its
+  # own turn. Turn-pinning also gives ordering coverage (create must not
+  # generate; generate must not re-create) without the sequence: grader
+  # this file's TODO wanted (still blocked upstream).
+  - name: create-release-plan-and-generate-sdk
+    environment: *specsWorktree
+    turns:
+      - |
+        Create a public preview release plan for the Contoso Widget Manager:
+          - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+          - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+          - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+          - target release timeline: "June 2026"
+          - API version: "2022-11-01-preview"
+          - SDK release type: "beta"
+          - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+      - |
+        Now generate SDK for all languages using the work-item ID from the
+        release plan you just created.
+    constraints:
+      max_turns: 14
+      max_tokens: 18000
+    graders:
+      # Turn 0 — create only, never generate yet.
+      - type: skill-invocation
+        turn: 0
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
           disallowed:
             - azsdk_run_generate_sdk
-            - azsdk_package_generate_code
-            - azsdk_release_sdk
-            - name: '^azure-sdk-mcp-azsdk_create_release_plan$'
-              pattern: '"(?:apiVersion|sdkReleaseType|confirmTarget|expectedTargetRevision|forceCreateReleasePlan)"\s*:'
+      # Turn 1 — generate for the plan created in turn 0; never re-create.
+      - type: skill-invocation
+        turn: 1
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+          # generate uses azsdk_run_generate_sdk (a release-planner pipeline
+          # tool); azsdk-common-generate-sdk-locally over-matches "generate" —
+          # see https://github.com/Azure/azure-sdk-tools/issues/15950.
+          disallowed:
+            - azsdk-common-generate-sdk-locally
       - type: tool-calls
         turn: 1
         config:
           required:
-            - name: '^azure-sdk-mcp-azsdk_create_release_plan$'
-              args:
-                apiReleaseType: '^Public Preview$'
-                targetReleaseMonthYear: '^December 2026$'
-                specPullRequestUrl: '^https://github\.com/Azure/azure-rest-api-specs/pull/38387$'
-      - type: prompt
-        config:
-          model: gpt-5.4
-          scoring: binary
-          threshold: 1.0
-          prompt: |
-            Require exactly one create call after the supplied details and a
-            successful saved response. Preserve the Contoso project, PR 38387,
-            December 2026, service/product IDs and Public Preview release type.
-            Report metadata API 2024-01-01, packages, beta SDK type, and saved SHA
-            0123456789abcdef0123456789abcdef01234567. Omitted specCommitSha is
-            valid because the tool derives it from the PR; any supplied SHA must
-            match. Do not ask for target approval or an API-version choice.
-            Require tool-call/result evidence, decoding JSON inside MCP results.
-            Forbidden caller arguments are checked separately; metadata returned
-            by the tool is not a caller argument.
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_create_release_plan
 
   # --- Scenario 2: Generate SDK for an existing release plan -----------
   - name: generate-sdk-for-existing-release-plan
@@ -126,23 +169,16 @@ stimuli:
 
   # --- Scenario 3: Link a different spec PR to an existing release plan
   - name: link-different-spec-pr-to-release-plan
-    tags:
-      feature: release-target
     environment: *specsWorktree
     prompt: |
-      Update the API spec PR for Contoso Widget Manager work item 35000 to
-      https://github.com/Azure/azure-rest-api-specs/pull/38387. The local project is
-      specification/contosowidgetmanager/Contoso.WidgetManager. The fixture
-      checkout is clean and at the PR's source HEAD,
-      0123456789abcdef0123456789abcdef01234567. Use that spec commit.
-      Do not generate SDKs.
+      Using the release-planner
+      flow, update the API spec pull request on an existing Contoso Widget
+      Manager release plan. Here is the context you need:
+        - release plan work item ID: "29262"
+        - new spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38500"
     constraints:
-      max_turns: 12
-      max_tokens: 14000
-      max_duration: 8m
-    rubric:
-      - Update once with exact work item 35000, the supplied project, PR and commit, without asking for the ID again or target approval.
-      - Require a successful result, without generation or publishing.
+      max_turns: 6
+      max_tokens: 8000
     graders:
       - type: skill-invocation
         config:
@@ -151,87 +187,9 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - name: '^azure-sdk-mcp-azsdk_update_api_spec_pull_request_in_release_plan$'
-              pattern: '"workItemId"\s*:\s*35000\s*[,}]'
-              args:
-                typeSpecProjectPath: 'specification[/\\]contosowidgetmanager[/\\]Contoso\.WidgetManager(?:[/\\]tspconfig\.yaml)?[/\\]?$'
-                specPullRequestUrl: '^https://github\.com/Azure/azure-rest-api-specs/pull/38387$'
-                specCommitSha: '^0123456789abcdef0123456789abcdef01234567$'
+            - azsdk_update_api_spec_pull_request_in_release_plan
           disallowed:
             - azsdk_create_release_plan
-            - azsdk_run_generate_sdk
-            - azsdk_package_generate_code
-            - azsdk_release_sdk
-            - name: '^azure-sdk-mcp-azsdk_update_api_spec_pull_request_in_release_plan$'
-              pattern: '"(?:apiVersion|releasePlanId|confirmTarget|expectedTargetRevision)"\s*:'
-      - type: prompt
-        config:
-          model: gpt-5.4
-          scoring: binary
-          threshold: 1.0
-          prompt: |
-            Require exactly one spec-PR update call with work item 35000, the
-            supplied Contoso project, PR 38387 and commit, and a successful
-            result. Do not ask again for the known work item ID, target approval,
-            or an API-version choice. The API version comes from metadata.
-            Require tool-call/result evidence, not just narration.
-
-  - name: update-release-target-with-metadata-derived-version
-    tags:
-      feature: release-target
-    environment: *specsWorktree
-    prompt: |
-      Update the metadata for Contoso Widget Manager release plan 50001 using
-      local project specification/contosowidgetmanager/Contoso.WidgetManager
-      and PR https://github.com/Azure/azure-rest-api-specs/pull/12345.
-      Keep the plan's existing SDK release type. The fixture checkout is clean
-      and matches the PR commit. Derive the API version and packages from
-      metadata. Do not generate SDKs.
-    constraints:
-      max_turns: 12
-      max_tokens: 14000
-      max_duration: 8m
-    rubric:
-      - Look up Release Plan ID 50001 before writing; use returned WorkItemId 35000 and SDKReleaseType beta.
-      - Update once without an API-version input or approval roundtrip, and report the saved metadata and PR-derived SHA.
-    graders:
-      - type: skill-invocation
-        config:
-          required:
-            - azsdk-common-prepare-release-plan
-      - type: tool-calls
-        config:
-          required:
-            - name: '^azure-sdk-mcp-azsdk_get_release_plan$'
-              pattern: '"releasePlanId"\s*:\s*50001\s*[,}]'
-            - name: '^azure-sdk-mcp-azsdk_update_release_plan$'
-              pattern: '"workItemId"\s*:\s*35000\s*[,}]'
-              args:
-                typeSpecProjectPath: 'specification[/\\]contosowidgetmanager[/\\]Contoso\.WidgetManager(?:[/\\]tspconfig\.yaml)?[/\\]?$'
-                specPullRequestUrl: '^https://github\.com/Azure/azure-rest-api-specs/pull/12345$'
-                sdkReleaseType: '^beta$'
-          disallowed:
-            - azsdk_create_release_plan
-            - azsdk_run_generate_sdk
-            - azsdk_package_generate_code
-            - azsdk_release_sdk
-            - name: '^azure-sdk-mcp-azsdk_update_release_plan$'
-              pattern: '"(?:apiVersion|releasePlanId|confirmTarget|expectedTargetRevision)"\s*:'
-      - type: prompt
-        config:
-          model: gpt-5.4
-          scoring: binary
-          threshold: 1.0
-          prompt: |
-            Require a lookup using releasePlanId 50001 before exactly one
-            metadata update with returned WorkItemId 35000, the supplied project,
-            PR 12345 and the plan's SDKReleaseType beta. Do not use 50001 as the
-            work item ID or infer stable from the plan's GA API release type.
-            Require a successful saved response with metadata API 2024-01-01,
-            packages and SHA 0123456789abcdef0123456789abcdef01234567. Omitted
-            specCommitSha is valid; any supplied SHA must match the PR commit.
-            Do not ask for an ID, SDK type, API-version choice or target approval.
-            Require tool-call/result evidence, decoding JSON inside MCP results.
 
   # --- Scenario 4: Update SDK details (package names) ------------------
   - name: update-sdk-details-in-release-plan
@@ -467,7 +425,6 @@ stimuli:
 
 scoring:
   weights:
-    skill-invocation: 0.3
-    tool-calls: 0.3
-    prompt: 0.4
+    skill-invocation: 0.5
+    tool-calls: 0.5
   threshold: 0.8

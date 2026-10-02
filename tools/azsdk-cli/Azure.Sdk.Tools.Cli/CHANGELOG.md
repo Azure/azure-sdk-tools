@@ -4,19 +4,7 @@
 
 ### Features Added
 
-- Release-plan creation and updates save the spec commit with the API version and packages read from TypeSpec metadata. The commit input is optional; it defaults to the linked PR's source or merge commit.
-
-### Breaking Changes
-
-- Release-plan updates and spec-link updates require the exact Azure DevOps work item ID returned by lookup. They no longer fall back to a different plan by project or PR.
-
-### Bugs Fixed
-
-- Keep revision checks internal and reject concurrent writes without a preview, confirmation flag, or caller-supplied revision.
-- Allow valid metadata without a single API version or emitter entries; never substitute one language's version for all SDKs. Compilation errors still stop target updates.
-- Do not overwrite inactive release-plan targets or roll back a newer stored commit. Incomplete multi-record updates remain distinguishable from legacy unpinned plans.
-- Reuse same-project and same-PR legacy plans with an unset API version rather than creating duplicates.
-- Return the current release-plan revision after updating API approval, and avoid rewriting approval on later reads.
+- Support optional spec commit SHA on release-plan creation and updates.
 
 ## 0.6.51 (2026-10-01)
 

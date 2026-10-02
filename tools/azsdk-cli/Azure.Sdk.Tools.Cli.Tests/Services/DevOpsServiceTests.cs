@@ -29,6 +29,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+        [TestCase("0123456789abcdef0123456789abcdef01234567")]
+        [TestCase("")]
+        public async Task GetReleasePlanForWorkItemAsync_ReadsOptionalSavedCommit(string sha)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            if (sha.Length > 0)
+            {
+                plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = sha;
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/42", "New"));
+
+            var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
+
+            Assert.That(result.SpecCommitSHA, Is.EqualTo(sha));
+        }
+
         [TestCase("January 2020")]
         [TestCase("Jan 2020")]
         public async Task ListOverdueReleasePlansAsync_PrivatePreviewWithoutSpecChild_IsMissing(string targetMonth)
@@ -602,21 +619,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(plan);
             _connection.AddWorkItem(apiSpec);
 
-            var result = await _devOpsService.UpdateSpecPullRequestAsync(100, new ReleasePlanSpecTarget { SpecPullRequestUrl = newSpec }, [], [], CancellationToken.None);
+            var result = await _devOpsService.UpdateSpecPullRequestAsync(100, newSpec, CancellationToken.None);
 
             Assert.That(result, Is.True);
-            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(3));
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(2));
             var specPatch = _connection.CapturedPatches.Single(p => p.WorkItemId == 200).Document;
             Assert.That(specPatch.Single(op => op.Path == "/fields/Custom.ActiveSpecPullRequestUrl").Value, Is.EqualTo(newSpec));
             Assert.That(specPatch.Single(op => op.Path == "/fields/Custom.RESTAPIReviews").Value,
                 Is.EqualTo($"<a href=\"{oldSpec}\">{oldSpec}</a><br><a href=\"{newSpec}\">{newSpec}</a>"));
-            var statusPatch = _connection.CapturedPatches.Last().Document;
-            Assert.That(statusPatch, Has.Count.EqualTo(languages.Length + 2));
+            var statusPatch = _connection.CapturedPatches.Single(p => p.WorkItemId == 100).Document;
+            Assert.That(statusPatch, Has.Count.EqualTo(languages.Length));
             foreach (var language in languages)
             {
                 Assert.That(statusPatch.Single(op => op.Path == $"/fields/Custom.GenerationStatusFor{language}").Value, Is.EqualTo("Not applicable"));
             }
-            Assert.That(statusPatch.Skip(2).All(op => op.Path.StartsWith("/fields/Custom.GenerationStatusFor", StringComparison.Ordinal)), Is.True,
+            Assert.That(statusPatch.All(op => op.Path.StartsWith("/fields/Custom.GenerationStatusFor", StringComparison.Ordinal)), Is.True,
                 "Linking a spec must not remove pipeline or SDK PR links, or change release/exclusion state.");
         }
 
@@ -631,13 +648,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
 
             var result = await _devOpsService.UpdateSpecPullRequestAsync(
-                100, new ReleasePlanSpecTarget { SpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/456" }, [], [], CancellationToken.None);
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", CancellationToken.None);
 
             Assert.That(result, Is.True);
-            var patch = _connection.CapturedPatches.Last().Document;
-            Assert.That(patch, Has.Count.EqualTo(6));
+            var patch = _connection.CapturedPatches.Single(p => p.WorkItemId == 100).Document;
+            Assert.That(patch, Has.Count.EqualTo(4));
             Assert.That(patch.Any(op => op.Path == "/fields/Custom.GenerationStatusForJava"), Is.False);
-            Assert.That(patch.Skip(2).All(op => Equals(op.Value, "Not applicable")), Is.True);
+            Assert.That(patch.All(op => Equals(op.Value, "Not applicable")), Is.True);
         }
 
         [Test]
@@ -653,192 +670,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/123", "Active"));
 
             var result = await _devOpsService.UpdateSpecPullRequestAsync(
-                100, new ReleasePlanSpecTarget { SpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/456" }, [], [], CancellationToken.None);
+                100, "https://github.com/Azure/azure-rest-api-specs/pull/456", CancellationToken.None);
 
             Assert.That(result, Is.True);
-            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(3));
-            Assert.That(_connection.CapturedPatches[1].WorkItemId, Is.EqualTo(200));
-            Assert.That(_connection.CapturedPatches.Last().Document.Any(op => op.Path.Contains("GenerationStatusFor")), Is.False);
-        }
-
-        #endregion
-
-        #region Release target storage
-
-        private const string TargetSha = "0123456789abcdef0123456789abcdef01234567";
-        private const string PriorSha = "fedcba9876543210fedcba9876543210fedcba98";
-        private const string TargetPr = "https://github.com/Azure/azure-rest-api-specs/pull/123";
-
-        private (WorkItem Parent, WorkItem Spec, ReleasePlanSpecTarget Target) TargetFixture()
-        {
-            var parent = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
-            parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = PriorSha;
-            var spec = CreateApiSpecWorkItemWithVersion(200, TargetPr, "Active", "2024-01-01");
-            _connection.AddWorkItem(parent);
-            _connection.AddWorkItem(spec);
-            return (parent, spec, new ReleasePlanSpecTarget
-            {
-                SpecPullRequestUrl = TargetPr, SpecCommitSHA = TargetSha, ApiVersion = "2024-01-01",
-                ExpectedTargetRevision = "100:1:200:1"
-            });
-        }
-
-        [Test]
-        public async Task ReleaseTargetMapsParentPinChildVersionAndBothRevisions()
-        {
-            var (parent, spec, _) = TargetFixture();
-            spec.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = "not-the-parent-pin";
-            var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, default);
-            Assert.That(result.SpecCommitSHA, Is.EqualTo(PriorSha));
-            Assert.That(result.SpecAPIVersion, Is.EqualTo("2024-01-01"));
-            Assert.That(result.ApiSpecWorkItemId, Is.EqualTo(200));
-            Assert.That(result.TargetRevision, Is.EqualTo("100:1:200:1"));
-            var stored = new ReleasePlanWorkItem { SpecCommitSHA = TargetSha };
-            Assert.That(stored.GetPatchDocument().Single(op => op.Path == "/fields/Custom.SpecCommitSHA").Value, Is.EqualTo(TargetSha));
-            Assert.That(stored.ToApiSpecWorkItem().GetPatchDocument().Any(op => op.Path == "/fields/Custom.SpecCommitSHA"), Is.False);
-            parent.Fields.Remove(ReleasePlanWorkItem.SpecCommitSHAField);
-            Assert.That((await _devOpsService.GetReleasePlanForWorkItemAsync(100, default)).SpecCommitSHA, Is.Empty);
-            Assert.That(_connection.CapturedPatches, Is.Empty);
-        }
-
-        [TestCase("unreadable")]
-        [TestCase("cleared-pin")]
-        [TestCase("republished-pin")]
-        public async Task ReleaseTargetReadFailsClosedWhenChildUnreadableOrPinChanges(string change)
-        {
-            var (parent, _, _) = TargetFixture();
-            _connection.BeforeRead = id =>
-            {
-                if (id != 200) { return; }
-                if (change == "unreadable") { throw new InvalidOperationException("API Spec unavailable"); }
-                var updatedParent = new WorkItem
-                {
-                    Id = parent.Id,
-                    Rev = parent.Rev + 2,
-                    Fields = new Dictionary<string, object>(parent.Fields)
-                };
-                updatedParent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = change == "cleared-pin" ? string.Empty : PriorSha;
-                updatedParent.Fields["Custom.SDKtypetobereleased"] = "stable";
-                _connection.AddWorkItem(updatedParent);
-            };
-            var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, default);
-            Assert.That(result.SpecCommitSHA, Is.EqualTo(PriorSha));
-            Assert.That(result.IsSpecTargetConsistent, Is.False);
-            Assert.That(_connection.CapturedPatches, Is.Empty);
-        }
-
-        [TestCase("sha")]
-        [TestCase("version")]
-        [TestCase("fields")]
-        [TestCase("packages")]
-        public void ReleaseTargetPayloadRequiresRevisionBeforeAnyWrite(string payload)
-        {
-            var target = new ReleasePlanSpecTarget { SpecPullRequestUrl = TargetPr };
-            if (payload == "sha") { target.SpecCommitSHA = TargetSha; }
-            if (payload == "version") { target.ApiVersion = "2024-01-01"; }
-            Dictionary<string, string> fields = payload == "fields" ? new() { ["Custom.SDKtypetobereleased"] = "beta" } : [];
-            List<SDKInfo> packages = payload == "packages" ? [new() { Language = "Python", PackageName = "azure-contoso" }] : [];
-            Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.UpdateSpecPullRequestAsync(100, target, fields, packages, default));
-            Assert.That(_connection.CapturedPatches, Is.Empty);
-        }
-
-        [TestCase("parent")]
-        [TestCase("child")]
-        [TestCase("missing-revision")]
-        [TestCase("version")]
-        public void ReleaseTargetRechecksRevisionAndVersionBeforeClearingPin(string change)
-        {
-            var (parent, spec, target) = TargetFixture();
-            if (change == "parent") { parent.Rev++; }
-            if (change == "child") { spec.Rev++; }
-            if (change == "missing-revision") { spec.Rev = null; }
-            if (change == "version") { target.ApiVersion = "2025-01-01"; }
-            Assert.That(Assert.CatchAsync(() => _devOpsService.UpdateSpecPullRequestAsync(100, target, [], [], default)), Is.Not.Null);
-            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(PriorSha));
-            Assert.That(_connection.CapturedPatches, Is.Empty);
-        }
-
-        [TestCase(false)]
-        [TestCase(true)]
-        public async Task ReleaseTargetPublishesPinAndMetadataLastPreservingStatusesOnlyForSameTarget(bool sameSha)
-        {
-            var (parent, spec, target) = TargetFixture();
-            if (sameSha) { parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = TargetSha; }
-            parent.Fields["Custom.SDKLanguages"] = "Java,Go";
-            parent.Fields["Custom.JavaPackageName"] = "existing-java";
-            parent.Fields["Custom.GenerationStatusForPython"] = "Pending";
-            parent.Fields["Custom.ReleaseStatusForJava"] = "Released";
-            parent.Fields["Custom.ReleaseExclusionStatusForJava"] = "Approved";
-            parent.Fields["Custom.ReleaseExclusionStatusForPython"] = "MissingEmitterConfig";
-            parent.Fields["Custom.GenerationStatusForJava"] = "In progress";
-            parent.Fields["Custom.SDKGenerationPipelineForJava"] = "existing-pipeline";
-            spec.Fields["Custom.RESTAPIReviews"] = $"<a href=\"{TargetPr}\">{TargetPr}</a>";
-            Assert.That(await _devOpsService.UpdateSpecPullRequestAsync(100, target,
-                new() { ["Custom.SDKtypetobereleased"] = "beta", ["Custom.ProductName"] = "Contoso" },
-                [new() { Language = "Python", PackageName = "azure-contoso" }], default), Is.True);
-
-            var patches = _connection.CapturedPatches;
-            Assert.That(patches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
-            Assert.That(patches.Select(p => p.Document[0].Path), Is.All.EqualTo("/rev"));
-            Assert.That(patches.Select(p => p.Document[0].Value), Is.EqualTo(new object[] { 1, 1, 2 }));
-            Assert.That(patches[0].Document[1].Value, Is.EqualTo("updating"));
-            Assert.That(patches[1].Document.Single(op => op.Path == "/fields/Custom.APISpecversion").Value, Is.EqualTo("2024-01-01"));
-            Assert.That(patches[2].Document.Any(op => op.Path.Contains("GenerationStatusFor")), Is.EqualTo(!sameSha));
-            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(TargetSha));
-            Assert.That(parent.Fields["Custom.ProductName"], Is.EqualTo("Contoso"));
-            Assert.That(parent.Fields["Custom.SDKLanguages"].ToString()!.Split(','), Is.EquivalentTo(new[] { "Python", "Java", "Go" }));
-            Assert.That(parent.Fields["Custom.JavaPackageName"], Is.EqualTo("existing-java"));
-            Assert.That(parent.Fields["Custom.PythonPackageName"], Is.EqualTo("azure-contoso"));
-            Assert.That(parent.Fields["Custom.GenerationStatusForPython"], Is.EqualTo(sameSha ? "Pending" : "Not applicable"));
-            Assert.That(parent.Fields["Custom.GenerationStatusForJava"], Is.EqualTo("In progress"), "Keep the recorded run so generation can check whether it is still active.");
-            Assert.That(parent.Fields["Custom.ReleaseStatusForJava"], Is.EqualTo("Released"));
-            Assert.That(parent.Fields["Custom.ReleaseExclusionStatusForJava"], Is.EqualTo("Approved"));
-            Assert.That(parent.Fields["Custom.ReleaseExclusionStatusForPython"], Is.EqualTo("Not applicable"));
-            Assert.That(parent.Fields["Custom.SDKGenerationPipelineForJava"], Is.EqualTo("existing-pipeline"));
-            Assert.That(spec.Fields["Custom.RESTAPIReviews"], Is.EqualTo($"<a href=\"{TargetPr}\">{TargetPr}</a>"));
-        }
-
-        [TestCase(1, false)]
-        [TestCase(2, false)]
-        [TestCase(3, false)]
-        [TestCase(1, true)]
-        [TestCase(2, true)]
-        [TestCase(3, true)]
-        public void ReleaseTargetPartialFailureOrRevisionConflictNeverRetriesOrRestoresPin(int failedPhase, bool conflict)
-        {
-            var (parent, spec, target) = TargetFixture();
-            _connection.BeforePatch = (id, _) =>
-            {
-                if (_connection.CapturedPatches.Count != failedPhase) { return; }
-                if (conflict) { if (id == 100) { parent.Rev++; } else { spec.Rev++; } }
-                else { throw new InvalidOperationException("ADO unavailable"); }
-            };
-            Assert.That(Assert.CatchAsync(() => _devOpsService.UpdateSpecPullRequestAsync(100, target,
-                new() { ["Custom.ProductName"] = "not-published" }, [], default)), Is.Not.Null);
-            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(failedPhase));
-            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(failedPhase == 1 ? PriorSha : "updating"));
-            Assert.That(parent.Fields.ContainsKey("Custom.ProductName"), Is.False);
-        }
-
-        [Test]
-        public void ReleaseTargetRejectsMetadataPinOverrideBeforeClearingPin()
-        {
-            var (parent, _, target) = TargetFixture();
-            Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.UpdateSpecPullRequestAsync(100, target,
-                new() { [ReleasePlanWorkItem.SpecCommitSHAField] = PriorSha }, [], default));
-            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(PriorSha));
-            Assert.That(_connection.CapturedPatches, Is.Empty);
-        }
-
-        [Test]
-        public void ReleaseTargetCancellationLeavesPinClearedAndStopsPublication()
-        {
-            var (parent, _, target) = TargetFixture();
-            using var cancellation = new CancellationTokenSource();
-            _connection.BeforePatch = (id, _) => { if (id == 200) { cancellation.Cancel(); } };
-            Assert.CatchAsync<OperationCanceledException>(() => _devOpsService.UpdateSpecPullRequestAsync(100, target, [], [], cancellation.Token));
-            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo("updating"));
-            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(2));
+            Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(1));
+            Assert.That(_connection.CapturedPatches[0].WorkItemId, Is.EqualTo(200));
         }
 
         #endregion
@@ -867,7 +703,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var workItem = new WorkItem
             {
                 Id = id,
-                Rev = 1,
                 Fields = new Dictionary<string, object>
                 {
                     { "System.WorkItemType", "API Spec" },
@@ -914,7 +749,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var workItem = new WorkItem
             {
                 Id = id,
-                Rev = 1,
                 Fields = new Dictionary<string, object>
                 {
                     { "System.WorkItemType", "Release Plan" },
@@ -1480,9 +1314,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches => _workItemClient.CapturedPatches;
 
-            public Action<int>? BeforeRead { set => _workItemClient.BeforeRead = value; }
-            public Action<int, DevOpsJsonPatchDocument>? BeforePatch { set => _workItemClient.BeforePatch = value; }
-
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
@@ -1545,9 +1376,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument { get; private set; }
 
             public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches { get; } = [];
-
-            public Action<int>? BeforeRead { get; set; }
-            public Action<int, DevOpsJsonPatchDocument>? BeforePatch { get; set; }
 
             public bool CancelQuery { get; set; }
 
@@ -1647,7 +1475,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 {
                     return Task.FromCanceled<WorkItem>(cancellationToken);
                 }
-                BeforeRead?.Invoke(id);
                 if (_workItems.TryGetValue(id, out var workItem))
                 {
                     return Task.FromResult(workItem);
@@ -1668,26 +1495,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 UpdateCount++;
                 LastCapturedPatchDocument = document;
                 CapturedPatches.Add((id, document));
-                BeforePatch?.Invoke(id, document);
-                cancellationToken.ThrowIfCancellationRequested();
                 _workItems.TryGetValue(id, out var workItem);
-                workItem ??= new WorkItem { Id = id, Fields = new Dictionary<string, object>() };
-                foreach (var test in document.Where(op => op.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test))
+                var revisionTest = document.FirstOrDefault(operation => operation.Path == "/rev"
+                    && operation.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test);
+                if (revisionTest != null)
                 {
-                    if (test.Path == "/rev" && !Equals(test.Value, workItem.Rev))
+                    if (workItem == null || workItem.Rev != (int)revisionTest.Value)
                     {
-                        throw new InvalidOperationException("Revision conflict");
+                        throw new InvalidOperationException("Work item revision conflict.");
                     }
+                    foreach (var operation in document.Where(operation => operation.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add
+                        && operation.Path.StartsWith("/fields/", StringComparison.Ordinal)))
+                    {
+                        workItem.Fields[operation.Path["/fields/".Length..]] = operation.Value;
+                    }
+                    workItem.Rev++;
                 }
-                foreach (var field in document.Where(op => op.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add
-                    && op.Path.StartsWith("/fields/", StringComparison.Ordinal)))
-                {
-                    workItem.Fields[field.Path[8..]] = field.Value;
-                }
-                workItem.Rev = (workItem.Rev ?? 0) + 1;
                 foreach (var operation in document.Where(operation => operation.Path == "/relations/-"))
                 {
-                    if (!FailRelationUpdate || AddRelationBeforeFailure)
+                    if (workItem != null && (!FailRelationUpdate || AddRelationBeforeFailure))
                     {
                         workItem.Relations ??= new List<WorkItemRelation>();
                         workItem.Relations.Add((WorkItemRelation)operation.Value);
@@ -1698,7 +1524,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                         throw new VssServiceException("Relation update failed");
                     }
                 }
-                return Task.FromResult(workItem);
+                return Task.FromResult(workItem ?? new WorkItem { Id = id });
             }
 
         }

@@ -92,12 +92,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = false,
         };
 
-        private readonly Option<int> updateWorkItemIdOpt = new("--work-item-id", "--workitem-id", "-w")
-        {
-            Description = "Exact Azure DevOps work item ID returned by release-plan get.",
-            Required = true,
-        };
-
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-path")
         {
             Description = "Path to TypeSpec project",
@@ -195,7 +189,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string> updateSdkReleaseTypeOpt = new("--sdk-type")
         {
-            Description = "SDK release type: beta or stable. Preserve the plan's current value unless changing it explicitly.",
+            Description = "SDK release type: beta or stable. If not provided, inferred from API version (preview → beta, otherwise stable).",
             Required = false,
         };
 
@@ -244,7 +238,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string> specCommitShaOpt = new("--spec-commit-sha")
         {
-            Description = "Optional full spec commit SHA. When omitted, uses the linked PR's source commit if open, or merge commit if merged.",
+            Description = "Optional spec commit SHA to save on the release plan. Updates require the exact work item ID when provided.",
         };
 
         private readonly Option<string> kpiProductIdOpt = new("--product")
@@ -313,6 +307,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-rest-api-specs(-pr)?\\/pull\\/[0-9]+\\/?", RegexOptions.IgnoreCase)]
         private static partial Regex PullRequestUrlRegex();
 
+        [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}(-preview)?$")]
+        private static partial Regex ApiVersionRegex();
+
         protected override List<Command> GetCommands() =>
         [
             new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", GetReleasePlanToolName) { releasePlanNumberOpt, workItemIdOpt, optionalPullRequestOpt, optionalTypeSpecProjectPathOpt, optionalApiReleaseTypeOpt, optionalApiVersionOpt },
@@ -332,14 +329,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
             new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon inactive release plans after one full overdue calendar month") { dryRunOpt },
-            new McpCommand(updateApiSpecPullRequestCommandName, "Update a release plan's spec PR and commit", UpdateApiSpecPullRequestToolName) { pullRequestOpt, updateWorkItemIdOpt, optionalTypeSpecProjectPathOpt, specCommitShaOpt, },
+            new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(getServiceDetailsCommandName, "Get service and product details (service tree ID, service ID, package display name) in service tree for TypeSpec project", GetServiceDetailsToolName) { typeSpecProjectOpt, },
             new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan", AbandonReleasePlanToolName) { workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(getKpiAttestationStatusCommandName, "Get KPI attestation status for a product by product ID and release plan type", GetKPIAttestationStatusToolName) { kpiProductIdOpt, releasePlanTypeOpt, kpiTypeSpecProjectPathOpt, kpiIsTestReleasePlanOpt, },
             new McpCommand(updateReleasePlanCommandName, "Update an existing release plan", UpdateReleasePlanToolName)
             {
                 updateTypeSpecProjectPathOpt,
-                updateWorkItemIdOpt,
+                workItemIdOpt,
                 updateSdkReleaseTypeOpt,
                 optionalPullRequestOpt,
                 optionalServiceTreeIdOpt,
@@ -402,9 +399,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return await AbandonOverdueReleasePlans(commandParser.GetValue(dryRunOpt), ct);
 
                 case updateApiSpecPullRequestCommandName:
-                    return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(updateWorkItemIdOpt),
-                        typeSpecProjectPath: commandParser.GetValue(optionalTypeSpecProjectPathOpt),
-                        specCommitSha: commandParser.GetValue(specCommitShaOpt), ct: ct);
+                    return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt), ct: ct);
 
                 case getServiceDetailsCommandName:
                     return await GetProductByTypeSpecPath(commandParser.GetValue(typeSpecProjectOpt), ct);
@@ -417,7 +412,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 case updateReleasePlanCommandName:
                     return await UpdateReleasePlan(
                         typeSpecProjectPath: commandParser.GetValue(updateTypeSpecProjectPathOpt),
-                        workItemId: commandParser.GetValue(updateWorkItemIdOpt),
+                        workItemId: commandParser.GetValue(workItemIdOpt),
                         sdkReleaseType: commandParser.GetValue(updateSdkReleaseTypeOpt),
                         specPullRequestUrl: commandParser.GetValue(optionalPullRequestOpt),
                         serviceTreeId: commandParser.GetValue(optionalServiceTreeIdOpt),
@@ -534,13 +529,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             var specReadiness = await CheckApiReadyForSDKGeneration(releasePlan.APISpecProjectPath, prNumber, releasePlan.WorkItemId, ct);
                             if (specReadiness.Status == "Success")
                             {
-                                if (!releasePlan.IsSpecApproved)
-                                {
-                                    // The approval write changes the revision used to confirm the next update.
-                                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct)
-                                        ?? throw new InvalidOperationException("Failed to refresh the release plan after updating API approval.");
-                                    response.ReleasePlanDetails = releasePlan;
-                                }
                                 releasePlan.IsSpecApproved = true;
                                 // API spec is approved/merged, so the next step is to generate the SDK.
                                 // Surface the pipeline-based generation tool explicitly so the agent does
@@ -704,19 +692,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         /// <summary>
-        /// Updates one release plan by its exact work item ID, using API version and packages from metadata.
+        /// Updates an existing release plan with new details. Finds the release plan by work item ID,
+        /// or by TypeSpec project path/spec PR URL if work item ID is not provided.
+        /// Runs the @azure-tools/typespec-metadata emitter to resolve package names and updates SDK details.
         /// </summary>
-        [McpServerTool(Name = UpdateReleasePlanToolName), Description("Update release-plan metadata, SDK release type (beta or stable), and optional service/product IDs by exact workItemId. " +
-            "Look up the plan first if only its Release Plan ID, project or PR is known. An invalid work item ID never falls back to another plan. " +
-            "API version and packages come from the existing TypeSpec metadata reader, not user input. Public targets require a clean checkout of the linked PR's source or merge commit; specCommitSha is optional. " +
-            "A different project or API version needs a separate plan. Product details resolve from triage; supply productType (Offering, Feature, Sku) if unresolved. Does not generate SDK code.")]
-        public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, int workItemId, string specPullRequestUrl = "", string sdkReleaseType = "", string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, string specCommitSha = "", CancellationToken ct = default)
+        [McpServerTool(Name = UpdateReleasePlanToolName), Description("Update an existing release plan. Updates spec PR URL, TypeSpec project path, SDK release type, and optionally service/product IDs. " +
+            "When a product ID is provided, product name, product lifecycle and product type are resolved from a matching triage work item in Azure DevOps. " +
+            "If the product type cannot be determined, provide it via productType (allowed values: Offering, Feature, Sku). " +
+            "Runs TypeSpec metadata emitter to resolve package names and updates SDK details. If work item ID is not provided, finds the active release plan by TypeSpec project path or spec PR URL. " +
+            "An optional spec commit SHA requires the exact Azure DevOps work item ID; omission preserves the saved SHA.")]
+        public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", int workItemId = 0, string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, CancellationToken ct = default, string specCommitSha = "")
         {
             try
             {
-                if (workItemId <= 0)
+                if (!string.IsNullOrEmpty(specCommitSha) && workItemId <= 0)
                 {
-                    return new ReleasePlanResponse { ResponseError = "A positive work item ID is required. Look up the release plan first and use its WorkItemId." };
+                    return new ReleasePlanResponse { ResponseError = "A positive work item ID is required when providing a spec commit SHA." };
                 }
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
 
@@ -756,12 +747,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleasePlanResponse { ResponseError = $"Product tree ID '{productTreeId}' is not a valid GUID." };
                 }
 
-                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
-                if (releasePlan == null || releasePlan.WorkItemId != workItemId)
+                // Find the release plan
+                ReleasePlanWorkItem? releasePlan = null;
+                if (workItemId != 0)
                 {
-                    return new ReleasePlanResponse { ResponseError = $"No release plan found for work item ID {workItemId}. No other plan was selected." };
+                    // SHA updates use the exact work item; other updates retain ID resolution.
+                    releasePlan = !string.IsNullOrEmpty(specCommitSha)
+                        ? await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct)
+                        : await devOpsService.ResolveReleasePlanByIdAsync(workItemId, ct);
+                    if (!string.IsNullOrEmpty(specCommitSha) && (releasePlan == null || releasePlan.WorkItemId != workItemId))
+                    {
+                        return new ReleasePlanResponse { ResponseError = $"No release plan found for work item ID {workItemId}. No other plan was selected." };
+                    }
                 }
-                EnsureActiveSpecTarget(releasePlan);
 
                 // Resolve TypeSpec project relative path
                 string specProject;
@@ -789,35 +787,32 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     };
                 }
                                
-                logger.LogInformation("Found release plan work item {WorkItemId} to update", releasePlan.WorkItemId);
+                //Checkfor release plan using spec PR first and then using spec path
+                if (releasePlan == null && !string.IsNullOrEmpty(specPullRequestUrl))
+                {
+                    // Try to find by spec PR URL
+                    logger.LogInformation("Release plan not found by TypeSpec project path, searching by spec PR URL: {specPullRequestUrl}", specPullRequestUrl);
+                    releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, ct: ct);
+                }
 
-                if (!string.IsNullOrWhiteSpace(releasePlan.APISpecProjectPath) &&
-                    !string.Equals(specProject.TrimEnd('/'), releasePlan.APISpecProjectPath.TrimEnd('/'), StringComparison.Ordinal))
+                if (releasePlan == null)
                 {
-                    return new ReleasePlanResponse { ResponseError = "Use a separate release plan for a different TypeSpec project." };
+                    // Try to find by TypeSpec project path
+                    logger.LogInformation("Work item not found or not provided, searching by TypeSpec project path: {typeSpecProjectPath}", specProject);
+                    releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(specProject, ct: ct);
                 }
-                // An omitted PR must still validate the already linked public target.
-                if (string.IsNullOrEmpty(specPullRequestUrl) && releasePlan.ApiReleaseType != ApiReleaseType.PrivatePreview)
+
+                if (releasePlan == null)
                 {
-                    specPullRequestUrl = releasePlan.ActiveSpecPullRequest;
+                    return new ReleasePlanResponse { ResponseError = "No active release plan found. Provide a valid work item ID, TypeSpec project path, or spec PR URL." };
                 }
+
+                logger.LogInformation("Found release plan work item {WorkItemId} to update", releasePlan.WorkItemId);
 
                 // Validate spec PR against release type if both are available
                 if (!string.IsNullOrEmpty(specPullRequestUrl) && releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
                 {
                     ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ApiReleaseType);
-                }
-
-                ReleasePlanSpecTarget? specTarget = null;
-                if (!string.IsNullOrEmpty(specPullRequestUrl) && releasePlan.ApiReleaseType != ApiReleaseType.PrivatePreview)
-                {
-                    specTarget = await ReadSpecTargetAsync(typeSpecProjectPath, specPullRequestUrl, specCommitSha, sdkReleaseType, ct, releasePlan);
-                    EnsureSameApiVersion(releasePlan, specTarget.ApiVersion);
-                    specTarget.ExpectedTargetRevision = releasePlan.TargetRevision;
-                }
-                else if (!string.IsNullOrEmpty(specCommitSha))
-                {
-                    return new ReleasePlanResponse { ResponseError = "A public spec PR is required to save an SDK generation commit." };
                 }
 
                 // Update release plan fields
@@ -826,6 +821,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     { "Custom.SDKtypetobereleased", sdkReleaseType },
                     { "Custom.ApiSpecProjectPath", specProject },
                 };
+
+                if (!string.IsNullOrEmpty(specCommitSha))
+                {
+                    fieldsToUpdate[ReleasePlanWorkItem.SpecCommitSHAField] = specCommitSha;
+                }
 
                 if (!string.IsNullOrEmpty(serviceTreeId))
                 {
@@ -873,39 +873,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     fieldsToUpdate["Custom.ProductType"] = resolvedProductType;
                 }
 
-                ct.ThrowIfCancellationRequested();
-                if (specTarget != null)
-                {
-                    var supported = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
-                    var sdkInfos = specTarget.Packages
-                        .Select(package => new SDKInfo { Language = package.Language.ToWorkItemString(), PackageName = package.PackageName ?? string.Empty })
-                        .Where(sdk => supported.Contains(sdk.Language)).ToList();
-                    if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId, specTarget, fieldsToUpdate, sdkInfos, ct))
-                    {
-                        return new ReleasePlanResponse { ResponseError = "Failed to save the release plan spec commit and metadata." };
-                    }
-                }
-                else
-                {
-                    await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
-                }
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
                 logger.LogInformation("Updated release plan fields for work item {WorkItemId}", releasePlan.WorkItemId);
 
-                // Public targets were saved above; private-preview links remain unpinned.
-                if (specTarget == null && !string.IsNullOrEmpty(specPullRequestUrl) &&
+                // Update spec PR on the API spec child work item only if provided and different from current
+                if (!string.IsNullOrEmpty(specPullRequestUrl) &&
                     (string.IsNullOrEmpty(releasePlan.ActiveSpecPullRequest) || !releasePlan.ActiveSpecPullRequest.Equals(specPullRequestUrl, StringComparison.OrdinalIgnoreCase)))
                 {
-                    if (!await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId,
-                        new ReleasePlanSpecTarget { SpecPullRequestUrl = specPullRequestUrl }, [], [], ct))
-                    {
-                        return new ReleasePlanResponse { ResponseError = "Failed to update the linked spec PR." };
-                    }
+                    await devOpsService.UpdateSpecPullRequestAsync(releasePlan.WorkItemId, specPullRequestUrl, ct);
                     logger.LogInformation("Updated spec PR URL in release plan {WorkItemId}", releasePlan.WorkItemId);
                 }
 
                 // Run TypeSpec metadata emitter to get package names
-                List<PackageInfo>? resolvedPackages = specTarget?.Packages;
-                if (resolvedPackages == null && !typeSpecHelper.IsUrl(typeSpecProjectPath) && TypeSpecProject.IsValidTypeSpecProjectPath(typeSpecProjectPath))
+                List<PackageInfo>? resolvedPackages = null;
+                if (!typeSpecHelper.IsUrl(typeSpecProjectPath) && TypeSpecProject.IsValidTypeSpecProjectPath(typeSpecProjectPath))
                 {
                     var tspProject = await typeSpecHelper.ParseTypeSpecProjectAsync(typeSpecProjectPath, npxHelper, logger, ct);
                     resolvedPackages = tspProject?.Packages;
@@ -915,7 +896,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogWarning("Cannot run TypeSpec metadata emitter for URL-based TypeSpec project paths. Skipping emitter.");
                 }
 
-                if (specTarget == null && resolvedPackages != null && resolvedPackages.Count > 0)
+                if (resolvedPackages != null && resolvedPackages.Count > 0)
                 {
                     logger.LogInformation("Resolved {count} package names from TypeSpec metadata emitter", resolvedPackages.Count);
                     var sdkInfos = resolvedPackages.Select(p => new SDKInfo
@@ -932,7 +913,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         logger.LogWarning("Failed to update SDK package details in release plan {WorkItemId}", releasePlan.WorkItemId);
                     }
                 }
-                else if (specTarget == null)
+                else
                 {
                     logger.LogWarning("No package names resolved from TypeSpec metadata emitter for {typeSpecProjectPath}", typeSpecProjectPath);
                 }
@@ -954,11 +935,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         var specReadiness = await CheckApiReadyForSDKGeneration(specProject, prNumber, releasePlan.WorkItemId, ct);
                         if (specReadiness.Status == "Success")
                         {
-                            if (!releasePlan.IsSpecApproved)
-                            {
-                                releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct)
-                                    ?? throw new InvalidOperationException("Failed to refresh the release plan after updating API approval.");
-                            }
                             releasePlan.IsSpecApproved = true;
                         }
 
@@ -974,10 +950,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     TypeSpecProject = specProject,
                     PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane
                 };
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                throw;
             }
             catch (Exception ex)
             {
@@ -1180,10 +1152,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create or reuse a release plan for a TypeSpec project and API release type (Private Preview, Public Preview, or GA). " +
-            "API version and packages are read from TypeSpec metadata, not supplied by the caller. A public spec PR saves its source commit if open or merge commit if merged; specCommitSha is optional and must match that commit. Use a clean checkout at that commit. " +
-            "Reusing a plan never changes its saved target; use an explicit update to advance it. Without a PR, creates a tracking-only plan. Service/product IDs resolve from earlier plans when available.")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, [Description(TargetReleaseMonthDescription)] string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, string specCommitSha = "", CancellationToken ct = default)
+        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available. Optionally saves a supplied spec commit SHA.")]
+        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, [Description(TargetReleaseMonthDescription)] string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, CancellationToken ct = default, string specCommitSha = "")
         {
             try
             {         
@@ -1235,25 +1205,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogInformation("AZSDKTOOLS_AGENT_TESTING environment variable is set to true, creating test release plan");
                 }
 
-                ReleasePlanSpecTarget? specTarget = null;
-                if (!string.IsNullOrEmpty(specPullRequestUrl) && parsedApiReleaseType != ApiReleaseType.PrivatePreview)
-                {
-                    specTarget = await ReadSpecTargetAsync(typeSpecProjectPath, specPullRequestUrl, specCommitSha, sdkReleaseType, ct);
-                    specCommitSha = specTarget.SpecCommitSHA;
-                }
-                else if (!string.IsNullOrEmpty(specCommitSha))
-                {
-                    return new ReleasePlanResponse { ResponseError = "A public spec PR is required to save an SDK generation commit. Create a tracking-only plan without a commit until the PR is available." };
-                }
-
                 // Run TypeSpec metadata emitter to get API version (local paths only)
                 TypeSpecProject? typeSpecMetadata = null;
-                if (specTarget != null)
-                {
-                    typeSpecMetadata = TypeSpecProject.ParseTypeSpecConfig(typeSpecProjectPath);
-                    typeSpecMetadata.Packages = specTarget.Packages;
-                }
-                else if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
+                if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
                 {
                     typeSpecMetadata = await typeSpecHelper.ParseTypeSpecProjectAsync(typeSpecProjectPath, npxHelper, logger, ct);
                 }
@@ -1275,7 +1229,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Extract API version from the parsed metadata
-                var apiVersion = specTarget?.ApiVersion ?? ExtractApiVersionFromMetadata(typeSpecMetadata?.Packages);
+                var apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata?.Packages);
                 // Check if a release plan already exists with the same TypeSpec project path and API version
                 if (!string.IsNullOrEmpty(apiVersion))
                 {
@@ -1292,7 +1246,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                 ReleasePlanDetails = existingReleasePlanWithSameVersion,
                                 Message = $"An existing release plan (ID: {existingReleasePlanWithSameVersion.ReleasePlanId}) was found for TypeSpec project '{specProject}' with API version '{apiVersion}'. No new release plan was created.",
                                 TypeSpecProject = specProject,
-                                NextSteps = ["The existing release target was not changed. Use update-spec-pr with the returned WorkItemId to update its spec commit."]
+                                NextSteps = ["Review the existing release plan and use it for your SDK release."]
                             },
                             specPullRequestUrl,
                             ct);
@@ -1354,18 +1308,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
                     var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
-                    if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0 &&
-                        (specTarget == null ||
-                         (string.Equals(existingReleasePlan.APISpecProjectPath.TrimEnd('/'), specProject.TrimEnd('/'), StringComparison.Ordinal) &&
-                                                    (string.IsNullOrWhiteSpace(existingReleasePlan.SpecAPIVersion) ||
-                                                     string.Equals(existingReleasePlan.SpecAPIVersion, apiVersion, StringComparison.OrdinalIgnoreCase)))))
+                    if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
                     {
                         return await AddCreateReleasePlanScheduleRiskGuidanceAsync(
                             new ReleasePlanResponse
                             {
                                 Message = $"A {parsedApiReleaseType.ToDisplayLabel()} release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
-                                ReleasePlanDetails = existingReleasePlan,
-                                NextSteps = ["The existing release target was not changed. Use update-spec-pr to configure or advance its saved target."]
+                                ReleasePlanDetails = existingReleasePlan
                             },
                             specPullRequestUrl,
                             ct);
@@ -1427,11 +1376,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType,
                     SpecAPIVersion = apiVersion,
-                    ActiveSpecPullRequest = specPullRequestUrl,
                     SpecCommitSHA = specCommitSha ?? string.Empty
                 };
 
-                ct.ThrowIfCancellationRequested();
                 var reporter = new ProgressReporter(progress, logger, totalSteps: 2, outputHelper);
                 reporter.NextStep("Creating a release plan");
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan, ct);
@@ -1872,10 +1819,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                     if (releasePlan != null)
                     {
-                        if (!releasePlan.IsSpecApproved)
-                        {
-                            await devOpsService.UpdateApiSpecStatusAsync(releasePlan.WorkItemId, "Approved", ct);
-                        }
+                        await devOpsService.UpdateApiSpecStatusAsync(releasePlan.WorkItemId, "Approved", ct);
                     }
                     else
                     {
@@ -2490,47 +2434,44 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = UpdateApiSpecPullRequestToolName), Description("Update a release plan's spec PR and commit by exact workItemId. Look up the plan first if its WorkItemId is not already known. " +
-            "Public targets require typeSpecProjectPath in a clean checkout of the PR's source or merge commit. API version comes from TypeSpec metadata; specCommitSha is optional. " +
-            "Different projects or API versions require a separate plan. Private-preview plans only update their spec link.")]
-        public async Task<ReleaseWorkflowResponse> UpdateSpecPullRequestInReleasePlan(string specPullRequestUrl, int workItemId, string typeSpecProjectPath = "", string specCommitSha = "", CancellationToken ct = default)
+        [McpServerTool(Name = UpdateApiSpecPullRequestToolName), Description("Update TypeSpec pull request URL in a release plan using work item id or release plan id.")]
+        public async Task<ReleaseWorkflowResponse> UpdateSpecPullRequestInReleasePlan(string specPullRequestUrl, int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default)
         {
             try
             {
-                if (workItemId <= 0)
+                if (workItemId == 0 && releasePlanId == 0)
                 {
-                    return new ReleaseWorkflowResponse { ResponseError = "A positive work item ID is required. Look up the release plan first and use its WorkItemId." };
+                    return new ReleaseWorkflowResponse { ResponseError = "Either work item ID or release plan ID must be provided." };
                 }
                 ValidatePullRequestUrl(specPullRequestUrl);
 
-                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
-                if (releasePlan == null || releasePlan.WorkItemId != workItemId)
+                // Get the release plan to check its type
+                ReleasePlanWorkItem? releasePlan = null;
+                if (releasePlanId > 0)
                 {
-                    return new ReleaseWorkflowResponse { ResponseError = $"No release plan found for work item ID {workItemId}. No other plan was selected." };
+                    releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, ct);
+                    if (releasePlan == null)
+                    {
+                        return new ReleaseWorkflowResponse
+                        {
+                            ResponseError = $"Release plan with ID {releasePlanId} not found."
+                        };
+                    }
+                    workItemId = releasePlan.WorkItemId;
                 }
-                EnsureActiveSpecTarget(releasePlan);
+                else
+                {
+                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                }
 
                 // Validate spec PR against release type
-                if (releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
+                if (releasePlan != null && releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
                 {
                     ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ApiReleaseType);
                 }
 
-                ReleasePlanSpecTarget? specTarget = null;
-                if (releasePlan.ApiReleaseType != ApiReleaseType.PrivatePreview)
-                {
-                    specTarget = await ReadSpecTargetAsync(typeSpecProjectPath, specPullRequestUrl, specCommitSha, releasePlan.SDKReleaseType, ct, releasePlan);
-                    EnsureSameApiVersion(releasePlan, specTarget.ApiVersion);
-                    specTarget.ExpectedTargetRevision = releasePlan.TargetRevision;
-                    if (!string.IsNullOrWhiteSpace(releasePlan.APISpecProjectPath) &&
-                        !string.Equals(specTarget.TypeSpecProjectPath, releasePlan.APISpecProjectPath.TrimEnd('/'), StringComparison.Ordinal))
-                    {
-                        return new ReleaseWorkflowResponse { ResponseError = "Use a separate release plan for a different TypeSpec project." };
-                    }
-                }
-                ct.ThrowIfCancellationRequested();
-                var updated = await devOpsService.UpdateSpecPullRequestAsync(workItemId,
-                    specTarget ?? new ReleasePlanSpecTarget { SpecPullRequestUrl = specPullRequestUrl }, [], [], ct);
+                // Update the spec pull request in the release plan
+                var updated = await devOpsService.UpdateSpecPullRequestAsync(workItemId, specPullRequestUrl, ct);
 
                 if (!updated)
                 {
@@ -2545,21 +2486,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     Status = "Success",
                     Details =
                     [
-                        $"Successfully updated spec pull request URL to {specPullRequestUrl} in release plan.",
-                        specTarget == null ? "Private-preview release plans do not require an SDK generation commit pin." : $"Pinned spec commit SHA: {specTarget.SpecCommitSHA}."
+                        $"Successfully updated spec pull request URL to {specPullRequestUrl} in release plan."
                     ],
-                    NextSteps = releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
-                    ? ["Merge the linked spec PR to complete the private-preview release plan."]
-                    :
+                    NextSteps =
                     [
-                        "The spec commit and metadata are saved. SDK generation is a separate operation.",
+                        "SDK generation should be triggered to regenerate SDK using the new spec pull request.",
                         "Generate SDK for each language listed in the release plan."
                     ]
                 };
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                throw;
             }
             catch (Exception ex)
             {
@@ -2789,7 +2723,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// Rules:
         /// - If any language has "all" or "multiple-versions" as the apiVersion, returns empty string.
         /// - If all languages have the same apiVersion (and it's not empty), returns that version.
-        /// - If apiVersions differ across languages, returns empty string for an unversioned tracking plan.
+        /// - If apiVersions differ across languages, returns the first non-empty version found.
         /// - If apiVersion is undefined or empty for all languages, returns empty string.
         /// </summary>
         /// <param name="packages">List of PackageInfo objects containing parsed metadata</param>
@@ -2803,8 +2737,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             var apiVersions = packages
                 .Select(p => p.ApiVersion)
-                .Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v!.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(v => !string.IsNullOrEmpty(v))
+                .Distinct()
                 .ToList();
 
             // Check if any language has "all" or "multiple-versions"
@@ -2830,86 +2764,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return version;
             }
 
-            logger.LogWarning("Multiple API versions in TypeSpec metadata: {versions}. Leaving the tracking plan's API version unset.", string.Join(", ", apiVersions));
-            return string.Empty;
+            // If versions differ, log warning and return the first one
+            logger.LogWarning("Multiple different API versions found in TypeSpec metadata: {versions}. Using the first one: {firstVersion}", 
+                string.Join(", ", apiVersions), apiVersions[0]);
+            return apiVersions[0];
         }
-
-        private async Task<ReleasePlanSpecTarget> ReadSpecTargetAsync(
-            string projectPath, string pullRequestUrl, string commitSha, string sdkReleaseType, CancellationToken ct, ReleasePlanWorkItem? currentPlan = null)
-        {
-            ValidatePullRequestUrl(pullRequestUrl);
-            var repository = pullRequestUrl.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase)
-                ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
-            var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, repository, ParsePullRequestNumberFromUrl(pullRequestUrl), ct).WaitAsync(ct)
-                ?? throw new InvalidOperationException("The spec PR could not be read. No release-plan target was saved.");
-            if (!pullRequest.Merged && pullRequest.State == Octokit.ItemState.Closed)
-            {
-                throw new InvalidOperationException("The selected spec PR was closed without merging.");
-            }
-            var resolvedCommit = pullRequest.Merged ? pullRequest.MergeCommitSha : pullRequest.Head?.Sha;
-            if (!GitHelper.IsValidCommitSha(resolvedCommit))
-            {
-                throw new InvalidOperationException("The spec PR has no valid source commit SHA.");
-            }
-            if (!string.IsNullOrEmpty(commitSha) && !string.Equals(commitSha, resolvedCommit, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException("The supplied spec commit does not match the linked PR's current source or merge commit.");
-            }
-            if (typeSpecHelper.IsUrl(projectPath) || !typeSpecHelper.IsValidTypeSpecProjectPath(projectPath))
-            {
-                throw new ArgumentException("Provide a local TypeSpec project in a clean checkout of the spec commit.");
-            }
-            await gitHelper.VerifyCleanSnapshotAsync(projectPath, resolvedCommit!, ct);
-            // Recheck ancestry inside the update call. The plan can advance after automation's
-            // lookup but before this tool starts; an internal revision alone would not detect it.
-            if (currentPlan != null && GitHelper.IsValidCommitSha(currentPlan.SpecCommitSHA) &&
-                !string.Equals(currentPlan.ActiveSpecPullRequest, pullRequestUrl, StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(currentPlan.SpecCommitSHA, resolvedCommit, StringComparison.OrdinalIgnoreCase))
-            {
-                var mergeBase = await gitHelper.GetMergeBaseCommitShaAsync(projectPath, currentPlan.SpecCommitSHA, ct);
-                if (!string.Equals(mergeBase, currentPlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidOperationException("The saved spec commit is newer or has divergent history. No release target was changed.");
-                }
-            }
-            var project = await typeSpecHelper.ParseTypeSpecProjectAsync(projectPath, npxHelper, logger, ct)
-                ?? throw new InvalidOperationException("Could not read the TypeSpec metadata at the spec commit.");
-            var apiVersion = ExtractApiVersionFromMetadata(project.Packages);
-            if (string.Equals(sdkReleaseType, "stable", StringComparison.OrdinalIgnoreCase) && apiVersion.Contains("preview", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException("A stable SDK release cannot target a preview API version.");
-            }
-            await gitHelper.VerifyCleanSnapshotAsync(projectPath, resolvedCommit!, ct);
-            return new ReleasePlanSpecTarget
-            {
-                TypeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(projectPath).TrimEnd('/'),
-                ApiVersion = apiVersion,
-                SpecCommitSHA = resolvedCommit!,
-                SpecPullRequestUrl = pullRequestUrl,
-                Packages = project.Packages
-            };
-        }
-
-        private static void EnsureSameApiVersion(ReleasePlanWorkItem plan, string apiVersion)
-        {
-            if (!string.IsNullOrWhiteSpace(plan.SpecAPIVersion) &&
-                !string.Equals(plan.SpecAPIVersion, apiVersion, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException($"API version '{apiVersion}' does not match release plan version '{plan.SpecAPIVersion}'. Use a separate release plan for the new API version.");
-            }
-        }
-
-        private static void EnsureActiveSpecTarget(ReleasePlanWorkItem plan)
-        {
-            if (!plan.IsSpecTargetConsistent)
-            {
-                throw new InvalidOperationException("The release plan target could not be read consistently. Read the plan again before updating it.");
-            }
-            if (new[] { "Finished", "Abandoned", "Closed", "Duplicate" }.Contains(plan.Status, StringComparer.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException("Cannot change the spec target of an inactive release plan. Use an active plan for new spec work.");
-            }
-        }
-
     }
 }

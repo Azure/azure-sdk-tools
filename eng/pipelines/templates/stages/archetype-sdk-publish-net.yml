@@ -113,6 +113,7 @@ stages:
 
         - task: AzurePowerShell@5
           displayName: Get azuresdkartifacts write mode token
+          condition: and(succeeded(), eq(${{ parameters.ShouldPublishToAzsdkArtifacts }}, true))
           inputs:
             azureSubscription: 'Azure SDK Artifacts'
             ScriptType: FilePath
@@ -128,7 +129,7 @@ stages:
           inputs:
             targetType: filePath
             filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-azuresdkartifacts.ps1'
-            arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)"'
+            arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
             pwsh: true
           env:
             AZURESDKARTIFACTS_SAS_TOKEN: $(VCPKG_BINARY_SAS_TOKEN)

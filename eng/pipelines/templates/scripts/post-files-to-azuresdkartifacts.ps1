@@ -6,6 +6,9 @@ param(
    [string] $BinariesDirectory,
 
    [Parameter(mandatory=$false)]
+   [string] $RepoId = "azure/azure-sdk-tools",
+
+   [Parameter(mandatory=$false)]
    [string] $FileFilter = "*.*",
 
    [Parameter(mandatory=$false)]

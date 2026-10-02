@@ -6,6 +6,12 @@
 
 - Support optional spec commit SHA on release-plan creation and updates.
 
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.6.51 (2026-10-01)
 
 ### Features Added

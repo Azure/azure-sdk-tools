@@ -331,7 +331,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         [TestCase(null, false, 1)]
         [TestCase(null, true, 1)]
         [TestCase(PinnedSpecCommit, false, 3)]
-        public async Task GetReleasePlanForWorkItemAsync_ChangedOrUnreadableParentClearsResponsePin(string? latestPin, bool readFails, int latestRevision)
+        public async Task GetReleasePlanForWorkItemAsync_ChangedOrUnreadableParentMarksInconsistentRead(string? latestPin, bool readFails, int latestRevision)
         {
             var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             plan.Rev = 1;
@@ -363,7 +363,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             var result = await new DevOpsService(_logger, connection.Object).GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
 
-            Assert.That(result.SpecCommitSHA, Is.Empty);
+            Assert.That(result.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            Assert.That(result.IsSpecTargetConsistent, Is.False);
             Assert.That(result.SpecAPIVersion, Is.EqualTo("2024-01-01"));
             Assert.That(result.SDKReleaseType, Is.EqualTo("beta"), "The old parent metadata must not be returned with a runnable pin after an intervening write.");
             Assert.That(plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(PinnedSpecCommit));
@@ -373,7 +374,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public async Task GetReleasePlanForWorkItemAsync_MissingChildClearsOnlyResponsePin()
+        public async Task GetReleasePlanForWorkItemAsync_MissingChildCannotBecomeLegacyFallback()
         {
             var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = PinnedSpecCommit;
@@ -381,7 +382,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
 
-            Assert.That(result.SpecCommitSHA, Is.Empty);
+            Assert.That(result.SpecCommitSHA, Is.EqualTo(PinnedSpecCommit));
+            Assert.That(result.IsSpecTargetConsistent, Is.False);
             Assert.That(result.SpecAPIVersion, Is.Empty);
             Assert.That(plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(PinnedSpecCommit));
             Assert.That(_connection.CapturedPatches, Is.Empty);
@@ -929,8 +931,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #region RunSDKGenerationPipelineAsync Tests
 
-        [TestCase(null)]
-        [TestCase("")]
         [TestCase("main")]
         [TestCase("refs/pull/123/merge")]
         [TestCase("abc123")]
@@ -941,20 +941,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 source!, "specification/test/service", "2024-01-01", "beta", "Java", 0, "refs/heads/main"));
         }
 
-        [TestCase("")]
-        [TestCase("none")]
-        public void RunSDKGenerationPipelineAsync_RejectsMissingApiVersion(string apiVersion)
-        {
-            Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.RunSDKGenerationPipelineAsync(
-                PinnedSpecCommit, "specification/test/service", apiVersion, "beta", "Java", 0, "refs/heads/main"));
-        }
-
-        [TestCase(false, "refs/heads/main")]
-        [TestCase(true, "refs/heads/main")]
-        [TestCase(false, "refs/pull/123/head")]
-        [TestCase(true, "refs/pull/123/head")]
+        [TestCase(false, "refs/heads/main", PinnedSpecCommit, "2024-01-01")]
+        [TestCase(true, "refs/heads/main", PinnedSpecCommit, "2024-01-01")]
+        [TestCase(false, "refs/pull/123/head", PinnedSpecCommit, "2024-01-01")]
+        [TestCase(true, "refs/pull/123/head", PinnedSpecCommit, "2024-01-01")]
+        [TestCase(false, "refs/heads/main", "", "")]
+        [TestCase(true, "refs/heads/main", "", "2024-01-01")]
+        [TestCase(false, "refs/pull/123/merge", "", "2024-01-01")]
+        [TestCase(true, "refs/heads/main", PinnedSpecCommit, "")]
+        [TestCase(false, "refs/heads/main", PinnedSpecCommit, "none")]
         [NonParallelizable]
-        public async Task RunSDKGenerationPipelineAsync_PinsSourceAndForwardsTargetWithoutChangingGenericQueue(bool inPipeline, string sourceBranch)
+        public async Task RunSDKGenerationPipelineAsync_PreservesLegacyPayloadAndPinsSavedTargets(bool inPipeline, string sourceBranch, string commitSha, string apiVersion)
         {
             using var cancellation = new CancellationTokenSource();
             var ct = cancellation.Token;
@@ -978,23 +975,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", inPipeline ? "test-project" : null);
 
                 await service.RunSDKGenerationPipelineAsync(
-                    PinnedSpecCommit, "specification/test/service", "2024-01-01", "stable", "Java", 0, sourceBranch,
+                    commitSha, "specification/test/service", apiVersion, "stable", "Java", 0, sourceBranch,
                     sdkRepoBranch: "feature/existing-sdk", ct: ct);
 
                 Assert.That(queuedBuilds, Has.Count.EqualTo(1));
                 Assert.That(queuedBuilds[0].SourceBranch, Is.EqualTo(sourceBranch));
-                Assert.That(queuedBuilds[0].SourceVersion, Is.EqualTo(PinnedSpecCommit));
-                Assert.That(queuedBuilds[0].TemplateParameters, Is.EquivalentTo(new Dictionary<string, string>
+                Assert.That(queuedBuilds[0].SourceVersion, Is.EqualTo(commitSha.Length == 0 ? null : commitSha));
+                var expectedParameters = new Dictionary<string, string>
                 {
                     ["ConfigType"] = "TypeSpec",
                     ["ConfigPath"] = "specification/test/service/tspconfig.yaml",
                     ["CreatePullRequest"] = "true",
                     ["ReleasePlanWorkItemId"] = "0",
                     ["TriggerSource"] = "sdk-release",
-                    ["SdkReleaseType"] = "stable",
-                    ["ApiVersion"] = "2024-01-01",
                     ["SdkRepoBranch"] = "feature/existing-sdk"
-                }));
+                };
+                if (commitSha.Length > 0 || !inPipeline)
+                {
+                    expectedParameters["SdkReleaseType"] = "stable";
+                    if (apiVersion.Length > 0 && apiVersion != "none") { expectedParameters["ApiVersion"] = apiVersion; }
+                }
+                Assert.That(queuedBuilds[0].TemplateParameters, Is.EquivalentTo(expectedParameters));
 
                 var genericParameters = new Dictionary<string, string> { ["UnrelatedParameter"] = "value" };
                 await service.RunPipelineAsync(7421, genericParameters, "feature/release", ct);

@@ -1047,12 +1047,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 @base = new { @ref = baseBranch }
             }));
 
-        [TestCase("", "2023-01-01")]
         [TestCase("main", "2023-01-01")]
         [TestCase("gggggggggggggggggggggggggggggggggggggggg", "2023-01-01")]
         [TestCase(SpecCommit + "\n", "2023-01-01")]
-        [TestCase(SpecCommit, "")]
-        [TestCase(SpecCommit, "none")]
+        [TestCase("updating", "2023-01-01")]
         public async Task GenerateSdk_RejectsMissingOrInvalidStoredTarget(string commitSha, string apiVersion)
         {
             var releasePlan = new ReleasePlanWorkItem
@@ -1068,13 +1066,64 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 releasePlan.APISpecProjectPath, "beta", "Java", workItemId: 456);
 
             Assert.That(result.Status, Is.EqualTo("Failed"));
-            Assert.That(result.ResponseErrors, Has.Some.Contains("missing or invalid spec commit SHA or API version"));
-            Assert.That(result.NextSteps, Has.Some.Contains("Explicitly configure"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("invalid or incomplete spec commit"));
+            Assert.That(result.NextSteps, Has.Some.Contains("Retry the release plan spec update"));
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
             Assert.That(devOpsService.Invocations.Select(call => call.Method.Name), Does.Not.Contain(nameof(IDevOpsService.UpdateSpecPullRequestAsync)));
             devOpsService.Verify(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase("", "")]
+        [TestCase(SpecCommit, "")]
+        [TestCase(SpecCommit, "none")]
+        public async Task GenerateSdk_LegacyOrUnversionedPlanStillQueues(string commitSha, string apiVersion)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo = [new SDKInfo { Language = "Java", PackageName = "azure-test" }]
+            };
+            var service = SetupSdkGenerationTool(plan);
+            plan.SpecCommitSHA = commitSha;
+            plan.SpecAPIVersion = apiVersion;
+            var result = await specWorkflowTool.RunGenerateSdkAsync(plan.APISpecProjectPath, "beta", "Java", workItemId: 456);
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            service.Verify(s => s.RunSDKGenerationPipelineAsync(commitSha, plan.APISpecProjectPath,
+                apiVersion, "beta", "Java", 456, "refs/heads/main", "", It.IsAny<CancellationToken>()), Times.Once);
+            if (commitSha.Length == 0) { mockGitHubService.VerifyNoOtherCalls(); }
+        }
+
+        [TestCase(false, "refs/pull/123/merge")]
+        [TestCase(true, "refs/heads/main")]
+        public async Task GenerateSdk_LegacyPlanPreservesRequestedPrRef(bool merged, string expectedRef)
+        {
+            var plan = new ReleasePlanWorkItem { WorkItemId = 456, SDKInfo = [new SDKInfo { Language = "Java", PackageName = "azure-test" }] };
+            var service = SetupSdkGenerationTool(plan);
+            plan.SpecCommitSHA = "";
+            plan.ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/122";
+            mockGitHubService.Setup(g => g.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(SourcePullRequest(merged));
+            var result = await specWorkflowTool.RunGenerateSdkAsync(plan.APISpecProjectPath, "beta", "Java", pullRequestNumber: 123, workItemId: 456);
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            service.Verify(s => s.RunSDKGenerationPipelineAsync("", plan.APISpecProjectPath,
+                plan.SpecAPIVersion, "beta", "Java", 456, expectedRef, "", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase("")]
+        [TestCase(SpecCommit)]
+        public async Task GenerateSdk_InconsistentReadNeverFallsBack(string commitSha)
+        {
+            var plan = new ReleasePlanWorkItem { WorkItemId = 456, SDKInfo = [new SDKInfo { Language = "Java", PackageName = "azure-test" }] };
+            var service = SetupSdkGenerationTool(plan);
+            plan.SpecCommitSHA = commitSha;
+            plan.IsSpecTargetConsistent = false;
+            var result = await specWorkflowTool.RunGenerateSdkAsync(plan.APISpecProjectPath, "beta", "Java", workItemId: 456);
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("could not be read consistently"));
+            Assert.That(service.Invocations.Any(call => call.Method.Name == nameof(IDevOpsService.RunSDKGenerationPipelineAsync)), Is.False);
             mockGitHubService.VerifyNoOtherCalls();
         }
 

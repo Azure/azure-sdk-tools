@@ -44,6 +44,10 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName(SpecCommitSHAField)]
         public string SpecCommitSHA { get; set; } = string.Empty;
 
+        // A failed or mixed parent/child read must not be treated as an unpinned legacy plan.
+        [JsonIgnore]
+        public bool IsSpecTargetConsistent { get; set; } = true;
+
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
 

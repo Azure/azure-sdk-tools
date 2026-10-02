@@ -466,22 +466,23 @@ namespace Azure.Sdk.Tools.Cli.Services
                     releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
-                    if (!string.IsNullOrEmpty(releasePlan.SpecCommitSHA))
+                    // Check unpinned reads too: a target update may have started after the
+                    // first parent read, and that must not enable the legacy fallback.
                     {
                         // The revision also detects clearing and republishing the same SHA.
                         var currentParent = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlan.WorkItemId, cancellationToken: ct);
                         if (currentParent?.Fields == null ||
                             currentParent.Rev != workItem.Rev ||
-                            !currentParent.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var currentPin) ||
-                            !string.Equals(currentPin?.ToString(), releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
+                            !string.Equals(currentParent.Fields.GetValueOrDefault(ReleasePlanWorkItem.SpecCommitSHAField)?.ToString() ?? string.Empty,
+                                releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
                         {
-                            releasePlan.SpecCommitSHA = string.Empty;
+                            releasePlan.IsSpecTargetConsistent = false;
                         }
                     }
                 }
                 else
                 {
-                    releasePlan.SpecCommitSHA = string.Empty;
+                    releasePlan.IsSpecTargetConsistent = false;
                     logger.LogWarning("API spec work item not found for release plan work item {workItemId}", releasePlan.WorkItemId);
                 }
             }
@@ -491,7 +492,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                releasePlan.SpecCommitSHA = string.Empty;
+                releasePlan.IsSpecTargetConsistent = false;
                 logger.LogError(ex, "Failed to get API spec work item for release plan work item {WorkItemId}", releasePlan.WorkItemId);
             }
 
@@ -1005,13 +1006,9 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<Build> RunSDKGenerationPipelineAsync(string specCommitSha, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string apiSpecBranchRef, string sdkRepoBranch = "", CancellationToken ct = default)
         {
-            if (specCommitSha is not { Length: 40 } || !specCommitSha.All(Uri.IsHexDigit))
+            if (!string.IsNullOrEmpty(specCommitSha) && (specCommitSha.Length != 40 || !specCommitSha.All(Uri.IsHexDigit)))
             {
-                throw new ArgumentException("A full 40-character hexadecimal spec commit SHA is required. Explicitly configure the stored release target before generating SDKs; branch references are not supported.", nameof(specCommitSha));
-            }
-            if (string.IsNullOrWhiteSpace(apiVersion) || apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException("An API version is required. Explicitly configure the stored release target before generating SDKs.", nameof(apiVersion));
+                throw new ArgumentException("A stored spec commit must be a full 40-character hexadecimal SHA. Retry the spec target update if it is incomplete.", nameof(specCommitSha));
             }
 
             int pipelineDefinitionId = GetPipelineDefinitionId(language);
@@ -1020,10 +1017,14 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
             }
 
-            var templateParams = BuildSdkGenerationTemplateParams(typespecProjectRoot, workItemId, sdkReleaseType, apiVersion, sdkRepoBranch);
+            var isRunningInAzurePipelines = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID"));
+            // Preserve the legacy automation payload; saved targets carry their stored channel
+            // and any concrete version consistently, regardless of the caller's environment.
+            var templateParams = BuildSdkGenerationTemplateParams(typespecProjectRoot, workItemId, sdkReleaseType, apiVersion, sdkRepoBranch,
+                !string.IsNullOrEmpty(specCommitSha) || !isRunningInAzurePipelines);
 
             // SourceVersion selects the immutable input; the ref preserves draft/auto-release classification.
-            var build = await QueuePipelineAsync(pipelineDefinitionId, templateParams, apiSpecBranchRef, specCommitSha, ct);
+            var build = await QueuePipelineAsync(pipelineDefinitionId, templateParams, apiSpecBranchRef, string.IsNullOrEmpty(specCommitSha) ? null : specCommitSha, ct);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
             logger.LogInformation("Started pipeline run {pipelineRunUrl} to generate SDK.", pipelineRunUrl);
             if (workItemId != 0)
@@ -1035,7 +1036,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return build;
         }
 
-        private static Dictionary<string, string> BuildSdkGenerationTemplateParams(string typespecProjectRoot, int workItemId, string sdkReleaseType, string apiVersion, string sdkRepoBranch)
+        private static Dictionary<string, string> BuildSdkGenerationTemplateParams(string typespecProjectRoot, int workItemId, string sdkReleaseType, string apiVersion, string sdkRepoBranch, bool includeTargetParameters)
         {
             var templateParams = new Dictionary<string, string>
             {
@@ -1043,10 +1044,17 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "CreatePullRequest", "true" },
                  { "ReleasePlanWorkItemId", $"{workItemId}"},
-                 { "TriggerSource", "sdk-release" },
-                 { "SdkReleaseType", sdkReleaseType },
-                 { "ApiVersion", apiVersion }
+                 { "TriggerSource", "sdk-release" }
             };
+
+            if (includeTargetParameters)
+            {
+                templateParams["SdkReleaseType"] = sdkReleaseType;
+                if (!string.IsNullOrWhiteSpace(apiVersion) && !apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
+                {
+                    templateParams["ApiVersion"] = apiVersion;
+                }
+            }
 
             if (!string.IsNullOrEmpty(sdkRepoBranch))
             {

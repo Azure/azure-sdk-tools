@@ -180,7 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         [McpServerTool(Name = RunGenerateSdkToolName), Description("Run pipeline SDK generation for a release plan, including no-local-clone and all-language requests (one call per language). " +
             "Read the plan; pass its repository-relative project path, SDK release type (beta or stable), language and plan/work item ID. Uses stored SpecCommitSHA, SpecAPIVersion and SDK release type for interactive and automated runs. " +
-            "Caller inputs only check consistency; they cannot override the stored target. Missing targets must be explicitly configured before generation; there is no fallback to main or the latest spec PR. " +
+            "A saved SHA is never replaced by a moving ref. Older plans without a saved SHA retain the existing branch/PR generation path; an empty API version is supported. " +
             "Do not use azsdk_release_sdk (package publishing) or azsdk_get_sdk_pull_request_link (link retrieval) to generate SDKs.")]
         public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
         {
@@ -219,8 +219,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 language = inputSanitizer.SanitizeLanguage(language);
+                if (!releasePlan.IsSpecTargetConsistent)
+                {
+                    response.Status = "Failed";
+                    response.ResponseErrors.Add("The release plan target could not be read consistently. Read the plan again before generating; no fallback was attempted.");
+                    return response;
+                }
+                var specCommitSha = releasePlan.SpecCommitSHA;
+                var hasStoredCommit = !string.IsNullOrEmpty(specCommitSha);
                 var expectedApiVersion = apiVersion;
-                apiVersion = releasePlan.SpecAPIVersion;
+                if (hasStoredCommit || string.IsNullOrWhiteSpace(apiVersion) || apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
+                {
+                    apiVersion = releasePlan.SpecAPIVersion;
+                }
 
                 logger.LogInformation(
                     "Generating SDK for TypeSpec project: {TypespecProjectRoot}, API Version: {ApiVersion}, SDK Release Type: {SdkReleaseType}, Language: {Language}, Pull Request Number: {PullRequestNumber}, Work Item ID: {WorkItemId}",
@@ -265,7 +276,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.ResponseErrors.Add("SDK release type must be set as either beta or stable to generate SDK.");
                     response.Status = "Failed";
                 }
-                if (!string.Equals(sdkReleaseType, releasePlan.SDKReleaseType, StringComparison.OrdinalIgnoreCase))
+                if (hasStoredCommit && !string.Equals(sdkReleaseType, releasePlan.SDKReleaseType, StringComparison.OrdinalIgnoreCase))
                 {
                     response.ResponseErrors.Add("SDK release type does not match the release plan's stored release type. Explicitly configure the stored target before requesting a different release type.");
                     response.Status = "Failed";
@@ -404,39 +415,52 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                var specCommitSha = releasePlan.SpecCommitSHA;
-                if (specCommitSha is not { Length: 40 } || !specCommitSha.All(Uri.IsHexDigit) ||
-                    string.IsNullOrWhiteSpace(apiVersion) || apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
+                if (hasStoredCommit && (specCommitSha.Length != 40 || !specCommitSha.All(Uri.IsHexDigit)))
                 {
                     response.Status = "Failed";
-                    response.ResponseErrors.Add("The release plan has a missing or invalid spec commit SHA or API version. Generation never chooses or saves a target implicitly.");
-                    response.NextSteps = ["Explicitly configure the release plan's stored target: a full 40-character hexadecimal Custom.SpecCommitSHA on the parent release plan and the selected API version on its API Spec child, then read the plan and retry."];
+                    response.ResponseErrors.Add("The release plan has an invalid or incomplete spec commit. Generation will not fall back to a moving ref.");
+                    response.NextSteps = ["Retry the release plan spec update, then read the plan and retry SDK generation."];
                     return response;
                 }
 
-                var linkedPullRequest = Regex.Match(releasePlan.ActiveSpecPullRequest ?? string.Empty,
-                    @"\Ahttps://github\.com/Azure/azure-rest-api-specs/pull/([1-9][0-9]*)/?\z", RegexOptions.IgnoreCase);
-                if (!linkedPullRequest.Success || !int.TryParse(linkedPullRequest.Groups[1].Value, out var linkedPullRequestNumber))
+                var apiSpecBranchRef = "refs/heads/main";
+                if (!hasStoredCommit)
                 {
-                    response.Status = "Failed";
-                    response.ResponseErrors.Add("SDK generation requires a linked spec PR in the public Azure/azure-rest-api-specs repository.");
-                    return response;
+                    // Backward compatibility only: never save a guessed historical commit.
+                    if (pullRequestNumber > 0)
+                    {
+                        var pullRequest = await githubService.GetPullRequestAsync("Azure", "azure-rest-api-specs", pullRequestNumber, ct).WaitAsync(ct)
+                            ?? throw new InvalidOperationException("The requested spec PR could not be read.");
+                        apiSpecBranchRef = pullRequest.Merged ? $"refs/heads/{pullRequest.Base.Ref}" : $"refs/pull/{pullRequestNumber}/merge";
+                    }
+                    response.Details.Add("This legacy plan has no saved spec commit; using its existing branch/PR generation path without saving a target.");
                 }
-                if (pullRequestNumber > 0 && pullRequestNumber != linkedPullRequestNumber)
+                else
                 {
-                    response.Status = "Failed";
-                    response.ResponseErrors.Add($"Spec PR {pullRequestNumber} does not match the release plan's linked PR {linkedPullRequestNumber}. Explicitly configure the stored target before generating from a different spec PR.");
-                    return response;
-                }
+                    var linkedPullRequest = Regex.Match(releasePlan.ActiveSpecPullRequest ?? string.Empty,
+                        @"\Ahttps://github\.com/Azure/azure-rest-api-specs/pull/([1-9][0-9]*)/?\z", RegexOptions.IgnoreCase);
+                    if (!linkedPullRequest.Success || !int.TryParse(linkedPullRequest.Groups[1].Value, out var linkedPullRequestNumber))
+                    {
+                        response.Status = "Failed";
+                        response.ResponseErrors.Add("SDK generation requires a linked spec PR in the public Azure/azure-rest-api-specs repository.");
+                        return response;
+                    }
+                    if (pullRequestNumber > 0 && pullRequestNumber != linkedPullRequestNumber)
+                    {
+                        response.Status = "Failed";
+                        response.ResponseErrors.Add($"Spec PR {pullRequestNumber} does not match the release plan's linked PR {linkedPullRequestNumber}. Explicitly configure the stored target before generating from a different spec PR.");
+                        return response;
+                    }
 
-                // A PR lookup classifies release eligibility only; it must never select a new SHA.
-                var specPullRequest = await githubService.GetPullRequestAsync("Azure", "azure-rest-api-specs", linkedPullRequestNumber, ct).WaitAsync(ct)
-                    ?? throw new InvalidOperationException("The linked spec PR could not be read to determine draft generation behavior.");
-                var apiSpecBranchRef = specPullRequest.Merged &&
-                    string.Equals(specPullRequest.Base?.Ref, "main", StringComparison.Ordinal) &&
-                    string.Equals(specPullRequest.MergeCommitSha, specCommitSha, StringComparison.OrdinalIgnoreCase)
-                    ? "refs/heads/main"
-                    : $"refs/pull/{linkedPullRequestNumber}/head";
+                    // A PR lookup classifies release eligibility only; it must never select a new SHA.
+                    var specPullRequest = await githubService.GetPullRequestAsync("Azure", "azure-rest-api-specs", linkedPullRequestNumber, ct).WaitAsync(ct)
+                        ?? throw new InvalidOperationException("The linked spec PR could not be read to determine draft generation behavior.");
+                    apiSpecBranchRef = specPullRequest.Merged &&
+                        string.Equals(specPullRequest.Base?.Ref, "main", StringComparison.Ordinal) &&
+                        string.Equals(specPullRequest.MergeCommitSha, specCommitSha, StringComparison.OrdinalIgnoreCase)
+                        ? "refs/heads/main"
+                        : $"refs/pull/{linkedPullRequestNumber}/head";
+                }
 
                 string sdkRepoBranch = "";                
                 var sdkPullRequestUrl = sdkInfo?.SdkPullRequestUrl;
@@ -452,9 +476,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 logger.LogInformation("Running SDK generation pipeline");
                 ct.ThrowIfCancellationRequested();
-                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(specCommitSha, typeSpecProjectPath, apiVersion, releasePlan.SDKReleaseType.ToLowerInvariant(), language, workItemId, apiSpecBranchRef, sdkRepoBranch, ct);
+                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(specCommitSha, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, apiSpecBranchRef, sdkRepoBranch, ct);
                 response.Status = "Success";
-                response.Details.Add($"SDK generation uses pinned spec commit {specCommitSha} and API version '{apiVersion}'.");
+                if (hasStoredCommit)
+                {
+                    response.Details.Add($"SDK generation uses pinned spec commit {specCommitSha} and API version '{apiVersion}'.");
+                }
                 response.Details.Add($"Azure DevOps pipeline {DevOpsService.GetPipelineUrl(pipelineRun.Id)} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created.");
                 return response;
             }

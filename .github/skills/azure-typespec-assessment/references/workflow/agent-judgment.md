@@ -23,6 +23,15 @@ Also read only:
 - the [official document catalog](../reference-document-links.md);
 - the [documentation checks](../document-quality.md).
 
+For SDK naming with known targets, or when explicitly requested, invoke
+`azsdk-common-typespec-naming` in review mode and read its selected references.
+Reuse the supplied changed declarations, language and release evidence; do not
+start another repository scan, generation or customization. Missing evidence or
+a missing naming skill means naming is not assessed, not passed. Keep its
+findings, exceptions and coverage for the final response as a **supplementary
+SDK naming review**. Do not insert local naming rules into fetched Azure
+Guidelines provenance or add fields to `agent-decisions.json`.
+
 Do not recursively list the work directory, broadly search report artifacts,
 inspect raw compiler output, or repeatedly read schemas and canonical inputs.
 Use `agent-workspace\agent-decisions.draft.json` only as the structural

@@ -52,6 +52,7 @@ Do not substitute a `file:` URL or only return filesystem paths.
 
 ## Boundaries
 
+- For SDK naming, use `azsdk-common-typespec-naming` in **review mode** during bounded Agent judgment when target-language evidence is available or naming was explicitly requested. Both authoring and assessment consume that skill's rules; do not duplicate them here. Never call its apply workflow or the customization tool during assessment. Report supplementary naming findings and coverage separately from the current assessment report schema.
 - V1 is standalone and opt-in: run only when the user explicitly requests an assessment or review. Do not invoke this skill from `azure-typespec-author`, or automatically before or after its authoring and validation workflow. Integration is deferred to a future version.
 - Run complete mode only: merge-base through `HEAD`, staged, unstaged, and relevant untracked changes.
 - Derive semantic intents from changed TypeSpec source. Use AutoRest only to map those intents to REST operations and assess REST compatibility; use TCGC only for downstream SDK analysis.

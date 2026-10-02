@@ -8,6 +8,7 @@ Run **5.1 General Validation** for every case; run **5.2 Case-Specific Validatio
 | -------- | --------------------------------------------- | ----------------------- |
 | 5.1.1    | `azure-sdk-mcp:azsdk_run_typespec_validation` | Always                  |
 | 5.1.2    | `tsp compile .`                               | Always                  |
+| 5.1.3    | SDK naming checks                             | Always; report coverage |
 | 5.2      | Case-specific validation                      | Case matches (see §5.2) |
 
 ---
@@ -23,6 +24,10 @@ Invoke `azure-sdk-mcp:azsdk_run_typespec_validation` with the project root. On f
 Run `tsp compile .` from the project root. Verify `.json` output under the directory specified by the `@azure-tools/typespec-autorest` entry in the project's tspconfig.yaml. Fix compile errors if any.
 
 > 5.1.1 checks for errors/warnings; 5.1.2 generates the OpenAPI output. Both are required.
+
+### 5.1.3: SDK Naming
+
+For applicable naming changes, use the decisions and verification guidance from `azsdk-common-typespec-naming`. Report profiles, exceptions, blockers and unassessed targets. Keep 5.1.1 and 5.1.2 after tool-applied customizations; `SpecInputs` does not verify generated SDK names. If SDK generation was not run, report those names as unverified. Naming guidance is independent of linting; installed linters remain part of normal validation.
 
 ---
 

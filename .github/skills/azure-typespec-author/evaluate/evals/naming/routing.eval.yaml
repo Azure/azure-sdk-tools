@@ -1,0 +1,81 @@
+name: azure-typespec-author-routing-eval
+description: Authoring boundaries with shared naming available
+type: capability
+area: naming
+environment: &skills
+  skills:
+    - ../../..
+    - ../../../../azsdk-common-typespec-naming
+tags:
+  area: azure-typespec-author
+  type: ci-gate
+  suite: naming
+  mode: trigger
+defaults:
+  runs: 1
+  timeout: "120s"
+  model: gpt-5.4
+  executor: copilot-sdk
+scoring:
+  threshold: 1.0
+stimuli:
+  - name: trigger-add-arm-property
+    prompt: |
+      Add an enabled boolean to WidgetProperties in specification/widget/resource-manager/Microsoft.Widget/main.tsp.
+      For now, identify and invoke the applicable skill, then stop before intake or edits.
+    graders:
+      - &author
+        type: skill-invocation
+        config:
+          required: [azure-typespec-author]
+  - name: trigger-author-dataplane-operation
+    prompt: |
+      Author a TypeSpec data-plane operation in specification/widget/data-plane/WidgetAnalytics/main.tsp.
+      For now, identify and invoke the applicable skill, then stop before intake or edits.
+    graders:
+      - *author
+  - name: trigger-modify-typespec-enum
+    prompt: |
+      Add a value to WidgetState in specification/widget/resource-manager/Microsoft.Widget/models.tsp.
+      For now, identify and invoke the applicable skill, then stop before intake or edits.
+    graders:
+      - *author
+  - name: anti-trigger-naming-only-client-tsp
+    prompt: |
+      Fix naming in client.tsp: add a C# clientName override for WidgetProperties.enabled
+      in specification/widget/resource-manager/Microsoft.Widget/client.tsp.
+      For now, identify and invoke the applicable skill, then stop before edits or tool calls.
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azsdk-common-typespec-naming]
+          disallowed: [azure-typespec-author]
+  - name: anti-trigger-readonly-typespec-assessment
+    environment:
+      skills:
+        - ../../..
+        - ../../../../azsdk-common-typespec-naming
+        - ../../../../azure-typespec-assessment
+    prompt: |
+      Assess the TypeSpec diff for specification/widget against origin/main for REST breaking changes.
+      For now, identify and invoke the applicable skill; do not run the assessment or modify TypeSpec.
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-assessment]
+          disallowed: [azure-typespec-author]
+  - name: anti-trigger-generate-csharp-sdk
+    environment:
+      skills:
+        - ../../..
+        - ../../../../azsdk-common-typespec-naming
+        - ../../../../azsdk-common-generate-sdk-locally
+    prompt: |
+      Generate the C# SDK locally from specification/widget/resource-manager/Microsoft.Widget
+      into sdk/widget/Azure.ResourceManager.Widget. The TypeSpec is ready.
+      For now, identify and invoke the applicable skill, then stop before generation or edits.
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azsdk-common-generate-sdk-locally]
+          disallowed: [azure-typespec-author]

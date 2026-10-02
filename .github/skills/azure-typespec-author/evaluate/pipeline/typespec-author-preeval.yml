@@ -39,6 +39,9 @@ steps:
     env:
       SKILL_BRANCH: $(SkillBranch)
 
+  - script: node .github/skills/azure-typespec-author/evaluate/scripts/prepare-skill-bundle.mjs
+    displayName: 'Stage authoring and shared naming skills'
+
   - script: |
       set -e
       npm ci --userconfig $(Build.SourcesDirectory)/.npmrc

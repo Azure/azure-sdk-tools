@@ -1,0 +1,192 @@
+name: azure-typespec-author-naming-eval
+description: Supplementary naming planning and customization ownership
+type: capability
+area: naming
+environment: &skills
+  skills:
+    - ../../..
+    - ../../../../azsdk-common-typespec-naming
+tags:
+  area: azure-typespec-author
+  suite: naming
+  mode: forced
+defaults:
+  runs: 1
+  timeout: "180s"
+  model: gpt-5.4
+  executor: copilot-sdk
+scoring:
+  threshold: 1.0
+stimuli:
+  - name: 007001-plan-csharp-names-before-authoring
+    prompt: |
+      Invoke azure-typespec-author. Project analysis, intake, and general TypeSpec
+      grounding are already complete. Use its case-specific authoring plan for only
+      the SDK naming portion of these approved additions. This is a never-shipped
+      C# ARM Widget SDK at specification/widget/resource-manager/Microsoft.Widget,
+      version 2026-01-01-preview. Add WidgetProperties.enabled: boolean and
+      retryInterval: int32, documented in seconds. No collisions or existing overrides.
+      Use bundled references and these confirmed facts; no network, MCP, edits,
+      compilation or SDK generation. Return JSON "names" mapping the two properties
+      to C# names, "scope" (a string containing the TCGC language identifier),
+      "applied", and "generatedNamesVerified".
+    constraints: &bounded
+      max_turns: 14
+      max_tokens: 20000
+    graders:
+      - &naming
+        type: skill-invocation
+        config:
+          required: [azure-typespec-author, azsdk-common-typespec-naming]
+      - &planning
+        type: tool-calls
+        config:
+          required:
+            - name: "^(view|powershell|bash|rg)$"
+              pattern: "references"
+              result: "SDK Naming Conventions|C# ARM (Member|Model) Naming"
+          disallowed:
+            - name: "azsdk_"
+            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
+      - type: output-matches
+        config:
+          pattern: '"enabled"\s*:\s*"IsEnabled"'
+      - type: output-matches
+        config:
+          pattern: '"retryInterval"\s*:\s*"RetryIntervalInSeconds"'
+      - type: output-matches
+        config:
+          pattern: '"scope"\s*:\s*"csharp"'
+      - &notApplied
+        type: output-matches
+        config:
+          pattern: '"applied"\s*:\s*false'
+      - &unverified
+        type: output-matches
+        config:
+          pattern: '"generatedNamesVerified"\s*:\s*false'
+
+  - name: 007001-preserve-shipped-name-in-authoring-plan
+    prompt: |
+      Invoke azure-typespec-author for case-specific SDK naming planning only;
+      analysis, intake and general grounding are complete. The Widget ARM service
+      targets C#, Java and Python. Azure.ResourceManager.Widget 1.0.0 exposes the
+      boolean WidgetProperties.Enabled; client.tsp preserves that shipped C# name.
+      The authorized TypeSpec addition is ttl: int32, documented in minutes, to
+      WidgetProperties in specification/widget/resource-manager/Microsoft.Widget.
+      Its SDK name is unshipped. No cleanup or breaking rename is authorized.
+      Use only bundled references and this evidence. No network, tools that mutate,
+      compilation or generation. Return JSON "names" mapping enabled and ttl to
+      planned C# names, "otherLanguagesChanged", "applied", and "generatedNamesVerified".
+    constraints: *bounded
+    graders:
+      - *naming
+      - *planning
+      - type: output-matches
+        config:
+          pattern: '"enabled"\s*:\s*"Enabled"'
+      - type: output-matches
+        config:
+          pattern: '"ttl"\s*:\s*"TimeToLiveInMinutes"'
+      - type: output-matches
+        config:
+          pattern: '"otherLanguagesChanged"\s*:\s*false'
+      - *notApplied
+      - *unverified
+
+  - name: 007001-unsupported-target-does-not-borrow-csharp-rules
+    prompt: |
+      Invoke azure-typespec-author for case-specific SDK naming planning only;
+      analysis, intake and general grounding are complete. A new, never-shipped
+      Java-only ARM service at specification/widget/resource-manager/Microsoft.Widget
+      adds enabled: boolean to WidgetProperties. No C# SDK is targeted. No authoritative
+      Java naming guidance is supplied beyond bundled skill references.
+      No network, MCP, edits, compilation or generation. Return JSON "coverage"
+      ("covered" or "not-covered"), "decorators" (only justified SDK overrides),
+      and "applied". Do not invent language conventions.
+    constraints: *bounded
+    graders:
+      - *naming
+      - *planning
+      - type: output-matches
+        config:
+          pattern: '"coverage"\s*:\s*"not-covered"'
+      - type: output-matches
+        config:
+          pattern: '"decorators"\s*:\s*\[\s*\]'
+      - *notApplied
+
+  - name: 007001-authoring-delegates-client-tsp-to-customization
+    environment:
+      skills:
+        - ../../..
+        - ../../../../azsdk-common-typespec-naming
+      files:
+        - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/customization-mcp.mjs
+          dest: customization-mcp.mjs
+      mcpServers:
+        azure-sdk-mcp:
+          type: stdio
+          command: node
+          args: ["customization-mcp.mjs"]
+    prompt: |
+      Invoke azure-typespec-author and execute only Step 4's approved SDK naming
+      handoff. The ordinary declaration edit is already complete. The confirmed
+      plan from Step 3: C# ARM WidgetProperties.enabled is a new/unshipped boolean;
+      its C# SDK name should be IsEnabled, wire name enabled unchanged, all Java
+      and Python overrides preserved. There are no collisions. client.tsp is loaded
+      by the generation entrypoint and the TypeSpec project root is the absolute
+      current working directory (resolve it locally). No SDK package exists.
+      These are all confirmed facts; do not create a project or inspect eval fixtures.
+      The customization MCP tool is available. Do not edit client.tsp directly.
+      Stop after the handoff result; the next authoring step will run TypeSpec
+      validation. Return JSON "applied" and "generatedNamesVerified". Do not compile
+      or generate an SDK in this bounded handoff.
+    constraints: *bounded
+    graders:
+      - *naming
+      - type: tool-calls
+        config:
+          required:
+            - name: "^azure-sdk-mcp[-:]azsdk_customized_code_update$"
+              args:
+                editScope: "^SpecInputs$"
+                tspProjectPath: '^(?:[A-Za-z]:[\\/]|/)'
+                customizationRequest: '(?is)(?=.*(?:csharp|C#))(?=.*WidgetProperties\.enabled)(?=.*IsEnabled)(?=.*wire)(?=.*(?:Java|Python)).+'
+          disallowed:
+            - name: "^(edit|create|apply_patch)$"
+            - name: "azsdk_(?:package_generate_code|package_build_code|run_typespec_validation)"
+            - name: "azsdk_customized_code_update"
+              args:
+                packagePath: ".+"
+      - type: output-matches
+        config:
+          pattern: '"applied"\s*:\s*true'
+      - *unverified
+
+  - name: 007001-unrelated-authoring-has-no-sdk-intake
+    prompt: |
+      Invoke azure-typespec-author. Analysis, intake and grounding are complete for
+      a documentation-only request in specification/widget/resource-manager/Microsoft.Widget:
+      add "Whether the widget is enabled." to the existing WidgetProperties.enabled.
+      Names and types must remain unchanged. The SDK targets are unknown and SDK
+      naming was not requested. Consult bundled guidance, then return only JSON
+      "sdkLanguageRequired" and "namingChangesPlanned". Do not edit, fetch docs,
+      invoke MCP, compile or generate.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-author]
+          disallowed: [azsdk-common-typespec-naming]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "azsdk_"
+            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
+      - type: output-matches
+        config:
+          pattern: '"sdkLanguageRequired"\s*:\s*false'
+      - type: output-matches
+        config:
+          pattern: '"namingChangesPlanned"\s*:\s*false'

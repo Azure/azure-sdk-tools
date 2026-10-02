@@ -58,6 +58,10 @@ describe("Check diagnostic reporting", () => {
       ),
     );
     assert.equal(entrypointFile, "main.tsp");
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "client-only"),
+    );
+    assert.equal(entrypointFile, "client.tsp");
     // Verify that entrypoint files specified with a forward-slash path in a
     // sub-directory are found, even on Windows where readdir returns paths
     // with back-slash separators.

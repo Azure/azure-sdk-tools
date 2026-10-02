@@ -9,15 +9,7 @@ public class ReleasePlanSpecTarget
     public string ApiVersion { get; set; } = string.Empty;
     public string SpecCommitSHA { get; set; } = string.Empty;
     public string SpecPullRequestUrl { get; set; } = string.Empty;
-    public string CommitUrl { get; set; } = string.Empty;
-    public string SDKReleaseType { get; set; } = string.Empty;
+    // Internal optimistic-concurrency check, captured by the tool before metadata is read.
     public string? ExpectedTargetRevision { get; set; }
-    public List<string> AvailableApiVersions { get; set; } = [];
     public List<PackageInfo> Packages { get; set; } = [];
-
-    public override string ToString() =>
-        $"Project: {TypeSpecProjectPath}\nAPI version: {ApiVersion}\nSDK release type: {SDKReleaseType}\nSpec PR: {SpecPullRequestUrl}\n" +
-        $"Spec commit SHA: {SpecCommitSHA}\nSpec commit: {CommitUrl}\n" +
-        $"Expected target revision: {ExpectedTargetRevision ?? "not applicable (new plan)"}\n" +
-        $"Packages: {string.Join(", ", Packages.Select(p => p.PackageName))}\nAvailable API versions: {string.Join(", ", AvailableApiVersions)}";
 }

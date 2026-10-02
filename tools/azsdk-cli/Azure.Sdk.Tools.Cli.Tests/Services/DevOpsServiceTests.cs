@@ -663,7 +663,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
-        #region Confirmed release target storage
+        #region Release target storage
 
         private const string TargetSha = "0123456789abcdef0123456789abcdef01234567";
         private const string PriorSha = "fedcba9876543210fedcba9876543210fedcba98";
@@ -679,7 +679,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             return (parent, spec, new ReleasePlanSpecTarget
             {
                 SpecPullRequestUrl = TargetPr, SpecCommitSHA = TargetSha, ApiVersion = "2024-01-01",
-                ExpectedTargetRevision = "100:1:200:1", SDKReleaseType = "beta"
+                ExpectedTargetRevision = "100:1:200:1"
             });
         }
 
@@ -722,7 +722,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 _connection.AddWorkItem(updatedParent);
             };
             var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, default);
-            Assert.That(result.SpecCommitSHA, Is.Empty);
+            Assert.That(result.SpecCommitSHA, Is.EqualTo(PriorSha));
+            Assert.That(result.IsSpecTargetConsistent, Is.False);
             Assert.That(_connection.CapturedPatches, Is.Empty);
         }
 
@@ -780,7 +781,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(patches.Select(p => p.WorkItemId), Is.EqualTo(new[] { 100, 200, 100 }));
             Assert.That(patches.Select(p => p.Document[0].Path), Is.All.EqualTo("/rev"));
             Assert.That(patches.Select(p => p.Document[0].Value), Is.EqualTo(new object[] { 1, 1, 2 }));
-            Assert.That(patches[0].Document[1].Value, Is.EqualTo(string.Empty));
+            Assert.That(patches[0].Document[1].Value, Is.EqualTo("updating"));
             Assert.That(patches[1].Document.Single(op => op.Path == "/fields/Custom.APISpecversion").Value, Is.EqualTo("2024-01-01"));
             Assert.That(patches[2].Document.Any(op => op.Path.Contains("GenerationStatusFor")), Is.EqualTo(!sameSha));
             Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(TargetSha));
@@ -815,7 +816,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(Assert.CatchAsync(() => _devOpsService.UpdateSpecPullRequestAsync(100, target,
                 new() { ["Custom.ProductName"] = "not-published" }, [], default)), Is.Not.Null);
             Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(failedPhase));
-            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(failedPhase == 1 ? PriorSha : string.Empty));
+            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(failedPhase == 1 ? PriorSha : "updating"));
             Assert.That(parent.Fields.ContainsKey("Custom.ProductName"), Is.False);
         }
 
@@ -836,7 +837,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             using var cancellation = new CancellationTokenSource();
             _connection.BeforePatch = (id, _) => { if (id == 200) { cancellation.Cancel(); } };
             Assert.CatchAsync<OperationCanceledException>(() => _devOpsService.UpdateSpecPullRequestAsync(100, target, [], [], cancellation.Token));
-            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(string.Empty));
+            Assert.That(parent.Fields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo("updating"));
             Assert.That(_connection.CapturedPatches, Has.Count.EqualTo(2));
         }
 

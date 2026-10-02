@@ -22,7 +22,6 @@ internal class ReleasePlanSnapshotTests
     private Mock<INpxHelper> _npx = null!;
     private Mock<IProcessHelper> _process = null!;
     private TypeSpecHelper _helper = null!;
-    private readonly List<string> _steps = [];
     private string? _output;
 
     [SetUp]
@@ -32,11 +31,8 @@ internal class ReleasePlanSnapshotTests
         _project = Directory.CreateDirectory(Path.Combine(_directory.DirectoryPath, "specification", "contoso")).FullName;
         File.WriteAllText(Path.Combine(_project, "tspconfig.yaml"), "azure-resource-provider-folder: ./resource-manager\n");
         File.WriteAllText(Path.Combine(_project, "main.tsp"), "namespace Contoso;\n");
-        _steps.Clear();
         _output = null;
         _git = new Mock<IGitHelper>(MockBehavior.Strict);
-        _git.Setup(g => g.VerifyCleanSnapshotAsync(It.IsAny<string>(), Sha, It.IsAny<CancellationToken>()))
-            .Callback(() => _steps.Add("verify")).Returns(Task.CompletedTask);
         _process = new Mock<IProcessHelper>(MockBehavior.Strict);
         _npx = new Mock<INpxHelper>(MockBehavior.Strict);
         _helper = new TypeSpecHelper(_git.Object, _process.Object);
@@ -95,41 +91,43 @@ internal class ReleasePlanSnapshotTests
 
     [TestCase(false)]
     [TestCase(true)]
-    public async Task SnapshotChecksBeforeAndAfterMetadataAndCleansExternalOutput(bool configPath)
+    public async Task ParseEmitsMetadataAndCleansExternalOutput(bool configPath)
     {
         var path = configPath ? Path.Combine(_project, "tspconfig.yaml") : _project;
-        var project = await _helper.ValidateReleasePlanSnapshotAsync(path, Sha, _npx.Object, NullLogger.Instance, default);
-        Assert.That(project.Packages.Single().ApiVersion, Is.EqualTo("2024-01-01"));
+        var project = await _helper.ParseTypeSpecProjectAsync(path, _npx.Object, NullLogger.Instance, default);
+        Assert.That(project, Is.Not.Null);
+        Assert.That(project!.Packages.Single().ApiVersion, Is.EqualTo("2024-01-01"));
         Assert.That(project.Packages.Single().PackageName, Is.EqualTo("azure-mgmt-contoso"));
-        Assert.That(_steps, Is.EqualTo(new[] { "verify", "metadata", "verify" }));
+        Assert.That(_output, Is.Not.Null);
         Assert.That(_output, Does.Not.StartWith(_directory.DirectoryPath));
         Assert.That(Directory.Exists(_output), Is.False);
         var options = (NpxOptions)_npx.Invocations.Single().Arguments[0];
         Assert.That(Arguments(options), Does.Contain("@azure-tools/typespec-metadata"));
         Assert.That(options.WorkingDirectory, Is.EqualTo(_project));
+        _git.VerifyNoOtherCalls();
         _process.VerifyNoOtherCalls();
     }
 
     [TestCase("", 0)]
-    [TestCase("languages: {}", 0)]
     [TestCase("languages: [", 0)]
     [TestCase(Metadata, 1)]
-    public void MissingOrFailedMetadataCannotConfirm(string metadata, int exitCode)
+    public async Task MissingOrFailedMetadataCannotBeMistakenForAnUnversionedProject(string metadata, int exitCode)
     {
         Emit(metadata, exitCode);
-        Assert.ThrowsAsync<InvalidOperationException>(() => Validate());
+        var project = await Parse();
+        Assert.That(project, Is.Null);
+        Assert.That(_output, Is.Not.Null);
         Assert.That(Directory.Exists(_output), Is.False);
+        _git.VerifyNoOtherCalls();
     }
 
-    [TestCase(1)]
-    [TestCase(2)]
-    public void SnapshotDriftStopsBeforeSave(int failedCheck)
+    [Test]
+    public async Task ValidMetadataWithoutEmittersReturnsAnUnversionedProject()
     {
-        var checks = 0;
-        _git.Setup(g => g.VerifyCleanSnapshotAsync(_project, Sha, It.IsAny<CancellationToken>()))
-            .Returns(() => ++checks == failedCheck ? Task.FromException(new InvalidOperationException("snapshot drift")) : Task.CompletedTask);
-        Assert.ThrowsAsync<InvalidOperationException>(() => Validate());
-        _npx.Verify(n => n.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(failedCheck - 1));
+        Emit("languages: {}", 0);
+        var project = await Parse();
+        Assert.That(project, Is.Not.Null);
+        Assert.That(project!.Packages, Is.Empty);
         Assert.That(Directory.Exists(_output), Is.False);
     }
 
@@ -137,35 +135,48 @@ internal class ReleasePlanSnapshotTests
     public void MetadataCancellationPropagates()
     {
         using var cancellation = new CancellationTokenSource();
-        _npx.Setup(n => n.Run(It.IsAny<NpxOptions>(), cancellation.Token)).Returns<NpxOptions, CancellationToken>((_, ct) =>
+        _npx.Setup(n => n.Run(It.IsAny<NpxOptions>(), cancellation.Token)).Returns<NpxOptions, CancellationToken>((options, ct) =>
         {
+            var outputIndex = options.Args.IndexOf("--output-dir");
+            Assert.That(outputIndex, Is.GreaterThanOrEqualTo(0));
+            _output = options.Args[outputIndex + 1];
+            Assert.That(Path.GetDirectoryName(_output), Is.EqualTo(Path.TrimEndingDirectorySeparator(Path.GetTempPath())));
+            Assert.That(Path.GetFileName(_output), Does.Match("^azsdk-spec-metadata-[0-9a-f]{32}$"));
+            Directory.CreateDirectory(_output);
             cancellation.Cancel();
             return Task.FromCanceled<ProcessResult>(ct);
         });
-        Assert.CatchAsync<OperationCanceledException>(() => Validate(cancellation.Token));
-        _git.Verify(g => g.VerifyCleanSnapshotAsync(_project, Sha, cancellation.Token), Times.Once);
+        Assert.CatchAsync<OperationCanceledException>(() => Parse(cancellation.Token));
+        Assert.That(_output, Is.Not.Null);
+        Assert.That(Directory.Exists(_output), Is.False);
+        _npx.Verify(n => n.Run(It.IsAny<NpxOptions>(), cancellation.Token), Times.Once);
+        _git.VerifyNoOtherCalls();
     }
 
     [TestCase("")]
     [TestCase("https://github.com/Azure/azure-rest-api-specs/tree/main/specification/contoso")]
-    public void SnapshotRequiresLocalProject(string path)
+    public async Task ParseReturnsNullForInvalidProject(string path)
     {
-        Assert.ThrowsAsync<ArgumentException>(() => _helper.ValidateReleasePlanSnapshotAsync(path, Sha, _npx.Object, NullLogger.Instance, default));
+        var project = await _helper.ParseTypeSpecProjectAsync(path, _npx.Object, NullLogger.Instance, default);
+        Assert.That(project, Is.Null);
         _git.VerifyNoOtherCalls();
         _npx.VerifyNoOtherCalls();
     }
 
-    private Task<TypeSpecProject> Validate(CancellationToken ct = default) =>
-        _helper.ValidateReleasePlanSnapshotAsync(_project, Sha, _npx.Object, NullLogger.Instance, ct);
+    private Task<TypeSpecProject?> Parse(CancellationToken ct = default) =>
+        _helper.ParseTypeSpecProjectAsync(_project, _npx.Object, NullLogger.Instance, ct);
 
     private void Emit(string metadata, int exitCode = 0) =>
         _npx.Setup(n => n.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>())).ReturnsAsync((NpxOptions options, CancellationToken _) =>
         {
-            _steps.Add("metadata");
-            _output = Arguments(options)[^1];
+            var outputIndex = options.Args.IndexOf("--output-dir");
+            Assert.That(outputIndex, Is.GreaterThanOrEqualTo(0));
+            _output = options.Args[outputIndex + 1];
+            Assert.That(Path.GetDirectoryName(_output), Is.EqualTo(Path.TrimEndingDirectorySeparator(Path.GetTempPath())));
+            Assert.That(Path.GetFileName(_output), Does.Match("^azsdk-spec-metadata-[0-9a-f]{32}$"));
+            var output = Directory.CreateDirectory(Path.Combine(_output, "@azure-tools", "typespec-metadata")).FullName;
             if (metadata.Length > 0)
             {
-                var output = Directory.CreateDirectory(Path.Combine(_output, "@azure-tools", "typespec-metadata")).FullName;
                 File.WriteAllText(Path.Combine(output, "typespec-metadata.yaml"), metadata);
             }
             return Result("", exitCode);

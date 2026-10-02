@@ -26,10 +26,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private readonly IGitHubService gitHubService = gitHubService;
         private readonly IGitCommandHelper gitCommandHelper = gitCommandHelper;
 
+        internal static bool IsValidCommitSha(string? commitSha) =>
+            commitSha is { Length: 40 } && commitSha.All(Uri.IsHexDigit);
+
         public async Task VerifyCleanSnapshotAsync(string pathInRepo, string commitSha, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            if (!ReleasePlanSpecHelper.IsValidCommitSha(commitSha))
+            if (!IsValidCommitSha(commitSha))
             {
                 throw new ArgumentException("A full 40-character spec commit SHA is required.", nameof(commitSha));
             }

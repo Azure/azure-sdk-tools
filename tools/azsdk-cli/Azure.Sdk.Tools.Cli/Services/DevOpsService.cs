@@ -479,29 +479,31 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
-                if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
+                if (apiSpecWorkItem is { Id: > 0, Fields: not null })
                 {
-                    releasePlan.ApiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
-                    releasePlan.TargetRevision = ReleasePlanSpecHelper.GetTargetRevision(workItem.Id, workItem.Rev, apiSpecWorkItem.Id, apiSpecWorkItem.Rev);
+                    releasePlan.ApiSpecWorkItemId = apiSpecWorkItem.Id.Value;
+                    releasePlan.TargetRevision = ReleasePlanWorkItem.GetTargetRevision(workItem.Id, workItem.Rev, apiSpecWorkItem.Id, apiSpecWorkItem.Rev);
                     releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
-                    if (!string.IsNullOrEmpty(releasePlan.SpecCommitSHA))
+                    // Check unpinned reads too: a target update may have started after the
+                    // first parent read, and that must not enable the legacy fallback.
                     {
                         // The revision also detects clearing and republishing the same SHA.
                         var currentParent = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlan.WorkItemId, cancellationToken: ct);
                         if (currentParent?.Fields == null ||
                             currentParent.Rev != workItem.Rev ||
-                            !currentParent.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var currentPin) ||
-                            !string.Equals(currentPin?.ToString(), releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
+                            !string.Equals(currentParent.Fields.GetValueOrDefault(ReleasePlanWorkItem.SpecCommitSHAField)?.ToString() ?? string.Empty,
+                                releasePlan.SpecCommitSHA, StringComparison.OrdinalIgnoreCase))
                         {
-                            releasePlan.SpecCommitSHA = string.Empty;
+                            releasePlan.IsSpecTargetConsistent = false;
+                            releasePlan.TargetRevision = string.Empty;
                         }
                     }
                 }
                 else
                 {
-                    releasePlan.SpecCommitSHA = string.Empty;
+                    releasePlan.IsSpecTargetConsistent = false;
                     logger.LogWarning("API spec work item not found for release plan work item {workItemId}", releasePlan.WorkItemId);
                 }
             }
@@ -511,7 +513,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                releasePlan.SpecCommitSHA = string.Empty;
+                releasePlan.IsSpecTargetConsistent = false;
                 logger.LogError(ex, "Failed to get API spec work item for release plan work item {WorkItemId}", releasePlan.WorkItemId);
                 if (requireSpecDetails && releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
                 {
@@ -1482,8 +1484,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         /// <summary>
-        /// Updates the spec link and, when supplied, the confirmed SDK target and related fields.
-        /// Link-only updates supply just the PR URL; saving SDK inputs requires the preview's revision.
+        /// Updates the spec link and, when supplied, the metadata-derived SDK target and related fields.
+        /// The caller captures the work-item revisions internally before reading the spec metadata.
         /// </summary>
         public async Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, ReleasePlanSpecTarget target, Dictionary<string, string> fields, List<SDKInfo> sdkInfos, CancellationToken ct)
         {
@@ -1495,7 +1497,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             if ((!string.IsNullOrEmpty(specCommitSha) || !string.IsNullOrEmpty(apiVersion) ||
                 fields.Count > 0 || sdkInfos.Count > 0) && string.IsNullOrWhiteSpace(expectedTargetRevision))
             {
-                throw new InvalidOperationException("Preview the release target and preserve its ExpectedTargetRevision before confirming an update.");
+                throw new InvalidOperationException("Read the release plan before updating its spec target.");
             }
             if (fields.Keys.Any(field => field.Equals(ReleasePlanWorkItem.SpecCommitSHAField, StringComparison.OrdinalIgnoreCase)))
             {
@@ -1508,7 +1510,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     throw new ArgumentException("Please provide the work item ID and a spec pull request URL to update the work item.");
                 }
-                if (!string.IsNullOrEmpty(specCommitSha) && !ReleasePlanSpecHelper.IsValidCommitSha(specCommitSha))
+                if (!string.IsNullOrEmpty(specCommitSha) && !GitHelper.IsValidCommitSha(specCommitSha))
                 {
                     throw new ArgumentException("The spec commit SHA must be empty for an unconfigured target or a full 40-character hexadecimal commit SHA.", nameof(specCommitSha));
                 }
@@ -1526,13 +1528,18 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     throw new InvalidOperationException("Cannot update the spec input without valid release plan and API Spec work item revisions.");
                 }
-                if (expectedTargetRevision != null && !string.Equals(expectedTargetRevision,
-                    ReleasePlanSpecHelper.GetTargetRevision(releasePlanWorkItem.Id, releasePlanWorkItem.Rev, apiSpecWorkItem.Id, apiSpecWorkItem.Rev), StringComparison.Ordinal))
+                if (releasePlanWorkItem.Fields.TryGetValue("System.State", out var state) &&
+                    new[] { "Finished", "Abandoned", "Closed", "Duplicate" }.Contains(state?.ToString(), StringComparer.OrdinalIgnoreCase))
                 {
-                    throw new InvalidOperationException("The release plan or API Spec changed since the target was previewed. Preview again and obtain fresh approval; no changes were saved.");
+                    throw new InvalidOperationException("Cannot change the spec target of an inactive release plan.");
+                }
+                if (expectedTargetRevision != null && !string.Equals(expectedTargetRevision,
+                    ReleasePlanWorkItem.GetTargetRevision(releasePlanWorkItem.Id, releasePlanWorkItem.Rev, apiSpecWorkItem.Id, apiSpecWorkItem.Rev), StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException("The release plan or API Spec changed while processing the update. Retry the operation; no changes were saved.");
                 }
                 apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out var currentApiVersion);
-                if (!string.IsNullOrWhiteSpace(apiVersion) && !string.IsNullOrWhiteSpace(currentApiVersion?.ToString()) &&
+                if (!string.IsNullOrEmpty(specCommitSha) && !string.IsNullOrWhiteSpace(currentApiVersion?.ToString()) &&
                     !string.Equals(apiVersion, currentApiVersion.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
                     throw new InvalidOperationException("Use a separate release plan for a different API version; an existing release target cannot be silently retargeted.");
@@ -1542,18 +1549,18 @@ namespace Azure.Sdk.Tools.Cli.Services
                 releasePlanWorkItem.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var currentSpecCommitSha);
                 var sameSpecTarget = sameSpecPullRequest && string.Equals(currentSpecCommitSha?.ToString() ?? string.Empty, specCommitSha, StringComparison.OrdinalIgnoreCase);
 
-                // Parent and child cannot be patched atomically. Clear the pin first, publish it
-                // last, and leave it empty after a partial failure rather than restore a stale pin.
+                // Parent and child cannot be patched atomically. A non-SHA marker distinguishes
+                // an incomplete update from a legacy plan with no pin, which can still generate.
                 var clearPin = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
                 {
                     new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test, Path = "/rev", Value = releasePlanWorkItem.Rev.Value },
-                    new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/{ReleasePlanWorkItem.SpecCommitSHAField}", Value = string.Empty }
+                    new JsonPatchOperation { Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add, Path = $"/fields/{ReleasePlanWorkItem.SpecCommitSHAField}", Value = string.IsNullOrEmpty(specCommitSha) ? string.Empty : "updating" }
                 };
                 ct.ThrowIfCancellationRequested();
                 var clearedPlan = await workItemClient.UpdateWorkItemAsync(clearPin, releasePlanWorkItemId, cancellationToken: ct);
                 if (clearedPlan?.Rev is not > 0)
                 {
-                    throw new InvalidOperationException("Could not safely clear the prior spec pin. No new target was saved.");
+                    throw new InvalidOperationException("Could not mark the spec target update as incomplete. No new target was saved.");
                 }
 
                 // Get current REST API review links and append new spec pull request link
@@ -1598,7 +1605,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var updatedSpec = await workItemClient.UpdateWorkItemAsync(jsonLinkDocument, apiSpecWorkItemId, cancellationToken: ct);
                 if (updatedSpec?.Rev is not > 0)
                 {
-                    throw new InvalidOperationException("Could not verify the API Spec update. The release plan remains unpinned.");
+                    throw new InvalidOperationException("Could not verify the API Spec update. The release plan target remains incomplete.");
                 }
 
                 // Linking a spec does not request or start SDK generation, so do not mark it Pending or In progress.

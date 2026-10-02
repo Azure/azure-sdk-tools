@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Mock.Handlers.ReleasePlan;
 
 /// <summary>
 /// Mock handler for azsdk_create_release_plan.
-/// Switches on typespec project path — returns a Contoso release plan for the expected path, default otherwise.
+/// Creates a Contoso release plan from fixture metadata for the expected local TypeSpec project.
 /// </summary>
 public class CreateReleasePlanHandler : IMockToolHandler
 {
@@ -17,26 +17,22 @@ public class CreateReleasePlanHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var typespecPath = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "";
-
-        return typespecPath.ToLowerInvariant() switch
+        var typespecPath = ReleasePlanMockResponses.NormalizeProjectPath(arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "");
+        if (!string.Equals(typespecPath, ReleasePlanMockResponses.ContosoTypeSpecProjectPath, StringComparison.OrdinalIgnoreCase))
         {
-            "specification/contosowidgetmanager/contoso.widgetmanager" => ContosoReleasePlanResponse(typespecPath, arguments),
-            _ => MockToolFactory.GetDefaultResponse()
-        };
+            return new ReleasePlanResponse { ResponseError = "Provide the local Contoso TypeSpec project at the selected commit." };
+        }
+
+        return ContosoReleasePlanResponse(ReleasePlanMockResponses.ContosoTypeSpecProjectPath, arguments);
     }
 
     private static ReleasePlanResponse ContosoReleasePlanResponse(string typespecPath, Dictionary<string, object?>? arguments)
     {
-        var specPr = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString() ?? string.Empty;
+        var specPr = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()?.Trim() ?? string.Empty;
         var hasSpecPullRequest = !string.IsNullOrWhiteSpace(specPr);
         if (!ApiReleaseTypeExtensions.TryParseFromUserInput(arguments?.GetValueOrDefault("apiReleaseType")?.ToString() ?? "", out var releaseType))
         {
             return new ReleasePlanResponse { ResponseError = "Choose Private Preview, Public Preview, or GA." };
-        }
-        if (releaseType.ValidateSpecPullRequest(specPr) is { } error)
-        {
-            return new ReleasePlanResponse { ResponseError = error };
         }
         var response = new ReleasePlanResponse
         {
@@ -72,10 +68,6 @@ public class CreateReleasePlanHandler : IMockToolHandler
                 ]
             }
         };
-        if (releaseType == ApiReleaseType.PrivatePreview)
-        {
-            return response;
-        }
-        return hasSpecPullRequest ? ReleasePlanMockResponses.ConfigureTarget(arguments, update: false, response: response) : response;
+        return ReleasePlanMockResponses.SaveTarget(arguments, update: false, response: response);
     }
 }

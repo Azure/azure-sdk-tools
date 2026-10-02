@@ -1,24 +1,29 @@
 # Release History
 
-## 0.6.51 (Unreleased)
+## 0.6.52 (Unreleased)
 
 ### Features Added
 
-- Release-plan create, update, and spec-link tools preview exact PR source targets before explicit confirmation. API versions and packages come from TypeSpec metadata compiled in a clean checkout; confirmed updates require the preview's parent/child revision token.
-- Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
-- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
+- Release-plan creation and updates save the spec commit with the API version and packages read from TypeSpec metadata. The commit input is optional; it defaults to the linked PR's source or merge commit.
 
 ### Breaking Changes
 
-- Public target writes require `specCommitSha` and `confirmTarget=true`; updates also require `expectedTargetRevision`. Reusing create never changes a saved target, and different API versions or projects require separate plans. Private-preview links and tracking-only plans remain unpinned.
+- Release-plan updates and spec-link updates require the exact Azure DevOps work item ID returned by lookup. They no longer fall back to a different plan by project or PR.
 
 ### Bugs Fixed
 
-- Store the spec SHA in the existing parent `Custom.SpecCommitSHA` field. Revision-guarded updates clear the pin before changing the child PR/version and publish it with metadata last; partial failures leave the plan unpinned instead of publishing mismatched inputs.
-- Reuse same-project and same-PR legacy plans with an unset API version rather than creating duplicates; their target remains unchanged until explicitly updated.
+- Keep revision checks internal and reject concurrent writes without a preview, confirmation flag, or caller-supplied revision.
+- Allow valid metadata without a single API version or emitter entries; never substitute one language's version for all SDKs. Compilation errors still stop target updates.
+- Do not overwrite inactive release-plan targets or roll back a newer stored commit. Incomplete multi-record updates remain distinguishable from legacy unpinned plans.
+- Reuse same-project and same-PR legacy plans with an unset API version rather than creating duplicates.
 - Return the current release-plan revision after updating API approval, and avoid rewriting approval on later reads.
 
-### Other Changes
+## 0.6.51 (2026-10-01)
+
+### Features Added
+
+- Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
+- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
 
 ## 0.6.50 (2026-09-30)
 

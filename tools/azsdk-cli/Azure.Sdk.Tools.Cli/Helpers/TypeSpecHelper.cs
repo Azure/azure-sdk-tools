@@ -21,8 +21,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// </summary>
         public Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct);
 
-        public Task<TypeSpecProject> ValidateReleasePlanSnapshotAsync(string typeSpecProjectPath, string commitSha, INpxHelper npxHelper, ILogger logger, CancellationToken ct);
-
         /// <summary>
         /// Checks if the path is within either the azure-rest-api-specs repo.
         /// This should also work for forks of these repos.
@@ -101,35 +99,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return typeSpecObject?.IsManagementPlane ?? false;
         }
 
-        public async Task<TypeSpecProject> ValidateReleasePlanSnapshotAsync(string typeSpecProjectPath, string commitSha, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-            if (IsUrl(typeSpecProjectPath) || !IsValidTypeSpecProjectPath(typeSpecProjectPath))
-            {
-                throw new ArgumentException("To set a release target, provide a local TypeSpec project in a clean checkout of the selected commit.");
-            }
-            await _gitHelper.VerifyCleanSnapshotAsync(typeSpecProjectPath, commitSha, ct);
-            var metadataDirectory = Path.Combine(Path.GetTempPath(), $"azsdk-spec-metadata-{Guid.NewGuid():N}");
-            try
-            {
-                var project = await ParseTypeSpecProjectCoreAsync(typeSpecProjectPath, npxHelper, logger, ct, metadataDirectory)
-                    ?? throw new InvalidOperationException("Could not compile the selected spec snapshot.");
-                if (project.Packages.Count == 0)
-                {
-                    throw new InvalidOperationException("Could not validate SDK package metadata for the selected spec snapshot. Fix compilation or emitter configuration before confirming a release target.");
-                }
-                await _gitHelper.VerifyCleanSnapshotAsync(typeSpecProjectPath, commitSha, ct);
-                return project;
-            }
-            finally
-            {
-                if (Directory.Exists(metadataDirectory))
-                {
-                    Directory.Delete(metadataDirectory, recursive: true);
-                }
-            }
-        }
-
         private bool IsTypeParserExecutablePresent(string repoRoot)
         {
             var tspExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "tsp.cmd" : "tsp";
@@ -138,10 +107,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         /// <inheritdoc/>
         public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
-            => await ParseTypeSpecProjectCoreAsync(typeSpecProjectPath, npxHelper, logger, ct);
-
-        private async Task<TypeSpecProject?> ParseTypeSpecProjectCoreAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct, string? metadataDirectory = null)
         {
+            var metadataDirectory = Path.Combine(Path.GetTempPath(), $"azsdk-spec-metadata-{Guid.NewGuid():N}");
             try
             {
                 // Find the typespec project directory
@@ -205,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 var npxOptions = new NpxOptions(
                     package: "@typespec/compiler",
-                    args: ["tsp", "compile", entrypoint, "--emit", "@azure-tools/typespec-metadata", "--output-dir", metadataDirectory ?? "./tsp-output"],
+                    args: ["tsp", "compile", entrypoint, "--emit", "@azure-tools/typespec-metadata", "--output-dir", metadataDirectory],
                     logOutputStream: true,
                     workingDirectory: project.ProjectRootPath,
                     timeout: TimeSpan.FromMinutes(5)
@@ -215,24 +182,25 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 if (result.ExitCode != 0)
                 {
                     logger.LogWarning("TypeSpec metadata emitter failed with exit code {ExitCode}. Output: {Output}", result.ExitCode, result.Output);
-                    return project;
+                    return null;
                 }
 
-                var metadataFilePath = Path.Combine(metadataDirectory ?? Path.Combine(project.ProjectRootPath, "tsp-output"), "@azure-tools", "typespec-metadata", "typespec-metadata.yaml");
+                var metadataFilePath = Path.Combine(metadataDirectory, "@azure-tools", "typespec-metadata", "typespec-metadata.yaml");
                 if (!File.Exists(metadataFilePath))
                 {
                     logger.LogWarning("typespec-metadata.yaml not found at expected path: {metadataFilePath}", metadataFilePath);
-                    return project;
+                    return null;
                 }
 
                 var metadataYaml = await File.ReadAllTextAsync(metadataFilePath, ct);
                 logger.LogDebug("TypeSpec metadata YAML: {metadataYaml}", metadataYaml);
 
                 var packages = ParsePackageNamesFromMetadata(metadataYaml);
-                if (packages != null)
+                if (packages == null)
                 {
-                    project.Packages = packages;
+                    return null;
                 }
+                project.Packages = packages;
                 return project;
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -243,6 +211,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 logger.LogError(ex, "Failed to run TypeSpec metadata emitter");
                 return null;
+            }
+            finally
+            {
+                if (Directory.Exists(metadataDirectory))
+                {
+                    Directory.Delete(metadataDirectory, recursive: true);
+                }
             }
         }
 
@@ -334,7 +309,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     }
                 }
 
-                return packages.Count > 0 ? packages : null;
+                return packages;
             }
             catch (Exception)
             {

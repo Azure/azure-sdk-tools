@@ -10,7 +10,7 @@ resources:
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-python
-      ref: arh/UpdateTemplates
+      ref: main
     - repository: java-repo
       type: github
       endpoint: Azure

@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept an optional package type (`mgmt`, `client`, `spring`, or `functions`). API Review Hub requires it for new packages and validates it against stored metadata for existing packages.
+
 ### Bugs Fixed
 
 ### Other Changes
@@ -16,10 +18,6 @@
 
 - Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
 - Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
-
-### Breaking Changes
-
-- `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept an optional package type (`mgmt`, `client`, `spring`, or `functions`). API Review Hub requires it for new packages and validates it against stored metadata for existing packages.
 
 ## 0.6.50 (2026-09-30)
 

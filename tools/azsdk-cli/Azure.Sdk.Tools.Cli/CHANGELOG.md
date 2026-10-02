@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- SDK generation uses the release plan's saved spec commit when present; existing branch/PR behavior is preserved for plans without a saved commit.
+
 ### Other Changes
 
 ## 0.6.51 (2026-10-01)

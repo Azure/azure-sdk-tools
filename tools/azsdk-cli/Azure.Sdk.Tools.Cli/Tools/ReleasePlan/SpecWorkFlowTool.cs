@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using System.Web;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
@@ -179,7 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = RunGenerateSdkToolName), Description("Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). It generates one language per call, so to generate for all languages call this tool once per language. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK.")]
+        [McpServerTool(Name = RunGenerateSdkToolName), Description("Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). It generates one language per call, so to generate for all languages call this tool once per language. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK. Uses the plan's saved spec commit when present; plans without one retain existing branch/PR behavior.")]
         public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
         {
             try
@@ -379,11 +380,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                var specCommitSha = string.IsNullOrEmpty(releasePlan.SpecCommitSHA) ? null : releasePlan.SpecCommitSHA;
+                if (specCommitSha != null && pullRequestNumber == 0 && !string.IsNullOrEmpty(releasePlan.ActiveSpecPullRequest))
+                {
+                    var linkedPr = Regex.Match(releasePlan.ActiveSpecPullRequest, @"/pull/(\d+)");
+                    int.TryParse(linkedPr.Groups[1].Value, out pullRequestNumber);
+                }
                 string apiSpecBranchRef = "main";
                 if (pullRequestNumber > 0)
                 {
                     var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber, ct);
-                    apiSpecBranchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
+                    apiSpecBranchRef = pullRequest != null && pullRequest.Merged &&
+                        (specCommitSha == null || string.Equals(specCommitSha, pullRequest.MergeCommitSha, StringComparison.OrdinalIgnoreCase))
+                        ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
                 }
 
                 string sdkRepoBranch = "";                
@@ -400,7 +409,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 logger.LogInformation("Running SDK generation pipeline");
                 ct.ThrowIfCancellationRequested();
-                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(apiSpecBranchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch, ct);
+                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(apiSpecBranchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch, ct, specCommitSha);
                 response.Status = "Success";
                 response.Details.Add($"Azure DevOps pipeline {DevOpsService.GetPipelineUrl(pipelineRun.Id)} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created.");
                 return response;

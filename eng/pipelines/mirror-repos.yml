@@ -32,10 +32,6 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
-          Azure/typespec-azure:
-            TargetRepos:
-              Azure/typespec-azure-pr:
-
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
         GH_TOKEN: $(GH_TOKEN_Azure)

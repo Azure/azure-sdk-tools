@@ -48,10 +48,6 @@ resources:
       ref: main
 
 variables:
-  # Resource alias used for checkout; LanguageRepo is the resulting filesystem path.
-  - name: LanguageRepoResource
-    value: ${{ format('{0}-repo', parameters.language) }}
-    readonly: true
   - name: callbackTokenAudience
     value: 'api://apireviewhub'
     readonly: true
@@ -113,6 +109,7 @@ stages:
         - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-job-{0}.yml@{0}-repo', parameters.language) }}
           parameters:
             repositoryOwner: ${{ parameters.owner }}
+            languageRepoResource: ${{ format('{0}-repo', parameters.language) }}
             steps:
               - pwsh: $(ToolsRepo)/eng/scripts/Initialize-ApiReviewHubRequest.ps1
                 displayName: 'Validate request parameters'

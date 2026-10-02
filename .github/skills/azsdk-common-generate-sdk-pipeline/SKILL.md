@@ -22,9 +22,8 @@ DO NOT USE FOR: generating a single SDK locally from a local clone (use `azsdk-c
 
 - **Always call `azure-sdk-mcp:azsdk_run_generate_sdk`** to generate. Do **not** use `azure-sdk-mcp:azsdk_release_sdk` (that publishes an already-generated package, it does not generate) or `azure-sdk-mcp:azsdk_get_sdk_pull_request_link` / `azure-sdk-mcp:azsdk_get_pull_request` (those only retrieve links) to generate an SDK.
 - `azure-sdk-mcp:azsdk_run_generate_sdk` generates **one language per call**. To generate for **all languages**, call it **once per language** the release plan targets.
-- **Read the release plan first.** Generation consumes its saved `SpecCommitSHA`, `SpecAPIVersion`, project path and SDK release type. Pass the required plan/work item ID, project path, SDK release type (`beta` or `stable`) and language from that plan. A matching repository-relative project path needs no local clone.
-- For a pinned plan, caller inputs are **consistency checks, not target overrides**. Optional `apiVersion` and `pullRequestNumber` must match the stored target. The SHA is read from the plan, not supplied to generation.
-- A legacy plan with no SHA retains the existing branch/PR generation path. An empty API version is supported. Report that legacy generation is unpinned; never invent or save a historical SHA. Invalid/incomplete stored commits and inconsistent reads must stop, not fall back to `main`.
+- A **release plan work item ID (or release plan ID)** is required. `azsdk_run_generate_sdk` **also** requires the **TypeSpec project path** and the **SDK release type** (`beta` or `stable`) as explicit inputs, and it validates them — it does **not** read them from the release plan. First call `azure-sdk-mcp:azsdk_get_release_plan` to obtain the TypeSpec project path, SDK release type, and target languages, then pass those into each generation call along with the work item ID.
+- Generation uses the release plan’s saved spec commit when present. Plans without a saved commit keep the existing branch/PR behavior.
 - Requires the `azure-sdk-mcp` server; there is no CLI fallback for the pipeline generation workflow.
 - Private Preview release plans cannot generate SDKs via the pipeline — only the API spec PR needs to merge. If needed for validation, direct the user to generate locally via `azsdk-common-generate-sdk-locally`.
 
@@ -40,8 +39,8 @@ DO NOT USE FOR: generating a single SDK locally from a local clone (use `azsdk-c
 
 1. **Collect release plan** — Get the release plan work item ID (or release plan ID) from the user, then call `azure-sdk-mcp:azsdk_get_release_plan` to fetch it.
 2. **Determine languages** — If the user asked for "all languages", determine the languages the release plan targets (e.g. via `azure-sdk-mcp:azsdk_get_release_plan`). Otherwise use the single language requested.
-3. **Generate per language** — For each target language, call `azure-sdk-mcp:azsdk_run_generate_sdk` with the plan's **project path**, **SDK release type**, **language**, **work item ID**, and **API version** when present. A saved SHA is used unchanged; a missing legacy SHA does not require backfilling. Regeneration can reuse an existing open SDK PR branch.
-4. **Report results** — Report the pinned commit, API version and pipeline links. Preserve the tool's released/duplicate/in-progress/conflicting-plan decisions. After a queued run completes, retrieve the SDK pull request link with `azure-sdk-mcp:azsdk_get_sdk_pull_request_link`.
+3. **Generate per language** — For each target language, run `azure-sdk-mcp:azsdk_run_generate_sdk` passing the **TypeSpec project path**, the **SDK release type** (`beta` or `stable`), and the **language** taken from the release plan, plus the release plan **work item ID**. These inputs are required and validated — an invalid TypeSpec project path, or a release type other than `beta`/`stable`, fails the run.
+4. **Report pull requests** — After each run completes, retrieve and show the generated SDK pull request link with `azure-sdk-mcp:azsdk_get_sdk_pull_request_link`.
 
 ## Examples
 

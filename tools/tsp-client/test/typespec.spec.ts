@@ -46,7 +46,7 @@ describe("Check diagnostic reporting", () => {
     entrypointFile = await discoverEntrypointFile(
       joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
     );
-    assert.equal(entrypointFile, "client.tsp");
+    assert.equal(entrypointFile, "main.tsp");
     entrypointFile = await discoverEntrypointFile(
       joinPaths(
         process.cwd(),
@@ -56,6 +56,10 @@ describe("Check diagnostic reporting", () => {
         "contosowidgetmanager",
         "Contoso.WidgetManager",
       ),
+    );
+    assert.equal(entrypointFile, "main.tsp");
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "client-only"),
     );
     assert.equal(entrypointFile, "client.tsp");
     // Verify that entrypoint files specified with a forward-slash path in a

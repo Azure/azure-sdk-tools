@@ -97,6 +97,90 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 _timeProvider);
         }
 
+        [TestCase("0123456789abcdef0123456789abcdef01234567")]
+        [TestCase("")]
+        public async Task CreateReleasePlan_SavesOnlySuppliedSpecCommit(string sha)
+        {
+            var response = await releasePlanTool.CreateReleasePlan(null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "GA",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                isTestReleasePlan: true, specCommitSha: sha);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails!.SpecCommitSHA, Is.EqualTo(sha));
+            var patch = response.ReleasePlanDetails.GetPatchDocument();
+            Assert.That(patch.Single(p => p.Path == "/fields/Custom.SpecCommitSHA").Value, Is.EqualTo(sha));
+        }
+
+        [TestCase("0123456789abcdef0123456789abcdef01234567")]
+        [TestCase("")]
+        public async Task UpdateReleasePlan_WritesSpecCommitOnlyWhenProvided(string sha)
+        {
+            const string previous = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            var plan = new ReleasePlanWorkItem { WorkItemId = 42, ReleasePlanId = 42, SpecCommitSHA = previous };
+            Dictionary<string, string>? writtenFields = null;
+            var service = new Mock<IDevOpsService>();
+            service.Setup(s => s.GetReleasePlanForWorkItemAsync(42, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            service.Setup(s => s.ResolveReleasePlanByIdAsync(42, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            service.Setup(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) =>
+                {
+                    writtenFields = fields;
+                    if (fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out var savedSha))
+                    {
+                        plan.SpecCommitSHA = savedSha;
+                    }
+                })
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 42 });
+            service.Setup(s => s.UpdateReleasePlanSDKDetailsAsync(42, It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+
+            var response = await tool.UpdateReleasePlan(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", sdkReleaseType: "beta",
+                workItemId: 42, specCommitSha: sha);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(writtenFields, Is.Not.Null);
+            Assert.That(writtenFields!.ContainsKey(ReleasePlanWorkItem.SpecCommitSHAField), Is.EqualTo(sha.Length > 0));
+            if (sha.Length > 0)
+            {
+                Assert.That(writtenFields[ReleasePlanWorkItem.SpecCommitSHAField], Is.EqualTo(sha));
+            }
+            Assert.That(response.ReleasePlanDetails!.SpecCommitSHA, Is.EqualTo(sha.Length > 0 ? sha : previous));
+            service.Verify(s => s.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        [TestCase(42)]
+        [TestCase(43)]
+        public async Task UpdateReleasePlan_SpecCommitRequiresAnExistingExplicitWorkItem(int id)
+        {
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            if (id > 0)
+            {
+                service.Setup(s => s.GetReleasePlanForWorkItemAsync(id, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(id == 43 ? new ReleasePlanWorkItem { WorkItemId = 99 } : null!);
+            }
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+
+            var response = await tool.UpdateReleasePlan(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", sdkReleaseType: "beta",
+                workItemId: id, specCommitSha: "0123456789abcdef0123456789abcdef01234567");
+
+            Assert.That(response.ResponseError, Is.Not.Null);
+            if (id > 0)
+            {
+                service.Verify(s => s.GetReleasePlanForWorkItemAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+            }
+            service.VerifyNoOtherCalls();
+        }
+
         [Test]
         public async Task Test_Create_releasePlan_for_existing_product()
         {

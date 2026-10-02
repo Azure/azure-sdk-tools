@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Support optional spec commit SHA on release-plan creation and updates.
+
 ### Breaking Changes
 
 ### Bugs Fixed

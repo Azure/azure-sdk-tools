@@ -236,6 +236,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = false,
         };
 
+        private readonly Option<string> specCommitShaOpt = new("--spec-commit-sha")
+        {
+            Description = "Optional spec commit SHA to save on the release plan. Updates require the exact work item ID when provided.",
+        };
+
         private readonly Option<string> kpiProductIdOpt = new("--product")
         {
             Description = "Product service tree ID",
@@ -317,6 +322,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 productTreeIdOpt,
                 optionalPullRequestOpt,
                 isTestReleasePlanOpt,
+                specCommitShaOpt,
             },
             new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
@@ -336,6 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 optionalServiceTreeIdOpt,
                 optionalProductTreeIdOpt,
                 productTypeOpt,
+                specCommitShaOpt,
             },
             new McpCommand(updateReleasePlanTargetCommandName, "Update the SDK release target month on an existing release plan", UpdateReleasePlanTargetToolName) { workItemIdOpt, targetReleaseOpt, },
         ];
@@ -372,6 +379,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         serviceTreeId: serviceTreeId,
                         productTreeId: productTreeId,
                         isTestReleasePlan: isTestReleasePlan,
+                        specCommitSha: commandParser.GetValue(specCommitShaOpt),
                         ct: ct
                     );
 
@@ -410,6 +418,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         serviceTreeId: commandParser.GetValue(optionalServiceTreeIdOpt),
                         productTreeId: commandParser.GetValue(optionalProductTreeIdOpt),
                         productType: commandParser.GetValue(productTypeOpt),
+                        specCommitSha: commandParser.GetValue(specCommitShaOpt),
                         ct: ct
                     );
 
@@ -690,11 +699,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [McpServerTool(Name = UpdateReleasePlanToolName), Description("Update an existing release plan. Updates spec PR URL, TypeSpec project path, SDK release type, and optionally service/product IDs. " +
             "When a product ID is provided, product name, product lifecycle and product type are resolved from a matching triage work item in Azure DevOps. " +
             "If the product type cannot be determined, provide it via productType (allowed values: Offering, Feature, Sku). " +
-            "Runs TypeSpec metadata emitter to resolve package names and updates SDK details. If work item ID is not provided, finds the active release plan by TypeSpec project path or spec PR URL.")]
-        public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", int workItemId = 0, string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, CancellationToken ct = default)
+            "Runs TypeSpec metadata emitter to resolve package names and updates SDK details. If work item ID is not provided, finds the active release plan by TypeSpec project path or spec PR URL. " +
+            "An optional spec commit SHA requires the exact Azure DevOps work item ID; omission preserves the saved SHA.")]
+        public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", int workItemId = 0, string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, CancellationToken ct = default, string specCommitSha = "")
         {
             try
             {
+                if (!string.IsNullOrEmpty(specCommitSha) && workItemId <= 0)
+                {
+                    return new ReleasePlanResponse { ResponseError = "A positive work item ID is required when providing a spec commit SHA." };
+                }
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
 
                 var sdkReleaseTypeMappings = new Dictionary<string, string>
@@ -737,8 +751,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 ReleasePlanWorkItem? releasePlan = null;
                 if (workItemId != 0)
                 {
-                    // The resolver accepts either a Release Plan ID or a work item ID.
-                    releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(workItemId, ct);
+                    // SHA updates use the exact work item; other updates retain ID resolution.
+                    releasePlan = !string.IsNullOrEmpty(specCommitSha)
+                        ? await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct)
+                        : await devOpsService.ResolveReleasePlanByIdAsync(workItemId, ct);
+                    if (!string.IsNullOrEmpty(specCommitSha) && (releasePlan == null || releasePlan.WorkItemId != workItemId))
+                    {
+                        return new ReleasePlanResponse { ResponseError = $"No release plan found for work item ID {workItemId}. No other plan was selected." };
+                    }
                 }
 
                 // Resolve TypeSpec project relative path
@@ -801,6 +821,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     { "Custom.SDKtypetobereleased", sdkReleaseType },
                     { "Custom.ApiSpecProjectPath", specProject },
                 };
+
+                if (!string.IsNullOrEmpty(specCommitSha))
+                {
+                    fieldsToUpdate[ReleasePlanWorkItem.SpecCommitSHAField] = specCommitSha;
+                }
 
                 if (!string.IsNullOrEmpty(serviceTreeId))
                 {
@@ -1127,8 +1152,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available.")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, [Description(TargetReleaseMonthDescription)] string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, CancellationToken ct = default)
+        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available. Optionally saves a supplied spec commit SHA.")]
+        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, [Description(TargetReleaseMonthDescription)] string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, CancellationToken ct = default, string specCommitSha = "")
         {
             try
             {         
@@ -1350,7 +1375,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ProductType = productType,
                     ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType,
-                    SpecAPIVersion = apiVersion
+                    SpecAPIVersion = apiVersion,
+                    SpecCommitSHA = specCommitSha ?? string.Empty
                 };
 
                 var reporter = new ProgressReporter(progress, logger, totalSteps: 2, outputHelper);

@@ -17,7 +17,7 @@
 # Eng Sys
 ###########
 /eng/                                  @azure/azure-sdk-eng
-/.config/1espt/                        @chidozieononiwu
+/.config/1espt/                        @chidozieononiwu @raych1 
 
 ###########
 # Files used to manage spelling version and installation

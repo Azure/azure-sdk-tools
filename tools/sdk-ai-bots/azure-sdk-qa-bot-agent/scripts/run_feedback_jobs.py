@@ -86,6 +86,54 @@ def _resolve_window(args: argparse.Namespace) -> tuple[datetime, datetime]:
     return start, end
 
 
+async def _validate_pending_records(
+    qa_service: QARecordService,
+    evolution_service: ChatbotEvolutionAgentService,
+    excluded_channels: set[str],
+    tenant_id: str | None,
+    counts: dict[str, int],
+) -> None:
+    pending = await qa_service.list_pending_validation(tenant_id=tenant_id)
+    for record in pending:
+        if QARecordService.channel_key_of(record) in excluded_channels:
+            counts["skipped"] += 1
+            continue
+        issue_url = record.feedback.issue_url if record.feedback else None
+        if not issue_url:
+            logger.error("Pending-validation record %s has no issue URL", record.id)
+            counts["skipped"] += 1
+            continue
+        try:
+            issue_state = await get_github_issue_state(issue_url)
+        except Exception:
+            logger.exception("Failed to read issue state for %s", record.id)
+            counts["skipped"] += 1
+            continue
+        if issue_state != "closed":
+            counts["waiting_validation"] += 1
+            continue
+
+        try:
+            result = await evolution_service.run_job(
+                record.id,
+                record.tenant_id,
+                mode=ChatbotEvolutionAgentMode.validation,
+            )
+        except Exception:
+            logger.exception("Validation persistence failed for %s", record.id)
+            counts["validation_failed"] += 1
+            continue
+        if result is None:
+            counts["validation_failed"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
+            counts["validated"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_skipped:
+            counts["validation_skipped"] += 1
+            logger.info("Validation skipped for %s (%s)", record.id, issue_url)
+        else:
+            counts["validation_failed"] += 1
+
+
 async def _run(args: argparse.Namespace) -> None:
     qa_service = QARecordService()
     evolution_service = ChatbotEvolutionAgentService()
@@ -128,50 +176,8 @@ async def _run(args: argparse.Namespace) -> None:
         "skipped": 0,
     }
 
-    # 2. Validate fixes first. Newly created issues from this run wait until
-    # the next daily scan before their closure is checked.
-    pending = await qa_service.list_pending_validation(tenant_id=args.tenant)
-    for record in pending:
-        if QARecordService.channel_key_of(record) in excluded_channels:
-            counts["skipped"] += 1
-            continue
-        issue_url = record.feedback.issue_url if record.feedback else None
-        if not issue_url:
-            logger.error("Pending-validation record %s has no issue URL", record.id)
-            counts["skipped"] += 1
-            continue
-        try:
-            issue_state = await get_github_issue_state(issue_url)
-        except Exception:
-            logger.exception("Failed to read issue state for %s", record.id)
-            counts["skipped"] += 1
-            continue
-        if issue_state != "closed":
-            counts["waiting_validation"] += 1
-            continue
-
-        try:
-            result = await evolution_service.run_job(
-                record.id,
-                record.tenant_id,
-                mode=ChatbotEvolutionAgentMode.validation,
-            )
-        except Exception:
-            logger.exception("Validation persistence failed for %s", record.id)
-            counts["validation_failed"] += 1
-            continue
-        if result is None:
-            counts["validation_failed"] += 1
-        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
-            counts["validated"] += 1
-        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_skipped:
-            counts["validation_skipped"] += 1
-            logger.info("Validation skipped for %s (%s)", record.id, issue_url)
-        else:
-            counts["validation_failed"] += 1
-
-    # 3. Ask the Evolution Agent to evaluate and, when necessary, diagnose
-    # each conversation. The pipeline does not make either decision itself.
+    # 2. Analyze each eligible conversation. The Agent decides whether the
+    # conversation is complete and whether its answer needs remediation.
     analyzable = await qa_service.list_analyzable(tenant_id=args.tenant)
     if args.limit is not None:
         analyzable = analyzable[: args.limit]
@@ -202,6 +208,16 @@ async def _run(args: argparse.Namespace) -> None:
             counts["finished"] += 1
         else:
             counts["issues"] += 1
+
+    # 3. Validate closed issues. Issues created by this run remain open and are
+    # considered on a later run.
+    await _validate_pending_records(
+        qa_service,
+        evolution_service,
+        excluded_channels,
+        args.tenant,
+        counts,
+    )
 
     logger.info(
         "Evolution scan complete: ongoing=%d finished=%d issues=%d "

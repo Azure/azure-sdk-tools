@@ -1,0 +1,28 @@
+# Build context for the agent-server image (see Dockerfile).
+# Allowlist: ignore everything, then re-include only the paths the Dockerfile
+# COPYs. This keeps the `az acr build` upload minimal (excludes images/, tests/,
+# pipelines/, scripts/, tsp/, docs, dev deps, etc.).
+*
+
+!requirements.txt
+!agents/
+!agents/chat_agent/
+!config/
+!models/
+!prompts/
+!services/
+!static/
+!tools/
+!utils/
+!skills/
+!server.py
+!_version.py
+
+# Drop caches that may live inside the re-included directories.
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+agents/chat_agent/chat_agent_env/

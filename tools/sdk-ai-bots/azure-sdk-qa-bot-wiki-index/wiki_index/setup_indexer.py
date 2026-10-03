@@ -11,21 +11,10 @@ from .config import get as cfg, load_sync as load_config, require
 
 logger = logging.getLogger(__name__)
 
-API_VERSION = "2024-11-01-preview"  # user-assigned identity fields need a preview version
+API_VERSION = "2026-04-01"
 DATASOURCE = "azure-sdk-knowledge-wiki-datasource"
 SKILLSET = "azure-sdk-knowledge-wiki-skillset"
 INDEXER = "azure-sdk-knowledge-wiki-indexer"
-
-# The shared index was created with ada-002 vectors, so the wiki skillset must
-# embed with the same model regardless of what the build pipeline uses.
-EMBEDDING_DEPLOYMENT = "text-embedding-ada-002"
-
-
-def _ua_identity() -> dict:
-    return {
-        "@odata.type": "#Microsoft.Azure.Search.DataUserAssignedIdentity",
-        "userAssignedIdentity": require("SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID"),
-    }
 
 
 def _put(base: str, token: str, kind: str, name: str, body: dict) -> None:
@@ -48,7 +37,6 @@ def datasource_body() -> dict:
         "type": "azureblob",
         "credentials": {"connectionString": f"ResourceId={require('STORAGE_ACCOUNT_RESOURCE_ID')};"},
         "container": {"name": cfg("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")},
-        "identity": _ua_identity(),
         "dataDeletionDetectionPolicy": {
             "@odata.type": "#Microsoft.Azure.Search.SoftDeleteColumnDeletionDetectionPolicy",
             "softDeleteColumnName": "IsDeleted",
@@ -59,6 +47,9 @@ def datasource_body() -> dict:
 
 def skillset_body() -> dict:
     index = cfg("AI_SEARCH_INDEX", "azure-sdk-knowledge")
+    embedding_deployment = cfg(
+        "AI_SEARCH_EMBEDDING_MODEL", "text-embedding-3-small"
+    )
     return {
         "name": SKILLSET,
         "description": "Chunk + embed LLM wiki pages; project into the shared KB index with page_type.",
@@ -81,10 +72,9 @@ def skillset_body() -> dict:
                 "name": "#2",
                 "context": "/document/pages/*",
                 "resourceUri": require("AZURE_OPENAI_ENDPOINT"),
-                "deploymentId": EMBEDDING_DEPLOYMENT,
+                "deploymentId": embedding_deployment,
                 "dimensions": 1536,
-                "modelName": EMBEDDING_DEPLOYMENT,
-                "authIdentity": _ua_identity(),
+                "modelName": embedding_deployment,
                 "inputs": [{"name": "text", "source": "/document/pages/*"}],
                 "outputs": [{"name": "embedding", "targetName": "text_vector"}],
             },

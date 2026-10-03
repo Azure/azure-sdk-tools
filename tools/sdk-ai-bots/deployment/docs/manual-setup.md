@@ -1,0 +1,228 @@
+# Manual Setup Guide
+
+Use this guide once for each new deployment environment. Complete the sections
+in order. Routine deployments use the [deploy runbook](runbook-deploy.md).
+
+## 1. Install Local Prerequisites
+
+Local tooling is needed only for dev bootstrap or maintenance from a
+workstation. Azure DevOps agents install their own dependencies.
+
+- Azure CLI 2.60 or later
+- Azure Developer CLI (`azd`) 1.32.0 or later
+- Bicep CLI 0.30 or later (`az bicep install`)
+- Node.js 20 or later and npm
+- `yq` v4 for extension setup and pipeline YAML checks
+- Docker only for optional local image builds; pipelines build remotely in ACR
+
+Install and validate the deployment tooling:
+
+```bash
+cd tools/sdk-ai-bots/deployment
+npm ci
+bash ./scripts/install-azd-extensions.sh
+az --version
+azd version
+```
+
+## 2. Choose Azure Targets and Check Quota
+
+Choose the subscription, tenant, resource-group name, and locations for each of
+`dev`, `preview`, and `prod`. Environments may share a subscription, but they
+must have isolated resource groups and globally unique resource names.
+
+The agent layer deploys these models serially:
+
+- `gpt-4.1` version `2025-04-14`, capacity 1
+- `gpt-5.6-sol` version `2026-07-09`, capacity 500
+- `gpt-5.1` version `2025-11-13`, capacity 1
+- `gpt-5-mini` version `2025-08-07`, capacity 1
+- `text-embedding-3-small` version `1`, capacity 1
+
+Check availability and quota in each selected AI region before provisioning:
+
+```bash
+az cognitiveservices usage list \
+  --subscription <subscription-id> \
+  --location <ai-region> \
+  --output table
+```
+
+Request quota or choose another supported region before proceeding. Model child
+deployments are intentionally serialized because concurrent writes to one AI
+Services account can return `RequestConflict`.
+
+## 3. Bootstrap the Backend Entra Application
+
+The agent-server Easy Auth application is external deployment input. Create one
+per environment from an identity authorized to create applications in the
+target tenant:
+
+```bash
+cd tools/sdk-ai-bots/deployment
+npm run create-entra-app -- \
+  --display-name azuresdkqabot-server-<env> \
+  --application-id-uri "api://<tenant-id>/azure-sdk-qa-bot-<env>" \
+  --tenant-id <tenant-id> \
+  --service-management-reference <reference>
+```
+
+The script exposes delegated and application permissions and preauthorizes
+Azure CLI. It prints `serverApplicationClientId` and
+`serverApplicationIdUri`; record both for the environment suite. Run with
+`--dry-run` first when modifying an existing registration.
+
+This backend application is separate from the Azure Bot identity. Azure Bot
+uses the frontend user-assigned managed identity directly. The supported
+deployment keeps Azure resources and Teams in the same Entra tenant and does
+not create a multitenant bot or client secret.
+
+## 4. Define the Environment and Bot Routing
+
+Populate the selected environment in
+`deployment/infra/environments/environment-suite.yaml` according to the
+[environment contract](environment-contract.md). Use `bicepOverrides` for
+adopted resource names and set `candidateEnvironment` when chatbot evolution is
+enabled.
+
+Update `deployment/config/<env>/channel.yaml` and `tenant.yaml` for the same
+Teams routes. The postprovision hook substitutes resource placeholders and
+uploads these files to the `bot-configs` container. Do not hard-code a different
+environment's backend endpoint.
+
+```bash
+npm run validate-env-suite -- --environment <env>
+```
+
+All `REPLACE_WITH_*` values for the selected environment must be resolved.
+
+## 5. Create Federated Service Connections
+
+Create an Azure Resource Manager workload-identity-federated service connection
+for each environment. Define its name in
+`pipelines/templates/service-connection.yml` and ensure it targets the
+environment suite's `subscriptionId`.
+
+The provisioning identity must be able to:
+
+- create the target resource group for a new environment;
+- create and update the resources declared by all seven Bicep layers;
+- create role assignments for workload and deployment identities;
+- read/write the required App Configuration, Key Vault, Storage, Search, ACR,
+  Cosmos DB, and AI Services control/data planes.
+
+For a new environment, resource-group creation requires subscription-scope
+permission during bootstrap. After the resource group exists, narrow the
+connection to the target scope where organizational policy permits. Role
+assignment creation requires `Microsoft.Authorization/roleAssignments/write`,
+typically supplied by User Access Administrator or Role Based Access Control
+Administrator at the assignment scope.
+
+Authorize only the intended pipeline definitions. Add service-connection
+approval and branch-control checks for preview and production. The pipelines
+also include their own preview-to-apply manual gate.
+
+The production evolution and feedback workflows also need the configured
+candidate service connection.
+
+## 6. Register the Pipeline Definitions
+
+Create these 5 definitions from their existing YAML paths and use the exact
+names shown.
+
+| Purpose | Pipeline name | YAML |
+| --- | --- | --- |
+| Application provision/deploy | `tools - sdk-ai-bots - deploy` | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` |
+| Wiki CI | `tools - sdk-ai-bots-wiki-index - ci` | `azure-sdk-qa-bot-wiki-index/ci.yml` |
+| Wiki build | `tools - sdk-ai-bots-wiki-index - build` | `azure-sdk-qa-bot-wiki-index/build_wiki.yml` |
+| Hosted-agent deploy | `tools - sdk-ai-bots-hosted-agent - deploy` | `azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` |
+| Feedback jobs | `tools - sdk-ai-bots-feedback-jobs` | `azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` |
+
+Component CI remains in existing package-owned workflows and is not registered
+from `deployment/pipelines/orchestrators`.
+
+The application deployment definition accepts `component=all` (the default),
+`shared-resources`, `agent`, `frontend`, `agent-server`, `function-app`, or
+`logic-app`. Use `all` for the full environment. Application selections
+provision and deploy one service; `shared-resources` and `logic-app` are
+provision-only selections.
+
+Knowledge sync, wiki generation, hosted-agent deployment, and feedback jobs use
+the package-owned definitions listed in the [deploy runbook](runbook-deploy.md).
+
+## 7. Bootstrap Dev Layer State
+
+The normal full-stack preflight refreshes existing layer state. Bootstrap a new
+dev environment once from an authorized workstation. Before creating a preview
+or production environment, provide an approved first-state bootstrap pipeline;
+those environments disable local provision and deploy through
+`localDeployAllowed`.
+
+The command below is for dev only:
+
+```bash
+cd tools/sdk-ai-bots/deployment
+azd auth login
+azd env new dev \
+  --subscription <dev-subscription-id> \
+  --location <dev-region> \
+  --no-prompt
+npm run sync-env-suite -- --environment dev
+npm run validate-env-suite -- --environment dev
+azd provision --environment dev --no-prompt
+```
+
+Provisioning creates the seven-layer resource graph. The final postprovision
+hook also:
+
+- uploads source-controlled bot routing;
+- retrieves and stores `AI-SEARCH-APIKEY` in the deployment Key Vault;
+- creates or updates Search indexes, data sources, skillsets, indexers,
+  knowledge source, and knowledge base;
+- seeds runtime App Configuration values, including the web-fetch allow-list.
+
+It does not deploy application images. Continue with the deploy runbook after
+the first provision.
+
+## 8. Complete Interactive and External Setup
+
+### Teams managed-API consent
+
+When the Logic App layer is provisioned through a pipeline, the run pauses if
+the Teams connection is not authorized. Open the supplied Azure portal URL,
+authorize as the Teams service account, save, and resume. The next job verifies
+that the connection is `Connected`.
+
+For local dev, authorize in the portal and apply the final workflow after the
+Function App is deployed:
+
+```bash
+npm run deploy:logic-app -- --env dev
+```
+
+### Teams app publication
+
+Bicep creates the Azure Bot and `MsTeamsChannel`. Verify both after the first
+apply. Publish the generated Teams package to the tenant catalog once; later
+approved versions can be installed or upgraded by the frontend postdeploy hook.
+
+### External credentials and notifications
+
+- The GitHub App private key is expected in the vault configured by
+  `GITHUB_APP_KEYVAULT_URL` and `GITHUB_APP_KEY_NAME`. Ensure the runtime
+  identities can read that existing secret; this deployment does not create it.
+- `TeamsWebhookUrl` in the deployment Key Vault is optional. Add it only when
+  Teams deployment notifications are required. A missing value skips
+  notification without failing deployment.
+- Do not create a Cosmos DB connection-string secret for the Logic App; its
+  connection uses managed identity.
+
+Storage soft delete and seven-day continuous Cosmos backup are provisioned. If
+the recovery plan requires blob-version restoration, enable and test blob
+versioning before production use.
+
+## 9. Validate Readiness and Deploy
+
+Complete the [operational readiness checklist](operational-readiness-checklist.md),
+then follow the [deploy runbook](runbook-deploy.md). The runbook owns routine
+apply, application deployment, verification, and re-provisioning procedures.

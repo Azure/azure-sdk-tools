@@ -53,7 +53,11 @@ def _build_credential_chain() -> AsyncTokenCredential:
             )
         _logger.warning(
             "SYSTEM_ACCESSTOKEN is set but AZURESUBSCRIPTION_* env vars are "
-            "incomplete; falling back to credential chain"
+            "incomplete; using the AzureCLI task login before managed identity"
+        )
+        return ChainedTokenCredential(
+            AzureCliCredential(),
+            ManagedIdentityCredential(),
         )
 
     # ── Standard credential chain (non-pipeline environments) ──

@@ -1,0 +1,280 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Shared environment-suite for the sdk-ai-bots deployment.
+#
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║  ACTION REQUIRED BEFORE FIRST DEPLOY                                      ║
+# ║                                                                           ║
+# ║  Replace every `REPLACE_WITH_*` placeholder below with the real value:    ║
+# ║    - subscriptionId (dev / preview / prod)                                ║
+# ║    - tenantId (if non-default)                                            ║
+# ║    - backend server application client ID and Application ID URI          ║
+# ║    - teamsAppId                                                           ║
+# ║                                                                           ║
+# ║  Validate with:                                                           ║
+# ║    npm run validate-env-suite                                              ║
+# ║                                                                           ║
+# ║  Full setup guide: docs/manual-setup.md §4                                ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+#
+# This file is the single source of truth for:
+#   - which environments exist
+#   - which subscription each one targets
+#   - the resource group prefix
+#   - the deployment location
+#   - whether local provision and deploy operations are allowed
+#   - the Teams group and channels monitored by each environment
+#
+# All provision / CI / CD pipelines load this file via
+# pipelines/templates/load-environment-suite.yml and read individual fields by
+# name. No pipeline may hard-code an environment list, subscription ID, region,
+# or RG name — change them here and they propagate.
+# ─────────────────────────────────────────────────────────────────────────────
+
+environments:
+    dev:
+        # Existing shared dev environment in the Azure SDK Engineering System
+        # subscription. Name overrides below attach every supported layer to
+        # the resources already deployed in `azure-sdk-qa-bot-dev`.
+        subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        serverApplicationClientId: '830f1656-8b36-4e8e-9781-87ccdd038644'
+        serverApplicationIdUri: 'api://azure-sdk-qa-bot-dev'
+        resourceGroupPrefix: 'azure-sdk-qa-bot-dev'
+        keyVaultName: 'azuresdkqabot-dev-kv'
+        appConfigName: 'azuresdkqabot-dev-config'
+        containerRegistryName: 'azuresdkqabotdevcontainer'
+        # Site names for CD pipelines. These are passed as bicep params
+        # (frontendBaseName / agentServerSiteName / functionAppName) so the
+        # deployed resources match — no post-provision discovery required.
+        frontendSiteName: 'azsdkqabotdev'
+        agentServerSiteName: 'azuresdkqabot-dev-server'
+        functionAppName: 'azuresdkqabot-dev-function'
+        # Teams Toolkit app registration for this environment. Each env owns a
+        # DIFFERENT Teams app (created by `teamsapp provision`); the value is
+        # written into azure-sdk-qa-bot/env/.env.azd by the postprovision hook
+        # (deployment/hooks/lib/sync-teams-env.ts). If empty on first-ever
+        # provision, teamsapp will create one and you should copy its GUID here.
+        teamsAppId: '9d620152-6b1b-44f2-9635-b1f120c93c4a'
+        teamsGroupId: '7ccc31f0-b371-450b-a73c-48f5a31a9b96'
+        teamsChannelIds:
+            - '19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2'
+            - '19:43d25834bb394e0fa9a3b316ce5a2ea4@thread.tacv2'
+            - '19:f876c6910f4048aa81f172300e0f7104@thread.tacv2'
+            - '19:6f6b56e7deda45ecb9dc001a18dcfa3b@thread.tacv2'
+            - '19:7fed54bbc68e443381c6e196c7615b6b@thread.tacv2'
+            - '19:b518e8426f32490eab370e9642b3600a@thread.tacv2'
+            - '19:06178cf7377f447cb486bb15fca7a5f5@thread.tacv2'
+            - '19:e0c83381ddd141d08e5ebea53fd8366c@thread.tacv2'
+            - '19:2f1cb90ce78a46678b203709167db8c1@thread.tacv2'
+            - '19:975533cdd084485ca305739f16b30507@thread.tacv2'
+            - '19:453ec446a66446589d764132f5cebb00@thread.tacv2'
+            - '19:037246b9968445edb3a23612ea44524d@thread.tacv2'
+        azureMcpTeamsGroupId: '07bb6114-8ffb-4e79-b65a-67f19d23e5bc'
+        azureMcpTeamsChannelIds:
+            - '19:GZ1GJyuOy0b8PWe6XtNxFdiaiT2M-NdiOXDLR5ySXXc1@thread.tacv2'
+        location: 'westus2'
+        aiLocation: 'swedencentral'
+        cosmosDbLocation: 'westus2'
+        chatbotEvolutionAgentEnabled: false
+        bicepOverrides:
+            # Stable identifiers and live resource settings are explicit
+            # because this environment predates azd layer state. Keep these in
+            # sync with Azure before changing or reprovisioning shared resources.
+            DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
+            DEVELOPER_PRINCIPAL_TYPE: 'Group'
+            MANAGED_IDENTITY_NAME: 'azuresdkqabot-dev-identity'
+            MANAGED_IDENTITY_CLIENT_ID: 'a9c2a3a5-878e-42c1-b9b8-8cae14e5eed2'
+            MANAGED_IDENTITY_PRINCIPAL_ID: 'f8ec2208-d3c9-4271-b787-07c26651e1c6'
+            MANAGED_IDENTITY_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity'
+            ACTION_GROUP_NAME: 'azuresdkqabot-dev-alert'
+            SEARCH_SERVICE_NAME: 'azuresdkqabot-dev-search'
+            SEARCH_SERVICE_PRINCIPAL_ID: '3b64b356-e878-4e4f-ac1c-08f79259a422'
+            SEARCH_USER_ASSIGNED_IDENTITIES: '{"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity":{}}'
+            SEARCH_KNOWLEDGE_RETRIEVAL: 'free'
+            STORAGE_ACCOUNT_NAME: 'azuresdkqabotdevstorage'
+            STORAGE_BLOB_ENDPOINT: 'https://azuresdkqabotdevstorage.blob.core.windows.net/'
+            COSMOS_DB_ACCOUNT_NAME: 'azuresdkqabot-dev-db'
+            COSMOS_CAPABILITIES: '[{"name":"EnableServerless"},{"name":"EnableNoSQLVectorSearch"}]'
+            ENABLE_EPISODE_VECTOR_INDEX: 'true'
+            BOT_SERVICE_NAME: 'azsdkqabotdev'
+            BOT_ID: '5f27e2e7-84d6-4e3c-b7d0-43cde3b9b89c'
+            BOT_AZURE_APP_SERVICE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azsdkqabotdev'
+            BOT_DOMAIN: 'azsdkqabotdev.azurewebsites.net'
+            AI_RESOURCE_NAME: 'azuresdkqabot-dev-ai-resource'
+            AI_RESOURCE_USER_ASSIGNED_IDENTITIES: '{"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity":{}}'
+            AI_PROJECT_NAME: 'azuresdkqabot-ai'
+            AZURE_AI_PROJECT_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.CognitiveServices/accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai'
+            FOUNDRY_PROJECT_ENDPOINT: 'https://azuresdkqabot-dev-ai-resource.services.ai.azure.com/api/projects/azuresdkqabot-ai'
+            MODEL_RAI_POLICY_NAME: 'Microsoft.DefaultV2'
+            GPT_4_1_SKU_NAME: 'Standard'
+            GPT_4_1_CAPACITY: '400'
+            GPT_5_6_SOL_CAPACITY: '500'
+            GPT_5_1_CAPACITY: '2000'
+            GPT_5_MINI_CAPACITY: '150'
+            TEXT_EMBEDDING_3_SMALL_CAPACITY: '120'
+            TEXT_EMBEDDING_3_SMALL_VERSION_UPGRADE_OPTION: 'OnceNewDefaultVersionAvailable'
+            AGENT_LOG_WORKSPACE_NAME: 'azuresdkqabot-dev-log'
+            AGENT_LOG_WORKSPACE_LOCATION: 'westus2'
+            AGENT_LOG_RETENTION_IN_DAYS: '365'
+            AGENT_APP_INSIGHTS_NAME: 'azuresdkqabot-dev-agent'
+            AGENT_APPLICATIONINSIGHTS_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Insights/components/azuresdkqabot-dev-agent'
+            CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES: '{"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity":{},"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity":{}}'
+            CONTAINER_REGISTRY_IS_EXISTING: 'true'
+            KEY_VAULT_ACCESS_POLICIES: '[{"tenantId":"72f988bf-86f1-41af-91ab-2d7cd011db47","objectId":"0d592d27-c3a0-487b-b5ac-245d9fcea5a7","permissions":{"keys":["Verify","Sign"],"secrets":[],"certificates":[]}},{"tenantId":"72f988bf-86f1-41af-91ab-2d7cd011db47","objectId":"eb14b1bf-9a84-425e-a4bc-1a0c4a4298bf","permissions":{"keys":["Verify","Sign"],"secrets":[],"certificates":[]}}]'
+            ACR_NAME: 'azuresdkqabotdevcontainer'
+            AZURE_CONTAINER_REGISTRY_ENDPOINT: 'azuresdkqabotdevcontainer.azurecr.io'
+            FRONTEND_APP_INSIGHTS_NAME: 'azsdkqabotdev-insights'
+            FRONTEND_EMAIL_ACTION_GROUP_NAME: 'azsdkqabotdev-email-alerts'
+            FRONTEND_DIAGNOSTIC_SETTING_NAME: 'azsdkqabotdev-diagnostic'
+            FRONTEND_HEALTH_TEST_NAME: 'azsdkqabotdev-health-test'
+            FRONTEND_SERVER_ERRORS_ALERT_NAME: 'azsdkqabotdev-server-errors'
+            FRONTEND_HEALTH_CHECK_ALERT_NAME: 'azsdkqabotdev-health-check-failure'
+            FRONTEND_DELETE_LOCK_NAME: 'azsdkqabotdev-delete-lock'
+            AGENT_SERVER_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-dev-appserviceplan'
+            AGENT_SERVER_LOG_WORKSPACE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/DefaultResourceGroup-WUS2/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-a18897a6-7e44-457d-9260-f2854c0aca42-WUS2'
+            AGENT_SERVER_APP_INSIGHTS_NAME: 'azuresdkqabot-dev-server'
+            AGENT_SERVER_APP_INSIGHTS_FLOW_TYPE: 'Redfield'
+            AGENT_SERVER_APP_INSIGHTS_REQUEST_SOURCE: 'IbizaAIExtensionEnablementBlade'
+            AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-dev-alert'
+            SERVER_BASE_URL: 'https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net'
+            AZD_DEPLOY_AGENT_SERVER_SLOT_NAME: 'production'
+            FUNCTION_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-dev-functionserviceplan'
+            FUNCTION_LOG_WORKSPACE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/DefaultResourceGroup-WUS2/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-a18897a6-7e44-457d-9260-f2854c0aca42-WUS2'
+            INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-dev-ia'
+            TEAMS_CONNECTION_NAME: 'teams'
+            LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-dev-logicapp'
+            AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-dev-logicapp'
+            LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
+            AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-dev-logicapp-alert'
+            AI_RESOURCE_RESTORE: 'false'
+        # The shared environment already has runtime RBAC assignments and
+        # delete locks. Local provisioning must not attempt privileged writes.
+        manageAuthorizationResources: false
+        localDeployAllowed: true
+
+    preview:
+        subscriptionId: 'REPLACE_WITH_PREVIEW_SUBSCRIPTION_ID'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        serverApplicationClientId: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_CLIENT_ID'
+        serverApplicationIdUri: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_ID_URI'
+        resourceGroupPrefix: 'rg-azuresdkqabot-preview'
+        keyVaultName: 'azsdkqabot-kv-preview'
+        appConfigName: 'azsdkqabot-config-preview'
+        containerRegistryName: 'azsdkqabotacrpreview'
+        frontendSiteName: 'azsdkqabot-preview'
+        agentServerSiteName: 'azuresdkqabot-server-preview'
+        functionAppName: 'azuresdkqabot-function-preview'
+        # See dev.teamsAppId for the contract.
+        teamsAppId: 'REPLACE_WITH_PREVIEW_TEAMS_APP_ID'
+        teamsGroupId: '3e17dcb0-4257-4a30-b843-77f47f1d4121'
+        teamsChannelIds:
+            - '19:de3fce22c2994be18cac50502c55f717@thread.skype'
+            - '19:906c1efbbec54dc8949ac736633e6bdf@thread.skype'
+        azureMcpTeamsGroupId: 'aa6955c1-8ef2-4dea-ae63-b5ce6342630a'
+        azureMcpTeamsChannelIds:
+            - '19:LrGMf-oSqw_bSeRtjMh0rGos3Je8-5fpMSdgVjVwX4k1@thread.tacv2'
+        location: 'westus2'
+        aiLocation: 'westus2'
+        cosmosDbLocation: 'westus2'
+        chatbotEvolutionAgentEnabled: false
+        bicepOverrides:
+            AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-test-logicapp'
+        manageAuthorizationResources: true
+        localDeployAllowed: false
+
+    prod:
+        # Real prod values are captured from the pre-existing `azure-sdk-qa-bot` RG
+        # in the Azure SDK Engineering System subscription. bicepOverrides pins
+        # names that cannot be derived so azd preview/provision attaches to the
+        # existing resources instead of proposing replacements.
+        subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        serverApplicationClientId: '899da762-d510-48f2-911a-db9ea0cc41fd'
+        serverApplicationIdUri: 'api://azure-sdk-qa-bot'
+        resourceGroupPrefix: 'azure-sdk-qa-bot'
+        keyVaultName: 'azuresdkqabot-keyvalut'
+        appConfigName: 'azuresdkqabot-config'
+        containerRegistryName: 'azuresdkqabotcontainer'
+        # Site names for CD pipelines (must match the resources currently
+        # deployed to the `azure-sdk-qa-bot` RG).
+        frontendSiteName: 'azsdkqabot'
+        agentServerSiteName: 'azuresdkqabot-server'
+        functionAppName: 'azuresdkqabot-function'
+        # See dev.teamsAppId for the contract.
+        teamsAppId: 'REPLACE_WITH_PROD_TEAMS_APP_ID'
+        teamsGroupId: '3e17dcb0-4257-4a30-b843-77f47f1d4121'
+        teamsChannelIds:
+            - '19:de3fce22c2994be18cac50502c55f717@thread.skype'
+            - '19:906c1efbbec54dc8949ac736633e6bdf@thread.skype'
+            - '19:b97d98e6d22c41e0970a1150b484d935@thread.skype'
+            - '19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype'
+            - '19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype'
+            - '19:084875bb626242ed95f3ac8dddfaa12a@thread.skype'
+            - '19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype'
+            - '19:6d2c19322c254a80bcc521675134da03@thread.skype'
+        azureMcpTeamsGroupId: '256e3336-e328-4683-a24a-7a36c8a123fc'
+        azureMcpTeamsChannelIds:
+            - '19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2'
+        location: 'westus2'
+        aiLocation: 'swedencentral'
+        cosmosDbLocation: 'westus2'
+        chatbotEvolutionAgentEnabled: true
+        candidateEnvironment: 'dev'
+        bicepOverrides:
+            # Production values preserve the existing manually evolved
+            # environment while retaining fresh-environment defaults elsewhere.
+            DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
+            DEVELOPER_PRINCIPAL_TYPE: 'Group'
+            FRONTEND_IMAGE_REPOSITORY: 'azure-sdk-qa-bot:latest'
+            MANAGED_IDENTITY_NAME: 'azuresdkqabot-identity'
+            ACTION_GROUP_NAME: 'azuresdkqabot-alert'
+            SEARCH_SERVICE_NAME: 'azuresdkqabot-search'
+            STORAGE_ACCOUNT_NAME: 'azuresdkqabotstorage'
+            COSMOS_DB_ACCOUNT_NAME: 'azuresdkqabot-db'
+            COSMOS_CAPABILITIES: '[{"name":"EnableServerless"}]'
+            AI_RESOURCE_NAME: 'azuresdkqabot-ai-resource'
+            AI_PROJECT_NAME: 'azuresdkqabot-ai'
+            MODEL_RAI_POLICY_NAME: 'Microsoft.DefaultV2'
+            GPT_4_1_SKU_NAME: 'GlobalStandard'
+            GPT_4_1_CAPACITY: '200'
+            GPT_5_6_SOL_CAPACITY: '500'
+            GPT_5_1_CAPACITY: '130'
+            GPT_5_MINI_CAPACITY: '130'
+            AGENT_LOG_WORKSPACE_NAME: 'azuresdkqabot-log'
+            AGENT_LOG_RETENTION_IN_DAYS: '365'
+            AGENT_APP_INSIGHTS_NAME: 'azuresdkqabot-agent'
+            CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES: '{"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity":{}}'
+            FRONTEND_APP_INSIGHTS_NAME: 'azsdkqabot-insights'
+            FRONTEND_EMAIL_ACTION_GROUP_NAME: 'azsdkqabot-email-alerts'
+            FRONTEND_DIAGNOSTIC_SETTING_NAME: 'azsdkqabot-diagnostic'
+            FRONTEND_HEALTH_TEST_NAME: 'azsdkqabot-health-test'
+            FRONTEND_SERVER_ERRORS_ALERT_NAME: 'azsdkqabot-server-errors'
+            FRONTEND_HEALTH_CHECK_ALERT_NAME: 'azsdkqabot-health-check-failure'
+            FRONTEND_DELETE_LOCK_NAME: 'azsdkqabot-delete-lock'
+            AGENT_SERVER_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-appserviceplan'
+            AGENT_SERVER_LOG_WORKSPACE_NAME: 'azuresdkqabot-log'
+            AGENT_SERVER_APP_INSIGHTS_NAME: 'azuresdkqabot-server202510300250'
+            AGENT_SERVER_APP_INSIGHTS_FLOW_TYPE: 'Redfield'
+            AGENT_SERVER_APP_INSIGHTS_REQUEST_SOURCE: 'IbizaAIExtensionEnablementBlade'
+            AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-alert'
+            FUNCTION_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-functionserviceplan'
+            FUNCTION_LOG_WORKSPACE_NAME: 'azuresdkqabot-function-log'
+            INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-ia'
+            TEAMS_CONNECTION_NAME: 'teams'
+            LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
+            AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-logicapp'
+            LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
+            AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-logicapp-alert'
+        manageAuthorizationResources: true
+        localDeployAllowed: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Component health endpoints used by deployment readiness and local smoke tests.
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+    frontend:
+        healthPath: '/health'
+    function-app:
+        healthPath: '/'
+    agent-server:
+        healthPath: '/ping'

@@ -1,0 +1,55 @@
+# Reusable infrastructure sequence for every environment:
+# preview -> manual approval -> apply.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: layer
+      type: string
+      default: ''
+    - name: dependencyLayers
+      type: string
+      default: ''
+    - name: scope
+      type: string
+      default: complete environment
+    - name: workingDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
+
+stages:
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+      parameters:
+          environment: ${{ parameters.environment }}
+          stageName: Preflight
+          stageDisplayName: 'Preflight (preview)'
+          runValidateAndPreview: true
+          runProvision: false
+          showReadinessReminder: ${{ eq(parameters.environment, 'prod') }}
+          layer: ${{ parameters.layer }}
+          dependencyLayers: ${{ parameters.dependencyLayers }}
+          workingDirectory: ${{ parameters.workingDirectory }}
+          ${{ if eq(parameters.environment, 'dev') }}:
+              authenticateBeforeEnvironmentLoad: true
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/approval-stage.yml
+      parameters:
+          environment: ${{ parameters.environment }}
+          stageName: ApproveProvisioning
+          dependsOn: Preflight
+          scope: ${{ parameters.scope }}
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+      parameters:
+          environment: ${{ parameters.environment }}
+          stageName: Provision
+          stageDisplayName: 'Provision (apply)'
+          dependsOn: ApproveProvisioning
+          runValidateAndPreview: false
+          runProvision: true
+          layer: ${{ parameters.layer }}
+          dependencyLayers: ${{ parameters.dependencyLayers }}
+          workingDirectory: ${{ parameters.workingDirectory }}
+          ${{ if eq(parameters.environment, 'dev') }}:
+              authenticateBeforeEnvironmentLoad: true

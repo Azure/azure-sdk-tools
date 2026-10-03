@@ -1,1 +1,13 @@
 name: azure-sdk-chat-agent
+kind: hosted
+description: Hosted container agent using pre-built image placeholder.azurecr.io/agent:v1
+protocols:
+    - protocol: responses
+      version: 2.0.0
+# NOTE: the hosted agent container's AZURE_APPCONFIG_ENDPOINT env var is NOT set
+# here. azd's azure.ai.agents extension does not embed agent.yaml
+# `environment_variables` into the deployed version's container definition (its
+# "Registering agent environment variables" step is a no-op), so the container
+# would still boot without it and crash in app_config.init(). The env var is
+# injected reliably by deployment/hooks/agent-postdeploy.ts, which creates a
+# follow-up agent version with environment_variables embedded in the definition.

@@ -121,7 +121,7 @@ export class ConversationHandler {
   private readonly tableName: string;
 
   constructor() {
-    this.botId = config.MicrosoftAppId;
+    this.botId = config.userManagedIdentityClientID;
 
     // Get Azure Table Storage configuration from config
     this.tableStorageUrl = config.azureStorageUrl;

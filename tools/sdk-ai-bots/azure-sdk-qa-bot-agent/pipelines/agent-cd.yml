@@ -22,6 +22,7 @@ parameters:
       - chat_agent
       - azure_mcp_server_agent
       - chatbot_evolution_agent
+      - teams_collection_agent
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml

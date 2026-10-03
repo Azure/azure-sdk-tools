@@ -7,7 +7,8 @@ See: tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tsp/models.tsp
 from __future__ import annotations
 
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from models.bot_config import ConfidenceLevel
 from config.tenant_config import TenantID
 from models.conversation import ConversationType, Role
 from models.knowledge import Reference
@@ -78,6 +79,23 @@ class ChatRequest(BaseModel):
     message: Message
     with_full_context: bool | None = False
     additional_infos: list[AdditionalInfo] | None = None
+    channel_id: str | None = None
+
+
+class AnswerConfidence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    level: ConfidenceLevel
+    summary: str = Field(min_length=1)
+    unresolved_needs: list[str]
+    needs_expert_help: StrictBool
+
+
+class AssessedAnswer(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    answer: str = Field(min_length=1)
+    confidence: AnswerConfidence
 
 
 class ChatResponse(BaseModel):
@@ -91,3 +109,5 @@ class ChatResponse(BaseModel):
     route_tenant: TenantID | None = None
     agent_conversation_id: str | None = None
     trace_id: str | None = None
+    confidence: AnswerConfidence | None = None
+    notify_experts: bool = False

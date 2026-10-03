@@ -10,7 +10,12 @@ conversation mapping.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import datetime, timezone
+
+from azure.core import MatchConditions
+from azure.core.exceptions import AzureError
+from azure.cosmos.exceptions import CosmosHttpResponseError, CosmosResourceExistsError
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +25,7 @@ from models.conversation import (
     ConversationMessage,
     ConversationMessageItem,
     ConversationType,
+    ExpertNotificationAttempt,
     Role,
 )
 from utils.azure_cosmosdb import (
@@ -30,6 +36,92 @@ from utils.azure_cosmosdb import (
 
 class ConversationService:
     """Persists and retrieves customer-to-agent conversation ID mappings."""
+
+    _MAX_WRITE_ATTEMPTS = 3
+
+    async def _write_message_document(
+        self,
+        message_id: str,
+        partition_key: str,
+        update: Callable[[dict], bool],
+        *,
+        create_body: dict | None = None,
+    ) -> bool:
+        """Conditionally write a Cosmos message document, preserving raw fields.
+
+        Apply the callback to an existing document, or create a missing one
+        only when create_body is supplied. Retry known concurrency conflicts
+        only; failed or ambiguous writes return False.
+        """
+        try:
+            container = await get_conversation_message_container()
+        except (AzureError, TimeoutError, RuntimeError):
+            logger.exception(
+                "Cannot access message storage; skipping update: message_id=%s, partition_key=%s",
+                message_id, partition_key,
+            )
+            return False
+
+        try:
+            for _ in range(self._MAX_WRITE_ATTEMPTS):
+                try:
+                    raw = await container.read_item(
+                        item=message_id, partition_key=partition_key
+                    )
+                except CosmosHttpResponseError as exc:
+                    if exc.status_code != 404:
+                        raise
+                    if create_body is None:
+                        logger.warning(
+                            "Cannot update message %s: not found in %s",
+                            message_id,
+                            partition_key,
+                        )
+                        return False
+                    try:
+                        await container.create_item(body=create_body)
+                        return True
+                    except CosmosHttpResponseError as create_exc:
+                        if create_exc.status_code == 409:
+                            continue
+                        raise
+
+                if raw.get("document_type") != ConversationDocumentType.message.value:
+                    logger.warning("Cannot update non-message document %s", message_id)
+                    return False
+                etag = raw.get("_etag")
+                if not etag:
+                    logger.warning(
+                        "Missing ETag; skipping message update: message_id=%s, partition_key=%s",
+                        message_id, partition_key,
+                    )
+                    return False
+                if not update(raw):
+                    return False
+                try:
+                    await container.replace_item(
+                        item=message_id,
+                        body=raw,
+                        etag=etag,
+                        match_condition=MatchConditions.IfNotModified,
+                    )
+                    return True
+                except CosmosHttpResponseError as exc:
+                    if exc.status_code in (404, 412):
+                        continue
+                    raise
+        except (AzureError, TimeoutError):
+            logger.exception(
+                "Message storage operation failed; skipping update: message_id=%s, partition_key=%s",
+                message_id, partition_key,
+            )
+            return False
+
+        logger.warning(
+            "Concurrent updates exhausted after %s attempts; skipping update: message_id=%s, partition_key=%s",
+            self._MAX_WRITE_ATTEMPTS, message_id, partition_key,
+        )
+        return False
 
     @staticmethod
     def _to_conversation_type_value(
@@ -58,7 +150,18 @@ class ConversationService:
         customer_conversation_id: str | None,
         conversation_type: ConversationType | None = None,
     ) -> str | None:
-        """Get an AI Foundry agent conversation ID from the local store.
+        """Get the mapped AI Foundry conversation ID, if present."""
+        mapping = await self.get_agent_conversation_mapping(
+            customer_conversation_id, conversation_type
+        )
+        return mapping.agent_conversation_id if mapping else None
+
+    async def get_agent_conversation_mapping(
+        self,
+        customer_conversation_id: str | None,
+        conversation_type: ConversationType | None = None,
+    ) -> ConversationMappingItem | None:
+        """Get the AI Foundry conversation mapping and pinned response format.
 
         Args:
             customer_conversation_id: The source conversation identifier
@@ -67,7 +170,7 @@ class ConversationService:
                 (e.g. teams_channel).
 
         Returns:
-            The AI Foundry conversation ID if found, otherwise ``None``.
+            The saved mapping if found, otherwise ``None``.
         """
         if not customer_conversation_id:
             return None
@@ -88,14 +191,17 @@ class ConversationService:
                 return None
             raise
 
-        return ConversationMappingItem.model_validate(raw).agent_conversation_id
+        return ConversationMappingItem.model_validate(raw)
 
     async def save_agent_conversation_mapping(
         self,
         customer_conversation_id: str | None,
         conversation_type: ConversationType | None,
         agent_conversation_id: str,
-    ) -> str | None:
+        *,
+        confidence_enabled: bool,
+        create_only: bool = False,
+    ) -> ConversationMappingItem | None:
         """Save the mapping relationship in the local store.
 
         Args:
@@ -104,15 +210,17 @@ class ConversationService:
             conversation_type: The source conversation type
                 (e.g. teams_channel).
             agent_conversation_id: The AI Foundry conversation ID to persist.
+            confidence_enabled: Pinned response format; preserve it during recovery.
+            create_only: Keep the winning mapping if another request created it first.
 
         Returns:
-            The saved AI Foundry conversation ID, or ``None`` if input is invalid.
+            The saved mapping, or ``None`` if input is invalid or a conflicting
+            mapping cannot be found.
         """
         if not customer_conversation_id:
             return None
 
         container = await get_conversation_mapping_container()
-        conversation_type_value = self._to_conversation_type_value(conversation_type)
         mapping_key = self._build_mapping_key(
             customer_conversation_id,
             conversation_type,
@@ -124,19 +232,28 @@ class ConversationService:
             conversation_type=conversation_type,
             mapping_key=mapping_key,
             agent_conversation_id=agent_conversation_id,
+            confidence_enabled=confidence_enabled,
         )
 
-        await container.upsert_item(mapping_item.model_dump(mode="json"))
+        if create_only:
+            try:
+                await container.create_item(body=mapping_item.model_dump(mode="json"))
+            except CosmosResourceExistsError:
+                return await self.get_agent_conversation_mapping(
+                    customer_conversation_id, conversation_type
+                )
+        else:
+            await container.upsert_item(mapping_item.model_dump(mode="json"))
 
         logger.info(
             "Saved conversation mapping: %s -> %s",
             customer_conversation_id,
             agent_conversation_id,
         )
-        return agent_conversation_id
+        return mapping_item
 
-    async def save_conversation(self, message: ConversationMessage) -> None:
-        """Save a conversation message to the backing store."""
+    async def save_conversation(self, message: ConversationMessage) -> bool:
+        """Save a conversation message and return whether the write was confirmed."""
         if not message.conversation_id or not message.conversation_type:
             raise ValueError("conversation_id and conversation_type are required")
         logger.info(
@@ -146,14 +263,36 @@ class ConversationService:
             message.conversation_type,
             message.sender_role,
         )
-        container = await get_conversation_message_container()
+        # Only ingress model fields are accepted, even if a persistence-model
+        # instance was passed. Notification attempts are server-owned metadata.
+        ingress = message.model_dump(
+            mode="json", include=set(ConversationMessage.model_fields)
+        )
         message_item = ConversationMessageItem(
-            **message.model_dump(mode="json"),
+            **ingress,
             conversation_partition=self._build_message_partition_key(message),
         )
-        result = await container.upsert_item(message_item.model_dump(mode="json"))
-        logger.info("Saved conversation message: %s", result["id"])
-        return
+
+        def update(raw: dict) -> bool:
+            raw.update(
+                {
+                    key: value
+                    for key, value in ingress.items()
+                    if key not in ("should_reply", "created_at")
+                }
+            )
+            return True
+
+        saved = await self._write_message_document(
+            message.id,
+            message_item.conversation_partition,
+            update,
+            create_body=message_item.model_dump(mode="json"),
+        )
+        if not saved:
+            return False
+        logger.info("Saved conversation message: %s", message.id)
+        return True
 
     async def record_should_reply(
         self,
@@ -168,31 +307,56 @@ class ConversationService:
         question within the bot's scope). This enables computing the bot
         answering rate: (replied messages) / (questions in scope).
         """
-        container = await get_conversation_message_container()
         partition_key = f"{conversation_type.value}:{conversation_id}"
 
-        try:
-            raw = await container.read_item(
-                item=message_id,
-                partition_key=partition_key,
-            )
-        except Exception as exc:
-            if getattr(exc, "status_code", None) == 404:
-                logger.warning(
-                    "Cannot record should_reply: message %s not found in %s",
-                    message_id,
-                    partition_key,
-                )
-                return
-            raise
+        def update(raw: dict) -> bool:
+            raw["should_reply"] = should_reply
+            return True
 
-        message_item = ConversationMessageItem.model_validate(raw)
-        message_item.should_reply = should_reply
-        await container.upsert_item(message_item.model_dump(mode="json"))
+        if not await self._write_message_document(message_id, partition_key, update):
+            return
         logger.info(
             "Recorded should_reply=%s for message %s",
             should_reply,
             message_id,
+        )
+
+    @staticmethod
+    def _root_message_id(conversation_id: str) -> str | None:
+        channel, separator, root_id = conversation_id.partition(";messageid=")
+        if not channel or not separator or not root_id or ";" in root_id:
+            logger.warning("Cannot identify root message for %s", conversation_id)
+            return None
+        return root_id
+
+    async def reserve_expert_notification(
+        self,
+        conversation_id: str,
+        conversation_type: ConversationType,
+        response_id: str,
+    ) -> bool:
+        """Reserve the thread's only notification attempt on its existing root.
+
+        Once reserved, even the same response cannot reserve again. A lost
+        completion response or failed Teams send does not release the attempt.
+        """
+        if not response_id.strip():
+            return False
+        root_id = self._root_message_id(conversation_id)
+        if not root_id:
+            return False
+
+        def update(raw: dict) -> bool:
+            if raw.get("expert_notification") is not None:
+                return False
+            raw["expert_notification"] = ExpertNotificationAttempt(
+                response_id=response_id,
+                reserved_at=datetime.now(timezone.utc),
+            ).model_dump(mode="json")
+            return True
+
+        return await self._write_message_document(
+            root_id, f"{conversation_type.value}:{conversation_id}", update
         )
 
     async def has_expert_reply(

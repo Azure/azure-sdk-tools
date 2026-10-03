@@ -703,9 +703,15 @@
 
     function isAllowedIssueUrl(value) {
       const url = safeHttpsUrl(value);
-      return Boolean(url
-        && url.hostname.toLowerCase() === "github.com"
-        && /^\/Azure\/azure-sdk-pr\/issues\/[1-9]\d*\/?$/i.test(url.pathname));
+      if (!url) return false;
+      const hostname = url.hostname.toLowerCase();
+      if (hostname === "github.com") {
+        return /^\/[^/]+\/[^/]+\/issues\/[1-9]\d*\/?$/i.test(url.pathname);
+      }
+      if (hostname === "dev.azure.com") {
+        return /^\/[^/]+\/[^/]+\/_workitems\/edit\/[1-9]\d*\/?$/i.test(url.pathname);
+      }
+      return false;
     }
 
     function externalLink(value, text) {
@@ -1026,6 +1032,33 @@
         link.rel = "noopener noreferrer";
         step.append(link);
       }
+      const parsedIssueUrl = safeHttpsUrl(url);
+      const hostname = parsedIssueUrl?.hostname.toLowerCase();
+      const provider = hostname === "dev.azure.com"
+        ? "azure-devops"
+        : hostname === "github.com"
+          ? "github"
+          : "unknown";
+      const metadata = node("div", "timeline-metadata");
+      metadata.append(metaItem(
+        "Provider",
+        provider === "azure-devops"
+          ? "Azure DevOps"
+          : provider === "github"
+            ? "GitHub"
+            : "Unknown"
+      ));
+      if (provider === "github") {
+        metadata.append(metaItem(
+          "Copilot assignment",
+          record.feedback.copilot_assigned === true
+            ? "Assigned"
+            : record.feedback.copilot_assigned === false
+              ? "Not assigned"
+              : "Unknown"
+        ));
+      }
+      step.append(metadata);
       return step;
     }
 

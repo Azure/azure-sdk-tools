@@ -37,7 +37,8 @@ import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.chatagent_tools import ChatAgentTools
 from tools.conversation_tools import ConversationTools
-from tools.github_mcp_tools import create_github_mcp_tool
+from tools.ado_mcp_tools import create_evolution_ado_mcp_tool
+from tools.github_mcp_tools import assign_issue_to_copilot, create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
@@ -134,9 +135,10 @@ async def main() -> None:
         knowledge_tools.update_knowledge,
         chatagent_tools.chat,
         web_tools.web_fetch,
+        assign_issue_to_copilot,
     ]
 
-    # GitHub MCP tool with write access so the agent can file KB-gap issues.
+    # GitHub MCP tool with write access for remediation issues and comments.
     try:
         github_mcp_tool = await create_github_mcp_tool(
             readonly=False,
@@ -145,6 +147,15 @@ async def main() -> None:
         tools.append(github_mcp_tool)
     except Exception:
         logger.exception("create_github_mcp_tool failed to initialize, skipped")
+
+    # ADO work-item tools. ADO issues are not assigned to Copilot.
+    try:
+        ado_mcp_tool = await create_evolution_ado_mcp_tool()
+        tools.append(ado_mcp_tool)
+    except Exception:
+        logger.exception(
+            "create_evolution_ado_mcp_tool failed to initialize, skipped"
+        )
 
     # Compaction provider — compact history before and after each turn.
     compaction_provider = CompactionProvider(

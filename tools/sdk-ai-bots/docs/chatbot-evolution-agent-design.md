@@ -21,9 +21,9 @@ The architecture has five execution planes and three resource roles. Production 
 
 - **Detection:** the daily feedback job ingests QA threads, and the Evolution Agent identifies concluded conversations with an incorrect or unconfirmed bot answer.
 - **Evolution loop:** the Evolution Agent diagnoses the failure. For a KB issue, it writes a candidate to the dev knowledge source, validates the original bad case against the dev Chat Agent, and revises until the case passes or the attempt limit is reached.
-- **Issue creation:** after KB validation passes, the same Evolution agent creates the GitHub issue with the diagnosis, proposed source change, answer, trace ID, and validation evidence. For chatbot self-issues, it creates the issue immediately after diagnosis without validation.
+- **Issue creation:** after KB validation passes, the same Evolution Agent creates or reuses an issue in the authoritative source's configured GitHub or ADO tracker, with `Azure/azure-sdk-pr` as the fallback. Normal GitHub issues are assigned to Copilot; GitHub wiki issues and ADO work items skip assignment. For chatbot self-issues, it creates or reuses the fallback GitHub issue immediately after diagnosis without candidate validation.
 - **Restoration:** the feedback orchestrator queues the configured knowledge-sync pipeline at most once per run when an Evolution-agent session mutated the dev KB or a closed KB issue is ready for validation, then waits for authoritative content to be restored or promoted before continuing.
-- **Closed-issue validation:** for an agent-created issue whose QA record is `pending_validation`, the pipeline waits for closure and the required production rollout, then the Evolution Agent reruns the original bad case against the production Chat Agent, comments the result and trace ID on the issue, labels the fix as passed or failed, and persists the terminal Cosmos state.
+- **Closed-item validation:** for an agent-created GitHub issue or ADO work item whose QA record is `pending_validation`, the pipeline waits for the provider's closed state and the required production rollout, then the Evolution Agent reruns the original bad case against the production Chat Agent, comments the result through the matching provider, and persists the terminal Cosmos state. Presentation labels are updated only for `Azure/azure-sdk-pr`.
 
 ```text
 ongoing QA record
@@ -39,12 +39,14 @@ Evolution agent completion/correctness gates
     │     └── update_knowledge
     │           └── validate_agent_response(original bad case)
     │                 ├── fail → revise candidate and retry
-    │                 └── pass → issue_write
+    │                 └── pass → resolve source tracker → search/reuse or create
     │
-    └── chatbot self-issue → issue_write
+    └── chatbot self-issue → search/reuse or create in Azure/azure-sdk-pr
 
-issue created → feedback.status=pending_validation
-closed agent-created issue → validate original bad case in prod → comment evidence → label and persist validation_passed or validation_failed
+normal GitHub issue → assign Copilot → feedback.status=pending_validation
+GitHub wiki issue → skip Copilot → feedback.status=pending_validation
+ADO Issue work item → feedback.status=pending_validation
+closed agent-created item → validate original bad case in prod → comment evidence → persist validation result
 ```
 
 ### 2.2 Agent Design
@@ -54,7 +56,7 @@ The Chatbot Evolution Agent is built on the `agent_framework` library and deploy
 | Component | Purpose |
 | --- | --- |
 | **Instruction** | System prompt that tells the agent how to act as a feedback analyst: what the root-cause categories are, how to back up findings with evidence, and how to propose a safely testable fix. |
-| **Tools** | Analysis: `fetch_chat_trace`, `fetch_conversation`, `search_knowledge_base` (reused), `web_fetch` (reused), and `resolve_kb_source`. Validation: guarded `update_knowledge` and `validate_agent_response`, explicitly routed to `candidate` or `prod`. Issue creation and closed-issue updates: existing GitHub MCP. |
+| **Tools** | Analysis: `fetch_chat_trace`, `fetch_conversation`, `search_knowledge_base` (reused), `web_fetch` (reused), and `resolve_kb_source`. Validation: guarded `update_knowledge` and `validate_agent_response`, explicitly routed to `candidate` or `prod`. Issue lifecycle: GitHub MCP, ADO MCP, provider-neutral state polling, and the GitHub Copilot assignment tool. |
 
 #### 2.2.1 Tools
 
@@ -64,9 +66,10 @@ The Chatbot Evolution Agent is built on the `agent_framework` library and deploy
 | `fetch_conversation` | `tools/conversation_tools.py` (new) | `FunctionTool` | Returns the full thread transcript for the conversation under analysis (Cosmos `conversation-messages`); each bot message includes its `trace_id`. |
 | `search_knowledge_base` | `tools/knowledge_tools.py` | `FunctionTool` | Re-runs targeted KB searches to confirm what is/isn't indexed today. Reused unchanged from the Chat Agent. |
 | `web_fetch` | `tools/web_tools.py` | `FunctionTool` | Fetches the source-of-truth doc URL to detect drift between KB content and upstream docs. Reused unchanged from the Chat Agent. |
-| `resolve_kb_source` | `tools/knowledge_tools.py` (extend) | `FunctionTool` | Maps the chunk's `source` folder and exact `blob_path` to `{owner, repo, branch, path, labels}` by looking up `knowledge-config.json`. The blob path disambiguates folders backed by multiple repository paths. |
-| `issue_write` | `tools/github_mcp_tools.py` | MCP Server | The existing GitHub MCP tool. Creates a chatbot self-issue after diagnosis or a KB issue after validation passes. |
-| `issue_read`, `add_issue_comment`, `issue_write` | `tools/github_mcp_tools.py` | MCP Server | Existing GitHub MCP tools used to read closed agent-created issues, record validation evidence, and replace the pending label with a passed or failed label. |
+| `resolve_kb_source` | `tools/knowledge_tools.py` (extend) | `FunctionTool` | Maps a chunk's `source` folder and optional exact `blob_path` to authoritative GitHub or ADO ownership plus the optional `issueTracker` configured in `knowledge-config.json`. The blob path disambiguates folders backed by different sources; missing-content cases may omit it when all configured paths share ownership. |
+| `issue_write`, `search_issues`, `issue_read`, `add_issue_comment` | `tools/github_mcp_tools.py` | MCP Server | Creates, reuses, reads, and comments on GitHub issues in the configured source repository or the fallback repository. |
+| `assign_issue_to_copilot` | `tools/github_mcp_tools.py` | `FunctionTool` | Assigns created or reused non-wiki GitHub issues to Copilot using a user-authorized token. GitHub wiki issues and ADO work items skip this step because Copilot cannot modify those source repositories. |
+| `wit_create_work_item`, `wit_query_by_wiql`, `wit_get_work_item`, `wit_list_work_item_comments`, `wit_add_work_item_comment` | `tools/ado_mcp_tools.py` | MCP Server | Creates, reuses, reads, and comments on Azure Boards `Issue` work items in the configured ADO project. |
 | `update_knowledge` | `tools/knowledge_tools.py` | `FunctionTool` | Writes candidate markdown to an existing tenant-configured folder in dev storage and refreshes the dev AI Search index. The injected clients prevent production KB mutation. |
 | `validate_agent_response` | `tools/chatagent_tools.py` | `FunctionTool` | Sends the original bad case to the explicitly selected Chat Agent. `target="candidate"` routes to the dev Chat Agent during remediation analysis; `target="prod"` is used only for post-close final validation. |
 
@@ -74,11 +77,11 @@ The Chatbot Evolution Agent is built on the `agent_framework` library and deploy
 
 The agent classifies each case into exactly one root cause and acts accordingly:
 
-| Classification | Description | Category | Issue Repo |
+| Classification | Description | Category | Issue destination |
 | --- | --- | --- | --- |
-| `missing_content` | No KB chunk covers the user's intent. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
-| `outdated_content` | KB guidance contradicts or has drifted from the current source of truth. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
-| `insufficient_content` | Related KB guidance exists but omits the rule, applicability, decision criteria, or cross-document connection needed for reasonable use. This includes facts that exist elsewhere but are not coherently connected to the owning workflow. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
+| `missing_content` | No KB chunk covers the user's intent. | KB issue | Best maintained KB source's configured tracker; fallback when unavailable |
+| `outdated_content` | KB guidance contradicts or has drifted from the current source of truth. | KB issue | Authoritative KB source's configured tracker; fallback when unavailable |
+| `insufficient_content` | Related KB guidance exists but omits the rule, applicability, decision criteria, or cross-document connection needed for reasonable use. This includes facts that exist elsewhere but are not coherently connected to the owning workflow. | KB issue | Authoritative KB source's configured tracker; fallback when unavailable |
 | `retrieval_mismatch` | A complete passage or explicit cross-reference chain exists but was not retrieved. Disconnected facts across documents are not sufficient. | System issue | `Azure/azure-sdk-pr` |
 | `reasoning_gap` | Retrieved chunks explicitly state the correct rule and its applicability, but the bot reasoned poorly or ignored them. | System issue | `Azure/azure-sdk-pr` |
 | `out_of_scope` | The intent is outside the tenant's scope. | System issue | `Azure/azure-sdk-pr` |
@@ -127,17 +130,11 @@ A JSON payload with `mode`, `tenant_id`, `conversation_id`,
   dev knowledge folder, then call `validate_agent_response` with
   `target="candidate"` and the original bad
    case. If it fails, revise the candidate and repeat within the attempt limit.
-9. **Create the KB issue after validation.** When the original bad case passes,
-   call `resolve_kb_source` with the selected chunk's exact `blob_path`, build
-   the issue with the validation evidence, and call `issue_write`. Never create
-   a KB issue before validation passes.
-10. **Handle chatbot self-issues.** Record the diagnosis and suggested fix,
-   then call `issue_write` without entering the candidate-validation loop.
-11. **Validate a closed issue.** In validation mode, read `issue_url`,
-  refetch the persisted conversation using its input coordinates, replay
-  the original bad case through `validate_agent_response` with `target="prod"`, comment the evidence,
-  replace the pending validation label, and return the result.
-12. **Return** the fixed-schema result.
+9. **Create the KB issue after validation.** When the original bad case passes, call `resolve_kb_source` for the authoritative source, search the configured tracker for the stable source/classification/scope marker, and create or reuse the item. Use GitHub issues for GitHub targets and ADO `Issue` work items for ADO targets. When no configured source tracker can accept the issue, fall back to `Azure/azure-sdk-pr`. Never create a KB issue before validation passes.
+10. **Handle chatbot self-issues.** Record the diagnosis and suggested fix, then search, reuse, or create the fallback GitHub issue without entering the candidate-validation loop.
+11. **Complete provider setup.** Assign non-wiki GitHub issues to Copilot before returning success. Do not assign GitHub wiki issues or ADO work items to Copilot.
+12. **Validate a closed item.** In validation mode, read `issue_url` with the matching provider, refetch the persisted conversation using its input coordinates, replay the original bad case through `validate_agent_response` with `target="prod"`, comment the evidence, update Azure/azure-sdk-pr presentation labels only when applicable, and return the result.
+13. **Return** the fixed-schema result.
 
 ## Classification
 
@@ -192,15 +189,15 @@ The feedback loop is driven by a **daily batch job** over a durable status table
     - finished + problem → set `qa_status=failed`, run diagnosis and the KB candidate-validation loop when applicable, then create the remediation issue and set `feedback.status=pending_validation`.
     - finished + problem + remediation blocker → keep `qa_status=failed`, persist the Agent's failure reason, and set `feedback.status=failed`.
     - processing failure before a verdict → set `qa_status=failed` with an unknown verdict and `feedback.status=failed`; the Dashboard distinguishes this from an incorrect bot answer.
-3. **Closed-issue scan** — read `pending_validation` records and retryable `failed` records with an issue URL, then find issues whose stored GitHub issue is closed. Issue closure, not labels, determines validation eligibility.
+3. **Closed-item scan** — read `pending_validation` records and retryable `failed` records with an issue URL, dispatch to GitHub or ADO according to the stored canonical URL, and find items in the provider's closed state. Item state, not labels or tags, determines validation eligibility.
 4. **Restore** — if any analysis session mutated the KB or a closed KB issue needs validation, queue the knowledge-sync pipeline once and wait for successful restoration.
-5. **Validate fixes** — rerun each closed issue's original bad case, comment the evidence, replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, and persist terminal `feedback.status=validation_passed` or `feedback.status=validation_failed`. Operational failures persist retryable `feedback.status=failed`.
+5. **Validate fixes** — rerun each closed item's original bad case, comment the evidence through the matching provider, update presentation labels only for `Azure/azure-sdk-pr`, and persist terminal `feedback.status=validation_passed` or `feedback.status=validation_failed`. Operational failures persist retryable `feedback.status=failed`.
 
 The whole feature is gated by `CHATBOT_EVOLUTION_AGENT_ENABLED` so it can be disabled without a code rollback.
 
 #### 2.3.1 Feedback-session invocation
 
-The production daily batch job (`scripts/run_feedback_jobs.py`) invokes `ChatbotEvolutionAgentService` synchronously in `analysis` or `validation` mode. Analysis starts with the completion and correctness gates. For a confirmed KB issue, the hosted Agent performs the existing bounded loop: it gathers evidence, proposes a candidate, writes it to the dev knowledge source, calls the dev Chat Agent, interprets the result, and revises the candidate when needed. The Agent calls `issue_write` only after the original bad case passes. Chatbot self-issues skip candidate validation and are created after diagnosis. In validation mode, the same Agent calls the production Chat Agent to validate closed agent-created issues without proposing another fix.
+The production daily batch job (`scripts/run_feedback_jobs.py`) invokes `ChatbotEvolutionAgentService` synchronously in `analysis` or `validation` mode. Analysis starts with the completion and correctness gates. For a confirmed KB issue, the hosted Agent performs the existing bounded loop: it gathers evidence, proposes a candidate, writes it to the dev knowledge source, calls the dev Chat Agent, interprets the result, and revises the candidate when needed. The Agent creates or reuses a provider item only after the original bad case passes. Chatbot self-issues skip candidate validation and use the fallback GitHub repository after diagnosis. In validation mode, the same Agent calls the production Chat Agent to validate closed agent-created items without proposing another fix.
 
 The Agent is invoked through the Responses API (`store=True`) with bounded analysis and iteration limits. Its fixed-schema result drives the production Cosmos status transition. The guarded tools own dev-storage writes, indexing, explicitly routed chatbot invocation, and evidence collection. No public issue is created for an unvalidated KB candidate. Records in `failed` are retried automatically: a record with an issue URL retries validation, while one without an issue URL retries analysis. Records in `done`, `validation_passed`, or `validation_failed` are terminal and are not retried.
 
@@ -255,6 +252,8 @@ model FeedbackState {
   error?: string;
 
   issue_url?: string;
+  source_url?: string;
+  copilot_assigned?: boolean;
   classification?: string;
   validation_reasoning?: string;
   validated_at?: utcDateTime;
@@ -320,13 +319,15 @@ After all agent sessions finish, fail, or time out, the feedback pipeline trigge
 
 ### 2.6 Issue creation
 
-The Evolution Agent may prepare the issue content during analysis, but it must complete the KB validation loop before creating the issue. Only after `validate_agent_response(target="candidate")` shows that the original bad case passes may the Agent call `issue_write` in **`Azure/azure-sdk-pr`** through the existing GitHub MCP tool ([`tools/github_mcp_tools.py`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/github_mcp_tools.py)).
+The Evolution Agent may prepare issue content during analysis, but it must complete the KB validation loop before creating an item. After `validate_agent_response(target="candidate")` shows that the original bad case passes, the Agent calls `resolve_kb_source` and routes the defect through the source's optional `issueTracker`: a GitHub issue for a GitHub target or an Azure Boards `Issue` work item for an ADO target. GitHub wiki sources configure their parent GitHub repository. Known non-writable sources omit `issueTracker`; missing configuration or a permanent provider capability/permission failure uses the existing `Azure/azure-sdk-pr` fallback. Timeouts, provider 5xx responses, and ambiguous create responses remain retryable failures rather than fallback triggers.
 
-Every Agent-created issue includes concise expected behavior, detailed fixed-document provenance, validation evidence, and the `fix-validation:pending` label. It does not duplicate the complete conversation or validated answer. The backend stores the issue URL, conversation coordinates, and `feedback.status=pending_validation` in the QA record so the daily job can find and validate it after closure. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent calls `resolve_kb_source` and cites the exact KB document and upstream source in the issue:
+Before creation, the Agent searches the selected tracker for a stable HTML marker containing the source, classification, and scope. It reuses only an item representing the same defect and adds the new conversation and validation evidence as a comment. New and reused non-wiki GitHub issues must be assigned to Copilot before the Agent returns success: source-repository issues target that repository, while every fallback or system issue in `Azure/azure-sdk-pr` targets `Azure/azure-sdk-tools` on `main`. GitHub wiki issues and ADO work items are not assigned because Copilot cannot modify their source repositories.
+
+Every Agent-created item includes concise expected behavior, detailed fixed-document provenance, and validation evidence. It does not duplicate the complete conversation or validated answer. Before persisting a KB issue, the backend re-resolves its exact source URL against the authoritative knowledge configuration and requires the issue destination to match the configured tracker or the explicit `Azure/azure-sdk-pr` fallback. It then stores the canonical issue URL, authoritative source URL, conversation coordinates, GitHub Copilot assignment status, and `feedback.status=pending_validation` so the daily job can validate the item after closure. A configured `.wiki.git` source permits an unassigned GitHub issue only at its configured parent tracker or the fallback repository. Labels are presentation metadata written only in `Azure/azure-sdk-pr`; they never control routing, deduplication, scheduling, validation, persistence, retries, or dashboard reporting. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent cites the exact KB document or proposed missing-content location and authoritative source:
 
 > **Title:** [Doc] No guidance on the TypeSpec `@added` versioning decorator
 >
-> **Labels:** `feedback-agent`, `classification:missing_content`, `fix-validation:pending`
+> **Marker:** `<!-- chatbot-evolution source="typespec_docs" classification="missing_content" scope="documentation/typespec/versioning.md" -->`
 >
 > **Fixed document:** `typespec_docs/documentation/typespec/versioning.md`
 >
@@ -338,15 +339,10 @@ Every Agent-created issue includes concise expected behavior, detailed fixed-doc
 >
 > **Validation:** The dev Chat Agent passed the original bad case. Trace ID: `abc123def456`.
 
-When a registered KB source has no GitHub upstream, `resolve_kb_source`
-returns its source folder without owner/repository coordinates. Unknown source
-folders, blob paths outside the configured repository roots, and ambiguous
-folders resolved without a blob path return `resolved=false`. Chatbot
-self-issues include the diagnosis and suggested fix but no validation
-evidence.
+For `missing_content`, the Agent chooses the best maintained location using tenant scope, verified ownership, related evidence, expert corrections, and provenance even when no exact blob path exists. `resolve_kb_source` can resolve a folder without a blob path when every configured path shares the same source and tracker ownership. Unknown source folders, blob paths outside configured roots, and folders spanning different owners without a disambiguating path return `resolved=false`. Chatbot self-issues include the diagnosis and suggested fix but no candidate-validation evidence and use the fallback repository.
 
 ### 2.7 Closed-issue validation
 
-The daily feedback job reads production `pending_validation` QA records and checks their stored issues for closure; labels do not gate validation eligibility. For a KB issue, it first waits for the configured knowledge-sync or rollout pipeline so the production Chat Agent uses the authoritative fixed content rather than the temporary candidate. The Evolution Agent refetches the production conversation using the coordinates persisted in the QA record, recovers the original question, and calls `validate_agent_response` with `target="prod"`. The issue supplies the concise expected behavior used for comparison.
+The daily feedback job reads production `pending_validation` QA records and checks each stored GitHub issue or ADO work item through a provider-neutral state dispatcher; labels and tags do not gate validation eligibility. For a KB issue, it first waits for the configured knowledge-sync or rollout pipeline so the production Chat Agent uses authoritative fixed content rather than the temporary candidate. The Evolution Agent reads the item and all provider comments, identifies the latest maintainer disposition, refetches the production conversation, recovers the original question, and calls `validate_agent_response` with `target="prod"`.
 
-The Agent comments the returned answer, trace ID, and pass/fail evidence on the closed issue. It replaces the pending label with `fix-validation:passed` when the original case now succeeds or `fix-validation:failed` when it does not; a rejected validation does not automatically reopen the issue. The backend persists terminal `feedback.status=validation_passed` for a pass or `feedback.status=validation_failed` for a rejection. Operational failures use retryable `feedback.status=failed`, and the stored issue URL routes the next daily run back to validation. The historical `qa_status` remains `failed` because the original answer was wrong. The terminal validation status and issue label prevent the same closed issue from being validated again on later daily runs.
+The Agent comments the returned answer, trace ID, and pass/fail evidence through the matching provider. Only an item in `Azure/azure-sdk-pr` receives a presentation-only `fix-validation:passed`, `fix-validation:failed`, or `fix-validation:skipped` label; a rejected validation does not automatically reopen it. The backend persists terminal `feedback.status=validation_passed`, `feedback.status=validation_failed`, or `feedback.status=validation_skipped`. Operational failures use retryable `feedback.status=failed`, and the stored canonical URL routes the next daily run back to the correct provider. The historical `qa_status` remains `failed` because the original answer was wrong. The terminal Cosmos status, not a provider label or tag, prevents repeated validation.

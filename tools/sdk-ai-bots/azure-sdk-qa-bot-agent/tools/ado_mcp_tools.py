@@ -1,7 +1,7 @@
 """Azure DevOps pipeline tools for the Azure SDK QA Bot Agent.
 
 Provides an MCP-based tool that connects to the Azure DevOps MCP server
-via stdio (``npx @azure-devops/mcp``).  Exposes read-only pipeline
+via its installed ``mcp-server-azuredevops`` executable. Exposes read-only pipeline
 definition lookup and work-item reads so the agent can help users find
 release / CI pipeline links and inspect release plans (work items in the
 ``Release`` project).
@@ -18,10 +18,13 @@ from __future__ import annotations
 
 import logging
 import os
+from urllib.parse import quote
 
 from agent_framework import MCPStdioTool
+import httpx
 
 from config.app_config import get as cfg
+from models.feedback import AzureDevOpsIssueReference, parse_issue_reference
 from tools import truncating_mcp_parser
 from utils.ado_token import resolve_token
 
@@ -30,13 +33,12 @@ logger = logging.getLogger(__name__)
 _DEFAULT_ADO_ORG = "azure-sdk"
 # Environment variable read by the ADO MCP server in ``-a envvar`` auth mode.
 _ADO_TOKEN_ENV = "ADO_MCP_AUTH_TOKEN"
-# Pinned to match the copy baked into the image (Dockerfile ADO_MCP_VERSION)
-# so `npx` resolves from cache instead of hitting the registry on cold start.
-_ADO_MCP_PACKAGE = os.environ.get("ADO_MCP_PACKAGE", "@azure-devops/mcp@2.7.0")
+_ADO_MCP_COMMAND = "mcp-server-azuredevops"
+_ADO_API_TIMEOUT_SECS = 10.0
 
 # Client-side read-only allow-list: the work-items domain also exposes write
 # tools (wit_update_work_item, pipelines_run_pipeline, ...); restrict to reads.
-_ADO_ALLOWED_TOOLS: list[str] = [
+_ADO_ALLOWED_TOOLS = (
     # core (read-only)
     "core_list_projects",
     "core_list_project_teams",
@@ -59,14 +61,51 @@ _ADO_ALLOWED_TOOLS: list[str] = [
     "wit_get_work_items_batch_by_ids",
     "wit_list_work_item_comments",
     "wit_get_work_item_type",
-]
+)
+_ADO_EVOLUTION_TOOLS = (
+    "wit_query_by_wiql",
+    "wit_get_work_item",
+    "wit_list_work_item_comments",
+    "wit_create_work_item",
+    "wit_add_work_item_comment",
+)
 
 
 async def create_ado_mcp_tool() -> MCPStdioTool:
-    """Create an MCPStdioTool that launches the Azure DevOps MCP server.
+    """Create the general read-only Azure DevOps MCP profile."""
+    return await _create_ado_mcp_tool(
+        allowed_tools=_ADO_ALLOWED_TOOLS,
+        domains=("core", "pipelines", "work-items"),
+        description=(
+            "Read-only Azure DevOps MCP tools. Use to (1) find release/CI "
+            "pipeline definitions by name and get their links, and (2) read "
+            "release plans — work items in the 'Release' project: resolve a "
+            "dashboard release-plan id via WIQL on [Custom.ReleasePlanID], "
+            "then read the work item and its API Spec / Package children."
+        ),
+    )
 
-    Read-only: pipeline lookup and work-item/release-plan reads.
-    """
+
+async def create_evolution_ado_mcp_tool() -> MCPStdioTool:
+    """Create the issue-only Azure DevOps MCP profile for evolution."""
+    return await _create_ado_mcp_tool(
+        allowed_tools=_ADO_EVOLUTION_TOOLS,
+        domains=("work-items",),
+        description=(
+            "Azure Boards issue tools for the chatbot evolution workflow. "
+            "May query and read work items, list comments, create Issue work "
+            "items, and add comments. Must not access pipelines, project "
+            "identities, artifacts, tags, or assignments."
+        ),
+    )
+
+
+async def _create_ado_mcp_tool(
+    *,
+    allowed_tools: tuple[str, ...],
+    domains: tuple[str, ...],
+    description: str,
+) -> MCPStdioTool:
     org = cfg("ADO_ORG", _DEFAULT_ADO_ORG) or _DEFAULT_ADO_ORG
     env = {**os.environ}
 
@@ -83,31 +122,49 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
         )
 
     logger.info("ADO MCP tool configured (org=%s)", org)
-
     return MCPStdioTool(
         name="ado-mcp-tools",
-        command="npx",
+        command=_ADO_MCP_COMMAND,
         args=[
-            "-y",
-            _ADO_MCP_PACKAGE,
             org,
             "-d",
-            "core",
-            "pipelines",
-            "work-items",
+            *domains,
             "-a",
             "envvar",
         ],
         env=env,
         load_prompts=False,
-        allowed_tools=_ADO_ALLOWED_TOOLS,
+        allowed_tools=list(allowed_tools),
         approval_mode="never_require",
         parse_tool_results=truncating_mcp_parser,
-        description=(
-            "Read-only Azure DevOps MCP tools. Use to (1) find release/CI "
-            "pipeline definitions by name and get their links, and (2) read "
-            "release plans — work items in the 'Release' project: resolve a "
-            "dashboard release-plan id via WIQL on [Custom.ReleasePlanID], "
-            "then read the work item and its API Spec / Package children."
-        ),
+        description=description,
     )
+
+
+async def get_ado_work_item_state(issue_url: str) -> str:
+    """Return ``open`` or ``closed`` for a canonical Azure Boards work item."""
+    reference = parse_issue_reference(issue_url)
+    if not isinstance(reference, AzureDevOpsIssueReference):
+        raise ValueError(f"Not an Azure Boards work item URL: {issue_url}")
+
+    token = await resolve_token()
+    api_url = (
+        f"https://dev.azure.com/{quote(reference.organization, safe='')}/"
+        f"{quote(reference.project, safe='')}"
+        f"/_apis/wit/workitems/{reference.work_item_id}"
+        "?fields=System.State&api-version=7.1"
+    )
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/json",
+    }
+    async with httpx.AsyncClient(timeout=_ADO_API_TIMEOUT_SECS) as client:
+        response = await client.get(api_url, headers=headers)
+        response.raise_for_status()
+    payload = response.json()
+    state = payload.get("fields", {}).get("System.State")
+    if not isinstance(state, str) or not state:
+        raise RuntimeError(f"ADO returned no state for {issue_url}")
+
+    closed_state = cfg("ADO_ISSUE_CLOSED_STATE", "Closed") or "Closed"
+    return "closed" if state.casefold() == closed_state.casefold() else "open"

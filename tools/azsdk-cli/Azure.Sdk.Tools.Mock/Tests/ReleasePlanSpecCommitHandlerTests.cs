@@ -33,8 +33,8 @@ public class ReleasePlanSpecCommitHandlerTests
 
     [TestCase(SpecCommit, 35000, false)]
     [TestCase(SpecCommit, 35000, true)]
-    [TestCase("", 0, false)]
-    [TestCase("", 0, true)]
+    [TestCase("", 35000, false)]
+    [TestCase("", 35000, true)]
     public void Update_EchoesOptionalSpecCommit(string sha, int workItemId, bool wireArguments)
     {
         var response = Update(sha, workItemId, wireArguments);
@@ -44,15 +44,32 @@ public class ReleasePlanSpecCommitHandlerTests
         Assert.That(response.ReleasePlanDetails.SpecCommitSHA, Is.EqualTo(sha));
     }
 
-    [TestCase(0, false)]
-    [TestCase(0, true)]
-    [TestCase(-1, false)]
-    [TestCase(-1, true)]
-    [TestCase(50001, false)]
-    [TestCase(50001, true)]
-    public void Update_RejectsSpecCommitWithoutExactMockWorkItem(int workItemId, bool wireArguments)
+    [TestCase(SpecCommit, 0, false)]
+    [TestCase(SpecCommit, 0, true)]
+    [TestCase(SpecCommit, -1, false)]
+    [TestCase(SpecCommit, -1, true)]
+    [TestCase(SpecCommit, 50001, false)]
+    [TestCase(SpecCommit, 50001, true)]
+    [TestCase("", 0, false)]
+    [TestCase("", 0, true)]
+    [TestCase("", -1, false)]
+    [TestCase("", -1, true)]
+    [TestCase("", 50001, false)]
+    [TestCase("", 50001, true)]
+    public void Update_RejectsWithoutExactMockWorkItem(string sha, int workItemId, bool wireArguments)
     {
-        var response = Update(SpecCommit, workItemId, wireArguments);
+        var response = Update(sha, workItemId, wireArguments);
+
+        Assert.That(response.ResponseError, Is.Not.Null);
+        Assert.That(response.ReleasePlanDetails, Is.Null);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Update_RejectsOmittedWorkItem(bool wireArguments)
+    {
+        var arguments = new Dictionary<string, object?>();
+        var response = (ReleasePlanResponse)new UpdateReleasePlanHandler().Handle(ToArguments(arguments, wireArguments));
 
         Assert.That(response.ResponseError, Is.Not.Null);
         Assert.That(response.ReleasePlanDetails, Is.Null);

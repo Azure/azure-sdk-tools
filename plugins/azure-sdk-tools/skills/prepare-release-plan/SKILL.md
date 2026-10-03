@@ -23,8 +23,8 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 - Do not display Azure DevOps work item URLs; only provide the Release Plan Link and ID.
 - Require an API spec PR link or a TypeSpec project path before creating or updating a plan.
 - Validate that the spec PR repository matches the requested API release type before creation.
-- Release plan tools accept **either** a Release Plan ID or an Azure DevOps work item ID — pass whichever the user provides. Each tool resolves the value automatically (trying it as a Release Plan ID first, then as a work item ID), so you do not need to call `azure-sdk-mcp:azsdk_get_release_plan` first just to translate one ID into the other.
-- Create/update accept optional `specCommitSha`; when passing it to update, supply the explicit Azure DevOps `workItemId`.
+- Release plan tools accept **either** a Release Plan ID or an Azure DevOps work item ID, except metadata updates: `azure-sdk-mcp:azsdk_update_release_plan` requires the exact `WorkItemId`. If only a Release Plan ID is known, get that plan and use its returned `WorkItemId`; do not treat the two IDs as interchangeable.
+- Create/update accept optional `specCommitSha`; omission on update preserves the saved SHA.
 - Always relay schedule-risk `warnings` and `next_steps` returned by release plan tools. For each past-due plan, show its Release Plan ID and dashboard link, then present both choices: update its target release month or abandon it and record the reason in the dashboard.
 
 ## MCP Tools
@@ -97,10 +97,10 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 **Steps**:
 
-1. **Identify Plan** — Get the work item ID or TypeSpec project path from the user.
+1. **Identify Plan** — Use the exact Azure DevOps work item ID. If only a Release Plan ID is known, get the plan and use its returned `WorkItemId`.
 2. **Update Metadata** — Run `azure-sdk-mcp:azsdk_update_release_plan` with:
    - `typeSpecProjectPath` (required)
-   - `workItemId` (optional — resolved from TypeSpec path or spec PR if not provided)
+   - `workItemId` (required — exact Azure DevOps work item ID; no PR/path fallback)
    - `specPullRequestUrl` (optional)
    - `sdkReleaseType` (required — do NOT default this from API release type; always ask user explicitly)
    - `serviceTreeId` (optional)

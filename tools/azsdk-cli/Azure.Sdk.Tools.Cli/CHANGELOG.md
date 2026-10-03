@@ -8,6 +8,8 @@
 
 ### Breaking Changes
 
+- Release-plan metadata updates now require the exact Azure DevOps work item ID. PR/path-only lookup and Release Plan ID fallback are no longer used by this update command.
+
 ### Bugs Fixed
 
 ### Other Changes

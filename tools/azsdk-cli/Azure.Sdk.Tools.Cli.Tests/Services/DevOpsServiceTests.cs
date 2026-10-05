@@ -29,6 +29,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+        [TestCase("0123456789abcdef0123456789abcdef01234567")]
+        [TestCase("")]
+        public async Task GetReleasePlanForWorkItemAsync_ReadsOptionalSavedCommit(string sha)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            if (sha.Length > 0)
+            {
+                plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = sha;
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/42", "New"));
+
+            var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
+
+            Assert.That(result.SpecCommitSHA, Is.EqualTo(sha));
+        }
+
         [TestCase("January 2020")]
         [TestCase("Jan 2020")]
         public async Task ListOverdueReleasePlansAsync_PrivatePreviewWithoutSpecChild_IsMissing(string targetMonth)

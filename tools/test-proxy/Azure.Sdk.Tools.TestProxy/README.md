@@ -87,7 +87,7 @@ For a more detailed explanation of how the test proxy works, along with links to
 
 ### Via Local Compile or .NET
 
-1. [Install .NET 8.0 (LTS) or 9.0](https://dotnet.microsoft.com/download)
+1. [Install the .NET 10.0 SDK (LTS)](https://dotnet.microsoft.com/download/dotnet/10.0)
 2. Install or update test-proxy
 
 ```powershell

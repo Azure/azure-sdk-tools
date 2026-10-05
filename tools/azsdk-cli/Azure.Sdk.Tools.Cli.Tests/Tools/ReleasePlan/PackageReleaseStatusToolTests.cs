@@ -78,20 +78,35 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase(-1)]
         public async Task CorrelationRegression_WithoutValidPlanId_DoesNotWrite(int releasePlanId)
         {
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
             var result = await UpdateAsync(releasePlanId: releasePlanId, version: "7.0.1");
 
             AssertNoWrites();
-            Assert.That(_devOps.Invocations, Is.Empty, "A no-plan release must not even query candidate plans.");
-            Assert.That(result.ReleaseStatus, Is.Empty);
             if (releasePlanId == 0)
             {
+                Assert.That(_devOps.Invocations.Select(i => i.Method.Name), Is.EqualTo(new[] { nameof(IDevOpsService.GetReleasePlansForPackageAsync) }),
+                    "Without a plan ID or SDK PR only the transitional package lookup runs.");
                 Assert.That(result.ResponseError, Is.Null);
-                Assert.That(result.Message, Does.Contain("no release plan was updated"));
+                Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
             }
             else
             {
+                Assert.That(_devOps.Invocations, Is.Empty);
                 Assert.That(result.ResponseError, Does.Contain("positive integer"));
             }
+        }
+
+        [Test]
+        public async Task PlanIdNotFound_DoesNotFallBackToLegacyLookup()
+        {
+            _devOps.Setup(s => s.GetReleasePlansByIdAsync(999, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+            var result = await UpdateAsync(releasePlanId: 999);
+
+            AssertNoWrites();
+            Assert.That(result.ResponseError, Does.Contain("exactly one release plan"));
+            _devOps.Verify(s => s.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [TestCase(false)]
@@ -139,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task UnsupportedLanguage_DoesNotWrite(string language)
         {
             var result = await UpdateAsync(language: language);
-            Assert.That(result.ResponseError, Does.Contain("not supported"));
+            Assert.That(result.Message, Does.Contain("not supported"));
             Assert.That(_devOps.Invocations, Is.Empty);
         }
 
@@ -557,15 +572,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Cli_OmittedCorrelationInputs_IsSafeNoOp()
+        public async Task Cli_OmittedCorrelationInputs_UsesLegacyLookup()
         {
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
             var command = _tool.GetCommandInstances().First();
             var parse = command.Parse("--package-name azure-test --language Python");
             Assert.That(parse.Errors, Is.Empty);
             var result = (ReleaseStatusUpdateResponse)await _tool.HandleCommand(parse, CancellationToken.None);
             Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.ReleaseStatus, Is.Empty);
-            Assert.That(_devOps.Invocations, Is.Empty);
+            Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
+            Assert.That(_devOps.Invocations.Select(i => i.Method.Name), Is.EqualTo(new[] { nameof(IDevOpsService.GetReleasePlansForPackageAsync) }));
         }
 
         [TestCase(".NET", "Azure.Test", "Dotnet")]
@@ -588,17 +604,33 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task AutomaticSdkPr_NoMatchIsNoOp()
+        public async Task AutomaticSdkPr_NoLinkedPlanFallsBackToLegacyLookup()
         {
             _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(PythonSdkPr, "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
             var result = await UpdateAsync(releasePlanId: 0, sdkPr: PythonSdkPr);
 
             Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.Message, Does.Contain("No in-progress release plan"));
-            Assert.That(result.ReleaseStatus, Is.Empty);
+            Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
+            _devOps.Verify(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
             _devOps.Verify(s => s.GetReleasePlansByIdAsync(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
             AssertNoWrites();
+        }
+
+        [Test]
+        public async Task AutomaticSdkPr_AmbiguousLinkDoesNotFallBackToLegacyLookup()
+        {
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(PythonSdkPr, "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([_plan, other]);
+
+            var result = await UpdateAsync(releasePlanId: 0, sdkPr: PythonSdkPr);
+
+            AssertNoWrites();
+            Assert.That(result.ResponseError, Does.Contain("exactly one release plan"));
+            _devOps.Verify(s => s.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -672,11 +704,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/0")]
         [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/100/files")]
         [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/100?x=1")]
-        public async Task AutomaticSdkPr_InvalidIdentityDoesNotQuery(string sdkPr)
+        public async Task AutomaticSdkPr_UnrecognizedUrlUsesLegacyLookup(string sdkPr)
         {
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
             var result = await UpdateAsync(releasePlanId: 0, sdkPr: sdkPr);
-            Assert.That(result.ResponseError, Does.Contain("SDK pull request"));
-            Assert.That(_devOps.Invocations, Is.Empty);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(_devOps.Invocations.Select(i => i.Method.Name), Is.EqualTo(new[] { nameof(IDevOpsService.GetReleasePlansForPackageAsync) }),
+                "An unrecognized PR URL must never be used to query by SDK PR.");
         }
 
         [Test]

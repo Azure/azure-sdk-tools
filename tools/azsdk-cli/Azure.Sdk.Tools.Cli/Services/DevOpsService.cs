@@ -145,6 +145,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByIdAsync(int releasePlanId, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
@@ -367,6 +368,42 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 logger.LogError(ex, "Failed to get release plans for product id {productTreeId}", productTreeId);
                 throw new Exception($"Failed to get release plans for product id {productTreeId}. Error: {ex.Message}");
+            }
+        }
+
+        // Transitional legacy lookup, used only when a release provides neither a plan ID nor a matching SDK PR.
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
+        {
+            try
+            {
+                var languageId = MapLanguageToId(language);
+                var escapedPackageName = packageName?.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+                query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
+                query += $" AND [Custom.ReleaseStatusFor{languageId}] <> 'Released'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] = 'In Progress'";
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No in-progress release plans found for package {packageName} in {language}", packageName, language);
+                    return [];
+                }
+
+                var releasePlans = new List<ReleasePlanWorkItem>();
+                foreach (var workItem in releasePlanWorkItems)
+                {
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
+                    releasePlans.Add(releasePlan);
+                }
+
+                return releasePlans;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get release plans for package {packageName} in {language}", packageName, language);
+                throw new Exception($"Failed to get release plans for package {packageName} in {language}. Error: {ex.Message}", ex);
             }
         }
 

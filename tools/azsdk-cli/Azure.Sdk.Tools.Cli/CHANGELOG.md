@@ -4,14 +4,15 @@
 
 ### Features Added
 
+- `release-plan update-release-status` resolves the release plan from a supplied `--release-plan-id` first, then from a supplied `--sdk-pull-request` linked to exactly one in-progress plan, and validates the language/package entry inside that plan. When neither identifies a plan, the original package-name lookup is used as a transitional fallback and logs `LEGACY_RELEASE_PLAN_LOOKUP`, so existing release pipelines keep working. No API version is required.
+
 ### Breaking Changes
 
-- `release-plan update-release-status` now requires a requester-supplied release-plan ID or the triggering SDK PR linked to exactly one in-progress ADO plan. Calls without either input are safe no-ops. Package-name, cached-PR-status, and release-type heuristics no longer select a plan; no API version is required.
 - `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept an optional package type (`mgmt`, `client`, `spring`, or `functions`). API Review Hub requires it for new packages and validates it against stored metadata for existing packages.
 
 ### Bugs Fixed
 
-- Release status updates validate the language/package entry, reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes.
+- Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or an SDK PR matching several plans never falls back to the package lookup.
 - Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
 - Automatic release resolution re-fetches associated PRs and rejects multiple authoritative exact-merge-commit matches, not unrelated PRs that merely contain the commit.
 

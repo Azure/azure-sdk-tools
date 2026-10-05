@@ -18,12 +18,13 @@ param(
 
 <#
 .SYNOPSIS
-    Updates release status only for packages with explicit release-plan correlation metadata.
+    Updates release status using an explicit release-plan ID or SDK PR when supplied, otherwise the legacy package lookup.
 
 .DESCRIPTION
     Uses the requester-supplied release-plan ID for manual releases, or the triggering SDK PR
     for automatic releases. azsdk resolves the existing ADO plan and validates the language/package.
-    No API version or package-name-to-plan mapping is used. Missing correlation skips the update.
+    TRANSITIONAL: when neither is supplied, the original package-name lookup is used and a warning is logged
+    so pipelines that do not yet forward the association keep working. Remove once every pipeline forwards one.
 
 .PARAMETER PackageInfoFilePath
     The path to the package information file (required) or path to the directory containing package information files.
@@ -73,10 +74,10 @@ function Process-Package([string]$packageInfoPath)
         return
     }
 
-    if ($suppliedPlanId -eq 0 -and [string]::IsNullOrWhiteSpace($SdkPullRequest))
+    $isLegacyLookup = ($suppliedPlanId -eq 0 -and [string]::IsNullOrWhiteSpace($SdkPullRequest))
+    if ($isLegacyLookup)
     {
-        Write-Host "Package '$PackageName' has no supplied release-plan ID or triggering SDK PR. No release plan was updated."
-        return
+        Write-Warning "LEGACY_RELEASE_PLAN_LOOKUP: Package '$PackageName' has no release-plan ID or triggering SDK PR; using the legacy package lookup. Forward ReleasePlanId or SdkPullRequest from the release pipeline."
     }
 
     # Do not inherit plan IDs from package metadata; unrelated bug-fix builds can reuse those files.
@@ -106,6 +107,11 @@ function Process-Package([string]$packageInfoPath)
         }
         $sdkReleaseType = if ($version.IsPrerelease) { 'beta' } else { 'stable' }
         $releaseArgs += @("--package-version", $PackageVersion, "--sdk-release-type", $sdkReleaseType)
+    }
+    elseif ($isLegacyLookup)
+    {
+        Write-Host "Package version is not available for package '$PackageName'. Skipping the release plan status update."
+        return
     }
     $releaseInfo = & $AzsdkExePath @releaseArgs
     if ($LASTEXITCODE -ne 0)

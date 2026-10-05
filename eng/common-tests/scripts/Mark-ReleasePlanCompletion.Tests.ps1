@@ -65,7 +65,46 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
 
         Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0
 
+        $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        $call = $global:ReleaseStatusTestCalls[0]
+        Get-CapturedArgument $call '--release-plan-id' | Should -BeNullOrEmpty
+        Get-CapturedArgument $call '--api-version' | Should -BeNullOrEmpty
+    }
+
+    It 'uses the legacy package lookup when neither an ID nor an SDK PR is supplied' {
+        $warnings = @(Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0 3>&1 | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+
+        $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        $call = $global:ReleaseStatusTestCalls[0]
+        Get-CapturedArgument $call '--package-name' | Should -Be 'azure-test'
+        Get-CapturedArgument $call '--language' | Should -Be 'Python'
+        Get-CapturedArgument $call '--status' | Should -Be 'Released'
+        Get-CapturedArgument $call '--package-version' | Should -Be '1.2.3'
+        Get-CapturedArgument $call '--sdk-release-type' | Should -Be 'stable'
+        Get-CapturedArgument $call '--release-plan-id' | Should -BeNullOrEmpty
+        Get-CapturedArgument $call '--sdk-pull-request' | Should -BeNullOrEmpty
+        ($warnings | ForEach-Object { $_.Message }) -join ' ' | Should -Match 'LEGACY_RELEASE_PLAN_LOOKUP'
+    }
+
+    It 'skips the legacy lookup when the package version is missing or unparseable' -TestCases @(
+        @{ Version = $null }, @{ Version = 'not-a-version' }
+    ) {
+        param($Version)
+        $script:packageInfo.Version = $Version
+        $script:packageInfo | ConvertTo-Json | Set-Content -LiteralPath $script:packageInfoPath
+
+        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0 3>$null
+
         $global:ReleaseStatusTestCalls.Count | Should -Be 0
+    }
+
+    It 'forwards the SDK PR without a legacy warning when no plan ID is supplied' {
+        $pr = 'https://github.com/Azure/azure-sdk-for-python/pull/100'
+        $warnings = @(Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0 -SdkPullRequest $pr 3>&1 | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+
+        $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--sdk-pull-request' | Should -Be $pr
+        ($warnings | ForEach-Object { $_.Message }) -join ' ' | Should -Not -Match 'LEGACY_RELEASE_PLAN_LOOKUP'
     }
 
     It 'rejects malformed explicit IDs without rounding them to another plan' -TestCases @(

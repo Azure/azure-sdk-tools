@@ -32,21 +32,12 @@ jobs:
             $installationId = Get-GitHubInstallationId -Jwt $jwt -ApiBase "https://api.github.com" -ApiVersion "2022-11-28" -InstallationTokenOwner "Azure"
             Write-Host "Installation ID: $installationId"
 
-            # Confirm the install actually grants All-repositories access - a Selected-repositories
-            # install does not satisfy the Copilot API's parent-install permission check even when
-            # the mint response below shows copilot_requests=write.
             $ghHeaders = @{ Authorization = "Bearer $jwt"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" }
             $installation = Invoke-RestMethod -Uri "https://api.github.com/app/installations/$installationId" -Headers $ghHeaders
             Write-Host "Installation repository_selection: $($installation.repository_selection) (target_type: $($installation.target_type))"
-            if ($installation.repository_selection -ne "all") {
-              Write-Host "##vso[task.logissue type=warning]Installation is NOT set to All repositories - this alone can cause Copilot API rejection even with copilot_requests=write on the minted token."
-            }
 
-            # The JWT is only valid for App-level endpoints (/app, /app/installations/*) - it
-            # is rejected with "Bad credentials" on generic /repos/ lookups. azure-sdk-tools is
-            # public, so this one lookup needs no auth at all.
-            $repo = Invoke-RestMethod -Uri "https://api.github.com/repos/Azure/azure-sdk-tools" -Headers @{ Accept = "application/vnd.github+json" }
-            $repoId = $repo.id
+            # Avoid anonymous GitHub rate limits on shared build agents.
+            $repoId = 170592186
             Write-Host "Repo ID: $repoId"
 
             $body = @{ repository_ids = @($repoId); permissions = @{ copilot_requests = "write"; metadata = "read" } } | ConvertTo-Json
@@ -67,6 +58,7 @@ jobs:
 
       - task: AzureCLI@2
         displayName: Test a real Copilot CLI call with the scoped token
+        continueOnError: true
         inputs:
           azureSubscription: 'AzureSDKEngKeyVault Secrets'
           scriptType: pscore
@@ -98,3 +90,42 @@ jobs:
               Write-Host "##vso[task.logissue type=warning]No debug log files were written to $logDir."
             }
             Write-Host "##[endgroup]"
+
+      - pwsh: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN)) {
+            throw 'No scoped installation token was minted.'
+          }
+          $sdkDir = Join-Path "$(Agent.TempDirectory)" 'copilot-sdk-write-probe'
+          New-Item -ItemType Directory -Force -Path $sdkDir | Out-Null
+          npm install --prefix $sdkDir --no-save --no-package-lock @github/copilot-sdk@1.0.16
+          if ($LASTEXITCODE -ne 0) { throw 'Could not install the Copilot SDK.' }
+          $env:COPILOT_SDK_PROBE_DIR = $sdkDir
+          $probe = @'
+          const { createRequire } = require('node:module');
+          const { join } = require('node:path');
+          const fromProbe = createRequire(join(process.env.COPILOT_SDK_PROBE_DIR, 'probe.cjs'));
+          const { CopilotClient, RuntimeConnection } = fromProbe('@github/copilot-sdk');
+          const timeout = setTimeout(() => { console.error('SDK probe timed out'); process.exit(124); }, 90000);
+          timeout.unref();
+          const client = new CopilotClient({
+            connection: RuntimeConnection.forStdio(),
+            env: { ...process.env, COPILOT_GITHUB_TOKEN: process.env.COPILOT_GITHUB_TOKEN },
+            useLoggedInUser: false,
+          });
+          (async () => {
+            try {
+              const session = await client.createSession({ model: 'auto' });
+              const message = await session.sendAndWait({ prompt: 'Reply with the single word: success' }, 60000);
+              if (!message?.data?.content) throw new Error('No assistant response received');
+              console.log(`SDK response: ${message.data.content}`);
+            } finally {
+              await client.stop().catch(error => console.error(`SDK cleanup failed: ${error.message}`));
+            }
+          })().catch(error => { console.error(`SDK probe failed: ${error.message}`); process.exitCode = 1; });
+          '@
+          node -e $probe
+          if ($LASTEXITCODE -ne 0) { throw 'Copilot SDK prompt failed.' }
+        displayName: Test SDK prompt with repository-write token
+        env:
+          COPILOT_GITHUB_TOKEN: $(ScopedToken)

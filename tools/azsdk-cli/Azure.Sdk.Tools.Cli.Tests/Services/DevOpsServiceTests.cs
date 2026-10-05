@@ -29,6 +29,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+        [TestCase("0123456789abcdef0123456789abcdef01234567")]
+        [TestCase("")]
+        public async Task GetReleasePlanForWorkItemAsync_ReadsOptionalSavedCommit(string sha)
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            if (sha.Length > 0)
+            {
+                plan.Fields[ReleasePlanWorkItem.SpecCommitSHAField] = sha;
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/42", "New"));
+
+            var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
+
+            Assert.That(result.SpecCommitSHA, Is.EqualTo(sha));
+        }
+
         [TestCase("January 2020")]
         [TestCase("Jan 2020")]
         public async Task ListOverdueReleasePlansAsync_PrivatePreviewWithoutSpecChild_IsMissing(string targetMonth)
@@ -1000,6 +1017,34 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #region RunSDKGenerationPipelineAsync Tests
 
         [Test]
+        public async Task RunPipelineAsync_GenericQueueKeepsSourceVersionUnset()
+        {
+            var ct = CancellationToken.None;
+            var buildClient = new Mock<BuildHttpClient>(new Uri("https://dev.azure.com/test"), new Microsoft.VisualStudio.Services.Common.VssCredentials());
+            var projectClient = new Mock<ProjectHttpClient>(new Uri("https://dev.azure.com/test"), new Microsoft.VisualStudio.Services.Common.VssCredentials());
+            var connection = new Mock<IDevOpsConnection>();
+            connection.Setup(x => x.GetBuildClient(ct)).Returns(buildClient.Object);
+            connection.Setup(x => x.GetProjectClient(ct)).Returns(projectClient.Object);
+            buildClient.Setup(x => x.GetDefinitionAsync("internal", 7421, null, null, null, null, null, ct))
+                .ReturnsAsync(new BuildDefinition { Id = 7421 });
+            projectClient.Setup(x => x.GetProject("internal", null, false, null))
+                .ReturnsAsync(new TeamProject { Id = Guid.NewGuid(), Name = "internal" });
+            Build? queuedBuild = null;
+            buildClient.Setup(x => x.QueueBuildAsync(It.IsAny<Build>(), null, null, null, null, null, ct))
+                .Callback(new InvocationAction(invocation => queuedBuild = (Build)invocation.Arguments[0]))
+                .ReturnsAsync(new Build { Id = 99 });
+            var parameters = new Dictionary<string, string> { ["UnrelatedParameter"] = "value" };
+
+            await new DevOpsService(_logger, connection.Object).RunPipelineAsync(7421, parameters, "feature/release", ct);
+
+            Assert.That(queuedBuild, Is.Not.Null);
+            Assert.That(queuedBuild!.SourceBranch, Is.EqualTo("feature/release"));
+            Assert.That(queuedBuild.SourceVersion, Is.Null);
+            Assert.That(queuedBuild.TemplateParameters, Is.EquivalentTo(parameters));
+            buildClient.Verify(x => x.QueueBuildAsync(It.IsAny<Build>(), null, null, null, null, null, ct), Times.Once);
+        }
+
+        [Test]
         public void RunSDKGenerationPipelineAsync_WhenRunningInAzurePipelines_DoesNotIncludeSdkReleaseTypeOrApiVersionTemplateParams()
         {
             // Arrange
@@ -1019,6 +1064,64 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(templateParams["SdkRepoBranch"], Is.EqualTo("feature/sdk-branch"));
             Assert.That(templateParams, Does.Not.ContainKey("SdkReleaseType"));
             Assert.That(templateParams, Does.Not.ContainKey("ApiVersion"));
+        }
+
+        [Test, Combinatorial]
+        [NonParallelizable]
+        public async Task RunSDKGenerationPipelineAsync_QueuesSavedCommitWithoutChangingTemplateParameters(
+            [Values(false, true)] bool inPipeline,
+            [Values(null, "", "0123456789abcdef0123456789abcdef01234567")] string? commitSha,
+            [Values("refs/pull/123/merge", "main")] string sourceRef)
+        {
+            using var cancellation = new CancellationTokenSource();
+            var ct = cancellation.Token;
+            var buildClient = new Mock<BuildHttpClient>(new Uri("https://dev.azure.com/test"), new Microsoft.VisualStudio.Services.Common.VssCredentials());
+            var projectClient = new Mock<ProjectHttpClient>(new Uri("https://dev.azure.com/test"), new Microsoft.VisualStudio.Services.Common.VssCredentials());
+            var connection = new Mock<IDevOpsConnection>();
+            connection.Setup(x => x.GetBuildClient(ct)).Returns(buildClient.Object);
+            connection.Setup(x => x.GetProjectClient(ct)).Returns(projectClient.Object);
+            buildClient.Setup(x => x.GetDefinitionAsync("internal", 7421, null, null, null, null, null, ct))
+                .ReturnsAsync(new BuildDefinition { Id = 7421, Name = "SDK generation" });
+            projectClient.Setup(x => x.GetProject("internal", null, false, null))
+                .ReturnsAsync(new TeamProject { Id = Guid.NewGuid(), Name = "internal" });
+            List<Build> queuedBuilds = [];
+            buildClient.Setup(x => x.QueueBuildAsync(It.IsAny<Build>(), null, null, null, null, null, ct))
+                .Callback(new InvocationAction(invocation => queuedBuilds.Add((Build)invocation.Arguments[0])))
+                .ReturnsAsync(new Build { Id = 99 });
+            var service = new DevOpsService(_logger, connection.Object);
+            var originalTeamProject = Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID");
+            try
+            {
+                Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", inPipeline ? "test-project" : null);
+
+                await service.RunSDKGenerationPipelineAsync(
+                    sourceRef, "specification/test/service", "2024-01-01", "stable", "Java", 0,
+                    sdkRepoBranch: "feature/existing-sdk", specCommitSha: commitSha, ct: ct);
+
+                Assert.That(queuedBuilds, Has.Count.EqualTo(1));
+                Assert.That(queuedBuilds[0].SourceBranch, Is.EqualTo(sourceRef));
+                Assert.That(queuedBuilds[0].SourceVersion, Is.EqualTo(commitSha));
+                var expectedParameters = new Dictionary<string, string>
+                {
+                    ["ConfigType"] = "TypeSpec",
+                    ["ConfigPath"] = "specification/test/service/tspconfig.yaml",
+                    ["CreatePullRequest"] = "true",
+                    ["ReleasePlanWorkItemId"] = "0",
+                    ["TriggerSource"] = "sdk-release",
+                    ["SdkRepoBranch"] = "feature/existing-sdk"
+                };
+                if (!inPipeline)
+                {
+                    expectedParameters["SdkReleaseType"] = "stable";
+                    expectedParameters["ApiVersion"] = "2024-01-01";
+                }
+                Assert.That(queuedBuilds[0].TemplateParameters, Is.EquivalentTo(expectedParameters));
+                buildClient.Verify(x => x.QueueBuildAsync(It.IsAny<Build>(), null, null, null, null, null, ct), Times.Once);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", originalTeamProject);
+            }
         }
 
         #endregion

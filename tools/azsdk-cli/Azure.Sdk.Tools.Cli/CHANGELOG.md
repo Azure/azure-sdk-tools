@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept an optional package type (`mgmt`, `client`, `spring`, or `functions`). API Review Hub requires it for new packages and validates it against stored metadata for existing packages.
+
 ### Bugs Fixed
 
 ### Other Changes

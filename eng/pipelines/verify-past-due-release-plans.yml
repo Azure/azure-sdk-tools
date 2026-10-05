@@ -1,0 +1,84 @@
+# One-off verification for #17192. No schedules, plan writes, or production-owner emails.
+trigger: none
+pr: none
+
+parameters:
+  - name: sendTestEmails
+    type: boolean
+    default: false
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+  - group: AzureSDKEmailerVariable
+
+pool:
+  name: $(LINUXPOOL)
+  demands: ImageOverride -equals $(LINUXVMIMAGE)
+
+jobs:
+  - job: VerifyPastDue
+    timeoutInMinutes: 30
+    steps:
+      - checkout: self
+
+      - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+      - task: PowerShell@2
+        displayName: Build isolated verifier from released template source
+        inputs:
+          targetType: inline
+          pwsh: true
+          script: |
+            dotnet build eng/verification/past-due/PastDueVerification.csproj --configuration Release -p:CopilotSkipCliDownload=true -warnaserror
+            if ($LASTEXITCODE -ne 0) { throw 'Verifier build failed.' }
+
+      - task: PowerShell@2
+        displayName: Render synthetic emails and verify negative paths without sending
+        inputs:
+          targetType: inline
+          pwsh: true
+          script: |
+            dotnet run --project eng/verification/past-due/PastDueVerification.csproj --configuration Release --no-build -- --output "$(Build.ArtifactStagingDirectory)/past-due-verification/offline"
+            if ($LASTEXITCODE -ne 0) { throw 'Offline verification failed.' }
+
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          TokenOwners:
+            - Azure
+
+      - task: PowerShell@2
+        displayName: Install exact published CLI 0.6.51 for preview
+        inputs:
+          targetType: inline
+          pwsh: true
+          script: './eng/common/mcp/azure-sdk-mcp.ps1 -Version 0.6.51 -InstallDirectory $(System.DefaultWorkingDirectory)/released-cli'
+
+      - task: AzureCLI@2
+        displayName: Read-only cleanup preview under the pipeline service identity
+        env:
+          GITHUB_TOKEN: $(GH_TOKEN)
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: scriptPath
+          scriptPath: eng/verification/past-due/Read-Only-Preview.ps1
+          arguments: '-AzsdkPath "$(System.DefaultWorkingDirectory)/released-cli/azsdk" -OutputDirectory "$(Build.ArtifactStagingDirectory)/past-due-verification/preview"'
+
+      - ${{ if eq(parameters.sendTestEmails, true) }}:
+        - task: PowerShell@2
+          displayName: Send two TEST ONLY emails to gaoh@microsoft.com without CCs
+          env:
+            AZSDKTOOLS_NOTIFICATION_SERVICE_URL: $(AzureSDKEmailerSasURL)
+          inputs:
+            targetType: inline
+            pwsh: true
+            script: |
+              dotnet run --project eng/verification/past-due/PastDueVerification.csproj --configuration Release --no-build -- --output "$(Build.ArtifactStagingDirectory)/past-due-verification/send" --send-test-emails
+              if ($LASTEXITCODE -ne 0) { throw 'Controlled email verification failed. Inspect sanitized evidence before any retry.' }
+
+      - task: PublishPipelineArtifact@1
+        displayName: Save private verification evidence
+        condition: always()
+        inputs:
+          artifactName: past-due-verification
+          targetPath: $(Build.ArtifactStagingDirectory)/past-due-verification

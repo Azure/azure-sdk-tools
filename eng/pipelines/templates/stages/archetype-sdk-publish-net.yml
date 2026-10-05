@@ -129,7 +129,7 @@ stages:
           inputs:
             targetType: filePath
             filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-azuresdkartifacts.ps1'
-            arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
+            arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)"'
             pwsh: true
           env:
             AZURESDKARTIFACTS_SAS_TOKEN: $(VCPKG_BINARY_SAS_TOKEN)

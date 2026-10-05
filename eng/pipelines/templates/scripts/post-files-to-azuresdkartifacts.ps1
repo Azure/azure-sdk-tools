@@ -32,6 +32,7 @@ foreach ($artifact in $filesForPublish) {
    Write-Host "Publishing $artifact to $StorageAccountName/$releaseId/$fileName"
 
    Set-AzStorageBlobContent `
+      -Force `
       -Context $context `
       -File $artifact `
       -Container $Container `

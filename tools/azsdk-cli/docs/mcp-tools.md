@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.50.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.52.
 
 ## Tools list
 
@@ -76,8 +76,8 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_verify_setup | `azsdk verify setup check` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, the packagePath of the repo to check, and an optional list of requirement names to try installing. To auto-install, call with `requirementsToInstall` containing the exact requirement names the user wants to install. |
 |  | `azsdk apiview get-content` | Get content by APIView URL |
 |  | `azsdk release-plan update-release-status` |  |
+|  | `azsdk release-plan abandon-overdue` |  |
 |  | `azsdk release-plan list-overdue` |  |
-|  | `azsdk release-plan abandon-overdue` | Abandon eligible inactive plans after the grace period. Use `--dry-run` to preview eligible plans and reasons without updates or notifications. |
 |  | `azsdk quokka` |  |
 |  | `azsdk pkg mark-released` | Mark a package as released in API Review Hub and APIView |
 |  | `azsdk pkg get-approval-status` | Check API review release approval status using APIView and API Review Hub |
@@ -88,21 +88,20 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk config github-label sync-ado` | Synchronize service labels from the GitHub CSV to Azure DevOps Work Items |
 |  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
 |  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
-|  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
-|  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
+|  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
+|  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file |
 |  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
 |  | `azsdk config codeowners remove-label-owner` | Remove owner(s) from a label and optional path |
 |  | `azsdk config codeowners remove-package-label` | Remove PR label(s) from a package |
 |  | `azsdk config codeowners remove-package-owner` | Remove source owner(s) from a package |
 |  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
 |  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
-|  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
 |  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
+|  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
 |  | `azsdk eng evaluate` | Evaluate whether Copilot's pipeline-failure fixes changed failing checks to passing over the last N days |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
-|  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file |
+|  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk list` |  |
-

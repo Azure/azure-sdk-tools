@@ -6,7 +6,7 @@ Determines which of a pipeline's packages should be auto-released after a labele
 Language-agnostic. Intended to run in an internal post-merge CI run on 'main'. Given the build's merge
 commit, this script:
   1. Uses the shared Get-GitHubAutoReleasePullRequestForCommit policy to resolve the pull request for
-    the commit: it requires one PR merged into the base branch (default 'main') at that commit and the
+     the commit: it selects the newest PR merged into the base branch (default 'main') and requires the
      'auto-release' label.
   2. Builds a PR diff object (New-GitHubPullRequestDiffObject) from the PR's changed files and reuses
      the repo's existing package-detection logic (Get-PrPkgProperties) to identify the changed packages
@@ -58,7 +58,7 @@ The path to the azsdk executable used for release operations. Defaults to the AZ
 Azure DevOps output variables (reference cross-stage via dependencies.<stage>.outputs['<job>.<step>.<name>']):
   - HasAutoReleaseArtifacts    : 'true' if at least one declared package is releasable
   - AutoReleaseArtifactsJson   : JSON array of the matched declared-artifact objects (or '[]')
-  - AutoReleaseSdkPullRequestUrl : verified triggering SDK PR for release-stage status correlation
+  - AutoReleaseSdkPullRequestUrl : the SDK PR selected for this release, for release-stage status correlation
   - ReleaseArtifact_<safeName> : 'true'/'false' per declared artifact
 HasAutoReleaseArtifacts is the single eligibility gate: it is 'true' only when a merged, auto-release-labeled
 PR changed at least one declared package, and it is emitted last so any earlier failure fails closed.

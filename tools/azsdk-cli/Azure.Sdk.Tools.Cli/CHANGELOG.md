@@ -14,7 +14,6 @@
 
 - Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or an SDK PR matching several plans never falls back to the package lookup.
 - Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
-- Automatic release resolution re-fetches associated PRs and rejects multiple authoritative exact-merge-commit matches, not unrelated PRs that merely contain the commit.
 
 ### Other Changes
 

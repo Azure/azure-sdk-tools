@@ -85,6 +85,8 @@ For a more detailed explanation of how the test proxy works, along with links to
 
 ## Installation
 
+Install [Git](https://git-scm.com/downloads) 2.51.0 or later and ensure `git` is on `PATH`. This requirement also applies to standalone executables.
+
 ### Via Local Compile or .NET
 
 1. [Install .NET 8.0 (LTS) or 9.0](https://dotnet.microsoft.com/download)

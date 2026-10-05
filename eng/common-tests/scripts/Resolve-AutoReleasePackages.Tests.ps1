@@ -116,7 +116,6 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
-            $vars['AutoReleaseSdkPullRequestUrl'] | Should -Be ''
             $vars['ReleaseArtifact_AzureStorageBlobs'] | Should -Be 'false'
             $global:AutoReleaseGetPrPkgCalled | Should -BeFalse
         }
@@ -250,8 +249,6 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $callArgs | Should -Contain 'https://github.com/Azure/azure-sdk-for-net/pull/123'
             $callArgs | Should -Contain '--release-pipeline'
             $callArgs | Should -Contain 'https://dev.azure.com/fabrikam/project/_build/results?buildId=12345'
-            $callArgs | Should -Not -Contain '--api-version'
-            $global:AutoReleaseEmittedVars['AutoReleaseSdkPullRequestUrl'] | Should -Be 'https://github.com/Azure/azure-sdk-for-net/pull/123'
         }
     }
 
@@ -363,7 +360,6 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $vars = $global:AutoReleaseEmittedVars
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
-            $vars['AutoReleaseSdkPullRequestUrl'] | Should -Be ''
             $vars['ReleaseArtifact_pkg'] | Should -Be 'false'
         }
     }

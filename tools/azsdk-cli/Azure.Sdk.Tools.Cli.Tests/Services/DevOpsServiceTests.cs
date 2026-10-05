@@ -1049,12 +1049,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(templateParams, Does.Not.ContainKey("ApiVersion"));
         }
 
-        [TestCase(false, "0123456789abcdef0123456789abcdef01234567")]
-        [TestCase(true, "0123456789abcdef0123456789abcdef01234567")]
-        [TestCase(false, "")]
-        [TestCase(true, "")]
+        [Test, Combinatorial]
         [NonParallelizable]
-        public async Task RunSDKGenerationPipelineAsync_QueuesSavedCommitWithoutChangingTemplateParameters(bool inPipeline, string commitSha)
+        public async Task RunSDKGenerationPipelineAsync_QueuesSavedCommitWithoutChangingTemplateParameters(
+            [Values(false, true)] bool inPipeline,
+            [Values(null, "", "0123456789abcdef0123456789abcdef01234567")] string? commitSha,
+            [Values("refs/pull/123/merge", "main")] string sourceRef)
         {
             using var cancellation = new CancellationTokenSource();
             var ct = cancellation.Token;
@@ -1078,12 +1078,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", inPipeline ? "test-project" : null);
 
                 await service.RunSDKGenerationPipelineAsync(
-                    "refs/pull/123/merge", "specification/test/service", "2024-01-01", "stable", "Java", 0,
-                    sdkRepoBranch: "feature/existing-sdk", ct: ct, specCommitSha: commitSha);
+                    sourceRef, "specification/test/service", "2024-01-01", "stable", "Java", 0,
+                    sdkRepoBranch: "feature/existing-sdk", specCommitSha: commitSha, ct: ct);
 
                 Assert.That(queuedBuilds, Has.Count.EqualTo(1));
-                Assert.That(queuedBuilds[0].SourceBranch, Is.EqualTo("refs/pull/123/merge"));
-                Assert.That(queuedBuilds[0].SourceVersion, Is.EqualTo(commitSha.Length == 0 ? null : commitSha));
+                Assert.That(queuedBuilds[0].SourceBranch, Is.EqualTo(sourceRef));
+                Assert.That(queuedBuilds[0].SourceVersion, Is.EqualTo(commitSha));
                 var expectedParameters = new Dictionary<string, string>
                 {
                     ["ConfigType"] = "TypeSpec",

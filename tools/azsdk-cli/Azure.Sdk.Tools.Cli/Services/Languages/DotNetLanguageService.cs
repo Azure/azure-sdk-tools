@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public sealed partial class DotNetLanguageService: LanguageService
 {
     private const string DotNetCommand = "dotnet";
-    private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
+    private const string RequiredDotNetVersion = "10.0.400"; // TODO - centralize this as part of env setup tool
     private const string GeneratedFolderName = "Generated";
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);

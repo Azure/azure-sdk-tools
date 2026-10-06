@@ -294,9 +294,12 @@ Describe "Get-GitHubAutoReleasePullRequestForCommit" -Tag "UnitTest", "AutoRelea
         $result.SkipReason | Should -BeLike '*does not have the required label*'
     }
 
-    It 'does not select a known match if another candidate cannot be verified' {
+    It 'searches every candidate but fails closed if one cannot be verified' -TestCases @(
+        @{ CandidateNumbers = @(10, 20) }, @{ CandidateNumbers = @(20, 10) }
+    ) {
+        param($CandidateNumbers)
         Mock Get-GitHubPullRequestsForCommit {
-            @([pscustomobject]@{ number = 10 }, [pscustomobject]@{ number = 20 })
+            foreach ($number in $CandidateNumbers) { [pscustomobject]@{ number = $number } }
         }
         Mock Get-GitHubPullRequest {
             if ($PullRequestNumber -eq 20) { return $null }
@@ -313,7 +316,11 @@ Describe "Get-GitHubAutoReleasePullRequestForCommit" -Tag "UnitTest", "AutoRelea
 
         $result.IsEligible | Should -BeFalse
         $result.PullRequestNumber | Should -BeNullOrEmpty
+        $result.PullRequest | Should -BeNullOrEmpty
         $result.SkipReason | Should -BeLike '*Could not verify*20*'
+        Should -Invoke Get-GitHubPullRequest -Times 2 -Exactly
+        Should -Invoke Get-GitHubPullRequest -Times 1 -Exactly -ParameterFilter { $PullRequestNumber -eq 10 }
+        Should -Invoke Get-GitHubPullRequest -Times 1 -Exactly -ParameterFilter { $PullRequestNumber -eq 20 }
     }
 }
 

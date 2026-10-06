@@ -1,6 +1,16 @@
 # Release History
 
-## 0.6.52 (Unreleased)
+## 0.6.53 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.52 (2026-10-05)
 
 ### Features Added
 
@@ -13,7 +23,7 @@
 
 ### Bugs Fixed
 
-### Other Changes
+- SDK generation uses the release plan's saved spec commit when present; existing branch/PR behavior is preserved for plans without a saved commit.
 
 ## 0.6.51 (2026-10-01)
 

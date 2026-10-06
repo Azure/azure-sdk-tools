@@ -14,7 +14,7 @@ $script:updateScenarios = $false
 Describe ".NET Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
     BeforeAll {
         $NET_REPO = "Azure/azure-sdk-for-net"
-        $NET_REPO_REF = "5f689e205f29371dcaa200f211f5299f5b144e68"
+        $NET_REPO_REF = "5594fe195625e2816ed54d556d8948a8f60d862c"
 
         . $PSScriptRoot/pr-matrix-generation-acceptance.helpers.ps1
         $RepoRoot = Get-Repo -Repo $NET_REPO -Reference $NET_REPO_REF

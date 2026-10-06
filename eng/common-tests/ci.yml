@@ -30,4 +30,12 @@ extends:
     TargetTags: UnitTest,IntegrationTest
     PreTestSteps:
       - template: /eng/pipelines/templates/steps/install-dotnet.yml
+      # The Linux package-detection acceptance fixture pins SDK 9.0.102 in global.json.
+      - task: UseDotNet@2
+        displayName: Use .NET SDK for package-detection acceptance fixture
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+        retryCountOnTaskFailure: 3
+        inputs:
+          packageType: sdk
+          version: 9.0.102
       - template: /eng/common/pipelines/templates/steps/enable-long-path-support.yml

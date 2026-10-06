@@ -219,8 +219,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Dataplane));
             result.SetPackageType("spring");
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Spring));
+            result.SetPackageType("functions");
+            Assert.That(result.PackageType, Is.EqualTo(SdkType.Functions));
             result.SetPackageType("data");
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Unknown));
+        }
+
+        [TestCase(SdkType.Dataplane)]
+        [TestCase(SdkType.Spring)]
+        [TestCase(SdkType.Functions)]
+        public void IsDataPlane_RecognizesDataPlaneSdkTypes(SdkType sdkType)
+        {
+            Assert.That(sdkType.IsDataPlane(), Is.True);
         }
 
         [Test]

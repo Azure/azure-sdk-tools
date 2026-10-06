@@ -366,6 +366,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {
@@ -416,6 +417,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             TargetBranch = new GitBranchReference
             {
                 Owner = "Azure",
@@ -432,6 +434,7 @@ public class ApiReviewHubServiceTests
             CancellationToken.None);
 
         Assert.That(requestBody, Does.Contain("\"baseTag\":\"\""));
+        Assert.That(requestBody, Does.Contain("\"packageType\":\"client\""));
     }
 
     [Test]
@@ -470,6 +473,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {
@@ -526,6 +530,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {

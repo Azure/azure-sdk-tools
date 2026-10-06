@@ -27,6 +27,7 @@ extends:
       SkipReleaseStage: false
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
+    ReleaseToAzsdkArtifacts: true
     ToolDirectory: $(ToolDir)
     TestDirectory: tools/azsdk-cli
     VerifyChangelog: true

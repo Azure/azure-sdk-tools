@@ -222,7 +222,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         branch,
                         System.Text.Json.JsonSerializer.Serialize(templateParams));
 
-                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), templateParams, branch, ct);
+                    Build releasePipelineRun;
+                    try
+                    {
+                        releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), templateParams, branch, ct);
+                    }
+                    catch (Exception ex) when (releasePlanId > 0
+                        && ex.Message.Contains("Unexpected parameter", StringComparison.OrdinalIgnoreCase)
+                        && ex.Message.Contains("ReleasePlanId", StringComparison.OrdinalIgnoreCase))
+                    {
+                        response.ReleasePipelineStatus = "Failed";
+                        response.ReleaseStatusDetails = $"The release pipeline on branch '{branch}' does not support the ReleasePlanId parameter. The request was rejected; it was not retried without release-plan ID {releasePlanId}.";
+                        response.ResponseError = response.ReleaseStatusDetails;
+                        response.NextSteps = ["Update the release pipeline on the selected branch to declare and forward ReleasePlanId, then retry with the same release-plan ID."];
+                        logger.LogError(ex, "Release pipeline {buildDefinitionId} on branch {branch} does not support ReleasePlanId.", buildDefinitionId, branch);
+                        return response;
+                    }
                     if (releasePipelineRun != null)
                     {
                         response.ReleasePipelineRunUrl = DevOpsService.GetPipelineUrl(releasePipelineRun.Id);

@@ -121,6 +121,48 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             Assert.That(parameters.Count, Is.EqualTo(language == "Java" ? 1 : 0));
         }
 
+        [TestCase(null)]
+        [TestCase(0)]
+        [TestCase(35307)]
+        public async Task ReleasePlanId_UnsupportedPipelineDoesNotRetryWithoutCorrelation(int? releasePlanId)
+        {
+            var calls = new List<Dictionary<string, string>>();
+            var devOps = new Mock<IDevOpsService>();
+            devOps.Setup(s => s.GetPackageWorkItemAsync("azure-template", "Python", "", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(await devOpsService.GetPackageWorkItemAsync("azure-template", "Python"));
+            devOps.Setup(s => s.RunPipelineAsync(1, It.IsAny<Dictionary<string, string>>(), "release/test", It.IsAny<CancellationToken>()))
+                .Returns((int _, Dictionary<string, string> parameters, string _, CancellationToken _) =>
+                {
+                    calls.Add(new Dictionary<string, string>(parameters));
+                    return parameters.ContainsKey("ReleasePlanId")
+                        ? Task.FromException<Build>(new InvalidOperationException("/sdk/template/ci.yml: Unexpected parameter 'ReleasePlanId'"))
+                        : Task.FromResult(new Build { Id = 1, Status = BuildStatus.InProgress });
+                });
+            var tool = new SdkReleaseTool(devOps.Object, mockApiViewService.Object, mockPackageReleaseStatusService.Object,
+                logger, new InputSanitizer(), new Mock<IEnvironmentHelper>().Object);
+
+            var result = releasePlanId.HasValue
+                ? await tool.ReleasePackageAsync("azure-template", "Python", "release/test", releasePlanId: releasePlanId.Value)
+                : await tool.ReleasePackageAsync("azure-template", "Python", "release/test");
+
+            Assert.That(calls, Has.Count.EqualTo(1), "An unsupported ID must not trigger an uncorrelated second release request.");
+            if (releasePlanId > 0)
+            {
+                Assert.That(calls.Single()["ReleasePlanId"], Is.EqualTo("35307"));
+                Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Failed"));
+                Assert.That(result.ResponseError, Does.Contain("does not support the ReleasePlanId parameter"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("not retried"));
+                Assert.That(result.NextSteps, Has.Some.Contains("selected branch"));
+                Assert.That(result.PipelineBuildId, Is.Zero);
+            }
+            else
+            {
+                Assert.That(calls.Single(), Is.Empty);
+                Assert.That(result.ResponseError, Is.Null);
+                Assert.That(result.ReleasePipelineStatus, Is.Not.EqualTo("Failed"));
+            }
+        }
+
         [TestCase(-1)]
         [TestCase(int.MinValue)]
         public async Task ReleasePlanId_NegativeRejectsBeforeAnyServiceCalls(int releasePlanId)

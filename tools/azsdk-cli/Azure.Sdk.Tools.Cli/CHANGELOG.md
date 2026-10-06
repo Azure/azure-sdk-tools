@@ -10,6 +10,8 @@
 
 ### Bugs Fixed
 
+- Manual releases report unsupported `ReleasePlanId` pipeline parameters with rollout guidance and never retry by dropping the supplied plan ID.
+
 ### Other Changes
 
 ## 0.6.52 (2026-10-05)

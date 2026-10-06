@@ -317,7 +317,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task UpdatePackageReleaseStatus_WithMultipleReleasePlans_AndSdkPullRequest_SelectsMatchingReleasePlan()
+        public async Task UpdatePackageReleaseStatus_WithLegacyCandidates_AndUnlinkedSdkPullRequest_DoesNotSelectAnyPlan()
         {
             // Arrange
             const string sdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/200";
@@ -367,14 +367,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "azure-test-package", "python", "Released", null, 0, null, null, sdkPullRequestUrl, CancellationToken.None);
 
             // Assert
-            Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.ReleasePlanId, Is.EqualTo(102));
+            Assert.That(result.ResponseError, Does.Contain("Expected exactly one release plan; found 0"));
+            mockDevOpsService.Verify(
+                x => x.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+                Times.Never);
 
-            // Verify only the matching release plan is updated.
+            // Even a matching package/PR in legacy candidates must not override the failed explicit lookup.
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(22222, It.Is<Dictionary<string, string>>(d =>
                     d.ContainsKey("Custom.ReleaseStatusForPython") && d["Custom.ReleaseStatusForPython"] == "Released"), It.IsAny<CancellationToken>()),
-                Times.Once);
+                Times.Never);
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(11111, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
                 Times.Never);

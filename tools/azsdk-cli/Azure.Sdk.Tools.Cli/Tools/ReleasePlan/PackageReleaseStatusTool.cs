@@ -52,13 +52,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string?> sdkReleaseTypeOpt = new("--sdk-release-type")
         {
-            Description = "SDK release type (e.g., beta, stable). When supplied, must match the identified plan; never used to select another plan.",
+            Description = "SDK release type (e.g., beta, stable). Used only by the transitional package-name lookup when neither a plan ID nor an SDK PR is supplied.",
             Required = false,
         };
 
         private readonly Option<string?> sdkPullRequestOpt = new("--sdk-pull-request")
         {
-            Description = "Full URL of the SDK PR that triggered an automatic release. Without a plan ID, find exactly one in-progress ADO plan linked to this PR. When no plan is linked to it, the transitional package-name lookup is used.",
+            Description = "Full URL of the SDK PR that triggered an automatic release. Without a plan ID, find exactly one in-progress ADO plan linked to this PR. Invalid or unlinked PRs never fall back to the package-name lookup.",
             Required = false,
         };
 
@@ -170,57 +170,38 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return Reject("Release status cannot be empty.");
                 }
 
-                // An ID or a recognized SDK PR takes priority; anything else uses the transitional lookup.
-                var suppliedSdkPullRequest = sdkPullRequest;
-                var useLegacyLookup = releasePlanId == 0 && string.IsNullOrWhiteSpace(sdkPullRequest);
-                var legacyReason = "No release-plan ID or SDK PR was supplied.";
-                if (!useLegacyLookup && !string.IsNullOrWhiteSpace(sdkPullRequest))
+                // Only callers that supply neither correlation input use the transitional lookup.
+                if (releasePlanId == 0 && string.IsNullOrWhiteSpace(sdkPullRequest))
                 {
-                    try
-                    {
-                        sdkPullRequest = DevOpsService.NormalizeSdkPullRequestUrl(sdkPullRequest, response.Language.ToWorkItemString());
-                        response.SdkPullRequest = sdkPullRequest;
-                    }
-                    catch (ArgumentException) when (releasePlanId == 0)
-                    {
-                        useLegacyLookup = true;
-                        legacyReason = $"SDK PR '{suppliedSdkPullRequest}' is not a recognized SDK PR URL.";
-                    }
+                    return await UpdateByLegacyPackageLookupAsync(response, packageName, language, releaseStatus, packageVersion, sdkReleaseType, releasePipelineUrl, sdkPullRequest, "No release-plan ID or SDK PR was supplied.", ct);
                 }
-                if (useLegacyLookup)
+                if (!string.IsNullOrWhiteSpace(sdkPullRequest))
                 {
-                    return await UpdateByLegacyPackageLookupAsync(response, packageName, language, releaseStatus, packageVersion, sdkReleaseType, releasePipelineUrl, suppliedSdkPullRequest, legacyReason, ct);
+                    sdkPullRequest = DevOpsService.NormalizeSdkPullRequestUrl(sdkPullRequest, response.Language.ToWorkItemString());
+                    response.SdkPullRequest = sdkPullRequest;
                 }
 
                 bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
                 var lookupBySdkPr = releasePlanId == 0;
-                var releasePlans = lookupBySdkPr
-                    ? await devOpsService.GetReleasePlansBySdkPullRequestAsync(sdkPullRequest!, response.Language.ToWorkItemString(), isAgentTesting, ct)
-                    : await devOpsService.GetReleasePlansByIdAsync(releasePlanId, isAgentTesting, ct);
-                if (lookupBySdkPr && releasePlans.Count == 0)
+                ReleasePlanWorkItem releasePlan;
+                if (lookupBySdkPr)
                 {
-                    return await UpdateByLegacyPackageLookupAsync(response, packageName, language, releaseStatus, packageVersion, sdkReleaseType, releasePipelineUrl, suppliedSdkPullRequest, $"No in-progress release plan is linked to SDK PR '{sdkPullRequest}'.", ct);
+                    var releasePlans = await devOpsService.GetReleasePlansBySdkPullRequestAsync(sdkPullRequest!, response.Language.ToWorkItemString(), isAgentTesting, ct);
+                    if (releasePlans.Count != 1)
+                    {
+                        return Reject($"Expected exactly one release plan; found {releasePlans.Count}. Candidate work item IDs: {string.Join(", ", releasePlans.Select(p => p.WorkItemId))}.");
+                    }
+                    releasePlan = releasePlans[0];
                 }
-                if (releasePlans.Count != 1)
+                else
                 {
-                    return Reject($"Expected exactly one release plan; found {releasePlans.Count}. Candidate work item IDs: {string.Join(", ", releasePlans.Select(p => p.WorkItemId))}.");
+                    releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, ct);
                 }
 
-                var releasePlan = releasePlans[0];
                 if (releasePlan.ReleasePlanId <= 0 || (!lookupBySdkPr && releasePlan.ReleasePlanId != releasePlanId) ||
                     releasePlan.WorkItemId <= 0 || releasePlan.IsTestReleasePlan != isAgentTesting)
                 {
                     return Reject("The resolved work item must have a valid release-plan ID and match the supplied ID and environment.");
-                }
-                if (lookupBySdkPr)
-                {
-                    var plansById = await devOpsService.GetReleasePlansByIdAsync(releasePlan.ReleasePlanId, isAgentTesting, ct);
-                    if (plansById.Count != 1 || plansById[0].WorkItemId != releasePlan.WorkItemId ||
-                        plansById[0].ReleasePlanId != releasePlan.ReleasePlanId || plansById[0].IsTestReleasePlan != isAgentTesting)
-                    {
-                        return Reject($"The SDK PR's release-plan ID {releasePlan.ReleasePlanId} does not resolve uniquely to the same work item. Candidate work item IDs: {string.Join(", ", plansById.Select(p => p.WorkItemId))}.");
-                    }
-                    releasePlan = plansById[0];
                 }
                 releasePlanId = releasePlan.ReleasePlanId;
                 response.ReleasePlanId = releasePlanId;
@@ -230,20 +211,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return Reject("The plan must contain exactly one entry for this language, with the exact package name. No other language or package is selected.");
                 }
                 var sdkInfo = sdkEntries[0];
-                if (!string.IsNullOrWhiteSpace(sdkReleaseType) && !string.Equals(releasePlan.SDKReleaseType, sdkReleaseType, StringComparison.OrdinalIgnoreCase))
-                {
-                    return Reject($"SDK release type does not match the plan's '{releasePlan.SDKReleaseType}' target.");
-                }
                 if (!string.IsNullOrWhiteSpace(sdkPullRequest) && !string.Equals(sdkInfo.SdkPullRequestUrl, sdkPullRequest, StringComparison.OrdinalIgnoreCase))
                 {
                     return Reject("The SDK pull request does not match this language/package entry.");
                 }
                 var isInProgress = string.Equals(releasePlan.Status, "In Progress", StringComparison.OrdinalIgnoreCase);
-                var isFinished = string.Equals(releasePlan.Status, "Finished", StringComparison.OrdinalIgnoreCase);
-                if ((!isInProgress && !isFinished) || (lookupBySdkPr && !isInProgress))
-                {
-                    return Reject($"The plan is not in progress (state '{releasePlan.Status}').");
-                }
 
                 // Retries cannot overwrite a recorded release, even after the overall plan has finished.
                 if (string.Equals(sdkInfo.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
@@ -264,6 +236,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 if (!isInProgress || releasePlan.Revision <= 0)
                 {
+                    // WIQL selection and work-item retrieval are separate reads; the state can change between them.
                     return Reject("The plan must be in progress and have a valid work item revision before updating status.");
                 }
 
@@ -644,11 +617,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Share the same fresh-read and revision checks for new releases and completion retries.
                 ct.ThrowIfCancellationRequested();
                 var currentPlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
-                if (currentPlan.ReleasePlanId != releasePlan.ReleasePlanId || currentPlan.WorkItemId != releasePlan.WorkItemId ||
-                    currentPlan.IsTestReleasePlan != releasePlan.IsTestReleasePlan || currentPlan.Revision <= 0 ||
+                // The work-item ID fixes identity; only mutable completion metadata and the fresh revision need checking.
+                if (currentPlan.IsTestReleasePlan != releasePlan.IsTestReleasePlan || currentPlan.Revision <= 0 ||
                     currentPlan.IsManagementPlane != releasePlan.IsManagementPlane || currentPlan.IsDataPlane != releasePlan.IsDataPlane ||
                     !string.Equals(currentPlan.APISpecProjectPath, releasePlan.APISpecProjectPath, StringComparison.Ordinal) ||
-                    !string.Equals(currentPlan.SDKReleaseType, releasePlan.SDKReleaseType, StringComparison.OrdinalIgnoreCase) ||
                     currentPlan.SDKInfo.Count != releasePlan.SDKInfo.Count ||
                     currentPlan.SDKInfo.Any(current => !releasePlan.SDKInfo.Any(original =>
                         string.Equals(current.Language, original.Language, StringComparison.OrdinalIgnoreCase) &&

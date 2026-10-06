@@ -146,7 +146,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
-        public Task<List<ReleasePlanWorkItem>> GetReleasePlansByIdAsync(int releasePlanId, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
@@ -288,12 +287,17 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
             // First find the API spec work item
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
             var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
             if (releasePlanWorkItems.Count == 0)
             {
                 throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
+            }
+            if (releasePlanWorkItems.Count != 1)
+            {
+                throw new InvalidOperationException($"Expected exactly one release plan with ID {releasePlanId}; found {releasePlanWorkItems.Count}. Candidate work item IDs: {string.Join(", ", releasePlanWorkItems.Select(item => item.Id))}.");
             }
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0], ct);
         }
@@ -371,7 +375,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        // Transitional legacy lookup, used only when a release provides neither a plan ID nor a matching SDK PR.
+        // Transitional legacy lookup, used only when a release provides neither a plan ID nor an SDK PR.
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
         {
             try
@@ -405,23 +409,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogError(ex, "Failed to get release plans for package {packageName} in {language}", packageName, language);
                 throw new Exception($"Failed to get release plans for package {packageName} in {language}. Error: {ex.Message}", ex);
             }
-        }
-
-        // Status updates must detect duplicate IDs and must not reinterpret a Release Plan ID as a work item ID.
-        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansByIdAsync(int releasePlanId, bool isTestReleasePlan = false, CancellationToken ct = default)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-            query += " AND [System.WorkItemType] = 'Release Plan'";
-            query += $" AND [Custom.ReleasePlanID] = '{releasePlanId}'";
-            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
-            var workItems = await FetchWorkItemsAsync(query, ct);
-            var plans = new List<ReleasePlanWorkItem>();
-            foreach (var workItem in workItems)
-            {
-                plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
-            }
-            return plans;
         }
 
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default)

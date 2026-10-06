@@ -52,8 +52,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 ]
             };
             _devOps = new Mock<IDevOpsService>();
-            _devOps.Setup(s => s.GetReleasePlansByIdAsync(100, _plan.IsTestReleasePlan, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(() => [ReadPlanSnapshot()]);
+            _devOps.Setup(s => s.GetReleasePlanAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ReadPlanSnapshot);
             _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(PythonSdkPr, "Python", _plan.IsTestReleasePlan, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => _plan.Status == "In Progress" ? new List<ReleasePlanWorkItem> { ReadPlanSnapshot() } : []);
             _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()))
@@ -80,8 +80,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TearDown]
         public void NeverUsesHeuristicLookupOrUnguardedWrites()
         {
-            Assert.That(_devOps.Invocations.Where(i => i.Method.Name is nameof(IDevOpsService.ResolveReleasePlanByIdAsync)
-                or nameof(IDevOpsService.GetReleasePlanAsync)), Is.Empty);
+            Assert.That(_devOps.Invocations.Where(i => i.Method.Name == nameof(IDevOpsService.ResolveReleasePlanByIdAsync)
+                || (i.Method.Name == nameof(IDevOpsService.GetReleasePlanAsync) && i.Arguments[0] is not int)), Is.Empty);
             Assert.That(_devOps.Invocations.Where(i => i.Method.Name == nameof(IDevOpsService.UpdateWorkItemAsync)
                 && (i.Arguments.Count != 4 || i.Arguments[2] is not int)), Is.Empty);
         }
@@ -213,7 +213,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(_writes.Select(w => w.Revision), Is.EqualTo(new[] { 7, 8 }));
             Assert.That(_writes[1].Fields, Is.EquivalentTo(new Dictionary<string, string> { ["System.State"] = "Finished" }));
             Assert.That(_plan.Status, Is.EqualTo("Finished"));
-            _devOps.Verify(s => s.GetReleasePlansByIdAsync(100, _plan.IsTestReleasePlan, It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.GetReleasePlanAsync(100, It.IsAny<CancellationToken>()), Times.Once);
             _devOps.Verify(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()), Times.Once);
         }
 

@@ -1308,7 +1308,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         [TestCase(false)]
         [TestCase(true)]
-        public async Task GetReleasePlansByIdAsync_UsesDisplayIdAndEnvironmentAndMapsSnapshot(bool isTest)
+        public async Task GetReleasePlanAsync_UsesDisplayIdAndMapsSnapshotAndEnvironment(bool isTest)
         {
             var plan = CreateReleasePlanWorkItemWithApiSpecChild(35000, "In Progress", 35001);
             plan.Rev = 7;
@@ -1321,55 +1321,54 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(plan);
             _connection.AddWorkItem(apiSpec);
 
-            var result = await _devOpsService.GetReleasePlansByIdAsync(100, isTest);
+            var result = await _devOpsService.GetReleasePlanAsync(100, CancellationToken.None);
 
             Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.ReleasePlanID] = '100'"));
             Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.WorkItemType] = 'Release Plan'"));
-            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[System.Tags] {(isTest ? "CONTAINS" : "NOT CONTAINS")} 'Release Planner App Test'"));
-            Assert.That(_connection.LastCapturedQuery, Does.Not.Contain("PackageName").And.Not.Contain("[System.State]"));
-            Assert.That(result, Has.Count.EqualTo(1));
-            Assert.That(result[0].ReleasePlanId, Is.EqualTo(100));
-            Assert.That(result[0].WorkItemId, Is.EqualTo(35000));
-            Assert.That(result[0].Revision, Is.EqualTo(7));
-            Assert.That(result[0].IsTestReleasePlan, Is.EqualTo(isTest));
-            Assert.That(result[0].SpecAPIVersion, Is.EqualTo("2026-07-01"));
-            Assert.That(result[0].SDKInfo.Single(s => s.Language == "Python").ReleasedVersion, Is.EqualTo("1.2.3"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.State] NOT IN ('Closed','Duplicate','Abandoned')"));
+            Assert.That(_connection.LastCapturedQuery, Does.Not.Contain("PackageName"));
+            Assert.That(result.ReleasePlanId, Is.EqualTo(100));
+            Assert.That(result.WorkItemId, Is.EqualTo(35000));
+            Assert.That(result.Revision, Is.EqualTo(7));
+            Assert.That(result.IsTestReleasePlan, Is.EqualTo(isTest));
+            Assert.That(result.SpecAPIVersion, Is.EqualTo("2026-07-01"));
+            Assert.That(result.SDKInfo.Single(s => s.Language == "Python").ReleasedVersion, Is.EqualTo("1.2.3"));
         }
 
         [Test]
-        public async Task GetReleasePlansByIdAsync_ReturnsEveryDuplicateInsteadOfSelectingFirst()
+        public void GetReleasePlanAsync_DuplicateIdRejectsInsteadOfSelectingFirst()
         {
             var first = CreateReleasePlanWorkItemWithReleasePlanId(11111, 100, "In Progress");
             var second = CreateReleasePlanWorkItemWithReleasePlanId(22222, 100, "Finished");
             _connection.AddWorkItemToQuery(first);
             _connection.AddWorkItemToQuery(second);
 
-            var result = await _devOpsService.GetReleasePlansByIdAsync(100);
+            var error = Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.GetReleasePlanAsync(100, CancellationToken.None));
 
-            Assert.That(result.Select(p => p.WorkItemId), Is.EquivalentTo(new[] { 11111, 22222 }));
+            Assert.That(error!.Message, Does.Contain("exactly one").And.Contain("11111").And.Contain("22222"));
         }
 
         [Test]
-        public async Task GetReleasePlansByIdAsync_MissingDisplayId_DoesNotFallBackToWorkItemId()
+        public void GetReleasePlanAsync_MissingDisplayId_DoesNotFallBackToWorkItemId()
         {
             _connection.AddWorkItem(CreateReleasePlanWorkItemWithReleasePlanId(100, 200, "In Progress"));
-            var result = await _devOpsService.GetReleasePlansByIdAsync(100);
-            Assert.That(result, Is.Empty);
+            var error = Assert.ThrowsAsync<Exception>(() => _devOpsService.GetReleasePlanAsync(100, CancellationToken.None));
+            Assert.That(error!.Message, Does.Contain("Failed to find release plan"));
         }
 
         [TestCase(0)]
         [TestCase(-1)]
-        public void GetReleasePlansByIdAsync_InvalidId_DoesNotQuery(int releasePlanId)
+        public void GetReleasePlanAsync_InvalidId_DoesNotQuery(int releasePlanId)
         {
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _devOpsService.GetReleasePlansByIdAsync(releasePlanId));
+            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _devOpsService.GetReleasePlanAsync(releasePlanId, CancellationToken.None));
             Assert.That(_connection.LastCapturedQuery, Is.Null);
         }
 
         [Test]
-        public void GetReleasePlansByIdAsync_QueryCancellationPropagates()
+        public void GetReleasePlanAsync_QueryCancellationPropagates()
         {
             _connection.CancelQuery();
-            Assert.CatchAsync<OperationCanceledException>(() => _devOpsService.GetReleasePlansByIdAsync(100));
+            Assert.CatchAsync<OperationCanceledException>(() => _devOpsService.GetReleasePlanAsync(100, CancellationToken.None));
         }
 
         [Test]

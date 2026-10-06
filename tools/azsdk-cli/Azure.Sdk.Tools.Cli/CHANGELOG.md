@@ -4,8 +4,11 @@
 
 ### Features Added
 
+- Support optional spec commit SHA on release-plan creation and updates.
+
 ### Breaking Changes
 
+- Release-plan metadata updates now require the exact Azure DevOps work item ID. PR/path-only lookup and Release Plan ID fallback are no longer used by this update command.
 - `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept an optional package type (`mgmt`, `client`, `spring`, or `functions`). API Review Hub requires it for new packages and validates it against stored metadata for existing packages.
 
 ### Bugs Fixed

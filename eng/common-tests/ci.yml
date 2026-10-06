@@ -38,7 +38,7 @@ extends:
       # so the test fails to build. In the future, we should update azure-sdk-for-net's SHA to more recent SHA that specifies a newer .NET version
       # in its global.json, but then we also should update the baseline files for the tests.
       # That will work until we update global.json in the root of this repo once again. Alternatively, we can refactor the Pester test helpers,
-      # so that that cloning the repos and building the tests are two separate steps, so then we could tell the tooling to install the version
+      # so that cloning the repos and building the tests are two separate steps, so then we could tell the tooling to install the version
       # that is required per cloned repo's global.json, if it is not present on the machine by that moment.
       # Alternatively, given that it took about two years for this issue to manifest with 9.0.102,
       # we could keep updating the version below next time it fails for the next couple of years.

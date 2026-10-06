@@ -32,10 +32,10 @@ extends:
     PreTestSteps:
       - template: /eng/pipelines/templates/steps/install-dotnet.yml
       # We install .NET 9.0.102 SDK in addition to .NET coming from global.json because the current SHA in
-      # /eng/common-tests/matrix-generator/pr-matrix-samples/pr-matrix-generation-acceptance.helpers.ps1 for azure-sdk-for-net repo has a SHA
-      # whose global.json specifies 9.0.102. Given that when running Pester tests, 'git clone' happens after the global.json (in the root of this repo)
-      # is read, it does not end up installing 9.0.102 from the cloned repo's global.json, and we end up with more recent (10.0+) version only,
-      # so the test fails to build. In the future, we should update azure-sdk-for-net's SHA to more recent SHA that specifies a newer .NET version
+      # /eng/common-tests/matrix-generator/pr-matrix-samples/pr-matrix-generation-acceptance.tests.ps1 for NET_REPO points to a specific SHA
+      # where global.json has '9.0.102'. Given that when running Pester tests, 'git clone' happens after the global.json (in the root of this repo)
+      # is read, it does NOT end up installing 9.0.102 from the cloned repo's global.json, and we end up with more recent (10.0+) version only,
+      # so the test fails to build. In the future, we should update NET_REPO_REF to more recent SHA that specifies a newer .NET version
       # in its global.json, but then we also should update the baseline files for the tests.
       # That will work until we update global.json in the root of this repo once again. Alternatively, we can refactor the Pester test helpers,
       # so that cloning the repos and building the tests are two separate steps, so then we could tell the tooling to install the version

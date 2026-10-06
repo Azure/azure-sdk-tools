@@ -1,0 +1,82 @@
+# Diagnostic continuation for #17192: no schedule, global cleanup, or emails.
+trigger: none
+pr: none
+
+parameters:
+  - name: applySinglePlan
+    type: boolean
+    default: false
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
+pool:
+  name: $(LINUXPOOL)
+  demands: ImageOverride -equals $(LINUXVMIMAGE)
+
+jobs:
+  - job: VerifySinglePlan
+    timeoutInMinutes: 30
+    steps:
+      - checkout: self
+      - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+      - task: PowerShell@2
+        displayName: Build scoped handler from exact released 0.6.52 source
+        inputs:
+          targetType: inline
+          pwsh: true
+          script: |
+            dotnet build eng/verification/pipeline-cleanup/PipelineCleanupVerification.csproj --configuration Release -p:CopilotSkipCliDownload=true -warnaserror
+            if ($LASTEXITCODE -ne 0) { throw 'Scoped verifier build failed.' }
+
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          TokenOwners:
+            - Azure
+
+      - task: PowerShell@2
+        displayName: Install exact published CLI 0.6.52
+        inputs:
+          targetType: inline
+          pwsh: true
+          script: './eng/common/mcp/azure-sdk-mcp.ps1 -Version 0.6.52 -InstallDirectory $(System.DefaultWorkingDirectory)/released-cli'
+
+      - task: AzureCLI@2
+        displayName: Fresh read-only preview under production service connection
+        env:
+          GITHUB_TOKEN: $(GH_TOKEN)
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: scriptPath
+          scriptPath: eng/verification/pipeline-cleanup/Read-Only-Preview.ps1
+          arguments: '-AzsdkPath "$(System.DefaultWorkingDirectory)/released-cli/azsdk" -OutputDirectory "$(Build.ArtifactStagingDirectory)/single-plan-verification/preview"'
+
+      - task: AzureCLI@2
+        displayName: Verify only plan 2006 eligibility without writing
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            dotnet run --project eng/verification/pipeline-cleanup/PipelineCleanupVerification.csproj --configuration Release --no-build -- --output "$(Build.ArtifactStagingDirectory)/single-plan-verification/scoped-preview"
+            if ($LASTEXITCODE -ne 0) { throw 'Selected plan is not eligible; no live cleanup will run.' }
+
+      - ${{ if eq(parameters.applySinglePlan, true) }}:
+        - task: AzureCLI@2
+          displayName: Clean only approved plan 2006 and verify no-op rerun; emails intercepted
+          inputs:
+            azureSubscription: opensource-api-connection
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              dotnet run --project eng/verification/pipeline-cleanup/PipelineCleanupVerification.csproj --configuration Release --no-build -- --output "$(Build.ArtifactStagingDirectory)/single-plan-verification/apply" --apply-work-item-29426
+              if ($LASTEXITCODE -ne 0) { throw 'Scoped cleanup blocked or failed. Inspect existing evidence before any retry.' }
+
+      - task: PublishPipelineArtifact@1
+        displayName: Save private single-plan evidence
+        condition: always()
+        inputs:
+          artifactName: single-plan-verification
+          targetPath: $(Build.ArtifactStagingDirectory)/single-plan-verification

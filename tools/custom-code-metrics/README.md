@@ -82,8 +82,9 @@ Pop-Location
 
 This is a **source provenance metric**, not customization debt, public API impact,
 or TypeSpec attribution. .NET observes shipping `Azure.*` libraries under `sdk`.
-Its language-aware collector and counting details remain in
-[the .NET documentation](https://github.com/Azure/azure-sdk-for-net/blob/main/doc/dev/CustomCodeMetrics.md).
+Its language-aware collector and counting details are maintained in
+`doc\dev\CustomCodeMetrics.md` in the separate .NET producer checkout; those
+producer changes have not yet landed on the repository's `main` branch.
 Physical source lines include comments and blank lines. Categories are management,
 data-plane and provisioning; each file is custom or generated, with no unknown
 bucket or redundant measurement rules.

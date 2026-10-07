@@ -33,6 +33,8 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
     # Restrict to pipeline analysis tools only
     allowed_tools = [
         "azsdk_analyze_pipeline",
+        "azsdk_get_failed_test_case_data",
+        "azsdk_get_failed_test_run_data",
         "azsdk_get_pipeline_status",
         "azsdk_get_pipeline_llm_artifacts",
     ]

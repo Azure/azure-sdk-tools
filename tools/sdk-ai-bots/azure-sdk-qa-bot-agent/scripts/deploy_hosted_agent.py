@@ -13,12 +13,15 @@ Usage:
 
 import argparse
 import asyncio
+import json
 import os
 import re
 import subprocess
 import sys
 import time
 from pathlib import Path
+from urllib.parse import quote, urlparse
+from urllib.request import Request, urlopen
 
 os.environ.setdefault("AZURE_CORE_WELCOME_MESSAGE", "false")
 
@@ -67,6 +70,30 @@ def _git_short_sha() -> str:
         return r.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "latest"
+
+
+def _qualify_rai_policy_id(
+    policy: str,
+    *,
+    subscription_id: str,
+    resource_group: str,
+    project_endpoint: str,
+) -> str:
+    if policy.lower().startswith("/subscriptions/"):
+        return policy
+
+    hostname = urlparse(project_endpoint).hostname or ""
+    ai_resource_name = hostname.split(".", 1)[0]
+    if not subscription_id or not resource_group or not ai_resource_name:
+        raise RuntimeError(
+            "Cannot qualify the RAI policy name; AZURE_SUBSCRIPTION_ID, "
+            "AZURE_RESOURCE_GROUP, and AI Foundry project endpoint are required."
+        )
+    return (
+        f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}"
+        f"/providers/Microsoft.CognitiveServices/accounts/{ai_resource_name}"
+        f"/raiPolicies/{policy}"
+    )
 
 
 def _wait_for_version_active(
@@ -132,6 +159,37 @@ def _wait_for_version_active(
 
     print(f"  Timed out after {timeout}s.")
     return False
+
+
+def _resolve_agent_principal_id(
+    project_endpoint: str,
+    agent_name: str,
+    agent_version: str,
+    credential: AzureCliCredential,
+) -> str:
+    """Resolve the managed identity assigned to a hosted agent version."""
+    token = credential.get_token("https://ai.azure.com/.default").token
+    endpoint = (
+        f"{project_endpoint.rstrip('/')}/agents/{quote(agent_name, safe='')}"
+        f"/versions/{quote(agent_version, safe='')}?api-version=2025-05-15-preview"
+    )
+    last_error = "identity was not returned"
+    for _ in range(10):
+        try:
+            request = Request(endpoint, headers={"Authorization": f"Bearer {token}"})
+            with urlopen(request, timeout=60) as response:
+                body = json.load(response)
+            identity = body.get("instance_identity") or body.get("instanceIdentity") or {}
+            principal_id = identity.get("principal_id") or identity.get("principalId")
+            if principal_id:
+                return str(principal_id)
+            last_error = "instance identity has no principal ID"
+        except Exception as exc:
+            last_error = str(exc)
+        time.sleep(15)
+    raise RuntimeError(
+        f"Could not resolve the runtime identity for {agent_name} v{agent_version}: {last_error}"
+    )
 
 
 def main() -> None:
@@ -276,15 +334,23 @@ def main() -> None:
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
         }
-        if candidate_appconfig_endpoint:
+        if args.agent_name == "chatbot_evolution_agent":
             env_vars["CANDIDATE_APPCONFIG_ENDPOINT"] = candidate_appconfig_endpoint
 
         # Ensure Content-safety guardrail.
-        rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID", "")
+        rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID") or cfg(
+            "AI_FOUNDRY_RAI_POLICY_ID"
+        )
         if not rai_policy_id:
             raise RuntimeError(
                 "Cannot apply guardrail because AI_FOUNDRY_RAI_POLICY_ID is not set."
             )
+        rai_policy_id = _qualify_rai_policy_id(
+            rai_policy_id,
+            subscription_id=sub_id,
+            resource_group=os.environ.get("AZURE_RESOURCE_GROUP", ""),
+            project_endpoint=project_endpoint,
+        )
         rai_config = RaiConfig(rai_policy_name=rai_policy_id)
         print(f"  Guardrail: {rai_policy_id}")
 
@@ -325,6 +391,22 @@ def main() -> None:
                 f'--url "{project_endpoint}/agents/{agent.name}/versions/{agent_version}" '
                 '--resource "https://ai.azure.com"'
             )
+
+        principal_id = _resolve_agent_principal_id(
+            project_endpoint,
+            agent.name,
+            agent_version,
+            credential,
+        )
+        print(f"Runtime identity: {principal_id}")
+        print(
+            "##vso[task.setvariable variable=HOSTED_AGENT_PRINCIPAL_ID]"
+            f"{principal_id}"
+        )
+        print(
+            "##vso[task.setvariable variable=HOSTED_AGENT_VERSION]"
+            f"{agent_version}"
+        )
     finally:
         project.close()
 

@@ -5,11 +5,13 @@ import { TokenCredential, AccessToken } from '@azure/identity';
 // Mock @azure/keyvault-keys
 vi.mock('@azure/keyvault-keys', () => {
   return {
-    CryptographyClient: vi.fn().mockImplementation(() => ({
-      sign: vi.fn().mockResolvedValue({
-        result: Buffer.from('mock-signature'),
-      }),
-    })),
+    CryptographyClient: vi.fn().mockImplementation(function CryptographyClient() {
+      return {
+        sign: vi.fn().mockResolvedValue({
+          result: Buffer.from('mock-signature'),
+        }),
+      };
+    }),
   };
 });
 
@@ -182,9 +184,11 @@ describe('GitHubAppTokenProvider', () => {
 
   it('should return undefined when Key Vault signing fails', async () => {
     const { CryptographyClient } = await import('@azure/keyvault-keys');
-    vi.mocked(CryptographyClient).mockImplementationOnce(() => ({
-      sign: vi.fn().mockRejectedValue(new Error('Access denied: missing sign permission')),
-    }) as any);
+    vi.mocked(CryptographyClient).mockImplementationOnce(function CryptographyClient() {
+      return {
+        sign: vi.fn().mockRejectedValue(new Error('Access denied: missing sign permission')),
+      } as any;
+    });
 
     const provider = createProvider();
     const token = await provider.getToken();

@@ -22,10 +22,10 @@ export class BlobService {
     private containerName: string;
 
     constructor() {
-        const storageAccountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+        const storageAccountName = process.env.STORAGE_ACCOUNT_NAME;
         if (!storageAccountName) {
             throw new Error(
-                "AZURE_STORAGE_ACCOUNT_NAME environment variable is required"
+            "STORAGE_ACCOUNT_NAME environment variable is required"
             );
         }
 
@@ -291,10 +291,10 @@ export class TableService {
     private tableClient: TableClient;
 
     constructor(tableName: string) {
-        const storageAccountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+        const storageAccountName = process.env.STORAGE_ACCOUNT_NAME;
         if (!storageAccountName) {
             throw new Error(
-                "AZURE_STORAGE_ACCOUNT_NAME environment variable is required"
+            "STORAGE_ACCOUNT_NAME environment variable is required"
             );
         }
 

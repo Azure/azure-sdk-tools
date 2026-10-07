@@ -43,9 +43,9 @@ export class SpectorCaseProcessor {
         const apiVersion = "2024-12-01-preview";
         const endpoint = process.env.AOAI_CHAT_COMPLETIONS_ENDPOINT;
         const credential = new ChainedTokenCredential(
+            new WorkloadIdentityCredential(),
             new ManagedIdentityCredential(),
-            new AzureCliCredential(),
-            new WorkloadIdentityCredential()
+            new AzureCliCredential()
         );
         const azureADTokenProvider = getBearerTokenProvider(
             credential,

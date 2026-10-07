@@ -1,16 +1,29 @@
 # Release History
 
-## 0.6.52 (Unreleased)
+## 0.6.53 (Unreleased)
 
 ### Features Added
 
 ### Breaking Changes
 
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.52 (2026-10-05)
+
+### Features Added
+
+- Support optional spec commit SHA on release-plan creation and updates.
+
+### Breaking Changes
+
+- Release-plan metadata updates now require the exact Azure DevOps work item ID. PR/path-only lookup and Release Plan ID fallback are no longer used by this update command.
 - `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept an optional package type (`mgmt`, `client`, `spring`, or `functions`). API Review Hub requires it for new packages and validates it against stored metadata for existing packages.
 
 ### Bugs Fixed
 
-### Other Changes
+- SDK generation uses the release plan's saved spec commit when present; existing branch/PR behavior is preserved for plans without a saved commit.
 
 ## 0.6.51 (2026-10-01)
 

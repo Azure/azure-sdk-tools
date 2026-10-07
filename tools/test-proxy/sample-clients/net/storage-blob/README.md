@@ -8,6 +8,6 @@ Invocation Steps:
   - `dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_pac
 kaging/azure-sdk-for-net/nuget/v3/index.json --version 1.0.0-dev*`
 - Run the test proxy `test-proxy`
-- Open the [solution](./Azure.Sdk.Tools.TestProxy.StorageBlobSample.slnx) in a compatible Visual Studio version with `.slnx` support.
+- Open the [solution](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/sample-clients/net/storage-blob/Azure.Sdk.Tools.TestProxy.StorageBlobSample.slnx) in a compatible Visual Studio version with `.slnx` support.
   - In the debugging configuration, set environment variable `STORAGE_CONNECTION_STRING` to a valid blob storage connection string.
 - Run the application

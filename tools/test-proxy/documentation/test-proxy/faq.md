@@ -130,7 +130,7 @@ If the current date is outside of the valid date range of the certificate, then 
 
 The dev certificate that secures the test-proxy's HTTPS endpoint is a **self-signed, localhost-rooted certificate**. Certificates rooted to `localhost` are capped at a **maximum lifetime of 365 days** by modern browsers and operating systems. This means the certificate checked into `eng/common/testproxy/` will periodically need to be regenerated.
 
-To regenerate the certificate, use the [`rotate.sh`](../../../../eng/common/testproxy/rotate.sh) script. The script uses `openssl` to produce a new `dotnet-devcert.crt` and `dotnet-devcert.pfx` that are valid for 365 days.
+To regenerate the certificate, use the [`rotate.sh`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/rotate.sh) script. The script uses `openssl` to produce a new `dotnet-devcert.crt` and `dotnet-devcert.pfx` that are valid for 365 days.
 
 ```bash
 # From WSL, Linux, or macOS — standing in the repo root:

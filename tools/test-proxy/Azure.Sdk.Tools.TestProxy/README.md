@@ -81,7 +81,7 @@ There is a walkthrough through the process below in the [how do I use the test p
 
 For a more detailed explanation of how the test proxy works, along with links to demo projects for various languages, refer to the following post on the Azure SDK blog:
 
-[Level up your cloud testing game with the Azure SDK test proxy](http://aka.ms/azsdk/test-proxy)
+[Level up your cloud testing game with the Azure SDK test proxy](https://aka.ms/azsdk/test-proxy)
 
 ## Installation
 

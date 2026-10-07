@@ -124,7 +124,7 @@ If the current date is outside of the valid date range of the certificate, then 
   - `windows` check task manager
   - `linux/mac` use `ps aux | grep TestProxy`. Kill any processes that match.
 - Delete any local copies of the certificate.
-- Follow any specific `import` directions in [trusting-cert-per-language](trusting-cert-per-language.md) for your current `language`.
+- Follow any specific `import` directions in [trusting-cert-per-language](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/documentation/test-proxy/cert-per-language.md) for your current `language`.
 
 ### Why does the dev cert expire, and how do I regenerate it?
 

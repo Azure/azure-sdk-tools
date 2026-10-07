@@ -524,7 +524,7 @@ When attempting to use in-memory recording, you cannot submit empty body `{}` to
 
 ### See example implementations
 
-Of course, feel free to check any of the [examples](https://github.com/Azure/azure-sdk-tools/tree/feature/http-recording-server/tools/test-proxy/sample-clients) to see actual test code and invocations.
+Of course, feel free to check any of the [examples](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/sample-clients) to see actual test code and invocations.
 
 ## Session and Test Level Transforms, Sanitizers, and Matchers
 
@@ -906,7 +906,7 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 #### Windows IIS
 
-[Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
+[Add Internet Information](https://docs.microsoft.com/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
 
 ![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
 

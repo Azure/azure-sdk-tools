@@ -3317,7 +3317,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
   dumper->InsertWhitespace();
   if (m_isForwardDeclaration)
   {
-    dumper->InsertIdentifier(Name());
+    dumper->InsertForwardDeclaration(Name(), m_navigationId);
   }
   else
   {
@@ -3417,7 +3417,7 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
   dumper->InsertWhitespace();
   if (m_isForwardDeclaration)
   {
-    dumper->InsertIdentifier(Name());
+    dumper->InsertForwardDeclaration(Name(), m_navigationId);
   }
   else
   {

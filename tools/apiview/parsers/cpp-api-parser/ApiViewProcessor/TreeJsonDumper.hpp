@@ -42,12 +42,19 @@ class TreeJsonDumper : public JsonDumper {
   std::vector<std::string> m_lineDefinitions;
   std::unordered_set<std::string> m_definitions;
   std::unordered_map<std::string, std::string> m_lineIds;
-  std::unordered_map<std::string, size_t> m_namespaceCounts;
+  std::unordered_map<std::string, size_t> m_generatedIdCounts;
   std::string m_closedScopeId;
   std::optional<std::string> m_externalUrl;
   bool m_documentation{};
   bool m_deprecated{};
   bool m_skipDiff{};
+
+  std::string GenerateLineId(std::string_view kind, std::string_view id)
+  {
+    // '#' cannot begin a legacy C++ definition ID.
+    auto key = "#" + std::string(kind) + ":" + std::string(id);
+    return key + "#" + std::to_string(++m_generatedIdCounts[key]);
+  }
 
   void AddToken(std::string_view value, TokenKind kind)
   {
@@ -113,7 +120,8 @@ class TreeJsonDumper : public JsonDumper {
       {
         for (auto const& id : m_lineDefinitions)
         {
-          m_lineIds.emplace(id, m_line["LineId"].get<std::string>());
+          // A legacy definition takes precedence over a synthetic navigation alias.
+          m_lineIds.insert_or_assign(id, m_line["LineId"].get<std::string>());
         }
       }
       if (!m_closedScopeId.empty())
@@ -171,10 +179,15 @@ class TreeJsonDumper : public JsonDumper {
     state = value;
   }
 
-  static void NormalizeNavigation(nlohmann::json& items)
+  void NormalizeNavigation(nlohmann::json& items) const
   {
     for (auto& item : items)
     {
+      auto target = m_lineIds.find(item.value("NavigationId", ""));
+      if (target != m_lineIds.end())
+      {
+        item["NavigationId"] = target->second;
+      }
       if (!item.contains("ChildItems"))
       {
         item["ChildItems"] = nlohmann::json::array();
@@ -246,16 +259,7 @@ public:
     auto& heading = m_lines[parent].Content;
     if (!id.empty())
     {
-      auto count = ++m_namespaceCounts[std::string(id)];
-      auto lineId = std::string(id);
-      if (count > 1)
-      {
-        lineId += " scope " + std::to_string(count);
-      }
-      if (!m_definitions.emplace(lineId).second)
-      {
-        throw std::runtime_error("Duplicate namespace LineId: " + lineId);
-      }
+      auto lineId = GenerateLineId("namespace", id);
       heading["LineId"] = lineId;
       m_lineIds.emplace(std::string(id), lineId);
       for (auto& token : heading["Tokens"])
@@ -318,6 +322,19 @@ public:
   {
     AddToken(value, TokenKind::TypeName);
     UpdateCursor(value.size());
+  }
+  void InsertForwardDeclaration(
+      std::string_view const& value,
+      std::string_view const& id) override
+  {
+    InsertIdentifier(value);
+    if (!id.empty())
+    {
+      auto lineId = GenerateLineId("forward", id);
+      m_line["LineId"] = lineId;
+      m_lineIds.emplace(std::string(id), lineId);
+      m_line["Tokens"].back()["NavigateToId"] = id;
+    }
   }
   void InsertTypeName(std::string_view const& value, std::string_view const& id) override
   {

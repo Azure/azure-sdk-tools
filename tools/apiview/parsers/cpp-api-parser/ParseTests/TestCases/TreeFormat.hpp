@@ -19,6 +19,9 @@ namespace Azure { namespace TreeTest {
     template <class T> T Transform(T value) const;
   };
   class Forward;
+  class Defined;
+  class Defined {};
+  enum class ForwardEnum;
   class Final final {
   protected:
     bool ShouldRetry(int index) const;

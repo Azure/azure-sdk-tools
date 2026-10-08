@@ -35,6 +35,8 @@ ParseAzureSdkCpp C:\AzureCppSdk\sdk\storage\azure-storage-blobs\inc -o blobs-tre
 
 Both formats use the **Json** upload language; selecting **C++** explicitly chooses the website's separate `.cppast` archive input path. Tree output uses semantic namespace, class, and enum scopes. Opening class/enum braces are placed on the declaration line, with closing lines linked to their declarations. Token spelling and intra-line spacing, documentation, range flags, and navigation are retained. Line IDs retain the legacy renderer's comment IDs; diagnostics targeting another definition on the same line are mapped to that line ID without changing their diagnostic IDs. The tree schema has its own numeric token kinds and reports `ParserVersion` separately from the legacy `.cppast` parser.
 
+Namespace scopes and forward declarations use separate synthetic tree line IDs. Navigation resolves to a full definition when present, or to the corresponding scope or forward declaration otherwise. Legacy declaration IDs, including using directives, remain unchanged.
+
 ### ApiViewSettings.json
 
 In order to create an API Review, there is a set of additional configuration information needed to be provided. This information is provided in a JSON file named ApiViewSettings.json in the `<input-directory>` location.

@@ -46,6 +46,12 @@ public:
   virtual void InsertPunctuation(char punctuation) = 0;
   virtual void InsertLineIdMarker() = 0;
   virtual void InsertIdentifier(std::string_view const& identifier) = 0;
+  virtual void InsertForwardDeclaration(
+      std::string_view const& name,
+      std::string_view const& navigationId)
+  {
+    InsertIdentifier(name);
+  }
   virtual void InsertTypeName(
       std::string_view const& type,
       std::string_view const& typeNavigationId)

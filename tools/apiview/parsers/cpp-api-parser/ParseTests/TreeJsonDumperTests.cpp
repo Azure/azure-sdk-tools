@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <functional>
 #include <sstream>
+#include <unordered_set>
 
 using namespace nlohmann::literals;
 
@@ -33,6 +34,39 @@ std::string Text(nlohmann::json const& line)
   }
   return text;
 }
+
+void ExpectNavigationTargetsResolve(nlohmann::json const& json)
+{
+  std::unordered_set<std::string> ids;
+  Walk(json["ReviewLines"], [&](auto const& line) {
+    if (line.contains("LineId"))
+    {
+      EXPECT_TRUE(ids.emplace(line["LineId"].template get<std::string>()).second);
+    }
+  });
+  Walk(json["ReviewLines"], [&](auto const& line) {
+    for (auto const& token : line["Tokens"])
+    {
+      auto id = token.value("NavigateToId", "");
+      if (!id.empty() && token["Kind"] != 8)
+      {
+        EXPECT_TRUE(ids.contains(id)) << id;
+      }
+    }
+  });
+  std::function<void(nlohmann::json const&)> visit = [&](auto const& items) {
+    for (auto const& item : items)
+    {
+      auto id = item.value("NavigationId", "");
+      if (!id.empty())
+      {
+        EXPECT_TRUE(ids.contains(id)) << id;
+      }
+      visit(item["ChildItems"]);
+    }
+  };
+  visit(json["Navigation"]);
+}
 } // namespace
 
 TEST(TreeJsonDumper, SemanticHierarchyAndLegacyCommentIds)
@@ -49,6 +83,7 @@ TEST(TreeJsonDumper, SemanticHierarchyAndLegacyCommentIds)
   db->DumpClassDatabase(&legacy);
   db->DumpClassDatabase(&tree);
   auto json = tree.GetJson();
+  ExpectNavigationTargetsResolve(json);
   EXPECT_FALSE(json.contains("Tokens"));
   EXPECT_EQ(json["ParserVersion"], "1.0.0");
   EXPECT_EQ(json["PackageVersion"], "1.2.3");
@@ -71,8 +106,14 @@ TEST(TreeJsonDumper, SemanticHierarchyAndLegacyCommentIds)
     }
   }
   size_t documentationTokens{}, sourceLinks{}, contexts{};
+  std::unordered_set<std::string> allLineIds;
   Walk(json["ReviewLines"], [&](auto const& line) {
-    if (line.contains("LineId") && line["LineId"] != "Azure" && line["LineId"] != "Azure::TreeTest")
+    if (line.contains("LineId"))
+    {
+      allLineIds.emplace(line["LineId"].template get<std::string>());
+    }
+    if (line.contains("LineId")
+        && !line["LineId"].template get<std::string>().starts_with("#"))
     {
       treeIds.push_back(line["LineId"]);
     }
@@ -118,12 +159,170 @@ TEST(TreeJsonDumper, SemanticHierarchyAndLegacyCommentIds)
     }
     overloadWarnings += target.find("Azure::TreeTest::Overloaded(") != std::string::npos;
     templateWarnings += target.find("Azure::TreeTest::Identity(") != std::string::npos;
-    EXPECT_NE(std::find(treeIds.begin(), treeIds.end(), target), treeIds.end()) << target;
+    EXPECT_TRUE(allLineIds.contains(target)) << target;
   }
   EXPECT_EQ(protectedWarnings, 1);
   EXPECT_EQ(overloadWarnings, 2);
   EXPECT_EQ(templateWarnings, 1);
   EXPECT_EQ(tree.GetJson(), json);
+}
+
+TEST(TreeJsonDumper, UsingNamespacePreservesDefinitionReferencesAndDiagnostic)
+{
+  ApiViewProcessor processor("tests", R"({
+    "sourceFilesToProcess": ["UsingNamespace.cpp"]
+  })"_json);
+  ASSERT_EQ(processor.ProcessApiView(), 0);
+  auto& db = processor.GetClassesDatabase();
+  JsonDumper legacy("Review", "Storage", "test");
+  TreeJsonDumper tree("Review", "Storage", "test");
+  db->DumpClassDatabase(&legacy);
+  std::ostringstream serializedLegacy;
+  legacy.DumpToFile(serializedLegacy);
+  db->DumpClassDatabase(&tree);
+  auto json = tree.GetJson();
+  ExpectNavigationTargetsResolve(json);
+  bool directiveFound = false;
+  Walk(json["ReviewLines"], [&](auto const& line) {
+    if (Text(line) == "using namespace Test::Inner;")
+    {
+      directiveFound = true;
+      EXPECT_EQ(line["LineId"], "Test::Inner");
+      for (auto const& token : line["Tokens"])
+      {
+        if (token["Value"] == "Test::Inner")
+        {
+          EXPECT_EQ(token["NavigateToId"], "Test::Inner");
+        }
+      }
+    }
+  });
+  EXPECT_TRUE(directiveFound);
+  bool diagnosticFound = false;
+  for (auto const& diagnostic : json["Diagnostics"])
+  {
+    if (diagnostic["DiagnosticId"] == "CPA000A")
+    {
+      diagnosticFound = true;
+      EXPECT_EQ(diagnostic["TargetId"], "Test::Inner");
+    }
+  }
+  EXPECT_TRUE(diagnosticFound);
+  EXPECT_EQ(json["Diagnostics"], legacy.GetJson()["Diagnostics"]);
+}
+
+TEST(TreeJsonDumper, RepeatedNamespaceScopesHaveDistinctIdsAndResolvableAliases)
+{
+  TreeJsonDumper tree("Review", "Storage", "test");
+  for (int scope = 0; scope != 2; ++scope)
+  {
+    tree.SetNamespace("Test::Inner");
+    tree.SetNamespace("");
+  }
+  auto node = std::make_shared<TypeHierarchy::TypeHierarchyNode>(
+      "Inner", "Test::Inner", TypeHierarchy::TypeHierarchyClass::Namespace);
+  tree.DumpTypeHierarchyNode(node);
+  auto json = tree.GetJson();
+  ExpectNavigationTargetsResolve(json);
+  std::unordered_set<std::string> ids;
+  Walk(json["ReviewLines"], [&](auto const& line) {
+    if (line.contains("LineId"))
+    {
+      EXPECT_TRUE(ids.emplace(line["LineId"].template get<std::string>()).second);
+    }
+    if (line.contains("RelatedToLine"))
+    {
+      EXPECT_TRUE(ids.contains(line["RelatedToLine"].template get<std::string>()));
+    }
+  });
+  EXPECT_EQ(ids.size(), 4);
+  tree.InsertTypeName("Test::Inner", "Test::Inner");
+  tree.Newline();
+  json = tree.GetJson();
+  ExpectNavigationTargetsResolve(json);
+  EXPECT_EQ(json["Navigation"][0]["NavigationId"], "Test::Inner");
+  EXPECT_EQ(json["ReviewLines"].back()["LineId"], "Test::Inner");
+  tree.SetNamespace("Test::Inner");
+  tree.SetNamespace("");
+  json = tree.GetJson();
+  ExpectNavigationTargetsResolve(json);
+  EXPECT_EQ(json["Navigation"][0]["NavigationId"], "Test::Inner");
+}
+
+TEST(TreeJsonDumper, ForwardDeclarationsRemainNavigableWithAndWithoutDefinitions)
+{
+  ApiViewProcessor processor("tests", R"({
+    "sourceFilesToProcess": ["TreeFormat.hpp"]
+  })"_json);
+  ASSERT_EQ(processor.ProcessApiView(), 0);
+  TreeJsonDumper tree("Review", "Storage", "test");
+  processor.GetClassesDatabase()->DumpClassDatabase(&tree);
+  auto json = tree.GetJson();
+  ExpectNavigationTargetsResolve(json);
+  bool forwardFound = false, definedFound = false, enumForwardFound = false;
+  Walk(json["ReviewLines"], [&](auto const& line) {
+    auto text = Text(line);
+    if (text == "class Forward;")
+    {
+      forwardFound = true;
+      EXPECT_TRUE(line.contains("LineId"));
+      for (auto const& token : line["Tokens"])
+      {
+        if (token["Value"] == "Forward")
+        {
+          EXPECT_EQ(token["NavigateToId"], line["LineId"]);
+        }
+      }
+    }
+    if (text == "class Defined {")
+    {
+      definedFound = true;
+      EXPECT_EQ(line["LineId"], "Azure::TreeTest::Defined");
+    }
+    if (text == "enum class ForwardEnum;")
+    {
+      enumForwardFound = true;
+      EXPECT_TRUE(line.contains("LineId"));
+    }
+  });
+  EXPECT_TRUE(forwardFound);
+  EXPECT_TRUE(definedFound);
+  EXPECT_TRUE(enumForwardFound);
+}
+
+TEST(TreeJsonDumper, ForwardAliasesPreferDefinitionsInEitherOrder)
+{
+  for (bool definitionFirst : {false, true})
+  {
+    TreeJsonDumper tree("Review", "Storage", "test");
+    auto definition = [&]() {
+      tree.InsertTypeName("Defined", "Test::Defined");
+      tree.Newline();
+    };
+    if (definitionFirst)
+    {
+      definition();
+    }
+    for (int declaration = 0; declaration != 2; ++declaration)
+    {
+      tree.InsertForwardDeclaration("Defined", "Test::Defined");
+      tree.Newline();
+    }
+    if (!definitionFirst)
+    {
+      definition();
+    }
+    auto node = std::make_shared<TypeHierarchy::TypeHierarchyNode>(
+        "Defined", "Test::Defined", TypeHierarchy::TypeHierarchyClass::Class);
+    tree.DumpTypeHierarchyNode(node);
+    auto json = tree.GetJson();
+    ExpectNavigationTargetsResolve(json);
+    EXPECT_EQ(json["Navigation"][0]["NavigationId"], "Test::Defined");
+    for (auto const& line : json["ReviewLines"])
+    {
+      EXPECT_EQ(line["Tokens"][0]["NavigateToId"], "Test::Defined");
+    }
+  }
 }
 
 TEST(TreeJsonDumper, RangeFlagsSpacingAndDiagnosticTargets)

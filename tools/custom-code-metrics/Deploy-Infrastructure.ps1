@@ -5,7 +5,8 @@ param(
     [string]$ResourceGroup = "rg-azsdk-custom-code-metrics",
     [string]$Location = "westus2",
     [string]$SiteName = "azsdk-custom-code-metrics",
-    [Parameter(Mandatory)][string]$Owner,
+    [Parameter(Mandatory)][ValidatePattern("^[a-zA-Z0-9][a-zA-Z0-9-]*(?:@microsoft\.com)?$")][string]$Owner,
+    [ValidatePattern("\S")][string]$Purpose = "Azure SDK custom code metrics",
     [Parameter(Mandatory)][guid]$BootstrapPrincipalId,
     [switch]$ProvisionResourcesOnly,
     [switch]$PublicReports
@@ -25,10 +26,10 @@ function Invoke-AzureJson {
 }
 
 $null = Invoke-AzureJson -Arguments @("group", "create", "--name", $ResourceGroup, "--location", $Location,
-    "--tags", "Owner=$Owner", "Project=Azure SDK custom code metrics", "Environment=Playground")
+    "--tags", "Owners=$Owner", "Purpose=$Purpose", "Project=Azure SDK custom code metrics", "Environment=Playground")
 $deployment = Invoke-AzureJson -Arguments @("deployment", "group", "create", "--resource-group", $ResourceGroup,
     "--name", "custom-code-metrics", "--template-file", (Join-Path $PSScriptRoot "infra" "main.bicep"),
-    "--parameters", "location=$Location", "siteName=$SiteName", "owner=$Owner",
+    "--parameters", "location=$Location", "siteName=$SiteName", "owner=$Owner", "purpose=$Purpose",
     "bootstrapPrincipalId=$BootstrapPrincipalId",
     "deployRoleAssignments=$((-not $ProvisionResourcesOnly).ToString().ToLowerInvariant())",
     "publicReports=$($PublicReports.IsPresent.ToString().ToLowerInvariant())")

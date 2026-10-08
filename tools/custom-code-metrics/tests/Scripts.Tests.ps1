@@ -193,7 +193,7 @@ Describe "Relocated policy-safe infrastructure helper" {
         Mock Write-Warning {}
     }
     It "uses the relocated Bicep and private defaults when provisioning without access grants" {
-        $result = & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "test@example.invalid" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -ProvisionResourcesOnly
+        $result = & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "testalias@microsoft.com" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -ProvisionResourcesOnly
         $result.storageAccount | Should -Be "testaccount"
         $result.reportsArePublic | Should -BeFalse
         Should -Invoke az -Times 1 -Exactly -ParameterFilter {
@@ -201,16 +201,42 @@ Describe "Relocated policy-safe infrastructure helper" {
             $Arguments -contains "deployRoleAssignments=false" -and $Arguments -contains "publicReports=false"
         }
         Should -Invoke Write-Warning -Times 2 -Exactly
+        Should -Invoke az -Times 1 -Exactly -ParameterFilter {
+            $Arguments -contains "group" -and $Arguments -contains "Owners=testalias@microsoft.com" -and
+            $Arguments -contains "Purpose=Azure SDK custom code metrics" -and
+            -not ($Arguments -contains "Owner=testalias@microsoft.com")
+        }
     }
     It "does not hide resource provisioning failures" {
         Mock az { $global:LASTEXITCODE = 1 }
-        { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "test@example.invalid" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -ProvisionResourcesOnly } | Should -Throw "*Azure command failed*"
+        { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "testalias" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -ProvisionResourcesOnly } | Should -Throw "*Azure command failed*"
         Should -Invoke az -Times 1 -Exactly
     }
     It "previews infrastructure and roles without creating a resource group or deploying resources" {
-        & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "test@example.invalid" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -WhatIf
+        & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "testalias" -Purpose "Persistent dashboard proposal" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -WhatIf
         Should -Invoke az -Times 0 -Exactly
         Should -Invoke Write-Warning -Times 0 -Exactly
+    }
+    It "rejects malformed owners and empty purpose without making Azure calls" {
+        foreach ($owner in @("team@example.invalid", "first,second", "first;second", "first second", "", "@microsoft.com")) {
+            { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner $owner -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw
+        }
+        { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "testalias" -Purpose " " -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw
+        Should -Invoke az -Times 0 -Exactly
+    }
+    It "passes an explicit tracking purpose to the group and template without cleanup-exemption arguments" {
+        & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "test-alias" -Purpose "Metrics dashboard" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001"
+        Should -Invoke az -Times 1 -Exactly -ParameterFilter {
+            $Arguments -contains "group" -and $Arguments -contains "Owners=test-alias" -and $Arguments -contains "Purpose=Metrics dashboard"
+        }
+        Should -Invoke az -Times 1 -Exactly -ParameterFilter {
+            $Arguments -contains "deployment" -and $Arguments -contains "owner=test-alias" -and $Arguments -contains "purpose=Metrics dashboard"
+        }
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { ($Arguments -join " ") -match "DoNotDelete|DeleteAfter|allowlist" }
+        $template = Get-Content -LiteralPath (Join-Path $script:PackageRoot "infra" "main.bicep") -Raw
+        $template | Should -Match "Owners: owner"
+        $template | Should -Match "Purpose: purpose"
+        $template | Should -Not -Match "\bOwner: owner"
     }
 }
 

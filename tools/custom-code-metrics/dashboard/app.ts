@@ -206,7 +206,7 @@ function renderOverview(snapshot: Snapshot | undefined, libraries: Library[]): v
   byId("checkout-badge").classList.toggle("dirty", !!snapshot?.repository.isDirty);
   text("contract-info", snapshot ?
     `Schema ${snapshot.schemaVersion} | Physical C# lines, including comments and blanks` :
-    "Snapshot schema v3.0 / physical C# lines");
+    "Snapshot schema v1.0 / physical C# lines");
 }
 function renderBreakdown(libraries: Library[]): void {
   const group = select("breakdown-group").value === "service" ? "service" : "category";

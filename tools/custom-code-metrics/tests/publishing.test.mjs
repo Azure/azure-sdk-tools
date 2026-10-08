@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { gunzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
 import { AzureBlobStore, publish } from "../publishing.mjs";
-import { snapshot, library } from "../dashboard/tests/fixtures.mjs";
+import { snapshot, legacySnapshot, library } from "../dashboard/tests/fixtures.mjs";
 
 class Store {
   blobs = new Map();
@@ -66,26 +66,30 @@ test("invalid, dirty and inconsistent-identity inputs are rejected before upload
     assert.equal(store.operations.length, 0);
   }
 });
-test("v2 input cannot be republished as v3 or modify the existing index", async () => {
+test("old versions and prototype-1 input cannot be republished as the initial format or modify its index", async () => {
   const store = new Store();
   await publish(snapshot(), store);
-  const prior = { ...snapshot(undefined, "2026-10-02T12:00:00Z", "2"), schemaVersion: "2.0" };
   const before = structuredClone(store.blobs);
   store.operations = [];
-  await assert.rejects(publish(prior, store), /Invalid snapshot/);
-  assert.equal(prior.schemaVersion, "2.0");
+  for (const prior of [...["0.0", "2.0", "3.0"].map((schemaVersion) =>
+    ({ ...snapshot(undefined, "2026-10-02T12:00:00Z", "2"), schemaVersion })), legacySnapshot()]) {
+    const original = structuredClone(prior);
+    await assert.rejects(publish(prior, store), /Invalid snapshot/);
+    assert.deepEqual(prior, original);
+  }
   assert.deepEqual(store.blobs, before);
   assert.deepEqual(store.operations, []);
 });
-test("publication rejects any referenced v2 history month before writes, including older months behind a v3 latest", async () => {
-  for (const oldMonth of ["2026-10", "2026-11"]) {
+test("publication rejects prior-version history months before writes, including older months behind the current latest", async () => {
+  for (const [schemaVersion, oldMonth] of ["0.0", "2.0", "3.0"]
+    .flatMap((version) => ["2026-10", "2026-11"].map((month) => [version, month]))) {
     const store = new Store();
     await publish(snapshot(), store);
     await publish(snapshot(undefined, "2026-11-01T12:00:00Z", "2"), store);
     const index = latestIndex(store);
     const reference = index.history.find((reference) => reference.month === oldMonth);
     const document = month(store, oldMonth);
-    document.observations[0].schemaVersion = "2.0";
+    document.observations[0].schemaVersion = schemaVersion;
     const text = JSON.stringify(document);
     reference.path = `history/${createHash("sha256").update(text).digest("hex")}/${oldMonth}.json`;
     store.blobs.set(`reports/dotnet/${reference.path}`, { text, etag: '"v2"' });
@@ -97,18 +101,20 @@ test("publication rejects any referenced v2 history month before writes, includi
     assert.deepEqual(store.operations, []);
   }
 });
-test("a prior v2 latest is rejected even when all referenced months contain v3 observations", async () => {
-  const store = new Store();
-  await publish(snapshot(), store);
-  const key = `reports/dotnet/${latestIndex(store).latest}`;
-  const prior = JSON.parse(store.blobs.get(key).text);
-  prior.schemaVersion = "2.0";
-  store.blobs.get(key).text = JSON.stringify(prior);
-  const before = structuredClone(store.blobs);
-  store.operations = [];
-  await assert.rejects(publish(snapshot(undefined, "2026-11-01T12:00:00Z", "2"), store), /Invalid snapshot/);
-  assert.deepEqual(store.blobs, before);
-  assert.deepEqual(store.operations, []);
+test("a prototype latest is rejected even when all months contain current observations", async () => {
+  for (const schemaVersion of ["0.0", "2.0", "3.0"]) {
+    const store = new Store();
+    await publish(snapshot(), store);
+    const key = `reports/dotnet/${latestIndex(store).latest}`;
+    const prior = JSON.parse(store.blobs.get(key).text);
+    prior.schemaVersion = schemaVersion;
+    store.blobs.get(key).text = JSON.stringify(prior);
+    const before = structuredClone(store.blobs);
+    store.operations = [];
+    await assert.rejects(publish(snapshot(undefined, "2026-11-01T12:00:00Z", "2"), store), /Invalid snapshot/);
+    assert.deepEqual(store.blobs, before);
+    assert.deepEqual(store.operations, []);
+  }
 });
 test("missing or corrupt historical months outside the incoming month cannot be retained in a new index", async () => {
   for (const failure of ["missing", "hash", "dirty"]) {

@@ -117,12 +117,12 @@ test("freshness checks fail explicitly when an emitted schema is missing", () =>
   assert.notEqual(result.status, 0);
   assert.match(result.text, /ENOENT/);
 });
-test("canonical schema IDs identify tools and current v3 observations retain v1 reporting envelopes", async () => {
+test("canonical schema IDs identify tools and the initial observation and reporting formats", async () => {
   for (const name of names) {
     const schema = JSON.parse(await readFile(join(packageRoot, "schemas", `${name}.schema.json`), "utf8"));
     assert.equal(schema.$id, `https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/custom-code-metrics/schemas/${name}.schema.json`);
     assert.match(schema.$comment, /tools\/custom-code-metrics\/main.tsp in Azure\/azure-sdk-tools/);
-    assert.equal(schema.properties.schemaVersion.const, name === "CustomCodeMetrics" ? "3.0" : "1.0");
-    if (name === "HistoryMonth") assert.equal(schema.$defs.HistoryObservation.properties.schemaVersion.const, "3.0");
+    assert.equal(schema.properties.schemaVersion.const, "1.0");
+    if (name === "HistoryMonth") assert.equal(schema.$defs.HistoryObservation.properties.schemaVersion.const, "1.0");
   }
 });

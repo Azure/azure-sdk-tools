@@ -35,8 +35,8 @@
             "properties": {
                 "schemaVersion": {
                     "type": "string",
-                    "const": "3.0",
-                    "description": "Version 3 excludes linked core Shared helpers from other consuming libraries."
+                    "const": "1.0",
+                    "description": "Initial format excludes linked core Shared helpers from other consuming libraries."
                 },
                 "snapshotId": {
                     "type": "string",

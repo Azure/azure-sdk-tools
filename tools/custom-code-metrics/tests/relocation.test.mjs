@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runInNewContext } from "node:vm";
-import { library, snapshot } from "../dashboard/tests/fixtures.mjs";
+import { legacySnapshot, library, snapshot } from "../dashboard/tests/fixtures.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
@@ -90,6 +90,9 @@ test("relocated builds are script-relative; publication needs no website and lea
     for (const invalid of [
       "{broken", "{}", JSON.stringify({ ...audited, repository: { ...audited.repository, isDirty: true } }),
       JSON.stringify({ ...audited, schemaVersion: "2.0" }),
+      JSON.stringify({ ...audited, schemaVersion: "0.0" }),
+      JSON.stringify({ ...audited, schemaVersion: "3.0" }),
+      JSON.stringify(legacySnapshot()),
       JSON.stringify({ ...audited, repository: { ...audited.repository, commit: "a".repeat(40) } }),
       JSON.stringify({ ...audited, collectedAt: "2026-10-02T12:00:00Z" }),
       JSON.stringify({ ...audited, summary: { ...audited.summary, customLines: 11 } }),

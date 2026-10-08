@@ -6,7 +6,7 @@ import {
   isStale, loadHistory, loadReport, mergeObservations,
 } from "../generated/report.mjs";
 import { history } from "../generated/data.mjs";
-import { filters, library, snapshot } from "./fixtures.mjs";
+import { filters, legacySnapshot, library, snapshot } from "./fixtures.mjs";
 
 export function document(observations) {
   const month = new Date(observations[0].collectedAt).toISOString().slice(0, 7);
@@ -59,10 +59,13 @@ test("rejects history schema/version changes, extra fields and invalid calendars
     assert.throws(() => acceptHistoryMonth(value), /Invalid history/);
   }
 });
-test("v1 history envelopes strictly reject v2 observations and mixed v2/v3 history without conversion", () => {
+test("initial history rejects all prior version literals and the old prototype-1 metric shape", () => {
   for (const observations of [
-    [{ ...compactObservation(latest), schemaVersion: "2.0" }],
-    [compactObservation(latest), { ...compactObservation(snapshot(undefined, "2026-10-02T12:00:00Z", "2")), schemaVersion: "2.0" }],
+    ...["0.0", "2.0", "3.0"].flatMap((schemaVersion) => [
+      [{ ...compactObservation(latest), schemaVersion }],
+      [compactObservation(latest), { ...compactObservation(snapshot(undefined, "2026-10-02T12:00:00Z", "2")), schemaVersion }],
+    ]),
+    [compactObservation(legacySnapshot())],
   ]) {
     const value = { ...currentMonth.value, observations };
     const before = structuredClone(value);
@@ -70,13 +73,14 @@ test("v1 history envelopes strictly reject v2 observations and mixed v2/v3 histo
     assert.deepEqual(value, before);
   }
 });
-test("hosted latest rejects a v2 feed even when its discovery envelope remains v1", async () => {
-  const prior = { ...latest, schemaVersion: "2.0" };
-  const entries = new Map([
-    ["https://metrics.invalid/index.json", JSON.stringify(validIndex)],
-    [`https://metrics.invalid/${validIndex.latest}`, JSON.stringify(prior)],
-  ]);
-  await assert.rejects(loadReport("https://metrics.invalid/index.json", fetcher(entries)), /Invalid snapshot/);
+test("hosted latest rejects old versions and prototype-1 shapes with unchanged discovery envelopes", async () => {
+  for (const prior of [...["0.0", "2.0", "3.0"].map((schemaVersion) => ({ ...latest, schemaVersion })), legacySnapshot()]) {
+    const entries = new Map([
+      ["https://metrics.invalid/index.json", JSON.stringify(validIndex)],
+      [`https://metrics.invalid/${validIndex.latest}`, JSON.stringify(prior)],
+    ]);
+    await assert.rejects(loadReport("https://metrics.invalid/index.json", fetcher(entries)), /Invalid snapshot/);
+  }
 });
 test("lazy loading rejects a content-addressed old v2 month without replacing the caller's cache", async () => {
   const old = document([{ ...snapshot(undefined, "2026-09-01T12:00:00Z", "2"), schemaVersion: "2.0" }]);

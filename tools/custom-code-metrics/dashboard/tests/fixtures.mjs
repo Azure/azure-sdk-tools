@@ -25,7 +25,7 @@ export function snapshot(libraries = [library("Azure.One", 10, 35)], date = "202
     category, metrics: aggregate(members.filter((item) => item.category === category)),
   }));
   return {
-    schemaVersion: "3.0", snapshotId: `${stamp}Z-${commit}`,
+    schemaVersion: "1.0", snapshotId: `${stamp}Z-${commit}`,
     collectedAt: date, repository: { name: "Azure/azure-sdk-for-net", commit, isDirty: dirty },
     summary: aggregate(libraries),
     categories: rows(libraries),
@@ -41,3 +41,16 @@ export const browserSnapshot = () => snapshot([
   library("Azure.ResourceManager.Sample", 12, 88, "beta", "management"),
   library("Azure.Provisioning.Sample", 5, 5, "beta", "provisioning"),
 ]);
+export function legacySnapshot() {
+  const value = snapshot();
+  value.metricDefinition = {
+    version: "1.0", language: "csharp", lineCounting: "physical-including-comments-and-blanks",
+    sourceScope: "git-tracked-sdk-msbuild-compile-union", classification: "inferred-file-provenance-v1",
+    aggregation: "library-weighted-including-linked-source",
+  };
+  const metrics = [value.summary, ...value.categories.map((row) => row.metrics),
+    ...value.services.flatMap((row) => [row.metrics, ...row.categories.map((category) => category.metrics)]),
+    ...value.libraries.map((row) => row.metrics)];
+  for (const metric of metrics) Object.assign(metric, { unknownFiles: 0, unknownLines: 0 });
+  return value;
+}

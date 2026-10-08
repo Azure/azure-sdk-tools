@@ -5,7 +5,7 @@ publication commands for Azure SDK custom-source metrics. Language repositories
 own their schedules, trusted checkouts and publication jobs; tools owns the
 website, contracts, common commands, hosting infrastructure and validation CI.
 
-**Only the .NET adapter and .NET snapshot v3.0 are implemented today.** Moving
+**Only the .NET adapter and initial .NET snapshot format 1.0 are implemented today.** Moving
 ownership here does not make the existing C# counting rules or repository-specific
 wire contract valid for arbitrary languages.
 
@@ -92,16 +92,16 @@ bucket or redundant measurement rules.
 For every library/group, `totalLines = customLines + generatedLines`;
 `customRatio = customLines / totalLines`, or `null` for a zero denominator.
 Groups sum numerators and denominators before dividing, rather than averaging
-library ratios. Version 3 excludes linked files whose **actual Git path** matches
+library ratios. The initial format excludes linked files whose **actual Git path** matches
 `sdk/core/<package>/src/Shared/**` from the counts and optional evidence of
 other consuming libraries, regardless of generated markers. The owning core
 library still counts its own `src/Shared` source. This does not exclude core
 packages or all shared code: other linked source remains library-weighted.
 
-Snapshot contract **3.0** includes observation identity/time, repository
+Snapshot contract **1.0** includes observation identity/time, repository
 name/commit/dirty state, weighted summary/category/service rollups, libraries and
 exclusions. Optional file evidence contains paths/counts, never source content.
-`ReportIndex` and `HistoryMonth` envelopes remain **1.0**, containing v3.0
+`ReportIndex` and `HistoryMonth` envelopes are also **1.0**, containing current 1.0
 observations. Shape validation is generated from the schema; shared semantic
 validators additionally enforce safe integers, arithmetic, rollups, identities,
 file evidence consistency and conflicting retry rejection.
@@ -122,14 +122,21 @@ schemas byte-for-byte without rewriting the canonical files. Generated IDs and
 comments identify this package. Objects are sealed and reusable types bundled
 under `$defs`. See the [TypeSpec JSON Schema decorators reference](https://typespec.io/docs/emitters/json-schema/reference/decorators/).
 Changes to actual contract/counting rules require appropriate versioning.
-The linked-core-helper exclusion is a membership change from v2 to v3, not
-an observed code improvement. Keep existing v2 snapshots/immutable reports
-untouched. Current ingestion strictly rejects v2 snapshots/history rather than
-converting or connecting them to v3 trends. Start a new v3 baseline.
+This format is being introduced by an unmerged PR; its earlier prototype version
+label 3.0 was administratively renumbered to initial 1.0 without changing fields,
+membership or counting rules. Keep all earlier prototype files unchanged.
+Current ingestion rejects prototype versions 0, 2 and 3 without conversion.
+The old prototype also labeled 1.0 had rules metadata and an unknown bucket;
+those fields are still rejected by the current sealed two-way contract.
+
+An explicitly recorded, separate administrative copy may change only the version
+label of the already measured artifact for initial-format validation. Its counts,
+collection time, commit and snapshot identity remain unchanged; it is **not a new
+measurement** or a code-improvement trend. No automatic conversion is performed.
 
 The publisher validates **every** existing referenced history month and latest
 snapshot before any uploads, including older months outside the incoming
-observation's month. An incompatible v2 feed is rejected without replacing
+observation's month. An incompatible prototype feed is rejected without replacing
 its index or immutable blobs. There are no published playground Blob feeds
 to migrate; do not repurpose an existing incompatible feed without an explicit
 separate migration. Envelope field shapes/versions do not change.
@@ -274,7 +281,7 @@ one or more **absolute snapshot file paths** instead of `-IndexUrl`:
 the complete input before requesting a deployment secret, require clean
 observations, and strip optional file-level audit evidence from public seeds
 without modifying the source. They do not read Blob storage or fetch any feed.
-The deployed site retains the collection date/revision in observation metadata
+A seeded build retains the collection date/revision in observation metadata
 and the embedded-baseline/no-automatic-feed fact in its quiet footer. Persistent
 preview, loaded-count and embedded-staleness banners are not displayed. Genuine
 loading/error notifications remain explicit; hosted-feed health is discreet
@@ -303,30 +310,43 @@ report blobs; it is not a workaround for organizational policy. A permitted publ
 profile limits Blob CORS to the site origin and GET/HEAD, never container listing.
 
 `Deploy-Infrastructure.ps1 -ProvisionResourcesOnly` skips role assignments.
+The compatible `-Owner` parameter accepts one individual Microsoft/GitHub alias
+or Microsoft UPN and emits the documented **`Owners`** tracking tag, not the
+unrecognized singular `Owner` tag. `-Purpose` records the resource's purpose
+on the group and owned resources. These format checks do not verify that an
+individual is linked to GitHub or that cleanup eligibility has been approved.
+See the [resource management guidelines](https://github.com/Azure/azure-sdk-tools/blob/main/doc/engsys_resource_management.md).
+Playground resources are expiry-managed; persistent hosting requires EngSys
+coordination. The helper adds no cleanup bypass, non-expiring lease or exemption.
 The helper retains a `-BootstrapPrincipalId` parameter for its manual bootstrap
 profile; personal writer grants are an optional administrative convenience, not
 a runtime architectural requirement. The scheduled publisher needs scoped
 Storage Blob Data Contributor on archive/reports. A private-storage reader needs
 only Storage Blob Data Reader on reports, never archive.
 
-**The static preview is deployed; nightly reporting is not operational.** The
-[public preview](https://agreeable-rock-0fabe8a1e.4.azurestaticapps.net) shows the
-validated October 7, 2026 v3 .NET baseline (459 libraries, 276 services, 7.32%
-inferred custom source). It embeds compact data, not a live feed; its collection
-date and baseline/no-automatic-feed metadata remain visible without warning banners.
-The v3 provisioning `Azure.Provisioning.CostManagement` library has 120 custom
+**The former dashboard is unavailable; no live hosting or nightly reporting is
+operational.** Azure activity records show the external `azure-sdk-tests`
+service principal deleting the dedicated resource group and its site, storage
+and identity during October 8, 2026, 00:19-00:21 UTC. This occurred before the
+initial-format renumbering. The former endpoint was
+`agreeable-rock-0fabe8a1e.4.azurestaticapps.net`.
+
+The preserved last-working October 7 prototype-3 .NET observation contains
+459 libraries, 276 services and 7.32% inferred custom source.
+The measured `Azure.Provisioning.CostManagement` library has 120 custom
 lines out of 8,817 total lines (1.36%), with foreign core Shared helpers
 excluded. The change from earlier v2 percentages reflects the new membership
-rules, not a measured code improvement; the website starts a separate v3 baseline.
+rules, not a measured code improvement. The initial-format administrative copy
+retains exactly those measurements; no restored site is claimed.
 
-Private containers exist in
-`azsdkcmibsokvwfsterm` / `rg-azsdk-custom-code-metrics`, subscription
-`faa080af-c1d8-40ad-9cce-e1a450ca5b57`. Public Blob access remains prohibited
-and shared keys remain disabled. Container-scoped writer roles were configured
-separately; deploying this preview did not change those roles or publish Blob
-data. No pipeline/schedule is registered and no approved reader API is
-implemented. Do not bypass policy with account keys, browser SAS, or policy
-overrides.
+The deleted resources were in `rg-azsdk-custom-code-metrics`, subscription
+`faa080af-c1d8-40ad-9cce-e1a450ca5b57`, with storage account
+`azsdkcmibsokvwfsterm`. Restoration requires an explicitly approved persistent
+hosting arrangement; do not recreate resources or alter cleanup protections as
+part of a schema change. The tracking-tag mismatch is a documented setup gap,
+not proof of the exact deleted group's tags or cleanup decision branch.
+No pipeline/schedule is registered and no approved reader API is implemented.
+Do not bypass policy with account keys, browser SAS, or policy overrides.
 
 ### Language-owned collection and publication
 

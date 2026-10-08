@@ -2,7 +2,12 @@ targetScope = 'resourceGroup'
 
 param location string = resourceGroup().location
 param siteName string = 'azsdk-custom-code-metrics'
+@description('Individual Microsoft/GitHub alias or Microsoft UPN linked to GitHub. Format checks do not establish cleanup eligibility or hosting approval.')
+@minLength(1)
 param owner string
+@description('Resource purpose for owner tracking; this does not exempt resources from cleanup.')
+@minLength(1)
+param purpose string = 'Azure SDK custom code metrics'
 param bootstrapPrincipalId string
 @description('Resource-only provisioning does not grant publishing access. An access administrator must deploy again with this enabled.')
 param deployRoleAssignments bool = true
@@ -10,7 +15,8 @@ param deployRoleAssignments bool = true
 param publicReports bool = false
 
 var tags = {
-  Owner: owner
+  Owners: owner
+  Purpose: purpose
   Project: 'Azure SDK custom code metrics'
   Environment: 'Playground'
 }

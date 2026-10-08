@@ -5,7 +5,7 @@ import {
   acceptSnapshot, aggregate, breakdown, filterLibraries, forRepository, history, loadIndex,
   measurementKey, mergeSnapshots, parseSnapshot, REPOSITORIES, sortLibraries, trendSeries, withoutFileEvidence,
 } from "../generated/data.mjs";
-import { filters, library, snapshot } from "./fixtures.mjs";
+import { filters, legacySnapshot, library, snapshot } from "./fixtures.mjs";
 
 test("repository choices are exactly the seven requested languages, with only .NET collection implemented", () => {
   assert.deepEqual(REPOSITORIES.map(({ name, language }) => [name, language]), [
@@ -23,7 +23,7 @@ test("repository selection scopes observations without pooling .NET data into un
   for (const repository of REPOSITORIES.slice(1)) assert.deepEqual(forRepository(observations, repository.name), []);
   assert.deepEqual(observations, before);
 });
-test("selectable repositories do not widen the .NET-only v3 snapshot contract", () => {
+test("selectable repositories do not widen the .NET-only initial snapshot contract", () => {
   for (const repository of REPOSITORIES.slice(1)) {
     const foreign = snapshot();
     foreign.repository.name = repository.name;
@@ -75,14 +75,28 @@ test("identity accepts equivalent time zones and seven-digit fractions without t
     assert.equal(acceptSnapshot(value), value);
   }
 });
-test("rejects prior v2 measurements without converting their version or counts", () => {
-  const prior = { ...snapshot(), schemaVersion: "2.0" };
+test("rejects prototype versions 0, 2 and 3 without converting their version or counts", () => {
+  for (const schemaVersion of ["0.0", "2.0", "3.0"]) {
+    const prior = { ...snapshot(), schemaVersion };
+    const before = structuredClone(prior);
+    assert.throws(() => acceptSnapshot(prior), /Invalid snapshot/);
+    assert.throws(() => parseSnapshot(JSON.stringify(prior)), /Invalid snapshot/);
+    assert.deepEqual(prior, before);
+  }
+});
+test("legacy prototype 1.0 with its actual rules metadata and unknown bucket is not the initial sealed format", () => {
+  const prior = legacySnapshot();
   const before = structuredClone(prior);
+  assert.equal(prior.schemaVersion, "1.0");
+  assert.equal(prior.metricDefinition.classification, "inferred-file-provenance-v1");
+  assert.ok("unknownFiles" in prior.libraries[0].metrics);
   assert.throws(() => acceptSnapshot(prior), /Invalid snapshot/);
   assert.throws(() => parseSnapshot(JSON.stringify(prior)), /Invalid snapshot/);
-  assert.deepEqual(prior, before);
+  delete prior.metricDefinition;
+  assert.throws(() => acceptSnapshot(prior), /Invalid snapshot/, "Unknown counts cannot be silently discarded.");
+  assert.deepEqual({ ...prior, metricDefinition: before.metricDefinition }, before);
 });
-test("v3 audit evidence excludes actual linked core Shared paths from other libraries regardless of provenance", () => {
+test("initial format audit evidence excludes actual linked core Shared paths from other libraries regardless of provenance", () => {
   for (const [provenance, evidence] of [
     ["custom", "no-generated-signal"], ["generated", "auto-generated-header"],
   ]) {
@@ -95,7 +109,7 @@ test("v3 audit evidence excludes actual linked core Shared paths from other libr
       "Another core package is still a foreign consumer.");
   }
 });
-test("v3 retains a core library's own Shared evidence and linked source outside the exclusion", () => {
+test("initial format retains a core library's own Shared evidence and linked source outside the exclusion", () => {
   for (const [projectPath, sourcePath] of [
     ["sdk/core/Azure.Core/src/Azure.Core.csproj", "sdk/core/Azure.Core/src/Shared/Helper.cs"],
     ["sdk/core/Azure.OtherCore/src/Azure.OtherCore.csproj", "sdk/core/Azure.OtherCore/src/Shared/Nested/Helper.cs"],
@@ -113,7 +127,7 @@ test("v3 retains a core library's own Shared evidence and linked source outside 
 test("rejects missing, unsupported, or extra schema fields", () => {
   for (const mutate of [
     (s) => { delete s.summary; },
-    (s) => { s.schemaVersion = "1.0"; },
+    (s) => { s.schemaVersion = "0.0"; },
     (s) => { s.extra = true; },
     (s) => { s.summary.extra = true; },
     (s) => { s.metricDefinition = { version: "1.0" }; },
@@ -365,11 +379,11 @@ if (process.env.CUSTOM_CODE_METRICS_SNAPSHOT) {
       ...source.summary, customRatio: source.summary.totalLines ? source.summary.customLines / source.summary.totalLines : null,
     });
   });
-  test("real v3 provisioning CostManagement excludes core helpers from its library ratio", async () => {
+  test("real initial-format provisioning CostManagement retains the measured helper exclusion counts", async () => {
     const source = parseSnapshot(await readFile(process.env.CUSTOM_CODE_METRICS_SNAPSHOT, "utf8"));
     const measured = source.libraries.find((library) => library.library === "Azure.Provisioning.CostManagement");
     assert.ok(measured, "The full real observation is missing provisioning CostManagement.");
-    assert.equal(source.schemaVersion, "3.0");
+    assert.equal(source.schemaVersion, "1.0");
     assert.equal(measured.metrics.customLines, 120);
     assert.equal(measured.metrics.generatedLines, 8697);
     assert.equal(measured.metrics.totalLines, 8817);

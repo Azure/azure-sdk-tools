@@ -8,7 +8,7 @@ import { createServer } from "node:http";
 import { createHash } from "node:crypto";
 import { parseSnapshot, REPOSITORIES } from "../generated/data.mjs";
 import { compactObservation } from "../generated/report.mjs";
-import { browserSnapshot, library, snapshot } from "./fixtures.mjs";
+import { browserSnapshot, legacySnapshot, library, snapshot } from "./fixtures.mjs";
 
 const pageUrl = new URL("../dist/index.html", import.meta.url).href;
 const source = process.env.CUSTOM_CODE_METRICS_SNAPSHOT ?
@@ -58,7 +58,7 @@ try {
   await page.goto(pageUrl);
   await page.waitForFunction((count) => document.getElementById("library-count")?.textContent === count, expectedCount);
   assert.equal(await page.locator("#custom-percent").textContent(), percentage(source.summary.customRatio));
-  assert.match(await page.locator("#contract-info").textContent(), /Schema 3\.0/);
+  assert.match(await page.locator("#contract-info").textContent(), /Schema 1\.0/);
   if (process.env.CUSTOM_CODE_METRICS_SNAPSHOT) {
     await page.locator("#library-search").fill("Azure.Provisioning.CostManagement");
     await page.getByRole("button", { name: "Azure.Provisioning.CostManagement", exact: true }).click();
@@ -228,6 +228,8 @@ try {
     else if (url.endsWith("/valid.json")) value = partial;
     else if (url.endsWith("/v2/index.json")) value = { snapshots: ["v2.json"] };
     else if (url.endsWith("/v2.json")) value = { ...first, schemaVersion: "2.0" };
+    else if (url.endsWith("/legacy/index.json")) value = { snapshots: ["legacy.json"] };
+    else if (url.endsWith("/legacy.json")) value = legacySnapshot();
     else if (url.endsWith("index.json")) value = { snapshots: ["one.json"] };
     await route.fulfill({
       status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" },
@@ -251,7 +253,11 @@ try {
   await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.includes("Invalid snapshot"));
   assert.equal(await fixturePage.locator("#status").isVisible(), true);
   assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
-  assert.equal(await fixturePage.locator("#history-values tr").count(), 3, "Old v2 data became a false v3 trend point.");
+  assert.equal(await fixturePage.locator("#history-values tr").count(), 3, "Old version data became a false current-format trend point.");
+  await fixturePage.locator("#index-url").fill("https://metrics.invalid/legacy/index.json");
+  await fixturePage.locator("#load-index").click();
+  await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.includes("Invalid snapshot"));
+  assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
   await fixturePage.locator("#index-url").fill("https://metrics.invalid/history/index.json");
   await fixturePage.locator("#load-index").click();
   await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.startsWith("Published index:"));

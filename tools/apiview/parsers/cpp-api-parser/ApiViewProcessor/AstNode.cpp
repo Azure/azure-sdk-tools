@@ -1315,6 +1315,19 @@ static std::string GetNavigationId(clang::CXXRecordDecl const* record)
   return record->getQualifiedNameAsString();
 }
 
+static std::string GetDiagnosticTargetId(clang::NamedDecl const* declaration)
+{
+  if (auto function = dyn_cast<FunctionDecl>(declaration))
+  {
+    return GetNavigationId(function);
+  }
+  if (auto functionTemplate = dyn_cast<FunctionTemplateDecl>(declaration))
+  {
+    return GetNavigationId(functionTemplate->getTemplatedDecl());
+  }
+  return declaration->getQualifiedNameAsString();
+}
+
 /**
  * Get the navigation ID for a qualified type declaration.
  *
@@ -3268,7 +3281,8 @@ AstClassLike::AstClassLike(
           {
             azureClassesDatabase->CreateApiViewMessage(
                 ApiViewMessages::ProtectedFieldsInFinalClass,
-                cast<NamedDecl>(child)->getQualifiedNameAsString());
+                cast<NamedDecl>(child)->getQualifiedNameAsString(),
+                GetDiagnosticTargetId(cast<NamedDecl>(child)));
           }
         }
       }
@@ -3336,6 +3350,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
       }
 
       dumper->Newline();
+      dumper->BeginChildScope("", true);
       dumper->LeftAlign();
       dumper->InsertPunctuation('{');
       dumper->AdjustIndent(2);
@@ -3348,6 +3363,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
         child->DumpNode(dumper, innerOptions);
       }
       dumper->AdjustIndent(-2);
+      dumper->EndChildScope();
       dumper->LeftAlign();
       dumper->InsertPunctuation('}');
     }
@@ -3415,6 +3431,7 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
       dumper->InsertIdentifier(m_underlyingType);
     }
     dumper->Newline();
+    dumper->BeginChildScope("", true);
     dumper->LeftAlign();
     dumper->InsertPunctuation('{');
     dumper->AdjustIndent(2);
@@ -3434,6 +3451,7 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
     }
     dumper->Newline();
     dumper->AdjustIndent(-2);
+    dumper->EndChildScope();
     dumper->LeftAlign();
     dumper->InsertPunctuation('}');
   }
@@ -3749,6 +3767,7 @@ void AzureClassesDatabase::CreateAstNode(clang::NamedDecl* namedDecl)
     if (namedDecl->getKind() != Decl::Namespace)
     {
       const std::string typeName{namedDecl->getQualifiedNameAsString()};
+      const std::string canonicalId = GetDiagnosticTargetId(namedDecl);
       if (!m_processor->FilterNamespaces().empty())
       {
         // We have a namespace filter set. Verify that the type name starts with one of the filter
@@ -3771,7 +3790,7 @@ void AzureClassesDatabase::CreateAstNode(clang::NamedDecl* namedDecl)
           if (generateError)
           {
             m_processor->GetClassesDatabase()->CreateApiViewMessage(
-                ApiViewMessages::TypeDeclaredInNamespaceOutsideFilter, typeName);
+                ApiViewMessages::TypeDeclaredInNamespaceOutsideFilter, typeName, canonicalId);
           }
         }
       }
@@ -3783,7 +3802,7 @@ void AzureClassesDatabase::CreateAstNode(clang::NamedDecl* namedDecl)
         if (!m_processor->AllowInternal())
         {
           m_processor->GetClassesDatabase()->CreateApiViewMessage(
-              ApiViewMessages::InternalTypesInNonCorePackage, typeName);
+              ApiViewMessages::InternalTypesInNonCorePackage, typeName, canonicalId);
         }
       }
     }

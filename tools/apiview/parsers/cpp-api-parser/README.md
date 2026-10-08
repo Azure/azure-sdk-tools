@@ -24,9 +24,16 @@ The `ParseAzureSdkCpp` tool has the following command line switches:
 - `-r`, `--review` - Specifies the name of the API review for the API Review tool.
 - `--packageVersion` - Specifies the version of the package for the API Review.
 - `-o`, `--output` - Specifies the output file for the API review.
+- `--format legacy|tree` - Selects the JSON schema. The default is `legacy`, preserving existing pipeline output. Use `tree` for `ReviewLines`/`Children` output and the modern APIView UI.
 - `--version` - Prints the version of the ParseAzureSdkCpp tool.
 - `-h`, `--help` - Prints help text about the tool.
 - `-c`, `--console` - Prints the ApiView output to the console as well as the output JSON file.
+
+```powershell
+ParseAzureSdkCpp C:\AzureCppSdk\sdk\storage\azure-storage-blobs\inc -o blobs-tree.json --format tree
+```
+
+Both formats use the **Json** upload language; selecting **C++** explicitly chooses the website's separate `.cppast` archive input path. Tree output uses semantic namespace, class, and enum scopes. Opening class/enum braces are placed on the declaration line, with closing lines linked to their declarations. Token spelling and intra-line spacing, documentation, range flags, and navigation are retained. Line IDs retain the legacy renderer's comment IDs; diagnostics targeting another definition on the same line are mapped to that line ID without changing their diagnostic IDs. The tree schema has its own numeric token kinds and reports `ParserVersion` separately from the legacy `.cppast` parser.
 
 ### ApiViewSettings.json
 
@@ -155,7 +162,7 @@ and `Add<xxx>` methods. This allows the AST dumping to maintain a set of high
 level constructs such as soft line breaks (to handle intelligent line wrapping),
 Newline processing, indentation processing, etc.
 
-There are two AstDumper objects in the `ApiViewProcessor` directory - `TextDumper` and `JsonDumper`. 
+There are three AstDumper implementations in the `ApiViewProcessor` directory: `TextDumper`, `JsonDumper`, and `TreeJsonDumper`.
 The `TextDumper` object will dump the output of the ApiView as text to a `std::ostream` object, 
 while the `JsonDumper` object will dump the output of the ApiView as JSON to a `std::ostream` object (the `TextDumper`
 object is primarily used for test purposes).

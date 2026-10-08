@@ -81,7 +81,10 @@ public:
   TypeHierarchy* GetTypeHierarchy() { return &m_typeHierarchy; }
   ApiViewProcessorImpl const* GetProcessor() { return m_processor; }
 
-  void CreateApiViewMessage(ApiViewMessages diagnostic, std::string_view const& targetId);
+  void CreateApiViewMessage(
+      ApiViewMessages diagnostic,
+      std::string_view const& targetId,
+      std::string_view const& canonicalTargetId = "");
   void CreateAstNode(clang::NamedDecl* namedNode);
   void CreateAstNode(); // Create a terminal AstNode which is used to close out all outstanding
                         // namespaces.

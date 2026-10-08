@@ -18,6 +18,7 @@ struct ApiViewMessage
   std::string_view DiagnosticId;
   std::string_view HelpLinkUri;
   std::string TargetId;
+  std::string CanonicalTargetId;
   std::string_view DiagnosticText;
   MessageLevel Level;
 };

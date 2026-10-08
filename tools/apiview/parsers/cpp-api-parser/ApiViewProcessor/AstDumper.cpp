@@ -53,6 +53,17 @@ void AstDumper::OpenNamespace(std::string_view const& namespaceName)
   InsertPunctuation('{');
   AdjustIndent(namespaceIndent);
   Newline();
+  m_namespaceComponents.emplace_back(namespaceName);
+  std::string namespaceId;
+  for (auto const& component : m_namespaceComponents)
+  {
+    if (!namespaceId.empty())
+    {
+      namespaceId += "::";
+    }
+    namespaceId += component;
+  }
+  BeginChildScope(namespaceId);
 }
 void AstDumper::CloseNamespaces(
     std::vector<std::string> const& namespaceComponents,
@@ -64,6 +75,8 @@ void AstDumper::CloseNamespaces(
   {
     namespacesToClose.push_back(*current);
     AdjustIndent(-namespaceIndent);
+    EndChildScope();
+    m_namespaceComponents.pop_back();
   }
   LeftAlign();
   std::stringstream ss;
@@ -90,6 +103,8 @@ void AstDumper::CloseNamespaces(
 void AstDumper::CloseNamespace(std::string_view const& namespaceName)
 {
   AdjustIndent(-namespaceIndent);
+  EndChildScope();
+  m_namespaceComponents.pop_back();
   LeftAlign();
   InsertPunctuation('}');
   InsertWhitespace();

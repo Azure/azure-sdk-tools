@@ -37,6 +37,8 @@ public:
   size_t GetCurrentCursor() { return m_currentCursor; }
   void SetNamespace(std::string_view const& currentNamespace);
 
+  virtual void BeginChildScope(std::string_view const& id = "", bool mergeOpeningBrace = false) {}
+  virtual void EndChildScope() {}
   virtual void InsertNewline() = 0;
   virtual void InsertWhitespace(int count = 1) = 0;
   virtual void InsertKeyword(std::string_view const& keyword) = 0;

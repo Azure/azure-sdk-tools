@@ -13,6 +13,7 @@
 #include "ApiViewProcessor.hpp"
 #include "JsonDumper.hpp"
 #include "TextDumper.hpp"
+#include "TreeJsonDumper.hpp"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -77,6 +78,16 @@ An example of an ApiViewSettings.json file is:
         "r", "review", "Review Name", false, "", "string", commandLine);
     TCLAP::ValueArg<std::string> packageVersion(
         "", "packageVersion", "Package Version", false, "", "string", commandLine);
+    std::vector<std::string> formats{"legacy", "tree"};
+    TCLAP::ValuesConstraint<std::string> formatConstraint(formats);
+    TCLAP::ValueArg<std::string> format(
+        "",
+        "format",
+        "Output schema (default: legacy)",
+        false,
+        "legacy",
+        &formatConstraint,
+        commandLine);
     TCLAP::SwitchArg consoleOutput(
         "c", "console", "Dump output to console (diagnostic)", commandLine);
 
@@ -106,16 +117,41 @@ An example of an ApiViewSettings.json file is:
       }
 
       {
-        JsonDumper jsonDumper(
-            reviewName.getValue().empty() ? apiViewProcessor.ReviewName() : reviewName.getValue(),
-            apiViewProcessor.ServiceName(),
-            apiViewProcessor.PackageName(),
-            packageVersion.getValue());
-        apiViewProcessor.GetClassesDatabase()->DumpClassDatabase(&jsonDumper);
-
         std::cout << "Writing API Review JSON file to: " << outputFileName.string() << std::endl;
         std::ofstream outfile{outputFileName};
-        jsonDumper.DumpToFile(outfile);
+        if (!outfile)
+        {
+          throw std::runtime_error("Unable to open output file: " + outputFileName.string());
+        }
+        auto dump = [&](auto& jsonDumper) {
+          apiViewProcessor.GetClassesDatabase()->DumpClassDatabase(&jsonDumper);
+          jsonDumper.DumpToFile(outfile);
+        };
+        auto name
+            = reviewName.getValue().empty() ? apiViewProcessor.ReviewName() : reviewName.getValue();
+        if (format.getValue() == "tree")
+        {
+          TreeJsonDumper jsonDumper(
+              name,
+              apiViewProcessor.ServiceName(),
+              apiViewProcessor.PackageName(),
+              packageVersion.getValue());
+          dump(jsonDumper);
+        }
+        else
+        {
+          JsonDumper jsonDumper(
+              name,
+              apiViewProcessor.ServiceName(),
+              apiViewProcessor.PackageName(),
+              packageVersion.getValue());
+          dump(jsonDumper);
+        }
+        outfile.flush();
+        if (!outfile)
+        {
+          throw std::runtime_error("Unable to write output file: " + outputFileName.string());
+        }
       }
     }
     return rv;

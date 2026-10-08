@@ -13,6 +13,7 @@ include(GoogleTest)
 # Unit Tests
 add_executable(parseTests 
     tests.cpp 
+    TreeJsonDumperTests.cpp
     TestCases/SimpleTest.cpp
     TestCases/TemplateTests.cpp
     TestCases/ClassesWithInternalAndDetail.cpp 
@@ -34,6 +35,5 @@ add_custom_command(TARGET parseTests POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/TestCases ${CMAKE_CURRENT_BINARY_DIR}/Tests
     COMMENT 'Copying test collateral files.'
   )
-
 
 

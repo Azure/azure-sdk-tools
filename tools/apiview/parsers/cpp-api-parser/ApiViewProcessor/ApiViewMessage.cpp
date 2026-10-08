@@ -2,9 +2,11 @@
 
 void AzureClassesDatabase::CreateApiViewMessage(
     ApiViewMessages diagnostic,
-    std::string_view const& targetId)
+    std::string_view const& targetId,
+    std::string_view const& canonicalTargetId)
 {
   ApiViewMessage newMessage;
+  newMessage.CanonicalTargetId = canonicalTargetId;
 
   switch (diagnostic)
   {

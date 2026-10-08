@@ -24,7 +24,7 @@ The `ParseAzureSdkCpp` tool has the following command line switches:
 - `-r`, `--review` - Specifies the name of the API review for the API Review tool.
 - `--packageVersion` - Specifies the version of the package for the API Review.
 - `-o`, `--output` - Specifies the output file for the API review.
-- `--format legacy|tree` - Selects the JSON schema. The default is `legacy`, preserving existing pipeline output. Use `tree` for `ReviewLines`/`Children` output and the modern APIView UI.
+- `--format legacy|tree` - Selects the output format. Defaults to `legacy`; use `tree` for the modern APIView UI.
 - `--version` - Prints the version of the ParseAzureSdkCpp tool.
 - `-h`, `--help` - Prints help text about the tool.
 - `-c`, `--console` - Prints the ApiView output to the console as well as the output JSON file.
@@ -33,13 +33,7 @@ The `ParseAzureSdkCpp` tool has the following command line switches:
 ParseAzureSdkCpp C:\AzureCppSdk\sdk\storage\azure-storage-blobs\inc -o blobs-tree.json --format tree
 ```
 
-Both formats use the **Json** upload language; selecting **C++** explicitly chooses the website's separate `.cppast` archive input path. Tree output uses semantic namespace, class, and enum scopes. Opening class/enum braces are placed on the declaration line, with closing lines linked to their declarations. Tree output omits generated `// file:line:column` source-location comments, including their source links; legacy and console output retain them. API token spelling and intra-line spacing, documentation (including documentation links), other range flags, and navigation are retained. Line IDs retain the legacy renderer's comment IDs; diagnostics targeting another definition on the same line are mapped to that line ID without changing their diagnostic IDs. The tree schema has its own numeric token kinds and reports `ParserVersion` separately from the legacy `.cppast` parser.
-
-Namespace scopes and forward declarations use separate synthetic tree line IDs. Navigation resolves to a full definition when present, or to the corresponding scope or forward declaration otherwise. Legacy declaration IDs, including using directives, remain unchanged.
-
-Unnamed struct and union member types use synthetic tree IDs derived from their enclosing type and member name, including nested unnamed types. These IDs do not depend on checkout paths or source line numbers, so moving unchanged declarations does not create false diffs. Legacy output retains its existing IDs; named declaration IDs are unchanged.
-
-Tree output includes default member initializers, such as `int field = 10;` and `int field{10};`, using Clang-formatted expressions. Macro values are expanded. Legacy and console output continue to omit these initializers; field IDs remain unchanged.
+Upload either format using the **Json** language option in APIView.
 
 ### ApiViewSettings.json
 
@@ -94,7 +88,7 @@ An ApiViewSettings.json file contains the following options:
   namespace prefixes which are expected in the package.
   Types which do not match the filter will generate a warning.
 - "sourceRootUrl" - if present and non-null represents the root URL for the ApiView directory.
-  This URL is used to generate source links in legacy and console output. Tree output omits source-location comments and their links.
+  This URL is used to generate source links in legacy and console output.
 
 ## Implementation Details
 
@@ -152,13 +146,6 @@ There are two major functions for each `AstNode`:
 The `AstType` and `AstExpr` family of classes express a "type" or "expression",
 which are used to represent the types of parameters or default values for those
 parameters.
-
-Enum declarations display an underlying type only when an enum-base is explicitly
-written in that declaration, including opaque declarations. For example,
-`enum class Mode {};` has no `: int` in APIView, while
-`enum class Mode : int {};` retains its explicitly written base.
-This corrects enum-base spelling in both legacy and tree output; other legacy
-output remains unchanged.
 
 #### AstDumper
 

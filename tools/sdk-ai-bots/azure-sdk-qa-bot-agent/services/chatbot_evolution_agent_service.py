@@ -311,7 +311,6 @@ class ChatbotEvolutionAgentService:
                 record.feedback.status = FeedbackStatus.pending_validation
                 record.feedback.issue_url = result.issue_url
                 record.feedback.source_url = result.source_url
-                record.feedback.copilot_assigned = result.copilot_assigned
                 record.feedback.classification = result.classification
                 return
 

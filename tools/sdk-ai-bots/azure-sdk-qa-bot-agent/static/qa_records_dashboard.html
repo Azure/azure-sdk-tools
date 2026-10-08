@@ -1048,16 +1048,6 @@
             ? "GitHub"
             : "Unknown"
       ));
-      if (provider === "github") {
-        metadata.append(metaItem(
-          "Copilot assignment",
-          record.feedback.copilot_assigned === true
-            ? "Assigned"
-            : record.feedback.copilot_assigned === false
-              ? "Not assigned"
-              : "Unknown"
-        ));
-      }
       step.append(metadata);
       return step;
     }

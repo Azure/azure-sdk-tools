@@ -110,10 +110,6 @@ _ADO_WORK_ITEM_PATH = re.compile(
     r"(?P<number>\d+)/?$",
     flags=re.IGNORECASE,
 )
-_GITHUB_WIKI_REPOSITORY_PATH = re.compile(
-    r"^/[^/]+/[^/]+\.wiki(?:\.git)?/?$",
-    flags=re.IGNORECASE,
-)
 _KB_CLASSIFICATIONS = frozenset(
     {
         RootCauseClassification.missing_content,
@@ -121,18 +117,6 @@ _KB_CLASSIFICATIONS = frozenset(
         RootCauseClassification.insufficient_content,
     }
 )
-
-
-def _is_github_wiki_source(value: str | None) -> bool:
-    if not value:
-        return False
-    parsed = urlparse(value)
-    return (
-        parsed.scheme == "https"
-        and parsed.netloc.lower() == "github.com"
-        and _GITHUB_WIKI_REPOSITORY_PATH.fullmatch(parsed.path) is not None
-    )
-
 
 def parse_issue_reference(
     value: str,
@@ -248,7 +232,6 @@ class ChatbotEvolutionAgentResult(BaseModel):
     classification: RootCauseClassification | None = None
     issue_url: str | None = None
     source_url: str | None = None
-    copilot_assigned: bool | None = Field(default=None, strict=True)
     has_expert_interaction: bool | None = Field(default=None, strict=True)
     expert_interaction_reason: str | None = Field(
         default=None, min_length=1, max_length=500
@@ -267,14 +250,10 @@ class ChatbotEvolutionAgentResult(BaseModel):
             ChatbotEvolutionAgentOutcome.issue_created,
             ChatbotEvolutionAgentOutcome.issue_reused,
         ):
-            if (
-                not self.issue_url
-                or self.classification is None
-                or self.copilot_assigned is None
-            ):
+            if not self.issue_url or self.classification is None:
                 raise ValueError(
                     "issue_created and issue_reused require classification, "
-                    "issue_url, and copilot_assigned"
+                    "and issue_url"
                 )
             issue = parse_issue_reference(self.issue_url)
             if self.classification in _KB_CLASSIFICATIONS:
@@ -287,37 +266,21 @@ class ChatbotEvolutionAgentResult(BaseModel):
                     raise ValueError(
                         "System issue outcomes require an Azure/azure-sdk-pr issue"
                     )
-            if issue.provider == "azure-devops" and self.copilot_assigned:
-                raise ValueError("ADO work items cannot be assigned to Copilot")
-            if issue.provider == "github":
-                wiki_source = _is_github_wiki_source(self.source_url)
-                if wiki_source and self.copilot_assigned:
-                    raise ValueError("GitHub wiki issues cannot be assigned to Copilot")
-                if not wiki_source and not self.copilot_assigned:
-                    raise ValueError(
-                        "Unassigned GitHub issue outcomes require a GitHub wiki source"
-                    )
         elif self.outcome == ChatbotEvolutionAgentOutcome.remediation_failed:
-            if (
-                self.issue_url is not None
-                or self.source_url is not None
-                or self.copilot_assigned is not None
-            ):
+            if self.issue_url is not None or self.source_url is not None:
                 raise ValueError(
-                    "remediation_failed cannot include issue_url, source_url, "
-                    "or copilot_assigned"
+                    "remediation_failed cannot include issue_url or source_url"
                 )
         elif (
             self.issue_url is not None
             or self.source_url is not None
             or self.classification is not None
-            or self.copilot_assigned is not None
         ):
             raise ValueError(
                 "classification is only valid for issue_created, issue_reused, "
                 "or remediation_failed; issue_url is only valid for issue_created "
-                "or issue_reused; source_url and copilot_assigned are only valid "
-                "for issue_created or issue_reused"
+                "or issue_reused; source_url is only valid for issue_created or "
+                "issue_reused"
             )
         return self
 

@@ -38,7 +38,7 @@ from config.app_config import get as cfg
 from tools.chatagent_tools import ChatAgentTools
 from tools.conversation_tools import ConversationTools
 from tools.ado_mcp_tools import create_evolution_ado_mcp_tool
-from tools.github_mcp_tools import assign_issue_to_copilot, create_github_mcp_tool
+from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
@@ -135,7 +135,6 @@ async def main() -> None:
         knowledge_tools.update_knowledge,
         chatagent_tools.chat,
         web_tools.web_fetch,
-        assign_issue_to_copilot,
     ]
 
     # GitHub MCP tool with write access for remediation issues and comments.
@@ -148,7 +147,7 @@ async def main() -> None:
     except Exception:
         logger.exception("create_github_mcp_tool failed to initialize, skipped")
 
-    # ADO work-item tools. ADO issues are not assigned to Copilot.
+    # ADO work-item tools.
     try:
         ado_mcp_tool = await create_evolution_ado_mcp_tool()
         tools.append(ado_mcp_tool)

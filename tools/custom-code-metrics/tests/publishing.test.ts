@@ -2,20 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { gunzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
-import { AzureBlobStore, publish } from "../publishing.mjs";
-import { snapshot, legacySnapshot, library } from "../dashboard/tests/fixtures.mjs";
+import { AzureBlobStore, publish, type BlobStore, type BlobDocument, type BlobRequestOptions } from "../publishing.ts";
+import { acceptHistoryMonth, acceptReportIndex } from "../dashboard/report.ts";
+import { snapshot, legacySnapshot, library } from "../dashboard/tests/fixtures.ts";
 
-class Store {
-  blobs = new Map();
-  operations = [];
+class Store implements BlobStore {
+  blobs = new Map<string, BlobDocument>();
+  operations: string[] = [];
   revision = 0;
   fail = "";
-  async read(container, path, optional = false) {
+  async read(container: string, path: string, optional = false): Promise<BlobDocument | null> {
     const value = this.blobs.get(`${container}/${path}`);
     if (!value && !optional) throw new Error("Missing referenced blob.");
     return value ?? null;
   }
-  async immutable(container, path, text) {
+  async immutable(container: string, path: string, text: string): Promise<void> {
     const key = `${container}/${path}`;
     this.operations.push(key);
     if (key.includes(this.fail) && this.fail) throw new Error("Simulated upload failure.");
@@ -23,18 +24,27 @@ class Store {
     if (prior && prior.text !== text) throw new Error("Immutable content conflict.");
     this.blobs.set(key, { text, etag: `"${++this.revision}"` });
   }
-  async index(text, etag) {
+  async index(text: string, etag: string | null): Promise<void> {
     if (this.fail === "index") throw new Error("Simulated index failure.");
     assert.equal(etag, this.blobs.get("reports/dotnet/index.json")?.etag ?? null);
-    const index = JSON.parse(text);
+    const index = acceptReportIndex(JSON.parse(text));
     assert.ok(this.blobs.has(`reports/dotnet/${index.latest}`));
     for (const reference of index.history) assert.ok(this.blobs.has(`reports/dotnet/${reference.path}`));
     this.operations.push("index");
     this.blobs.set("reports/dotnet/index.json", { text, etag: `"${++this.revision}"` });
   }
 }
-const latestIndex = (store) => JSON.parse(store.blobs.get("reports/dotnet/index.json").text);
-const month = (store, name) => JSON.parse(store.blobs.get(`reports/dotnet/${latestIndex(store).history.find((reference) => reference.month === name).path}`).text);
+const blob = (store: Store, key: string): BlobDocument => {
+  const value = store.blobs.get(key);
+  assert.ok(value, `Missing test blob: ${key}`);
+  return value;
+};
+const latestIndex = (store: Store) => acceptReportIndex(JSON.parse(blob(store, "reports/dotnet/index.json").text));
+const month = (store: Store, name: string) => {
+  const reference = latestIndex(store).history.find((entry) => entry.month === name);
+  assert.ok(reference, `Missing test history month: ${name}`);
+  return acceptHistoryMonth(JSON.parse(blob(store, `reports/dotnet/${reference.path}`).text));
+};
 
 test("first publication validates and archives privately, then exposes complete immutable report and index last", async () => {
   const store = new Store();
@@ -52,11 +62,11 @@ test("full file audit remains only in the private archive", async () => {
   const input = snapshot([library("Azure.One", 10)]);
   input.libraries[0].files = [{ path: "sdk/alpha/Azure.One/src/One.cs", lines: 10, provenance: "custom", evidence: "no-generated-signal" }];
   await publish(input, store);
-  const raw = JSON.parse(store.blobs.get(store.operations[0]).text);
-  const publicValue = JSON.parse(store.blobs.get(`reports/dotnet/${latestIndex(store).latest}`).text);
+  const raw = JSON.parse(blob(store, store.operations[0]).text);
+  const publicValue = JSON.parse(blob(store, `reports/dotnet/${latestIndex(store).latest}`).text);
   assert.equal(raw.libraries[0].files.length, 1);
   assert.equal(publicValue.libraries[0].files, undefined);
-  assert.equal(month(store, "2026-10").observations[0].libraries[0].files, undefined);
+  assert.equal("files" in month(store, "2026-10").observations[0].libraries[0], false);
 });
 test("invalid, dirty and inconsistent-identity inputs are rejected before uploading", async () => {
   for (const input of [{}, snapshot(undefined, undefined, "1", true), { ...snapshot(), snapshotId: snapshot(undefined, undefined, "2").snapshotId },
@@ -88,12 +98,13 @@ test("publication rejects prior-version history months before writes, including 
     await publish(snapshot(undefined, "2026-11-01T12:00:00Z", "2"), store);
     const index = latestIndex(store);
     const reference = index.history.find((reference) => reference.month === oldMonth);
+    assert.ok(reference);
     const document = month(store, oldMonth);
-    document.observations[0].schemaVersion = schemaVersion;
+    Object.assign(document.observations[0], { schemaVersion });
     const text = JSON.stringify(document);
     reference.path = `history/${createHash("sha256").update(text).digest("hex")}/${oldMonth}.json`;
     store.blobs.set(`reports/dotnet/${reference.path}`, { text, etag: '"v2"' });
-    store.blobs.get("reports/dotnet/index.json").text = JSON.stringify(index);
+    blob(store, "reports/dotnet/index.json").text = JSON.stringify(index);
     const before = structuredClone(store.blobs);
     store.operations = [];
     await assert.rejects(publish(snapshot(undefined, "2026-11-02T12:00:00Z", "3"), store), /Invalid history/);
@@ -106,9 +117,9 @@ test("a prototype latest is rejected even when all months contain current observ
     const store = new Store();
     await publish(snapshot(), store);
     const key = `reports/dotnet/${latestIndex(store).latest}`;
-    const prior = JSON.parse(store.blobs.get(key).text);
+    const prior = JSON.parse(blob(store, key).text);
     prior.schemaVersion = schemaVersion;
-    store.blobs.get(key).text = JSON.stringify(prior);
+    blob(store, key).text = JSON.stringify(prior);
     const before = structuredClone(store.blobs);
     store.operations = [];
     await assert.rejects(publish(snapshot(undefined, "2026-11-01T12:00:00Z", "2"), store), /Invalid snapshot/);
@@ -124,14 +135,14 @@ test("missing or corrupt historical months outside the incoming month cannot be 
     const reference = index.history[0];
     const key = `reports/dotnet/${reference.path}`;
     if (failure === "missing") store.blobs.delete(key);
-    else if (failure === "hash") store.blobs.get(key).text += " ";
+    else if (failure === "hash") blob(store, key).text += " ";
     else {
       const document = month(store, reference.month);
       document.observations[0].repository.isDirty = true;
       const text = JSON.stringify(document);
       reference.path = `history/${createHash("sha256").update(text).digest("hex")}/${reference.month}.json`;
       store.blobs.set(`reports/dotnet/${reference.path}`, { text, etag: '"dirty"' });
-      store.blobs.get("reports/dotnet/index.json").text = JSON.stringify(index);
+      blob(store, "reports/dotnet/index.json").text = JSON.stringify(index);
     }
     const before = structuredClone(store.blobs);
     store.operations = [];
@@ -164,7 +175,7 @@ test("prior latest must exist exactly once and agree with its compact monthly hi
     const text = JSON.stringify(document);
     reference.path = `history/${createHash("sha256").update(text).digest("hex")}/${reference.month}.json`;
     store.blobs.set(`reports/dotnet/${reference.path}`, { text, etag: '"changed-history"' });
-    store.blobs.get("reports/dotnet/index.json").text = JSON.stringify(index);
+    blob(store, "reports/dotnet/index.json").text = JSON.stringify(index);
     const before = structuredClone(store.blobs);
     store.operations = [];
     await assert.rejects(publish(snapshot(undefined, "2026-11-01T12:00:00Z", "3"), store), /exactly once|Conflicting measurements/);
@@ -183,7 +194,7 @@ test("latest/history comparison accepts reordered compact fields but still valid
   const text = JSON.stringify(document);
   reference.path = `history/${createHash("sha256").update(text).digest("hex")}/${reference.month}.json`;
   store.blobs.set(`reports/dotnet/${reference.path}`, { text, etag: '"reordered"' });
-  store.blobs.get("reports/dotnet/index.json").text = JSON.stringify(index);
+  blob(store, "reports/dotnet/index.json").text = JSON.stringify(index);
   await publish(snapshot(undefined, "2026-11-01T12:00:00Z", "2"), store);
   assert.equal(latestIndex(store).history.length, 2);
 });
@@ -203,10 +214,10 @@ test("retry is idempotent and same-day later collection replaces only the compac
 test("same-day conflicting counts or metadata cannot corrupt the last-good index", async () => {
   const store = new Store();
   await publish(snapshot(), store);
-  const before = store.blobs.get("reports/dotnet/index.json");
+  const before = blob(store, "reports/dotnet/index.json");
   for (const item of [library("Azure.One", 20, 25), library("Azure.One", 10, 35, "renamed")]) {
     await assert.rejects(publish(snapshot([item], "2026-10-01T14:00:00Z"), store), /Conflicting measurements/);
-    assert.equal(store.blobs.get("reports/dotnet/index.json"), before);
+    assert.equal(blob(store, "reports/dotnet/index.json"), before);
   }
 });
 test("new revisions and months preserve previous membership and historical references", async () => {
@@ -231,10 +242,10 @@ test("archive, snapshot, history and index failure each preserve the previous in
   for (const failure of ["archive/", "reports/dotnet/snapshots/", "reports/dotnet/history/", "index"]) {
     const store = new Store();
     await publish(snapshot(), store);
-    const before = store.blobs.get("reports/dotnet/index.json");
+    const before = blob(store, "reports/dotnet/index.json");
     store.fail = failure;
     await assert.rejects(publish(snapshot(undefined, "2026-10-02T12:00:00Z", "2"), store), /Simulated/);
-    assert.equal(store.blobs.get("reports/dotnet/index.json"), before);
+    assert.equal(blob(store, "reports/dotnet/index.json"), before);
     store.fail = "";
     await publish(snapshot(undefined, "2026-10-02T12:00:00Z", "2"), store);
     assert.equal(month(store, "2026-10").observations.length, 2);
@@ -243,15 +254,31 @@ test("archive, snapshot, history and index failure each preserve the previous in
 test("missing or tampered referenced history and absent ETag terminate before upload", async () => {
   for (const tamper of ["missing", "content", "etag"]) {
     const store = new Store(); await publish(snapshot(), store);
-    const before = store.blobs.get("reports/dotnet/index.json");
+    const before = blob(store, "reports/dotnet/index.json");
     const key = `reports/dotnet/${latestIndex(store).history[0].path}`;
     if (tamper === "missing") store.blobs.delete(key);
-    if (tamper === "content") store.blobs.get(key).text += " ";
+    if (tamper === "content") blob(store, key).text += " ";
     if (tamper === "etag") before.etag = null;
     store.operations = [];
     await assert.rejects(publish(snapshot(undefined, "2026-10-02T12:00:00Z", "2"), store), /Missing|address|ETag/);
     assert.equal(store.operations.length, 0);
-    assert.equal(store.blobs.get("reports/dotnet/index.json"), before);
+    assert.equal(blob(store, "reports/dotnet/index.json"), before);
+  }
+});
+test("a store returning a missing required document fails explicitly before any publication writes", async () => {
+  for (const target of ["history", "latest"]) {
+    const store = new Store();
+    await publish(snapshot(), store);
+    const index = latestIndex(store);
+    const missing = `dotnet/${target === "history" ? index.history[0].path : index.latest}`;
+    const originalRead = store.read.bind(store);
+    store.read = async (container, path, optional) =>
+      path === missing ? null : originalRead(container, path, optional);
+    const before = structuredClone(store.blobs);
+    store.operations = [];
+    await assert.rejects(publish(snapshot(undefined, "2026-11-01T12:00:00Z", "2"), store), /Missing referenced blob/);
+    assert.deepEqual(store.blobs, before);
+    assert.deepEqual(store.operations, []);
   }
 });
 test("ETag races cannot overwrite concurrently published history", async () => {
@@ -263,26 +290,28 @@ test("ETag races cannot overwrite concurrently published history", async () => {
     return prior(text, etag);
   };
   await assert.rejects(publish(snapshot(undefined, "2026-10-02T12:00:00Z", "2"), store));
-  assert.equal(month(store, "2026-10").observations.at(-1).repository.commit, "3".repeat(40));
+  assert.equal(month(store, "2026-10").observations.at(-1)!.repository.commit, "3".repeat(40));
 });
 test("REST transport uses Entra, gzip JSON, immutable caches and conditional writes", async () => {
-  const requests = [];
+  const requests: { url: string; options: BlobRequestOptions }[] = [];
   const store = new AzureBlobStore("testaccount", "test-only-token", async (url, options) => {
     requests.push({ url, options });
     return new Response("", { status: 201 });
   });
   await store.immutable("reports", "dotnet/snapshots/test.json", '{"measured":true}');
   const { options } = requests[0];
+  assert.ok(options.headers);
   assert.equal(options.headers.Authorization, "Bearer test-only-token");
   assert.equal(options.headers["If-None-Match"], "*");
   assert.equal(options.headers["x-ms-blob-content-encoding"], "gzip");
+  assert.ok(options.body instanceof Uint8Array);
   assert.equal(gunzipSync(options.body).toString(), '{"measured":true}');
   assert.match(options.headers["x-ms-blob-cache-control"], /immutable/);
   await store.immutable("archive", "dotnet/snapshots/test.json", "{}");
-  assert.equal(requests[1].options.headers["x-ms-blob-cache-control"], "private, no-store");
+  assert.equal(requests[1].options.headers!["x-ms-blob-cache-control"], "private, no-store");
   await store.index("{}", '"old-etag"');
-  assert.equal(requests[2].options.headers["If-Match"], '"old-etag"');
-  assert.match(requests[2].options.headers["x-ms-blob-cache-control"], /no-cache/);
+  assert.equal(requests[2].options.headers!["If-Match"], '"old-etag"');
+  assert.match(requests[2].options.headers!["x-ms-blob-cache-control"], /no-cache/);
 });
 test("REST transport distinguishes missing bootstrap from forbidden/error reads and validates targets", async () => {
   const absent = new AzureBlobStore("testaccount", "test-only", async () => new Response("", { status: 404 }));

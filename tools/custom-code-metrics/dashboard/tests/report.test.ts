@@ -3,25 +3,25 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import {
   acceptHistoryMonth, acceptReportIndex, compactObservation, inRange,
-  isStale, loadHistory, loadReport, mergeObservations,
-} from "../generated/report.mjs";
-import { history } from "../generated/data.mjs";
-import { filters, legacySnapshot, library, snapshot } from "./fixtures.mjs";
+  isStale, loadHistory, loadReport, mergeObservations, type ReportIndex, type HistoryMonth,
+} from "../report.ts";
+import { history, type Observation } from "../data.ts";
+import { filters, legacySnapshot, library, snapshot } from "./fixtures.ts";
 
-export function document(observations) {
+export function document(observations: Observation[]) {
   const month = new Date(observations[0].collectedAt).toISOString().slice(0, 7);
-  const value = { schemaVersion: "1.0", month, observations: observations.map(compactObservation) };
+  const value: HistoryMonth = { schemaVersion: "1.0", month, observations: observations.map(compactObservation) };
   const text = JSON.stringify(value);
   const digest = createHash("sha256").update(text).digest("hex");
   return { value, text, reference: { month, path: `history/${digest}/${month}.json` } };
 }
-const index = (latest, documents) => ({
+const index = (latest: Observation, documents: ReturnType<typeof document>[]): ReportIndex => ({
   schemaVersion: "1.0", latest: `snapshots/${latest.snapshotId}.json`,
   history: documents.map((doc) => doc.reference),
 });
-const fetcher = (entries, requests = []) => async (url, options) => {
+const fetcher = (entries: Map<string, string>, requests: string[] = []): typeof fetch => async (url, options) => {
   requests.push(String(url));
-  assert.equal(options.credentials, "omit");
+  assert.equal(options?.credentials, "omit");
   return entries.has(String(url)) ? new Response(entries.get(String(url)), { status: 200 }) : new Response("", { status: 404 });
 };
 const latest = snapshot();
@@ -30,9 +30,9 @@ const validIndex = index(latest, [currentMonth]);
 
 test("compact history omits project, framework, evidence and redundant rollups", () => {
   const value = compactObservation(latest);
-  assert.equal(value.summary, undefined);
-  assert.equal(value.libraries[0].projectPath, undefined);
-  assert.equal(value.libraries[0].files, undefined);
+  assert.equal("summary" in value, false);
+  assert.equal("projectPath" in value.libraries[0], false);
+  assert.equal("files" in value.libraries[0], false);
   assert.deepEqual(value.libraries[0].metrics, latest.libraries[0].metrics);
   assert.deepEqual(acceptHistoryMonth(currentMonth.value), currentMonth.value);
 });
@@ -50,10 +50,10 @@ test("thin history preserves category/service filtering, weighting and fixed mem
 });
 test("rejects history schema/version changes, extra fields and invalid calendars", () => {
   for (const mutate of [
-    (value) => { value.schemaVersion = "9"; },
-    (value) => { value.extra = true; },
-    (value) => { value.observations[0].collectedAt = "2026-02-31T12:00:00Z"; },
-    (value) => { value.observations[0].libraries[0].projectPath = "sdk/x"; },
+    (value: HistoryMonth) => { Object.assign(value, { schemaVersion: "9" }); },
+    (value: HistoryMonth) => { Object.assign(value, { extra: true }); },
+    (value: HistoryMonth) => { value.observations[0].collectedAt = "2026-02-31T12:00:00Z"; },
+    (value: HistoryMonth) => { Object.assign(value.observations[0].libraries[0], { projectPath: "sdk/x" }); },
   ]) {
     const value = structuredClone(currentMonth.value); mutate(value);
     assert.throws(() => acceptHistoryMonth(value), /Invalid history/);
@@ -83,7 +83,9 @@ test("hosted latest rejects old versions and prototype-1 shapes with unchanged d
   }
 });
 test("lazy loading rejects a content-addressed old v2 month without replacing the caller's cache", async () => {
-  const old = document([{ ...snapshot(undefined, "2026-09-01T12:00:00Z", "2"), schemaVersion: "2.0" }]);
+  const oldSnapshot = snapshot(undefined, "2026-09-01T12:00:00Z", "2");
+  Object.assign(oldSnapshot, { schemaVersion: "2.0" });
+  const old = document([oldSnapshot]);
   const report = { indexUrl: new URL("https://metrics.invalid/index.json"), index: index(latest, [old, currentMonth]), latest };
   const cache = new Map([[`https://metrics.invalid/${currentMonth.reference.path}`, currentMonth.value]]);
   const before = new Map(cache);
@@ -94,9 +96,9 @@ test("lazy loading rejects a content-addressed old v2 month without replacing th
 });
 test("rejects wrong UTC month and mismatched identity/revision/timestamp", () => {
   for (const mutate of [
-    (value) => { value.month = "2026-09"; },
-    (value) => { value.observations[0].repository.commit = "a".repeat(40); },
-    (value) => { value.observations[0].collectedAt = "2026-10-02T12:00:00Z"; },
+    (value: HistoryMonth) => { value.month = "2026-09"; },
+    (value: HistoryMonth) => { value.observations[0].repository.commit = "a".repeat(40); },
+    (value: HistoryMonth) => { value.observations[0].collectedAt = "2026-10-02T12:00:00Z"; },
   ]) {
     const value = structuredClone(currentMonth.value); mutate(value);
     assert.throws(() => acceptHistoryMonth(value), /month|disagree/);
@@ -104,10 +106,10 @@ test("rejects wrong UTC month and mismatched identity/revision/timestamp", () =>
 });
 test("rejects duplicate libraries, non-unit library counts and unsafe/wrong metrics", () => {
   for (const mutate of [
-    (value) => { value.observations[0].libraries.push(value.observations[0].libraries[0]); },
-    (value) => { value.observations[0].libraries[0].metrics.libraryCount = 2; },
-    (value) => { value.observations[0].libraries[0].metrics.totalLines++; },
-    (value) => { value.observations[0].libraries[0].metrics.totalLines = Number.MAX_SAFE_INTEGER + 1; },
+    (value: HistoryMonth) => { value.observations[0].libraries.push(value.observations[0].libraries[0]); },
+    (value: HistoryMonth) => { value.observations[0].libraries[0].metrics.libraryCount = 2; },
+    (value: HistoryMonth) => { value.observations[0].libraries[0].metrics.totalLines++; },
+    (value: HistoryMonth) => { value.observations[0].libraries[0].metrics.totalLines = Number.MAX_SAFE_INTEGER + 1; },
   ]) {
     const value = structuredClone(currentMonth.value); mutate(value);
     assert.throws(() => acceptHistoryMonth(value), /Duplicate|libraryCount|provenance|safe integer/);
@@ -128,11 +130,11 @@ test("retains dirty observations separately and rejects conflicting timestamps f
 });
 test("rejects duplicate/mismatched history references, missing latest month and arbitrary external paths", () => {
   for (const mutate of [
-    (value) => { value.history.push(value.history[0]); },
-    (value) => { value.history[0].month = "2026-09"; },
-    (value) => { value.history[0].path = "https://other.invalid/history.json"; },
-    (value) => { value.latest = "../snapshot.json"; },
-    (value) => { value.extra = true; },
+    (value: ReportIndex) => { value.history.push(value.history[0]); },
+    (value: ReportIndex) => { value.history[0].month = "2026-09"; },
+    (value: ReportIndex) => { value.history[0].path = "https://other.invalid/history.json"; },
+    (value: ReportIndex) => { value.latest = "../snapshot.json"; },
+    (value: ReportIndex) => { Object.assign(value, { extra: true }); },
   ]) {
     const value = structuredClone(validIndex); mutate(value);
     assert.throws(() => acceptReportIndex(value), /Invalid|Duplicate|disagree|missing/);
@@ -154,7 +156,7 @@ test("staleness begins strictly after 36 hours, not at the boundary", () => {
   assert.equal(isStale(latest, boundary + 1), true);
 });
 test("startup fetches just index and full latest, with anonymous requests", async () => {
-  const requests = [];
+  const requests: string[] = [];
   const entries = new Map([
     ["https://metrics.invalid/dotnet/index.json", JSON.stringify(validIndex)],
     [`https://metrics.invalid/dotnet/${validIndex.latest}`, JSON.stringify(latest)],
@@ -183,7 +185,7 @@ test("lazy history fetches only intersecting months, verifies digest and reuses 
     [`https://metrics.invalid/${currentMonth.reference.path}`, currentMonth.text],
     [`https://metrics.invalid/${older.reference.path}`, older.text],
   ]);
-  const requests = [];
+  const requests: string[] = [];
   const first = await loadHistory(report, 30, new Map(), fetcher(entries, requests));
   assert.equal(requests.length, 1);
   assert.equal(first.cache.size, 1);
@@ -197,7 +199,7 @@ test("an imported historical selection anchors lazy requests to its UTC date, no
   const selected = snapshot(undefined, "2026-05-01T12:00:00Z", "2");
   const older = document([selected]);
   const report = { indexUrl: new URL("https://metrics.invalid/index.json"), index: index(latest, [older, currentMonth]), latest };
-  const requests = [];
+  const requests: string[] = [];
   const result = await loadHistory(report, 30, new Map(), fetcher(new Map([
     [`https://metrics.invalid/${older.reference.path}`, older.text],
   ]), requests), selected);

@@ -54,19 +54,25 @@ changes and detail selection preserve the current library sort.
 
 ## Prerequisites and layout
 
-Requires Node.js 22+, npm and the committed lockfile. PowerShell scripts require
+Requires Node.js 22.6+, npm and the committed lockfile. PowerShell scripts require
 PowerShell 7+. Browser checks use an installed Microsoft Edge. Pester 5.3.3+
 supports offline wrapper tests. Deployment/publication additionally require
 Azure CLI and explicitly authorized Entra access; local builds need no Azure
 credentials.
 
+Handwritten tooling, fixtures and tests are TypeScript, checked together with
+the dashboard under strict compiler settings. Scripts run directly with Node's
+`--experimental-strip-types` flag; no separate TypeScript runtime loader is needed.
+Only generated validators/bundles remain JavaScript build output. Native execution
+does not type-check: builds and validation run the pinned TypeScript compiler.
+
 | Path | Purpose |
 | --- | --- |
 | `main.tsp`, `tspconfig.yaml` | Single authoritative TypeSpec definition and JSON Schema emitter configuration |
 | `schemas\*.schema.json` | Canonical generated snapshot/index/history schemas |
-| `schema.mjs` | Generate/check schemas and byte-exact producer mirror sync/check |
+| `schema.ts` | Generate/check schemas and byte-exact producer mirror sync/check |
 | `dashboard` | Offline/hosted frontend, semantic validators, reporting and tests |
-| `publishing.mjs`, `Publish-Metrics.ps1` | .NET feed publisher and Azure CLI token wrapper |
+| `publishing.ts`, `Publish-Metrics.ps1` | .NET feed publisher and Azure CLI token wrapper |
 | `Collect-Metrics.ps1` | One measurement command operating on the caller's language checkout |
 | `ci.yml` | Shared tooling validation CI; no scheduled source-repository sweep |
 | `infra\main.bicep`, `Deploy-*.ps1` | Policy-safe hosting resources and separate deployment helpers |
@@ -155,8 +161,8 @@ needed to run the collector or the copy helper. After regenerating here, use
 an explicit destination:
 
 ```powershell
-node .\schema.mjs sync-copy C:\work\azure-sdk-for-net\eng\scripts\CustomCodeMetrics.schema.json
-node .\schema.mjs check-copy C:\work\azure-sdk-for-net\eng\scripts\CustomCodeMetrics.schema.json
+node --experimental-strip-types .\schema.ts sync-copy C:\work\azure-sdk-for-net\eng\scripts\CustomCodeMetrics.schema.json
+node --experimental-strip-types .\schema.ts check-copy C:\work\azure-sdk-for-net\eng\scripts\CustomCodeMetrics.schema.json
 ```
 
 The helper can be invoked by absolute script path from any working directory.
@@ -192,7 +198,7 @@ existing observations in page memory.
 To preload actual measurements, provide one or more real collector outputs:
 
 ```powershell
-node .\dashboard\build.mjs --snapshot C:\work\azure-sdk-for-net\artifacts\custom-code-metrics\<snapshot>.json
+node --experimental-strip-types .\dashboard\build.ts --snapshot C:\work\azure-sdk-for-net\artifacts\custom-code-metrics\<snapshot>.json
 ```
 
 Build output/data are ignored by Git. The default build explicitly clears seeds;
@@ -225,7 +231,7 @@ npm run build:publishing
 
 `build:publishing` does not build/write `dashboard\dist`, reset its seeds or
 require the language repository to build a website. The wrapper can run from any
-cwd; it resolves `publishing.mjs` relative to itself. It obtains a storage Entra
+cwd; it resolves `publishing.ts` relative to itself. It obtains a storage Entra
 token from Azure CLI, passes it only in the child environment and restores the
 previous environment. It does not use keys or SAS. Failures are explicit.
 
@@ -253,7 +259,7 @@ delete referenced immutable blobs.
 For hosted mode:
 
 ```powershell
-node .\dashboard\build.mjs --index-url "https://<approved-reader>/dotnet/index.json"
+node --experimental-strip-types .\dashboard\build.ts --index-url "https://<approved-reader>/dotnet/index.json"
 .\Deploy-Dashboard.ps1 -SubscriptionId <subscription> `
   -IndexUrl "https://<approved-reader>/dotnet/index.json"
 ```
@@ -296,7 +302,7 @@ hosted-feed loading is a separate build/deployment mode.
 For a local preview build without deployment:
 
 ```powershell
-node .\dashboard\build.mjs --preview --snapshot C:\data\<actual-snapshot>.json
+node --experimental-strip-types .\dashboard\build.ts --preview --snapshot C:\data\<actual-snapshot>.json
 ```
 
 Repeat `--snapshot` for additional real observations. Ordinary `--snapshot`
@@ -475,7 +481,7 @@ No test publishes or changes Azure resources.
 Use `CUSTOM_CODE_METRICS_SNAPSHOT` to validate real collector output in data and
 browser tests. Browser tests otherwise use synthetic fixtures confined to tests.
 For a final measured-data local preview, rebuild explicitly with
-`node .\dashboard\build.mjs --snapshot <actual-path>` after validation.
+`node --experimental-strip-types .\dashboard\build.ts --snapshot <actual-path>` after validation.
 
 Preserved tests cover weighted counts/filtering, safe integers, evidence,
 rollups, retry conflicts, cohorts/missing-day gaps, anonymous latest and lazy

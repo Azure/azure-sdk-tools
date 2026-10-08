@@ -6,7 +6,8 @@ import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runInNewContext } from "node:vm";
-import { legacySnapshot, library, snapshot } from "../dashboard/tests/fixtures.mjs";
+import { legacySnapshot, library, snapshot } from "../dashboard/tests/fixtures.ts";
+import type { BlobStore } from "../publishing.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
@@ -44,7 +45,7 @@ test("relocated builds are script-relative; publication needs no website and lea
   const target = join(directory, "tools", "custom-code-metrics");
   try {
     for (const name of [
-      "publishing.mjs", "dashboard/build.mjs", "dashboard/app.ts", "dashboard/data.ts", "dashboard/report.ts",
+      "package.json", "tsconfig.json", "publishing.ts", "schema.ts", "dashboard/build.ts", "dashboard/app.ts", "dashboard/data.ts", "dashboard/report.ts",
       "dashboard/tsconfig.json", "dashboard/index.html", "dashboard/styles.css", "dashboard/staticwebapp.config.json",
       ...["CustomCodeMetrics", "ReportIndex", "HistoryMonth"].map((name) => `schemas/${name}.schema.json`),
     ]) {
@@ -53,8 +54,8 @@ test("relocated builds are script-relative; publication needs no website and lea
       await copyFile(join(root, name), destination);
     }
     await symlink(join(root, "node_modules"), join(target, "node_modules"), process.platform === "win32" ? "junction" : "dir");
-    const invoke = (...args) => {
-      const result = spawnSync(process.execPath, [join(target, "dashboard", "build.mjs"), ...args], {
+    const invoke = (...args: string[]) => {
+      const result = spawnSync(process.execPath, ["--experimental-strip-types", join(target, "dashboard", "build.ts"), ...args], {
         cwd: directory, encoding: "utf8",
       });
       if (result.error) throw result.error;
@@ -63,9 +64,9 @@ test("relocated builds are script-relative; publication needs no website and lea
     const publishBuild = invoke("--publishing-only");
     assert.equal(publishBuild.status, 0, publishBuild.text);
     await assert.rejects(readFile(join(target, "dashboard", "dist", "index.html")), { code: "ENOENT" });
-    const { publish } = await import(pathToFileURL(join(target, "publishing.mjs")));
-    const operations = [];
-    const store = {
+    const { publish } = await import(pathToFileURL(join(target, "publishing.ts")).href);
+    const operations: string[] = [];
+    const store: BlobStore = {
       async read(container, path, optional) { assert.equal(optional, true); return null; },
       async immutable(container, path) { operations.push(`${container}/${path}`); },
       async index() { operations.push("index"); },
@@ -105,7 +106,7 @@ test("relocated builds are script-relative; publication needs no website and lea
     await writeFile(seedPath, JSON.stringify(audited));
     const preview = invoke("--preview", "--snapshot", seedPath, "--snapshot", seedPath);
     assert.equal(preview.status, 0, preview.text);
-    const context = {};
+    const context: Record<string, unknown> = {};
     const previewBytes = await readFile(seedFile);
     runInNewContext(previewBytes.toString(), context);
     assert.equal(context.customCodeMetricsPreview, true);
@@ -135,7 +136,7 @@ test("relocated builds are script-relative; publication needs no website and lea
     }
     await writeFile(seedPath, JSON.stringify(audited));
     assert.equal(invoke("--snapshot", seedPath).status, 0);
-    const localContext = {};
+    const localContext: Record<string, unknown> = {};
     runInNewContext(await readFile(seedFile, "utf8"), localContext);
     assert.equal(localContext.customCodeMetricsPreview, false);
     assert.deepEqual(JSON.parse(JSON.stringify(localContext.customCodeMetricsSeed)), [audited],

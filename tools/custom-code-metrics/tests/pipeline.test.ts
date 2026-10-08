@@ -30,5 +30,28 @@ test("measurement is separate from publication and dispatch fails explicitly for
   assert.match(command, /not implemented/);
   assert.match(command, /check-copy/);
   assert.match(command, /Invoke-Pester/);
-  assert.doesNotMatch(command, /git clone|git fetch|AzureCLI|& az|publishing\.mjs|Write-Host.*task\.setvariable/);
+  assert.doesNotMatch(command, /git clone|git fetch|AzureCLI|& az|publishing\.ts|Write-Host.*task\.setvariable/);
+});
+
+test("all handwritten Node tooling uses checked TypeScript and native execution without a runtime loader", async () => {
+  const manifest = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  const config = JSON.parse(await readFile(new URL("../tsconfig.json", import.meta.url), "utf8"));
+  const dashboard = JSON.parse(await readFile(new URL("../dashboard/tsconfig.json", import.meta.url), "utf8"));
+  assert.equal(manifest.type, "module");
+  assert.equal(manifest.engines.node, ">=22.6.0");
+  assert.equal(dashboard.compilerOptions.strict, true);
+  assert.equal(dashboard.compilerOptions.erasableSyntaxOnly, true);
+  assert.deepEqual(config.include, ["*.ts", "dashboard/**/*.ts", "tests/**/*.ts"]);
+  assert.equal(manifest.devDependencies.tsx, undefined);
+  assert.equal(manifest.devDependencies["ts-node"], undefined);
+  for (const command of ["compile", "generate", "check", "build:dashboard", "build:publishing", "test", "test:dashboard:browser"]) {
+    assert.match(manifest.scripts[command], /node --experimental-strip-types/);
+    assert.doesNotMatch(manifest.scripts[command], /\.mjs\b/);
+  }
+  for (const name of ["schema", "publishing", "dashboard/build", "dashboard/tests/browser", "dashboard/tests/fixtures",
+    "dashboard/tests/data.test", "dashboard/tests/report.test", "tests/pipeline.test", "tests/publishing.test",
+    "tests/relocation.test", "tests/schema.test"]) {
+    assert.ok((await readFile(new URL(`../${name}.ts`, import.meta.url))).length > 0);
+    await assert.rejects(access(new URL(`../${name}.mjs`, import.meta.url)), { code: "ENOENT" });
+  }
 });

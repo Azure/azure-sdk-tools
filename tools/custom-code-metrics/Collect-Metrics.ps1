@@ -14,7 +14,7 @@ if ($Language -ne "dotnet") {
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
 $OutputDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
 $schema = Join-Path $RepoRoot "eng" "scripts" "CustomCodeMetrics.schema.json"
-& node (Join-Path $PSScriptRoot "schema.mjs") check-copy $schema
+& node --experimental-strip-types (Join-Path $PSScriptRoot "schema.ts") check-copy $schema
 if ($LASTEXITCODE -ne 0) { throw "The .NET schema mirror differs from the canonical tools contract." }
 
 Push-Location $RepoRoot

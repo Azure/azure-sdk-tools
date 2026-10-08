@@ -33,7 +33,7 @@ $previous = $env:SWA_CLI_DEPLOYMENT_TOKEN
 $previousDebug = $env:SWA_CLI_DEBUG
 Push-Location $PSScriptRoot
 try {
-    & node .\dashboard\build.mjs @buildArguments
+    & node --experimental-strip-types .\dashboard\build.ts @buildArguments
     if ($LASTEXITCODE -ne 0) { throw "Dashboard build failed." }
     if ($PSCmdlet.ParameterSetName -eq "Hosted") {
         & node --input-type=module -e 'import {loadReport,loadHistory} from "./dashboard/generated/report.mjs"; await loadHistory(await loadReport(process.argv[1]),90);' $IndexUrl.AbsoluteUri

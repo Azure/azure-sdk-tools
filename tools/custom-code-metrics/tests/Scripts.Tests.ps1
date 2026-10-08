@@ -26,8 +26,9 @@ Describe "Relocated publication wrapper" {
         try {
             & (Join-Path $script:PackageRoot "Publish-Metrics.ps1") -SnapshotPath $script:Snapshot -StorageAccount "testaccount" -SubscriptionId "test-subscription"
             Should -Invoke node -Times 1 -Exactly -ParameterFilter {
-                $Arguments[0] -eq (Join-Path $script:PackageRoot "publishing.mjs") -and
-                $Arguments[1] -eq $script:Snapshot -and $Arguments[2] -eq "testaccount"
+                $Arguments[0] -eq "--experimental-strip-types" -and
+                $Arguments[1] -eq (Join-Path $script:PackageRoot "publishing.ts") -and
+                $Arguments[2] -eq $script:Snapshot -and $Arguments[3] -eq "testaccount"
             }
             $env:AZURE_STORAGE_ACCESS_TOKEN | Should -Be "previous-test-token"
         }
@@ -81,7 +82,7 @@ Describe "Dashboard deployment preflight" {
     }
     It "uses the package build and dist paths and restores environment and cwd" {
         & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -IndexUrl "https://metrics.invalid/dotnet/index.json"
-        Should -Invoke node -Times 1 -Exactly -ParameterFilter { $Arguments[0] -eq ".\dashboard\build.mjs" }
+        Should -Invoke node -Times 1 -Exactly -ParameterFilter { $Arguments[0] -eq "--experimental-strip-types" -and $Arguments[1] -eq ".\dashboard\build.ts" }
         Should -Invoke npx -Times 1 -Exactly -ParameterFilter { $Arguments -contains ".\dashboard\dist" }
         (Get-Location).Path | Should -Be $script:InitialLocation
         $env:SWA_CLI_DEPLOYMENT_TOKEN | Should -Be "previous-test-token"
@@ -95,7 +96,7 @@ Describe "Dashboard deployment preflight" {
         Should -Invoke npx -Times 0 -Exactly
     }
     It "surfaces a failed build without requesting Azure credentials" {
-        Mock node { $global:LASTEXITCODE = 1 } -ParameterFilter { $Arguments[0] -eq ".\dashboard\build.mjs" }
+        Mock node { $global:LASTEXITCODE = 1 } -ParameterFilter { $Arguments[1] -eq ".\dashboard\build.ts" }
         { & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -IndexUrl "https://metrics.invalid/dotnet/index.json" } | Should -Throw "*Dashboard build failed*"
         Should -Invoke az -Times 0 -Exactly
         Should -Invoke npx -Times 0 -Exactly
@@ -126,8 +127,9 @@ Describe "Dashboard deployment preflight" {
         }
         & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -SnapshotPath $paths
         Should -Invoke node -Times 1 -Exactly -ParameterFilter {
-            $Arguments.Count -eq 6 -and $Arguments[0] -eq ".\dashboard\build.mjs" -and
-            $Arguments[1] -eq "--preview" -and $Arguments[2] -eq "--snapshot" -and $Arguments[4] -eq "--snapshot"
+            $Arguments.Count -eq 7 -and $Arguments[0] -eq "--experimental-strip-types" -and
+            $Arguments[1] -eq ".\dashboard\build.ts" -and $Arguments[2] -eq "--preview" -and
+            $Arguments[3] -eq "--snapshot" -and $Arguments[5] -eq "--snapshot"
         }
         Should -Invoke az -Times 1 -Exactly -ParameterFilter {
             $Arguments -contains "test-subscription" -and $Arguments -contains "properties.apiKey"
@@ -338,8 +340,9 @@ return $path
         $snapshot = & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output
         Test-Path -LiteralPath $snapshot | Should -BeTrue
         Should -Invoke node -Times 1 -Exactly -ParameterFilter {
-            $Arguments[0] -eq (Join-Path $script:PackageRoot "schema.mjs") -and $Arguments[1] -eq "check-copy" -and
-            $Arguments[2] -eq (Join-Path $script:Repo "eng" "scripts" "CustomCodeMetrics.schema.json")
+            $Arguments[0] -eq "--experimental-strip-types" -and
+            $Arguments[1] -eq (Join-Path $script:PackageRoot "schema.ts") -and $Arguments[2] -eq "check-copy" -and
+            $Arguments[3] -eq (Join-Path $script:Repo "eng" "scripts" "CustomCodeMetrics.schema.json")
         }
         Should -Invoke Invoke-Pester -Times 1 -Exactly -ParameterFilter { $Path -eq (Join-Path $script:Repo "eng" "scripts" "tests" "Collect-CustomCodeMetrics.Tests.ps1") }
         Should -Invoke Write-Host -Times 0 -Exactly

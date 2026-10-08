@@ -1,8 +1,8 @@
-import { aggregate } from "../generated/data.mjs";
+import { aggregate, type Category, type Library, type Snapshot } from "../data.ts";
 
-export const categories = ["management", "data-plane", "provisioning"];
+export const categories: Category[] = ["management", "data-plane", "provisioning"];
 export const filters = { category: "", service: "", search: "" };
-export function library(name, custom, generated = 0, service = "alpha", category = "data-plane") {
+export function library(name: string, custom: number, generated = 0, service = "alpha", category: Category = "data-plane"): Library {
   const total = custom + generated;
   const customFiles = custom ? 1 : 0;
   const generatedFiles = generated ? 1 : 0;
@@ -17,11 +17,11 @@ export function library(name, custom, generated = 0, service = "alpha", category
     },
   };
 }
-export function snapshot(libraries = [library("Azure.One", 10, 35)], date = "2026-10-01T12:00:00Z", revision = "1", dirty = false) {
+export function snapshot(libraries: Library[] = [library("Azure.One", 10, 35)], date = "2026-10-01T12:00:00Z", revision = "1", dirty = false): Snapshot {
   const fraction = date.match(/\.(\d+)(?:Z|[+-]\d{2}:\d{2})$/)?.[1] ?? "";
   const stamp = new Date(date).toISOString().slice(0, 19).replace(/[-:]/g, "") + fraction.padEnd(7, "0").slice(0, 7);
   const commit = revision.repeat(40);
-  const rows = (members) => categories.map((category) => ({
+  const rows = (members: Library[]) => categories.map((category) => ({
     category, metrics: aggregate(members.filter((item) => item.category === category)),
   }));
   return {
@@ -42,12 +42,11 @@ export const browserSnapshot = () => snapshot([
   library("Azure.Provisioning.Sample", 5, 5, "beta", "provisioning"),
 ]);
 export function legacySnapshot() {
-  const value = snapshot();
-  value.metricDefinition = {
+  const value = Object.assign(snapshot(), { metricDefinition: {
     version: "1.0", language: "csharp", lineCounting: "physical-including-comments-and-blanks",
     sourceScope: "git-tracked-sdk-msbuild-compile-union", classification: "inferred-file-provenance-v1",
     aggregation: "library-weighted-including-linked-source",
-  };
+  } });
   const metrics = [value.summary, ...value.categories.map((row) => row.metrics),
     ...value.services.flatMap((row) => [row.metrics, ...row.categories.map((category) => category.metrics)]),
     ...value.libraries.map((row) => row.metrics)];

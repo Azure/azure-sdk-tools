@@ -5,7 +5,7 @@ import type { HistoryMonth } from "./generated/history-month.js";
 import {
   aggregate, assertMetric, assertObservationIdentity, COUNTS, measurementKey, parseSnapshot,
   type Observation, type Snapshot,
-} from "./data.js";
+} from "./data.ts";
 
 export type { ReportIndex, HistoryMonth };
 export type Report = { indexUrl: URL; index: ReportIndex; latest: Snapshot };

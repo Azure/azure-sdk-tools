@@ -1,6 +1,6 @@
 import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
@@ -8,15 +8,16 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const names = ["CustomCodeMetrics", "ReportIndex", "HistoryMonth"];
-let directory;
-let packageRoot;
-let destination;
+let directory: string;
+let packageRoot: string;
+let destination: string;
 beforeEach(async () => {
   directory = await mkdtemp(join(tmpdir(), "metrics-schema-"));
   packageRoot = join(directory, "tools", "custom-code-metrics");
   destination = join(directory, "producer", "CustomCodeMetrics.schema.json");
   await mkdir(join(packageRoot, "schemas"), { recursive: true });
-  await copyFile(join(root, "schema.mjs"), join(packageRoot, "schema.mjs"));
+  await copyFile(join(root, "schema.ts"), join(packageRoot, "schema.ts"));
+  await writeFile(join(packageRoot, "package.json"), '{"type":"module"}');
   for (const name of names) {
     await copyFile(join(root, "schemas", `${name}.schema.json`), join(packageRoot, "schemas", `${name}.schema.json`));
   }
@@ -24,8 +25,8 @@ beforeEach(async () => {
 afterEach(async () => {
   await rm(directory, { recursive: true, force: true });
 });
-const invoke = (...args) => {
-  const result = spawnSync(process.execPath, [join(packageRoot, "schema.mjs"), ...args], {
+const invoke = (...args: string[]) => {
+  const result = spawnSync(process.execPath, ["--experimental-strip-types", join(packageRoot, "schema.ts"), ...args], {
     cwd: directory, encoding: "utf8",
   });
   if (result.error) throw result.error;
@@ -34,6 +35,8 @@ const invoke = (...args) => {
 const canonical = () => readFile(join(packageRoot, "schemas", "CustomCodeMetrics.schema.json"));
 
 test("sync-copy creates a producer mirror byte-for-byte from script-relative schemas, from another cwd", async () => {
+  await assert.rejects(access(join(packageRoot, "node_modules")), { code: "ENOENT" });
+  await assert.rejects(access(join(packageRoot, "schema.js")), { code: "ENOENT" });
   assert.equal(invoke("sync-copy", destination).status, 0);
   assert.deepEqual(await readFile(destination), await canonical());
   assert.equal(invoke("check-copy", destination).status, 0);
@@ -76,7 +79,7 @@ test("schema helper rejects unknown modes and missing or extra arguments without
   for (const args of [[], ["invalid"], ["check", destination], ["check-copy"], ["sync-copy"], ["sync-copy", destination, "extra"]]) {
     const result = invoke(...args);
     assert.notEqual(result.status, 0);
-    assert.match(result.text, /Usage: node schema.mjs/);
+    assert.match(result.text, /Usage: node --experimental-strip-types schema.ts/);
     await assert.rejects(readFile(destination), { code: "ENOENT" });
   }
 });

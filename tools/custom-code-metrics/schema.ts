@@ -5,7 +5,7 @@ const [mode, copyPath, ...extra] = process.argv.slice(2);
 const copyMode = ["check-copy", "sync-copy"].includes(mode);
 if ((!copyMode && !["clean", "generate", "check"].includes(mode)) ||
   (copyMode ? !copyPath || extra.length > 0 : copyPath !== undefined)) {
-  throw new Error("Usage: node schema.mjs clean|generate|check OR check-copy|sync-copy <snapshot schema destination>");
+  throw new Error("Usage: node --experimental-strip-types schema.ts clean|generate|check OR check-copy|sync-copy <snapshot schema destination>");
 }
 if (copyMode) {
   const source = new URL("./schemas/CustomCodeMetrics.schema.json", import.meta.url);
@@ -16,7 +16,7 @@ if (copyMode) {
     await copyFile(source, destination);
     console.log(`Copied the canonical snapshot schema to ${destination}.`);
   } else if (!canonical.equals(await readFile(destination))) {
-    throw new Error(`Snapshot schema copy is stale: ${destination}. Run node schema.mjs sync-copy <destination>.`);
+    throw new Error(`Snapshot schema copy is stale: ${destination}. Run node --experimental-strip-types schema.ts sync-copy <destination>.`);
   } else {
     console.log(`Snapshot schema copy matches: ${destination}.`);
   }

@@ -1,0 +1,9 @@
+{
+  "extends": "./dashboard/tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "esModuleInterop": true
+  },
+  "include": ["*.ts", "dashboard/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dashboard/dist"]
+}

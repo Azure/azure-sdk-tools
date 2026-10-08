@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   acceptSnapshot, aggregate, breakdown, filterLibraries, forRepository, history, loadIndex,
-  measurementKey, mergeSnapshots, parseSnapshot, REPOSITORIES, sortLibraries, trendSeries, withoutFileEvidence,
-} from "../generated/data.mjs";
-import { filters, legacySnapshot, library, snapshot } from "./fixtures.mjs";
+  measurementKey, mergeSnapshots, parseSnapshot, REPOSITORIES, sortLibraries, trendSeries, withoutFileEvidence, type Snapshot,
+} from "../data.ts";
+import { filters, legacySnapshot, library, snapshot } from "./fixtures.ts";
 
 test("repository choices are exactly the seven requested languages, with only .NET collection implemented", () => {
   assert.deepEqual(REPOSITORIES.map(({ name, language }) => [name, language]), [
@@ -26,7 +26,7 @@ test("repository selection scopes observations without pooling .NET data into un
 test("selectable repositories do not widen the .NET-only initial snapshot contract", () => {
   for (const repository of REPOSITORIES.slice(1)) {
     const foreign = snapshot();
-    foreign.repository.name = repository.name;
+    Object.assign(foreign.repository, { name: repository.name });
     assert.throws(() => acceptSnapshot(foreign), /Invalid snapshot/);
   }
 });
@@ -58,9 +58,9 @@ test("parses JSON and rejects invalid JSON explicitly", () => {
 });
 test("snapshot identity must encode its actual commit and exact UTC collection time", () => {
   for (const mutate of [
-    (value) => { value.repository.commit = "a".repeat(40); },
-    (value) => { value.collectedAt = "2026-10-02T12:00:00Z"; },
-    (value) => { value.collectedAt = "2026-10-01T12:00:00.0000001Z"; },
+    (value: Snapshot) => { value.repository.commit = "a".repeat(40); },
+    (value: Snapshot) => { value.collectedAt = "2026-10-02T12:00:00Z"; },
+    (value: Snapshot) => { value.collectedAt = "2026-10-01T12:00:00.0000001Z"; },
   ]) {
     const value = snapshot();
     mutate(value);
@@ -92,14 +92,14 @@ test("legacy prototype 1.0 with its actual rules metadata and unknown bucket is 
   assert.ok("unknownFiles" in prior.libraries[0].metrics);
   assert.throws(() => acceptSnapshot(prior), /Invalid snapshot/);
   assert.throws(() => parseSnapshot(JSON.stringify(prior)), /Invalid snapshot/);
-  delete prior.metricDefinition;
+  Reflect.deleteProperty(prior, "metricDefinition");
   assert.throws(() => acceptSnapshot(prior), /Invalid snapshot/, "Unknown counts cannot be silently discarded.");
   assert.deepEqual({ ...prior, metricDefinition: before.metricDefinition }, before);
 });
 test("initial format audit evidence excludes actual linked core Shared paths from other libraries regardless of provenance", () => {
   for (const [provenance, evidence] of [
     ["custom", "no-generated-signal"], ["generated", "auto-generated-header"],
-  ]) {
+  ] as const) {
     const member = provenance === "custom" ? library("Azure.Consumer", 10) : library("Azure.Consumer", 0, 10);
     const value = snapshot([member]);
     member.files = [{ path: "sdk/core/Azure.Core/src/Shared/Helper.cs", lines: 10, provenance, evidence }];
@@ -126,13 +126,13 @@ test("initial format retains a core library's own Shared evidence and linked sou
 });
 test("rejects missing, unsupported, or extra schema fields", () => {
   for (const mutate of [
-    (s) => { delete s.summary; },
-    (s) => { s.schemaVersion = "0.0"; },
-    (s) => { s.extra = true; },
-    (s) => { s.summary.extra = true; },
-    (s) => { s.metricDefinition = { version: "1.0" }; },
-    (s) => { s.summary.unknownLines = 0; },
-    (s) => { s.summary.unknownFiles = 0; },
+    (s: Snapshot) => { Reflect.deleteProperty(s, "summary"); },
+    (s: Snapshot) => { Object.assign(s, { schemaVersion: "0.0" }); },
+    (s: Snapshot) => { Object.assign(s, { extra: true }); },
+    (s: Snapshot) => { Object.assign(s.summary, { extra: true }); },
+    (s: Snapshot) => { Object.assign(s, { metricDefinition: { version: "1.0" } }); },
+    (s: Snapshot) => { Object.assign(s.summary, { unknownLines: 0 }); },
+    (s: Snapshot) => { Object.assign(s.summary, { unknownFiles: 0 }); },
   ]) {
     const data = snapshot(); mutate(data);
     assert.throws(() => acceptSnapshot(data), /Invalid snapshot/);
@@ -145,10 +145,10 @@ test("rejects invalid calendar dates using the generated standalone validator", 
 });
 test("rejects negative and fractional counts, out-of-range ratios, and duplicate frameworks", () => {
   for (const mutate of [
-    (s) => { s.summary.customLines = -1; },
-    (s) => { s.summary.totalFiles = 1.5; },
-    (s) => { s.summary.customRatio = 1.1; },
-    (s) => { s.libraries[0].targetFrameworks = ["net8.0", "net8.0"]; },
+    (s: Snapshot) => { s.summary.customLines = -1; },
+    (s: Snapshot) => { s.summary.totalFiles = 1.5; },
+    (s: Snapshot) => { s.summary.customRatio = 1.1; },
+    (s: Snapshot) => { s.libraries[0].targetFrameworks = ["net8.0", "net8.0"]; },
   ]) {
     const data = snapshot(); mutate(data);
     assert.throws(() => acceptSnapshot(data), /Invalid snapshot/);
@@ -252,19 +252,19 @@ test("breakdowns retain empty categories and weight source counts by library", (
   const rows = breakdown(libs, "category");
   assert.equal(rows.length, 3);
   assert.equal(rows[0].metrics.customRatio, 11 / 101);
-  assert.equal(rows.find((item) => item.name === "management").metrics.customRatio, null);
+  assert.equal(rows.find((item) => item.name === "management")!.metrics.customRatio, null);
   assert.equal(breakdown(libs, "service")[0].name, "alpha");
 });
 test("measurement compatibility is independent of JSON property order", () => {
   const data = snapshot();
   const reordered = structuredClone(data);
-  reordered.repository = Object.fromEntries(Object.entries(reordered.repository).reverse());
+  reordered.repository = { isDirty: data.repository.isDirty, commit: data.repository.commit, name: data.repository.name };
   assert.equal(measurementKey(data), measurementKey(reordered));
 });
 test("deduplicates snapshot IDs, normalizes metadata order, and accepts added evidence", () => {
   const data = snapshot([library("Azure.One", 2)]);
   const detailed = structuredClone(data);
-  detailed.repository = Object.fromEntries(Object.entries(detailed.repository).reverse());
+  detailed.repository = { isDirty: data.repository.isDirty, commit: data.repository.commit, name: data.repository.name };
   detailed.libraries[0].files = [{
     path: "sdk/alpha/Azure.One/src/Source.cs", lines: 2, provenance: "custom", evidence: "no-generated-signal",
   }];
@@ -301,6 +301,7 @@ test("fixed-cohort history isolates changes in shared library IDs", () => {
   const first = snapshot([library("Azure.One", 80, 20), library("Azure.Old", 10, 90)]);
   const later = snapshot([library("Azure.One", 60, 40), library("Azure.New", 5, 5)], "2026-10-02T12:00:00Z", "2");
   const result = history([first, later], later, filters, { fixed: true, includeDirty: false, libraryId: "" });
+  assert.ok(result.fixedIds);
   assert.deepEqual([...result.fixedIds], ["Azure.One"]);
   assert.deepEqual(result.points.map((item) => item.metrics.customRatio), [0.8, 0.6]);
   assert.equal(result.distinctRevisions, 2);
@@ -317,7 +318,7 @@ test("excludes dirty and incompatible measurements from official history", () =>
   const first = snapshot();
   const dirty = snapshot(undefined, "2026-10-02T12:00:00Z", "2", true);
   const incompatible = snapshot(undefined, "2026-10-03T12:00:00Z", "3");
-  incompatible.schemaVersion = "2.0";
+  Object.assign(incompatible, { schemaVersion: "2.0" });
   const result = history([first, dirty, incompatible], first, filters, { fixed: true, includeDirty: false, libraryId: "" });
   assert.equal(result.points.length, 1);
   assert.equal(result.excludedDirty, 1);
@@ -336,7 +337,10 @@ test("uncommitted source cannot affect dashboard cohorts, scoped counts or trend
       assert.deepEqual(result.points.map((point) => point.snapshot.snapshotId), [first.snapshotId, later.snapshotId]);
       assert.deepEqual(result.points.map((point) => point.metrics.customRatio), [0.8, 0.6]);
       assert.equal(result.distinctRevisions, 2);
-      if (fixed) assert.deepEqual([...result.fixedIds], ["Azure.One"]);
+      if (fixed) {
+        assert.ok(result.fixedIds);
+        assert.deepEqual([...result.fixedIds], ["Azure.One"]);
+      }
       assert.equal(trendSeries(result.points)[1].y, null);
     }
   }
@@ -346,7 +350,7 @@ test("missing selected libraries and empty fixed cohorts produce N/A, not zeros"
   const first = snapshot([library("Azure.Old", 1)]);
   const later = snapshot([library("Azure.New", 2)], "2026-10-02T12:00:00Z", "2");
   const options = { fixed: true, includeDirty: false, libraryId: "" };
-  assert.equal(history([first, later], later, filters, options).fixedIds.size, 0);
+  assert.equal(history([first, later], later, filters, options).fixedIds!.size, 0);
   assert.ok(history([first, later], later, filters, options).points.every((point) => point.metrics.customRatio === null));
   const selected = history([first, later], later, filters, { ...options, fixed: false, libraryId: "Azure.Old" });
   assert.equal(selected.points[1].metrics.customRatio, null);
@@ -363,16 +367,16 @@ test("keeps one-code-revision history a baseline and inserts null gaps for missi
   assert.equal(new Date(series[1].x).toISOString(), "2026-10-02T00:00:00.000Z");
 });
 test("loads URL indexes relative to their location without cookies or uploads", async () => {
-  const requested = [];
+  const requested: [string, RequestInit | undefined][] = [];
   const source = snapshot();
-  const fakeFetch = async (url, options) => {
+  const fakeFetch: typeof fetch = async (url, options) => {
     requested.push([String(url), options]);
     return new Response(JSON.stringify(requested.length === 1 ? { snapshots: ["day-1.json"] } : source));
   };
   const result = await loadIndex("https://example.test/metrics/index.json", fakeFetch);
   assert.equal(result.length, 1);
   assert.equal(requested[1][0], "https://example.test/metrics/day-1.json");
-  assert.ok(requested.every(([, options]) => options.credentials === "omit" && options.method === undefined));
+  assert.ok(requested.every(([, options]) => options?.credentials === "omit" && options.method === undefined));
 });
 test("rejects unsafe URL schemes and invalid/empty index shapes before importing", async () => {
   const fake = async () => new Response(JSON.stringify({ snapshots: ["javascript:alert(1)"] }));
@@ -390,21 +394,23 @@ test("surfaces failed index and snapshot requests without returning an empty suc
   }), /HTTP 404/);
 });
 if (process.env.CUSTOM_CODE_METRICS_SNAPSHOT) {
+  const snapshotPath = process.env.CUSTOM_CODE_METRICS_SNAPSHOT;
   test("validates the supplied real collector observation against the full dashboard contract", async () => {
-    const source = parseSnapshot(await readFile(process.env.CUSTOM_CODE_METRICS_SNAPSHOT, "utf8"));
+    const source = parseSnapshot(await readFile(snapshotPath, "utf8"));
     assert.equal(source.summary.libraryCount, source.libraries.length);
     assert.deepEqual(aggregate(source.libraries), {
       ...source.summary, customRatio: source.summary.totalLines ? source.summary.customLines / source.summary.totalLines : null,
     });
   });
   test("real initial-format provisioning CostManagement retains the measured helper exclusion counts", async () => {
-    const source = parseSnapshot(await readFile(process.env.CUSTOM_CODE_METRICS_SNAPSHOT, "utf8"));
+    const source = parseSnapshot(await readFile(snapshotPath, "utf8"));
     const measured = source.libraries.find((library) => library.library === "Azure.Provisioning.CostManagement");
     assert.ok(measured, "The full real observation is missing provisioning CostManagement.");
     assert.equal(source.schemaVersion, "1.0");
     assert.equal(measured.metrics.customLines, 120);
     assert.equal(measured.metrics.generatedLines, 8697);
     assert.equal(measured.metrics.totalLines, 8817);
-    assert.ok(Math.abs(measured.metrics.customRatio - 120 / 8817) <= 1e-12);
+    assert.notEqual(measured.metrics.customRatio, null);
+    assert.ok(Math.abs(measured.metrics.customRatio! - 120 / 8817) <= 1e-12);
   });
 }

@@ -1,18 +1,19 @@
 import { readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import Ajv from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import standaloneCode from "ajv/dist/standalone/index.js";
 import { compile } from "json-schema-to-typescript";
 import { build } from "esbuild";
+import type { Snapshot } from "./data.ts";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const root = dirname(directory);
 const generated = join(directory, "generated");
 const output = join(directory, "dist");
-const seedPaths = [];
+const seedPaths: string[] = [];
 let indexUrl = "";
 let publishingOnly = false;
 let preview = false;
@@ -27,7 +28,7 @@ for (let index = 2; index < process.argv.length; index++) {
     continue;
   }
   if (!["--snapshot", "--index-url"].includes(argument) || !process.argv[index + 1]) {
-    throw new Error("Usage: node dashboard/build.mjs [--snapshot <JSON path>]... [--index-url <HTTPS URL>] OR --preview --snapshot <JSON path>... OR --publishing-only");
+    throw new Error("Usage: node --experimental-strip-types dashboard/build.ts [--snapshot <JSON path>]... [--index-url <HTTPS URL>] OR --preview --snapshot <JSON path>... OR --publishing-only");
   }
   const value = process.argv[++index];
   if (argument === "--snapshot") seedPaths.push(resolve(value));
@@ -56,7 +57,14 @@ for (const [file, name] of [["snapshot", "CustomCodeMetrics"], ["report-index", 
   const ajv = new Ajv({ allErrors: false, code: { source: true, esm: true } });
   addFormats(ajv);
   const validate = ajv.compile(schema);
-  await writeFile(join(generated, `validate-${file}.mjs`), standaloneCode(ajv, validate));
+  await build({
+    stdin: { contents: standaloneCode(ajv, validate), resolveDir: root, loader: "js" },
+    outfile: join(generated, `validate-${file}.mjs`),
+    bundle: true,
+    target: "es2022",
+    format: "esm",
+    platform: "neutral",
+  });
   await writeFile(join(generated, `validate-${file}.d.mts`), `
 import type { ${name} } from "./${file}.js";
 declare const validate: {
@@ -68,10 +76,10 @@ export default validate;
 }
 const typecheck = spawnSync(process.execPath, [
   join(root, "node_modules", "typescript", "bin", "tsc"),
-  "--project", join(directory, "tsconfig.json"),
+  "--project", join(root, "tsconfig.json"),
 ], { stdio: "inherit" });
 if (typecheck.error) throw typecheck.error;
-if (typecheck.status !== 0) throw new Error("Dashboard TypeScript check failed.");
+if (typecheck.status !== 0) throw new Error("Custom code metrics TypeScript check failed.");
 await build({
   entryPoints: [join(directory, "data.ts")],
   outfile: join(generated, "data.mjs"),
@@ -91,8 +99,8 @@ await build({
 if (publishingOnly) {
   console.log(`Built publishing validators and helpers in ${generated}; no website output written.`);
 } else {
-  const { parseSnapshot, mergeSnapshots, withoutFileEvidence } = await import(pathToFileURL(join(generated, "data.mjs")).href);
-  const incoming = [];
+  const { parseSnapshot, mergeSnapshots, withoutFileEvidence } = await import("./data.ts");
+  const incoming: Snapshot[] = [];
   for (const path of seedPaths) {
     try {
       incoming.push(parseSnapshot(await readFile(path, "utf8")));

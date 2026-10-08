@@ -88,9 +88,10 @@ class ActivityConverterService:
         converted_mentions: list[dict[str, Any]] = []
         for mention in mentions:
             application = ((mention.get("mentioned") or {}).get("application") or {})
+            application_id = application.get("id")
             converted_mentions.append({
                 "mentioned": {
-                    "id": "28:" + application.get("id") if application.get("id") else "",
+                    "id": f"28:{application_id}" if application_id else "",
                     "name": application.get("displayName") or "",
                 },
                 "text": f"<at>{mention.get('mentionText')}</at>",

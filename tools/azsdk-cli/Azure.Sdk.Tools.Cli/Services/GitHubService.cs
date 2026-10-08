@@ -164,6 +164,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct);
         public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
         public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
+        public Task<IssueComment> CreatePullRequestCommentAsync(string repoOwner, string repoName, int pullRequestNumber, string body, CancellationToken ct);
         public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct);
         public Task<string> GetBranchHeadShaAsync(string repoOwner, string repoName, string branchName, CancellationToken ct);
@@ -1095,6 +1096,15 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
         {
             ct.ThrowIfCancellationRequested();
             return await gitHubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pullRequestNumber);
+        }
+
+        public async Task<IssueComment> CreatePullRequestCommentAsync(string repoOwner, string repoName, int pullRequestNumber, string body, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            // Use the existing authenticated client. Never retry a potentially accepted POST.
+            var comment = await gitHubClient.Issue.Comment.Create(repoOwner, repoName, pullRequestNumber, body).WaitAsync(ct);
+            ct.ThrowIfCancellationRequested();
+            return comment;
         }
 
         public async Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)

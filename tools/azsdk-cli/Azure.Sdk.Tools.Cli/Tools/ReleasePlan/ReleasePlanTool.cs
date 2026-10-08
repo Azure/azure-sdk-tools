@@ -646,7 +646,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// <remarks>
         /// Either workItemId or releasePlanId must be provided. If both are provided, workItemId takes precedence.
         /// </remarks>
-        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by work item ID or release plan ID. Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support. Already abandoned plans are unchanged.")]
+        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by work item ID or release plan ID. Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support. After saving Abandoned, adds best-effort plan-specific notes to open SDK PRs authored by azure-sdk-automation[bot]; never closes PRs. Already abandoned plans can repair missing notes without state updates.")]
         public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default)
         {
             try
@@ -680,11 +680,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 if (string.Equals(releasePlan.Status, "Abandoned", StringComparison.OrdinalIgnoreCase))
                 {
-                    return new ReleaseWorkflowResponse
+                    var response = new ReleaseWorkflowResponse
                     {
                         Status = "Success",
-                        Details = [$"Release plan {releasePlan.WorkItemId} is already abandoned; no changes made."]
+                        Details = [$"Release plan {releasePlan.WorkItemId} is already abandoned; no state changes made."]
                     };
+                    await RepairAbandonedPullRequestNotesAsync(releasePlan, response, ct);
+                    return response;
                 }
 
                 ValidateManualAbandonment(releasePlan);
@@ -712,6 +714,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 // GitHub reads are live, independent of stored ADO PR statuses. This does not make
                 // a GitHub merge and an ADO state update a cross-service atomic transaction.
+                var verifiedPullRequests = new Dictionary<string, PullRequest?>(StringComparer.Ordinal);
                 foreach (var url in freshPullRequests.Order(StringComparer.Ordinal))
                 {
                     ct.ThrowIfCancellationRequested();
@@ -727,6 +730,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         throw new InvalidOperationException(ManualAbandonmentReleaseProtection);
                     }
+                    verifiedPullRequests.Add(url, pr);
                 }
 
                 // Update the work item status to "Abandoned"
@@ -752,11 +756,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 logger.LogInformation("Successfully abandoned release plan {WorkItemId}", releasePlan.WorkItemId);
 
-                return new ReleaseWorkflowResponse
+                var success = new ReleaseWorkflowResponse
                 {
                     Status = "Success",
                     Details = [$"Release plan {releasePlan.WorkItemId} has been successfully abandoned."]
                 };
+                await AddAbandonedPullRequestNotesAsync(targetId, freshPlan.ReleasePlanLink, verifiedPullRequests, success, ct);
+                return success;
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {

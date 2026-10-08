@@ -34,8 +34,8 @@ from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
 from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
+from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
-from tools.pipeline_tools import PipelineTools
 from skills.tenant_skills import create_tenant_skills
 from utils.azure_ai_foundry import (
     get_agent_client,
@@ -92,7 +92,6 @@ async def main() -> None:
     # Init Tools (synchronous / instant)
     knowledge_tools = KnowledgeTools()
     web_tools = WebTools()
-    pipeline_tools = PipelineTools()
     web_search_tool = agent_client.get_web_search_tool(
         search_context_size="medium",
     )
@@ -101,7 +100,6 @@ async def main() -> None:
         knowledge_tools.search_knowledge_base,
         knowledge_tools.wiki_search,
         web_tools.web_fetch,
-        pipeline_tools.azsdk_analyze_pipeline,
         web_search_tool,
     ]
 
@@ -127,12 +125,13 @@ async def main() -> None:
 
     # Only the MCP tools must exist before building the agent; create in
     # parallel (connection is lazy).
-    ado_task, github_task = await asyncio.gather(
+    ado_task, azsdk_task, github_task = await asyncio.gather(
         _init_mcp(create_ado_mcp_tool),
+        _init_mcp(create_azsdk_mcp_tool),
         _init_mcp(create_github_mcp_tool),
     )
 
-    for mcp_tool in (ado_task, github_task):
+    for mcp_tool in (ado_task, azsdk_task, github_task):
         if mcp_tool is not None:
             tools.append(mcp_tool)
 

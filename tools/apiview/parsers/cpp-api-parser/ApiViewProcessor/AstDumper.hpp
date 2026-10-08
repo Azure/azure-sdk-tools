@@ -39,6 +39,7 @@ public:
 
   virtual void BeginChildScope(std::string_view const& id = "", bool mergeOpeningBrace = false) {}
   virtual void EndChildScope() {}
+  virtual bool IncludeSourceComments() const { return true; }
   virtual void InsertNewline() = 0;
   virtual void InsertWhitespace(int count = 1) = 0;
   virtual void InsertKeyword(std::string_view const& keyword) = 0;

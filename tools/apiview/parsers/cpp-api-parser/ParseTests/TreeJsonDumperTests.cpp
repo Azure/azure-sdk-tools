@@ -3,6 +3,7 @@
 
 #include "ApiViewProcessor.hpp"
 #include "JsonDumper.hpp"
+#include "TextDumper.hpp"
 #include "TreeJsonDumper.hpp"
 #include "gtest/gtest.h"
 #include <algorithm>
@@ -146,7 +147,7 @@ TEST(TreeJsonDumper, SemanticHierarchyAndLegacyCommentIds)
   });
   EXPECT_EQ(legacyIds, treeIds);
   EXPECT_GT(documentationTokens, 0);
-  EXPECT_GT(sourceLinks, 0);
+  EXPECT_EQ(sourceLinks, 0);
   EXPECT_GT(contexts, 0);
   size_t protectedWarnings{}, overloadWarnings{}, templateWarnings{};
   for (auto const& diagnostic : json["Diagnostics"])
@@ -165,6 +166,85 @@ TEST(TreeJsonDumper, SemanticHierarchyAndLegacyCommentIds)
   EXPECT_EQ(overloadWarnings, 2);
   EXPECT_EQ(templateWarnings, 1);
   EXPECT_EQ(tree.GetJson(), json);
+}
+
+TEST(TreeJsonDumper, SourceCommentsOnlyOmittedFromTree)
+{
+  for (bool withSourceUrl : {false, true})
+  {
+    SCOPED_TRACE(withSourceUrl);
+    auto settings = R"({
+      "sourceFilesToProcess": ["TreeFormat.hpp"],
+      "filterNamespace": "Azure::TreeTest::Widget"
+    })"_json;
+    if (withSourceUrl)
+    {
+      settings["sourceRootUrl"] = "https://example.test/sdk";
+    }
+    ApiViewProcessor processor("tests", settings);
+    ASSERT_EQ(processor.ProcessApiView(), 0);
+    auto& db = processor.GetClassesDatabase();
+    JsonDumper legacy("Review", "Storage", "test");
+    TreeJsonDumper tree("Review", "Storage", "test");
+    std::ostringstream text;
+    TextDumper console(text);
+    db->DumpClassDatabase(&legacy);
+    db->DumpClassDatabase(&tree);
+    db->DumpClassDatabase(&console);
+    EXPECT_NE(text.str().find("TreeFormat.hpp:"), std::string::npos);
+    std::vector<std::string> legacyValues, treeValues;
+    bool sourceRange = false;
+    size_t sourceComments{}, sourceLinks{}, documentationLinks{};
+    for (auto const& token : legacy.GetJson()["Tokens"])
+    {
+      auto kind = token["Kind"].get<int>();
+      if (kind == 15)
+      {
+        sourceRange = true;
+      }
+      else if (kind == 16)
+      {
+        sourceRange = false;
+      }
+      else if (sourceRange)
+      {
+        sourceComments += kind == 10
+            && token["Value"].get<std::string>().find("TreeFormat.hpp:") != std::string::npos;
+        sourceLinks += kind == 29;
+      }
+      else if (
+          kind == 0 || kind == 3 || kind == 4 || kind == 6 || kind == 7 || kind == 8 || kind == 9
+          || kind == 10)
+      {
+        auto value = token["Value"].get<std::string>();
+        if (value.find_first_not_of(" \t\r\n") != std::string::npos)
+        {
+          legacyValues.push_back(value);
+        }
+      }
+    }
+    EXPECT_FALSE(sourceRange);
+    EXPECT_GT(sourceComments, 0);
+    EXPECT_EQ(sourceLinks > 0, withSourceUrl);
+    auto json = tree.GetJson();
+    ExpectNavigationTargetsResolve(json);
+    Walk(json["ReviewLines"], [&](auto const& line) {
+      EXPECT_EQ(Text(line).find("TreeFormat.hpp:"), std::string::npos);
+      for (auto const& token : line["Tokens"])
+      {
+        EXPECT_FALSE(token.value("SkipDiff", false));
+        auto value = token["Value"].get<std::string>();
+        if (value.find_first_not_of(" \t\r\n") != std::string::npos)
+        {
+          treeValues.push_back(value);
+        }
+        documentationLinks += token["Kind"] == 8 && token.value("IsDocumentation", false)
+            && token.value("NavigateToId", "") == "https://example.test/docs";
+      }
+    });
+    EXPECT_EQ(treeValues, legacyValues);
+    EXPECT_GT(documentationLinks, 0);
+  }
 }
 
 TEST(TreeJsonDumper, UsingNamespacePreservesDefinitionReferencesAndDiagnostic)

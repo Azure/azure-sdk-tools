@@ -33,7 +33,7 @@ The `ParseAzureSdkCpp` tool has the following command line switches:
 ParseAzureSdkCpp C:\AzureCppSdk\sdk\storage\azure-storage-blobs\inc -o blobs-tree.json --format tree
 ```
 
-Both formats use the **Json** upload language; selecting **C++** explicitly chooses the website's separate `.cppast` archive input path. Tree output uses semantic namespace, class, and enum scopes. Opening class/enum braces are placed on the declaration line, with closing lines linked to their declarations. Token spelling and intra-line spacing, documentation, range flags, and navigation are retained. Line IDs retain the legacy renderer's comment IDs; diagnostics targeting another definition on the same line are mapped to that line ID without changing their diagnostic IDs. The tree schema has its own numeric token kinds and reports `ParserVersion` separately from the legacy `.cppast` parser.
+Both formats use the **Json** upload language; selecting **C++** explicitly chooses the website's separate `.cppast` archive input path. Tree output uses semantic namespace, class, and enum scopes. Opening class/enum braces are placed on the declaration line, with closing lines linked to their declarations. Tree output omits generated `// file:line:column` source-location comments, including their source links; legacy and console output retain them. API token spelling and intra-line spacing, documentation (including documentation links), other range flags, and navigation are retained. Line IDs retain the legacy renderer's comment IDs; diagnostics targeting another definition on the same line are mapped to that line ID without changing their diagnostic IDs. The tree schema has its own numeric token kinds and reports `ParserVersion` separately from the legacy `.cppast` parser.
 
 Namespace scopes and forward declarations use separate synthetic tree line IDs. Navigation resolves to a full definition when present, or to the corresponding scope or forward declaration otherwise. Legacy declaration IDs, including using directives, remain unchanged.
 
@@ -90,7 +90,7 @@ An ApiViewSettings.json file contains the following options:
   namespace prefixes which are expected in the package.
   Types which do not match the filter will generate a warning.
 - "sourceRootUrl" - if present and non-null represents the root URL for the ApiView directory.
-  This URL is used to generate source links in the ApiView tool.
+  This URL is used to generate source links in legacy and console output. Tree output omits source-location comments and their links.
 
 ## Implementation Details
 

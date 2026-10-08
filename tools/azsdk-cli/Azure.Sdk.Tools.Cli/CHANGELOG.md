@@ -4,9 +4,15 @@
 
 ### Features Added
 
+- Added support for Attestation Status field updates in Product Onboarding.
+
 ### Breaking Changes
 
 ### Bugs Fixed
+
+### Bugs Fixed
+
+- Fixed serialization for ADO `Sku` product type in Product Onboarding.
 
 ### Other Changes
 

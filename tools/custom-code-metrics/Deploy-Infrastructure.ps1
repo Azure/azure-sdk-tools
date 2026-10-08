@@ -49,7 +49,18 @@ if ($UseExistingResourceGroup) {
             throw "A requested metrics resource already exists: $($resource.name). Refusing to overwrite existing resources."
         }
     }
-} else {
+}
+if ($StorageAccountName) {
+    $availability = Invoke-AzureJson -Arguments @("storage", "account", "check-name", "--name", $StorageAccountName)
+    if ($null -eq $availability -or $null -eq $availability.PSObject.Properties["nameAvailable"] -or
+        $availability.nameAvailable -isnot [bool]) {
+        throw "Storage account name availability could not be verified."
+    }
+    if (-not $availability.nameAvailable) {
+        throw "Storage account name '$StorageAccountName' is unavailable. Choose an available name before deploying metrics resources."
+    }
+}
+if (-not $UseExistingResourceGroup) {
     $null = Invoke-AzureJson -Arguments @("group", "create", "--name", $ResourceGroup, "--location", $Location,
         "--tags", "Owners=$Owner", "Purpose=$Purpose", "Project=Azure SDK custom code metrics", "Environment=$Environment")
 }

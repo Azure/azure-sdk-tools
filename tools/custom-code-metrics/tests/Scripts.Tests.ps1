@@ -246,16 +246,25 @@ Describe "Relocated policy-safe infrastructure helper" {
         $template | Should -Not -Match "\bOwner: owner"
     }
     It "deploys only new metrics resources into an existing group without group creation or tag writes" {
+        $discoveryOrder = [System.Collections.Generic.List[string]]::new()
         Mock az {
             $global:LASTEXITCODE = 0
+            $discoveryOrder.Add([string]$Arguments[0])
             if ($Arguments[0] -eq "group") { return '{"id":"/subscriptions/engineering-subscription/resourceGroups/typespec","location":"westus","tags":null}' }
             if ($Arguments[0] -eq "resource") { return '[{"name":"existing-project-site","type":"Microsoft.Web/staticSites"}]' }
+            if ($Arguments[0] -eq "storage") { return '{"nameAvailable":true}' }
             return '{"properties":{"outputs":{"storageAccount":{"value":"azsdkcustommetrics"},"accessConfigured":{"value":true},"reportsArePublic":{"value":false}}}}'
         }
         $result = & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup -Location "westus2" -Owner "jolov" -StorageAccountName "azsdkcustommetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001"
         $result.storageAccount | Should -Be "azsdkcustommetrics"
         $result.accessConfigured | Should -BeTrue
         $result.reportsArePublic | Should -BeFalse
+        ($discoveryOrder -join ",") | Should -Be "group,resource,storage,deployment"
+        Should -Invoke az -Times 1 -Exactly -ParameterFilter {
+            $Arguments[0] -eq "storage" -and $Arguments[1] -eq "account" -and $Arguments[2] -eq "check-name" -and
+            $Arguments -contains "--name" -and $Arguments -contains "azsdkcustommetrics" -and
+            $Arguments -contains "engineering-subscription"
+        }
         Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments[0] -eq "group" -and $Arguments[1] -ne "show" }
         Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments -contains "--tags" }
         Should -Invoke az -Times 1 -Exactly -ParameterFilter {
@@ -308,6 +317,52 @@ Describe "Relocated policy-safe infrastructure helper" {
     }
     It "requires an explicit storage name in existing-group mode to check every requested resource collision" {
         { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup -Owner "jolov" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw "*requires an explicit storage account name*"
+        Should -Invoke az -Times 0 -Exactly
+    }
+    It "rejects a globally reserved storage name before writes in either group mode" {
+        Mock az {
+            $global:LASTEXITCODE = 0
+            if ($Arguments[0] -eq "group") { return '{"id":"/subscriptions/engineering-subscription/resourceGroups/typespec"}' }
+            if ($Arguments[0] -eq "resource") { return '[]' }
+            if ($Arguments[0] -eq "storage") { return '{"nameAvailable":false,"reason":"AlreadyExists","message":"The name is reserved elsewhere."}' }
+            throw "Unexpected resource write."
+        }
+        foreach ($existing in @($false, $true)) {
+            { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup:$existing -Owner "jolov" -StorageAccountName "azsdkcustommetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw "*name 'azsdkcustommetrics' is unavailable*"
+        }
+        Should -Invoke az -Times 2 -Exactly -ParameterFilter { $Arguments[0] -eq "storage" }
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments[0] -eq "deployment" -or ($Arguments[0] -eq "group" -and $Arguments[1] -ne "show") }
+        Should -Invoke Write-Warning -Times 0 -Exactly
+    }
+    It "checks an available explicit name before creating a new group" {
+        $discoveryOrder = [System.Collections.Generic.List[string]]::new()
+        Mock az {
+            $global:LASTEXITCODE = 0
+            $discoveryOrder.Add([string]$Arguments[0])
+            if ($Arguments[0] -eq "storage") { return '{"nameAvailable":true}' }
+            if ($Arguments[0] -eq "group") { return '{}' }
+            return '{"properties":{"outputs":{"storageAccount":{"value":"testmetrics"},"reportsArePublic":{"value":false}}}}'
+        }
+        $result = & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "jolov" -StorageAccountName "testmetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -ProvisionResourcesOnly
+        ($discoveryOrder -join ",") | Should -Be "storage,group,deployment"
+        $result.storageAccount | Should -Be "testmetrics"
+        Should -Invoke az -Times 1 -Exactly -ParameterFilter { $Arguments[0] -eq "deployment" -and $Arguments -contains "storageAccountName=testmetrics" }
+    }
+    It "rejects missing or nonboolean availability results without resource writes" {
+        foreach ($response in @("null", "{}", '{"nameAvailable":null}', '{"nameAvailable":"true"}')) {
+            Mock az { $global:LASTEXITCODE = 0; return $response }
+            { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "jolov" -StorageAccountName "testmetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw "*availability could not be verified*"
+        }
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments[0] -ne "storage" }
+    }
+    It "surfaces failed availability requests before any resource writes" {
+        Mock az { $global:LASTEXITCODE = 1 }
+        { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "jolov" -StorageAccountName "testmetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw "*Azure command failed: az storage account*"
+        Should -Invoke az -Times 1 -Exactly -ParameterFilter { $Arguments[0] -eq "storage" }
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments[0] -ne "storage" }
+    }
+    It "previews an explicit new-group name without availability requests or writes" {
+        & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "jolov" -StorageAccountName "testmetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -WhatIf
         Should -Invoke az -Times 0 -Exactly
     }
 }

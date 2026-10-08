@@ -330,7 +330,10 @@ Playground resources are expiry-managed; persistent hosting requires EngSys
 coordination. The helper adds no cleanup bypass, non-expiring lease or exemption.
 `-Environment` defaults to `EngineeringSystem` for accurate tracking metadata.
 `-StorageAccountName` accepts an optional lowercase 3-24-character name; omitting
-it preserves the resource-group-unique storage-name default.
+it preserves the resource-group-unique storage-name default. Explicit names are
+checked for global availability before any group creation or resource deployment.
+Unavailable names or failed/invalid availability checks stop without writes;
+the check does not reserve a name or eliminate concurrent creation races.
 
 For an explicitly approved **existing** resource group, use
 `-UseExistingResourceGroup` with an explicit storage name. This mode verifies the requested group identity,

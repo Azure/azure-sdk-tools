@@ -185,7 +185,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
         Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest);
         Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest);
-        Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest);
+        Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(ProductOnboardingWorkItem existingWorkItem, ProductOnboardingStatus status, CancellationToken ct, bool isTest);
         Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct);
     }
 
@@ -2515,6 +2515,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             var wi = new ProductOnboardingWorkItem { };
             wi.SetFromProductOnboardingStatus(status);
+            wi.DataPlaneAttestationStatus = "Pending";
+            wi.ManagementPlaneAttestationStatus = "Pending";
             if (isTest)
             {
                 SetTestValue(wi);
@@ -2524,14 +2526,26 @@ namespace Azure.Sdk.Tools.Cli.Services
                 await CreateWorkItemAsync(wi, ProductOnboardingWorkItem.WorkItemTypeValue, GetProductOnboardingWorkItemTitle(status), ct: ct));
         }
 
-        public async Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+        public async Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(ProductOnboardingWorkItem existingWorkItem, ProductOnboardingStatus status, CancellationToken ct, bool isTest)
         {
             var wi = new ProductOnboardingWorkItem
             {
-                WorkItemId = workItemId,
+                WorkItemId = existingWorkItem.WorkItemId,
                 Title = GetProductOnboardingWorkItemTitle(status),
             };
             wi.SetFromProductOnboardingStatus(status);
+
+            wi.DataPlaneAttestationStatus
+                = (existingWorkItem.DataPlane == wi.DataPlane)
+                    ? existingWorkItem.DataPlaneAttestationStatus
+                    : ProductOnboardingWorkItem.PendingAttestationValue
+                ;
+
+            wi.ManagementPlaneAttestationStatus
+                = (existingWorkItem.ManagementPlane == wi.ManagementPlane)
+                    ? existingWorkItem.ManagementPlaneAttestationStatus
+                    : ProductOnboardingWorkItem.PendingAttestationValue
+                ;
 
             IList<PropertyInfo> properties = new List<PropertyInfo>();
             foreach (

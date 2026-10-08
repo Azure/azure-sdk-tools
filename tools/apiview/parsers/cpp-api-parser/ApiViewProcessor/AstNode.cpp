@@ -3318,6 +3318,10 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
   {
     dumper->InsertForwardDeclaration(Name(), m_navigationId);
   }
+  else if (m_isAnonymousNamedStruct && !m_anonymousNamedStructName.empty())
+  {
+    dumper->InsertAnonymousTypeName(Name(), m_navigationId, m_anonymousNamedStructName);
+  }
   else
   {
     dumper->InsertTypeName(Name(), m_navigationId);
@@ -3369,8 +3373,10 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
     if (m_isAnonymousNamedStruct && !m_anonymousNamedStructName.empty())
     {
       dumper->InsertWhitespace();
-      dumper->InsertTypeName(
-          m_anonymousNamedStructName, m_navigationId + m_anonymousNamedStructName);
+      dumper->InsertAnonymousTypeName(
+          m_anonymousNamedStructName,
+          m_navigationId + m_anonymousNamedStructName,
+          m_anonymousNamedStructName);
     }
   }
   if (dumpOptions.NeedsTrailingSemi)

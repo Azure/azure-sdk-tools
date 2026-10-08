@@ -57,6 +57,13 @@ public:
       std::string_view const& type,
       std::string_view const& typeNavigationId)
       = 0;
+  virtual void InsertAnonymousTypeName(
+      std::string_view const& type,
+      std::string_view const& typeNavigationId,
+      std::string_view const& memberName)
+  {
+    InsertTypeName(type, typeNavigationId);
+  }
   virtual void InsertMemberName(
       std::string_view const& member,
       std::string_view const& memberFullName)

@@ -247,6 +247,44 @@ TEST(TreeJsonDumper, SourceCommentsOnlyOmittedFromTree)
   }
 }
 
+TEST(TreeJsonDumper, AnonymousMemberTypesHaveSourceIndependentIds)
+{
+  std::vector<nlohmann::json> outputs;
+  for (auto file : {"AnonymousTypesA.hpp", "AnonymousTypesB.hpp"})
+  {
+    SCOPED_TRACE(file);
+    ApiViewProcessor processor("tests", {{"sourceFilesToProcess", {file}}});
+    ASSERT_EQ(processor.ProcessApiView(), 0);
+    auto& db = processor.GetClassesDatabase();
+    TreeJsonDumper tree("Review", "Storage", "test");
+    JsonDumper legacy("Review", "Storage", "test");
+    db->DumpClassDatabase(&tree);
+    db->DumpClassDatabase(&legacy);
+    auto json = tree.GetJson();
+    ExpectNavigationTargetsResolve(json);
+    size_t headings{}, members{}, legacyLocationIds{};
+    Walk(json["ReviewLines"], [&](auto const& line) {
+      auto id = line.value("LineId", "");
+      EXPECT_EQ(id.find("(unnamed "), std::string::npos);
+      headings += id.starts_with("#anonymous:");
+      members += id.starts_with("#anonymous-member:");
+    });
+    for (auto const& token : legacy.GetJson()["Tokens"])
+    {
+      if (token["DefinitionId"].is_string())
+      {
+        auto id = token["DefinitionId"].get<std::string>();
+        legacyLocationIds += id.find(file) != std::string::npos;
+      }
+    }
+    EXPECT_EQ(headings, 5);
+    EXPECT_EQ(members, 5);
+    EXPECT_EQ(legacyLocationIds, 10);
+    outputs.push_back(std::move(json));
+  }
+  EXPECT_EQ(outputs[0], outputs[1]);
+}
+
 TEST(TreeJsonDumper, UsingNamespacePreservesDefinitionReferencesAndDiagnostic)
 {
   ApiViewProcessor processor("tests", R"({

@@ -366,6 +366,25 @@ public:
     }
     UpdateCursor(value.size());
   }
+  void InsertAnonymousTypeName(
+      std::string_view const& value,
+      std::string_view const& id,
+      std::string_view const& memberName) override
+  {
+    if (m_scopes.empty() || memberName.empty())
+    {
+      throw std::runtime_error("Anonymous member type requires an enclosing scope and member name");
+    }
+    auto parentId = m_lines[m_scopes.back().Parent].Content.value("LineId", "");
+    if (parentId.empty())
+    {
+      throw std::runtime_error("Anonymous member type requires an enclosing line ID");
+    }
+    auto kind = value.empty() ? "anonymous" : "anonymous-member";
+    auto stableId = "#" + std::string(kind) + ":" + parentId + "::" + std::string(memberName);
+    InsertTypeName(value, stableId);
+    m_lineIds.insert_or_assign(std::string(id), stableId);
+  }
   void InsertMemberName(std::string_view const& value, std::string_view const& id) override
   {
     AddToken(value, TokenKind::MemberName);

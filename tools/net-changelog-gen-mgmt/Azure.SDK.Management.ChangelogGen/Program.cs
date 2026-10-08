@@ -67,12 +67,25 @@ namespace Azure.SDK.ChangelogGen
                         Logger.Log("Skip API comparison for preview version");
                     }
 
-                    Logger.Log("Start checking Swagger Tag");
-                    Logger.Log("  Check Autorest.md at: " + context.AutorestMdFile);
-                    Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
-                    string curAutorestMd = File.ReadAllText(context.AutorestMdFile);
-                    string baseAutorestMd = baselineTree.GetFileContent(context.AutorestMdGithubKey);
-                    result.SpecVersionChange = CompareSpecVersionTag(curAutorestMd, baseAutorestMd, SpecHelper.GenerateGitHubPathToAutorestMd(context.AutorestMdGithubKey));
+                    SpecConfigurationKind specConfigurationKind = SpecHelper.GetSpecConfigurationKind(context.AutorestMdFile, context.TypeSpecLocationFile);
+                    if (specConfigurationKind == SpecConfigurationKind.AutoRest)
+                    {
+                        Logger.Log("Start checking Swagger Tag");
+                        Logger.Log("  Check Autorest.md at: " + context.AutorestMdFile);
+                        Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
+                        string curAutorestMd = File.ReadAllText(context.AutorestMdFile);
+                        string baseAutorestMd = baselineTree.GetFileContent(context.AutorestMdGithubKey);
+                        result.SpecVersionChange = CompareSpecVersionTag(curAutorestMd, baseAutorestMd, SpecHelper.GenerateGitHubPathToAutorestMd(context.AutorestMdGithubKey));
+                    }
+                    else
+                    {
+                        Logger.Log("Start checking TypeSpec source");
+                        Logger.Log("  Check tsp-location.yaml at: " + context.TypeSpecLocationFile);
+                        Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
+                        string curTypeSpecLocation = File.ReadAllText(context.TypeSpecLocationFile);
+                        string baseTypeSpecLocation = baselineTree.GetFileContent(context.TypeSpecLocationGithubKey);
+                        result.SpecVersionChange = CompareTypeSpecSource(curTypeSpecLocation, baseTypeSpecLocation);
+                    }
 
                     Logger.Log("Start checking Azure Core");
                     Logger.Log("  Check AzureCore changelog at: " + context.AzureCoreChangeLogMdFile);
@@ -157,6 +170,22 @@ namespace Azure.SDK.ChangelogGen
                 return new StringValueChange(curVersionTag, baselineVersionTag,
                     $"Upgraded api-version tag from '{baselineVersionTag}' to '{curVersionTag}'. Tag detail available at {source}");
             }
+        }
+
+        public static StringValueChange? CompareTypeSpecSource(string curTypeSpecLocation, string baseTypeSpecLocation)
+        {
+            TypeSpecSource curSource = SpecHelper.GetTypeSpecSource(curTypeSpecLocation);
+            TypeSpecSource baseSource = SpecHelper.GetTypeSpecSource(baseTypeSpecLocation);
+
+            if (string.Equals(curSource.Version, baseSource.Version, StringComparison.OrdinalIgnoreCase))
+            {
+                Logger.Log($"No change found in TypeSpec source: {baseSource.Version} -> {curSource.Version}");
+                return null;
+            }
+
+            Logger.Log($"TypeSpec source change detected: {baseSource.Version} -> {curSource.Version}");
+            return new StringValueChange(curSource.Version, baseSource.Version,
+                $"Upgraded TypeSpec source from '{baseSource.Version}' to '{curSource.Version}'. Source detail available at {curSource.Url}");
         }
 
         public static ChangeSet CompareApi(string curApiFileContent, string baselineApiFileContent)

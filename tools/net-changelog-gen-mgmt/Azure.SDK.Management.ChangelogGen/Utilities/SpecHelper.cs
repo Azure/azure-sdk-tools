@@ -3,11 +3,51 @@
 
 using Markdig.Parsers;
 using System;
+using YamlDotNet.Serialization;
 
 namespace Azure.SDK.ChangelogGen.Utilities
 {
+    public enum SpecConfigurationKind
+    {
+        AutoRest,
+        TypeSpec,
+    }
+
+    public record TypeSpecSource(string Repo, string Directory, string Commit)
+    {
+        public string Version => $"{Repo}/{Directory}@{Commit}";
+        public string Url => $"https://github.com/{Repo}/tree/{Commit}/{Directory}";
+    }
+
     public static class SpecHelper
     {
+        public static SpecConfigurationKind GetSpecConfigurationKind(string autorestMdFile, string typeSpecLocationFile)
+        {
+            if (File.Exists(autorestMdFile))
+                return SpecConfigurationKind.AutoRest;
+            if (File.Exists(typeSpecLocationFile))
+                return SpecConfigurationKind.TypeSpec;
+
+            throw new FileNotFoundException($"Neither AutoRest nor TypeSpec configuration was found. Expected '{autorestMdFile}' or '{typeSpecLocationFile}'.");
+        }
+
+        public static TypeSpecSource GetTypeSpecSource(string typeSpecLocationContent)
+        {
+            var config = new DeserializerBuilder().Build().Deserialize<Dictionary<string, object>>(typeSpecLocationContent);
+            string repo = GetRequiredString(config, "repo");
+            string directory = GetRequiredString(config, "directory");
+            string commit = GetRequiredString(config, "commit");
+            return new TypeSpecSource(repo, directory.TrimEnd('/', '\\'), commit);
+        }
+
+        private static string GetRequiredString(Dictionary<string, object> config, string key)
+        {
+            if (!config.TryGetValue(key, out object? value) || value is not string stringValue || string.IsNullOrWhiteSpace(stringValue))
+                throw new InvalidDataException($"Invalid tsp-location.yaml: missing required field '{key}'.");
+
+            return stringValue;
+        }
+
         private static IEnumerable<string> GetTagsInBatch(Dictionary<string, object> config)
         {
             if (config == null)

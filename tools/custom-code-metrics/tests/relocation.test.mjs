@@ -24,6 +24,21 @@ test("source presentation removes obsolete labels and controls without offering 
   assert.doesNotMatch(styles, /\.badge\b/);
 });
 
+test("manual index loading leaves no controls, bindings or styles while configured hosted mode remains", async () => {
+  const [html, app, styles] = await Promise.all(["index.html", "app.ts", "styles.css"]
+    .map((name) => readFile(join(root, "dashboard", name), "utf8")));
+  for (const source of [html, app, styles]) {
+    assert.doesNotMatch(source, /index-loader|index-form|load-index|data-context/);
+  }
+  assert.doesNotMatch(html, /Load a published|Index URL|Load index|input[^>]*type="url"/i);
+  assert.doesNotMatch(app, /index-url|loadIndex|suppliedIndex/);
+  assert.doesNotMatch(styles, /input\[type=url\]/);
+  assert.match(app, /const url = globalThis\.customCodeMetricsIndexUrl/);
+  assert.match(app, /await openReport\(url\)/);
+  assert.match(app, /await loadReport\(url\)/);
+  assert.match(app, /await loadHistory\(nextReport, 90\)/);
+});
+
 test("relocated builds are script-relative; publication needs no website and leaves existing site seeds untouched", async () => {
   const directory = await mkdtemp(join(tmpdir(), "metrics-build-"));
   const target = join(directory, "tools", "custom-code-metrics");

@@ -184,9 +184,10 @@ Invoke-Item .\dashboard\dist\index.html
 ```
 
 The bundled site opens directly from disk. Seeded builds need no runtime backend,
-CDN or network. Browser file imports and the Clear data action are not supported;
-observations come from validated build-time seeds or a published index. Failed or
-inconsistent index loads retain existing observations in page memory.
+CDN or network. Browser file imports, manual index loading and the Clear data
+action are not supported; observations come from validated build-time seeds or a
+configured automatic hosted feed. Failed or inconsistent feed loads retain
+existing observations in page memory.
 
 To preload actual measurements, provide one or more real collector outputs:
 
@@ -198,10 +199,9 @@ Build output/data are ignored by Git. The default build explicitly clears seeds;
 rebuild with measured data after an unseeded build. Test fixtures must not become
 the published site's initial measurements.
 
-The manual **Load a published snapshot index** option retains the legacy
-`{"snapshots":["one.json","two.json"]}` format. Relative snapshot URLs resolve
-against the HTTP(S) index; cross-origin hosting must allow anonymous GET/CORS.
-Requests omit credentials.
+Configure the reporting index at build/deployment time with `--index-url` or
+`-IndexUrl`, not through browser controls. Hosted requests omit credentials;
+cross-origin hosting must allow anonymous GET/CORS.
 
 History includes only committed-source, compatible observations and defaults to a **fixed library cohort**
 (the intersection of library IDs). Disable fixed cohort to see each day's
@@ -261,7 +261,7 @@ node .\dashboard\build.mjs --index-url "https://<approved-reader>/dotnet/index.j
 The configured automatic anonymous startup loads latest plus 90-day monthly
 history, not the full archive. Choose 30/90/365 days to load older months lazily.
 Ranges end at the selected observation's UTC date, including older observations
-loaded from published indexes. Content hashes are verified, immutable months
+provided as build-time seeds. Content hashes are verified, immutable months
 reused from page cache, and failed range/selection changes roll back without losing prior data.
 Staleness starts **strictly after 36 hours**. Unconfigured builds remain offline.
 
@@ -289,8 +289,9 @@ and the embedded-baseline/no-automatic-feed fact in its quiet footer. Persistent
 preview, loaded-count and embedded-staleness banners are not displayed. Genuine
 loading/error notifications remain explicit; hosted-feed health is discreet
 footer metadata. A single measured revision remains a baseline, not a fabricated
-trend. Published-index loading and filters remain
-available; there is no browser file picker or Clear data control.
+trend. Filters remain available; the preview does not expose a manual index
+loader, browser file picker or Clear data control. Configured automatic
+hosted-feed loading is a separate build/deployment mode.
 
 For a local preview build without deployment:
 

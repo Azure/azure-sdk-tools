@@ -1,6 +1,6 @@
 import { Chart, registerables } from "chart.js";
 import {
-  acceptSnapshot, aggregate, breakdown, filterLibraries, forRepository, history, loadIndex, mergeSnapshots, REPOSITORIES,
+  acceptSnapshot, aggregate, breakdown, filterLibraries, forRepository, history, mergeSnapshots, REPOSITORIES,
   sortLibraries, trendSeries,
   type Snapshot, type Library, type Filters, type SortKey, type Observation, type RepositoryName,
 } from "./data.js";
@@ -97,7 +97,6 @@ async function perform(action: () => Promise<void>): Promise<void> {
   if (busy) return;
   busy = true;
   select("repository-select").disabled = true;
-  byId("load-index").setAttribute("disabled", "");
   select("history-range").disabled = true;
   select("snapshot-select").disabled = true;
   try {
@@ -109,13 +108,12 @@ async function perform(action: () => Promise<void>): Promise<void> {
   } finally {
     busy = false;
     select("repository-select").disabled = false;
-    byId("load-index").removeAttribute("disabled");
     select("history-range").disabled = false;
     select("snapshot-select").disabled = false;
     byId("status").hidden = !byId("status").classList.contains("error");
   }
 }
-function addSnapshots(incoming: Snapshot[], source: string): void {
+function addSnapshots(incoming: Snapshot[]): void {
   if (incoming.some((snapshot) => snapshot.repository.name !== selectedRepository)) {
     throw new Error(`Snapshot repository does not match the selected ${selectedRepository}.`);
   }
@@ -127,7 +125,6 @@ function addSnapshots(incoming: Snapshot[], source: string): void {
   populateServices();
   populateHistoryScope();
   render();
-  if (busy) setStatus(`${source}: ${snapshots.length} observations loaded.`);
 }
 function populateSnapshots(): void {
   const element = select("snapshot-select");
@@ -160,10 +157,8 @@ function render(): void {
   byId("repository-state").hidden = !!snapshot;
   byId("repository-empty").hidden = !!snapshot;
   text("repository-state", repository.implemented ?
-    `No observations loaded for ${repository.name}. Use a validated build-time baseline or a published index.` :
+    `No observations loaded for ${repository.name}. A validated build-time baseline or configured hosted feed is required.` :
     `No observations collected for ${repository.name}. The ${repository.language} collector is not implemented. Measurements from other repositories are not shown.`);
-  byId("index-loader").hidden = !repository.implemented;
-  byId("data-context").hidden = !repository.implemented;
   byId("status").hidden = !busy && !byId("status").classList.contains("error");
   if (!snapshot) {
     renderFreshness();
@@ -408,27 +403,8 @@ function renderDetail(snapshot: Snapshot | undefined): void {
   }
 }
 
-byId("index-form").addEventListener("submit", (event) => {
-  event.preventDefault();
-  void perform(async () => {
-    const url = input("index-url").value;
-    setStatus("Loading the explicitly requested snapshot index...");
-    const source = new URL(url);
-    if (!["https:", "http:"].includes(source.protocol) || source.username || source.password) {
-      throw new Error("An HTTP(S) index URL without credentials is required.");
-    }
-    const response = await fetch(source, { credentials: "omit", cache: "no-cache" });
-    if (!response.ok) throw new Error(`Index request failed: HTTP ${response.status}.`);
-    const value: unknown = await response.json();
-    if (typeof value === "object" && value !== null && "latest" in value) {
-      await openReport(url, value);
-    } else {
-      addSnapshots(await loadIndex(url), "Published index");
-    }
-  });
-});
-async function openReport(url: string, suppliedIndex?: unknown): Promise<void> {
-  const nextReport = await loadReport(url, fetch, suppliedIndex);
+async function openReport(url: string): Promise<void> {
+  const nextReport = await loadReport(url);
   if (nextReport.latest.repository.name !== selectedRepository) {
     throw new Error(`Report repository does not match the selected ${selectedRepository}.`);
   }
@@ -543,10 +519,9 @@ try {
   if (staticPreview) {
     if (!accepted.length || url) throw new Error("Static preview requires embedded observations and no automatic hosted feed.");
   }
-  if (accepted.length) addSnapshots(accepted, "Build-time observations");
+  if (accepted.length) addSnapshots(accepted);
   else render();
   if (url) {
-    input("index-url").value = url;
     void perform(async () => {
       setStatus("Loading the configured hosted report...");
       await openReport(url);

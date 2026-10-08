@@ -35,11 +35,11 @@ const contrast = (first, second) => {
   return (values[0] + 0.05) / (values[1] + 0.05);
 };
 async function assertSourcePresentation(page) {
-  assert.equal(await page.locator("#checkout-badge, #include-dirty").count(), 0);
+  assert.equal(await page.locator("#checkout-badge,#include-dirty,#index-loader,#index-form,#index-url,#load-index,#data-context,input[type=url]").count(), 0);
   const labels = await page.locator("[title], [aria-label]").evaluateAll((elements) =>
     elements.map((element) => `${element.getAttribute("title") || ""} ${element.getAttribute("aria-label") || ""}`).join("\n"));
   assert.doesNotMatch(`${await page.locator("body").textContent()}\n${labels}`,
-    /\binferred\b|\b(?:clean|dirty) checkouts?\b|\binclude\s*dirty\b|\(dirty\)|\bdirty observations\b/i);
+    /\binferred\b|\b(?:clean|dirty) checkouts?\b|\binclude\s*dirty\b|\(dirty\)|\bdirty observations\b|Load a published snapshot index|Index URL|Load index/i);
 }
 async function assertKeyboardScroller(page, region) {
   assert.equal(await region.getAttribute("tabindex"), "0");
@@ -219,10 +219,11 @@ try {
     library("Azure.Identity", 8, 37),
     library("Azure.ResourceManager.Sample", 12, 88, "beta", "management"),
   ], "2026-10-04T12:00:00Z", "2");
+  const modified = snapshot(first.libraries, "2026-10-05T12:00:00Z", "3", true);
   const fixturePage = await browser.newPage();
   fixturePage.on("pageerror", (error) => errors.push(error.message));
   await fixturePage.route(`${localUrl}snapshots.js`, (route) => route.fulfill({
-    status: 200, contentType: "application/javascript", body: seedConfig([first, second]),
+    status: 200, contentType: "application/javascript", body: seedConfig([first, second, modified]),
   }));
   await fixturePage.goto(localUrl);
   await fixturePage.waitForFunction(() => document.querySelectorAll("#history-values tr").length === 2);
@@ -231,43 +232,7 @@ try {
   assert.match(await fixturePage.locator("#history-values tr").last().textContent(), /\+0 \/ -1/);
   await fixturePage.locator("#history-scope").selectOption("Azure.Identity");
   assert.equal(await fixturePage.locator("#history-values tr").last().locator("td").nth(2).textContent(), "1");
-  const modified = snapshot(first.libraries, "2026-10-05T12:00:00Z", "3", true);
-  const modifiedMonth = JSON.stringify({
-    schemaVersion: "1.0", month: "2026-10", observations: [first, second, modified].map(compactObservation),
-  });
-  const modifiedMonthPath = `history/${createHash("sha256").update(modifiedMonth).digest("hex")}/2026-10.json`;
-  const officialIndex = (latest) => ({
-    schemaVersion: "1.0", latest: `snapshots/${latest.snapshotId}.json`,
-    history: [{ month: "2026-10", path: modifiedMonthPath }],
-  });
-  const partial = snapshot(first.libraries, "2026-10-06T12:00:00Z", "5");
-  await fixturePage.route("https://metrics.invalid/**", async (route) => {
-    const url = route.request().url();
-    assert.equal(route.request().method(), "GET");
-    assert.equal(route.request().headers().cookie, undefined);
-    let value = first;
-    if (url.endsWith("/modified/index.json")) value = { snapshots: ["modified.json"] };
-    else if (url.endsWith("/modified.json") || url.endsWith(`/snapshots/${modified.snapshotId}.json`)) value = modified;
-    else if (url.endsWith("/uncommitted/index.json")) value = officialIndex(modified);
-    else if (url.endsWith("/uncommitted-history/index.json")) value = officialIndex(second);
-    else if (url.endsWith(`/snapshots/${second.snapshotId}.json`)) value = second;
-    else if (url.endsWith("/broken/index.json")) value = { snapshots: ["valid.json", "broken.json"] };
-    else if (url.endsWith("/valid.json")) value = partial;
-    else if (url.endsWith("/v2/index.json")) value = { snapshots: ["v2.json"] };
-    else if (url.endsWith("/v2.json")) value = { ...first, schemaVersion: "2.0" };
-    else if (url.endsWith("/legacy/index.json")) value = { snapshots: ["legacy.json"] };
-    else if (url.endsWith("/legacy.json")) value = legacySnapshot();
-    else if (url.endsWith("index.json")) value = { snapshots: ["one.json"] };
-    await route.fulfill({
-      status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" },
-      body: url.endsWith("/broken.json") ? "{broken" :
-        url.endsWith(modifiedMonthPath) ? modifiedMonth : JSON.stringify(value),
-    });
-  });
-  await fixturePage.locator(".index-loader summary").click();
-  await fixturePage.locator("#index-url").fill("https://metrics.invalid/modified/index.json");
-  await fixturePage.locator("#load-index").click();
-  await fixturePage.waitForFunction(() => document.querySelectorAll("#snapshot-select option").length === 3);
+  assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
   assert.equal(await fixturePage.locator("#snapshot-select").inputValue(), modified.snapshotId);
   assert.equal(await fixturePage.locator("#history-values tr").count(), 2);
   assert.deepEqual(await fixturePage.locator("#history-values tr td:nth-child(2)").allTextContents(),
@@ -281,41 +246,7 @@ try {
     assert.equal(await fixturePage.locator("#history-values tr").count(), 2);
     await assertSourcePresentation(fixturePage);
   }
-  for (const endpoint of ["uncommitted", "uncommitted-history"]) {
-    await fixturePage.locator("#index-url").fill(`https://metrics.invalid/${endpoint}/index.json`);
-    await fixturePage.locator("#load-index").click();
-    await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.includes("Official observations require committed source."));
-    assert.equal(await fixturePage.locator("#status").isVisible(), true);
-    assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
-    assert.equal(await fixturePage.locator("#history-values tr").count(), 2);
-    await assertSourcePresentation(fixturePage);
-  }
-  await fixturePage.locator("#index-url").fill("https://metrics.invalid/broken/index.json");
-  await fixturePage.locator("#load-index").click();
-  await fixturePage.waitForFunction(() => document.getElementById("status")?.classList.contains("error"));
-  assert.equal(await fixturePage.locator("#status").isVisible(), true);
-  await assertSourcePresentation(fixturePage);
-  assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3, "A partially valid index changed existing observations.");
-  await fixturePage.locator("#index-url").fill("https://metrics.invalid/v2/index.json");
-  await fixturePage.locator("#load-index").click();
-  await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.includes("Invalid snapshot"));
-  assert.equal(await fixturePage.locator("#status").isVisible(), true);
-  assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
-  assert.equal(await fixturePage.locator("#history-values tr").count(), 2, "Old version data became a false current-format trend point.");
-  await assertSourcePresentation(fixturePage);
-  await fixturePage.locator("#index-url").fill("https://metrics.invalid/legacy/index.json");
-  await fixturePage.locator("#load-index").click();
-  await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.includes("Invalid snapshot"));
-  assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
-  await assertSourcePresentation(fixturePage);
-  await fixturePage.locator("#index-url").fill("https://metrics.invalid/history/index.json");
-  await fixturePage.locator("#load-index").click();
-  await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.startsWith("Published index:"));
-  assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
   await fixturePage.locator("#repository-select").selectOption("Azure/azure-sdk-for-java");
-  await fixturePage.locator("#index-form").evaluate((form) => form.requestSubmit());
-  await fixturePage.waitForFunction(() => document.getElementById("status")?.classList.contains("error"));
-  assert.match(await fixturePage.locator("#status").textContent(), /repository does not match/);
   assert.equal(await fixturePage.locator("#measurements").isVisible(), false);
   await fixturePage.locator("#repository-select").selectOption("Azure/azure-sdk-for-net");
   assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
@@ -330,6 +261,61 @@ try {
   };
   const october = monthDocument([first, second]);
   const may = monthDocument([older]);
+  const modifiedMonth = monthDocument([first, second, modified]);
+  const partial = snapshot(first.libraries, "2026-10-06T12:00:00Z", "5");
+  const brokenBody = "{broken";
+  const brokenMonth = {
+    body: brokenBody, month: "2026-10",
+    path: `history/${createHash("sha256").update(brokenBody).digest("hex")}/2026-10.json`,
+  };
+  for (const scenario of [
+    { name: "uncommitted-latest", latest: modified, month: october, error: /Official observations require committed source/ },
+    { name: "uncommitted-history", latest: second, month: modifiedMonth, error: /Official observations require committed source/ },
+    { name: "broken-history", latest: partial, month: brokenMonth, error: /JSON|Unexpected/ },
+    ...["0.0", "2.0", "3.0"].map((version) => ({
+      name: `version-${version}`, latest: { ...second, schemaVersion: version }, month: october, error: /Invalid snapshot/,
+    })),
+    { name: "legacy-prototype", latest: legacySnapshot(), month: october, error: /Invalid snapshot/ },
+    { name: "unsupported-repository", latest: { ...second, repository: { ...second.repository, name: "Azure/azure-sdk-for-java" } },
+      month: october, error: /Invalid snapshot/ },
+    { name: "unavailable-index", latest: second, month: october, status: 503, error: /HTTP 503/ },
+  ]) {
+    const fault = await browser.newPage();
+    fault.on("pageerror", (error) => errors.push(error.message));
+    const url = `https://metrics.invalid/${scenario.name}/index.json`;
+    const configuredIndex = {
+      schemaVersion: "1.0", latest: `snapshots/${scenario.latest.snapshotId}.json`,
+      history: [{ month: scenario.month.month, path: scenario.month.path }],
+    };
+    await fault.route(`${localUrl}snapshots.js`, (route) => route.fulfill({
+      status: 200, contentType: "application/javascript", body: seedConfig([first, second], url),
+    }));
+    await fault.route("https://metrics.invalid/**", (route) => {
+      assert.equal(route.request().method(), "GET");
+      assert.equal(route.request().headers().cookie, undefined);
+      assert.equal(route.request().headers().authorization, undefined);
+      const requested = route.request().url();
+      return route.fulfill({
+        status: requested === url ? scenario.status || 200 : 200, contentType: "application/json",
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: requested === url ? JSON.stringify(configuredIndex) :
+          requested.endsWith(configuredIndex.latest) ? JSON.stringify(scenario.latest) : scenario.month.body,
+      });
+    });
+    await fault.goto(localUrl);
+    await fault.waitForFunction(() => document.getElementById("status")?.classList.contains("error") &&
+      !document.getElementById("repository-select")?.disabled);
+    assert.equal(await fault.locator("#status").isVisible(), true);
+    assert.match(await fault.locator("#status").textContent(), scenario.error);
+    assert.match(await fault.locator("#status").textContent(), /Existing observations were retained/);
+    assert.equal(await fault.locator("#snapshot-select option").count(), 2, `${scenario.name} changed existing observations.`);
+    assert.equal(await fault.locator("#snapshot-select").inputValue(), second.snapshotId);
+    assert.equal(await fault.locator("#history-values tr").count(), 2, `${scenario.name} became a false history point.`);
+    assert.equal(await fault.locator("#custom-percent").textContent(), percentage(second.summary.customRatio));
+    assert.equal(await fault.locator("#freshness").isVisible(), false, "An incomplete feed became active.");
+    await assertSourcePresentation(fault);
+    await fault.close();
+  }
   const hostedIndex = { schemaVersion: "1.0", latest: `snapshots/${second.snapshotId}.json`,
     history: [may, october].map(({ month, path }) => ({ month, path })) };
   const publicIndex = "https://metrics.invalid/hosted/index.json";
@@ -339,7 +325,7 @@ try {
   const hostedRequests = [];
   let failOlder = true;
   await hosted.route(`${localUrl}snapshots.js`, (route) => route.fulfill({
-    status: 200, contentType: "application/javascript", body: seedConfig([], publicIndex),
+    status: 200, contentType: "application/javascript", body: seedConfig([older], publicIndex),
   }));
   await hosted.route("https://metrics.invalid/**", async (route) => {
     const url = route.request().url();
@@ -351,15 +337,14 @@ try {
     else if (url.endsWith(hostedIndex.latest)) body = JSON.stringify(second);
     else if (url.endsWith(october.path)) body = october.body;
     else if (url.endsWith(may.path) && !failOlder) body = may.body;
-    else if (url === "https://metrics.invalid/older/index.json") body = JSON.stringify({ snapshots: ["older.json"] });
-    else if (url.endsWith("/older.json")) body = JSON.stringify(older);
     else { status = 503; body = "Unavailable"; }
     await route.fulfill({ status, body, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" } });
   });
   await hosted.goto(localUrl);
   await hosted.waitForFunction(() => document.getElementById("status")?.textContent?.startsWith("Published index:"));
   assert.equal(await hosted.locator("#library-count").textContent(), "2");
-  assert.equal(await hosted.locator("#snapshot-select option").count(), 1);
+  await assertSourcePresentation(hosted);
+  assert.equal(await hosted.locator("#snapshot-select option").count(), 2);
   assert.equal(await hosted.locator("#history-values tr").count(), 2);
   assert.equal(await hosted.locator("#history-range").inputValue(), "90");
   assert.equal(hostedRequests.length, 3, "Startup downloaded the full archive.");
@@ -370,6 +355,14 @@ try {
   assert.equal(await hosted.locator("#history-range").inputValue(), "90");
   assert.equal(await hosted.locator("#history-values tr").count(), 2);
   assert.equal(await hosted.locator("#library-count").textContent(), "2");
+  await hosted.locator("#snapshot-select").selectOption(older.snapshotId);
+  await hosted.waitForFunction((id) => document.getElementById("snapshot-select")?.value === id &&
+    !document.getElementById("snapshot-select")?.disabled, second.snapshotId);
+  assert.equal(await hosted.locator("#status").isVisible(), true);
+  assert.match(await hosted.locator("#status").textContent(), /HTTP 503/);
+  assert.equal(await hosted.locator("#history-range").inputValue(), "90");
+  assert.equal(await hosted.locator("#history-values tr").count(), 2);
+  assert.equal(await hosted.locator("#library-count").textContent(), "2", "Failed selection changed the overview.");
   failOlder = false;
   await hosted.locator("#history-range").selectOption("365");
   await hosted.waitForFunction(() => document.querySelectorAll("#history-values tr").length === 3);
@@ -378,10 +371,6 @@ try {
   await hosted.waitForFunction(() => document.getElementById("status")?.textContent?.includes("30-day history loaded"));
   assert.equal(await hosted.locator("#history-values tr").count(), 2);
   assert.equal(hostedRequests.length, beforeCached, "Cached history was fetched again.");
-  await hosted.locator(".index-loader summary").click();
-  await hosted.locator("#index-url").fill("https://metrics.invalid/older/index.json");
-  await hosted.locator("#load-index").click();
-  await hosted.waitForFunction(() => document.querySelectorAll("#snapshot-select option").length === 2);
   const beforeSelection = hostedRequests.length;
   await hosted.locator("#snapshot-select").selectOption(older.snapshotId);
   await hosted.waitForFunction(() => document.getElementById("status")?.textContent?.includes("selected observation's UTC date"));
@@ -389,9 +378,6 @@ try {
   assert.match(await hosted.locator("#history-values tr").textContent(), /2026-05-01/);
   assert.equal(await hosted.locator("#library-count").textContent(), "3");
   assert.equal(hostedRequests.length, beforeSelection, "Historical selection did not reuse its cached month.");
-  await hosted.locator("#index-url").fill("https://metrics.invalid/unavailable/index.json");
-  await hosted.locator("#load-index").click();
-  await hosted.waitForFunction(() => document.getElementById("status")?.classList.contains("error"));
   assert.equal(await hosted.locator("#snapshot-select option").count(), 2);
   assert.equal(await hosted.locator("#snapshot-select").inputValue(), older.snapshotId);
   assert.equal(await hosted.locator("#library-count").textContent(), "3");
@@ -406,6 +392,7 @@ try {
   assert.equal(await hosted.locator("#library-count").textContent(), "3");
   assert.equal(await hosted.locator("#history-range").inputValue(), "30");
   assert.equal(hostedRequests.length, beforeRepositorySwitch, "Repository selection fetched an unconfigured feed.");
+  await assertSourcePresentation(hosted);
   assert.deepEqual(errors, []);
   const previewBuild = spawnSync(process.execPath, [
     fileURLToPath(new URL("../build.mjs", import.meta.url)), "--preview", "--snapshot", snapshotPath,
@@ -455,7 +442,7 @@ try {
     assert.equal(await previewPage.locator("#repository-branding").count(), 0);
     assert.equal(await previewPage.locator("#measurements").isVisible(), false);
     for (const id of ["custom-percent", "library-count", "history-chart", "library-values", "library-detail",
-      "observation-info", "deployment-info", "freshness", "index-loader"]) {
+      "observation-info", "deployment-info", "freshness"]) {
       assert.equal(await previewPage.locator(`#${id}`).isVisible(), false, `${repository.name} exposed .NET ${id}.`);
     }
     assert.equal(previewRequests.length, beforeRepositoryRequests, `${repository.name} requested a nonexistent feed.`);
@@ -596,11 +583,11 @@ try {
   }
   assert.ok(visualRequests.every((url) => url.startsWith("file:")), "The visual refresh introduced external assets or telemetry.");
   assert.deepEqual(errors, []);
-  console.log("Browser checks passed: baseline, category/service filters, sorting, charts, library details, seeded cohorts, atomic index error retention, committed-source-only history, responsive and dark layouts, no file-import/clear controls or unsolicited external requests.");
+  console.log("Browser checks passed: baseline, category/service filters, sorting, charts, library details, seeded cohorts, atomic configured-feed error retention, committed-source-only history, responsive and dark layouts, no file-import/clear/manual-index controls or unsolicited external requests.");
   console.log("Source-label checks passed: Custom source cards/legend/disclosure, no source-state badge/override/suffix/notes, modified-source history exclusion across ranges/cohorts, plain official-source rejection with retained observations.");
-  console.log("Hosted checks passed: automatic latest, anonymous bounded month loading, historical membership, stale warning, failed range/index rollback and cache reuse.");
+  console.log("Hosted checks passed: automatic latest, anonymous bounded month loading, historical membership, stale warning, failed range/selection rollback and cache reuse without any manual loader.");
   console.log("Preview checks passed: actual seed counts/ratio/date, quiet baseline metadata, all three banners removed, no feed requests/fake trend, full-portfolio initial mobile and immediate open-detail resize.");
-  console.log("Repository checks passed: seven choices, six honest uncollected states without .NET measurements/fetches, .NET filter/history/detail restoration and mismatched-index rejection.");
+  console.log("Repository checks passed: seven choices, six honest uncollected states without .NET measurements/fetches, .NET filter/history/detail restoration and configured unsupported-source rejection.");
   console.log("Visual checks passed: aligned desktop cards, compact context, 15px body/14px tables, light/dark 1440/1280/390/320px, painted charts, keyboard focus/scrolling, unfragmented package names and bounded page widths.");
   console.log("Sort-header checks passed: six native column controls, default custom-lines descending, lexical/numeric sorting, stable ties, Enter/Space, aria-sort/direction, N/A last both ways and filter/repository/detail state preservation.");
 } finally {

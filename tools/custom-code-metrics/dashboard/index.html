@@ -26,17 +26,6 @@
   </header>
 
   <main>
-    <div id="data-context" class="data-context">
-      <details id="index-loader" class="index-loader">
-        <summary>Load a published snapshot index</summary>
-        <form id="index-form">
-          <label for="index-url">Index URL</label>
-          <input id="index-url" type="url" placeholder="https://your-storage/snapshots/index.json" required>
-          <button id="load-index" type="submit">Load index</button>
-        </form>
-        <p>Hosted latest/monthly history or legacy <code>{"snapshots":["snapshot-1.json"]}</code>. Public GET requests omit credentials.</p>
-      </details>
-    </div>
     <p id="status" class="status" role="status" aria-live="polite" hidden></p>
 
     <section id="repository-empty" class="panel empty-state" aria-labelledby="empty-heading" hidden>

@@ -28,22 +28,17 @@ h2 { margin: 0; font-size: 20px; font-weight: 650; line-height: 1.35; letter-spa
 p { margin: 0; }
 .repository-filter { width: 370px; min-width: 0; flex: none; }
 label { display: block; min-width: 0; color: var(--muted); font-size: 14px; font-weight: 600; }
-select, input[type=search], input[type=url] { display: block; width: 100%; min-width: 0; margin-top: 6px; border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px; background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; }
+select, input[type=search] { display: block; width: 100%; min-width: 0; margin-top: 6px; border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px; background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; }
 button { background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: 9px 14px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 button:hover { background: var(--hover); }
 button:disabled, select:disabled { opacity: .6; cursor: wait; }
 button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .panel { min-width: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
-.data-context { display: flex; align-items: flex-start; justify-content: flex-end; margin-bottom: 18px; }
 .freshness { color: var(--muted); font-size: 13px; }
 .freshness.error { color: var(--warning-ink); }
 .status { margin-bottom: 20px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font-size: 14px; overflow-wrap: anywhere; }
 .status.error { border-color: #ca7781; background: #fff1f2; color: #8c2532; }
-.index-loader { min-width: 0; width: 260px; flex: none; color: var(--muted); font-size: 14px; }
 summary { cursor: pointer; }
-.index-loader summary { color: var(--accent); }
-.index-loader form { display: grid; gap: 8px; margin-top: 12px; }
-.index-loader p { margin-top: 10px; font-size: 13px; overflow-wrap: anywhere; }
 .section-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
 .section-header > div { min-width: 0; }
 .section-header p { margin-top: 6px; color: var(--muted); font-size: 14px; }
@@ -129,8 +124,6 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12
   main, .header-inner { padding: 20px 16px; }
   .header-inner { flex-wrap: wrap; gap: 16px; }
   .repository-filter { width: 100%; }
-  .data-context { flex-direction: column; gap: 12px; }
-  .index-loader { width: 100%; }
   .overview, .chart-panel, .library-panel, .detail-panel { padding: 20px; }
   .section-header { gap: 12px; }
   .kpis { grid-template-columns: 1fr; }

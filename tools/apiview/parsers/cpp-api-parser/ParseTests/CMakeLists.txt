@@ -18,6 +18,7 @@ add_executable(parseTests
     TestCases/TemplateTests.cpp
     TestCases/ClassesWithInternalAndDetail.cpp 
     TestCases/ExpressionTests.cpp
+    TestCases/EnumUnderlyingTypes.cpp
     TestCases/UsingNamespace.cpp
     TestCases/DestructorTests.cpp
     TestCases/FriendsTests.cpp

@@ -3014,7 +3014,6 @@ class AstEnum : public AstNamedNode {
   std::string m_underlyingType;
   bool m_isScoped;
   bool m_isScopedWithClass;
-  bool m_isFixed;
   bool m_isForwardDeclaration;
 
 public:
@@ -3023,9 +3022,9 @@ public:
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(enumDecl, azureClassesDatabase, parentNode),
-        m_underlyingType{enumDecl->getIntegerType().getAsString()},
+        m_underlyingType{
+            enumDecl->getIntegerTypeSourceInfo() ? enumDecl->getIntegerType().getAsString() : ""},
         m_isScoped{enumDecl->isScoped()}, m_isScopedWithClass{enumDecl->isScopedUsingClassTag()},
-        m_isFixed{enumDecl->isFixed()},
         m_isForwardDeclaration{enumDecl != enumDecl->getDefinition()}
   {
     if (!m_isScoped)
@@ -3422,14 +3421,16 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
   else
   {
     dumper->InsertTypeName(Name(), m_navigationId);
-
-    if (m_isFixed)
-    {
-      dumper->InsertWhitespace();
-      dumper->InsertPunctuation(':');
-      dumper->InsertWhitespace();
-      dumper->InsertIdentifier(m_underlyingType);
-    }
+  }
+  if (!m_underlyingType.empty())
+  {
+    dumper->InsertWhitespace();
+    dumper->InsertPunctuation(':');
+    dumper->InsertWhitespace();
+    dumper->InsertIdentifier(m_underlyingType);
+  }
+  if (!m_isForwardDeclaration)
+  {
     dumper->Newline();
     dumper->BeginChildScope("", true);
     dumper->LeftAlign();

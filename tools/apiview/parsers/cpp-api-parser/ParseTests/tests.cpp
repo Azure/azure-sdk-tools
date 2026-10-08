@@ -6,6 +6,7 @@
 #include "AstNode.hpp"
 #include "JsonDumper.hpp"
 #include "TextDumper.hpp"
+#include "TreeJsonDumper.hpp"
 #include "gtest/gtest.h"
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Tooling/CompilationDatabase.h>
@@ -13,6 +14,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ostream>
+#include <sstream>
 #include <string_view>
 
 using namespace nlohmann::literals;
@@ -500,6 +502,117 @@ TEST_F(TestParser, Expressions)
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Expression1.cpp"));
+}
+
+TEST_F(TestParser, EnumUnderlyingTypes)
+{
+  std::ifstream input(R"(Tests\EnumUnderlyingTypes.cpp)");
+  ASSERT_TRUE(input.is_open());
+  std::ostringstream source;
+  source << input.rdbuf();
+  auto ast = buildASTFromCodeWithArgs(source.str(), {"-std=c++14"});
+  ASSERT_NE(ast, nullptr);
+  ASSERT_FALSE(ast->getDiagnostics().hasErrorOccurred());
+
+  const std::vector<std::string> expectedDeclarations{
+      "enum  Plain",
+      "enum  PlainInt : int",
+      "enum  PlainByte : unsigned char",
+      "enum class ImplicitClass",
+      "enum struct ImplicitStruct",
+      "enum class ExplicitInt : int",
+      "enum struct ExplicitByte : unsigned char",
+      "enum class AliasBase : Byte",
+      "enum class TypedefBase : Word",
+      "enum class MacroBase : unsigned char",
+      "enum class OpaqueClass",
+      "enum struct OpaqueStruct",
+      "enum class OpaqueInt : int",
+      "enum struct OpaqueByte : unsigned char",
+      "enum  OpaquePlain : unsigned short",
+      "enum class RedeclaredImplicit : int",
+      "enum class RedeclaredImplicit",
+      "enum class RedeclaredExplicit",
+      "enum class RedeclaredExplicit : int",
+      "enum struct RedeclaredStruct : int",
+      "enum struct RedeclaredStruct",
+      "enum  RedeclaredPlain : unsigned char",
+      "enum  RedeclaredPlain : unsigned char"};
+
+  ApiViewProcessor processor(".", R"({})"_json);
+  DumpNodeOptions options;
+  options.NeedsSourceComment = false;
+  options.NeedsDocumentation = false;
+  size_t index = 0;
+  for (auto decl : ast->getASTContext().getTranslationUnitDecl()->decls())
+  {
+    auto enumDecl = dyn_cast<EnumDecl>(decl);
+    if (!enumDecl)
+    {
+      continue;
+    }
+    ASSERT_LT(index, expectedDeclarations.size());
+    SCOPED_TRACE(expectedDeclarations[index]);
+    EXPECT_EQ(
+        enumDecl->getIntegerTypeSourceInfo() != nullptr,
+        expectedDeclarations[index].find(" : ") != std::string::npos);
+    auto node = AstNode::Create(enumDecl, processor.GetClassesDatabase().get(), nullptr);
+    auto expected = expectedDeclarations[index]
+        + (enumDecl->isThisDeclarationADefinition() ? "\n{\n\n};\n" : ";\n");
+
+    std::ostringstream text;
+    TextDumper textDumper(text);
+    node->DumpNode(&textDumper, options);
+    EXPECT_EQ(text.str(), expected);
+
+    JsonDumper jsonDumper("Enum test", "Test", "Test");
+    node->DumpNode(&jsonDumper, options);
+    std::ostringstream json;
+    jsonDumper.DumpToFile(json);
+    std::string rendered;
+    for (auto const& token : jsonDumper.GetJson()["Tokens"])
+    {
+      if (token["Kind"] == 1)
+      {
+        rendered += '\n';
+      }
+      else if (token["Value"].is_string())
+      {
+        rendered += token["Value"].get<std::string>();
+      }
+    }
+    EXPECT_EQ(rendered, expected);
+
+    TreeJsonDumper treeDumper("Enum test", "Test", "Test");
+    node->DumpNode(&treeDumper, options);
+    auto navigation = std::make_shared<TypeHierarchy::TypeHierarchyNode>(
+        enumDecl->getNameAsString(),
+        enumDecl->getQualifiedNameAsString(),
+        TypeHierarchy::TypeHierarchyClass::Enum);
+    treeDumper.DumpTypeHierarchyNode(navigation);
+    auto tree = treeDumper.GetJson();
+    auto const& heading = tree["ReviewLines"][0];
+    std::string treeDeclaration;
+    for (auto const& token : heading["Tokens"])
+    {
+      treeDeclaration += token["Value"].get<std::string>();
+    }
+    EXPECT_EQ(
+        treeDeclaration,
+        expectedDeclarations[index] + (enumDecl->isThisDeclarationADefinition() ? " {" : ";"));
+    ASSERT_TRUE(heading.contains("LineId"));
+    EXPECT_EQ(tree["Navigation"][0]["NavigationId"], heading["LineId"]);
+    if (enumDecl->isThisDeclarationADefinition())
+    {
+      EXPECT_EQ(heading["LineId"], enumDecl->getQualifiedNameAsString());
+    }
+    else
+    {
+      EXPECT_TRUE(heading["LineId"].get<std::string>().starts_with("#forward:"));
+    }
+    ++index;
+  }
+  EXPECT_EQ(index, expectedDeclarations.size());
 }
 
 TEST_F(TestParser, Templates)

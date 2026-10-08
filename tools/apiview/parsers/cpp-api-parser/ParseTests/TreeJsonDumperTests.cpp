@@ -325,6 +325,42 @@ TEST(TreeJsonDumper, ForwardAliasesPreferDefinitionsInEitherOrder)
   }
 }
 
+TEST(TreeJsonDumper, EnumUnderlyingTypesNavigationAndDiagnosticsResolve)
+{
+  ApiViewProcessor processor("tests", R"({
+    "sourceFilesToProcess": ["EnumUnderlyingTypes.cpp"],
+    "filterNamespace": ["Byte", "Word"]
+  })"_json);
+  ASSERT_EQ(processor.ProcessApiView(), 0);
+  JsonDumper legacy("Review", "Test", "test");
+  TreeJsonDumper tree("Review", "Test", "test");
+  auto& db = processor.GetClassesDatabase();
+  db->DumpClassDatabase(&legacy);
+  db->DumpClassDatabase(&tree);
+  auto json = tree.GetJson();
+  ExpectNavigationTargetsResolve(json);
+  std::unordered_set<std::string> ids;
+  Walk(json["ReviewLines"], [&](auto const& line) {
+    if (line.contains("LineId"))
+    {
+      ids.emplace(line["LineId"].template get<std::string>());
+    }
+  });
+  auto const& legacyDiagnostics = legacy.GetJson()["Diagnostics"];
+  ASSERT_FALSE(legacyDiagnostics.empty());
+  ASSERT_EQ(json["Diagnostics"].size(), legacyDiagnostics.size());
+  for (size_t index = 0; index != legacyDiagnostics.size(); ++index)
+  {
+    auto expected = legacyDiagnostics[index];
+    auto const& diagnostic = json["Diagnostics"][index];
+    auto target = diagnostic["TargetId"].get<std::string>();
+    EXPECT_TRUE(ids.contains(target)) << target;
+    EXPECT_NE(target.find(expected["TargetId"].get<std::string>()), std::string::npos);
+    expected["TargetId"] = target;
+    EXPECT_EQ(diagnostic, expected);
+  }
+}
+
 TEST(TreeJsonDumper, RangeFlagsSpacingAndDiagnosticTargets)
 {
   TreeJsonDumper tree("Review", "Storage", "test");

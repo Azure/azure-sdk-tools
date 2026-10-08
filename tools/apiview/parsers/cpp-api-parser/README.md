@@ -149,6 +149,13 @@ The `AstType` and `AstExpr` family of classes express a "type" or "expression",
 which are used to represent the types of parameters or default values for those
 parameters.
 
+Enum declarations display an underlying type only when an enum-base is explicitly
+written in that declaration, including opaque declarations. For example,
+`enum class Mode {};` has no `: int` in APIView, while
+`enum class Mode : int {};` retains its explicitly written base.
+This corrects enum-base spelling in both legacy and tree output; other legacy
+output remains unchanged.
+
 #### AstDumper
 
 The `AstDumper` class defines an abstract base class which can be extended to enable

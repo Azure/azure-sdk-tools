@@ -263,8 +263,7 @@ namespace APIViewWeb.Managers
         /// </summary>
         public async Task<string> ComputeAPIContentHashAsync(CodeFile codeFile)
         {
-            var languageService = LanguageServiceHelpers.GetLanguageService(codeFile.Language, _languageServices);
-            bool isTreeStyle = languageService?.UsesTreeStyleParser ?? codeFile.ReviewLines.Count > 0;
+            bool isTreeStyle = codeFile.ReviewLines.Count > 0;
 
             var sb = new StringBuilder();
             sb.Append('\n');
@@ -304,13 +303,18 @@ namespace APIViewWeb.Managers
         /// <returns>bool</returns>
         public bool AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
         {
-            if (codeFileA.CodeFile.VersionString != codeFileA.CodeFile.VersionString)
+            if (codeFileA.CodeFile.VersionString != codeFileB.CodeFile.VersionString)
             {
                 return false;
             }
 
-            var languageService = LanguageServiceHelpers.GetLanguageService(codeFileA.CodeFile.Language, _languageServices);
-            if (languageService.UsesTreeStyleParser)
+            bool isTreeStyleA = codeFileA.CodeFile.ReviewLines.Count > 0;
+            bool isTreeStyleB = codeFileB.CodeFile.ReviewLines.Count > 0;
+            if (isTreeStyleA != isTreeStyleB)
+            {
+                return false;
+            }
+            if (isTreeStyleA)
             {
                 return CodeFileHelpers.AreCodeFilesSame(codeFileA.CodeFile, codeFileB.CodeFile);
             }

@@ -224,6 +224,13 @@ namespace APIViewWeb.LeanControllers
                 }
             }
 
+            if (activeAPIRevision.Language == "C++" && diffAPIRevision != null
+                && activeAPIRevision.Files[0].ParserStyle != diffAPIRevision.Files[0].ParserStyle)
+            {
+                return BadRequest(
+                    "Cannot compare legacy and tree C++ revisions. Generate both revisions with --format tree.");
+            }
+
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
 

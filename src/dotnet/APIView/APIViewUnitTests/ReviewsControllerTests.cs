@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using APIView;
 using APIView.Identity;
 using APIViewWeb;
 using APIViewWeb.Hubs;
@@ -70,6 +71,37 @@ namespace APIViewUnitTests
                 _mockSignalRHubContext.Object,
                 _mockNotificationManager.Object,
                 _mockPermissionsManager.Object);
+        }
+
+        [Theory]
+        [InlineData(ParserStyle.Tree, ParserStyle.Flat)]
+        [InlineData(ParserStyle.Flat, ParserStyle.Tree)]
+        public async Task GetReviewContentAsync_CppMixedSchemaDiff_ReturnsExplicitError(
+            ParserStyle activeStyle, ParserStyle diffStyle)
+        {
+            var active = new APIRevisionListItemModel
+            {
+                Language = "C++",
+                Files = [new APICodeFileModel { ParserStyle = activeStyle }]
+            };
+            var diff = new APIRevisionListItemModel
+            {
+                Language = "C++",
+                Files = [new APICodeFileModel { ParserStyle = diffStyle }]
+            };
+            _mockApiRevisionsManager
+                .Setup(m => m.GetAPIRevisionAsync(It.IsAny<ClaimsPrincipal>(), "active"))
+                .ReturnsAsync(active);
+            _mockApiRevisionsManager
+                .Setup(m => m.GetAPIRevisionAsync(It.IsAny<ClaimsPrincipal>(), "diff"))
+                .ReturnsAsync(diff);
+
+            var result = await _controller.GetReviewContentAsync("review", "active", "diff");
+
+            var error = Assert.IsType<BadRequestObjectResult>(result.Result);
+            Assert.Equal(StatusCodes.Status400BadRequest, error.StatusCode);
+            Assert.Contains("--format tree", Assert.IsType<string>(error.Value));
+            _mockCodeFileRepository.VerifyNoOtherCalls();
         }
 
         [Theory]

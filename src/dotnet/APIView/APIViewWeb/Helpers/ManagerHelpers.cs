@@ -7,6 +7,7 @@ using APIViewWeb.LeanModels;
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using APIViewWeb.Models;
 
 namespace APIViewWeb.Helpers
 {
@@ -67,7 +68,7 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        public static string ResolveReviewUrl(string reviewId, string apiRevisionId, string language, IConfiguration configuration, IEnumerable<LanguageService> languageServices, string diffRevisionId = null, string elementId = null)
+        public static string ResolveReviewUrl(string reviewId, string apiRevisionId, string language, IConfiguration configuration, IEnumerable<LanguageService> languageServices, string diffRevisionId = null, string elementId = null, ParserStyle? parserStyle = null)
         {
             var host = configuration["APIVIew-Host-Url"];
             var spaHost = configuration["APIVIew-SPA-Host-Url"];
@@ -76,7 +77,8 @@ namespace APIViewWeb.Helpers
 
             language = LanguageServiceHelpers.MapLanguageAlias(language);
             var languageService = LanguageServiceHelpers.GetLanguageService(language: language, languageServices: languageServices);
-            if (languageService.UsesTreeStyleParser) // Languages using treestyle parser are also using the spa UI
+            bool useTree = parserStyle.HasValue ? parserStyle == ParserStyle.Tree : languageService.UsesTreeStyleParser;
+            if (useTree)
             {
                 if (!String.IsNullOrWhiteSpace(diffRevisionId))
                 {

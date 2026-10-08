@@ -99,7 +99,8 @@ namespace APIViewWeb.Pages.Assemblies
             if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
             {
                 var uri = ManagerHelpers.ResolveReviewUrl(reviewId: id, apiRevisionId: ReviewContent.ActiveAPIRevision.Id,
-                    language: ReviewContent.ActiveAPIRevision.Language, configuration: _configuration, languageServices: _languageServices, diffRevisionId: DiffRevisionId);
+                    language: ReviewContent.ActiveAPIRevision.Language, configuration: _configuration, languageServices: _languageServices, diffRevisionId: DiffRevisionId,
+                    parserStyle: ReviewContent.ActiveAPIRevision.Files[0].ParserStyle);
                 return Redirect(uri);
             }
 

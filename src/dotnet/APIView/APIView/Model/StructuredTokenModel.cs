@@ -234,7 +234,17 @@ namespace APIView.TreeToken
                 TagsObj.Add("Deprecated");
             }
 
-            if (!string.IsNullOrEmpty(token.NavigateToId))
+            if (token.Kind == TokenKind.ExternalUrl)
+            {
+                var target = token.NavigateToId ?? token.Value;
+                if (!Uri.TryCreate(target, UriKind.Absolute, out var uri)
+                    || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                {
+                    throw new InvalidOperationException("External URL tokens require an absolute HTTP or HTTPS URL.");
+                }
+                PropertiesObj.Add("NavigateToUrl", target);
+            }
+            else if (!string.IsNullOrEmpty(token.NavigateToId))
             {
                 PropertiesObj.Add("NavigateToId", token.NavigateToId);
             }

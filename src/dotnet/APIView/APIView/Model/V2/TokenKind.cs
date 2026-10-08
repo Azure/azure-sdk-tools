@@ -12,6 +12,7 @@ namespace APIView.Model.V2
         MemberName = 4,
         StringLiteral = 5,
         Literal = 6,
-        Comment = 7
+        Comment = 7,
+        ExternalUrl = 8
     }
 }

@@ -318,33 +318,73 @@ individual is linked to GitHub or that cleanup eligibility has been approved.
 See the [resource management guidelines](https://github.com/Azure/azure-sdk-tools/blob/main/doc/engsys_resource_management.md).
 Playground resources are expiry-managed; persistent hosting requires EngSys
 coordination. The helper adds no cleanup bypass, non-expiring lease or exemption.
+`-Environment` defaults to `EngineeringSystem` for accurate tracking metadata.
+`-StorageAccountName` accepts an optional lowercase 3-24-character name; omitting
+it preserves the resource-group-unique storage-name default.
+
+For an explicitly approved **existing** resource group, use
+`-UseExistingResourceGroup` with an explicit storage name. This mode verifies the requested group identity,
+refuses collisions with the dedicated metrics names, and deploys incrementally
+without calling resource-group creation or changing its tags:
+
+```powershell
+.\Deploy-Infrastructure.ps1 -SubscriptionId <approved-subscription> `
+  -ResourceGroup <approved-existing-group> -UseExistingResourceGroup `
+  -Location westus2 -Owner <individual-alias> `
+  -StorageAccountName <available-name> -Environment EngineeringSystem `
+  -BootstrapPrincipalId <approved-user-object-id>
+```
+
+Select a supported resource location explicitly; an existing group's location
+need not be supported by Static Web Apps. Existing-group mode is for creating
+new dedicated resources, not overwriting another project's resources. It
+grants no retention exemption and does not modify group locks or cleanup tags.
 The helper retains a `-BootstrapPrincipalId` parameter for its manual bootstrap
 profile; personal writer grants are an optional administrative convenience, not
 a runtime architectural requirement. The scheduled publisher needs scoped
 Storage Blob Data Contributor on archive/reports. A private-storage reader needs
 only Storage Blob Data Reader on reports, never archive.
 
-**The former dashboard is unavailable; no live hosting or nightly reporting is
-operational.** Azure activity records show the external `azure-sdk-tests`
-service principal deleting the dedicated resource group and its site, storage
-and identity during October 8, 2026, 00:19-00:21 UTC. This occurred before the
-initial-format renumbering. The former endpoint was
-`agreeable-rock-0fabe8a1e.4.azurestaticapps.net`.
+**The static preview is restored in the user-approved Engineering System
+`typespec` resource group; automatic reporting is not operational.**
+The [current preview](https://orange-pebble-01bfc3d1e.6.azurestaticapps.net) embeds
+the administrative initial-1.0 copy of the measured October 7 observation.
+It remains a single baseline with quiet no-automatic-feed metadata, not a new
+measurement, a nightly feed or evidence that all language adapters exist.
 
-The preserved last-working October 7 prototype-3 .NET observation contains
+The preserved October 7 prototype-3 .NET observation and its separate
+initial-format copy both contain
 459 libraries, 276 services and 7.32% inferred custom source.
 The measured `Azure.Provisioning.CostManagement` library has 120 custom
 lines out of 8,817 total lines (1.36%), with foreign core Shared helpers
 excluded. The change from earlier v2 percentages reflects the new membership
-rules, not a measured code improvement. The initial-format administrative copy
-retains exactly those measurements; no restored site is claimed.
+rules, not a measured code improvement.
 
-The deleted resources were in `rg-azsdk-custom-code-metrics`, subscription
+The new dedicated resources are in subscription
+`a18897a6-7e44-457d-9260-f2854c0aca42`, existing resource group `typespec`.
+The Free Static Web App is `azsdk-custom-code-metrics`; the private Hot LRS
+storage account is `azsdkcustommetrics` and the dedicated publisher identity
+is `id-azsdk-custom-code-metrics`. Resources use West US 2 while the existing
+group remains in West US with its original metadata. Its tags and all twelve
+pre-existing resources were verified unchanged after deployment.
+
+The new report/archive containers remain private, public Blob and shared-key
+access remain disabled, and only container-scoped Storage Blob Data Contributor
+roles were created for the dedicated publisher and approved manual user.
+No federation or reporting feed was activated and no Blob observations were
+published; the preview embeds approved compact data without file-level evidence.
+User-approved placement does not establish a cleanup exemption. No group
+tracking tags, lease, lock or allowlist was changed.
+
+For the historical outage, Azure activity records show the external
+`azure-sdk-tests` service principal deleting the former Playground resources
+during October 8, 2026, 00:19-00:21 UTC, before initial-format renumbering.
+They were in `rg-azsdk-custom-code-metrics`, subscription
 `faa080af-c1d8-40ad-9cce-e1a450ca5b57`, with storage account
-`azsdkcmibsokvwfsterm`. Restoration requires an explicitly approved persistent
-hosting arrangement; do not recreate resources or alter cleanup protections as
-part of a schema change. The tracking-tag mismatch is a documented setup gap,
-not proof of the exact deleted group's tags or cleanup decision branch.
+`azsdkcmibsokvwfsterm` and obsolete hostname
+`agreeable-rock-0fabe8a1e.4.azurestaticapps.net`. Those resources were not recreated.
+The singular tracking-tag mismatch was a documented setup gap, not proof of the
+deleted group's exact tags or cleanup decision branch.
 No pipeline/schedule is registered and no approved reader API is implemented.
 Do not bypass policy with account keys, browser SAS, or policy overrides.
 

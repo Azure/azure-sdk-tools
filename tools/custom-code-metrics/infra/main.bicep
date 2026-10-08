@@ -8,6 +8,13 @@ param owner string
 @description('Resource purpose for owner tracking; this does not exempt resources from cleanup.')
 @minLength(1)
 param purpose string = 'Azure SDK custom code metrics'
+@description('Tracking environment; this does not grant retention or cleanup exemptions.')
+@minLength(1)
+param environment string = 'EngineeringSystem'
+@description('Explicit storage account name, or the default resource-group-unique name.')
+@minLength(3)
+@maxLength(24)
+param storageAccountName string = 'azsdkcm${uniqueString(resourceGroup().id)}'
 param bootstrapPrincipalId string
 @description('Resource-only provisioning does not grant publishing access. An access administrator must deploy again with this enabled.')
 param deployRoleAssignments bool = true
@@ -18,7 +25,7 @@ var tags = {
   Owners: owner
   Purpose: purpose
   Project: 'Azure SDK custom code metrics'
-  Environment: 'Playground'
+  Environment: environment
 }
 var blobContributorRole = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
 
@@ -36,7 +43,7 @@ resource site 'Microsoft.Web/staticSites@2023-12-01' = {
 }
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: 'azsdkcm${uniqueString(resourceGroup().id)}'
+  name: storageAccountName
   location: location
   tags: tags
   kind: 'StorageV2'
@@ -158,7 +165,9 @@ resource bootstrapArchiveRole 'Microsoft.Authorization/roleAssignments@2022-04-0
 }
 
 output siteUrl string = 'https://${site.properties.defaultHostname}'
+output siteResourceId string = site.id
 output storageAccount string = storage.name
+output storageResourceId string = storage.id
 output indexUrl string = '${storage.properties.primaryEndpoints.blob}reports/dotnet/index.json'
 output publisherClientId string = publisher.properties.clientId
 output publisherPrincipalId string = publisher.properties.principalId

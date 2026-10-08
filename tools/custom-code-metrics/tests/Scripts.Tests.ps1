@@ -204,7 +204,12 @@ Describe "Relocated policy-safe infrastructure helper" {
         Should -Invoke az -Times 1 -Exactly -ParameterFilter {
             $Arguments -contains "group" -and $Arguments -contains "Owners=testalias@microsoft.com" -and
             $Arguments -contains "Purpose=Azure SDK custom code metrics" -and
+            $Arguments -contains "Environment=EngineeringSystem" -and
             -not ($Arguments -contains "Owner=testalias@microsoft.com")
+        }
+        Should -Invoke az -Times 1 -Exactly -ParameterFilter {
+            $Arguments -contains "deployment" -and $Arguments -contains "environment=EngineeringSystem" -and
+            -not (($Arguments -join " ") -match "storageAccountName=")
         }
     }
     It "does not hide resource provisioning failures" {
@@ -237,6 +242,71 @@ Describe "Relocated policy-safe infrastructure helper" {
         $template | Should -Match "Owners: owner"
         $template | Should -Match "Purpose: purpose"
         $template | Should -Not -Match "\bOwner: owner"
+    }
+    It "deploys only new metrics resources into an existing group without group creation or tag writes" {
+        Mock az {
+            $global:LASTEXITCODE = 0
+            if ($Arguments[0] -eq "group") { return '{"id":"/subscriptions/engineering-subscription/resourceGroups/typespec","location":"westus","tags":null}' }
+            if ($Arguments[0] -eq "resource") { return '[{"name":"existing-project-site","type":"Microsoft.Web/staticSites"}]' }
+            return '{"properties":{"outputs":{"storageAccount":{"value":"azsdkcustommetrics"},"accessConfigured":{"value":true},"reportsArePublic":{"value":false}}}}'
+        }
+        $result = & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup -Location "westus2" -Owner "jolov" -StorageAccountName "azsdkcustommetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001"
+        $result.storageAccount | Should -Be "azsdkcustommetrics"
+        $result.accessConfigured | Should -BeTrue
+        $result.reportsArePublic | Should -BeFalse
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments[0] -eq "group" -and $Arguments[1] -ne "show" }
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments -contains "--tags" }
+        Should -Invoke az -Times 1 -Exactly -ParameterFilter {
+            $Arguments[0] -eq "deployment" -and $Arguments -contains "engineering-subscription" -and
+            $Arguments -contains "typespec" -and $Arguments -contains "Incremental" -and
+            $Arguments -contains "location=westus2" -and $Arguments -contains "environment=EngineeringSystem" -and
+            $Arguments -contains "storageAccountName=azsdkcustommetrics" -and
+            $Arguments -contains "owner=jolov" -and $Arguments -contains "deployRoleAssignments=true" -and
+            $Arguments -contains "publicReports=false"
+        }
+    }
+    It "fails for an absent or mismatched existing group before a deployment or write" {
+        Mock az { $global:LASTEXITCODE = 1 }
+        { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup -Owner "jolov" -StorageAccountName "azsdkcustommetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw "*Azure command failed*"
+        Mock az { $global:LASTEXITCODE = 0; return '{"id":"/subscriptions/wrong/resourceGroups/typespec"}' }
+        { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup -Owner "jolov" -StorageAccountName "azsdkcustommetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw "*does not match*"
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments[0] -ne "group" -or $Arguments[1] -ne "show" }
+    }
+    It "refuses collisions with any dedicated resource name without modifying existing resources" {
+        foreach ($name in @("azsdk-custom-code-metrics", "azsdkcustommetrics", "id-azsdk-custom-code-metrics")) {
+            Mock az {
+                $global:LASTEXITCODE = 0
+                if ($Arguments[0] -eq "group") { return '{"id":"/subscriptions/engineering-subscription/resourceGroups/typespec"}' }
+                return (ConvertTo-Json -InputObject @(@{ name = $name }) -Compress)
+            }
+            { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup -Owner "jolov" -StorageAccountName "azsdkcustommetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw "*Refusing to overwrite*"
+        }
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments[0] -eq "deployment" }
+        Should -Invoke az -Times 0 -Exactly -ParameterFilter { $Arguments[0] -eq "group" -and $Arguments[1] -ne "show" }
+    }
+    It "previews existing-group deployment without discovery, resource writes or metadata changes" {
+        & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup -Owner "jolov" -StorageAccountName "azsdkcustommetrics" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -WhatIf
+        Should -Invoke az -Times 0 -Exactly
+    }
+    It "rejects invalid friendly storage names or blank environment before any Azure call" {
+        foreach ($name in @("ab", "UPPERCASE", "has-hyphen", "name with space", ("a" * 25))) {
+            { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "jolov" -StorageAccountName $name -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw
+        }
+        { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "jolov" -Environment " " -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw
+        Should -Invoke az -Times 0 -Exactly
+    }
+    It "preserves the unique storage default and limits role scopes to the two new private containers" {
+        $template = Get-Content -LiteralPath (Join-Path $script:PackageRoot "infra" "main.bicep") -Raw
+        $template | Should -Match "param storageAccountName string = 'azsdkcm"
+        $template | Should -Match "Environment: environment"
+        $template | Should -Match "allowSharedKeyAccess: false"
+        $template | Should -Match "param publicReports bool = false"
+        [regex]::Matches($template, "scope: (reports|archive)").Count | Should -Be 4
+        $template | Should -Not -Match "scope: (resourceGroup|subscription)|DoNotDelete|DeleteAfter"
+    }
+    It "requires an explicit storage name in existing-group mode to check every requested resource collision" {
+        { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "engineering-subscription" -ResourceGroup "typespec" -UseExistingResourceGroup -Owner "jolov" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" } | Should -Throw "*requires an explicit storage account name*"
+        Should -Invoke az -Times 0 -Exactly
     }
 }
 

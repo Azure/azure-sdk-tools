@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.50 (Unreleased)
+## 0.6.53 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,42 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.52 (2026-10-05)
+
+### Features Added
+
+- Support optional spec commit SHA on release-plan creation and updates.
+
+### Breaking Changes
+
+- Release-plan metadata updates now require the exact Azure DevOps work item ID. PR/path-only lookup and Release Plan ID fallback are no longer used by this update command.
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept an optional package type (`mgmt`, `client`, `spring`, or `functions`). API Review Hub requires it for new packages and validates it against stored metadata for existing packages.
+
+### Bugs Fixed
+
+- SDK generation uses the release plan's saved spec commit when present; existing branch/PR behavior is preserved for plans without a saved commit.
+
+## 0.6.51 (2026-10-01)
+
+### Features Added
+
+- Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
+- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
+
+## 0.6.50 (2026-09-30)
+
+### Features Added
+
+- `azsdk_package_get_approval_status` now accepts common SDK language aliases.
+
+### Bugs Fixed
+
+- `azsdk_release_sdk` now queries the package approval service for current API review status instead of relying on the Azure DevOps package work item field.
+- Completing a management-plane release plan now queues pipeline 8254 for the nearest newer In Progress Public Preview or GA release plan for the same TypeSpec project, passing `ReleasePlanId`. The pending plan is related to the completed plan, and its submitter and SDK support aliases are notified after the run is queued.
+- If follow-up SDK generation cannot be queued for an identified pending plan, its notification directs the submitter to use the azsdk agent to generate SDKs and consult the release plan dashboard. Automation responses include queued plan/run details, metadata warnings, and failure guidance.
+- Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
+- Preserve detected SDK changes when classification or catalog loading fails, and reject invalid detector reports instead of silently falling back.
 
 ## 0.6.49 (2026-09-21)
 

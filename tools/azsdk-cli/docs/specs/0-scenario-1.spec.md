@@ -177,7 +177,7 @@ _If you create a PR to compare the generated library with the existing library a
 
 ### 4. Validating
 
-**Tools**: `validate` ([#11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127))  
+**Tools**: `validate` ([#11431](https://github.com/Azure/azure-sdk-tools/issues/11431))  
 **Action**: Run [validation checks](#pr-checks) locally before creating PRs  
 **Success**: All checks pass for all languages - PR will be green
 
@@ -298,7 +298,7 @@ For Python requirements, set environment variable `AZSDKTOOLS_PYTHON_VENV_PATH` 
 
 **Command:**
 ```bash
-azsdk verify setup --languages Dotnet Java JavaScript Python Go
+azsdk verify setup --languages DotNet Java JavaScript Python Go
 ```
 
 **Options:**
@@ -470,6 +470,5 @@ Note: The following checks are not implemented for this language: Dependency, AO
 - [Verify Setup - #12287](https://github.com/Azure/azure-sdk-tools/issues/12287)
 - [Generate SDK - #11403](https://github.com/Azure/azure-sdk-tools/issues/11403)
 - [Package Metadata Update - #11827](https://github.com/Azure/azure-sdk-tools/issues/11827)
-- [Build SDK](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122043733)
-- [Run validation Checks - #11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127)
-- [DevEx Inner Loop Project](https://github.com/orgs/Azure/projects/865/views/4)
+- [Build SDK - #11402](https://github.com/Azure/azure-sdk-tools/issues/11402)
+- [Run validation Checks - #11431](https://github.com/Azure/azure-sdk-tools/issues/11431)

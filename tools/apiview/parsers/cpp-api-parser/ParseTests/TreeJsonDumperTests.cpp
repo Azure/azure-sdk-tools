@@ -8,6 +8,7 @@
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <functional>
+#include <map>
 #include <sstream>
 #include <unordered_set>
 
@@ -245,6 +246,140 @@ TEST(TreeJsonDumper, SourceCommentsOnlyOmittedFromTree)
     EXPECT_EQ(treeValues, legacyValues);
     EXPECT_GT(documentationLinks, 0);
   }
+}
+
+TEST(TreeJsonDumper, FieldInitializersOnlyIncludedInTree)
+{
+  ApiViewProcessor processor("tests", {{"sourceFilesToProcess", {"FieldInitializers.hpp"}}});
+  ASSERT_EQ(processor.ProcessApiView(), 0);
+  auto& db = processor.GetClassesDatabase();
+  TreeJsonDumper tree("Review", "Storage", "test");
+  JsonDumper legacy("Review", "Storage", "test");
+  std::ostringstream text;
+  TextDumper console(text);
+  db->DumpClassDatabase(&tree);
+  db->DumpClassDatabase(&legacy);
+  db->DumpClassDatabase(&console);
+  auto json = tree.GetJson();
+  ExpectNavigationTargetsResolve(json);
+  std::map<std::string, std::string> treeLines, legacyLines;
+  Walk(json["ReviewLines"], [&](auto const& line) {
+    if (line.contains("LineId"))
+    {
+      treeLines.emplace(line["LineId"].template get<std::string>(), Text(line));
+    }
+  });
+  std::string currentId, currentText;
+  for (auto const& token : legacy.GetJson()["Tokens"])
+  {
+    if (token["Kind"] == 1)
+    {
+      if (!currentId.empty())
+      {
+        auto start = currentText.find_first_not_of(' ');
+        legacyLines.emplace(currentId, currentText.substr(start));
+      }
+      currentId.clear();
+      currentText.clear();
+    }
+    else
+    {
+      if (token["Value"].is_string())
+      {
+        currentText += token["Value"].get<std::string>();
+      }
+      if (token["DefinitionId"].is_string())
+      {
+        currentId = token["DefinitionId"];
+      }
+    }
+  }
+  struct ExpectedField
+  {
+    const char* Name;
+    const char* Declaration;
+    const char* Initializer;
+  };
+  for (auto const& field : std::initializer_list<ExpectedField>{
+           ExpectedField{"field", "int field", " = 10"},
+           {"Uninitialized", "int Uninitialized", ""},
+           {"Negative", "int Negative", " = -3"},
+           {"Enabled", "bool Enabled", " = true"},
+           {"Ratio", "double Ratio", " = 1.5"},
+           {"Label", "const char * Label", " = \"hello\""},
+           {"Escaped", "const char * Escaped", " = \"a\\n\\\"b\""},
+           {"Pointer", "int * Pointer", " = nullptr"},
+           {"State", "Mode State", " = Mode::Ready"},
+           {"Expression", "int Expression", " = (1 + 2) * 3"},
+           {"Conditional", "int Conditional", " = true ? 4 : 5"},
+           {"Macro", "int Macro", " = 42"},
+           {"Braced", "int Braced", "{10}"},
+           {"Empty", "int Empty", "{}"},
+           {"CopyList", "int CopyList", " = {20}"},
+           {"Constructed", "Value Constructed", "{7}"},
+           {"ConstructedEmpty", "Value ConstructedEmpty", "{}"},
+           {"CopyConstructed", "Value CopyConstructed", " = Value(8)"},
+           {"Aggregate", "Pair Aggregate", "{1, 2}"},
+           {"PartialAggregate", "Pair PartialAggregate", "{3}"},
+           {"EmptyAggregate", "Pair EmptyAggregate", "{}"},
+           {"Call", "int Call", " = MakeDefault(9)"},
+           {"Factory", "int (*)(int) Factory", " = MakeDefault"},
+           {"IndirectCall", "int IndirectCall", " = this->Factory(2)"},
+       })
+  {
+    SCOPED_TRACE(field.Name);
+    auto id = std::string("Azure::FieldDefaults::AA::") + field.Name;
+    auto declaration = std::string(field.Declaration);
+    EXPECT_EQ(treeLines.at(id), declaration + field.Initializer + ";");
+    EXPECT_EQ(legacyLines.at(id), declaration + ";");
+    EXPECT_NE(text.str().find(declaration + ";"), std::string::npos);
+  }
+  auto nested = "Azure::FieldDefaults::AA::(anonymous struct)::Nested";
+  EXPECT_EQ(treeLines.at(nested), "int Nested = 11;");
+  EXPECT_EQ(legacyLines.at(nested), "int Nested;");
+  EXPECT_EQ(
+      treeLines.at("#anonymous-member:Azure::FieldDefaults::AA::Anonymous"), "} Anonymous = {12};");
+  EXPECT_EQ(
+      treeLines.at("#anonymous-member:Azure::FieldDefaults::AA::BracedAnonymous"),
+      "} BracedAnonymous{13};");
+  EXPECT_NE(text.str().find("} Anonymous;"), std::string::npos);
+  EXPECT_NE(text.str().find("} BracedAnonymous;"), std::string::npos);
+  EXPECT_EQ(treeLines.at("Azure::FieldDefaults::Generic::Default"), "T Default{};");
+  EXPECT_EQ(treeLines.at("Azure::FieldDefaults::Generic::Copy"), "T Copy = T();");
+  EXPECT_EQ(legacyLines.at("Azure::FieldDefaults::Generic::Default"), "T Default;");
+  EXPECT_EQ(legacyLines.at("Azure::FieldDefaults::Generic::Copy"), "T Copy;");
+}
+
+TEST(TreeJsonDumper, ChangedFieldInitializerPreservesLineIdentity)
+{
+  std::vector<nlohmann::json> fields;
+  for (auto file : {"FieldInitializers.hpp", "FieldInitializersChanged.hpp"})
+  {
+    ApiViewProcessor processor("tests", {{"sourceFilesToProcess", {file}}});
+    ASSERT_EQ(processor.ProcessApiView(), 0);
+    TreeJsonDumper tree("Review", "Storage", "test");
+    processor.GetClassesDatabase()->DumpClassDatabase(&tree);
+    auto json = tree.GetJson();
+    Walk(json["ReviewLines"], [&](auto const& line) {
+      if (line.value("LineId", "") == "Azure::FieldDefaults::AA::field")
+      {
+        fields.push_back(line);
+      }
+    });
+  }
+  ASSERT_EQ(fields.size(), 2);
+  EXPECT_EQ(Text(fields[0]), "int field = 10;");
+  EXPECT_EQ(Text(fields[1]), "int field = 20;");
+  auto expected = fields[0];
+  for (auto& token : expected["Tokens"])
+  {
+    if (token["Value"] == "10")
+    {
+      EXPECT_FALSE(token.value("SkipDiff", false));
+      token["Value"] = "20";
+    }
+  }
+  EXPECT_EQ(fields[1], expected);
 }
 
 TEST(TreeJsonDumper, AnonymousMemberTypesHaveSourceIndependentIds)

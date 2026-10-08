@@ -39,6 +39,8 @@ Namespace scopes and forward declarations use separate synthetic tree line IDs. 
 
 Unnamed struct and union member types use synthetic tree IDs derived from their enclosing type and member name, including nested unnamed types. These IDs do not depend on checkout paths or source line numbers, so moving unchanged declarations does not create false diffs. Legacy output retains its existing IDs; named declaration IDs are unchanged.
 
+Tree output includes default member initializers, such as `int field = 10;` and `int field{10};`, using Clang-formatted expressions. Macro values are expanded. Legacy and console output continue to omit these initializers; field IDs remain unchanged.
+
 ### ApiViewSettings.json
 
 In order to create an API Review, there is a set of additional configuration information needed to be provided. This information is provided in a JSON file named ApiViewSettings.json in the `<input-directory>` location.

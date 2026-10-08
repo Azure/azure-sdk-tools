@@ -302,6 +302,7 @@ public:
     UpdateCursor(count);
   }
   bool IncludeSourceComments() const override { return false; }
+  bool IncludeMemberInitializers() const override { return true; }
   void InsertNewline() override { FinishLine(); }
   void InsertKeyword(std::string_view const& value) override
   {

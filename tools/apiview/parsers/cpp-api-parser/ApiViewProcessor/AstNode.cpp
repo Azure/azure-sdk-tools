@@ -2417,6 +2417,43 @@ public:
   }
 };
 
+class AstMemberInitializer {
+  std::string m_value;
+  InClassInitStyle m_style{ICIS_NoInit};
+
+public:
+  AstMemberInitializer() = default;
+  explicit AstMemberInitializer(FieldDecl const* fieldDecl)
+      : m_style{fieldDecl->getInClassInitStyle()}
+  {
+    if (auto initializer = fieldDecl->getInClassInitializer())
+    {
+      llvm::raw_string_ostream os{m_value};
+      initializer->printPretty(
+          os, nullptr, clang::PrintingPolicy{fieldDecl->getASTContext().getLangOpts()});
+    }
+  }
+
+  void Dump(AstDumper* dumper, std::string const& navigationId) const
+  {
+    if (!dumper->IncludeMemberInitializers() || m_style == ICIS_NoInit)
+    {
+      return;
+    }
+    if (m_value.empty())
+    {
+      throw std::runtime_error("Missing initializer for field: " + navigationId);
+    }
+    if (m_style == ICIS_CopyInit)
+    {
+      dumper->InsertWhitespace();
+      dumper->InsertPunctuation('=');
+      dumper->InsertWhitespace();
+    }
+    dumper->InsertLiteral(m_value);
+  }
+};
+
 /**
  * Represents an AST class or structure.
  */
@@ -2427,6 +2464,7 @@ class AstClassLike : public AstNamedNode {
   bool m_isAnonymousNamedStruct{};
   TagDecl::TagKind m_tagUsed;
   std::string m_anonymousNamedStructName;
+  AstMemberInitializer m_anonymousMemberInitializer;
 
   std::vector<std::unique_ptr<AstBaseClass>> m_baseClasses;
   std::vector<std::unique_ptr<AstNode>> m_children;
@@ -2758,9 +2796,7 @@ public:
 
 class AstField : public AstNamedNode {
   AstType m_fieldType;
-  std::unique_ptr<AstExpr> m_initializer;
-  InClassInitStyle m_classInitializerStyle;
-  bool m_hasDefaultMemberInitializer{};
+  AstMemberInitializer m_initializer;
   bool m_isMutable{};
   bool m_isConst{};
 
@@ -2771,10 +2807,7 @@ public:
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(fieldDecl, azureClassesDatabase, parentNode),
         m_fieldType{fieldDecl->getType(), fieldDecl->getASTContext()},
-        m_initializer{
-            AstExpr::Create(fieldDecl->getInClassInitializer(), fieldDecl->getASTContext())},
-        m_classInitializerStyle{fieldDecl->getInClassInitStyle()},
-        m_hasDefaultMemberInitializer{fieldDecl->hasInClassInitializer()},
+        m_initializer{fieldDecl},
         m_isMutable{fieldDecl->isMutable()}, m_isConst{fieldDecl->getType().isConstQualified()}
   {
     // If the type of the parameter is in the global namespace, then flag it as an error.
@@ -3092,7 +3125,9 @@ AstClassLike::AstClassLike(
       && decl->getNextDeclInContext()->getKind() == Decl::Kind::Field)
   {
     m_isAnonymousNamedStruct = true;
-    m_anonymousNamedStructName = cast<FieldDecl>(decl->getNextDeclInContext())->getNameAsString();
+    auto fieldDecl = cast<FieldDecl>(decl->getNextDeclInContext());
+    m_anonymousNamedStructName = fieldDecl->getNameAsString();
+    m_anonymousMemberInitializer = AstMemberInitializer{fieldDecl};
   }
   if (parentNode)
   {
@@ -3377,6 +3412,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
           m_anonymousNamedStructName,
           m_navigationId + m_anonymousNamedStructName,
           m_anonymousNamedStructName);
+      m_anonymousMemberInitializer.Dump(dumper, m_navigationId + m_anonymousNamedStructName);
     }
   }
   if (dumpOptions.NeedsTrailingSemi)
@@ -3483,21 +3519,7 @@ void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) c
   m_fieldType.Dump(dumper, dumpOptions);
   dumper->InsertWhitespace();
   dumper->InsertMemberName(Name(), m_navigationId);
-  // if (m_initializer)
-  //{
-  //   DumpNodeOptions innerOptions{dumpOptions};
-  //   if (m_classInitializerStyle == ICIS_CopyInit)
-  //   {
-  //     dumper->InsertWhitespace();
-  //     dumper->InsertPunctuation('=');
-  //     dumper->InsertWhitespace();
-  //   }
-  //   else if (m_classInitializerStyle == ICIS_ListInit)
-  //   {
-  //     innerOptions.DumpListInitializer = true;
-  //   }
-  //   m_initializer->Dump(dumper, innerOptions);
-  // }
+  m_initializer.Dump(dumper, m_navigationId);
   if (dumpOptions.NeedsTrailingSemi)
   {
     dumper->InsertPunctuation(';');

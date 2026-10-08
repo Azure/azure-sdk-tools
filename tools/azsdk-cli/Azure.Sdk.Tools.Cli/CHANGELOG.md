@@ -10,6 +10,7 @@
 
 ### Bugs Fixed
 
+- Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans are unchanged; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support instead of abandoning a partially completed release.
 - Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or SDK PR never falls back to the package lookup, including invalid or unlinked SDK PRs.
 - Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
 

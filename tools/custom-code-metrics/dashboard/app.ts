@@ -132,7 +132,7 @@ function addSnapshots(incoming: Snapshot[], source: string): void {
 function populateSnapshots(): void {
   const element = select("snapshot-select");
   element.replaceChildren(...forRepository(snapshots, selectedRepository).map((snapshot) => option(snapshot.snapshotId,
-    `${new Date(snapshot.collectedAt).toISOString().replace("T", " ").slice(0, 19)} UTC - ${snapshot.repository.commit.slice(0, 8)}${snapshot.repository.isDirty ? " (dirty)" : ""}`)));
+    `${new Date(snapshot.collectedAt).toISOString().replace("T", " ").slice(0, 19)} UTC - ${snapshot.repository.commit.slice(0, 8)}`)));
   element.value = selectedId;
 }
 function populateServices(): void {
@@ -202,8 +202,6 @@ function renderOverview(snapshot: Snapshot | undefined, libraries: Library[]): v
   text("observation-info", snapshot ?
     `${snapshot.repository.name} | ${new Date(snapshot.collectedAt).toISOString()} | revision ${snapshot.repository.commit.slice(0, 12)} | ${snapshot.excludedLibraries.length} excluded projects` :
     "No observation loaded.");
-  text("checkout-badge", snapshot ? snapshot.repository.isDirty ? "DIRTY CHECKOUT" : "CLEAN CHECKOUT" : "NO DATA");
-  byId("checkout-badge").classList.toggle("dirty", !!snapshot?.repository.isDirty);
   text("contract-info", snapshot ?
     `Schema ${snapshot.schemaVersion} | Physical C# lines, including comments and blanks` :
     "Snapshot schema v1.0 / physical C# lines");
@@ -272,13 +270,12 @@ function renderHistory(snapshot: Snapshot | undefined): void {
   const observations = inRange(mergeObservations(forRepository([...publishedHistory, ...snapshots], selectedRepository)), snapshot,
     range === "all" ? null : Number(range));
   const result = history(observations, snapshot, filters(), {
-    fixed: input("fixed-cohort").checked, includeDirty: input("include-dirty").checked,
+    fixed: input("fixed-cohort").checked, includeDirty: false,
     libraryId: select("history-scope").value,
   });
   const counts = `${result.points.length} observation${result.points.length === 1 ? "" : "s"} across ${result.distinctRevisions} measured revision${result.distinctRevisions === 1 ? "" : "s"}.`;
   let description = result.distinctRevisions < 2 ? `Baseline only: ${counts} No code-change trend yet.` : counts;
   if (result.fixedIds) description += ` Fixed cohort: ${result.fixedIds.size} libraries.`;
-  if (result.excludedDirty) description += ` ${result.excludedDirty} dirty observations excluded.`;
   if (result.excludedIncompatible) description += ` ${result.excludedIncompatible} incompatible observations excluded.`;
   description += " Missing days and N/A values break the line.";
   text("history-note", description);
@@ -289,7 +286,7 @@ function renderHistory(snapshot: Snapshot | undefined): void {
   for (const point of result.points) {
     const row = document.createElement("tr");
     cell(row, new Date(point.snapshot.collectedAt).toISOString().slice(0, 10));
-    cell(row, `${point.snapshot.repository.commit.slice(0, 8)}${point.snapshot.repository.isDirty ? " (dirty)" : ""}`);
+    cell(row, point.snapshot.repository.commit.slice(0, 8));
     cell(row, integer.format(point.metrics.libraryCount));
     cell(row, percent(point.metrics.customRatio));
     cell(row, `+${point.added} / -${point.removed}`);
@@ -305,7 +302,7 @@ function renderHistory(snapshot: Snapshot | undefined): void {
   historyChart = new Chart<"line", { x: number; y: number | null }[], number>(canvas("history-chart"), {
     type: "line",
     data: { datasets: [{
-      label: "Inferred custom source (%)", data: series,
+      label: "Custom source (%)", data: series,
       borderColor: color.custom, backgroundColor: color.custom,
       borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, spanGaps: false,
     }] },
@@ -316,7 +313,7 @@ function renderHistory(snapshot: Snapshot | undefined): void {
           const time = items[0]?.parsed.x;
           return time === undefined || time === null ? "No observation" : new Date(time).toISOString();
         },
-        label: (context) => `Custom: ${context.parsed.y?.toFixed(2) ?? "N/A"}%`,
+        label: (context) => `Custom source: ${context.parsed.y?.toFixed(2) ?? "N/A"}%`,
       } } },
       scales: {
         x: {
@@ -502,7 +499,7 @@ select("snapshot-select").addEventListener("change", () => {
 for (const id of ["category-filter", "service-filter", "breakdown-group", "breakdown-measure", "history-scope"]) {
   select(id).addEventListener("change", render);
 }
-for (const id of ["fixed-cohort", "include-dirty"]) input(id).addEventListener("change", render);
+input("fixed-cohort").addEventListener("change", render);
 for (const button of document.querySelectorAll<HTMLButtonElement>("#library-table button[data-sort]")) {
   button.addEventListener("click", () => {
     const key = sortKeys.find((candidate) => candidate === button.dataset.sort);

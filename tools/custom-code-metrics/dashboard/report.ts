@@ -113,7 +113,7 @@ export async function loadReport(url: string, fetcher: typeof fetch = fetch, sup
   const index = acceptReportIndex(suppliedIndex === undefined ? await (await get(indexUrl, fetcher)).json() : suppliedIndex);
   const latest = parseSnapshot(await (await get(new URL(index.latest, indexUrl), fetcher)).text());
   assert(index.latest === `snapshots/${latest.snapshotId}.json`, "Latest snapshot identity differs from the index.");
-  assert(!latest.repository.isDirty, "Official reports cannot contain a dirty latest snapshot.");
+  assert(!latest.repository.isDirty, "Official observations require committed source.");
   return { indexUrl, index, latest };
 }
 
@@ -138,7 +138,7 @@ export async function loadHistory(
       assert(month.month === reference.month, "Loaded history month differs from the index.");
       next.set(url.href, month);
     }
-    assert(month.observations.every((observation) => !observation.repository.isDirty), "Official history contains a dirty observation.");
+    assert(month.observations.every((observation) => !observation.repository.isDirty), "Official observations require committed source.");
     loaded.push(...month.observations);
   }
   const latestMonth = new Date(report.latest.collectedAt).toISOString().slice(0, 7);

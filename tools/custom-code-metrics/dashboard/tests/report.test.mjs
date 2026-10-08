@@ -163,7 +163,7 @@ test("startup fetches just index and full latest, with anonymous requests", asyn
   assert.equal(result.latest.snapshotId, latest.snapshotId);
   assert.equal(requests.length, 2);
 });
-test("latest load rejects HTTP errors, invalid identity and dirty official snapshots", async () => {
+test("latest load rejects HTTP errors, invalid identity and uncommitted source with plain error wording", async () => {
   await assert.rejects(loadReport("https://metrics.invalid/index.json", fetcher(new Map())), /HTTP 404/);
   await assert.rejects(loadReport("file:///index.json"), /HTTP/);
   await assert.rejects(loadReport("https://user:password@metrics.invalid/index.json"), /credentials/);
@@ -172,7 +172,8 @@ test("latest load rejects HTTP errors, invalid identity and dirty official snaps
       ["https://metrics.invalid/index.json", JSON.stringify(validIndex)],
       [`https://metrics.invalid/${validIndex.latest}`, JSON.stringify(value)],
     ]);
-    await assert.rejects(loadReport("https://metrics.invalid/index.json", fetcher(entries)), /identity|dirty/);
+    await assert.rejects(loadReport("https://metrics.invalid/index.json", fetcher(entries)),
+      value.repository.isDirty ? { message: "Official observations require committed source." } : /identity/);
   }
 });
 test("lazy history fetches only intersecting months, verifies digest and reuses immutable URLs", async () => {
@@ -218,7 +219,7 @@ test("partial history failures retain the caller's cache and reject corrupt/dirt
   const dirty = document([snapshot(undefined, undefined, "1", true)]);
   await assert.rejects(loadHistory({ ...report, index: index(latest, [dirty]) }, 30, cache, fetcher(new Map([
     [`https://metrics.invalid/${dirty.reference.path}`, dirty.text],
-  ]))), /dirty/);
+  ]))), { message: "Official observations require committed source." });
   const missing = document([snapshot(undefined, "2026-10-02T12:00:00Z", "2")]);
   await assert.rejects(loadHistory({ ...report, index: index(latest, [missing]) }, 30, cache, fetcher(new Map([
     [`https://metrics.invalid/${missing.reference.path}`, missing.text],

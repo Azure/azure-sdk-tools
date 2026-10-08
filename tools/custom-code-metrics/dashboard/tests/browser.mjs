@@ -34,6 +34,13 @@ const contrast = (first, second) => {
   const values = [luminance(first), luminance(second)].sort((a, b) => b - a);
   return (values[0] + 0.05) / (values[1] + 0.05);
 };
+async function assertSourcePresentation(page) {
+  assert.equal(await page.locator("#checkout-badge, #include-dirty").count(), 0);
+  const labels = await page.locator("[title], [aria-label]").evaluateAll((elements) =>
+    elements.map((element) => `${element.getAttribute("title") || ""} ${element.getAttribute("aria-label") || ""}`).join("\n"));
+  assert.doesNotMatch(`${await page.locator("body").textContent()}\n${labels}`,
+    /\binferred\b|\b(?:clean|dirty) checkouts?\b|\binclude\s*dirty\b|\(dirty\)|\bdirty observations\b/i);
+}
 async function assertKeyboardScroller(page, region) {
   assert.equal(await region.getAttribute("tabindex"), "0");
   assert.equal(await region.getAttribute("role"), "region");
@@ -57,6 +64,13 @@ try {
   page.on("request", (request) => network.push(request.url()));
   await page.goto(pageUrl);
   await page.waitForFunction((count) => document.getElementById("library-count")?.textContent === count, expectedCount);
+  await assertSourcePresentation(page);
+  assert.equal(await page.locator(".kpi.featured > p").textContent(), "Custom source");
+  assert.equal(await page.locator(".chart-panel[aria-labelledby='history-heading'] .legend").textContent(), "Custom source");
+  await page.locator(".measurement-note summary").click();
+  assert.match(await page.locator(".measurement-note p").textContent(), /Source classification uses file-level signals.*not a measure of debt or API impact/);
+  await assertSourcePresentation(page);
+  await page.locator(".measurement-note summary").click();
   assert.equal(await page.locator("#custom-percent").textContent(), percentage(source.summary.customRatio));
   assert.match(await page.locator("#contract-info").textContent(), /Schema 1\.0/);
   if (process.env.CUSTOM_CODE_METRICS_SNAPSHOT) {
@@ -100,6 +114,7 @@ try {
   "Charts did not paint.");
   await page.screenshot({ path: fileURLToPath(new URL("../generated/browser-desktop.png", import.meta.url)) });
   await page.locator("#category-filter").selectOption("management");
+  await assertSourcePresentation(page);
   const management = source.categories.find((row) => row.category === "management").metrics;
   assert.equal(await page.locator("#library-count").textContent(), String(management.libraryCount));
   assert.equal(await page.locator("#custom-percent").textContent(), percentage(management.customRatio));
@@ -141,6 +156,7 @@ try {
   await page.getByRole("button", { name: "Azure.Identity", exact: true }).click();
   assert.equal(await page.locator("#detail-heading").textContent(), "Azure.Identity");
   assert.match(await page.locator("#detail-source").textContent(), /No file-level evidence/);
+  await assertSourcePresentation(page);
   await page.locator("#library-search").fill("not-an-existing-library");
   assert.equal(await page.locator("#custom-percent").textContent(), "N/A");
   assert.match(await page.locator("#library-values").textContent(), /No libraries match/);
@@ -215,15 +231,26 @@ try {
   assert.match(await fixturePage.locator("#history-values tr").last().textContent(), /\+0 \/ -1/);
   await fixturePage.locator("#history-scope").selectOption("Azure.Identity");
   assert.equal(await fixturePage.locator("#history-values tr").last().locator("td").nth(2).textContent(), "1");
-  const dirty = snapshot(first.libraries, "2026-10-05T12:00:00Z", "3", true);
+  const modified = snapshot(first.libraries, "2026-10-05T12:00:00Z", "3", true);
+  const modifiedMonth = JSON.stringify({
+    schemaVersion: "1.0", month: "2026-10", observations: [first, second, modified].map(compactObservation),
+  });
+  const modifiedMonthPath = `history/${createHash("sha256").update(modifiedMonth).digest("hex")}/2026-10.json`;
+  const officialIndex = (latest) => ({
+    schemaVersion: "1.0", latest: `snapshots/${latest.snapshotId}.json`,
+    history: [{ month: "2026-10", path: modifiedMonthPath }],
+  });
   const partial = snapshot(first.libraries, "2026-10-06T12:00:00Z", "5");
   await fixturePage.route("https://metrics.invalid/**", async (route) => {
     const url = route.request().url();
     assert.equal(route.request().method(), "GET");
     assert.equal(route.request().headers().cookie, undefined);
     let value = first;
-    if (url.endsWith("/dirty/index.json")) value = { snapshots: ["dirty.json"] };
-    else if (url.endsWith("/dirty.json")) value = dirty;
+    if (url.endsWith("/modified/index.json")) value = { snapshots: ["modified.json"] };
+    else if (url.endsWith("/modified.json") || url.endsWith(`/snapshots/${modified.snapshotId}.json`)) value = modified;
+    else if (url.endsWith("/uncommitted/index.json")) value = officialIndex(modified);
+    else if (url.endsWith("/uncommitted-history/index.json")) value = officialIndex(second);
+    else if (url.endsWith(`/snapshots/${second.snapshotId}.json`)) value = second;
     else if (url.endsWith("/broken/index.json")) value = { snapshots: ["valid.json", "broken.json"] };
     else if (url.endsWith("/valid.json")) value = partial;
     else if (url.endsWith("/v2/index.json")) value = { snapshots: ["v2.json"] };
@@ -233,31 +260,54 @@ try {
     else if (url.endsWith("index.json")) value = { snapshots: ["one.json"] };
     await route.fulfill({
       status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" },
-      body: url.endsWith("/broken.json") ? "{broken" : JSON.stringify(value),
+      body: url.endsWith("/broken.json") ? "{broken" :
+        url.endsWith(modifiedMonthPath) ? modifiedMonth : JSON.stringify(value),
     });
   });
   await fixturePage.locator(".index-loader summary").click();
-  await fixturePage.locator("#index-url").fill("https://metrics.invalid/dirty/index.json");
+  await fixturePage.locator("#index-url").fill("https://metrics.invalid/modified/index.json");
   await fixturePage.locator("#load-index").click();
-  await fixturePage.waitForFunction(() => document.getElementById("checkout-badge")?.textContent === "DIRTY CHECKOUT");
-  assert.match(await fixturePage.locator("#history-note").textContent(), /1 dirty observations excluded/);
-  await fixturePage.locator("#include-dirty").check();
-  assert.equal(await fixturePage.locator("#history-values tr").count(), 3);
+  await fixturePage.waitForFunction(() => document.querySelectorAll("#snapshot-select option").length === 3);
+  assert.equal(await fixturePage.locator("#snapshot-select").inputValue(), modified.snapshotId);
+  assert.equal(await fixturePage.locator("#history-values tr").count(), 2);
+  assert.deepEqual(await fixturePage.locator("#history-values tr td:nth-child(2)").allTextContents(),
+    [first, second].map((observation) => observation.repository.commit.slice(0, 8)));
+  await assertSourcePresentation(fixturePage);
+  for (const range of ["30", "365"]) {
+    await fixturePage.locator("#history-range").selectOption(range);
+    await fixturePage.locator("#fixed-cohort").check();
+    assert.equal(await fixturePage.locator("#history-values tr").count(), 2);
+    await fixturePage.locator("#fixed-cohort").uncheck();
+    assert.equal(await fixturePage.locator("#history-values tr").count(), 2);
+    await assertSourcePresentation(fixturePage);
+  }
+  for (const endpoint of ["uncommitted", "uncommitted-history"]) {
+    await fixturePage.locator("#index-url").fill(`https://metrics.invalid/${endpoint}/index.json`);
+    await fixturePage.locator("#load-index").click();
+    await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.includes("Official observations require committed source."));
+    assert.equal(await fixturePage.locator("#status").isVisible(), true);
+    assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
+    assert.equal(await fixturePage.locator("#history-values tr").count(), 2);
+    await assertSourcePresentation(fixturePage);
+  }
   await fixturePage.locator("#index-url").fill("https://metrics.invalid/broken/index.json");
   await fixturePage.locator("#load-index").click();
   await fixturePage.waitForFunction(() => document.getElementById("status")?.classList.contains("error"));
   assert.equal(await fixturePage.locator("#status").isVisible(), true);
+  await assertSourcePresentation(fixturePage);
   assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3, "A partially valid index changed existing observations.");
   await fixturePage.locator("#index-url").fill("https://metrics.invalid/v2/index.json");
   await fixturePage.locator("#load-index").click();
   await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.includes("Invalid snapshot"));
   assert.equal(await fixturePage.locator("#status").isVisible(), true);
   assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
-  assert.equal(await fixturePage.locator("#history-values tr").count(), 3, "Old version data became a false current-format trend point.");
+  assert.equal(await fixturePage.locator("#history-values tr").count(), 2, "Old version data became a false current-format trend point.");
+  await assertSourcePresentation(fixturePage);
   await fixturePage.locator("#index-url").fill("https://metrics.invalid/legacy/index.json");
   await fixturePage.locator("#load-index").click();
   await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.includes("Invalid snapshot"));
   assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
+  await assertSourcePresentation(fixturePage);
   await fixturePage.locator("#index-url").fill("https://metrics.invalid/history/index.json");
   await fixturePage.locator("#load-index").click();
   await fixturePage.waitForFunction(() => document.getElementById("status")?.textContent?.startsWith("Published index:"));
@@ -269,6 +319,8 @@ try {
   assert.equal(await fixturePage.locator("#measurements").isVisible(), false);
   await fixturePage.locator("#repository-select").selectOption("Azure/azure-sdk-for-net");
   assert.equal(await fixturePage.locator("#snapshot-select option").count(), 3);
+  assert.equal(await fixturePage.locator("#history-values tr").count(), 2);
+  await assertSourcePresentation(fixturePage);
   assert.deepEqual(errors, []);
   const older = snapshot(first.libraries, "2026-05-01T12:00:00Z", "4");
   const monthDocument = (observations) => {
@@ -368,6 +420,7 @@ try {
   await previewPage.clock.setFixedTime(new Date(boundary));
   await previewPage.goto(pageUrl);
   await previewPage.waitForFunction((count) => document.getElementById("library-count")?.textContent === count, expectedCount);
+  await assertSourcePresentation(previewPage);
   assert.equal(await previewPage.locator("#custom-percent").textContent(), percentage(source.summary.customRatio));
   assert.equal(await previewPage.locator("#service-count").textContent(), `${source.services.length} services`);
   assert.equal(await previewPage.locator("#generated-lines").textContent(), number.format(source.summary.generatedLines));
@@ -398,6 +451,7 @@ try {
     const state = await previewPage.locator("#repository-state").textContent();
     assert.ok(state.includes(repository.name));
     assert.match(state, /No observations collected.*collector is not implemented/);
+    await assertSourcePresentation(previewPage);
     assert.equal(await previewPage.locator("#repository-branding").count(), 0);
     assert.equal(await previewPage.locator("#measurements").isVisible(), false);
     for (const id of ["custom-percent", "library-count", "history-chart", "library-values", "library-detail",
@@ -412,6 +466,7 @@ try {
   assert.equal(await previewPage.locator("#history-scope").inputValue(), selectedLibrary);
   assert.equal(await previewPage.locator("#detail-heading").textContent(), selectedLibrary);
   assert.equal(await previewPage.locator("#library-detail").isVisible(), true);
+  await assertSourcePresentation(previewPage);
   assert.equal(await previewPage.locator("#measurements").isVisible(), true);
   assert.equal(await previewPage.locator("#repository-state").isVisible(), false);
   assert.equal(await previewPage.locator("#library-count").textContent(), String(management.libraryCount));
@@ -522,6 +577,7 @@ try {
         assert.equal(layout.scrollsInternally, true, "Narrow library tables must scroll inside their container.");
       }
       assert.equal(await visual.locator("#custom-percent").textContent(), percentage(source.summary.customRatio));
+      await assertSourcePresentation(visual);
       assert.equal(await visual.locator("#snapshot-files, #clear-data, input[type=file]").count(), 0);
       await visual.waitForFunction(() => [...document.querySelectorAll("canvas")].every((canvas) =>
         canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data.some((value, index) => index % 4 === 3 && value > 0)));
@@ -540,7 +596,8 @@ try {
   }
   assert.ok(visualRequests.every((url) => url.startsWith("file:")), "The visual refresh introduced external assets or telemetry.");
   assert.deepEqual(errors, []);
-  console.log("Browser checks passed: baseline, category/service filters, sorting, charts, library details, seeded cohorts, atomic index error retention, dirty exclusion, responsive and dark layouts, no file-import/clear controls or unsolicited external requests.");
+  console.log("Browser checks passed: baseline, category/service filters, sorting, charts, library details, seeded cohorts, atomic index error retention, committed-source-only history, responsive and dark layouts, no file-import/clear controls or unsolicited external requests.");
+  console.log("Source-label checks passed: Custom source cards/legend/disclosure, no source-state badge/override/suffix/notes, modified-source history exclusion across ranges/cohorts, plain official-source rejection with retained observations.");
   console.log("Hosted checks passed: automatic latest, anonymous bounded month loading, historical membership, stale warning, failed range/index rollback and cache reuse.");
   console.log("Preview checks passed: actual seed counts/ratio/date, quiet baseline metadata, all three banners removed, no feed requests/fake trend, full-portfolio initial mobile and immediate open-detail resize.");
   console.log("Repository checks passed: seven choices, six honest uncollected states without .NET measurements/fetches, .NET filter/history/detail restoration and mismatched-index rejection.");

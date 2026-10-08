@@ -41,6 +41,9 @@ light/dark contrast and visible keyboard focus need no external assets or
 telemetry. Package names stay on one line; narrow tables scroll inside a
 keyboard-focusable region rather than overflowing the page. The provenance
 disclosure explains why custom source is not customization debt.
+Cards and chart labels use **Custom source**. Source-state badges and an
+override for including uncommitted observations are not displayed; internal
+source-state metadata and official publication checks remain enforced.
 
 Library columns sort through their native header buttons, including keyboard
 Enter/Space. New columns start ascending and repeated activation reverses the
@@ -200,10 +203,10 @@ The manual **Load a published snapshot index** option retains the legacy
 against the HTTP(S) index; cross-origin hosting must allow anonymous GET/CORS.
 Requests omit credentials.
 
-History defaults to clean, compatible observations and a **fixed library cohort**
+History includes only committed-source, compatible observations and defaults to a **fixed library cohort**
 (the intersection of library IDs). Disable fixed cohort to see each day's
 portfolio and additions/removals. Filters apply to weighted history too.
-Missing days break the line; empty cohorts are N/A, not zero. Identical clean
+Missing days break the line; empty cohorts are N/A, not zero. Identical committed-source
 same-revision daily retries deduplicate to the latest; conflicts fail explicitly.
 One measured revision is a baseline, not a code-change trend.
 
@@ -278,7 +281,7 @@ one or more **absolute snapshot file paths** instead of `-IndexUrl`:
 ```
 
 `-SnapshotPath` and `-IndexUrl` are mutually exclusive. Preview builds validate
-the complete input before requesting a deployment secret, require clean
+the complete input before requesting a deployment secret, require committed-source
 observations, and strip optional file-level audit evidence from public seeds
 without modifying the source. They do not read Blob storage or fetch any feed.
 A seeded build retains the collection date/revision in observation metadata
@@ -354,7 +357,7 @@ measurement, a nightly feed or evidence that all language adapters exist.
 
 The preserved October 7 prototype-3 .NET observation and its separate
 initial-format copy both contain
-459 libraries, 276 services and 7.32% inferred custom source.
+459 libraries, 276 services and 7.32% custom source.
 The measured `Azure.Provisioning.CostManagement` library has 120 custom
 lines out of 8,817 total lines (1.36%), with foreign core Shared helpers
 excluded. The change from earlier v2 percentages reflects the new membership

@@ -103,7 +103,7 @@ if (publishingOnly) {
   let seeds = mergeSnapshots([], incoming);
   if (preview) {
     if (seeds.some((snapshot) => snapshot.repository.isDirty)) {
-      throw new Error("Public static previews require clean tracked checkouts.");
+      throw new Error("Official observations require committed source.");
     }
     seeds = seeds.map(withoutFileEvidence);
   }

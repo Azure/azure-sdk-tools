@@ -52,13 +52,12 @@
             <h2 id="overview-heading">Source overview</h2>
             <p>Handwritten and generated source, weighted by line count.</p>
           </div>
-          <span id="checkout-badge" class="badge">No data</span>
         </div>
         <p id="observation-info" class="observation-meta">No observation loaded.</p>
 
         <div class="kpis" aria-label="Filtered portfolio summary">
           <article class="panel kpi featured">
-            <p>Inferred custom source</p>
+            <p>Custom source</p>
             <strong id="custom-percent">N/A</strong>
             <small id="custom-fraction">No measured lines</small>
           </article>
@@ -89,7 +88,7 @@
           <p>Filters apply to the overview, charts and history.</p>
           <details class="measurement-note">
             <summary>Source provenance, not customization debt</summary>
-            <p>Percentages divide summed custom lines by summed total lines, not averages of library percentages. Linked helpers under sdk/core/&lt;package&gt;/src/Shared are excluded from other consuming libraries, but included in their owning core library. Other linked source counts once per consuming library. File-level provenance is inferred; custom code is not a measure of debt or API impact.</p>
+            <p>Percentages divide summed custom lines by summed total lines, not averages of library percentages. Linked helpers under sdk/core/&lt;package&gt;/src/Shared are excluded from other consuming libraries, but included in their owning core library. Other linked source counts once per consuming library. Source classification uses file-level signals; custom code is not a measure of debt or API impact.</p>
           </details>
         </div>
       </section>
@@ -118,9 +117,8 @@
             <label>Range<select id="history-range"><option value="all">All observations</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 365 days</option></select></label>
             <label>Scope<select id="history-scope"><option value="">Filtered portfolio</option></select></label>
             <label class="checkbox" title="Compare libraries present in every compatible observation."><input id="fixed-cohort" type="checkbox" checked>Fixed library cohort</label>
-            <label class="checkbox"><input id="include-dirty" type="checkbox">Include dirty checkouts</label>
           </div>
-          <div class="legend"><span class="custom-key">Inferred custom source</span></div>
+          <div class="legend"><span class="custom-key">Custom source</span></div>
           <div class="chart-container"><canvas id="history-chart" role="img" aria-label="Custom source percentage over time"></canvas></div>
           <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable historical observations">
             <table class="small-table"><caption class="visually-hidden">Historical observations and cohort changes</caption><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Revision</th><th scope="col">Libraries</th><th scope="col">Custom %</th><th scope="col">Added / removed</th></tr></thead><tbody id="history-values"></tbody></table>

@@ -49,8 +49,6 @@ summary { cursor: pointer; }
 .section-header p { margin-top: 6px; color: var(--muted); font-size: 14px; }
 .overview { padding: 24px; background: var(--subtle); }
 .observation-meta { margin-top: 10px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
-.badge { flex: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 9px; background: var(--panel); font-size: 12px; font-weight: 600; }
-.badge.dirty { border-color: var(--warning-border); background: var(--warning-bg); color: var(--warning-ink); }
 .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
 .kpi { display: flex; flex-direction: column; align-items: center; min-height: 184px; padding: 22px 18px 20px; border-top: 3px solid var(--border); text-align: center; box-shadow: 0 2px 7px #172b4d05; }
 .kpi p { min-height: 42px; color: var(--muted); font-size: 14px; font-weight: 600; }

@@ -10,6 +10,20 @@ import { legacySnapshot, library, snapshot } from "../dashboard/tests/fixtures.m
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
+test("source presentation removes obsolete labels and controls without offering a source-state override", async () => {
+  const [html, app, styles] = await Promise.all(["index.html", "app.ts", "styles.css"]
+    .map((name) => readFile(join(root, "dashboard", name), "utf8")));
+  for (const source of [html, app]) {
+    assert.doesNotMatch(source, /\binferred\b|checkout-badge|include-dirty|(?:clean|dirty) checkouts?|\(dirty\)|dirty observations/i);
+  }
+  assert.match(html, /<p>Custom source<\/p>/);
+  assert.match(html, /class="custom-key">Custom source<\/span>/);
+  assert.match(html, /Source classification uses file-level signals; custom code is not a measure of debt or API impact/);
+  assert.match(app, /label: "Custom source \(%\)"/);
+  assert.match(app, /includeDirty: false/);
+  assert.doesNotMatch(styles, /\.badge\b/);
+});
+
 test("relocated builds are script-relative; publication needs no website and leaves existing site seeds untouched", async () => {
   const directory = await mkdtemp(join(tmpdir(), "metrics-build-"));
   const target = join(directory, "tools", "custom-code-metrics");
@@ -101,7 +115,7 @@ test("relocated builds are script-relative; publication needs no website and lea
       await writeFile(seedPath, invalid);
       const result = invoke("--preview", "--snapshot", seedPath);
       assert.notEqual(result.status, 0);
-      assert.match(result.text, /SyntaxError|Invalid snapshot|clean tracked checkouts|rollup|file evidence|does not add up|identity.*disagree/);
+      assert.match(result.text, /SyntaxError|Invalid snapshot|Official observations require committed source|rollup|file evidence|does not add up|identity.*disagree/);
       assert.deepEqual(await readFile(seedFile), previewBytes, "Invalid preview replaced the last-good seed.");
     }
     await writeFile(seedPath, JSON.stringify(audited));

@@ -324,6 +324,24 @@ test("excludes dirty and incompatible measurements from official history", () =>
   assert.equal(result.excludedIncompatible, 1);
   assert.equal(history([first, dirty], first, filters, { fixed: false, includeDirty: true, libraryId: "" }).points.length, 2);
 });
+test("uncommitted source cannot affect dashboard cohorts, scoped counts or trend gaps", () => {
+  const first = snapshot([library("Azure.One", 80, 20)]);
+  const later = snapshot([library("Azure.One", 60, 40)], "2026-10-03T12:00:00Z", "2");
+  const modified = snapshot([library("Azure.Uncommitted", 1000)], "2026-10-02T12:00:00Z", "3", true);
+  const incoming = [first, modified, later];
+  const before = structuredClone(incoming);
+  for (const fixed of [true, false]) {
+    for (const libraryId of ["", "Azure.One"]) {
+      const result = history(incoming, later, { ...filters, search: "Azure.One" }, { fixed, includeDirty: false, libraryId });
+      assert.deepEqual(result.points.map((point) => point.snapshot.snapshotId), [first.snapshotId, later.snapshotId]);
+      assert.deepEqual(result.points.map((point) => point.metrics.customRatio), [0.8, 0.6]);
+      assert.equal(result.distinctRevisions, 2);
+      if (fixed) assert.deepEqual([...result.fixedIds], ["Azure.One"]);
+      assert.equal(trendSeries(result.points)[1].y, null);
+    }
+  }
+  assert.deepEqual(incoming, before, "Presentation filtering must not rewrite source metadata or counts.");
+});
 test("missing selected libraries and empty fixed cohorts produce N/A, not zeros", () => {
   const first = snapshot([library("Azure.Old", 1)]);
   const later = snapshot([library("Azure.New", 2)], "2026-10-02T12:00:00Z", "2");

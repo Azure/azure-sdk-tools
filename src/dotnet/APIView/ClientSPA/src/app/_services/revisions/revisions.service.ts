@@ -1,4 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Location } from '@angular/common';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, map, shareReplay, take, tap, throwError } from 'rxjs';
 
@@ -18,7 +19,7 @@ export class APIRevisionsService {
   private revisionOptionsCache = new Map<string, Map<string, APIRevision>>();
   private revisionOptionsQueryCache = new Map<string, Observable<APIRevision[]>>();
 
-  constructor(private http: HttpClient, private configService: ConfigService) { }
+  constructor(private http: HttpClient, private configService: ConfigService, private location: Location) { }
 
   getLatestAPIRevision(reviewId: string): Observable<APIRevision> {
     return this.http.get<APIRevision>(this.baseUrl + `/${reviewId}/latest`, { withCredentials: true });
@@ -162,7 +163,7 @@ export class APIRevisionsService {
       isIndexPage => {
         const target = isIndexPage ? '_blank' : '_self';
         if (activeAPIRevision.files[0].parserStyle === "tree") {
-          window.open(`/review/${activeAPIRevision.reviewId}?activeApiRevisionId=${activeAPIRevision.id}&diffApiRevisionId=${diffAPIRevision.id}`, target);
+          window.open(this.location.prepareExternalUrl(`/review/${activeAPIRevision.reviewId}?activeApiRevisionId=${activeAPIRevision.id}&diffApiRevisionId=${diffAPIRevision.id}`), target);
         } else {
           window.open(this.configService.webAppUrl + `Assemblies/Review/${activeAPIRevision.reviewId}?revisionId=${activeAPIRevision.id}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevision.id}`, target);
         }
@@ -175,7 +176,7 @@ export class APIRevisionsService {
       isIndexPage => {
         const target = isIndexPage ? '_blank' : '_self';
         if (apiRevision.files[0].parserStyle === "tree") {
-          window.open(`/review/${apiRevision.reviewId}?activeApiRevisionId=${apiRevision.id}`, target);
+          window.open(this.location.prepareExternalUrl(`/review/${apiRevision.reviewId}?activeApiRevisionId=${apiRevision.id}`), target);
         } else {
           window.open(this.configService.webAppUrl + `Assemblies/Review/${apiRevision.reviewId}?revisionId=${apiRevision.id}`, target);
         }

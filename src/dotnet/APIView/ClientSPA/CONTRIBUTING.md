@@ -2,6 +2,8 @@
 
 This is the SPA Client project for [APIView](../APIViewWeb/CONTRIBUTING.md)
 
+The production build hosts the SPA under `/spa/browser/`. Revision and comparison links must respect the configured base path, including when development serves the SPA at `/`.
+
 ## Pre-requisites
 
 ### Development machine setup

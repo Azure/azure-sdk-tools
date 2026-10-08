@@ -172,7 +172,7 @@ object is primarily used for test purposes).
 When the `JsonDumper` class emits an API View JSON file, it emits a tokenized representation of the source file to be
 displayed in the ApiView tool.
 
-This tokenized representation is modeled in the following example JSON document found [here](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/apiview_token_gist.json)
+This tokenized representation is modeled in the following example JSON document found [here](https://github.com/Azure/azure-sdk-tools/blob/apiview/main/src/dotnet/APIView/apiview_token_gist.json)
 When this JSON file is parsed by the API View tool, it will create the following text in the ApiView:
 ![API View snippet defining `ClassLibrary1.dll`](https://i.imgur.com/ikfRmLM.png)
 

@@ -1,0 +1,23 @@
+# Reproduction of the 783700739 corruption shape: children items rendered as
+# mappings (the wrapper's `Length` property leaks through) instead of plain
+# scalar strings.
+- name: Reference
+  landingPageType: Root
+  expanded: false
+  items:
+  - name: Storage
+    landingPageType: Service
+    items:
+    - name: Azure.Storage.Blobs
+      children:
+      - Length: 18
+        Chars: Azure.Storage.Blobs
+      - Length: 25
+        Chars: Azure.Storage.Blobs.Models
+  - name: Other
+    landingPageType: Service
+    items:
+    - name: Uncategorized Packages
+      landingPageType: Service
+      children:
+      - '**'

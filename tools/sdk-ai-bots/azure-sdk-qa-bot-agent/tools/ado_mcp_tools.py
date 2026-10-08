@@ -6,12 +6,11 @@ definition lookup and work-item reads so the agent can help users find
 release / CI pipeline links and inspect release plans (work items in the
 ``Release`` project).
 
-Authentication: Azure DevOps does not accept Foundry agent identities
-as organization members, so the hosted agent cannot mint an ADO token
-directly. An out-of-band job (a UAMI that IS an org member) refreshes
-a usable ADO credential into Key Vault, and this module reads it from
-there and injects it as ``ADO_MCP_AUTH_TOKEN`` so the MCP server
-(launched with ``-a envvar``) can authenticate API calls.
+Authentication: the MCP server is launched with
+``-a env`` and acquires/refreshes ADO tokens itself via
+its own Credential; it inherits our environment, so it resolves to
+the agent identity in the hosted container and Azure CLI locally. Direct
+work-item state polling uses the same shared credential chain.
 """
 
 from __future__ import annotations
@@ -26,18 +25,17 @@ import httpx
 from config.app_config import get as cfg
 from models.feedback import AzureDevOpsIssueReference, parse_issue_reference
 from tools import truncating_mcp_parser
-from utils.ado_token import resolve_token
+from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
 _DEFAULT_ADO_ORG = "azure-sdk"
-# Environment variable read by the ADO MCP server in ``-a envvar`` auth mode.
-_ADO_TOKEN_ENV = "ADO_MCP_AUTH_TOKEN"
 _ADO_MCP_COMMAND = "mcp-server-azuredevops"
+_ADO_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default"
 _ADO_API_TIMEOUT_SECS = 10.0
 
-# Client-side read-only allow-list: the work-items domain also exposes write
-# tools (wit_update_work_item, pipelines_run_pipeline, ...); restrict to reads.
+# Client-side read-only allow-list: the pipelines domain also exposes write
+# tools (pipelines_run_pipeline, ...); restrict to reads.
 _ADO_ALLOWED_TOOLS = (
     # core (read-only)
     "core_list_projects",
@@ -55,12 +53,6 @@ _ADO_ALLOWED_TOOLS = (
     "pipelines_list_runs",
     "pipelines_list_artifacts",
     "pipelines_download_artifact",
-    # work items (read-only) — release plan lookup
-    "wit_query_by_wiql",
-    "wit_get_work_item",
-    "wit_get_work_items_batch_by_ids",
-    "wit_list_work_item_comments",
-    "wit_get_work_item_type",
 )
 _ADO_EVOLUTION_TOOLS = (
     "wit_query_by_wiql",
@@ -75,13 +67,10 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
     """Create the general read-only Azure DevOps MCP profile."""
     return await _create_ado_mcp_tool(
         allowed_tools=_ADO_ALLOWED_TOOLS,
-        domains=("core", "pipelines", "work-items"),
+        domains=("core", "pipelines"),
         description=(
-            "Read-only Azure DevOps MCP tools. Use to (1) find release/CI "
-            "pipeline definitions by name and get their links, and (2) read "
-            "release plans — work items in the 'Release' project: resolve a "
-            "dashboard release-plan id via WIQL on [Custom.ReleasePlanID], "
-            "then read the work item and its API Spec / Package children."
+            "Read-only Azure DevOps MCP tools. Use to find release/CI "
+            "pipeline definitions by name and get their links."
         ),
     )
 
@@ -109,18 +98,6 @@ async def _create_ado_mcp_tool(
     org = cfg("ADO_ORG", _DEFAULT_ADO_ORG) or _DEFAULT_ADO_ORG
     env = {**os.environ}
 
-    # Pull the ADO credential via the shared resolver (KV-first, with
-    # JIT caching) and inject it for the MCP server's envvar auth mode.
-    try:
-        token = await resolve_token()
-        env[_ADO_TOKEN_ENV] = token
-    except Exception:
-        logger.warning(
-            "Failed to resolve ADO token; ADO MCP server will start " "without %s",
-            _ADO_TOKEN_ENV,
-            exc_info=True,
-        )
-
     logger.info("ADO MCP tool configured (org=%s)", org)
     return MCPStdioTool(
         name="ado-mcp-tools",
@@ -130,7 +107,7 @@ async def _create_ado_mcp_tool(
             "-d",
             *domains,
             "-a",
-            "envvar",
+            "env",
         ],
         env=env,
         load_prompts=False,
@@ -147,7 +124,7 @@ async def get_ado_work_item_state(issue_url: str) -> str:
     if not isinstance(reference, AzureDevOpsIssueReference):
         raise ValueError(f"Not an Azure Boards work item URL: {issue_url}")
 
-    token = await resolve_token()
+    access_token = await get_credential().get_token(_ADO_SCOPE)
     api_url = (
         f"https://dev.azure.com/{quote(reference.organization, safe='')}/"
         f"{quote(reference.project, safe='')}"
@@ -155,7 +132,7 @@ async def get_ado_work_item_state(issue_url: str) -> str:
         "?fields=System.State&api-version=7.1"
     )
     headers = {
-        "Authorization": "Bearer " + token,
+        "Authorization": "Bearer " + access_token.token,
         "Accept": "application/json",
     }
     async with httpx.AsyncClient(timeout=_ADO_API_TIMEOUT_SECS) as client:

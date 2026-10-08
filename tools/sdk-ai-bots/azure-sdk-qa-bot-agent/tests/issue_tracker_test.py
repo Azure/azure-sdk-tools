@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -24,10 +25,12 @@ async def test_get_ado_work_item_state() -> None:
         return httpx.Response(200, json={"fields": {"System.State": "Closed"}})
 
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    credential = AsyncMock()
+    credential.get_token.return_value = SimpleNamespace(token="ado-token")
     with (
         patch(
-            "tools.ado_mcp_tools.resolve_token",
-            new=AsyncMock(return_value="ado-token"),
+            "tools.ado_mcp_tools.get_credential",
+            return_value=credential,
         ),
         patch("tools.ado_mcp_tools.cfg", return_value="Closed"),
         patch("tools.ado_mcp_tools.httpx.AsyncClient", return_value=client),
@@ -43,10 +46,6 @@ async def test_get_ado_work_item_state() -> None:
 async def test_evolution_ado_profile_exposes_only_issue_tools() -> None:
     mcp_tool = object()
     with (
-        patch(
-            "tools.ado_mcp_tools.resolve_token",
-            new=AsyncMock(return_value="test-token"),
-        ),
         patch("tools.ado_mcp_tools.cfg", return_value="azure-sdk"),
         patch(
             "tools.ado_mcp_tools.MCPStdioTool",
@@ -63,7 +62,7 @@ async def test_evolution_ado_profile_exposes_only_issue_tools() -> None:
         "-d",
         "work-items",
         "-a",
-        "envvar",
+        "env",
     ]
     assert kwargs["allowed_tools"] == [
         "wit_query_by_wiql",

@@ -8,7 +8,6 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
-using ModelContextProtocol.Protocol;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {

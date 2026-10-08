@@ -18,6 +18,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import os
@@ -128,7 +129,6 @@ def main(argv: list[str] | None = None) -> int:
     try:
         endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
         model = os.environ["AZURE_EVALUATION_MODEL_NAME"]
-        agent_name = os.environ.get("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
         threshold = int(os.environ.get("EVALUATE_THRESHOLD", "3"))
     except KeyError as exc:
         logging.error("Missing required environment variable: %s", exc)
@@ -157,8 +157,18 @@ def main(argv: list[str] | None = None) -> int:
         with (
             AIProjectClient(endpoint=endpoint, credential=credential, allow_preview=True) as project_client,
             project_client.get_openai_client() as evals_client,
-            project_client.get_openai_client(agent_name=agent_name) as response_client,
+            contextlib.ExitStack() as response_clients_stack,
         ):
+            response_clients: dict[str, Any] = {}
+
+            def response_client_for(agent_name: str) -> Any:
+                if agent_name not in response_clients:
+                    logging.info("Opening response client for agent=%s", agent_name)
+                    response_clients[agent_name] = response_clients_stack.enter_context(
+                        project_client.get_openai_client(agent_name=agent_name)
+                    )
+                return response_clients[agent_name]
+
             records, scenario = resolve_records(args.dataset, script_dir=script_dir)
             logging.info("Resolved %d records for scenario=%s", len(records), scenario)
             # Stable evaluation name = dataset identity + run context (local / pipeline),
@@ -177,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
                 scenario,
                 tenant_id=tenant_id,
                 evaluation_name=name,
-                response_client=response_client,
+                response_client_for=response_client_for,
             )
 
         _cache_results(args.cache_result, script_dir, all_results, metrics, suppression, evals_result)

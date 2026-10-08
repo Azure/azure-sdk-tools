@@ -142,6 +142,9 @@ model ChatResponse {
 
   @doc("The tenant ID the question is routed to")
   route_tenant?: string;
+
+  @doc("The Hosted Agent that produced the answer; the response ID is scoped to this agent")
+  agent_name?: string;
 }
 
 // ── Feedback Models ──────────────────────────────────────────

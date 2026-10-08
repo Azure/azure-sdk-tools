@@ -31,7 +31,7 @@ A next-generation AI chat agent built on the Microsoft Agent Framework with Azur
 
 ### 3. Azure Function (`azure-sdk-qa-bot-function/`)
 
-A serverless component that handles bot analytics and activity conversion. It processes Teams bot interactions and provides monitoring capabilities for the system.
+A serverless component reserved for scheduled maintenance tasks that do not depend on the backend server request path.
 
 ### 4. Evaluation Framework (`azure-sdk-qa-bot-evaluation/`)
 

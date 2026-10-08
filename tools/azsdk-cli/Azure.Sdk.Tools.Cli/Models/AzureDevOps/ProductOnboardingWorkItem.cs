@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.DataScope")]
         public string DataPlane { get; set; } = string.Empty;
 
-        [FieldName("Custom.DataplanePlaneAttestationStatus")]
+        [FieldName("Custom.DataplaneAttestationStatus")]
         public string DataPlaneAttestationStatus { get; set; } = string.Empty;
 
         [FieldName("Custom.MgmtScope")]

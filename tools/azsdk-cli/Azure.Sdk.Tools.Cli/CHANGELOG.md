@@ -11,8 +11,6 @@
 
 ### Bugs Fixed
 
-### Bugs Fixed
-
 - Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or SDK PR never falls back to the package lookup, including invalid or unlinked SDK PRs.
 - Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
 - Fixed serialization for ADO `Sku` product type in Product Onboarding.

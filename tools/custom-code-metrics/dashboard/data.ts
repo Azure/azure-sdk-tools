@@ -49,6 +49,16 @@ function assert(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
+export function assertObservationIdentity(observation: Observation): void {
+  assert(Number.isFinite(Date.parse(observation.collectedAt)), "Observation timestamp must be representable by the browser.");
+  assert(observation.snapshotId.endsWith(`-${observation.repository.commit}`), "Snapshot identity and revision disagree.");
+  const fraction = observation.collectedAt.match(/\.(\d+)(?:[Zz]|[+-]\d{2}:\d{2})$/)?.[1] ?? "";
+  const stamp = new Date(observation.collectedAt).toISOString().slice(0, 19).replace(/[-:]/g, "");
+  assert(!/[1-9]/.test(fraction.slice(7)) &&
+    observation.snapshotId === `${stamp}${fraction.padEnd(7, "0").slice(0, 7)}Z-${observation.repository.commit}`,
+  "Snapshot identity and timestamp disagree.");
+}
+
 export function aggregate(libraries: readonly MeasuredLibrary[]): Metric {
   const result: Metric = {
     libraryCount: 0, customFiles: 0, generatedFiles: 0, totalFiles: 0,
@@ -97,7 +107,7 @@ export function acceptSnapshot(value: unknown): Snapshot {
     const error = validate.errors?.[0];
     throw new Error(`Invalid snapshot ${error?.instancePath || "/"}: ${error?.message || "schema validation failed"}.`);
   }
-  assert(Number.isFinite(Date.parse(value.collectedAt)), "Observation timestamp must be representable by the browser.");
+  assertObservationIdentity(value);
   const ids = new Set<string>();
   for (const library of value.libraries) {
     assert(!ids.has(library.library), `Duplicate library ID: ${library.library}.`);

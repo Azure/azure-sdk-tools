@@ -18,13 +18,14 @@ export function library(name, custom, generated = 0, service = "alpha", category
   };
 }
 export function snapshot(libraries = [library("Azure.One", 10, 35)], date = "2026-10-01T12:00:00Z", revision = "1", dirty = false) {
-  const stamp = new Date(date).toISOString().replace(/\.\d{3}Z$/, "").replace(/[-:]/g, "");
+  const fraction = date.match(/\.(\d+)(?:Z|[+-]\d{2}:\d{2})$/)?.[1] ?? "";
+  const stamp = new Date(date).toISOString().slice(0, 19).replace(/[-:]/g, "") + fraction.padEnd(7, "0").slice(0, 7);
   const commit = revision.repeat(40);
   const rows = (members) => categories.map((category) => ({
     category, metrics: aggregate(members.filter((item) => item.category === category)),
   }));
   return {
-    schemaVersion: "3.0", snapshotId: `${stamp}0000000Z-${commit}`,
+    schemaVersion: "3.0", snapshotId: `${stamp}Z-${commit}`,
     collectedAt: date, repository: { name: "Azure/azure-sdk-for-net", commit, isDirty: dirty },
     summary: aggregate(libraries),
     categories: rows(libraries),

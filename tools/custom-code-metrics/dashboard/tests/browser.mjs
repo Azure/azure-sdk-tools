@@ -34,6 +34,18 @@ const contrast = (first, second) => {
   const values = [luminance(first), luminance(second)].sort((a, b) => b - a);
   return (values[0] + 0.05) / (values[1] + 0.05);
 };
+async function assertKeyboardScroller(page, region) {
+  assert.equal(await region.getAttribute("tabindex"), "0");
+  assert.equal(await region.getAttribute("role"), "region");
+  assert.ok(await region.getAttribute("aria-label"));
+  await region.evaluate((element) => { element.scrollLeft = 0; });
+  await page.keyboard.press("Tab");
+  await region.focus();
+  assert.equal(await region.evaluate((element) => element.matches(":focus-visible")), true);
+  await page.keyboard.press("ArrowRight");
+  await page.waitForFunction((label) => document.querySelector(`[aria-label="${label}"]`).scrollLeft > 0,
+    await region.getAttribute("aria-label"));
+}
 let browser;
 let server;
 try {
@@ -156,6 +168,20 @@ try {
   const localUrl = `http://127.0.0.1:${server.address().port}/`;
   const seedConfig = (seeds, indexUrl = "") =>
     `globalThis.customCodeMetricsSeed=${JSON.stringify(seeds)};globalThis.customCodeMetricsIndexUrl=${JSON.stringify(indexUrl)};globalThis.customCodeMetricsPreview=false;`;
+  const evidencePage = await browser.newPage({ viewport: { width: 320, height: 844 } });
+  evidencePage.on("pageerror", (error) => errors.push(error.message));
+  const audited = browserSnapshot();
+  audited.libraries[0].files = [
+    { path: "sdk/alpha/Azure.Identity/src/Custom.cs", lines: 10, provenance: "custom", evidence: "no-generated-signal" },
+    { path: "sdk/alpha/Azure.Identity/src/Generated.cs", lines: 35, provenance: "generated", evidence: "auto-generated-header" },
+  ];
+  await evidencePage.route(`${localUrl}snapshots.js`, (route) => route.fulfill({
+    status: 200, contentType: "application/javascript", body: seedConfig([audited]),
+  }));
+  await evidencePage.goto(localUrl);
+  await evidencePage.getByRole("button", { name: "Azure.Identity", exact: true }).click();
+  await evidencePage.locator("#file-evidence summary").click();
+  await assertKeyboardScroller(evidencePage, evidencePage.getByRole("region", { name: "Scrollable file provenance evidence" }));
   const naPage = await browser.newPage();
   naPage.on("pageerror", (error) => errors.push(error.message));
   const nullable = snapshot([...browserSnapshot().libraries, library("Azure.Empty", 0)]);
@@ -503,10 +529,9 @@ try {
     await visual.locator("#repository-select").selectOption("Azure/azure-sdk-for-net");
     assert.equal(await visual.locator("#library-count").textContent(), expectedCount);
   }
-  await visual.locator(".library-scroll").focus();
-  const beforeScroll = await visual.locator(".library-scroll").evaluate((element) => element.scrollLeft);
-  await visual.keyboard.press("ArrowRight");
-  await visual.waitForFunction((before) => document.querySelector(".library-scroll").scrollLeft > before, beforeScroll);
+  for (const name of ["Scrollable library measurements", "Scrollable provenance breakdown", "Scrollable historical observations"]) {
+    await assertKeyboardScroller(visual, visual.getByRole("region", { name }));
+  }
   assert.ok(visualRequests.every((url) => url.startsWith("file:")), "The visual refresh introduced external assets or telemetry.");
   assert.deepEqual(errors, []);
   console.log("Browser checks passed: baseline, category/service filters, sorting, charts, library details, seeded cohorts, atomic index error retention, dirty exclusion, responsive and dark layouts, no file-import/clear controls or unsolicited external requests.");

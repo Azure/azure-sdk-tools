@@ -80,6 +80,7 @@ export async function publish(value, store) {
   const prior = before ? acceptReportIndex(JSON.parse(before.text)) : null;
   if (before && !before.etag) throw new Error("Existing index has no ETag; cannot safely publish.");
   let existing = [];
+  const priorObservations = [];
   for (const reference of prior?.history ?? []) {
     const document = await store.read("reports", `dotnet/${reference.path}`);
     if (reference.path.split("/")[1] !== hash(document.text)) throw new Error("Published history content address does not match.");
@@ -88,6 +89,7 @@ export async function publish(value, store) {
       throw new Error("Existing official history month is inconsistent.");
     }
     if (reference.month === month) existing = history.observations;
+    priorObservations.push(...history.observations);
   }
   const history = acceptHistoryMonth({
     schemaVersion: "1.0", month, observations: mergeObservations([...existing, observation]),
@@ -101,6 +103,9 @@ export async function publish(value, store) {
     if (previous.repository.isDirty || prior.latest !== `snapshots/${previous.snapshotId}.json`) {
       throw new Error("Existing latest snapshot is inconsistent.");
     }
+    const matching = priorObservations.filter((entry) => entry.snapshotId === previous.snapshotId);
+    if (matching.length !== 1) throw new Error("Existing latest snapshot must appear exactly once in its monthly history.");
+    mergeObservations([matching[0], compactObservation(previous)]);
     mergeObservations([previous, observation]);
     if (Date.parse(previous.collectedAt) > Date.parse(source.collectedAt) ||
       (Date.parse(previous.collectedAt) === Date.parse(source.collectedAt) && previous.snapshotId > source.snapshotId)) {

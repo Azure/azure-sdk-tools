@@ -1,52 +1,34 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, access } from "node:fs/promises";
 
-const pipeline = await readFile(new URL("../nightly.yml", import.meta.url), "utf8");
+const pipeline = await readFile(new URL("../ci.yml", import.meta.url), "utf8");
 
-test("central schedule has no PR/resource triggers and requires trusted internal tools main", () => {
-  assert.match(pipeline, /^trigger: none\r?\npr: none/);
-  const condition = pipeline.match(/^\s+condition: (.*)$/m)?.[1];
-  for (const requirement of [
-    "eq(variables['System.TeamProject'], 'internal')",
-    "eq(variables['Build.SourceBranch'], 'refs/heads/main')",
-    "eq(variables['Build.Repository.Name'], 'Azure/azure-sdk-tools')",
-    "in(variables['Build.Reason'], 'Schedule', 'Manual')",
-  ]) assert.ok(condition?.includes(requirement), `Missing publication gate: ${requirement}`);
-  assert.match(pipeline, /cron: '0 8 \* \* \*'/);
-  assert.match(pipeline, /branches:\s+include:\s+- main/);
+test("shared CI validates tools without scheduling or checking out language repositories", () => {
+  assert.match(pipeline, /tools\/custom-code-metrics/);
+  assert.match(pipeline, /1es-redirect\.yml/);
+  assert.match(pipeline, /Validate\.ps1/);
+  assert.doesNotMatch(pipeline, /schedules:|azure-sdk-for-net|AzureCLI@|Publish-Metrics/);
 });
-test("only the .NET adapter is wired, with an explicit read-only endpoint prerequisite and immutable per-run revision", () => {
-  assert.match(pipeline, /default: SET_READ_ONLY_GITHUB_SERVICE_CONNECTION/);
-  assert.match(pipeline, /repository: dotnet\s+type: github\s+name: Azure\/azure-sdk-for-net/);
-  assert.match(pipeline, /endpoint: \$\{\{ parameters\.DotNetGitHubServiceConnection \}\}/);
-  assert.match(pipeline, /ref: refs\/heads\/main\s+trigger: none/);
-  assert.match(pipeline, /\$\[ resources\.repositories\.dotnet\.version \]/);
-  assert.match(pipeline, /-ExpectedNetCommit "\$\(MetricsNetCommit\)"/);
-  assert.match(pipeline, /-ExpectedToolsCommit "\$\(Build\.SourceVersion\)"/);
-  assert.doesNotMatch(pipeline, /azure-sdk-for-(java|js|python|go)/);
+test("only one public measurement command remains, without central nightly orchestration", async () => {
+  assert.ok((await readFile(new URL("../Collect-Metrics.ps1", import.meta.url))).length > 0);
+  for (const file of ["Collect-DotNetMetrics.ps1", "Initialize-NightlyMetrics.ps1", "nightly.yml"]) {
+    await assert.rejects(access(new URL(`../${file}`, import.meta.url)), { code: "ENOENT" });
+  }
 });
-test("nightly checkout paths are explicit, credentials are not persisted and publication follows validation and artifact retention", () => {
-  assert.match(pipeline, /checkout: self\s+clean: true\s+fetchDepth: 1\s+path: s\/azure-sdk-tools\s+persistCredentials: false/);
-  assert.match(pipeline, /checkout: dotnet\s+clean: true\s+fetchDepth: 1\s+path: s\/azure-sdk-for-net\s+persistCredentials: false/);
-  const steps = [
-    "Initialize-NightlyMetrics.ps1", "task: UseDotNet@2", "customCommand: run check",
-    "customCommand: run test:publishing", "Collect-DotNetMetrics.ps1",
-    "task: 1ES.PublishPipelineArtifact@1", "task: AzureCLI@2", "Publish-Metrics.ps1",
-  ].map((name) => {
-    const position = pipeline.indexOf(name);
-    assert.ok(position >= 0, `Missing nightly step: ${name}`);
-    return position;
-  });
-  assert.deepEqual(steps, [...steps].sort((a, b) => a - b));
-  assert.match(pipeline, /version: \$\(MetricsDotNetSdkVersion\)/);
-  assert.match(pipeline, /azureSubscription: azure-sdk-playground-custom-code-metrics/);
-  assert.match(pipeline, /scriptLocation: scriptPath/);
-  assert.doesNotMatch(pipeline, /inlineScript:|build:dashboard|Deploy-Dashboard|Deploy-Infrastructure|swa deploy/);
+test("language-owned caller measures first and publishes the actual returned observation", async () => {
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  assert.match(readme, /\$snapshot = & .*Collect-Metrics\.ps1/);
+  assert.match(readme, /-Language dotnet -RepoRoot \$repo -OutputDirectory/);
+  assert.match(readme, /Publish-Metrics\.ps1 -SnapshotPath \$snapshot/);
+  assert.match(readme, /Language repositories own their schedules, trusted checkouts and publication jobs/);
+  assert.doesNotMatch(readme, /nightly\.yml|Collect-DotNetMetrics|Initialize-NightlyMetrics/);
 });
-test("pipeline entrypoint scripts are present in the relocated package", async () => {
-  for (const name of [
-    "Initialize-NightlyMetrics.ps1", "Collect-DotNetMetrics.ps1", "Publish-Metrics.ps1",
-    "Install-TestDependencies.ps1", "Validate.ps1",
-  ]) assert.ok((await readFile(new URL(`../${name}`, import.meta.url))).length > 0);
+test("measurement is separate from publication and dispatch fails explicitly for unimplemented languages", async () => {
+  const command = await readFile(new URL("../Collect-Metrics.ps1", import.meta.url), "utf8");
+  assert.match(command, /ValidateSet\("dotnet", "java", "js", "python", "go", "rust", "cpp"\)/);
+  assert.match(command, /not implemented/);
+  assert.match(command, /check-copy/);
+  assert.match(command, /Invoke-Pester/);
+  assert.doesNotMatch(command, /git clone|git fetch|AzureCLI|& az|publishing\.mjs|Write-Host.*task\.setvariable/);
 });

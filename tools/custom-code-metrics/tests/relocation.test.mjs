@@ -90,13 +90,15 @@ test("relocated builds are script-relative; publication needs no website and lea
     for (const invalid of [
       "{broken", "{}", JSON.stringify({ ...audited, repository: { ...audited.repository, isDirty: true } }),
       JSON.stringify({ ...audited, schemaVersion: "2.0" }),
+      JSON.stringify({ ...audited, repository: { ...audited.repository, commit: "a".repeat(40) } }),
+      JSON.stringify({ ...audited, collectedAt: "2026-10-02T12:00:00Z" }),
       JSON.stringify({ ...audited, summary: { ...audited.summary, customLines: 11 } }),
       JSON.stringify({ ...audited, libraries: [{ ...audited.libraries[0], files: [] }] }),
     ]) {
       await writeFile(seedPath, invalid);
       const result = invoke("--preview", "--snapshot", seedPath);
       assert.notEqual(result.status, 0);
-      assert.match(result.text, /SyntaxError|Invalid snapshot|clean tracked checkouts|rollup|file evidence|does not add up/);
+      assert.match(result.text, /SyntaxError|Invalid snapshot|clean tracked checkouts|rollup|file evidence|does not add up|identity.*disagree/);
       assert.deepEqual(await readFile(seedFile), previewBytes, "Invalid preview replaced the last-good seed.");
     }
     await writeFile(seedPath, JSON.stringify(audited));

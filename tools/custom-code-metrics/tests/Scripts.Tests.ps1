@@ -7,7 +7,6 @@ BeforeAll {
         throw "Unexpected Node call."
     }
     function npx { param([Parameter(ValueFromRemainingArguments)][object[]]$Arguments) throw "Unexpected npx call." }
-    function git { param([Parameter(ValueFromRemainingArguments)][object[]]$Arguments) throw "Unexpected Git call." }
 }
 
 Describe "Relocated publication wrapper" {
@@ -48,6 +47,12 @@ Describe "Relocated publication wrapper" {
     It "rejects a missing input before requesting Azure credentials" {
         { & (Join-Path $script:PackageRoot "Publish-Metrics.ps1") -SnapshotPath (Join-Path $TestDrive "absent.json") -StorageAccount "testaccount" -SubscriptionId "test-subscription" } | Should -Throw
         Should -Invoke az -Times 0 -Exactly
+    }
+    It "previews publication without acquiring a token or launching the publisher" {
+        & (Join-Path $script:PackageRoot "Publish-Metrics.ps1") -SnapshotPath $script:Snapshot -StorageAccount "testaccount" -SubscriptionId "test-subscription" -WhatIf
+        Should -Invoke az -Times 0 -Exactly
+        Should -Invoke node -Times 0 -Exactly
+        $env:AZURE_STORAGE_ACCESS_TOKEN | Should -Be "previous-test-token"
     }
 }
 
@@ -162,6 +167,18 @@ Describe "Dashboard deployment preflight" {
         $env:SWA_CLI_DEPLOYMENT_TOKEN | Should -Be "previous-test-token"
         (Get-Location).Path | Should -Be $script:InitialLocation
     }
+    It "previews hosted or seeded replacement without builds, feed requests, secrets or deployment" {
+        $path = Join-Path $TestDrive "snapshot.json"
+        Set-Content -LiteralPath $path -Value "{}"
+        & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -SnapshotPath $path -WhatIf
+        & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -IndexUrl "https://metrics.invalid/index.json" -WhatIf
+        Should -Invoke node -Times 0 -Exactly
+        Should -Invoke az -Times 0 -Exactly
+        Should -Invoke npx -Times 0 -Exactly
+        $env:SWA_CLI_DEPLOYMENT_TOKEN | Should -Be "previous-test-token"
+        $env:SWA_CLI_DEBUG | Should -Be "silly"
+        (Get-Location).Path | Should -Be $script:InitialLocation
+    }
 }
 
 Describe "Relocated policy-safe infrastructure helper" {
@@ -190,52 +207,14 @@ Describe "Relocated policy-safe infrastructure helper" {
         { & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "test@example.invalid" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -ProvisionResourcesOnly } | Should -Throw "*Azure command failed*"
         Should -Invoke az -Times 1 -Exactly
     }
-}
-
-Describe "Nightly revision and SDK guards" {
-    BeforeEach {
-        $script:Repo = Join-Path $TestDrive "net"
-        $null = New-Item -ItemType Directory -Path $script:Repo -Force
-        Set-Content -LiteralPath (Join-Path $script:Repo "global.json") -Value '{"sdk":{"version":"10.0.401"}}'
-        $script:Commit = "a" * 40
-        Mock git {
-            $global:LASTEXITCODE = 0
-            if ($Arguments -contains "rev-parse") { return ("a" * 40) }
-        }
-        Mock Write-Host {}
-    }
-    It "verifies both exact clean commits and emits the checked-out global.json SDK" {
-        & (Join-Path $script:PackageRoot "Initialize-NightlyMetrics.ps1") -RepoRoot $script:Repo -ExpectedNetCommit $script:Commit -ExpectedToolsCommit $script:Commit
-        Should -Invoke git -Times 2 -Exactly -ParameterFilter { $Arguments -contains "rev-parse" }
-        Should -Invoke git -Times 2 -Exactly -ParameterFilter { $Arguments -contains "--untracked-files=no" }
-        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter { $Object -eq "##vso[task.setvariable variable=MetricsDotNetSdkVersion]10.0.401" }
-    }
-    It "rejects mismatched tools or language revisions" {
-        foreach ($parameter in @("ExpectedToolsCommit", "ExpectedNetCommit")) {
-            $arguments = @{ RepoRoot = $script:Repo; ExpectedNetCommit = $script:Commit; ExpectedToolsCommit = $script:Commit }
-            $arguments[$parameter] = "b" * 40
-            { & (Join-Path $script:PackageRoot "Initialize-NightlyMetrics.ps1") @arguments } | Should -Throw "*resolved revision*"
-        }
-    }
-    It "rejects dirty checkouts and Git failures" {
-        Mock git {
-            $global:LASTEXITCODE = 0
-            if ($Arguments -contains "rev-parse") { return ("a" * 40) }
-            return " M tracked-file"
-        }
-        { & (Join-Path $script:PackageRoot "Initialize-NightlyMetrics.ps1") -RepoRoot $script:Repo -ExpectedNetCommit $script:Commit -ExpectedToolsCommit $script:Commit } | Should -Throw "*clean tracked checkout*"
-        Mock git { $global:LASTEXITCODE = 1 }
-        { & (Join-Path $script:PackageRoot "Initialize-NightlyMetrics.ps1") -RepoRoot $script:Repo -ExpectedNetCommit $script:Commit -ExpectedToolsCommit $script:Commit } | Should -Throw "*resolved revision*"
-    }
-    It "rejects a wildcard or missing SDK rather than installing an arbitrary version" {
-        foreach ($json in @('{"sdk":{"version":"10.x"}}', '{"sdk":{}}')) {
-            Set-Content -LiteralPath (Join-Path $script:Repo "global.json") -Value $json
-            { & (Join-Path $script:PackageRoot "Initialize-NightlyMetrics.ps1") -RepoRoot $script:Repo -ExpectedNetCommit $script:Commit -ExpectedToolsCommit $script:Commit } | Should -Throw
-        }
+    It "previews infrastructure and roles without creating a resource group or deploying resources" {
+        & (Join-Path $script:PackageRoot "Deploy-Infrastructure.ps1") -SubscriptionId "test-subscription" -Owner "test@example.invalid" -BootstrapPrincipalId "00000000-0000-0000-0000-000000000001" -WhatIf
+        Should -Invoke az -Times 0 -Exactly
+        Should -Invoke Write-Warning -Times 0 -Exactly
     }
 }
 
-Describe "Language-aware .NET collection adapter" {
+Describe "Shared per-repository measurement command" {
     BeforeEach {
         $script:Repo = Join-Path $TestDrive "net"
         $scripts = Join-Path $script:Repo "eng" "scripts"
@@ -260,42 +239,81 @@ return $path
         (Get-Location).Path | Should -Be $script:InitialLocation
     }
     It "checks the exact schema mirror, runs language tests and returns the real collector output" {
-        $snapshot = & (Join-Path $script:PackageRoot "Collect-DotNetMetrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output
+        $snapshot = & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output
         Test-Path -LiteralPath $snapshot | Should -BeTrue
         Should -Invoke node -Times 1 -Exactly -ParameterFilter {
             $Arguments[0] -eq (Join-Path $script:PackageRoot "schema.mjs") -and $Arguments[1] -eq "check-copy" -and
             $Arguments[2] -eq (Join-Path $script:Repo "eng" "scripts" "CustomCodeMetrics.schema.json")
         }
         Should -Invoke Invoke-Pester -Times 1 -Exactly -ParameterFilter { $Path -eq (Join-Path $script:Repo "eng" "scripts" "tests" "Collect-CustomCodeMetrics.Tests.ps1") }
-        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter { $Object -eq "##vso[task.setvariable variable=MetricsSnapshotPath]$snapshot" }
+        Should -Invoke Write-Host -Times 0 -Exactly
     }
     It "does not test or collect when the schema mirror check fails" {
         Mock node { $global:LASTEXITCODE = 1 }
-        { & (Join-Path $script:PackageRoot "Collect-DotNetMetrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*schema mirror*"
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*schema mirror*"
         Should -Invoke Invoke-Pester -Times 0 -Exactly
     }
     It "does not produce observations when language tests fail" {
         Mock Invoke-Pester { return [PSCustomObject]@{ FailedCount = 1; TotalCount = 65 } }
-        { & (Join-Path $script:PackageRoot "Collect-DotNetMetrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*collector tests failed*"
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*collector tests failed*"
         Test-Path -LiteralPath $script:Output | Should -BeFalse
     }
     It "does not produce observations when language tests are missing" {
         Mock Invoke-Pester { return [PSCustomObject]@{ FailedCount = 0; TotalCount = 0 } }
-        { & (Join-Path $script:PackageRoot "Collect-DotNetMetrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*collector tests failed*"
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*collector tests failed*"
         Test-Path -LiteralPath $script:Output | Should -BeFalse
     }
     It "rejects absent collector output rather than publishing an empty success" {
         Set-Content -LiteralPath (Join-Path $script:Repo "eng" "scripts" "Collect-CustomCodeMetrics.ps1") -Value 'param([string]$RepoRoot, [string]$OutputDirectory)'
-        { & (Join-Path $script:PackageRoot "Collect-DotNetMetrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*complete snapshot*"
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*complete snapshot*"
     }
     It "resolves relative output against the caller rather than the .NET checkout" {
         Push-Location $TestDrive
         try {
             $directory = [guid]::NewGuid().ToString()
-            $snapshot = & (Join-Path $script:PackageRoot "Collect-DotNetMetrics.ps1") -RepoRoot $script:Repo -OutputDirectory $directory
+            $snapshot = & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $directory
             $snapshot | Should -Be (Join-Path $TestDrive $directory "snapshot.json")
             (Get-Location).Path | Should -Be $TestDrive
         }
         finally { Pop-Location }
+    }
+    It "supports explicit case-insensitive dotnet with the same adapter as the default" {
+        $snapshot = & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -Language DOTNET -RepoRoot $script:Repo -OutputDirectory $script:Output
+        Test-Path -LiteralPath $snapshot -PathType Leaf | Should -BeTrue
+        Should -Invoke node -Times 1 -Exactly
+        Should -Invoke Invoke-Pester -Times 1 -Exactly
+    }
+    It "rejects every unimplemented language before checking a checkout or producing data" {
+        foreach ($language in @("java", "js", "python", "go", "rust", "cpp")) {
+            { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -Language $language -RepoRoot (Join-Path $TestDrive "absent") -OutputDirectory $script:Output } | Should -Throw "*'$language' is not implemented*"
+        }
+        Should -Invoke node -Times 0 -Exactly
+        Should -Invoke Invoke-Pester -Times 0 -Exactly
+        Test-Path -LiteralPath $script:Output | Should -BeFalse
+    }
+    It "rejects unknown or empty language names without invoking an adapter" {
+        foreach ($language in @("unknown", "all", "", "net")) {
+            { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -Language $language -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw
+        }
+        Should -Invoke node -Times 0 -Exactly
+        Should -Invoke Invoke-Pester -Times 0 -Exactly
+        Test-Path -LiteralPath $script:Output | Should -BeFalse
+    }
+    It "propagates a collector exception and restores the caller location" {
+        Set-Content -LiteralPath (Join-Path $script:Repo "eng" "scripts" "Collect-CustomCodeMetrics.ps1") -Value 'param([string]$RepoRoot, [string]$OutputDirectory); throw "Collector evaluation failed."'
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*Collector evaluation failed*"
+        Test-Path -LiteralPath $script:Output | Should -BeFalse
+    }
+    It "rejects multiple or nonexistent output paths rather than returning a success-shaped value" {
+        $collector = Join-Path $script:Repo "eng" "scripts" "Collect-CustomCodeMetrics.ps1"
+        Set-Content -LiteralPath $collector -Value 'param([string]$RepoRoot, [string]$OutputDirectory); return @("one.json", "two.json")'
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*exactly one complete snapshot*"
+        Set-Content -LiteralPath $collector -Value 'param([string]$RepoRoot, [string]$OutputDirectory); return (Join-Path $OutputDirectory "missing.json")'
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*exactly one complete snapshot*"
+    }
+    It "rejects a missing checkout without executing validation or collection" {
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot (Join-Path $TestDrive "absent") -OutputDirectory $script:Output } | Should -Throw
+        Should -Invoke node -Times 0 -Exactly
+        Should -Invoke Invoke-Pester -Times 0 -Exactly
     }
 }

@@ -1,5 +1,5 @@
 #Requires -Version 7.0
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)][string]$SubscriptionId,
     [string]$ResourceGroup = "rg-azsdk-custom-code-metrics",
@@ -13,6 +13,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 4
+if (-not $PSCmdlet.ShouldProcess("$SubscriptionId/$ResourceGroup", "Create the resource group and deploy metrics infrastructure and requested access assignments")) {
+    return
+}
 
 function Invoke-AzureJson {
     param([string[]]$Arguments)

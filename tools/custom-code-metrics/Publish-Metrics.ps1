@@ -1,5 +1,5 @@
 #Requires -Version 7.0
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)][string]$SnapshotPath,
     [Parameter(Mandatory)][ValidatePattern("^[a-z0-9]{3,24}$")][string]$StorageAccount,
@@ -9,6 +9,9 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 4
 $SnapshotPath = (Resolve-Path -LiteralPath $SnapshotPath).Path
+if (-not $PSCmdlet.ShouldProcess("$SubscriptionId/$StorageAccount", "Publish snapshot $SnapshotPath and update the reporting index")) {
+    return
+}
 $previous = $env:AZURE_STORAGE_ACCESS_TOKEN
 try {
     $token = & az account get-access-token --subscription $SubscriptionId --resource https://storage.azure.com/ --query accessToken --output tsv --only-show-errors

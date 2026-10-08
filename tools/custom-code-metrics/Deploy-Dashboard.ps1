@@ -1,5 +1,5 @@
 #Requires -Version 7.0
-[CmdletBinding(DefaultParameterSetName = "Hosted")]
+[CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = "Hosted")]
 param(
     [Parameter(Mandatory)][string]$SubscriptionId,
     [string]$ResourceGroup = "rg-azsdk-custom-code-metrics",
@@ -25,6 +25,9 @@ if ($PSCmdlet.ParameterSetName -eq "Preview") {
     }
 } else {
     $buildArguments += $IndexUrl.AbsoluteUri
+}
+if (-not $PSCmdlet.ShouldProcess("$SubscriptionId/$ResourceGroup/$SiteName", "Build and replace the production dashboard")) {
+    return
 }
 $previous = $env:SWA_CLI_DEPLOYMENT_TOKEN
 $previousDebug = $env:SWA_CLI_DEBUG

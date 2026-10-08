@@ -105,7 +105,7 @@
           </div>
           <div class="legend"><span class="custom-key">Custom</span><span class="generated-key">Generated</span></div>
           <div class="chart-container"><canvas id="breakdown-chart" role="img" aria-label="Source provenance breakdown"></canvas></div>
-          <div class="table-scroll">
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable provenance breakdown">
             <table class="small-table"><caption class="visually-hidden">Breakdown values</caption><thead><tr><th scope="col">Group</th><th scope="col">Custom</th><th scope="col">Generated</th><th scope="col">Custom %</th></tr></thead><tbody id="breakdown-values"></tbody></table>
           </div>
         </section>
@@ -122,7 +122,7 @@
           </div>
           <div class="legend"><span class="custom-key">Inferred custom source</span></div>
           <div class="chart-container"><canvas id="history-chart" role="img" aria-label="Custom source percentage over time"></canvas></div>
-          <div class="table-scroll">
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable historical observations">
             <table class="small-table"><caption class="visually-hidden">Historical observations and cohort changes</caption><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Revision</th><th scope="col">Libraries</th><th scope="col">Custom %</th><th scope="col">Added / removed</th></tr></thead><tbody id="history-values"></tbody></table>
           </div>
         </section>
@@ -152,7 +152,7 @@
         <div class="section-header"><h2 id="detail-heading">Library detail</h2><button id="close-detail" type="button">Close detail</button></div>
         <p id="detail-meta"></p><div id="detail-stats" class="detail-stats"></div>
         <p id="detail-source"></p>
-        <details id="file-evidence" hidden><summary>File-level provenance evidence</summary><p id="file-evidence-note"></p><div class="table-scroll"><table class="small-table"><thead><tr><th scope="col">Path</th><th scope="col">Lines</th><th scope="col">Provenance</th><th scope="col">Evidence</th></tr></thead><tbody id="file-values"></tbody></table></div></details>
+        <details id="file-evidence" hidden><summary>File-level provenance evidence</summary><p id="file-evidence-note"></p><div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable file provenance evidence"><table class="small-table"><thead><tr><th scope="col">Path</th><th scope="col">Lines</th><th scope="col">Provenance</th><th scope="col">Evidence</th></tr></thead><tbody id="file-values"></tbody></table></div></details>
       </section>
       <footer>
         <p id="contract-info">Snapshot schema v3.0 / physical C# lines</p>

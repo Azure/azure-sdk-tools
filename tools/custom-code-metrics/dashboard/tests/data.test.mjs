@@ -56,6 +56,25 @@ test("parses JSON and rejects invalid JSON explicitly", () => {
   assert.equal(parseSnapshot(JSON.stringify(snapshot())).libraries.length, 1);
   assert.throws(() => parseSnapshot("{broken"), SyntaxError);
 });
+test("snapshot identity must encode its actual commit and exact UTC collection time", () => {
+  for (const mutate of [
+    (value) => { value.repository.commit = "a".repeat(40); },
+    (value) => { value.collectedAt = "2026-10-02T12:00:00Z"; },
+    (value) => { value.collectedAt = "2026-10-01T12:00:00.0000001Z"; },
+  ]) {
+    const value = snapshot();
+    mutate(value);
+    const before = structuredClone(value);
+    assert.throws(() => acceptSnapshot(value), /identity.*disagree/);
+    assert.deepEqual(value, before);
+  }
+});
+test("identity accepts equivalent time zones and seven-digit fractions without truncating the measured time", () => {
+  for (const date of ["2026-10-01T14:00:00+02:00", "2026-10-01T12:00:00.1234567Z", "2026-10-01T12:00:00.123456700Z"]) {
+    const value = snapshot(undefined, date);
+    assert.equal(acceptSnapshot(value), value);
+  }
+});
 test("rejects prior v2 measurements without converting their version or counts", () => {
   const prior = { ...snapshot(), schemaVersion: "2.0" };
   const before = structuredClone(prior);

@@ -1,9 +1,9 @@
 # Custom code metrics
 
-Shared TypeSpec contracts, a static dashboard, immutable publication tools and
-cross-repository collection orchestration for Azure SDK custom-source metrics.
-The collectors stay in their language repositories; tools owns the website,
-contracts, publishing, hosting infrastructure and central nightly schedule.
+Shared TypeSpec contracts, a static dashboard, measurement and immutable
+publication commands for Azure SDK custom-source metrics. Language repositories
+own their schedules, trusted checkouts and publication jobs; tools owns the
+website, contracts, common commands, hosting infrastructure and validation CI.
 
 **Only the .NET adapter and .NET snapshot v3.0 are implemented today.** Moving
 ownership here does not make the existing C# counting rules or repository-specific
@@ -64,8 +64,8 @@ credentials.
 | `schema.mjs` | Generate/check schemas and byte-exact producer mirror sync/check |
 | `dashboard` | Offline/hosted frontend, semantic validators, reporting and tests |
 | `publishing.mjs`, `Publish-Metrics.ps1` | .NET feed publisher and Azure CLI token wrapper |
-| `Collect-DotNetMetrics.ps1` | Central adapter invoking the .NET repository's tested collector |
-| `ci.yml`, `nightly.yml` | Validation CI and standalone central collection/publication definition |
+| `Collect-Metrics.ps1` | One measurement command operating on the caller's language checkout |
+| `ci.yml` | Shared tooling validation CI; no scheduled source-repository sweep |
 | `infra\main.bicep`, `Deploy-*.ps1` | Policy-safe hosting resources and separate deployment helpers |
 
 From this repository's root:
@@ -105,6 +105,8 @@ exclusions. Optional file evidence contains paths/counts, never source content.
 observations. Shape validation is generated from the schema; shared semantic
 validators additionally enforce safe integers, arithmetic, rollups, identities,
 file evidence consistency and conflicting retry rejection.
+Snapshot identities must encode the same commit and UTC collection time,
+including fractional seconds, in both complete snapshots and compact history.
 
 Edit `main.tsp`, never the generated JSON. Compiler and emitter are pinned at
 1.16.0. Regenerate and check from this package:
@@ -131,6 +133,9 @@ observation's month. An incompatible v2 feed is rejected without replacing
 its index or immutable blobs. There are no published playground Blob feeds
 to migrate; do not repurpose an existing incompatible feed without an explicit
 separate migration. Envelope field shapes/versions do not change.
+The existing latest must also occur exactly once in that history and agree with
+its compact observation; an independently valid but inconsistent latest cannot
+be carried forward.
 
 ### Offline producer schema mirror
 
@@ -323,35 +328,70 @@ data. No pipeline/schedule is registered and no approved reader API is
 implemented. Do not bypass policy with account keys, browser SAS, or policy
 overrides.
 
-### Central nightly orchestration
+### Language-owned collection and publication
 
-`nightly.yml` is a tools-owned standalone **definition**, not an active schedule.
-It schedules 08:00 UTC on tools `main` and allows publication only from trusted
-internal tools `main` manual/scheduled runs, never PR/fork runs. It checks out
-self/tools and .NET `main` into explicit separate paths, verifies each exact
-resolved commit and clean tracked state, installs the exact checked-out .NET
-`global.json` SDK, checks canonical schemas and the .NET mirror, runs shared
-publisher and .NET collector tests, collects through the .NET adapter, retains
-the snapshot artifact and publishes via workload federation. It does not deploy
-the website. Other language adapters are not silently included.
+Language repositories own their schedules, trusted checkouts and publication jobs.
+There is no tools-owned nightly sweep, repository cloning or seven-language
+success loop. A language job uses one shared `Collect-Metrics.ps1` command on
+its own checkout, then publishes the returned observation directly to Blob
+storage through `Publish-Metrics.ps1`. Website deployment is separate.
 
-Before activation:
+`Collect-Metrics.ps1 -Language dotnet -RepoRoot <checkout> -OutputDirectory <path>`
+defaults to `dotnet`. This is the only implemented adapter: it checks the exact
+schema mirror, runs the producer's Pester suite and calls its MSBuild-aware
+collector from the producer checkout. It returns exactly one completed snapshot
+path and restores the caller's working directory. Relative output paths resolve
+against the caller, not the producer.
 
-1. Land coordinated tools and .NET changes and register this YAML in the internal
-   Azure SDK project (`tools - custom-code-metrics`); register `ci.yml` separately
-   as `tools - custom-code-metrics - ci` for validation.
-2. Configure `DotNetGitHubServiceConnection` to an explicitly authorized
-   **read-only GitHub endpoint for Azure/azure-sdk-for-net**. The default
-   `SET_READ_ONLY_GITHUB_SERVICE_CONNECTION` is a placeholder, not an existing
-   authorized connection. Set the parameter's YAML default to the approved
-   endpoint name before enabling scheduled runs.
-3. Grant the publisher's container roles and create/authorize the
-   `azure-sdk-playground-custom-code-metrics` workload-federated ARM connection
-   with its exact Azure DevOps issuer/subject. Restrict it to this pipeline and
-   trusted tools/main checks; never authorize all pipelines or PR/fork jobs.
-4. Provision an approved anonymous reports-only reader if storage remains
-   private. Verify real publication, reader output, hosted site and scheduled
-   execution, and subscribe owners to failures before declaring this operational.
+The recognized future language names are `java`, `js`, `python`, `go`, `rust`
+and `cpp`; requesting any of them fails explicitly **before testing or writing
+an observation**. Unknown names are rejected. The selector's uncollected states
+do not imply that these adapters or a generic counting contract exist.
+
+For a .NET-owned CI job, after checking out a trusted tools revision and installing
+Node.js, Pester and the exact .NET SDK from its own `global.json`:
+
+```powershell
+$repo = "C:\work\azure-sdk-for-net"       # This job's own trusted source checkout
+$tool = "C:\work\azure-sdk-tools\tools\custom-code-metrics"
+Push-Location $tool
+try {
+    npm ci
+    if ($LASTEXITCODE -ne 0) { throw "Shared tooling restore failed." }
+    npm run check
+    if ($LASTEXITCODE -ne 0) { throw "Shared schema validation failed." }
+    npm run build:publishing
+    if ($LASTEXITCODE -ne 0) { throw "Publisher build failed." }
+    $snapshot = & .\Collect-Metrics.ps1 -Language dotnet -RepoRoot $repo -OutputDirectory "C:\artifacts\metrics"
+    # Run this publication step inside the language job's authorized AzureCLI task.
+    & .\Publish-Metrics.ps1 -SnapshotPath $snapshot `
+        -StorageAccount <account> -SubscriptionId <subscription>
+}
+finally {
+    Pop-Location
+}
+```
+
+This example is caller wiring, not a registered pipeline or a new SDK CI change.
+Land the separate .NET producer changes before using the adapter; they are not yet
+on `main`. The caller owns exact checkout verification, main-branch/trusted-source
+gates, artifact retention and a workload-federated ARM identity scoped to the
+report/archive containers. Never authorize publication for untrusted PR/fork
+jobs or all pipelines. Register this package's `ci.yml` only for shared tool
+validation (`tools - custom-code-metrics - ci`).
+
+Private storage still requires an approved anonymous reports-only reader before
+the website can consume a live feed. That reader and language-owned schedules
+are not implemented by this PR. Verify actual publication and scheduled execution
+before calling nightly reporting operational.
+
+### Safe dry runs
+
+`Publish-Metrics.ps1`, `Deploy-Dashboard.ps1` and `Deploy-Infrastructure.ps1`
+support `-WhatIf`. Declined operations make no Azure calls, retrieve no tokens
+and launch no publisher or deployment process. Dashboard dry runs also skip
+local builds and feed requests. Without `-WhatIf`, the existing validation,
+preflight and transient credential handling remain unchanged.
 
 ## Validation
 
@@ -379,7 +419,8 @@ months, content integrity, UTC anchors, stale boundaries, caching/rollback,
 immutable retries, gzip/cache metadata, ETag races and private audit separation.
 Relocation coverage checks byte-exact mirror sync/read-only failures, missing
 files, script-relative schema/build paths, publisher-only output isolation and
-offline pipeline guards. The .NET repository owns collector counting tests.
+offline per-repository command and shared CI boundaries. The .NET repository owns
+collector counting tests.
 Repository UI coverage checks all seven choices, honest unavailable states without
 cross-repository values or feed requests, .NET filter/history/detail restoration,
 declared-repository mismatch rejection, and the full real portfolio at 390px

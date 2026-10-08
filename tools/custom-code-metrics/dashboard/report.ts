@@ -3,7 +3,7 @@ import validateMonth from "./generated/validate-history-month.mjs";
 import type { ReportIndex } from "./generated/report-index.js";
 import type { HistoryMonth } from "./generated/history-month.js";
 import {
-  aggregate, assertMetric, COUNTS, measurementKey, parseSnapshot,
+  aggregate, assertMetric, assertObservationIdentity, COUNTS, measurementKey, parseSnapshot,
   type Observation, type Snapshot,
 } from "./data.js";
 
@@ -68,11 +68,8 @@ export function acceptReportIndex(value: unknown): ReportIndex {
 export function acceptHistoryMonth(value: unknown): HistoryMonth {
   if (!validateMonth(value)) throw new Error(`Invalid history month: ${validateMonth.errors?.[0]?.message}.`);
   for (const observation of value.observations) {
-    assert(Number.isFinite(Date.parse(observation.collectedAt)), "Invalid history timestamp.");
+    assertObservationIdentity(observation);
     assert(new Date(observation.collectedAt).toISOString().slice(0, 7) === value.month, "Observation belongs to another UTC month.");
-    assert(observation.snapshotId.endsWith(`-${observation.repository.commit}`), "Snapshot identity and revision disagree.");
-    assert(observation.snapshotId.startsWith(new Date(observation.collectedAt).toISOString().slice(0, 19).replace(/[-:]/g, "")),
-      "Snapshot identity and timestamp disagree.");
     const ids = new Set<string>();
     for (const library of observation.libraries) {
       assert(!ids.has(library.library), `Duplicate history library: ${library.library}.`);

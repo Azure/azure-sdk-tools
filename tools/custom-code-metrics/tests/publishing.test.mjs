@@ -134,6 +134,53 @@ test("missing or corrupt historical months outside the incoming month cannot be 
     assert.deepEqual(store.operations, []);
   }
 });
+test("prior latest must exist exactly once and agree with its compact monthly history before any uploads", async () => {
+  for (const failure of ["missing", "counts", "service", "duplicate"]) {
+    const store = new Store();
+    const original = snapshot();
+    await publish(original, store);
+    const index = latestIndex(store);
+    const reference = index.history[0];
+    const document = month(store, reference.month);
+    if (failure === "missing") {
+      const alternate = snapshot(undefined, "2026-10-02T12:00:00Z", "2");
+      document.observations = [{
+        schemaVersion: alternate.schemaVersion, snapshotId: alternate.snapshotId, collectedAt: alternate.collectedAt,
+        repository: alternate.repository, libraries: alternate.libraries.map(({ projectPath, targetFrameworks, ...member }) => member),
+      }];
+    } else if (failure === "counts") {
+      document.observations[0].libraries[0].metrics = library("Azure.One", 11, 34).metrics;
+    } else if (failure === "service") {
+      document.observations[0].libraries[0].service = "changed";
+    } else {
+      document.observations.push(structuredClone(document.observations[0]));
+    }
+    const text = JSON.stringify(document);
+    reference.path = `history/${createHash("sha256").update(text).digest("hex")}/${reference.month}.json`;
+    store.blobs.set(`reports/dotnet/${reference.path}`, { text, etag: '"changed-history"' });
+    store.blobs.get("reports/dotnet/index.json").text = JSON.stringify(index);
+    const before = structuredClone(store.blobs);
+    store.operations = [];
+    await assert.rejects(publish(snapshot(undefined, "2026-11-01T12:00:00Z", "3"), store), /exactly once|Conflicting measurements/);
+    assert.deepEqual(store.blobs, before);
+    assert.deepEqual(store.operations, []);
+  }
+});
+test("latest/history comparison accepts reordered compact fields but still validates their counts", async () => {
+  const store = new Store();
+  await publish(snapshot([library("Azure.One", 10, 35), library("Azure.Two", 20, 30)]), store);
+  const index = latestIndex(store);
+  const reference = index.history[0];
+  const document = month(store, reference.month);
+  document.observations[0].libraries.reverse();
+  document.observations[0].repository = { isDirty: false, commit: "1".repeat(40), name: "Azure/azure-sdk-for-net" };
+  const text = JSON.stringify(document);
+  reference.path = `history/${createHash("sha256").update(text).digest("hex")}/${reference.month}.json`;
+  store.blobs.set(`reports/dotnet/${reference.path}`, { text, etag: '"reordered"' });
+  store.blobs.get("reports/dotnet/index.json").text = JSON.stringify(index);
+  await publish(snapshot(undefined, "2026-11-01T12:00:00Z", "2"), store);
+  assert.equal(latestIndex(store).history.length, 2);
+});
 test("retry is idempotent and same-day later collection replaces only the compact daily observation", async () => {
   const store = new Store();
   const first = snapshot();

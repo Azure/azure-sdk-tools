@@ -1,0 +1,38 @@
+{
+  "name": "@azure-sdk/custom-code-metrics-schema",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "description": "TypeSpec contracts, publishing tools and static dashboard for custom code metrics.",
+  "scripts": {
+    "compile": "node --experimental-strip-types schema.ts clean && tsp compile .",
+    "generate": "npm run compile && node --experimental-strip-types schema.ts generate",
+    "check": "tsp format --check main.tsp && npm run compile && node --experimental-strip-types schema.ts check",
+    "build:dashboard": "node --experimental-strip-types dashboard/build.ts",
+    "build:publishing": "node --experimental-strip-types dashboard/build.ts --publishing-only",
+    "test:dashboard": "npm run build:dashboard && node --experimental-strip-types --test dashboard/tests/data.test.ts",
+    "test:dashboard:browser": "npm run build:dashboard && node --experimental-strip-types dashboard/tests/browser.ts",
+    "test:dashboard:multirepo": "npm run build:dashboard && node --experimental-strip-types dashboard/tests/multi-repository.ts",
+    "test:publishing": "npm run build:publishing && node --experimental-strip-types --test dashboard/tests/report.test.ts tests/publishing.test.ts",
+    "test": "npm run build:publishing && node --experimental-strip-types --test dashboard/tests/data.test.ts dashboard/tests/report.test.ts tests/*.test.ts",
+    "format": "tsp format main.tsp",
+    "format:check": "tsp format --check main.tsp"
+  },
+  "devDependencies": {
+    "@azure/static-web-apps-cli": "2.0.10",
+    "@playwright/test": "1.63.0",
+    "@types/node": "26.6.3",
+    "@typespec/compiler": "1.16.0",
+    "@typespec/json-schema": "1.16.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "chart.js": "4.5.1",
+    "esbuild": "0.28.2",
+    "json-schema-to-typescript": "16.0.0",
+    "typescript": "6.0.3",
+    "yaml": "2.9.1"
+  }
+}

@@ -1,0 +1,54 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/custom-code-metrics
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/custom-code-metrics
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: Validate
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+        jobs:
+          - job: Windows
+            timeoutInMinutes: 30
+            pool:
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
+            steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: 22.x
+              - task: Npm@1
+                displayName: Restore pinned tooling
+                inputs:
+                  command: ci
+                  workingDir: tools/custom-code-metrics
+              - task: UsePythonVersion@0
+                displayName: Select static package-metadata decoder
+                inputs:
+                  versionSpec: '3.11'
+              - task: PowerShell@2
+                displayName: Install repository Pester version
+                inputs:
+                  pwsh: true
+                  filePath: tools/custom-code-metrics/Install-TestDependencies.ps1
+              - task: PowerShell@2
+                displayName: Validate schemas, TypeScript, unit tests and Edge dashboard
+                inputs:
+                  pwsh: true
+                  filePath: tools/custom-code-metrics/Validate.ps1

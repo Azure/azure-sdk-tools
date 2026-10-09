@@ -9,6 +9,8 @@ Shared skills (those distributed to other Azure SDK repositories) are identified
 `azsdk-common-` directory prefix. This prefix enables the `sync-.github-skills.yml`
 pipeline to match and distribute them to all subscribed language SDK repos.
 
+The shared pre-push instruction in `.github/instructions/azsdk-common-pre-push.instructions.md` is distributed with these skills and requires agents to run local static checks before publishing docs, tooling, or SDK changes.
+
 ---
 
 ## Available Skills

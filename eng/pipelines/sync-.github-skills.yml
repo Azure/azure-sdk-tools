@@ -1,20 +1,21 @@
-# Mirror shared skills in the .github/skills directory to all subscribed repos
+# Mirror shared skills and their pre-push instruction to all subscribed repos
 #
 # For more information on this file, please see:
 # doc/engsys_workflows_and_skills.md
 parameters:
 - name: DirectoryToSync
   type: string
-  default: .github/skills
+  default: .github
   # Remember to update the path includes below as well as the eng-common-workflow-enforcer.yml
   # and .github/workflows/protected-files.yml files if you update this list.
 - name: FilePatterns
   type: object
   default:
-    # Shared skills use an azsdk-common- directory prefix and live in .github/skills/
-    # in azure-sdk-tools. Only azsdk-common-* directories are synced to target repos.
+    # Shared skills use an azsdk-common- directory prefix and live in .github/skills/.
+    # Only shared skills and the pre-push instruction are synced to target repos.
     # Repo-specific skills in .github/skills/<name>/ are not affected by this sync.
-    - 'azsdk-common-*'
+    - 'skills/azsdk-common-*'
+    - 'instructions/azsdk-common-pre-push.instructions.md'
 - name: Repos
   type: object
   default:
@@ -60,6 +61,7 @@ pr:
   paths:
     include:
       - .github/skills/azsdk-common-*/**
+      - .github/instructions/azsdk-common-pre-push.instructions.md
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml

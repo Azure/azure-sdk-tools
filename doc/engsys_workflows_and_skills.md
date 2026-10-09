@@ -10,12 +10,14 @@ Any updates to files in the `.github/workflows` directory should be made in the 
 
 Any updates to directories matching the pattern `.github/skills/azsdk-common-*` should be made in the [azure-sdk-tools](https://github.com/azure/azure-sdk-tools) repo.
 
+The shared `.github/instructions/azsdk-common-pre-push.instructions.md` is synced alongside the skills. Its `applyTo: "**"` rule requires agents to load the pre-push check skill before publishing changes, including documentation and non-SDK tools, without replacing each repository's own Copilot instructions.
+
 All changes made through the sync pipelines will cause PRs to be created in subscribed azure-sdk language repos which will blindly replace the synced files or directories in those repos. For that reason do **NOT** make changes to these files in the azure-sdk or individual azure-sdk language repos as they will be overwritten the next time an update is taken from the corresponding directory in the azure-sdk-tools repository.
 
 ## Pipelines
 
 - [`tools - sync-.github`][workflow-yml] syncs selected files from `.github/workflows/`, including `post-apiview.yml` and `protected-files.yml`.
-- [`tools - sync-.github-skills`][skills-yml] syncs shared skills from `.github/skills/azsdk-common-*`.
+- [`tools - sync-.github-skills`][skills-yml] syncs `.github/skills/azsdk-common-*` and `.github/instructions/azsdk-common-pre-push.instructions.md`.
 
 ## Workflow
 
@@ -26,7 +28,7 @@ This process is set up in such a way to make it easier for changes to be tested 
 1. You create a PR (let's call it here the **Tools PR**) in the `azure-sdk-tools` repo with changes to the synced workflow files in `.github/workflows` and/or `.github/skills/azsdk-common-*`.
 2. The matching sync pipeline is automatically triggered for the **Tools PR**:
    - [`tools - sync-.github`][workflow-yml] for the synced workflow targets in `.github/workflows`.
-   - [`tools - sync-.github-skills`][skills-yml] for `.github/skills/azsdk-common-*` changes.
+   - [`tools - sync-.github-skills`][skills-yml] for shared skill or pre-push instruction changes.
    - If your PR changes both areas, both pipelines will run.
 3. Each triggered pipeline creates branches mirroring your changes, one branch in azure-sdk and one per language repository receiving that sync. You can use these branches to run tests in those repos. The pipeline also queues test runs for template pipelines for each repo. These help you test the changes in the **Tools PR**. All of this is done in the `Create Sync` stage of the corresponding pipeline, specifically through `template: ./templates/steps/sync-directory.yml`.
 4. If you make additional changes to your **Tools PR** repeat steps 1 - 3 until you have completed the necessary testing of your changes. This includes full releases of the template package, if necessary.

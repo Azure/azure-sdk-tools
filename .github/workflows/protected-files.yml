@@ -19,6 +19,7 @@ on:
       - '.github/workflows/protected-files.yml'
       # Skills synced from azure-sdk-tools
       - '.github/skills/azsdk-common-*/**'
+      - '.github/instructions/azsdk-common-pre-push.instructions.md'
 
 permissions:
   contents: read

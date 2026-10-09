@@ -65,10 +65,9 @@ stages:
                 $filePatterns = '${{ convertToJson(parameters.FilePatterns) }}' | ConvertFrom-Json
                 if (!$filePatterns) { $filePatterns = @("*")}
 
-                foreach ($filePattern in $filePatterns) {
-                  Write-Host "Creating patch files for pattern: $filePattern"
-                  $patchFiles += git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}/$filePattern"
-                }
+                $patchPaths = @($filePatterns | ForEach-Object { "${{ parameters.DirectoryToSync }}/$_" })
+                Write-Host "Creating patch files for patterns: $($patchPaths -join ', ')"
+                $patchFiles = @(git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- @patchPaths)
                 if ($patchFiles -and ($LASTEXITCODE -eq 0)) {
                   echo "##vso[task.setvariable variable=PatchFilesLocation]$patchDir"
                   echo "Setting PatchFilesLocation"

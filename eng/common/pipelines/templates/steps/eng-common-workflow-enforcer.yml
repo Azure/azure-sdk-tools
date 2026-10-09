@@ -24,7 +24,7 @@ steps:
           # These lists need to be kept in sync with eng/pipelines/sync-.github.yml and
           # eng/pipelines/sync-.github-skills.yml.
           $workflowFilePatterns = @(".github/workflows/*event*", ".github/workflows/post-apiview.yml", ".github/workflows/protected-files.yml")
-          $skillsFilePatterns = @(".github/skills/azsdk-common-*/**")
+          $skillsFilePatterns = @(".github/skills/azsdk-common-*/**", ".github/instructions/azsdk-common-pre-push.instructions.md")
           $filePatterns = @($workflowFilePatterns + $skillsFilePatterns)
           $filesInCommonDir = @()
           foreach ($filePattern in $filePatterns) {
@@ -32,7 +32,7 @@ steps:
           }
           if ($filesInCommonDir.Count -gt 0)
           {
-            Write-Host "##vso[task.LogIssue type=error;]Changes to selected workflow and shared skill files under '.github/' should not be made in this Repo`n${filesInCommonDir}"
+            Write-Host "##vso[task.LogIssue type=error;]Changes to selected workflow, shared skill, and pre-push instruction files under '.github/' should not be made in this Repo`n${filesInCommonDir}"
             Write-Host "##vso[task.LogIssue type=error;]Follow the workflow at https://github.com/Azure/azure-sdk-tools/blob/main/doc/engsys_workflows_and_skills.md"
             exit 1
           }

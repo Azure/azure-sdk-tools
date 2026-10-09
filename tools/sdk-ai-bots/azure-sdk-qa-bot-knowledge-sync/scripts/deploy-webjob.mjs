@@ -21,13 +21,23 @@ function az(args) {
 async function request(url, token, { method = 'GET', body, contentType = 'application/json', allowMissing = false, headers = {} } = {}) {
     const operation = `${method} ${new URL(url).pathname}`;
     const started = Date.now();
+    const deadline = started + 5 * 60 * 1000;
     let response;
-    try {
-        response = await fetch(url, { method, body, redirect: 'error', signal: AbortSignal.timeout(120000),
-            headers: { ...headers, Authorization: `Bearer ${token}`, 'Content-Type': contentType } });
-    } catch {
-        throw new DeploymentError(`SCM ${operation} failed before receiving an HTTP response; check SCM availability after restart and network access`);
+    // Read-only requests can encounter temporary SCM unavailability while the container restarts.
+    while (true) {
+        try {
+            const timeout = method === 'GET' ? Math.max(1, Math.min(120000, deadline - Date.now())) : 120000;
+            response = await fetch(url, { method, body, redirect: 'error', signal: AbortSignal.timeout(timeout),
+                headers: { ...headers, Authorization: `Bearer ${token}`, 'Content-Type': contentType } });
+        } catch {
+            response = undefined;
+        }
+        const transient = !response || [500, 502, 503, 504].includes(response.status);
+        if (method !== 'GET' || !transient || Date.now() + 15000 >= deadline) break;
+        await response?.body?.cancel();
+        await delay(15000);
     }
+    if (!response) throw new DeploymentError(`SCM ${operation} failed before receiving an HTTP response; check SCM availability after restart and network access`);
     if (allowMissing && response.status === 404) return null;
     if (!response.ok) {
         const error = new DeploymentError(`SCM ${operation} rejected: HTTP ${response.status}`);

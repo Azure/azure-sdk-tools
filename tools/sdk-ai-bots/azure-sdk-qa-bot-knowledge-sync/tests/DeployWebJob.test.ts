@@ -54,7 +54,7 @@ describe('WebJob deployment', () => {
         expect(fetchMock).toHaveBeenCalledTimes(5);
     });
 
-    it.each([400, 401, 403, 503])('reports upload HTTP %i without exposing response contents', async (status) => {
+    it.each([400, 401, 403, 500, 503])('reports upload HTTP %i without exposing response contents', async (status) => {
         fetchMock.mockResolvedValueOnce(new Response(null, { status: 404 }))
             .mockResolvedValueOnce(new Response('secret-token private response', { status }));
         await expect(deploy(env)).rejects.toThrow(`SCM PUT /api/triggeredwebjobs/knowledge-sync rejected: HTTP ${status}`);
@@ -65,6 +65,46 @@ describe('WebJob deployment', () => {
         fetchMock.mockResolvedValueOnce(new Response(null, { status: 404 }))
             .mockRejectedValueOnce(new Error('secret-token private network details'));
         await expect(deploy(env)).rejects.toThrow('SCM PUT /api/triggeredwebjobs/knowledge-sync failed before receiving an HTTP response');
+    });
+
+    it.each([500, 502, 503, 504])('retries read-only HTTP %i after configuration changes and still checks job history', async (status) => {
+        const paused = { name: env.WEBJOB_NAME, settings: { ...settings, schedule: null } };
+        fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(paused)))
+            .mockResolvedValueOnce(new Response(null))
+            .mockResolvedValueOnce(new Response(JSON.stringify(paused)))
+            .mockResolvedValueOnce(new Response(JSON.stringify({ runs: [] })))
+            .mockResolvedValueOnce(new Response('private details', { status }))
+            .mockResolvedValueOnce(new Response(JSON.stringify(paused)))
+            .mockResolvedValueOnce(new Response(JSON.stringify({ runs: [] })));
+        await deploy(env);
+        expect(delay).toHaveBeenCalledWith(15000);
+        expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/history'))).toHaveLength(2);
+        expect(fetchMock.mock.calls.filter(([, options]) => options.headers['Content-Type'] === 'application/zip')).toHaveLength(1);
+    });
+
+    it('retries read-only network failures without logging private details', async () => {
+        fetchMock.mockRejectedValueOnce(new Error('secret-token private network details'))
+            .mockResolvedValueOnce(new Response(null, { status: 404 }));
+        await deploy(env);
+        expect(delay).toHaveBeenCalledWith(15000);
+        expect(console.warn).not.toHaveBeenCalledWith(expect.stringContaining('secret-token'));
+    });
+
+    it.each([401, 403])('does not retry read-only authorization HTTP %i', async (status) => {
+        fetchMock.mockResolvedValueOnce(new Response('private details', { status }));
+        await expect(deploy(env)).rejects.toThrow(`SCM GET /api/triggeredwebjobs/knowledge-sync rejected: HTTP ${status}`);
+        expect(fetchMock).toHaveBeenCalledOnce();
+        expect(delay).not.toHaveBeenCalled();
+    });
+
+    it('bounds read-only retries when SCM remains unavailable', async () => {
+        let clock = 0;
+        vi.spyOn(Date, 'now').mockImplementation(() => clock);
+        delay.mockImplementation(async () => { clock += 15000; });
+        fetchMock.mockImplementation(async () => new Response('private details', { status: 500 }));
+        await expect(deploy(env)).rejects.toThrow('SCM GET /api/triggeredwebjobs/knowledge-sync rejected: HTTP 500');
+        expect(clock).toBeLessThanOrEqual(5 * 60 * 1000);
+        expect(fetchMock.mock.calls.every(([, options]) => options.method === 'GET')).toBe(true);
     });
 
     function timedOutUpload() {

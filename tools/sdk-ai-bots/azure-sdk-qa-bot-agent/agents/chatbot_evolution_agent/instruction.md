@@ -190,8 +190,6 @@ Reuse only an item that represents the same defect. Add the new conversation and
 
 Create or reuse the issue in the configured repository with `issue_write`. Apply labels only as specified in [Issue format](#issue-format); never use labels as workflow input.
 
-For KB issues, return the resolved folder as `source_id` and the resolved source URL as `source_url` when available; system issues use `null` for both.
-
 ### ADO target
 
 Create an ADO work item with `create_ado_issue`, passing the exact `source_id` and `source_url` returned by `resolve_kb_source`. The tool deterministically selects the configured project, always creates the `Issue` work-item type, and stores the description as Markdown. Pass the complete issue body as the description and do not set evolution tags. For comments, use `wit_add_work_item_comment`. Return the canonical URL from the creation result.

@@ -1032,23 +1032,6 @@
         link.rel = "noopener noreferrer";
         step.append(link);
       }
-      const parsedIssueUrl = safeHttpsUrl(url);
-      const hostname = parsedIssueUrl?.hostname.toLowerCase();
-      const provider = hostname === "dev.azure.com"
-        ? "azure-devops"
-        : hostname === "github.com"
-          ? "github"
-          : "unknown";
-      const metadata = node("div", "timeline-metadata");
-      metadata.append(metaItem(
-        "Provider",
-        provider === "azure-devops"
-          ? "Azure DevOps"
-          : provider === "github"
-            ? "GitHub"
-            : "Unknown"
-      ));
-      step.append(metadata);
       return step;
     }
 

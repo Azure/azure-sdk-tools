@@ -345,48 +345,6 @@ def test_issue_result_waits_for_validation() -> None:
     )
 
 
-def test_ado_issue_result_waits_for_validation() -> None:
-    record = _record()
-    result = ChatbotEvolutionAgentResult(
-        outcome=ChatbotEvolutionAgentOutcome.issue_created,
-        classification=RootCauseClassification.missing_content,
-        issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
-        source_id="internal_wiki",
-        source_url=(
-            "https://azure-sdk@dev.azure.com/"
-            "azure-sdk/internal/_git/internal.wiki"
-        ),
-        reasoning="Grounded result.",
-        confidence=0.9,
-    )
-
-    ChatbotEvolutionAgentService()._apply_result(record, result)
-
-    assert record.feedback is not None
-    assert record.feedback.status == FeedbackStatus.pending_validation
-    assert record.feedback.source_id == result.source_id
-    assert record.feedback.source_url == result.source_url
-
-
-def test_github_wiki_issue_result_waits_for_validation() -> None:
-    record = _record()
-    result = ChatbotEvolutionAgentResult(
-        outcome=ChatbotEvolutionAgentOutcome.issue_created,
-        classification=RootCauseClassification.missing_content,
-        issue_url="https://github.com/Azure/azure-sdk-for-java/issues/456",
-        source_id="java_wiki",
-        source_url="https://github.com/Azure/azure-sdk-for-java.wiki.git",
-        reasoning="Grounded result.",
-        confidence=0.9,
-    )
-
-    ChatbotEvolutionAgentService()._apply_result(record, result)
-
-    assert record.feedback is not None
-    assert record.feedback.source_id == result.source_id
-    assert record.feedback.source_url == result.source_url
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "issue_url",

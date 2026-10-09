@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -84,8 +84,6 @@ class RootCauseClassification(str, Enum):
 class GitHubIssueReference(BaseModel):
     """Canonical identity for a GitHub issue."""
 
-    provider: Literal["github"] = "github"
-    url: str
     owner: str
     repository: str
     number: int = Field(gt=0)
@@ -94,8 +92,6 @@ class GitHubIssueReference(BaseModel):
 class AzureDevOpsIssueReference(BaseModel):
     """Canonical identity for an Azure Boards work item."""
 
-    provider: Literal["azure-devops"] = "azure-devops"
-    url: str
     organization: str
     project: str
     work_item_id: int = Field(gt=0)
@@ -140,7 +136,6 @@ def parse_issue_reference(
             if number <= 0 or (canonical and number_text != str(number)):
                 raise ValueError("issue_url must use a canonical positive issue number")
             return GitHubIssueReference(
-                url=value,
                 owner=match.group("owner"),
                 repository=match.group("repo"),
                 number=number,
@@ -156,7 +151,6 @@ def parse_issue_reference(
                     "issue_url must use a canonical positive work-item number"
                 )
             return AzureDevOpsIssueReference(
-                url=value,
                 organization=unquote(match.group("organization")),
                 project=unquote(match.group("project")),
                 work_item_id=number,
@@ -170,7 +164,7 @@ def is_fallback_issue_reference(
 ) -> bool:
     """Return whether an issue belongs to the evolution fallback repository."""
     return (
-        issue.provider == "github"
+        isinstance(issue, GitHubIssueReference)
         and issue.owner.casefold() == "azure"
         and issue.repository.casefold() == "azure-sdk-pr"
     )

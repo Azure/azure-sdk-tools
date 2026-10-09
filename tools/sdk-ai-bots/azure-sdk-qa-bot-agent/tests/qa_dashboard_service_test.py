@@ -449,7 +449,6 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     ).read_text(encoding="utf-8")
     assert "innerHTML" not in html
     assert "isAllowedIssueUrl" in html
-    assert "const parsedIssueUrl = safeHttpsUrl(url);" in html
     assert "Conversation status" in html
     assert "Evolution status" in html
     assert "<th>Answer assessment</th>" not in html

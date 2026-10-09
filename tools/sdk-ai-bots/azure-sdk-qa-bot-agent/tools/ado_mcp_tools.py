@@ -69,7 +69,6 @@ class AzureDevOpsIssueCreateResult(BaseModel):
     """Canonical identity of a newly created Azure Boards issue."""
 
     issue_url: str
-    work_item_id: int
 
 
 async def create_ado_mcp_tool() -> MCPStdioTool:
@@ -216,7 +215,6 @@ async def create_ado_issue(
             f"https://dev.azure.com/{organization}/{project}"
             f"/_workitems/edit/{work_item_id}"
         ),
-        work_item_id=work_item_id,
     )
 
 

@@ -333,8 +333,6 @@ class ChatbotEvolutionAgentService:
                 record.verdict = BotAnswerVerdict.Incorrect
                 record.feedback.status = FeedbackStatus.pending_validation
                 record.feedback.issue_url = result.issue_url
-                record.feedback.source_id = result.source_id
-                record.feedback.source_url = result.source_url
                 record.feedback.classification = result.classification
                 return
 
@@ -473,14 +471,14 @@ def _issue_matches_target(
 ) -> bool:
     if target.provider == "github":
         return (
-            issue.provider == "github"
+            isinstance(issue, GitHubIssueReference)
             and target.owner is not None
             and target.repo is not None
             and issue.owner.casefold() == target.owner.casefold()
             and issue.repository.casefold() == target.repo.casefold()
         )
     return (
-        issue.provider == "azure-devops"
+        isinstance(issue, AzureDevOpsIssueReference)
         and target.organization is not None
         and target.project is not None
         and issue.organization.casefold() == target.organization.casefold()

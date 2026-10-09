@@ -136,7 +136,6 @@ async def test_create_ado_issue_uses_configured_project_and_issue_type() -> None
             description="Validated issue body.",
         )
 
-    assert result.work_item_id == 456
     assert result.issue_url == (
         "https://dev.azure.com/azure-sdk/internal/_workitems/edit/456"
     )

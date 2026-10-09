@@ -250,8 +250,6 @@ model FeedbackState {
   error?: string;
 
   issue_url?: string;
-  source_id?: string;
-  source_url?: string;
   classification?: string;
   validation_reasoning?: string;
   validated_at?: utcDateTime;
@@ -321,7 +319,7 @@ The Evolution Agent may prepare issue content during analysis, but it must compl
 
 Before creation, the Agent searches the selected tracker for a stable HTML marker containing the source, classification, and scope. It reuses only an item representing the same defect and adds the new conversation and validation evidence as a comment. ADO creation is source-bound: the creation tool accepts the exact source identity and URL, re-resolves them against knowledge configuration, derives the configured project, and fixes the work-item type to `Issue`.
 
-Every Agent-created item includes concise expected behavior, detailed fixed-document provenance, and validation evidence. It does not duplicate the complete conversation or validated answer. Before persisting a KB issue, the backend re-resolves its exact source identity and URL against the authoritative knowledge configuration and requires the issue destination to match the configured tracker or the explicit `Azure/azure-sdk-pr` fallback. Registered static sources without repository configuration use their stable source identity and may route only to the fallback. The backend stores the canonical issue URL, authoritative source identity and URL, conversation coordinates, and `feedback.status=pending_validation` so the daily job can validate the item after closure. Labels are presentation metadata written only in `Azure/azure-sdk-pr`; they never control routing, deduplication, scheduling, validation, persistence, retries, or dashboard reporting. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent cites the exact KB document or proposed missing-content location and authoritative source:
+Every Agent-created item includes concise expected behavior, detailed fixed-document provenance, and validation evidence. It does not duplicate the complete conversation or validated answer. Before persisting a KB issue, the backend re-resolves its exact source identity and URL against the authoritative knowledge configuration and requires the issue destination to match the configured tracker or the explicit `Azure/azure-sdk-pr` fallback. Registered static sources without repository configuration use their stable source identity and may route only to the fallback. The backend stores the canonical issue URL and `feedback.status=pending_validation` so the daily job can validate the item after closure. Labels are presentation metadata written only in `Azure/azure-sdk-pr`; they never control routing, deduplication, scheduling, validation, persistence, retries, or dashboard reporting. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent cites the exact KB document or proposed missing-content location and authoritative source:
 
 > **Title:** [Doc] No guidance on the TypeSpec `@added` versioning decorator
 >

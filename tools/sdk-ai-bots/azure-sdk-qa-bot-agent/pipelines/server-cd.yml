@@ -235,8 +235,6 @@ extends:
                     echo "$OUTPUT"
                     [ $STATUS -eq 0 ] || { echo "Failed to update container" >&2; exit $STATUS; }
                     echo "Container configuration updated"
-                    az webapp restart --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" $SLOT_ARG
-                    echo "Webapp restart requested"
                 env:
                   APP_NAME: $(APP_NAME)
                   RESOURCE_GROUP: $(RESOURCE_GROUP)

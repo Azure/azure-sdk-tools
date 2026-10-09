@@ -106,8 +106,17 @@ Git credentials are passed through the child process environment, not clone URLs
 Deploy using an authenticated Azure CLI session with permission to publish through
 SCM using Microsoft Entra authentication. Backend CD automatically builds and
 publishes the ZIP and deploys the `knowledge-sync` WebJob for dev and production;
-preview deploys only the backend. Each CD run builds the ZIP from its checked-out
-source, including production runs.
+preview deploys only the backend. The stage has separate `DeployServer` and
+`DeployKnowledgeSync` jobs. Knowledge sync builds, tests, packages, publishes, and
+deploys after the server job succeeds. Each CD run builds the ZIP from its own
+checkout, including production runs.
+
+Select the backend CD parameter `deploymentTarget`:
+- `all` (default): deploy the server, then knowledge sync; preview deploys only the server.
+- `server`: deploy only the server.
+- `knowledge-sync`: build, test, and deploy only the knowledge-sync WebJob in dev
+	or production, skipping the server and SSH key provisioning. Existing App Service
+	settings must already be configured. Preview rejects this target.
 
 For a standalone deployment, set `WEBJOB_ZIP`, `APP_NAME`, `RESOURCE_GROUP`, and
 `WEBJOB_NAME` on the deployment machine, then run `node scripts/deploy-webjob.mjs`.

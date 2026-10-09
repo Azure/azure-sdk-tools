@@ -5,7 +5,8 @@ import { load } from 'js-yaml';
 import { describe, expect, it, vi } from 'vitest';
 
 const pipeline = load(readFileSync(resolve(__dirname, '../../azure-sdk-qa-bot-agent/pipelines/server-cd.yml'), 'utf8')) as any;
-const steps = pipeline.extends.parameters.stages[0].jobs[0].steps;
+const jobs = pipeline.extends.parameters.stages[0].jobs.flatMap((entry: any) => entry.job ? [entry] : Object.values(entry).flat());
+const steps = jobs.find((job: any) => job.job === 'DeployKnowledgeSync').steps;
 const tasks = steps.flatMap((step: any) => step.task ? [step] : Object.values(step).filter(Array.isArray).flat());
 const task = tasks.find((step: any) => step.displayName === 'Configure Knowledge Sync SSH Key');
 const inline = task.inputs.inlineScript as string;

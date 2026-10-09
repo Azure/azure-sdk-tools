@@ -2,8 +2,8 @@
  * Sets up the evaluation fixture environment:
  * 1. Selects the prebuilt MCP Vally environment.
  * 2. Builds the live and mock MCP binaries into artifacts/mcp.
- * 3. Runs setup-fixture-files.js to download package.json / package-lock.json
- *    and the live .github/copilot-instructions.md from azure-rest-api-specs.
+ * 3. Runs setup-fixture-files.js to create a standalone npm package from the
+ *    azure-rest-api-specs pnpm workspace and download its live instructions.
  * 4. Runs npm ci in the Widget fixture directory.
  * 5. Outputs the shell commands to set the environment variables used by Vally.
  *
@@ -11,6 +11,19 @@
  *   node scripts/setup-environment.js --mcp-kind live
  *   node scripts/setup-environment.js --mcp-kind mock
  *   eval $(node scripts/setup-environment.js --mcp-kind live)
+ *
+ * Linux/WSL setup:
+ *   - Use Linux-native Node.js 22 and npm; do not resolve them from /mnt/c Windows shims.
+ *   - Install both the repository SDK and the .NET 8 runtime required by the net8.0
+ *     prebuilt MCP servers (`dotnet --list-runtimes` must include Microsoft.NETCore.App 8.x).
+ *   - Evaluate this script in the current shell so AZSDK_EVAL_REPO_ROOT and
+ *     FIXTURE_NODE_MODULES remain available to Vally.
+ *
+ * Vally 0.14.0 cannot be installed locally under the current managed-device
+ * permissions. It depends on the native better-sqlite3 module, whose fallback
+ * installation invokes node-gyp. This environment blocks direct registry.npmjs.org
+ * downloads and does not permit elevating to install the required system build tools.
+ * Use the repository-pinned installation prepared through the approved package feed.
  *
  * On Windows (PowerShell):
  *   node scripts/setup-environment.js | Invoke-Expression
@@ -63,7 +76,7 @@ run(`node ${JSON.stringify(path.join(scriptDir, 'setup-fixture-files.js'))}`);
 
 // Step 4: Run npm ci.
 process.stderr.write(`==> Running npm ci in ${widgetDir} ...\n`);
-run('npm ci', { cwd: widgetDir });
+run('npm ci --legacy-peer-deps', { cwd: widgetDir });
 
 // Step 5: Output env var setters (stdout only, so eval/Invoke-Expression works).
 const nodeModules = path.join(widgetDir, 'node_modules');

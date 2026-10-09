@@ -4,10 +4,15 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 
 ## Prerequisites
 
-- [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli@0.7.0`
+- [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli@0.14.0`
 - Node.js/npm available on `PATH`; the MCP build restores Copilot SDK native npm assets.
 - The `azsdk-cli` MCP server built as described below.
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
+
+> **Platform note:** Run these evaluations on Linux or in WSL when possible. On native Windows,
+> installing Vally 0.14.0 may fail while building `better-sqlite3` with `node-gyp`, even with a
+> supported Node.js 22 installation. Native Windows installation requires the Visual Studio
+> **Desktop development with C++** workload and a VC++ toolset; otherwise use Linux or WSL.
 
 ## Environment Setup
 
@@ -28,6 +33,22 @@ node scripts/setup-environment.js --mcp-kind live | Invoke-Expression
 # Bash / Zsh
 eval $(node scripts/setup-environment.js --mcp-kind live)
 ```
+
+Vally 0.14 isolates the Copilot config home by default. For local runs that authenticate through
+`copilot login`, explicitly allow the executor to reuse the host profile:
+
+```powershell
+# PowerShell
+$env:EVALUATE_USE_HOST_COPILOT_HOME = "1"
+```
+
+```bash
+# Bash / Zsh
+export EVALUATE_USE_HOST_COPILOT_HOME=1
+```
+
+Keep this opt-in local. Pipeline runs authenticate with their injected token and should retain the
+default isolated Copilot home.
 
 Managed development devices cannot download packages directly from `registry.npmjs.org`.
 `dotnet run` performs an implicit build, and `GitHub.Copilot.SDK` may download its platform package
@@ -67,8 +88,9 @@ participating files under `evals/`. Local environment overrides should not be co
 1. Set scalar eval specs to the selected local prebuilt environment.
 2. Build the live MCP server into `artifacts/mcp/cli` and the mock MCP server
   into `artifacts/mcp/mock`.
-3. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
-   `npm ci` there.
+3. Convert the azure-rest-api-specs pnpm workspace manifest into standalone `package.json` /
+   `package-lock.json` files under `fixtures/Microsoft.Widget/Widget/` and run
+   `npm ci --legacy-peer-deps` there.
 4. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
 5. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
 

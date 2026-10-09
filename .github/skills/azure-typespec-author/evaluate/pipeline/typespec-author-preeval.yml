@@ -41,7 +41,7 @@ steps:
 
   - script: |
       set -e
-      npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+      npm ci --legacy-peer-deps --userconfig $(Build.SourcesDirectory)/.npmrc
       echo "##vso[task.prependpath]$(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval/node_modules/.bin"
     displayName: 'Install TypeSpec toolchain (pinned)'
     workingDirectory: $(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval

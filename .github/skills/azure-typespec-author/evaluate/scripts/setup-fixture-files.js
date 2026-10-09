@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /*
  * Sparse-checkout https://github.com/Azure/azure-rest-api-specs (excluding the
- * `specification/` folder) and copy package.json + package-lock.json into the
- * Microsoft.Widget fixture directory, plus the live `.github/copilot-instructions.md`
- * into the instructions-test fixture directory.
+ * `specification/` folder), convert its pnpm workspace manifest into a standalone
+ * npm package for the Microsoft.Widget fixture, and copy the live
+ * `.github/copilot-instructions.md` into the instructions-test fixture directory.
  *
  * Cross-platform: runs on both Linux and Windows under Node.js (>=16).
  * Requires `git` in PATH.
@@ -25,7 +25,8 @@ const path = require('node:path');
 
 const REPO_URL = 'https://github.com/Azure/azure-rest-api-specs.git';
 const BRANCH = 'main';
-const FILES = ['package.json', 'package-lock.json'];
+const PACKAGE_JSON = 'package.json';
+const PNPM_WORKSPACE = 'pnpm-workspace.yaml';
 
 // The live .github/copilot-instructions.md is pulled from the spec repo into the
 // instructions-test fixture so evals exercise the real authoring instructions
@@ -42,6 +43,69 @@ const DEST = process.argv[2]
 function run(cmd, args, opts = {}) {
     console.log(`> ${cmd} ${args.join(' ')}`);
     execFileSync(cmd, args, { stdio: 'inherit', ...opts });
+}
+
+function parseYamlScalar(value) {
+    const trimmed = value.trim();
+    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+        return JSON.parse(trimmed);
+    }
+    if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
+        return trimmed.slice(1, -1).replace(/''/g, "'");
+    }
+    return trimmed;
+}
+
+function parseFlatYamlSection(content, sectionName) {
+    const lines = content.split(/\r?\n/);
+    const start = lines.findIndex((line) => line === `${sectionName}:`);
+    if (start === -1) {
+        throw new Error(`Expected ${sectionName}: section in ${PNPM_WORKSPACE}`);
+    }
+
+    const result = {};
+    for (const line of lines.slice(start + 1)) {
+        if (line && !line.startsWith(' ')) break;
+
+        const match = line.match(/^  (.+?):\s+(.+?)\s*(?:#.*)?$/);
+        if (!match) continue;
+        result[parseYamlScalar(match[1])] = parseYamlScalar(match[2]);
+    }
+    return result;
+}
+
+function createStandalonePackage(tmp) {
+    const packagePath = path.join(tmp, PACKAGE_JSON);
+    const workspacePath = path.join(tmp, PNPM_WORKSPACE);
+    for (const filePath of [packagePath, workspacePath]) {
+        if (!fs.existsSync(filePath)) {
+            throw new Error(`Expected file not present after sparse checkout: ${filePath}`);
+        }
+    }
+
+    const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    const workspace = fs.readFileSync(workspacePath, 'utf8');
+    const catalog = parseFlatYamlSection(workspace, 'catalog');
+
+    delete pkg.packageManager;
+    delete pkg.workspaces;
+    for (const depKey of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+        if (!pkg[depKey]) continue;
+        for (const [name, version] of Object.entries(pkg[depKey])) {
+            if (version === 'catalog:') {
+                if (!catalog[name]) {
+                    throw new Error(`No catalog version found for ${name}`);
+                }
+                pkg[depKey][name] = catalog[name];
+            } else if (typeof version === 'string' && version.startsWith('workspace:')) {
+                delete pkg[depKey][name];
+            } else if (typeof version === 'string' && version.startsWith('catalog:')) {
+                throw new Error(`Unsupported named catalog reference for ${name}: ${version}`);
+            }
+        }
+    }
+    pkg.overrides = parseFlatYamlSection(workspace, 'overrides');
+    return pkg;
 }
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'azure-rest-api-specs-'));
@@ -63,15 +127,9 @@ try {
     run('git', ['-C', tmp, 'sparse-checkout', 'set', '--no-cone', '/*', '!/specification/']);
 
     fs.mkdirSync(DEST, { recursive: true });
-    for (const name of FILES) {
-        const src = path.join(tmp, name);
-        const dst = path.join(DEST, name);
-        if (!fs.existsSync(src)) {
-            throw new Error(`Expected file not present after sparse checkout: ${src}`);
-        }
-        fs.copyFileSync(src, dst);
-        console.log(`copied ${name} -> ${dst}`);
-    }
+    const pkgPath = path.join(DEST, PACKAGE_JSON);
+    fs.writeFileSync(pkgPath, JSON.stringify(createStandalonePackage(tmp), null, 2) + '\n');
+    console.log(`created standalone ${PACKAGE_JSON} -> ${pkgPath}`);
 
     // Copy the live .github/copilot-instructions.md into the instructions-test fixture.
     const ciSrc = path.join(tmp, COPILOT_INSTRUCTIONS_SRC);
@@ -82,60 +140,28 @@ try {
     fs.copyFileSync(ciSrc, COPILOT_INSTRUCTIONS_DEST);
     console.log(`copied ${COPILOT_INSTRUCTIONS_SRC} -> ${COPILOT_INSTRUCTIONS_DEST}`);
 
-    // Strip "file:" workspace references from package.json and package-lock.json
-    // to prevent npm ci from creating unwanted node_modules in eng/ and .github/.
-    const pkgPath = path.join(DEST, 'package.json');
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-    delete pkg.workspaces;
-    for (const depKey of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-        if (!pkg[depKey]) continue;
-        for (const [name, ver] of Object.entries(pkg[depKey])) {
-            if (typeof ver === 'string' && ver.startsWith('file:')) {
-                delete pkg[depKey][name];
-            }
-        }
-    }
-    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
-    console.log('stripped file: references from package.json');
-
+    // Generate an npm lockfile because eval work directories use npm ci and do
+    // not contain the source repository's pnpm workspace.
     const lockPath = path.join(DEST, 'package-lock.json');
-    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
-    // Remove file: entries from top-level dependencies/packages
-    for (const section of ['dependencies', 'packages']) {
-        if (!lock[section]) continue;
-        for (const [key, val] of Object.entries(lock[section])) {
-            if (typeof val === 'object' && val !== null) {
-                // In "packages", file: deps appear as keys like "node_modules/..." with link:true
-                // or as entries whose resolved/version starts with "file:"
-                const ver = val.version || val.resolved || '';
-                if (typeof ver === 'string' && ver.startsWith('file:')) {
-                    delete lock[section][key];
-                    continue;
-                }
-                if (val.link === true) {
-                    delete lock[section][key];
-                    continue;
-                }
-            } else if (typeof val === 'string' && val.startsWith('file:')) {
-                delete lock[section][key];
-            }
-        }
+    fs.rmSync(lockPath, { force: true });
+    const npmCommand = process.platform === 'win32' ? process.execPath : 'npm';
+    const npmArgs = process.platform === 'win32'
+        ? [path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')]
+        : [];
+    run(npmCommand, [
+        ...npmArgs,
+        'install',
+        '--package-lock-only',
+        '--ignore-scripts',
+        '--no-audit',
+        '--no-fund',
+        '--workspaces=false',
+        '--legacy-peer-deps',
+    ], { cwd: DEST });
+    if (!fs.existsSync(lockPath)) {
+        throw new Error(`npm did not create expected lockfile: ${lockPath}`);
     }
-    // Also strip file: from the root package entry's dependencies
-    if (lock.packages && lock.packages['']) {
-        const rootPkg = lock.packages[''];
-        delete rootPkg.workspaces;
-        for (const depKey of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-            if (!rootPkg[depKey]) continue;
-            for (const [name, ver] of Object.entries(rootPkg[depKey])) {
-                if (typeof ver === 'string' && ver.startsWith('file:')) {
-                    delete rootPkg[depKey][name];
-                }
-            }
-        }
-    }
-    fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
-    console.log('stripped file: references from package-lock.json');
+    console.log(`generated package-lock.json -> ${lockPath}`);
 } finally {
     fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5 });
 }

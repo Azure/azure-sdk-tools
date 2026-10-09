@@ -3,54 +3,72 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+// Only these deliberately safe messages may be printed by the entry point.
+class DeploymentError extends Error {}
+
 // All subprocess output stays private; do not log tokens or appsettings responses.
 function az(args) {
-    return execFileSync('az', [...args, '--only-show-errors', '--output', 'json'], {
-        encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 4 * 1024 * 1024
-    });
+    const operation = args.slice(0, args.indexOf('--name') === -1 ? 2 : args.indexOf('--name')).join(' ');
+    try {
+        return execFileSync('az', [...args, '--only-show-errors', '--output', 'json'], {
+            encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 4 * 1024 * 1024
+        });
+    } catch (error) {
+        throw new DeploymentError(`Azure CLI ${operation} failed (exit status ${error.status ?? 'unavailable'})`);
+    }
 }
-async function request(url, token, { method = 'GET', body, contentType = 'application/json', allowMissing = false } = {}) {
-    const response = await fetch(url, { method, body, redirect: 'error', signal: AbortSignal.timeout(120000),
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': contentType } });
+async function request(url, token, { method = 'GET', body, contentType = 'application/json', allowMissing = false, headers = {} } = {}) {
+    const operation = `${method} ${new URL(url).pathname}`;
+    let response;
+    try {
+        response = await fetch(url, { method, body, redirect: 'error', signal: AbortSignal.timeout(120000),
+            headers: { ...headers, Authorization: `Bearer ${token}`, 'Content-Type': contentType } });
+    } catch {
+        throw new DeploymentError(`SCM ${operation} failed before receiving an HTTP response; check SCM availability after restart and network access`);
+    }
     if (allowMissing && response.status === 404) return null;
-    if (!response.ok) throw new Error(`Deployment API rejected ${method}: HTTP ${response.status}`);
-    const text = await response.text();
-    return text ? JSON.parse(text) : null;
+    if (!response.ok) throw new DeploymentError(`SCM ${operation} rejected: HTTP ${response.status}`);
+    try {
+        const text = await response.text();
+        return text ? JSON.parse(text) : null;
+    } catch {
+        throw new DeploymentError(`SCM ${operation} returned an unreadable or invalid JSON response (HTTP ${response.status})`);
+    }
 }
 async function assertPausedAndDrained(job, token) {
     const paused = await request(job, token);
-    if (!paused?.settings || paused.settings.schedule) throw new Error('Job schedule was not removed');
+    if (!paused?.settings || paused.settings.schedule) throw new DeploymentError('Job schedule was not removed');
     const history = await request(`${job}/history`, token);
     if (!Array.isArray(history?.runs) || history.runs.some(run => !['Success', 'Failed', 'Aborted'].includes(run.status))) {
-        throw new Error('Job has running/pending history or unknown state; drain before deployment');
+        throw new DeploymentError('Job has running/pending history or unknown state; drain before deployment');
     }
 }
 export async function deploy(env = process.env) {
     for (const name of ['WEBJOB_ZIP', 'APP_NAME', 'RESOURCE_GROUP', 'WEBJOB_NAME']) {
-        if (typeof env[name] !== 'string' || !env[name].trim()) throw new Error(`Required deployment input missing: ${name}`);
+        if (typeof env[name] !== 'string' || !env[name].trim()) throw new DeploymentError(`Required deployment input missing: ${name}`);
     }
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(env.WEBJOB_NAME ?? '')) throw new Error('Invalid WebJob name');
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(env.WEBJOB_NAME ?? '')) throw new DeploymentError('Invalid WebJob name');
     const archive = await readFile(env.WEBJOB_ZIP);
-    if (!archive.length) throw new Error('WebJob ZIP is empty');
+    if (!archive.length) throw new DeploymentError('WebJob ZIP is empty');
     const settings = JSON.parse(await readFile(new URL('../webjob/settings.job', import.meta.url), 'utf8'));
     const target = ['--name', env.APP_NAME, '--resource-group', env.RESOURCE_GROUP];
     const site = JSON.parse(az(['webapp', 'show', ...target]));
-    if (!site.reserved || !site.kind?.includes('container')) throw new Error('Expected Linux container App Service');
+    if (!site.reserved || !site.kind?.includes('container')) throw new DeploymentError('Expected Linux container App Service');
     // Read only the required existing app settings and scheduler timezone; never replace app identity/configuration.
     const existingSettings = JSON.parse(az(['webapp', 'config', 'appsettings', 'list', ...target,
         '--query', "[?name=='AZURE_APPCONFIG_ENDPOINT' || name=='AZURE_CLIENT_ID' || name=='WEBSITE_TIME_ZONE' || name=='TZ'].{name:name,value:value}"]));
     for (const name of ['AZURE_APPCONFIG_ENDPOINT', 'AZURE_CLIENT_ID']) {
         if (!existingSettings.some(setting => setting.name === name && typeof setting.value === 'string' && setting.value.trim())) {
-            throw new Error(`Required existing app setting missing: ${name}`);
+            throw new DeploymentError(`Required existing app setting missing: ${name}`);
         }
     }
     if (existingSettings.some(setting => ['WEBSITE_TIME_ZONE', 'TZ'].includes(setting.name) && !['UTC', 'Etc/UTC'].includes(setting.value))) {
-        throw new Error('Scheduler must use UTC; timezone settings are not modified');
+        throw new DeploymentError('Scheduler must use UTC; timezone settings are not modified');
     }
     const scmHost = site.enabledHostNames?.find(host => host.includes('.scm.') && host.endsWith('.azurewebsites.net'));
-    if (!scmHost || !/^[a-z0-9.-]+$/i.test(scmHost)) throw new Error('SCM hostname not available');
+    if (!scmHost || !/^[a-z0-9.-]+$/i.test(scmHost)) throw new DeploymentError('SCM hostname not available');
     const token = JSON.parse(az(['account', 'get-access-token'])).accessToken;
-    if (!token) throw new Error('SCM Entra token unavailable');
+    if (!token) throw new DeploymentError('SCM Entra token unavailable');
     const job = `https://${scmHost}/api/triggeredwebjobs/${encodeURIComponent(env.WEBJOB_NAME)}`;
     const existing = await request(job, token, { allowMissing: true });
     // Pause only this job, never all WebJobs on the backend.
@@ -64,15 +82,19 @@ export async function deploy(env = process.env) {
         'WEBSITE_SKIP_RUNNING_KUDUAGENT=false', 'WEBSITES_ENABLE_APP_SERVICE_STORAGE=true']);
     // Configuration changes can restart the app; recheck immediately before overwriting this job.
     if (existing) await assertPausedAndDrained(job, token);
-    await request(job, token, { method: 'PUT', contentType: 'application/zip', body: archive });
+    await request(job, token, { method: 'PUT', contentType: 'application/zip', body: archive,
+        headers: { 'Content-Disposition': 'attachment; filename="knowledge-sync.zip"' } });
     const installed = await request(job, token);
-    if (installed?.name !== env.WEBJOB_NAME) throw new Error('Job discovery failed');
+    if (installed?.name !== env.WEBJOB_NAME) throw new DeploymentError('Job discovery failed');
     await request(`${job}/settings`, token, { method: 'PUT', body: JSON.stringify(settings) });
     const final = await request(job, token);
-    if (final?.name !== env.WEBJOB_NAME) throw new Error('Job discovery failed');
-    if (final.settings?.schedule !== settings.schedule || final.settings?.is_singleton !== true) throw new Error('Schedule verification failed');
+    if (final?.name !== env.WEBJOB_NAME) throw new DeploymentError('Job discovery failed');
+    if (final.settings?.schedule !== settings.schedule || final.settings?.is_singleton !== true) throw new DeploymentError('Schedule verification failed');
     console.log(JSON.stringify({ job: env.WEBJOB_NAME, schedule: settings.schedule }));
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-    deploy().catch(() => { console.error('WebJob deployment failed closed; check deployment inputs, app settings, SCM Entra authorization and job history. No basic-auth fallback.'); process.exitCode = 1; });
+    deploy().catch(error => {
+        console.error(`WebJob deployment failed: ${error instanceof DeploymentError ? error.message : 'Unexpected error; raw details suppressed to protect credentials'}. No basic-auth fallback.`);
+        process.exitCode = 1;
+    });
 }

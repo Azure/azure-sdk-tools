@@ -99,9 +99,11 @@ jobs:
 
       - pwsh: |
           $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN)) {
-            throw 'No scoped installation token was minted.'
+          if ([string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN) -or -not $env:COPILOT_GITHUB_TOKEN.StartsWith('ghs_')) {
+            throw 'A GitHub App installation token was not passed to the SDK task.'
           }
+          $env:COPILOT_CLI_PATH = (Get-Command copilot -ErrorAction Stop).Source
+          Write-Host "SDK runtime: $env:COPILOT_CLI_PATH"
           $sdkDir = Join-Path "$(Agent.TempDirectory)" 'copilot-sdk-org-read-probe'
           New-Item -ItemType Directory -Force -Path $sdkDir | Out-Null
           npm install --prefix $sdkDir --no-save --no-package-lock @github/copilot-sdk@1.0.16
@@ -115,7 +117,7 @@ jobs:
           const timeout = setTimeout(() => { console.error('SDK probe timed out'); process.exit(124); }, 90000);
           timeout.unref();
           const client = new CopilotClient({
-            connection: RuntimeConnection.forStdio(),
+            connection: RuntimeConnection.forStdio({ path: process.env.COPILOT_CLI_PATH }),
             env: { ...process.env, COPILOT_GITHUB_TOKEN: process.env.COPILOT_GITHUB_TOKEN },
             useLoggedInUser: false,
           });

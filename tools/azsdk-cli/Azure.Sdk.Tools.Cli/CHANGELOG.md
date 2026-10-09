@@ -5,6 +5,7 @@
 ### Features Added
 
 - `release-plan update-release-status` resolves the release plan from a supplied `--release-plan-id` first, then from a supplied `--sdk-pull-request` linked to exactly one in-progress plan, and validates the language/package entry inside that plan. Only when neither input is supplied does the original package-name lookup run as a transitional fallback and log `LEGACY_RELEASE_PLAN_LOOKUP`, so existing release pipelines keep working. No API version is required.
+- `api-review create` supports API Review Hub pipeline ref overrides through `AZSDK_API_REVIEW_PIPELINE_REF`, `AZSDK_API_REVIEW_TOOLS_REF`, and `AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF`. These overrides are intentionally unavailable to the MCP tool.
 
 ### Breaking Changes
 

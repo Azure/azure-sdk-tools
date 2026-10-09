@@ -51,51 +51,54 @@ resources:
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-python
-      ref: ${{ parameters.languageToolsRef }}
+      ref: ${{ iif(eq(parameters.language, 'python'), parameters.languageToolsRef, 'main') }}
     - repository: java-repo
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-java
-      ref: ${{ parameters.languageToolsRef }}
+      ref: ${{ iif(eq(parameters.language, 'java'), parameters.languageToolsRef, 'main') }}
     - repository: csharp-repo
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-net
-      ref: ${{ parameters.languageToolsRef }}
+      ref: ${{ iif(eq(parameters.language, 'csharp'), parameters.languageToolsRef, 'main') }}
     - repository: javascript-repo
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-js
-      ref: ${{ parameters.languageToolsRef }}
+      ref: ${{ iif(eq(parameters.language, 'javascript'), parameters.languageToolsRef, 'main') }}
     - repository: go-repo
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-go
-      ref: ${{ parameters.languageToolsRef }}
+      ref: ${{ iif(eq(parameters.language, 'go'), parameters.languageToolsRef, 'main') }}
     - repository: rust-repo
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-rust
-      ref: ${{ parameters.languageToolsRef }}
+      ref: ${{ iif(eq(parameters.language, 'rust'), parameters.languageToolsRef, 'main') }}
     - repository: cpp-repo
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-cpp
-      ref: ${{ parameters.languageToolsRef }}
+      ref: ${{ iif(eq(parameters.language, 'cpp'), parameters.languageToolsRef, 'main') }}
 
 variables:
-  - name: callbackTokenAudience
+  - name: CompletionCallbackAzureSubscription
+    value: 'ADO to ARH Service Connection'
+    readonly: true
+  - name: CompletionCallbackResourceUrl
     value: 'api://apireviewhub'
     readonly: true
-  - name: completionCallbackUrl
-    value: 'https://api-review-hub.azurewebsites.net/api/operations/'
+  - name: ApiReviewHubEndpoint
+    value: 'https://api-review-hub.azurewebsites.net'
     readonly: true
 
 stages:
   - stage: BuildTools
     displayName: 'Build API review tools'
     jobs:
-      - template: /eng/common/pipelines/templates/jobs/apireview-hub-build-tools-base.yml
+      - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-build-tools-{0}.yml@{0}-repo', parameters.language) }}
         parameters:
           languageRepoResource: ${{ format('{0}-repo', parameters.language) }}
           toolsRef: ${{ parameters.toolsRef }}
@@ -110,6 +113,7 @@ stages:
         - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-generate-artifact-{0}.yml@{0}-repo', parameters.language) }}
           parameters:
             kind: base
+            requestMode: ${{ parameters.requestMode }}
             repositoryOwner: ${{ parameters.owner }}
             ref: ${{ parameters.baseRef }}
             packageName: ${{ parameters.packageName }}
@@ -118,6 +122,7 @@ stages:
       - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-generate-artifact-{0}.yml@{0}-repo', parameters.language) }}
         parameters:
           kind: target
+          requestMode: ${{ parameters.requestMode }}
           repositoryOwner: ${{ parameters.owner }}
           ref: ${{ parameters.targetRef }}
           packageName: ${{ parameters.packageName }}

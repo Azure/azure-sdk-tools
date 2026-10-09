@@ -34,6 +34,18 @@ public class ReviewPullRequestCreationRequest
 
     [JsonPropertyName("targetBranch")]
     public required GitBranchReference TargetBranch { get; set; }
+
+    [JsonPropertyName("pipelineRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PipelineRef { get; set; }
+
+    [JsonPropertyName("toolsRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ToolsRef { get; set; }
+
+    [JsonPropertyName("languageToolsRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LanguageToolsRef { get; set; }
 }
 
 public class MarkPackageReleasedRequest

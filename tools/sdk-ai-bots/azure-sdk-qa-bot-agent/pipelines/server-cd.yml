@@ -36,6 +36,10 @@ variables:
     value: 'azure-sdk-qa-bot-agent-server'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: syncWorkingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
+  - name: webjobName
+    value: 'knowledge-sync'
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -51,6 +55,14 @@ extends:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
               os: linux
+            ${{ if ne(parameters.environment, 'preview') }}:
+              templateContext:
+                outputs:
+                  - output: pipelineArtifact
+                    path: $(Build.ArtifactStagingDirectory)/knowledge-sync
+                    artifact: knowledge-sync
+                    displayName: 'Publish Scheduled Knowledge Sync ZIP'
+                    condition: succeededOrFailed()
             steps:
               # 1. Checkout
               - checkout: self
@@ -81,6 +93,27 @@ extends:
                 displayName: 'Resolve Image Tag'
                 failOnStderr: true
                 continueOnError: false
+
+              # Build, test, and package scheduled knowledge sync before cloud mutations.
+              - ${{ if ne(parameters.environment, 'preview') }}:
+                - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
+                - task: NodeTool@0
+                  displayName: 'Use Node.js 24.x for Scheduled Knowledge Sync'
+                  inputs:
+                    versionSpec: '24.x'
+
+                - bash: npm ci
+                  displayName: 'Install Scheduled Knowledge Sync Dependencies'
+                  workingDirectory: $(syncWorkingDirectory)
+
+                - bash: npm test -- --no-file-parallelism
+                  displayName: 'Test Scheduled Knowledge Sync'
+                  workingDirectory: $(syncWorkingDirectory)
+
+                - bash: npm run build:webjob -- $(Build.ArtifactStagingDirectory)/knowledge-sync/knowledge-sync.zip
+                  displayName: 'Build and Package Scheduled Knowledge Sync'
+                  workingDirectory: $(syncWorkingDirectory)
 
               # 3. Build & push (prod reuses existing image)
               - task: AzureCLI@2
@@ -165,6 +198,21 @@ extends:
                   ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
                   IMAGE_NAME: $(imageName)
 
+              - ${{ if ne(parameters.environment, 'preview') }}:
+                - task: AzureCLI@2
+                  displayName: 'Deploy Scheduled Knowledge Sync WebJob'
+                  continueOnError: false
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: node "$(syncWorkingDirectory)/scripts/deploy-webjob.mjs"
+                  env:
+                    WEBJOB_ZIP: $(Build.ArtifactStagingDirectory)/knowledge-sync/knowledge-sync.zip
+                    APP_NAME: $(APP_NAME)
+                    RESOURCE_GROUP: $(RESOURCE_GROUP)
+                    WEBJOB_NAME: $(webjobName)
+
               # 6. Health check
               - task: AzureCLI@2
                 displayName: 'Health Check'
@@ -197,6 +245,7 @@ extends:
                       echo "Health check OK"
                     else
                       echo "Health endpoint returned $HTTP_STATUS" >&2
+                      exit 1
                     fi
                     ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
                     echo "=== Deployment Summary ==="

@@ -10,6 +10,7 @@
     "prestart": "npm run clean && npm run build",
     "start": "node dist/src/index.js",
     "sync": "npm run build && npm run start",
+    "build:webjob": "bash scripts/build-webjob.sh",
     "test": "vitest run --reporter=default",
     "test:watch": "vitest"
   },

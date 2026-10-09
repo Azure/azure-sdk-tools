@@ -216,10 +216,9 @@
     },
     {
       "repository": {
-        "url": "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms",
+        "url": "https://dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms",
         "branch": "main",
-        "authType": "local",
-        "localPathEnv": "AZURE_SDK_DOCS_PATH"
+        "authType": "azure-devops"
       },
       "paths": [
         {
@@ -235,10 +234,9 @@
     },
     {
       "repository": {
-        "url": "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/internal.wiki",
+        "url": "https://dev.azure.com/azure-sdk/internal/_git/internal.wiki",
         "branch": "wikiMaster",
-        "authType": "local",
-        "localPathEnv": "AZURE_SDK_WIKI_PATH"
+        "authType": "azure-devops"
       },
       "paths": [
         {

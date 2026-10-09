@@ -13,7 +13,7 @@ This is a standalone TypeScript application which processes documentation from v
 
 ## Project Structure
 
-```
+```text
 azure-sdk-qa-bot-knowledge-sync/
 ├── src/
 │   ├── index.ts                    # Main entry point (calls DailySyncKnowledge)
@@ -74,6 +74,38 @@ npm run dev
 ## Environment Variables
 
 - `AZURE_APPCONFIG_ENDPOINT`
+
+## App Service WebJob
+
+Build the ZIP on Linux x64 with Node 24, npm, curl, tar, zip, and unzip available.
+Run `npm ci`, then `npm run build:webjob -- <output.zip>`. The package contains
+compiled code, configuration, production dependencies, and a pinned Node runtime.
+It does not install or build anything when the job runs.
+
+The launcher uses the existing App Service environment, including
+`AZURE_APPCONFIG_ENDPOINT` and `AZURE_CLIENT_ID`. Git and OpenSSH must be available
+in the WebJob execution environment. App Configuration must provide
+`ADO_RESOURCE_SCOPE` for private Azure Repos checkout; the identity also needs
+Azure DevOps repository read access and access to the configured Azure resources.
+
+Deploy using an authenticated Azure CLI session with permission to publish through
+SCM using Microsoft Entra authentication. Backend CD automatically builds and
+publishes the ZIP and deploys the `knowledge-sync` WebJob for dev and production;
+preview deploys only the backend. Each CD run builds the ZIP from its checked-out
+source, including production runs.
+
+For a standalone deployment, set `WEBJOB_ZIP`, `APP_NAME`, `RESOURCE_GROUP`, and
+`WEBJOB_NAME` on the deployment machine, then run `node scripts/deploy-webjob.mjs`.
+These are deployment inputs, not App Service application settings. Backend CD
+supplies them using the artifact path and existing environment-specific variables.
+The script uploads only the named triggered WebJob, refuses to overwrite a running
+job, and verifies its schedule. Enabling Always On, the Kudu agent, and persistent
+storage may restart the backend app.
+
+The job runs daily at **02:00 UTC**, using the schedule in `webjob/settings.job`.
+Disable the previous ADO sync schedules before deploying the scheduled WebJob to
+avoid concurrent writers. Use the appropriate existing app configuration for each
+dev and production deployment.
 
 ## Azure DevOps Pipeline
 

@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 
 // Only these deliberately safe messages may be printed by the entry point.
@@ -17,8 +19,9 @@ function az(args) {
         throw new DeploymentError(`Azure CLI ${operation} failed (exit status ${error.status ?? 'unavailable'})`);
     }
 }
-async function request(url, token, { method = 'GET', body, contentType = 'application/json', allowMissing = false, headers = {} } = {}) {
+async function request(url, token, { method = 'GET', body, contentType = 'application/json', allowMissing = false, headers = {}, binary = false } = {}) {
     const operation = `${method} ${new URL(url).pathname}`;
+    const started = Date.now();
     let response;
     try {
         response = await fetch(url, { method, body, redirect: 'error', signal: AbortSignal.timeout(120000),
@@ -27,12 +30,57 @@ async function request(url, token, { method = 'GET', body, contentType = 'applic
         throw new DeploymentError(`SCM ${operation} failed before receiving an HTTP response; check SCM availability after restart and network access`);
     }
     if (allowMissing && response.status === 404) return null;
-    if (!response.ok) throw new DeploymentError(`SCM ${operation} rejected: HTTP ${response.status}`);
+    if (!response.ok) {
+        const error = new DeploymentError(`SCM ${operation} rejected: HTTP ${response.status}`);
+        // Kudu may suppress the error body; its forwarding timeout is approximately 100 seconds.
+        // Never print an arbitrary SCM error body or recover from an authorization failure.
+        if (response.status === 400 && method === 'PUT' && contentType === 'application/zip') {
+            const text = await response.text();
+            error.forwardingTimeout = /A task was canceled\./i.test(text) || Date.now() - started >= 95000;
+        }
+        throw error;
+    }
     try {
+        if (binary) return Buffer.from(await response.arrayBuffer());
         const text = await response.text();
         return text ? JSON.parse(text) : null;
     } catch {
         throw new DeploymentError(`SCM ${operation} returned an unreadable or invalid JSON response (HTTP ${response.status})`);
+    }
+}
+// Compare uncompressed file lengths and CRCs, not ZIP bytes (Kudu repacks downloads).
+function zipInventory(file) {
+    execFileSync('unzip', ['-tq', file], { encoding: 'utf8', timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
+    const listing = execFileSync('unzip', ['-v', file], { encoding: 'utf8', timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
+    const files = listing.split('\n').flatMap(line => {
+        const match = line.match(/^\s*(\d+)\s+\S+\s+\d+\s+\S+\s+\S+\s+\S+\s+([a-f\d]{8})\s+(.+)$/i);
+        return match && !match[3].endsWith('/') ? [`${match[3]}:${match[1]}:${match[2].toLowerCase()}`] : [];
+    }).sort();
+    if (!files.length) throw new DeploymentError('Cannot verify WebJob ZIP file inventory');
+    return JSON.stringify(files);
+}
+async function waitForUpload(job, token, archivePath) {
+    const expected = zipInventory(archivePath);
+    const directory = await mkdtemp(resolve(tmpdir(), 'webjob-verify-'));
+    try {
+        const deadline = Date.now() + 10 * 60 * 1000;
+        while (Date.now() < deadline) {
+            const installed = await request(job, token, { allowMissing: true });
+            if (installed?.name === new URL(job).pathname.split('/').pop() && !installed.error) {
+                const name = new URL(job).pathname.split('/').pop();
+                const url = `${new URL(job).origin}/api/zip/site/wwwroot/App_Data/jobs/triggered/${name}/`;
+                const content = await request(url, token, { binary: true, allowMissing: true });
+                if (content) {
+                    const downloaded = resolve(directory, 'installed.zip');
+                    await writeFile(downloaded, content);
+                    if (zipInventory(downloaded) === expected) return;
+                }
+            }
+            await delay(15000);
+        }
+        throw new DeploymentError('Timed-out upload did not produce the expected WebJob package within 10 minutes');
+    } finally {
+        await rm(directory, { recursive: true, force: true });
     }
 }
 async function assertPausedAndDrained(job, token) {
@@ -82,8 +130,14 @@ export async function deploy(env = process.env) {
         'WEBSITE_SKIP_RUNNING_KUDUAGENT=false', 'WEBSITES_ENABLE_APP_SERVICE_STORAGE=true']);
     // Configuration changes can restart the app; recheck immediately before overwriting this job.
     if (existing) await assertPausedAndDrained(job, token);
-    await request(job, token, { method: 'PUT', contentType: 'application/zip', body: archive,
-        headers: { 'Content-Disposition': 'attachment; filename="knowledge-sync.zip"' } });
+    try {
+        await request(job, token, { method: 'PUT', contentType: 'application/zip', body: archive,
+            headers: { 'Content-Disposition': 'attachment; filename="knowledge-sync.zip"' } });
+    } catch (error) {
+        if (!error.forwardingTimeout) throw error;
+        console.warn('Kudu upload forwarding timed out; waiting for verified package completion without repeating the upload.');
+        await waitForUpload(job, token, env.WEBJOB_ZIP);
+    }
     const installed = await request(job, token);
     if (installed?.name !== env.WEBJOB_NAME) throw new DeploymentError('Job discovery failed');
     await request(`${job}/settings`, token, { method: 'PUT', body: JSON.stringify(settings) });

@@ -2,7 +2,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential, WorkloadIdentityCredential } from '@azure/identity';
+import { AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential } from '@azure/identity';
 import { BlobService } from './services/StorageService';
 import { SpectorCaseProcessor } from './services/SpectorCaseProcessor';
 import { ConfigurationLoader, DocumentationSource, Metadata, RepositoryConfig } from './services/ConfigurationLoader';
@@ -321,9 +321,8 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
                 const scope = process.env.ADO_RESOURCE_SCOPE;
                 if (!scope) throw new Error('ADO_RESOURCE_SCOPE is required for Azure DevOps checkout');
                 const credential = new ChainedTokenCredential(
-                    new ManagedIdentityCredential(),
-                    new AzureCliCredential(),
-                    new WorkloadIdentityCredential()
+                    new ManagedIdentityCredential({ clientId: process.env.AZURE_CLIENT_ID }),
+                    new AzureCliCredential()
                 );
                 const token = await credential.getToken(scope);
                 if (!token) throw new Error('No Azure DevOps access token');

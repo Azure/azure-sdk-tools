@@ -80,12 +80,55 @@ let sortDescending = true;
 let busy = false;
 let breakdownChart: Chart<"bar"> | null = null;
 let historyChart: Chart<"line", { x: number; y: number | null }[], number> | null = null;
+type RepositoryView = {
+  selectedId: string;
+  detailId: string;
+  filters: Filters;
+  historyScope: string;
+  range: string;
+  fixedCohort: boolean;
+  breakdownGroup: string;
+  breakdownMeasure: string;
+  sortKey: SortKey;
+  sortDescending: boolean;
+};
+const repositoryViews = new Map<RepositoryName, RepositoryView>();
 
 function current(): Snapshot | undefined {
   return forRepository(snapshots, selectedRepository).find((snapshot) => snapshot.snapshotId === selectedId);
 }
 function filters(): Filters {
   return { category: select("category-filter").value, service: select("service-filter").value, search: input("library-search").value };
+}
+function saveView(): void {
+  repositoryViews.set(selectedRepository, {
+    selectedId, detailId, filters: filters(),
+    historyScope: select("history-scope").value, range: select("history-range").value,
+    fixedCohort: input("fixed-cohort").checked,
+    breakdownGroup: select("breakdown-group").value, breakdownMeasure: select("breakdown-measure").value,
+    sortKey, sortDescending,
+  });
+}
+function restoreView(): void {
+  const view = repositoryViews.get(selectedRepository);
+  selectedId = view?.selectedId || forRepository(snapshots, selectedRepository).at(-1)?.snapshotId || "";
+  detailId = view?.detailId || "";
+  sortKey = view?.sortKey || "customLines";
+  sortDescending = view?.sortDescending ?? true;
+  select("category-filter").value = view?.filters.category || "";
+  input("library-search").value = view?.filters.search || "";
+  loadedRange = view?.range || (report?.latest.repository.name === selectedRepository ? "90" : "all");
+  select("history-range").value = loadedRange;
+  const all = [...select("history-range").options].find((item) => item.value === "all");
+  if (all) all.disabled = report?.latest.repository.name === selectedRepository;
+  input("fixed-cohort").checked = view?.fixedCohort ?? true;
+  select("breakdown-group").value = view?.breakdownGroup || "category";
+  select("breakdown-measure").value = view?.breakdownMeasure || "percent";
+  populateSnapshots();
+  populateServices();
+  populateHistoryScope();
+  select("service-filter").value = view?.filters.service || "";
+  select("history-scope").value = view?.historyScope || "";
 }
 function setStatus(message: string, error = false): void {
   text("status", message);
@@ -114,13 +157,10 @@ async function perform(action: () => Promise<void>): Promise<void> {
   }
 }
 function addSnapshots(incoming: Snapshot[]): void {
-  if (incoming.some((snapshot) => snapshot.repository.name !== selectedRepository)) {
-    throw new Error(`Snapshot repository does not match the selected ${selectedRepository}.`);
-  }
   const next = mergeSnapshots(snapshots, incoming);
   mergeObservations([...publishedHistory, ...next]);
   snapshots = next;
-  selectedId = snapshots.at(-1)?.snapshotId || "";
+  selectedId = forRepository(snapshots, selectedRepository).at(-1)?.snapshotId || "";
   populateSnapshots();
   populateServices();
   populateHistoryScope();
@@ -198,8 +238,15 @@ function renderOverview(snapshot: Snapshot | undefined, libraries: Library[]): v
     `${snapshot.repository.name} | ${new Date(snapshot.collectedAt).toISOString()} | revision ${snapshot.repository.commit.slice(0, 12)} | ${snapshot.excludedLibraries.length} excluded projects` :
     "No observation loaded.");
   text("contract-info", snapshot ?
-    `Schema ${snapshot.schemaVersion} | Physical C# lines, including comments and blanks` :
-    "Snapshot schema v1.0 / physical C# lines");
+    `Schema ${snapshot.schemaVersion} | Physical ${snapshot.repository.name === "Azure/azure-sdk-for-net" ? "C#" :
+      snapshot.repository.name === "Azure/azure-sdk-for-java" ? "Java/Scala" : "Python"} lines, including comments and blanks` :
+    "Snapshot schema v1.0 / physical source lines");
+  const scope = snapshot?.repository.name === "Azure/azure-sdk-for-net" ?
+    "Linked helpers under sdk/core/<package>/src/Shared are excluded from other consuming libraries, but included in their owning core library. Other linked source counts once per consuming library." :
+    snapshot?.repository.name === "Azure/azure-sdk-for-java" ?
+      "Counts cover committed production Maven Java/Scala source, including declared shared origins and local vendor code. Whole-file generator banners determine generated provenance, not member annotations." :
+      "Counts cover package-owned SDK implementation modules and typing stubs, including local shared/vendor copies. Customization patches remain custom; installed dependency source is not included.";
+  text("measurement-description", `Percentages divide summed custom lines by summed total lines, not averages of library percentages. ${scope} Source classification uses file-level signals; custom code is not a measure of debt or API impact.`);
 }
 function renderBreakdown(libraries: Library[]): void {
   const group = select("breakdown-group").value === "service" ? "service" : "category";
@@ -371,7 +418,8 @@ function renderDetail(snapshot: Snapshot | undefined): void {
   byId("library-detail").hidden = !library;
   if (!library) return;
   text("detail-heading", library.library);
-  text("detail-meta", `${library.service} / ${categoryNames[library.category]} | ${library.targetFrameworks.join(", ")}`);
+  text("detail-meta", `${library.service} / ${categoryNames[library.category]}${"targetFrameworks" in library ?
+    ` | ${library.targetFrameworks.join(", ")}` : ""}`);
   const metrics: [string, string][] = [
     ["Custom source", percent(library.metrics.customRatio)],
     ["Custom lines", integer.format(library.metrics.customLines)],
@@ -419,12 +467,12 @@ async function openReport(url: string): Promise<void> {
   select("history-range").value = loadedRange;
   const all = [...select("history-range").options].find((item) => item.value === "all");
   if (all) all.disabled = true;
-  selectedId = snapshots.at(-1)?.snapshotId || "";
+  selectedId = forRepository(snapshots, selectedRepository).at(-1)?.snapshotId || "";
   populateSnapshots(); populateServices(); populateHistoryScope(); render();
   setStatus(`Published index: latest snapshot and bounded monthly history loaded. ${report.index.history.length} months available; older months load on demand.`);
 }
 select("history-range").addEventListener("change", () => {
-  if (!report) { loadedRange = select("history-range").value; render(); return; }
+  if (!report || report.latest.repository.name !== selectedRepository) { loadedRange = select("history-range").value; render(); return; }
   const nextRange = select("history-range").value;
   const activeReport = report;
   void perform(async () => {
@@ -447,8 +495,8 @@ select("history-range").addEventListener("change", () => {
 });
 select("snapshot-select").addEventListener("change", () => {
   const nextId = select("snapshot-select").value;
-  const anchor = snapshots.find((snapshot) => snapshot.snapshotId === nextId);
-  if (!report) {
+  const anchor = forRepository(snapshots, selectedRepository).find((snapshot) => snapshot.snapshotId === nextId);
+  if (!report || report.latest.repository.name !== selectedRepository) {
     selectedId = nextId; populateServices(); render(); return;
   }
   if (!anchor) {
@@ -499,7 +547,9 @@ select("repository-select").addEventListener("change", () => {
     setStatus("Unknown repository selection; existing observations were retained.", true);
     return;
   }
+  saveView();
   selectedRepository = repository.name;
+  restoreView();
   setStatus(`Repository selected: ${repository.name}.`);
   render();
 });

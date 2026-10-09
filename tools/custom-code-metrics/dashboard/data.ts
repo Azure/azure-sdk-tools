@@ -1,17 +1,23 @@
 import validate from "./generated/validate-snapshot.mjs";
-import type { CustomCodeMetrics, Metrics, LibraryMetrics } from "./generated/snapshot.js";
+import type { CustomCodeMetrics, Metrics } from "./generated/dotnet-snapshot.js";
+import type { RepositoryCodeMetrics } from "./generated/snapshot.js";
 
-export type Snapshot = CustomCodeMetrics;
-export type Library = LibraryMetrics;
+export type DotNetSnapshot = CustomCodeMetrics;
+export type Library = RepositoryCodeMetrics["libraries"][number];
+export type Snapshot = Omit<CustomCodeMetrics, "repository" | "libraries" | "excludedLibraries"> & {
+  repository: RepositoryCodeMetrics["repository"];
+  libraries: Library[];
+  excludedLibraries: RepositoryCodeMetrics["excludedLibraries"][number][];
+};
 export type MeasuredLibrary = Pick<Library, "library" | "service" | "category" | "metrics">;
 export type Observation = Pick<Snapshot, "schemaVersion" | "snapshotId" | "collectedAt" | "repository"> & {
   libraries: MeasuredLibrary[];
 };
 export const REPOSITORIES = [
   { name: "Azure/azure-sdk-for-net", language: ".NET", implemented: true },
-  { name: "Azure/azure-sdk-for-java", language: "Java", implemented: false },
+  { name: "Azure/azure-sdk-for-java", language: "Java", implemented: true },
   { name: "Azure/azure-sdk-for-js", language: "JavaScript/TypeScript", implemented: false },
-  { name: "Azure/azure-sdk-for-python", language: "Python", implemented: false },
+  { name: "Azure/azure-sdk-for-python", language: "Python", implemented: true },
   { name: "Azure/azure-sdk-for-go", language: "Go", implemented: false },
   { name: "Azure/azure-sdk-for-rust", language: "Rust", implemented: false },
   { name: "Azure/azure-sdk-for-cpp", language: "C++", implemented: false },
@@ -123,7 +129,7 @@ export function acceptSnapshot(value: unknown): Snapshot {
       };
       for (const file of library.files) {
         const coreShared = /^(sdk\/core\/[^/]+\/src\/)Shared\//.exec(file.path);
-        assert(!coreShared || library.projectPath.startsWith(coreShared[1]),
+        assert(value.repository.name !== "Azure/azure-sdk-for-net" || !coreShared || library.projectPath.startsWith(coreShared[1]),
           `${library.library}: linked core Shared helper must be excluded from counts and evidence (${file.path}).`);
         assert(!paths.has(file.path), `${library.library}: duplicate file evidence ${file.path}.`);
         paths.add(file.path);
@@ -168,13 +174,17 @@ export function measurementKey(snapshot: Observation): string {
   return JSON.stringify([snapshot.schemaVersion, snapshot.repository.name]);
 }
 
+export function snapshotKey(snapshot: Observation): string {
+  return JSON.stringify([snapshot.repository.name, snapshot.snapshotId]);
+}
+
 function observationContent(snapshot: Snapshot): string {
   return JSON.stringify([
     [snapshot.repository.name, snapshot.repository.commit, snapshot.repository.isDirty],
     measurementKey(snapshot),
     [...snapshot.libraries].sort((a, b) => a.library.localeCompare(b.library)).map((library) => [
       library.library, library.service, library.category, library.projectPath,
-      [...library.targetFrameworks].sort(), COUNTS.map((key) => library.metrics[key]),
+      "targetFrameworks" in library ? [...library.targetFrameworks].sort() : null, COUNTS.map((key) => library.metrics[key]),
     ]),
     [...snapshot.excludedLibraries].sort((a, b) => a.projectPath.localeCompare(b.projectPath)).map((library) => [library.projectPath, library.reason]),
   ]);
@@ -183,19 +193,20 @@ function observationContent(snapshot: Snapshot): string {
 export function mergeSnapshots(existing: readonly Snapshot[], incoming: readonly Snapshot[]): Snapshot[] {
   const unique = new Map<string, Snapshot>();
   for (const snapshot of [...existing, ...incoming]) {
-    const prior = unique.get(snapshot.snapshotId);
+    const key = snapshotKey(snapshot);
+    const prior = unique.get(key);
     if (prior) {
       assert(Date.parse(prior.collectedAt) === Date.parse(snapshot.collectedAt) && observationContent(prior) === observationContent(snapshot),
         `Conflicting content for snapshot ${snapshot.snapshotId}.`);
-      if (snapshot.libraries.some((library) => library.files)) unique.set(snapshot.snapshotId, snapshot);
+      if (snapshot.libraries.some((library) => library.files)) unique.set(key, snapshot);
     } else {
-      unique.set(snapshot.snapshotId, snapshot);
+      unique.set(key, snapshot);
     }
   }
   const retries = new Map<string, Snapshot>();
   for (const snapshot of [...unique.values()].sort(compareSnapshots)) {
     const day = new Date(snapshot.collectedAt).toISOString().slice(0, 10);
-    const key = snapshot.repository.isDirty ? snapshot.snapshotId :
+    const key = snapshot.repository.isDirty ? snapshotKey(snapshot) :
       `${measurementKey(snapshot)}|${snapshot.repository.commit}|${day}`;
     const prior = retries.get(key);
     if (prior) {
@@ -208,7 +219,8 @@ export function mergeSnapshots(existing: readonly Snapshot[], incoming: readonly
 }
 
 function compareSnapshots(a: Observation, b: Observation): number {
-  return Date.parse(a.collectedAt) - Date.parse(b.collectedAt) || a.snapshotId.localeCompare(b.snapshotId);
+  return Date.parse(a.collectedAt) - Date.parse(b.collectedAt) || a.snapshotId.localeCompare(b.snapshotId) ||
+    a.repository.name.localeCompare(b.repository.name);
 }
 
 export function filterLibraries<T extends MeasuredLibrary>(libraries: readonly T[], filters: Filters): T[] {

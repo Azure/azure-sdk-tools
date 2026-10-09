@@ -1,13 +1,14 @@
 import validateIndex from "./generated/validate-report-index.mjs";
 import validateMonth from "./generated/validate-history-month.mjs";
 import type { ReportIndex } from "./generated/report-index.js";
-import type { HistoryMonth } from "./generated/history-month.js";
+import type { HistoryMonth as GeneratedHistoryMonth } from "./generated/history-month.js";
 import {
-  aggregate, assertMetric, assertObservationIdentity, COUNTS, measurementKey, parseSnapshot,
+  aggregate, assertMetric, assertObservationIdentity, COUNTS, measurementKey, parseSnapshot, snapshotKey,
   type Observation, type Snapshot,
 } from "./data.ts";
 
-export type { ReportIndex, HistoryMonth };
+export type { ReportIndex };
+export type HistoryMonth = Omit<GeneratedHistoryMonth, "observations"> & { observations: Observation[] };
 export type Report = { indexUrl: URL; index: ReportIndex; latest: Snapshot };
 export type MonthCache = Map<string, HistoryMonth>;
 
@@ -38,7 +39,7 @@ export function mergeObservations(observations: readonly Observation[]): Observa
     Date.parse(a.collectedAt) - Date.parse(b.collectedAt) || a.snapshotId.localeCompare(b.snapshotId))) {
     assert(Number.isFinite(Date.parse(observation.collectedAt)), "Invalid observation timestamp.");
     const day = new Date(observation.collectedAt).toISOString().slice(0, 10);
-    const key = observation.repository.isDirty ? observation.snapshotId :
+    const key = observation.repository.isDirty ? snapshotKey(observation) :
       `${measurementKey(observation)}|${observation.repository.commit}|${day}`;
     const prior = unique.get(key);
     if (prior) {
@@ -49,7 +50,7 @@ export function mergeObservations(observations: readonly Observation[]): Observa
     unique.set(key, compactObservation(observation));
   }
   const result = [...unique.values()];
-  assert(new Set(result.map((observation) => observation.snapshotId)).size === result.length, "Duplicate snapshot identity.");
+  assert(new Set(result.map(snapshotKey)).size === result.length, "Duplicate snapshot identity.");
   return result;
 }
 
@@ -67,7 +68,9 @@ export function acceptReportIndex(value: unknown): ReportIndex {
 
 export function acceptHistoryMonth(value: unknown): HistoryMonth {
   if (!validateMonth(value)) throw new Error(`Invalid history month: ${validateMonth.errors?.[0]?.message}.`);
+  const repository = value.observations[0].repository.name;
   for (const observation of value.observations) {
+    assert(observation.repository.name === repository, "History month contains observations from another repository.");
     assertObservationIdentity(observation);
     assert(new Date(observation.collectedAt).toISOString().slice(0, 7) === value.month, "Observation belongs to another UTC month.");
     const ids = new Set<string>();
@@ -121,6 +124,7 @@ export async function loadHistory(
   report: Report, days: number, cache: MonthCache = new Map(), fetcher: typeof fetch = fetch,
   anchor: Snapshot = report.latest,
 ): Promise<{ observations: Observation[]; cache: MonthCache }> {
+  assert(measurementKey(anchor) === measurementKey(report.latest), "Selected observation does not match the reporting repository and format.");
   const start = new Date(rangeStart(anchor, days)).toISOString().slice(0, 7);
   const end = new Date(anchor.collectedAt).toISOString().slice(0, 7);
   const references = report.index.history.filter((reference) => reference.month >= start && reference.month <= end);
@@ -138,12 +142,14 @@ export async function loadHistory(
       assert(month.month === reference.month, "Loaded history month differs from the index.");
       next.set(url.href, month);
     }
+    assert(month.observations.every((observation) => measurementKey(observation) === measurementKey(report.latest)),
+      "History month does not match the reporting repository and format.");
     assert(month.observations.every((observation) => !observation.repository.isDirty), "Official observations require committed source.");
     loaded.push(...month.observations);
   }
   const latestMonth = new Date(report.latest.collectedAt).toISOString().slice(0, 7);
   assert(!references.some((reference) => reference.month === latestMonth) ||
-    loaded.some((observation) => observation.snapshotId === report.latest.snapshotId),
+    loaded.some((observation) => snapshotKey(observation) === snapshotKey(report.latest)),
     "Latest snapshot is missing from its history month.");
   const observations = mergeObservations([...loaded, report.latest]);
   return { observations: inRange(observations, anchor, days), cache: next };

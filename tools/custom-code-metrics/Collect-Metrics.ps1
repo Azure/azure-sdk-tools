@@ -8,11 +8,19 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 4
-if ($Language -ne "dotnet") {
+if ($Language -notin @("dotnet", "java", "python")) {
     throw "Metrics collection for '$Language' is not implemented. No observation was produced."
 }
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
 $OutputDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
+if ($Language -in @("java", "python")) {
+    $snapshots = @(& node --experimental-strip-types (Join-Path $PSScriptRoot "collect.ts") `
+        --language $Language.ToLowerInvariant() --repo-root $RepoRoot --output-directory $OutputDirectory)
+    if ($LASTEXITCODE -ne 0 -or $snapshots.Count -ne 1 -or -not (Test-Path -LiteralPath $snapshots[0] -PathType Leaf)) {
+        throw "Native collection did not produce exactly one complete snapshot."
+    }
+    return $snapshots[0]
+}
 $schema = Join-Path $RepoRoot "eng" "scripts" "CustomCodeMetrics.schema.json"
 & node --experimental-strip-types (Join-Path $PSScriptRoot "schema.ts") check-copy $schema
 if ($LASTEXITCODE -ne 0) { throw "The .NET schema mirror differs from the canonical tools contract." }

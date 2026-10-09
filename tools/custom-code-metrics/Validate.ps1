@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 4
 Push-Location $PSScriptRoot
 try {
-    foreach ($command in @("check", "test", "test:dashboard:browser")) {
+    foreach ($command in @("check", "test", "test:dashboard:browser", "test:dashboard:multirepo")) {
         & npm run $command
         if ($LASTEXITCODE -ne 0) { throw "Custom code metrics validation failed: npm run $command." }
     }

@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const names = ["CustomCodeMetrics", "ReportIndex", "HistoryMonth"];
+const names = ["CustomCodeMetrics", "RepositoryCodeMetrics", "ReportIndex", "HistoryMonth"];
 let directory: string;
 let packageRoot: string;
 let destination: string;
@@ -125,6 +125,10 @@ test("canonical schema IDs identify tools and the initial observation and report
     const schema = JSON.parse(await readFile(join(packageRoot, "schemas", `${name}.schema.json`), "utf8"));
     assert.equal(schema.$id, `https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/custom-code-metrics/schemas/${name}.schema.json`);
     assert.match(schema.$comment, /tools\/custom-code-metrics\/main.tsp in Azure\/azure-sdk-tools/);
+    if (name === "RepositoryCodeMetrics") {
+      assert.equal(schema.oneOf.length, 3);
+      continue;
+    }
     assert.equal(schema.properties.schemaVersion.const, "1.0");
     if (name === "HistoryMonth") assert.equal(schema.$defs.HistoryObservation.properties.schemaVersion.const, "1.0");
   }

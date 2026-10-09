@@ -77,7 +77,7 @@
           <p>Filters apply to the overview, charts and history.</p>
           <details class="measurement-note">
             <summary>Source provenance, not customization debt</summary>
-            <p>Percentages divide summed custom lines by summed total lines, not averages of library percentages. Linked helpers under sdk/core/&lt;package&gt;/src/Shared are excluded from other consuming libraries, but included in their owning core library. Other linked source counts once per consuming library. Source classification uses file-level signals; custom code is not a measure of debt or API impact.</p>
+            <p id="measurement-description">Percentages divide summed custom lines by summed total lines, not averages of library percentages. Source classification uses file-level signals; custom code is not a measure of debt or API impact.</p>
           </details>
         </div>
       </section>
@@ -142,7 +142,7 @@
         <details id="file-evidence" hidden><summary>File-level provenance evidence</summary><p id="file-evidence-note"></p><div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable file provenance evidence"><table class="small-table"><thead><tr><th scope="col">Path</th><th scope="col">Lines</th><th scope="col">Provenance</th><th scope="col">Evidence</th></tr></thead><tbody id="file-values"></tbody></table></div></details>
       </section>
       <footer>
-        <p id="contract-info">Snapshot schema v1.0 / physical C# lines</p>
+        <p id="contract-info">Snapshot schema v1.0 / physical source lines</p>
         <p id="deployment-info"></p>
         <p id="freshness" class="freshness" role="status" hidden></p>
         <p>Missing observations are gaps, not zeros.</p>

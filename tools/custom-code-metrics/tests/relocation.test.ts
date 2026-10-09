@@ -47,7 +47,7 @@ test("relocated builds are script-relative; publication needs no website and lea
     for (const name of [
       "package.json", "tsconfig.json", "publishing.ts", "schema.ts", "dashboard/build.ts", "dashboard/app.ts", "dashboard/data.ts", "dashboard/report.ts",
       "dashboard/tsconfig.json", "dashboard/index.html", "dashboard/styles.css", "dashboard/staticwebapp.config.json",
-      ...["CustomCodeMetrics", "ReportIndex", "HistoryMonth"].map((name) => `schemas/${name}.schema.json`),
+      ...["CustomCodeMetrics", "RepositoryCodeMetrics", "ReportIndex", "HistoryMonth"].map((name) => `schemas/${name}.schema.json`),
     ]) {
       const destination = join(target, name);
       await mkdir(dirname(destination), { recursive: true });

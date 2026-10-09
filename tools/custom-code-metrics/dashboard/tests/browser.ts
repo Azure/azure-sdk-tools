@@ -453,7 +453,7 @@ try {
   const selectedLibrary = source.libraries.find((library) => library.category === "management")!.library;
   await previewPage.getByRole("button", { name: selectedLibrary, exact: true }).click();
   const beforeRepositoryRequests = previewRequests.length;
-  for (const repository of REPOSITORIES.slice(1)) {
+  for (const repository of REPOSITORIES.filter((repository) => !repository.implemented)) {
     await previewPage.locator("#repository-select").selectOption(repository.name);
     assert.equal(await previewPage.getByRole("combobox", { name: "Repository", exact: true }).inputValue(), repository.name);
     assert.equal(await previewPage.locator("#repository-state").isVisible(), true);
@@ -609,7 +609,7 @@ try {
   console.log("Source-label checks passed: Custom source cards/legend/disclosure, no source-state badge/override/suffix/notes, modified-source history exclusion across ranges/cohorts, plain official-source rejection with retained observations.");
   console.log("Hosted checks passed: automatic latest, anonymous bounded month loading, historical membership, stale warning, failed range/selection rollback and cache reuse without any manual loader.");
   console.log("Preview checks passed: actual seed counts/ratio/date, quiet baseline metadata, all three banners removed, no feed requests/fake trend, full-portfolio initial mobile and immediate open-detail resize.");
-  console.log("Repository checks passed: seven choices, six honest uncollected states without .NET measurements/fetches, .NET filter/history/detail restoration and configured unsupported-source rejection.");
+  console.log("Repository checks passed: seven choices, four unsupported-language states without measurements/fetches, .NET filter/history/detail restoration and configured unsupported-source rejection.");
   console.log("Visual checks passed: aligned desktop cards, compact context, 15px body/14px tables, light/dark 1440/1280/390/320px, painted charts, keyboard focus/scrolling, unfragmented package names and bounded page widths.");
   console.log("Sort-header checks passed: six native column controls, default custom-lines descending, lexical/numeric sorting, stable ties, Enter/Space, aria-sort/direction, N/A last both ways and filter/repository/detail state preservation.");
 } finally {

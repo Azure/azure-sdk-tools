@@ -21,7 +21,7 @@ if (copyMode) {
     console.log(`Snapshot schema copy matches: ${destination}.`);
   }
 } else {
-  for (const name of ["CustomCodeMetrics", "ReportIndex", "HistoryMonth"]) {
+  for (const name of ["CustomCodeMetrics", "RepositoryCodeMetrics", "ReportIndex", "HistoryMonth"]) {
     const emitted = new URL(`./tsp-output/@typespec/json-schema/${name}.json`, import.meta.url);
     const destination = new URL(`./schemas/${name}.schema.json`, import.meta.url);
     if (mode === "clean") await rm(emitted, { force: true });

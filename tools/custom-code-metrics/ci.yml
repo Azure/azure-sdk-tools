@@ -38,6 +38,10 @@ extends:
                 inputs:
                   command: ci
                   workingDir: tools/custom-code-metrics
+              - task: UsePythonVersion@0
+                displayName: Select static package-metadata decoder
+                inputs:
+                  versionSpec: '3.11'
               - task: PowerShell@2
                 displayName: Install repository Pester version
                 inputs:

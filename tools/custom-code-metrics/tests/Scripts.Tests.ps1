@@ -438,7 +438,7 @@ return $path
         Should -Invoke Invoke-Pester -Times 1 -Exactly
     }
     It "rejects every unimplemented language before checking a checkout or producing data" {
-        foreach ($language in @("java", "js", "python", "go", "rust", "cpp")) {
+        foreach ($language in @("js", "go", "rust", "cpp")) {
             { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -Language $language -RepoRoot (Join-Path $TestDrive "absent") -OutputDirectory $script:Output } | Should -Throw "*'$language' is not implemented*"
         }
         Should -Invoke node -Times 0 -Exactly
@@ -469,5 +469,31 @@ return $path
         { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -RepoRoot (Join-Path $TestDrive "absent") -OutputDirectory $script:Output } | Should -Throw
         Should -Invoke node -Times 0 -Exactly
         Should -Invoke Invoke-Pester -Times 0 -Exactly
+    }
+    It "dispatches Java and Python to the typed tracked-checkout collector with exact output" {
+        $outputDirectory = $script:Output
+        foreach ($language in @("java", "python")) {
+            Mock node {
+                $global:LASTEXITCODE = 0
+                $null = New-Item -ItemType Directory -Path $outputDirectory -Force
+                $path = Join-Path $outputDirectory "native.json"
+                Set-Content -LiteralPath $path -Value "{}"
+                return $path
+            }
+            $snapshot = & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -Language $language -RepoRoot $script:Repo -OutputDirectory $script:Output
+            Test-Path -LiteralPath $snapshot -PathType Leaf | Should -BeTrue
+        }
+        Should -Invoke node -Times 2 -Exactly -ParameterFilter {
+            $Arguments[0] -eq "--experimental-strip-types" -and
+            $Arguments[1] -eq (Join-Path $script:PackageRoot "collect.ts") -and
+            $Arguments -contains "--repo-root" -and $Arguments -contains $script:Repo -and
+            $Arguments -contains "--output-directory" -and $Arguments -contains $script:Output
+        }
+        Should -Invoke Invoke-Pester -Times 0 -Exactly
+    }
+    It "surfaces native failure without inventing a snapshot" {
+        Mock node { $global:LASTEXITCODE = 1 }
+        { & (Join-Path $script:PackageRoot "Collect-Metrics.ps1") -Language python -RepoRoot $script:Repo -OutputDirectory $script:Output } | Should -Throw "*exactly one complete snapshot*"
+        Test-Path -LiteralPath $script:Output | Should -BeFalse
     }
 }

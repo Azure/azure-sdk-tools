@@ -128,6 +128,19 @@ test("retains dirty observations separately and rejects conflicting timestamps f
   assert.equal(mergeObservations([latest, dirty]).length, 2);
   assert.throws(() => mergeObservations([latest, { ...latest, collectedAt: "2026-10-01T14:00:00Z" }]), /timestamps/);
 });
+test("compact merge identities cannot collide across repositories with identical wire IDs", () => {
+  for (const isDirty of [false, true]) {
+    const net = snapshot(undefined, undefined, "1", isDirty);
+    const foreign = snapshot([library("Azure.Other", 1, 9)], undefined, "1", isDirty);
+    Object.assign(foreign.repository, { name: "Azure/azure-sdk-for-python" });
+    const before = structuredClone([net, foreign]);
+    const result = mergeObservations([net, foreign]);
+    assert.equal(result.length, 2);
+    assert.equal(result[0].snapshotId, result[1].snapshotId);
+    assert.deepEqual([net, foreign], before);
+    assert.equal(mergeObservations([net, foreign, foreign]).length, 2);
+  }
+});
 test("rejects duplicate/mismatched history references, missing latest month and arbitrary external paths", () => {
   for (const mutate of [
     (value: ReportIndex) => { value.history.push(value.history[0]); },
@@ -206,6 +219,22 @@ test("an imported historical selection anchors lazy requests to its UTC date, no
   assert.equal(requests.length, 1);
   assert.equal(result.observations.length, 1);
   assert.equal(result.observations[0].snapshotId, selected.snapshotId);
+});
+test("history rejects foreign anchors before requests and foreign cached observations before changing the cache", async () => {
+  const report = { indexUrl: new URL("https://metrics.invalid/index.json"), index: validIndex, latest };
+  const foreign = structuredClone(latest);
+  Object.assign(foreign.repository, { name: "Azure/azure-sdk-for-java" });
+  const requests: string[] = [];
+  await assert.rejects(loadHistory(report, 30, new Map(), fetcher(new Map(), requests), foreign),
+    /does not match the reporting repository and format/);
+  assert.deepEqual(requests, []);
+  const foreignMonth = document([foreign]);
+  const cache = new Map([[`https://metrics.invalid/${currentMonth.reference.path}`, foreignMonth.value]]);
+  const before = structuredClone(cache);
+  await assert.rejects(loadHistory(report, 30, cache, fetcher(new Map(), requests)),
+    /does not match the reporting repository and format/);
+  assert.deepEqual(cache, before);
+  assert.deepEqual(requests, []);
 });
 test("partial history failures retain the caller's cache and reject corrupt/dirty/missing latest data", async () => {
   const older = document([snapshot(undefined, "2026-09-01T12:00:00Z", "2")]);

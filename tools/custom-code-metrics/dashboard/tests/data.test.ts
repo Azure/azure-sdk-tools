@@ -3,18 +3,19 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   acceptSnapshot, aggregate, breakdown, filterLibraries, forRepository, history, loadIndex,
-  measurementKey, mergeSnapshots, parseSnapshot, REPOSITORIES, sortLibraries, trendSeries, withoutFileEvidence, type Snapshot,
+  measurementKey, mergeSnapshots, parseSnapshot, REPOSITORIES, snapshotKey, sortLibraries, trendSeries, withoutFileEvidence, type DotNetSnapshot,
 } from "../data.ts";
+type Snapshot = DotNetSnapshot;
 import { filters, legacySnapshot, library, snapshot } from "./fixtures.ts";
 
-test("repository choices are exactly the seven requested languages, with only .NET collection implemented", () => {
+test("repository choices are exactly the seven requested languages, with three implemented prototype collectors", () => {
   assert.deepEqual(REPOSITORIES.map(({ name, language }) => [name, language]), [
     ["Azure/azure-sdk-for-net", ".NET"], ["Azure/azure-sdk-for-java", "Java"],
     ["Azure/azure-sdk-for-js", "JavaScript/TypeScript"], ["Azure/azure-sdk-for-python", "Python"],
     ["Azure/azure-sdk-for-go", "Go"], ["Azure/azure-sdk-for-rust", "Rust"], ["Azure/azure-sdk-for-cpp", "C++"],
   ]);
   assert.deepEqual(REPOSITORIES.filter((repository) => repository.implemented).map((repository) => repository.name),
-    ["Azure/azure-sdk-for-net"]);
+    ["Azure/azure-sdk-for-net", "Azure/azure-sdk-for-java", "Azure/azure-sdk-for-python"]);
 });
 test("repository selection scopes observations without pooling .NET data into uncollected repositories", () => {
   const observations = [snapshot(), snapshot(undefined, "2026-10-02T12:00:00Z", "2")];
@@ -277,6 +278,25 @@ test("deduplicates identical clean same-revision same-day retries, keeping lates
   const later = snapshot(first.libraries, "2026-10-01T19:00:00Z");
   assert.deepEqual(mergeSnapshots([first], [later]), [later]);
   assert.equal(mergeSnapshots([later], [first]).length, 1);
+});
+test("repository identity scopes merge keys even when wire snapshot IDs and commits are equal", () => {
+  for (const isDirty of [false, true]) {
+    const net = snapshot(undefined, undefined, "1", isDirty);
+    const foreign = snapshot([library("Azure.Other", 20, 30)], undefined, "1", isDirty);
+    Object.assign(foreign.repository, { name: "Azure/azure-sdk-for-java" });
+    assert.equal(net.snapshotId, foreign.snapshotId);
+    assert.notEqual(snapshotKey(net), snapshotKey(foreign));
+    const before = structuredClone([net, foreign]);
+    assert.equal(mergeSnapshots([net], [foreign]).length, 2);
+    assert.equal(mergeSnapshots([net, foreign], [foreign]).length, 2);
+    assert.deepEqual([net, foreign], before);
+    const changed = structuredClone(net);
+    changed.libraries[0].metrics.customLines++;
+    assert.throws(() => mergeSnapshots([net, foreign], [changed]), /Conflicting content/);
+    const result = history([net, foreign], net, filters, { fixed: true, includeDirty: isDirty, libraryId: "" });
+    assert.deepEqual(result.points.map((point) => point.snapshot), [net]);
+    assert.equal(result.points[0].metrics.customRatio, net.summary.customRatio);
+  }
 });
 test("does not deduplicate different revisions or different observation days", () => {
   const first = snapshot();

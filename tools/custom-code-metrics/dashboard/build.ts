@@ -47,7 +47,8 @@ if (preview && (!seedPaths.length || indexUrl)) {
   throw new Error("--preview requires snapshot inputs and cannot be combined with a hosted index URL.");
 }
 await mkdir(generated, { recursive: true });
-for (const [file, name] of [["snapshot", "CustomCodeMetrics"], ["report-index", "ReportIndex"], ["history-month", "HistoryMonth"]]) {
+for (const [file, name] of [["snapshot", "RepositoryCodeMetrics"], ["dotnet-snapshot", "CustomCodeMetrics"],
+  ["report-index", "ReportIndex"], ["history-month", "HistoryMonth"]]) {
   const schema = JSON.parse(await readFile(join(root, "schemas", `${name}.schema.json`), "utf8"));
   await writeFile(join(generated, `${file}.d.ts`), await compile({ ...schema, title: name }, name, {
     additionalProperties: false,

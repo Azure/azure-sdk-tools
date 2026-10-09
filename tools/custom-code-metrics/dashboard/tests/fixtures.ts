@@ -1,4 +1,6 @@
-import { aggregate, type Category, type Library, type Snapshot } from "../data.ts";
+import { aggregate, type Category, type DotNetSnapshot } from "../data.ts";
+type Snapshot = DotNetSnapshot;
+type Library = DotNetSnapshot["libraries"][number];
 
 export const categories: Category[] = ["management", "data-plane", "provisioning"];
 export const filters = { category: "", service: "", search: "" };

@@ -15,6 +15,7 @@
     "build:publishing": "node --experimental-strip-types dashboard/build.ts --publishing-only",
     "test:dashboard": "npm run build:dashboard && node --experimental-strip-types --test dashboard/tests/data.test.ts",
     "test:dashboard:browser": "npm run build:dashboard && node --experimental-strip-types dashboard/tests/browser.ts",
+    "test:dashboard:multirepo": "npm run build:dashboard && node --experimental-strip-types dashboard/tests/multi-repository.ts",
     "test:publishing": "npm run build:publishing && node --experimental-strip-types --test dashboard/tests/report.test.ts tests/publishing.test.ts",
     "test": "npm run build:publishing && node --experimental-strip-types --test dashboard/tests/data.test.ts dashboard/tests/report.test.ts tests/*.test.ts",
     "format": "tsp format main.tsp",
@@ -31,6 +32,7 @@
     "chart.js": "4.5.1",
     "esbuild": "0.28.2",
     "json-schema-to-typescript": "16.0.0",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "yaml": "2.9.1"
   }
 }

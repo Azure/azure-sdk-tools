@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { acceptSnapshot, withoutFileEvidence, type Observation } from "./dashboard/data.ts";
+import { acceptSnapshot, measurementKey, withoutFileEvidence, type Observation } from "./dashboard/data.ts";
 import {
   acceptReportIndex, acceptHistoryMonth, compactObservation, mergeObservations,
 } from "./dashboard/report.ts";
@@ -86,6 +86,9 @@ export class AzureBlobStore implements BlobStore {
 
 export async function publish(value: unknown, store: BlobStore): Promise<{ snapshotId: string; latest: string; historyMonths: number }> {
   const source = acceptSnapshot(value);
+  if (source.repository.name !== "Azure/azure-sdk-for-net") {
+    throw new Error("Publication for this repository is not configured. Prototype observations must not enter the .NET feed.");
+  }
   if (source.repository.isDirty) throw new Error("Official publishing requires a clean tracked checkout.");
   if (!source.snapshotId.endsWith(`-${source.repository.commit}`)) throw new Error("Snapshot identity and commit disagree.");
   const observation = compactObservation(source);
@@ -100,7 +103,8 @@ export async function publish(value: unknown, store: BlobStore): Promise<{ snaps
     if (!document) throw new Error("Missing referenced blob.");
     if (reference.path.split("/")[1] !== hash(document.text)) throw new Error("Published history content address does not match.");
     const history = acceptHistoryMonth(JSON.parse(document.text));
-    if (history.month !== reference.month || history.observations.some((entry) => entry.repository.isDirty)) {
+    if (history.month !== reference.month ||
+        history.observations.some((entry) => entry.repository.isDirty || measurementKey(entry) !== measurementKey(source))) {
       throw new Error("Existing official history month is inconsistent.");
     }
     if (reference.month === month) existing = history.observations;
@@ -116,7 +120,8 @@ export async function publish(value: unknown, store: BlobStore): Promise<{ snaps
     const document = await store.read("reports", `dotnet/${prior.latest}`);
     if (!document) throw new Error("Missing referenced blob.");
     const previous = acceptSnapshot(JSON.parse(document.text));
-    if (previous.repository.isDirty || prior.latest !== `snapshots/${previous.snapshotId}.json`) {
+    if (previous.repository.isDirty || measurementKey(previous) !== measurementKey(source) ||
+        prior.latest !== `snapshots/${previous.snapshotId}.json`) {
       throw new Error("Existing latest snapshot is inconsistent.");
     }
     const matching = priorObservations.filter((entry) => entry.snapshotId === previous.snapshotId);

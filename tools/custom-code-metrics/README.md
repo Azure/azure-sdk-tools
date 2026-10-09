@@ -5,31 +5,34 @@ publication commands for Azure SDK custom-source metrics. Language repositories
 own their schedules, trusted checkouts and publication jobs; tools owns the
 website, contracts, common commands, hosting infrastructure and validation CI.
 
-**Only the .NET adapter and initial .NET snapshot format 1.0 are implemented today.** Moving
-ownership here does not make the existing C# counting rules or repository-specific
-wire contract valid for arbitrary languages.
+**The prototype implements .NET, Java/Scala and Python collection.** Each has a
+sealed initial 1.0 snapshot variant and native source-selection rules; the C#
+rules are not applied to other languages. The four remaining adapters are not
+implemented, and no language's scheduled reporting job is activated.
 
 | Repository / language | Adapter status |
 | --- | --- |
 | Azure/azure-sdk-for-net / .NET | Implemented; language-aware collector in the .NET repository |
-| Azure/azure-sdk-for-java / Java | **NOT IMPLEMENTED** |
+| Azure/azure-sdk-for-java / Java | Implemented; committed production Maven Java/Scala inventory |
 | Azure/azure-sdk-for-js / JavaScript/TypeScript | **NOT IMPLEMENTED** |
-| Azure/azure-sdk-for-python / Python | **NOT IMPLEMENTED** |
+| Azure/azure-sdk-for-python / Python | Implemented; package-owned SDK Python modules and typing stubs |
 | Azure/azure-sdk-for-go / Go | **NOT IMPLEMENTED** |
 | Azure/azure-sdk-for-rust / Rust | **NOT IMPLEMENTED** |
 | Azure/azure-sdk-for-cpp / C++ | **NOT IMPLEMENTED** |
 
-Those adapters are the collection roadmap, not enabled jobs. Each requires
+The remaining adapters are the collection roadmap, not enabled jobs. Each requires
 language-specific compiled-source membership, generated/custom evidence,
 categories and contract compatibility decisions. Do not apply the C# heuristics
 to other languages, publish empty/zero-valued success observations for missing
 adapters, or compare incompatible measurements as one portfolio.
 
 The accessible **Repository** selector defaults to .NET and lists those seven
-repositories. Only .NET has validated observations today. Other selections show
+repositories. .NET, Java and Python have validated observations. Unsupported selections show
 the named repository's uncollected/collector-not-implemented state, hide all
 measurement panels and do not request nonexistent feeds. Switching back to .NET
-restores its baseline, filters, history and library detail. Friendly dropdown
+restores its baseline, filters, history and library detail. Measured repositories
+save their observation, filters, history range/scope, detail and sorting independently.
+Friendly dropdown
 labels carry the language without a redundant product/language/repository
 breadcrumb; .NET values are never presented as another language's
 metrics, and observations/cohorts are scoped to the selected repository.
@@ -59,6 +62,10 @@ PowerShell 7+. Browser checks use an installed Microsoft Edge. Pester 5.3.3+
 supports offline wrapper tests. Deployment/publication additionally require
 Azure CLI and explicitly authorized Entra access; local builds need no Azure
 credentials.
+Java/Python collection and shared validation also require Python 3.11+ for the
+small static XML/TOML/setup-AST metadata decoder. Counting and discovery cores
+are TypeScript; the decoder never imports packages, executes setup scripts,
+runs Maven, installs dependencies or fetches source.
 
 Handwritten tooling, fixtures and tests are TypeScript, checked together with
 the dashboard under strict compiler settings. Scripts run directly with Node's
@@ -74,6 +81,8 @@ does not type-check: builds and validation run the pinned TypeScript compiler.
 | `dashboard` | Offline/hosted frontend, semantic validators, reporting and tests |
 | `publishing.ts`, `Publish-Metrics.ps1` | .NET feed publisher and Azure CLI token wrapper |
 | `Collect-Metrics.ps1` | One measurement command operating on the caller's language checkout |
+| `collect.ts`, `collect-{java,python,source}.ts` | Stable tracked-checkout wrapper and native transport-independent counting |
+| `parse_metadata.py`, `metadata.ts` | Isolated static metadata decoding and provenance helpers |
 | `ci.yml` | Shared tooling validation CI; no scheduled source-repository sweep |
 | `infra\main.bicep`, `Deploy-*.ps1` | Policy-safe hosting resources and separate deployment helpers |
 
@@ -101,7 +110,7 @@ bucket or redundant measurement rules.
 For every library/group, `totalLines = customLines + generatedLines`;
 `customRatio = customLines / totalLines`, or `null` for a zero denominator.
 Groups sum numerators and denominators before dividing, rather than averaging
-library ratios. The initial format excludes linked files whose **actual Git path** matches
+library ratios. The .NET format excludes linked files whose **actual Git path** matches
 `sdk/core/<package>/src/Shared/**` from the counts and optional evidence of
 other consuming libraries, regardless of generated markers. The owning core
 library still counts its own `src/Shared` source. This does not exclude core
@@ -114,6 +123,15 @@ exclusions. Optional file evidence contains paths/counts, never source content.
 observations. Shape validation is generated from the schema; shared semantic
 validators additionally enforce safe integers, arithmetic, rollups, identities,
 file evidence consistency and conflicting retry rejection.
+`RepositoryCodeMetrics.schema.json` is the shared union of .NET, Java and Python
+variants. `CustomCodeMetrics.schema.json` remains the byte-stable .NET-only
+producer mirror: its fields, constraints and Core Shared behavior are unchanged.
+Native variants require Maven coordinates or normalized Python distribution
+names, actual native metadata paths and Java/Scala or Python/stub file evidence;
+they do not accept fake .NET target frameworks. Repository names scope snapshot
+identity, retries, selection and history, even when timestamp/commit IDs coincide.
+History months and selected anchors must belong to their feed's repository;
+there is no cross-language cohort or aggregate quality ranking.
 Snapshot identities must encode the same commit and UTC collection time,
 including fractional seconds, in both complete snapshots and compact history.
 
@@ -126,7 +144,7 @@ npm run generate
 npm run check
 ```
 
-`check` verifies formatting, compiles TypeSpec and compares all three emitted
+`check` verifies formatting, compiles TypeSpec and compares all four emitted
 schemas byte-for-byte without rewriting the canonical files. Generated IDs and
 comments identify this package. Objects are sealed and reusable types bundled
 under `$defs`. See the [TypeSpec JSON Schema decorators reference](https://typespec.io/docs/emitters/json-schema/reference/decorators/).
@@ -179,6 +197,55 @@ For VS Code, select this package's compiler:
   "typespec.tsp-server.path": "${workspaceFolder}\\tools\\custom-code-metrics\\node_modules\\@typespec\\compiler"
 }
 ```
+
+### Native Java and Python source policies
+
+Java discovers release-eligible `extends.parameters.Artifacts` in committed SDK
+CI YAML and joins exact Maven `groupId:artifactId` to the module POM. Modern
+`com.azure`/subgroup production JARs are included; tooling, test/sample/perf/stress,
+templates, POM-only artifacts, legacy `com.microsoft.azure` and unbranded
+`io.clientcore` are explicitly outside this scope, not described as unshipped.
+Static parent/build-helper/compiler/source-copy declarations resolve committed
+Java and Scala origins. Spark shared Scala and copy exclusions are respected
+per artifact; ordinary Maven dependencies and uncommitted generated build output
+are not counted. Zero-source runtime starters have genuine zero counts/null ratios.
+Resource-manager groups and `azure-core-management` are management; Spring
+integrations remain data-plane/support. A dedicated Java provisioning family
+has not been established. Source ownership is the first `sdk/<service>` segment.
+
+Java generated classification uses verified AutoRest/TypeSpec whole-file banners
+in leading comments. `Generated` symbols, imports, member annotations, `Impl`,
+`models` and `implementation` are not whole-file evidence. Header-negative vendor
+source is custom by this file-provenance convention, not proof of human authorship.
+
+Python discovers direct SDK distribution metadata, preferring TOML project
+declarations and statically resolving setup literals otherwise. It honors
+setuptools package includes/excludes, namespace discovery and Python package data,
+including `.pyi` stubs, alternate namespaces, local `_shared` and vendored copies.
+It excludes templates, the non-package OpenAI placeholder, retired Text Analytics
+duplicate, unbranded CoreHTTP, namespace compatibility packages, dependency-only
+metapackages and structurally proven noninstallable SDIST placeholders such as
+`azure-monitor` and `azure-storage`. It does not count installed dependencies,
+sdist-only tests/samples, setup scripts, non-code markers or native C implementation.
+This is an SDK implementation source inventory, **not an audited PyPI release or
+built-wheel inventory**.
+
+Python exact `_patch.py`/`_patch.pyi` customization files remain custom. Generated
+banners and proven output-directory/marked-sibling ownership identify generated
+files and bannerless generator helpers; a helper filename alone is insufficient.
+Every chosen file's comments/blanks count, including customization scaffolding.
+Unsupported metadata, missing origins and incomplete source classification fail
+explicitly rather than silently skipping a package or fabricating a zero snapshot.
+
+The transport-independent cores accept explicit original paths and a `readText`
+provider plus actual repository/commit/source-state/time context. The production
+entry point requires a real tracked checkout and verifies HEAD/diff and every
+read file before writing one immutable result. It has no archive/network fallback.
+The prototype's Java/Python inputs were separately collected from verified
+SHA-pinned source archives through an administrative read-only provider with
+archive/per-file hashes and explicit committed-source attestation. That transport
+does not fabricate a Git checkout; its receipts and full file audits are not
+committed or exposed by the preview.
 
 ## Dashboard builds and published indexes
 
@@ -235,6 +302,9 @@ cwd; it resolves `publishing.ts` relative to itself. It obtains a storage Entra
 token from Azure CLI, passes it only in the child environment and restores the
 previous environment. It does not use keys or SAS. Failures are explicit.
 
+The existing publication feed remains **.NET-only**. Java/Python prototype
+observations are rejected before publication rather than entering `dotnet/`;
+their live preview uses build-time seeds, not new Blob feeds.
 Official publication rejects dirty observations, inconsistent counts/identities,
 incompatible data and conflicting measurements. The full audit goes only to the
 private archive. Approved public snapshots omit file evidence; monthly history
@@ -361,9 +431,21 @@ only Storage Blob Data Reader on reports, never archive.
 **The static preview is restored in the user-approved Engineering System
 `typespec` resource group; automatic reporting is not operational.**
 The [current preview](https://orange-pebble-01bfc3d1e.6.azurestaticapps.net) embeds
-the administrative initial-1.0 copy of the measured October 7 observation.
-It remains a single baseline with quiet no-automatic-feed metadata, not a new
-measurement, a nightly feed or evidence that all language adapters exist.
+the unchanged administrative initial-1.0 October 7 .NET observation and separately
+measured October 9 Java/Python committed-source observations. Each repository
+has its own baseline with quiet no-automatic-feed metadata, not a nightly feed.
+
+| Repository | Libraries | Services | Custom / total physical lines | Custom source |
+| --- | ---: | ---: | ---: | ---: |
+| .NET | 459 | 276 | 1,192,020 / 16,289,770 | 7.32% |
+| Java/Scala | 464 | 278 | 1,703,618 / 14,594,099 | 11.67% |
+| Python | 409 | 262 | 759,343 / 10,235,771 | 7.42% |
+
+Java source commit is `0d93db3f44c0a22b1de8b8ee853a958f85dac3c1`; Python is
+`12feba1b420fc0b1f635b62da2990b40a8a0ea39`. These are language-specific
+source-provenance baselines, not an authorship/quality comparison or combined
+portfolio trend. The .NET measurement, timestamp, commit and snapshot ID were
+not rewritten or recollected.
 
 The preserved October 7 prototype-3 .NET observation and its separate
 initial-format copy both contain
@@ -410,14 +492,19 @@ its own checkout, then publishes the returned observation directly to Blob
 storage through `Publish-Metrics.ps1`. Website deployment is separate.
 
 `Collect-Metrics.ps1 -Language dotnet -RepoRoot <checkout> -OutputDirectory <path>`
-defaults to `dotnet`. This is the only implemented adapter: it checks the exact
+defaults to `dotnet`. That adapter checks the exact
 schema mirror, runs the producer's Pester suite and calls its MSBuild-aware
 collector from the producer checkout. It returns exactly one completed snapshot
 path and restores the caller's working directory. Relative output paths resolve
 against the caller, not the producer.
 
-The recognized future language names are `java`, `js`, `python`, `go`, `rust`
-and `cpp`; requesting any of them fails explicitly **before testing or writing
+Use `-Language java` or `-Language python` on the corresponding real tracked
+checkout after `npm run build:publishing`. These adapters use the common typed
+core and verify source stability; no fake repository metadata, clone, restore,
+build or network source fallback is performed.
+
+The recognized future language names are `js`, `go`, `rust` and `cpp`;
+requesting any of them fails explicitly **before testing or writing
 an observation**. Unknown names are rejected. The selector's uncollected states
 do not imply that these adapters or a generic counting contract exist.
 
@@ -482,7 +569,9 @@ For targeted checks use `npm test`, `npm run test:publishing`,
 No test publishes or changes Azure resources.
 
 Use `CUSTOM_CODE_METRICS_SNAPSHOT` to validate real collector output in data and
-browser tests. Browser tests otherwise use synthetic fixtures confined to tests.
+browser tests. `CUSTOM_CODE_METRICS_JAVA_SNAPSHOT` and
+`CUSTOM_CODE_METRICS_PYTHON_SNAPSHOT` supply real native observations to
+`npm run test:dashboard:multirepo`. Browser tests otherwise use synthetic fixtures confined to tests.
 For a final measured-data local preview, rebuild explicitly with
 `node --experimental-strip-types .\dashboard\build.ts --snapshot <actual-path>` after validation.
 
@@ -504,3 +593,7 @@ contrast, keyboard focus and horizontal table scrolling. Set
 `CUSTOM_CODE_METRICS_SCREENSHOT_DIRECTORY` to an absolute artifact directory
 alongside `CUSTOM_CODE_METRICS_SNAPSHOT` when running browser checks to retain
 the viewport/theme screenshots for inspection.
+Native regressions cover static metadata without source execution, SDIST-only
+placeholder proof, Scala shared/copied origins, source exclusions, zero-source
+starters, Python stubs/package data/alternate namespaces/customization precedence,
+same-ID cross-repository isolation and three-repository state restoration.

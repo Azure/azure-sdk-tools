@@ -320,8 +320,23 @@ async def test_resolve_kb_source_without_blob_uses_shared_repository(
     assert result.path is None
 
 
+@pytest.mark.parametrize(
+    "issue_target",
+    [
+        None,
+        KbIssueTarget(provider="github", owner="Azure", repo="typespec-azure"),
+        KbIssueTarget(
+            provider="azure-devops",
+            organization="azure-sdk",
+            project="internal",
+        ),
+    ],
+)
 @pytest.mark.asyncio
-async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
+async def test_resolve_kb_source_returns_ownership_and_issue_target(
+    monkeypatch,
+    issue_target: KbIssueTarget | None,
+) -> None:
     monkeypatch.setattr(
         knowledge_tools_module,
         "get_kb_targets",
@@ -334,6 +349,7 @@ async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
                     branch="main",
                     path="./website/src/content/docs/docs",
                     scope=SRC_TYPESPEC_AZURE_DOCS,
+                    issue_target=issue_target,
                 ),
             )
         ),
@@ -350,6 +366,9 @@ async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
     assert result.path == "./website/src/content/docs/docs"
     assert "upstream_url" not in type(result).model_fields
     assert result.source_url == "https://github.com/Azure/typespec-azure.git"
+    assert result.model_dump(mode="json")["issue_target"] == (
+        vars(issue_target) if issue_target is not None else None
+    )
 
 
 @pytest.mark.asyncio

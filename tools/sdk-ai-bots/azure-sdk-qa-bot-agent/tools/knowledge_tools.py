@@ -6,7 +6,7 @@ import asyncio
 import logging
 from enum import Enum
 from pathlib import PurePosixPath
-from typing import Annotated, Callable, Literal
+from typing import Annotated, Callable
 
 from azure.core.exceptions import ResourceModifiedError
 from azure.storage.blob.aio import BlobServiceClient
@@ -24,7 +24,7 @@ from tools import tool
 from utils.azure_ai_search import SearchClient, get_search_client
 from utils.azure_storage import BlobContent, download_blob, upload_blob
 from utils.knowledge_config import (
-    KbTarget,
+    KbIssueTarget,
     get_kb_targets,
     select_kb_target,
 )
@@ -75,14 +75,6 @@ _SEARCH_MODE_DESC = (
     "Default: 'quick'."
 )
 
-class IssueTargetView(BaseModel):
-    provider: Literal["github", "azure-devops"]
-    owner: str | None = None
-    repo: str | None = None
-    organization: str | None = None
-    project: str | None = None
-
-
 class KbSourceView(BaseModel):
     folder: str
     resolved: bool
@@ -95,7 +87,7 @@ class KbSourceView(BaseModel):
     branch: str | None = None
     path: str | None = None
     scope: str | None = None
-    issue_target: IssueTargetView | None = None
+    issue_target: KbIssueTarget | None = None
     reason: str | None = None  # populated when resolved=False
 
 
@@ -503,7 +495,6 @@ class KnowledgeTools:
         optional issue target. ``resolved=False`` when the folder is unmapped
         or an ambiguous source cannot be selected.
         """
-        targets: tuple[KbTarget, ...] = ()
         try:
             targets = await get_kb_targets(folder)
         except Exception:
@@ -516,17 +507,6 @@ class KnowledgeTools:
 
         target = select_kb_target(folder, blob_path, targets)
         if target is not None:
-            issue_target = (
-                IssueTargetView(
-                    provider=target.issue_target.provider,
-                    owner=target.issue_target.owner,
-                    repo=target.issue_target.repo,
-                    organization=target.issue_target.organization,
-                    project=target.issue_target.project,
-                )
-                if target.issue_target is not None
-                else None
-            )
             return KbSourceView(
                 folder=folder,
                 resolved=True,
@@ -543,7 +523,7 @@ class KnowledgeTools:
                     else None
                 ),
                 scope=target.scope,
-                issue_target=issue_target,
+                issue_target=target.issue_target,
             )
 
         if targets:

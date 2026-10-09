@@ -173,11 +173,7 @@ For `missing_content`, always select the best maintained source even when there 
 
 If the selected source has no `issue_target`, or the configured tracker has a permanent permission/capability failure, use `Azure/azure-sdk-pr` and explain the intended source and fallback reason. Do not fall back on timeouts, provider 5xx responses, or an ambiguous create response; return `remediation_failed` so the operation can retry without creating a duplicate.
 
-Build a stable marker and include it verbatim in the item body:
-
-```markdown
-<!-- chatbot-evolution source="<source folder or repository>" classification="<classification>" scope="<blob path or proposed location>" -->
-```
+Build the stable marker from [Issue format](#issue-format) using the source folder or repository, classification, and exact blob path or proposed location, and include it verbatim in the item body.
 
 Before creating anything, search only the selected target for that marker and matching provenance:
 

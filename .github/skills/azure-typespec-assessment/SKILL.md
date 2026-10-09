@@ -52,6 +52,13 @@ Do not substitute a `file:` URL or only return filesystem paths.
 
 ## Boundaries
 
+- For SDK naming, **invoke `azsdk-common-typespec-naming` in review mode** during bounded Agent judgment whenever target-language evidence is available or naming was explicitly requested. Invoke it before deciding that target context is missing or a profile is unsupported; those coverage decisions belong to the handoff too. This handoff is mandatory—directly reading its references, reproducing its rules locally, or delegating the decision to another Agent does not satisfy it. Never call its apply workflow or the customization tool during assessment. Record the returned bounded coverage, findings, compatibility evidence, and verification state in `sdkNamingReview`; materialization includes them as the read-only SDK Naming report dimension.
+- Keep `sdkNamingReview` in the exact compact contract even for planning-only requests. It contains only:
+  - `summary: string`;
+  - `coverage: Array<{ language, serviceType, profile?, status, rationale }>`;
+  - `findings: Array<{ reviewUnitId?, declaration, currentSdkName, recommendedSdkName?, languageScope, decision, rule, rationale, compatibilityEvidence, verification, sourceLocation? }>`;
+  - `blockers: string[]`.
+    Use only the schema enums: `serviceType` is `arm`, `data-plane`, or `unknown`; coverage `status` is `reviewed`, `not-covered`, or `not-assessed`; finding `decision` is `recommend` or `blocked`; and `verification` is `proposed`, `supplied-generated`, or `applied`. Use `language: "unknown"` and `serviceType: "unknown"` when context is missing. A confirmed target without an applicable profile is `not-covered`; this takes precedence over missing generated-name or compatibility evidence, which belongs in blockers. Missing target context or evidence required by an available profile is `not-assessed`. A supplied emitted or generated SDK name is `supplied-generated`. Do not rename these properties or pass through auxiliary metadata from the naming handoff.
 - V1 is standalone and opt-in: run only when the user explicitly requests an assessment or review. Do not invoke this skill from `azure-typespec-author`, or automatically before or after its authoring and validation workflow. Integration is deferred to a future version.
 - Run complete mode only: merge-base through `HEAD`, staged, unstaged, and relevant untracked changes.
 - Derive semantic intents from changed TypeSpec source. Use AutoRest only to map those intents to REST operations and assess REST compatibility; use TCGC only for downstream SDK analysis.
@@ -62,6 +69,6 @@ Do not substitute a `file:` URL or only return filesystem paths.
 - Treat a completed search with no governing guidance as `no-applicable-guidance`; count it as assessed and do not create a blocker. Reserve `not-assessed` for an incomplete or blocked Azure Guidelines assessment.
 - Check documentation deterministically from compiler results only for newly added operation, model, enum, and interface declarations. A declaration is complete when the compiler returns a nonempty effective document, including inherited documentation. Missing or empty documentation creates a finding with the exact TypeSpec declaration. Never compare documentation text with code or send documentation to the Agent.
 - Report Azure Guidelines and Documentation Completeness independently with explicit coverage. Documentation with no eligible newly added declarations is `not-applicable`; unavailable compiler evidence remains `not-assessed`.
-- Overall safety covers REST and downstream SDK impact only.
+- Overall safety covers REST and downstream SDK impact only. SDK Naming is an independent review dimension and never changes that safety result.
 - After successful materialization, run one guarded invocation of `finalize-assessment.mjs --work <work-directory>`. Do not separately assemble, validate, and render. Finalization requires validated `assessment.json` and `assessment.html`; user-facing completion additionally requires the served report link described above. `model-input.json`, the Agent index, filesystem paths without the link, or a partial blocker is not completion.
 - Retain blockers as **Potential limits** in the report appendix and stop after assessment. Do not author fixes or remediate TypeSpec.

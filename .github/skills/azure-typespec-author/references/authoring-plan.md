@@ -43,3 +43,26 @@ Key guidance for data-plane:
 2. Define operations inside an `interface` block.
 3. Add `/** */` documentation to all operations.
 4. Data-plane services use `@azure-tools/typespec-azure-core`, not `@azure-tools/typespec-azure-resource-manager`.
+
+### SDK Naming — Supplementary Case
+
+Apply alongside the matching case above when the request concerns SDK naming or
+adds/changes names for known SDK targets. For unrelated REST work, do not require
+SDK-language intake; record naming as not assessed when targets are unknown.
+Naming-only `client.tsp` requests go directly to `azsdk-common-typespec-naming`,
+not through this authoring plan.
+
+1. Invoke `azsdk-common-typespec-naming` in **guidance mode** with the service type,
+   confirmed SDK targets, changed declarations, and release compatibility evidence.
+   It selects only applicable profiles; currently C# ARM is covered. No SDK generation
+   or linter diagnostic is required to consult the rules.
+2. Include its decisions, scopes, exceptions, uncovered targets and blockers in the
+   plan. Resolve blocked decisions before the affected edits; preserve shipped SDK
+   names, wire contracts and other-language overrides. Do not expand into unrelated cleanup.
+3. Keep ownership explicit: this authoring skill edits ordinary TypeSpec declarations.
+   The shared naming skill supplies naming decisions and delegates authorized SDK-only
+   overrides to `azsdk_customized_code_update` with `SpecInputs`. That customization tool
+   owns `client.tsp` imports, placement and edits; the authoring skill never writes them
+   directly or duplicates the customization implementation.
+4. After apply, retain the normal [validation](validation.md) workflow. Report generated
+   SDK names as unverified without generated API evidence.

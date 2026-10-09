@@ -27,6 +27,22 @@ report** link and the absolute `assessment.json` path for structured results.
 Keep the server running while viewed. Do not use relative Markdown or `file:`
 URLs.
 
+SDK naming coverage and findings are included in `assessment.json` under
+`dimensions.sdkNaming` and rendered in the **SDK naming** section of
+`assessment.html`. Naming remains read-only: finalization must not mutate the
+spec, run customization, or imply verified generated SDK names without evidence.
+Coverage is `reviewed`, `not-covered` (no applicable profile), or `not-assessed`
+(missing evidence). Findings retain the declaration and supplied source
+location, current and recommended SDK names, language scope, rule, compatibility
+evidence, and verification state. Proposed names, supplied generated names, and
+already-applied changes must remain distinguishable. SDK Naming status is
+`failed` when findings exist, `passed` only when every supplied target was
+reviewed with no finding or blocker, and otherwise `not-assessed`. It never
+changes the REST/downstream safety result.
+
+Performance measurements must identify their scope: isolated naming-review
+timings are not end-to-end assessment timings or measured incremental overhead.
+
 For an asynchronous or background host process, read its startup output
 immediately with the host's process-output reader. Do not wait for process
 completion or a completion notification: successful report serving is a

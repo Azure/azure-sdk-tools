@@ -871,6 +871,7 @@ void test("renderer labels active Azure Guidelines and scoped safety", () => {
   assert.match(html, /<a class="summary-card" href="#semantic-intents">/);
   assert.match(html, /<a class="summary-card" href="#downstream-breaking">/);
   assert.match(html, /<a class="summary-card" href="#azure-compliance">/);
+  assert.match(html, /<a class="summary-card" href="#sdk-naming">/);
   assert.match(html, /<a class="summary-card" href="#document-quality">/);
   const summaryLabels = [
     ...html.matchAll(
@@ -882,6 +883,7 @@ void test("renderer labels active Azure Guidelines and scoped safety", () => {
     "Azure Guidelines",
     "REST breaking changes",
     "Downstream breaking changes",
+    "SDK naming",
     "Documentation Completeness",
   ]);
   assert.doesNotMatch(html, /Overall code quality/);
@@ -924,6 +926,7 @@ void test("renderer labels active Azure Guidelines and scoped safety", () => {
     "azure-compliance",
     "rest-breaking",
     "downstream-breaking",
+    "sdk-naming",
     "document-quality",
   ].map((id) => html.indexOf(`<section id="${id}">`));
   assert.deepEqual(
@@ -2004,7 +2007,7 @@ function documentedAssessment(decision = "pass", noDocs = false, version = 1) {
   );
 }
 
-void test("five dimension cards retain the requested order without an overall quality card", () => {
+void test("six dimension cards retain the requested order without an overall quality card", () => {
   const html = renderAssessmentHtml(documentedAssessment("not-assessed"));
   const header = html.slice(html.indexOf('<div class="summary-grid">'), html.indexOf("</header>"));
   const links = [...header.matchAll(/<a class="summary-card" href="#([^"]+)"/g)].map(
@@ -2015,14 +2018,88 @@ void test("five dimension cards retain the requested order without an overall qu
     "azure-compliance",
     "rest-breaking",
     "downstream-breaking",
+    "sdk-naming",
     "document-quality",
   ]);
   assert.doesNotMatch(header, /Overall code quality|<div class="summary-card">/);
-  assert.equal((header.match(/class="summary-card"/g) ?? []).length, 5);
+  assert.equal((header.match(/class="summary-card"/g) ?? []).length, 6);
   assert.match(
     html,
-    /@media\s*\(min-width:\s*1051px\)\s*\{\s*\.summary-grid\s*\{\s*grid-template-columns:\s*repeat\(5,\s*minmax\(0,\s*1fr\)\);\s*\}\s*\}/,
+    /@media\s*\(min-width:\s*1051px\)\s*\{\s*\.summary-grid\s*\{\s*grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\);\s*\}\s*\}/,
   );
+});
+
+void test("SDK naming findings render coverage, evidence, verification, and semantic links", () => {
+  const assessment = documentedAssessment("pass");
+  assessment.dimensions.sdkNaming = {
+    status: "failed",
+    summary: "One C# ARM naming issue was found.",
+    coverage: [
+      {
+        language: "C#",
+        serviceType: "arm",
+        profile: "csharp-arm",
+        status: "reviewed",
+        rationale: "The C# ARM naming profile applies.",
+      },
+    ],
+    findings: [
+      {
+        id: "sdk-naming-0123456789abcdef",
+        reviewUnitId: "semantic-widget",
+        declaration: "Widget.enabled",
+        currentSdkName: "Enabled",
+        recommendedSdkName: "IsEnabled",
+        languageScope: "C#",
+        decision: "recommend",
+        rule: "Boolean properties should use an Is prefix.",
+        rationale: "The property represents a boolean state.",
+        compatibilityEvidence: "A later supplied review commit applies the same rename.",
+        verification: "proposed",
+        sourceLocation: "models.tsp:4",
+      },
+    ],
+    blockers: [],
+  };
+  const html = renderAssessmentHtml(assessment);
+  const header = html.slice(html.indexOf('<div class="summary-grid">'), html.indexOf("</header>"));
+  const naming = reportSection(html, "sdk-naming");
+  const semantic = reportSection(html, "semantic-intents");
+  assert.match(header, /href="#sdk-naming"/);
+  assert.match(header, /SDK naming/);
+  assert.match(header, /1 finding/);
+  assert.match(naming, /C#.*ARM.*csharp-arm/s);
+  assert.match(naming, /Widget\.enabled/);
+  assert.match(naming, /Enabled → IsEnabled/);
+  assert.match(naming, /Compatibility evidence:/);
+  assert.match(naming, /later supplied review commit/);
+  assert.match(naming, /Verification:<\/strong> proposed/);
+  assert.match(naming, /models\.tsp:4/);
+  assert.match(semantic, /href="#sdk-naming-sdk-naming-0123456789abcdef"/);
+});
+
+void test("SDK naming not-assessed coverage and blockers remain visible", () => {
+  const assessment = documentedAssessment("pass");
+  assessment.dimensions.sdkNaming = {
+    status: "not-assessed",
+    summary: "The requested naming profile is not covered.",
+    coverage: [
+      {
+        language: "Java",
+        serviceType: "data-plane",
+        status: "not-covered",
+        rationale: "No applicable naming profile is available.",
+      },
+    ],
+    findings: [],
+    blockers: ["sdk-naming-profile-unavailable: Java data-plane is not covered."],
+  };
+  const naming = reportSection(renderAssessmentHtml(assessment), "sdk-naming");
+  assert.match(naming, /not assessed/i);
+  assert.match(naming, /Java/);
+  assert.match(naming, /Data plane/);
+  assert.match(naming, /not covered/);
+  assert.match(naming, /sdk-naming-profile-unavailable/);
 });
 
 void recordedAssessmentTest(
@@ -2048,6 +2125,7 @@ void recordedAssessmentTest(
           "azure-compliance",
           "rest-breaking",
           "downstream-breaking",
+          "sdk-naming",
           "appendix",
         ],
       },
@@ -2061,6 +2139,7 @@ void recordedAssessmentTest(
           "semantic-intents",
           "azure-compliance",
           "rest-breaking",
+          "sdk-naming",
           "appendix",
         ],
       },
@@ -2097,11 +2176,11 @@ void test("hero headings contain only an icon and title with counts in the detai
         /<div class="summary-heading"><div class="summary-value"><span[^>]*>([^<]+)<\/span><\/div><div class="summary-label">([^<]+)<\/div><\/div><div class="summary-detail">/g,
       ),
     ];
-    assert.equal(headings.length, 5);
+    assert.equal(headings.length, 6);
     assert.ok(headings.every(([, icon]) => ["✓", "×", "i", "ⓘ"].includes(icon)));
     assert.deepEqual(
       headings.map(([, , label]) => summaryCardValue(html, label)),
-      [1, 0, 0, 0, decision === "fail" ? 2 : 0],
+      [1, 0, 0, 0, 0, decision === "fail" ? 2 : 0],
     );
     assert.match(header, /0 findings/);
     assert.match(header, /class="info" aria-label="Information only">ⓘ<\/span>/);
@@ -2144,6 +2223,7 @@ void test("Semantic intents is informational and stays in the no-findings group 
             "azure-compliance",
             "rest-breaking",
             "downstream-breaking",
+            "sdk-naming",
             "appendix",
           ]
         : [
@@ -2151,6 +2231,7 @@ void test("Semantic intents is informational and stays in the no-findings group 
             "azure-compliance",
             "rest-breaking",
             "downstream-breaking",
+            "sdk-naming",
             "document-quality",
             "appendix",
           ],

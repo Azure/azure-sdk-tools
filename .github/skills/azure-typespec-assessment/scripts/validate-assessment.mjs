@@ -81,6 +81,87 @@ function validateFinding(finding, dimension, errors) {
   }
 }
 
+/**
+ * @param {import("./runtime-types.js").SdkNamingDimension | undefined} naming
+ * @param {AssessmentSemanticItem[]} semanticItems
+ * @param {string[]} errors
+ */
+function validateSdkNamingDimension(naming, semanticItems, errors) {
+  if (naming === undefined) return;
+  if (!["passed", "failed", "not-assessed"].includes(naming.status)) {
+    errors.push("SDK Naming status is invalid.");
+    return;
+  }
+  if (!naming.summary?.trim()) errors.push("SDK Naming summary is required.");
+  for (const field of /** @type {const} */ (["coverage", "findings", "blockers"])) {
+    if (!Array.isArray(naming[field])) {
+      errors.push(`SDK Naming ${field} must be an array.`);
+      return;
+    }
+  }
+  const coverageKeys = naming.coverage.map(
+    (item) => `${item.language}\u0000${item.serviceType}\u0000${item.profile ?? ""}`,
+  );
+  if (duplicateValues(coverageKeys).length) {
+    errors.push("SDK Naming contains duplicate coverage targets.");
+  }
+  for (const [index, coverage] of naming.coverage.entries()) {
+    const prefix = `SDK Naming coverage ${index + 1}`;
+    if (!coverage.language?.trim() || !coverage.rationale?.trim()) {
+      errors.push(`${prefix} is incomplete.`);
+    }
+    if (!["arm", "data-plane", "unknown"].includes(coverage.serviceType)) {
+      errors.push(`${prefix} has invalid serviceType.`);
+    }
+    if (!["reviewed", "not-covered", "not-assessed"].includes(coverage.status)) {
+      errors.push(`${prefix} has invalid status.`);
+    }
+  }
+  uniqueIds(naming.findings, "SDK Naming findings", errors);
+  const semanticIds = new Set(semanticItems.map((item) => item.id));
+  for (const finding of naming.findings) {
+    const prefix = `SDK Naming finding ${finding.id ?? "<unknown>"}`;
+    for (const field of /** @type {const} */ ([
+      "declaration",
+      "currentSdkName",
+      "languageScope",
+      "rule",
+      "rationale",
+      "compatibilityEvidence",
+    ])) {
+      if (!finding[field]?.trim()) errors.push(`${prefix} is missing ${field}.`);
+    }
+    if (!["recommend", "blocked"].includes(finding.decision)) {
+      errors.push(`${prefix} has invalid decision.`);
+    }
+    if (finding.decision === "recommend" && !finding.recommendedSdkName?.trim()) {
+      errors.push(`${prefix} requires a recommended SDK name.`);
+    }
+    if (!["proposed", "supplied-generated", "applied"].includes(finding.verification)) {
+      errors.push(`${prefix} has invalid verification.`);
+    }
+    if (finding.reviewUnitId && !semanticIds.has(finding.reviewUnitId)) {
+      errors.push(`${prefix} links unknown semantic intent ${finding.reviewUnitId}.`);
+    }
+  }
+  for (const [index, blocker] of naming.blockers.entries()) {
+    if (!blocker?.trim()) errors.push(`SDK Naming blocker ${index + 1} is empty.`);
+  }
+  const expectedStatus = naming.findings.length
+    ? "failed"
+    : naming.coverage.length > 0 &&
+        naming.coverage.every((item) => item.status === "reviewed") &&
+        naming.blockers.length === 0
+      ? "passed"
+      : "not-assessed";
+  if (naming.status !== expectedStatus) {
+    errors.push(`SDK Naming status must be ${expectedStatus}.`);
+  }
+  if (naming.findings.length && !naming.coverage.length) {
+    errors.push("SDK Naming findings require explicit language and service-profile coverage.");
+  }
+}
+
 /** @param {LegacyAssessment} assessment */
 function validateLegacy(assessment) {
   /** @type {string[]} */
@@ -581,6 +662,7 @@ export function validateAssessment(assessment) {
   uniqueIds(methodGroups, "downstream method groups", errors);
   uniqueIds(typeImpacts, "SDK type impacts", errors);
   validateComplianceDimension(dimensions.compliance, dimensions.semantic?.items ?? [], errors);
+  validateSdkNamingDimension(dimensions.sdkNaming, dimensions.semantic?.items ?? [], errors);
   for (const impact of typeImpacts) {
     downstreamGroupIds.add(impact.id);
   }

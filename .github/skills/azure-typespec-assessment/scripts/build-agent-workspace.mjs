@@ -171,6 +171,12 @@ function decisionsDraft(modelInput, declarationNames) {
       actual: "",
       rationale: "",
     })),
+    sdkNamingReview: {
+      summary: "",
+      coverage: [],
+      findings: [],
+      blockers: ["unresolved: record SDK naming coverage or why it could not be assessed"],
+    },
     overallConfidence: "__UNRESOLVED__",
     blockers: [],
   };
@@ -279,6 +285,7 @@ export function buildAgentWorkspace({ work }) {
             "Score the full catalog, fetch the first four retrievable documents with fallback, and complete the compact Agent decisions; use only prefilled intent-scoped declarationNames in complianceJudgments.",
           ]
         : []),
+      "Record bounded SDK naming coverage, findings, compatibility evidence, and verification state in sdkNamingReview; use not-assessed coverage when the requested profile or evidence is unavailable.",
       "Run materialize-assessment-results.mjs and require all materialized Agent artifacts.",
       "Run finalize-assessment.mjs and require validated assessment.json and assessment.html.",
       "Start serve-assessment.mjs as an attached long-lived process, immediately read its startup output without waiting for process completion or a completion notification, and return its localhost URL as the clickable Assessment report link with the absolute assessment.json path.",

@@ -23,7 +23,9 @@ Write `agent-workspace\agent-decisions.json` conforming to
 summaries, REST/downstream choices, optional inference, four score signals and
 rationale keyed by stable `catalogId`, fetched-document provenance and bytes,
 extracted guidance, failed retrievals, compliance judgments, confidence, and
-blockers. Do not repeat catalog metadata, query profiles, source/hunk IDs,
+blockers. It also carries `sdkNamingReview`: bounded target coverage, read-only
+findings, compatibility evidence, verification state, and naming blockers. Do
+not repeat catalog metadata, query profiles, source/hunk IDs,
 calculated totals/ranks/accounting, or final output wrappers. Guidance excerpts
 omit declaration IDs. Each compliance judgment selects from its prefilled
 intent-scoped qualified `declarationNames` and cites guidance by `catalogId`
@@ -117,6 +119,34 @@ The materializer writes one `assessment-judgment.json` conforming to `scripts\as
       "rationale": "..."
     }
   ],
+  "sdkNaming": {
+    "status": "failed",
+    "summary": "One C# ARM naming issue was found.",
+    "coverage": [
+      {
+        "language": "C#",
+        "serviceType": "arm",
+        "profile": "csharp-arm",
+        "status": "reviewed",
+        "rationale": "The supplied project is an ARM service."
+      }
+    ],
+    "findings": [
+      {
+        "id": "sdk-naming-...",
+        "declaration": "WidgetProperties.enabled",
+        "currentSdkName": "Enabled",
+        "recommendedSdkName": "IsEnabled",
+        "languageScope": "C#",
+        "decision": "recommend",
+        "rule": "Boolean properties should use a verb prefix.",
+        "rationale": "The member represents a boolean state.",
+        "compatibilityEvidence": "The declaration is confirmed unshipped.",
+        "verification": "proposed"
+      }
+    ],
+    "blockers": []
+  },
   "overallConfidence": "high",
   "blockers": []
 }
@@ -132,6 +162,10 @@ the Azure Guidelines assessment.
 All IDs and URLs must come from the bounded inputs or validated inference
 output. Every `applicable-fail` decision must also provide a concise finding
 title and `high`, `medium`, or `low` severity for structured assessment data.
+SDK naming is materialized from `sdkNamingReview`. Finding IDs are derived
+deterministically. Status is `failed` when findings exist, `passed` only when
+every supplied target is reviewed and no blockers exist, and otherwise
+`not-assessed`.
 
 Documentation Completeness is not part of the Agent judgment. The compiler
 evidence records documentation presence for changed declarations. Assembly
@@ -171,10 +205,13 @@ Dimension statuses are derived, not authored:
 - REST/downstream: `passed`, `failed`, or `not-assessed`;
 - Azure Guidelines: `passed`, `failed`, or `not-assessed`, derived from
   Semantic intent coverage and applicable fetched guidance;
+- SDK Naming (`sdkNaming`): `passed`, `failed`, or `not-assessed`, derived from
+  target coverage, findings, and naming-specific blockers;
 - Documentation Completeness (`documentQuality`): `passed`, `failed`,
   `not-assessed`, or `not-applicable`, with `assessmentVersion: 5` and
   declaration/documented/missing coverage;
-- safety scope: `rest-and-downstream-only`, never Azure Guidelines or document quality.
+- safety scope: `rest-and-downstream-only`, never Azure Guidelines, SDK Naming,
+  or document quality.
 
 A blocked implemented dimension cannot pass. Documentation Completeness is
 `failed` when one or more eligible newly added declarations lack a nonempty effective
@@ -194,11 +231,12 @@ the Azure Guidelines assessment.
 finding-based status icon, REST/downstream code-safety findings, semantic
 intents, active Azure Guidelines status
 and coverage, fetched guidance and changed TypeSpec, collapsed finding cards,
-retrieval blockers, explicit Documentation Completeness status and coverage,
+retrieval blockers, SDK Naming coverage/findings/verification, explicit
+Documentation Completeness status and coverage,
 and complete provenance.
-Overall code quality is a non-clickable summary card. The five dimension cards
+Overall code quality is a non-clickable summary card. The six dimension cards
 follow in this order: Semantic intents, Azure Guidelines, REST breaking changes,
-downstream breaking changes, and Documentation Completeness. Main sections with findings
+downstream breaking changes, SDK Naming, and Documentation Completeness. Main sections with findings
 precede those without findings; within each group, use the dimension-card order.
 Semantic intents are information only, always in the no-findings group. Show an
 information icon beside its title, with intent, operation, and action counts below;
@@ -206,7 +244,7 @@ do not display Pass, Fail, or N/A status tags for Semantic intents. Preserve the
 recorded review state in JSON. The appendix remains last.
 Each card's heading contains only its icon and title on the same line, not a
 number or Pass/Fail/N/A text. Quality cards show the recorded finding count below
-the heading. Overall sums REST, downstream, Azure Guidelines, and Documentation Completeness
+the heading. Overall sums REST, downstream, Azure Guidelines, SDK Naming, and Documentation Completeness
 findings, excluding intents. Preserve status icons, accessible labels, and colors.
 Count underlying findings, not grouped operations, SDK methods, or guideline issue
 cards. Exclude legacy downstream entries that only repeat approved REST findings.
@@ -229,7 +267,7 @@ must include a clickable pull request link when a PR number is available,
 deriving the URL from `repository.remoteUrl` when no dedicated pull-request URL
 is present. Escape all source- and Agent-controlled text.
 
-All five dimensions share a heading, description, and right-aligned metadata.
+All six dimensions share a heading, description, and right-aligned metadata.
 Finding and intent cards share typography, right-aligned status/cause labels,
 and collapsed-by-default summaries.
 
@@ -321,5 +359,5 @@ from HTML; complete presence facts and blockers remain in `assessment.json`.
 compatibility. The general report appendix remains unchanged. Hash navigation opens
 all enclosing details for appendix, finding, and intent links. Failed documentation
 links contribute to semantic `Impacts (N)` but never to scoped REST/downstream safety.
-Recorded documentation findings participate in overall code quality; coverage
+Recorded documentation findings set their dimension card to failed; coverage
 limitations remain recorded in the assessment data.

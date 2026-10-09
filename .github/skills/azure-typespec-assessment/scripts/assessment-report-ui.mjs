@@ -1561,6 +1561,49 @@ export function renderReportSections(assessment, helpers, options = {}) {
     guidelineCards ||
     `<div class="report-empty">${compliance.status === "not-assessed" ? "Azure Guidelines could not be fully assessed." : "No Azure Guidelines findings."}</div>`;
   const coverage = compliance.coverage;
+  const sdkNaming = dimensions.sdkNaming ?? {
+    status: "not-assessed",
+    summary: "SDK naming was not assessed.",
+    coverage: [],
+    findings: [],
+    blockers: [],
+  };
+  const namingCoverage = sdkNaming.coverage ?? [];
+  const namingFindings = sdkNaming.findings ?? [];
+  const namingCoverageHtml = namingCoverage.length
+    ? `<div class="report-card-grid">${namingCoverage
+        .map(
+          (item) =>
+            `<article class="report-card"><div class="report-card-body"><p><strong>${escape(item.language)}</strong> · ${escape(item.serviceType === "arm" ? "ARM" : item.serviceType === "data-plane" ? "Data plane" : "Unknown service type")} ${item.profile ? `· ${escape(item.profile)}` : ""}</p><p>${status(item.status)}</p><p>${escape(item.rationale)}</p></div></article>`,
+        )
+        .join("")}</div>`
+    : "";
+  const namingFindingsHtml = namingFindings
+    .map((finding) => {
+      const recommendation =
+        finding.decision === "recommend"
+          ? `${escape(finding.currentSdkName)} → ${escape(finding.recommendedSdkName)}`
+          : `${escape(finding.currentSdkName)} · recommendation blocked`;
+      const source = finding.sourceLocation
+        ? `<p><strong>Source:</strong> <code>${escape(finding.sourceLocation)}</code></p>`
+        : "";
+      const relation = finding.reviewUnitId
+        ? affectedIntents([finding.reviewUnitId])
+        : affectedIntents([]);
+      return `<details class="report-card" id="sdk-naming-${anchor(finding.id)}">${summary(
+        escape(finding.declaration),
+        recommendation,
+        `<span class="report-badge ${finding.decision === "recommend" ? "remove" : "unknown"}">${escape(finding.decision)}</span>${count(finding.languageScope)}`,
+        relation,
+      )}<div class="report-card-body"><p><strong>Rule:</strong> ${escape(finding.rule)}</p><p>${escape(finding.rationale)}</p><p><strong>Compatibility evidence:</strong> ${escape(finding.compatibilityEvidence)}</p><p><strong>Verification:</strong> ${escape(finding.verification.replaceAll("-", " "))}</p>${source}</div></details>`;
+    })
+    .join("");
+  const namingBlockersHtml = (sdkNaming.blockers ?? []).length
+    ? `<div class="report-empty"><strong>Assessment limits:</strong><ul>${sdkNaming.blockers.map((blocker) => `<li>${escape(blocker)}</li>`).join("")}</ul></div>`
+    : "";
+  const namingBody =
+    `${namingCoverageHtml}${namingFindingsHtml}` ||
+    `<div class="report-empty">${sdkNaming.status === "passed" ? "No SDK naming findings." : "SDK naming was not assessed."}</div>`;
   const documentQuality = dimensions.documentQuality ?? {};
   const documentBody = renderDocumentQuality(documentQuality, {
     escapeHtml: escape,
@@ -1625,7 +1668,13 @@ export function renderReportSections(assessment, helpers, options = {}) {
             `<a class="report-link impact" href="#downstream-${anchor(finding.id)}">Downstream: ${escape(finding.title ?? finding.rule)}</a>`,
           );
       }
-      const impactLinks = unique([...restLinks, ...downstreamLinks]);
+      const namingLinks = namingFindings
+        .filter((finding) => finding.reviewUnitId === item.id)
+        .map(
+          (finding) =>
+            `<a class="report-link impact" href="#sdk-naming-${anchor(finding.id)}">SDK naming: ${escape(finding.declaration)}</a>`,
+        );
+      const impactLinks = unique([...restLinks, ...downstreamLinks, ...namingLinks]);
       const guidelineIds = unique(
         complianceFindings
           .filter(
@@ -1649,7 +1698,7 @@ export function renderReportSections(assessment, helpers, options = {}) {
       const impactCount = impactLinks.length + documentLinks.length;
       const relations =
         impactCount || guidelineIds.length
-          ? `<div class="report-intent-relations">${impactCount ? `<span class="report-relation-label" title="REST, downstream, and failed Documentation Completeness impacts">Impacts (${impactCount})</span>` : ""}${impactLinks.length ? `<div class="report-link-row" aria-label="Intent impacts">${impactLinks.join("")}</div>` : ""}${guidelineIds.length ? `<div class="report-link-row" aria-label="Guideline findings">${guidelineIds.map((id, index) => `<a class="report-link" href="#compliance-finding-${anchor(id)}">Azure Guidelines${guidelineIds.length > 1 ? ` (${index + 1})` : ""}</a>`).join("")}</div>` : ""}${documentLinks.length ? `<div class="report-link-row" aria-label="Documentation Completeness findings">${documentLinks.join("")}</div>` : ""}</div>`
+          ? `<div class="report-intent-relations">${impactCount ? `<span class="report-relation-label" title="REST, downstream, SDK naming, and failed Documentation Completeness impacts">Impacts (${impactCount})</span>` : ""}${impactLinks.length ? `<div class="report-link-row" aria-label="Intent impacts">${impactLinks.join("")}</div>` : ""}${guidelineIds.length ? `<div class="report-link-row" aria-label="Guideline findings">${guidelineIds.map((id, index) => `<a class="report-link" href="#compliance-finding-${anchor(id)}">Azure Guidelines${guidelineIds.length > 1 ? ` (${index + 1})` : ""}</a>`).join("")}</div>` : ""}${documentLinks.length ? `<div class="report-link-row" aria-label="Documentation Completeness findings">${documentLinks.join("")}</div>` : ""}</div>`
           : "";
       const all = item.operations ?? [];
       const operations = all
@@ -1700,6 +1749,10 @@ export function renderReportSections(assessment, helpers, options = {}) {
     {
       findingCount: downstreamCount,
       html: `<section id="downstream-breaking">${sectionHead("Downstream breaking changes", "Method impact and affected intents at a glance; expand for before/after evidence.", status(downstreamStatus) + count(`${downstream.methods.length} mapped methods · ${downstream.types.length} changed types`))}${downstreamBody || `<div class="report-empty">${downstreamStatus === "not-assessed" ? "Downstream breaking changes were not fully assessed." : "No downstream breaking changes detected."}</div>`}</section>`,
+    },
+    {
+      findingCount: namingFindings.length,
+      html: `<section id="sdk-naming">${sectionHead("SDK naming", "Read-only, language-scoped naming review. Recommendations are separate from REST and downstream safety.", status(sdkNaming.status) + count(`${namingFindings.length} findings · ${namingCoverage.length} ${namingCoverage.length === 1 ? "target" : "targets"}`))}<p class="report-small">${escape(sdkNaming.summary)}</p>${namingBody}${namingBlockersHtml}</section>`,
     },
     { findingCount: documentQuality.findings?.length ?? 0, html: documentBody.html },
   ];

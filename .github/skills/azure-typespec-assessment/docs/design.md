@@ -16,6 +16,8 @@ Included:
 - downstream SDK breaking candidates from TCGC;
 - documentation-grounded Azure Guidelines assessment from four official
   documents ranked and fetched once across all Semantic intents;
+- read-only, language-scoped SDK naming coverage and findings from the shared
+  naming skill;
 - one deterministic check that each changed compiler declaration has nonempty
   effective documentation;
 - optional bounded AI inference for source hunks that deterministic analysis
@@ -24,8 +26,9 @@ Included:
 - validated `assessment.json`;
 - readable `assessment.html`.
 
-All five dimensions are active. Documentation Completeness checks compiler
-documentation presence without judging prose. Overall safety
+All six dimensions are active. SDK Naming is independent of compatibility
+safety, and Documentation Completeness checks compiler documentation presence
+without judging prose. Overall safety
 continues to cover REST and downstream SDK compatibility only.
 Changed declaration scope uses actual added and removed lines, including an
 immediately attached documentation/decorator prefix. Declarations present only
@@ -494,7 +497,11 @@ File: `source/source-index.json`
             "startLine": 10,
             "endLine": 15
           },
-          "lines": [" model Widget {", "-  name: string;", "+  name: WidgetName;"],
+          "lines": [
+            " model Widget {",
+            "-  name: string;",
+            "+  name: WidgetName;"
+          ],
           "declarationOccurrenceIds": ["declaration-occurrence-<hash>"],
           "normalizedChanges": [
             {
@@ -2441,15 +2448,13 @@ The header follows a summary-dashboard hierarchy:
 2. prominent assessment title;
 3. the single source/artifact pair or multi-project appendix link on one
    metadata line;
-4. six summary cards: overall code quality, then the five dimensions in this
-   order: Semantic intents, Azure Guidelines, REST breaking changes, downstream
-   breaking changes, and Documentation Completeness.
+4. six dimension summary cards in this order: Semantic intents, Azure
+   Guidelines, REST breaking changes, downstream breaking changes, SDK Naming,
+   and Documentation Completeness.
 
-Card headings contain only an icon beside the title; counts appear below, not as
-a separate oversized primary value. Quality cards show finding counts rather than
-Pass/Fail/N/A text. Overall sums the REST, downstream, Azure Guidelines, and Documentation Completeness
-finding counts, excluding Semantic intents. Its status icon indicates failure
-when findings exist and pass otherwise. It remains non-clickable.
+Card headings contain only an icon beside the title; counts appear below, not
+as a separate oversized primary value. Quality cards show finding counts rather
+than Pass/Fail/N/A text.
 Coverage limitations and original assessment states remain in JSON, with general
 assessment limits in the appendix; a finding-based pass does not claim complete
 assessment coverage. Documentation Completeness details are not rendered in the appendix.
@@ -2458,8 +2463,9 @@ with intent, distinct affected-operation, and add/modify/remove counts below. It
 Fail, or N/A status tag, regardless of the recorded semantic review state.
 Quality cards count underlying recorded findings, not grouped operations,
 affected SDK methods, or distinct visual guideline issues. Legacy downstream
-entries that only repeat approved REST findings are excluded. The Azure Guidelines
-card retains covered-intent counts in its detail. Status icons and colors
+entries that only repeat approved REST findings are excluded. The Azure
+Guidelines card retains covered-intent counts in its detail; SDK Naming retains
+reviewed-target counts. Status icons and colors
 communicate `passed`, `failed`, or `not-assessed`. A zero finding count must not
 imply a pass when evidence retrieval or intent coverage is incomplete.
 

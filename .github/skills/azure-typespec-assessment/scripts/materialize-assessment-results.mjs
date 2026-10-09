@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { isMain, parseArgs, readJsonObject, runMain } from "./cli.mjs";
 import { assembleCompliance, readComplianceCatalog } from "./compliance-assessment.mjs";
-import { canonicalJson } from "./stable-id.mjs";
+import { canonicalJson, stableId } from "./stable-id.mjs";
 import {
   readWorkflowState,
   resolveWorkPath,
@@ -986,14 +986,132 @@ function materializeJudgment(
       rationale: judgment.rationale,
     };
   });
+  const reviewUnitIds = new Set(modelInput.semanticReviewUnits.map((item) => item.reviewUnitId));
+  const sdkNaming = materializeSdkNaming(decisions.sdkNamingReview, reviewUnitIds);
   return {
     schemaVersion: 1,
     semanticIntents: decisions.semanticSummaries,
     restDecisions: decisions.restDecisions,
     downstreamDecisions: decisions.downstreamDecisions,
     complianceDecisions,
+    sdkNaming,
     overallConfidence: decisions.overallConfidence,
     blockers: decisions.blockers,
+  };
+}
+
+/**
+ * @param {CompactDecisions["sdkNamingReview"]} review
+ * @param {Set<string>} reviewUnitIds
+ */
+function materializeSdkNaming(review, reviewUnitIds) {
+  if (review === undefined) {
+    return {
+      status: /** @type {const} */ ("not-assessed"),
+      summary: "SDK naming was not assessed.",
+      coverage: [],
+      findings: [],
+      blockers: [
+        "sdk-naming-not-assessed: no bounded SDK naming review was supplied by the Agent.",
+      ],
+    };
+  }
+  assertKeys(review, ["summary", "coverage", "findings", "blockers"], "SDK naming review");
+  requireText(review.summary, "SDK naming review.summary");
+  requireArray(review.coverage, "SDK naming review.coverage");
+  requireArray(review.findings, "SDK naming review.findings");
+  requireArray(review.blockers, "SDK naming review.blockers");
+  const coverageKeys = [];
+  for (const [index, coverage] of review.coverage.entries()) {
+    const label = `SDK naming coverage ${index + 1}`;
+    assertKeys(coverage, ["language", "serviceType", "profile", "status", "rationale"], label);
+    requireText(coverage.language, `${label}.language`);
+    requireText(coverage.rationale, `${label}.rationale`);
+    if (!["arm", "data-plane", "unknown"].includes(coverage.serviceType)) {
+      throw new Error(`${label}.serviceType is invalid.`);
+    }
+    if (!["reviewed", "not-covered", "not-assessed"].includes(coverage.status)) {
+      throw new Error(`${label}.status is invalid.`);
+    }
+    if (coverage.profile !== undefined) requireText(coverage.profile, `${label}.profile`);
+    coverageKeys.push(`${coverage.language}\u0000${coverage.serviceType}\u0000${coverage.profile ?? ""}`);
+  }
+  const duplicateCoverage = duplicates(coverageKeys);
+  if (duplicateCoverage.length) {
+    throw new Error("SDK naming review contains duplicate coverage targets.");
+  }
+  const findings = review.findings.map((finding, index) => {
+    const label = `SDK naming finding ${index + 1}`;
+    assertKeys(
+      finding,
+      [
+        "reviewUnitId",
+        "declaration",
+        "currentSdkName",
+        "recommendedSdkName",
+        "languageScope",
+        "decision",
+        "rule",
+        "rationale",
+        "compatibilityEvidence",
+        "verification",
+        "sourceLocation",
+      ],
+      label,
+    );
+    for (const field of [
+      "declaration",
+      "currentSdkName",
+      "languageScope",
+      "rule",
+      "rationale",
+      "compatibilityEvidence",
+    ]) {
+      requireText(finding[field], `${label}.${field}`);
+    }
+    if (!["recommend", "blocked"].includes(finding.decision)) {
+      throw new Error(`${label}.decision is invalid.`);
+    }
+    if (finding.decision === "recommend") {
+      requireText(finding.recommendedSdkName, `${label}.recommendedSdkName`);
+    } else if (finding.recommendedSdkName !== undefined) {
+      requireText(finding.recommendedSdkName, `${label}.recommendedSdkName`);
+    }
+    if (!["proposed", "supplied-generated", "applied"].includes(finding.verification)) {
+      throw new Error(`${label}.verification is invalid.`);
+    }
+    if (finding.reviewUnitId && !reviewUnitIds.has(finding.reviewUnitId)) {
+      throw new Error(`${label} references unknown review unit ${finding.reviewUnitId}.`);
+    }
+    if (finding.sourceLocation !== undefined) {
+      requireText(finding.sourceLocation, `${label}.sourceLocation`);
+    }
+    return {
+      id: stableId("sdk-naming", finding),
+      ...finding,
+    };
+  });
+  if (duplicates(findings.map((finding) => finding.id)).length) {
+    throw new Error("SDK naming review contains duplicate findings.");
+  }
+  review.blockers.forEach((blocker, index) => {
+    requireText(blocker, `SDK naming review.blockers[${index}]`);
+    if (/^unresolved:/i.test(blocker)) {
+      throw new Error(`SDK naming review.blockers[${index}] is unresolved.`);
+    }
+  });
+  const fullyReviewed =
+    review.coverage.length > 0 &&
+    review.coverage.every((coverage) => coverage.status === "reviewed") &&
+    review.blockers.length === 0;
+  return {
+    status: /** @type {"passed" | "failed" | "not-assessed"} */ (
+      findings.length ? "failed" : fullyReviewed ? "passed" : "not-assessed"
+    ),
+    summary: review.summary,
+    coverage: review.coverage,
+    findings,
+    blockers: review.blockers,
   };
 }
 
@@ -1015,6 +1133,7 @@ export function validateCompactDecisions(decisions) {
       "failedRetrievals",
       "searchBlockers",
       "complianceJudgments",
+      "sdkNamingReview",
       "overallConfidence",
       "blockers",
     ],
@@ -1039,6 +1158,15 @@ export function validateCompactDecisions(decisions) {
   }
   if (decisions.inferenceResults !== undefined) {
     requireArray(decisions.inferenceResults, "Agent decisions.inferenceResults");
+  }
+  if (decisions.sdkNamingReview !== undefined) {
+    if (
+      typeof decisions.sdkNamingReview !== "object" ||
+      decisions.sdkNamingReview === null ||
+      Array.isArray(decisions.sdkNamingReview)
+    ) {
+      throw new Error("Agent decisions.sdkNamingReview must be an object.");
+    }
   }
   if (!isSeverity(decisions.overallConfidence)) {
     throw new Error("Agent decisions.overallConfidence is invalid.");

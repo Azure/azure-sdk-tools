@@ -18,6 +18,7 @@ import {
  * @typedef {{
  *   catalogScores: CatalogScore[],
  *   fetchedDocuments: FetchedDocument[],
+ *   sdkNamingReview: import("./agent-decisions.schema.js").SdkNamingReview,
  *   overallConfidence: "high" | "medium" | "low",
  *   [key: string]: unknown
  * }} TestAgentDecisions
@@ -120,6 +121,20 @@ function completedDecisions(work) {
     noRelevantGuidance: true,
   }));
   decisions.overallConfidence = "high";
+  decisions.sdkNamingReview = {
+    summary: "C# ARM naming was reviewed.",
+    coverage: [
+      {
+        language: "C#",
+        serviceType: "arm",
+        profile: "csharp-arm",
+        status: "reviewed",
+        rationale: "The supplied project is an ARM service and the C# ARM profile applies.",
+      },
+    ],
+    findings: [],
+    blockers: [],
+  };
   return decisions;
 }
 
@@ -133,6 +148,8 @@ void test("materializes guideline evidence and judgment without inference", () =
     const judgment = /** @type {AssessmentJudgment} */ (readJson(result.judgmentPath));
     assert.equal(judgment.schemaVersion, 1);
     assert.deepEqual(judgment.complianceDecisions, []);
+    assert.equal(judgment.sdkNaming?.status, "passed");
+    assert.equal(judgment.sdkNaming?.coverage[0].profile, "csharp-arm");
     const evidence = /** @type {ComplianceSearchEvidence} */ (
       readJson(path.join(work, "compliance-search-evidence.json"))
     );
@@ -142,6 +159,110 @@ void test("materializes guideline evidence and judgment without inference", () =
     assert.equal(
       JSON.stringify(readJson(path.join(work, "workflow-state.json"))).includes("guideline"),
       true,
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+void test("materializes SDK naming findings with stable IDs and evidence state", () => {
+  const work = fixture();
+  try {
+    const decisions = completedDecisions(work);
+    decisions.sdkNamingReview.findings = [
+      {
+        declaration: "ScenarioParameter.required",
+        currentSdkName: "Required",
+        recommendedSdkName: "IsRequired",
+        languageScope: "C#",
+        decision: "recommend",
+        rule: "Boolean properties should use an Is prefix.",
+        rationale: "The generated member represents a boolean state.",
+        compatibilityEvidence: "A later supplied review commit applies the same rename.",
+        verification: "proposed",
+        sourceLocation: "specification/chaos/ScenarioParameter.tsp:12",
+      },
+    ];
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), decisions);
+    const result = materializeAssessmentResults({ work });
+    const judgment = /** @type {AssessmentJudgment} */ (readJson(result.judgmentPath));
+    assert.equal(judgment.sdkNaming?.status, "failed");
+    assert.match(judgment.sdkNaming?.findings[0].id ?? "", /^sdk-naming-[0-9a-f]{16}$/);
+    assert.equal(judgment.sdkNaming?.findings[0].recommendedSdkName, "IsRequired");
+    assert.equal(judgment.sdkNaming?.findings[0].verification, "proposed");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+void test("materializes unsupported naming coverage as not assessed", () => {
+  const work = fixture();
+  try {
+    const decisions = completedDecisions(work);
+    decisions.sdkNamingReview = {
+      summary: "Java data-plane naming is outside the available naming profile.",
+      coverage: [
+        {
+          language: "Java",
+          serviceType: "data-plane",
+          status: "not-covered",
+          rationale: "No applicable profile is available.",
+        },
+      ],
+      findings: [],
+      blockers: ["sdk-naming-profile-unavailable: Java data-plane is not covered."],
+    };
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), decisions);
+    const result = materializeAssessmentResults({ work });
+    const judgment = /** @type {AssessmentJudgment} */ (readJson(result.judgmentPath));
+    assert.equal(judgment.sdkNaming?.status, "not-assessed");
+    assert.equal(judgment.sdkNaming?.coverage[0].status, "not-covered");
+    assert.equal(judgment.sdkNaming?.blockers.length, 1);
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+void test("rejects naming recommendations without a recommended SDK name", () => {
+  const work = fixture();
+  try {
+    const decisions = completedDecisions(work);
+    decisions.sdkNamingReview.findings = [
+      /** @type {import("./agent-decisions.schema.js").SdkNamingFinding} */ ({
+        declaration: "ScenarioParameter.required",
+        currentSdkName: "Required",
+        languageScope: "C#",
+        decision: "recommend",
+        rule: "Boolean properties should use an Is prefix.",
+        rationale: "The generated member represents a boolean state.",
+        compatibilityEvidence: "No shipped SDK name was supplied.",
+        verification: "proposed",
+      }),
+    ];
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), decisions);
+    assert.throws(
+      () => materializeAssessmentResults({ work }),
+      /recommendedSdkName/,
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+void test("rejects unresolved SDK naming draft blockers", () => {
+  const work = fixture();
+  try {
+    const decisions = completedDecisions(work);
+    decisions.sdkNamingReview = {
+      summary: "SDK naming review is incomplete.",
+      coverage: [],
+      findings: [],
+      blockers: ["unresolved: record SDK naming coverage"],
+    };
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), decisions);
+    assert.throws(
+      () => materializeAssessmentResults({ work }),
+      /SDK naming review\.blockers\[0\] is unresolved/,
     );
   } finally {
     fs.rmSync(work, { recursive: true, force: true });

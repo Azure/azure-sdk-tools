@@ -94,6 +94,12 @@ dotnet test
 This tool can be run in test mode when the `AZSDKTOOLS_AGENT_TESTING` environment variable is set to `true`.
 When testing is enabled, release plans will be automatically generated in the test environment.
 
+### Manual release-plan abandonment
+
+`azsdk release-plan abandon` and `azsdk_abandon_release_plan` refuse abandonment when the plan is finished, any SDK is recorded as Released, or any linked SDK PR has merged. Teams should request a language-exclusion exception for the unreleased languages and contact SDK Release Support instead of abandoning a partially completed release. There is no force or approval override input.
+
+Open PRs, drafts, and PRs closed without merging do not themselves block manual abandonment. Plans with no SDK links remain supported. The command validates canonical SDK PR URLs, reads current GitHub merge state rather than cached ADO PR statuses, rereads the plan, and uses an ADO revision precondition. Unreadable PRs, malformed data, or concurrent plan changes fail without a state write or automatic retry; already abandoned plans are successful no-ops. The GitHub reads and ADO write are not a cross-service atomic transaction. Monthly overdue cleanup retains its separate existing eligibility policy.
+
 ### Test with GitHub Coding Agent
 
 This tool can be used as an MCP server in a github action invoked by the [GitHub Coding Agent](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent). The azure-sdk language repositories and azure-rest-api-specs repository already have this MCP server configured for the coding agent.

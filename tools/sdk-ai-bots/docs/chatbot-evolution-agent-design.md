@@ -67,7 +67,8 @@ The Chatbot Evolution Agent is built on the `agent_framework` library and deploy
 | `web_fetch` | `tools/web_tools.py` | `FunctionTool` | Fetches the source-of-truth doc URL to detect drift between KB content and upstream docs. Reused unchanged from the Chat Agent. |
 | `resolve_kb_source` | `tools/knowledge_tools.py` (extend) | `FunctionTool` | Maps a chunk's `source` folder and optional exact `blob_path` to authoritative GitHub or ADO ownership plus the optional `issueTracker` configured in `knowledge-config.json`. The blob path disambiguates folders backed by different sources; missing-content cases may omit it when all configured paths share ownership. |
 | `issue_write`, `search_issues`, `issue_read`, `add_issue_comment` | `tools/github_mcp_tools.py` | MCP Server | Creates, reuses, reads, and comments on GitHub issues in the configured source repository or the fallback repository. |
-| `wit_create_work_item`, `wit_query_by_wiql`, `wit_get_work_item`, `wit_list_work_item_comments`, `wit_add_work_item_comment` | `tools/ado_mcp_tools.py` | MCP Server | Creates, reuses, reads, and comments on Azure Boards `Issue` work items in the configured ADO project. |
+| `create_ado_issue` | `tools/ado_mcp_tools.py` | `FunctionTool` | Re-resolves the exact knowledge-source identity and URL, selects its configured ADO project, and creates only the `Issue` work-item type. |
+| `wit_query_by_wiql`, `wit_get_work_item`, `wit_list_work_item_comments`, `wit_add_work_item_comment` | `tools/ado_mcp_tools.py` | MCP Server | Searches, reads, and comments on Azure Boards work items. The raw create primitive is not exposed. |
 | `update_knowledge` | `tools/knowledge_tools.py` | `FunctionTool` | Writes candidate markdown to an existing tenant-configured folder in dev storage and refreshes the dev AI Search index. The injected clients prevent production KB mutation. |
 | `validate_agent_response` | `tools/chatagent_tools.py` | `FunctionTool` | Sends the original bad case to the explicitly selected Chat Agent. `target="candidate"` routes to the dev Chat Agent during remediation analysis; `target="prod"` is used only for post-close final validation. |
 
@@ -128,11 +129,10 @@ A JSON payload with `mode`, `tenant_id`, `conversation_id`,
   dev knowledge folder, then call `validate_agent_response` with
   `target="candidate"` and the original bad
    case. If it fails, revise the candidate and repeat within the attempt limit.
-9. **Create the KB issue after validation.** When the original bad case passes, call `resolve_kb_source` for the authoritative source, search the configured tracker for the stable source/classification/scope marker, and create or reuse the item. Use GitHub issues for GitHub targets and ADO `Issue` work items for ADO targets. When no configured source tracker can accept the issue, fall back to `Azure/azure-sdk-pr`. Never create a KB issue before validation passes.
+9. **Create the KB issue after validation.** When the original bad case passes, call `resolve_kb_source` for the authoritative source, search the configured tracker for the stable source/classification/scope marker, and create or reuse the item. Use GitHub issues for GitHub targets and the source-bound `create_ado_issue` tool for ADO targets. When no configured source tracker can accept the issue, fall back to `Azure/azure-sdk-pr`. Never create a KB issue before validation passes.
 10. **Handle chatbot self-issues.** Record the diagnosis and suggested fix, then search, reuse, or create the fallback GitHub issue without entering the candidate-validation loop.
-11. **Complete provider setup.** Assign non-wiki GitHub issues to Copilot before returning success. Do not assign GitHub wiki issues or ADO work items to Copilot.
-12. **Validate a closed item.** In validation mode, read `issue_url` with the matching provider, refetch the persisted conversation using its input coordinates, replay the original bad case through `validate_agent_response` with `target="prod"`, comment the evidence, update Azure/azure-sdk-pr presentation labels only when applicable, and return the result.
-13. **Return** the fixed-schema result.
+11. **Validate a closed item.** In validation mode, read `issue_url` with the matching provider, refetch the persisted conversation using its input coordinates, replay the original bad case through `validate_agent_response` with `target="prod"`, comment the evidence, update Azure/azure-sdk-pr presentation labels only when applicable, and return the result.
+12. **Return** the fixed-schema result.
 
 ## Classification
 
@@ -250,6 +250,7 @@ model FeedbackState {
   error?: string;
 
   issue_url?: string;
+  source_id?: string;
   source_url?: string;
   classification?: string;
   validation_reasoning?: string;
@@ -318,9 +319,9 @@ After all agent sessions finish, fail, or time out, the feedback pipeline trigge
 
 The Evolution Agent may prepare issue content during analysis, but it must complete the KB validation loop before creating an item. After `validate_agent_response(target="candidate")` shows that the original bad case passes, the Agent calls `resolve_kb_source` and routes the defect through the source's optional `issueTracker`: a GitHub issue for a GitHub target or an Azure Boards `Issue` work item for an ADO target. GitHub wiki sources configure their parent GitHub repository. Known non-writable sources omit `issueTracker`; missing configuration or a permanent provider capability/permission failure uses the existing `Azure/azure-sdk-pr` fallback. Timeouts, provider 5xx responses, and ambiguous create responses remain retryable failures rather than fallback triggers.
 
-Before creation, the Agent searches the selected tracker for a stable HTML marker containing the source, classification, and scope. It reuses only an item representing the same defect and adds the new conversation and validation evidence as a comment.
+Before creation, the Agent searches the selected tracker for a stable HTML marker containing the source, classification, and scope. It reuses only an item representing the same defect and adds the new conversation and validation evidence as a comment. ADO creation is source-bound: the creation tool accepts the exact source identity and URL, re-resolves them against knowledge configuration, derives the configured project, and fixes the work-item type to `Issue`.
 
-Every Agent-created item includes concise expected behavior, detailed fixed-document provenance, and validation evidence. It does not duplicate the complete conversation or validated answer. Before persisting a KB issue, the backend re-resolves its exact source URL against the authoritative knowledge configuration and requires the issue destination to match the configured tracker or the explicit `Azure/azure-sdk-pr` fallback. It then stores the canonical issue URL, authoritative source URL, conversation coordinates, and `feedback.status=pending_validation` so the daily job can validate the item after closure. Labels are presentation metadata written only in `Azure/azure-sdk-pr`; they never control routing, deduplication, scheduling, validation, persistence, retries, or dashboard reporting. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent cites the exact KB document or proposed missing-content location and authoritative source:
+Every Agent-created item includes concise expected behavior, detailed fixed-document provenance, and validation evidence. It does not duplicate the complete conversation or validated answer. Before persisting a KB issue, the backend re-resolves its exact source identity and URL against the authoritative knowledge configuration and requires the issue destination to match the configured tracker or the explicit `Azure/azure-sdk-pr` fallback. Registered static sources without repository configuration use their stable source identity and may route only to the fallback. The backend stores the canonical issue URL, authoritative source identity and URL, conversation coordinates, and `feedback.status=pending_validation` so the daily job can validate the item after closure. Labels are presentation metadata written only in `Azure/azure-sdk-pr`; they never control routing, deduplication, scheduling, validation, persistence, retries, or dashboard reporting. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent cites the exact KB document or proposed missing-content location and authoritative source:
 
 > **Title:** [Doc] No guidance on the TypeSpec `@added` versioning decorator
 >

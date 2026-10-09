@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -9,10 +10,28 @@ import httpx
 import pytest
 
 from tools.ado_mcp_tools import (
+    create_ado_issue,
     create_evolution_ado_mcp_tool,
     get_ado_work_item_state,
 )
 from tools.issue_tracker import get_issue_state
+from utils.knowledge_config import KbIssueTarget, KbTarget
+
+_ADO_SOURCE_ID = "internal_wiki"
+_ADO_SOURCE_URL = (
+    "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/internal.wiki"
+)
+_ADO_SOURCE_TARGET = KbTarget(
+    source_url=_ADO_SOURCE_URL,
+    branch="wikiMaster",
+    path="",
+    scope=_ADO_SOURCE_ID,
+    issue_target=KbIssueTarget(
+        provider="azure-devops",
+        organization="azure-sdk",
+        project="internal",
+    ),
+)
 
 
 @pytest.mark.asyncio
@@ -68,9 +87,76 @@ async def test_evolution_ado_profile_exposes_only_issue_tools() -> None:
         "wit_query_by_wiql",
         "wit_get_work_item",
         "wit_list_work_item_comments",
-        "wit_create_work_item",
         "wit_add_work_item_comment",
     ]
+
+
+@pytest.mark.asyncio
+async def test_create_ado_issue_uses_configured_project_and_issue_type() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == (
+            "/azure-sdk/internal/_apis/wit/workitems/$Issue"
+        )
+        assert request.headers["Authorization"].endswith("ado-token")
+        assert request.headers["Content-Type"] == "application/json-patch+json"
+        assert json.loads(request.content) == [
+            {
+                "op": "add",
+                "path": "/fields/System.Title",
+                "value": "Fix guidance",
+            },
+            {
+                "op": "add",
+                "path": "/fields/System.Description",
+                "value": "Validated issue body.",
+            },
+            {
+                "op": "add",
+                "path": "/multilineFieldsFormat/System.Description",
+                "value": "Markdown",
+            },
+        ]
+        return httpx.Response(200, json={"id": 456})
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    credential = AsyncMock()
+    credential.get_token.return_value = SimpleNamespace(token="ado-token")
+    with (
+        patch(
+            "tools.ado_mcp_tools.get_kb_targets",
+            new=AsyncMock(return_value=(_ADO_SOURCE_TARGET,)),
+        ),
+        patch("tools.ado_mcp_tools.get_credential", return_value=credential),
+        patch("tools.ado_mcp_tools.httpx.AsyncClient", return_value=client),
+    ):
+        result = await create_ado_issue(
+            source_id=_ADO_SOURCE_ID,
+            source_url=_ADO_SOURCE_URL,
+            title="Fix guidance",
+            description="Validated issue body.",
+        )
+
+    assert result.work_item_id == 456
+    assert result.issue_url == (
+        "https://dev.azure.com/azure-sdk/internal/_workitems/edit/456"
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_ado_issue_rejects_unconfigured_source_url() -> None:
+    with (
+        patch(
+            "tools.ado_mcp_tools.get_kb_targets",
+            new=AsyncMock(return_value=(_ADO_SOURCE_TARGET,)),
+        ),
+        pytest.raises(ValueError, match="one configured issue target"),
+    ):
+        await create_ado_issue(
+            source_id=_ADO_SOURCE_ID,
+            source_url="https://example.com/unconfigured",
+            title="Fix guidance",
+            description="Validated issue body.",
+        )
 
 
 @pytest.mark.asyncio

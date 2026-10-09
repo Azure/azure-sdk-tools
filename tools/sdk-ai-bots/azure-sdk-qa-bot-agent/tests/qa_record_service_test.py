@@ -137,12 +137,14 @@ def _result(
 def _kb_issue_result(
     *,
     issue_url: str,
+    source_id: str,
     source_url: str,
 ) -> ChatbotEvolutionAgentResult:
     return ChatbotEvolutionAgentResult(
         outcome=ChatbotEvolutionAgentOutcome.issue_created,
         classification=RootCauseClassification.missing_content,
         issue_url=issue_url,
+        source_id=source_id,
         source_url=source_url,
         reasoning="Grounded result.",
         confidence=0.9,
@@ -349,6 +351,7 @@ def test_ado_issue_result_waits_for_validation() -> None:
         outcome=ChatbotEvolutionAgentOutcome.issue_created,
         classification=RootCauseClassification.missing_content,
         issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+        source_id="internal_wiki",
         source_url=(
             "https://azure-sdk@dev.azure.com/"
             "azure-sdk/internal/_git/internal.wiki"
@@ -361,6 +364,7 @@ def test_ado_issue_result_waits_for_validation() -> None:
 
     assert record.feedback is not None
     assert record.feedback.status == FeedbackStatus.pending_validation
+    assert record.feedback.source_id == result.source_id
     assert record.feedback.source_url == result.source_url
 
 
@@ -370,6 +374,7 @@ def test_github_wiki_issue_result_waits_for_validation() -> None:
         outcome=ChatbotEvolutionAgentOutcome.issue_created,
         classification=RootCauseClassification.missing_content,
         issue_url="https://github.com/Azure/azure-sdk-for-java/issues/456",
+        source_id="java_wiki",
         source_url="https://github.com/Azure/azure-sdk-for-java.wiki.git",
         reasoning="Grounded result.",
         confidence=0.9,
@@ -378,6 +383,7 @@ def test_github_wiki_issue_result_waits_for_validation() -> None:
     ChatbotEvolutionAgentService()._apply_result(record, result)
 
     assert record.feedback is not None
+    assert record.feedback.source_id == result.source_id
     assert record.feedback.source_url == result.source_url
 
 
@@ -394,11 +400,12 @@ async def test_wiki_issue_route_accepts_configured_target_or_fallback(
 ) -> None:
     result = _kb_issue_result(
         issue_url=issue_url,
+        source_id="java_wiki",
         source_url=_WIKI_SOURCE_URL,
     )
 
     with patch(
-        "services.chatbot_evolution_agent_service.get_kb_targets_by_source_url",
+        "services.chatbot_evolution_agent_service.get_kb_targets",
         new=AsyncMock(return_value=(_WIKI_SOURCE_TARGET,)),
     ):
         await ChatbotEvolutionAgentService()._validate_issue_route(result)
@@ -408,6 +415,7 @@ async def test_wiki_issue_route_accepts_configured_target_or_fallback(
 async def test_run_job_rejects_wiki_source_with_unrelated_issue_target() -> None:
     result = _kb_issue_result(
         issue_url="https://github.com/Azure/azure-sdk-tools/issues/456",
+        source_id="java_wiki",
         source_url=_WIKI_SOURCE_URL,
     )
 
@@ -418,7 +426,7 @@ async def test_run_job_rejects_wiki_source_with_unrelated_issue_target() -> None
     upsert = AsyncMock()
     with (
         patch(
-            "services.chatbot_evolution_agent_service.get_kb_targets_by_source_url",
+            "services.chatbot_evolution_agent_service.get_kb_targets",
             new=AsyncMock(return_value=(_WIKI_SOURCE_TARGET,)),
         ),
         patch(
@@ -441,12 +449,13 @@ async def test_run_job_rejects_wiki_source_with_unrelated_issue_target() -> None
 async def test_wiki_issue_route_rejects_unconfigured_source() -> None:
     result = _kb_issue_result(
         issue_url="https://github.com/Azure/unconfigured/issues/456",
+        source_id="unconfigured",
         source_url="https://github.com/Azure/unconfigured.wiki.git",
     )
 
     with (
         patch(
-            "services.chatbot_evolution_agent_service.get_kb_targets_by_source_url",
+            "services.chatbot_evolution_agent_service.get_kb_targets",
             new=AsyncMock(return_value=()),
         ),
         pytest.raises(ValueError, match="authoritative configuration"),
@@ -458,14 +467,76 @@ async def test_wiki_issue_route_rejects_unconfigured_source() -> None:
 async def test_ado_issue_route_accepts_configured_target() -> None:
     result = _kb_issue_result(
         issue_url="https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+        source_id="internal_wiki",
         source_url=_ADO_SOURCE_URL,
     )
 
     with patch(
-        "services.chatbot_evolution_agent_service.get_kb_targets_by_source_url",
+        "services.chatbot_evolution_agent_service.get_kb_targets",
         new=AsyncMock(return_value=(_ADO_SOURCE_TARGET,)),
     ):
         await ChatbotEvolutionAgentService()._validate_issue_route(result)
+
+
+@pytest.mark.asyncio
+async def test_static_source_route_accepts_fallback_without_source_url() -> None:
+    result = ChatbotEvolutionAgentResult(
+        outcome=ChatbotEvolutionAgentOutcome.issue_created,
+        classification=RootCauseClassification.missing_content,
+        issue_url="https://github.com/Azure/azure-sdk-pr/issues/456",
+        source_id="static_typespec_qa",
+        reasoning="Grounded result.",
+        confidence=0.9,
+    )
+
+    with (
+        patch(
+            "services.chatbot_evolution_agent_service.get_kb_targets",
+            new=AsyncMock(return_value=()),
+        ),
+        patch(
+            "services.chatbot_evolution_agent_service.get_knowledge_source",
+            return_value=object(),
+        ),
+    ):
+        await ChatbotEvolutionAgentService()._validate_issue_route(result)
+
+
+@pytest.mark.asyncio
+async def test_static_source_route_requires_fallback_repository() -> None:
+    result = ChatbotEvolutionAgentResult(
+        outcome=ChatbotEvolutionAgentOutcome.issue_created,
+        classification=RootCauseClassification.missing_content,
+        issue_url="https://github.com/Azure/azure-sdk-tools/issues/456",
+        source_id="static_typespec_qa",
+        reasoning="Grounded result.",
+        confidence=0.9,
+    )
+
+    with (
+        patch(
+            "services.chatbot_evolution_agent_service.get_kb_targets",
+            new=AsyncMock(return_value=()),
+        ),
+        patch(
+            "services.chatbot_evolution_agent_service.get_knowledge_source",
+            return_value=object(),
+        ),
+        pytest.raises(ValueError, match="must use Azure/azure-sdk-pr"),
+    ):
+        await ChatbotEvolutionAgentService()._validate_issue_route(result)
+
+
+def test_kb_issue_result_requires_source_id() -> None:
+    with pytest.raises(ValidationError, match="require source_id"):
+        ChatbotEvolutionAgentResult(
+            outcome=ChatbotEvolutionAgentOutcome.issue_created,
+            classification=RootCauseClassification.missing_content,
+            issue_url="https://github.com/Azure/azure-sdk-pr/issues/456",
+            source_url=_WIKI_SOURCE_URL,
+            reasoning="Missing source identity.",
+            confidence=0.9,
+        )
 
 
 @pytest.mark.parametrize(

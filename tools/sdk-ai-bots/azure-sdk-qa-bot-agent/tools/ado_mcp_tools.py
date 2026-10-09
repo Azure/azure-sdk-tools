@@ -17,15 +17,18 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Annotated
 from urllib.parse import quote
 
 from agent_framework import MCPStdioTool
 import httpx
+from pydantic import BaseModel
 
 from config.app_config import get as cfg
 from models.feedback import AzureDevOpsIssueReference, parse_issue_reference
-from tools import truncating_mcp_parser
+from tools import tool, truncating_mcp_parser
 from utils.azure_credential import get_credential
+from utils.knowledge_config import get_kb_targets
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +61,15 @@ _ADO_EVOLUTION_TOOLS = (
     "wit_query_by_wiql",
     "wit_get_work_item",
     "wit_list_work_item_comments",
-    "wit_create_work_item",
     "wit_add_work_item_comment",
 )
+
+
+class AzureDevOpsIssueCreateResult(BaseModel):
+    """Canonical identity of a newly created Azure Boards issue."""
+
+    issue_url: str
+    work_item_id: int
 
 
 async def create_ado_mcp_tool() -> MCPStdioTool:
@@ -82,9 +91,10 @@ async def create_evolution_ado_mcp_tool() -> MCPStdioTool:
         domains=("work-items",),
         description=(
             "Azure Boards issue tools for the chatbot evolution workflow. "
-            "May query and read work items, list comments, create Issue work "
-            "items, and add comments. Must not access pipelines, project "
-            "identities, artifacts, tags, or assignments."
+            "May query and read work items, list comments, and add comments. "
+            "Issue creation is provided separately by a source-bound tool. "
+            "Must not access pipelines, project identities, artifacts, tags, "
+            "or assignments."
         ),
     )
 
@@ -115,6 +125,98 @@ async def _create_ado_mcp_tool(
         approval_mode="never_require",
         parse_tool_results=truncating_mcp_parser,
         description=description,
+    )
+
+
+@tool
+async def create_ado_issue(
+    *,
+    source_id: Annotated[
+        str,
+        "Exact knowledge-source folder returned by resolve_kb_source.",
+    ],
+    source_url: Annotated[
+        str,
+        "Exact authoritative source URL returned by resolve_kb_source.",
+    ],
+    title: Annotated[str, "Concise Azure Boards issue title."],
+    description: Annotated[
+        str,
+        "Complete issue description with the stable evolution marker and evidence.",
+    ],
+) -> AzureDevOpsIssueCreateResult:
+    """Create an Issue in the ADO project configured for a knowledge source."""
+    title = title.strip()
+    description = description.strip()
+    if not source_id.strip() or not source_url.strip():
+        raise ValueError("source_id and source_url must not be empty")
+    if not title:
+        raise ValueError("title must not be empty")
+    if not description:
+        raise ValueError("description must not be empty")
+
+    matching_targets = tuple(
+        target
+        for target in await get_kb_targets(source_id)
+        if target.source_url == source_url
+    )
+    issue_targets = {target.issue_target for target in matching_targets}
+    if len(issue_targets) != 1:
+        raise ValueError(
+            "source_id and source_url do not resolve to one configured issue target"
+        )
+    issue_target = issue_targets.pop()
+    if (
+        issue_target is None
+        or issue_target.provider != "azure-devops"
+        or not issue_target.organization
+        or not issue_target.project
+    ):
+        raise ValueError("knowledge source is not configured for Azure DevOps issues")
+
+    organization = quote(issue_target.organization, safe="")
+    project = quote(issue_target.project, safe="")
+    api_url = (
+        f"https://dev.azure.com/{organization}/{project}"
+        "/_apis/wit/workitems/$Issue?api-version=7.1"
+    )
+    access_token = await get_credential().get_token(_ADO_SCOPE)
+    headers = {
+        "Authorization": "Bearer " + access_token.token,
+        "Accept": "application/json",
+        "Content-Type": "application/json-patch+json",
+    }
+    body = [
+        {
+            "op": "add",
+            "path": "/fields/System.Title",
+            "value": title,
+        },
+        {
+            "op": "add",
+            "path": "/fields/System.Description",
+            "value": description,
+        },
+        {
+            "op": "add",
+            "path": "/multilineFieldsFormat/System.Description",
+            "value": "Markdown",
+        },
+    ]
+    async with httpx.AsyncClient(timeout=_ADO_API_TIMEOUT_SECS) as client:
+        response = await client.post(api_url, headers=headers, json=body)
+        response.raise_for_status()
+    payload = response.json()
+    work_item_id = payload.get("id")
+    if not isinstance(work_item_id, int) or work_item_id <= 0:
+        raise RuntimeError("ADO returned no valid work-item ID")
+
+    return AzureDevOpsIssueCreateResult(
+        issue_url=(
+            f"https://dev.azure.com/{organization}/{project}"
+            f"/_workitems/edit/{work_item_id}"
+        ),
+        work_item_id=work_item_id,
     )
 
 

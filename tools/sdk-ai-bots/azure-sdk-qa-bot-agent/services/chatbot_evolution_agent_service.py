@@ -15,6 +15,7 @@ from azure.ai.projects.aio import AIProjectClient
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 
 from config.app_config import get as cfg
+from config.tenant_config import get_knowledge_source
 from models.conversation import BotAnswerVerdict
 from models.feedback import (
     AzureDevOpsIssueReference,
@@ -30,7 +31,7 @@ from models.feedback import (
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from utils.azure_ai_foundry import get_project_client
 from utils.azure_cosmosdb import read_qa_record, upsert_qa_record
-from utils.knowledge_config import KbIssueTarget, get_kb_targets_by_source_url
+from utils.knowledge_config import KbIssueTarget, get_kb_targets
 
 logger = logging.getLogger(__name__)
 
@@ -214,23 +215,45 @@ class ChatbotEvolutionAgentService:
                 ChatbotEvolutionAgentOutcome.issue_created,
                 ChatbotEvolutionAgentOutcome.issue_reused,
             )
-            or result.source_url is None
+            or result.source_id is None
             or result.issue_url is None
         ):
             return
 
-        source_targets = await get_kb_targets_by_source_url(result.source_url)
-        if not source_targets:
+        source_targets = await get_kb_targets(result.source_id)
+        issue = parse_issue_reference(result.issue_url)
+        if result.source_url is None:
+            if (
+                source_targets
+                or not result.source_id.startswith("static_")
+                or get_knowledge_source(result.source_id) is None
+            ):
+                raise ValueError(
+                    "KB issue source_id does not identify an unconfigured "
+                    "registered static source"
+                )
+            if not is_fallback_issue_reference(issue):
+                raise ValueError(
+                    "KB sources without a repository must use Azure/azure-sdk-pr"
+                )
+            return
+
+        matching_targets = tuple(
+            target
+            for target in source_targets
+            if target.source_url == result.source_url
+        )
+        if not matching_targets:
             raise ValueError(
-                "KB issue source_url does not match authoritative configuration"
+                "KB issue source_id and source_url do not match authoritative "
+                "configuration"
             )
 
-        issue = parse_issue_reference(result.issue_url)
         if is_fallback_issue_reference(issue):
             return
 
         configured_targets = {
-            source_target.issue_target for source_target in source_targets
+            source_target.issue_target for source_target in matching_targets
         }
         if len(configured_targets) != 1:
             raise ValueError(
@@ -310,6 +333,7 @@ class ChatbotEvolutionAgentService:
                 record.verdict = BotAnswerVerdict.Incorrect
                 record.feedback.status = FeedbackStatus.pending_validation
                 record.feedback.issue_url = result.issue_url
+                record.feedback.source_id = result.source_id
                 record.feedback.source_url = result.source_url
                 record.feedback.classification = result.classification
                 return

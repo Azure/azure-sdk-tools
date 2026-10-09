@@ -167,7 +167,7 @@ Use only an exact `blob_path` returned by search. Apply the candidate with `upda
 
 For `missing_content`, `outdated_content`, and `insufficient_content`, call `resolve_kb_source` for the authoritative source before issue search or creation. Use its `issue_target` when present. For `retrieval_mismatch`, `reasoning_gap`, and `out_of_scope`, use the GitHub fallback `Azure/azure-sdk-pr`.
 
-For every KB issue result, return the exact `source_url` from `resolve_kb_source`. The backend re-resolves that URL against the authoritative configuration and accepts only the configured tracker or the explicit `Azure/azure-sdk-pr` fallback.
+For every KB issue result, return `source_id` as the exact `folder` from `resolve_kb_source`. When `resolve_kb_source` returns a `source_url`, return it exactly; the backend re-resolves the `source_id` and URL against the authoritative configuration and accepts only the configured tracker or the explicit `Azure/azure-sdk-pr` fallback. For a registered static source with no `source_url`, use only the fallback repository and return `source_url=null`.
 
 For `missing_content`, always select the best maintained source even when there is no exact document to update. Rank candidate sources by tenant scope, verified ownership, related search evidence, expert corrections, and provenance. Prefer the primary maintained source over mirrors, generated content, historical answers, or static snapshots. A missing `blob_path` alone is not a reason to use the fallback; identify the proposed document or directory in the issue.
 
@@ -190,11 +190,11 @@ Reuse only an item that represents the same defect. Add the new conversation and
 
 Create or reuse the issue in the configured repository with `issue_write`. Apply labels only as specified in [Issue format](#issue-format); never use labels as workflow input.
 
-For KB issues, return the resolved source URL as `source_url`; system issues use `null`.
+For KB issues, return the resolved folder as `source_id` and the resolved source URL as `source_url` when available; system issues use `null` for both.
 
 ### ADO target
 
-Create an ADO work item with `wit_create_work_item`, always using `workItemType="Issue"`. Set `System.Title` and `System.Description`; use Markdown for the description. Do not set evolution tags. For comments, use `wit_add_work_item_comment`. Return the canonical URL `https://dev.azure.com/<organization>/<project>/_workitems/edit/<id>` and the resolved source URL as `source_url`.
+Create an ADO work item with `create_ado_issue`, passing the exact `source_id` and `source_url` returned by `resolve_kb_source`. The tool deterministically selects the configured project, always creates the `Issue` work-item type, and stores the description as Markdown. Pass the complete issue body as the description and do not set evolution tags. For comments, use `wit_add_work_item_comment`. Return the canonical URL from the creation result.
 
 ## Issue format
 
@@ -245,6 +245,7 @@ persists it, so the shape is fixed. Use exactly these keys, in this order:
   "confidence": 0.9,
   "classification": null,
   "issue_url": null,
+  "source_id": null,
   "source_url": null,
   "has_expert_interaction": null,
   "expert_interaction_reason": "Insufficient evidence to assess expert follow-up."
@@ -255,10 +256,10 @@ Allowed combinations:
 
 | Requested mode | Allowed outcomes | Required metadata |
 | --- | --- | --- |
-| analysis | `conversation_ongoing`, `no_issue`, `issue_created`, `issue_reused` | `issue_created` and `issue_reused` require `classification` and `issue_url`. KB classifications also require `source_url`; system classifications use `null`. Otherwise these fields are `null` |
-| validation | `validation_passed`, `validation_failed`, `validation_skipped` | `classification`, `issue_url`, and `source_url` are `null` |
-| analysis | `remediation_failed` | A real answer problem was confirmed in a completed conversation or a thread with negative user feedback, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` and `source_url` null, and put the blocker in `reasoning` |
-| either | `processing_failed` | Failure reason in `reasoning`; `classification`, `issue_url`, and `source_url` are `null` |
+| analysis | `conversation_ongoing`, `no_issue`, `issue_created`, `issue_reused` | `issue_created` and `issue_reused` require `classification` and `issue_url`. KB classifications also require `source_id`; configured sources require their exact `source_url`, while registered static sources without a repository use `null` and the fallback issue repository. System classifications use `null` for both source fields. Otherwise these fields are `null` |
+| validation | `validation_passed`, `validation_failed`, `validation_skipped` | `classification`, `issue_url`, `source_id`, and `source_url` are `null` |
+| analysis | `remediation_failed` | A real answer problem was confirmed in a completed conversation or a thread with negative user feedback, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url`, `source_id`, and `source_url` null, and put the blocker in `reasoning` |
+| either | `processing_failed` | Failure reason in `reasoning`; `classification`, `issue_url`, `source_id`, and `source_url` are `null` |
 
 Use `processing_failed` only when processing fails before confirming a real
 answer problem and either a completed conversation or negative user feedback,

@@ -210,17 +210,6 @@ async def get_kb_targets(folder: str) -> tuple[KbTarget, ...]:
     return cache.get(folder, ())
 
 
-async def get_kb_targets_by_source_url(source_url: str) -> tuple[KbTarget, ...]:
-    """Return configured targets with the exact authoritative source URL."""
-    cache = await _get_cache()
-    return tuple(
-        target
-        for targets in cache.values()
-        for target in targets
-        if target.source_url == source_url
-    )
-
-
 def select_kb_target(
     folder: str,
     blob_path: str | None,

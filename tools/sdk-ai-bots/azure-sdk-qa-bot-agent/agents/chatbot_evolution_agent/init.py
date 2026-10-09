@@ -37,7 +37,7 @@ import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.chatagent_tools import ChatAgentTools
 from tools.conversation_tools import ConversationTools
-from tools.ado_mcp_tools import create_evolution_ado_mcp_tool
+from tools.ado_mcp_tools import create_ado_issue, create_evolution_ado_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
@@ -135,6 +135,7 @@ async def main() -> None:
         knowledge_tools.update_knowledge,
         chatagent_tools.chat,
         web_tools.web_fetch,
+        create_ado_issue,
     ]
 
     # GitHub MCP tool with write access for remediation issues and comments.

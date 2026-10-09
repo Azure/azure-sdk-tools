@@ -231,6 +231,7 @@ class ChatbotEvolutionAgentResult(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     classification: RootCauseClassification | None = None
     issue_url: str | None = None
+    source_id: str | None = Field(default=None, min_length=1)
     source_url: str | None = None
     has_expert_interaction: bool | None = Field(default=None, strict=True)
     expert_interaction_reason: str | None = Field(
@@ -257,30 +258,38 @@ class ChatbotEvolutionAgentResult(BaseModel):
                 )
             issue = parse_issue_reference(self.issue_url)
             if self.classification in _KB_CLASSIFICATIONS:
-                if not self.source_url:
-                    raise ValueError("KB issue outcomes require source_url")
+                if not self.source_id:
+                    raise ValueError("KB issue outcomes require source_id")
             else:
-                if self.source_url is not None:
-                    raise ValueError("System issue outcomes cannot include source_url")
+                if self.source_id is not None or self.source_url is not None:
+                    raise ValueError(
+                        "System issue outcomes cannot include source_id or source_url"
+                    )
                 if not is_fallback_issue_reference(issue):
                     raise ValueError(
                         "System issue outcomes require an Azure/azure-sdk-pr issue"
                     )
         elif self.outcome == ChatbotEvolutionAgentOutcome.remediation_failed:
-            if self.issue_url is not None or self.source_url is not None:
+            if (
+                self.issue_url is not None
+                or self.source_id is not None
+                or self.source_url is not None
+            ):
                 raise ValueError(
-                    "remediation_failed cannot include issue_url or source_url"
+                    "remediation_failed cannot include issue_url, source_id, "
+                    "or source_url"
                 )
         elif (
             self.issue_url is not None
+            or self.source_id is not None
             or self.source_url is not None
             or self.classification is not None
         ):
             raise ValueError(
                 "classification is only valid for issue_created, issue_reused, "
                 "or remediation_failed; issue_url is only valid for issue_created "
-                "or issue_reused; source_url is only valid for issue_created or "
-                "issue_reused"
+                "or issue_reused; source_id and source_url are only valid for "
+                "issue_created or issue_reused"
             )
         return self
 

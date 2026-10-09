@@ -23,9 +23,9 @@ parameters:
       - none
       - live
       - mock
-  - name: threshold
+  - name: runs
     type: number
-    default: 0.8
+    default: 1
   - name: postEvalTemplate
     type: string
     default: ''
@@ -107,8 +107,7 @@ jobs:
         env:
           EVAL_ARGS: $(evalArgs)
 
-      # This runner keeps the pipeline threshold out of `vally eval`: TypeSpec
-      # gates the completed results.jsonl without overriding eval scoring.
+      # TypeSpec gates the completed results with pass@k semantics.
       - ${{ if eq(parameters.mcpEnvironment, 'live') }}:
         - task: AzureCLI@2
           displayName: 'vally eval $(shardName) (authenticated)'
@@ -123,7 +122,7 @@ jobs:
                 --shard-name "$(shardName)" \
                 --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
                 --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
-                --threshold ${{ parameters.threshold }}
+                --runs ${{ parameters.runs }}
           env:
             GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
             AZSDK_EVAL_MCP_KIND: live
@@ -135,7 +134,7 @@ jobs:
               --shard-name "$(shardName)" \
               --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
               --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
-              --threshold ${{ parameters.threshold }}
+              --runs ${{ parameters.runs }}
           displayName: 'vally eval $(shardName)'
           workingDirectory: ${{ parameters.vallyRoot }}
           env:

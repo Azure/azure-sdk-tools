@@ -17,17 +17,17 @@
 # Eng Sys
 ###########
 /eng/                                  @azure/azure-sdk-eng
-/.config/1espt/                        @benbp
+/.config/1espt/                        @chidozieononiwu @raych1 
 
 ###########
 # Files used to manage spelling version and installation
 ###########
-/eng/common/spelling/ @danieljurek @mikeharder
+/eng/common/spelling/ @danieljurek
 
 ###########
 # Files used to manage tsp-client version and installation
 ###########
-/eng/**/tsp-client/ @catalinaperalta @mikeharder
+/eng/**/tsp-client/ @catalinaperalta
 
 ###########
 # Eng Sys Tools
@@ -37,51 +37,52 @@
 /tools/codeowners-utils/                @danieljurek
 /tools/fxlister/                        @KrzysztofCwalina
 /tools/github/                          @jsquire @lmazuel
-/tools/github-event-processor/          @benbp @jsquire
+/tools/github-event-processor/          @jsquire
 /tools/github-team-user-store/          @danieljurek
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
-/tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803 @jeremymeng
 /tools/keyvault-mock-attestation/       @maorleger
-/tools/perf-automation/                 @mikeharder @benbp
+/tools/perf-automation/                 @chidozieononiwu @raych1 
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
-/tools/pipeline-generator/              @benbp
-/tools/pipeline-witness/                @hallipr
+/tools/pipeline-generator/              @chidozieononiwu @raych1 
+/tools/pipeline-witness/                @chidozieononiwu @raych1 
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
-/tools/test-proxy/                      @scbedd @mikeharder @benbp
-/tools/tsp-client/                      @catalinaperalta @mikeharder
+/tools/test-proxy/                      @antkmsft
+/tools/tsp-client/                      @catalinaperalta
 /tools/typespec-bump-deps/              @weidongxu-microsoft
-/tools/content-validation/              @xiangyan99 @zedy-wj
-/tools/perf-regression-finder/          @m-redding @jsquire
-/tools/release-plan-dashboard/          @praveenkuttappan
+/tools/content-validation/              @zedy-wj
+/tools/perf-regression-finder/          @jsquire
 
 #####################
 # Attestation
 #####################              
-/eng/pipelines/cpex-attestation.yml     @praveenkuttappan @maririos 
-/eng/scripts/Attest-CPEX-KPIs.ps1       @praveenkuttappan @maririos 
+/eng/pipelines/cpex-attestation.yml     @praveenkuttappan 
+/eng/scripts/Attest-CPEX-KPIs.ps1       @praveenkuttappan 
 
 #####################
 # Azure SDK Tools MCP
 #####################
-/eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
+/eng/common/instructions/azsdk-tools/   @praveenkuttappan @MrJustinB 
 # PRLabel: %azsdk-cli
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion
 /tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
-/.github/skills/                        @azure/azsdk-cli
+/.github/skills/                        @azure/azsdk-cli @helen229 @praveenkuttappan @azure/azure-sdk-eng
 /.github/skills/azure-typespec-author/  @azure/azsdk-cli @catalinaperalta
 /eng/pipelines/azure-typespec-author-eval/                      @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/azure-typespec-author-benchmark.yml              @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/azure-typespec-author-benchmark-no-skill.yml     @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/templates/steps/typespec-author-eval-*.yml              @azure/azsdk-cli @haolingdong-msft @catalinaperalta
+/eng/common/scripts/eval/               @helen229 @praveenkuttappan @azure/azure-sdk-eng
+/eng/skill-eval/                        @helen229 @praveenkuttappan @azure/azure-sdk-eng
+/evals/                                 @helen229 @praveenkuttappan @azure/azure-sdk-eng
 
 
 ###########
 # Stress
 ###########
-/eng/common/scripts/stress-testing/     @benbp @richardpark-msft
-/tools/stress-cluster/                  @benbp @richardpark-msft
+/eng/common/scripts/stress-testing/     @richardpark-msft
+/tools/stress-cluster/                  @richardpark-msft
 
 ###########
 # .NET Client Tools
@@ -94,16 +95,17 @@
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @tjprescott @praveenkuttappan
-/tools/apiview/emitters/typespec-apiview/ @timotheeguerin
-/tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
-/tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
-/tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
-/src/swift/                               @tjprescott
-/src/java/apiview-java-processor/         @JonathanGiles @alzimmermsft @srnagar
-/packages/python-packages/apiview-copilot/ @tjprescott
-/packages/python-packages/*stub*/         @l0lawrence
-/src/go/                                  @jhendrixMSFT @RickWinter
+/tools/apiview/                                     @tjprescott @praveenkuttappan
+/tools/apiview/emitters/typespec-apiview/           @timotheeguerin
+/tools/apiview/parsers/cpp-api-parser/              @LarryOsterman
+/tools/apiview/parsers/csharp-api-parser/           @azure/azsdknet @jsquire
+/tools/apiview/parsers/js-api-parser/               @jeremymeng @maorleger
+/src/swift/                                         @tjprescott
+/src/java/apiview-java-processor/                   @JonathanGiles @alzimmermsft
+/packages/java-packages/codesnippet-maven-plugin/   @alzimmermsft
+/packages/python-packages/apiview-copilot/          @tjprescott
+/packages/python-packages/*stub*/                   @l0lawrence
+/src/go/                                            @jhendrixMSFT @RickWinter
 
 ###########
 # Pylint checkers
@@ -118,10 +120,11 @@
 /tools/sdk-ai-bots/azure-sdk-qa-bot                 @chunyu3 @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
 /tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev
+/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index      @lirenhe @chunyu3 @JiaqiZhang-Dev
 
 # Add owners for notifications for specific pipelines
 /eng/common/pipelines/codeowners-linter.yml        @danieljurek
 /eng/pipelines/pipeline-owners-extraction.yml      @danieljurek
 
 # EngSys should own all package-lock.json under eng/common
-/eng/common/**/package-lock.json                    @mikeharder @danieljurek
+/eng/common/**/package-lock.json                   @danieljurek

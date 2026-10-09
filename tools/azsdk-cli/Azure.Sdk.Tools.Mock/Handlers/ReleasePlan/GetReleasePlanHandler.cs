@@ -9,28 +9,70 @@ namespace Azure.Sdk.Tools.Mock.Handlers.ReleasePlan;
 
 /// <summary>
 /// Mock handler for azsdk_get_release_plan.
-/// Switches on workItem ID — returns the Contoso release plan for "35000", default otherwise.
+/// Returns the Contoso release plan for its known IDs, TypeSpec project path, or spec PR.
 /// </summary>
 public class GetReleasePlanHandler : IMockToolHandler
 {
+    private const string ContosoTypeSpecProjectPath = "specification/contosowidgetmanager/Contoso.WidgetManager";
+    private const string ContosoApiVersion = "2024-01-01";
+    private const string DefaultSpecPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/12345";
+
     public string ToolName => "azsdk_get_release_plan";
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var workItemId = arguments?.GetValueOrDefault("workItem")?.ToString() ?? "0";
+        var workItemId = arguments?.GetValueOrDefault("workItemId")?.ToString()
+            ?? arguments?.GetValueOrDefault("workItem")?.ToString()
+            ?? "0";
+        var releasePlanId = arguments?.GetValueOrDefault("releasePlanId")?.ToString() ?? "0";
+        var specPullRequestUrl = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString() ?? "";
+        var typeSpecProjectPath = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "";
+        var apiReleaseType = arguments?.GetValueOrDefault("apiReleaseType")?.ToString() ?? "";
+        var apiVersion = arguments?.GetValueOrDefault("apiVersion")?.ToString() ?? "";
 
-        return workItemId switch
+        if (!string.IsNullOrWhiteSpace(apiVersion) && string.IsNullOrWhiteSpace(typeSpecProjectPath))
         {
-            "35000" => ContosoReleasePlanResponse(),
-            _ => MockToolFactory.GetDefaultResponse()
-        };
+            return new ReleasePlanResponse { ResponseError = "TypeSpec project path is required when API version is provided." };
+        }
+
+        if (!string.IsNullOrWhiteSpace(apiVersion) && string.IsNullOrWhiteSpace(apiReleaseType))
+        {
+            return new ReleasePlanResponse { ResponseError = "API release type is required when API version is provided. Allowed values: Private Preview, Public Preview, GA" };
+        }
+
+        var isKnownSpecPullRequest = string.Equals(
+            specPullRequestUrl,
+            "https://github.com/Azure/azure-rest-api-specs/pull/38387",
+            StringComparison.OrdinalIgnoreCase);
+        var isKnownTypeSpecProject = string.Equals(typeSpecProjectPath, ContosoTypeSpecProjectPath, StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrWhiteSpace(apiReleaseType) || string.Equals(apiReleaseType, "GA", StringComparison.OrdinalIgnoreCase));
+        var isKnownApiVersion = string.IsNullOrWhiteSpace(apiVersion)
+            || string.Equals(apiVersion, ContosoApiVersion, StringComparison.OrdinalIgnoreCase);
+        var matchesApiVersionSelector = string.IsNullOrWhiteSpace(apiVersion)
+            || (isKnownTypeSpecProject && isKnownApiVersion);
+
+        return matchesApiVersionSelector
+            && (workItemId == "35000"
+            || releasePlanId == "50001"
+            || isKnownSpecPullRequest
+            || isKnownTypeSpecProject)
+            ? ContosoReleasePlanResponse(isKnownSpecPullRequest ? specPullRequestUrl : DefaultSpecPullRequestUrl)
+            : MockToolFactory.GetDefaultResponse();
     }
 
-    private static ReleasePlanResponse ContosoReleasePlanResponse() => new()
+    private static ReleasePlanResponse ContosoReleasePlanResponse(string activeSpecPullRequestUrl) => new()
     {
         TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
         PackageType = SdkType.Dataplane,
         Message = "Release plan found",
+        Warnings =
+        [
+            $"Release plan 49999 ({ReleasePlanWorkItem.DashboardBaseUrl}49999) is past due. Its target release month was May 2026."
+        ],
+        NextSteps =
+        [
+            "Either postpone the past-due plan by updating its target release month, or abandon it and record the reason in the release plan dashboard."
+        ],
         ReleasePlanDetails = new ReleasePlanWorkItem
         {
             WorkItemId = 35000,
@@ -39,10 +81,12 @@ public class GetReleasePlanHandler : IMockToolHandler
             Owner = "testuser@microsoft.com",
             SDKReleaseMonth = "06/2026",
             ReleasePlanId = 50001,
+            ReleasePlanType = "GA",
             IsDataPlane = true,
             SpecType = "TypeSpec",
-            ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/12345",
-            APISpecProjectPath = "specification/contosowidgetmanager/Contoso.WidgetManager",
+            SpecAPIVersion = ContosoApiVersion,
+            ActiveSpecPullRequest = activeSpecPullRequestUrl,
+            APISpecProjectPath = ContosoTypeSpecProjectPath,
             SDKReleaseType = "beta",
             SDKInfo =
             [

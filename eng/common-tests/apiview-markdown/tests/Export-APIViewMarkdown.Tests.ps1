@@ -12,7 +12,56 @@ BeforeAll {
     $simpleTokensJson = Join-Path $testFilesDir "simple_tokens.json"
 }
 
-Describe "Export-APIViewMarkdown" {
+Describe "Export-APIViewMarkdown" -Tag "UnitTest" {
+    Context "Case-sensitive API identifiers" {
+        It "Preserves nested API content, spacing, blank lines, and the Python fence" {
+            $jsonFile = Join-Path $testFilesDir "case_distinct_tokens.json"
+            $outFile = Join-Path $TestDrive "case_distinct.md"
+
+            & $scriptPath -TokenJsonPath $jsonFile -OutputPath $outFile
+
+            $expected = @(
+                '```py'
+                'namespace azure.mgmt.apimanagement.models'
+                '    class LLMDiagnosticSettings:'
+                '        log: LlmDiagnosticSettings'
+                ''
+                '    enum LlmDiagnosticSettings:'
+                '        ENABLED = "enabled"'
+                ''
+                '```'
+            ) -join "`n"
+            Get-Content $outFile -Raw | Should -BeExactly $expected
+        }
+    }
+
+    Context "Optional fields" {
+        It "Supports <Name> Children and Language under strict mode" -TestCases @(
+            @{ Name = "missing"; Fields = @{} }
+            @{ Name = "null"; Fields = @{ Children = $null; Language = $null } }
+            @{ Name = "empty"; Fields = @{ Children = @(); Language = "" } }
+        ) {
+            param($Name, $Fields)
+
+            Set-StrictMode -Version 4
+            $line = @{
+                Tokens = @(@{ Value = "x"; HasPrefixSpace = $false; HasSuffixSpace = $false })
+            }
+            $tokenJson = @{ ReviewLines = @($line) }
+            if ($Fields.ContainsKey("Children")) {
+                $line.Children = $Fields.Children
+                $tokenJson.Language = $Fields.Language
+            }
+            $jsonFile = Join-Path $TestDrive "optional_$Name.json"
+            $outFile = Join-Path $TestDrive "optional_$Name.md"
+            $tokenJson | ConvertTo-Json -Depth 10 | Set-Content $jsonFile
+
+            & $scriptPath -TokenJsonPath $jsonFile -OutputPath $outFile
+
+            Get-Content $outFile -Raw | Should -BeExactly (@('```', 'x', '```') -join "`n")
+        }
+    }
+
     Context "Basic rendering" {
         It "Renders a fenced code block using the language from the JSON" {
             $outFile = Join-Path $TestDrive "output.md"

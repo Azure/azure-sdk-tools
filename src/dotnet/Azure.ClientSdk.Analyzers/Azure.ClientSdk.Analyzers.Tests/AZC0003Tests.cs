@@ -35,6 +35,48 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0003ProducedForAsyncMethodWithoutSyncCounterpart()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public Task {|AZC0003:GetAsync|}(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task NoDiagnosticForVirtualAsyncMethodWithoutSyncCounterpart()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task GetAsync(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0003SkippedForPrivateMethods()
         {
             const string code = @"

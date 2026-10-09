@@ -7,7 +7,7 @@ area: "versioning"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -61,6 +61,10 @@ stimuli:
     prompt: |
       @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
     environment: *shared_environment
+    rubric: &shared_rubric
+      - EmployeeProperties.email becomes required only in API version 2025-05-04-preview using valid TypeSpec versioning.
+      - The email property remains optional in earlier API versions.
+      - The target project compiles and changes are limited to the requested property requirement.
     graders:
       - type: "tool-calls"
         config:
@@ -80,19 +84,25 @@ stimuli:
           command: "tsp compile ."
           sub_path: "Microsoft.Widget/Widget"
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "v2025_05_04_preview"
           path: "Microsoft.Widget/Widget/main.tsp"
-      - type: "file-matches"
+      - &file_matches_required_property
+        type: "file-matches"
+        name: "file-matches-required-property"
         config:
           pattern: '@madeRequired\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)'
           path: "Microsoft.Widget/Widget/employee.tsp"
-      - type: "file-matches"
+      - &file_matches_property
+        type: "file-matches"
+        name: "file-matches-property"
         config:
           pattern: "email: string;"
           path: "Microsoft.Widget/Widget/employee.tsp"
-      - type: "prompt"
+      - &prompt
+        type: "prompt"
         config:
           threshold: 0.88
           model: "gpt-5.6-sol"
@@ -107,29 +117,16 @@ stimuli:
       mode: "no-skill"
     prompt: "In the TypeSpec project at `./Microsoft.Widget/Widget/`, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`."
     environment: *shared_environment
+    rubric: *shared_rubric
     graders:
       - type: "tool-calls"
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/main.tsp"
-          pattern: "v2025_05_04_preview"
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/employee.tsp"
-          pattern: '@madeRequired\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)'
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/employee.tsp"
-          pattern: "email: string;"
-      - type: "prompt"
-        config:
-          prompt: "Verify email property made required only in new version, only scoped edits made. Verify compile the project and fix any compilation errors if present."
-          model: "gpt-5.6-sol"
-          scoring: "scale_1_10"
-          threshold: 0.88
+      - *file_matches
+      - *file_matches_required_property
+      - *file_matches_property
+      - *prompt
     constraints:
       max_turns: 6
       max_tokens: 100000

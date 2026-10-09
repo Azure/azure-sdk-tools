@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Helpers.EngSys;
 using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -54,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IApiReviewHubService, ApiReviewHubService>();
             services.AddSingleton<IPackageReleaseStatusService, PackageReleaseStatusService>();
 
-            services.AddScoped<LanguageService, DotnetLanguageService>();
+            services.AddScoped<LanguageService, DotNetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();
             services.AddScoped<LanguageService, JavaScriptLanguageService>();
             services.AddScoped<LanguageService, PythonLanguageService>();
@@ -122,6 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
             services.AddScoped<IPipelineAnalysisHelper, PipelineAnalysisHelper>();
             services.AddScoped<IGitHubWorkflowAnalysisHelper, GitHubWorkflowAnalysisHelper>();
+            services.AddScoped<IPipelineFixEvaluatorHelper, PipelineFixEvaluatorHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
@@ -196,17 +198,54 @@ namespace Azure.Sdk.Tools.Cli.Services
             });
         }
 
+        /// <summary>
+        /// Token resolution priority for Copilot SDK authentication:
+        /// 1. AZSDK_COPILOT_GITHUB_TOKEN (explicit tool-specific override)
+        /// 2. COPILOT_GITHUB_TOKEN (set by Copilot host in MCP mode)
+        /// 3. GH_TOKEN (set by GitHub CLI, GitHub Actions, or login-to-github)
+        /// 4. GITHUB_TOKEN (set by GitHub Actions or CI pipelines)
+        /// This enables token inheritance from the MCP host so users running
+        /// through VS Code Copilot or Copilot CLI agent don't need a separate copilot login.
+        /// </summary>
+        public static readonly string[] GitHubTokenEnvironmentVariables =
+        [
+            "AZSDK_COPILOT_GITHUB_TOKEN",
+            "COPILOT_GITHUB_TOKEN",
+            "GH_TOKEN",
+            "GITHUB_TOKEN"
+        ];
+
         public static CopilotClientOptions CreateCopilotClientOptions(ILogger<CopilotClient>? logger)
         {
             var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
-            var githubToken = Environment.GetEnvironmentVariable("AZSDK_COPILOT_GITHUB_TOKEN");
+            var githubToken = ResolveGitHubToken(logger);
             return new CopilotClientOptions
             {
                 Connection = RuntimeConnection.ForStdio(
                     string.IsNullOrWhiteSpace(cliPath) ? null : cliPath.Trim()),
-                GitHubToken = string.IsNullOrWhiteSpace(githubToken) ? null : githubToken.Trim(),
+                GitHubToken = githubToken,
                 Logger = logger
             };
+        }
+
+        /// <summary>
+        /// Resolves a GitHub token by checking environment variables in priority order.
+        /// Returns the first non-empty token found, or null if none are set.
+        /// </summary>
+        public static string? ResolveGitHubToken(ILogger? logger = null)
+        {
+            foreach (var envVar in GitHubTokenEnvironmentVariables)
+            {
+                var token = Environment.GetEnvironmentVariable(envVar);
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    logger?.LogDebug("Resolved GitHub token from {EnvironmentVariable}", envVar);
+                    return token.Trim();
+                }
+            }
+
+            logger?.LogDebug("No GitHub token found in environment variables");
+            return null;
         }
 
         // Update checking and upgrade management in MCP server mode

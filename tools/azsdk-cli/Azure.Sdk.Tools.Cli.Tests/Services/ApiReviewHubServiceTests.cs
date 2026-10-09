@@ -64,7 +64,7 @@ public class ApiReviewHubServiceTests
             {
                 Content = new StringContent(
                     """
-                    {"packageId":"11111111-1111-1111-1111-111111111111","packageVersionId":"22222222-2222-2222-2222-222222222222","packageName":"azure-test","language":"python","version":"1.0.0","releasedApiHash":"api-hash","approvalStatus":"Approved","isReleased":false,"releasedOn":null}
+                    {"packageId":"11111111-1111-1111-1111-111111111111","packageVersionId":"22222222-2222-2222-2222-222222222222","packageName":"azure-test","language":"python","version":"1.0.0","releasedApiHash":"api-hash","approvalStatus":"Approved","approvalRecordId":"approval-record-id","appliedInheritanceRule":"prereleaseToPrerelease","isReleased":false,"releasedOn":null}
                     """,
                     Encoding.UTF8,
                     "application/json")
@@ -89,6 +89,8 @@ public class ApiReviewHubServiceTests
         Assert.That(result.PackageName, Is.EqualTo("azure-test"));
         Assert.That(result.PackageVersionId, Is.EqualTo(Guid.Parse("22222222-2222-2222-2222-222222222222")));
         Assert.That(result.ApprovalStatus, Is.EqualTo("Approved"));
+        Assert.That(result.ApprovalRecordId, Is.EqualTo("approval-record-id"));
+        Assert.That(result.AppliedInheritanceRule, Is.EqualTo("prereleaseToPrerelease"));
         Assert.That(result.IsReleased, Is.False);
     }
 
@@ -158,6 +160,7 @@ public class ApiReviewHubServiceTests
                       "details": [],
                       "approvals": [
                         {
+                                                    "id": "approval-record-id",
                           "apiHash": "hash-1",
                           "version": "4.12.0b3",
                           "status": "approved",
@@ -181,6 +184,7 @@ public class ApiReviewHubServiceTests
         Assert.That(result.AppliedInheritanceRule, Is.EqualTo("prereleaseToStable"));
         Assert.That(result.Approvals, Is.Not.Null);
         Assert.That(result.Approvals!.Count, Is.EqualTo(1));
+        Assert.That(result.Approvals[0].Id, Is.EqualTo("approval-record-id"));
         Assert.That(result.Approvals[0].Version, Is.EqualTo("4.12.0b3"));
     }
 
@@ -362,6 +366,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {
@@ -412,6 +417,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             TargetBranch = new GitBranchReference
             {
                 Owner = "Azure",
@@ -428,6 +434,7 @@ public class ApiReviewHubServiceTests
             CancellationToken.None);
 
         Assert.That(requestBody, Does.Contain("\"baseTag\":\"\""));
+        Assert.That(requestBody, Does.Contain("\"packageType\":\"client\""));
     }
 
     [Test]
@@ -466,6 +473,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {
@@ -522,6 +530,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {

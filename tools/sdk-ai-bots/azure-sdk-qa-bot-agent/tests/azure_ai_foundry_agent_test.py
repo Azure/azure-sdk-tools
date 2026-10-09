@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from json import JSONDecodeError
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -20,7 +21,11 @@ if _PROJECT_ROOT not in sys.path:
 
 from openai import BadRequestError, NotFoundError
 
-from utils.azure_ai_foundry_agent import CONTENT_SAFETY_MESSAGE, HostedAgentClient
+from utils.azure_ai_foundry_agent import (
+    CONTENT_SAFETY_MESSAGE,
+    HostedAgentClient,
+    ConversationBrokenError,
+)
 
 
 class _FakeResponse:
@@ -123,7 +128,7 @@ async def test_invoke_retries_on_empty_response_then_succeeds() -> None:
 
 @pytest.mark.asyncio
 async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
-    """When every attempt is empty, retries exhaust and a RuntimeError is raised."""
+    """Stateless empty responses exhaust retries without history recovery."""
     client = _mock_client(
         lambda *a, **k: _completed_stream(_FakeResponse(output_text=""))
     )
@@ -141,6 +146,26 @@ async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
 
 
 @pytest.mark.asyncio
+async def test_invoke_recovers_thread_after_empty_response_polling_exhausted() -> None:
+    """An empty threaded response triggers recovery after polling is exhausted."""
+    client = _mock_client(
+        lambda *a, **k: _completed_stream(_FakeResponse(output_text=""))
+    )
+
+    with patch.object(
+        HostedAgentClient, "_poll_response", AsyncMock(side_effect=lambda r: r)
+    ):
+        with pytest.raises(ConversationBrokenError):
+            await HostedAgentClient(client, max_retries=2, retry_delay=0).invoke(
+                conversation_items=[],
+                agent_ref={},
+                agent_conversation_id="conv-broken",
+            )
+
+    assert client.responses.create.await_count == 1
+
+
+@pytest.mark.asyncio
 async def test_invoke_retries_when_stream_ends_without_completion() -> None:
     """A stream ending without ``response.completed`` is retryable, not fatal."""
 
@@ -151,6 +176,27 @@ async def test_invoke_retries_when_stream_ends_without_completion() -> None:
 
     good = _FakeResponse(output_text="answer", status="completed", id="r2")
     client = _mock_client([_incomplete_stream(), _completed_stream(good)])
+
+    _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+        conversation_items=[],
+        agent_ref={},
+    )
+
+    assert out is good
+    assert client.responses.create.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_invoke_retries_when_stream_event_contains_malformed_json() -> None:
+    """A malformed SSE event is abandoned and retried with a fresh stream."""
+
+    async def _malformed_stream():
+        raise JSONDecodeError("Extra data", "{}\n{}", 3)
+        yield
+
+    good = _FakeResponse(output_text="answer", status="completed", id="r2")
+    malformed = _malformed_stream()
+    client = _mock_client([malformed, _completed_stream(good)])
 
     _, out = await HostedAgentClient(client, retry_delay=0).invoke(
         conversation_items=[],
@@ -203,11 +249,16 @@ async def test_consume_stream_raises_without_completed_event() -> None:
         await HostedAgentClient(AsyncMock())._consume_stream(stream, "conv")
 
 
-def _api_error(error_cls, status_code: int):
+def _api_error(
+    error_cls,
+    status_code: int,
+    message: str = "rejected",
+    body=None,
+):
     """Build a real OpenAI ``APIStatusError`` subclass instance for tests."""
     request = httpx.Request("POST", "https://example.test/v1/responses")
     response = httpx.Response(status_code, request=request)
-    return error_cls("rejected", response=response, body=None)
+    return error_cls(message, response=response, body=body)
 
 
 @pytest.mark.parametrize(
@@ -235,14 +286,14 @@ async def test_invoke_drops_rejected_session_and_retries_without_it(
     ) as mock_set:
         _, out = await HostedAgentClient(client, retry_delay=0).invoke(
             conversation_items=[],
-            agent_ref={},
+            agent_ref={"name": "azure-mcp-agent"},
             agent_session_id="stale-session",
         )
 
     assert out is good
     assert client.responses.create.await_count == 2
     # The rejected session is cleared so a fresh one is created next time.
-    mock_set.assert_called_once_with(None)
+    mock_set.assert_called_once_with("azure-mcp-agent", None)
     # First attempt carried the stale session; the retry dropped it.
     assert captured_extra_bodies[0].get("agent_session_id") == "stale-session"
     assert "agent_session_id" not in captured_extra_bodies[1]
@@ -278,5 +329,3 @@ async def test_invoke_returns_content_safety_response_without_retry() -> None:
     assert out.output_text == CONTENT_SAFETY_MESSAGE
     # No retry: the deterministic content-safety block fails fast.
     assert client.responses.create.await_count == 1
-
-

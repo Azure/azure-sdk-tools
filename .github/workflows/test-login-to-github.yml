@@ -15,9 +15,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: azure/login@v3
+      - uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           client-id: 5786d1fb-187e-4ca9-9a81-ab89ea278986
           tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
@@ -54,9 +54,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: azure/login@v3
+      - uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           client-id: 5786d1fb-187e-4ca9-9a81-ab89ea278986
           tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47

@@ -1,0 +1,28 @@
+name: azsdk-cli Copilot review pilot
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review]
+    paths:
+      - tools/azsdk-cli/**
+
+permissions: {}
+
+jobs:
+  request-copilot-review:
+    name: Request non-blocking Copilot review
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Request Copilot review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh api \
+            --method POST \
+            "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/requested_reviewers" \
+            --field 'reviewers[]=copilot-pull-request-reviewer[bot]'

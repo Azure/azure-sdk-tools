@@ -86,6 +86,8 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
       const goodFeedback: FeedbackRequestPayload = {
         channel_id: channelId,
         tenant_id: ragTenantId,
+        conversation_id: context.activity.conversation.id,
+        conversation_type: 'teams_channel',
         reaction: 'good',
         comment: feedbackComment,
         reasons: selectedReasons,
@@ -99,6 +101,8 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
       const badFeedback: FeedbackRequestPayload = {
         channel_id: channelId,
         tenant_id: ragTenantId,
+        conversation_id: context.activity.conversation.id,
+        conversation_type: 'teams_channel',
         reaction: 'bad',
         comment: feedbackComment,
         reasons: selectedReasons,

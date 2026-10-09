@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -8,22 +9,33 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
+using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
-    public class SdkReleaseTool(
+    public partial class SdkReleaseTool(
         IDevOpsService devopsService,
         IAPIViewService apiViewService,
+        IPackageReleaseStatusService packageReleaseStatusService,
         ILogger<SdkReleaseTool> logger,
         IInputSanitizer inputSanitizer,
         IEnvironmentHelper environmentHelper) : MCPTool
     {
         private const string ReleaseSdkToolName = "azsdk_release_sdk";
         private const string Pipeline_Success_Status = "Succeeded";
+
+        // PEP 440 release, prerelease, post-release, and development segments.
+        // Local metadata is removed before matching and does not change release kind.
+        [GeneratedRegex(@"\Av?(?:[0-9]+!)?[0-9]+(?:\.[0-9]+)*" +
+            @"(?<prerelease>[-_.]?(?:alpha|beta|preview|pre|rc|a|b|c)[-_.]?[0-9]*)?" +
+            @"(?:-[0-9]+|[-_.]?(?:post|rev|r)[-_.]?[0-9]*)?" +
+            @"(?<development>[-_.]?dev[-_.]?[0-9]*)?\z", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+        private static partial Regex PythonPackageVersionRegex();
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
@@ -257,9 +269,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     package.PackageReadinessDetails = $"No planned release date found in package details for current package version {package.Version}. Please check the package version and verify that change log file is correct. ";
                 }
 
-                var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
-                bool isPreviewRelease = releaseType.Equals("Beta");
-                bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
+                // Classify the version, not the planned-release label. Stable post-releases and
+                // build metadata must not skip the GA APIView approval gate.
+                bool isPreviewRelease = IsPreviewVersion(package.Version, language);
+                bool isDataPlanePackage = package.PackageType.IsDataPlane();
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
                 {
@@ -279,8 +292,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Check if API view is approved if stable version for data plane or .NET
                 if ((isDataPlanePackage || language.Equals(".NET")) && !isPreviewRelease)
                 {
+                    string canonicalLanguage = ApiReviewHubTool.ResolveLanguage(language)
+                        ?? throw new InvalidOperationException($"Unsupported SDK language '{language}' for package approval lookup.");
+                    var approvalStatus = await packageReleaseStatusService.GetApprovalStatusAsync(
+                        PackageApprovalStatusTool.DefaultEndpoint,
+                        canonicalLanguage,
+                        packageName,
+                        package.Version,
+                        "",
+                        "",
+                        ct);
+                    // TODO: Pass the release artifact API hash to Review Hub and remove this workaround
+                    // once the agent can retrieve the hash.
+                    bool missingApiHash =
+                        string.Equals(approvalStatus.Reason, "missingApiHash", StringComparison.OrdinalIgnoreCase);
+                    // IsApproved covers both "approved" and "reviewNotRequired".
+                    bool apiCheckPassed = approvalStatus.IsApproved || missingApiHash;
+                    package.APIViewStatus = apiCheckPassed ? "Approved" : "Pending";
+                    package.ApiViewValidationDetails = $"Package approval status queried from {approvalStatus.FinalSource}: {approvalStatus.Reason}.";
 
-                    if (!package.IsApiViewApproved)
+                    if (!apiCheckPassed)
                     {
                         package.IsPackageReady = false;
                         package.PackageReadinessDetails += $"API view is not approved for GA release of package '{packageName}'. ";
@@ -354,6 +385,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 package.SetLanguage(language);
                 return package;
             }
+        }
+
+        private static bool IsPreviewVersion(string? version, string language)
+        {
+            var publicVersion = version?.Split('+', 2)[0] ?? string.Empty;
+            if (language.Equals("Python", StringComparison.OrdinalIgnoreCase))
+            {
+                var pythonVersion = PythonPackageVersionRegex().Match(publicVersion);
+                if (pythonVersion.Success)
+                {
+                    return pythonVersion.Groups["prerelease"].Success || pythonVersion.Groups["development"].Success;
+                }
+            }
+
+            // SemVer prereleases have a hyphen before any +build metadata.
+            return publicVersion.Contains('-');
         }
 
         private async Task<string> GetPipelineRunDetails(string pipelineRunUrl, CancellationToken ct)

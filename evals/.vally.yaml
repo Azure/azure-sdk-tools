@@ -20,6 +20,7 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
+        cwd: .
         args: ["../artifacts/mcp/mock/azsdk-mock.dll"]
         timeout: "30s"
 
@@ -31,13 +32,12 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        workingDirectory: ..
-        args: ["artifacts/mcp/cli/azsdk.dll", "start"]
+        cwd: .
+        args: ["../artifacts/mcp/cli/azsdk.dll", "start"]
         timeout: "5m"
         env:
           AZSDKTOOLS_AGENT_TESTING: "true"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
-          NPM_CONFIG_REGISTRY: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/"
 
 # Suites group evals for selective execution.
 #

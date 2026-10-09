@@ -4,8 +4,8 @@ description: 'Author and validate Vally evals for Agent Skills under .github/ski
 license: MIT
 metadata:
   author: Microsoft
-  version: "1.0.0"
-compatibility: "copilot-chat, @microsoft/vally-cli 0.7.0"
+  version: "1.1.0"
+compatibility: "copilot-chat, @microsoft/vally-cli 0.14.0"
 ---
 
 # Skill Eval Authoring
@@ -24,7 +24,7 @@ DO NOT USE FOR: single MCP tool prompt-to-tool coverage (use eval-authoring-tool
 2. Read the target `SKILL.md` — its `WHEN`/`DO NOT USE FOR` boundaries, invoked tools — and its existing `evals/`.
 3. Write `eval.yaml` with routing stimuli (trigger + anti-trigger, `skill-invocation` grader) and capability stimuli together in the same file per the guide's naming convention and four-layer pattern. Split into additional `<behavior>.eval.yaml` files only once a skill's coverage genuinely grows large. For a boundary prompt, mount and **require** the intended competing skill while disallowing the skill under test — an anti-trigger with no competing skill mounted trivially "passes" (guide anti-pattern A7).
 4. Supply concrete identifiers (repo path, package name, anything needed to reach the call) in every stimulus prompt — a vague prompt fails `tool-calls` with zero recorded calls, which looks like a routing bug but is really a missing-context prompt bug.
-5. Validate locally per the guide's "Running evals locally" section. Do not finish or open a PR until the focused local eval passes; inspect `eval-results.md` and `results.jsonl` on failure.
+5. Run strict eval-spec lint, then validate locally per the guide's "Running evals locally" section. Do not finish or open a PR until both lint and the focused local eval pass; inspect `eval-results.md` and `results.jsonl` on failure.
 
 ## Rules
 

@@ -24,14 +24,6 @@ namespace Azure.ClientSdk.Analyzers
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-virtual"
         );
 
-        public static DiagnosticDescriptor AZC0004 = new DiagnosticDescriptor(
-            nameof(AZC0004),
-            "DO provide both asynchronous and synchronous variants for all service methods.",
-            "DO provide both asynchronous and synchronous variants for all service methods.",
-            DiagnosticCategory.Usage, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
-            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-sync-and-async"
-        );
-
         public static DiagnosticDescriptor AZC0005 = new DiagnosticDescriptor(
             nameof(AZC0005),
             "DO provide protected parameterless constructor for mocking.",
@@ -113,15 +105,6 @@ namespace Azure.ClientSdk.Analyzers
 
         public static readonly DiagnosticDescriptor AZC0031 = new DiagnosticDescriptor(
             nameof(AZC0031),
-            "Improper model name suffix",
-            "Model name '{0}' ends with '{1}'. Suggest to rename it to an appropriate name.",
-            DiagnosticCategory.Naming,
-            DiagnosticSeverity.Warning,
-            true,
-            "Suffix is not recommended. Consider to remove or modify it.");
-
-        public static readonly DiagnosticDescriptor AZC0032 = new DiagnosticDescriptor(
-            nameof(AZC0032),
             "Improper model name suffix",
             "Model name '{0}' ends with '{1}'. Suggest to rename it to an appropriate name.",
             DiagnosticCategory.Naming,

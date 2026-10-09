@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ostream>
+#include <sstream>
 #include <string_view>
 
 using namespace nlohmann::literals;
@@ -644,6 +645,26 @@ TEST_F(TestParser, TestDocuments)
 
   NsDumper dumper;
   db->DumpClassDatabase(&dumper);
+
+  JsonDumper jsonDumper("Documentation test", "Test service", "test-package");
+  db->DumpClassDatabase(&jsonDumper);
+  bool hasDocumentation = false;
+  for (auto const& token : jsonDumper.GetJson()["Tokens"])
+  {
+    if (token["Kind"] == 10)
+    {
+      auto text = token["Value"].get<std::string>();
+      EXPECT_EQ(text.find("DocumentationTests.cpp:"), std::string::npos);
+      hasDocumentation
+          |= text.find("demonstrates all the doxygen special commands") != std::string::npos;
+    }
+  }
+  EXPECT_TRUE(hasDocumentation);
+
+  std::ostringstream output;
+  TextDumper consoleDumper(output);
+  db->DumpClassDatabase(&consoleDumper);
+  EXPECT_NE(output.str().find("DocumentationTests.cpp:"), std::string::npos);
 }
 
 #if 0

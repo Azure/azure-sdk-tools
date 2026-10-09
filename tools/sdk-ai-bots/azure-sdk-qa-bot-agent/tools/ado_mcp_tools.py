@@ -1,10 +1,9 @@
 """Azure DevOps pipeline tools for the Azure SDK QA Bot Agent.
 
 Provides an MCP-based tool that connects to the Azure DevOps MCP server
-via its installed ``mcp-server-azuredevops`` executable. Exposes read-only pipeline
-definition lookup and work-item reads so the agent can help users find
-release / CI pipeline links and inspect release plans (work items in the
-``Release`` project).
+via stdio (``npx @azure-devops/mcp``).  Exposes read-only pipeline
+definition lookup so the agent can help users find release / CI pipeline
+links.
 
 Authentication: the MCP server is launched with
 ``-a env`` and acquires/refreshes ADO tokens itself via
@@ -33,7 +32,8 @@ from utils.knowledge_config import get_kb_targets
 logger = logging.getLogger(__name__)
 
 _DEFAULT_ADO_ORG = "azure-sdk"
-_ADO_MCP_COMMAND = "mcp-server-azuredevops"
+# Pinned to match the copy baked into the image (Dockerfile ADO_MCP_VERSION)
+_ADO_MCP_PACKAGE = os.environ.get("ADO_MCP_PACKAGE", "@azure-devops/mcp@2.7.0")
 _ADO_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default"
 _ADO_API_TIMEOUT_SECS = 10.0
 
@@ -110,8 +110,10 @@ async def _create_ado_mcp_tool(
     logger.info("ADO MCP tool configured (org=%s)", org)
     return MCPStdioTool(
         name="ado-mcp-tools",
-        command=_ADO_MCP_COMMAND,
+        command="npx",
         args=[
+            "-y",
+            _ADO_MCP_PACKAGE,
             org,
             "-d",
             *domains,

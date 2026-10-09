@@ -66,6 +66,7 @@ async def test_evolution_ado_profile_exposes_only_issue_tools() -> None:
     mcp_tool = object()
     with (
         patch("tools.ado_mcp_tools.cfg", return_value="azure-sdk"),
+        patch("tools.ado_mcp_tools._ADO_MCP_PACKAGE", "@azure-devops/mcp@2.7.0"),
         patch(
             "tools.ado_mcp_tools.MCPStdioTool",
             return_value=mcp_tool,
@@ -75,8 +76,10 @@ async def test_evolution_ado_profile_exposes_only_issue_tools() -> None:
 
     assert result is mcp_tool
     kwargs = constructor.call_args.kwargs
-    assert kwargs["command"] == "mcp-server-azuredevops"
+    assert kwargs["command"] == "npx"
     assert kwargs["args"] == [
+        "-y",
+        "@azure-devops/mcp@2.7.0",
         "azure-sdk",
         "-d",
         "work-items",

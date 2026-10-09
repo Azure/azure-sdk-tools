@@ -268,6 +268,11 @@ function headerSummary(assessment) {
     : complianceFindingGroups(compliance.findings).length;
   const complianceCoveredCount = compliance.coverage?.assessedIntentCount ?? 0;
   const complianceMaterialCount = compliance.coverage?.semanticIntentCount ?? 0;
+  const sdkNaming = assessment.dimensions.sdkNaming ?? {
+    status: "not-assessed",
+    findings: [],
+    coverage: [],
+  };
   return {
     semanticItems,
     actionCounts,
@@ -289,6 +294,9 @@ function headerSummary(assessment) {
     complianceCoverageDetail: compliance.legacyDocuments
       ? `${compliance.legacyDocuments.length} documents assessed`
       : `${complianceCoveredCount}/${complianceMaterialCount} intents assessed`,
+    sdkNamingStatus: sdkNaming.status,
+    sdkNamingFindingCount: sdkNaming.findings?.length ?? 0,
+    sdkNamingCoverageCount: sdkNaming.coverage?.length ?? 0,
   };
 }
 
@@ -2124,6 +2132,7 @@ function renderCurrent(assessment, options = {}) {
   const downstreamStatus = complianceStatus(
     dimensions.downstream.status ?? (summary.downstreamCount ? "failed" : "not-assessed"),
   );
+  const sdkNamingStatus = complianceStatus(summary.sdkNamingStatus);
   const documentQuality = documentQualitySummary(dimensions.documentQuality);
   const documentStatus = complianceStatus(documentQuality.findingStatus);
   /** @type {Map<string, Partial<ArtifactComparison>>} */
@@ -2161,6 +2170,7 @@ ${reportStyles}
 <a class="summary-card" href="#azure-compliance">${summaryHeading("Azure Guidelines", complianceStatus(summary.complianceStatus))}<div class="summary-detail">${complianceStatus(summary.complianceStatus).label === "N/A" ? "Not assessed<br>" : ""}${summary.complianceFindingCount} ${summary.complianceFindingCount === 1 ? "finding" : "findings"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
 <a class="summary-card" href="#rest-breaking">${summaryHeading("REST breaking changes", restStatus)}<div class="summary-detail">${restStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.restFindingCount} ${summary.restFindingCount === 1 ? "finding" : "findings"}</div></a>
 <a class="summary-card" href="#downstream-breaking">${summaryHeading("Downstream breaking changes", downstreamStatus)}<div class="summary-detail">${downstreamStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.downstreamFindingCount} ${summary.downstreamFindingCount === 1 ? "finding" : "findings"}</div></a>
+<a class="summary-card" href="#sdk-naming">${summaryHeading("SDK naming", sdkNamingStatus)}<div class="summary-detail">${sdkNamingStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.sdkNamingFindingCount} ${summary.sdkNamingFindingCount === 1 ? "finding" : "findings"}<br>${summary.sdkNamingCoverageCount} ${summary.sdkNamingCoverageCount === 1 ? "target" : "targets"}</div></a>
 <a class="summary-card" href="#document-quality">${summaryHeading("Documentation Completeness", documentStatus)}<div class="summary-detail">${documentQuality.compactDetail.map(escapeHtml).join("<br>")}</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>

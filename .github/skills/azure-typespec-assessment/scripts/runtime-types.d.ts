@@ -836,6 +836,40 @@ export interface CandidateDecision {
   rationale: string;
 }
 
+export interface SdkNamingCoverage {
+  language: string;
+  serviceType: "arm" | "data-plane" | "unknown";
+  profile?: string;
+  status: "reviewed" | "not-covered" | "not-assessed";
+  rationale: string;
+}
+
+export interface AgentSdkNamingFinding {
+  reviewUnitId?: string;
+  declaration: string;
+  currentSdkName: string;
+  recommendedSdkName?: string;
+  languageScope: string;
+  decision: "recommend" | "blocked";
+  rule: string;
+  rationale: string;
+  compatibilityEvidence: string;
+  verification: "proposed" | "supplied-generated" | "applied";
+  sourceLocation?: string;
+}
+
+export interface SdkNamingFinding extends AgentSdkNamingFinding {
+  id: string;
+}
+
+export interface SdkNamingDimension {
+  status: "passed" | "failed" | "not-assessed";
+  summary: string;
+  coverage: SdkNamingCoverage[];
+  findings: SdkNamingFinding[];
+  blockers: string[];
+}
+
 export interface AssessmentJudgment {
   schemaVersion: 1;
   semanticIntents: {
@@ -846,6 +880,7 @@ export interface AssessmentJudgment {
   restDecisions: CandidateDecision[];
   downstreamDecisions: CandidateDecision[];
   complianceDecisions: ComplianceDecision[];
+  sdkNaming?: SdkNamingDimension;
   overallConfidence: "high" | "medium" | "low";
   blockers: string[];
 }
@@ -1714,6 +1749,7 @@ export interface AssessmentOutput {
       legacyFindings?: LegacyAssessmentFinding[];
     };
     compliance: FinalComplianceAssessment;
+    sdkNaming?: SdkNamingDimension;
     documentQuality: DocumentQualityDimension;
     [key: string]: unknown;
   };

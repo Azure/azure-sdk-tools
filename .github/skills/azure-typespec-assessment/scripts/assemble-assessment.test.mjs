@@ -634,6 +634,70 @@ void test("assembler derives missing documentation without changing REST/downstr
   }
 });
 
+void test("assembler includes SDK naming findings without changing REST/downstream safety", () => {
+  const work = fixture();
+  try {
+    const judgment = documentJudgment();
+    judgment.sdkNaming = {
+      status: "failed",
+      summary: "One C# ARM naming issue was found.",
+      coverage: [
+        {
+          language: "C#",
+          serviceType: "arm",
+          profile: "csharp-arm",
+          status: "reviewed",
+          rationale: "The project is an ARM service and the C# ARM profile applies.",
+        },
+      ],
+      findings: [
+        {
+          id: "sdk-naming-0123456789abcdef",
+          reviewUnitId: "semantic-1",
+          declaration: "Contoso.Widget.enabled",
+          currentSdkName: "Enabled",
+          recommendedSdkName: "IsEnabled",
+          languageScope: "C#",
+          decision: "recommend",
+          rule: "Boolean properties should use an Is prefix.",
+          rationale: "The generated property represents a boolean state.",
+          compatibilityEvidence: "No shipped SDK name was supplied.",
+          verification: "proposed",
+          sourceLocation: "specification/a/main.tsp:1",
+        },
+      ],
+      blockers: [],
+    };
+    const assessment = assembleTestAssessment({ work, judgment });
+    assert.equal(assessment.dimensions.sdkNaming?.status, "failed");
+    assert.equal(assessment.dimensions.sdkNaming?.findings[0].recommendedSdkName, "IsEnabled");
+    assert.equal(assessment.safety.status, "passed");
+    assert.deepEqual(validateAssessment(assessment), []);
+
+    assessment.dimensions.sdkNaming.status = "passed";
+    assert.ok(
+      validateAssessment(assessment).some((error) =>
+        error.includes("SDK Naming status must be failed"),
+      ),
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+void test("assembler emits a backward-compatible not-assessed naming dimension", () => {
+  const work = fixture();
+  try {
+    const assessment = assembleTestAssessment({ work, judgment: documentJudgment() });
+    assert.equal(assessment.dimensions.sdkNaming?.status, "not-assessed");
+    assert.deepEqual(assessment.dimensions.sdkNaming?.findings, []);
+    assert.match(assessment.dimensions.sdkNaming?.blockers[0] ?? "", /not-assessed/);
+    assert.deepEqual(validateAssessment(assessment), []);
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
 void test("assembler rejects Agent-authored documentation decisions", () => {
   const work = fixture();
   try {

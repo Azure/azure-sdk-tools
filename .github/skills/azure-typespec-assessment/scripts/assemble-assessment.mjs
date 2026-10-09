@@ -21,6 +21,14 @@ import {
 } from "./semantic-assessment-scope.mjs";
 import { canonicalJson, stableId } from "./stable-id.mjs";
 
+const DEFAULT_SDK_NAMING = {
+  status: /** @type {const} */ ("not-assessed"),
+  summary: "SDK naming was not assessed.",
+  coverage: [],
+  findings: [],
+  blockers: ["sdk-naming-not-assessed: no bounded SDK naming review was supplied by the Agent."],
+};
+
 /** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
 /** @typedef {import("./runtime-types.js").AssessmentInference} AssessmentInference */
 /** @typedef {import("./runtime-types.js").AssessmentJudgment} AssessmentJudgment */
@@ -159,6 +167,7 @@ function validateJudgment(answer) {
       "restDecisions",
       "downstreamDecisions",
       "complianceDecisions",
+      "sdkNaming",
       "overallConfidence",
       "blockers",
     ],
@@ -217,6 +226,24 @@ function validateJudgment(answer) {
       ],
       `Azure Guidelines decision ${decision.reviewUnitId ?? "<unknown>"}`,
     );
+  }
+  if (answer.sdkNaming !== undefined) {
+    assertKeys(
+      answer.sdkNaming,
+      ["status", "summary", "coverage", "findings", "blockers"],
+      "SDK naming judgment",
+    );
+    if (!["passed", "failed", "not-assessed"].includes(answer.sdkNaming.status)) {
+      throw new Error("SDK naming judgment.status is invalid.");
+    }
+    if (!answer.sdkNaming.summary?.trim()) {
+      throw new Error("SDK naming judgment.summary is required.");
+    }
+    for (const field of /** @type {const} */ (["coverage", "findings", "blockers"])) {
+      if (!Array.isArray(answer.sdkNaming[field])) {
+        throw new Error(`SDK naming judgment.${field} must be an array.`);
+      }
+    }
   }
 }
 
@@ -1368,6 +1395,7 @@ export function assembleAssessment({ work, judgment }) {
       rest: restDimension,
       downstream: downstreamDimension,
       compliance: complianceDimension,
+      sdkNaming: answer.sdkNaming ?? DEFAULT_SDK_NAMING,
       documentQuality: documentQualityDimension,
     },
     changedFiles: manifest.changedFiles,

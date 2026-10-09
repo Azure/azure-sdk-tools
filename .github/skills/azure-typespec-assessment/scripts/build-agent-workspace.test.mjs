@@ -28,7 +28,13 @@ import { readJson, writeJson } from "./cli.mjs";
  *   semanticSummaries: {title: string}[],
  *   downstreamDecisions: {decision: string}[],
  *   complianceJudgments: unknown[],
- *   catalogScores: unknown[]
+ *   catalogScores: unknown[],
+ *   sdkNamingReview: {
+ *     summary: string,
+ *     coverage: unknown[],
+ *     findings: unknown[],
+ *     blockers: string[]
+ *   }
  * }} AgentDecisionsDraft
  * @typedef {{state: string, telemetry: {agentIndexBytes: number}}} TestWorkflowState
  */
@@ -242,12 +248,24 @@ void test("builds a compact complete Agent workspace", () => {
           item.includes("clickable Assessment report link"),
       ),
     );
+    assert.ok(
+      index.completionChecklist.some(
+        (item) =>
+          item.includes("SDK naming coverage") &&
+          item.includes("compatibility evidence") &&
+          item.includes("not-assessed"),
+      ),
+    );
     const decisionsDraft = /** @type {AgentDecisionsDraft} */ (
       readJson(path.join(work, "agent-workspace", "agent-decisions.draft.json"))
     );
     assert.equal(decisionsDraft.inferenceResults[0].decision, "__UNRESOLVED__");
     assert.equal(decisionsDraft.semanticSummaries[0].title, "");
     assert.equal(decisionsDraft.downstreamDecisions[0].decision, "__UNRESOLVED__");
+    assert.equal(decisionsDraft.sdkNamingReview.summary, "");
+    assert.deepEqual(decisionsDraft.sdkNamingReview.coverage, []);
+    assert.deepEqual(decisionsDraft.sdkNamingReview.findings, []);
+    assert.match(decisionsDraft.sdkNamingReview.blockers[0], /unresolved/);
     const state = /** @type {TestWorkflowState} */ (
       readJson(path.join(work, "workflow-state.json"))
     );

@@ -708,7 +708,7 @@ void recordedAssessmentTest(
   },
 );
 
-void test("five dimension headers and empty not-assessed states use the shared layout", () => {
+void test("six dimension headers and empty not-assessed states use the shared layout", () => {
   const input = assessment();
   input.dimensions.rest.status = "not-assessed";
   input.dimensions.rest.blockers = ["REST evidence unavailable."];
@@ -716,10 +716,11 @@ void test("five dimension headers and empty not-assessed states use the shared l
   input.dimensions.downstream.blockers = ["Downstream evidence unavailable."];
   input.safety.status = "not-assessed";
   const html = renderAssessmentHtml(input);
-  assert.equal((html.match(/class="report-section-head"/g) ?? []).length, 5);
+  assert.equal((html.match(/class="report-section-head"/g) ?? []).length, 6);
   assert.match(html, /REST breaking changes were not fully assessed/);
   assert.match(html, /Downstream breaking changes were not fully assessed/);
   assert.match(html, /Azure Guidelines could not be fully assessed/);
+  assert.match(reportSection(html, "sdk-naming"), /SDK naming was not assessed/);
   const quality = reportSection(html, "document-quality");
   assert.match(quality, /not assessed/);
   assert.match(quality, /report-badge add">passed/);

@@ -27,39 +27,19 @@ report** link and the absolute `assessment.json` path for structured results.
 Keep the server running while viewed. Do not use relative Markdown or `file:`
 URLs.
 
-If a supplementary SDK naming review was performed during Agent judgment,
-include its findings, exceptions and coverage with the final response. State
-that these are separate from `assessment.json` / `assessment.html`; the current
-report schema does not include them. Naming review must not mutate the spec,
-run customization, or imply verified generated SDK names without evidence.
+SDK naming coverage and findings are included in `assessment.json` under
+`dimensions.sdkNaming` and rendered in the **SDK naming** section of
+`assessment.html`. Naming remains read-only: finalization must not mutate the
+spec, run customization, or imply verified generated SDK names without evidence.
+Coverage is `reviewed`, `not-covered` (no applicable profile), or `not-assessed`
+(missing evidence). Findings retain the declaration and supplied source
+location, current and recommended SDK names, language scope, rule, compatibility
+evidence, and verification state. Proposed names, supplied generated names, and
+already-applied changes must remain distinguishable. SDK Naming status is
+`failed` when findings exist, `passed` only when every supplied target was
+reviewed with no finding or blocker, and otherwise `not-assessed`. It never
+changes the REST/downstream safety result.
 
-Use this compact supplementary format:
-
-- **Coverage:** each supplied SDK target and applicable profile, or `not-covered`
-  (no profile) / `not-assessed` (missing evidence). An empty finding list is not
-  a passing result for uncovered or unassessed targets. For those targets, report
-  the missing guidance/evidence only, not hypothetical language-specific names
-  or decorators.
-- **Findings:** TypeSpec declaration and supplied source location, current SDK
-  name (or unknown), recommended SDK name and language scope, rule/exception,
-  and compatibility evidence or blocker. Do not invent missing source locations
-  or shipped API evidence.
-- **Verification:** distinguish supplied generated API evidence from a proposed
-  name; explicitly say when the recommendation has not been generated or applied.
-
-For example, given a confirmed new/unshipped C# ARM boolean
-`WidgetProperties.enabled` with supplied generated name `Enabled`:
-
-> **Supplementary SDK naming review** (separate from the assessment report)
->
-> Coverage: C# ARM reviewed; other targets not supplied.
->
-> `WidgetProperties.enabled`: `Enabled` -> `IsEnabled` (`csharp`).
-> Boolean names should begin with a verb. The declaration is confirmed unshipped;
-> preserve wire name `enabled`. Proposed customization only, not applied;
-> generated name `IsEnabled` is unverified.
-
-This example illustrates the output shape, not an assessment of a real PR.
 Performance measurements must identify their scope: isolated naming-review
 timings are not end-to-end assessment timings or measured incremental overhead.
 

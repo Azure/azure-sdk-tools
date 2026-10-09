@@ -22,7 +22,7 @@ async function acquireInstallationToken(): Promise<string> {
         throw new Error('GitHub App requires GITHUB_APP_ID, GITHUB_APP_KEY_NAME and GITHUB_APP_KEYVAULT_URL');
     }
     const credential = new ChainedTokenCredential(
-        new ManagedIdentityCredential({ clientId: process.env.AZURE_CLIENT_ID }), new AzureCliCredential()
+        new ManagedIdentityCredential({ clientId: process.env.BOT_CLIENT_ID }), new AzureCliCredential()
     );
     const crypto = new CryptographyClient(`${vaultUrl.replace(/\/$/, '')}/keys/${keyName}`, credential);
     const now = Math.floor(Date.now() / 1000);

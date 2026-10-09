@@ -93,6 +93,7 @@ public class ApiReviewHubService(
         var loggedPipelineUrl = false;
         while (true)
         {
+            authorization = await GetAuthorizationAsync(endpoint, ct);
             var operation = await GetJsonAsync<OperationStatus>(httpClient, $"{endpoint}/api/operations/{accepted.OperationId}", authorization, ct);
             LogOperationProgress(operation, startedAt, ref loggedPipelineUrl);
 

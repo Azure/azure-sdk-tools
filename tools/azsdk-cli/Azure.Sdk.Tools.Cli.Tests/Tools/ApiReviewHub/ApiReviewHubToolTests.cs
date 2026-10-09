@@ -10,6 +10,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ApiReviewHub;
 [TestFixture]
 public class ApiReviewHubToolTests
 {
+    private const string PipelineRefEnvironmentVariable = "AZSDK_API_REVIEW_PIPELINE_REF";
+    private const string ToolsRefEnvironmentVariable = "AZSDK_API_REVIEW_TOOLS_REF";
+    private const string LanguageToolsRefEnvironmentVariable = "AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF";
+
     [Test]
     public void CreateCommand_AllowsOmittedPackageType()
     {
@@ -22,6 +26,81 @@ public class ApiReviewHubToolTests
             "--language python --package-name azure-test --target-branch feature");
 
         Assert.That(parseResult.Errors, Is.Empty);
+    }
+
+    [Test]
+    public void CreateCommand_RejectsSwift()
+    {
+        var tool = new ApiReviewHubTool(
+            Mock.Of<IApiReviewHubService>(),
+            new TestLogger<ApiReviewHubTool>());
+        var command = tool.GetCommandInstances().Single();
+
+        var parseResult = command.Parse(
+            "--language swift --package-name azure-test --target-branch feature");
+
+        Assert.That(parseResult.Errors.Single().Message, Does.Contain("Invalid language 'swift'"));
+    }
+
+    [Test]
+    [NonParallelizable]
+    public async Task CreateCommand_AddsRefOverridesFromEnvironment()
+    {
+        ReviewPullRequestCreationRequest? capturedRequest = null;
+        var service = new Mock<IApiReviewHubService>();
+        service
+            .Setup(x => x.RequestReviewPullRequestAsync(
+                It.IsAny<ReviewPullRequestCreationRequest>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<ReviewPullRequestCreationRequest, string, bool, TimeSpan, CancellationToken>(
+                (request, _, _, _, _) => capturedRequest = request)
+            .ReturnsAsync(new OperationStatus { Status = "accepted" });
+        var tool = new ApiReviewHubTool(service.Object, new TestLogger<ApiReviewHubTool>());
+        var command = tool.GetCommandInstances().Single();
+        var originalPipelineRef = Environment.GetEnvironmentVariable(PipelineRefEnvironmentVariable);
+        var originalToolsRef = Environment.GetEnvironmentVariable(ToolsRefEnvironmentVariable);
+        var originalLanguageToolsRef = Environment.GetEnvironmentVariable(LanguageToolsRefEnvironmentVariable);
+
+        try
+        {
+            Environment.SetEnvironmentVariable(PipelineRefEnvironmentVariable, "refs/heads/pipeline");
+            Environment.SetEnvironmentVariable(ToolsRefEnvironmentVariable, "refs/heads/tools");
+            Environment.SetEnvironmentVariable(LanguageToolsRefEnvironmentVariable, "refs/heads/language-tools");
+
+            var parseResult = command.Parse(
+                "--language python --package-name azure-test --target-branch feature --no-wait");
+            await tool.HandleCommand(parseResult, CancellationToken.None);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(PipelineRefEnvironmentVariable, originalPipelineRef);
+            Environment.SetEnvironmentVariable(ToolsRefEnvironmentVariable, originalToolsRef);
+            Environment.SetEnvironmentVariable(LanguageToolsRefEnvironmentVariable, originalLanguageToolsRef);
+        }
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedRequest!.PipelineRef, Is.EqualTo("refs/heads/pipeline"));
+            Assert.That(capturedRequest.ToolsRef, Is.EqualTo("refs/heads/tools"));
+            Assert.That(capturedRequest.LanguageToolsRef, Is.EqualTo("refs/heads/language-tools"));
+        });
+    }
+
+    [Test]
+    public void RequestReviewPullRequest_DoesNotExposeRefOverridesToMcp()
+    {
+        var parameterNames = typeof(ApiReviewHubTool)
+            .GetMethod(nameof(ApiReviewHubTool.RequestReviewPullRequest))!
+            .GetParameters()
+            .Select(parameter => parameter.Name);
+
+        Assert.That(parameterNames, Does.Not.Contain("pipelineRef"));
+        Assert.That(parameterNames, Does.Not.Contain("toolsRef"));
+        Assert.That(parameterNames, Does.Not.Contain("languageToolsRef"));
     }
 
     [TestCase("mgmt", "mgmt")]
@@ -82,6 +161,12 @@ public class ApiReviewHubToolTests
 
         Assert.That(capturedRequest, Is.Not.Null);
         Assert.That(capturedRequest!.PackageType, Is.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedRequest.PipelineRef, Is.Null);
+            Assert.That(capturedRequest.ToolsRef, Is.Null);
+            Assert.That(capturedRequest.LanguageToolsRef, Is.Null);
+        });
     }
 
     [Test]
@@ -99,6 +184,28 @@ public class ApiReviewHubToolTests
             "unsupported");
 
         Assert.That(response.ResponseError, Does.Contain("Unsupported package type 'unsupported'"));
+        service.Verify(x => x.RequestReviewPullRequestAsync(
+            It.IsAny<ReviewPullRequestCreationRequest>(),
+            It.IsAny<string>(),
+            It.IsAny<bool>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task RequestReviewPullRequest_RejectsSwift()
+    {
+        var service = new Mock<IApiReviewHubService>();
+        var tool = new ApiReviewHubTool(service.Object, new TestLogger<ApiReviewHubTool>());
+
+        var response = await tool.RequestReviewPullRequest(
+            "swift",
+            "azure-test",
+            "Azure",
+            "azure-sdk-for-ios",
+            "feature");
+
+        Assert.That(response.ResponseError, Does.Contain("Unsupported language 'swift'"));
         service.Verify(x => x.RequestReviewPullRequestAsync(
             It.IsAny<ReviewPullRequestCreationRequest>(),
             It.IsAny<string>(),

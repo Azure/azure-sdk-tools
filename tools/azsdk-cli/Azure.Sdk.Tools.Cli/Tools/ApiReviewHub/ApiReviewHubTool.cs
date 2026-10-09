@@ -23,7 +23,6 @@ public class ApiReviewHubTool(
         ["js"] = "azure-sdk-for-js",
         ["go"] = "azure-sdk-for-go",
         ["cpp"] = "azure-sdk-for-cpp",
-        ["swift"] = "azure-sdk-for-ios",
         ["rust"] = "azure-sdk-for-rust"
     };
     private static readonly IReadOnlyDictionary<string, string> LanguageAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -48,6 +47,9 @@ public class ApiReviewHubTool(
     private const string RequestReviewPullRequestToolName = "azsdk_apireviewhub_request_review_pr";
     private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
     private const string DefaultTargetOwner = "Azure";
+    private const string PipelineRefEnvironmentVariable = "AZSDK_API_REVIEW_PIPELINE_REF";
+    private const string ToolsRefEnvironmentVariable = "AZSDK_API_REVIEW_TOOLS_REF";
+    private const string LanguageToolsRefEnvironmentVariable = "AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ApiReviewHub];
 
@@ -122,7 +124,7 @@ public class ApiReviewHubTool(
 
     private async Task<CommandResponse> HandleCreateCommand(ParseResult parseResult, CancellationToken ct)
     {
-        return await RequestReviewPullRequest(
+        return await RequestReviewPullRequestCore(
             parseResult.GetValue(languageOption) ?? string.Empty,
             parseResult.GetValue(packageNameOption) ?? string.Empty,
             parseResult.GetValue(targetOwnerOption) ?? string.Empty,
@@ -132,6 +134,9 @@ public class ApiReviewHubTool(
             parseResult.GetValue(baseTagOption),
             !parseResult.GetValue(noWaitOption),
             parseResult.GetValue(pollIntervalSecondsOption),
+            GetEnvironmentVariable(PipelineRefEnvironmentVariable),
+            GetEnvironmentVariable(ToolsRefEnvironmentVariable),
+            GetEnvironmentVariable(LanguageToolsRefEnvironmentVariable),
             ct);
     }
 
@@ -150,6 +155,55 @@ public class ApiReviewHubTool(
     {
         try
         {
+            return await RequestReviewPullRequestCore(
+                language,
+                packageName,
+                targetOwner,
+                targetRepo,
+                targetBranch,
+                packageType,
+                baseTag,
+                waitForCompletion,
+                pollIntervalSeconds,
+                null,
+                null,
+                null,
+                ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to request API Review Hub review PR for {packageName}", packageName);
+            return new ApiReviewHubResponse
+            {
+                ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
+            };
+        }
+    }
+
+    private async Task<ApiReviewHubResponse> RequestReviewPullRequestCore(
+        string language,
+        string packageName,
+        string targetOwner,
+        string targetRepo,
+        string targetBranch,
+        string? packageType,
+        string? baseTag,
+        bool waitForCompletion,
+        int pollIntervalSeconds,
+        string? pipelineRef,
+        string? toolsRef,
+        string? languageToolsRef,
+        CancellationToken ct)
+    {
+        try
+        {
+            if (!SupportedLanguages.Contains(language, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    $"Unsupported language '{language}'. Supported values: {SupportedLanguagesDescription}.",
+                    nameof(language));
+            }
+
             var request = new ReviewPullRequestCreationRequest
             {
                 Language = language,
@@ -161,7 +215,10 @@ public class ApiReviewHubTool(
                     Owner = targetOwner,
                     Repo = targetRepo,
                     Name = targetBranch
-                }
+                },
+                PipelineRef = pipelineRef,
+                ToolsRef = toolsRef,
+                LanguageToolsRef = languageToolsRef
             };
 
             var result = await apiReviewHubService.RequestReviewPullRequestAsync(
@@ -184,6 +241,12 @@ public class ApiReviewHubTool(
                 ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
             };
         }
+    }
+
+    private static string? GetEnvironmentVariable(string name)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
     private static string ResolveTargetRepo(string? language, string? targetRepo)

@@ -161,8 +161,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan, CancellationToken ct)
         {
-            var releasePlans = new List<ReleasePlanWorkItem>();
-            return Task.FromResult(releasePlans);
+            return Task.FromResult(new List<ReleasePlanWorkItem>());
+        }
+
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan, CancellationToken ct)
+        {
+            return Task.FromResult(new List<ReleasePlanWorkItem>());
         }
 
         Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string productLifecycle, bool isTestReleasePlan, CancellationToken ct)
@@ -238,7 +242,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, CancellationToken ct)
+        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, string? specCommitSha, CancellationToken ct)
         {
             if (ConfiguredRunSDKGenerationPipeline != null)
             {
@@ -295,6 +299,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct)
         {
             return ((IDevOpsService)this).UpdateWorkItemAsync(workItemId, fields, new Dictionary<string, string>(), ct);
+        }
+
+        Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, int expectedRevision, CancellationToken ct)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision);
+            return ((IDevOpsService)this).UpdateWorkItemAsync(workItemId, fields, ct);
         }
 
         Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct)
@@ -421,6 +431,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct = default)
         {
             throw new NotImplementedException();
+        }
+
+        public Task EnsureReleasePlanAutomationRelationAsync(int releasePlanWorkItemId, int completedReleasePlanWorkItemId, CancellationToken ct)
+        {
+            return Task.CompletedTask;
         }
 
         public Task DeleteWorkItemAsync(int workItemId, CancellationToken ct)

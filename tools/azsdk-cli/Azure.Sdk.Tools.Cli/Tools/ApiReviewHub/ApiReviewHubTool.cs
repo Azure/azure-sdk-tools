@@ -26,6 +26,20 @@ public class ApiReviewHubTool(
         ["swift"] = "azure-sdk-for-ios",
         ["rust"] = "azure-sdk-for-rust"
     };
+    private static readonly IReadOnlyDictionary<string, string> LanguageAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["net"] = "csharp",
+        [".net"] = "csharp",
+        ["dotnet"] = "csharp",
+        ["c#"] = "csharp",
+        ["cs"] = "csharp",
+        ["c++"] = "cpp",
+        ["javascript"] = "js",
+        ["typescript"] = "js",
+        ["ts"] = "js",
+        ["golang"] = "go",
+        ["py"] = "python"
+    };
 
     private static readonly string[] SupportedLanguages = [.. DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
     private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
@@ -44,6 +58,8 @@ public class ApiReviewHubTool(
         Description = "The package name.",
         Required = true
     };
+
+    private readonly Option<string> packageTypeOption = CreatePackageTypeOption();
 
     private readonly Option<string> baseTagOption = new("--base-tag")
     {
@@ -85,6 +101,7 @@ public class ApiReviewHubTool(
         {
             languageOption,
             packageNameOption,
+            packageTypeOption,
             baseTagOption,
             targetOwnerOption,
             targetRepoOption,
@@ -111,6 +128,7 @@ public class ApiReviewHubTool(
             parseResult.GetValue(targetOwnerOption) ?? string.Empty,
             ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
             parseResult.GetValue(targetBranchOption) ?? string.Empty,
+            parseResult.GetValue(packageTypeOption),
             parseResult.GetValue(baseTagOption),
             !parseResult.GetValue(noWaitOption),
             parseResult.GetValue(pollIntervalSecondsOption),
@@ -124,6 +142,7 @@ public class ApiReviewHubTool(
         [Description("The GitHub owner for the target working branch.")] string targetOwner,
         [Description("The GitHub repository for the target working branch. By default, the command selects the appropriate repo based on the language.")] string targetRepo,
         [Description("The target working branch name.")] string targetBranch,
+        [Description("The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: mgmt, client, spring, functions. Spring and functions are treated as client packages.")] string? packageType = null,
         [Description("The optional release tag or ref used as the base API surface.")] string? baseTag = null,
         [Description("Poll API Review Hub until the operation completes.")] bool waitForCompletion = true,
         [Description("Seconds to wait between API Review Hub operation status polls.")] int pollIntervalSeconds = 10,
@@ -135,6 +154,7 @@ public class ApiReviewHubTool(
             {
                 Language = language,
                 PackageName = packageName,
+                PackageType = string.IsNullOrWhiteSpace(packageType) ? null : ApiReviewPackageType.Normalize(packageType),
                 BaseTag = baseTag ?? string.Empty,
                 TargetBranch = new GitBranchReference
                 {
@@ -204,6 +224,32 @@ public class ApiReviewHubTool(
         });
 
         return option;
+    }
+
+    private static Option<string> CreatePackageTypeOption()
+    {
+        var option = new Option<string>("--package-type")
+        {
+            Description = $"The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Spring and functions are treated as client packages."
+        };
+
+        option.Validators.Add(result =>
+        {
+            string? value = result.GetValueOrDefault<string>();
+            if (!string.IsNullOrWhiteSpace(value) && !ApiReviewPackageType.SupportedValues.Contains(value, StringComparer.OrdinalIgnoreCase))
+            {
+                result.AddError($"Invalid package type '{value}'. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}.");
+            }
+        });
+
+        return option;
+    }
+
+    internal static string? ResolveLanguage(string language)
+    {
+        string? canonical = DefaultTargetRepos.Keys.FirstOrDefault(
+            value => value.Equals(language, StringComparison.OrdinalIgnoreCase));
+        return canonical ?? LanguageAliases.GetValueOrDefault(language);
     }
 
 }

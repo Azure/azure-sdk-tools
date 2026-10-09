@@ -97,7 +97,7 @@ The agent is configured with the following components:
 | Component | Purpose |
 | --- | --- |
 | **Instruction** | System prompt defining the agent's role, behavior, and response format. |
-| **Tools** | `KnowledgeTools.search_knowledge_base` and `KnowledgeTools.wiki_search` (AI Search), `WebTools.web_fetch`, `PipelineTools.azsdk_analyze_pipeline`, `web_search` (Bing grounding), ADO MCP tool, GitHub MCP tool. |
+| **Tools** | `KnowledgeTools.search_knowledge_base` and `KnowledgeTools.wiki_search` (AI Search), `WebTools.web_fetch`, `web_search` (Bing grounding), ADO MCP tool, Azure SDK MCP tool, GitHub MCP tool. |
 | **Skills** | Tenant-specific skills auto-generated from tenant config. Each tenant becomes a `Skill` with a description (for routing) and content (QA guideline + knowledge source names). The agent self-routes to the correct tenant. |
 | **Context Providers** | `SkillsProvider` (injects active skill context), `MemoryContextProvider` (injects user + expert memories), `CompactionProvider` (compacts tool-call history to manage context size). |
 

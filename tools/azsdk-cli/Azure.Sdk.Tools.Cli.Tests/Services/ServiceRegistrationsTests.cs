@@ -1,5 +1,8 @@
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 using GitHub.Copilot;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
@@ -27,6 +30,26 @@ internal class ServiceRegistrationsTests
         {
             Environment.SetEnvironmentVariable(key, value);
         }
+    }
+
+    [TestCase(OutputHelper.OutputModes.Json)]
+    [TestCase(OutputHelper.OutputModes.Plain)]
+    [TestCase(OutputHelper.OutputModes.Mcp)]
+    public void RegisterCommonServices_RegistersDotNetLanguageService(OutputHelper.OutputModes outputMode)
+    {
+        foreach (var envVar in new[] { "GITHUB_ACTIONS", "SYSTEM_TEAMPROJECTID" })
+        {
+            _savedEnvVars[envVar] = Environment.GetEnvironmentVariable(envVar);
+            Environment.SetEnvironmentVariable(envVar, null);
+        }
+        var services = new ServiceCollection();
+
+        ServiceRegistrations.RegisterCommonServices(services, outputMode);
+
+        var registration = services.Single(descriptor =>
+            descriptor.ServiceType == typeof(LanguageService) &&
+            descriptor.ImplementationType == typeof(DotNetLanguageService));
+        Assert.That(registration.Lifetime, Is.EqualTo(ServiceLifetime.Scoped));
     }
 
     [Test]

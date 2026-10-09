@@ -35,6 +35,9 @@ parameters:
   - name: ReleaseBinaries
     type: boolean
     default: false
+  - name: ReleaseToAzsdkArtifacts
+    type: boolean
+    default: false
   - name: ShouldPublishSymbols
     type: boolean
     default: true
@@ -240,6 +243,7 @@ extends:
             Feed: 'public/azure-sdk-for-net'
             ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
             ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
+            ShouldPublishToAzsdkArtifacts: ${{ parameters.ReleaseToAzsdkArtifacts }}
             ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
             ${{ if parameters.PublishEnvironment }}:

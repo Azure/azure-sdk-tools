@@ -750,7 +750,9 @@ def message_images(content: str | None) -> list[ConversationMessageImage]:
     images: list[ConversationMessageImage] = []
     seen: set[str] = set()
     for values in parser.images:
-        source = values["src"]
+        source = values.get("src")
+        if not source:
+            continue
         if source in seen:
             continue
         seen.add(source)

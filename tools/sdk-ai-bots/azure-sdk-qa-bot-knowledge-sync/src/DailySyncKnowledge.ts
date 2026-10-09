@@ -11,6 +11,7 @@ import { MetadataResolver } from './services/MetadataResolver';
 import { TypeSpecProcessor } from './services/TypeSpecProcessor';
 import { SampleProcessor } from './services/SampleProcessor';
 import { AlloySampleProcessor } from './services/AlloySampleProcessor';
+import { getGitHubEnvironment } from './services/GitHubAuthentication';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -189,12 +190,8 @@ function getAuthenticatedUrl(repo: RepositoryConfig): string {
     }
     
     if (repo.authType === 'token') {
-        if (!repo.token) {
-            console.error(`Token is missing for repository ${repo.name}. Please check environment variable.`);
-            throw new Error(`Authentication token missing for ${repo.name}`);
-        }
         console.log(`Using token authentication for ${repo.name}`);
-        return repo.url.replace('https://', `https://x-access-token:${repo.token}@`);
+        return repo.url;
     }
     
     if (repo.authType === 'ssh') {
@@ -317,6 +314,9 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
             // Get authenticated URL if required
             const cloneUrl = getAuthenticatedUrl(repo);
             let env = process.env;
+            if (repo.authType === 'token') {
+                env = await getGitHubEnvironment(repo.url, repo.token);
+            }
             if (repo.authType === 'azure-devops') {
                 const scope = process.env.ADO_RESOURCE_SCOPE;
                 if (!scope) throw new Error('ADO_RESOURCE_SCOPE is required for Azure DevOps checkout');
@@ -352,15 +352,11 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
                 execSync(`git clone ${cloneUrl} ${repo.path}`, { stdio: 'pipe', env });
             }
             console.log(`${repo.name} setup completed`);
-        } catch (error) {
-            if (repo.authType === 'azure-devops') {
-                // Subprocess errors may include the environment containing the bearer.
-                const redactedError = new Error(`Error setting up ${repo.name}: Azure DevOps repository setup failed`);
-                console.error(redactedError.message);
-                throw redactedError;
-            }
-            console.error(`Error setting up ${repo.name}:`, error);
-            throw error;
+        } catch {
+            // Raw subprocess errors can contain credentials from the child environment.
+            const setupError = new Error(`Repository setup failed: ${repo.name}`);
+            console.error(setupError.message);
+            throw setupError;
         }
     }
 }

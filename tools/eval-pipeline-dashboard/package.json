@@ -1,0 +1,40 @@
+{
+  "name": "vally-eval-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-repository Vally eval pipeline dashboard with a local filesystem-backed Blob POC.",
+  "type": "module",
+  "main": "start.js",
+  "engines": {
+    "node": ">=22.12 <23"
+  },
+  "scripts": {
+    "start": "node start.js",
+    "poc": "npm run poc:start",
+    "poc:publish": "node scripts/publish-poc-run.mjs",
+    "poc:submit": "node scripts/submit-bundle.mjs",
+    "poc:seed": "node scripts/seed-poc.mjs",
+    "poc:start": "node scripts/start-poc.mjs",
+    "maintenance": "node scripts/maintenance.mjs",
+    "bundle:prepare": "node scripts/prepare-pipeline-bundle.mjs",
+    "bundle:publish": "node scripts/publish-bundle.mjs",
+    "test": "node --test test/*.test.mjs",
+    "postinstall": "node scripts/patch-vally.mjs"
+  },
+  "dependencies": {
+    "@azure/identity": "4.13.3",
+    "@azure/storage-blob": "12.33.0",
+    "@azure/storage-queue": "12.31.0",
+    "@hono/node-server": "^2.0.5",
+    "@microsoft/vally-server": "0.15.0",
+    "better-sqlite3": "13.0.3",
+    "fflate": "0.8.3",
+    "hono": "^4.12.26",
+    "jose": "6.2.12",
+    "proper-lockfile": "4.1.2"
+  },
+  "devDependencies": {
+    "azurite": "3.37.0",
+    "yaml": "2.9.0"
+  }
+}

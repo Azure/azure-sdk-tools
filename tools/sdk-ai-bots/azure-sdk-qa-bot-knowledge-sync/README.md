@@ -88,6 +88,13 @@ in the WebJob execution environment. App Configuration must provide
 `ADO_RESOURCE_SCOPE` for private Azure Repos checkout; the identity also needs
 Azure DevOps repository read access and access to the configured Azure resources.
 
+SSH checkout uses the base64-encoded `SSH_PRIVATE_KEY` App Service setting.
+Backend CD provisions it from the ADO Secure File named EMU-SSH-PRIVATE-KEY
+for dev and production. Authorize the backend CD pipeline to use that secure file;
+it may contain the original PEM/OpenSSH private key or its base64-encoded value.
+The key is not included in the container image or WebJob ZIP. Local execution
+requires the same environment variable for SSH repositories.
+
 Private GitHub repositories use the configured token environment variable when
 provided; otherwise each checkout obtains a short-lived GitHub App installation
 token. App Configuration must provide `GITHUB_APP_ID`, `GITHUB_APP_KEY_NAME`, and

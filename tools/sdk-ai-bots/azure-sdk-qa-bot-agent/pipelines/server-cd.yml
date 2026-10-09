@@ -157,6 +157,52 @@ extends:
                     fi
 
               # 5. Deploy App Service
+              - ${{ if ne(parameters.environment, 'preview') }}:
+                - task: DownloadSecureFile@1
+                  name: sshPrivateKey
+                  displayName: 'Download Knowledge Sync SSH Key'
+                  inputs:
+                    secureFile: 'EMU-SSH-PRIVATE-KEY'
+
+                - task: AzureCLI@2
+                  displayName: 'Configure Knowledge Sync SSH Key'
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      node --input-type=module <<'NODE'
+                      import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+                      import { tmpdir } from 'node:os';
+                      import { join } from 'node:path';
+                      import { execFileSync } from 'node:child_process';
+                      let directory;
+                      try {
+                        const value = readFileSync(process.env.SSH_KEY_FILE, 'utf8').trim();
+                        const key = value.startsWith('-----BEGIN ') ? value : Buffer.from(value, 'base64').toString('utf8').trim();
+                        if (!/^-----BEGIN (OPENSSH|RSA|EC|DSA|ENCRYPTED)? ?PRIVATE KEY-----/.test(key)) {
+                          throw new Error('Invalid key format');
+                        }
+                        directory = mkdtempSync(join(tmpdir(), 'ssh-setting-'));
+                        const settings = join(directory, 'settings.json');
+                        writeFileSync(settings, JSON.stringify({ SSH_PRIVATE_KEY: Buffer.from(key + '\n').toString('base64') }), { mode: 0o600 });
+                        execFileSync('az', ['webapp', 'config', 'appsettings', 'set',
+                          '--name', process.env.APP_NAME, '--resource-group', process.env.RESOURCE_GROUP,
+                          '--settings', '@' + settings, '--only-show-errors', '--output', 'none'],
+                          { stdio: ['ignore', 'pipe', 'pipe'], timeout: 120000 });
+                        console.log('Knowledge sync SSH setting configured.');
+                      } catch {
+                        console.error('SSH setting configuration failed; check secure file format and App Service permissions.');
+                        process.exitCode = 1;
+                      } finally {
+                        if (directory) rmSync(directory, { recursive: true, force: true });
+                      }
+                      NODE
+                  env:
+                    SSH_KEY_FILE: $(sshPrivateKey.secureFilePath)
+                    APP_NAME: $(APP_NAME)
+                    RESOURCE_GROUP: $(RESOURCE_GROUP)
+
               - task: AzureCLI@2
                 displayName: 'Update App Service'
                 continueOnError: false

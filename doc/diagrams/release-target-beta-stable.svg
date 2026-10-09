@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="448" height="640" viewBox="0 0 448 640" role="img" aria-labelledby="targets-title targets-description">
+  <title id="targets-title">The beta result belongs to A-1, not A-2</title>
+  <desc id="targets-description">Target A-1 requests a beta SDK for the July API at commit C1. Job G1 uses A-1 and produces a beta result. An intentional target update creates A-2, requesting a stable SDK for the same API and commit. The beta result must not complete or overwrite A-2; new generation work uses A-2.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="#52627a" />
+    </marker>
+    <marker id="warning-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="#865111" />
+    </marker>
+  </defs>
+  <rect width="448" height="640" fill="#ffffff" />
+  <g fill="none" stroke="#52627a" stroke-width="1.5" marker-end="url(#arrow)">
+    <path d="M 280 100 V 140" />
+    <path d="M 280 210 V 248" />
+    <path d="M 144 58 H 60 V 474 H 140" />
+    <path d="M 280 516 V 554" />
+  </g>
+  <path d="M 280 318 V 428" fill="none" stroke="#865111" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#warning-arrow)" />
+  <g font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="400" fill="#17243b" text-anchor="middle">
+    <g data-node="beta-target">
+      <rect x="144" y="16" width="272" height="84" rx="8" fill="#fff6e7" stroke="#c19a59" stroke-width="1.5" />
+      <text x="280" y="42" font-weight="600">Target A-1</text>
+      <text x="280" y="64">July API + C1</text>
+      <text x="280" y="84">BETA SDK</text>
+    </g>
+    <g data-node="beta-job">
+      <rect x="144" y="144" width="272" height="66" rx="8" fill="#fff6e7" stroke="#c19a59" stroke-width="1.5" />
+      <text x="280" y="170" font-weight="600">Job G1</text>
+      <text x="280" y="192">Uses A-1</text>
+    </g>
+    <g data-node="beta-result">
+      <rect x="144" y="252" width="272" height="66" rx="8" fill="#fff6e7" stroke="#c19a59" stroke-width="1.5" />
+      <text x="280" y="278" font-weight="600">Beta result</text>
+      <text x="280" y="300">Belongs to A-1</text>
+    </g>
+    <rect x="6" y="250" width="120" height="50" rx="4" fill="#ffffff" />
+    <text x="66" y="270">Intentional</text>
+    <text x="66" y="290">target update</text>
+    <rect x="184" y="346" width="192" height="54" rx="4" fill="#ffffff" />
+    <text x="280" y="368" fill="#865111">Must not complete</text>
+    <text x="280" y="389" fill="#865111">or overwrite A-2</text>
+    <g data-node="stable-target">
+      <rect x="144" y="432" width="272" height="84" rx="8" fill="#e9f7f1" stroke="#78ad99" stroke-width="1.5" />
+      <text x="280" y="458" font-weight="600">Target A-2</text>
+      <text x="280" y="480">July API + C1</text>
+      <text x="280" y="500">STABLE SDK</text>
+    </g>
+    <g data-node="stable-job">
+      <rect x="144" y="558" width="272" height="66" rx="8" fill="#e9f7f1" stroke="#78ad99" stroke-width="1.5" />
+      <text x="280" y="584" font-weight="600">New generation work</text>
+      <text x="280" y="606">Uses A-2</text>
+    </g>
+  </g>
+</svg>

@@ -5,7 +5,8 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 ## Prerequisites
 
 - [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli@0.14.0`
-- Node.js/npm available on `PATH`; the MCP build restores Copilot SDK native npm assets.
+- Node.js 24.14.1 or newer and npm available on `PATH`; setup installs the pnpm version pinned by
+  azure-rest-api-specs.
 - The `azsdk-cli` MCP server built as described below.
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
 
@@ -19,10 +20,10 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 ### Prepare Vally, fixtures, and MCP binaries
 
 Before running any evals, run the setup script from this directory. It builds the live and mock MCP
-servers into `artifacts/mcp`, primes fixtures from the live
-[azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main` branch, runs fixture
-`npm ci`, and prints the environment variables needed by local Vally runs. The MCP binaries use the
-same `artifacts/mcp/cli` and `artifacts/mcp/mock` layout staged by the pipeline:
+servers into `artifacts/mcp`, sparse-clones
+[azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main`, installs the fixture
+with pnpm, and prints the environment variables needed by local Vally runs. The MCP binaries use
+the same `artifacts/mcp/cli` and `artifacts/mcp/mock` layout staged by the pipeline:
 
 ```powershell
 # PowerShell
@@ -87,12 +88,13 @@ participating files under `evals/`. Local environment overrides should not be co
 
 1. Set scalar eval specs to the selected local prebuilt environment.
 2. Build the live MCP server into `artifacts/mcp/cli` and the mock MCP server
-  into `artifacts/mcp/mock`.
-3. Convert the azure-rest-api-specs pnpm workspace manifest into standalone `package.json` /
-   `package-lock.json` files under `fixtures/Microsoft.Widget/Widget/` and run
-   `npm ci --legacy-peer-deps` there.
-4. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
-5. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
+   into `artifacts/mcp/mock`.
+3. Sparse-clone azure-rest-api-specs without `specification/` into
+   `artifacts/azure-rest-api-specs`.
+4. Install the pnpm version pinned by that checkout and run `pnpm install --frozen-lockfile` in the
+   checked-in Microsoft.Widget fixture.
+5. Copy `.github/copilot-instructions.md` into the instructions fixture.
+6. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
 
 The MCP build uses `GitHub.Copilot.SDK`, which downloads platform-specific `@github/copilot-*`
 assets through MSBuild. The setup script passes
@@ -102,8 +104,8 @@ Microsoft package feed proxy instead of `registry.npmjs.org`. To use a different
 
 Why each piece matters:
 
-- **`FIXTURE_NODE_MODULES`** lets the agent symlink a prebuilt `node_modules` instead of running
-  `npm install` on every case. Without it evals still work, just slower.
+- **`FIXTURE_NODE_MODULES`** lets the agent symlink the pnpm-installed fixture `node_modules`
+  instead of installing dependencies in every case.
 - **`copilot-instructions.md`** is copied into each run's `.github/` by the `azsdk-mcp` environments
   in `.vally.yaml`, so evals exercise the *real* spec-repo authoring guidance. It is intentionally
   **not** checked in (it is git-ignored) and always refreshed from `main`, so the eval reflects what
@@ -111,6 +113,43 @@ Why each piece matters:
 
 CI builds MCP binaries in a shared build job and runs `setup-fixture-files.js` during pre-eval setup,
 so the binaries and fixtures are always present in pipeline runs.
+
+### Install pnpm locally
+
+The preferred path installs exactly the version pinned by the current azure-rest-api-specs
+`packageManager` field:
+
+```powershell
+node scripts/setup-fixture-files.js
+node scripts/install-pnpm.js
+pnpm --version
+pnpm install --frozen-lockfile --dir fixtures\Microsoft.Widget\Widget
+```
+
+On Bash or Zsh, use the same commands with `/` path separators:
+
+```bash
+node scripts/setup-fixture-files.js
+node scripts/install-pnpm.js
+pnpm --version
+pnpm install --frozen-lockfile --dir fixtures/Microsoft.Widget/Widget
+```
+
+For the current spec checkout, the equivalent manual installation is:
+
+```powershell
+npm install --global pnpm@12.6.0
+pnpm --version
+```
+
+On managed development devices, route npm through the approved feed before installing pnpm:
+
+```powershell
+$env:npm_config_registry = "https://packagefeedproxy.microsoft.io/npm/"
+node scripts/install-pnpm.js
+```
+
+The full `setup-environment.js` command performs all of these pnpm steps automatically.
 
 ## Running Evaluations Locally
 

@@ -55,8 +55,6 @@ stimuli:
           dest: main.tsp
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/models.tsp
           dest: models.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
         - src: ../scripts/check-node-dependencies.js

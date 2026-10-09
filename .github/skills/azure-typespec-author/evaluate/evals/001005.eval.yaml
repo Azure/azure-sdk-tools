@@ -27,8 +27,6 @@ stimuli:
           dest: employee.tsp
         - src: ../fixtures/001005-version-add-preview-after-preview/main.tsp
           dest: main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
         - src: ../scripts/check-node-dependencies.js

@@ -27,8 +27,6 @@ stimuli:
           dest: Microsoft.Widget/Widget/employee.tsp
         - src: ../fixtures/001-share-version-new-feature/main.tsp
           dest: Microsoft.Widget/Widget/main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
         - src: ../fixtures/Microsoft.Widget/Widget/node_modules

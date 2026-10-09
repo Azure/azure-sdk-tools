@@ -8,7 +8,8 @@ ENV PIP_DEFAULT_TIMEOUT=100
 ENV PIP_RETRIES=5
 
 # Install Node.js >= 22 (required for MCP stdio tools that use npx)
-RUN tdnf install -y ca-certificates tar gzip && \
+RUN tdnf install -y ca-certificates tar gzip git openssh-clients && \
+  git --version && ssh -V && command -v ssh-keyscan && \
     curl -fsSL https://nodejs.org/dist/v22.15.0/node-v22.15.0-linux-x64.tar.xz \
       | tar -xJ --strip-components=1 -C /usr/local && \
     tdnf clean all

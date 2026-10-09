@@ -1,10 +1,10 @@
 import { beforeAll, beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
-const { execFileSync, readFile, mkdtemp, writeFile, rm, delay } = vi.hoisted(() => ({
-    execFileSync: vi.fn(), readFile: vi.fn(), mkdtemp: vi.fn(), writeFile: vi.fn(), rm: vi.fn(), delay: vi.fn()
+const { execFileSync, readFile, delay } = vi.hoisted(() => ({
+    execFileSync: vi.fn(), readFile: vi.fn(), delay: vi.fn()
 }));
 vi.mock('node:child_process', () => ({ execFileSync }));
-vi.mock('node:fs/promises', () => ({ readFile, mkdtemp, writeFile, rm }));
+vi.mock('node:fs/promises', () => ({ readFile }));
 vi.mock('node:timers/promises', () => ({ setTimeout: delay }));
 
 // The deployment script is native JavaScript, outside the TypeScript application build.
@@ -22,9 +22,6 @@ describe('WebJob deployment', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
         vi.spyOn(console, 'log').mockImplementation(() => {});
         readFile.mockImplementation(async (file) => file instanceof URL ? JSON.stringify(settings) : Buffer.from('zip'));
-        mkdtemp.mockResolvedValue('webjob-verify-test');
-        writeFile.mockResolvedValue(undefined);
-        rm.mockResolvedValue(undefined);
         delay.mockResolvedValue(undefined);
         execFileSync.mockImplementation((_command, args: string[]) => {
             if (args[0] === 'account') return JSON.stringify({ accessToken: 'secret-token' });
@@ -71,40 +68,32 @@ describe('WebJob deployment', () => {
     });
 
     function timedOutUpload() {
-        const cli = execFileSync.getMockImplementation()!;
-        execFileSync.mockImplementation((command, args) => command === 'unzip'
-            ? '  123 Defl:N 99 20% 2026-10-09 02:00 abcd1234 dist/src/index.js\n'
-            : cli(command, args));
         const normal = fetchMock.getMockImplementation()!;
         fetchMock.mockImplementation(async (url, options) => {
             if (options.headers['Content-Type'] === 'application/zip') {
                 return new Response('One or more errors occurred. (A task was canceled.)', { status: 400 });
             }
-            if (url.includes('/api/zip/')) return new Response(Buffer.from('downloaded zip'));
             return normal(url, options);
         });
     }
 
-    it('recovers from the forwarding timeout only after verifying the installed package', async () => {
+    it('recovers from the forwarding timeout when the job is discoverable', async () => {
         timedOutUpload();
         await deploy(env);
-        expect(execFileSync.mock.calls.filter(([command, args]) => command === 'unzip' && args.includes('-v'))).toHaveLength(2);
         expect(fetchMock.mock.calls.filter(([, options]) => options.headers['Content-Type'] === 'application/zip')).toHaveLength(1);
-        expect(writeFile).toHaveBeenCalledOnce();
-        expect(rm).toHaveBeenCalledWith('webjob-verify-test', { recursive: true, force: true });
+        expect(fetchMock.mock.calls.every(([url]) => !url.includes('/api/zip/'))).toBe(true);
     });
 
-    it('waits rather than accepting an old or partially installed package', async () => {
+    it('polls job metadata until discovery', async () => {
         timedOutUpload();
-        const cli = execFileSync.getMockImplementation()!;
-        let inventories = 0;
-        execFileSync.mockImplementation((command, args) => {
-            const listing = cli(command, args);
-            return command === 'unzip' && args.includes('-v') && ++inventories === 2 ? listing.replace('abcd1234', '11111111') : listing;
+        const normal = fetchMock.getMockImplementation()!;
+        fetchMock.mockImplementation(async (url, options) => {
+            if (fetchMock.mock.calls.length === 3) return new Response(null, { status: 404 });
+            return normal(url, options);
         });
         await deploy(env);
         expect(delay).toHaveBeenCalledOnce();
-        expect(writeFile).toHaveBeenCalledTimes(2);
+        expect(fetchMock.mock.calls.every(([url]) => !url.includes('/api/zip/'))).toBe(true);
     });
 
     it('verifies completion after a 100-second HTTP 400 even when Kudu hides the error body', async () => {
@@ -120,11 +109,11 @@ describe('WebJob deployment', () => {
             return normal(url, options);
         });
         await deploy(env);
-        expect(writeFile).toHaveBeenCalledOnce();
+        expect(fetchMock.mock.calls.every(([url]) => !url.includes('/api/zip/'))).toBe(true);
         expect(fetchMock.mock.calls.filter(([, options]) => options.headers['Content-Type'] === 'application/zip')).toHaveLength(1);
     });
 
-    it('fails bounded recovery when the intended package never appears', async () => {
+    it('fails bounded recovery when the job is not discoverable', async () => {
         timedOutUpload();
         let clock = 0;
         vi.spyOn(Date, 'now').mockImplementation(() => clock);
@@ -134,16 +123,15 @@ describe('WebJob deployment', () => {
             return normal(url, options);
         });
         delay.mockImplementation(async () => { clock += 15000; });
-        await expect(deploy(env)).rejects.toThrow('within 10 minutes');
+        await expect(deploy(env)).rejects.toThrow('within 5 minutes');
         expect(fetchMock.mock.calls.filter(([, options]) => options.headers['Content-Type'] === 'application/zip')).toHaveLength(1);
-        expect(rm).toHaveBeenCalledOnce();
     });
 
     it('does not recover from authorization failures even if the body mentions cancellation', async () => {
         fetchMock.mockResolvedValueOnce(new Response(null, { status: 404 }))
             .mockResolvedValueOnce(new Response('A task was canceled.', { status: 403 }));
         await expect(deploy(env)).rejects.toThrow('HTTP 403');
-        expect(mkdtemp).not.toHaveBeenCalled();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it('identifies a failed CLI configuration operation without leaking subprocess output', async () => {

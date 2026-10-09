@@ -1,6 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
@@ -19,7 +18,7 @@ function az(args) {
         throw new DeploymentError(`Azure CLI ${operation} failed (exit status ${error.status ?? 'unavailable'})`);
     }
 }
-async function request(url, token, { method = 'GET', body, contentType = 'application/json', allowMissing = false, headers = {}, binary = false } = {}) {
+async function request(url, token, { method = 'GET', body, contentType = 'application/json', allowMissing = false, headers = {} } = {}) {
     const operation = `${method} ${new URL(url).pathname}`;
     const started = Date.now();
     let response;
@@ -41,47 +40,21 @@ async function request(url, token, { method = 'GET', body, contentType = 'applic
         throw error;
     }
     try {
-        if (binary) return Buffer.from(await response.arrayBuffer());
         const text = await response.text();
         return text ? JSON.parse(text) : null;
     } catch {
         throw new DeploymentError(`SCM ${operation} returned an unreadable or invalid JSON response (HTTP ${response.status})`);
     }
 }
-// Compare uncompressed file lengths and CRCs, not ZIP bytes (Kudu repacks downloads).
-function zipInventory(file) {
-    execFileSync('unzip', ['-tq', file], { encoding: 'utf8', timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
-    const listing = execFileSync('unzip', ['-v', file], { encoding: 'utf8', timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
-    const files = listing.split('\n').flatMap(line => {
-        const match = line.match(/^\s*(\d+)\s+\S+\s+\d+\s+\S+\s+\S+\s+\S+\s+([a-f\d]{8})\s+(.+)$/i);
-        return match && !match[3].endsWith('/') ? [`${match[3]}:${match[1]}:${match[2].toLowerCase()}`] : [];
-    }).sort();
-    if (!files.length) throw new DeploymentError('Cannot verify WebJob ZIP file inventory');
-    return JSON.stringify(files);
-}
-async function waitForUpload(job, token, archivePath) {
-    const expected = zipInventory(archivePath);
-    const directory = await mkdtemp(resolve(tmpdir(), 'webjob-verify-'));
-    try {
-        const deadline = Date.now() + 10 * 60 * 1000;
-        while (Date.now() < deadline) {
-            const installed = await request(job, token, { allowMissing: true });
-            if (installed?.name === new URL(job).pathname.split('/').pop() && !installed.error) {
-                const name = new URL(job).pathname.split('/').pop();
-                const url = `${new URL(job).origin}/api/zip/site/wwwroot/App_Data/jobs/triggered/${name}/`;
-                const content = await request(url, token, { binary: true, allowMissing: true });
-                if (content) {
-                    const downloaded = resolve(directory, 'installed.zip');
-                    await writeFile(downloaded, content);
-                    if (zipInventory(downloaded) === expected) return;
-                }
-            }
-            await delay(15000);
-        }
-        throw new DeploymentError('Timed-out upload did not produce the expected WebJob package within 10 minutes');
-    } finally {
-        await rm(directory, { recursive: true, force: true });
+async function waitForUpload(job, token) {
+    const name = new URL(job).pathname.split('/').pop();
+    const deadline = Date.now() + 5 * 60 * 1000;
+    while (Date.now() < deadline) {
+        const installed = await request(job, token, { allowMissing: true });
+        if (installed?.name === name && !installed.error) return;
+        await delay(15000);
     }
+    throw new DeploymentError('Timed-out upload did not produce a discoverable WebJob within 5 minutes');
 }
 async function assertPausedAndDrained(job, token) {
     const paused = await request(job, token);
@@ -135,14 +108,14 @@ export async function deploy(env = process.env) {
             headers: { 'Content-Disposition': 'attachment; filename="knowledge-sync.zip"' } });
     } catch (error) {
         if (!error.forwardingTimeout) throw error;
-        console.warn('Kudu upload forwarding timed out; waiting for verified package completion without repeating the upload.');
-        await waitForUpload(job, token, env.WEBJOB_ZIP);
+        console.warn('Kudu upload forwarding timed out; waiting for WebJob discovery.');
+        await waitForUpload(job, token);
     }
     const installed = await request(job, token);
-    if (installed?.name !== env.WEBJOB_NAME) throw new DeploymentError('Job discovery failed');
+    if (installed?.name !== env.WEBJOB_NAME || installed.error) throw new DeploymentError('Job discovery failed');
     await request(`${job}/settings`, token, { method: 'PUT', body: JSON.stringify(settings) });
     const final = await request(job, token);
-    if (final?.name !== env.WEBJOB_NAME) throw new DeploymentError('Job discovery failed');
+    if (final?.name !== env.WEBJOB_NAME || final.error) throw new DeploymentError('Job discovery failed');
     if (final.settings?.schedule !== settings.schedule || final.settings?.is_singleton !== true) throw new DeploymentError('Schedule verification failed');
     console.log(JSON.stringify({ job: env.WEBJOB_NAME, schedule: settings.schedule }));
 }

@@ -3,6 +3,7 @@ paths:
     - skill-authoring/evals/
     - azsdk-common-pipeline-analysis/evals/
     - azsdk-common-pipeline-fixer/evals/
+    - azsdk-common-pre-push-check/evals/
     - markdown-token-optimizer/evals/
     - azsdk-common-generate-sdk-locally/evals/
     - azsdk-common-sdk-release/evals/

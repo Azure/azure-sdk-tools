@@ -96,6 +96,13 @@ Follow conventions in `.editorconfig`:
 
 ## Building and Testing
 
+### Before Publishing Changes
+
+- Before every push or agent tool that commits and pushes changes, run the `azsdk-common-pre-push-check` skill in `.github/skills/azsdk-common-pre-push-check/SKILL.md`.
+- Include documentation-only and non-SDK changes. Validate the whole branch diff against the PR target and any uncommitted files, not just the latest commit.
+- Run applicable existing spelling, link, formatting, lint, and type checks. After fixes or further edits, rerun affected checks before publishing.
+- Report commands and results. Do not publish with failed or blocked required checks; missing tools, configuration, base history, or network access are not successful validation.
+
 ### .NET Projects
 
 - Use `dotnet build` for building

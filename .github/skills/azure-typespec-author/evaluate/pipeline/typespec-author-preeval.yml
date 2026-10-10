@@ -57,7 +57,7 @@ steps:
       export NPM_CONFIG_USERCONFIG="$(Build.SourcesDirectory)/.npmrc"
       node .github/skills/azure-typespec-author/evaluate/scripts/setup-fixture-files.js
       node .github/skills/azure-typespec-author/evaluate/scripts/install-pnpm.js
-      FIXTURE_DIR="$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
-      pnpm install --frozen-lockfile --dir "$FIXTURE_DIR"
+      FIXTURE_DIR="$(Build.SourcesDirectory)/artifacts/typespec-author-eval/Microsoft.Widget/Widget"
+      pnpm install --dir "$FIXTURE_DIR"
       echo "##vso[task.setvariable variable=FIXTURE_NODE_MODULES]$FIXTURE_DIR/node_modules"
     displayName: 'Prepare fixture files and node_modules'

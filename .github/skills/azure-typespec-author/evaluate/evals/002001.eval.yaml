@@ -27,7 +27,7 @@ stimuli:
           dest: employee.tsp
         - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
           dest: main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        - src: ../../../../../artifacts/typespec-author-eval/Microsoft.Widget/Widget/package.json
           dest: package.json
         - src: ../scripts/check-node-dependencies.cjs
           dest: check-node-dependencies.cjs

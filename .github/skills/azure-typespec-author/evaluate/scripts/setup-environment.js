@@ -3,7 +3,7 @@
  * 1. Selects the prebuilt MCP Vally environment.
  * 2. Builds the live and mock MCP binaries into artifacts/mcp.
  * 3. Sparse-clones azure-rest-api-specs and prepares its maintained fixtures.
- * 4. Installs the spec repository's pinned pnpm and frozen fixture dependencies.
+ * 4. Installs the generated fixture package with the spec repository's pinned pnpm.
  * 5. Outputs the shell commands and PATH update used by Vally and its graders.
  *
  * Usage:
@@ -34,7 +34,9 @@ const path = require('node:path');
 const scriptDir = __dirname;
 const repoRoot = path.resolve(scriptDir, '..', '..', '..', '..', '..');
 const evalsDir = path.resolve(scriptDir, '..', 'evals');
-const widgetDir = path.resolve(scriptDir, '..', 'fixtures', 'Microsoft.Widget', 'Widget');
+const widgetDir = path.join(
+  repoRoot, 'artifacts', 'typespec-author-eval', 'Microsoft.Widget', 'Widget'
+);
 const copilotNpmRegistryUrl = process.env.COPILOT_NPM_REGISTRY_URL || 'https://packagefeedproxy.microsoft.io/npm/';
 const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 
@@ -74,10 +76,10 @@ run(`dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o artifacts/m
 process.stderr.write('==> Preparing fixture files from azure-rest-api-specs...\n');
 run(`node ${JSON.stringify(path.join(scriptDir, 'setup-fixture-files.js'))}`);
 
-// Step 4: Install the pinned pnpm and frozen fixture dependencies.
-process.stderr.write('==> Installing frozen fixture dependencies with pnpm...\n');
+// Step 4: Install the generated fixture package with the pinned pnpm.
+process.stderr.write('==> Installing generated fixture dependencies with pnpm...\n');
 run(`node ${JSON.stringify(path.join(scriptDir, 'install-pnpm.js'))}`);
-run(`${pnpmCommand} install --frozen-lockfile`, { cwd: widgetDir });
+run(`${pnpmCommand} install`, { cwd: widgetDir });
 
 // Step 5: Output env var setters (stdout only, so eval/Invoke-Expression works).
 const nodeModules = path.join(widgetDir, 'node_modules');

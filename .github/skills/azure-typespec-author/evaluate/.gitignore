@@ -1,7 +1,0 @@
-# Downloaded at eval setup time from azure-rest-api-specs main.
-# See scripts/setup-fixture-files.js
-copilot-instructions.md
-!fixtures/Microsoft.Widget/Widget/pnpm-lock.yaml
-/debug*
-/result*
-/ado-*

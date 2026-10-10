@@ -22,7 +22,7 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/006004-dp-create-resource-with-crud/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../../../../../artifacts/typespec-author-eval/Microsoft.Widget/Widget/package.json
       dest: package.json
     - src: ../fixtures/006004-dp-create-resource-with-crud/tspconfig.yaml
       dest: tspconfig.yaml

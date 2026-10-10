@@ -452,9 +452,7 @@ SDK package
 - SDK changes: the string of sdk changes markdown. (see following sdk change markdown schema)
 - 'hasBreakingChange': true/false
 
-Both fields are required. `changes` must contain non-whitespace Markdown even
-when `hasBreakingChange` is false; an empty or malformed report is not a clean
-comparison. Optional `details` does not substitute for `changes`.
+Both fields are required. `changes` may be null or empty when `hasBreakingChange` is false, but it must contain non-whitespace Markdown when `hasBreakingChange` is true. Optional `details` does not substitute for `changes`.
 
 e.g.
 

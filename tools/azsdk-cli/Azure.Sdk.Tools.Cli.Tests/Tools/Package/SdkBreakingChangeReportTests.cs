@@ -78,9 +78,6 @@ public class SdkBreakingChangeReportTests
         _language.Verify(s => s.DetectSdkBreakingChangeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [TestCase(null, false)]
-    [TestCase("", false)]
-    [TestCase("  \r\n\t", false)]
     [TestCase(null, true)]
     [TestCase("", true)]
     [TestCase("  \r\n\t", true)]

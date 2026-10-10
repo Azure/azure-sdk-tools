@@ -8,7 +8,7 @@ Classify intent, not domain coverage: technical questions should receive a respo
 
 The bot SHOULD respond when the message is:
 
-- A technical question, regardless of domain
+- A technical question
 - A request for technical help, troubleshooting, or guidance
 - A direct ask that expects an answer
 - A substantive follow-up to the bot's previous reply that adds a new question, correction, or technical detail — even if it is not phrased as a question

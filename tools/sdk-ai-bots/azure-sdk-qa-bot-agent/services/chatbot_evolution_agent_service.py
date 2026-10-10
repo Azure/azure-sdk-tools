@@ -15,17 +15,23 @@ from azure.ai.projects.aio import AIProjectClient
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 
 from config.app_config import get as cfg
+from config.tenant_config import get_knowledge_source
 from models.conversation import BotAnswerVerdict
 from models.feedback import (
+    AzureDevOpsIssueReference,
     ChatbotEvolutionAgentInput,
     ChatbotEvolutionAgentMode,
     ChatbotEvolutionAgentOutcome,
     ChatbotEvolutionAgentResult,
     FoundryAgentReference,
+    GitHubIssueReference,
+    is_fallback_issue_reference,
+    parse_issue_reference,
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from utils.azure_ai_foundry import get_project_client
 from utils.azure_cosmosdb import read_qa_record, upsert_qa_record
+from utils.knowledge_config import KbIssueTarget, get_kb_targets
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +41,7 @@ _ALLOWED_OUTCOMES = {
             ChatbotEvolutionAgentOutcome.conversation_ongoing,
             ChatbotEvolutionAgentOutcome.no_issue,
             ChatbotEvolutionAgentOutcome.issue_created,
+            ChatbotEvolutionAgentOutcome.issue_reused,
             ChatbotEvolutionAgentOutcome.remediation_failed,
             ChatbotEvolutionAgentOutcome.processing_failed,
         }
@@ -112,6 +119,7 @@ class ChatbotEvolutionAgentService:
                     f"Agent returned outcome={result.outcome.value} "
                     f"for mode={mode.value}"
                 )
+            await self._validate_issue_route(result)
             self._apply_result(record, result, mode=mode)
         except Exception as exc:
             logger.exception(
@@ -197,6 +205,69 @@ class ChatbotEvolutionAgentService:
 
     # -- Structured outcome mapping ---------------------------------------
 
+    async def _validate_issue_route(
+        self,
+        result: ChatbotEvolutionAgentResult,
+    ) -> None:
+        if (
+            result.outcome
+            not in (
+                ChatbotEvolutionAgentOutcome.issue_created,
+                ChatbotEvolutionAgentOutcome.issue_reused,
+            )
+            or result.source_id is None
+            or result.issue_url is None
+        ):
+            return
+
+        source_targets = await get_kb_targets(result.source_id)
+        issue = parse_issue_reference(result.issue_url)
+        if result.source_url is None:
+            if (
+                source_targets
+                or not result.source_id.startswith("static_")
+                or get_knowledge_source(result.source_id) is None
+            ):
+                raise ValueError(
+                    "KB issue source_id does not identify an unconfigured "
+                    "registered static source"
+                )
+            if not is_fallback_issue_reference(issue):
+                raise ValueError(
+                    "KB sources without a repository must use Azure/azure-sdk-pr"
+                )
+            return
+
+        matching_targets = tuple(
+            target
+            for target in source_targets
+            if target.source_url == result.source_url
+        )
+        if not matching_targets:
+            raise ValueError(
+                "KB issue source_id and source_url do not match authoritative "
+                "configuration"
+            )
+
+        if is_fallback_issue_reference(issue):
+            return
+
+        configured_targets = {
+            source_target.issue_target for source_target in matching_targets
+        }
+        if len(configured_targets) != 1:
+            raise ValueError(
+                "KB source has ambiguous configured issue destinations"
+            )
+        configured_target = configured_targets.pop()
+        if configured_target is None or not _issue_matches_target(
+            issue,
+            configured_target,
+        ):
+            raise ValueError(
+                "KB issue must use its configured tracker or Azure/azure-sdk-pr"
+            )
+
     def _apply_result(
         self,
         record: QARecord,
@@ -253,7 +324,11 @@ class ChatbotEvolutionAgentService:
                 record.feedback = None
                 return
 
-            if result.outcome == ChatbotEvolutionAgentOutcome.issue_created:
+            if result.outcome in (
+                ChatbotEvolutionAgentOutcome.issue_created,
+                ChatbotEvolutionAgentOutcome.issue_reused,
+            ):
+                assert result.issue_url is not None
                 record.qa_status = QAStatus.failed
                 record.verdict = BotAnswerVerdict.Incorrect
                 record.feedback.status = FeedbackStatus.pending_validation
@@ -388,6 +463,27 @@ class ChatbotEvolutionAgentService:
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _issue_matches_target(
+    issue: GitHubIssueReference | AzureDevOpsIssueReference,
+    target: KbIssueTarget,
+) -> bool:
+    if target.provider == "github":
+        return (
+            isinstance(issue, GitHubIssueReference)
+            and target.owner is not None
+            and target.repo is not None
+            and issue.owner.casefold() == target.owner.casefold()
+            and issue.repository.casefold() == target.repo.casefold()
+        )
+    return (
+        isinstance(issue, AzureDevOpsIssueReference)
+        and target.organization is not None
+        and target.project is not None
+        and issue.organization.casefold() == target.organization.casefold()
+        and issue.project.casefold() == target.project.casefold()
+    )
 
 
 __all__ = ["ChatbotEvolutionAgentService"]

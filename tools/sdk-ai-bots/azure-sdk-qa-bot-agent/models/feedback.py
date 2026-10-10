@@ -5,7 +5,8 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any, ClassVar
+from typing import Any
+from urllib.parse import unquote, urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -61,6 +62,7 @@ class ChatbotEvolutionAgentOutcome(str, Enum):
     conversation_ongoing = "conversation_ongoing"
     no_issue = "no_issue"
     issue_created = "issue_created"
+    issue_reused = "issue_reused"
     remediation_failed = "remediation_failed"
     validation_passed = "validation_passed"
     validation_failed = "validation_failed"
@@ -79,6 +81,95 @@ class RootCauseClassification(str, Enum):
     out_of_scope = "out_of_scope"
 
 
+class GitHubIssueReference(BaseModel):
+    """Canonical identity for a GitHub issue."""
+
+    owner: str
+    repository: str
+    number: int = Field(gt=0)
+
+
+class AzureDevOpsIssueReference(BaseModel):
+    """Canonical identity for an Azure Boards work item."""
+
+    organization: str
+    project: str
+    work_item_id: int = Field(gt=0)
+
+
+_GITHUB_ISSUE_PATH = re.compile(
+    r"^/(?P<owner>[^/]+)/(?P<repo>[^/]+)/issues/(?P<number>\d+)/?$",
+    flags=re.IGNORECASE,
+)
+_ADO_WORK_ITEM_PATH = re.compile(
+    r"^/(?P<organization>[^/]+)/(?P<project>[^/]+)/_workitems/edit/"
+    r"(?P<number>\d+)/?$",
+    flags=re.IGNORECASE,
+)
+_KB_CLASSIFICATIONS = frozenset(
+    {
+        RootCauseClassification.missing_content,
+        RootCauseClassification.outdated_content,
+        RootCauseClassification.insufficient_content,
+    }
+)
+
+def parse_issue_reference(
+    value: str,
+    *,
+    canonical: bool = True,
+) -> GitHubIssueReference | AzureDevOpsIssueReference:
+    """Parse a supported issue URL into a provider identity."""
+    parsed = urlparse(value)
+    if (
+        parsed.scheme != "https"
+        or (canonical and value != value.strip())
+        or (canonical and (parsed.query or parsed.fragment))
+    ):
+        raise ValueError("issue_url must be a canonical HTTPS issue URL")
+
+    if parsed.netloc.lower() == "github.com":
+        match = _GITHUB_ISSUE_PATH.fullmatch(parsed.path)
+        if match is not None:
+            number_text = match.group("number")
+            number = int(number_text)
+            if number <= 0 or (canonical and number_text != str(number)):
+                raise ValueError("issue_url must use a canonical positive issue number")
+            return GitHubIssueReference(
+                owner=match.group("owner"),
+                repository=match.group("repo"),
+                number=number,
+            )
+
+    if parsed.netloc.lower() == "dev.azure.com":
+        match = _ADO_WORK_ITEM_PATH.fullmatch(parsed.path)
+        if match is not None:
+            number_text = match.group("number")
+            number = int(number_text)
+            if number <= 0 or (canonical and number_text != str(number)):
+                raise ValueError(
+                    "issue_url must use a canonical positive work-item number"
+                )
+            return AzureDevOpsIssueReference(
+                organization=unquote(match.group("organization")),
+                project=unquote(match.group("project")),
+                work_item_id=number,
+            )
+
+    raise ValueError("issue_url must identify a GitHub issue or ADO work item")
+
+
+def is_fallback_issue_reference(
+    issue: GitHubIssueReference | AzureDevOpsIssueReference,
+) -> bool:
+    """Return whether an issue belongs to the evolution fallback repository."""
+    return (
+        isinstance(issue, GitHubIssueReference)
+        and issue.owner.casefold() == "azure"
+        and issue.repository.casefold() == "azure-sdk-pr"
+    )
+
+
 class ChatbotEvolutionAgentInput(BaseModel):
     """Structured input sent to the hosted chatbot evolution agent.
 
@@ -90,10 +181,6 @@ class ChatbotEvolutionAgentInput(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid")
-    issue_url_pattern: ClassVar[re.Pattern[str]] = re.compile(
-        r"https://github\.com/Azure/azure-sdk-pr/issues/[1-9]\d*",
-        flags=re.IGNORECASE,
-    )
 
     conversation_id: str
     conversation_type: ConversationType
@@ -111,8 +198,8 @@ class ChatbotEvolutionAgentInput(BaseModel):
     @field_validator("issue_url")
     @classmethod
     def validate_issue_url(cls, value: str | None) -> str | None:
-        if value is not None and cls.issue_url_pattern.fullmatch(value) is None:
-            raise ValueError("issue_url must identify an Azure/azure-sdk-pr issue")
+        if value is not None:
+            parse_issue_reference(value)
         return value
 
     @model_validator(mode="after")
@@ -138,6 +225,8 @@ class ChatbotEvolutionAgentResult(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     classification: RootCauseClassification | None = None
     issue_url: str | None = None
+    source_id: str | None = Field(default=None, min_length=1)
+    source_url: str | None = None
     has_expert_interaction: bool | None = Field(default=None, strict=True)
     expert_interaction_reason: str | None = Field(
         default=None, min_length=1, max_length=500
@@ -146,29 +235,55 @@ class ChatbotEvolutionAgentResult(BaseModel):
     @field_validator("issue_url")
     @classmethod
     def validate_issue_url(cls, value: str | None) -> str | None:
-        if (
-            value is not None
-            and ChatbotEvolutionAgentInput.issue_url_pattern.fullmatch(value) is None
-        ):
-            raise ValueError("issue_url must identify an Azure/azure-sdk-pr issue")
+        if value is not None:
+            parse_issue_reference(value)
         return value
 
     @model_validator(mode="after")
     def validate_outcome(self) -> "ChatbotEvolutionAgentResult":
-        if self.outcome == ChatbotEvolutionAgentOutcome.issue_created:
+        if self.outcome in (
+            ChatbotEvolutionAgentOutcome.issue_created,
+            ChatbotEvolutionAgentOutcome.issue_reused,
+        ):
             if not self.issue_url or self.classification is None:
                 raise ValueError(
-                    "issue_created requires classification and issue_url"
+                    "issue_created and issue_reused require classification, "
+                    "and issue_url"
                 )
+            issue = parse_issue_reference(self.issue_url)
+            if self.classification in _KB_CLASSIFICATIONS:
+                if not self.source_id:
+                    raise ValueError("KB issue outcomes require source_id")
+            else:
+                if self.source_id is not None or self.source_url is not None:
+                    raise ValueError(
+                        "System issue outcomes cannot include source_id or source_url"
+                    )
+                if not is_fallback_issue_reference(issue):
+                    raise ValueError(
+                        "System issue outcomes require an Azure/azure-sdk-pr issue"
+                    )
         elif self.outcome == ChatbotEvolutionAgentOutcome.remediation_failed:
-            if self.issue_url is not None:
+            if (
+                self.issue_url is not None
+                or self.source_id is not None
+                or self.source_url is not None
+            ):
                 raise ValueError(
-                    "remediation_failed cannot include issue_url"
+                    "remediation_failed cannot include issue_url, source_id, "
+                    "or source_url"
                 )
-        elif self.issue_url is not None or self.classification is not None:
+        elif (
+            self.issue_url is not None
+            or self.source_id is not None
+            or self.source_url is not None
+            or self.classification is not None
+        ):
             raise ValueError(
-                "classification is only valid for issue_created or "
-                "remediation_failed; issue_url is only valid for issue_created"
+                "classification is only valid for issue_created, issue_reused, "
+                "or remediation_failed; issue_url is only valid for issue_created "
+                "or issue_reused; source_id and source_url are only valid for "
+                "issue_created or issue_reused"
             )
         return self
 

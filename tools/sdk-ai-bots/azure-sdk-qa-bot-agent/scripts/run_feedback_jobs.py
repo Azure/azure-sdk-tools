@@ -39,7 +39,7 @@ from models.feedback import (
 )
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
-from tools.github_mcp_tools import get_github_issue_state
+from tools.issue_tracker import get_issue_state
 from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
@@ -141,7 +141,7 @@ async def _run(args: argparse.Namespace) -> None:
             counts["skipped"] += 1
             continue
         try:
-            issue_state = await get_github_issue_state(issue_url)
+            issue_state = await get_issue_state(issue_url)
         except Exception:
             logger.exception("Failed to read issue state for %s", record.id)
             counts["skipped"] += 1

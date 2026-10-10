@@ -19,6 +19,7 @@ describe('GitHub checkout authentication', () => {
         vi.stubEnv('GITHUB_APP_KEY_NAME', 'github-key');
         vi.stubEnv('GITHUB_APP_KEYVAULT_URL', 'https://test.vault.azure.net/');
         vi.stubEnv('GITHUB_APP_INSTALLATION_OWNER', '');
+        vi.stubEnv('BOT_CLIENT_ID', 'bot-signing-identity');
         sign.mockResolvedValue({ result: Buffer.from('signature') });
         fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ id: 456 })))
             .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'installation-token' })));
@@ -70,6 +71,14 @@ describe('GitHub checkout authentication', () => {
         vi.stubEnv('GITHUB_APP_ID', '');
         await expect(getGitHubEnvironment(url)).rejects.toThrow('GitHub App requires');
         expect(sign).not.toHaveBeenCalled();
+    });
+
+    it('requires BOT_CLIENT_ID without falling back to AZURE_CLIENT_ID', async () => {
+        vi.stubEnv('BOT_CLIENT_ID', '');
+        vi.stubEnv('AZURE_CLIENT_ID', 'other-identity');
+        await expect(getGitHubEnvironment(url)).rejects.toThrow('BOT_CLIENT_ID is required');
+        expect(cryptoClient).not.toHaveBeenCalled();
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('does not expose Key Vault signing errors', async () => {

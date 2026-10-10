@@ -28,7 +28,8 @@ describe('WebJob deployment', () => {
             if (args[1] === 'show') return JSON.stringify({ reserved: true, kind: 'app,linux,container', enabledHostNames: ['test-app.scm.azurewebsites.net'] });
             if (args.includes('list')) return JSON.stringify([
                 { name: 'AZURE_APPCONFIG_ENDPOINT', value: 'https://test.azconfig.io' },
-                { name: 'AZURE_CLIENT_ID', value: 'test-client' }
+                { name: 'AZURE_CLIENT_ID', value: 'test-client' },
+                { name: 'BOT_CLIENT_ID', value: 'bot-client' }
             ]);
             return '{}';
         });
@@ -41,6 +42,18 @@ describe('WebJob deployment', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
+    });
+
+    it('rejects a missing signing identity before changing the job', async () => {
+        const normal = execFileSync.getMockImplementation()!;
+        execFileSync.mockImplementation((command, args: string[], options) => {
+            const result = normal(command, args, options);
+            return args.includes('list')
+                ? JSON.stringify(JSON.parse(result).filter((setting: any) => setting.name !== 'BOT_CLIENT_ID'))
+                : result;
+        });
+        await expect(deploy(env)).rejects.toThrow('Required existing app setting missing: BOT_CLIENT_ID');
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('uploads with the required ZIP filename and retains Entra authentication', async () => {
@@ -178,7 +191,8 @@ describe('WebJob deployment', () => {
         execFileSync.mockImplementationOnce(() => JSON.stringify({ reserved: true, kind: 'container', enabledHostNames: ['test-app.scm.azurewebsites.net'] }))
             .mockImplementationOnce(() => JSON.stringify([
                 { name: 'AZURE_APPCONFIG_ENDPOINT', value: 'endpoint' },
-                { name: 'AZURE_CLIENT_ID', value: 'client' }
+                { name: 'AZURE_CLIENT_ID', value: 'client' },
+                { name: 'BOT_CLIENT_ID', value: 'bot-client' }
             ]))
             .mockImplementationOnce(() => JSON.stringify({ accessToken: 'secret-token' }))
             .mockImplementationOnce(() => { throw Object.assign(new Error('secret-token'), { status: 1, stderr: 'private settings' }); });

@@ -21,6 +21,7 @@ async function acquireInstallationToken(): Promise<string> {
     if (!appId || !keyName || !vaultUrl) {
         throw new Error('GitHub App requires GITHUB_APP_ID, GITHUB_APP_KEY_NAME and GITHUB_APP_KEYVAULT_URL');
     }
+    if (!process.env.BOT_CLIENT_ID?.trim()) throw new Error('BOT_CLIENT_ID is required for GitHub App signing');
     const credential = new ChainedTokenCredential(
         new ManagedIdentityCredential({ clientId: process.env.BOT_CLIENT_ID }), new AzureCliCredential()
     );

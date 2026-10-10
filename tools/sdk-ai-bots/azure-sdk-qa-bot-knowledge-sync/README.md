@@ -99,7 +99,9 @@ Private GitHub repositories use the configured token environment variable when
 provided; otherwise each checkout obtains a short-lived GitHub App installation
 token. App Configuration must provide `GITHUB_APP_ID`, `GITHUB_APP_KEY_NAME`, and
 `GITHUB_APP_KEYVAULT_URL`, with optional `GITHUB_APP_INSTALLATION_OWNER` (default
-`Azure`). The identity needs signing access to the Key Vault key, and the GitHub
+`Azure`). App Service must provide `BOT_CLIENT_ID` to select the managed identity
+with signing access to the shared Key Vault key. `AZURE_CLIENT_ID` selects the
+identity for other Azure resources. The GitHub
 App installation must have contents read access to the private repositories.
 Git credentials are passed through the child process environment, not clone URLs.
 

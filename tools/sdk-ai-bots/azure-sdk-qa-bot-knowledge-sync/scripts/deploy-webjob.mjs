@@ -87,8 +87,8 @@ export async function deploy(env = process.env) {
     if (!site.reserved || !site.kind?.includes('container')) throw new DeploymentError('Expected Linux container App Service');
     // Read only the required existing app settings and scheduler timezone; never replace app identity/configuration.
     const existingSettings = JSON.parse(az(['webapp', 'config', 'appsettings', 'list', ...target,
-        '--query', "[?name=='AZURE_APPCONFIG_ENDPOINT' || name=='AZURE_CLIENT_ID' || name=='WEBSITE_TIME_ZONE' || name=='TZ'].{name:name,value:value}"]));
-    for (const name of ['AZURE_APPCONFIG_ENDPOINT', 'AZURE_CLIENT_ID']) {
+        '--query', "[?name=='AZURE_APPCONFIG_ENDPOINT' || name=='AZURE_CLIENT_ID' || name=='BOT_CLIENT_ID' || name=='WEBSITE_TIME_ZONE' || name=='TZ'].{name:name,value:value}"]));
+    for (const name of ['AZURE_APPCONFIG_ENDPOINT', 'AZURE_CLIENT_ID', 'BOT_CLIENT_ID']) {
         if (!existingSettings.some(setting => setting.name === name && typeof setting.value === 'string' && setting.value.trim())) {
             throw new DeploymentError(`Required existing app setting missing: ${name}`);
         }

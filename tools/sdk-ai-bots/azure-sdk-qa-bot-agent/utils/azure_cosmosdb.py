@@ -27,6 +27,7 @@ _DEFAULT_MESSAGE_CONTAINER_NAME = "conversation-messages"
 _DEFAULT_EPISODE_CONTAINER_NAME = "experience-episodes"
 _DEFAULT_QA_RECORDS_CONTAINER_NAME = "qa-records"
 _DEFAULT_FEEDBACK_CONTAINER_NAME = "feedback-records"
+_DEFAULT_TEAMS_QA_SUMMARIES_CONTAINER_NAME = "teams-qa-summaries"
 
 # Retry defaults for the Cosmos DB client
 _DEFAULT_RETRY_TOTAL = 3  # Maximum number of total retry attempts
@@ -45,6 +46,7 @@ _message_container: ContainerProxy | None = None
 _episode_container: ContainerProxy | None = None
 _qa_records_container: ContainerProxy | None = None
 _feedback_container: ContainerProxy | None = None
+_teams_qa_summaries_container: ContainerProxy | None = None
 _client_lock = asyncio.Lock()
 _container_lock = asyncio.Lock()
 
@@ -94,7 +96,11 @@ async def _get_client() -> CosmosClient:
                     )
                 ),
             )
-            await client.__aenter__()
+            try:
+                await client.__aenter__()
+            except BaseException:
+                await client.close()
+                raise
             _client = client
             logger.info("Initialized Azure Cosmos DB client for %s", _get_endpoint())
 
@@ -133,6 +139,29 @@ async def _get_container(
         raise
 
     return container
+
+
+async def get_teams_qa_summaries_container() -> ContainerProxy:
+    """Return the pre-provisioned Teams Q&A summary container.
+
+    Summaries are kept apart from ``conversation-messages`` so summarization
+    never rewrites the messages the bot owns.
+    """
+    global _teams_qa_summaries_container
+    if _teams_qa_summaries_container is not None:
+        return _teams_qa_summaries_container
+
+    async with _container_lock:
+        if _teams_qa_summaries_container is None:
+            _teams_qa_summaries_container = await _get_container(
+                container_name=_DEFAULT_TEAMS_QA_SUMMARIES_CONTAINER_NAME,
+            )
+            logger.info(
+                "Using Cosmos DB Teams Q&A summary container: %s",
+                _DEFAULT_TEAMS_QA_SUMMARIES_CONTAINER_NAME,
+            )
+
+    return _teams_qa_summaries_container
 
 
 async def get_conversation_mapping_container() -> ContainerProxy:
@@ -226,11 +255,13 @@ async def query_conversation_feedback(
 async def close_cosmos_client() -> None:
     """Close the shared Cosmos client and reset cached proxies."""
     global _client, _mapping_container, _message_container, _episode_container, _qa_records_container, _feedback_container
+    global _teams_qa_summaries_container
     _mapping_container = None
     _message_container = None
     _episode_container = None
     _qa_records_container = None
     _feedback_container = None
+    _teams_qa_summaries_container = None
     if _client is not None:
         await _client.__aexit__(None, None, None)
         _client = None

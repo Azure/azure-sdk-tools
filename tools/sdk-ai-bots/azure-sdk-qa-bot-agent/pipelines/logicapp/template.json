@@ -301,6 +301,7 @@
                         "conversation_type": "teams_channel",
                         "created_at": "@outputs('Resolved_message_details')?['createdDateTime']",
                         "extra_info": {
+                          "attachments": "@outputs('Resolved_message_details')?['attachments']",
                           "channel_id": "@item()?['channelId']",
                           "message_link": "@outputs('Resolved_message_details')?['messageLink']"
                         },

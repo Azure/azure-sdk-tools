@@ -15,6 +15,7 @@ import argparse
 import asyncio
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -46,14 +47,40 @@ from config.app_config import get as cfg
 from utils.azure_credential import close_credential
 
 
+def _resolve_command(cmd: list[str]) -> list[str]:
+    if cmd and cmd[0] == "az":
+        executable = shutil.which("az") or shutil.which("az.cmd")
+        if executable is None:
+            raise RuntimeError("Azure CLI was not found on PATH.")
+        return [executable, *cmd[1:]]
+    return cmd
+
+
+def _utf8_environment(overrides: dict[str, str] | None = None) -> dict[str, str]:
+    environment = {**os.environ, **(overrides or {})}
+    environment.setdefault("PYTHONIOENCODING", "utf-8")
+    environment.setdefault("PYTHONUTF8", "1")
+    return environment
+
+
 def _run(cmd: list[str], **kwargs) -> None:
+    resolved = _resolve_command(cmd)
+    environment = _utf8_environment(kwargs.pop("env", None))
     print(f"  $ {' '.join(cmd)}")
-    subprocess.run(cmd, check=True, **kwargs)
+    subprocess.run(resolved, check=True, env=environment, **kwargs)
 
 
 def _run_quiet(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Run a command and return the result without raising on failure."""
-    return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+    environment = _utf8_environment(kwargs.pop("env", None))
+    return subprocess.run(
+        _resolve_command(cmd),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=environment,
+        **kwargs,
+    )
 
 
 def _git_short_sha() -> str:
@@ -276,6 +303,9 @@ def main() -> None:
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
         }
+        if args.agent_name == "teams_collection_agent":
+            env_vars["ENABLE_INSTRUMENTATION"] = "false"
+            env_vars["ENABLE_SENSITIVE_DATA"] = "false"
         if candidate_appconfig_endpoint:
             env_vars["CANDIDATE_APPCONFIG_ENDPOINT"] = candidate_appconfig_endpoint
 

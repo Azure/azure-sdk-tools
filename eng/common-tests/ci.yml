@@ -31,3 +31,35 @@ extends:
     PreTestSteps:
       - template: /eng/pipelines/templates/steps/install-dotnet.yml
       - template: /eng/common/pipelines/templates/steps/enable-long-path-support.yml
+      - task: UseNode@1
+        displayName: Use Node.js for eval result unit tests
+        inputs:
+          version: 22.x
+      - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+        parameters:
+          npmrcPath: $(Agent.TempDirectory)/eval-unit-tests.npmrc
+      # Shared eval tests use Node built-ins; only the archive's locked fflate is needed.
+      # No Vally CLI install, evaluation, model call, or publishing service connection.
+      - pwsh: |
+          $ErrorActionPreference = 'Stop'
+          npm ci --prefix publisher --omit=dev --ignore-scripts --no-audit --no-fund --userconfig "$(Agent.TempDirectory)/eval-unit-tests.npmrc"
+          if ($LASTEXITCODE -ne 0) { throw 'Archive dependency restore failed.' }
+          node --experimental-strip-types --test test/*.test.ts publisher/test/*.test.ts
+          if ($LASTEXITCODE -ne 0) { throw 'Eval result unit tests failed.' }
+        workingDirectory: $(Build.SourcesDirectory)/eng/common/scripts/eval
+        displayName: Run eval result unit tests (no evaluations)
+    # Keep the common runner's tags/reports/coverage, and make failed tests fail this job.
+    # The shared template still installs Pester and publishes the generated reports.
+    CustomTestSteps:
+      - pwsh: |
+          $ErrorActionPreference = 'Stop'
+          $config = New-PesterConfiguration
+          $config.CodeCoverage.Enabled = $true
+          $config.TestResult.Enabled = $true
+          $config.Run.PassThru = $true
+          $config.Filter.Tag = @('UnitTest', 'IntegrationTest')
+          $env:PESTER_TEST_RUN = 'true'
+          $result = Invoke-Pester -Configuration $config
+          if ($result.FailedCount -gt 0) { throw 'Common PowerShell tests failed.' }
+        workingDirectory: $(Build.SourcesDirectory)/eng/common-tests
+        displayName: Run Pester Tests

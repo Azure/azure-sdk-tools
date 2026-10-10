@@ -1,7 +1,8 @@
-# Exercises the real pipeline script with CLI/HTTP transports mocked and fail-closed.
+# Exercises the real publisher with fake Azure transports and loopback HTTP, never evaluations.
 BeforeAll {
-    $script:publisher = Join-Path $PSScriptRoot '../Publish-EvalResults.ps1'
-    # Function precedence prevents an unmocked call reaching an installed az executable.
+    $script:publisher = Join-Path $PSScriptRoot '../../common/scripts/eval/publisher/Publish-EvalResults.ps1'
+    # Keep the cmdlet itself: Pester can intercept module-qualified calls too.
+    $script:realWebRequest = Get-Command Microsoft.PowerShell.Utility\Invoke-WebRequest -CommandType Cmdlet
     function az {
         param([Parameter(ValueFromRemainingArguments)] [string[]] $Arguments)
         throw 'Real Azure CLI calls are forbidden in these tests.'
@@ -13,15 +14,15 @@ BeforeAll {
 }
 AfterAll { Remove-Variable -Name EvalPublicationFixture -Scope Global -ErrorAction SilentlyContinue }
 
-Describe 'Azure CLI evaluation publication' {
+Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
     BeforeEach {
-        # Pester mocks can execute in the script-under-test scope. Share one fixture object,
-        # not $script: variables whose meaning changes across that scope boundary.
+        # Mocks called from the publisher have another script scope; use one isolated fixture.
         $id = [Guid]::NewGuid().ToString()
         $script:f = $global:EvalPublicationFixture = @{
             bundle = (Join-Path $TestDrive "$id.zip"); result = (Join-Path $TestDrive "$id.json")
             calls = @(); uploadFails = $false; showFails = $false; storageToken = $script:identityToken
             notifyTokenFails = $false; status = 200; headers = @{}; responseFailures = 0; finalReceiptFails = $false; httpCalls = 0
+            realWebRequest = $script:realWebRequest
             name = 'v1/azure-sdk/internal/8255/1001/1/dashboard-bundle.zip'
         }
         $f.bytes = [Text.Encoding]::UTF8.GetBytes('SAVED_ARCHIVE_FIXTURE_NO_EVALUATIONS')
@@ -36,8 +37,7 @@ Describe 'Azure CLI evaluation publication' {
 
         Mock az {
             param([string[]] $Arguments)
-            $f = $global:EvalPublicationFixture
-            $f.calls += ,@($Arguments)
+            $f = $global:EvalPublicationFixture; $f.calls += ,@($Arguments)
             $global:LASTEXITCODE = 0
             if ($Arguments[0] -eq 'account' -and $Arguments[1] -eq 'get-access-token') {
                 if ($Arguments -contains 'https://storage.azure.com/') { return @{ accessToken = $f.storageToken } | ConvertTo-Json -Compress }
@@ -102,11 +102,23 @@ Describe 'Azure CLI evaluation publication' {
         @($f.calls | Where-Object { $_[0] -eq 'storage' }).Count | Should -Be 2
     }
 
+    It 'accepts canonical UTC metadata and preserves calendar/fractional precision' -ForEach @(
+        @{ Value = '2024-02-29T23:59:59Z' }, @{ Value = '2026-01-01T00:00Z' },
+        @{ Value = '2026-01-01T00:00:00.1Z' }, @{ Value = '2026-01-01T00:00:00.1234567Z' },
+        @{ Value = '2026-01-01T00:00:00.123456789Z' }
+    ) {
+        $f.uploadFails = $true; $f.existing.metadata.storedat = $Value
+        & $script:publisher @script:publishArgs
+        $f.existing.metadata.storedat | Should -BeExactly $Value
+        (Get-Content $f.result -Raw | ConvertFrom-Json).duplicate | Should -BeTrue
+    }
+
     It 'never adopts a collision with different <Field>' -ForEach @(
         @{ Field = 'schema'; Value = '2' }, @{ Field = 'sha256'; Value = 'bad' }, @{ Field = 'publisher'; Value = 'other' },
         @{ Field = 'storedat'; Value = $null }, @{ Field = 'storedat'; Value = 'not a date' },
         @{ Field = 'storedat'; Value = '2026-02-30T00:00:00Z' }, @{ Field = 'storedat'; Value = '2026-01-01T24:00:00Z' },
-        @{ Field = 'storedat'; Value = '2026-01-01T00:00:00+00:00' }
+        @{ Field = 'storedat'; Value = '2026-01-01T00:00:00+00:00' }, @{ Field = 'storedat'; Value = '2026-01-01T 01:00:00Z' },
+        @{ Field = 'storedat'; Value = '2026-01-01T00:00:00 Z' }, @{ Field = 'storedat'; Value = "2026-01-01T00:00:00Z`n" }
     ) {
         $f.uploadFails = $true; $f.existing.metadata[$Field] = $Value
         { & $script:publisher @script:publishArgs } | Should -Throw '*submission_conflict*'
@@ -137,6 +149,13 @@ Describe 'Azure CLI evaluation publication' {
         @($f.calls | Where-Object { $_[0] -eq 'storage' -and $_[2] -eq 'upload' }).Count | Should -Be 1
     }
 
+    It 'never truncates a pre-existing receipt staging file' {
+        Set-Content -LiteralPath "$($f.result).tmp" -Value 'preserve existing bytes' -NoNewline
+        { & $script:publisher @script:publishArgs } | Should -Throw '*receipt_failed*'
+        Get-Content -LiteralPath "$($f.result).tmp" -Raw | Should -BeExactly 'preserve existing bytes'
+        Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
+    }
+
     It 'preserves the first stored receipt when notification status cannot be saved' {
         $f.finalReceiptFails = $true
         & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
@@ -152,6 +171,62 @@ Describe 'Azure CLI evaluation publication' {
         $receipt.status | Should -Be 'stored'; $receipt.notification.status | Should -Be 'failed'
         Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
         Assert-MockCalled Start-Sleep -Times 0 -Exactly
+    }
+
+    It 'recognizes the real redirect exception without a Response property' {
+        Mock Invoke-WebRequest {
+            $exception = [InvalidOperationException]::new('Synthetic MaximumRedirection failure')
+            $record = [Management.Automation.ErrorRecord]::new($exception,
+                'MaximumRedirectExceeded,Microsoft.PowerShell.Commands.InvokeWebRequestCommand',
+                [Management.Automation.ErrorCategory]::InvalidOperation, $null)
+            throw $record
+        }
+        & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
+        (Get-Content $f.result -Raw | ConvertFrom-Json).status | Should -Be 'stored'
+        Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
+        Assert-MockCalled Start-Sleep -Times 0 -Exactly
+    }
+
+    It 'does not retry or follow a real loopback HTTP <Status> redirect' -Tag 'IntegrationTest' -ForEach @(@{ Status = 302 }, @{ Status = 307 }) {
+        $start = [Diagnostics.ProcessStartInfo]::new()
+        $start.FileName = (Get-Command node -CommandType Application).Source
+        $start.UseShellExecute = $false; $start.RedirectStandardOutput = $true; $start.RedirectStandardError = $true
+        $start.ArgumentList.Add('--input-type=module'); $start.ArgumentList.Add('-e')
+        $start.ArgumentList.Add(@"
+import {createServer} from 'node:http';
+const server=createServer((req,res)=>{
+  console.log(req.url);
+  res.writeHead($Status,{'Content-Type':'application/json',Location:'/must-not-follow'});res.end('{}');
+});
+server.listen(0,'127.0.0.1',()=>console.log(server.address().port));
+setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
+"@)
+        $server = [Diagnostics.Process]::Start($start)
+        try {
+            $line = $server.StandardOutput.ReadLineAsync()
+            if (!$line.Wait(5000)) { throw 'Loopback fixture did not start.' }
+            $port = [int]$line.Result
+            $f.loopbackUri = "http://127.0.0.1:$port/probe"
+            Mock Invoke-WebRequest {
+                $f = $global:EvalPublicationFixture
+                $Uri | Should -Be 'https://azsdk-eval-bue6a7dwanatgpb3.westus3-01.azurewebsites.net/api/refresh'
+                ([uri]$f.loopbackUri).Host | Should -Be '127.0.0.1'
+                $cmdlet = $f.realWebRequest
+                return & $cmdlet -Uri $f.loopbackUri -Method Post `
+                    -ContentType $ContentType -Body $Body -Headers $Headers -MaximumRedirection $MaximumRedirection `
+                    -ConnectionTimeoutSeconds 5 -OperationTimeoutSeconds 5 -SkipHttpErrorCheck
+            }
+            & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
+            Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
+            Assert-MockCalled Start-Sleep -Times 0 -Exactly
+            $receipt = Get-Content $f.result -Raw | ConvertFrom-Json
+            $receipt.status | Should -Be 'stored'; $receipt.notification.status | Should -Be 'failed'
+            $server.Kill($true); $server.WaitForExit()
+            @($server.StandardOutput.ReadToEnd().Trim() -split '\r?\n') | Should -Be @('/probe')
+        } finally {
+            if (!$server.HasExited) { $server.Kill($true); $server.WaitForExit() }
+            $server.Dispose()
+        }
     }
 
     It 'bounds transient notification retries to four and honors capped backpressure' {
@@ -226,5 +301,17 @@ Describe 'Azure CLI evaluation publication' {
         { & $script:publisher @script:publishArgs } | Should -Throw '*invalid_bundle*'
         Assert-MockCalled az -Times 0 -Exactly
         (Get-FileHash $f.bundle).Hash.ToLowerInvariant() | Should -Be $f.hash
+    }
+
+    It 'rejects a receipt temporary-path alias before credentials and preserves saved bytes' {
+        $f.arguments.ResultPath = $f.bundle.Substring(0, $f.bundle.Length - 4)
+        $alias = "$($f.arguments.ResultPath).tmp"
+        Copy-Item -LiteralPath $f.bundle -Destination $alias
+        Copy-Item -LiteralPath "$($f.bundle).json" -Destination "$alias.json"
+        $f.arguments.BundlePath = $alias
+        { & $script:publisher @script:publishArgs } | Should -Throw '*invalid_bundle*'
+        Assert-MockCalled az -Times 0 -Exactly
+        (Get-FileHash $alias -Algorithm SHA256).Hash.ToLowerInvariant() | Should -Be $f.hash
+        Test-Path -LiteralPath "$alias.json" | Should -BeTrue
     }
 }

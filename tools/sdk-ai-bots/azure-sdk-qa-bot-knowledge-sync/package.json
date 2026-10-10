@@ -10,6 +10,7 @@
     "prestart": "npm run clean && npm run build",
     "start": "node dist/src/index.js",
     "sync": "npm run build && npm run start",
+    "build:webjob": "bash scripts/build-webjob.sh",
     "test": "vitest run --reporter=default",
     "test:watch": "vitest"
   },
@@ -22,7 +23,7 @@
     "@azure/data-tables": "^13.3.1",
     "@azure/functions": "^4.11.2",
     "@azure/identity": "^4.13.1",
-    "@azure/keyvault-secrets": "^4.8.0",
+    "@azure/keyvault-keys": "^4.10.2",
     "@azure/search-documents": "^12.1.0",
     "@azure/storage-blob": "^12.21.0",
     "dotenv": "^16.4.5",

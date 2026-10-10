@@ -244,11 +244,17 @@ python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 Builds the backend API (FastAPI) container image and deploys to Azure App Service.
 
 - **Pipeline**: [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
-- **Parameters**: `environment` (dev/preview/prod), `slot` (default/agent)
+- **Parameters**: `environment` (dev/preview/prod), `deploymentTarget` (all/server/knowledge-sync; default: `all`)
+- **Deployment targets**:
+   - `all`: deploy the server, then knowledge sync. Preview deploys only the server.
+   - `server`: deploy only the backend container.
+   - `knowledge-sync`: build, test, and deploy only the knowledge sync WebJob in dev/prod.
 - **What it does**:
-  1. Resolves image tag from `_version.py` (prod) or git short SHA (dev)
-  2. Builds and pushes image to ACR via `az acr build`
-  3. Deploys to App Service using container image reference
+   1. `DeployServer` resolves the image tag from `_version.py` (preview/prod) or git short SHA (dev), builds and pushes to ACR (except prod, which reuses the image), validates the image, updates App Service, and checks server health.
+   2. `DeployKnowledgeSync` builds, tests, packages and publishes the knowledge sync ZIP, and deploys the scheduled WebJob. With `all`, it runs after server success and provisions the SSH key; with `knowledge-sync`, it runs independently using existing settings. Preview omits this job.
+
+WebJob deployment may restart the backend when applying App Service prerequisites,
+even when its container image is unchanged. See the [knowledge sync deployment guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/README.md).
 
 ### Logic App Deploy
 

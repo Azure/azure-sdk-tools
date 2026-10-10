@@ -539,7 +539,13 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(container["properties"]["resource"]["partitionKey"]["paths"], ["/channel_id"])
         access = workflow["properties"]["accessControl"]["triggers"]
         self.assertEqual(access["sasAuthenticationPolicy"]["state"], "Disabled")
-        policies = access["openAuthenticationPolicies"]["policies"]
+        self.assertEqual(
+            access["openAuthenticationPolicies"]["policies"],
+            "[if(empty(parameters('localDevPrincipalId')), variables('backfillPolicy'), "
+            "union(variables('backfillPolicy'), variables('localDevPolicy')))]",
+        )
+        self.assertEqual(template["parameters"]["localDevPrincipalId"]["defaultValue"], "")
+        policies = template["variables"]["backfillPolicy"]
         self.assertEqual(list(policies), ["backfill"])
         self.assertEqual({claim["name"] for claim in policies["backfill"]["claims"]},
                          {"iss", "aud", "oid"})
@@ -548,6 +554,12 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         }
         self.assertEqual(claims["aud"], "https://management.core.windows.net")
         self.assertEqual(claims["oid"], "[parameters('backfillPrincipalId')]")
+        local_dev = template["variables"]["localDevPolicy"]["localDev"]
+        self.assertEqual(local_dev["type"], "AAD")
+        local_claims = {claim["name"]: claim["value"] for claim in local_dev["claims"]}
+        self.assertEqual(local_claims["iss"], claims["iss"])
+        self.assertEqual(local_claims["aud"], claims["aud"])
+        self.assertEqual(local_claims["oid"], "[parameters('localDevPrincipalId')]")
         definition = workflow["properties"]["definition"]
         self.assertEqual(list(definition["triggers"]), ["manual"])
         self.assertEqual(definition["triggers"]["manual"]["operationOptions"], "EnableSchemaValidation")
@@ -611,6 +623,11 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(parameters["cosmosAccountName"]["value"], cosmos_account)
                 self.assertNotIn("collectorPrincipalId", parameters)
                 self.assertNotIn("backfillPrincipalId", parameters)
+                if environment == "dev":
+                    self.assertEqual(parameters["localDevPrincipalId"]["value"],
+                                     "3781d51f-0690-4a8c-b86e-70ee0b3bbddc")
+                else:
+                    self.assertNotIn("localDevPrincipalId", parameters)
 
     def test_template_grants_metadata_message_and_summary_data_access(self):
         project = Path(__file__).resolve().parents[1]

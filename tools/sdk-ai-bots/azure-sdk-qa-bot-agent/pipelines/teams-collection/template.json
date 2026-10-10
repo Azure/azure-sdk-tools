@@ -8,12 +8,33 @@
     "tenantId": { "type": "string" },
     "collectorPrincipalId": { "type": "string" },
     "backfillPrincipalId": { "type": "string" },
+    "localDevPrincipalId": { "type": "string", "defaultValue": "" },
     "allowedChannels": { "type": "array", "minLength": 1 },
     "cosmosAccountName": { "type": "string" }
   },
   "variables": {
     "cosmosAccountResourceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName'))]",
-    "metadataRoleName": "41cd8d60-edff-4171-9ff9-e7e1810d045b"
+    "metadataRoleName": "41cd8d60-edff-4171-9ff9-e7e1810d045b",
+    "backfillPolicy": {
+      "backfill": {
+        "type": "AAD",
+        "claims": [
+          { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
+          { "name": "aud", "value": "https://management.core.windows.net" },
+          { "name": "oid", "value": "[parameters('backfillPrincipalId')]" }
+        ]
+      }
+    },
+    "localDevPolicy": {
+      "localDev": {
+        "type": "AAD",
+        "claims": [
+          { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
+          { "name": "aud", "value": "https://management.core.windows.net" },
+          { "name": "oid", "value": "[parameters('localDevPrincipalId')]" }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -46,16 +67,7 @@
           "triggers": {
             "sasAuthenticationPolicy": { "state": "Disabled" },
             "openAuthenticationPolicies": {
-              "policies": {
-                "backfill": {
-                  "type": "AAD",
-                  "claims": [
-                    { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
-                    { "name": "aud", "value": "https://management.core.windows.net" },
-                    { "name": "oid", "value": "[parameters('backfillPrincipalId')]" }
-                  ]
-                }
-              }
+              "policies": "[if(empty(parameters('localDevPrincipalId')), variables('backfillPolicy'), union(variables('backfillPolicy'), variables('localDevPolicy')))]"
             }
           }
         },

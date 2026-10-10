@@ -206,7 +206,7 @@ function getAuthenticatedUrl(repo: RepositoryConfig): string {
 /**
  * Setup SSH configuration for git operations (Windows and Linux compatible)
  */
-async function setupSSHConfig(): Promise<void> {
+async function setupSSHConfig(sshDir: string): Promise<void> {
     const sshPrivateKey = process.env.SSH_PRIVATE_KEY;
     
     if (!sshPrivateKey) {
@@ -215,11 +215,6 @@ async function setupSSHConfig(): Promise<void> {
     }
     
     try {
-        // Determine home directory based on platform
-        const homeDir = process.env.HOME;
-        
-        const sshDir = path.join(homeDir, '.ssh');
-        
         // Create .ssh directory if it doesn't exist
         if (!fs.existsSync(sshDir)) {
             fs.mkdirSync(sshDir, { recursive: true });
@@ -301,7 +296,7 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
     }
     
     // Setup SSH configuration first
-    await setupSSHConfig();
+    await setupSSHConfig(path.join(path.dirname(docsDir), '.ssh'));
     
     // Load repository configurations from the config file
     const repositories = ConfigurationLoader.getRepositoryConfigs();

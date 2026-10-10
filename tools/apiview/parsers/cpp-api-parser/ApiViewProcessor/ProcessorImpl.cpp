@@ -276,6 +276,66 @@ ApiViewProcessorImpl::AstVisitorAction::AstVisitorAction(ApiViewProcessorImpl* p
 {
 }
 
+void ApiViewProcessorImpl::CollectCppClassesVisitor::CollectClasses(
+    clang::TranslationUnitDecl* translationUnit)
+{
+  if (!m_processorImpl->IncludeDetail())
+  {
+    // Discover exposures before collection so definitions preceding their public aliases survive.
+    m_discoverExposedDetailTypes = true;
+    TraverseDecl(translationUnit);
+    m_discoverExposedDetailTypes = false;
+  }
+  TraverseDecl(translationUnit);
+}
+
+void ApiViewProcessorImpl::CollectCppClassesVisitor::AddExposedDetailType(clang::NamedDecl* target)
+{
+  auto tag = dyn_cast<TagDecl>(target);
+  if (auto alias = dyn_cast<TypedefNameDecl>(target))
+  {
+    tag = alias->getUnderlyingType()->getAsTagDecl();
+  }
+  if (tag && !isa<ClassTemplateSpecializationDecl>(tag)
+      && !AzureClassesDatabase::IsMemberOfObject(tag)
+      && tag->getQualifiedNameAsString().find("::_detail") != std::string::npos)
+  {
+    m_exposedDetailTypes.insert(tag->getCanonicalDecl());
+  }
+}
+
+bool ApiViewProcessorImpl::CollectCppClassesVisitor::VisitNamedDecl(clang::NamedDecl* namedDecl)
+{
+  if (!ShouldCollectNamedDecl(namedDecl))
+  {
+    return true;
+  }
+  if (m_discoverExposedDetailTypes)
+  {
+    auto name = namedDecl->getQualifiedNameAsString();
+    if (name.find("::_detail") == std::string::npos
+        && name.find("::_internal") == std::string::npos)
+    {
+      if (auto alias = dyn_cast<TypeAliasDecl>(namedDecl))
+      {
+        AddExposedDetailType(alias);
+      }
+      else if (auto usingDecl = dyn_cast<UsingDecl>(namedDecl))
+      {
+        for (auto shadow : usingDecl->shadows())
+        {
+          AddExposedDetailType(shadow->getTargetDecl());
+        }
+      }
+    }
+  }
+  else
+  {
+    m_processorImpl->m_classDatabase->CreateAstNode(namedDecl);
+  }
+  return true;
+}
+
 bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     clang::NamedDecl* namedDecl)
 {
@@ -309,7 +369,9 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
     {
       // There is an exception for Azure::_detail::Clock to the "exclude _detail" rule.
-      if (typeName.find("Azure::_detail::Clock") != 0)
+      if (typeName.find("Azure::_detail::Clock") != 0
+          && m_exposedDetailTypes.find(namedDecl->getCanonicalDecl())
+              == m_exposedDetailTypes.end())
       {
         shouldCollect = false;
       }

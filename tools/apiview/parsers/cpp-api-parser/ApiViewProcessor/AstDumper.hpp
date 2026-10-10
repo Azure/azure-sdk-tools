@@ -36,6 +36,7 @@ public:
   void Newline();
   size_t GetCurrentCursor() { return m_currentCursor; }
   void SetNamespace(std::string_view const& currentNamespace);
+  virtual bool IncludeSourceComments() const { return true; }
 
   virtual void InsertNewline() = 0;
   virtual void InsertWhitespace(int count = 1) = 0;

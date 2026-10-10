@@ -18,6 +18,7 @@ const SPEC_REPO_ROOT = path.join(REPO_ROOT, 'artifacts', 'azure-rest-api-specs')
 const FIXTURE_ROOT = path.resolve(__dirname, '..', 'fixtures');
 const GENERATED_FIXTURE_ROOT = path.join(FIXTURE_ROOT, 'Microsoft.Widget', 'Widget');
 const COPILOT_INSTRUCTIONS_RELATIVE = path.join('.github', 'copilot-instructions.md');
+// Keep the eval install minimal while sourcing every version from the spec repo's catalog.
 const FIXTURE_DEPENDENCIES = [
     '@azure-tools/typespec-autorest',
     '@azure-tools/typespec-azure-core',
@@ -67,6 +68,8 @@ if (!fs.existsSync(workspaceFile)) {
 
 const catalog = new Map();
 let inCatalog = false;
+// Avoid a YAML package dependency here because this script runs before fixture dependencies exist.
+// The pnpm catalog is a single top-level mapping, so its indentation provides a bounded parser.
 for (const line of fs.readFileSync(workspaceFile, 'utf8').split(/\r?\n/)) {
     if (line === 'catalog:') {
         inCatalog = true;
@@ -95,6 +98,8 @@ for (const dependency of FIXTURE_DEPENDENCIES) {
 
 fs.mkdirSync(GENERATED_FIXTURE_ROOT, { recursive: true });
 const fixturePackage = path.join(GENERATED_FIXTURE_ROOT, 'package.json');
+// Vally maps this stable fixture path into each trial. Generate it instead of committing
+// package metadata that would drift from azure-rest-api-specs.
 fs.writeFileSync(fixturePackage, `${JSON.stringify({
     name: 'microsoft-widget-eval-fixture',
     private: true,

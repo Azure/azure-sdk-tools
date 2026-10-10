@@ -47,6 +47,110 @@ async def test_technical_question_should_respond(service: IntentionService) -> N
 @pytest.mark.parametrize(
     "content",
     [
+        pytest.param(
+            "how can I permanently suppress an avocado error?",
+            id="avocado-suppression",
+        ),
+        pytest.param(
+            "Suppress avocado error\n\nhow can I permanently suppress an avocado error?",
+            id="avocado-suppression-with-title",
+        ),
+        pytest.param(
+            "How do I fix an AutoRest failure while generating my SDK?",
+            id="autorest-generation",
+        ),
+        pytest.param(
+            "How can I suppress a Swagger validation warning for a legacy API?",
+            id="swagger-validation",
+        ),
+        pytest.param(
+            "TypeSpec-Validation is failing on my PR. Please help me diagnose the error.",
+            id="typespec-validation-help",
+        ),
+        pytest.param(
+            "How do I debug a PostgreSQL deadlock?",
+            id="outside-domain-database",
+        ),
+        pytest.param(
+            "Why does my React component render twice in development mode?",
+            id="outside-domain-frontend",
+        ),
+        pytest.param(
+            "My Linux service fails to start after reboot. Please help me troubleshoot it.",
+            id="outside-domain-help-without-question-mark",
+        ),
+        pytest.param(
+            "The widgetlint tool reports error W123. How can I configure a permanent suppression?",
+            id="unfamiliar-tool",
+        ),
+        pytest.param(
+            "This may be outside the bot's scope, but how do I resolve a Git merge conflict?",
+            id="explicitly-outside-scope",
+        ),
+        pytest.param(
+            "<at>Alex</at> any idea why my PostgreSQL migration fails with a deadlock?",
+            id="outside-domain-question-with-mention",
+        ),
+        pytest.param(
+            "<at>API Spec Review</at> how can I permanently suppress an avocado error?",
+            id="avocado-question-with-team-mention",
+        ),
+    ],
+)
+async def test_technical_asks_regardless_of_domain_should_respond(
+    service: IntentionService, content: str
+) -> None:
+    """Technical intent alone should trigger a live-model reply without tenant context."""
+    req = IntentionRequest(message=Message(role="user", content=content))
+
+    resp = await service.classify(req)
+
+    assert resp.reason != "llm_error_default_respond", resp.reason
+    assert resp.should_respond is True, resp.reason
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize(
+    "content",
+    [
+        pytest.param(
+            "FYI: the avocado validation error is now suppressed. No help needed.",
+            id="avocado-status-update",
+        ),
+        pytest.param(
+            "AutoRest has been upgraded and Swagger validation is passing. Just a heads up.",
+            id="engineering-tools-announcement",
+        ),
+        pytest.param(
+            "FYI: the PostgreSQL migration completed successfully. No action needed.",
+            id="outside-domain-status-update",
+        ),
+        pytest.param(
+            "cc <at>API Spec Review</at> fyi",
+            id="team-routing-only",
+        ),
+        pytest.param(
+            "I made avocado toast for lunch. Happy Friday!",
+            id="avocado-social-message",
+        ),
+    ],
+)
+async def test_technical_keywords_without_an_ask_should_not_respond(
+    service: IntentionService, content: str
+) -> None:
+    """Broad technical coverage must not turn keywords or routing into technical asks."""
+    req = IntentionRequest(message=Message(role="user", content=content))
+
+    resp = await service.classify(req)
+
+    assert resp.reason != "llm_error_default_respond", resp.reason
+    assert resp.should_respond is False, resp.reason
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize(
+    "content",
+    [
         (
             "Azure MCP Server fails to authenticate when running remotely with "
             "on-behalf-of credentials. How can I troubleshoot the token exchange?"

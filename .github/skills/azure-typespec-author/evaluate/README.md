@@ -115,7 +115,7 @@ The setup command:
 2. Builds live and mock MCP binaries under `artifacts/mcp`.
 3. Sparse-clones azure-rest-api-specs under `artifacts/azure-rest-api-specs`.
 4. Installs the pnpm version pinned by azure-rest-api-specs.
-5. Generates the Microsoft.Widget fixture package under `artifacts/` and installs it with pnpm.
+5. Generates the untracked Microsoft.Widget fixture package and installs it with pnpm.
 6. Exports `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
 7. Prepends the fixture `node_modules/.bin` to PATH so graders use its TypeSpec compiler.
 
@@ -138,8 +138,8 @@ node ../../../scripts/check-node-dependencies.cjs packages
 popd
 ```
 
-`tsp --version` must match the generated fixture package under
-`artifacts/typespec-author-eval/Microsoft.Widget/Widget`, not an older global installation.
+`tsp --version` must match the generated package under
+`fixtures/Microsoft.Widget/Widget`, not an older global installation.
 
 Allow the executor to reuse the Copilot login from the same WSL environment:
 
@@ -256,9 +256,9 @@ Normally `setup-environment.js` performs these steps. To debug pnpm separately:
 node scripts/setup-fixture-files.js
 node scripts/install-pnpm.js
 pnpm --version
-pnpm install --dir ../../../../artifacts/typespec-author-eval/Microsoft.Widget/Widget
+pnpm install --dir fixtures/Microsoft.Widget/Widget
 
-export FIXTURE_NODE_MODULES="$PWD/../../../../artifacts/typespec-author-eval/Microsoft.Widget/Widget/node_modules"
+export FIXTURE_NODE_MODULES="$PWD/fixtures/Microsoft.Widget/Widget/node_modules"
 export PATH="$FIXTURE_NODE_MODULES/.bin:$PATH"
 ```
 

@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /*
  * Sparse-clone azure-rest-api-specs without specification/ and copy its
- * Copilot instructions into the local fixture and generate the package used
- * to install fixture dependencies under artifacts/.
+ * Copilot instructions and generated package metadata into the local fixture.
  *
  * Dependencies are installed separately from the clone's native pnpm workspace
  * by install-pnpm.js and setup-environment.js.
@@ -16,9 +15,8 @@ const REPO_URL = 'https://github.com/Azure/azure-rest-api-specs.git';
 const BRANCH = 'main';
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const SPEC_REPO_ROOT = path.join(REPO_ROOT, 'artifacts', 'azure-rest-api-specs');
-const GENERATED_FIXTURE_ROOT = path.join(
-    REPO_ROOT, 'artifacts', 'typespec-author-eval', 'Microsoft.Widget', 'Widget');
 const FIXTURE_ROOT = path.resolve(__dirname, '..', 'fixtures');
+const GENERATED_FIXTURE_ROOT = path.join(FIXTURE_ROOT, 'Microsoft.Widget', 'Widget');
 const COPILOT_INSTRUCTIONS_RELATIVE = path.join('.github', 'copilot-instructions.md');
 const FIXTURE_DEPENDENCIES = [
     '@azure-tools/typespec-autorest',

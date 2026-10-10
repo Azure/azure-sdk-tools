@@ -25,7 +25,7 @@ stimuli:
       files:
         - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
           dest: main.tsp
-        - src: ../../../../../artifacts/typespec-author-eval/Microsoft.Widget/Widget/package.json
+        - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
         - src: ../scripts/check-node-dependencies.cjs
           dest: check-node-dependencies.cjs

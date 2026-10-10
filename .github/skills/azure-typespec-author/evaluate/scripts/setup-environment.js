@@ -34,9 +34,7 @@ const path = require('node:path');
 const scriptDir = __dirname;
 const repoRoot = path.resolve(scriptDir, '..', '..', '..', '..', '..');
 const evalsDir = path.resolve(scriptDir, '..', 'evals');
-const widgetDir = path.join(
-  repoRoot, 'artifacts', 'typespec-author-eval', 'Microsoft.Widget', 'Widget'
-);
+const widgetDir = path.resolve(scriptDir, '..', 'fixtures', 'Microsoft.Widget', 'Widget');
 const copilotNpmRegistryUrl = process.env.COPILOT_NPM_REGISTRY_URL || 'https://packagefeedproxy.microsoft.io/npm/';
 const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 

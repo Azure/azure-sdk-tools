@@ -4,7 +4,7 @@
  * 2. Builds the live and mock MCP binaries into artifacts/mcp.
  * 3. Sparse-clones azure-rest-api-specs and prepares its maintained fixtures.
  * 4. Installs the spec repository's pinned pnpm and frozen fixture dependencies.
- * 5. Outputs the shell commands to set the environment variables used by Vally.
+ * 5. Outputs the shell commands and PATH update used by Vally and its graders.
  *
  * Usage:
  *   node scripts/setup-environment.js --mcp-kind live
@@ -13,12 +13,12 @@
  *
  * Linux/WSL setup:
  *   - Use Linux-native Node.js 24.14.1 or newer; do not resolve it from /mnt/c Windows shims.
- *   - Install both the repository SDK and the .NET 8 runtime required by the net8.0
- *     prebuilt MCP servers (`dotnet --list-runtimes` must include Microsoft.NETCore.App 8.x).
+ *   - Install the .NET SDK plus the .NET 8 and ASP.NET Core 8 runtimes required by the
+ *     prebuilt MCP servers (`dotnet --list-runtimes` must list both 8.x shared frameworks).
  *   - Evaluate this script in the current shell so AZSDK_EVAL_REPO_ROOT and
  *     FIXTURE_NODE_MODULES remain available to Vally.
  *
- * Vally 0.14.0 cannot be installed locally under the current managed-device
+ * Vally cannot be installed locally under some managed-device
  * permissions. It depends on the native better-sqlite3 module, whose fallback
  * installation invokes node-gyp. This environment blocks direct registry.npmjs.org
  * downloads and does not permit elevating to install the required system build tools.
@@ -81,13 +81,16 @@ run(`${pnpmCommand} install --frozen-lockfile`, { cwd: widgetDir });
 
 // Step 5: Output env var setters (stdout only, so eval/Invoke-Expression works).
 const nodeModules = path.join(widgetDir, 'node_modules');
+const nodeBin = path.join(nodeModules, '.bin');
 const shell = process.env.SHELL || '';
 const isPowerShell = !shell && process.platform === 'win32' && !process.env.BASH;
 if (isPowerShell) {
   console.log(`$env:AZSDK_EVAL_REPO_ROOT="${repoRoot}"`);
   console.log(`$env:FIXTURE_NODE_MODULES="${nodeModules}"`);
+  console.log(`$env:PATH="${nodeBin};$env:PATH"`);
 } else {
   console.log(`export AZSDK_EVAL_REPO_ROOT="${repoRoot}"`);
   console.log(`export FIXTURE_NODE_MODULES="${nodeModules}"`);
+  console.log(`export PATH="${nodeBin}:$PATH"`);
 }
 process.stderr.write('==> Setup complete.\n');

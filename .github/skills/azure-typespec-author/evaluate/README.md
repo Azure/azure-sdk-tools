@@ -1,378 +1,307 @@
 # Azure TypeSpec Author Skill Evaluations
 
-This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `azure-typespec-author` skill.
+This directory contains [Vally](https://aka.ms/vally) evaluations for the
+`azure-typespec-author` skill.
 
-## Prerequisites
+## Supported Local Environment
 
-- [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli@0.14.0`
-- Node.js 24.14.1 or newer and npm available on `PATH`; setup installs the pnpm version pinned by
-  azure-rest-api-specs.
-- The `azsdk-cli` MCP server built as described below.
-- An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
+Use Vally 0.14.0.
 
-> **Platform note:** Run these evaluations on Linux or in WSL when possible. On native Windows,
-> installing Vally 0.14.0 may fail while building `better-sqlite3` with `node-gyp`, even with a
-> supported Node.js 22 installation. Native Windows installation requires the Visual Studio
-> **Desktop development with C++** workload and a VC++ toolset; otherwise use Linux or WSL.
+Vally 0.14.0 can run on native Windows when its native dependencies install successfully. The
+Windows run must use `--workers 1`, and eval fixtures must link `node_modules` through
+`FIXTURE_NODE_MODULES` instead of copying pnpm symlinks.
 
-## Environment Setup
+Linux or WSL2 remains the fallback when Vally's native npm dependencies cannot be installed on
+Windows. When using WSL, install the full toolchain inside WSL and keep the repository in its Linux
+filesystem rather than `/mnt/c` or `/mnt/d`.
 
-### Prepare Vally, fixtures, and MCP binaries
+## Local Quick Start
 
-Before running any evals, run the setup script from this directory. It builds the live and mock MCP
-servers into `artifacts/mcp`, sparse-clones
-[azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main`, installs the fixture
-with pnpm, and prints the environment variables needed by local Vally runs. The MCP binaries use
-the same `artifacts/mcp/cli` and `artifacts/mcp/mock` layout staged by the pipeline:
+### 1. Install prerequisites
+
+#### Native Windows
+
+From PowerShell:
 
 ```powershell
-# PowerShell
-node scripts/setup-environment.js --mcp-kind live | Invoke-Expression
+winget install --id Microsoft.DotNet.AspNetCore.8 --exact --source winget `
+  --accept-package-agreements --accept-source-agreements
+npm install --global @microsoft/vally-cli@0.14.0
 ```
+
+Vally's `better-sqlite3` dependency may require the Visual Studio **Desktop development with C++**
+workload when no prebuilt native binary is available.
+
+Verify:
+
+```powershell
+node --version
+dotnet --list-runtimes | Select-String "Microsoft.NETCore.App 8|Microsoft.AspNetCore.App 8"
+vally --version
+az account show --output table
+```
+
+#### Linux or WSL2 fallback
+
+Install Linux build tools plus the .NET 8 SDK and ASP.NET Core 8 runtime:
 
 ```bash
-# Bash / Zsh
-eval $(node scripts/setup-environment.js --mcp-kind live)
+sudo apt-get update
+sudo apt-get install -y build-essential git python3 curl dotnet-sdk-8.0 aspnetcore-runtime-8.0
 ```
 
-Vally 0.14 isolates the Copilot config home by default. For local runs that authenticate through
-`copilot login`, explicitly allow the executor to reuse the host profile:
+If Ubuntu cannot find the .NET packages, configure Microsoft's package repository for your Ubuntu
+version first, then repeat the command.
+
+Install a Linux-native Node.js 24.14.1 or newer. With `nvm` already installed:
+
+```bash
+nvm install 24.14.1
+nvm use 24.14.1
+```
+
+Install Vally inside WSL:
+
+```bash
+npm install --global @microsoft/vally-cli@0.14.0
+```
+
+Vally contains native dependencies. `build-essential` and `python3` allow npm to build them when a
+prebuilt Linux binary is unavailable.
+
+Install and sign in to the Linux Azure CLI when using the live MCP:
+
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+az login
+```
+
+Under WSL, verify that every executable is Linux-native and that both required .NET 8 frameworks
+exist:
+
+```bash
+command -v node npm dotnet vally az
+node --version
+dotnet --version
+dotnet --list-runtimes | grep -E 'Microsoft\.NETCore\.App 8|Microsoft\.AspNetCore\.App 8'
+vally --version
+az account show --output table
+```
+
+Expected executable paths start with Linux locations such as `/usr/` or `/home/`, not `/mnt/c/`.
+The runtime command must list both `Microsoft.NETCore.App 8.x` and
+`Microsoft.AspNetCore.App 8.x`.
+
+### 2. Prepare MCP binaries and fixtures
+
+#### Native Windows
 
 ```powershell
-# PowerShell
+node scripts/setup-environment.js --mcp-kind live | Invoke-Expression
 $env:EVALUATE_USE_HOST_COPILOT_HOME = "1"
 ```
 
+#### Linux or WSL2
+
+From the `evaluate/` directory, prepare the live MCP:
+
 ```bash
-# Bash / Zsh
+eval "$(node scripts/setup-environment.js --mcp-kind live)"
+```
+
+The setup command:
+
+1. Changes eval files to `environment: azsdk-mcp-local`.
+2. Builds live and mock MCP binaries under `artifacts/mcp`.
+3. Sparse-clones azure-rest-api-specs under `artifacts/azure-rest-api-specs`.
+4. Installs the pnpm version pinned by azure-rest-api-specs.
+5. Runs `pnpm install --frozen-lockfile` for the Microsoft.Widget fixture.
+6. Exports `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
+7. Prepends the fixture `node_modules/.bin` to PATH so graders use its TypeSpec compiler.
+
+On a managed device that blocks `registry.npmjs.org`, set the approved feed before setup:
+
+```bash
+export npm_config_registry="https://packagefeedproxy.microsoft.io/npm/"
+eval "$(node scripts/setup-environment.js --mcp-kind live)"
+```
+
+Verify the prepared environment:
+
+```bash
+pnpm --version
+tsp --version
+dotnet "$AZSDK_EVAL_REPO_ROOT/artifacts/mcp/cli/azsdk.dll" --help
+
+pushd fixtures/Microsoft.Widget/Widget
+node ../../../scripts/check-node-dependencies.cjs packages
+popd
+```
+
+`tsp --version` must match the version in `fixtures/Microsoft.Widget/Widget/package.json`, not an
+older global installation.
+
+Allow the executor to reuse the Copilot login from the same WSL environment:
+
+```bash
 export EVALUATE_USE_HOST_COPILOT_HOME=1
 ```
 
-Keep this opt-in local. Pipeline runs authenticate with their injected token and should retain the
-default isolated Copilot home.
+Keep this setting local. CI supplies its own authentication.
 
-Managed development devices cannot download packages directly from `registry.npmjs.org`.
-`dotnet run` performs an implicit build, and `GitHub.Copilot.SDK` may download its platform package
-during that build. Local evals therefore use prebuilt Release DLLs instead of building MCP from
-source in each trial. Setup routes that package download through the Microsoft CFS-protected feed.
+### 3. Run one smoke test
 
-Setup builds both live and mock once and rewrites scalar eval specs to the selected local
-environment. Choose `mock` instead when initially preparing trigger evaluations:
+Use one worker for local live MCP runs. This avoids concurrent Copilot SDK session-filesystem
+provider conflicts.
+
+Native Windows:
 
 ```powershell
-node scripts/setup-environment.js --mcp-kind mock | Invoke-Expression
+vally eval `
+  --eval-spec evals/001001.eval.yaml `
+  --tag mode=forced `
+  --skill-dir .. `
+  --workers 1 `
+  --output-dir ./result-001001 `
+  --workspace ./debug-001001 `
+  --verbose
 ```
 
-Local live and mock runs use `environment: azsdk-mcp-local` and
-`environment: azsdk-mcp-mock-local`, respectively. Both run prebuilt DLLs; neither uses
-`dotnet run`. Do not rerun setup just to switch MCP kind because setup rebuilds both binaries and
-refreshes the fixtures. Instead, change the root environment in the eval files being run:
+Linux or WSL2:
 
-```yaml
-# Local live MCP
-environment: azsdk-mcp-local
-
-# Local mock MCP
-environment: azsdk-mcp-mock-local
-
-# Pipeline
-environment: azsdk-mcp
+```bash
+vally eval \
+  --eval-spec evals/001001.eval.yaml \
+  --tag mode=forced \
+  --skill-dir .. \
+  --workers 1 \
+  --output-dir ./result-001001 \
+  --workspace ./debug-001001 \
+  --verbose
 ```
 
-For a single-case run, change only that eval file. For a suite run, replace the environment in all
-participating files under `evals/`. Local environment overrides should not be committed; restore
-`environment: azsdk-mcp` before committing. Pipeline live/mock selection remains controlled by
-`AZSDK_EVAL_MCP_KIND`.
+Do not start the full suite until this run produces assistant/tool events and passes the dependency
+and TypeSpec compilation graders.
 
-`setup-environment.js` does the following:
+### 4. Run the forced suite
 
-1. Set scalar eval specs to the selected local prebuilt environment.
-2. Build the live MCP server into `artifacts/mcp/cli` and the mock MCP server
-   into `artifacts/mcp/mock`.
-3. Sparse-clone azure-rest-api-specs without `specification/` into
-   `artifacts/azure-rest-api-specs`.
-4. Install the pnpm version pinned by that checkout and run `pnpm install --frozen-lockfile` in the
-   checked-in Microsoft.Widget fixture.
-5. Copy `.github/copilot-instructions.md` into the instructions fixture.
-6. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
-
-The MCP build uses `GitHub.Copilot.SDK`, which downloads platform-specific `@github/copilot-*`
-assets through MSBuild. The setup script passes
-`/p:CopilotNpmRegistryUrl=https://packagefeedproxy.microsoft.io/npm/` so the download URL uses the
-Microsoft package feed proxy instead of `registry.npmjs.org`. To use a different registry, set
-`COPILOT_NPM_REGISTRY_URL` before running the setup script.
-
-Why each piece matters:
-
-- **`FIXTURE_NODE_MODULES`** lets the agent symlink the pnpm-installed fixture `node_modules`
-  instead of installing dependencies in every case.
-- **`copilot-instructions.md`** is copied into each run's `.github/` by the `azsdk-mcp` environments
-  in `.vally.yaml`, so evals exercise the *real* spec-repo authoring guidance. It is intentionally
-  **not** checked in (it is git-ignored) and always refreshed from `main`, so the eval reflects what
-  authors actually see today.
-
-CI builds MCP binaries in a shared build job and runs `setup-fixture-files.js` during pre-eval setup,
-so the binaries and fixtures are always present in pipeline runs.
-
-### Install pnpm locally
-
-The preferred path installs exactly the version pinned by the current azure-rest-api-specs
-`packageManager` field:
-
-```powershell
-node scripts/setup-fixture-files.js
-node scripts/install-pnpm.js
-pnpm --version
-pnpm install --frozen-lockfile --dir fixtures\Microsoft.Widget\Widget
+```bash
+vally eval \
+  --suite forced \
+  --skill-dir .. \
+  --workers 1 \
+  --output-dir ./result-forced \
+  --workspace ./debug-forced \
+  --verbose
 ```
 
-On Bash or Zsh, use the same commands with `/` path separators:
+Useful suites:
+
+| Suite | Coverage |
+|---|---|
+| `forced` | All forced-mode cases |
+| `trigger` | All skill-trigger cases |
+| `versioning-forced` | Versioning forced cases |
+| `armtemplate-forced` | ARM forced cases |
+| `longrunningoperation-forced` | LRO forced cases |
+| `decorators-forced` | Decorator forced cases |
+| `warning-forced` | Warning forced cases |
+| `dataplane-forced` | Data-plane forced cases |
+
+The same domain names are available with `-trigger` and `-no-skill` suffixes.
+
+### 5. Run trigger mode with mock MCP
+
+Prepare the mock environment:
+
+```bash
+eval "$(node scripts/setup-environment.js --mcp-kind mock)"
+export EVALUATE_USE_HOST_COPILOT_HOME=1
+```
+
+Run the trigger suite:
+
+```bash
+vally eval \
+  --suite trigger \
+  --skill-dir .. \
+  --workers 1 \
+  --output-dir ./result-trigger \
+  --workspace ./debug-trigger \
+  --verbose
+```
+
+Setup changes eval files to `environment: azsdk-mcp-mock-local`. Do not commit that local override;
+restore `environment: azsdk-mcp` before committing.
+
+### 6. Run a no-skill baseline
+
+```bash
+mkdir -p ./no-skills
+
+vally eval \
+  --suite no-skill \
+  --skill-dir ./no-skills \
+  --workers 1 \
+  --output-dir ./result-no-skill \
+  --workspace ./debug-no-skill \
+  --verbose
+```
+
+## Manual Fixture Setup
+
+Normally `setup-environment.js` performs these steps. To debug pnpm separately:
 
 ```bash
 node scripts/setup-fixture-files.js
 node scripts/install-pnpm.js
 pnpm --version
 pnpm install --frozen-lockfile --dir fixtures/Microsoft.Widget/Widget
+
+export FIXTURE_NODE_MODULES="$PWD/fixtures/Microsoft.Widget/Widget/node_modules"
+export PATH="$FIXTURE_NODE_MODULES/.bin:$PATH"
 ```
 
-For the current spec checkout, the equivalent manual installation is:
+## Results and Troubleshooting
 
-```powershell
-npm install --global pnpm@12.6.0
-pnpm --version
-```
+Each run writes:
 
-On managed development devices, route npm through the approved feed before installing pnpm:
+- `results.jsonl`: complete trial and grader data
+- `eval-results.md`: readable pass/fail summary
+- `azure-typespec-author-eval/**/events.jsonl`: executor events when session logs are kept
 
-```powershell
-$env:npm_config_registry = "https://packagefeedproxy.microsoft.io/npm/"
-node scripts/install-pnpm.js
-```
+| Symptom | Resolution |
+|---|---|
+| Native Vally installation fails | Install the Visual Studio C++ workload or use WSL2 |
+| WSL resolves Vally from `/mnt/c` | Install Vally and Node inside WSL; remove Windows paths from the WSL PATH |
+| Missing `Microsoft.AspNetCore.App 8.x` | Install `aspnetcore-runtime-8.0` inside WSL |
+| `sessionFs.setProvider` | Run with `--workers 1` |
+| `require is not defined in ES module scope` | Ensure evals use `check-node-dependencies.cjs` |
+| Compiler reports TypeSpec 1.8.0 | Rerun setup through `eval`; verify fixture `.bin` is first on PATH |
+| pnpm symlink returns `EPERM` | Move the checkout from `/mnt/c` or `/mnt/d` to the WSL filesystem |
+| MCP initialize connection closes | Run the MCP DLL directly and inspect its missing Linux runtime message |
 
-The full `setup-environment.js` command performs all of these pnpm steps automatically.
+## Environments
 
-## Running Evaluations Locally
+| Environment | Use |
+|---|---|
+| `azsdk-mcp` | CI pipeline; selects live/mock through `AZSDK_EVAL_MCP_KIND` |
+| `azsdk-mcp-local` | Local live MCP under Linux/WSL |
+| `azsdk-mcp-mock-local` | Local mock MCP under Linux/WSL |
 
-Run local evaluations from this directory (`.github/skills/azure-typespec-author/evaluate`). Local
-runs intentionally use the local/default `evaluate/.vally.yaml`; the benchmark pipelines use the
-outer `.github/skills/.vally.yaml` integration described later.
+Local setup rewrites only the root `environment:` entry in each eval file. Restore these entries to
+`azsdk-mcp` before committing.
 
-### Local forced smoke test
+## Pipeline
 
-Use these commands for the usual local check. Setup builds the same Release binaries that trials
-run in CI:
+The manual benchmark pipeline is `eng/pipelines/azure-typespec-author-benchmark.yml`. It builds the
+selected MCP, generates area-based forced and trigger shard matrices, runs each area, publishes
+result/debug artifacts, and produces separate summaries.
 
-```powershell
-# Ensure the eval spec uses: environment: azsdk-mcp-local
-vally eval --suite forced --skill-dir .. --output-dir ./result-forced --workspace ./debug-forced --verbose
-```
+| Parameter | Purpose |
+|---|---|
+| `SkillBranch` | Skill source branch to overlay |
+| `McpKind` | `live` or `mock` |
+| `Runs` | Trials per stimulus |
 
-Switch to the mock server for a trigger run without repeating setup:
-
-```powershell
-# Ensure the eval spec uses: environment: azsdk-mcp-mock-local
-vally eval --suite trigger --skill-dir .. --output-dir ./result-trigger --workspace ./debug-trigger --verbose
-```
-
-### Which file to use
-
-Use different entry files depending on your goal:
-
-| File                     | When to use                            | Example command                                                                                                   |
-| ------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `evaluate/.vally.yaml`   | Default local entry; run by suite name | `vally eval --suite forced --skill-dir .. --output-dir ./result --workspace ./debug --verbose`                    |
-| `evals/00xxxx.eval.yaml` | Debug one specific case file           | `vally eval --eval-spec evals/003001.eval.yaml --tag mode=forced --skill-dir .. --output-dir ./result-003001 --workspace ./debug-003001 --verbose` |
-
-Notes:
-
-- Use `--suite` for local mode-wide runs because `evaluate/.vally.yaml` defines the Azure TypeSpec
-  Author suites.
-- Use `--eval-spec` + `--tag` for single-file targeted mode runs.
-
-### Run a named test suite
-
-Test suites are defined in `evaluate/.vally.yaml` under the `suites` key. This is the preferred
-local entry point.
-
-| Suite                           | Description                                     |
-| ------------------------------- | ----------------------------------------------- |
-| `versioning-forced`             | Versioning cases (001xxx) — forced mode         |
-| `armtemplate-forced`            | ARM template cases (002xxx) — forced mode       |
-| `longrunningoperation-forced`   | Long-running operation cases (003xxx) — forced  |
-| `decorators-forced`             | Decorator cases (004xxx) — forced mode          |
-| `warning-forced`                | Warning cases (005xxx) — forced mode            |
-| `dataplane-forced`              | Data-plane cases (006xxx) — forced mode         |
-| `versioning-trigger`            | Versioning cases — trigger mode                 |
-| `armtemplate-trigger`           | ARM template cases — trigger mode               |
-| `longrunningoperation-trigger`  | LRO cases — trigger mode                        |
-| `decorators-trigger`            | Decorator cases — trigger mode                  |
-| `warning-trigger`               | Warning cases — trigger mode                    |
-| `dataplane-trigger`             | Data-plane cases — trigger mode                 |
-| `versioning-no-skill`           | Versioning cases — no-skill baseline            |
-| `armtemplate-no-skill`          | ARM template cases — no-skill baseline          |
-| `longrunningoperation-no-skill` | LRO cases — no-skill baseline                   |
-| `decorators-no-skill`           | Decorator cases — no-skill baseline             |
-| `warning-no-skill`              | Warning cases — no-skill baseline               |
-| `dataplane-no-skill`            | Data-plane cases — no-skill baseline            |
-| `forced`                        | All cases — forced mode                         |
-| `trigger`                       | All cases — trigger mode                        |
-| `no-skill`                      | All cases — no-skill baseline                   |
-
-Run a suite by name. Forced and trigger runs should point at the skill directory:
-
-```powershell
-vally eval --suite forced --skill-dir .. --output-dir ./result --workspace ./debug --verbose
-vally eval --suite trigger --skill-dir .. --output-dir ./result-trigger --workspace ./debug-trigger --verbose
-```
-
-For no-skill baselines, create an empty skill directory under the current `evaluate/` directory and
-pass that path instead:
-
-```powershell
-$noSkillDir = Join-Path (Get-Location) 'no-skills'
-if (Test-Path $noSkillDir) { Remove-Item -Recurse -Force $noSkillDir }
-New-Item -ItemType Directory -Force $noSkillDir | Out-Null
-vally eval --suite no-skill --skill-dir $noSkillDir --output-dir ./result-no-skill --workspace ./debug-no-skill --verbose
-```
-
-### Run a single evaluation file with a specific mode
-
-Use `--eval-spec` + `--tag` only when debugging one specific case file. For no-skill runs, create
-`$noSkillDir` as shown in the suite section first.
-
-```powershell
-vally eval --eval-spec evals/001001.eval.yaml --tag mode=forced --skill-dir .. --output-dir ./result-forced --workspace ./debug-forced --verbose
-vally eval --eval-spec evals/001001.eval.yaml --tag mode=trigger --skill-dir .. --output-dir ./result-trigger --workspace ./debug-trigger --verbose
-vally eval --eval-spec evals/001001.eval.yaml --tag mode=no-skill --skill-dir $noSkillDir --output-dir ./result-no-skill --workspace ./debug-no-skill --verbose
-```
-
-### Modes (forced / trigger / no-skill)
-
-Each test case has three modes:
-
-| Mode       | Description                                                                              |
-| ---------- | ---------------------------------------------------------------------------------------- |
-| `forced`   | Skill explicitly invoked via `@azure-typespec-author` prefix + full code quality graders |
-| `trigger`  | Tests whether the skill is automatically triggered (skill invocation detection)          |
-| `no-skill` | Baseline run without loading the skill (`--skill-dir` points at an empty directory)      |
-
-For targeted single-case debugging, use `--eval-spec` with `--tag mode=...` as shown above.
-
-### Vally local runs
-
-For local forced and trigger runs, pass `--skill-dir ..` from the `evaluate/` directory so Vally
-discovers the `azure-typespec-author` skill directory that contains `SKILL.md`. The prompts still
-include the `@azure-typespec-author` prefix, and the evals still use `skill-invocation` graders to
-verify that the skill was invoked.
-
-Result output includes run metadata such as `Turns`, `Tool Calls`, `Executor: copilot-sdk`, and JSONL
-fields (`type`, `itemId`, `stimulus`, `durationMs`, `workspacePath`). Because tool-call tracking is
-strict, forced-mode failures often mean the agent did not call a required tool such as
-`azure-sdk-mcp-azsdk_run_typespec_validation`. When debugging local runs, keep `--verbose` enabled
-and inspect the `Tool Calls` column in `eval-results.md` or the trial entries in `results.jsonl`.
-
-Do not use `--skill-dir ..` for no-skill baseline runs. Those runs intentionally use an empty skill
-directory to measure behavior without loading the skill.
-
-### Run a subset suite (optional)
-
-Domain-specific suites are useful for ad-hoc local runs on one scenario family:
-
-```powershell
-# Run forced mode for versioning cases only
-vally eval --suite versioning-forced --skill-dir ..
-
-# Run no-skill baseline for armtemplate cases
-vally eval --suite armtemplate-no-skill --skill-dir $noSkillDir
-
-# Run trigger detection for versioning cases
-vally eval --suite versioning-trigger --skill-dir ..
-```
-
-### Useful flags
-
-| Flag                           | Purpose                                                        |
-| ------------------------------ | -------------------------------------------------------------- |
-| `--keep-executor-session-logs` | Preserve agent session logs under `--output-dir` for debugging |
-| `--runs <n>`                   | Override the number of trials per stimulus for local runs      |
-| `--verbose`                    | Show full agent output during the run                          |
-| `--workers <n>`                | Run multiple stimuli in parallel (default: 5)                  |
-
-### Run with multiple workers
-
-By default local evals use the `azsdk-mcp` environment from `evaluate/.vally.yaml` one by one. Set
-workers when you want to run multiple stimuli in parallel:
-
-```bash
-vally eval --suite forced --skill-dir .. --workers 3
-```
-
-## Results
-
-Results are written to the `results/` directory after each run. You can rerun graders with:
-
-```bash
-vally eval --eval-spec evals/001001.eval.yaml --tag mode=forced --skill-dir .. --skip-grade --output jsonl | vally grade --eval-spec evals/001001.eval.yaml
-```
-
-```bash
-vally grade --eval-spec evals/001001.eval.yaml < results/results.jsonl
-```
-
-## File Structure
-
-```
-evaluate/
-├── .vally.yaml          # Vally configuration: environments, suites, paths
-├── evals/               # Individual eval specs (one per test case, for local dev)
-│   ├── 001001.eval.yaml
-│   ├── ...
-├── fixtures/            # TypeSpec project fixtures referenced by evals
-│   ├── 001-share-version-new-feature/
-│   ├── Microsoft.Widget/
-│   └── ...
-├── pipeline/            # Repo-owned Azure Pipelines templates
-│   └── skill/           # Forced/trigger/no-skill benchmark templates
-├── scripts/             # Setup and utility scripts
-├── results/             # Eval run output
-└── debug/               # Eval run workspace
-```
-
-## Pipeline Architecture
-
-The CI runs Vally from `.github/skills` and uses the merged eval files in
-`azure-typespec-author/evaluate/evals/*.eval.yaml`. Each stimulus has dual tags, for example
-`{ suite: versioning, mode: forced }`. The pipeline matrix is generated from the eval files, then
-each track passes its mode through `TypeSpecAuthorEvalExtraArgs`.
-
-| Pipeline           | Template shape                              | Extra args                                     | MCP binding                                                    | Purpose                                                               |
-| ------------------ | ------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
-| benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=forced --skill-dir azure-typespec-author` | Uses the run's selected `McpKind` | Forced skill invocation + code-quality graders                        |
-| benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=trigger --skill-dir azure-typespec-author` | Uses the run's selected `McpKind` | Skill trigger detection                                               |
-| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline` no-skill invoke wrapper | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses its run's selected `McpKind` | Baseline run without loading the skill                                 |
-
-The forced and trigger tracks are composed manually so they can run and summarize independently in
-one pipeline run. Both tracks use the same live or mock MCP implementation selected by `McpKind`.
-The no-skill pipeline stays on the common `archetype-eval.yml` entry point and only uses a repo-owned
-wrapper for Vally invocation.
-
-### Pipeline Parameters and Extensions
-
-`TypeSpecAuthorEvalExtraArgs` is the primary extension point for Vally CLI options. The repo-local
-invoke wrapper appends it to the final `vally eval` command, so run-level options such as
-`--workers`, `--verbose`, and additional tag filters can be added without changing the templates.
-
-Examples:
-
-```yaml
-variables:
-  TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger --skill-dir azure-typespec-author --workers 3'
-```
-
-```yaml
-variables:
-  TypeSpecAuthorEvalExtraArgs: '--tag mode=no-skill --skill-dir /tmp/no-skills --workers 2'
-```
-
-Keep mode selection in the extra args (`--tag mode=...`) because all three tracks consume the same
-merged eval files.
+Pipeline eval files must use `environment: azsdk-mcp`.

@@ -29,8 +29,8 @@ stimuli:
           dest: main.tsp
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/001006-version-add-preview-after-stable/shared.tsp
           dest: shared.tsp
         - src: ../fixtures/001006-version-add-preview-after-stable/tspconfig.yaml
@@ -107,11 +107,11 @@ stimuli:
             - "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:

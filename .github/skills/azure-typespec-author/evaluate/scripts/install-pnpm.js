@@ -11,13 +11,18 @@ const path = require('node:path');
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const SPEC_PACKAGE = path.join(REPO_ROOT, 'artifacts', 'azure-rest-api-specs', 'package.json');
 
-function run(command, args, capture = false) {
+function run(command, args, capture = false, allowMissing = false) {
     const result = spawnSync(command, args, {
         encoding: capture ? 'utf8' : undefined,
         stdio: capture ? ['ignore', 'pipe', 'ignore'] : 'inherit',
         shell: process.platform === 'win32',
     });
-    if (result.error) throw result.error;
+    if (result.error) {
+        if (allowMissing && result.error.code === 'ENOENT') {
+            return { code: 1, stdout: '' };
+        }
+        throw result.error;
+    }
     return {
         code: result.status ?? 1,
         stdout: capture ? result.stdout.trim() : '',
@@ -36,7 +41,7 @@ if (!match) {
 }
 
 const version = match[1];
-const installed = run('pnpm', ['--version'], true);
+const installed = run('pnpm', ['--version'], true, true);
 if (installed.code === 0 && installed.stdout === version) {
     console.log(`pnpm@${version} is already installed. Nothing to do.`);
     process.exit(0);

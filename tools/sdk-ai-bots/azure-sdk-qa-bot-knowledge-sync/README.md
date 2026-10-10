@@ -131,14 +131,13 @@ Disable the previous ADO sync schedules before deploying the scheduled WebJob to
 avoid concurrent writers. Use the appropriate existing app configuration for each
 dev and production deployment.
 
-## Azure DevOps Pipeline
+## Continuous Integration
 
-The project is designed to run in Azure DevOps pipelines via `sync_knowledge.yml`, which:
+Azure DevOps runs `ci.yml` for knowledge-sync changes. It:
 
-1. Sets up Node.js environment
-2. Installs dependencies
-3. Builds the TypeScript project
-4. Executes the knowledge sync process
+1. Installs dependencies
+2. Builds the TypeScript project
+3. Runs tests and publishes test results
 
 ## Architecture
 

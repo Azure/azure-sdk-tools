@@ -1,0 +1,38 @@
+# Not in any production eval glob. These prompts use no MCP server or live tools.
+name: copilot-app-installation-token-auth-smoke
+description: Verify both the Vally Copilot SDK executor and its LLM prompt grader.
+type: capability
+
+tags:
+  area: copilot-app-auth-smoke
+
+defaults:
+  runs: 1
+  timeout: '120s'
+  executor: copilot-sdk
+  model: gpt-5.4
+
+scoring:
+  threshold: 1.0
+
+stimuli:
+  - name: executor-only
+    prompt: 'What is two plus two? Reply with only one digit.'
+    graders:
+      - type: output-matches
+        config:
+          pattern: '^\s*4\s*$'
+
+  - name: executor-and-llm-judge
+    prompt: 'What is three plus three? Reply with only one digit.'
+    rubric:
+      - The assistant's final answer is the digit 6, allowing surrounding whitespace but no other text.
+    graders:
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Pass only if the assistant's final answer is the digit 6 (ignoring surrounding whitespace).
+            Fail if it gives a different answer or no answer.

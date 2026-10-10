@@ -1,0 +1,19 @@
+# Manual, isolated test of the real Vally shard runner with a GitHub App token.
+# No PAT variable group, PR/CI trigger, schedule, or live MCP calls.
+trigger: none
+pr: none
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
+extends:
+  template: /eng/common/pipelines/templates/stages/archetype-eval.yml
+  parameters:
+    mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+    TestType: mock
+    vallyRoot: evals
+    evalGlobs:
+      - 'auth-smoke/*.eval.yaml'
+    evalInvokeTemplate: /eng/pipelines/copilot-app-vally-eval-invoke.yml
+    threshold: 1.0
+    failOnFailedTests: true

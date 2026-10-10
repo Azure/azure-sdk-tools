@@ -1,0 +1,79 @@
+# Test-only replacement for eval-invoke.yml. All other shard setup and the Vally
+# runner are unchanged; neither the production PAT nor its variable group is used.
+parameters:
+  - name: vallyRoot
+    type: string
+  - name: UseAzSdkAuthentication
+    type: boolean
+    default: false
+  - name: threshold
+    type: number
+    default: 1.0
+
+steps:
+  - task: AzureCLI@2
+    displayName: 'Mint selected-repository Copilot installation token'
+    inputs:
+      azureSubscription: 'AzureSDKEngKeyVault Secrets'
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript: |
+        $ErrorActionPreference = 'Stop'
+
+        # Load the shared Key Vault JWT signer without its default, unscoped login.
+        $env:PESTER_TEST_RUN = 'true'
+        try {
+          . "$(Build.SourcesDirectory)/eng/common/scripts/login-to-github.ps1"
+        }
+        finally {
+          Remove-Item Env:PESTER_TEST_RUN
+        }
+
+        $api = 'https://api.github.com'
+        $version = '2022-11-28'
+        $jwt = New-GitHubAppJwt -VaultName 'azuresdkengkeyvault' -KeyName 'azure-sdk-automation' -AppId '1086291'
+        $installationId = Get-GitHubInstallationId -Jwt $jwt -ApiBase $api -ApiVersion $version -InstallationTokenOwner 'Azure'
+        if ($installationId -ne '58331742') { throw 'Unexpected Azure SDK Automation installation.' }
+
+        $headers = @{ Authorization = "Bearer $jwt"; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = $version }
+        $installation = Invoke-RestMethod -Uri "$api/app/installations/$installationId" -Headers $headers
+        if ($installation.account.login -ne 'Azure' -or $installation.repository_selection -ne 'selected' -or
+            $installation.permissions.organization_copilot_requests -ne 'read') {
+          throw 'The Azure installation must select repositories and grant organization Copilot Requests: read.'
+        }
+
+        # Limit this one-hour token to Azure/azure-sdk-tools, not every installed repository.
+        $body = @{ repository_ids = @(170592186); permissions = @{
+            organization_copilot_requests = 'read'; metadata = 'read'
+          } } | ConvertTo-Json -Depth 4
+        $response = Invoke-RestMethod -Method Post -Uri "$api/app/installations/$installationId/access_tokens" `
+          -Headers $headers -Body $body -ContentType 'application/json'
+        if (-not $response.token -or -not $response.token.StartsWith('ghs_') -or
+            $response.permissions.organization_copilot_requests -ne 'read') {
+          throw 'The scoped installation token was not issued with organization Copilot Requests: read.'
+        }
+
+        # Register the token as a secret immediately; never print it or pass it on the command line.
+        Write-Host "##vso[task.setvariable variable=ScopedCopilotAppToken;issecret=true]$($response.token)"
+        Write-Host 'Minted an Azure installation token scoped to Azure/azure-sdk-tools with organization Copilot Requests: read.'
+
+  - script: |
+      set -euo pipefail
+      if [[ "$COPILOT_GITHUB_TOKEN" != ghs_* || "$GITHUB_TOKEN" != "$COPILOT_GITHUB_TOKEN" ]]; then
+        echo 'Missing or mismatched GitHub App installation token for Vally.' >&2
+        exit 1
+      fi
+      # Do not allow inherited credentials to override the token under test.
+      unset GH_TOKEN GITHUB_COPILOT_API_TOKEN CAPI_HMAC_KEY COPILOT_HMAC_KEY
+      node --experimental-strip-types "$(Build.SourcesDirectory)/eng/common/scripts/eval/invoke-eval-shard.ts" \
+        --eval-args "$(evalArgs)" \
+        --shard-name "$(shardName)" \
+        --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
+        --threshold ${{ parameters.threshold }}
+    displayName: 'vally eval $(shardName) (installation token)'
+    workingDirectory: ${{ parameters.vallyRoot }}
+    env:
+      # Vally's executor passes COPILOT_GITHUB_TOKEN to its Copilot runtime;
+      # Vally 0.14's LLM prompt grader passes GITHUB_TOKEN as SDK gitHubToken.
+      COPILOT_GITHUB_TOKEN: $(ScopedCopilotAppToken)
+      GITHUB_TOKEN: $(ScopedCopilotAppToken)

@@ -72,15 +72,52 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        // 2.37.0 is the min version of git required by the TestProxy
+        [InlineData("path with spaces")]
+        [InlineData("path[with]brackets")]
+        [InlineData("quoted \"value\"")]
+        [InlineData("trailing\\")]
+        public void RunPreservesStructuredArguments(string value)
+        {
+            var handler = new GitProcessHandler();
+            var result = handler.Run(new[] { "-c", $"testproxy.argument={value}", "config", "--get", "testproxy.argument" }, System.IO.Path.GetTempPath());
+
+            Assert.Equal(0, result.ExitCode);
+            Assert.Equal(value, result.StdOut.Trim());
+        }
+
+        [Fact]
+        public void RunThrowsAfterExhaustingRetriableFailures()
+        {
+            var testFolder = TestHelpers.DescribeTestFolder(null, Array.Empty<string>());
+            try
+            {
+                var handler = new GitProcessHandler();
+                var exception = Assert.Throws<GitProcessException>(() => handler.Run(new[] { "cat-file", "-e", "connection reset" }, testFolder));
+
+                Assert.NotEqual(0, exception.Result.ExitCode);
+                Assert.Contains("connection reset", exception.Result.StdErr);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [Theory]
+        // 2.51.0 is the min version of git required by the TestProxy
         // Windows git version strings
-        [InlineData("git version 2.37.2.windows.2", false)]
+        [InlineData("git version 2.51.0.windows.1", false)]
+        [InlineData("git version 2.50.1.windows.1", true)]
         [InlineData("git version 2.24.0.windows.2", true)]
         // Mac git version strings
-        [InlineData("git version 2.37.1 (Apple Git-133)", false)]
+        [InlineData("git version 2.51.1 (Apple Git-133)", false)]
+        [InlineData("git version 2.50.1 (Apple Git-133)", true)]
         [InlineData("git version 1.37.1 (Apple Git-133)", true)]
         // Linux git version string
-        [InlineData("git version 2.25.0", false)]
+        [InlineData("git version 2.25.0", true)]
+        [InlineData("git version 2.51.0", false)]
+        [InlineData("git version 2.52.0", false)]
+        [InlineData("git version 3.0.0", false)]
         // Check the actual version on the machine
         [InlineData(null, false)]
         public void CheckGitVersionTests(string gitTestVersionString, bool shouldThrow)

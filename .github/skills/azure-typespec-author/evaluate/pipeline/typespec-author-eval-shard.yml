@@ -64,9 +64,9 @@ jobs:
         fetchDepth: 1
 
       - task: UseNode@1
-        displayName: 'Use Node.js 22.x'
+        displayName: 'Use Node.js 24.x'
         inputs:
-          version: 22.x
+          version: 24.x
 
       - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
         parameters:

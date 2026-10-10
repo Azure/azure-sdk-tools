@@ -27,20 +27,18 @@ stimuli:
           dest: Microsoft.Widget/Widget/employee.tsp
         - src: ../fixtures/001-share-version-new-feature/main.tsp
           dest: Microsoft.Widget/Widget/main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-          dest: node_modules
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/001-share-version-new-feature/readme.md
           dest: Microsoft.Widget/Widget/readme.md
         - src: ../fixtures/001-share-version-new-feature/shared.tsp
           dest: Microsoft.Widget/Widget/shared.tsp
         - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
           dest: Microsoft.Widget/Widget/tspconfig.yaml
+      commands:
+        - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
       - type: "tool-calls"
         config:
@@ -73,11 +71,11 @@ stimuli:
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:

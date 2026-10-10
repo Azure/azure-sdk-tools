@@ -219,7 +219,7 @@ extends:
                   ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
                   IMAGE_NAME: $(imageName)
 
-          - ${{ if ne(parameters.environment, 'preview') }}:
+          - ${{ if in(parameters.environment, 'dev', 'prod') }}:
             - job: DeployKnowledgeSync
               displayName: 'Deploy Scheduled Knowledge Sync'
               dependsOn: DeployServer

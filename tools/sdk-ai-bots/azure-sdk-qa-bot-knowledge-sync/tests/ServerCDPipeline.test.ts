@@ -8,8 +8,8 @@ const pipeline = load(readFileSync(resolve(__dirname, '../../azure-sdk-qa-bot-ag
 const stages = pipeline.extends.parameters.stages;
 const entries = stages[0].jobs;
 const server = entries.find((entry: any) => entry.job === 'DeployServer');
-const knowledge = entries.find((entry: any) => entry["${{ if ne(parameters.environment, 'preview') }}"])
-    ["${{ if ne(parameters.environment, 'preview') }}"][0];
+const knowledge = entries.find((entry: any) => entry["${{ if in(parameters.environment, 'dev', 'prod') }}"])
+    ["${{ if in(parameters.environment, 'dev', 'prod') }}"][0];
 
 describe('server CD job separation', () => {
     it('keeps the existing templates, one stage, Linux pools, and default combined deployment', () => {

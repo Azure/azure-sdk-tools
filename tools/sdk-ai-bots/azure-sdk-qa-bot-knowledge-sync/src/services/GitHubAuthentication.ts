@@ -2,6 +2,14 @@ import { createHash } from 'node:crypto';
 import { AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential } from '@azure/identity';
 import { CryptographyClient } from '@azure/keyvault-keys';
 
+interface GitHubInstallationResponse {
+    id: number;
+}
+
+interface GitHubAccessTokenResponse {
+    token: string;
+}
+
 /** Get Git authentication using an existing token or a fresh GitHub App installation token. */
 export async function getGitHubEnvironment(url: string, token?: string): Promise<NodeJS.ProcessEnv> {
     if (new URL(url).origin !== 'https://github.com') throw new Error('Expected an HTTPS GitHub repository');
@@ -37,14 +45,14 @@ async function acquireInstallationToken(): Promise<string> {
         throw new Error('GitHub App JWT signing failed; check Key Vault key signing access');
     }
     const jwt = `${unsigned}.${Buffer.from(signature).toString('base64url')}`;
-    const installation = await githubRequest(`/orgs/${encodeURIComponent(owner)}/installation`, jwt);
+    const installation = await githubRequest<GitHubInstallationResponse>(`/orgs/${encodeURIComponent(owner)}/installation`, jwt);
     if (!Number.isSafeInteger(installation.id) || installation.id <= 0) throw new Error('GitHub App installation ID missing');
-    const result = await githubRequest(`/app/installations/${installation.id}/access_tokens`, jwt, 'POST');
+    const result = await githubRequest<GitHubAccessTokenResponse>(`/app/installations/${installation.id}/access_tokens`, jwt, 'POST');
     if (typeof result.token !== 'string' || !result.token) throw new Error('GitHub installation token missing');
     return result.token;
 }
 
-async function githubRequest(route: string, jwt: string, method = 'GET'): Promise<any> {
+async function githubRequest<T>(route: string, jwt: string, method = 'GET'): Promise<T> {
     let response: Response;
     try {
         response = await fetch(`https://api.github.com${route}`, {

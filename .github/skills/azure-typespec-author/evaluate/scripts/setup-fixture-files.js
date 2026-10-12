@@ -24,6 +24,7 @@ const FIXTURE_DEPENDENCIES = [
     '@azure-tools/typespec-azure-core',
     '@azure-tools/typespec-azure-resource-manager',
     '@azure-tools/typespec-azure-rulesets',
+    '@azure-tools/typespec-client-generator-core',
     '@typespec/compiler',
     '@typespec/events',
     '@typespec/http',

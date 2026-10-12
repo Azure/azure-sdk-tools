@@ -38,7 +38,7 @@ export interface Repository {
     url: string;
     path?: string;
     branch: string;
-    authType: 'public' | 'ssh' | 'token';
+    authType: 'public' | 'ssh' | 'token' | 'local' | 'azure-devops';
     sshHost?: string;
     tokenEnvVar?: string;
     localPathEnv?: string;
@@ -87,10 +87,9 @@ export interface RepositoryConfig {
     path: string;
     branch: string;
     sparseCheckout?: string[];
-    authType?: 'public' | 'token' | 'ssh' | 'local';
+    authType?: 'public' | 'token' | 'ssh' | 'local' | 'azure-devops';
     sshHost?: string;
     token?: string;
-    localPath?: string;
 }
 
 /**
@@ -178,8 +177,7 @@ export class ConfigurationLoader {
                 sparseCheckout: sparseCheckout.length > 0 ? sparseCheckout : undefined,
                 authType: repo.authType,
                 sshHost: repo.sshHost,
-                token: repo.tokenEnvVar ? process.env[repo.tokenEnvVar] : undefined,
-                localPath: repo.localPathEnv ? process.env[repo.localPathEnv] : undefined
+                token: repo.tokenEnvVar ? process.env[repo.tokenEnvVar] : undefined
             });
         }
 

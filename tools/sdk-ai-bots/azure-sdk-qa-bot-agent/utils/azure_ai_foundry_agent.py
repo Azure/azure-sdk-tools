@@ -167,6 +167,9 @@ class HostedAgentClient:
                 trace_id = self._extract_trace_id(stream)
                 await self.close_stream(stream)
                 return trace_id, response
+            except asyncio.CancelledError:
+                await self.close_stream(stream)
+                raise
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
                 await self.close_stream(stream)

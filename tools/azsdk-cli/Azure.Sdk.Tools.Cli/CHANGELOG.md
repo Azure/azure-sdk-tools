@@ -1,21 +1,17 @@
 # Release History
 
-## 0.6.53 (Unreleased)
+## 0.6.53 (2026-10-12)
 
 ### Features Added
 
 - `release-plan update-release-status` resolves the release plan from a supplied `--release-plan-id` first, then from a supplied `--sdk-pull-request` linked to exactly one in-progress plan, and validates the language/package entry inside that plan. Only when neither input is supplied does the original package-name lookup run as a transitional fallback and log `LEGACY_RELEASE_PLAN_LOOKUP`, so existing release pipelines keep working. No API version is required.
 - Added support for Attestation Status field updates in Product Onboarding.
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or SDK PR never falls back to the package lookup, including invalid or unlinked SDK PRs.
 - Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
 - Fixed serialization for ADO `Sku` product type in Product Onboarding.
-
-### Other Changes
 
 ## 0.6.52 (2026-10-05)
 

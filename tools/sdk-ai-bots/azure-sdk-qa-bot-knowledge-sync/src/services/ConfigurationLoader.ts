@@ -38,9 +38,22 @@ export interface Repository {
     url: string;
     path?: string;
     branch: string;
-    authType: 'public' | 'ssh' | 'token' | 'azure-devops';
+    authType: 'public' | 'ssh' | 'token' | 'local' | 'azure-devops';
     sshHost?: string;
     tokenEnvVar?: string;
+    localPathEnv?: string;
+    issueTracker?: GitHubIssueTracker | AzureDevOpsIssueTracker;
+}
+
+export interface GitHubIssueTracker {
+    provider: 'github';
+    repository: string;
+}
+
+export interface AzureDevOpsIssueTracker {
+    provider: 'azure-devops';
+    organization: string;
+    project: string;
 }
 
 export interface Source {
@@ -74,7 +87,7 @@ export interface RepositoryConfig {
     path: string;
     branch: string;
     sparseCheckout?: string[];
-    authType?: 'public' | 'token' | 'ssh' | 'azure-devops';
+    authType?: 'public' | 'token' | 'ssh' | 'local' | 'azure-devops';
     sshHost?: string;
     token?: string;
 }

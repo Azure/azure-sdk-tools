@@ -13,6 +13,7 @@ from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 from dotenv import load_dotenv
 
@@ -33,6 +34,7 @@ from models.qa_dashboard import (
     QAOverview,
 )
 from models.qa_record import QAStatus
+from services.activity_converter_service import ActivityConverterService
 from services.bot_config_service import BotConfigService
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
@@ -146,6 +148,7 @@ async def request_id_middleware(request: Request, call_next):
 
 
 _chat_service = ChatService()
+_activity_converter_service = ActivityConverterService()
 _bot_config_service = BotConfigService()
 _conversation_service = ConversationService()
 _feedback_service = FeedbackService()
@@ -300,6 +303,17 @@ async def handle_intention(req: IntentionRequest):
         req.message.content[:200],
     )
     return await _intention_service.classify(req)
+
+
+@app.post("/activity/convert")
+async def convert_activity(req: dict[str, Any]):
+    """Convert a Microsoft Graph chatMessage into a Bot Framework Activity."""
+    logger.info(
+        "Activity conversion request: message=%s, channel=%s",
+        req.get("id"),
+        (req.get("channelIdentity") or {}).get("channelId"),
+    )
+    return _activity_converter_service.convert_to_activity(req)
 
 
 @app.post("/conversation/save", response_model=SaveConversationMessageResponse)

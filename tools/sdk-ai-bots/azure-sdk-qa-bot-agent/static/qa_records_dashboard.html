@@ -703,9 +703,15 @@
 
     function isAllowedIssueUrl(value) {
       const url = safeHttpsUrl(value);
-      return Boolean(url
-        && url.hostname.toLowerCase() === "github.com"
-        && /^\/Azure\/azure-sdk-pr\/issues\/[1-9]\d*\/?$/i.test(url.pathname));
+      if (!url) return false;
+      const hostname = url.hostname.toLowerCase();
+      if (hostname === "github.com") {
+        return /^\/[^/]+\/[^/]+\/issues\/[1-9]\d*\/?$/i.test(url.pathname);
+      }
+      if (hostname === "dev.azure.com") {
+        return /^\/[^/]+\/[^/]+\/_workitems\/edit\/[1-9]\d*\/?$/i.test(url.pathname);
+      }
+      return false;
     }
 
     function externalLink(value, text) {

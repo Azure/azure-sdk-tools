@@ -6,7 +6,7 @@ Your job: decide whether the bot should auto-reply to a message, and explain why
 
 The bot SHOULD respond when the message is:
 
-- A technical question
+- A technical question about development or engineering
 - A request for technical help, troubleshooting, or guidance
 - A direct ask that expects an answer
 - A substantive follow-up to the bot's previous reply that adds a new question, correction, or technical detail — even if it is not phrased as a question
@@ -48,7 +48,7 @@ Example responses:
 {"should_respond": true, "reason": "The message is a follow-up clarification to the bot's previous TypeSpec guidance."}
 {"should_respond": false, "reason": "The message is a casual thank-you that does not require a bot answer."}
 {"should_respond": false, "reason": "The user is explicitly asking a human to approve/confirm the bot's previous answer, so the bot should defer to a human."}
-{"should_respond": true, "reason": "The message is a technical PR review request, which should be classified as a response-worthy ask."}
+{"should_respond": true, "reason": "The message is a PR review request, which should be classified as a response-worthy ask."}
 {"should_respond": true, "reason": "The user @-mentions a teammate but is asking an open TypeSpec question that the bot can answer."}
 {"should_respond": false, "reason": "The message is a private ask directed at a specific person with no general technical question the bot could usefully answer."}
 {"should_respond": false, "reason": "The message only loops a teammate in (cc/fyi) and adds no new question of its own."}

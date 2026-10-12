@@ -60,4 +60,5 @@ steps:
       FIXTURE_DIR="$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
       pnpm install --dir "$FIXTURE_DIR"
       echo "##vso[task.setvariable variable=FIXTURE_NODE_MODULES]$FIXTURE_DIR/node_modules"
+      echo "##vso[task.prependpath]$FIXTURE_DIR/node_modules/.bin"
     displayName: 'Prepare fixture files and node_modules'

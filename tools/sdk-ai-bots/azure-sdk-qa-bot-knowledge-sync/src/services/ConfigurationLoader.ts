@@ -42,6 +42,18 @@ export interface Repository {
     sshHost?: string;
     tokenEnvVar?: string;
     localPathEnv?: string;
+    issueTracker?: GitHubIssueTracker | AzureDevOpsIssueTracker;
+}
+
+export interface GitHubIssueTracker {
+    provider: 'github';
+    repository: string;
+}
+
+export interface AzureDevOpsIssueTracker {
+    provider: 'azure-devops';
+    organization: string;
+    project: string;
 }
 
 export interface Source {

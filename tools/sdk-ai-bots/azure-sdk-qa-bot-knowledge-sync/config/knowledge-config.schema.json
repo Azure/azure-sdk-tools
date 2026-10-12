@@ -79,6 +79,10 @@
         "localPathEnv": {
           "type": "string",
           "description": "Environment variable containing local repository path (required for local auth)"
+        },
+        "issueTracker": {
+          "$ref": "#/$defs/IssueTracker",
+          "description": "Optional issue tracker for knowledge defects. Omit when the source cannot accept issues."
         }
       },
       "required": ["url", "branch", "authType"],
@@ -95,6 +99,43 @@
           "then": {
             "required": ["sshHost"]
           }
+        }
+      ]
+    },
+    "IssueTracker": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "const": "github"
+            },
+            "repository": {
+              "type": "string",
+              "pattern": "^[^/]+/[^/]+$",
+              "description": "GitHub owner/repository that accepts knowledge issues"
+            }
+          },
+          "required": ["provider", "repository"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "const": "azure-devops"
+            },
+            "organization": {
+              "type": "string",
+              "minLength": 1
+            },
+            "project": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["provider", "organization", "project"],
+          "additionalProperties": false
         }
       ]
     },

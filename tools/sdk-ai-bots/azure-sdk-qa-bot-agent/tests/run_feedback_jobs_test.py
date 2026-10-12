@@ -223,7 +223,7 @@ async def test_run_validates_only_after_issue_closes(
         ),
         patch.object(
             run_feedback_jobs,
-            "get_github_issue_state",
+            "get_issue_state",
             new=AsyncMock(return_value="closed"),
         ),
         patch.object(

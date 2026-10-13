@@ -39,6 +39,24 @@ The application uses `config/knowledge-config.json` to define which repositories
 - Documentation paths within repositories  
 - Processing options and filters
 
+`path` may select a directory or an individual Markdown file.
+`relativeByRepoPath: true` keeps blob filenames relative to the repository root
+for citations; it does not expand the scan beyond the selected `path`.
+Multiple entries may share a destination folder, but their selected paths should
+not overlap, especially when assigning different metadata.
+
+The .NET source retains `/doc` and the Resource Manager docs and adds narrowly
+selected C# emitter docs/READMEs, the `mitigate-breaking-changes` and
+`mgmt-review-comment-resolution` skill directories (including any Markdown
+references), the Azure.Core test framework README, test proxy onboarding,
+tsp-client README, and client customization guidance. All use
+`azure_sdk_for_net_docs` with repository-relative citations. Upstream
+`microsoft/typespec` C# emitter docs use the separate
+`typespec_csharp_emitter_docs` folder and `scope: unbranded`.
+
+Changing configuration does not itself index or deploy these sources. Do not run
+sync against a partial source list: sync removes blobs absent from its results.
+
 ## Building and Running
 
 ### Prerequisites

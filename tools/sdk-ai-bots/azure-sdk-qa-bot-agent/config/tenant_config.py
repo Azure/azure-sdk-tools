@@ -71,6 +71,7 @@ SRC_STATIC_CPEX_DOCS = "static_cpex_docs"
 # -- SDK language docs --
 SRC_AZURE_SDK_FOR_PYTHON_DOCS = "azure_sdk_for_python_docs"
 SRC_AZURE_SDK_FOR_NET_DOCS = "azure_sdk_for_net_docs"
+SRC_TYPESPEC_CSHARP_EMITTER_DOCS = "typespec_csharp_emitter_docs"
 SRC_AZURE_SDK_FOR_GO_DOCS = "azure_sdk_for_go_docs"
 SRC_AZURE_SDK_FOR_JAVA_DOCS = "azure_sdk_for_java_docs"
 SRC_AZURE_SDK_FOR_JAVA_WIKI = "azure_sdk_for_java_wiki"
@@ -226,8 +227,13 @@ _register(
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_NET_DOCS,
-        description="Azure SDK for .NET documentation covering installation, usage patterns, and API reference.",
+        description="Azure SDK for .NET development documentation covering C# emitters, TypeSpec customization, management SDK review and compatibility skills, testing, and test proxy onboarding.",
         base_url="https://github.com/Azure/azure-sdk-for-net/blob/main/",
+    ),
+    KnowledgeSource(
+        name=SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
+        description="Upstream unbranded TypeSpec C# emitter usage and customization documentation. Use alongside the Azure .NET emitter guidance, checking the package and emitter version.",
+        base_url="https://github.com/microsoft/typespec/blob/main/packages/http-client-csharp/.tspd/docs/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_GO_DOCS,
@@ -460,6 +466,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_NET_DOCS,
+            SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
             SRC_AZURE_SDK_GUIDELINES,
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,
@@ -470,7 +477,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-csharp', 'title') or search.ismatch('generate*', 'title')",
             SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
-        qa_guideline_file="tenants/language_channel.md",
+        qa_guideline_file="tenants/language_dotnet.md",
     ),
     TenantID.GOLANG_CHANNEL_QA_BOT: TenantConfig(
         display_name="Go SDK",

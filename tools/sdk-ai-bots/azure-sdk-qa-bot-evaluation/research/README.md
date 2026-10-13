@@ -10,6 +10,13 @@ The existing `offline-evaluation.yml` keeps its normal behavior when
 candidate branch with `scenarios: [apispec]`, a selected `researchProfile`,
 `researchSnapshot`, and `researchDataset` template parameters.
 
+For this pipeline's Runs REST API, send the template parameter values as strings;
+JSON-encode the object/array values. Native nested JSON values were silently
+ignored in qualification, including the profile selection. Before queuing, verify
+the preview contains the selected `QA_RESEARCH_PROFILE`, the full decoded snapshot
+and case array, the API-spec job only, and the research holdout step. After queuing,
+verify the build's recorded template parameters and source commit as well.
+
 `researchSnapshot` is a source-reviewed, frozen snapshot object containing
 `captured_utc`, `source_revision`, and `contract`. The contract includes the
 configuration facts and five SDK-tools source paths/URLs/SHA-256 checksums.

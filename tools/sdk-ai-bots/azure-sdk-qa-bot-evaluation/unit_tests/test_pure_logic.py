@@ -247,8 +247,11 @@ def test_output_items_to_rows_builtin_and_composite():
 def test_output_items_to_rows_groundedness_fail():
     output_items = [
         {
-            "datasource_item": {"testcase": "t2", "ground_truth": "gt", "response": "x"},
-            "results": [{"name": "groundedness", "score": 1.0, "passed": False}],
+            "datasource_item": {"testcase": "t2", "ground_truth": "gt", "response": "x", "context": "source"},
+            "results": [{
+                "name": "groundedness", "score": 1.0, "passed": False,
+                "sample": {"input": [{"content": '{"context":"source","response":"x"}'}]},
+            }],
         }
     ]
     rows = output_items_to_rows(output_items, ["groundedness"])["rows"]
@@ -385,7 +388,12 @@ def test_resolve_tenant_for_scenario():
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
-    assert resolve_tenant_for_scenario("typespec", None) is None
+    try:
+        resolve_tenant_for_scenario("typespec", None)
+    except ValueError as exc:
+        assert "channel->tenant map" in str(exc)
+    else:
+        raise AssertionError("expected ValueError for missing routing map")
 
 
 def test_output_items_to_rows_completion_item_response():

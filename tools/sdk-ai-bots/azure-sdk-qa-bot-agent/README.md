@@ -29,6 +29,14 @@ The project has three independently runnable components:
 
 > Both hosted agents bind port `8088`. Run **one at a time** locally.
 
+For evaluation callers, `/completion` with `with_full_context: true` returns
+document content from every `search_knowledge_base` and `wiki_search` call,
+including hosted-agent `function_call_output` items and the legacy message format.
+Text `additional_infos` are included unchanged with
+`document_source: "user_provided"`; this identifies supplied evidence, not verified authority.
+Questions, generated answers, link-only metadata, and images are not substituted
+for source content. Without evidence, `full_context` remains absent.
+
 ## Getting Started
 
 ### Prerequisites

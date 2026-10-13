@@ -543,10 +543,12 @@ class ChatService:
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
-        search = tool_results.get("search_knowledge_base")
-        tool_references = (
-            search.results if isinstance(search, SearchKnowledgeBaseResult) else []
-        )
+        tool_references = [
+            reference
+            for name in ("search_knowledge_base", "wiki_search")
+            if isinstance(search := tool_results.get(name), SearchKnowledgeBaseResult)
+            for reference in search.results
+        ]
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
@@ -560,16 +562,25 @@ class ChatService:
             output_text, tool_references
         )
 
-        # Build full_context from search tool results when requested.
+        # Build full_context from evidence actually supplied to the agent.
         # Keys use "document_" prefix for compatibility with the eval pipeline.
         full_context = None
-        if req.with_full_context and tool_references:
-            full_context = json.dumps(
-                [
-                    DocumentContext.from_reference(r).model_dump(mode="json")
-                    for r in tool_references
-                ]
+        if req.with_full_context:
+            documents = [DocumentContext.from_reference(r) for r in tool_references]
+            documents.extend(
+                DocumentContext(
+                    document_title="Additional information",
+                    document_link=info.link or "",
+                    document_source="user_provided",
+                    document_content=info.content,
+                )
+                for info in req.additional_infos or []
+                if info.type == AdditionalInfoType.Text and info.content.strip()
             )
+            if documents:
+                full_context = json.dumps(
+                    [document.model_dump(mode="json") for document in documents]
+                )
 
         resp = ChatResponse(
             id=response.id,
@@ -702,11 +713,15 @@ class ChatService:
 
         # Decode each tool output using its registered response model
         for item in items:
-            if not isinstance(item, ResponseOutputMessage):
+            if item.type == "function_call_output":
+                call_id = getattr(item, "call_id", "") or ""
+                output = getattr(item, "output", None)
+            elif isinstance(item, ResponseOutputMessage):
+                extras = item.model_extra or {}
+                call_id = extras.get("call_id") or ""
+                output = extras.get("output", None)
+            else:
                 continue
-            extras = item.model_extra or {}
-            call_id = extras.get("call_id") or ""
-            output = extras.get("output", None)
             tool_name = call_id_to_name.get(call_id, "") if call_id else ""
             if not tool_name or not output:
                 continue
@@ -718,7 +733,14 @@ class ChatService:
             try:
                 json_str = self._unwrap_json(output)
                 if json_str:
-                    results[tool_name] = response_model.model_validate_json(json_str)
+                    decoded = response_model.model_validate_json(json_str)
+                    previous = results.get(tool_name)
+                    if isinstance(previous, SearchKnowledgeBaseResult) and isinstance(
+                        decoded, SearchKnowledgeBaseResult
+                    ):
+                        previous.results.extend(decoded.results)
+                    else:
+                        results[tool_name] = decoded
             except Exception as e:
                 logger.warning("Failed to decode tool output for %s: %s", tool_name, e)
 

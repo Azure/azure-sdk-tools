@@ -50,9 +50,11 @@ class EvalsResult:
 
         pass_rates: dict[str, int] = {}
         fail_rates: dict[str, int] = {}
+        not_assessable_rates: dict[str, int] = {}
         for metric in metrics:
             pass_rates[metric] = 0
             fail_rates[metric] = 0
+            not_assessable_rates[metric] = 0
 
         for row in result["rows"]:
             row_result: dict[str, Any] = {}
@@ -89,6 +91,8 @@ class EvalsResult:
                                 pass_rates[metric] += 1 #record to pass rate if the testcase is suppressed.
                         if value == "pass":
                             pass_rates[metric] += 1
+                        if value == "not_assessable":
+                            not_assessable_rates[metric] += 1
 
                     if key == f"outputs.{metric}.{metric}":
                         row_result[metric_name] = float(value)
@@ -101,6 +105,8 @@ class EvalsResult:
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):
             summary_result[f"{key}_fail_rate"] = value
+        for key, value in not_assessable_rates.items():
+            summary_result[f"{key}_not_assessable_rate"] = value
 
         run_result.append(summary_result)
         return run_result
@@ -148,9 +154,11 @@ class EvalsResult:
             if baseline_results is not None and testcase in baseline_results:
                 base = baseline_results[testcase]
                 for metric in metrics:
-                    metric_score = float(result[f"{metric}"]) if f"{metric}" in result else -1
+                    metric_score = float(result[metric]) if metric in result else None
                     base_score = base[f"{metric}"] if f"{metric}" in base else None
-                    if base_score is not None:
+                    if metric_score is None:
+                        values.append("N/A")
+                    elif base_score is not None:
                         values.append(
                             f"{metric_score:.2f}{EvalsResult.format_terminal_diff(metric_score, float(base_score))}"
                         )
@@ -167,8 +175,8 @@ class EvalsResult:
                         values.append(f"{metric_result}")
             else:
                 for metric in metrics:
-                    metric_score = result[f"{metric}"] if f"{metric}" in result else -1
-                    values.append(f"{metric_score:.2f}")
+                    metric_score = result.get(metric)
+                    values.append(f"{metric_score:.2f}" if metric_score is not None else "N/A")
                     fields = self._metrics[metric]
                     if fields:
                         for field in fields:
@@ -251,10 +259,12 @@ class EvalsResult:
             for metric in metrics:
                 pass_rate = test_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in test_results[-1] else 0
                 fail_rate = test_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in test_results[-1] else 0
+                not_assessable_rate = test_results[-1].get(f"{metric}_not_assessable_rate", 0)
+
                 # workaround: for groundedness, only caculate the `fail`
                 metric_ret = EvalReturnCode.SUCCESS
                 if metric == "groundedness":
-                    if fail_rate > 0:
+                    if fail_rate > 0 or not_assessable_rate > 0:
                         metric_ret = EvalReturnCode.FAIL
                 else:
                     if pass_rate < test_results[-1]["total_evals"]:

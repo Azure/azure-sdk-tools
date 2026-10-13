@@ -116,6 +116,10 @@ async def _run(args: argparse.Namespace) -> None:
         logger.info("Agent processing disabled; ingestion completed only")
         return
 
+    await evolution_service.recover_stale_jobs(
+        tenant_id=args.tenant, excluded_channels=excluded_channels
+    )
+
     counts = {
         "ongoing": 0,
         "finished": 0,

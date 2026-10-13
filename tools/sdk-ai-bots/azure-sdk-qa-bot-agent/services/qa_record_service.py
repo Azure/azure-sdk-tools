@@ -14,7 +14,6 @@ from typing import Sequence
 from models.conversation import (
     ConversationDocumentType,
     ConversationMessageItem,
-    Role,
 )
 from models.qa_record import FeedbackStatus, QARecord, QAStatus
 from utils.azure_cosmosdb import (
@@ -22,6 +21,7 @@ from utils.azure_cosmosdb import (
     query_qa_records_by_qa_status,
     query_qa_records_by_feedback_status,
     read_qa_record,
+    replace_qa_record_if_unchanged,
     upsert_qa_record,
 )
 
@@ -38,7 +38,7 @@ class QARecordService:
         start: datetime,
         end: datetime,
     ) -> list[ConversationMessageItem]:
-        """Return full threads with a bot message in the scan window."""
+        """Return full threads with any message in the scan window."""
         if start.tzinfo is not None:
             start = start.astimezone(timezone.utc)
         if end.tzinfo is not None:
@@ -51,17 +51,12 @@ class QARecordService:
         window_query = (
             "SELECT c.conversation_partition AS partition FROM c "
             "WHERE c.document_type = @dtype "
-            "AND ARRAY_CONTAINS(@bot_roles, c.sender_role) "
             "AND c.created_at >= @start AND c.created_at < @end"
         )
         window_params: list[dict[str, object]] = [
             {
                 "name": "@dtype",
                 "value": ConversationDocumentType.message.value,
-            },
-            {
-                "name": "@bot_roles",
-                "value": [Role.System.value, Role.Assistant.value],
             },
             {"name": "@start", "value": start.isoformat()},
             {"name": "@end", "value": end.isoformat()},
@@ -143,7 +138,9 @@ class QARecordService:
             if existing.qa_status in (QAStatus.finished, QAStatus.failed):
                 # Concluded threads are immutable to the scanner.
                 if needs_creation_time_backfill:
-                    await upsert_qa_record(existing.to_cosmos())
+                    await replace_qa_record_if_unchanged(
+                        existing.to_cosmos(), etag=existing_doc["_etag"]
+                    )
                 touched.append(existing)
                 continue
 
@@ -153,8 +150,10 @@ class QARecordService:
             existing.has_expert_reply = candidate.has_expert_reply
             existing.last_activity_at = candidate.last_activity_at
             existing.updated_at = _now()
-            await upsert_qa_record(existing.to_cosmos())
-            touched.append(existing)
+            if await replace_qa_record_if_unchanged(
+                existing.to_cosmos(), etag=existing_doc["_etag"]
+            ):
+                touched.append(existing)
         return touched
 
     def build_record(

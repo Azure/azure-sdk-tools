@@ -5,7 +5,8 @@ from __future__ import annotations
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -26,11 +27,13 @@ from models.feedback import (
     ChatbotEvolutionAgentMode,
     ChatbotEvolutionAgentOutcome,
     ChatbotEvolutionAgentResult,
+    FoundryAgentReference,
     RootCauseClassification,
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
+from utils.azure_ai_foundry_agent import HostedAgentClient
 from utils.knowledge_config import KbIssueTarget, KbTarget
 
 _CONVERSATION_ID = "conv-qa-test"
@@ -180,6 +183,168 @@ def test_build_record_without_bot_answer_is_none() -> None:
     assert QARecordService().build_record(
         [_msg(Role.User, "poster-1", "Anyone there?", 0)]
     ) is None
+
+
+@pytest.mark.asyncio
+async def test_scan_fetches_full_thread_after_human_only_activity() -> None:
+    human = _msg(Role.User, "poster-1", "Follow-up?", 2)
+    human.created_at = _BASE_TIME + timedelta(days=1)
+    items = [
+        _msg(Role.User, "poster-1", "Question?", 0),
+        _msg(Role.System, "bot", "Answer.", 1, tenant_id="typespec"),
+        human,
+    ]
+
+    async def rows(values):
+        for value in values:
+            yield value
+
+    container = MagicMock()
+    container.query_items.side_effect = [
+        rows([{"partition": _PARTITION}]),
+        rows([item.model_dump(mode="json") for item in items]),
+    ]
+    with patch(
+        "services.qa_record_service.get_conversation_message_container",
+        new=AsyncMock(return_value=container),
+    ):
+        actual = await QARecordService().get_messages_in_period(
+            human.created_at, human.created_at + timedelta(days=1)
+        )
+
+    assert actual == items
+    window = container.query_items.call_args_list[0].kwargs
+    assert "sender_role" not in window["query"]
+    assert not any(param["name"] == "@bot_roles" for param in window["parameters"])
+    record = QARecordService().build_record(actual)
+    assert record is not None
+    assert record.last_activity_at == human.created_at
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("qa_status", [QAStatus.ongoing, QAStatus.finished, QAStatus.failed])
+async def test_refresh_updates_only_ongoing_thread_metadata(qa_status: QAStatus) -> None:
+    record = _record(qa_status=qa_status, feedback_status=None)
+    record.conversation_created_at = _BASE_TIME
+    record.last_activity_at = _BASE_TIME + timedelta(minutes=1)
+    record.message_count = 2
+    doc = {**record.to_cosmos(), "_etag": "old-etag"}
+    items = [
+        _msg(Role.User, "poster", "Question?", 0),
+        _msg(Role.System, "bot", "Answer.", 1, tenant_id="typespec"),
+        _msg(Role.User, "poster", "New follow-up?", 2),
+    ]
+    replace = AsyncMock(return_value=True)
+    upsert = AsyncMock()
+    with (
+        patch("services.qa_record_service.read_qa_record", new=AsyncMock(return_value=doc)),
+        patch("services.qa_record_service.replace_qa_record_if_unchanged", new=replace),
+        patch("services.qa_record_service.upsert_qa_record", new=upsert),
+    ):
+        touched = await QARecordService().upsert_threads_from_messages(items)
+
+    assert len(touched) == 1
+    upsert.assert_not_awaited()
+    if qa_status == QAStatus.ongoing:
+        replace.assert_awaited_once()
+        write = replace.await_args
+        assert write is not None
+        assert write.kwargs["etag"] == "old-etag"
+        updated = QARecord.from_cosmos(write.args[0])
+        assert updated.last_activity_at == items[-1].created_at
+        assert updated.message_count == 3
+        assert updated.feedback is None
+    else:
+        replace.assert_not_awaited()
+        assert touched[0].last_activity_at == record.last_activity_at
+
+
+@pytest.mark.asyncio
+async def test_metadata_refresh_does_not_overwrite_concurrent_feedback() -> None:
+    record = _record(feedback_status=None)
+    record.conversation_created_at = _BASE_TIME
+    doc = {**record.to_cosmos(), "_etag": "old-etag"}
+    replace = AsyncMock(return_value=False)
+    with (
+        patch("services.qa_record_service.read_qa_record", new=AsyncMock(return_value=doc)),
+        patch("services.qa_record_service.replace_qa_record_if_unchanged", new=replace),
+    ):
+        assert await QARecordService().upsert_threads_from_messages(
+            [_msg(Role.System, "bot", "Answer.", 1, tenant_id="typespec")]
+        ) == []
+    replace.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "mode", [ChatbotEvolutionAgentMode.analysis, ChatbotEvolutionAgentMode.validation]
+)
+@pytest.mark.parametrize("status", [FeedbackStatus.created, FeedbackStatus.running])
+async def test_recovery_makes_abandoned_jobs_retryable(
+    mode: ChatbotEvolutionAgentMode, status: FeedbackStatus,
+) -> None:
+    record = _record(feedback_status=status)
+    assert record.feedback is not None
+    record.feedback.updated_at = _BASE_TIME - timedelta(minutes=20)
+    record.feedback.created_at = record.feedback.updated_at
+    if mode == ChatbotEvolutionAgentMode.validation:
+        record.qa_status = QAStatus.failed
+        record.verdict = BotAnswerVerdict.Incorrect
+        record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/123"
+    doc = {**record.to_cosmos(), "_etag": "old-etag"}
+    query = AsyncMock(side_effect=[[doc], []] if status == FeedbackStatus.created else [[], [doc]])
+    replace = AsyncMock(return_value=True)
+    service = ChatbotEvolutionAgentService()
+    service._invoke_agent = AsyncMock()
+    with (
+        patch("services.chatbot_evolution_agent_service._now", return_value=_BASE_TIME),
+        patch("services.chatbot_evolution_agent_service.query_qa_records_by_feedback_status", new=query),
+        patch("services.chatbot_evolution_agent_service.replace_qa_record_if_unchanged", new=replace),
+    ):
+        assert await service.recover_stale_jobs(tenant_id="typespec") == 1
+
+    assert all(call.kwargs["tenant_id"] == "typespec" for call in query.await_args_list)
+    write = replace.await_args
+    assert write is not None
+    assert write.kwargs["etag"] == "old-etag"
+    recovered = QARecord.from_cosmos(write.args[0])
+    assert recovered.feedback is not None
+    assert recovered.feedback.status == FeedbackStatus.failed
+    assert recovered.feedback.error == f"agent_{mode.value}_abandoned: inactive for at least 20 minutes"
+    assert recovered.feedback.issue_url == record.feedback.issue_url
+    assert ChatbotEvolutionAgentService._can_run(recovered, mode)
+    if mode == ChatbotEvolutionAgentMode.analysis:
+        assert recovered.verdict == BotAnswerVerdict.Unknown
+    else:
+        assert recovered.verdict == BotAnswerVerdict.Incorrect
+    service._invoke_agent.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("age_minutes", "excluded", "write_succeeds", "writes"),
+    [(19, False, True, 0), (20, True, True, 0), (20, False, False, 1)],
+)
+async def test_recovery_preserves_active_excluded_or_changed_jobs(
+    age_minutes: int, excluded: bool, write_succeeds: bool, writes: int,
+) -> None:
+    record = _record()
+    assert record.feedback is not None
+    record.feedback.updated_at = _BASE_TIME - timedelta(minutes=age_minutes)
+    doc = {**record.to_cosmos(), "_etag": "old-etag"}
+    replace = AsyncMock(return_value=write_succeeds)
+    with (
+        patch("services.chatbot_evolution_agent_service._now", return_value=_BASE_TIME),
+        patch(
+            "services.chatbot_evolution_agent_service.query_qa_records_by_feedback_status",
+            new=AsyncMock(side_effect=[[], [doc]]),
+        ),
+        patch("services.chatbot_evolution_agent_service.replace_qa_record_if_unchanged", new=replace),
+    ):
+        assert await ChatbotEvolutionAgentService().recover_stale_jobs(
+            excluded_channels={_CONVERSATION_ID} if excluded else set()
+        ) == 0
+    assert replace.await_count == writes
 
 
 def test_build_record_captures_channel_id_from_extra_info() -> None:
@@ -745,6 +910,123 @@ def test_agent_result_rejects_removed_fields() -> None:
                 "verdict": BotAnswerVerdict.Correct,
             }
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "mode",
+    [ChatbotEvolutionAgentMode.analysis, ChatbotEvolutionAgentMode.validation],
+)
+@pytest.mark.parametrize("poll_for_text", [False, True])
+async def test_evolution_consumes_shared_response_stream(
+    mode: ChatbotEvolutionAgentMode,
+    poll_for_text: bool,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    outcome = (
+        ChatbotEvolutionAgentOutcome.issue_created
+        if mode == ChatbotEvolutionAgentMode.analysis
+        else ChatbotEvolutionAgentOutcome.validation_passed
+    )
+    result_text = _result(outcome).model_dump_json()
+    payload = ChatbotEvolutionAgentInput(
+        conversation_id=_CONVERSATION_ID,
+        conversation_type=ConversationType.teams_channel,
+        evaluation_time=_BASE_TIME,
+        mode=mode,
+        issue_url=(
+            "https://github.com/Azure/azure-sdk-pr/issues/123"
+            if mode == ChatbotEvolutionAgentMode.validation
+            else None
+        ),
+    )
+    response = SimpleNamespace(
+        id="resp-evolution",
+        status="completed",
+        output_text=result_text,
+        error=None,
+    )
+    completed = (
+        SimpleNamespace(id=response.id, status="completed", output_text="")
+        if poll_for_text
+        else response
+    )
+    stream = MagicMock()
+    stream.__aiter__.return_value = [
+        SimpleNamespace(type="response.created"),
+        SimpleNamespace(type="response.output_text.delta", delta="partial"),
+        SimpleNamespace(type="response.completed", response=completed),
+    ]
+    stream.close = AsyncMock()
+    stream.response.headers = {"x-request-id": "trace-evolution"}
+    project = MagicMock()
+    client = project.get_openai_client.return_value
+    client.responses.create = AsyncMock(return_value=stream)
+    client.responses.retrieve = AsyncMock(return_value=response)
+    service = ChatbotEvolutionAgentService(project_client=project)
+    reference = FoundryAgentReference(name="evolution", version="14")
+    service._resolve_agent_reference = AsyncMock(return_value=reference)
+    caplog.set_level("INFO", logger="services.chatbot_evolution_agent_service")
+
+    with (
+        patch(
+            "services.chatbot_evolution_agent_service.HostedAgentClient",
+            wraps=HostedAgentClient,
+        ) as shared_client,
+        patch("utils.azure_ai_foundry_agent.asyncio.sleep", new=AsyncMock()),
+    ):
+        actual = await service._invoke_agent(payload)
+
+    assert actual == result_text
+    shared_client.assert_called_once_with(
+        client, max_retries=1, stream_timeout=600
+    )
+    project.get_openai_client.assert_called_once_with(
+        agent_name="azure-sdk-chatbot-evolution-agent"
+    )
+    client.responses.create.assert_awaited_once_with(
+        input=[
+            {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": payload.to_json()}],
+            }
+        ],
+        store=True,
+        stream=True,
+        extra_body={"agent_reference": reference.to_extra_body()},
+    )
+    if poll_for_text:
+        client.responses.retrieve.assert_awaited_once_with(response.id)
+    else:
+        client.responses.retrieve.assert_not_awaited()
+    stream.close.assert_awaited_once()
+    assert "trace_id=trace-evolution, response_id=resp-evolution" in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "event_type", ["response.failed", "response.incomplete", "response.in_progress"]
+)
+async def test_evolution_does_not_retry_unfinished_stream(event_type: str) -> None:
+    stream = MagicMock()
+    stream.__aiter__.return_value = [SimpleNamespace(type=event_type)]
+    stream.close = AsyncMock()
+    project = MagicMock()
+    client = project.get_openai_client.return_value
+    client.responses.create = AsyncMock(return_value=stream)
+    service = ChatbotEvolutionAgentService(project_client=project)
+    service._resolve_agent_reference = AsyncMock(
+        return_value=FoundryAgentReference(name="evolution", version="14")
+    )
+    payload = service._build_input(_record(), ChatbotEvolutionAgentMode.analysis)
+
+    with pytest.raises(RuntimeError, match="after 1 attempts") as exc:
+        await service._invoke_agent(payload)
+
+    assert "without a response.completed event" in str(exc.value.__cause__)
+    client.responses.create.assert_awaited_once()
+    stream.close.assert_awaited_once()
 
 
 @pytest.mark.asyncio

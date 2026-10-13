@@ -13,7 +13,9 @@ The existing APIView CI pipeline validates changes to this project. To publish
 with **Publish to the Java dev feed** enabled.
 
 Publishing a version is immutable. Before releasing a new package, update the version in `pom.xml`, the `JavaProcessor` path in `../../dotnet/APIView/APIViewWeb/APIViewWeb.csproj`, and `VersionString` in `../../dotnet/APIView/APIViewWeb/Languages/JavaLanguageService.cs`.
-The pipeline publishes only to the Azure Artifacts Java dev feed, not Maven Central.
+The pipeline signs and verifies the JAR through ESRP before publishing it to the Azure Artifacts
+Java dev feed, not Maven Central. The pipeline must be authorized to use the
+**Azure SDK PME Managed Identity** service connection for signing.
 
 ## How To Use
 

@@ -62,7 +62,7 @@ extends:
                   ArtifactPath: $(Build.ArtifactStagingDirectory)/apiview-java-processor
 
       - stage: PublishDevFeed
-        displayName: Publish to Java dev feed
+        displayName: Sign and publish to Java dev feed
         dependsOn: Build
         condition: |
           and(
@@ -78,7 +78,7 @@ extends:
 
         jobs:
           - job: PublishDevFeed
-            displayName: Publish Maven package
+            displayName: Sign and publish Maven package
             pool:
               name: $(WINDOWSPOOL)
               image: $(WINDOWSVMIMAGE)
@@ -123,6 +123,46 @@ extends:
                 displayName: Validate package version
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+              - task: EsrpCodeSigning@6
+                displayName: Sign and verify JAR via ESRP
+                inputs:
+                  ConnectedServiceName: Azure SDK PME Managed Identity
+                  UseMSIAuthentication: true
+                  AppRegistrationClientId: 4fa2001b-ad7a-4a1e-9185-d6ea881f8712
+                  AppRegistrationTenantId: 975f013f-7f24-47e8-a7d3-abc4752bf346
+                  EsrpClientId: 5e796b8d-3c4d-4e28-93f6-12a44f4368a0
+                  AuthAKVName: kv-azuresdk-codesign
+                  AuthSignCertName: azure-sdk-esrp-signing-certificate
+                  FolderPath: $(Pipeline.Workspace)/apiview-java-processor
+                  Pattern: '*.jar'
+                  signConfigType: inlineSignParams
+                  inlineOperation: |
+                    [
+                      {
+                        "KeyCode": "CP-447347-Java",
+                        "OperationCode": "JavaSign",
+                        "Parameters": {
+                          "SigAlg": "SHA256withRSA",
+                          "Timestamp": "-tsa http://sha256timestamp.ws.digicert.com/sha256/timestamp"
+                        },
+                        "ToolName": "sign",
+                        "ToolVersion": "1.0"
+                      },
+                      {
+                        "KeyCode": "CP-447347-Java",
+                        "OperationCode": "JavaVerify",
+                        "Parameters": {},
+                        "ToolName": "sign",
+                        "ToolVersion": "1.0"
+                      }
+                    ]
+
+              - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+                parameters:
+                  ArtifactName: apiview-java-processor-signed
+                  ArtifactPath: $(Pipeline.Workspace)/apiview-java-processor
+                  CustomCondition: succeeded()
 
               - task: Maven@3
                 displayName: Publish package

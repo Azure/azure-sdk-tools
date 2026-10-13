@@ -4,7 +4,7 @@
 
 ### Other Changes
 
-- Remove unused Node.js and npm from the backend server container to reduce vulnerable dependencies. Node.js remains available in the separate hosted-agent containers for MCP tools, and knowledge sync bundles its own Node.js runtime.
+- Remove unused Node.js and npm from the backend server container to reduce vulnerable dependencies.
 
 ## 0.1.0
 

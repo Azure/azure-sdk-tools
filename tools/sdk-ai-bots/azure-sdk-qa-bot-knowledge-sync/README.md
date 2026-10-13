@@ -158,5 +158,3 @@ The `src/index.ts` file provides a minimal wrapper that:
 
 - Calls the original `processDailySyncKnowledge` function
 - Handles errors and logging
-
-This approach allows the original Azure Function code to be reused with minimal modifications.

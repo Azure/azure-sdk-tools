@@ -52,7 +52,8 @@ Changing configuration does not itself index or deploy these sources. Do not run
 sync against a partial source list: sync removes blobs absent from its results.
 
 **Merge dependency:** The .NET additions require the separately reviewed
-repository-relative path-scoping fix before they are merged or used for sync.
+[repository-relative path-scoping fix (#17256)](https://github.com/Azure/azure-sdk-tools/pull/17256)
+before they are merged or used for sync.
 Without that fix, each `relativeByRepoPath` entry scans the shared sparse-checkout
 root, duplicating documents and potentially applying another entry's plane
 metadata. Configuration and citation tests here do not claim narrow ingestion

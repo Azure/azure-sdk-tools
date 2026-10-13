@@ -43,12 +43,10 @@ environments:
         keyVaultName: 'azuresdkqabot-dev-kv'
         appConfigName: 'azuresdkqabot-dev-config'
         containerRegistryName: 'azuresdkqabotdevcontainer'
-        # Site names for CD pipelines. These are passed as bicep params
-        # (frontendBaseName / agentServerSiteName / functionAppName) so the
-        # deployed resources match — no post-provision discovery required.
+        # Site names for CD pipelines. These are passed as Bicep parameters so
+        # the deployed resources match — no post-provision discovery required.
         frontendSiteName: 'azsdkqabotdev'
         agentServerSiteName: 'azuresdkqabot-dev-server'
-        functionAppName: 'azuresdkqabot-dev-function'
         # Teams Toolkit app registration for this environment. Each env owns a
         # DIFFERENT Teams app (created by `teamsapp provision`); the value is
         # written into azure-sdk-qa-bot/env/.env.azd by the postprovision hook
@@ -69,6 +67,7 @@ environments:
             - '19:975533cdd084485ca305739f16b30507@thread.tacv2'
             - '19:453ec446a66446589d764132f5cebb00@thread.tacv2'
             - '19:037246b9968445edb3a23612ea44524d@thread.tacv2'
+            - '19:de16cb01a8a140678f02c3c1c8999756@thread.tacv2'
         azureMcpTeamsGroupId: '07bb6114-8ffb-4e79-b65a-67f19d23e5bc'
         azureMcpTeamsChannelIds:
             - '19:GZ1GJyuOy0b8PWe6XtNxFdiaiT2M-NdiOXDLR5ySXXc1@thread.tacv2'
@@ -138,8 +137,6 @@ environments:
             AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-dev-alert'
             SERVER_BASE_URL: 'https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net'
             AZD_DEPLOY_AGENT_SERVER_SLOT_NAME: 'production'
-            FUNCTION_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-dev-functionserviceplan'
-            FUNCTION_LOG_WORKSPACE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/DefaultResourceGroup-WUS2/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-a18897a6-7e44-457d-9260-f2854c0aca42-WUS2'
             INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-dev-ia'
             TEAMS_CONNECTION_NAME: 'teams'
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-dev-logicapp'
@@ -163,7 +160,6 @@ environments:
         containerRegistryName: 'azsdkqabotacrpreview'
         frontendSiteName: 'azsdkqabot-preview'
         agentServerSiteName: 'azuresdkqabot-server-preview'
-        functionAppName: 'azuresdkqabot-function-preview'
         # See dev.teamsAppId for the contract.
         teamsAppId: 'REPLACE_WITH_PREVIEW_TEAMS_APP_ID'
         teamsGroupId: '3e17dcb0-4257-4a30-b843-77f47f1d4121'
@@ -199,7 +195,6 @@ environments:
         # deployed to the `azure-sdk-qa-bot` RG).
         frontendSiteName: 'azsdkqabot'
         agentServerSiteName: 'azuresdkqabot-server'
-        functionAppName: 'azuresdkqabot-function'
         # See dev.teamsAppId for the contract.
         teamsAppId: 'REPLACE_WITH_PROD_TEAMS_APP_ID'
         teamsGroupId: '3e17dcb0-4257-4a30-b843-77f47f1d4121'
@@ -257,8 +252,6 @@ environments:
             AGENT_SERVER_APP_INSIGHTS_FLOW_TYPE: 'Redfield'
             AGENT_SERVER_APP_INSIGHTS_REQUEST_SOURCE: 'IbizaAIExtensionEnablementBlade'
             AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-alert'
-            FUNCTION_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-functionserviceplan'
-            FUNCTION_LOG_WORKSPACE_NAME: 'azuresdkqabot-function-log'
             INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-ia'
             TEAMS_CONNECTION_NAME: 'teams'
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
@@ -274,7 +267,5 @@ environments:
 components:
     frontend:
         healthPath: '/health'
-    function-app:
-        healthPath: '/'
     agent-server:
         healthPath: '/ping'

@@ -1,6 +1,6 @@
 /**
  * seedAppConfiguration — populate the App Configuration store consumed by the
- * agent / backend / function-app with the two classes of values described in
+ * agent / backend with the two classes of values described in
  * the design notes (Azure/azure-sdk-pr#2628):
  *
  *   1. FIXED       — chosen by the project, not derived from provisioning

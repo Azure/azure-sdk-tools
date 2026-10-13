@@ -247,7 +247,7 @@ async def test_run_validates_only_after_issue_closes(
 
 
 @pytest.mark.asyncio
-async def test_run_analyzes_before_production_validation() -> None:
+async def test_run_validates_before_analysis() -> None:
     events: list[str] = []
     qa_service = MagicMock()
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
@@ -290,11 +290,11 @@ async def test_run_analyzes_before_production_validation() -> None:
         ),
         patch.object(
             run_feedback_jobs,
-            "get_github_issue_state",
+            "get_issue_state",
             new=AsyncMock(return_value="closed"),
         ),
         patch.object(run_feedback_jobs.app_config, "get", return_value="true"),
     ):
         await run_feedback_jobs._run(_args())
 
-    assert events == ["analysis", "validation"]
+    assert events == ["validation", "analysis"]

@@ -7,8 +7,8 @@ Use this runbook for routine deployments after the one-time
 
 Use the deployment pipeline with `component=all` when infrastructure contracts
 or multiple services change. Select one component for an isolated application
-or infrastructure change. Scheduled data jobs use their package-owned
-definitions.
+or infrastructure change. Dev/prod agent-server deployments include the
+scheduled knowledge-sync WebJob.
 
 | Scope | Pipeline | `component` |
 | --- | --- | --- |
@@ -16,7 +16,6 @@ definitions.
 | Agent platform and chat agent | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `agent` |
 | Agent-server | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `agent-server` |
 | Frontend | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `frontend` |
-| Function App | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `function-app` |
 | Shared resources | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `shared-resources` |
 | Logic App | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `logic-app` |
 
@@ -25,7 +24,7 @@ generation and feedback processing use their specialized scheduled pipelines.
 
 | Related job | YAML definition |
 | --- | --- |
-| Knowledge sync | `azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml` |
+| Knowledge sync fallback/manual workflow | `azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml` |
 | Generated wiki | `azure-sdk-qa-bot-wiki-index/build_wiki.yml` |
 | Hosted-agent deployment | `azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` |
 | Feedback/evolution jobs | `azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` |
@@ -40,6 +39,9 @@ generation and feedback processing use their specialized scheduled pipelines.
    [operational readiness checklist](operational-readiness-checklist.md).
 6. Confirm the source revision is permitted by the target service connection's
    branch-control policy.
+7. Before the first dev/prod WebJob deployment, disable and drain the prior
+   Azure DevOps knowledge-sync schedule and confirm the deployment pipeline can
+   use the `EMU-SSH-PRIVATE-KEY` secure file.
 
 ## 3. Preview, Approve, and Apply
 
@@ -69,21 +71,29 @@ completed.
 
 After apply, `qa-bot-deploy.yml` deploys the selected application service.
 `shared-resources` and `logic-app` stop after provisioning. With `component=all`,
-Function App and chat-agent deployment begin in parallel. The Azure MCP Server
-agent follows the chat agent, and agent-server waits for both hosted agents.
-The production-only evolution agent follows the chat agent on an independent
-branch. Before frontend deployment, the pipeline acquires an Easy Auth token
-and retries agent-server `/ping`; a failed readiness probe stops the rollout.
+chat-agent deployment starts first. The Azure MCP Server agent follows the chat
+agent, and agent-server waits for both hosted agents. The production-only
+evolution agent follows the chat agent on an independent branch. Before
+frontend or knowledge-sync WebJob deployment, the pipeline acquires an Easy
+Auth token and retries agent-server `/ping`; a failed readiness probe stops the
+rollout.
 
 Each service uses an `azd` native remote build or the shared hosted-agent
-deployment helper. The Function App postdeploy hook then installs both Logic
-App workflows. The frontend postdeploy hook synchronizes Teams values and
-installs or upgrades the app in both configured Teams groups only when tenant
-catalog prerequisites are satisfied.
+deployment helper. Bicep owns both complete Logic App workflows. The dev/prod
+agent-server path tests, packages, and deploys the `knowledge-sync` WebJob. The
+frontend postdeploy hook synchronizes Teams values and installs or upgrades the
+app in both configured Teams groups only when tenant catalog prerequisites are
+satisfied.
 
 The rollout deploys directly to each service's production target. Frontend
 postdeploy also probes `/health`; release completion requires the full
 verification sequence below.
+
+For the first rollout of this architecture, keep the legacy Function App until
+both Logic Apps have successfully called agent-server `/activity/convert`.
+After verification, remove the obsolete Function App resources and `ado-token`
+secret through an approved cleanup change; they are no longer deployment-owned
+or runtime dependencies.
 
 ## 5. Verify the Deployment
 
@@ -91,10 +101,11 @@ verification sequence below.
 2. Confirm frontend `/health` is healthy.
 3. Call agent-server `/ping` with an Easy Auth token for the backend
    Application ID URI.
-4. Confirm the Function App host root `/` and recent trigger executions are healthy.
+4. In dev/prod, confirm the `knowledge-sync` WebJob has the expected schedule
+   and its latest run completed successfully.
 5. Confirm both Logic Apps are enabled, their shared Teams connection is
-   `Connected`, and test activities from both Teams groups reach the Function
-   App.
+   `Connected`, and test activities from both Teams groups reach the
+   agent-server `/activity/convert` endpoint.
 6. Send a test Teams message through each newly changed route.
 7. Confirm the hosted chat and Azure MCP Server agent versions are active. For
    production, also confirm the evolution-agent version and its
@@ -118,18 +129,19 @@ npm run sync-env-suite -- --environment dev
 npm run validate-env-suite -- --environment dev
 azd provision --environment dev --no-prompt
 azd deploy agent-server --environment dev --no-prompt
-azd deploy function-app --environment dev --no-prompt
 azd deploy agent --environment dev --no-prompt
 azd deploy frontend --environment dev --no-prompt
 ```
 
+The unified pipeline owns knowledge-sync WebJob packaging, SSH-key injection,
+and deployment. Use it when validating the complete dev/prod deployment path.
 Preview and production use their mapped pipelines and service connections.
 
 ## 7. Re-provisioning
 
 After infrastructure apply, run the corresponding application deployment
 stages and repeat post-deployment verification. This establishes the selected
-images and installs the complete Logic App workflow.
+images and the scheduled WebJob.
 
 If verification fails, stop promotion and follow the
 [rollback runbook](runbook-rollback.md).

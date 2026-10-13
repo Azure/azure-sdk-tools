@@ -10,8 +10,7 @@
  * by main.bicep while setting state from the Teams OAuth status: Enabled when
  * connected, Disabled otherwise.
  *
- * Callers (function-postdeploy.ts, scripts/deploy-logic-app.ts) populate
- * process.env with the azd env values before invoking.
+ * Callers populate process.env with the azd env values before invoking.
  */
 
 import { execSync } from "child_process";
@@ -41,21 +40,6 @@ export interface PatchWorkflowOptions {
     * template shipped with the Logic App layer.
    */
   workflowDefinitionPath?: string;
-  /**
-   * How long to wait for the Function App host to become healthy before
-   * giving up (ms). The workflow's `function.id` reference is validated
-   * against this host at write time, so we must confirm it is Running AND
-   * serving /admin/host/status = 200 before attempting the PUT. Defaults
-   * to 5 minutes. Set to 0 to skip the readiness wait entirely (only safe
-   * from function-postdeploy where the deploy already succeeded).
-   */
-  functionHostReadyTimeoutMs?: number;
-  /**
-   * When true, skip the Function App readiness gate. Only set this from
-   * contexts that have already confirmed the container is live (e.g. the
-   * function-postdeploy hook that runs immediately after `azd deploy`).
-   */
-  skipFunctionHostCheck?: boolean;
 }
 
 interface WorkflowTarget {
@@ -80,14 +64,6 @@ function managedApiId(subscriptionId: string, location: string, connector: strin
   return `/subscriptions/${subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/${connector}`;
 }
 
-function tryRun(cmd: string): string | undefined {
-  try {
-    return execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
-  } catch {
-    return undefined;
-  }
-}
-
 function readTeamsConnectionStatus(
   subscriptionId: string,
   resourceGroup: string,
@@ -109,79 +85,6 @@ function readTeamsConnectionStatus(
   }
 }
 
-async function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/**
- * Enforce the Function-App-first dependency: ARM validates the workflow's
- * `function.id` reference (which points to convertActivity inside the
- * container) against the Function App host at write time. The host only
- * serves `/admin/host/status = 200` once the container image is pulled and
- * the functions runtime is loaded — which happens on the first successful
- * `azd deploy function-app`. Callers should run this preflight before
- * PUTting the workflow so we fail with an actionable hint rather than an
- * opaque `ServiceUnavailable from host runtime` from the PUT response.
- */
-async function waitForFunctionAppReady(
-  functionAppName: string,
-  resourceGroup: string,
-  log: (msg: string) => void,
-  timeoutMs: number,
-): Promise<void> {
-  // State check first — cheap, catches "app doesn't exist / not provisioned"
-  // right away.
-  const state = tryRun(
-    `az functionapp show --name "${functionAppName}" --resource-group "${resourceGroup}" --query state -o tsv`,
-  );
-  if (!state) {
-    throw new Error(
-      `Function App '${functionAppName}' in RG '${resourceGroup}' not found. ` +
-        `Run \`azd provision\` first to create it, then \`azd deploy function-app\`.`,
-    );
-  }
-  if (state !== "Running") {
-    throw new Error(
-      `Function App '${functionAppName}' state is '${state}' (expected Running). ` +
-        `Fix the app in the portal or re-run \`azd deploy function-app\`.`,
-    );
-  }
-
-  const defaultHostname = tryRun(
-    `az functionapp show --name "${functionAppName}" --resource-group "${resourceGroup}" --query defaultHostName -o tsv`,
-  );
-  if (!defaultHostname) {
-    throw new Error(`Could not read defaultHostName for Function App '${functionAppName}'.`);
-  }
-
-  const url = `https://${defaultHostname}/admin/host/status`;
-  log(`Waiting for function host at ${url} (Logic App PUT depends on convertActivity being loaded)...`);
-
-  const deadline = Date.now() + timeoutMs;
-  let attempt = 0;
-  let lastCode = "0";
-  while (Date.now() < deadline) {
-    attempt++;
-    lastCode = tryRun(`curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${url}"`) ?? "0";
-    // 200 = healthy with admin access. 401/403 also mean the Functions host is
-    // up and loaded — /admin/host/status requires the master key, so an
-    // unauthenticated probe is rejected with 401/403 only once the runtime is
-    // serving requests. A host that hasn't pulled its container yet returns 503
-    // (or the connection fails), so treat 401/403 as ready too.
-    if (lastCode === "200" || lastCode === "401" || lastCode === "403") {
-      log(`  ✓ Function host healthy after ${attempt} attempt(s) (status ${lastCode}).`);
-      return;
-    }
-    log(`  attempt ${attempt}: /admin/host/status returned ${lastCode} — retrying in 15s`);
-    await sleep(15_000);
-  }
-  throw new Error(
-    `Function host at ${url} did not return 200/401/403 within ${Math.round(timeoutMs / 1000)}s ` +
-      `(last status: ${lastCode}). The container image is probably not deployed yet — ` +
-      `run \`azd deploy function-app -e <env>\` first, then retry this step.`,
-  );
-}
-
 export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<void> {
   const prefix = opts.logPrefix ?? "[patch-workflow]";
   const log = (msg: string): void => console.log(`${prefix} ${msg}`);
@@ -196,7 +99,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
 
   const serverIdentityName = requireEnv("MANAGED_IDENTITY_NAME");
   const botIdentityName = requireEnv("FRONTEND_SITE_NAME");
-  const functionAppName = requireEnv("FUNCTION_APP_NAME");
 
   const teamsConnectionStatus = readTeamsConnectionStatus(
     subscriptionId,
@@ -208,16 +110,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     log(
       `Teams connection '${teamsConnName}' is '${teamsConnectionStatus || "not-found"}'. ` +
         "Deploying the full workflow in Disabled state until OAuth consent is complete.",
-    );
-  }
-
-  // Enforce the function-app-first dependency before touching the workflow.
-  if (!opts.skipFunctionHostCheck) {
-    await waitForFunctionAppReady(
-      functionAppName,
-      resourceGroup,
-      log,
-      opts.functionHostReadyTimeoutMs ?? 5 * 60 * 1000,
     );
   }
 
@@ -260,19 +152,10 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   // Derived resource IDs.
   const serverIdentityResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.ManagedIdentity", "userAssignedIdentities", serverIdentityName);
   const botIdentityResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.ManagedIdentity", "userAssignedIdentities", botIdentityName);
-  const functionAppResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "sites", functionAppName);
   const teamsConnResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "connections", teamsConnName);
 
-  // Load and templatize the workflow definition. `function.id` is resolved at
-  // PATCH time (ARM rejects `@{parameters(...)}` there); the rest of the
-  // definition continues to reference workflow-runtime parameters that we
-  // populate below.
   const definitionPath = opts.workflowDefinitionPath ?? WORKFLOW_DEFINITION_JSON_DEFAULT;
-  const rawDefinition = readFileSync(definitionPath, "utf8").replace(
-    /@\{parameters\('functionAppResourceId'\)\}/g,
-    functionAppResourceId,
-  );
-  const definition = JSON.parse(rawDefinition);
+  const definition = JSON.parse(readFileSync(definitionPath, "utf8"));
 
   for (const target of workflowTargets) {
     const parameters = {
@@ -294,7 +177,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
       botBaseUrl: { value: botBaseUrl },
       botAudience: { value: botAudience },
       botIdentityResourceId: { value: botIdentityResourceId },
-      functionAppResourceId: { value: functionAppResourceId },
     };
 
     const workflowUrl =

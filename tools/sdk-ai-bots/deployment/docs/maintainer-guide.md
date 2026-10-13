@@ -135,22 +135,22 @@ Each Logic App workflow has its own `RunsFailed` metric alert. Azure rejects a
 single-resource metric criterion when the alert contains two workflow scopes,
 so do not merge those alerts into one multi-scope resource.
 
-Full-stack application deployment is a graph, not a serial list. `function-app`
-and `agent` start after provisioning. The Azure MCP Server agent follows
-`agent`; `agent-server` waits for both hosted agents; and `frontend` waits for
-an authenticated agent-server `/ping` readiness probe. The production-only
-evolution agent also waits for `agent`, but runs independently of the
-agent-server/frontend branch. Preserve these runtime dependencies unless the
-producer-consumer contract changes.
+Full-stack application deployment is a graph, not a serial list. `agent` starts
+after provisioning. The Azure MCP Server agent follows `agent`; `agent-server`
+waits for both hosted agents; and `frontend` plus the dev/prod knowledge-sync
+WebJob wait for an authenticated agent-server `/ping` readiness probe. The
+production-only evolution agent also waits for `agent`, but runs independently
+of the agent-server/frontend branch. Preserve these runtime dependencies unless
+the producer-consumer contract changes.
 
 The pipeline always publishes a Bicep/configuration preview before apply and
 uses a manual approval stage. The approval task expires after 24 hours and the
 stage after three days. Logic App provisioning verifies the Teams managed
 connection and requests delegated consent before the deployment can complete.
 
-Scheduled knowledge sync, wiki generation, and feedback/evolution pipelines
-remain data jobs outside the azd service graph. They own data production and
-Search indexer triggers rather than hosted application deployment.
+Knowledge sync is deployed as a scheduled WebJob with the dev/prod
+agent-server path. Wiki generation and feedback/evolution remain data jobs
+outside the azd service graph.
 
 ## azd Hook Workflow
 
@@ -214,7 +214,7 @@ The registered provision hooks are:
    principal. Bicep cannot inspect local tools, compare local azd
    state with repository configuration, query quota safely, or derive the
    caller identity from the current Azure CLI token.
-- **Shared, agent, frontend, agent-server, and Function App preprovision:
+- **Shared, agent, frontend, and agent-server preprovision:
    `layer-preprovision.ts`.** Enforces the selected environment's local
    operation policy immediately before each layer apply. The repeated layer
    registration also protects a targeted `azd provision <layer>` that does not
@@ -229,12 +229,10 @@ The registered provision hooks are:
    captured Bicep outputs. Teams Toolkit configuration is not an ARM resource,
    and the required values do not all exist until this layer completes.
 - **Logic App preprovision: `logic-app-preprovision.ts`.** Discovers and
-   preserves an existing Teams managed API connection, checks its OAuth status,
-   and detects whether the Logic App already has a real workflow definition.
-   It writes flags that tell Bicep to create or repair a connection, preserve a
-   connected one, retain an existing workflow, or deploy only an empty shell.
-   This probe is required to avoid replacing delegated OAuth state or erasing a
-   workflow installed by the Function App deploy hook.
+   preserves an existing Teams managed API connection and checks its OAuth
+   status. It writes flags that tell Bicep to create or repair a connection,
+   preserve a connected one, and enable the workflow only after consent. This
+   probe is required to avoid replacing delegated OAuth state.
 - **Logic App postprovision: `postprovision.ts`.** Uploads per-environment bot
    routing, seeds Key Vault and App Configuration, and reconciles Azure AI
    Search data-plane objects after the final layer outputs exist. These are
@@ -274,10 +272,6 @@ The registered deploy hooks are:
    native azd. The pipeline normally sets `AZD_SKIP_TEAMS_PROVISION=1`; local
    interactive runs can perform the Teams work. Teams failures and health
    timeout are warnings unless strict Teams mode is enabled.
-- **Function App postdeploy: `function-postdeploy.ts`.** Verifies that the
-   Function App is running, waits for host readiness, and installs the complete
-   Logic App workflow. The workflow calls the Function App, so applying it in
-   Bicep before the container is live would create an unusable definition.
 - **Channel configuration:** the Logic App calls the agent-server's
    `/config/channel` endpoint with the shared managed identity. The backend owns
    Blob access, YAML parsing, and the five-minute cache. The workflow consumes
@@ -289,13 +283,13 @@ The registered deploy hooks are:
    definition are unavailable to Bicep beforehand. The environment injection
    also compensates for behavior not handled by the pinned azd agent extension.
 
-Frontend, Function App, and `agent-server` have no custom predeploy hook. They
-use azd's native package, remote publish, and container deployment lifecycle;
-the frontend Dockerfile compiles TypeScript inside the remote build. The
-Function App uses the native container-aware `function` host. `agent` also has
-no predeploy hook; azd and the `azure.ai.agents` extension own its image build
-and initial Foundry deployment before `agent-postdeploy.ts` reconciles runtime
-state.
+Frontend and `agent-server` have no custom predeploy hook. They use azd's native
+package, remote publish, and container deployment lifecycle; the frontend
+Dockerfile compiles TypeScript inside the remote build. `agent` also has no
+predeploy hook; azd and the `azure.ai.agents` extension own its image build and
+initial Foundry deployment before `agent-postdeploy.ts` reconciles runtime
+state. The deployment pipeline separately packages and deploys the
+knowledge-sync WebJob after agent-server readiness.
 
 ### When to Add a Hook
 
@@ -327,7 +321,7 @@ version` step runs before the build or deployment.
 The handoff is:
 
 1. `azd-deploy.yml` resolves or accepts the tag and sets `AZD_IMAGE_TAG`.
-2. `azure.yaml` uses `AZD_IMAGE_TAG` as `docker.tag` for all four azd-managed
+2. `azure.yaml` uses `AZD_IMAGE_TAG` as `docker.tag` for all three azd-managed
    container builds.
 3. Agent postdeploy independently reconstructs the selected chat-agent image
    from the ACR endpoint, environment name, and `AZD_IMAGE_TAG` before it clones
@@ -336,10 +330,10 @@ The handoff is:
    `deploy_hosted_agent.py`.
 
 Do not compute a second tag after the display step. The value shown to an
-operator must be the value consumed by the real deployment. Frontend and
-Function App automatic tags are computed from existing ACR tags by
-`scripts/resolve-image-version.ts`; the azd-managed agent and agent-server use a
-build-based tag when no override is supplied.
+operator must be the value consumed by the real deployment. Frontend automatic
+tags are computed from existing ACR tags by `scripts/resolve-image-version.ts`;
+the azd-managed agent and agent-server use a build-based tag when no override
+is supplied.
 
 ## Safe Change Recipes
 
@@ -408,16 +402,14 @@ azd config set alpha.deployment.stacks on
 - Bicep outputs are contracts. Renaming one requires updating downstream
   `main.bicepparam` files, hooks, environment refreshes, and tests.
 - Preview and apply must use the same Bicep entry point and parameter adapter.
-- Re-provisioning can restore placeholder container images or the empty Logic
-  App shell. The matching application deploy must run afterward.
-- The Function App postdeploy hook installs the final Logic App definition only
-  after the container runtime is available.
+- Re-provisioning can restore placeholder container images. The matching
+  application deploy must run afterward.
 - Production is pipeline-only. Do not weaken the provision guard to debug a
   production issue locally.
 - `.azure/` contains machine-local state. Never use it as review evidence or
   commit it.
-- Keep data jobs such as knowledge sync and wiki generation outside the azd
-  service graph; they are scheduled pipelines, not hosted application services.
+- Keep wiki generation and feedback processing outside the azd service graph.
+  Knowledge sync is a WebJob coupled to the agent-server deployment path.
 
 ## Validation Before Review
 

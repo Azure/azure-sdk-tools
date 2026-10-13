@@ -14,16 +14,15 @@ test("loads typed environment and hyphenated component names", () => {
   const suite = loadEnvironmentSuite();
 
   assert.equal(suite.environments.dev.location, "westus2");
-  assert.equal(getComponentConfig(suite, "function-app").healthPath, "/");
+  assert.equal(getComponentConfig(suite, "agent-server").healthPath, "/ping");
   assert.deepEqual(loadServiceImageRepositories("dev"), {
     agent: "sdk-ai-bots/agent-dev",
     "agent-server": "azure-sdk-qa-bot-agent-server",
     frontend: "azure-sdk-qa-bot",
-    "function-app": "azure-sdk-qa-bot-function",
   });
   assert.equal(getEnvSuiteValue("dev", "chatbotEvolutionAgentEnabled"), "false");
   const devChannelIds = getEnvSuiteValues("dev", "teamsChannelIds");
-  assert.equal(devChannelIds.length, 12);
+  assert.equal(devChannelIds.length, 13);
   assert.ok(
     devChannelIds.includes(
       "19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2",
@@ -51,7 +50,6 @@ test("builds the complete local azd environment mapping", () => {
   assert.equal(values.RAG_SERVICE_SCOPE, undefined);
   assert.equal(values.FRONTEND_IMAGE_REPOSITORY, "azure-sdk-qa-bot:dev");
   assert.equal(values.AGENT_SERVER_IMAGE_REPOSITORY, "azure-sdk-qa-bot-agent-server:dev");
-  assert.equal(values.FUNCTION_IMAGE_REPOSITORY, "azure-sdk-qa-bot-function:dev");
   assert.equal(
     values.AZURE_MCP_TEAMS_GROUP_ID,
     suite.environments.dev.azureMcpTeamsGroupId,

@@ -28,7 +28,6 @@ test("adopts the existing dev infrastructure contract without losing live state"
   const agent = read("infra/layers/agent/main.bicep");
   const frontendParameters = read("infra/layers/frontend/main.bicepparam");
   const agentServerParameters = read("infra/layers/agent-server/main.bicepparam");
-  const functionParameters = read("infra/layers/function-app/main.bicepparam");
 
   assert.equal(dev.SEARCH_KNOWLEDGE_RETRIEVAL, "free");
   assert.deepEqual(JSON.parse(dev.COSMOS_CAPABILITIES), [
@@ -69,12 +68,11 @@ test("adopts the existing dev infrastructure contract without losing live state"
   assert.match(agent, /capacity: gpt51Capacity/);
   assert.match(agent, /retentionInDays: agentLogRetentionInDays/);
   assert.match(agent, /resource appInsightsConnection[\s\S]*?name: component\.name/);
-  for (const parameters of [frontendParameters, agentServerParameters, functionParameters]) {
+  for (const parameters of [frontendParameters, agentServerParameters]) {
     assert.match(parameters, /AZURE_CONTAINER_REGISTRY_ENDPOINT/);
   }
   assert.match(frontendParameters, /SERVICE_FRONTEND_IMAGE_NAME/);
   assert.match(agentServerParameters, /SERVICE_AGENT_SERVER_IMAGE_NAME/);
-  assert.match(functionParameters, /SERVICE_FUNCTION_APP_IMAGE_NAME/);
   assert.match(
     read("infra/layers/frontend/main.bicep"),
     /Microsoft\.Azure\.Monitor\.WebtestLocationAvailabilityCriteria/,
@@ -140,12 +138,10 @@ test("deploys application services according to runtime dependencies", () => {
     return stages.slice(start, next === -1 ? undefined : next);
   };
 
-  const functionApp = stageInvocation("DeployFunctionApp");
   const agent = stageInvocation("DeployAgent");
   const agentServer = stageInvocation("DeployAgentServer");
   const frontend = stageInvocation("DeployFrontend");
 
-  assert.match(functionApp, /dependsOn: \$\{\{ parameters\.dependsOn \}\}/);
   assert.match(agent, /dependsOn: \$\{\{ parameters\.dependsOn \}\}/);
   assert.match(agentServer, /dependsOn: DeployAzureMcpServerAgent/);
   assert.match(stages, /stage: VerifyAgentServer[\s\S]*?dependsOn: DeployAgentServer/);
@@ -154,8 +150,10 @@ test("deploys application services according to runtime dependencies", () => {
   assert.match(stages, /healthPath: '\$\(AGENT_SERVER_HEALTH_PATH\)'/);
   assert.match(stages, /easyAuthAudience: '\$\(SERVER_APPLICATION_ID_URI\)'/);
   assert.match(stages, /evolution-agent-deploy-stage\.yml[\s\S]*?dependsOn: DeployAgent/);
+  assert.match(stages, /knowledge-sync-deploy-stage\.yml[\s\S]*?dependsOn: VerifyAgentServer/);
   assert.match(frontend, /dependsOn: VerifyAgentServer/);
   assert.doesNotMatch(frontend, /dependsOn: DeployEvolutionAgent/);
+  assert.doesNotMatch(`${orchestrator}\n${stages}`, /function-app|DeployFunctionApp/);
   assert.doesNotMatch(`${orchestrator}\n${stages}`, /stabilizationSeconds|\bsleep\b/);
 });
 
@@ -208,7 +206,6 @@ test("targets the existing shared dev environment", () => {
   assert.equal(dev.containerRegistryName, "azuresdkqabotdevcontainer");
   assert.equal(dev.frontendSiteName, "azsdkqabotdev");
   assert.equal(dev.agentServerSiteName, "azuresdkqabot-dev-server");
-  assert.equal(dev.functionAppName, "azuresdkqabot-dev-function");
   assert.equal(dev.bicepOverrides.MANAGED_IDENTITY_NAME, "azuresdkqabot-dev-identity");
   assert.equal(dev.bicepOverrides.AI_RESOURCE_NAME, "azuresdkqabot-dev-ai-resource");
   assert.equal(dev.bicepOverrides.AI_PROJECT_NAME, "azuresdkqabot-ai");
@@ -252,20 +249,16 @@ test("reports the selected image version before each azd deployment", () => {
 test("deploys the image tag selected by the pipeline", () => {
   const project = read("../azure.yaml");
   const localSync = read("scripts/sync-env-suite.ts");
-  const frontend = project.match(/\n    frontend:\n([\s\S]*?)\n    function-app:/)?.[1] ?? "";
-  const functionApp = project.match(/\n    function-app:\n([\s\S]*?)\ninfra:/)?.[1] ?? "";
+  const frontend = project.match(/\n    frontend:\n([\s\S]*?)\ninfra:/)?.[1] ?? "";
   const agentServer = project.match(/\n    agent-server:\n([\s\S]*?)\n    frontend:/)?.[1] ?? "";
 
-  assert.equal((project.match(/tag: \$\{AZD_IMAGE_TAG\}/g) ?? []).length, 4);
+  assert.equal((project.match(/tag: \$\{AZD_IMAGE_TAG\}/g) ?? []).length, 3);
   assert.doesNotMatch(agentServer, /resourceName:/);
   assert.match(frontend, /language: docker/);
   assert.match(frontend, /image: azure-sdk-qa-bot/);
   assert.match(frontend, /remoteBuild: true/);
   assert.doesNotMatch(frontend, /predeploy:/);
-  assert.match(functionApp, /host: function/);
-  assert.match(functionApp, /image: azure-sdk-qa-bot-function/);
-  assert.match(functionApp, /remoteBuild: true/);
-  assert.doesNotMatch(functionApp, /predeploy:/);
+  assert.doesNotMatch(project, /function-app|azure-sdk-qa-bot-function/);
   assert.match(localSync, /buildAzdEnvironmentValues/);
 });
 
@@ -281,7 +274,7 @@ test("runs hooks with the package-local TypeScript runtime", () => {
   assert.doesNotMatch(project, /npx(?: --yes)? tsx/);
   assert.equal(
     (project.match(/\.\/node_modules\/\.bin\/tsx/g) ?? []).length,
-    16,
+    14,
   );
 });
 
@@ -378,10 +371,9 @@ test("uses suite-owned frontend identity name and tenant values", () => {
 
 test("aligns runtime app settings with application consumers", () => {
   const agentServer = read("infra/layers/agent-server/main.bicep");
-  const functionApp = read("infra/layers/function-app/main.bicep");
-  const storageService = read("../azure-sdk-qa-bot-function/src/services/StorageService.ts");
 
   assert.match(agentServer, /name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'/);
+  assert.match(agentServer, /name: 'BOT_CLIENT_ID'\s+value: frontendIdentityClientId/);
   assert.doesNotMatch(agentServer, /APP_INSIGHTS_CONNECTION_STRING/);
   for (const unusedSetting of [
     "AI_PROJECT_NAME",
@@ -391,9 +383,7 @@ test("aligns runtime app settings with application consumers", () => {
   ]) {
     assert.doesNotMatch(agentServer, new RegExp(`name: '${unusedSetting}'`));
   }
-  assert.doesNotMatch(functionApp, /name: 'APP_CONFIG_NAME'/);
-  assert.match(storageService, /process\.env\.STORAGE_ACCOUNT_NAME/g);
-  assert.doesNotMatch(storageService, /AZURE_STORAGE_ACCOUNT_NAME/);
+  assert.doesNotMatch(agentServer, /KEY_VAULT_URL|ADO_RESOURCE_SCOPE/);
 });
 
 test("runs Search indexers after both data producers", () => {
@@ -414,6 +404,8 @@ test("loads Logic App channel configuration through the authenticated backend", 
   const threadActions =
     workflow.actions.For_each.actions.Thread_Message_From_User.actions;
   const channelLookup = threadActions.Get_Channel_Config;
+  const convertActivity =
+    threadActions.Need_Reply.actions.Should_Reply.actions.convertActivity;
 
   assert.equal(channelLookup.type, "Http");
   assert.equal(channelLookup.inputs.authentication.type, "ManagedServiceIdentity");
@@ -438,6 +430,58 @@ test("loads Logic App channel configuration through the authenticated backend", 
   );
   assert.match(server, /@app\.get\("\/config\/channel"/);
   assert.match(server, /_bot_config_service\.get_channel_config\(channel_id\)/);
+  assert.equal(convertActivity.type, "Http");
+  assert.equal(convertActivity.inputs.method, "POST");
+  assert.equal(
+    convertActivity.inputs.authentication.audience,
+    "@parameters('serverApplicationIdUri')",
+  );
+  assert.equal(
+    convertActivity.inputs.uri,
+    "@{parameters('serverBaseUrl')}/activity/convert",
+  );
+  assert.doesNotMatch(
+    `${workflowText}\n${bicep}\n${parameters}\n${patchWorkflow}`,
+    /functionAppResourceId|FUNCTION_APP/,
+  );
+});
+
+test("deploys scheduled knowledge sync with the agent server", () => {
+  const agentServer = read("infra/layers/agent-server/main.bicep");
+  const fullStack = read("pipelines/templates/deploy-stage.yml");
+  const targeted = read("pipelines/templates/provision-and-deploy-component.yml");
+  const stage = read("pipelines/templates/knowledge-sync-deploy-stage.yml");
+
+  assert.doesNotThrow(() => parse(stage));
+  assert.match(agentServer, /name: 'BOT_CLIENT_ID'\s+value: frontendIdentityClientId/);
+  assert.match(fullStack, /knowledge-sync-deploy-stage\.yml/);
+  assert.match(
+    targeted,
+    /eq\(parameters\.component, 'agent-server'\)[\s\S]*?knowledge-sync-deploy-stage\.yml/,
+  );
+  assert.match(stage, /values: \[dev, prod\]/);
+  assert.match(stage, /npm test -- --no-file-parallelism/);
+  assert.match(stage, /npm run build:webjob/);
+  assert.match(stage, /configure-knowledge-sync-ssh\.mjs/);
+  assert.match(stage, /deploy-webjob\.mjs/);
+  assert.match(stage, /WEBJOB_NAME: knowledge-sync/);
+});
+
+test("subscribes the additional dev .NET channel", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  const channels = read("config/dev/channel.yaml");
+  const channelId =
+    "19:de16cb01a8a140678f02c3c1c8999756@thread.tacv2";
+
+  assert.ok(suite.environments.dev.teamsChannelIds.includes(channelId));
+  assert.match(
+    channels,
+    new RegExp(channelId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+  );
+  assert.match(
+    channels,
+    /name: Code Generation - \.NET[\s\S]*?tenant: dotnet_channel_qa_bot/,
+  );
 });
 
 test("resolves forwarded Teams messages before processing them", () => {

@@ -66,22 +66,6 @@ services:
                 shell: sh
                 run: cd ../deployment && ./node_modules/.bin/tsx hooks/frontend-postdeploy.ts
                 interactive: true
-    function-app:
-        project: azure-sdk-qa-bot-function
-        host: function
-        language: docker
-        docker:
-            path: Dockerfile
-            context: .
-            image: azure-sdk-qa-bot-function
-            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
-            tag: ${AZD_IMAGE_TAG}
-            remoteBuild: true
-        hooks:
-            postdeploy:
-                shell: sh
-                run: cd ../deployment && ./node_modules/.bin/tsx hooks/function-postdeploy.ts
-                interactive: true
 infra:
     provider: bicep
     layers:
@@ -153,18 +137,6 @@ infra:
             - agent
             - frontend
         - provider: bicep
-          path: deployment/infra/layers/function-app
-          name: function-app
-          hooks:
-            preprovision:
-                shell: sh
-                dir: ../../..
-                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
-                interactive: true
-          dependsOn:
-            - shared-resources
-            - frontend
-        - provider: bicep
           path: deployment/infra/layers/logic-app
           name: logic-app
           hooks:
@@ -182,7 +154,6 @@ infra:
             - shared-resources
             - frontend
             - agent-server
-            - function-app
 hooks:
     postdown:
         shell: sh

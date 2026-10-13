@@ -1,7 +1,6 @@
 import { execSync } from "child_process";
 import { isManagedApiConnection } from "./lib/managed-api-connection.js";
 import { enforceProvisionGuard } from "./lib/provision-guard.js";
-import { hasWorkflowActions } from "./lib/workflow-definition.js";
 
 const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID ?? "";
 const resourceGroup = process.env.AZURE_RESOURCE_GROUP ?? "";
@@ -102,64 +101,9 @@ function preserveTeamsConnection(): void {
   );
 }
 
-function preserveWorkflowDefinition(): void {
-  if (!resourceGroup || !subscriptionId) {
-    process.env.INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION = "false";
-    log("Resource group is not known yet; the first provision will deploy the workflow shell.");
-    return;
-  }
-
-  const configuredNames = [
-    process.env.LOGIC_APP_WORKFLOW_NAME?.trim(),
-    process.env.AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME?.trim(),
-  ].filter((name): name is string => !!name);
-  let workflowNames: string[] = [];
-  try {
-    const raw = execSync(
-      `az resource list --resource-group "${resourceGroup}" ` +
-        `--subscription "${subscriptionId}" --resource-type Microsoft.Logic/workflows ` +
-        `--query "[].name" -o json`,
-      { encoding: "utf8" },
-    );
-    workflowNames = (JSON.parse(raw) as string[]).filter((name) =>
-      configuredNames.length > 0
-        ? configuredNames.includes(name)
-        : name.startsWith("azuresdkqabot-logicapp-") ||
-          name.startsWith("azuremcpserver-qabot-logicapp-"),
-    );
-  } catch (error) {
-    if (!isMissingResource(error)) throw error;
-  }
-
-  const includeDefinition = workflowNames.some((workflowName) => {
-    try {
-      const raw = execSync(
-        `az resource show --resource-type Microsoft.Logic/workflows ` +
-          `--subscription "${subscriptionId}" -g "${resourceGroup}" ` +
-          `-n "${workflowName}" --api-version 2019-05-01 ` +
-          `--query "properties.definition.actions" -o json`,
-        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-      );
-      return hasWorkflowActions(JSON.parse(raw || "null"));
-    } catch (error) {
-      if (!isMissingResource(error)) throw error;
-      return false;
-    }
-  });
-  setEnvironmentValue("INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION", includeDefinition);
-  log(
-    includeDefinition
-      ? `Preserving the deployed workflow definition for ${workflowNames.join(", ")}.`
-      : workflowNames.length > 0
-        ? `Existing workflow ${workflowNames.join(", ")} is an empty shell; preserving the shell until Function App postdeploy.`
-        : "No workflow exists yet; Bicep will deploy the workflow shell.",
-  );
-}
-
 try {
   enforceProvisionGuard();
   preserveTeamsConnection();
-  preserveWorkflowDefinition();
 } catch (error) {
   console.error(`[logic-app:preprovision] FAILED: ${error instanceof Error ? error.message : error}`);
   process.exit(1);

@@ -5,7 +5,7 @@
 parameters:
     - name: component
       type: string
-      values: [agent-server, function-app, agent, frontend]
+      values: [agent-server, agent, frontend]
     - name: dependencyLayers
       type: string
     - name: environment
@@ -36,4 +36,10 @@ stages:
         parameters:
           environment: ${{ parameters.environment }}
           imageTag: ${{ parameters.imageTag }}
+          dependsOn: DeployComponent
+
+    - ${{ if and(eq(parameters.component, 'agent-server'), ne(parameters.environment, 'preview')) }}:
+      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/knowledge-sync-deploy-stage.yml
+        parameters:
+          environment: ${{ parameters.environment }}
           dependsOn: DeployComponent

@@ -36,7 +36,7 @@ const REQUIRED_KEYS = [
 
 const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const APPLICATION_ID_URI_PATTERN = /^(api|https):\/\/[^/].*[^/]$/;
-const DEPLOYABLE_COMPONENTS = ["frontend", "function-app", "agent-server"] as const;
+const DEPLOYABLE_COMPONENTS = ["frontend", "agent-server"] as const;
 
 interface ChannelConfig {
   default?: { tenant?: string };

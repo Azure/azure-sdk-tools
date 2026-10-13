@@ -2,7 +2,7 @@
 
 This directory is the source of truth for provisioning, deploying, and
 operating the SDK AI chatbot in Azure. The supported workflow uses `azd >=
-1.32.0`, seven ordered Bicep layers, Azure DevOps workload identity federation,
+1.32.0`, six ordered Bicep layers, Azure DevOps workload identity federation,
 and lifecycle hooks for state that cannot be expressed safely in Bicep.
 
 ## Layout
@@ -14,7 +14,7 @@ deployment/
 ├─ hooks/                        ← azd lifecycle reconciliation
 ├─ infra/
 │  ├─ environments/              ← dev/preview/prod contract
-│  └─ layers/                    ← seven Bicep entry points
+│  └─ layers/                    ← six Bicep entry points
 ├─ pipelines/
 │  ├─ orchestrators/             ← unified deployment entry point
 │  └─ templates/                 ← reusable authentication and deployment stages

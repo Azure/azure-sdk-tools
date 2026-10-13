@@ -33,12 +33,6 @@ param managedIdentityName string
 @description('Name of the bot managed identity.')
 param botIdentityName string
 
-@description('Name of the Function App hosting convertActivity.')
-param functionAppName string
-
-@description('When false, deploy the workflow with an empty definition (no triggers or actions). This lets `azd provision` create the workflow resource before the Function App container image is pushed. The Function App postdeploy hook applies the full definition after the runtime is available.')
-param includeWorkflowDefinition bool = false
-
 @description('Enable the workflow only when the Teams API connection has completed OAuth consent.')
 param workflowEnabled bool = false
 
@@ -81,7 +75,6 @@ var deployAzureMcpWorkflow = !empty(azureMcpTeamsGroupId) && length(azureMcpTeam
 // from names so the layer resolves correctly in any subscription / RG.
 var serverIdentityResourceId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', managedIdentityName)
 var botIdentityResourceId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', botIdentityName)
-var functionAppResourceId = resourceId('Microsoft.Web/sites', functionAppName)
 
 // Computed ID for the Teams managed API connection. Used instead of
 // `teamsConnection.id` in the workflow parameters because `teamsConnection`
@@ -89,31 +82,8 @@ var functionAppResourceId = resourceId('Microsoft.Web/sites', functionAppName)
 // conditional resource symbolically fails when the condition is false.
 var teamsConnectionResourceId = resourceId('Microsoft.Web/connections', teamsConnectionName)
 
-// Logic App action `function.id` must be a literal, fully-qualified resource
-// ID at deploy time — ARM validation rejects runtime `@{parameters(...)}`
-// expressions there. Substitute the value into the raw JSON so validation
-// sees a concrete ID while the rest of the definition stays parameterized.
-var workflowDefinitionText = replace(
-  loadTextContent('./workflowDefinition.json'),
-  '@{parameters(\'functionAppResourceId\')}',
-  functionAppResourceId
-)
+var workflowDefinition = json(loadTextContent('./workflowDefinition.json'))
 
-// Minimal skeleton used when includeWorkflowDefinition is false. The workflow
-// resource still needs a valid definition schema, but with no actions there is
-// nothing for ARM to validate against the Function App runtime.
-var emptyWorkflowDefinition = {
-  '$schema': 'https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#'
-  contentVersion: '1.0.0.0'
-  triggers: {}
-  actions: {}
-  outputs: {}
-}
-
-// The workflow's `properties.parameters` values must match the parameter
-// declarations inside the definition body. When we deploy the empty
-// definition, we must also send an empty parameters map to avoid
-// "parameter X is not declared in the definition" errors.
 var workflowParameters = {
   '$connections': {
     value: {
@@ -148,9 +118,6 @@ var workflowParameters = {
   }
   botIdentityResourceId: {
     value: botIdentityResourceId
-  }
-  functionAppResourceId: {
-    value: functionAppResourceId
   }
 }
 
@@ -188,9 +155,6 @@ var azureMcpWorkflowParameters = {
   }
   botIdentityResourceId: {
     value: botIdentityResourceId
-  }
-  functionAppResourceId: {
-    value: functionAppResourceId
   }
 }
 
@@ -238,18 +202,8 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
     integrationAccount: {
       id: integrationAccount.id
     }
-    // The workflow definition is environment-agnostic and stored separately so
-    // it can be edited / diffed independently and reused across environments.
-    // Every environment-specific value is injected below via workflow
-    // parameters (definition.parameters <- properties.parameters), never baked
-    // into the definition body.
-    //
-    // On the first provision (before `azd deploy function-app` pushes the
-    // Function App container image), we deploy an empty definition so ARM
-    // does not try to validate `convertActivity` against a cold host. The
-    // real definition is applied afterwards by the Function App postdeploy hook.
-    definition: includeWorkflowDefinition ? json(workflowDefinitionText) : emptyWorkflowDefinition
-    parameters: includeWorkflowDefinition ? workflowParameters : {}
+    definition: workflowDefinition
+    parameters: workflowParameters
   }
 }
 
@@ -268,8 +222,8 @@ resource azureMcpWorkflow 'Microsoft.Logic/workflows@2019-05-01' = if (deployAzu
     integrationAccount: {
       id: integrationAccount.id
     }
-    definition: includeWorkflowDefinition ? json(workflowDefinitionText) : emptyWorkflowDefinition
-    parameters: includeWorkflowDefinition ? azureMcpWorkflowParameters : {}
+    definition: workflowDefinition
+    parameters: azureMcpWorkflowParameters
   }
 }
 

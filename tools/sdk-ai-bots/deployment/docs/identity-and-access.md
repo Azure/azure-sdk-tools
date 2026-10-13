@@ -88,12 +88,14 @@ The shared-resources layer creates the `qabot-identity` user-assigned managed
 identity and exports its client, object, and resource IDs. It is used by:
 
 - the agent-server App Service through `AZURE_CLIENT_ID`;
-- the Function App through `AZURE_CLIENT_ID`;
 - the Logic App's authenticated agent-server calls and Cosmos DB managed API
   connection.
 
 It is attached to the agent-server together with the frontend identity, but the
-agent-server explicitly selects the shared identity for Azure SDK credentials.
+agent-server and its knowledge-sync WebJob explicitly select the shared
+identity for Azure SDK credentials. The App Service exposes the frontend
+identity's client ID as `BOT_CLIENT_ID` so the WebJob can sign GitHub App tokens
+with the externally managed Key Vault key.
 
 ### Frontend and bot identity
 
@@ -157,10 +159,6 @@ Declared in
 - **Key Vault Secrets User**
   (`4633458b-17de-408a-b874-0445c86b69e6`) on the application vault for runtime
   secret reads.
-- **Key Vault Secrets Officer**
-  (`b86a8fe4-44ce-4948-aee5-eccb2c155cd7`) on the application vault. The
-  Function timer writes the `ado-token` secret, so read-only access is not
-  sufficient.
 - **App Configuration Data Reader**
   (`516239f1-63e1-4d78-a4de-a74fb236a071`) on App Configuration.
 - **Search Index Data Contributor**
@@ -353,11 +351,11 @@ scope and calls the server with that token.
 
 ### Runtime access
 
-The agent-server and Function App explicitly select the shared runtime identity
-through `AZURE_CLIENT_ID`. The agent-server uses it to read channel
-configuration from Blob Storage. The Logic App uses it for authenticated
-agent-server calls and the Cosmos managed API connection, and attaches the
-frontend identity for bot calls.
+The agent-server and its knowledge-sync WebJob explicitly select the shared
+runtime identity through `AZURE_CLIENT_ID`. The agent-server uses it to read
+channel configuration from Blob Storage. The Logic App uses it for
+authenticated agent-server calls and the Cosmos managed API connection, and
+attaches the frontend identity for bot calls.
 
 The Teams managed connector is different: it uses delegated OAuth. The
 repository creates the connection shell and preserves a connected token, but

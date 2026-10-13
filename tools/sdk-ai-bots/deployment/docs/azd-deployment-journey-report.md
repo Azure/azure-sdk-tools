@@ -3,6 +3,7 @@
 # SDK AI Bot azd Deployment Journey Report
 
 - **Date:** September 9, 2026
+- **Last updated:** October 13, 2026
 - **Pull request:** [Azure/azure-sdk-tools#16357](https://github.com/Azure/azure-sdk-tools/pull/16357)
 - **Branch:** `qiaozha/sdk-ai-bots-deployment`
 
@@ -13,7 +14,7 @@ SDK AI bot with Azure Developer CLI (`azd`). It correlates the implementation in
 PR #16357 with all 12 `Azure/azure-dev` issues authored by `qiaozha` and
 distinguishes native capabilities, retained workarounds, and current risks.
 
-PR #16357 replaces fragmented deployment machinery with a seven-layer `azd`
+PR #16357 replaces fragmented deployment machinery with a six-layer `azd`
 architecture, workload identity federation, explicit dependencies, and a
 source-controlled environment contract. The result is coherent, but it remains
 a hybrid: `azd` owns orchestration and several native deployments, while
@@ -42,15 +43,13 @@ inputs are unavailable; unproduced image override aliases were removed.
 Focused tests cover explicit, derived, and missing target-image inputs. The hook
 can now detect image drift while injecting `AZURE_APPCONFIG_ENDPOINT`.
 
-### 3. Resolved: native Function App container deployment
+### 3. Resolved: Function App retirement
 
-The Function App now uses `host: function`, `language: docker`, and native
-remote build in [`azure.yaml`](../../azure.yaml). Its duplicate ACR build and
-direct container-repoint predeploy hook were removed.
-
-This adopts the container-aware Function host delivered by
-[Azure/azure-dev#9284](https://github.com/Azure/azure-dev/pull/9284) and removes
-the lifecycle ordering ambiguity.
+The October chatbot audit found that the Function App no longer registered any
+functions after the activity-conversion API moved to agent-server and the ADO
+token timer was removed. The deployment therefore removed the Function App
+service, Bicep layer, runtime role, and postdeploy hook. Logic Apps now call the
+authenticated agent-server `/activity/convert` endpoint directly.
 
 ### 4. Resolved: principal-aware frontend role assignments
 
@@ -113,7 +112,7 @@ logic. Cognitive Services model deployments were serialized with
 
 ### August 20 through September 9: consolidate the operational model
 
-The branch consolidated seven dependency-ordered infrastructure layers, removed
+The branch consolidated six dependency-ordered infrastructure layers, removed
 the ADE scaffolding and redundant pipelines, and added workload identity
 federation, Search, Teams consent, evolution settings, configurable image tags,
 and separate developer and deployment identities. A single component-aware
@@ -135,9 +134,9 @@ issues: five closed and seven open.
 | [#9152: Agent host strips hooks and image templating](https://github.com/Azure/azure-dev/issues/9152) | Jul 15 | Closed | Fixed by [#9211](https://github.com/Azure/azure-dev/pull/9211) in 1.29. The final service-scoped agent hook is preserved. |
 | [#9246: Named App Service slot deployment](https://github.com/Azure/azure-dev/issues/9246) | Jul 22 | Closed | Existing `AZD_DEPLOY_<SERVICE>_SLOT_NAME` support was confirmed and briefly adopted. The later dedicated-site topology no longer needs it. |
 | [#9247: Agent environment variables are not persisted](https://github.com/Azure/azure-dev/issues/9247) | Jul 22 | Open | The postdeploy hook clones the latest Foundry version to inject App Configuration and now validates it against an independently resolved target image. |
-| [#9248: Resolve image interpolation after predeploy](https://github.com/Azure/azure-dev/issues/9248) | Jul 22 | Open | Frontend and Function custom image hooks were removed in favor of native Docker services with a tag selected before azd starts. |
+| [#9248: Resolve image interpolation after predeploy](https://github.com/Azure/azure-dev/issues/9248) | Jul 22 | Open | The frontend custom image hook was removed in favor of a native Docker service with a tag selected before azd starts. |
 | [#9249: App Service container settings are overwritten](https://github.com/Azure/azure-dev/issues/9249) | Jul 22 | Closed | Fixed by [#9281](https://github.com/Azure/azure-dev/pull/9281) in 1.29. The old ACR identity-repair helper was removed. |
-| [#9250: Container Function deployment hangs](https://github.com/Azure/azure-dev/issues/9250) | Jul 22 | Closed | Fixed by [#9284](https://github.com/Azure/azure-dev/pull/9284) in 1.30. The branch now adopts native `host: function` container deployment. |
+| [#9250: Container Function deployment hangs](https://github.com/Azure/azure-dev/issues/9250) | Jul 22 | Closed | Fixed by [#9284](https://github.com/Azure/azure-dev/pull/9284) in 1.30. The branch adopted native deployment before the chatbot later retired the Function App entirely. |
 | [#9251: Expose target service to global hooks](https://github.com/Azure/azure-dev/issues/9251) | Jul 22 | Open | Largely avoided through service-scoped hooks. The remaining global predeploy hook only enforces deployment policy. |
 | [#9252: Preview omits hook effects](https://github.com/Azure/azure-dev/issues/9252) | Jul 22 | Open | Pipeline preview manually runs preprovision only. RBAC and postprovision data-plane changes remain absent. |
 | [#9253: Idempotent role-assignment ensure semantics](https://github.com/Azure/azure-dev/issues/9253) | Jul 22 | Open | The known out-of-band Foundry grant retains tuple-aware ensure reconciliation. Frontend grants remain declarative in Bicep with principal-aware names and require a one-time legacy GUID migration in existing environments. |
@@ -155,10 +154,11 @@ The active pipeline follows this sequence:
 3. Validate the environment contract and compile relevant Bicep.
 4. Refresh prior layer outputs and run `azd provision --preview`.
 5. Present the preview at a manual approval gate.
-6. Apply the seven dependency-ordered infrastructure layers.
-7. Deploy Function App and chat agent in parallel, then fan out chat-agent
-   completion to agent server and the production-only evolution agent; deploy
-   frontend after the authenticated agent-server readiness probe succeeds.
+6. Apply the six dependency-ordered infrastructure layers.
+7. Deploy the chat agent, then fan out to the Azure MCP Server agent,
+   agent-server, and production-only evolution agent; deploy frontend and the
+   dev/prod knowledge-sync WebJob after the authenticated agent-server readiness
+   probe succeeds.
 8. Reconcile App Configuration, Key Vault, Search, Teams, Foundry RBAC and
    settings, and the Logic App workflow through hooks.
 
@@ -184,8 +184,8 @@ A brand-new preview or production environment cannot follow the normal layered
 preview path because later layers require outputs from existing state. It needs
 a separately approved bootstrap process.
 
-Reprovisioning can also restore placeholder images or an empty Logic App shell.
-Application deployment and reconciliation hooks must run afterward. Slot swaps,
+Reprovisioning can also restore placeholder images. Application deployment and
+reconciliation hooks must run afterward. Slot swaps,
 blocking smoke tests, automated rollback, and health-threshold enforcement are
 not currently part of the active path.
 
@@ -197,10 +197,9 @@ For example, the environment-suite indentation and drift-detection regex
 comments no longer describe the current implementations.
 
 The smoke-test naming concern was resolved by suite-based target lookup. The
-Logic App workflow still has an open alignment request against
-[Azure/azure-sdk-tools#16865](https://github.com/Azure/azure-sdk-tools/pull/16865)
-and
-[Azure/azure-sdk-tools#16911](https://github.com/Azure/azure-sdk-tools/pull/16911).
+October audit aligned the Logic App with #16865, #16911, #16964, and #17142,
+including forwarded-message resolution, post titles, backend channel lookup,
+and backend activity conversion.
 
 ## Validation
 
@@ -251,6 +250,15 @@ The following checks were run from `tools/sdk-ai-bots/deployment` on September
 The deployment package now exposes `test` and `typecheck` scripts. Docker was
 unavailable, so no local image build ran. No live Azure deployment or resource
 mutation was performed.
+
+The October 13 audit revalidated the updated deployment:
+
+- deployment typecheck, environment validation, and 66 tests passed;
+- all six Bicep parameter entry points compiled, with only the existing Web
+  type-provider warnings;
+- knowledge sync passed 92 tests and its TypeScript build;
+- the focused hosted-agent/feedback suite passed 18 tests;
+- the retired Function package compiled and its empty-suite command passed.
 
 ## Recommendation
 

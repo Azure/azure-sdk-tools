@@ -29,7 +29,6 @@ export interface EnvironmentConfig {
   containerRegistryName: string;
   frontendSiteName: string;
   agentServerSiteName: string;
-  functionAppName: string;
   teamsAppId: string;
   teamsGroupId: string;
   teamsChannelIds: string[];
@@ -57,7 +56,7 @@ export interface EnvironmentSuite {
 }
 
 export type ServiceImageRepositories = Record<
-  "agent" | "agent-server" | "frontend" | "function-app",
+  "agent" | "agent-server" | "frontend",
   string
 >;
 
@@ -93,7 +92,7 @@ export function loadServiceImageRepositories(
   }
 
   const repositories = {} as ServiceImageRepositories;
-  for (const serviceName of ["agent", "agent-server", "frontend", "function-app"] as const) {
+  for (const serviceName of ["agent", "agent-server", "frontend"] as const) {
     const service = parsed.services[serviceName];
     const docker = isRecord(service) ? service.docker : undefined;
     const image = isRecord(docker) && typeof docker.image === "string"
@@ -184,7 +183,6 @@ const OVERRIDE_ALIAS_KEYS = new Set([
   "AI_RESOURCE_NAME",
   "AI_PROJECT_NAME",
   "AGENT_SERVER_SITE_NAME",
-  "FUNCTION_APP_NAME",
   "INTEGRATION_ACCOUNT_NAME",
   "TEAMS_CONNECTION_NAME",
   "LOGIC_APP_WORKFLOW_NAME",
@@ -218,8 +216,6 @@ export function buildAzdEnvironmentValues(
     FRONTEND_SITE_NAME: environment.frontendSiteName,
     AGENT_SERVER_SITE_NAME: environment.agentServerSiteName,
     AGENT_SERVER_SITE_NAME_OVERRIDE: environment.agentServerSiteName,
-    FUNCTION_APP_NAME: environment.functionAppName,
-    FUNCTION_APP_NAME_OVERRIDE: environment.functionAppName,
     CONTAINER_REGISTRY_NAME: environment.containerRegistryName,
     CONTAINER_REGISTRY_NAME_OVERRIDE: environment.containerRegistryName,
     KEY_VAULT_NAME: environment.keyVaultName,
@@ -230,7 +226,6 @@ export function buildAzdEnvironmentValues(
     AGENT_IMAGE_REPOSITORY: imageRepositories.agent,
     FRONTEND_IMAGE_REPOSITORY: `${imageRepositories.frontend}:${environmentName}`,
     AGENT_SERVER_IMAGE_REPOSITORY: `${imageRepositories["agent-server"]}:${environmentName}`,
-    FUNCTION_IMAGE_REPOSITORY: `${imageRepositories["function-app"]}:${environmentName}`,
     TEAMS_GROUP_ID: environment.teamsGroupId,
     TEAMS_CHANNEL_IDS: environment.teamsChannelIds.join(","),
     AZURE_MCP_TEAMS_GROUP_ID: environment.azureMcpTeamsGroupId,

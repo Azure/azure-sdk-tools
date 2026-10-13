@@ -1,6 +1,6 @@
 /**
  * Shared ACR tag helpers used by the per-service predeploy hooks
- * (agent / frontend / function-app) to list tags and compute the next
+ * (agent / frontend) to list tags and compute the next
  * auto-incrementing version tag for an image.
  *
  * Versioning scheme: `${prefix}-<major>.<minor>.<patch>` where `prefix` is the

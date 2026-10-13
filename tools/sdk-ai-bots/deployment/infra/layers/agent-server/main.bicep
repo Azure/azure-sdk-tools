@@ -146,6 +146,10 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
           value: managedIdentityClientId
         }
         {
+          name: 'BOT_CLIENT_ID'
+          value: frontendIdentityClientId
+        }
+        {
           name: 'AZURE_TENANT_ID'
           value: tenant().tenantId
         }

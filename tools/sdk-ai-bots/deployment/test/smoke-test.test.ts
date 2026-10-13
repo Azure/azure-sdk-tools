@@ -19,7 +19,7 @@ test("resolves smoke targets from the environment suite", () => {
 test("explicit smoke target values override the suite", () => {
   assert.deepEqual(
     resolveSmokeTarget({
-      component: "function-app",
+      component: "agent-server",
       environment: "dev",
       appName: "custom-app",
       resourceGroup: "custom-rg",

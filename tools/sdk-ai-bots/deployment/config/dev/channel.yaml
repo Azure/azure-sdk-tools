@@ -33,6 +33,11 @@ channels:
     endpoint: ${SERVER_BASE_URL}
     tenant: dotnet_channel_qa_bot
 
+  - name: Code Generation - .NET
+    id: 19:de16cb01a8a140678f02c3c1c8999756@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: dotnet_channel_qa_bot
+
   - name: API Spec Review
     id: 19:06178cf7377f447cb486bb15fca7a5f5@thread.tacv2
     endpoint: ${SERVER_BASE_URL}

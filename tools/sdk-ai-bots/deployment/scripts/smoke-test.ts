@@ -16,12 +16,11 @@ import {
   runCommand,
 } from "./lib/cli.js";
 
-export const SMOKE_COMPONENTS = ["frontend", "function-app", "agent-server"] as const;
+export const SMOKE_COMPONENTS = ["frontend", "agent-server"] as const;
 export type SmokeComponent = (typeof SMOKE_COMPONENTS)[number];
 
-const APP_NAME_KEYS: Record<SmokeComponent, "frontendSiteName" | "functionAppName" | "agentServerSiteName"> = {
+const APP_NAME_KEYS: Record<SmokeComponent, "frontendSiteName" | "agentServerSiteName"> = {
   frontend: "frontendSiteName",
-  "function-app": "functionAppName",
   "agent-server": "agentServerSiteName",
 };
 

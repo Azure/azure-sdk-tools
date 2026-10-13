@@ -3,7 +3,7 @@
 parameters:
     - name: layer
       type: string
-      values: [resource-group, shared-resources, agent, frontend, agent-server, function-app, logic-app]
+      values: [resource-group, shared-resources, agent, frontend, agent-server, logic-app]
     - name: dependencyLayers
       type: string
       default: ''

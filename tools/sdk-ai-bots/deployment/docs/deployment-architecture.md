@@ -12,19 +12,18 @@ is `tools/sdk-ai-bots/azure.yaml`, the Bicep entry points under
 - **`frontend`:** Teams bot on App Service. A user-assigned managed identity
   provides Azure Bot authentication.
 - **`agent-server`:** Python API on App Service protected by Easy Auth. It
-  resolves and caches channel configuration for the Logic App.
-- **`function-app`:** Containerized Azure Functions workload used by the Logic
-  App integration.
+  resolves channel configuration, converts Teams activities, and hosts the
+  scheduled knowledge-sync WebJob.
 - **`agent`:** Microsoft Foundry hosted chat agent built remotely in ACR.
 - **Azure MCP Server agent:** Separate Foundry hosted agent for the Azure MCP
   Server tenant.
-- **`logic-app`:** Two Teams-group workflows share the agent-server, Function
-  App, Teams connection, and integration account. Bicep creates both workflow
-  shells, and the Function App postdeploy hook installs their definitions.
+- **`logic-app`:** Two Teams-group workflows share the agent-server, Teams
+  connection, and integration account. Bicep owns both complete workflow
+  definitions.
 - **Evolution agent:** Production-only Foundry hosted agent with scoped access
   to production and candidate-dev resources.
-- **Data jobs:** Scheduled knowledge sync, generated-wiki build, and
-  feedback/evolution pipelines operating independently of the azd services.
+- **Data jobs:** Knowledge sync runs as a scheduled WebJob on `agent-server`.
+  Generated-wiki and feedback/evolution pipelines remain independent jobs.
 
 Shared infrastructure includes ACR, Storage, Cosmos DB, Key Vault, App
 Configuration, Azure AI Search, AI Services, Log Analytics, Application
@@ -37,31 +36,26 @@ graph TD
     RG[resource-group] --> SHARED[shared-resources]
     SHARED --> AGENT[agent platform]
     SHARED --> FRONTEND[frontend identity and App Service]
-    SHARED --> FUNCTION[function-app]
-    FRONTEND --> FUNCTION
     SHARED --> SERVER[agent-server]
     AGENT --> SERVER
     FRONTEND --> SERVER
     SHARED --> LOGIC[logic-app]
     FRONTEND --> LOGIC
     SERVER --> LOGIC
-    FUNCTION --> LOGIC
 ```
 
-The seven Bicep layers are listed in `azure.yaml` in this order:
+The six Bicep layers are listed in `azure.yaml` in this order:
 
 1. `resource-group`
 2. `shared-resources`
 3. `agent`
 4. `frontend`
 5. `agent-server`
-6. `function-app`
-7. `logic-app`
+6. `logic-app`
 
 `dependsOn` is authoritative. `agent` and `frontend` can be provisioned after
-shared resources; `agent-server` waits for both; `function-app` waits for the
-frontend identity; and `logic-app` is last because it consumes the deployed
-resource outputs.
+shared resources; `agent-server` waits for both; and `logic-app` is last because
+it consumes the deployed resource outputs.
 
 ## Pipeline Flow
 
@@ -86,26 +80,27 @@ infrastructure apply:
 
 ```mermaid
 flowchart LR
-  APPLY[Provision applied] --> FUNCTION[Function App]
   APPLY --> AGENT[Chat agent]
   AGENT --> MCP[Azure MCP Server agent]
   MCP --> SERVER[Agent server]
   AGENT --> EVOLUTION[Evolution agent, prod only]
   SERVER --> READY[Authenticated /ping readiness]
   READY --> FRONTEND[Frontend]
+  READY --> SYNC[Knowledge-sync WebJob, dev/prod]
 ```
 
-Function App and chat-agent deployment can run in parallel. The Azure MCP
-Server agent follows the chat agent, and agent-server waits for both hosted
-agents before frontend readiness. The readiness gate retries the Easy
-Auth-protected `/ping` endpoint before the frontend rollout proceeds. The
-production-only evolution branch does not gate frontend deployment.
+The Azure MCP Server agent follows the chat agent, and agent-server waits for
+both hosted agents before frontend readiness. The readiness gate retries the
+Easy Auth-protected `/ping` endpoint before the frontend and dev/prod WebJob
+stages proceed. The production-only evolution branch does not gate frontend
+deployment.
 
 `qa-bot-deploy.yml` defaults to `component=all`. Selecting `agent-server`,
-`function-app`, `agent`, or `frontend` provisions that layer and its
-dependencies, then deploys only that component. Selecting `shared-resources` or
-`logic-app` provisions that infrastructure scope without an application deploy.
-Component CI remains separate from provisioning and deployment.
+`agent`, or `frontend` provisions that layer and its dependencies, then deploys
+only that component. Dev/prod `agent-server` deployments also update the
+knowledge-sync WebJob. Selecting `shared-resources` or `logic-app` provisions
+that infrastructure scope without an application deploy. Component CI remains
+separate from provisioning and deployment.
 
 Both Logic Apps call the authenticated agent-server `/config/channel` endpoint
 to resolve each channel's tenant. The backend reads
@@ -127,8 +122,8 @@ lifecycle hooks:
 - frontend postdeploy synchronizes Teams environment values, installs or
   updates the approved Teams app in both configured groups, and probes
   `/health`;
-- Function App postdeploy verifies host readiness and installs both complete
-  Logic App workflows.
+- the knowledge-sync deployment stage packages and deploys the scheduled
+  WebJob after agent-server readiness.
 
 Application images use azd native remote Docker builds. After infrastructure
 apply, the selected application deployment stage establishes runtime state and
@@ -148,9 +143,10 @@ flowchart LR
     EVOLVE --> VALIDATE[Validate closed issues]
 ```
 
-Knowledge sync and wiki generation run as scheduled data pipelines outside the
-azd service graph and start their Search indexers after writing blobs. The
-feedback pipeline operates independently of knowledge sync.
+Knowledge sync runs as the `knowledge-sync` scheduled WebJob on the
+agent-server App Service and starts the primary Search indexer after writing
+blobs. Wiki generation remains a scheduled pipeline and starts its own indexer.
+The feedback pipeline operates independently of knowledge sync.
 
 ## Security Boundaries
 

@@ -26,11 +26,11 @@ or infrastructure contracts.
 | Failure area | Recovery path |
 | --- | --- |
 | Frontend | Run with `component=frontend`. Reapply the prior Teams package if its manifest changed. |
-| Agent-server | Run with `component=agent-server`. It deploys directly to the production site. |
-| Function App | Run with `component=function-app`; its postdeploy hook reapplies the Logic App definition. |
+| Agent-server | Run with `component=agent-server`. It deploys directly to the production site and redeploys the knowledge-sync WebJob in dev/prod. |
+| Knowledge-sync WebJob | Run with `component=agent-server` from the known-good revision, then verify the WebJob schedule and latest run. |
 | Chat agent | Run with `component=agent` or use the hosted-agent pipeline, then verify the new active Foundry version. |
 | Evolution agent | Run the production hosted-agent deployment from the known-good revision and verify primary/candidate RBAC. |
-| Logic App | Run with `component=function-app` to reapply its workflow, or keep the workflow disabled during investigation. |
+| Logic App | Run with `component=logic-app` to reapply its workflow, or keep the workflow disabled during investigation. |
 
 Review and approve the infrastructure preview even during rollback. A prior
 source revision may also contain older Bicep; do not approve unintended

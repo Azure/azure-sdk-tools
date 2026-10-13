@@ -1,7 +1,6 @@
 /**
  * deploy-logic-app — apply the Logic App workflow definition & parameters
- * to an existing environment via ARM PUT, independently of
- * `azd deploy function-app`.
+ * to an existing environment via ARM PUT.
  *
  * Usage (from the deployment/ folder):
  *   npm run deploy:logic-app -- -e dev
@@ -9,10 +8,8 @@
  *
  * The script resolves the target azd environment, loads its outputs with
  * `azd env get-values`, exports them into process.env, and calls the
- * shared patchWorkflow() helper. Requires that:
- *   - `azd provision` has been run for the environment (populates the .env).
- *   - `azd deploy function-app` has been run at least once (so the Function
- *     App host can validate the workflow's `function.id` reference).
+ * shared patchWorkflow() helper. `azd provision` must have populated the
+ * environment first.
  */
 
 import { execSync } from "child_process";

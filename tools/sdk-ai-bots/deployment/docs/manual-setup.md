@@ -106,7 +106,7 @@ environment suite's `subscriptionId`.
 The provisioning identity must be able to:
 
 - create the target resource group for a new environment;
-- create and update the resources declared by all seven Bicep layers;
+- create and update the resources declared by all six Bicep layers;
 - create role assignments for workload and deployment identities;
 - read/write the required App Configuration, Key Vault, Storage, Search, ACR,
   Cosmos DB, and AI Services control/data planes.
@@ -142,13 +142,14 @@ Component CI remains in existing package-owned workflows and is not registered
 from `deployment/pipelines/orchestrators`.
 
 The application deployment definition accepts `component=all` (the default),
-`shared-resources`, `agent`, `frontend`, `agent-server`, `function-app`, or
-`logic-app`. Use `all` for the full environment. Application selections
-provision and deploy one service; `shared-resources` and `logic-app` are
-provision-only selections.
+`shared-resources`, `agent`, `frontend`, `agent-server`, or `logic-app`. Use
+`all` for the full environment. Application selections provision and deploy one
+service; dev/prod `agent-server` deployments also update the scheduled
+knowledge-sync WebJob. `shared-resources` and `logic-app` are provision-only
+selections.
 
-Knowledge sync, wiki generation, hosted-agent deployment, and feedback jobs use
-the package-owned definitions listed in the [deploy runbook](runbook-deploy.md).
+Wiki generation, hosted-agent deployment, and feedback jobs use the
+package-owned definitions listed in the [deploy runbook](runbook-deploy.md).
 
 ## 7. Bootstrap Dev Layer State
 
@@ -172,7 +173,7 @@ npm run validate-env-suite -- --environment dev
 azd provision --environment dev --no-prompt
 ```
 
-Provisioning creates the seven-layer resource graph. The final postprovision
+Provisioning creates the six-layer resource graph. The final postprovision
 hook also:
 
 - uploads source-controlled bot routing;
@@ -193,8 +194,8 @@ the Teams connection is not authorized. Open the supplied Azure portal URL,
 authorize as the Teams service account, save, and resume. The next job verifies
 that the connection is `Connected`.
 
-For local dev, authorize in the portal and apply the final workflow after the
-Function App is deployed:
+For local dev, authorize in the portal and reapply the workflow after
+provisioning if consent was completed separately:
 
 ```bash
 npm run deploy:logic-app -- --env dev
@@ -211,6 +212,11 @@ approved versions can be installed or upgraded by the frontend postdeploy hook.
 - The GitHub App private key is expected in the vault configured by
   `GITHUB_APP_KEYVAULT_URL` and `GITHUB_APP_KEY_NAME`. Ensure the runtime
   identities can read that existing secret; this deployment does not create it.
+- Authorize `tools - sdk-ai-bots - deploy` to use the
+  `EMU-SSH-PRIVATE-KEY` secure file. The dev/prod agent-server path injects it
+  into the App Service without placing the key in pipeline arguments or logs.
+- Before the first WebJob deployment, disable and drain the previous dev/prod
+  Azure DevOps knowledge-sync schedules to prevent concurrent writers.
 - `TeamsWebhookUrl` in the deployment Key Vault is optional. Add it only when
   Teams deployment notifications are required. A missing value skips
   notification without failing deployment.

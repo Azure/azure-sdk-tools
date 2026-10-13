@@ -3,7 +3,7 @@
 parameters:
     - name: component
       type: string
-      values: [agent-server, function-app, agent, frontend]
+      values: [agent-server, agent, frontend]
     - name: environment
       type: string
       values: [dev, preview, prod]

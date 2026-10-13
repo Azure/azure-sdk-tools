@@ -11,7 +11,6 @@ param botBaseUrl = 'https://${readEnvironmentVariable('BOT_DOMAIN', '')}'
 param botAudience = 'https://api.botframework.com'
 param managedIdentityName = readEnvironmentVariable('MANAGED_IDENTITY_NAME', '')
 param botIdentityName = readEnvironmentVariable('FRONTEND_SITE_NAME', '')
-param functionAppName = readEnvironmentVariable('FUNCTION_APP_NAME', '')
 param integrationAccountNameOverride = readEnvironmentVariable('INTEGRATION_ACCOUNT_NAME_OVERRIDE', '')
 param teamsConnectionNameOverride = readEnvironmentVariable('TEAMS_CONNECTION_NAME_OVERRIDE', '')
 param logicAppWorkflowNameOverride = readEnvironmentVariable('LOGIC_APP_WORKFLOW_NAME_OVERRIDE', '')
@@ -19,6 +18,5 @@ param azureMcpLogicAppWorkflowNameOverride = readEnvironmentVariable('AZURE_MCP_
 param logicAppAlertNameOverride = readEnvironmentVariable('LOGIC_APP_ALERT_NAME_OVERRIDE', '')
 param azureMcpLogicAppAlertNameOverride = readEnvironmentVariable('AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME_OVERRIDE', '')
 param actionGroupName = readEnvironmentVariable('ACTION_GROUP_NAME', '')
-param includeWorkflowDefinition = readEnvironmentVariable('INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION', 'false') == 'true'
 param workflowEnabled = readEnvironmentVariable('LOGIC_APP_WORKFLOW_ENABLED', 'false') == 'true'
 param createTeamsConnection = readEnvironmentVariable('CREATE_TEAMS_CONNECTION', 'true') == 'true'

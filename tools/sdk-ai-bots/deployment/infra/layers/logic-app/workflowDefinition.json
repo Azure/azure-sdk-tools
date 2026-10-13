@@ -32,9 +32,6 @@
     },
     "botIdentityResourceId": {
       "type": "String"
-    },
-    "functionAppResourceId": {
-      "type": "String"
     }
   },
   "triggers": {
@@ -346,12 +343,19 @@
                   },
                   "actions": {
                     "convertActivity": {
-                      "type": "Function",
+                      "type": "Http",
                       "inputs": {
+                        "authentication": {
+                          "audience": "@parameters('serverApplicationIdUri')",
+                          "identity": "@parameters('serverIdentityResourceId')",
+                          "type": "ManagedServiceIdentity"
+                        },
                         "body": "@outputs('Resolved_message_details')",
-                        "function": {
-                          "id": "@{parameters('functionAppResourceId')}/functions/convertActivity"
-                        }
+                        "headers": {
+                          "Content-Type": "application/json"
+                        },
+                        "method": "POST",
+                        "uri": "@{parameters('serverBaseUrl')}/activity/convert"
                       }
                     },
                     "Scope": {

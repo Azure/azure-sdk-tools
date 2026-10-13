@@ -25,7 +25,6 @@ export const PROVISION_LAYERS = [
   "agent",
   "frontend",
   "agent-server",
-  "function-app",
   "logic-app",
 ] as const;
 

@@ -67,7 +67,7 @@ exception with an owner and due date.
 - [ ] Frontend availability test and deployment alerts report healthy.
 - [ ] Alert destinations and on-call ownership have been exercised.
 - [ ] Operators can verify frontend `/health`, agent-server `/ping`, and the
-      Function App host root `/` after deployment.
+      `knowledge-sync` WebJob schedule and latest run after deployment.
 - [ ] The Teams message path and Logic App trigger have been tested in the
       target tenant.
 - [ ] Dashboard or saved-query links are recorded in the team's operational
@@ -77,7 +77,7 @@ exception with an owner and due date.
 
 - [ ] Every component and data job has a primary and backup DRI.
 - [ ] Model quota covers the capacities declared in the agent Bicep layer.
-- [ ] App Service, Functions, Search, Cosmos DB, and ACR capacity are reviewed
+- [ ] App Service, Search, Cosmos DB, and ACR capacity are reviewed
       for expected production load.
 - [ ] The release owner and production approver sign off below.
 

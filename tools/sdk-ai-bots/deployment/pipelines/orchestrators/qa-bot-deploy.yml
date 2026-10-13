@@ -9,7 +9,7 @@ parameters:
     - name: component
       type: string
       default: all
-      values: [all, shared-resources, agent, frontend, agent-server, function-app, logic-app]
+      values: [all, shared-resources, agent, frontend, agent-server, logic-app]
     - name: environment
       type: string
       default: dev
@@ -77,14 +77,6 @@ extends:
                         environment: ${{ parameters.environment }}
                         imageTag: ${{ parameters.imageTag }}
 
-            - ${{ if eq(parameters.component, 'function-app') }}:
-                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
-                    parameters:
-                        component: function-app
-                        dependencyLayers: resource-group,shared-resources,frontend
-                        environment: ${{ parameters.environment }}
-                        imageTag: ${{ parameters.imageTag }}
-
             - ${{ if eq(parameters.component, 'agent') }}:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
                     parameters:
@@ -105,7 +97,7 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
                     parameters:
                         layer: logic-app
-                        dependencyLayers: resource-group,shared-resources,frontend,agent-server,function-app
+                        dependencyLayers: resource-group,shared-resources,frontend,agent-server
                         environment: ${{ parameters.environment }}
                         operation: preview
                         stageName: PreflightLayer
@@ -119,7 +111,7 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
                     parameters:
                         layer: logic-app
-                        dependencyLayers: resource-group,shared-resources,frontend,agent-server,function-app
+                        dependencyLayers: resource-group,shared-resources,frontend,agent-server
                         environment: ${{ parameters.environment }}
                         operation: apply
                         stageName: ProvisionLayer

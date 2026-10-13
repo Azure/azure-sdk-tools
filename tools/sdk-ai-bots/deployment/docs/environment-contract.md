@@ -40,7 +40,6 @@ environments:
         containerRegistryName: string
         frontendSiteName: string
         agentServerSiteName: string
-        functionAppName: string
         teamsAppId: GUID
         aiLocation: string
         cosmosDbLocation: string

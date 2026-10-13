@@ -23,17 +23,7 @@ For questions about current state, outcomes, correctness, failures, or required 
 
 ## Knowledge Sources & Tools
 
-Use the ADO MCP tools (read-only) for live release-plan data in the `azure-sdk` organization. Release plans are Azure DevOps work items in the `Release` project. A dashboard link such as `?releasePlan=35199` contains the **`Custom.ReleasePlanID`**, not necessarily the work-item ID. To retrieve a specific plan:
-
-1. Run `wit_query_by_wiql` with `project = "Release"` to resolve the work-item ID:
-   ```sql
-   SELECT [System.Id] FROM WorkItems
-   WHERE [System.TeamProject] = 'Release'
-     AND [Custom.ReleasePlanID] = '<id>'
-     AND [System.WorkItemType] = 'Release Plan'
-   ```
-   If no item is found and `<id>` is numeric, retry by treating it as the work-item ID.
-2. Call `wit_get_work_item` with the resolved ID, `project = "Release"`, and `expand = "all"`. Follow related **API Spec** or **Package** children with `wit_get_work_items_batch_by_ids` when their details are needed. The plan title is `System.Title`, and its overall status is `System.State`.
+Use `azsdk_get_release_plan` for live release-plan data in the `azure-sdk` organization. Pass `releasePlanId` for a dashboard link such as `?releasePlan=35199`, `workItemId` for an Azure DevOps work-item ID, or `specPullRequestUrl` for an API spec pull request link. Lookups by `releasePlanId` or spec PR only find active plans; if a numeric ID is not found, retry it as a work-item ID and state that the plan may be closed. The result includes each language's SDK details and SDK pull request link.
 
 ## Specific Answer Guidelines
 
@@ -53,4 +43,4 @@ Use the ADO MCP tools (read-only) for live release-plan data in the `azure-sdk` 
 
 ### SDK Release
 - **Release (generation) date**: Describe the release processes first, then provide suggestions.
-- **Release plan**: Own questions about release plan creation, status, readiness, lifecycle, and troubleshooting. For a specific plan ID or dashboard link, retrieve its current data through the read-only ADO MCP workflow above before answering. Mention the legacy Release Planner only when explicitly requested.
+- **Release plan**: Own questions about release plan creation, status, readiness, lifecycle, and troubleshooting. For a specific plan ID or dashboard link, retrieve its current data with `azsdk_get_release_plan` before answering. Mention the legacy Release Planner only when explicitly requested.

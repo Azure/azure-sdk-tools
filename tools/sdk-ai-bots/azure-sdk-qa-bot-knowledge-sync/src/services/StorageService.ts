@@ -8,7 +8,6 @@ import {
     ChainedTokenCredential,
     ManagedIdentityCredential,
     AzureCliCredential,
-    WorkloadIdentityCredential,
 } from "@azure/identity";
 import * as crypto from "crypto";
 
@@ -30,8 +29,7 @@ export class BlobService {
 
         // Use ChainedTokenCredential for better fallback options
         const credential = new ChainedTokenCredential(
-            new WorkloadIdentityCredential(),
-            new ManagedIdentityCredential(),
+            new ManagedIdentityCredential({ clientId: process.env.AZURE_CLIENT_ID }),
             new AzureCliCredential()
         );
 

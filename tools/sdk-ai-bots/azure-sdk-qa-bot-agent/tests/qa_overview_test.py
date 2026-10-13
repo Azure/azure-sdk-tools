@@ -634,6 +634,23 @@ async def test_issue_identity_normalization(storage):
 
 
 @pytest.mark.asyncio
+async def test_ado_work_item_identity_normalization(storage):
+    urls = [
+        "https://dev.azure.com/azure-sdk/internal/_workitems/edit/456",
+        "https://DEV.AZURE.COM/AZURE-SDK/Internal/_workitems/edit/0456/",
+        "https://dev.azure.com/azure-sdk/internal/_workitems/edit/457",
+    ]
+    storage[0].documents = [
+        qa(feedback={**issue_feedback(), "issue_url": url}) for url in urls
+    ]
+
+    total = (await QADashboardService().get_overview(start=START, end=END)).totals
+
+    assert total.tracked_issues == 2
+    assert total.issue_cases == total.resolved_cases == 3
+
+
+@pytest.mark.asyncio
 async def test_findings_include_all_known_causes_without_inference(storage):
     storage[0].documents = [qa(verdict="incorrect", feedback={"classification": cause.value})
                             for cause in RootCauseClassification]

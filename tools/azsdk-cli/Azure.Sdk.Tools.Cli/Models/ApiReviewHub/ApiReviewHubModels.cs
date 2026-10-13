@@ -25,6 +25,10 @@ public class ReviewPullRequestCreationRequest
     [JsonPropertyName("packageName")]
     public required string PackageName { get; set; }
 
+    [JsonPropertyName("packageType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PackageType { get; set; }
+
     [JsonPropertyName("baseTag")]
     public string BaseTag { get; set; } = string.Empty;
 

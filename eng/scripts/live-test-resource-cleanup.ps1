@@ -990,6 +990,41 @@ function Invoke-PreDeleteResourceCleanup() {
   return $errors
 }
 
+# Emits a single structured line per subscription per run. Azure DevOps build logs are
+# ingested into the Pipelines Kusto database by pipeline-witness, where this line is parsed to
+# drive the live test resource cleanup dashboard. Keep the marker and property names in sync with
+# tools/pipeline-witness/infrastructure/kusto/views/LiveTestResourceGroupSnapshot.kql
+function WriteCleanupMetrics() {
+  [CmdletBinding()]
+  param(
+    [int] $TotalGroups,
+    [int] $ToDelete,
+    [int] $ToClean,
+    [int] $ToDeleteSoon,
+    [int] $ToDeleteLater
+  )
+
+  try {
+    $subscription = (Get-AzContext).Subscription
+    $metrics = [ordered]@{
+      timestamp        = [DateTime]::UtcNow.ToString('o')
+      subscriptionId   = $subscription.Id
+      subscriptionName = $subscription.Name
+      environment      = $Environment
+      groupFilter      = $GroupFilter
+      totalGroups      = $TotalGroups
+      toDelete         = $ToDelete
+      toClean          = $ToClean
+      toDeleteSoon     = $ToDeleteSoon
+      toDeleteLater    = $ToDeleteLater
+    }
+    Write-Host "CLEANUP_METRICS $($metrics | ConvertTo-Json -Compress)"
+  } catch {
+    # Telemetry must never interfere with cleanup.
+    Write-Warning "Failed to emit cleanup metrics: $($_.Exception.Message)"
+  }
+}
+
 function DeleteOrUpdateResourceGroups() {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
   param()
@@ -1001,8 +1036,14 @@ function DeleteOrUpdateResourceGroups() {
   Write-Verbose "Fetching groups"
   [Array]$allGroups = Retry { Get-AzResourceGroup } | Where-Object { $_.ResourceGroupName -like $GroupFilter }
   if (!$allGroups) {
-      Write-Warning "No resource groups found"
-      return
+    Write-Warning "No resource groups found"
+    WriteCleanupMetrics `
+      -TotalGroups 0 `
+      -ToDelete 0 `
+      -ToClean 0 `
+      -ToDeleteSoon 0 `
+      -ToDeleteLater 0
+    return
   }
   if ($allGroups.Count -gt 1) {
     $allGroups = @($allGroups | Get-Random -Count $allGroups.Count)
@@ -1042,6 +1083,12 @@ function DeleteOrUpdateResourceGroups() {
     $toDeleteSoon += $rg
   }
 
+  WriteCleanupMetrics `
+    -TotalGroups $allGroups.Count `
+    -ToDelete $toDelete.Count `
+    -ToClean $toClean.Count `
+    -ToDeleteSoon $toDeleteSoon.Count `
+    -ToDeleteLater $toDeleteLater.Count
 
   foreach ($rg in $toDeleteSoon) {
     FindOrCreateDeleteAfterTag -ResourceGroup $rg -HoursToDelete $DeleteAfterHours

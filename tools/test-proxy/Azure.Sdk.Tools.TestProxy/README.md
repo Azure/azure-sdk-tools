@@ -81,13 +81,13 @@ There is a walkthrough through the process below in the [how do I use the test p
 
 For a more detailed explanation of how the test proxy works, along with links to demo projects for various languages, refer to the following post on the Azure SDK blog:
 
-[Level up your cloud testing game with the Azure SDK test proxy](http://aka.ms/azsdk/test-proxy)
+[Level up your cloud testing game with the Azure SDK test proxy](https://aka.ms/azsdk/test-proxy)
 
 ## Installation
 
 ### Via Local Compile or .NET
 
-1. [Install .NET 8.0 (LTS) or 9.0](https://dotnet.microsoft.com/download)
+1. [Install the .NET 10.0 SDK (LTS)](https://dotnet.microsoft.com/download/dotnet/10.0)
 2. Install or update test-proxy
 
 ```powershell
@@ -128,7 +128,7 @@ These executables are produced for multiple platforms and are available attached
 
 The version suffix for each release is based on the date. In most cases, the latest version should be totally stable.
 
-For safety, the "official target" version that the azure-sdk team uses is present within [`eng/common/testproxy/target_version.txt`](../../../eng/common/testproxy/target_version.txt). New "official" versions are tested by all consumers prior to updating the target version within this file.
+For safety, the "official target" version that the azure-sdk team uses is present within [`eng/common/testproxy/target_version.txt`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/target_version.txt). New "official" versions are tested by all consumers prior to updating the target version within this file.
 
 ## Command line arguments
 
@@ -346,7 +346,7 @@ test-proxy --storage-location "C:/repo/sdk-for-net/"
 
 We start a test run by POST-ing to either `/Record/Start` or `/Playback/Start`. Within the body of the post request we provide a file location within JSON body key `x-recording-file`.
 
-**Note:** The test-proxy supports external storage of recordings. In this context there is an additional body key `x-recording-assets-file` that must be provided. Read more about this in the `asset-sync` [documentation.](../documentation/asset-sync/README.md).
+**Note:** The test-proxy supports external storage of recordings. In this context there is an additional body key `x-recording-assets-file` that must be provided. Read more about this in the `asset-sync` [documentation.](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/documentation/asset-sync/README.md).
 
 This key is used in combination with the `context` directory to either **store** or **load** an existing recording.
 
@@ -524,7 +524,7 @@ When attempting to use in-memory recording, you cannot submit empty body `{}` to
 
 ### See example implementations
 
-Of course, feel free to check any of the [examples](https://github.com/Azure/azure-sdk-tools/tree/feature/http-recording-server/tools/test-proxy/sample-clients) to see actual test code and invocations.
+Of course, feel free to check any of the [examples](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/sample-clients) to see actual test code and invocations.
 
 ## Session and Test Level Transforms, Sanitizers, and Matchers
 
@@ -906,7 +906,7 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 #### Windows IIS
 
-[Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
+[Add Internet Information](https://docs.microsoft.com/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
 
 ![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
 
@@ -914,4 +914,4 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
-For further reading about this feature, please refer to the [asset-sync documentation folder](../documentation/asset-sync/README.md).
+For further reading about this feature, please refer to the [asset-sync documentation folder](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/documentation/asset-sync/README.md).

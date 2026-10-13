@@ -23,8 +23,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/006003-dp-add-list-operation/tspconfig.yaml
       dest: tspconfig.yaml
     commands:

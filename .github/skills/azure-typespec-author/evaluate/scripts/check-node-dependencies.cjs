@@ -14,7 +14,7 @@ const requiredPackages = [
 const mode = process.argv[2];
 
 if (!mode || !['node_modules', 'packages'].includes(mode)) {
-  console.error('[dependency-check] usage: node check-node-dependencies.js <node_modules|packages>');
+  console.error('[dependency-check] usage: node check-node-dependencies.cjs <node_modules|packages>');
   process.exit(2);
 }
 

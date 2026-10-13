@@ -39,8 +39,8 @@ The application uses `config/knowledge-config.json` to define which repositories
 - Documentation paths within repositories  
 - Processing options and filters
 
-The .NET source retains `/doc` and the Resource Manager docs and adds narrowly
-selected C# emitter docs/READMEs, the `mitigate-breaking-changes` and
+The .NET source retains `/doc` and the Resource Manager docs and adds
+C# emitter docs/READMEs, the `mitigate-breaking-changes` and
 `mgmt-review-comment-resolution` skill directories (including any Markdown
 references), the Azure.Core test framework README, test proxy onboarding,
 tsp-client README, and client customization guidance. All use
@@ -48,16 +48,13 @@ tsp-client README, and client customization guidance. All use
 `microsoft/typespec` C# emitter docs use the separate
 `typespec_csharp_emitter_docs` folder and `scope: unbranded`.
 
-Changing configuration does not itself index or deploy these sources. Do not run
-sync against a partial source list: sync removes blobs absent from its results.
+All entries sharing `azure_sdk_for_net_docs` use the same `scope: branded`
+metadata without a service-plane label, keeping both management- and data-plane
+documentation available to the .NET tenant. The configured paths select sparse
+checkout contents; the existing repository-relative processor scans the shared
+checkout for each entry, rather than enforcing a per-entry scan boundary.
 
-**Merge dependency:** The .NET additions require the separately reviewed
-[repository-relative path-scoping fix (#17256)](https://github.com/Azure/azure-sdk-tools/pull/17256)
-before they are merged or used for sync.
-Without that fix, each `relativeByRepoPath` entry scans the shared sparse-checkout
-root, duplicating documents and potentially applying another entry's plane
-metadata. Configuration and citation tests here do not claim narrow ingestion
-works with the historical processor.
+Changing configuration does not itself index or deploy these sources.
 
 ## Building and Running
 

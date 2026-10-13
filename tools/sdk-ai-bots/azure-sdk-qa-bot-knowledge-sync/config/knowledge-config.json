@@ -346,8 +346,7 @@
           "folder": "azure_sdk_for_net_docs",
           "relativeByRepoPath": true,
           "metadata": {
-            "scope": "branded",
-            "service_type": "management-plane"
+            "scope": "branded"
           }
         },
         {
@@ -356,8 +355,7 @@
           "folder": "azure_sdk_for_net_docs",
           "relativeByRepoPath": true,
           "metadata": {
-            "scope": "branded",
-            "service_type": "management-plane"
+            "scope": "branded"
           }
         },
         {
@@ -366,8 +364,7 @@
           "folder": "azure_sdk_for_net_docs",
           "relativeByRepoPath": true,
           "metadata": {
-            "scope": "branded",
-            "service_type": "data-plane"
+            "scope": "branded"
           }
         },
         {
@@ -376,8 +373,7 @@
           "folder": "azure_sdk_for_net_docs",
           "relativeByRepoPath": true,
           "metadata": {
-            "scope": "branded",
-            "service_type": "data-plane"
+            "scope": "branded"
           }
         },
         {
@@ -386,8 +382,7 @@
           "folder": "azure_sdk_for_net_docs",
           "relativeByRepoPath": true,
           "metadata": {
-            "scope": "branded",
-            "service_type": "management-plane"
+            "scope": "branded"
           }
         },
         {
@@ -396,8 +391,7 @@
           "folder": "azure_sdk_for_net_docs",
           "relativeByRepoPath": true,
           "metadata": {
-            "scope": "branded",
-            "service_type": "management-plane"
+            "scope": "branded"
           }
         },
         {

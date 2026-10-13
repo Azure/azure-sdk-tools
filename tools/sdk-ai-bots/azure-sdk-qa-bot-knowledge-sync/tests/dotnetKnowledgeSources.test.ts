@@ -42,13 +42,34 @@ describe('.NET knowledge configuration', () => {
         const sources = ConfigurationLoader.getDocumentationSources()
             .filter(source => source.folder === 'azure_sdk_for_net_docs');
         expect(sources.every(source => source.path === 'docs/azure-sdk-for-net')).toBe(true);
-        expect(sources.every(source => source.metadata?.scope === 'branded')).toBe(true);
-        expect(sources[2].metadata?.service_type).toBe('management-plane');
-        expect(sources[4].metadata?.service_type).toBe('data-plane');
-        expect(sources[6].metadata?.service_type).toBe('management-plane');
+        expect(sources.map(source => source.metadata)).toEqual(
+            expectedPaths.map(() => ({ scope: 'branded' })));
         const repo = ConfigurationLoader.getRepositoryConfigs()
             .find(repository => repository.name === 'azure-sdk-for-net');
         expect(repo?.sparseCheckout).toEqual(expectedPaths);
+    });
+
+    it('applies identical metadata to .NET documents across all shared-root entries', () => {
+        ConfigurationLoader.setConfigPath(configPath);
+        const sources = ConfigurationLoader.getDocumentationSources()
+            .filter(source => source.folder === 'azure_sdk_for_net_docs');
+        expect(sources).toHaveLength(12);
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dotnet-metadata-'));
+        tempDirs.push(root);
+        for (const relativePath of [
+            'eng/packages/http-client-csharp-mgmt/docs/emitter.md',
+            'eng/packages/http-client-csharp/.tspd/docs/emitter.md',
+            '.github/skills/mitigate-breaking-changes/SKILL.md',
+            'sdk/core/Azure.Core.TestFramework/README.md',
+        ]) {
+            const file = path.join(root, relativePath);
+            fs.mkdirSync(path.dirname(file), { recursive: true });
+            fs.writeFileSync(file, '# .NET documentation');
+            const results = sources.map(source => processMarkdownFile(file, source, root));
+            expect(results.map(result => result.metadata)).toEqual(
+                sources.map(() => ({ scope: 'branded' })));
+            expect(new Set(results.map(result => result.blobPath)).size).toBe(1);
+        }
     });
 
     it('preserves distinct repository-relative filenames for .NET emitter READMEs', () => {

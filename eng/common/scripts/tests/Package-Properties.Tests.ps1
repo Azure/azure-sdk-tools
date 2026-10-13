@@ -1,4 +1,4 @@
-Describe "Get-PrPkgProperties service-level CI detection" {
+Describe "Get-PrPkgProperties service-level CI detection" -Tag "UnitTest" {
     BeforeAll {
         . (Join-Path $PSScriptRoot ".." "Package-Properties.ps1")
 

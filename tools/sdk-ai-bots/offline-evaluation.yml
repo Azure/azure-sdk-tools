@@ -19,14 +19,6 @@ parameters:
   - name: researchProfile
     type: string
     default: ''
-    values:
-      - ''
-      - baseline
-      - c1_facts
-      - c2_typed_evidence
-      - c3_witness_policy
-      - c4_primary_sources
-      - c5_counterexample_policy
   - name: scenarios
     type: object
     default:

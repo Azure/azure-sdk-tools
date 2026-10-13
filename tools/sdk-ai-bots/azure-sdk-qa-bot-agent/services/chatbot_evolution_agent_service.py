@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import cast
 
 from azure.ai.projects.aio import AIProjectClient
@@ -29,8 +29,15 @@ from models.feedback import (
     parse_issue_reference,
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
+from services.qa_record_service import QARecordService
 from utils.azure_ai_foundry import get_project_client
-from utils.azure_cosmosdb import read_qa_record, upsert_qa_record
+from utils.azure_ai_foundry_agent import HostedAgentClient
+from utils.azure_cosmosdb import (
+    query_qa_records_by_feedback_status,
+    read_qa_record,
+    replace_qa_record_if_unchanged,
+    upsert_qa_record,
+)
 from utils.knowledge_config import KbIssueTarget, get_kb_targets
 
 logger = logging.getLogger(__name__)
@@ -58,6 +65,7 @@ _ALLOWED_OUTCOMES = {
 
 # Hard cap on Agent wall-clock time for one synchronous pipeline job.
 _JOB_TIMEOUT_SECS = 600
+_STALE_JOB_TIMEOUT = timedelta(minutes=20)
 
 # Keep informational logs bounded; the structured result is persisted in
 # Cosmos, so logs need only a diagnostic preview.
@@ -92,6 +100,57 @@ class ChatbotEvolutionAgentService:
         return self._project_client
 
     # -- Public job lifecycle ----------------------------------------------
+
+    async def recover_stale_jobs(
+        self,
+        *,
+        tenant_id: str | None = None,
+        excluded_channels: set[str] | None = None,
+    ) -> int:
+        """Make abandoned jobs retryable without invoking the Agent."""
+        cutoff = _now() - _STALE_JOB_TIMEOUT
+        excluded_channels = excluded_channels or set()
+        recovered = 0
+        for status in (FeedbackStatus.created, FeedbackStatus.running):
+            docs = await query_qa_records_by_feedback_status(
+                feedback_status=status.value, tenant_id=tenant_id
+            )
+            for doc in docs:
+                record = QARecord.from_cosmos(doc)
+                feedback = record.feedback
+                if (
+                    feedback is None
+                    or feedback.status
+                    not in (FeedbackStatus.created, FeedbackStatus.running)
+                    or QARecordService.channel_key_of(record) in excluded_channels
+                ):
+                    continue
+                updated_at = (
+                    feedback.updated_at or feedback.created_at or record.updated_at
+                )
+                if updated_at > cutoff:
+                    continue
+                mode = (
+                    ChatbotEvolutionAgentMode.validation
+                    if feedback.issue_url
+                    else ChatbotEvolutionAgentMode.analysis
+                )
+                self._finalize_failed(
+                    record,
+                    mode=mode,
+                    error=f"agent_{mode.value}_abandoned: inactive for at least 20 minutes",
+                )
+                if await replace_qa_record_if_unchanged(
+                    record.to_cosmos(), etag=doc["_etag"]
+                ):
+                    recovered += 1
+                    logger.warning(
+                        "Recovered abandoned %s job %s (last update: %s)",
+                        mode.value,
+                        record.id,
+                        updated_at.isoformat(),
+                    )
+        return recovered
 
     async def run_job(
         self,
@@ -439,13 +498,22 @@ class ChatbotEvolutionAgentService:
                 },
             )
         ]
-        raw_response = await openai_client.responses.with_raw_response.create(
-            input=input_items,
-            store=True,
-            stream=False,
-            extra_body={"agent_reference": agent_ref.to_extra_body()},
+        # Do not add invocation retries to a job that can update KBs and issues.
+        agent_client = HostedAgentClient(
+            openai_client,
+            max_retries=1,
+            stream_timeout=_JOB_TIMEOUT_SECS,
         )
-        response = raw_response.parse()
+        trace_id, response = await agent_client.invoke(
+            conversation_items=input_items,
+            agent_ref=agent_ref.to_extra_body(),
+        )
+        logger.info(
+            "Evolution agent trace: trace_id=%s, response_id=%s, conversation=%s",
+            trace_id,
+            response.id,
+            payload.conversation_id,
+        )
         if response.status != "completed":
             raise RuntimeError(
                 f"Agent response {response.id} ended with status={response.status}: "

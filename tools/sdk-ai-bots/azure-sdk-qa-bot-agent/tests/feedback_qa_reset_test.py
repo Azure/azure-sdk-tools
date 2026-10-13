@@ -1,4 +1,4 @@
-"""Offline tests for the conditional Cosmos patch used by negative feedback."""
+"""Offline tests for conditional QA-record Cosmos writes."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from azure.core import MatchConditions
 from azure.cosmos import exceptions
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
@@ -18,6 +19,40 @@ if _PROJECT_ROOT not in sys.path:
 from models.conversation import BotAnswerVerdict
 from models.qa_record import QARecord, QAStatus
 from utils import azure_cosmosdb
+
+
+@pytest.mark.asyncio
+async def test_conditional_replace_uses_etag_without_upsert() -> None:
+    container = AsyncMock()
+    document = {"id": "record", "tenant_id": "typespec"}
+    with patch.object(azure_cosmosdb, "get_qa_records_container", return_value=container):
+        assert await azure_cosmosdb.replace_qa_record_if_unchanged(
+            document, etag="old-etag"
+        )
+    container.replace_item.assert_awaited_once_with(
+        item="record", body=document, etag="old-etag",
+        match_condition=MatchConditions.IfNotModified,
+    )
+    container.upsert_item.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [404, 412, 403, 429, 503])
+async def test_conditional_replace_only_skips_concurrent_changes(status_code: int) -> None:
+    container = AsyncMock()
+    error = exceptions.CosmosHttpResponseError(status_code=status_code, message="write failed")
+    container.replace_item.side_effect = error
+    with patch.object(azure_cosmosdb, "get_qa_records_container", return_value=container):
+        if status_code in (404, 412):
+            assert not await azure_cosmosdb.replace_qa_record_if_unchanged(
+                {"id": "record", "tenant_id": "typespec"}, etag="old-etag"
+            )
+        else:
+            with pytest.raises(exceptions.CosmosHttpResponseError) as exc:
+                await azure_cosmosdb.replace_qa_record_if_unchanged(
+                    {"id": "record", "tenant_id": "typespec"}, etag="old-etag"
+                )
+            assert exc.value is error
 
 
 @pytest.mark.asyncio

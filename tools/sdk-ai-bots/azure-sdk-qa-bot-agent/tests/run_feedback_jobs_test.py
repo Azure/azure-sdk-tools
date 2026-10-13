@@ -134,6 +134,29 @@ async def test_excluded_channel_load_failure_stops_the_job() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(("dry_run", "enabled"), [(True, "true"), (False, "false")])
+async def test_disabled_agent_processing_does_not_recover_jobs(
+    dry_run: bool, enabled: str,
+) -> None:
+    qa_service = MagicMock()
+    qa_service.get_messages_in_period = AsyncMock(return_value=[])
+    qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
+    evolution = MagicMock()
+    evolution.recover_stale_jobs = AsyncMock()
+    args = _args()
+    args.dry_run = dry_run
+    with (
+        patch.object(run_feedback_jobs, "QARecordService", return_value=qa_service),
+        patch.object(run_feedback_jobs, "ChatbotEvolutionAgentService", return_value=evolution),
+        patch.object(run_feedback_jobs, "_load_excluded_channels", new=AsyncMock(return_value=set())),
+        patch.object(run_feedback_jobs.app_config, "get", return_value=enabled),
+    ):
+        await run_feedback_jobs._run(args)
+    evolution.recover_stale_jobs.assert_not_awaited()
+    qa_service.list_analyzable.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_run_invokes_agent_for_analysis_without_external_evaluator() -> None:
     qa_service = MagicMock()
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
@@ -143,6 +166,7 @@ async def test_run_invokes_agent_for_analysis_without_external_evaluator() -> No
         return_value=[_record(qa_status=QAStatus.ongoing)]
     )
     evolution = MagicMock()
+    evolution.recover_stale_jobs = AsyncMock(return_value=0)
     evolution.run_job = AsyncMock(
         return_value=_result(
             ChatbotEvolutionAgentOutcome.no_issue,
@@ -170,6 +194,9 @@ async def test_run_invokes_agent_for_analysis_without_external_evaluator() -> No
         await run_feedback_jobs._run(_args())
 
     qa_service.get_messages_in_period.assert_awaited_once()
+    evolution.recover_stale_jobs.assert_awaited_once_with(
+        tenant_id=None, excluded_channels=set()
+    )
     evolution.run_job.assert_awaited_once()
     assert (
         evolution.run_job.await_args.kwargs["mode"]
@@ -205,6 +232,7 @@ async def test_run_validates_only_after_issue_closes(
     )
     qa_service.list_analyzable = AsyncMock(return_value=[])
     evolution = MagicMock()
+    evolution.recover_stale_jobs = AsyncMock(return_value=0)
     evolution.run_job = AsyncMock(
         return_value=_result(outcome) if outcome is not None else None
     )
@@ -264,6 +292,7 @@ async def test_run_validates_before_analysis() -> None:
         ]
     )
     evolution = MagicMock()
+    evolution.recover_stale_jobs = AsyncMock(return_value=0)
 
     async def run_job(*_args, mode: ChatbotEvolutionAgentMode, **_kwargs):
         events.append(mode.value)
@@ -297,4 +326,7 @@ async def test_run_validates_before_analysis() -> None:
     ):
         await run_feedback_jobs._run(_args())
 
+    evolution.recover_stale_jobs.assert_awaited_once_with(
+        tenant_id=None, excluded_channels=set()
+    )
     assert events == ["validation", "analysis"]

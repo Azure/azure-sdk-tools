@@ -11,6 +11,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from azure.core import MatchConditions
 from azure.cosmos import PartitionKey, exceptions as cosmos_exceptions
 from azure.cosmos.aio import ContainerProxy, CosmosClient
 
@@ -451,6 +452,29 @@ async def upsert_qa_record(document: dict[str, Any]) -> dict[str, Any]:
     """Upsert a QA-record document into the qa-records container."""
     container = await get_qa_records_container()
     return await container.upsert_item(document)
+
+
+async def replace_qa_record_if_unchanged(
+    document: dict[str, Any], *, etag: str
+) -> bool:
+    """Replace an existing QA record without overwriting concurrent changes."""
+    container = await get_qa_records_container()
+    try:
+        await container.replace_item(
+            item=document["id"],
+            body=document,
+            etag=etag,
+            match_condition=MatchConditions.IfNotModified,
+        )
+    except cosmos_exceptions.CosmosHttpResponseError as exc:
+        if exc.status_code in (404, 412):
+            logger.info(
+                "QA record %s changed or was deleted; conditional update skipped",
+                document["id"],
+            )
+            return False
+        raise
+    return True
 
 
 async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> bool:

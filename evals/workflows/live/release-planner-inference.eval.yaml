@@ -11,7 +11,7 @@ environment: azsdk-mcp-live
 defaults:
   runs: 1
   timeout: 30m
-  model: gpt-5.4
+  model: gpt-5.6-terra
   executor: copilot-sdk
 stimuli:
   - name: release-planner-infer-details-from-spec-pr
@@ -71,7 +71,7 @@ stimuli:
             - azsdk_verify_setup
       - type: prompt
         config:
-          model: gpt-5.4
+          model: gpt-5.6-terra
           scoring: binary
           threshold: 1.0
           prompt: |

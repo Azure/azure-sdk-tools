@@ -2,22 +2,26 @@
 
 Aggregates per-message rows into one ``QARecord`` per thread. New threads with
 a bot answer start as ``ongoing``; the Chatbot Evolution Agent owns subsequent
-evaluation and lifecycle transitions.
+evaluation, except for automatic closure after 144 hours of inactivity.
 """
 
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Sequence
 
 from models.conversation import (
+    BotAnswerVerdict,
     ConversationDocumentType,
     ConversationMessageItem,
 )
+from models.feedback import Reaction
 from models.qa_record import FeedbackStatus, QARecord, QAStatus
+from services.conversation_service import ConversationService
 from utils.azure_cosmosdb import (
     get_conversation_message_container,
+    query_conversation_feedback,
     query_qa_records_by_qa_status,
     query_qa_records_by_feedback_status,
     read_qa_record,
@@ -26,6 +30,7 @@ from utils.azure_cosmosdb import (
 )
 
 logger = logging.getLogger(__name__)
+_INACTIVE_THREAD_TIMEOUT = timedelta(hours=144)
 
 
 class QARecordService:
@@ -252,6 +257,78 @@ class QARecordService:
             if link:
                 return link
         return None
+
+    async def close_inactive_threads(
+        self,
+        *,
+        tenant_id: str | None = None,
+        excluded_channels: set[str] | None = None,
+    ) -> int:
+        """Auto-close inactive ongoing threads unless negative feedback exists."""
+        now = _now()
+        cutoff = now - _INACTIVE_THREAD_TIMEOUT
+        excluded_channels = excluded_channels or set()
+        docs = await query_qa_records_by_qa_status(
+            qa_status=QAStatus.ongoing.value, tenant_id=tenant_id
+        )
+        conversations = ConversationService()
+        closed = 0
+        for doc in docs:
+            record = QARecord.from_cosmos(doc)
+            if (
+                record.qa_status != QAStatus.ongoing
+                or record.feedback is not None
+                or self.channel_key_of(record) in excluded_channels
+                or (
+                    record.last_activity_at is not None
+                    and record.last_activity_at > cutoff
+                )
+            ):
+                continue
+
+            # Verify the actual transcript before relying on possibly stale metadata.
+            messages = await conversations.get_messages_by_conversation_id(
+                conversation_id=record.conversation_id,
+                conversation_type=record.conversation_type,
+            )
+            if not messages:
+                logger.warning(
+                    "Cannot auto-close QA record %s: conversation unavailable",
+                    record.id,
+                )
+                continue
+            last_activity_at = max(message.created_at for message in messages)
+            if last_activity_at > cutoff:
+                continue
+            feedback = await query_conversation_feedback(
+                conversation_id=record.conversation_id,
+                conversation_type=record.conversation_type.value,
+            )
+            if any(item.get("reaction") == Reaction.bad.value for item in feedback):
+                continue
+
+            record.qa_status = QAStatus.finished
+            record.verdict = BotAnswerVerdict.Correct
+            record.reasoning = (
+                "Automatically marked correct after at least 144 hours without "
+                "conversation activity and with no negative feedback; "
+                "not confirmed by the Evolution Agent."
+            )
+            record.confidence = None
+            record.last_activity_at = last_activity_at
+            record.message_count = len(messages)
+            record.updated_at = now
+            if await replace_qa_record_if_unchanged(
+                record.to_cosmos(), etag=doc["_etag"]
+            ):
+                closed += 1
+                logger.info(
+                    "Auto-closed inactive QA record %s without Agent review "
+                    "(last activity: %s)",
+                    record.id,
+                    last_activity_at.isoformat(),
+                )
+        return closed
 
     # -- Queries -----------------------------------------------------------
 

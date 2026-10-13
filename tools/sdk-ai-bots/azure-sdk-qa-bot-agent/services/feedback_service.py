@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class FeedbackService:
-    """Persist feedback and reopen completed no-issue QA records for reanalysis."""
+    """Persist feedback and requeue no-issue QA records for reanalysis."""
 
     async def process(self, req: FeedbackRequest) -> FeedbackResponse:
-        """Save feedback, then reopen a completed no-issue record if negative."""
+        """Save feedback, then requeue an inactive no-issue record if negative."""
         result = FeedbackResponse()
 
         await self._save_feedback(req)
@@ -33,7 +33,7 @@ class FeedbackService:
                 if await requeue_qa_record_for_analysis(
                     record_id=record_id, tenant_id=req.tenant_id,
                 ):
-                    logger.info("Reopened QA record %s after negative feedback", record_id)
+                    logger.info("Requeued QA record %s after negative feedback", record_id)
 
         return result
 

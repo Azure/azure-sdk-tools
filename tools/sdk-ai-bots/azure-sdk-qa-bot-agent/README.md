@@ -156,6 +156,8 @@ The daily poller treats the global `ADO_ISSUE_CLOSED_STATE` App Configuration va
 
 The scan refreshes ongoing thread metadata after human-only replies as well as bot replies. Before processing enabled Agent jobs, it recovers `created`/`running` feedback inactive for at least 20 minutes into retryable `failed` state; conditional writes prevent overwriting concurrent updates.
 
+Ongoing threads without an active feedback workflow are automatically marked `finished`/`correct` after at least 144 hours since the latest conversation message, without invoking the Evolution Agent. The scan verifies the actual transcript and excludes threads with negative feedback; new replies before closure restart the clock. The recorded reasoning identifies automatic closure, and no confidence score is assigned. Negative feedback submitted later requeues the record for Agent review. Dry runs and disabled Agent processing do not auto-close records.
+
 To exercise the loop locally:
 
 1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (ingests active threads and runs the hosted chatbot evolution agent in-process to analyze `ongoing` records and validate remediated failures). Use `--dry-run` to ingest records without invoking the agent. Set breakpoints in `services/chatbot_evolution_agent_service.py` to step through a run.

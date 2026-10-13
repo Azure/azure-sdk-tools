@@ -478,11 +478,11 @@ async def replace_qa_record_if_unchanged(
 
 
 async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> bool:
-    """Requeue a completed no-issue assessment without overwriting active work.
+    """Requeue an inactive no-issue record without overwriting active work.
 
-    The predicate is checked atomically by Cosmos, including for duplicate
-    feedback submissions. Missing records and changed states are no-ops;
-    other storage failures propagate so a failed reset is not reported as success.
+    Touch ongoing records too, so concurrent automatic closure fails its ETag
+    check. Missing records and active work are no-ops; other storage failures
+    propagate so a failed reset is not reported as success.
     """
     container = await get_qa_records_container()
     try:
@@ -490,7 +490,8 @@ async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> b
             item=record_id,
             partition_key=tenant_id,
             filter_predicate=(
-                "FROM c WHERE c.qa_status = 'finished' AND c.verdict = 'correct' "
+                "FROM c WHERE (c.qa_status = 'ongoing' "
+                "OR (c.qa_status = 'finished' AND c.verdict = 'correct')) "
                 "AND (NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback))"
             ),
             patch_operations=[

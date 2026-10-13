@@ -601,6 +601,12 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         allowed_channels = [
             f"{channel['teamId']}|{channel['channelId']}" for channel in config["channels"]
         ]
+        dev_dump_channels = [
+            "3e17dcb0-4257-4a30-b843-77f47f1d4121|"
+            "19:acbd512e57bd475198ea6bf4564599e3@thread.skype",
+            "3e17dcb0-4257-4a30-b843-77f47f1d4121|"
+            "19:7b87fb348f224b37b6206fa9d89a105b@thread.skype",
+        ]
         expected = {
             "dev": ("azuresdkqabot-dev-teams-collection", "azure-sdk-qa-bot-dev",
                     "azuresdkqabot-dev-db"),
@@ -619,7 +625,8 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn(f"/resourceGroups/{connection_group}/",
                               parameters["teamsConnectionResourceId"]["value"])
                 self.assertEqual(parameters["tenantId"]["value"], config["tenantId"])
-                self.assertEqual(parameters["allowedChannels"]["value"], allowed_channels)
+                self.assertEqual(parameters["allowedChannels"]["value"],
+                                 allowed_channels + (dev_dump_channels if environment == "dev" else []))
                 self.assertEqual(parameters["cosmosAccountName"]["value"], cosmos_account)
                 self.assertNotIn("collectorPrincipalId", parameters)
                 self.assertNotIn("backfillPrincipalId", parameters)

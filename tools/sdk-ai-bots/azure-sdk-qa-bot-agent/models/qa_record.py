@@ -126,6 +126,8 @@ class QARecord(BaseModel):
     first_seen_at: datetime
     #: When the thread was last evaluated by the LLM judge.
     evaluated_at: datetime | None = None
+    #: Inactivity-policy closure time; None for Agent-assessed conclusions.
+    auto_closed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

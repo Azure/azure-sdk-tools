@@ -91,6 +91,7 @@ async def test_reset_uses_atomic_no_issue_guard_and_clears_only_assessment(qa_st
         "reasoning": None,
         "confidence": None,
         "evaluated_at": None,
+        "auto_closed_at": None,
     }
     # The reset document remains valid and retains conversation metadata.
     record = QARecord(
@@ -98,11 +99,13 @@ async def test_reset_uses_atomic_no_issue_guard_and_clears_only_assessment(qa_st
         conversation_type=ConversationType.teams_channel, qa_status=qa_status,
         verdict=BotAnswerVerdict.Correct, reasoning="Previously correct",
         confidence=0.9, evaluated_at=before, first_seen_at=before,
+        auto_closed_at=before,
         created_at=before, updated_at=before,
     )
     reopened = QARecord.from_cosmos({**record.to_cosmos(), **changes, "updated_at": updated_at})
     assert reopened.qa_status == QAStatus.ongoing
     assert reopened.feedback is None
+    assert reopened.auto_closed_at is None
     assert reopened.first_seen_at == record.first_seen_at
     container.read_item.assert_not_awaited()
     container.upsert_item.assert_not_awaited()

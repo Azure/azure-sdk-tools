@@ -500,6 +500,7 @@ async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> b
                 {"op": "set", "path": "/reasoning", "value": None},
                 {"op": "set", "path": "/confidence", "value": None},
                 {"op": "set", "path": "/evaluated_at", "value": None},
+                {"op": "set", "path": "/auto_closed_at", "value": None},
                 {"op": "set", "path": "/updated_at", "value": datetime.now(timezone.utc).isoformat()},
             ],
         )

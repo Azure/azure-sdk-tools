@@ -109,8 +109,8 @@ class QARecordService:
 
         Threads without a bot answer are skipped (nothing to judge), as are
         threads in ``excluded_channels`` (e.g. testing channels). Existing
-        records that already concluded (``finished`` / ``failed``) are left
-        untouched; ``ongoing`` records get their latest-bot-turn metadata
+        Agent-concluded records are left untouched. Automatically closed records
+        reopen on new activity; ongoing records get their thread metadata
         refreshed. Returns the records touched.
         """
         excluded_channels = excluded_channels or set()
@@ -140,8 +140,28 @@ class QARecordService:
             )
             if needs_creation_time_backfill:
                 existing.conversation_created_at = candidate.conversation_created_at
+            if (
+                existing.qa_status == QAStatus.finished
+                and existing.auto_closed_at is not None
+                and existing.feedback is None
+                and candidate.last_activity_at is not None
+                and (
+                    existing.last_activity_at is None
+                    or candidate.last_activity_at > existing.last_activity_at
+                )
+            ):
+                existing.qa_status = QAStatus.ongoing
+                existing.verdict = BotAnswerVerdict.Unknown
+                existing.reasoning = None
+                existing.confidence = None
+                existing.evaluated_at = None
+                existing.auto_closed_at = None
+                logger.info(
+                    "New activity detected for auto-closed QA record %s; requeueing",
+                    existing.id,
+                )
             if existing.qa_status in (QAStatus.finished, QAStatus.failed):
-                # Concluded threads are immutable to the scanner.
+                # Agent-concluded threads are immutable to the scanner.
                 if needs_creation_time_backfill:
                     await replace_qa_record_if_unchanged(
                         existing.to_cosmos(), etag=existing_doc["_etag"]
@@ -317,6 +337,7 @@ class QARecordService:
             record.confidence = None
             record.last_activity_at = last_activity_at
             record.message_count = len(messages)
+            record.auto_closed_at = now
             record.updated_at = now
             if await replace_qa_record_if_unchanged(
                 record.to_cosmos(), etag=doc["_etag"]

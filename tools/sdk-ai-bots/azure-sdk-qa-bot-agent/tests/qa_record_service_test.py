@@ -276,6 +276,99 @@ async def test_metadata_refresh_does_not_overwrite_concurrent_feedback() -> None
 
 
 @pytest.mark.asyncio
+async def test_reply_persisted_during_auto_close_reopens_on_next_ingestion() -> None:
+    record = _record(feedback_status=None)
+    record.last_activity_at = _BASE_TIME - timedelta(hours=144)
+    record.conversation_created_at = record.last_activity_at
+    record.message_count = 1
+    stored = {**record.to_cosmos(), "_etag": "old-etag"}
+    answer = _msg(Role.System, "bot", "Answer.", 0, tenant_id="typespec")
+    answer.created_at = record.last_activity_at
+    reply = _msg(Role.User, "poster", "Still waiting for a follow-up.", 1)
+    reply.created_at = _BASE_TIME
+    transcript = [answer]
+
+    async def query(**kwargs):
+        return [dict(stored)] if stored["qa_status"] == kwargs["qa_status"] else []
+
+    async def persist_reply_after_transcript_read(**kwargs):
+        transcript.append(reply)
+        return []
+
+    async def replace(document, *, etag):
+        if etag != stored["_etag"]:
+            return False
+        stored.update(document)
+        stored["_etag"] += "-next"
+        return True
+
+    with (
+        patch("services.qa_record_service._now", return_value=_BASE_TIME),
+        patch("services.qa_record_service.query_qa_records_by_qa_status", new=AsyncMock(side_effect=query)),
+        patch("services.qa_record_service.query_qa_records_by_feedback_status", new=AsyncMock(return_value=[])),
+        patch("services.qa_record_service.read_qa_record", new=AsyncMock(side_effect=lambda **kwargs: dict(stored))),
+        patch(
+            "services.qa_record_service.ConversationService.get_messages_by_conversation_id",
+            new=AsyncMock(side_effect=lambda **kwargs: list(transcript)),
+        ),
+        patch("services.qa_record_service.query_conversation_feedback", new=AsyncMock(side_effect=persist_reply_after_transcript_read)),
+        patch("services.qa_record_service.replace_qa_record_if_unchanged", new=AsyncMock(side_effect=replace)),
+    ):
+        service = QARecordService()
+        assert await service.close_inactive_threads() == 1
+        assert stored["qa_status"] == QAStatus.finished.value
+        assert stored["message_count"] == 1
+
+        touched = await service.upsert_threads_from_messages(transcript)
+        assert len(touched) == 1
+        reopened = QARecord.from_cosmos(stored)
+        assert reopened.qa_status == QAStatus.ongoing
+        assert reopened.verdict == BotAnswerVerdict.Unknown
+        assert reopened.auto_closed_at is None
+        assert reopened.reasoning is None
+        assert reopened.evaluated_at is None
+        assert reopened.last_activity_at == reply.created_at
+        assert reopened.message_count == 2
+        assert reopened.first_seen_at == record.first_seen_at
+        assert await service.close_inactive_threads() == 0
+        assert [item.id for item in await service.list_analyzable()] == [record.id]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("new_reply", "feedback_status"),
+    [(False, None), (True, FeedbackStatus.running)],
+)
+async def test_auto_closed_threads_do_not_reopen_without_activity_or_during_feedback(
+    new_reply: bool, feedback_status: FeedbackStatus | None,
+) -> None:
+    record = _record(qa_status=QAStatus.finished, feedback_status=feedback_status)
+    record.last_activity_at = _BASE_TIME - timedelta(hours=144)
+    record.conversation_created_at = record.last_activity_at
+    record.auto_closed_at = _BASE_TIME
+    answer = _msg(Role.System, "bot", "Answer.", 0, tenant_id="typespec")
+    answer.created_at = record.last_activity_at
+    messages = [answer]
+    if new_reply:
+        reply = _msg(Role.User, "poster", "Follow-up?", 1)
+        reply.created_at = _BASE_TIME
+        messages.append(reply)
+    replace = AsyncMock()
+    with (
+        patch(
+            "services.qa_record_service.read_qa_record",
+            new=AsyncMock(return_value={**record.to_cosmos(), "_etag": "old-etag"}),
+        ),
+        patch("services.qa_record_service.replace_qa_record_if_unchanged", new=replace),
+    ):
+        touched = await QARecordService().upsert_threads_from_messages(messages)
+    assert len(touched) == 1
+    assert touched[0].qa_status == QAStatus.finished
+    assert touched[0].auto_closed_at == record.auto_closed_at
+    replace.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("hours", "reaction", "write_succeeds", "expected_closed"),
     [

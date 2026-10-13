@@ -1,6 +1,38 @@
 pr: none
 trigger: none
 
+schedules:
+  - cron: '0 0,4,8,12,16,20 * * *'
+    displayName: AzureCloud
+    branches:
+      include:
+        - main
+    always: true
+  - cron: '5 0,4,8,12,16,20 * * *'
+    displayName: Playground
+    branches:
+      include:
+        - main
+    always: true
+  - cron: '15 0,4,8,12,16,20 * * *'
+    displayName: Cosmos
+    branches:
+      include:
+        - main
+    always: true
+  - cron: '20 0,4,8,12,16,20 * * *'
+    displayName: GithubCopilot
+    branches:
+      include:
+        - main
+    always: true
+  - cron: '25 0,2,4,6,8,10,12,14,16,18,20,22 * * *'
+    displayName: TME
+    branches:
+      include:
+        - main
+    always: true
+
 parameters:
   - name: DryRun
     type: boolean
@@ -14,35 +46,32 @@ parameters:
   - name: Subscriptions
     type: object
     default:
-      - DisplayName: AzureCloud - Resource Cleanup
+      - JobName: AzureCloud
+        ScheduleName: AzureCloud
+        DisplayName: AzureCloud - Resource Cleanup
         ServiceConnection: azure-sdk-tests
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
         # AdditionalParameters: "-DeleteNonCompliantGroups"
-      - DisplayName: AzureCloud Playground - Resource Cleanup
+      - JobName: Playground
+        ScheduleName: Playground
+        DisplayName: AzureCloud Playground - Resource Cleanup
         ServiceConnection: azure-sdk-tests-playground
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments -MaxLifespanDeleteAfterHours 240"
-      # TODO: Disabled this clean-up as the dogfood enviroment is busted and the tests are no longer running
-      # see https://github.com/Azure/azure-sdk-for-python/pull/33483 were the tests were disabled.
-      # - DisplayName: Dogfood Translation - Resource Cleanup
-      #   SubscriptionConfigurations:
-      #     - $(sub-config-translation-int-test-resources)
-      # TODO: re-enable dogfood cleanup after resource deletion issues are solved, to avoid pipeline timeouts
-      # - DisplayName: Dogfood ACS - Resource Cleanup
-      #   SubscriptionConfigurations:
-      #     - $(sub-config-communication-int-test-resources-common)
-      - DisplayName: AzureCloud ACS - Resource Cleanup
-        ServiceConnection: azure-sdk-tests-communication
-        SubscriptionConfigurations:
-          - $(sub-config-communication-services-cloud-test-resources-common)
-      - DisplayName: AzureCloud Cosmos - Resource Cleanup
+      - JobName: Cosmos
+        ScheduleName: Cosmos
+        DisplayName: AzureCloud Cosmos - Resource Cleanup
         ServiceConnection: azure-sdk-tests-cosmos
         SubscriptionConfigurations:
           - $(sub-config-cosmos-azure-cloud-test-resources)
-      - DisplayName: GithubCopilotForAzureTestingSubscription
+      - JobName: GithubCopilot
+        ScheduleName: GithubCopilot
+        DisplayName: GithubCopilotForAzureTestingSubscription
         ServiceConnection: GithubCopilotForAzure-Testing
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments -CheckPrefix $false"
-      - DisplayName: AzureCloud TME - Resource Cleanup
+      - JobName: TME
+        ScheduleName: TME
+        DisplayName: AzureCloud TME - Resource Cleanup
         ServiceConnection: azure-sdk-tests-public
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
       # - DisplayName: AzureCloud Storage NET - Resource Cleanup
@@ -60,38 +89,40 @@ stages:
     value: CleanupCache
 
   jobs:
-  - job: Run
-    timeoutInMinutes: 120  # sometimes RP throttling slows down the cleanup script
-    pool:
-      name: azsdk-pool
-      demands: ImageOverride -equals ubuntu-24.04
+  - ${{ each subscription in parameters.Subscriptions }}:
+    - job: ${{ subscription.JobName }}
+      displayName: ${{ subscription.DisplayName }}
+      condition: or(ne(variables['Build.Reason'], 'Schedule'), eq(variables['Build.CronSchedule.DisplayName'], '${{ subscription.ScheduleName }}'))
+      timeoutInMinutes: 120  # sometimes RP throttling slows down the cleanup script
+      pool:
+        name: azsdk-pool
+        demands: ImageOverride -equals ubuntu-24.04
 
-    steps:
-    - template: /eng/common/pipelines/templates/steps/cache-ps-modules.yml
+      steps:
+      - template: /eng/common/pipelines/templates/steps/cache-ps-modules.yml
 
-    - task: Cache@2
-      inputs:
-        # CacheSalt is an optional variable that can be overridden at pipeline runtime to
-        # force invalidate the cache.
-        # DailyCacheKey will trigger a new cache entry to refresh once per day.
-        key: '"$(CacheSalt)" | "$(DailyCacheKey)" | $(Build.SourcesDirectory)/eng/scripts/live-test-resource-cleanup.ps1'
-        path: $(CachePath)
-      displayName: Cache Github Alias Mappings
+      - task: Cache@2
+        inputs:
+          # CacheSalt is an optional variable that can be overridden at pipeline runtime to
+          # force invalidate the cache.
+          # DailyCacheKey will trigger a new cache entry to refresh once per day.
+          key: '"$(CacheSalt)" | "$(DailyCacheKey)" | $(Build.SourcesDirectory)/eng/scripts/live-test-resource-cleanup.ps1'
+          path: $(CachePath)
+        displayName: Cache Github Alias Mappings
 
-    # Register the dogfood environment to clean up any custom subscriptions in it
-    - template: /eng/common/TestResources/setup-environments.yml
+      # Register the dogfood environment to clean up any custom subscriptions in it
+      - template: /eng/common/TestResources/setup-environments.yml
 
-    - task: AzureCLI@2
-      displayName: Authenticate to OpenSource API
-      inputs:
-        azureSubscription: opensource-api-connection
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          $jwt_accessToken = az account get-access-token --resource "api://2efaf292-00a0-426c-ba7d-f5d2b214b8fc" --query "accessToken" --output tsv
-          Write-Host "##vso[task.setvariable variable=opensource-api-token;isSecret=true]$jwt_accessToken"
+      - task: AzureCLI@2
+        displayName: Authenticate to OpenSource API
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $jwt_accessToken = az account get-access-token --resource "api://2efaf292-00a0-426c-ba7d-f5d2b214b8fc" --query "accessToken" --output tsv
+            Write-Host "##vso[task.setvariable variable=opensource-api-token;isSecret=true]$jwt_accessToken"
 
-    - ${{ each subscription in parameters.Subscriptions }}:
       - template: ./live-test-cleanup-template.yml
         parameters:
           DryRun: ${{ parameters.DryRun }}

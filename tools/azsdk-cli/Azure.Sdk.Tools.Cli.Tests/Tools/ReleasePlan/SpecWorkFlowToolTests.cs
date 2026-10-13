@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
     [TestFixture]
     internal class SpecWorkflowToolTests
     {
+        private const string SpecCommit = "0123456789abcdef0123456789abcdef01234567";
         private const string PreviousGenerationPipelineUrl = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99";
         private MockDevOpsService mockDevOpsService;
         private Mock<IGitHubService> mockGitHubService;
@@ -253,7 +254,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             });
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
                 It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -303,7 +304,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
-                "Java", 456, "", It.IsAny<CancellationToken>()), Times.Once);
+                "Java", 456, "", null, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test, Combinatorial]
@@ -323,7 +324,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test, Combinatorial]
@@ -349,7 +350,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
             mockGitHubService.VerifyNoOtherCalls();
         }
 
@@ -373,7 +374,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
-                "Java", 456, "", It.IsAny<CancellationToken>()), Times.Once);
+                "Java", 456, "", null, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test, Combinatorial]
@@ -394,7 +395,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
-                "Java", 456, "", It.IsAny<CancellationToken>()), Times.Once);
+                "Java", 456, "", null, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99&view=results")]
@@ -434,7 +435,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                "Java", 456, It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(null)]
@@ -456,7 +457,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                "Java", 456, It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(true)]
@@ -476,7 +477,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                "Java", 456, It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase("archived")]
@@ -503,7 +504,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                "Java", 456, It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(null)]
@@ -525,7 +526,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                "Java", 456, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                "Java", 456, It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -547,7 +548,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 devOpsService.Verify(x => x.GetPipelineRunAsync(99, cancellation.Token), Times.Once);
                 devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                    It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
             }
             finally
             {
@@ -582,7 +583,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Assert.That(result.Details, Has.Some.Contains("has been initiated to generate the SDK"));
                 devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                     "main", "specification/testcontoso/Contoso.Management", "2023-01-01", "beta",
-                    language, 456, "", It.IsAny<CancellationToken>()), Times.Once);
+                    language, 456, "", null, It.IsAny<CancellationToken>()), Times.Once);
             }
         }
 
@@ -627,7 +628,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService.Verify(x => x.GetPipelineRunAsync(99, It.IsAny<CancellationToken>()), Times.Once);
             devOpsService.Verify(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -966,6 +967,106 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
+        [TestCase(SpecCommit, "2023-01-01")]
+        [TestCase(SpecCommit, "")]
+        [TestCase(null, "2023-01-01")]
+        [TestCase(null, "")]
+        public async Task GenerateSdk_ForwardsOptionalSavedCommitAndPreservesApiVersion(string? commitSha, string apiVersion)
+        {
+            using var cancellation = new CancellationTokenSource();
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SpecCommitSHA = commitSha ?? "",
+                SDKInfo = [new SDKInfo { Language = "Java", PackageName = "azure-test" }]
+            };
+            var service = SetupSdkGenerationTool(plan);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, apiVersion: apiVersion, ct: cancellation.Token);
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            service.Verify(s => s.RunSDKGenerationPipelineAsync(
+                "main", "specification/testcontoso/Contoso.Management", apiVersion, "beta", "Java", 456,
+                "", commitSha, cancellation.Token), Times.Once);
+            mockGitHubService.VerifyNoOtherCalls();
+        }
+
+        [TestCase(false, null, "refs/pull/123/merge")]
+        [TestCase(true, null, "release")]
+        [TestCase(false, SpecCommit, "refs/pull/123/merge")]
+        [TestCase(true, SpecCommit, "release")]
+        [TestCase(false, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "refs/pull/123/merge")]
+        [TestCase(true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "release")]
+        public async Task GenerateSdk_PreservesRequestedPrBranchBehaviorWithOptionalSavedCommit(bool merged, string? commitSha, string expectedRef)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SpecCommitSHA = commitSha ?? "",
+                SDKInfo = [new SDKInfo { Language = "Java", PackageName = "azure-test" }]
+            };
+            var service = SetupSdkGenerationTool(plan);
+            var pullRequest = new Octokit.Internal.SimpleJsonSerializer().Deserialize<Octokit.PullRequest>(
+                System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    number = 123,
+                    merged_at = merged ? "2026-09-01T00:00:00Z" : null,
+                    merge_commit_sha = SpecCommit,
+                    @base = new { @ref = "release" }
+                }));
+            mockGitHubService.Setup(g => g.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pullRequest);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                pullRequestNumber: 123, workItemId: 456, apiVersion: "2023-01-01");
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            service.Verify(s => s.RunSDKGenerationPipelineAsync(
+                expectedRef, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta", "Java", 456,
+                "", commitSha, It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHubService.Verify(g => g.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase(false, SpecCommit, "refs/pull/123/merge")]
+        [TestCase(true, SpecCommit, "main")]
+        [TestCase(false, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "refs/pull/123/merge")]
+        [TestCase(true, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "main")]
+        [TestCase(false, null, "refs/pull/123/merge")]
+        [TestCase(true, null, "main")]
+        public async Task GenerateSdk_UsesLinkedPrRefForSavedCommitWhenPrIsOmitted(bool merged, string? mergeCommitSha, string expectedRef)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SpecCommitSHA = SpecCommit,
+                ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/123",
+                SDKInfo = [new SDKInfo { Language = "Java", PackageName = "azure-test" }]
+            };
+            var service = SetupSdkGenerationTool(plan);
+            var pullRequest = new Octokit.Internal.SimpleJsonSerializer().Deserialize<Octokit.PullRequest>(
+                System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    number = 123,
+                    merged_at = merged ? "2026-09-01T00:00:00Z" : null,
+                    merge_commit_sha = mergeCommitSha,
+                    @base = new { @ref = "main" }
+                }));
+            mockGitHubService.Setup(g => g.GetPullRequestAsync("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pullRequest);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "beta", "Java",
+                workItemId: 456, apiVersion: "2023-01-01");
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            service.Verify(s => s.RunSDKGenerationPipelineAsync(
+                expectedRef, "specification/testcontoso/Contoso.Management", "2023-01-01", "beta", "Java", 456,
+                "", SpecCommit, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
         [Test]
         public async Task GetSDKPullRequestDetails_WithInvalidLanguage_ReturnsError()
         {
@@ -1142,7 +1243,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(new List<ReleasePlanWorkItem>());
             devOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Build { Id = 100, Status = BuildStatus.InProgress });
             mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
                 .Returns("specification/testcontoso/Contoso.Management");

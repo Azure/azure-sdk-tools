@@ -107,6 +107,30 @@ async def test_invoke_returns_trace_id_and_closes_stream_on_success() -> None:
 
 
 @pytest.mark.asyncio
+async def test_invoke_closes_stream_on_cancellation_without_retry() -> None:
+    started = asyncio.Event()
+
+    async def _stalled_stream():
+        started.set()
+        await asyncio.Event().wait()
+        yield _FakeEvent("response.completed")
+
+    stream = _StreamWithHeaders(_FakeResponse(output_text="answer"))
+    client = _mock_client([stream])
+    with patch.object(stream, "_iter", _stalled_stream):
+        task = asyncio.create_task(
+            HostedAgentClient(client).invoke(conversation_items=[], agent_ref={})
+        )
+        await started.wait()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    assert stream.closed is True
+    assert client.responses.create.await_count == 1
+
+
+@pytest.mark.asyncio
 async def test_invoke_retries_on_empty_response_then_succeeds() -> None:
     """An empty ``output_text`` is retried and a later non-empty response wins."""
     empty = _FakeResponse(output_text="", status="completed", id="r1")

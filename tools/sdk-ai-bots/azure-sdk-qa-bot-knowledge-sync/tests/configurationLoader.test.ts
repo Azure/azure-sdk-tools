@@ -67,35 +67,12 @@ describe('ConfigurationLoader', () => {
     expect(repos[0].sparseCheckout).toEqual(['docs/part1', 'docs/part2']);
   });
 
-  it('keeps repository-relative citation roots but selects only the configured path', () => {
-    const temp = writeTempConfig({
-      version: '1.0.0',
-      sources: [{
-        repository: { url: 'https://github.com/org/repo.git', branch: 'main', authType: 'public' },
-        paths: [
-          { description: 'Docs', path: '/doc', folder: 'docs', relativeByRepoPath: true },
-          { description: 'Readme', path: '/eng/tool/README.md', folder: 'docs', relativeByRepoPath: true },
-          { description: 'Entire repo', folder: 'whole_repo', relativeByRepoPath: true }
-        ]
-      }]
-    });
-    ConfigurationLoader.setConfigPath(temp);
-
-    const docs = ConfigurationLoader.getDocumentationSources();
-    expect(docs.map(source => source.path)).toEqual(['docs/repo', 'docs/repo', 'docs/repo']);
-    expect(docs.map(source => source.includePath)).toEqual(['doc', 'eng/tool/README.md', undefined]);
-    expect(ConfigurationLoader.getRepositoryConfigs()[0].sparseCheckout).toEqual([
-      '/doc', '/eng/tool/README.md'
-    ]);
-  });
-
   it('throws when file missing', () => {
     const missing = path.join(process.cwd(), 'definitely-missing-config.json');
     ConfigurationLoader.setConfigPath(missing);
     expect(() => ConfigurationLoader.getDocumentationSources()).toThrow();
   });
   afterAll(() => {
-    ConfigurationLoader.setConfigPath(originalPath);
     for (const dir of tempDirs) {
       try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
     }

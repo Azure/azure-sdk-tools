@@ -103,9 +103,8 @@ export async function processDailySyncKnowledge(): Promise<void> {
             const sourceDir = path.join(workingDir, source.path);
             const targetDir = path.join(tempDocsDir, source.folder);
             
-            const scanPath = source.includePath ? path.join(sourceDir, source.includePath) : sourceDir;
-            if (!fs.existsSync(scanPath)) {
-                console.warn(`Source path not found: ${scanPath}`);
+            if (!fs.existsSync(sourceDir)) {
+                console.warn(`Source directory not found: ${sourceDir}`);
                 continue;
             }
             
@@ -360,12 +359,12 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
 /**
  * Process files in a source directory
  */
-export async function processSourceDirectory(
+async function processSourceDirectory(
     sourceDir: string,
     source: DocumentationSource,
     targetDir: string,
     existingBlobs: Map<string, any>,
-    blobService: Pick<BlobService, 'hasContentChanged' | 'hasMetadataChanged'>
+    blobService: BlobService
 ): Promise<ProcessSourceDirectoryResult> {
     
     let totalProcessed = 0;
@@ -423,12 +422,11 @@ export async function processSourceDirectory(
         }
     };
     
-    // Selection stays narrow while filenames remain relative to the repository root.
-    const scanPath = source.includePath ? path.join(sourceDir, source.includePath) : sourceDir;
-    const isFile = fs.statSync(scanPath).isFile();
+    // Check if sourceDir is actually a file on the filesystem
+    const isFile = fs.existsSync(sourceDir) && fs.statSync(sourceDir).isFile();
     
     if (isFile) {
-        processSingleFile(scanPath, source.includePath ? sourceDir : path.dirname(sourceDir));
+        processSingleFile(sourceDir, path.dirname(sourceDir));
         
         return { totalProcessed, changedDocuments, unchangedDocuments, changedFiles, metadataChangedFiles, unchangedFiles };
     }
@@ -463,7 +461,7 @@ export async function processSourceDirectory(
         }
     }
     
-    await walkDirectory(scanPath);
+    await walkDirectory(sourceDir);
     
     return {
         totalProcessed, 
@@ -485,14 +483,6 @@ async function createReleaseNotesIndex(
 ): Promise<void> {
     // Path to release notes directory
     const releaseNotesDir = path.join(sourceDir, 'release-notes');
-
-    if (source.includePath) {
-        const selectedPath = path.join(sourceDir, source.includePath);
-        const relativeReleasePath = path.relative(selectedPath, releaseNotesDir);
-        if (relativeReleasePath.startsWith('..') || path.isAbsolute(relativeReleasePath)) {
-            return;
-        }
-    }
     
     // Check if release notes directory exists
     if (!fs.existsSync(releaseNotesDir)) {

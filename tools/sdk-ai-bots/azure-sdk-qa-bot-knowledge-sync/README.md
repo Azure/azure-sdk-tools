@@ -39,12 +39,6 @@ The application uses `config/knowledge-config.json` to define which repositories
 - Documentation paths within repositories  
 - Processing options and filters
 
-`path` may select a directory or an individual Markdown file.
-`relativeByRepoPath: true` keeps blob filenames relative to the repository root
-for citations; it does not expand the scan beyond the selected `path`.
-Multiple entries may share a destination folder, but their selected paths should
-not overlap, especially when assigning different metadata.
-
 The .NET source retains `/doc` and the Resource Manager docs and adds narrowly
 selected C# emitter docs/READMEs, the `mitigate-breaking-changes` and
 `mgmt-review-comment-resolution` skill directories (including any Markdown
@@ -56,6 +50,13 @@ tsp-client README, and client customization guidance. All use
 
 Changing configuration does not itself index or deploy these sources. Do not run
 sync against a partial source list: sync removes blobs absent from its results.
+
+**Merge dependency:** The .NET additions require the separately reviewed
+repository-relative path-scoping fix before they are merged or used for sync.
+Without that fix, each `relativeByRepoPath` entry scans the shared sparse-checkout
+root, duplicating documents and potentially applying another entry's plane
+metadata. Configuration and citation tests here do not claim narrow ingestion
+works with the historical processor.
 
 ## Building and Running
 

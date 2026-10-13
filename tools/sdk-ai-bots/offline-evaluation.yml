@@ -10,6 +10,23 @@ trigger: none
 pr: none
 
 parameters:
+  - name: researchSnapshot
+    type: object
+    default: {}
+  - name: researchDataset
+    type: object
+    default: []
+  - name: researchProfile
+    type: string
+    default: ''
+    values:
+      - ''
+      - baseline
+      - c1_facts
+      - c2_typed_evidence
+      - c3_witness_policy
+      - c4_primary_sources
+      - c5_counterexample_policy
   - name: scenarios
     type: object
     default:
@@ -68,13 +85,14 @@ extends:
                         export AZURE_TENANT_ID=$tenantId
                         EVAL_CACHE="$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache"
                         mkdir -p "$EVAL_CACHE"
-                        nohup python server.py </dev/null > "$EVAL_CACHE/server.log" 2>&1 &
-                        sleep 20
-                        lsof -ti:8089 || { echo "##[error]agent server failed to start"; cat "$EVAL_CACHE/server.log" || true; exit 1; }
+                        nohup python ../azure-sdk-qa-bot-evaluation/research/server.py --profile "$QA_RESEARCH_PROFILE" </dev/null > "$EVAL_CACHE/server.log" 2>&1 &
+                        python ../azure-sdk-qa-bot-evaluation/research/wait_for_server.py || { echo "##[error]agent server failed to start"; cat "$EVAL_CACHE/server.log"; exit 1; }
                     env:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                       AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
                       AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                      QA_RESEARCH_PROFILE: ${{ parameters.researchProfile }}
+                      QA_RESEARCH_SNAPSHOT: ${{ convertToJson(parameters.researchSnapshot) }}
                   - script: |
                       pip install -r requirements.txt
                     displayName: 'install requirements'
@@ -101,6 +119,25 @@ extends:
                       BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                       BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                       EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
+                  - ${{ if and(ne(parameters.researchProfile, ''), eq(scenario, 'apispec')) }}:
+                    - task: AzureCLI@2
+                      displayName: 'Run frozen research holdout (${{ scenario }})'
+                      condition: succeededOrFailed()
+                      inputs:
+                        azureSubscription: 'azuresdkqabot-dev'
+                        scriptType: bash
+                        scriptLocation: scriptPath
+                        scriptPath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/research/run-holdout.sh
+                        workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                      env:
+                        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                        AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
+                        AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
+                        STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
+                        BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
+                        BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
+                        EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
+                        QA_RESEARCH_DATASET: ${{ convertToJson(parameters.researchDataset) }}
                 templateContext:
                   outputs:
                     - output: pipelineArtifact

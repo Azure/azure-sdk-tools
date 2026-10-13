@@ -104,6 +104,10 @@ Results appear on the Evaluation tab of the Azure AI Foundry portal (each run pr
 
 If the channel-to-tenant map cannot be loaded, evaluation stops rather than silently evaluating the default bot.
 
+A completed Foundry run can publish its output items gradually. Evaluation waits
+until all submitted items are available before recording scores. Missing outputs
+cause a timeout, not a successful report with a smaller denominator.
+
 Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately. A normal response ID can retrieve the original stored response on demand; synthetic IDs such as `content-filter` have no stored response.
 
 ### Evaluators
@@ -152,6 +156,9 @@ but are not scored by an evaluator.
 | `offline-evaluation.yml` | PR gate; starts agent server.py, evaluates the curated `basic` sets via local /completion. |
 | `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
 | `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
+
+For opt-in branch-local candidate testing, see [isolated candidate evaluation](research/README.md).
+An empty research profile leaves the normal offline server behavior unchanged.
 
 The online pipeline evaluates the **freshly collected weekly md** (not the static
 `basic` set): `dataset.online_snapshot` downloads recent md and converts it to

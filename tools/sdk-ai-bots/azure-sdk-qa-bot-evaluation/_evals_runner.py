@@ -534,6 +534,7 @@ class FoundryEvalsRunner:
         scenario: str,
         tool_calls_by_response_id: dict[str, list[dict[str, Any]]],
         extra_failed_rows: list[dict[str, Any]] | None = None,
+        expected_count: int | None = None,
     ) -> dict[str, Any]:
         """Shared poll-to-terminal + output_items -> rows -> record step.
 
@@ -556,7 +557,28 @@ class FoundryEvalsRunner:
         if run.status == "failed":
             raise RuntimeError(f"Eval run {run_id} failed")
 
-        output_items = list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id))
+        if expected_count is None:
+            expected_count = _get(_get(run, "result_counts", None), "total", None)
+        if not isinstance(expected_count, int) or isinstance(expected_count, bool) or expected_count < 0:
+            raise RuntimeError(f"Eval run {run_id} has no valid expected output count")
+        while True:
+            output_items = list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id))
+            if len(output_items) == expected_count:
+                break
+            if len(output_items) > expected_count:
+                raise RuntimeError(
+                    f"Eval run {run_id} returned {len(output_items)} outputs for {expected_count} inputs"
+                )
+            if time.time() > deadline:
+                raise TimeoutError(
+                    f"Eval run {run_id} completed but only {len(output_items)}/{expected_count} "
+                    f"outputs became available within {self._poll_timeout}s"
+                )
+            logger.info(
+                "Waiting for completed run outputs: %s, %d/%d",
+                run_id, len(output_items), expected_count,
+            )
+            time.sleep(self._poll_interval)
         raw = output_items_to_rows(
             output_items,
             self._evaluators,
@@ -709,6 +731,7 @@ class FoundryEvalsRunner:
             scenario,
             tool_calls_by_response_id,
             failed_rows,
+            expected_count=len(items),
         )
 
 

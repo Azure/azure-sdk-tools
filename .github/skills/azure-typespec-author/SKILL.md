@@ -49,6 +49,12 @@ Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name f
 - **Keep source and client plans separate** — Step 3 plans ordinary TypeSpec source changes. Step 4 offers an explicit opt-out from the [client configuration workflow](references/client-configuration.md), which is recommended and included by default for SDK-visible changes. The authoring skill owns declaration edits; the customization tool owns `client.tsp` edits.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
+- **Do not stop for plan confirmation** — once the request and project evidence
+  resolve material REST and versioning choices, continue through apply and
+  validation. Ask only when an unresolved ambiguity could change the wire
+  contract or version semantics.
+- **Do not call `azsdk_typespec_generate_authoring_plan`** — build the source
+  plan from the selected references or `azsdk_typespec_retrieve_knowledge`.
 - **Follow both plans exactly** — source changes in Step 5 must follow the
   TypeSpec source plan from Step 3; client configuration changes must follow the
   separate plan from Step 4. Do not improvise from unrelated project patterns.
@@ -91,7 +97,8 @@ Step 4 produced a client configuration plan, use
 `azsdk-common-typespec-naming` in apply mode; it calls
 `azsdk_customized_code_update` with `SpecInputs`. The agent must not edit
 `client.tsp` directly—the customization tool is the authorized writer. Confirm
-uncertainties with the user first.
+only unresolved material ambiguities; do not ask the user to approve the plan
+before applying an otherwise fully specified request.
 
 ### Step 6: Validate
 

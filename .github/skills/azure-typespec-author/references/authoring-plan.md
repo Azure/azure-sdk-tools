@@ -18,9 +18,12 @@ For a request containing both covered and uncovered changes, use the MCP tool fo
 
 ### 3.1.2 Generate Authoring Plan
 
-Synthesize the retrieved knowledge in step 3.1.1 into a concrete plan.
+Synthesize the retrieved knowledge in step 3.1.1 into a concrete plan. Do not
+call `azsdk_typespec_generate_authoring_plan`; the agent owns this synthesis.
 
 Document your final plan with references to supporting documents, and ensure the plan follows the retrieved context above.
+When the request and project evidence already determine the material API
+choices, continue to application without asking the user to confirm the plan.
 
 ---
 

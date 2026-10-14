@@ -54,10 +54,10 @@ stimuli:
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
       - type: output-matches
         config:
-          pattern: '"enabled"\s*:\s*"IsEnabled"'
+          pattern: '"(?:WidgetProperties\.)?enabled"\s*:\s*"IsEnabled"'
       - type: output-matches
         config:
-          pattern: '"retryInterval"\s*:\s*"RetryIntervalInSeconds"'
+          pattern: '"(?:WidgetProperties\.)?retryInterval"\s*:\s*"RetryIntervalInSeconds"'
       - type: output-matches
         config:
           pattern: '"scope"\s*:\s*"csharp"'
@@ -198,8 +198,8 @@ stimuli:
         config:
           required:
             - name: "^(view|powershell|bash|rg)$"
-              pattern: "client-configuration\\.md"
-              result: "(?i)client configuration analysis is recommended and included by default"
+              pattern: "csharp-naming\\.md"
+              result: "(?i)Boolean.*Start with a verb|enabled.*IsEnabled"
           disallowed:
             - name: "azsdk_"
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
@@ -235,8 +235,8 @@ stimuli:
         config:
           required:
             - name: "^(view|powershell|bash|rg)$"
-              pattern: "client-configuration\\.md"
-              result: "(?i)proceed without a blocking confirmation|absence of an opt-out"
+              pattern: "csharp-naming\\.md"
+              result: "(?i)Boolean.*Start with a verb|enabled.*IsEnabled"
           disallowed:
             - name: "azsdk_"
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"

@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import Ajv from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import standaloneCode from "ajv/dist/standalone/index.js";
@@ -17,6 +18,7 @@ const seedPaths: string[] = [];
 let indexUrl = "";
 let publishingOnly = false;
 let preview = false;
+let previewMetadataPath = "";
 for (let index = 2; index < process.argv.length; index++) {
   const argument = process.argv[index];
   if (argument === "--publishing-only" && !publishingOnly) {
@@ -27,11 +29,13 @@ for (let index = 2; index < process.argv.length; index++) {
     preview = true;
     continue;
   }
-  if (!["--snapshot", "--index-url"].includes(argument) || !process.argv[index + 1]) {
-    throw new Error("Usage: node --experimental-strip-types dashboard/build.ts [--snapshot <JSON path>]... [--index-url <HTTPS URL>] OR --preview --snapshot <JSON path>... OR --publishing-only");
+  if (!["--snapshot", "--index-url", "--preview-metadata"].includes(argument) || !process.argv[index + 1] ||
+    (argument === "--preview-metadata" && previewMetadataPath)) {
+    throw new Error("Usage: node --experimental-strip-types dashboard/build.ts [--snapshot <JSON path>]... [--index-url <HTTPS URL>] OR --preview --snapshot <JSON path>... [--preview-metadata <JSON path>] OR --publishing-only");
   }
   const value = process.argv[++index];
   if (argument === "--snapshot") seedPaths.push(resolve(value));
+  else if (argument === "--preview-metadata") previewMetadataPath = resolve(value);
   else {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) {
@@ -40,11 +44,14 @@ for (let index = 2; index < process.argv.length; index++) {
     indexUrl = url.href;
   }
 }
-if (publishingOnly && (seedPaths.length || indexUrl || preview)) {
+if (publishingOnly && (seedPaths.length || indexUrl || preview || previewMetadataPath)) {
   throw new Error("--publishing-only cannot be combined with dashboard snapshot or index options.");
 }
 if (preview && (!seedPaths.length || indexUrl)) {
   throw new Error("--preview requires snapshot inputs and cannot be combined with a hosted index URL.");
+}
+if (previewMetadataPath && !preview) {
+  throw new Error("--preview-metadata requires --preview and cannot be used for offline or hosted reporting.");
 }
 await mkdir(generated, { recursive: true });
 for (const [file, name] of [["snapshot", "RepositoryCodeMetrics"], ["dotnet-snapshot", "CustomCodeMetrics"],
@@ -100,16 +107,29 @@ await build({
 if (publishingOnly) {
   console.log(`Built publishing validators and helpers in ${generated}; no website output written.`);
 } else {
-  const { parseSnapshot, mergeSnapshots, withoutFileEvidence } = await import("./data.ts");
+  const { parseSnapshot, mergeSnapshots, snapshotKey, withoutFileEvidence } = await import("./data.ts");
+  const { acceptPreviewMetadata, indexPreviewMetadata, previewTime, verifyPreviewHashes } = await import("./preview.ts");
   const incoming: Snapshot[] = [];
+  const hashes = new Map<string, Set<string>>();
   for (const path of seedPaths) {
     try {
-      incoming.push(parseSnapshot(await readFile(path, "utf8")));
+      const bytes = await readFile(path);
+      const snapshot = parseSnapshot(bytes.toString("utf8"));
+      incoming.push(snapshot);
+      const key = snapshotKey(snapshot);
+      const source = hashes.get(key) || new Set<string>();
+      source.add(createHash("sha256").update(bytes).digest("hex"));
+      hashes.set(key, source);
     } catch (error) {
       throw new Error(`${path}: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }
   }
-  let seeds = mergeSnapshots([], incoming);
+  const metadata = acceptPreviewMetadata(previewMetadataPath ?
+    JSON.parse(await readFile(previewMetadataPath, "utf8")) : { schemaVersion: "1.0", observations: [] }, incoming);
+  verifyPreviewHashes(metadata, hashes);
+  const time = previewTime(indexPreviewMetadata(metadata));
+  let seeds = mergeSnapshots([], incoming, time);
+  acceptPreviewMetadata(metadata, seeds);
   if (preview) {
     if (seeds.some((snapshot) => snapshot.repository.isDirty)) {
       throw new Error("Official observations require committed source.");
@@ -127,7 +147,7 @@ if (publishingOnly) {
     platform: "browser",
     legalComments: "eof",
   });
-  await writeFile(join(output, "snapshots.js"), `globalThis.customCodeMetricsSeed = ${JSON.stringify(seeds)};\nglobalThis.customCodeMetricsIndexUrl = ${JSON.stringify(indexUrl)};\nglobalThis.customCodeMetricsPreview = ${preview};\n`);
+  await writeFile(join(output, "snapshots.js"), `globalThis.customCodeMetricsSeed = ${JSON.stringify(seeds)};\nglobalThis.customCodeMetricsIndexUrl = ${JSON.stringify(indexUrl)};\nglobalThis.customCodeMetricsPreview = ${preview};\nglobalThis.customCodeMetricsPreviewMetadata = ${JSON.stringify(metadata)};\n`);
   for (const name of ["index.html", "styles.css", "staticwebapp.config.json"]) {
     await copyFile(join(directory, name), join(output, name));
   }

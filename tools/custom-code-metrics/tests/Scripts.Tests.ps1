@@ -114,6 +114,8 @@ Describe "Dashboard deployment preflight" {
         ($sets | Where-Object Name -eq "Hosted").Parameters.Name | Should -Not -Contain "SnapshotPath"
         ($sets | Where-Object Name -eq "Preview").Parameters.Name | Should -Contain "SnapshotPath"
         ($sets | Where-Object Name -eq "Preview").Parameters.Name | Should -Not -Contain "IndexUrl"
+        ($sets | Where-Object Name -eq "Preview").Parameters.Name | Should -Contain "PreviewMetadataPath"
+        ($sets | Where-Object Name -eq "Hosted").Parameters.Name | Should -Not -Contain "PreviewMetadataPath"
     }
     It "builds preview snapshots without fetching a feed and passes the deployment secret only through environment" {
         $paths = @((Join-Path $TestDrive "one.json"), (Join-Path $TestDrive "two.json"))
@@ -147,6 +149,53 @@ Describe "Dashboard deployment preflight" {
         }
         { & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -SnapshotPath @() } | Should -Throw
         { & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -SnapshotPath $path -IndexUrl "https://metrics.invalid/index.json" } | Should -Throw
+        Should -Invoke node -Times 0 -Exactly
+        Should -Invoke az -Times 0 -Exactly
+        Should -Invoke npx -Times 0 -Exactly
+    }
+    It "passes an absolute preview metadata path to the validated build without fetching a feed" {
+        $path = Join-Path $TestDrive "snapshot.json"
+        $second = Join-Path $TestDrive "second.json"
+        $metadata = Join-Path $TestDrive "metadata.json"
+        Set-Content -LiteralPath $path -Value "{}"
+        Set-Content -LiteralPath $second -Value "{}"
+        Set-Content -LiteralPath $metadata -Value "{}"
+        & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -SnapshotPath @($path, $second) -PreviewMetadataPath $metadata
+        Should -Invoke node -Times 1 -Exactly -ParameterFilter {
+            $Arguments.Count -eq 9 -and $Arguments[2] -eq "--preview" -and
+            $Arguments[3] -eq "--snapshot" -and $Arguments[5] -eq "--snapshot" -and
+            $Arguments[7] -eq "--preview-metadata" -and $Arguments[8] -eq $metadata
+        }
+        Should -Invoke node -Times 0 -Exactly -ParameterFilter { $Arguments[0] -eq "--input-type=module" }
+    }
+    It "rejects invalid preview metadata paths and hosted combinations before external calls" {
+        $path = Join-Path $TestDrive "snapshot.json"
+        Set-Content -LiteralPath $path -Value "{}"
+        foreach ($metadata in @("relative.json", (Join-Path $TestDrive "missing.json"))) {
+            { & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -SnapshotPath $path -PreviewMetadataPath $metadata } | Should -Throw "*absolute path*"
+        }
+        { & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -IndexUrl "https://metrics.invalid/index.json" -PreviewMetadataPath $path } | Should -Throw
+        Should -Invoke node -Times 0 -Exactly
+        Should -Invoke az -Times 0 -Exactly
+        Should -Invoke npx -Times 0 -Exactly
+    }
+    It "does not acquire secrets when the metadata-aware preview build fails" {
+        $path = Join-Path $TestDrive "snapshot.json"
+        $metadata = Join-Path $TestDrive "metadata.json"
+        Set-Content -LiteralPath $path -Value "{}"
+        Set-Content -LiteralPath $metadata -Value "{}"
+        Mock node { $global:LASTEXITCODE = 1 }
+        { & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -SnapshotPath $path -PreviewMetadataPath $metadata } | Should -Throw "*Dashboard build failed*"
+        Should -Invoke az -Times 0 -Exactly
+        Should -Invoke npx -Times 0 -Exactly
+        $env:SWA_CLI_DEPLOYMENT_TOKEN | Should -Be "previous-test-token"
+    }
+    It "previews metadata-aware replacement without builds, secrets or deployment" {
+        $path = Join-Path $TestDrive "snapshot.json"
+        $metadata = Join-Path $TestDrive "metadata.json"
+        Set-Content -LiteralPath $path -Value "{}"
+        Set-Content -LiteralPath $metadata -Value "{}"
+        & (Join-Path $script:PackageRoot "Deploy-Dashboard.ps1") -SubscriptionId "test-subscription" -SnapshotPath $path -PreviewMetadataPath $metadata -WhatIf
         Should -Invoke node -Times 0 -Exactly
         Should -Invoke az -Times 0 -Exactly
         Should -Invoke npx -Times 0 -Exactly

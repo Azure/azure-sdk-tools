@@ -13,6 +13,8 @@ export type MeasuredLibrary = Pick<Library, "library" | "service" | "category" |
 export type Observation = Pick<Snapshot, "schemaVersion" | "snapshotId" | "collectedAt" | "repository"> & {
   libraries: MeasuredLibrary[];
 };
+export type ObservationTime = (observation: Observation) => number;
+export const collectionTime: ObservationTime = (observation) => Date.parse(observation.collectedAt);
 export const REPOSITORIES = [
   { name: "Azure/azure-sdk-for-net", language: ".NET", implemented: true },
   { name: "Azure/azure-sdk-for-java", language: "Java", implemented: true },
@@ -190,7 +192,9 @@ function observationContent(snapshot: Snapshot): string {
   ]);
 }
 
-export function mergeSnapshots(existing: readonly Snapshot[], incoming: readonly Snapshot[]): Snapshot[] {
+export function mergeSnapshots(
+  existing: readonly Snapshot[], incoming: readonly Snapshot[], time: ObservationTime = collectionTime,
+): Snapshot[] {
   const unique = new Map<string, Snapshot>();
   for (const snapshot of [...existing, ...incoming]) {
     const key = snapshotKey(snapshot);
@@ -204,8 +208,8 @@ export function mergeSnapshots(existing: readonly Snapshot[], incoming: readonly
     }
   }
   const retries = new Map<string, Snapshot>();
-  for (const snapshot of [...unique.values()].sort(compareSnapshots)) {
-    const day = new Date(snapshot.collectedAt).toISOString().slice(0, 10);
+  for (const snapshot of [...unique.values()].sort((a, b) => compareSnapshots(a, b, time))) {
+    const day = new Date(time(snapshot)).toISOString().slice(0, 10);
     const key = snapshot.repository.isDirty ? snapshotKey(snapshot) :
       `${measurementKey(snapshot)}|${snapshot.repository.commit}|${day}`;
     const prior = retries.get(key);
@@ -215,11 +219,11 @@ export function mergeSnapshots(existing: readonly Snapshot[], incoming: readonly
     }
     retries.set(key, snapshot);
   }
-  return [...retries.values()].sort(compareSnapshots);
+  return [...retries.values()].sort((a, b) => compareSnapshots(a, b, time));
 }
 
-function compareSnapshots(a: Observation, b: Observation): number {
-  return Date.parse(a.collectedAt) - Date.parse(b.collectedAt) || a.snapshotId.localeCompare(b.snapshotId) ||
+function compareSnapshots(a: Observation, b: Observation, time: ObservationTime = collectionTime): number {
+  return time(a) - time(b) || a.snapshotId.localeCompare(b.snapshotId) ||
     a.repository.name.localeCompare(b.repository.name);
 }
 
@@ -258,9 +262,11 @@ export function breakdown(libraries: readonly Library[], group: "category" | "se
 export function history(
   snapshots: readonly Observation[], selected: Observation, filters: Filters,
   options: { fixed: boolean; includeDirty: boolean; libraryId: string },
+  time: ObservationTime = collectionTime,
 ): History {
   const compatible = snapshots.filter((snapshot) => measurementKey(snapshot) === measurementKey(selected));
-  const eligible = compatible.filter((snapshot) => options.includeDirty || !snapshot.repository.isDirty).sort(compareSnapshots);
+  const eligible = compatible.filter((snapshot) => options.includeDirty || !snapshot.repository.isDirty)
+    .sort((a, b) => compareSnapshots(a, b, time));
   const members = eligible.map((snapshot) => filterLibraries(snapshot.libraries, filters)
     .filter((library) => !options.libraryId || library.library === options.libraryId));
   let fixedIds: Set<string> | null = null;
@@ -291,11 +297,13 @@ export function history(
   };
 }
 
-export function trendSeries(points: readonly HistoryPoint[]): { x: number; y: number | null }[] {
+export function trendSeries(
+  points: readonly HistoryPoint[], timestamp: ObservationTime = collectionTime,
+): { x: number; y: number | null }[] {
   const result: { x: number; y: number | null }[] = [];
   let priorDay: number | null = null;
   for (const point of points) {
-    const time = Date.parse(point.snapshot.collectedAt);
+    const time = timestamp(point.snapshot);
     const day = Math.floor(time / 86400000);
     if (priorDay !== null && day - priorDay > 1) {
       result.push({ x: (priorDay + 1) * 86400000, y: null });

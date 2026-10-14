@@ -380,6 +380,45 @@ builds retain local evidence and offline behavior; only explicit public preview
 mode strips evidence and records quiet baseline metadata. Both deployment modes use the pinned
 Static Web Apps CLI and transient deployment-token environment handling.
 
+#### Reconstructed historical source
+
+Historical backfills are measurements run now against actual historical commits
+using the current collector rules, not observations collected in the past.
+Keep the real collection timestamp and generated snapshot ID in each snapshot.
+For a static preview only, pass `--preview-metadata <JSON path>` (or
+`-PreviewMetadataPath <absolute JSON path>` to the deployment helper):
+
+```json
+{
+  "schemaVersion": "1.0",
+  "observations": [
+    {
+      "repository": "Azure/azure-sdk-for-net",
+      "snapshotId": "<unchanged collector-generated snapshot ID>",
+      "snapshotSha256": "<SHA-256 of the exact original snapshot file bytes>",
+      "asOf": "2026-10-11T23:59:59.999Z"
+    }
+  ]
+}
+```
+
+This separate preview format does not extend the snapshot wire contract. Entries
+must match embedded .NET repository/ID pairs and exact source-file hashes; source
+dates must precede actual collection. Unknown entries, duplicate identities,
+invalid dates and conflicting hashes fail before site output or deployment
+credentials. Omit original observations from the mapping. No snapshot source,
+collection timestamp, commit, counts or identity is rewritten.
+
+Matched points visibly say **Source as of ...; reconstructed ... using current
+collector rules**. Their selector, history rows and tooltips identify reconstruction.
+Preview ordering, retry grouping, latest selection, history and range anchors use
+the source date; distinct historical weeks survive even if their commit is the
+same. Unmapped observations retain normal collection-date behavior. Weekly samples
+do not imply daily measurements: missing days remain gaps. Historical source
+receipts and full audits stay private; this mode neither publishes a feed nor
+changes the .NET-only publisher. Metadata cannot be used in ordinary offline,
+hosted-index or publishing-only builds.
+
 ## Infrastructure and activation prerequisites
 
 `infra\main.bicep` provisions a Free Static Web App, Hot LRS storage, versioning

@@ -5,7 +5,8 @@ param(
     [string]$ResourceGroup = "rg-azsdk-custom-code-metrics",
     [string]$SiteName = "azsdk-custom-code-metrics",
     [Parameter(Mandatory, ParameterSetName = "Hosted")][uri]$IndexUrl,
-    [Parameter(Mandatory, ParameterSetName = "Preview")][ValidateNotNullOrEmpty()][string[]]$SnapshotPath
+    [Parameter(Mandatory, ParameterSetName = "Preview")][ValidateNotNullOrEmpty()][string[]]$SnapshotPath,
+    [Parameter(ParameterSetName = "Preview")][ValidateNotNullOrEmpty()][string]$PreviewMetadataPath
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,6 +23,13 @@ if ($PSCmdlet.ParameterSetName -eq "Preview") {
             throw "Static preview requires an absolute path to each existing snapshot file."
         }
         $buildArguments += @("--snapshot", (Resolve-Path -LiteralPath $path).Path)
+    }
+    if ($PreviewMetadataPath) {
+        if (-not [System.IO.Path]::IsPathFullyQualified($PreviewMetadataPath) -or
+            -not (Test-Path -LiteralPath $PreviewMetadataPath -PathType Leaf)) {
+            throw "Preview metadata requires an absolute path to an existing file."
+        }
+        $buildArguments += @("--preview-metadata", (Resolve-Path -LiteralPath $PreviewMetadataPath).Path)
     }
 } else {
     $buildArguments += $IndexUrl.AbsoluteUri

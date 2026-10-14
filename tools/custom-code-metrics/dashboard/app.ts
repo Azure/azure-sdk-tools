@@ -1,15 +1,17 @@
 import { Chart, registerables } from "chart.js";
 import {
   acceptSnapshot, aggregate, breakdown, filterLibraries, forRepository, history, mergeSnapshots, REPOSITORIES,
-  sortLibraries, trendSeries,
+  snapshotKey, sortLibraries, trendSeries,
   type Snapshot, type Library, type Filters, type SortKey, type Observation, type RepositoryName,
 } from "./data.js";
 import { inRange, isStale, loadReport, loadHistory, mergeObservations, type Report, type MonthCache } from "./report.js";
+import { acceptPreviewMetadata, indexPreviewMetadata, previewTime, type PreviewMetadataIndex } from "./preview.js";
 
 declare global {
   var customCodeMetricsSeed: unknown;
   var customCodeMetricsIndexUrl: unknown;
   var customCodeMetricsPreview: unknown;
+  var customCodeMetricsPreviewMetadata: unknown;
 }
 
 Chart.register(...registerables);
@@ -69,6 +71,8 @@ const colors = () => {
 let snapshots: Snapshot[] = [];
 let selectedRepository: RepositoryName = REPOSITORIES[0].name;
 let staticPreview = false;
+let reconstructions: PreviewMetadataIndex = new Map();
+let observationTime = previewTime(reconstructions);
 let publishedHistory: Observation[] = [];
 let report: Report | null = null;
 let monthCache: MonthCache = new Map();
@@ -157,8 +161,8 @@ async function perform(action: () => Promise<void>): Promise<void> {
   }
 }
 function addSnapshots(incoming: Snapshot[]): void {
-  const next = mergeSnapshots(snapshots, incoming);
-  mergeObservations([...publishedHistory, ...next]);
+  const next = mergeSnapshots(snapshots, incoming, observationTime);
+  mergeObservations([...publishedHistory, ...next], observationTime);
   snapshots = next;
   selectedId = forRepository(snapshots, selectedRepository).at(-1)?.snapshotId || "";
   populateSnapshots();
@@ -169,7 +173,7 @@ function addSnapshots(incoming: Snapshot[]): void {
 function populateSnapshots(): void {
   const element = select("snapshot-select");
   element.replaceChildren(...forRepository(snapshots, selectedRepository).map((snapshot) => option(snapshot.snapshotId,
-    `${new Date(snapshot.collectedAt).toISOString().replace("T", " ").slice(0, 19)} UTC - ${snapshot.repository.commit.slice(0, 8)}`)));
+    `${new Date(observationTime(snapshot)).toISOString().replace("T", " ").slice(0, 19)} UTC${reconstructions.has(snapshotKey(snapshot)) ? " (reconstructed)" : ""} - ${snapshot.repository.commit.slice(0, 8)}`)));
   element.value = selectedId;
 }
 function populateServices(): void {
@@ -216,7 +220,8 @@ function renderFreshness(): void {
   const activeReport = report?.latest.repository.name === selectedRepository ? report : null;
   byId("freshness").hidden = !activeReport;
   text("deployment-info", activeReport ? "Published snapshots; history uses the selected observation's UTC date." :
-    staticPreview ? "Embedded baseline. No automatic feed." : "Build-time observations. No automatic feed.");
+    staticPreview ? reconstructions.size && selectedRepository === "Azure/azure-sdk-for-net" ?
+      "Embedded observations. No automatic feed." : "Embedded baseline. No automatic feed." : "Build-time observations. No automatic feed.");
   if (activeReport) {
     const stale = isStale(activeReport.latest);
     text("freshness", `Hosted feed collected ${new Date(activeReport.latest.collectedAt).toISOString()}${stale ?
@@ -234,8 +239,12 @@ function renderOverview(snapshot: Snapshot | undefined, libraries: Library[]): v
   text("generated-lines", integer.format(totals.generatedLines));
   text("generated-percent", totals.totalLines === 0 ? "No measured lines" :
     `${percent(totals.generatedLines / totals.totalLines)} of total source`);
+  const reconstruction = snapshot && reconstructions.get(snapshotKey(snapshot));
+  const date = snapshot && (reconstruction ?
+    `Source as of ${new Date(observationTime(snapshot)).toISOString()}; reconstructed ${new Date(snapshot.collectedAt).toISOString()} using current collector rules` :
+    new Date(snapshot.collectedAt).toISOString());
   text("observation-info", snapshot ?
-    `${snapshot.repository.name} | ${new Date(snapshot.collectedAt).toISOString()} | revision ${snapshot.repository.commit.slice(0, 12)} | ${snapshot.excludedLibraries.length} excluded projects` :
+    `${snapshot.repository.name} | ${date} | revision ${snapshot.repository.commit.slice(0, 12)} | ${snapshot.excludedLibraries.length} excluded projects` :
     "No observation loaded.");
   text("contract-info", snapshot ?
     `Schema ${snapshot.schemaVersion} | Physical ${snapshot.repository.name === "Azure/azure-sdk-for-net" ? "C#" :
@@ -309,17 +318,19 @@ function renderHistory(snapshot: Snapshot | undefined): void {
     return;
   }
   const range = select("history-range").value;
-  const observations = inRange(mergeObservations(forRepository([...publishedHistory, ...snapshots], selectedRepository)), snapshot,
-    range === "all" ? null : Number(range));
+  const observations = inRange(mergeObservations(forRepository([...publishedHistory, ...snapshots], selectedRepository), observationTime), snapshot,
+    range === "all" ? null : Number(range), observationTime);
   const result = history(observations, snapshot, filters(), {
     fixed: input("fixed-cohort").checked, includeDirty: false,
     libraryId: select("history-scope").value,
-  });
+  }, observationTime);
   const counts = `${result.points.length} observation${result.points.length === 1 ? "" : "s"} across ${result.distinctRevisions} measured revision${result.distinctRevisions === 1 ? "" : "s"}.`;
   let description = result.distinctRevisions < 2 ? `Baseline only: ${counts} No code-change trend yet.` : counts;
   if (result.fixedIds) description += ` Fixed cohort: ${result.fixedIds.size} libraries.`;
   if (result.excludedIncompatible) description += ` ${result.excludedIncompatible} incompatible observations excluded.`;
   description += " Missing days and N/A values break the line.";
+  const reconstructedCount = result.points.filter((point) => reconstructions.has(snapshotKey(point.snapshot))).length;
+  if (reconstructedCount) description += ` ${reconstructedCount} historical source observations reconstructed using current collector rules, not measurements recorded at that time.`;
   text("history-note", description);
   if (!result.points.length) {
     canvas("history-chart").hidden = true;
@@ -327,14 +338,14 @@ function renderHistory(snapshot: Snapshot | undefined): void {
   }
   for (const point of result.points) {
     const row = document.createElement("tr");
-    cell(row, new Date(point.snapshot.collectedAt).toISOString().slice(0, 10));
+    cell(row, `${new Date(observationTime(point.snapshot)).toISOString().slice(0, 10)}${reconstructions.has(snapshotKey(point.snapshot)) ? " (reconstructed)" : ""}`);
     cell(row, point.snapshot.repository.commit.slice(0, 8));
     cell(row, integer.format(point.metrics.libraryCount));
     cell(row, percent(point.metrics.customRatio));
     cell(row, `+${point.added} / -${point.removed}`);
     byId("history-values").append(row);
   }
-  const series = trendSeries(result.points);
+  const series = trendSeries(result.points, observationTime);
   const first = series[0].x;
   const last = series[series.length - 1].x;
   const singleDay = Math.floor(first / 86400000) === Math.floor(last / 86400000);
@@ -353,7 +364,11 @@ function renderHistory(snapshot: Snapshot | undefined): void {
       plugins: { legend: { display: false }, tooltip: { callbacks: {
         title: (items) => {
           const time = items[0]?.parsed.x;
-          return time === undefined || time === null ? "No observation" : new Date(time).toISOString();
+          if (time === undefined || time === null) return "No observation";
+          const point = result.points.find((point) => observationTime(point.snapshot) === time);
+          return point && reconstructions.has(snapshotKey(point.snapshot)) ?
+            `Source as of ${new Date(time).toISOString()} (reconstructed ${new Date(point.snapshot.collectedAt).toISOString()})` :
+            new Date(time).toISOString();
         },
         label: (context) => `Custom source: ${context.parsed.y?.toFixed(2) ?? "N/A"}%`,
       } } },
@@ -569,6 +584,13 @@ try {
   if (staticPreview) {
     if (!accepted.length || url) throw new Error("Static preview requires embedded observations and no automatic hosted feed.");
   }
+  const metadata = globalThis.customCodeMetricsPreviewMetadata;
+  const acceptedMetadata = acceptPreviewMetadata(metadata === undefined ? { schemaVersion: "1.0", observations: [] } : metadata, accepted);
+  if (acceptedMetadata.observations.length && !staticPreview) {
+    throw new Error("Reconstruction metadata requires static preview mode.");
+  }
+  reconstructions = indexPreviewMetadata(acceptedMetadata);
+  observationTime = previewTime(reconstructions);
   if (accepted.length) addSnapshots(accepted);
   else render();
   if (url) {

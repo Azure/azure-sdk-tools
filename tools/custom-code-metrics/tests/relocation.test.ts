@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runInNewContext } from "node:vm";
+import { createHash } from "node:crypto";
 import { legacySnapshot, library, snapshot } from "../dashboard/tests/fixtures.ts";
 import type { BlobStore } from "../publishing.ts";
 
@@ -45,7 +46,7 @@ test("relocated builds are script-relative; publication needs no website and lea
   const target = join(directory, "tools", "custom-code-metrics");
   try {
     for (const name of [
-      "package.json", "tsconfig.json", "publishing.ts", "schema.ts", "dashboard/build.ts", "dashboard/app.ts", "dashboard/data.ts", "dashboard/report.ts",
+      "package.json", "tsconfig.json", "publishing.ts", "schema.ts", "dashboard/build.ts", "dashboard/app.ts", "dashboard/data.ts", "dashboard/report.ts", "dashboard/preview.ts",
       "dashboard/tsconfig.json", "dashboard/index.html", "dashboard/styles.css", "dashboard/staticwebapp.config.json",
       ...["CustomCodeMetrics", "RepositoryCodeMetrics", "ReportIndex", "HistoryMonth"].map((name) => `schemas/${name}.schema.json`),
     ]) {
@@ -141,10 +142,55 @@ test("relocated builds are script-relative; publication needs no website and lea
     assert.equal(localContext.customCodeMetricsPreview, false);
     assert.deepEqual(JSON.parse(JSON.stringify(localContext.customCodeMetricsSeed)), [audited],
       "Ordinary offline builds lost local file evidence.");
+    const metadataPath = join(directory, "preview-metadata.json");
+    const metadata = {
+      schemaVersion: "1.0", observations: [{
+        repository: audited.repository.name, snapshotId: audited.snapshotId,
+        snapshotSha256: createHash("sha256").update(await readFile(seedPath)).digest("hex"),
+        asOf: "2026-09-27T23:59:59.999Z",
+      }],
+    };
+    await writeFile(metadataPath, JSON.stringify(metadata));
+    const reconstructed = invoke("--preview", "--snapshot", seedPath, "--preview-metadata", metadataPath);
+    assert.equal(reconstructed.status, 0, reconstructed.text);
+    const reconstructedBytes = await readFile(seedFile);
+    const reconstructedContext: Record<string, unknown> = {};
+    runInNewContext(reconstructedBytes.toString(), reconstructedContext);
+    assert.deepEqual(JSON.parse(JSON.stringify(reconstructedContext.customCodeMetricsPreviewMetadata)), metadata);
+    assert.deepEqual(JSON.parse(JSON.stringify(reconstructedContext.customCodeMetricsSeed)), publicSeeds);
+    assert.deepEqual(JSON.parse(await readFile(seedPath, "utf8")), audited);
+    assert.deepEqual(JSON.parse(await readFile(metadataPath, "utf8")), metadata);
+    for (const args of [
+      ["--snapshot", seedPath, "--preview-metadata", metadataPath],
+      ["--index-url", "https://metrics.invalid/index.json", "--preview-metadata", metadataPath],
+      ["--publishing-only", "--preview-metadata", metadataPath],
+      ["--preview", "--snapshot", seedPath, "--preview-metadata"],
+      ["--preview", "--snapshot", seedPath, "--preview-metadata", metadataPath, "--preview-metadata", metadataPath],
+    ]) {
+      const result = invoke(...args);
+      assert.notEqual(result.status, 0);
+      assert.match(result.text, /Usage:|requires --preview|cannot be combined/);
+      assert.deepEqual(await readFile(seedFile), reconstructedBytes);
+    }
+    for (const invalid of [
+      "{broken", "{}",
+      JSON.stringify({ ...metadata, observations: [{ ...metadata.observations[0], snapshotSha256: "0".repeat(64) }] }),
+      JSON.stringify({ ...metadata, observations: [{ ...metadata.observations[0], snapshotId: "absent" }] }),
+      JSON.stringify({ ...metadata, observations: [{ ...metadata.observations[0], asOf: "2027-01-01T00:00:00Z" }] }),
+    ]) {
+      await writeFile(metadataPath, invalid);
+      const result = invoke("--preview", "--snapshot", seedPath, "--preview-metadata", metadataPath);
+      assert.notEqual(result.status, 0);
+      assert.match(result.text, /SyntaxError|Invalid preview metadata/);
+      assert.deepEqual(await readFile(seedFile), reconstructedBytes);
+    }
     const unseeded = invoke();
     assert.equal(unseeded.status, 0, unseeded.text);
     assert.match(await readFile(seedFile, "utf8"), /customCodeMetricsSeed = \[\];/);
     assert.match(await readFile(seedFile, "utf8"), /customCodeMetricsPreview = false;/);
+    const reset: Record<string, unknown> = {};
+    runInNewContext(await readFile(seedFile, "utf8"), reset);
+    assert.deepEqual(JSON.parse(JSON.stringify(reset.customCodeMetricsPreviewMetadata)), { schemaVersion: "1.0", observations: [] });
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

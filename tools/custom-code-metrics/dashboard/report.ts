@@ -3,8 +3,8 @@ import validateMonth from "./generated/validate-history-month.mjs";
 import type { ReportIndex } from "./generated/report-index.js";
 import type { HistoryMonth as GeneratedHistoryMonth } from "./generated/history-month.js";
 import {
-  aggregate, assertMetric, assertObservationIdentity, COUNTS, measurementKey, parseSnapshot, snapshotKey,
-  type Observation, type Snapshot,
+  aggregate, assertMetric, assertObservationIdentity, collectionTime, COUNTS, measurementKey, parseSnapshot, snapshotKey,
+  type Observation, type ObservationTime, type Snapshot,
 } from "./data.ts";
 
 export type { ReportIndex };
@@ -33,12 +33,14 @@ function content(observation: Observation): string {
   ]);
 }
 
-export function mergeObservations(observations: readonly Observation[]): Observation[] {
+export function mergeObservations(
+  observations: readonly Observation[], time: ObservationTime = collectionTime,
+): Observation[] {
   const unique = new Map<string, Observation>();
   for (const observation of [...observations].sort((a, b) =>
-    Date.parse(a.collectedAt) - Date.parse(b.collectedAt) || a.snapshotId.localeCompare(b.snapshotId))) {
+    time(a) - time(b) || a.snapshotId.localeCompare(b.snapshotId))) {
     assert(Number.isFinite(Date.parse(observation.collectedAt)), "Invalid observation timestamp.");
-    const day = new Date(observation.collectedAt).toISOString().slice(0, 10);
+    const day = new Date(time(observation)).toISOString().slice(0, 10);
     const key = observation.repository.isDirty ? snapshotKey(observation) :
       `${measurementKey(observation)}|${observation.repository.commit}|${day}`;
     const prior = unique.get(key);
@@ -86,21 +88,23 @@ export function acceptHistoryMonth(value: unknown): HistoryMonth {
   return value;
 }
 
-export function rangeStart(latest: Snapshot, days: number | null): number {
+export function rangeStart(latest: Snapshot, days: number | null, time: ObservationTime = collectionTime): number {
   if (days === null) return -Infinity;
   assert(Number.isInteger(days) && days >= 1 && days <= 366, "History range must be between 1 and 366 days.");
-  return Math.floor(Date.parse(latest.collectedAt) / 86400000) * 86400000 - (days - 1) * 86400000;
+  return Math.floor(time(latest) / 86400000) * 86400000 - (days - 1) * 86400000;
 }
 
 export function isStale(snapshot: Snapshot, now = Date.now()): boolean {
   return now - Date.parse(snapshot.collectedAt) > 36 * 3600000;
 }
 
-export function inRange(observations: readonly Observation[], latest: Snapshot, days: number | null): Observation[] {
+export function inRange(
+  observations: readonly Observation[], latest: Snapshot, days: number | null, time: ObservationTime = collectionTime,
+): Observation[] {
   if (days === null) return [...observations];
-  const start = rangeStart(latest, days);
-  const end = (Math.floor(Date.parse(latest.collectedAt) / 86400000) + 1) * 86400000;
-  return observations.filter((observation) => Date.parse(observation.collectedAt) >= start && Date.parse(observation.collectedAt) < end);
+  const start = rangeStart(latest, days, time);
+  const end = (Math.floor(time(latest) / 86400000) + 1) * 86400000;
+  return observations.filter((observation) => time(observation) >= start && time(observation) < end);
 }
 
 async function get(url: URL, fetcher: typeof fetch): Promise<Response> {

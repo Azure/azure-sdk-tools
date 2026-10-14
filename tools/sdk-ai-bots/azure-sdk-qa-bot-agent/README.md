@@ -4,6 +4,25 @@ The Azure SDK Chat Agent helps developers with Azure SDK questions. It is built 
 
 > **Note:** This project is currently in draft / active development.
 
+## Isolated API-spec decision-contract research
+
+The optional `API_SPEC_DECISION_MODE` setting leaves normal behavior unchanged
+when empty. It applies only to the API-spec tenant. `evidence_only` retrieves
+knowledge and wiki evidence before the ordinary hosted-agent invocation.
+`quoted`, `role_bound`, and `extractive` additionally require a first-pass JSON
+answer contract, validate source IDs and exact quotations, and render the result
+in the actual chat-service path. No answer-review or repair retry is performed.
+
+`quoted` checks quote existence, not semantic entailment. `role_bound` additionally
+rejects execution/authorization outcomes derived from documentation or a user's
+account and requires conditions on recommendations. Its claim classification and
+conditions are still model-produced, not independently verified. `extractive`
+publishes source quotations instead of paraphrased assertions; quotations can
+still be irrelevant or insufficient. None of these modes is a validated accuracy
+improvement. Rejected claims are explicitly reported; invalid JSON fails rather
+than returning an apparently successful fallback. These are opt-in research
+interventions, not a hosted-agent deployment or shared configuration change.
+
 ## Project Structure
 
 ```

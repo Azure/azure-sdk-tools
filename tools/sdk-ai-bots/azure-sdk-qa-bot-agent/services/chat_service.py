@@ -27,6 +27,7 @@ from models.chat import (
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from services.conversation_service import ConversationService
+from services.decision_context import DecisionContext, prepare_decision_context
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
     build_skill_content,
@@ -130,6 +131,9 @@ class ChatService:
             )
             agent_session_id = None
         tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
+        decision_context = await prepare_decision_context(
+            req, self._settings("API_SPEC_DECISION_MODE", ""),
+        )
         tenant_system_item = cast(
             ResponseInputItemParam,
             ConversationItem(
@@ -181,6 +185,22 @@ class ChatService:
             req.additional_infos or []
         )
         conversation_items.extend(additional_items)
+        decision_items: list[ResponseInputItemParam] = []
+        if decision_context is not None:
+            decision_items.append(cast(
+                ResponseInputItemParam,
+                ConversationItem(
+                    role=Role.User, content=decision_context.input_text(),
+                ).model_dump(mode="json", exclude_none=True),
+            ))
+            if decision_context.mode != "evidence_only":
+                decision_items.append(cast(
+                    ResponseInputItemParam,
+                    ConversationItem(
+                        role=Role.System, content=decision_context.instruction(),
+                    ).model_dump(mode="json", exclude_none=True),
+                ))
+        conversation_items.extend(decision_items)
 
         agent_ref: dict = {
             "name": agent.name,
@@ -210,6 +230,7 @@ class ChatService:
             conversation_items.insert(0, tenant_system_item)
             # Additional infos are not persisted in Cosmos; reuse the items already built.
             conversation_items.extend(additional_items)
+            conversation_items.extend(decision_items)
             # Replace the poisoned mapping before the single recovery attempt.
             await self._conversation_service.save_agent_conversation_mapping(
                 req.conversation_id,
@@ -256,7 +277,9 @@ class ChatService:
                 agent_conversation_id,
             )
 
-        chat_response = self._postprocess(req, response, agent_conversation_id)
+        chat_response = self._postprocess(
+            req, response, agent_conversation_id, decision_context=decision_context,
+        )
         chat_response.trace_id = trace_id
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(
@@ -540,6 +563,8 @@ class ChatService:
         req: ChatRequest,
         response: OpenAIResponse,
         agent_conversation_id: str | None,
+        *,
+        decision_context: DecisionContext | None = None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
@@ -552,6 +577,8 @@ class ChatService:
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
+        if decision_context is not None and decision_context.mode != "evidence_only":
+            output_text = decision_context.render(output_text)
 
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)
@@ -567,6 +594,8 @@ class ChatService:
         full_context = None
         if req.with_full_context:
             documents = [DocumentContext.from_reference(r) for r in tool_references]
+            if decision_context is not None:
+                documents.extend(item.document for item in decision_context.evidence)
             documents.extend(
                 DocumentContext(
                     document_title="Additional information",

@@ -36,3 +36,99 @@ pipeline run. Pipeline validation requires a completed run on the candidate
 commit, the expected profile/evidence hashes in the server log, and complete
 result artifacts. Grader scores do not substitute for source-based correctness
 checks or authorize production deployment.
+
+## First-pass bot-code candidates
+
+Set `decisionAgentVersion` to the frozen hosted-agent version and `decisionMode`
+to `evidence_only`, `quoted`, `role_bound`, or `extractive`. For the unchanged-bot
+arm, leave `decisionMode` empty but retain the same `decisionAgentVersion`.
+For basic-only integration probes, leave `researchProfile`, `researchSnapshot`,
+and `researchDataset` at their empty defaults. Set `researchProfile: baseline`
+only when intentionally supplying a frozen `researchDataset` for a separate
+research step. Keep `researchSnapshot` empty for these modes:
+evidence is acquired automatically by the actual bot service, not supplied as a
+manually compiled source card. Do not combine these modes with the older
+source-card candidates.
+
+The candidate implementation is in the agent's `services/decision_context.py`
+and normal `ChatService` execution path. These settings affect only the
+branch-local server; they do not modify shared App Configuration or deploy an
+agent. Candidate JSON is rendered once, with explicit rejection notices or
+validation errors, not an answer-repair loop. Quote validity is not semantic
+entailment, and model-produced roles/conditions are not verified observations.
+
+With `decisionAgentVersion` set, CI also runs `research/audit_inputs.py` under
+the server's authorized pipeline identity. It verifies recorded questions and
+response identities, actual input roles and evidence delivery, and exact answer
+rendering. Missing identities or unavailable response access fail this audit;
+the script does not impersonate another identity or substitute source sidecars.
+
+## Evidence-contract development screening
+
+The October 14 research round froze three actual bot-code candidates before
+generating answers: quote-bound claims (`quoted`), quote-and-role-bound claims
+(`role_bound`), and quotation-only output (`extractive`). Baseline and automatic
+evidence retrieval without the contract (`evidence_only`) were controls. Each
+arm answered the same 15 development questions, using the existing hosted agent,
+evaluation model, grading rules, weights, and threshold.
+
+| Arm | Source-supported and adequate | Automated combined passes |
+| --- | ---: | ---: |
+| Baseline | 10/15 | 14/15 |
+| Evidence-only control | 9/15 | 14/15 |
+| Quoted | 8/15 | 12/15 |
+| Role-bound | 9/15 | 11/15 |
+| Extractive | 9/15 | 10/15 |
+
+The source-supported labels are coordinator judgments after reading every
+answer and checking material claims, policy scope, and recommended actions;
+they are not independently adjudicated expert labels or population accuracy
+estimates. The cases are new synthetic counterfactuals from previously studied
+topic families, not independent unused historical-topic holdouts.
+
+No candidate met the frozen baseline adequacy floor, so none advanced.
+All 30 reserved validation cases remain unexposed. Role-bound was selected only
+for regression and CI integration probes, not as a finalist or accepted change.
+All 75 development answers were independently reconciled with their actual
+provider inputs, rendered outputs, returned evidence, and grounding-grader
+inputs. This establishes provenance, not correctness.
+
+The negative result distinguishes two limitations: genuine quotations can be
+applied to the wrong object, workflow, or authority; stricter filtering can also
+withhold useful conclusions or ask for facts already supplied. Passing quote
+and role checks therefore does not establish current policy applicability.
+These modes remain opt-in research prototypes and are not recommended for
+production.
+
+The unchanged official API-spec datasets provided additional local regression
+probes, using the same research grading settings:
+
+| Dataset | Baseline combined passes | Role-bound combined passes |
+| --- | ---: | ---: |
+| Basic | 8/8 | 6/8 |
+| Perf | 17/25 | 6/25 |
+
+All 66 official regression answers were reconciled with actual provider and
+grounding-grader inputs. These are automated regression outcomes, not a second
+source-certified accuracy estimate. Reading the answers confirmed usefulness
+loss: for example, role-bound acknowledged a requested meeting link without
+providing the URL, and withheld a concrete configuration workaround. Both arms
+still proposed a lifecycle-cleanup remedy without establishing the checker's
+exact comparison witness. A passing grounding grade did not resolve that scope
+error.
+
+Actual Azure DevOps integration probes used only the unchanged eight-case basic
+dataset, the frozen agent version, and the exact branch commit. The first pair
+exposed a bug in the research audit: full result caches are lists of case rows
+followed by a summary, not mappings. The audit reader was repaired with
+end-to-end tests, without changing candidate behavior or grading.
+
+Both verification runs passed the owning-identity audit for all eight responses,
+including actual model input roles, answer rendering, and evidence delivery.
+Actual grounding-rendered inputs were also reconciled for every response.
+Both nevertheless failed the existing evaluation gate: baseline had 7/8 combined
+passes and role-bound had 7/8, failing different questions. These integration
+results do not promote the rejected prototype or demonstrate improved accuracy.
+The earlier baseline run also contained one invalid grounding result whose
+rendered input was unavailable; that judgment remains unverified and
+non-assessable, not a pass.

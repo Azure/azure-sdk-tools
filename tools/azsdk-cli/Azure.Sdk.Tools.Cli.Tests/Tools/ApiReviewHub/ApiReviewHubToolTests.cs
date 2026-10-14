@@ -28,6 +28,24 @@ public class ApiReviewHubToolTests
         Assert.That(parseResult.Errors, Is.Empty);
     }
 
+    [TestCase("mgmt")]
+    [TestCase("data")]
+    [TestCase("client")]
+    [TestCase("spring")]
+    [TestCase("functions")]
+    public void CreateCommand_AcceptsSupportedPackageType(string packageType)
+    {
+        var tool = new ApiReviewHubTool(
+            Mock.Of<IApiReviewHubService>(),
+            new TestLogger<ApiReviewHubTool>());
+        var command = tool.GetCommandInstances().Single();
+
+        var parseResult = command.Parse(
+            $"--language python --package-name azure-test --target-branch feature --package-type {packageType}");
+
+        Assert.That(parseResult.Errors, Is.Empty);
+    }
+
     [Test]
     public void CreateCommand_RejectsSwift()
     {
@@ -104,9 +122,10 @@ public class ApiReviewHubToolTests
     }
 
     [TestCase("mgmt", "mgmt")]
-    [TestCase("client", "client")]
-    [TestCase("spring", "client")]
-    [TestCase("functions", "client")]
+    [TestCase("data", "data")]
+    [TestCase("client", "data")]
+    [TestCase("spring", "data")]
+    [TestCase("functions", "data")]
     public async Task RequestReviewPullRequest_NormalizesPackageType(string packageType, string expectedPackageType)
     {
         ReviewPullRequestCreationRequest? capturedRequest = null;

@@ -37,13 +37,13 @@ parameters:
     default: ''
   - name: pipelineRef
     type: string
-    default: main
+    default: refs/heads/main
   - name: toolsRef
     type: string
-    default: main
+    default: refs/heads/main
   - name: languageToolsRef
     type: string
-    default: main
+    default: refs/heads/main
 
 resources:
   repositories:

@@ -9,6 +9,7 @@
 ### Breaking Changes
 
 - `api-review create` and `azsdk_apireviewhub_request_review_pr` no longer support Swift.
+- `--package-type` and the corresponding MCP parameter now normalize `client`, `spring`, and `functions` to API Review Hub's `data` package type.
 
 ### Bugs Fixed
 

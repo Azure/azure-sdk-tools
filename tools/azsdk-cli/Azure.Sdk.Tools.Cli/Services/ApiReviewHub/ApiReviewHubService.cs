@@ -42,6 +42,7 @@ public class ApiReviewHubService(
     TimeSpan? operationTimeout = null) : IApiReviewHubService
 {
     private static readonly TimeSpan DefaultOperationTimeout = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan TokenRefreshOffset = TimeSpan.FromMinutes(5);
     private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 
     private static readonly JsonSerializerOptions serializerOptions = new()
@@ -62,7 +63,8 @@ public class ApiReviewHubService(
     {
         endpoint = endpoint.TrimEnd('/');
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
-        var authorization = await GetAuthorizationAsync(endpoint, ct);
+        var accessToken = await GetAccessTokenAsync(endpoint, ct);
+        var authorization = CreateAuthorizationHeader(accessToken);
 
         logger.LogInformation("Requesting API Review Hub review PR for {packageName} from {endpoint}", request.PackageName, endpoint);
         ReviewPullRequestCreationAcceptedResponse accepted;
@@ -93,7 +95,12 @@ public class ApiReviewHubService(
         var loggedPipelineUrl = false;
         while (true)
         {
-            authorization = await GetAuthorizationAsync(endpoint, ct);
+            if (accessToken.ExpiresOn - _timeProvider.GetUtcNow() <= TokenRefreshOffset)
+            {
+                accessToken = await GetAccessTokenAsync(endpoint, ct);
+                authorization = CreateAuthorizationHeader(accessToken);
+            }
+
             var operation = await GetJsonAsync<OperationStatus>(httpClient, $"{endpoint}/api/operations/{accepted.OperationId}", authorization, ct);
             LogOperationProgress(operation, startedAt, ref loggedPipelineUrl);
 
@@ -127,7 +134,7 @@ public class ApiReviewHubService(
     {
         endpoint = endpoint.TrimEnd('/');
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
-        var authorization = await GetAuthorizationAsync(endpoint, ct);
+        var authorization = CreateAuthorizationHeader(await GetAccessTokenAsync(endpoint, ct));
 
         var uriBuilder = new UriBuilder($"{endpoint}/api/releases/check-approval");
         var query = new List<string>
@@ -162,7 +169,7 @@ public class ApiReviewHubService(
         bool dryRun = false)
     {
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
-        var authorization = await GetAuthorizationAsync(DefaultEndpoint, ct);
+        var authorization = CreateAuthorizationHeader(await GetAccessTokenAsync(DefaultEndpoint, ct));
         var request = new MarkPackageReleasedRequest
         {
             Language = language,
@@ -200,12 +207,13 @@ public class ApiReviewHubService(
             : elapsed.ToString(@"m\:ss");
     }
 
-    private async Task<AuthenticationHeaderValue> GetAuthorizationAsync(string endpoint, CancellationToken ct)
+    private async Task<AccessToken> GetAccessTokenAsync(string endpoint, CancellationToken ct)
     {
         var tokenScope = $"{GetAppIdUri(endpoint)}/.default";
-        var token = await azureService.GetCredential().GetTokenAsync(new TokenRequestContext([tokenScope]), ct);
-        return new AuthenticationHeaderValue("Bearer", token.Token);
+        return await azureService.GetCredential().GetTokenAsync(new TokenRequestContext([tokenScope]), ct);
     }
+
+    private static AuthenticationHeaderValue CreateAuthorizationHeader(AccessToken token) => new("Bearer", token.Token);
 
     private static async Task<T> PostJsonAsync<T>(HttpClient httpClient, string url, object body, AuthenticationHeaderValue authorization, CancellationToken ct)
     {

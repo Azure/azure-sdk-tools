@@ -124,20 +124,28 @@ public class ApiReviewHubTool(
 
     private async Task<CommandResponse> HandleCreateCommand(ParseResult parseResult, CancellationToken ct)
     {
-        return await RequestReviewPullRequestCore(
-            parseResult.GetValue(languageOption) ?? string.Empty,
-            parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(targetOwnerOption) ?? string.Empty,
-            ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
-            parseResult.GetValue(targetBranchOption) ?? string.Empty,
-            parseResult.GetValue(packageTypeOption),
-            parseResult.GetValue(baseTagOption),
-            !parseResult.GetValue(noWaitOption),
-            parseResult.GetValue(pollIntervalSecondsOption),
-            GetEnvironmentVariable(PipelineRefEnvironmentVariable),
-            GetEnvironmentVariable(ToolsRefEnvironmentVariable),
-            GetEnvironmentVariable(LanguageToolsRefEnvironmentVariable),
-            ct);
+        var packageName = parseResult.GetValue(packageNameOption) ?? string.Empty;
+        try
+        {
+            return await RequestReviewPullRequestCore(
+                parseResult.GetValue(languageOption) ?? string.Empty,
+                packageName,
+                parseResult.GetValue(targetOwnerOption) ?? string.Empty,
+                ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
+                parseResult.GetValue(targetBranchOption) ?? string.Empty,
+                parseResult.GetValue(packageTypeOption),
+                parseResult.GetValue(baseTagOption),
+                !parseResult.GetValue(noWaitOption),
+                parseResult.GetValue(pollIntervalSecondsOption),
+                GetEnvironmentVariable(PipelineRefEnvironmentVariable),
+                GetEnvironmentVariable(ToolsRefEnvironmentVariable),
+                GetEnvironmentVariable(LanguageToolsRefEnvironmentVariable),
+                ct);
+        }
+        catch (Exception ex)
+        {
+            return CreateErrorResponse(ex, packageName);
+        }
     }
 
     [McpServerTool(Name = RequestReviewPullRequestToolName), Description("Request API Review Hub creation of a review pull request for a package API change.")]
@@ -147,7 +155,7 @@ public class ApiReviewHubTool(
         [Description("The GitHub owner for the target working branch.")] string targetOwner,
         [Description("The GitHub repository for the target working branch. By default, the command selects the appropriate repo based on the language.")] string targetRepo,
         [Description("The target working branch name.")] string targetBranch,
-        [Description("The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: mgmt, client, spring, functions. Spring and functions are treated as client packages.")] string? packageType = null,
+        [Description("The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: mgmt, data, client, spring, functions. Client, spring, and functions are sent to API Review Hub as data packages.")] string? packageType = null,
         [Description("The optional release tag or ref used as the base API surface.")] string? baseTag = null,
         [Description("Poll API Review Hub until the operation completes.")] bool waitForCompletion = true,
         [Description("Seconds to wait between API Review Hub operation status polls.")] int pollIntervalSeconds = 10,
@@ -172,11 +180,7 @@ public class ApiReviewHubTool(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to request API Review Hub review PR for {packageName}", packageName);
-            return new ApiReviewHubResponse
-            {
-                ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
-            };
+            return CreateErrorResponse(ex, packageName);
         }
     }
 
@@ -195,52 +199,50 @@ public class ApiReviewHubTool(
         string? languageToolsRef,
         CancellationToken ct)
     {
-        try
+        if (!SupportedLanguages.Contains(language, StringComparer.OrdinalIgnoreCase))
         {
-            if (!SupportedLanguages.Contains(language, StringComparer.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException(
-                    $"Unsupported language '{language}'. Supported values: {SupportedLanguagesDescription}.",
-                    nameof(language));
-            }
-
-            var request = new ReviewPullRequestCreationRequest
-            {
-                Language = language,
-                PackageName = packageName,
-                PackageType = string.IsNullOrWhiteSpace(packageType) ? null : ApiReviewPackageType.Normalize(packageType),
-                BaseTag = baseTag ?? string.Empty,
-                TargetBranch = new GitBranchReference
-                {
-                    Owner = targetOwner,
-                    Repo = targetRepo,
-                    Name = targetBranch
-                },
-                PipelineRef = pipelineRef,
-                ToolsRef = toolsRef,
-                LanguageToolsRef = languageToolsRef
-            };
-
-            var result = await apiReviewHubService.RequestReviewPullRequestAsync(
-                request,
-                DefaultEndpoint,
-                waitForCompletion,
-                TimeSpan.FromSeconds(Math.Max(1, pollIntervalSeconds)),
-                ct);
-
-            return new ApiReviewHubResponse
-            {
-                Result = result
-            };
+            throw new ArgumentException(
+                $"Unsupported language '{language}'. Supported values: {SupportedLanguagesDescription}.",
+                nameof(language));
         }
-        catch (Exception ex)
+
+        var request = new ReviewPullRequestCreationRequest
         {
-            logger.LogError(ex, "Failed to request API Review Hub review PR for {packageName}", packageName);
-            return new ApiReviewHubResponse
+            Language = language,
+            PackageName = packageName,
+            PackageType = string.IsNullOrWhiteSpace(packageType) ? null : ApiReviewPackageType.Normalize(packageType),
+            BaseTag = baseTag ?? string.Empty,
+            TargetBranch = new GitBranchReference
             {
-                ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
-            };
-        }
+                Owner = targetOwner,
+                Repo = targetRepo,
+                Name = targetBranch
+            },
+            PipelineRef = pipelineRef,
+            ToolsRef = toolsRef,
+            LanguageToolsRef = languageToolsRef
+        };
+
+        var result = await apiReviewHubService.RequestReviewPullRequestAsync(
+            request,
+            DefaultEndpoint,
+            waitForCompletion,
+            TimeSpan.FromSeconds(Math.Max(1, pollIntervalSeconds)),
+            ct);
+
+        return new ApiReviewHubResponse
+        {
+            Result = result
+        };
+    }
+
+    private ApiReviewHubResponse CreateErrorResponse(Exception ex, string packageName)
+    {
+        logger.LogError(ex, "Failed to request API Review Hub review PR for {packageName}", packageName);
+        return new ApiReviewHubResponse
+        {
+            ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
+        };
     }
 
     private static string? GetEnvironmentVariable(string name)
@@ -293,7 +295,7 @@ public class ApiReviewHubTool(
     {
         var option = new Option<string>("--package-type")
         {
-            Description = $"The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Spring and functions are treated as client packages."
+            Description = $"The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Client, spring, and functions are sent to API Review Hub as data packages."
         };
 
         option.Validators.Add(result =>

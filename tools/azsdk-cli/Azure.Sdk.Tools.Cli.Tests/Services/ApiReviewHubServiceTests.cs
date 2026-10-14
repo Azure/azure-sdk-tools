@@ -385,7 +385,7 @@ public class ApiReviewHubServiceTests
     }
 
     [Test]
-    public async Task RequestReviewPullRequestAsync_RefreshesAuthorizationWhilePolling()
+    public async Task RequestReviewPullRequestAsync_RefreshesAuthorizationNearExpiry()
     {
         credentialMock
             .SetupSequence(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
@@ -447,7 +447,10 @@ public class ApiReviewHubServiceTests
             CancellationToken.None);
 
         Assert.That(result.Status, Is.EqualTo("succeeded"));
-        Assert.That(authorizationParameters, Is.EqualTo(new[] { "request-token", "poll-token-1", "poll-token-2" }));
+        Assert.That(authorizationParameters, Is.EqualTo(new[] { "request-token", "poll-token-1", "poll-token-1" }));
+        credentialMock.Verify(
+            x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
     }
 
     [Test]

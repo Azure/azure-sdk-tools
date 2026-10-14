@@ -16,7 +16,7 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from models.conversation import BotAnswerVerdict
+from models.conversation import BotAnswerVerdict, ConversationType
 from models.qa_record import QARecord, QAStatus
 from utils import azure_cosmosdb
 
@@ -56,7 +56,7 @@ async def test_conditional_replace_only_skips_concurrent_changes(status_code: in
 
 
 @pytest.mark.asyncio
-async def test_reset_uses_atomic_no_issue_guard_and_clears_only_assessment():
+async def test_reset_uses_atomic_agent_conclusion_guard_and_clears_only_assessment():
     container = AsyncMock()
     record_id = "teams_channel:19:channel@thread.tacv2;messageid=123"
     before = datetime.now(timezone.utc)
@@ -72,11 +72,12 @@ async def test_reset_uses_atomic_no_issue_guard_and_clears_only_assessment():
     assert args["partition_key"] == "typespec"
     # This predicate must be evaluated by Cosmos at write time, not by a
     # client-side read followed by an unconditional upsert. Any feedback
-    # object (created/running/remediation/validation) prevents reopening.
+    # object or automatic-closure marker prevents reopening.
     assert args["filter_predicate"] == (
         f"FROM c WHERE c.qa_status = '{QAStatus.finished.value}' "
         f"AND c.verdict = '{BotAnswerVerdict.Correct.value}' "
-        "AND (NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback))"
+        "AND (NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback)) "
+        "AND (NOT IS_DEFINED(c.auto_closed_at) OR IS_NULL(c.auto_closed_at))"
     )
     operations = args["patch_operations"]
     assert all(op["op"] == "set" for op in operations)
@@ -93,7 +94,7 @@ async def test_reset_uses_atomic_no_issue_guard_and_clears_only_assessment():
     # The reset document remains valid and retains conversation metadata.
     record = QARecord(
         id=record_id, tenant_id="typespec", conversation_id="thread",
-        conversation_type="teams_channel", qa_status=QAStatus.finished,
+        conversation_type=ConversationType.teams_channel, qa_status=QAStatus.finished,
         verdict=BotAnswerVerdict.Correct, reasoning="Previously correct",
         confidence=0.9, evaluated_at=before, first_seen_at=before,
         created_at=before, updated_at=before,
@@ -101,6 +102,7 @@ async def test_reset_uses_atomic_no_issue_guard_and_clears_only_assessment():
     reopened = QARecord.from_cosmos({**record.to_cosmos(), **changes, "updated_at": updated_at})
     assert reopened.qa_status == QAStatus.ongoing
     assert reopened.feedback is None
+    assert reopened.auto_closed_at is None
     assert reopened.first_seen_at == record.first_seen_at
     container.read_item.assert_not_awaited()
     container.upsert_item.assert_not_awaited()
@@ -139,7 +141,7 @@ async def test_unexpected_storage_errors_propagate(status_code):
 async def test_duplicate_reset_does_not_retry_after_state_changes():
     container = AsyncMock()
     # Cosmos accepts the first patch; a later patch fails its predicate once
-    # the row is ongoing or a worker has moved it into active analysis.
+    # a worker has moved the row into active analysis.
     container.patch_item.side_effect = [
         {}, exceptions.CosmosHttpResponseError(status_code=412, message="State changed"),
     ]

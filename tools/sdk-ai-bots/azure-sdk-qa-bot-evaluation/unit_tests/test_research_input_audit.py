@@ -89,3 +89,12 @@ def test_extra_oracle_context_cannot_be_appended():
     row["actual"]["context"] = json.dumps(docs)
     with pytest.raises(ValueError, match="differs from actual"):
         audit_inputs.audit_record(row, inputs, response, "quoted")
+
+
+def test_question_uses_the_same_normalization_as_actual_chat():
+    row, inputs, response = fixture()
+    row["query"] = "My Swagger question"
+    inputs[0]["content"] = "My Open API question"
+    assert audit_inputs.audit_record(row, inputs, response, "quoted")[
+        "actual_answer_rendering_verified"
+    ]

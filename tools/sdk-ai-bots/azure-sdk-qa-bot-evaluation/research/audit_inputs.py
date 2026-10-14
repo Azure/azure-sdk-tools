@@ -36,10 +36,11 @@ def audit_record(row, inputs, raw_response, mode):
     from models.knowledge import DocumentContext, SearchKnowledgeBaseResult
     from services.chat_service import ChatService, _CITATION_RE
     from services.decision_context import DecisionContext, DecisionEvidence
+    from utils.text_util import preprocess_message
 
     query = row["query"]
     if not any(
-        query == text for item in inputs if item.get("role") == "user"
+        preprocess_message(query) == text for item in inputs if item.get("role") == "user"
         for text in strings(item)
     ):
         raise ValueError("Recorded question does not match actual response input")

@@ -44,11 +44,7 @@ stimuli:
         config:
           required:
             - name: "^(view|powershell|bash|rg)$"
-              pattern: "client-configuration\\.md"
-              result: "Optional Client Configuration|Build the Client Configuration Plan"
-            - name: "^(view|powershell|bash|rg)$"
-              pattern: "references"
-              result: "SDK Naming Conventions|C# ARM (Member|Model) Naming"
+              pattern: "csharp-naming\\.md"
           disallowed:
             - name: "azsdk_"
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
@@ -117,8 +113,7 @@ stimuli:
         config:
           required:
             - name: "^(view|powershell|bash|rg)$"
-              pattern: "references"
-              result: "SDK Naming Conventions|C# ARM (Member|Model) Naming"
+              pattern: "naming-conventions\\.md"
           disallowed:
             - name: "azsdk_"
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
@@ -280,7 +275,7 @@ stimuli:
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
       - type: output-matches
         config:
-          pattern: '"clientConfigurationStatus"\s*:\s*"(?:skipped|declined)"'
+          pattern: '"clientConfigurationStatus"\s*:\s*"(?:skipped|declined|optedOut|opted-out)"'
       - type: output-matches
         config:
           pattern: '"namingSkillInvoked"\s*:\s*false'

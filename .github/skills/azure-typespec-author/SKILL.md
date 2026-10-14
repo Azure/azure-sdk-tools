@@ -55,6 +55,12 @@ Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name f
   contract or version semantics.
 - **Do not call `azsdk_typespec_generate_authoring_plan`** — build the source
   plan from the selected references or `azsdk_typespec_retrieve_knowledge`.
+- **Use agentic search for cataloged cases** — when the request matches a case
+  in [reference-document-links.md](references/reference-document-links.md),
+  select its URLs and use `web_fetch` as described in
+  [agentic-search.md](references/agentic-search.md). Use
+  `azsdk_typespec_retrieve_knowledge` only when the catalog does not cover the
+  request.
 - **Follow both plans exactly** — source changes in Step 5 must follow the
   TypeSpec source plan from Step 3; client configuration changes must follow the
   separate plan from Step 4. Do not improvise from unrelated project patterns.

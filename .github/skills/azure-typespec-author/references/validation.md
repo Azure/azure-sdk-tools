@@ -25,6 +25,10 @@ Run `tsp compile .` from the project root. Verify `.json` output under the direc
 
 > 5.1.1 checks for errors/warnings; 5.1.2 generates the OpenAPI output. Both are required.
 
+Clean only outputs created by the current validation run and only when they did
+not exist beforehand. Do not remove project dependencies or environment setup
+such as `node_modules`, `packages`, restored tools, or fixture links.
+
 ### 5.1.3: Client Configuration
 
 Run when Step 4 produced a client configuration plan. If the user opted out,

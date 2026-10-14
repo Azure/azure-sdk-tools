@@ -1,7 +1,9 @@
+import asyncio
 import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -98,3 +100,38 @@ def test_question_uses_the_same_normalization_as_actual_chat():
     assert audit_inputs.audit_record(row, inputs, response, "quoted")[
         "actual_answer_rendering_verified"
     ]
+
+
+@pytest.mark.parametrize("valid", [True, False])
+def test_audit_reads_actual_full_cache_list(tmp_path, monkeypatch, valid):
+    import config.app_config as app_config
+    import utils.azure_ai_foundry as foundry
+    import utils.azure_credential as credential
+
+    row, inputs, response = fixture()
+    cache = [row, {"total_evals": 1}] if valid else {"quoted": [row, {"total_evals": 1}]}
+    (tmp_path / "apispec-result-run.json").write_text(json.dumps(cache), encoding="utf-8")
+
+    async def list_inputs(response_id):
+        assert response_id == response.id
+        for item in inputs:
+            yield SimpleNamespace(model_dump=lambda mode, item=item: item)
+
+    client = SimpleNamespace(responses=SimpleNamespace(
+        input_items=SimpleNamespace(list=list_inputs),
+        retrieve=AsyncMock(return_value=response),
+    ))
+    monkeypatch.setattr(app_config, "init", AsyncMock())
+    monkeypatch.setattr(foundry, "get_openai_client", lambda name: client)
+    monkeypatch.setattr(foundry, "close_clients", AsyncMock())
+    monkeypatch.setattr(credential, "close_credential", AsyncMock())
+    args = SimpleNamespace(cache=tmp_path, mode="quoted")
+    if not valid:
+        with pytest.raises(ValueError, match="full result cache rows"):
+            asyncio.run(audit_inputs.run(args))
+        return
+    asyncio.run(audit_inputs.run(args))
+    report = json.loads((tmp_path / "owning-identity-input-audit.json").read_text())
+    assert report["passed"]
+    assert len(report["rows"]) == 1
+    assert report["rows"][0]["actual_answer_rendering_verified"]

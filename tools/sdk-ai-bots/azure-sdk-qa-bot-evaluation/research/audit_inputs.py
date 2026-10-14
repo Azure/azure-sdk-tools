@@ -113,18 +113,22 @@ async def run(args):
     try:
         for path in files:
             cache = json.loads(path.read_text(encoding="utf-8"))
-            for group in cache.values():
-                for row in group[:-1]:
-                    if not row.get("execution", {}).get("response_id"):
-                        errors.append({"testcase": row.get("testcase"), "error": "No actual response identity"})
-                        continue
-                    response_id = row["execution"]["response_id"]
-                    inputs = [
-                        item.model_dump(mode="json")
-                        async for item in client.responses.input_items.list(response_id)
-                    ]
-                    raw_response = await client.responses.retrieve(response_id)
-                    records.append(audit_record(row, inputs, raw_response, args.mode))
+            if (
+                not isinstance(cache, list) or len(cache) < 2
+                or cache[-1].get("total_evals") != len(cache) - 1
+            ):
+                raise ValueError("Expected full result cache rows followed by their evaluation summary")
+            for row in cache[:-1]:
+                if not row.get("execution", {}).get("response_id"):
+                    errors.append({"testcase": row.get("testcase"), "error": "No actual response identity"})
+                    continue
+                response_id = row["execution"]["response_id"]
+                inputs = [
+                    item.model_dump(mode="json")
+                    async for item in client.responses.input_items.list(response_id)
+                ]
+                raw_response = await client.responses.retrieve(response_id)
+                records.append(audit_record(row, inputs, raw_response, args.mode))
     finally:
         await close_clients()
         await close_credential()

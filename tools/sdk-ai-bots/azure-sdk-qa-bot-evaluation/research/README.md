@@ -39,10 +39,13 @@ checks or authorize production deployment.
 
 ## First-pass bot-code candidates
 
-Set `researchProfile: baseline`, `decisionAgentVersion` to the frozen hosted-agent
-version, and `decisionMode` to `evidence_only`, `quoted`, `role_bound`, or
-`extractive`. For the unchanged-bot arm, leave `decisionMode` empty but retain the
-same `decisionAgentVersion`. Keep `researchSnapshot` empty for these modes:
+Set `decisionAgentVersion` to the frozen hosted-agent version and `decisionMode`
+to `evidence_only`, `quoted`, `role_bound`, or `extractive`. For the unchanged-bot
+arm, leave `decisionMode` empty but retain the same `decisionAgentVersion`.
+For basic-only integration probes, leave `researchProfile`, `researchSnapshot`,
+and `researchDataset` at their empty defaults. Set `researchProfile: baseline`
+only when intentionally supplying a frozen `researchDataset` for a separate
+research step. Keep `researchSnapshot` empty for these modes:
 evidence is acquired automatically by the actual bot service, not supplied as a
 manually compiled source card. Do not combine these modes with the older
 source-card candidates.

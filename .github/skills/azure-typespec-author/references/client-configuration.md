@@ -9,21 +9,17 @@ not the REST contract.
 Skip this step without prompting when the request cannot affect the generated
 client surface, such as documentation-only edits. For SDK-visible source
 changes, client configuration analysis is recommended and included by default.
-If the request already explicitly asks for naming or client configuration,
-continue without another decision. Otherwise, use `ask_user` to offer:
-
-- **Keep client configuration analysis (Recommended)**
-- **Opt out**
-
-Explain:
+Proceed without a blocking confirmation unless the user explicitly opts out.
+When presenting a plan or interim update, explain:
 
 > Client configuration analysis is included by default for SDK-visible changes.
-> Would you like to keep it, or opt out for this authoring request? If you opt
-> out, you can run the analysis later when entering the Azure SDK release
-> workflow using AzSDKToolsAgent: <https://aka.ms/azsdk/agent>.
+> You can opt out for this authoring request and run the analysis later when
+> entering the Azure SDK release workflow using AzSDKToolsAgent:
+> <https://aka.ms/azsdk/agent>.
 
-Do not invoke `azsdk-common-typespec-naming` before the user decides. When the
-user opts out, do not create or edit `client.tsp`.
+Absence of an opt-out keeps the recommended default. Do not pause source
+authoring to ask the user to confirm the default. When the user opts out, do not
+invoke `azsdk-common-typespec-naming` or create or edit `client.tsp`.
 
 Keep the source and client configuration plans visibly separate so the user can
 approve the source changes while declining the client configuration portion.

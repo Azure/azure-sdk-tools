@@ -13,7 +13,7 @@ tags:
 defaults:
   runs: 1
   timeout: "180s"
-  model: gpt-5.4
+  model: gpt-5.6-sol
   executor: copilot-sdk
 scoring:
   threshold: 1.0
@@ -191,7 +191,7 @@ stimuli:
           required:
             - name: "^(view|powershell|bash|rg)$"
               pattern: "client-configuration\\.md"
-              result: "include client configuration analysis by default"
+              result: "(?i)client configuration analysis is recommended and included by default"
           disallowed:
             - name: "azsdk_"
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
@@ -208,43 +208,48 @@ stimuli:
         config:
           pattern: '"clientTspChanged"\s*:\s*false'
 
-  - name: 007001-sdk-visible-authoring-offers-opt-out
+  - name: 007001-sdk-visible-authoring-defaults-to-client-configuration
     prompt: |
       Invoke azure-typespec-author. Project analysis, intake, grounding, and the
       TypeSpec source plan are complete for adding a new WidgetProperties.enabled
-      boolean. The source change is SDK-visible, but the user has not decided
-      whether to keep the default client configuration analysis. For this bounded
-      noninteractive check, return JSON "question", "recommendedChoice",
-      "optOutChoice", and "namingSkillInvoked" instead of asking interactively.
-      Stop before invoking another skill. Do not edit, invoke MCP, compile, or
-      generate.
+      boolean to a new never-shipped C# ARM Widget SDK. The source change is
+      SDK-visible, and the user has not opted out of client configuration
+      analysis. Build the default Step 4 client configuration plan without
+      asking for confirmation. Return JSON "clientConfigurationStatus", "name",
+      "namingSkillInvoked", "optOutAvailable", and "clientTspChanged". Do not
+      edit, invoke MCP, compile, or generate.
     constraints: *bounded
     graders:
       - type: skill-invocation
         config:
-          required: [azure-typespec-author]
-          disallowed: [azsdk-common-typespec-naming]
+          required: [azure-typespec-author, azsdk-common-typespec-naming]
       - type: tool-calls
         config:
           required:
             - name: "^(view|powershell|bash|rg)$"
               pattern: "client-configuration\\.md"
-              result: "(?i)included by default|opt out"
+              result: "(?i)proceed without a blocking confirmation|absence of an opt-out"
           disallowed:
             - name: "azsdk_"
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
       - type: output-matches
         config:
-          pattern: '(?is)"question"\s*:\s*"[^"]*included by default[^"]*opt out[^"]*"'
+          pattern: '"clientConfigurationStatus"\s*:\s*"planned"'
       - type: output-matches
         config:
-          pattern: '(?is)"recommendedChoice"\s*:\s*"[^"]*Keep client configuration analysis[^"]*"'
+          pattern: '"name"\s*:\s*"IsEnabled"'
       - type: output-matches
         config:
-          pattern: '"optOutChoice"\s*:\s*"Opt out"'
+          pattern: '"namingSkillInvoked"\s*:\s*true'
       - type: output-matches
         config:
-          pattern: '"namingSkillInvoked"\s*:\s*false'
+          pattern: '"optOutAvailable"\s*:\s*true'
+      - type: output-matches
+        config:
+          pattern: '"clientTspChanged"\s*:\s*false'
+      - type: output-not-matches
+        config:
+          pattern: '(?i)"question"|please confirm|keep client configuration'
 
   - name: 007001-client-configuration-opt-out-skips-naming
     prompt: |

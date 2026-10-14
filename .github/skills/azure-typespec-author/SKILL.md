@@ -79,10 +79,10 @@ See [authoring-plan.md](references/authoring-plan.md).
 
 ### Step 4: Optional Client Configuration
 
-See [client-configuration.md](references/client-configuration.md). Do not invoke
-`azsdk-common-typespec-naming` until the user keeps the recommended default,
-unless naming or client configuration was already explicitly requested. Do not
-invoke it when the user opts out.
+See [client-configuration.md](references/client-configuration.md). Invoke
+`azsdk-common-typespec-naming` for SDK-visible changes unless the user explicitly
+opts out. Do not pause source authoring to confirm the recommended default, and
+do not invoke the naming skill when the user opts out.
 
 ### Step 5: Apply Changes
 

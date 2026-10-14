@@ -217,7 +217,7 @@ async def test_run_invokes_agent_for_analysis_without_external_evaluator() -> No
 
 
 @pytest.mark.asyncio
-async def test_scan_auto_closes_inactive_record_without_agent_invocation(caplog) -> None:
+async def test_scan_auto_closes_with_negative_feedback_without_agent_invocation(caplog) -> None:
     caplog.set_level("INFO", logger="run_feedback_jobs")
     record = _record(qa_status=QAStatus.ongoing)
     record.last_activity_at = record.created_at
@@ -244,6 +244,11 @@ async def test_scan_auto_closes_inactive_record_without_agent_invocation(caplog)
         stored.update(document)
         return True
 
+    async def feedback_rows():
+        yield {"reaction": "bad"}
+
+    feedback_container = MagicMock()
+    feedback_container.query_items.return_value = feedback_rows()
     evolution = MagicMock()
     evolution.recover_stale_jobs = AsyncMock(return_value=0)
     evolution.run_job = AsyncMock()
@@ -259,7 +264,7 @@ async def test_scan_auto_closes_inactive_record_without_agent_invocation(caplog)
             "services.qa_record_service.ConversationService.get_messages_by_conversation_id",
             new=AsyncMock(return_value=[message]),
         ),
-        patch("services.qa_record_service.query_conversation_feedback", new=AsyncMock(return_value=[])),
+        patch("utils.azure_cosmosdb.get_feedback_container", new=AsyncMock(return_value=feedback_container)),
         patch("services.qa_record_service.replace_qa_record_if_unchanged", new=AsyncMock(side_effect=replace)),
         patch.object(run_feedback_jobs, "ChatbotEvolutionAgentService", return_value=evolution),
         patch.object(run_feedback_jobs, "_load_excluded_channels", new=AsyncMock(return_value=set())),
@@ -269,6 +274,7 @@ async def test_scan_auto_closes_inactive_record_without_agent_invocation(caplog)
 
     assert stored["qa_status"] == QAStatus.finished.value
     assert stored["verdict"] == BotAnswerVerdict.Correct.value
+    feedback_container.query_items.assert_not_called()
     evolution.run_job.assert_not_awaited()
     assert "ongoing=0 finished=1" in caplog.text
 

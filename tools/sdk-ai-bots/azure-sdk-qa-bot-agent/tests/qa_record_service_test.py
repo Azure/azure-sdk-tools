@@ -291,13 +291,11 @@ async def test_reply_persisted_during_auto_close_reopens_on_next_ingestion() -> 
     async def query(**kwargs):
         return [dict(stored)] if stored["qa_status"] == kwargs["qa_status"] else []
 
-    async def persist_reply_after_transcript_read(**kwargs):
-        transcript.append(reply)
-        return []
-
     async def replace(document, *, etag):
         if etag != stored["_etag"]:
             return False
+        if document["qa_status"] == QAStatus.finished.value:
+            transcript.append(reply)
         stored.update(document)
         stored["_etag"] += "-next"
         return True
@@ -311,7 +309,6 @@ async def test_reply_persisted_during_auto_close_reopens_on_next_ingestion() -> 
             "services.qa_record_service.ConversationService.get_messages_by_conversation_id",
             new=AsyncMock(side_effect=lambda **kwargs: list(transcript)),
         ),
-        patch("services.qa_record_service.query_conversation_feedback", new=AsyncMock(side_effect=persist_reply_after_transcript_read)),
         patch("services.qa_record_service.replace_qa_record_if_unchanged", new=AsyncMock(side_effect=replace)),
     ):
         service = QARecordService()
@@ -370,17 +367,16 @@ async def test_auto_closed_threads_do_not_reopen_without_activity_or_during_feed
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("hours", "reaction", "write_succeeds", "expected_closed"),
+    ("hours", "write_succeeds", "expected_closed"),
     [
-        (143, "good", True, 0),
-        (144, "good", True, 1),
-        (145, "good", True, 1),
-        (144, "bad", True, 0),
-        (144, "good", False, 0),
+        (143, True, 0),
+        (144, True, 1),
+        (145, True, 1),
+        (144, False, 0),
     ],
 )
-async def test_inactive_threads_close_only_after_cutoff_without_negative_feedback(
-    hours: int, reaction: str, write_succeeds: bool, expected_closed: int,
+async def test_inactive_threads_close_only_after_cutoff(
+    hours: int, write_succeeds: bool, expected_closed: int,
 ) -> None:
     record = _record(feedback_status=None)
     record.last_activity_at = _BASE_TIME - timedelta(hours=hours)
@@ -391,7 +387,6 @@ async def test_inactive_threads_close_only_after_cutoff_without_negative_feedbac
     message.created_at = record.last_activity_at
     doc = {**record.to_cosmos(), "_etag": "old-etag"}
     query = AsyncMock(return_value=[doc])
-    feedback = AsyncMock(return_value=[{"reaction": reaction}])
     replace = AsyncMock(return_value=write_succeeds)
     with (
         patch("services.qa_record_service._now", return_value=_BASE_TIME),
@@ -400,7 +395,6 @@ async def test_inactive_threads_close_only_after_cutoff_without_negative_feedbac
             "services.qa_record_service.ConversationService.get_messages_by_conversation_id",
             new=AsyncMock(return_value=[message]),
         ),
-        patch("services.qa_record_service.query_conversation_feedback", new=feedback),
         patch("services.qa_record_service.replace_qa_record_if_unchanged", new=replace),
     ):
         assert await QARecordService().close_inactive_threads(
@@ -408,7 +402,7 @@ async def test_inactive_threads_close_only_after_cutoff_without_negative_feedbac
         ) == expected_closed
 
     query.assert_awaited_once_with(qa_status="ongoing", tenant_id="typespec")
-    if hours < 144 or reaction == "bad":
+    if hours < 144:
         replace.assert_not_awaited()
     else:
         write = replace.await_args
@@ -433,7 +427,6 @@ async def test_inactivity_closure_checks_latest_transcript_not_stale_metadata() 
     record.last_activity_at = _BASE_TIME - timedelta(days=30)
     message = _msg(Role.User, "poster", "A new follow-up?", 0)
     message.created_at = _BASE_TIME - timedelta(hours=143, minutes=59, seconds=59)
-    feedback = AsyncMock()
     replace = AsyncMock()
     with (
         patch("services.qa_record_service._now", return_value=_BASE_TIME),
@@ -445,11 +438,9 @@ async def test_inactivity_closure_checks_latest_transcript_not_stale_metadata() 
             "services.qa_record_service.ConversationService.get_messages_by_conversation_id",
             new=AsyncMock(return_value=[message]),
         ),
-        patch("services.qa_record_service.query_conversation_feedback", new=feedback),
         patch("services.qa_record_service.replace_qa_record_if_unchanged", new=replace),
     ):
         assert await QARecordService().close_inactive_threads() == 0
-    feedback.assert_not_awaited()
     replace.assert_not_awaited()
 
 
@@ -482,18 +473,10 @@ async def test_inactivity_closure_preserves_feedback_workflows_and_excluded_chan
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("lookup", ["messages", "feedback"])
-async def test_inactivity_closure_propagates_lookup_failures(lookup: str) -> None:
+async def test_inactivity_closure_propagates_transcript_failures() -> None:
     record = _record(feedback_status=None)
     record.last_activity_at = _BASE_TIME - timedelta(days=30)
-    message = _msg(Role.System, "bot", "Answer.", 0)
-    message.created_at = record.last_activity_at
-    messages = AsyncMock(return_value=[message])
-    feedback = AsyncMock(return_value=[])
-    if lookup == "messages":
-        messages.side_effect = RuntimeError("lookup unavailable")
-    else:
-        feedback.side_effect = RuntimeError("lookup unavailable")
+    messages = AsyncMock(side_effect=RuntimeError("lookup unavailable"))
     replace = AsyncMock()
     with (
         patch("services.qa_record_service._now", return_value=_BASE_TIME),
@@ -505,7 +488,6 @@ async def test_inactivity_closure_propagates_lookup_failures(lookup: str) -> Non
             "services.qa_record_service.ConversationService.get_messages_by_conversation_id",
             new=messages,
         ),
-        patch("services.qa_record_service.query_conversation_feedback", new=feedback),
         patch("services.qa_record_service.replace_qa_record_if_unchanged", new=replace),
         pytest.raises(RuntimeError, match="lookup unavailable"),
     ):

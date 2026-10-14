@@ -3,7 +3,7 @@
 The pipeline ingests active Teams threads, invokes the Agent to evaluate every
 eligible conversation, checks remediation issues, and invokes Agent validation
 after an issue closes. The Agent judges completion and correctness, except for
-automatic closure after 144 hours of inactivity without negative feedback.
+automatic closure after 144 hours of inactivity regardless of user feedback.
 
 Usage::
 

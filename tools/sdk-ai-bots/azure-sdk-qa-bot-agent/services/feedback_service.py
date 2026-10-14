@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class FeedbackService:
-    """Persist feedback and requeue no-issue QA records for reanalysis."""
+    """Persist feedback and requeue Agent-concluded no-issue QA records."""
 
     async def process(self, req: FeedbackRequest) -> FeedbackResponse:
-        """Save feedback, then requeue an inactive no-issue record if negative."""
+        """Save feedback, then reopen an Agent-concluded no-issue record if negative."""
         result = FeedbackResponse()
 
         await self._save_feedback(req)

@@ -16,12 +16,10 @@ from models.conversation import (
     ConversationDocumentType,
     ConversationMessageItem,
 )
-from models.feedback import Reaction
 from models.qa_record import FeedbackStatus, QARecord, QAStatus
 from services.conversation_service import ConversationService
 from utils.azure_cosmosdb import (
     get_conversation_message_container,
-    query_conversation_feedback,
     query_qa_records_by_qa_status,
     query_qa_records_by_feedback_status,
     read_qa_record,
@@ -284,7 +282,7 @@ class QARecordService:
         tenant_id: str | None = None,
         excluded_channels: set[str] | None = None,
     ) -> int:
-        """Auto-close inactive ongoing threads unless negative feedback exists."""
+        """Auto-close inactive ongoing threads regardless of user feedback."""
         now = _now()
         cutoff = now - _INACTIVE_THREAD_TIMEOUT
         excluded_channels = excluded_channels or set()
@@ -320,18 +318,11 @@ class QARecordService:
             last_activity_at = max(message.created_at for message in messages)
             if last_activity_at > cutoff:
                 continue
-            feedback = await query_conversation_feedback(
-                conversation_id=record.conversation_id,
-                conversation_type=record.conversation_type.value,
-            )
-            if any(item.get("reaction") == Reaction.bad.value for item in feedback):
-                continue
-
             record.qa_status = QAStatus.finished
             record.verdict = BotAnswerVerdict.Correct
             record.reasoning = (
                 "Automatically marked correct after at least 144 hours without "
-                "conversation activity and with no negative feedback; "
+                "conversation activity, regardless of user feedback; "
                 "not confirmed by the Evolution Agent."
             )
             record.confidence = None

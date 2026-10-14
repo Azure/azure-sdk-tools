@@ -59,3 +59,40 @@ the server's authorized pipeline identity. It verifies recorded questions and
 response identities, actual input roles and evidence delivery, and exact answer
 rendering. Missing identities or unavailable response access fail this audit;
 the script does not impersonate another identity or substitute source sidecars.
+
+## Evidence-contract development screening
+
+The October 14 research round froze three actual bot-code candidates before
+generating answers: quote-bound claims (`quoted`), quote-and-role-bound claims
+(`role_bound`), and quotation-only output (`extractive`). Baseline and automatic
+evidence retrieval without the contract (`evidence_only`) were controls. Each
+arm answered the same 15 development questions, using the existing hosted agent,
+evaluation model, grading rules, weights, and threshold.
+
+| Arm | Source-supported and adequate | Automated combined passes |
+| --- | ---: | ---: |
+| Baseline | 10/15 | 14/15 |
+| Evidence-only control | 9/15 | 14/15 |
+| Quoted | 8/15 | 12/15 |
+| Role-bound | 9/15 | 11/15 |
+| Extractive | 9/15 | 10/15 |
+
+The source-supported labels are coordinator judgments after reading every
+answer and checking material claims, policy scope, and recommended actions;
+they are not independently adjudicated expert labels or population accuracy
+estimates. The cases are new synthetic counterfactuals from previously studied
+topic families, not independent unused historical-topic holdouts.
+
+No candidate met the frozen baseline adequacy floor, so none advanced.
+All 30 reserved validation cases remain unexposed. Role-bound was selected only
+for regression and CI integration probes, not as a finalist or accepted change.
+All 75 development answers were independently reconciled with their actual
+provider inputs, rendered outputs, returned evidence, and grounding-grader
+inputs. This establishes provenance, not correctness.
+
+The negative result distinguishes two limitations: genuine quotations can be
+applied to the wrong object, workflow, or authority; stricter filtering can also
+withhold useful conclusions or ask for facts already supplied. Passing quote
+and role checks therefore does not establish current policy applicability.
+These modes remain opt-in research prototypes and are not recommended for
+production.

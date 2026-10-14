@@ -79,6 +79,10 @@ selected revision's lockfile. The dependency fingerprint includes package
 metadata, lockfile and workspace configuration, platform, and architecture.
 Do not skip compatibility checks or reuse a mismatched toolchain for speed.
 
+See [SDK Naming validation evidence](sdk-naming-validation.md) for the sample
+report and bounded performance measurements used to validate this dimension.
+Those measurements are not a corpus-wide performance claim.
+
 ## End-to-end flow
 
 ```text

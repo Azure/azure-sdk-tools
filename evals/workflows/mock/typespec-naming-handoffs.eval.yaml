@@ -29,7 +29,8 @@ scoring:
 stimuli:
   - name: authoring-consults-shared-guidance
     prompt: |
-      Invoke azure-typespec-author and plan only the SDK naming part of this authoring request.
+      Invoke azure-typespec-author and build only the separate Step 4 client
+      configuration plan for this authoring request. The user has not opted out.
       Confirmed intake: new never-shipped C# ARM Widget service, first version
       2026-01-01-preview, specification/widget/resource-manager/Microsoft.Widget/main.tsp.
       Add enabled: boolean to WidgetProperties. Use the skill's prescribed naming workflow.
@@ -61,6 +62,31 @@ stimuli:
         type: output-matches
         config:
           pattern: '"applied"\s*:\s*false'
+
+  - name: authoring-opt-out-does-not-consult-naming
+    prompt: |
+      Invoke azure-typespec-author. Analysis, intake, grounding, and the TypeSpec
+      source plan are complete for adding WidgetProperties.enabled: boolean to a
+      C# ARM service. The user explicitly declined client configuration. For this
+      bounded planning response, do not apply source changes. Return JSON
+      "clientConfigurationStatus", "namingSkillInvoked", and "clientTspChanged".
+      Do not fetch docs, edit, invoke MCP, compile, or generate.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-author]
+          disallowed: [azsdk-common-typespec-naming, azure-typespec-assessment]
+      - *readOnly
+      - type: output-matches
+        config:
+          pattern: '"clientConfigurationStatus"\s*:\s*"skipped"'
+      - type: output-matches
+        config:
+          pattern: '"namingSkillInvoked"\s*:\s*false'
+      - type: output-matches
+        config:
+          pattern: '"clientTspChanged"\s*:\s*false'
 
   - name: assessment-consults-same-guidance-readonly
     tags:

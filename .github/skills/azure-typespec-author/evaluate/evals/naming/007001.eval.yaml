@@ -21,8 +21,8 @@ stimuli:
   - name: 007001-plan-csharp-names-before-authoring
     prompt: |
       Invoke azure-typespec-author. Project analysis, intake, and general TypeSpec
-      grounding are already complete. Use its case-specific authoring plan for only
-      the SDK naming portion of these approved additions. This is a never-shipped
+      grounding are already complete. Build only Step 4's separate default client
+      configuration plan for these approved additions. This is a never-shipped
       C# ARM Widget SDK at specification/widget/resource-manager/Microsoft.Widget,
       version 2026-01-01-preview. Add WidgetProperties.enabled: boolean and
       retryInterval: int32, documented in seconds. No collisions or existing overrides.
@@ -42,6 +42,9 @@ stimuli:
         type: tool-calls
         config:
           required:
+            - name: "^(view|powershell|bash|rg)$"
+              pattern: "client-configuration\\.md"
+              result: "Optional Client Configuration|Build the Client Configuration Plan"
             - name: "^(view|powershell|bash|rg)$"
               pattern: "references"
               result: "SDK Naming Conventions|C# ARM (Member|Model) Naming"
@@ -68,7 +71,7 @@ stimuli:
 
   - name: 007001-preserve-shipped-name-in-authoring-plan
     prompt: |
-      Invoke azure-typespec-author for case-specific SDK naming planning only;
+      Invoke azure-typespec-author for Step 4 client configuration planning only;
       analysis, intake and general grounding are complete. The Widget ARM service
       targets C#, Java and Python. Azure.ResourceManager.Widget 1.0.0 exposes the
       boolean WidgetProperties.Enabled; client.tsp preserves that shipped C# name.
@@ -96,7 +99,7 @@ stimuli:
 
   - name: 007001-unsupported-target-does-not-borrow-csharp-rules
     prompt: |
-      Invoke azure-typespec-author for case-specific SDK naming planning only;
+      Invoke azure-typespec-author for Step 4 client configuration planning only;
       analysis, intake and general grounding are complete. A new, never-shipped
       Java-only ARM service at specification/widget/resource-manager/Microsoft.Widget
       adds enabled: boolean to WidgetProperties. No C# SDK is targeted. No authoritative
@@ -130,9 +133,10 @@ stimuli:
           command: node
           args: ["customization-mcp.mjs"]
     prompt: |
-      Invoke azure-typespec-author and execute only Step 4's approved SDK naming
+      Invoke azure-typespec-author and execute only Step 5's approved SDK naming
       handoff. The ordinary declaration edit is already complete. The confirmed
-      plan from Step 3: C# ARM WidgetProperties.enabled is a new/unshipped boolean;
+      client configuration plan from Step 4: C# ARM WidgetProperties.enabled is a
+      new/unshipped boolean;
       its C# SDK name should be IsEnabled, wire name enabled unchanged, all Java
       and Python overrides preserved. There are no collisions. client.tsp is loaded
       by the generation entrypoint and the TypeSpec project root is the absolute
@@ -163,6 +167,75 @@ stimuli:
         config:
           pattern: '"applied"\s*:\s*true'
       - *unverified
+
+  - name: 007001-sdk-visible-authoring-includes-client-configuration
+    prompt: |
+      Invoke azure-typespec-author. Project analysis, intake, grounding, and the
+      TypeSpec source plan are complete for adding a new WidgetProperties.enabled
+      boolean to a new never-shipped C# ARM Widget SDK. The source change is
+      SDK-visible, and the user has not opted out of client configuration.
+      Build the default Step 4 client configuration plan and return JSON
+      "clientConfigurationStatus", "name", "namingSkillInvoked", and
+      "clientTspChanged". Do not edit, invoke MCP, compile, or generate.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-author, azsdk-common-typespec-naming]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(view|powershell|bash|rg)$"
+              pattern: "client-configuration\\.md"
+              result: "include client configuration analysis by default"
+          disallowed:
+            - name: "azsdk_"
+            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
+      - type: output-matches
+        config:
+          pattern: '"clientConfigurationStatus"\s*:\s*"planned"'
+      - type: output-matches
+        config:
+          pattern: '"name"\s*:\s*"IsEnabled"'
+      - type: output-matches
+        config:
+          pattern: '"namingSkillInvoked"\s*:\s*true'
+      - type: output-matches
+        config:
+          pattern: '"clientTspChanged"\s*:\s*false'
+
+  - name: 007001-client-configuration-opt-out-skips-naming
+    prompt: |
+      Invoke azure-typespec-author. Project analysis, intake, grounding, and the
+      TypeSpec source plan are complete for adding a new WidgetProperties.enabled
+      boolean. The user explicitly declined client configuration. Stop before
+      applying the source plan and return JSON "clientConfigurationStatus",
+      "namingSkillInvoked", and "clientTspChanged". Do not edit, invoke MCP,
+      compile, or generate.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-author]
+          disallowed: [azsdk-common-typespec-naming]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(view|powershell|bash|rg)$"
+              pattern: "client-configuration\\.md"
+              result: "(?i)opt out|do not invoke"
+          disallowed:
+            - name: "azsdk_"
+            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
+      - type: output-matches
+        config:
+          pattern: '"clientConfigurationStatus"\s*:\s*"skipped"'
+      - type: output-matches
+        config:
+          pattern: '"namingSkillInvoked"\s*:\s*false'
+      - type: output-matches
+        config:
+          pattern: '"clientTspChanged"\s*:\s*false'
 
   - name: 007001-unrelated-authoring-has-no-sdk-intake
     prompt: |

@@ -31,10 +31,10 @@ This includes but is not limited to:
 
 ## MCP Tools
 
-| Tool                                              | Purpose                                                                                                                                                                                                     |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for requests **not** covered by [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search; SDK naming uses `azsdk-common-typespec-naming`. |
-| `azure-sdk-mcp:azsdk_run_typespec_validation`     | Validate TypeSpec                                                                                                                                                                                           |
+| Tool                                              | Purpose                                                                                                                                                                                          |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for requests not covered by the eight cases in [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search (`web_fetch`) instead. |
+| `azure-sdk-mcp:azsdk_run_typespec_validation`     | Validate TypeSpec                                                                                                                                                                                |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
 
@@ -46,21 +46,24 @@ Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name f
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
 - **Mandatory for ALL `.tsp` edits** — even a single `?` change can be breaking.
 - **Minimal, scoped edits** — only change what the request requires.
-- **Plan applicable SDK names before editing** — follow the supplementary SDK naming case in [case-specific planning](references/authoring-plan.md#sdk-naming--supplementary-case). General intake does not require SDK-language selection. The authoring skill owns declaration edits; the customization tool owns `client.tsp` edits.
+- **Keep source and client plans separate** — Step 3 plans ordinary TypeSpec source changes. Step 4 includes the [client configuration workflow](references/client-configuration.md) by default for SDK-visible changes unless the user opts out. The authoring skill owns declaration edits; the customization tool owns `client.tsp` edits.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
-- **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
+- **Follow both plans exactly** — source changes in Step 5 must follow the
+  TypeSpec source plan from Step 3; client configuration changes must follow the
+  separate plan from Step 4. Do not improvise from unrelated project patterns.
 
 ## Steps
 
-> Analyze → Intake → Plan → Apply → Validate → Output reference links
+> Analyze → Intake → Plan TypeSpec source → Optional client configuration → Apply → Validate → Output reference links
 
 - [ ] Step 1 — Analyze project
 - [ ] Step 2 — Intake
-- [ ] Step 3 — Build authoring plan
-- [ ] Step 4 — Apply changes
-- [ ] Step 5 — Validate
-- [ ] Step 6 — Output reference links
+- [ ] Step 3 — Build TypeSpec source plan
+- [ ] Step 4 — Build client configuration plan unless opted out
+- [ ] Step 5 — Apply changes
+- [ ] Step 6 — Validate
+- [ ] Step 7 — Output reference links
 
 ### Step 1: Analyze Project
 
@@ -70,34 +73,46 @@ See [analyze-project.md](references/analyze-project.md).
 
 See [intake.md](references/intake.md).
 
-### Step 3: Build Authoring Plan
+### Step 3: Build TypeSpec Source Plan
 
 See [authoring-plan.md](references/authoring-plan.md).
 
-### Step 4: Apply Changes
+### Step 4: Optional Client Configuration
 
-Make minimal `.tsp` declaration edits following the plan from Step 3. For planned SDK-only naming overrides, use `azsdk-common-typespec-naming` in apply mode; it calls `azsdk_customized_code_update` with `SpecInputs`. Do not edit `client.tsp` directly. Confirm uncertainties with the user first.
+See [client-configuration.md](references/client-configuration.md). Do not invoke
+`azsdk-common-typespec-naming` when the user opts out. Otherwise, include it by
+default for SDK-visible source changes.
 
-### Step 5: Validate
+### Step 5: Apply Changes
+
+Make minimal `.tsp` declaration edits following the source plan from Step 3. If
+Step 4 produced a client configuration plan, use
+`azsdk-common-typespec-naming` in apply mode; it calls
+`azsdk_customized_code_update` with `SpecInputs`. The agent must not edit
+`client.tsp` directly—the customization tool is the authorized writer. Confirm
+uncertainties with the user first.
+
+### Step 6: Validate
 
 See [validation.md](references/validation.md). Always run 5.1 general validation (5.1.1 TypeSpec validation and 5.1.2 `tsp compile .`); run 5.2 case-specific validation whenever its case matches.
 
 **Output the validation results as a checklist.** Report one line per check, each marked ✅ (pass) or ❌ (fail) with a short note. Fix every ❌ and re-run until all checks pass. For API Versioning (Case 3) the checklist **must** cover every §5.2 Case 3 check — including: the new version's `examples/` folder exists; no example folder remains for a version absent from the `Versions` enum; no decorator references a version absent from the enum; every carried-over feature is present with its decorators rebased onto the new version (not reverted); every excluded feature is fully removed.
 
-### Step 6: Output Reference Links
+### Step 7: Output Reference Links
 
 Output all referenced document URLs from Step 3. This gives the user direct links to the documentation that informed the changes.
 
 ## Reference Files
 
-| File                                                                  | Purpose                                     |
-| --------------------------------------------------------------------- | ------------------------------------------- |
-| [analyze-project.md](references/analyze-project.md)                   | Step 1: project analysis                    |
-| [intake.md](references/intake.md)                                     | Step 2: general + case-specific intake      |
-| [authoring-plan.md](references/authoring-plan.md)                     | Step 3: build authoring plan (Option A + B) |
-| [agentic-search.md](references/agentic-search.md)                     | Procedure: fetch URLs → extract guidance    |
-| [reference-document-links.md](references/reference-document-links.md) | Catalog of external guide URLs              |
-| [validation.md](references/validation.md)                             | Step 5: validate → compile → verify         |
+| File                                                                  | Purpose                                    |
+| --------------------------------------------------------------------- | ------------------------------------------ |
+| [analyze-project.md](references/analyze-project.md)                   | Step 1: project analysis                   |
+| [intake.md](references/intake.md)                                     | Step 2: general + case-specific intake     |
+| [authoring-plan.md](references/authoring-plan.md)                     | Step 3: build TypeSpec source plan         |
+| [client-configuration.md](references/client-configuration.md)         | Step 4: optional client configuration plan |
+| [agentic-search.md](references/agentic-search.md)                     | Procedure: fetch URLs → extract guidance   |
+| [reference-document-links.md](references/reference-document-links.md) | Catalog of external guide URLs             |
+| [validation.md](references/validation.md)                             | Step 6: validate → compile → verify        |
 
 ## Examples
 

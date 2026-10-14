@@ -36,3 +36,26 @@ pipeline run. Pipeline validation requires a completed run on the candidate
 commit, the expected profile/evidence hashes in the server log, and complete
 result artifacts. Grader scores do not substitute for source-based correctness
 checks or authorize production deployment.
+
+## First-pass bot-code candidates
+
+Set `researchProfile: baseline`, `decisionAgentVersion` to the frozen hosted-agent
+version, and `decisionMode` to `evidence_only`, `quoted`, `role_bound`, or
+`extractive`. For the unchanged-bot arm, leave `decisionMode` empty but retain the
+same `decisionAgentVersion`. Keep `researchSnapshot` empty for these modes:
+evidence is acquired automatically by the actual bot service, not supplied as a
+manually compiled source card. Do not combine these modes with the older
+source-card candidates.
+
+The candidate implementation is in the agent's `services/decision_context.py`
+and normal `ChatService` execution path. These settings affect only the
+branch-local server; they do not modify shared App Configuration or deploy an
+agent. Candidate JSON is rendered once, with explicit rejection notices or
+validation errors, not an answer-repair loop. Quote validity is not semantic
+entailment, and model-produced roles/conditions are not verified observations.
+
+With `decisionAgentVersion` set, CI also runs `research/audit_inputs.py` under
+the server's authorized pipeline identity. It verifies recorded questions and
+response identities, actual input roles and evidence delivery, and exact answer
+rendering. Missing identities or unavailable response access fail this audit;
+the script does not impersonate another identity or substitute source sidecars.

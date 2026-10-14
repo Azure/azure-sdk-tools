@@ -84,3 +84,22 @@ def test_holdout_requires_nonempty_case_array(monkeypatch, value):
     monkeypatch.setenv("QA_RESEARCH_DATASET", value)
     with pytest.raises(ValueError):
         run_holdout.main()
+
+
+def test_contract_candidates_cannot_use_historical_cards(monkeypatch):
+    monkeypatch.setattr(sys, "argv", [
+        "research/server.py", "--profile", "c3_witness_policy",
+        "--decision-mode", "quoted", "--agent-version", "267",
+    ])
+    monkeypatch.setattr(server.os, "chdir", Mock())
+    with pytest.raises(ValueError, match="Do not combine"):
+        server.main()
+
+
+def test_contract_candidate_requires_pinned_agent(monkeypatch):
+    monkeypatch.setattr(sys, "argv", [
+        "research/server.py", "--decision-mode", "quoted",
+    ])
+    monkeypatch.setattr(server.os, "chdir", Mock())
+    with pytest.raises(ValueError, match="pinned"):
+        server.main()

@@ -52,14 +52,24 @@ def load_snapshot(value):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--profile", choices=["", *PROFILES], default="")
+    parser.add_argument("--decision-mode", default="")
+    parser.add_argument("--agent-version", default="")
     args = parser.parse_args()
     sys.path.insert(0, str(AGENT))
     os.chdir(AGENT)
-    if not args.profile:
+    if not args.profile and not args.decision_mode and not args.agent_version:
         runpy.run_path(str(AGENT / "server.py"), run_name="__main__")
         return
+    from services.decision_context import validate_mode
+    validate_mode(args.decision_mode)
+    if args.decision_mode and args.profile not in ("", "baseline"):
+        raise ValueError("Do not combine decision-contract candidates with historical source cards")
+    if args.decision_mode and not args.agent_version:
+        raise ValueError("Decision-contract research requires a pinned agent version")
+    if args.agent_version and not re.fullmatch(r"[0-9]+", args.agent_version):
+        raise ValueError("Agent version must be numeric")
     packet = ""
-    if args.profile != "baseline":
+    if args.profile and args.profile != "baseline":
         packet = source_content(args.profile, load_snapshot(os.environ.get("QA_RESEARCH_SNAPSHOT")))
     import uvicorn
     import server
@@ -71,7 +81,7 @@ def main():
     class ResearchService(ChatService):
         def _build_tenant_system_message(self, tenant_id):
             original = super()._build_tenant_system_message(tenant_id)
-            if tenant_id == TenantID.API_SPEC_REVIEW_BOT and PROFILES[args.profile]:
+            if tenant_id == TenantID.API_SPEC_REVIEW_BOT and args.profile and PROFILES[args.profile]:
                 return original + "\n[research_reasoning_protocol]\n" + PROFILES[args.profile]
             return original
 
@@ -92,15 +102,18 @@ def main():
 
         def __call__(self, key: str, default: str | None = None) -> str | None:
             if key == "AI_FOUNDRY_AGENT_VERSION":
-                return "267"
+                return args.agent_version or "267"
+            if key == "API_SPEC_DECISION_MODE":
+                return args.decision_mode
             return app_config.get(key, default)
 
     async def serve():
         await app_config.init()
         server._chat_service = ResearchService(settings=PinnedSettings())
         logger.warning(
-            "Opt-in QA research profile=%s agent_version=267 evidence_sha256=%s",
-            args.profile, hashlib.sha256(packet.encode()).hexdigest(),
+            "Opt-in QA research profile=%s decision_mode=%s agent_version=%s evidence_sha256=%s",
+            args.profile, args.decision_mode, args.agent_version or "267",
+            hashlib.sha256(packet.encode()).hexdigest(),
         )
         await uvicorn.Server(uvicorn.Config(server.app, host="127.0.0.1", port=8089)).serve()
 

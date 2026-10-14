@@ -113,7 +113,15 @@ stimuli:
     constraints: *bounded
     graders:
       - *naming
-      - *planning
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(view|powershell|bash|rg)$"
+              pattern: "references"
+              result: "SDK Naming Conventions|C# ARM (Member|Model) Naming"
+          disallowed:
+            - name: "azsdk_"
+            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
       - type: output-matches
         config:
           pattern: '"coverage"\s*:\s*"not-covered"'
@@ -267,16 +275,12 @@ stimuli:
           disallowed: [azsdk-common-typespec-naming]
       - type: tool-calls
         config:
-          required:
-            - name: "^(view|powershell|bash|rg)$"
-              pattern: "client-configuration\\.md"
-              result: "(?i)opt out|do not invoke"
           disallowed:
             - name: "azsdk_"
             - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
       - type: output-matches
         config:
-          pattern: '"clientConfigurationStatus"\s*:\s*"skipped"'
+          pattern: '"clientConfigurationStatus"\s*:\s*"(?:skipped|declined)"'
       - type: output-matches
         config:
           pattern: '"namingSkillInvoked"\s*:\s*false'

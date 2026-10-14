@@ -99,3 +99,36 @@ withhold useful conclusions or ask for facts already supplied. Passing quote
 and role checks therefore does not establish current policy applicability.
 These modes remain opt-in research prototypes and are not recommended for
 production.
+
+The unchanged official API-spec datasets provided additional local regression
+probes, using the same research grading settings:
+
+| Dataset | Baseline combined passes | Role-bound combined passes |
+| --- | ---: | ---: |
+| Basic | 8/8 | 6/8 |
+| Perf | 17/25 | 6/25 |
+
+All 66 official regression answers were reconciled with actual provider and
+grounding-grader inputs. These are automated regression outcomes, not a second
+source-certified accuracy estimate. Reading the answers confirmed usefulness
+loss: for example, role-bound acknowledged a requested meeting link without
+providing the URL, and withheld a concrete configuration workaround. Both arms
+still proposed a lifecycle-cleanup remedy without establishing the checker's
+exact comparison witness. A passing grounding grade did not resolve that scope
+error.
+
+Actual Azure DevOps integration probes used only the unchanged eight-case basic
+dataset, the frozen agent version, and the exact branch commit. The first pair
+exposed a bug in the research audit: full result caches are lists of case rows
+followed by a summary, not mappings. The audit reader was repaired with
+end-to-end tests, without changing candidate behavior or grading.
+
+Both verification runs passed the owning-identity audit for all eight responses,
+including actual model input roles, answer rendering, and evidence delivery.
+Actual grounding-rendered inputs were also reconciled for every response.
+Both nevertheless failed the existing evaluation gate: baseline had 7/8 combined
+passes and role-bound had 7/8, failing different questions. These integration
+results do not promote the rejected prototype or demonstrate improved accuracy.
+The earlier baseline run also contained one invalid grounding result whose
+rendered input was unavailable; that judgment remains unverified and
+non-assessable, not a pass.

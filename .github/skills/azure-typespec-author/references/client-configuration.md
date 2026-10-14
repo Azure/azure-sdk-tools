@@ -20,7 +20,7 @@ Explain:
 > Client configuration analysis is included by default for SDK-visible changes.
 > Would you like to keep it, or opt out for this authoring request? If you opt
 > out, you can run the analysis later when entering the Azure SDK release
-> workflow using AzSDKToolsAgent: <http://aka.ms/azsdk/agent>.
+> workflow using AzSDKToolsAgent: <https://aka.ms/azsdk/agent>.
 
 Do not invoke `azsdk-common-typespec-naming` before the user decides. When the
 user opts out, do not create or edit `client.tsp`.

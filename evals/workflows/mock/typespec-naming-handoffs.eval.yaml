@@ -30,7 +30,8 @@ stimuli:
   - name: authoring-consults-shared-guidance
     prompt: |
       Invoke azure-typespec-author and build only the separate Step 4 client
-      configuration plan for this authoring request. The user has not opted out.
+      configuration plan for this authoring request. The user kept the recommended
+      default client configuration analysis.
       Confirmed intake: new never-shipped C# ARM Widget service, first version
       2026-01-01-preview, specification/widget/resource-manager/Microsoft.Widget/main.tsp.
       Add enabled: boolean to WidgetProperties. Use the skill's prescribed naming workflow.

@@ -22,7 +22,8 @@ stimuli:
     prompt: |
       Invoke azure-typespec-author. Project analysis, intake, and general TypeSpec
       grounding are already complete. Build only Step 4's separate default client
-      configuration plan for these approved additions. This is a never-shipped
+      configuration plan for these approved additions. The user kept the
+      recommended default. This is a never-shipped
       C# ARM Widget SDK at specification/widget/resource-manager/Microsoft.Widget,
       version 2026-01-01-preview. Add WidgetProperties.enabled: boolean and
       retryInterval: int32, documented in seconds. No collisions or existing overrides.
@@ -72,7 +73,8 @@ stimuli:
   - name: 007001-preserve-shipped-name-in-authoring-plan
     prompt: |
       Invoke azure-typespec-author for Step 4 client configuration planning only;
-      analysis, intake and general grounding are complete. The Widget ARM service
+      analysis, intake and general grounding are complete, and the user kept the
+      recommended default. The Widget ARM service
       targets C#, Java and Python. Azure.ResourceManager.Widget 1.0.0 exposes the
       boolean WidgetProperties.Enabled; client.tsp preserves that shipped C# name.
       The authorized TypeSpec addition is ttl: int32, documented in minutes, to
@@ -100,7 +102,8 @@ stimuli:
   - name: 007001-unsupported-target-does-not-borrow-csharp-rules
     prompt: |
       Invoke azure-typespec-author for Step 4 client configuration planning only;
-      analysis, intake and general grounding are complete. A new, never-shipped
+      analysis, intake and general grounding are complete, and the user kept the
+      recommended default. A new, never-shipped
       Java-only ARM service at specification/widget/resource-manager/Microsoft.Widget
       adds enabled: boolean to WidgetProperties. No C# SDK is targeted. No authoritative
       Java naming guidance is supplied beyond bundled skill references.
@@ -173,7 +176,8 @@ stimuli:
       Invoke azure-typespec-author. Project analysis, intake, grounding, and the
       TypeSpec source plan are complete for adding a new WidgetProperties.enabled
       boolean to a new never-shipped C# ARM Widget SDK. The source change is
-      SDK-visible, and the user has not opted out of client configuration.
+      SDK-visible, and the user kept the recommended default client configuration
+      analysis.
       Build the default Step 4 client configuration plan and return JSON
       "clientConfigurationStatus", "name", "namingSkillInvoked", and
       "clientTspChanged". Do not edit, invoke MCP, compile, or generate.
@@ -203,6 +207,44 @@ stimuli:
       - type: output-matches
         config:
           pattern: '"clientTspChanged"\s*:\s*false'
+
+  - name: 007001-sdk-visible-authoring-offers-opt-out
+    prompt: |
+      Invoke azure-typespec-author. Project analysis, intake, grounding, and the
+      TypeSpec source plan are complete for adding a new WidgetProperties.enabled
+      boolean. The source change is SDK-visible, but the user has not decided
+      whether to keep the default client configuration analysis. For this bounded
+      noninteractive check, return JSON "question", "recommendedChoice",
+      "optOutChoice", and "namingSkillInvoked" instead of asking interactively.
+      Stop before invoking another skill. Do not edit, invoke MCP, compile, or
+      generate.
+    constraints: *bounded
+    graders:
+      - type: skill-invocation
+        config:
+          required: [azure-typespec-author]
+          disallowed: [azsdk-common-typespec-naming]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(view|powershell|bash|rg)$"
+              pattern: "client-configuration\\.md"
+              result: "(?i)included by default|opt out"
+          disallowed:
+            - name: "azsdk_"
+            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
+      - type: output-matches
+        config:
+          pattern: '(?is)"question"\s*:\s*"[^"]*included by default[^"]*opt out[^"]*"'
+      - type: output-matches
+        config:
+          pattern: '(?is)"recommendedChoice"\s*:\s*"[^"]*Keep client configuration analysis[^"]*"'
+      - type: output-matches
+        config:
+          pattern: '"optOutChoice"\s*:\s*"Opt out"'
+      - type: output-matches
+        config:
+          pattern: '"namingSkillInvoked"\s*:\s*false'
 
   - name: 007001-client-configuration-opt-out-skips-naming
     prompt: |

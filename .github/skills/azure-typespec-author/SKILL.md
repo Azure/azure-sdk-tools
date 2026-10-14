@@ -46,7 +46,7 @@ Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name f
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
 - **Mandatory for ALL `.tsp` edits** — even a single `?` change can be breaking.
 - **Minimal, scoped edits** — only change what the request requires.
-- **Keep source and client plans separate** — Step 3 plans ordinary TypeSpec source changes. Step 4 includes the [client configuration workflow](references/client-configuration.md) by default for SDK-visible changes unless the user opts out. The authoring skill owns declaration edits; the customization tool owns `client.tsp` edits.
+- **Keep source and client plans separate** — Step 3 plans ordinary TypeSpec source changes. Step 4 offers an explicit opt-out from the [client configuration workflow](references/client-configuration.md), which is recommended and included by default for SDK-visible changes. The authoring skill owns declaration edits; the customization tool owns `client.tsp` edits.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
 - **Follow both plans exactly** — source changes in Step 5 must follow the
@@ -80,8 +80,9 @@ See [authoring-plan.md](references/authoring-plan.md).
 ### Step 4: Optional Client Configuration
 
 See [client-configuration.md](references/client-configuration.md). Do not invoke
-`azsdk-common-typespec-naming` when the user opts out. Otherwise, include it by
-default for SDK-visible source changes.
+`azsdk-common-typespec-naming` until the user keeps the recommended default,
+unless naming or client configuration was already explicitly requested. Do not
+invoke it when the user opts out.
 
 ### Step 5: Apply Changes
 

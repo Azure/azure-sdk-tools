@@ -1,13 +1,23 @@
 """Tests for tenant skill and knowledge-source configuration."""
 
 import asyncio
+import json
 from pathlib import Path
 
 from agent_framework import FileSkillsSource
+import pytest
 
 from config.tenant_config import (
+    SRC_AZURE_API_GUIDELINES,
+    SRC_AZURE_AVOCADO_DOCS,
     SRC_AZURE_MCP_SERVER_DOCS,
+    SRC_AZURE_OPENAPI_DIFF_DOCS,
+    SRC_AZURE_REST_API_SPECS_DOCS,
+    SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_DOCS_ENG,
+    SRC_AZURE_SDK_GUIDELINES,
+    SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_DOCS,
     TenantID,
     get_knowledge_source,
     get_tenant_config,
@@ -17,6 +27,124 @@ from skills.tenant_skills import (
     create_tenant_skills,
     get_skill_name_for_tenant,
 )
+
+
+def test_stewardship_tenant_uses_shared_agent_and_maintained_sources() -> None:
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+
+    assert config is not None
+    assert config.agent.name == "azure-sdk-chat-agent"
+    assert config.agent.name_config_key == "AI_FOUNDRY_AGENT_NAME"
+    assert config.display_name == "API Stewardship Board - General"
+    assert config.skill_name == "api-stewardship-board"
+    assert config.enable_routing
+    assert not config.enable_wiki_cross_document_pages
+    assert [source.name for source in config.sources] == [
+        SRC_AZURE_API_GUIDELINES,
+        SRC_TYPESPEC_DOCS,
+        SRC_TYPESPEC_AZURE_DOCS,
+        SRC_AZURE_SDK_GUIDELINES,
+        SRC_AZURE_SDK_DOCS_ENG,
+        SRC_AZURE_REST_API_SPECS_WIKI,
+        SRC_AZURE_REST_API_SPECS_DOCS,
+        SRC_AZURE_OPENAPI_DIFF_DOCS,
+        SRC_AZURE_AVOCADO_DOCS,
+    ]
+    assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
+        "search.ismatch('design* OR plan* OR support* OR faqs*', 'title', 'full', 'any')"
+    )
+
+
+def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    skills = create_tenant_skills("azure-sdk-chat-agent")
+    skill = next(s for s in skills if s.frontmatter.name == "api-stewardship-board")
+
+    assert get_skill_name_for_tenant(TenantID.API_STEWARDSHIP_BOARD_QA_BOT) == (
+        "api-stewardship-board"
+    )
+    assert "[skill_tenant_id]: api_stewardship_board_qa_bot" in content
+    assert f"- {SRC_AZURE_AVOCADO_DOCS}:" in content
+    assert "[skill_guideline]" in content
+    assert "Advisory only" in skill.frontmatter.description
+    assert "Never approve changes" in content
+    assert "omission from generated artifacts is not runtime authorization" in content
+    assert "Do not infer that a workflow-role error requires role elevation" in content
+    assert "Do not repeat old recurring-meeting schedules" in content
+
+
+def test_stewardship_filter_does_not_broaden_existing_review_tenants() -> None:
+    for tenant_id in (TenantID.API_SPEC_REVIEW_BOT, TenantID.TYPESPEC_CHANNEL_QA_BOT):
+        config = get_tenant_config(tenant_id)
+        assert config is not None
+        assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
+            "search.ismatch('design*', 'title')"
+        )
+
+
+@pytest.mark.parametrize(
+    ("source_name", "title", "expected_url"),
+    [
+        (
+            SRC_AZURE_AVOCADO_DOCS,
+            "README.md",
+            "https://github.com/Azure/avocado/blob/main/README.md",
+        ),
+        (
+            SRC_AZURE_REST_API_SPECS_DOCS,
+            ".github#workflows#src#package-name-approval#PACKAGE-NAME-REVIEW-PROCESS.md",
+            "https://github.com/Azure/azure-rest-api-specs/blob/main/"
+            ".github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md",
+        ),
+        (
+            SRC_AZURE_REST_API_SPECS_DOCS,
+            "documentation#ci-fix.md",
+            "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/ci-fix.md",
+        ),
+        (
+            SRC_AZURE_SDK_DOCS_ENG,
+            "docs#support#support.md",
+            "https://eng.ms/docs/products/azure-developer-experience/support/support",
+        ),
+    ],
+)
+def test_stewardship_document_citations(
+    source_name: str, title: str, expected_url: str
+) -> None:
+    source = get_knowledge_source(source_name)
+
+    assert source is not None
+    assert source.get_link(title) == expected_url
+
+
+def test_stewardship_sources_have_matching_sync_configuration() -> None:
+    config_path = (
+        Path(__file__).parents[2]
+        / "azure-sdk-qa-bot-knowledge-sync"
+        / "config"
+        / "knowledge-config.json"
+    )
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    sources = config["sources"]
+    avocado = next(
+        s for s in sources if s["repository"]["url"] == "https://github.com/Azure/avocado.git"
+    )
+    assert avocado["repository"]["branch"] == "main"
+    assert avocado["paths"][0]["path"] == "/README.md"
+    assert avocado["paths"][0]["folder"] == SRC_AZURE_AVOCADO_DOCS
+    specs = next(
+        s
+        for s in sources
+        if s["repository"]["url"] == "https://github.com/Azure/azure-rest-api-specs.git"
+    )
+    assert {p["path"] for p in specs["paths"]} == {
+        "/documentation/BreakingChange-Oad-Rules-Mapping.md",
+        "/eng/tools/typespec-suppressions/README.md",
+        "/.github/arm-leases/README.md",
+        "/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md",
+        "/documentation/ci-fix.md",
+    }
+    assert all(p["folder"] == SRC_AZURE_REST_API_SPECS_DOCS for p in specs["paths"])
 
 
 def test_azure_mcp_server_tenant_uses_curated_sources() -> None:

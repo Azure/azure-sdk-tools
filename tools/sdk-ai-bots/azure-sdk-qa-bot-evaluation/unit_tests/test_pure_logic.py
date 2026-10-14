@@ -34,6 +34,7 @@ from _evals_runner import (  # noqa: E402
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
     resolve_tenant_for_scenario,
+    resolve_records,
 )
 from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E402
 
@@ -380,12 +381,214 @@ def test_resolve_tenant_for_scenario():
         "TypeSpec Discussion": "tenant-ts",
         "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
+        "API Stewardship Board - General": "api_stewardship_board_qa_bot",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
+    assert resolve_tenant_for_scenario("stewardship", m) == "api_stewardship_board_qa_bot"
+    assert resolve_tenant_for_scenario("stewardship", {"default": "tenant-default"}) == "tenant-default"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
+
+
+def test_stewardship_local_dataset():
+    from pathlib import Path
+
+    from dataset.schema import normalize_query
+
+    root = Path(__file__).resolve().parents[1]
+    datasets = {}
+    for target in ("basic", "perf"):
+        dataset = root / "evaluation_datasets" / target / "stewardship.jsonl"
+        count = validate_file(dataset, require_reviewed=True)
+        records, scenario = resolve_records(str(dataset), script_dir=root)
+        assert count == len(records)
+        assert scenario == "stewardship"
+        assert all(row["scenario"] == scenario for row in records)
+        assert all(row["tenant"] == "api_stewardship_board_qa_bot" for row in records)
+        assert all(row["reviewed"] == "pass" for row in records)
+        assert all(row["source"] and row["expected_references"] for row in records)
+        assert len({normalize_query(row["query"]) for row in records}) == count
+        datasets[target] = records
+    assert len(datasets["basic"]) == 1
+    assert datasets["basic"][0]["testcase"] == "Async data-plane review request"
+    assert len(datasets["perf"]) >= 30
+    assert datasets["basic"][0] == datasets["perf"][0]
+
+
+def _run_completion_cli(tenant_override=None, *, scenario="stewardship", tenant_map=None, status=200):
+    from contextlib import ExitStack
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    import evals_run
+
+    posts = []
+
+    class Response:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def json(self):
+            return {"id": "content-filter", "answer": "advisory answer", "references": []}
+
+    class Session:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        def post(self, url, *, json, headers):
+            posts.append((url, json))
+            response = Response()
+            response.status = status
+            return response
+
+    project = MagicMock()
+    project.__enter__.return_value = project
+    client = MagicMock()
+    project.get_openai_client.return_value.__enter__.return_value = client
+    client.evals.create.return_value = SimpleNamespace(id="eval-local")
+    client.evals.runs.create.return_value = SimpleNamespace(id="run-local")
+    records = [
+        {"testcase": "one", "query": "q1", "ground_truth": "a", "tenant": "ignored-row-tenant"},
+        {"testcase": "two", "query": "q2", "ground_truth": "a", "tenant": "another-ignored-tenant"},
+    ]
+    argv = ["--dataset", "evaluation_datasets/basic/stewardship.jsonl", "--baseline_check", "False"]
+    if tenant_override is not None:
+        argv.extend(["--tenant-id", tenant_override])
+
+    with ExitStack() as stack:
+        stack.enter_context(patch.dict(os.environ, {
+            "AZURE_AI_PROJECT_ENDPOINT": "https://unused.invalid",
+            "AZURE_EVALUATION_MODEL_NAME": "unused-model",
+            "EVALUATE_THRESHOLD": "3",
+        }))
+        stack.enter_context(patch.dict(sys.modules, {
+            "azure.ai.projects": SimpleNamespace(AIProjectClient=lambda **kwargs: project),
+        }))
+        stack.enter_context(patch("aiohttp.ClientSession", Session))
+        stack.enter_context(patch.object(evals_run, "load_dotenv"))
+        stack.enter_context(patch.object(evals_run, "credential_for", return_value=object()))
+        stack.enter_context(patch.object(evals_run, "resolve_bot_token", return_value=None))
+        stack.enter_context(patch.object(evals_run, "resolve_completion_url", return_value="http://unused.invalid/completion"))
+        stack.enter_context(patch.object(evals_run, "resolve_records", return_value=(records, scenario)))
+        stack.enter_context(patch.object(evals_run, "_load_suppression", return_value={"evaluators": [], "testcases": []}))
+        stack.enter_context(patch.object(evals_run.EvalsResult, "show_results"))
+        stack.enter_context(patch.object(FoundryEvalsRunner, "_poll_and_adapt", return_value={}))
+        lookup = stack.enter_context(patch.object(
+            evals_run,
+            "retrieve_channel_tenant_map",
+            return_value=tenant_map,
+            side_effect=AssertionError("override must bypass Blob") if tenant_override is not None else None,
+        ))
+        exit_code = evals_run.main(argv)
+        assert lookup.call_count == (0 if tenant_override is not None else 1)
+
+    return exit_code, posts
+
+
+def test_cli_override_reaches_real_completion_runner():
+    exit_code, posts = _run_completion_cli("api_stewardship_board_qa_bot")
+    assert exit_code == 0
+    assert len(posts) == 2
+    assert all(url.endswith("/completion") for url, _ in posts)
+    assert all(payload["tenant_id"] == "api_stewardship_board_qa_bot" for _, payload in posts)
+    assert [payload["message"]["content"] for _, payload in posts] == ["q1", "q2"]
+    assert all(payload["with_full_context"] is True for _, payload in posts)
+
+
+def test_cli_default_routing_reaches_completion_unchanged():
+    for scenario, mapping, expected in [
+        ("typespec", {"TypeSpec Discussion": "tenant-ts", "default": "tenant-default"}, "tenant-ts"),
+        ("unknown", {"default": "tenant-default"}, "tenant-default"),
+        ("stewardship", None, "general_qa_bot"),
+    ]:
+        exit_code, posts = _run_completion_cli(scenario=scenario, tenant_map=mapping)
+        assert exit_code == 0
+        assert len(posts) == 2
+        assert all(payload["tenant_id"] == expected for _, payload in posts)
+
+
+def test_cli_rejected_tenant_does_not_fall_back():
+    exit_code, posts = _run_completion_cli("unregistered_tenant", status=400)
+    assert exit_code == 1
+    assert len(posts) == 2
+    assert all(payload["tenant_id"] == "unregistered_tenant" for _, payload in posts)
+
+
+def test_cli_invalid_tenant_override_fails_before_credentials():
+    from unittest.mock import patch
+
+    import evals_run
+
+    for value in ("", " ", "api stewardship", " api_stewardship_board_qa_bot"):
+        with patch.object(evals_run, "credential_for", side_effect=AssertionError("must not authenticate")):
+            try:
+                evals_run.main(["--dataset", "unused.jsonl", "--tenant-id", value])
+            except SystemExit as exc:
+                assert exc.code == 2
+            else:
+                raise AssertionError("expected invalid override to fail argument parsing")
+
+
+def test_default_blob_lookup_failure_preserves_general_fallback():
+    from unittest.mock import patch
+
+    import evals_run
+
+    with patch.object(evals_run, "retrieve_channel_tenant_map", side_effect=RuntimeError("offline")):
+        assert evals_run._resolve_run_tenant("typespec", object(), None) is None
+
+
+def test_offline_pipeline_stewardship_uses_local_dataset_and_override():
+    from pathlib import Path
+
+    import yaml
+
+    path = Path(__file__).resolve().parents[2] / "offline-evaluation.yml"
+    pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
+    scenarios = pipeline["parameters"][0]["default"]
+    assert scenarios == ["typespec", "onboarding", "python", "apispec", "authoring", "mcpserver", "sdkagent", "stewardship"]
+    jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
+    steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
+    inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Evals (${{ scenario }})")
+    board = inputs["${{ if eq(scenario, 'stewardship') }}"]["inlineScript"]
+    existing = inputs["${{ else }}"]["inlineScript"]
+    assert '--dataset "evaluation_datasets/basic/stewardship.jsonl"' in board
+    assert '--tenant-id "api_stewardship_board_qa_bot"' in board
+    assert "qa-bot-basic-stewardship" not in board
+    assert '--dataset "qa-bot-basic-${{ scenario }}:latest"' in existing
+    assert "--tenant-id" not in existing
+
+
+def test_perf_pipeline_stewardship_uses_local_dataset_and_override():
+    from pathlib import Path
+
+    import yaml
+
+    path = Path(__file__).resolve().parents[2] / "perf-evaluation.yml"
+    pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
+    scenarios = pipeline["parameters"][0]["default"]
+    assert scenarios == ["typespec", "onboarding", "python", "apispec", "general", "releasesupport", "authoring", "mcpserver", "stewardship"]
+    jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
+    steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
+    inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Perf Evals (${{ scenario }})")
+    board = inputs["${{ if eq(scenario, 'stewardship') }}"]["inlineScript"]
+    existing = inputs["${{ else }}"]["inlineScript"]
+    assert '--dataset "evaluation_datasets/perf/stewardship.jsonl"' in board
+    assert '--tenant-id "api_stewardship_board_qa_bot"' in board
+    assert "qa-bot-perf-stewardship" not in board
+    assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in existing
+    assert "--tenant-id" not in existing
 
 
 def test_output_items_to_rows_completion_item_response():

@@ -34,6 +34,10 @@ stimuli:
       required:
       - "^(edit|apply_patch|bash|powershell)$"
       - azure-sdk-mcp-azsdk_run_typespec_validation
+      disallowed:
+      - name: "^(bash|powershell)$"
+        args:
+          command: "(?i)(?:rm|remove-item).*\\b(?:node_modules|packages)\\b"
   - type: skill-invocation
     config:
       required:

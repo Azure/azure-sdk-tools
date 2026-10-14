@@ -61,6 +61,10 @@ Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name f
   [agentic-search.md](references/agentic-search.md). Use
   `azsdk_typespec_retrieve_knowledge` only when the catalog does not cover the
   request.
+- **Preserve dependency setup** — never delete `node_modules`, `packages`,
+  restored tools, or fixture links during validation cleanup, even if they were
+  installed or restored in the current turn. They are environment setup, not
+  compiler output.
 - **Follow both plans exactly** — source changes in Step 5 must follow the
   TypeSpec source plan from Step 3; client configuration changes must follow the
   separate plan from Step 4. Do not improvise from unrelated project patterns.

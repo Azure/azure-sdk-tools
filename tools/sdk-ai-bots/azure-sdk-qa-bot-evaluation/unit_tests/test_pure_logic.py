@@ -29,6 +29,7 @@ from dataset.schema import (  # noqa: E402
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
+    CompletionCollector,
     FoundryEvalsRunner,
     output_items_to_rows,
     extract_title_and_link_from_references,
@@ -378,14 +379,41 @@ def test_resolve_tenant_for_scenario():
     m = {
         "default": "tenant-default",
         "TypeSpec Discussion": "tenant-ts",
+        "API Spec Review": "tenant-spec-review",
         "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
+    assert resolve_tenant_for_scenario("apispec", m) == "tenant-spec-review"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
+
+
+def test_completion_collector_honors_record_tenant():
+    from unittest.mock import AsyncMock, patch
+
+    collector = CompletionCollector(api_url="http://localhost/completion", access_token=None)
+    records = [
+        {"query": "explicit", "tenant": "api_spec_review_bot"},
+        {"query": "inherited"},
+        {"query": "null", "tenant": None},
+    ]
+    response = {"answer": "answer", "id": "response"}
+    with patch.object(collector, "_call_bot_api", new=AsyncMock(return_value=response)) as call:
+        result = collector.collect(records, tenant_id="scenario-tenant")
+    assert len(result) == 3
+    tenants = {args.args[0]: args.args[1] for args in call.await_args_list}
+    assert tenants == {
+        "explicit": "api_spec_review_bot",
+        "inherited": "scenario-tenant",
+        "null": "scenario-tenant",
+    }
+    with patch.object(collector, "_call_bot_api", new=AsyncMock(return_value=response)) as call:
+        collector.collect(records, tenant_id=None)
+    tenants = {args.args[0]: args.args[1] for args in call.await_args_list}
+    assert tenants == {"explicit": "api_spec_review_bot", "inherited": None, "null": None}
 
 
 def test_output_items_to_rows_completion_item_response():

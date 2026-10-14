@@ -169,7 +169,7 @@ class CompletionCollector:
             async with semaphore:
                 start = time.time()
                 try:
-                    api_response = await self._call_bot_api(record["query"], tenant_id, session)
+                    api_response = await self._call_bot_api(record["query"], record.get("tenant") or tenant_id, session)
                 except Exception as exc:  # noqa: BLE001
                     logger.error("❌ collect failed for %s: %s", record.get("testcase", "?"), exc)
                     return

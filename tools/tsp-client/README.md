@@ -94,6 +94,13 @@ Example:
 tsp-client generate
 ```
 
+SDK generation replaces the project's `linter` configuration with an empty ruleset.
+Authoring rulesets and individual rule overrides are not loaded, so their files and
+packages do not need to be copied or installed in the SDK repository. Compiler
+diagnostics, library validation, and `warn-as-error` still apply. Run linting in the
+specification repository using its own toolchain; a direct `tsp compile` command
+still uses the project's linter configuration.
+
 ### convert
 
 Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag. By default, the converted TypeSpec project will leverage TypeSpec built-in libraries with standard patterns and templates (highly recommended), which will cause discrepancies between the generated TypeSpec and original swagger. If you really don't want this intended discrepancy, add `--fully-compatible` flag to generate a TypeSpec project that is fully compatible with the swagger.

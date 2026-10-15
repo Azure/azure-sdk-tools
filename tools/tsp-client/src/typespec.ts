@@ -145,6 +145,8 @@ export async function compileTsp({
     emit: [emitterPackage],
     options: overrideOptions,
     trace: trace,
+    // Authoring rulesets may depend on files or packages outside the copied service.
+    linter: {},
   };
   Logger.info(`Compiling tsp using ${emitterPackage}...`);
   const [options, diagnostics] = await resolveCompilerOptions(NodeHost, {

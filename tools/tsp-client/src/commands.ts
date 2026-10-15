@@ -502,7 +502,7 @@ export async function generateCommand(argv: any) {
   });
 
   if (argv["debug"]) {
-    Logger.warn(`Example of how to compile using the tsp commandline. NOTE: tsp-client does NOT directly run this command, results may vary:
+    Logger.warn(`Example of how to compile using the tsp commandline. NOTE: tsp-client does NOT directly run this command, results may vary. Unlike tsp-client, this command uses the project's linter configuration:
         ${result.exampleCmd}
         `);
   }

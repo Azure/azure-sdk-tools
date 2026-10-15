@@ -147,12 +147,17 @@ Same AI Toolkit workflow as the chat agent, just pointed at the chatbot evolutio
 }
 ```
 
-The agent derives `tenant_id` from `fetch_conversation`, then calls
-`fetch_chat_trace` / `search_knowledge_base` and may file a real GitHub issue — use a throwaway conversation when iterating.
+The agent derives `tenant_id` from `fetch_conversation`, then calls `fetch_chat_trace` / `search_knowledge_base` and may file a real GitHub issue or ADO work item — use a throwaway conversation when iterating.
 
 **2. Debug the feedback loop end-to-end.**
 
-`ChatbotEvolutionAgentService` runs the hosted chatbot evolution agent synchronously against the *deployed* Foundry agent. Its settings (`AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_NAME`, `AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_VERSION`, `CHATBOT_EVOLUTION_AGENT_ENABLED`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+`ChatbotEvolutionAgentService` runs the hosted chatbot evolution agent synchronously against the *deployed* Foundry agent, using the chat agent's shared streaming response client with a 600-second job limit and no invocation-level retries. Its settings (`AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_NAME`, `AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_VERSION`, `CHATBOT_EVOLUTION_AGENT_ENABLED`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+
+The daily poller treats the global `ADO_ISSUE_CLOSED_STATE` App Configuration value as terminal, defaulting to `Closed`.
+
+The scan refreshes ongoing thread metadata after human-only replies as well as bot replies. Before processing enabled Agent jobs, it recovers `created`/`running` feedback inactive for at least 20 minutes into retryable `failed` state; conditional writes prevent overwriting concurrent updates.
+
+Ongoing threads without an active feedback workflow are automatically marked `finished`/`correct` after at least 144 hours since the latest conversation message, without invoking the Evolution Agent and regardless of user feedback. The scan verifies the actual transcript. Automatic closures are marked with `auto_closed_at`; a newer reply reopens them on ingestion and restarts the inactivity clock, including replies persisted while closure was in progress. Agent-assessed conclusions remain immutable to message ingestion. The recorded reasoning identifies automatic closure, and no confidence score is assigned. Negative feedback is still saved, but does not reopen automatically closed records; it can reopen Agent-assessed correct records. Dry runs and disabled Agent processing do not auto-close records.
 
 To exercise the loop locally:
 
@@ -413,11 +418,17 @@ The default schedule is weekly at 00:00 UTC on Sunday. Use `routine-disable` to 
 Builds the backend API (FastAPI) container image and deploys to Azure App Service.
 
 - **Pipeline**: [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
-- **Parameters**: `environment` (dev/preview/prod), `slot` (default/agent)
+- **Parameters**: `environment` (dev/preview/prod), `deploymentTarget` (all/server/knowledge-sync; default: `all`)
+- **Deployment targets**:
+   - `all`: deploy the server, then knowledge sync. Preview deploys only the server.
+   - `server`: deploy only the backend container.
+   - `knowledge-sync`: build, test, and deploy only the knowledge sync WebJob in dev/prod.
 - **What it does**:
-  1. Resolves image tag from `_version.py` (prod) or git short SHA (dev)
-  2. Builds and pushes image to ACR via `az acr build`
-  3. Deploys to App Service using container image reference
+   1. `DeployServer` resolves the image tag from `_version.py` (preview/prod) or git short SHA (dev), builds and pushes to ACR (except prod, which reuses the image), validates the image, updates App Service, and checks server health.
+   2. `DeployKnowledgeSync` builds, tests, packages and publishes the knowledge sync ZIP, and deploys the scheduled WebJob. With `all`, it runs after server success and provisions the SSH key; with `knowledge-sync`, it runs independently using existing settings. Preview omits this job.
+
+WebJob deployment may restart the backend when applying App Service prerequisites,
+even when its container image is unchanged. See the [knowledge sync deployment guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/README.md).
 
 ### Logic App Deploy
 

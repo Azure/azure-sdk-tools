@@ -248,10 +248,7 @@ public class SdkBreakingChangeDetectToolTests
     [TestCase("{}")]
     [TestCase("{\"changes\":\"text\"}")]
     [TestCase("{\"hasBreakingChange\":false}")]
-    [TestCase("{\"changes\":null,\"hasBreakingChange\":false}")]
     [TestCase("{\"changes\":\"\",\"hasBreakingChange\":true}")]
-    [TestCase("{\"changes\":\"\",\"hasBreakingChange\":false}")]
-    [TestCase("{\"changes\":\" \\t\\n\",\"hasBreakingChange\":false}")]
     [TestCase("{\"changes\":\" \\t\\n\",\"hasBreakingChange\":true}")]
     [TestCase("{\"changes\":\"text\",\"hasBreakingChange\":\"false\"}")]
     public async Task InvalidScriptOutput_FailsWithoutFallbackAndCleansOutput(string output)

@@ -2,8 +2,8 @@
 
 The pipeline ingests active Teams threads, invokes the Agent to evaluate every
 eligible conversation, checks remediation issues, and invokes Agent validation
-after an issue closes. Conversation completion and correctness are judged only
-inside the Agent.
+after an issue closes. The Agent judges completion and correctness, except for
+automatic closure after 144 hours of inactivity regardless of user feedback.
 
 Usage::
 
@@ -39,7 +39,7 @@ from models.feedback import (
 )
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
-from tools.github_mcp_tools import get_github_issue_state
+from tools.issue_tracker import get_issue_state
 from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
@@ -116,9 +116,16 @@ async def _run(args: argparse.Namespace) -> None:
         logger.info("Agent processing disabled; ingestion completed only")
         return
 
+    await evolution_service.recover_stale_jobs(
+        tenant_id=args.tenant, excluded_channels=excluded_channels
+    )
+    auto_closed = await qa_service.close_inactive_threads(
+        tenant_id=args.tenant, excluded_channels=excluded_channels
+    )
+
     counts = {
         "ongoing": 0,
-        "finished": 0,
+        "finished": auto_closed,
         "issues": 0,
         "waiting_validation": 0,
         "validated": 0,
@@ -141,7 +148,7 @@ async def _run(args: argparse.Namespace) -> None:
             counts["skipped"] += 1
             continue
         try:
-            issue_state = await get_github_issue_state(issue_url)
+            issue_state = await get_issue_state(issue_url)
         except Exception:
             logger.exception("Failed to read issue state for %s", record.id)
             counts["skipped"] += 1

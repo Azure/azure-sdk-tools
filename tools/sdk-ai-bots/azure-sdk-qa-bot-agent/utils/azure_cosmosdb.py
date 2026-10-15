@@ -11,6 +11,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from azure.core import MatchConditions
 from azure.cosmos import PartitionKey, exceptions as cosmos_exceptions
 from azure.cosmos.aio import ContainerProxy, CosmosClient
 
@@ -484,12 +485,35 @@ async def upsert_qa_record(document: dict[str, Any]) -> dict[str, Any]:
     return await container.upsert_item(document)
 
 
-async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> bool:
-    """Requeue a completed no-issue assessment without overwriting active work.
+async def replace_qa_record_if_unchanged(
+    document: dict[str, Any], *, etag: str
+) -> bool:
+    """Replace an existing QA record without overwriting concurrent changes."""
+    container = await get_qa_records_container()
+    try:
+        await container.replace_item(
+            item=document["id"],
+            body=document,
+            etag=etag,
+            match_condition=MatchConditions.IfNotModified,
+        )
+    except cosmos_exceptions.CosmosHttpResponseError as exc:
+        if exc.status_code in (404, 412):
+            logger.info(
+                "QA record %s changed or was deleted; conditional update skipped",
+                document["id"],
+            )
+            return False
+        raise
+    return True
 
-    The predicate is checked atomically by Cosmos, including for duplicate
-    feedback submissions. Missing records and changed states are no-ops;
-    other storage failures propagate so a failed reset is not reported as success.
+
+async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> bool:
+    """Requeue an Agent-concluded no-issue record without overwriting active work.
+
+    User feedback does not reopen inactivity-policy closures. Missing records
+    and ineligible states are no-ops; other storage failures propagate so a
+    failed reset is not reported as success.
     """
     container = await get_qa_records_container()
     try:
@@ -498,7 +522,8 @@ async def requeue_qa_record_for_analysis(*, record_id: str, tenant_id: str) -> b
             partition_key=tenant_id,
             filter_predicate=(
                 "FROM c WHERE c.qa_status = 'finished' AND c.verdict = 'correct' "
-                "AND (NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback))"
+                "AND (NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback)) "
+                "AND (NOT IS_DEFINED(c.auto_closed_at) OR IS_NULL(c.auto_closed_at))"
             ),
             patch_operations=[
                 {"op": "set", "path": "/qa_status", "value": "ongoing"},

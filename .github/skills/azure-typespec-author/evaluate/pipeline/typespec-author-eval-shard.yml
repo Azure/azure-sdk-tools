@@ -6,6 +6,9 @@
 parameters:
   - name: vallyRoot
     type: string
+  - name: skillRepository
+    type: string
+    default: ''
   # F/T and no-skill runs use different matrix-producing stages; this also
   # namespaces their published artifacts so Summary can consume both tracks.
   - name: matrixStageName
@@ -91,6 +94,8 @@ jobs:
       # Materializes the TypeSpec project dependencies required by these evals
       # before Vally copies each fixture into its trial workspace.
       - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
+        parameters:
+          skillRepository: ${{ parameters.skillRepository }}
 
       - script: |
           patterns=()

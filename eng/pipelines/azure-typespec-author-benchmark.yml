@@ -6,6 +6,7 @@
 # - Skill source:
 #   - SkillBranch empty: evaluate the current checked-out branch.
 #   - SkillBranch set: overlay SKILL.md + references from that branch before evaluation.
+#   - SkillRepository empty: fetch from origin; otherwise use the specified GitHub HTTPS URL.
 #
 # Structure:
 # - PrepareShared builds the selected MCP binary once and publishes it as the mcp-servers artifact.
@@ -20,6 +21,10 @@ parameters:
   displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Defaults to the full source branch ref.
   type: string
   default: $(Build.SourceBranch)
+- name: SkillRepository
+  displayName: Optional GitHub HTTPS repository URL containing SkillBranch. Empty uses origin.
+  type: string
+  default: ''
 - name: McpKind
   displayName: MCP implementation
   type: string
@@ -72,6 +77,7 @@ extends:
             parameters:
               matrixStageName: PrepareForced
               vallyRoot: .github/skills/azure-typespec-author/evaluate
+              skillRepository: ${{ parameters.SkillRepository }}
               mcpEnvironment: ${{ parameters.McpKind }}
               azureSubscription: azuresdkqabot-dev
               runs: ${{ parameters.Runs }}
@@ -113,6 +119,7 @@ extends:
             parameters:
               matrixStageName: PrepareTrigger
               vallyRoot: .github/skills/azure-typespec-author/evaluate
+              skillRepository: ${{ parameters.SkillRepository }}
               mcpEnvironment: ${{ parameters.McpKind }}
               azureSubscription: azuresdkqabot-dev
               runs: ${{ parameters.Runs }}

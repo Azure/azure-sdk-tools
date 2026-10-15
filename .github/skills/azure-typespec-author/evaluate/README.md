@@ -3,26 +3,6 @@
 This directory contains [Vally](https://aka.ms/vally) evaluations for the
 `azure-typespec-author` skill.
 
-## Benchmark Skill Source
-
-The tools benchmark in `eng/pipelines/azure-typespec-author-benchmark.yml` accepts
-`SkillBranch` and optional `SkillRepository`. An empty `SkillRepository` preserves the
-existing behavior: fetch the skill ref from the checkout's `origin`. To evaluate the
-canonical specs-hosted skill, set `SkillRepository` to
-`https://github.com/Azure/azure-rest-api-specs.git` and `SkillBranch` to its branch or
-`refs/pull/<number>/head`. Only `SKILL.md` and `references/` are overlaid; the evals,
-fixtures, and pipeline infrastructure remain in tools.
-
-Maintenance tooling is hosted in the canonical
-[agentic doc-refinement directory](https://github.com/Azure/azure-rest-api-specs/tree/main/.github/skills/azure-typespec-author/agentic-doc-refinement).
-The tools pipeline support must land before that workflow can queue specs-hosted refs.
-
-Run the focused overlay checks from the repository root:
-
-```powershell
-node --test .github\skills\azure-typespec-author\evaluate\pipeline\typespec-author-overlay-skill.test.cjs
-```
-
 ## Supported Local Environment
 
 Use Vally 0.14.0.

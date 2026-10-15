@@ -3,7 +3,7 @@ name: azure-typespec-author
 license: MIT
 metadata:
   version: "1.0.0"
-description: "Authors and modifies Azure TypeSpec (.tsp) API specifications. MUST BE USED FOR ALL TypeSpec changes regardless of complexity — even adding a single property or enum value requires this skill's validation workflow. USE FOR: any TypeSpec/tsp change — api versions (add, bump, preview, stable, promote), resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread model. Covers both ARM resource-manager (Azure.ResourceManager) and data-plane (Azure.Core) services. DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls. INVOKES: azure-sdk-mcp:azsdk_typespec_retrieve_knowledge, azure-sdk-mcp:azsdk_run_typespec_validation."
+description: "Authors Azure TypeSpec API specifications. MUST BE USED for all .tsp changes except naming-only client.tsp SDK overrides handled by azsdk-common-typespec-naming. WHEN: api versions, resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread models for ARM or data-plane. DO NOT USE FOR: naming-only client.tsp overrides, SDK generation/releases, or single MCP calls. INVOKES: azure-sdk-mcp:azsdk_typespec_retrieve_knowledge, azure-sdk-mcp:azsdk_run_typespec_validation."
 compatibility: "azure-sdk-mcp server with azure-sdk-mcp:azsdk_typespec_retrieve_knowledge and azure-sdk-mcp:azsdk_run_typespec_validation tools"
 ---
 
@@ -13,9 +13,9 @@ This skill authors and modifies Azure TypeSpec (`.tsp`) API specifications for A
 
 ## Triggers
 
-USE FOR: any TypeSpec/tsp change — api versions (add, bump, preview, stable, promote), resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread model
+USE FOR: TypeSpec/tsp changes except naming-only client.tsp SDK overrides — api versions (add, bump, preview, stable, promote), resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread model
 WHEN: "add TypeSpec API version", "modify .tsp file", "change TypeSpec decorators", "update TypeSpec models or operations", "author Azure TypeSpec"
-DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls
+DO NOT USE FOR: naming-only client.tsp SDK overrides, SDK generation, releasing SDK packages, or single MCP tool calls
 
 The `azure-typespec-author` skill **must** be invoked immediately in all modes (including plan mode) for any task that involves creating and modifying TypeSpec (`.tsp`) files except for `client.tsp` under the specification directory in this repository. **This skill MUST be used regardless of how simple the task appears** — there are no "simple" TypeSpec edits. Even trivial-seeming changes (adding a single enum value, one property, one operation) require the full workflow because versioning decorators, validation, and compliance checks are mandatory.
 
@@ -42,9 +42,9 @@ Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name f
 
 ## Rules
 
-- **Do NOT skip this skill for "simple" tasks** — there are no simple TypeSpec edits. A single property addition can require `@added` decorators, version gating, and validation. Always invoke this skill.
+- **Do NOT skip this skill for "simple" declaration tasks** — there are no simple TypeSpec source edits. A single property addition can require `@added` decorators, version gating, and validation. The only `.tsp` exception is a naming-only `client.tsp` SDK override routed directly to `azsdk-common-typespec-naming`.
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
-- **Mandatory for ALL `.tsp` edits** — even a single `?` change can be breaking.
+- **Mandatory for ordinary `.tsp` edits** — even a single `?` change can be breaking. Do not invoke this skill for the naming-only `client.tsp` exception.
 - **Minimal, scoped edits** — only change what the request requires.
 - **Keep source and client plans separate** — Step 3 plans ordinary TypeSpec source changes. Step 4 offers an explicit opt-out from the [client configuration workflow](references/client-configuration.md), which is recommended and included by default for SDK-visible changes. The authoring skill owns declaration edits; the customization tool owns `client.tsp` edits.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.

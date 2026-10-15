@@ -7,20 +7,21 @@ every eval scenario maps to an authoritative TypeSpec document.
 
 Sync `.github/skills/azure-typespec-author/references/reference-document-links.md`.
 
-Cases (these 8 categories MUST exist, in this order):
+Categories (these 9 categories MUST exist, in this order):
 
-1. Add ARM Resource Type
-2. Add ARM Resource Operation
-3. API Versioning
-4. Long-Running Operations (LRO)
-5. Paging
-6. Models and Enums
-7. Decorators
-8. Warnings
+1. ARM Resource Types
+2. ARM Resource Operations
+3. Data-Plane Operations
+4. API Versioning
+5. Long-Running Operations (LRO)
+6. Paging
+7. Models and Enums
+8. Decorators
+9. Warnings
 
 Rules:
 
-- Categorize every document under one of the 8 cases above.
+- Categorize every document under one of the 9 categories above.
 - Do **not** include the "Migrate Swagger to TypeSpec" material.
 - Avoid adding a new case/category if the topic fits an existing case. Fold niche ARM
   scenarios (private endpoints/links, network security perimeter, common types, change
@@ -37,4 +38,4 @@ Rules:
 ## Validation
 
 - Every URL you add or keep must return HTTP 200.
-- The 8 case headings must be present and non-empty.
+- The 9 category headings must be present and non-empty.

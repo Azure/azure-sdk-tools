@@ -137,7 +137,7 @@ Imported knowledge sources include:
 - RPC guidelines
 - ......
 
-An Azure Function syncs all documents from sources daily. The function detects changed and deleted files and updates them in Azure Storage. It then automatically triggers Azure AI Search to reindex the index for adopting the changed documents.
+The Knowledge Sync Service runs as a scheduled WebJob to sync documents from sources daily. It detects changed and deleted files and updates them in Azure Storage, then triggers Azure AI Search to reindex the changed documents.
 
 #### 2.3.2 Data Preprocessing & Indexing
 

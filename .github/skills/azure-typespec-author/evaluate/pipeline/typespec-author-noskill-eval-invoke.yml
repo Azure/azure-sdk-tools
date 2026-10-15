@@ -36,7 +36,6 @@ steps:
             --runs $(TypeSpecAuthorEvalRuns)
       env:
         COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
-        GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
         AZSDK_EVAL_MCP_KIND: $(AZSDK_EVAL_MCP_KIND)
 
   - ${{ else }}:
@@ -51,5 +50,4 @@ steps:
       workingDirectory: ${{ parameters.vallyRoot }}
       env:
         COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
-        GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
         AZSDK_EVAL_MCP_KIND: $(AZSDK_EVAL_MCP_KIND)

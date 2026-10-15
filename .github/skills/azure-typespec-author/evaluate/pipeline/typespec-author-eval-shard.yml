@@ -127,7 +127,6 @@ jobs:
                 --runs ${{ parameters.runs }}
           env:
             COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
-            GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
             AZSDK_EVAL_MCP_KIND: live
 
       - ${{ else }}:
@@ -142,7 +141,6 @@ jobs:
           workingDirectory: ${{ parameters.vallyRoot }}
           env:
             COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
-            GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
             ${{ if ne(parameters.mcpEnvironment, 'none') }}:
               AZSDK_EVAL_MCP_KIND: ${{ parameters.mcpEnvironment }}
 

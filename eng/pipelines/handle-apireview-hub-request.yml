@@ -93,6 +93,21 @@ variables:
   - name: ApiReviewHubEndpoint
     value: 'https://api-review-hub.azurewebsites.net'
     readonly: true
+  - name: ApiReviewRequestMode
+    value: ${{ parameters.requestMode }}
+    readonly: true
+  - name: ApiReviewRequestLanguage
+    value: ${{ parameters.language }}
+    readonly: true
+  - name: ApiReviewOperationId
+    value: ${{ parameters.operationId }}
+    readonly: true
+  - name: ApiReviewBaseRef
+    value: ${{ parameters.baseRef }}
+    readonly: true
+  - name: ApiReviewTargetRef
+    value: ${{ parameters.targetRef }}
+    readonly: true
 
 stages:
   - stage: BuildTools

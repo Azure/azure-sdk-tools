@@ -132,6 +132,16 @@ but are not scored by an evaluator.
 | `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
 | `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
 
+Offline/perf start a local development backend and always use the running pipeline's
+branch name via `EVAL_AGENT_BRANCH`. No additional pipeline parameters are needed.
+Branch deployments must already exist: targeting a branch does not build/deploy it.
+Each request prepends `[branch:<running-branch>]` to the message, using the same
+routing as channel messages. The backend resolves the tenant's agent and branch
+version from its shared App Configuration settings.
+Missing branch/agent entries fail instead of falling back.
+Dataset queries and grading inputs remain unchanged; only the outgoing message includes the prefix.
+Local runs without `EVAL_AGENT_BRANCH` and online production retain environment defaults.
+
 The online pipeline evaluates the **freshly collected weekly md** (not the static
 `basic` set): `dataset.online_snapshot` downloads recent md and converts it to
 per-scenario `online-tests/<scenario>.jsonl`, then `evals_run.py` grades each file:

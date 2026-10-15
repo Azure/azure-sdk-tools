@@ -140,6 +140,7 @@ async def close_clients() -> None:
     for client in _openai_clients.values():
         await client.close()
     _openai_clients.clear()
+    _stateless_session_ids.clear()
     if _agent_client is not None:
         _agent_client = None
     if _project_client is not None:
@@ -149,19 +150,21 @@ async def close_clients() -> None:
 
 # -- Stateless warm-session cache ------------------------------------------
 # Stateless requests (no customer conversation_id) share one warm sandbox per
-# agent via a stable agent_session_id captured from the first stateless response.
+# agent version via an agent_session_id captured from a stateless response.
 # No `conversation` is threaded, so history is never shared across callers.
-_stateless_session_ids: dict[str, str] = {}
+_stateless_session_ids: dict[tuple[str, str], str] = {}
 
 
-def get_stateless_session_id(agent_name: str) -> str | None:
+def get_stateless_session_id(agent_name: str, agent_version: str) -> str | None:
     """Return the cached warm sandbox id for stateless requests, if any."""
-    return _stateless_session_ids.get(agent_name)
+    return _stateless_session_ids.get((agent_name, agent_version))
 
 
-def set_stateless_session_id(agent_name: str, session_id: str | None) -> None:
+def set_stateless_session_id(
+    agent_name: str, agent_version: str, session_id: str | None
+) -> None:
     """Cache (or clear) the warm sandbox id reused by stateless requests."""
     if session_id is None:
-        _stateless_session_ids.pop(agent_name, None)
+        _stateless_session_ids.pop((agent_name, agent_version), None)
     else:
-        _stateless_session_ids[agent_name] = session_id
+        _stateless_session_ids[(agent_name, agent_version)] = session_id

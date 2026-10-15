@@ -93,10 +93,11 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
         Remove-Variable -Scope Global -ErrorAction SilentlyContinue -Name `
             AutoReleaseEmittedVars, AutoReleaseStubRelease, AutoReleaseStubFiles, AutoReleaseStubChangedPackages, `
             AutoReleaseGetPrPkgCalled, AutoReleaseResolveArgs, AutoReleaseThrowOnResolve, AutoReleaseThrowOnGetPrPkg, `
-            AutoReleaseAzsdkCalls
+            AutoReleaseAzsdkCalls, LanguageDisplayName
     }
 
     BeforeEach {
+        $global:LanguageDisplayName = '.NET'
         $global:AutoReleaseEmittedVars = @{}
         $global:AutoReleaseStubRelease = [pscustomobject]@{ PullRequestNumber = $null; IsEligible = $false; SkipReason = 'default'; PullRequest = $null }
         $global:AutoReleaseStubFiles = @()
@@ -248,6 +249,8 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $callArgs | Should -Contain 'Release In Progress'
             $callArgs | Should -Contain '--sdk-pull-request'
             $callArgs | Should -Contain 'https://github.com/Azure/azure-sdk-for-net/pull/123'
+            $languageIndex = [Array]::IndexOf($callArgs, '--language')
+            $callArgs[$languageIndex + 1] | Should -Be '.NET'
             $callArgs | Should -Contain '--release-pipeline'
             $callArgs | Should -Contain 'https://dev.azure.com/fabrikam/project/_build/results?buildId=12345'
             $callArgs | Should -Not -Contain '--api-version'

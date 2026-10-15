@@ -180,12 +180,25 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
     }
 
-    It 'does not turn a status-command failure into a package-publication failure' {
+    It 'does not retry a failed correlated update through the legacy lookup' -TestCases @(
+        @{ ReleasePlanId = '100'; SdkPullRequest = '' },
+        @{ ReleasePlanId = '0'; SdkPullRequest = 'https://github.com/Azure/azure-sdk-for-python/pull/100' }
+    ) {
+        param($ReleasePlanId, $SdkPullRequest)
         $global:ReleaseStatusTestExitCode = 1
 
-        { Invoke-CompletionTest $script:packageInfoPath } | Should -Not -Throw
+        { Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest } | Should -Not -Throw
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        $call = $global:ReleaseStatusTestCalls[0]
+        Get-CapturedArgument $call '--package-name' | Should -Be 'azure-test'
+        Get-CapturedArgument $call '--language' | Should -Be 'Python'
+        if ($ReleasePlanId -ne '0') {
+            Get-CapturedArgument $call '--release-plan-id' | Should -Be $ReleasePlanId
+        }
+        if ($SdkPullRequest) {
+            Get-CapturedArgument $call '--sdk-pull-request' | Should -Be $SdkPullRequest
+        }
     }
 
     It 'declares and forwards both correlation inputs in the shared completion template' {

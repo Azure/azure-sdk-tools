@@ -470,21 +470,47 @@ only Storage Blob Data Reader on reports, never archive.
 **The static preview is restored in the user-approved Engineering System
 `typespec` resource group; automatic reporting is not operational.**
 The [current preview](https://orange-pebble-01bfc3d1e.6.azurestaticapps.net) embeds
-the unchanged administrative initial-1.0 October 7 .NET observation and separately
-measured October 9 Java/Python committed-source observations. Each repository
-has its own baseline with quiet no-automatic-feed metadata, not a nightly feed.
+six real retrospective .NET weekly measurements, the unchanged administrative
+initial-1.0 October 7 .NET observation, and separately measured October 9
+Java/Python committed-source observations. History is repository-scoped with
+quiet no-automatic-feed metadata, not a nightly feed.
 
-| Repository | Libraries | Services | Custom / total physical lines | Custom source |
+| Repository | Selected source date | Libraries | Services | Custom / total physical lines | Custom source |
+| --- | --- | ---: | ---: | ---: | ---: |
+| .NET | October 11 (reconstructed) | 464 | 276 | 1,196,799 / 16,350,459 | 7.32% |
+| Java/Scala | October 9 | 464 | 278 | 1,703,618 / 14,594,099 | 11.67% |
+| Python | October 9 | 409 | 262 | 759,343 / 10,235,771 | 7.42% |
+
+The six completed Monday-Sunday UTC weeks use the final `main` commit before
+the following Monday. These actual historical sources were measured on
+October 15 UTC using the current collector, not collected on the historical
+dates. The hash-bound preview sidecar supplies each source-as-of Sunday; the
+snapshot's real collection timestamp and generated ID remain intact.
+
+| Source as of (UTC) | Libraries | Services | Custom / total physical lines | Custom source |
 | --- | ---: | ---: | ---: | ---: |
-| .NET | 459 | 276 | 1,192,020 / 16,289,770 | 7.32% |
-| Java/Scala | 464 | 278 | 1,703,618 / 14,594,099 | 11.67% |
-| Python | 409 | 262 | 759,343 / 10,235,771 | 7.42% |
+| September 6 | 451 | 273 | 1,154,194 / 16,048,089 | 7.19% |
+| September 13 | 454 | 275 | 1,150,415 / 16,046,191 | 7.17% |
+| September 20 | 455 | 275 | 1,162,856 / 16,180,810 | 7.19% |
+| September 27 | 456 | 275 | 1,155,457 / 16,210,572 | 7.13% |
+| October 4 | 459 | 276 | 1,192,020 / 16,289,770 | 7.32% |
+| October 11 | 464 | 276 | 1,196,799 / 16,350,459 | 7.32% |
+
+October 11 is the default latest .NET source observation. The original October 7
+baseline remains selectable and unmarked; its bytes and counts were not replaced.
+The October 4 reconstruction uses that same source commit and matches the entire
+original snapshot except its new actual collection timestamp and snapshot ID.
+History labels disclose reconstruction/current rules; missing days remain gaps.
+Only approved compact seeds were uploaded to the same existing Static Web App.
+Live asset bytes and source-date selection/ranges were verified against the
+actual nine-input build; fresh read-only before/after checks preserved all fifteen
+resource identities, locations and tags, including the twelve pre-existing assets.
 
 Java source commit is `0d93db3f44c0a22b1de8b8ee853a958f85dac3c1`; Python is
 `12feba1b420fc0b1f635b62da2990b40a8a0ea39`. These are language-specific
 source-provenance baselines, not an authorship/quality comparison or combined
-portfolio trend. The .NET measurement, timestamp, commit and snapshot ID were
-not rewritten or recollected.
+portfolio trend. The original .NET baseline's timestamp, commit, snapshot ID
+and counts were not rewritten; retrospective collections are separate observations.
 
 The preserved October 7 prototype-3 .NET observation and its separate
 initial-format copy both contain

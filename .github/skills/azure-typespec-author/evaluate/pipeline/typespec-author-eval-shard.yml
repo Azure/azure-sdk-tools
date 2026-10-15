@@ -126,9 +126,8 @@ jobs:
                 --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
                 --runs ${{ parameters.runs }}
           env:
-            ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-              COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
-              GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+            COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+            GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
             AZSDK_EVAL_MCP_KIND: live
 
       - ${{ else }}:
@@ -142,9 +141,8 @@ jobs:
           displayName: 'vally eval $(shardName)'
           workingDirectory: ${{ parameters.vallyRoot }}
           env:
-            ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-              COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
-              GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+            COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+            GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
             ${{ if ne(parameters.mcpEnvironment, 'none') }}:
               AZSDK_EVAL_MCP_KIND: ${{ parameters.mcpEnvironment }}
 

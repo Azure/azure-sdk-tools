@@ -24,11 +24,6 @@ BOARD_TARGETS = {
 }
 EXISTING_TEAMS = ("azure_sdk", "azure_mcp_server")
 ENVIRONMENTS = ("dev", "test", "prod")
-BOARD_NAMES = {
-    "dev": "api-stewardship-board-qabot-dev-logicapp",
-    "test": "api-stewardship-board-qabot-test-logicapp",
-    "prod": "api-stewardship-board-qabot-logicapp",
-}
 
 
 def load_parameters(team: str, environment: str) -> dict:
@@ -38,20 +33,18 @@ def load_parameters(team: str, environment: str) -> dict:
     return {key: parameter["value"] for key, parameter in content["parameters"].items()}
 
 
-@pytest.mark.parametrize("environment", ENVIRONMENTS)
-def test_board_listener_is_disabled_with_known_team_and_safe_channels(environment):
-    board = load_parameters("api_stewardship_board", environment)
-    team, channel = BOARD_TARGETS[environment]
+def test_board_production_listener_is_disabled_with_known_team_and_channel():
+    board = load_parameters("api_stewardship_board", "prod")
+    team, channel = BOARD_TARGETS["prod"]
     assert board["teamsGroupId"] == team
     assert board["teamsChannelIds"] == [channel]
     assert board["workflowState"] == "Disabled"
-    assert board["logicAppName"] == BOARD_NAMES[environment]
+    assert board["logicAppName"] == "api-stewardship-board-qabot-logicapp"
 
 
-@pytest.mark.parametrize("environment", ENVIRONMENTS)
-def test_board_reuses_matching_environment_infrastructure(environment):
-    board = load_parameters("api_stewardship_board", environment)
-    sdk = load_parameters("azure_sdk", environment)
+def test_board_production_reuses_matching_environment_infrastructure():
+    board = load_parameters("api_stewardship_board", "prod")
+    sdk = load_parameters("azure_sdk", "prod")
     infrastructure_keys = set(sdk) - {"logicAppName", "teamsGroupId", "teamsChannelIds"}
     assert set(board) == set(sdk) | {"workflowState"}
     assert {key: board[key] for key in infrastructure_keys} == {
@@ -59,13 +52,38 @@ def test_board_reuses_matching_environment_infrastructure(environment):
     }
 
 
+@pytest.mark.parametrize("environment", ("dev", "test"))
+def test_board_nonproduction_channels_reuse_existing_sdk_listeners(environment):
+    sdk = load_parameters("azure_sdk", environment)
+    team, channel = BOARD_TARGETS[environment]
+    assert sdk["teamsGroupId"] == team
+    assert sdk["teamsChannelIds"].count(channel) == 1
+    assert not (
+        LOGICAPP_ROOT / f"parameters.api_stewardship_board.{environment}.json"
+    ).exists()
+
+
+@pytest.mark.parametrize("environment", ENVIRONMENTS)
+def test_each_board_channel_has_exactly_one_matching_listener(environment):
+    team, channel = BOARD_TARGETS[environment]
+    owners = []
+    for path in LOGICAPP_ROOT.glob("parameters.*.*.json"):
+        parameters = json.loads(path.read_text())["parameters"]
+        if channel in parameters["teamsChannelIds"]["value"]:
+            assert parameters["teamsGroupId"]["value"] == team
+            owners.append(path.name)
+    listener_team = "api_stewardship_board" if environment == "prod" else "azure_sdk"
+    assert owners == [f"parameters.{listener_team}.{environment}.json"]
+
+
 def test_listener_names_are_unique_across_all_teams_and_environments():
     names = [
         load_parameters(team, environment)["logicAppName"]
-        for team in (*EXISTING_TEAMS, "api_stewardship_board")
+        for team in EXISTING_TEAMS
         for environment in ENVIRONMENTS
     ]
-    assert len(names) == len(set(names)) == 9
+    names.append(load_parameters("api_stewardship_board", "prod")["logicAppName"])
+    assert len(names) == len(set(names)) == 7
 
 
 def test_template_preserves_existing_enabled_default_and_team_binding():
@@ -83,12 +101,9 @@ def test_template_preserves_existing_enabled_default_and_team_binding():
 
 @pytest.mark.parametrize("team", EXISTING_TEAMS)
 @pytest.mark.parametrize("environment", ENVIRONMENTS)
-def test_existing_teams_retain_enabled_default_and_exclude_board_channels(team, environment):
+def test_existing_teams_retain_enabled_default(team, environment):
     existing = load_parameters(team, environment)
     assert "workflowState" not in existing
-    assert set(existing["teamsChannelIds"]).isdisjoint(
-        channel for _, channel in BOARD_TARGETS.values()
-    )
 
 
 def test_pipeline_keeps_original_bash_deployment_with_new_team_choice():

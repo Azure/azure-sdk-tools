@@ -89,10 +89,12 @@ describe('ChannelConfigManager', () => {
         name,
         tenant: 'api_stewardship_board_qa_bot',
       });
+      const listenerTeam = environment === 'prod' ? 'api_stewardship_board' : 'azure_sdk';
       const listener = JSON.parse(readFileSync(new URL(
-        `../../azure-sdk-qa-bot-agent/pipelines/logicapp/parameters.api_stewardship_board.${environment}.json`,
+        `../../azure-sdk-qa-bot-agent/pipelines/logicapp/parameters.${listenerTeam}.${environment}.json`,
         import.meta.url,
       ), 'utf8'));
+      expect(listener.parameters.teamsChannelIds.value).toContain(channelId);
       expect(board[0].endpoint).toBe(listener.parameters.serverBaseUrl.value);
       expect(manager.getConfig().default.tenant).toBe('general_qa_bot');
       expect(manager.getConfig().channels.find(channel => channel.name === 'TypeSpec Discussion')

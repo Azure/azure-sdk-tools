@@ -150,7 +150,7 @@ extends:
 
                       # Resolves the collection agent's principal ID, so that agent
                       # must already be deployed through agent-cd.yml.
-                      python scripts/deploy_teams_collection.py deploy \
+                      python scripts/deploy_hosted_agent.py teams-collection deploy \
                         --environment "${{ parameters.environment }}" \
                         --resource-group "$(RESOURCE_GROUP)" \
                         --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)" \

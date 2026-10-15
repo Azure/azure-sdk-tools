@@ -179,9 +179,9 @@ def stored_message(partition, message_id, content, *, ts=1, role="user",
 class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
     def test_cli_rejects_local_collection(self):
         from io import StringIO
-        from scripts.deploy_teams_collection import main
+        from scripts.deploy_hosted_agent import main
 
-        with patch.object(sys, "argv", ["deploy_teams_collection.py", "run"]), \
+        with patch.object(sys, "argv", ["deploy_hosted_agent.py", "teams-collection", "run"]), \
                 patch("sys.stderr", new_callable=StringIO) as stderr:
             with self.assertRaises(SystemExit) as failure:
                 main()
@@ -352,7 +352,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_cli_dispatches_remote_routine_and_closes_credential(self):
         from types import SimpleNamespace
-        from scripts.deploy_teams_collection import execute_routine
+        from scripts.deploy_hosted_agent import execute_routine
 
         config = config_with()
         endpoint = "https://account.services.ai.azure.com/api/projects/project"
@@ -364,7 +364,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         for fails in (False, True):
             with self.subTest(fails=fails), \
                     patch("config.app_config.init", new=AsyncMock()) as initialize, \
-                    patch("scripts.deploy_teams_collection.routine_request", new=AsyncMock(
+                    patch("scripts.deploy_hosted_agent.routine_request", new=AsyncMock(
                         return_value={"dispatch_id": "dispatch"},
                         side_effect=RuntimeError("dispatch failed") if fails else None,
                     )) as dispatch, \
@@ -467,7 +467,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
     async def test_only_summarization_is_scheduled_and_the_routine_starts_paused(self):
         import httpx
         from types import SimpleNamespace
-        from scripts.deploy_teams_collection import routine_request, routine_definition
+        from scripts.deploy_hosted_agent import routine_request, routine_definition
 
         config = json.loads(
             (Path(__file__).resolve().parents[1] / "config/teams_collection_config.json").read_text()
@@ -505,7 +505,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             await routine_request(config, "routine-enable", endpoint, credential, client)
 
     def test_cli_no_longer_exposes_backfill_and_rejects_untrusted_endpoints(self):
-        import scripts.deploy_teams_collection as cli
+        import scripts.deploy_hosted_agent as cli
 
         for removed in ("start_backfill", "backfill_status", "execute_backfill",
                         "_agent_responses", "_response_result"):
@@ -668,7 +668,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
 
     def test_collection_deployment_resolves_identity_and_sanitizes_callback_url(self):
         from types import SimpleNamespace
-        from scripts.deploy_teams_collection import (
+        from scripts.deploy_hosted_agent import (
             _appconfig_name,
             _collector_principal_id,
             _sas_free_callback_url,
@@ -714,7 +714,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("deploy_teams_collection.py", agent_pipeline)
 
         self.assertIn("- teams-collection", logicapp_pipeline)
-        self.assertIn("python scripts/deploy_teams_collection.py deploy", logicapp_pipeline)
+        self.assertIn("python scripts/deploy_hosted_agent.py teams-collection deploy", logicapp_pipeline)
         self.assertIn(
             "--appconfig-endpoint \"$(AZURE_APPCONFIG_ENDPOINT)\"", logicapp_pipeline
         )
@@ -725,7 +725,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(
             "${{ if eq(parameters.workflow, 'teams-collection') }}", logicapp_pipeline
         )
-        self.assertNotIn("deploy_hosted_agent.py", logicapp_pipeline)
+        self.assertNotIn("deploy_teams_collection.py", logicapp_pipeline)
 
     def test_normalization_matches_the_realtime_workflow(self):
         from services.conversation_service import normalized_content, split_subject

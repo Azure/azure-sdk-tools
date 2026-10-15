@@ -312,7 +312,7 @@ The `conversation-messages` container already exists and is owned by the bot; th
 3. For a manual equivalent after deploying the hosted agent, run:
 
     ```powershell
-    python scripts/deploy_teams_collection.py deploy `
+   python scripts/deploy_hosted_agent.py teams-collection deploy `
       --environment dev `
       --resource-group azure-sdk-qa-bot-dev `
       --appconfig-endpoint https://azuresdkqabot-dev-config.azconfig.io `
@@ -333,7 +333,7 @@ The `conversation-messages` container already exists and is owned by the bot; th
 4. Manually dispatch the disabled summary Routine for verification:
 
     ```powershell
-    python scripts/deploy_teams_collection.py routine-dispatch `
+   python scripts/deploy_hosted_agent.py teams-collection routine-dispatch `
       --project-endpoint $projectEndpoint
     ```
 
@@ -407,7 +407,7 @@ If no summaries are written at all, check Hosted Agent startup/initialization an
 Only after cloud verification succeeds, enable the weekly summary schedule:
 
 ```powershell
-python scripts/deploy_teams_collection.py routine-enable `
+python scripts/deploy_hosted_agent.py teams-collection routine-enable `
   --project-endpoint $projectEndpoint
 ```
 

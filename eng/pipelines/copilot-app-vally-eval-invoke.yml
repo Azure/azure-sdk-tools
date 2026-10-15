@@ -1,0 +1,27 @@
+# Test-only wrapper. The production shard already performed the shared App login.
+parameters:
+  - name: vallyRoot
+    type: string
+  - name: UseAzSdkAuthentication
+    type: boolean
+    default: false
+  - name: threshold
+    type: number
+    default: 1.0
+
+steps:
+  # This is the unmodified production invocation and remains the gating control.
+  - template: /eng/common/pipelines/templates/steps/eval-invoke.yml
+    parameters:
+      vallyRoot: ${{ parameters.vallyRoot }}
+      UseAzSdkAuthentication: ${{ parameters.UseAzSdkAuthentication }}
+      threshold: ${{ parameters.threshold }}
+
+  - script: node "$(Build.SourcesDirectory)/eng/pipelines/copilot-app-auth-probes.mjs"
+    displayName: 'Compare single-variable executor and prompt-judge authentication'
+    workingDirectory: ${{ parameters.vallyRoot }}
+    condition: succeededOrFailed()
+    env:
+      COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+      GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+      EVAL_ARGS: $(evalArgs)

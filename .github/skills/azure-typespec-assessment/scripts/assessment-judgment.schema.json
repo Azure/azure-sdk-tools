@@ -151,6 +151,8 @@
       "properties": {
         "id": { "type": "string", "pattern": "^sdk-naming-[0-9a-f]{16}$" },
         "reviewUnitId": { "type": "string", "pattern": "^semantic-" },
+        "declarationId": { "type": "string", "pattern": "^declaration-" },
+        "sdkArtifactFactId": { "type": "string", "minLength": 1 },
         "declaration": { "type": "string", "minLength": 1 },
         "currentSdkName": { "type": "string", "minLength": 1 },
         "recommendedSdkName": { "type": "string", "minLength": 1 },
@@ -163,6 +165,12 @@
         "sourceLocation": { "type": "string", "minLength": 1 }
       },
       "allOf": [
+        {
+          "anyOf": [
+            { "required": ["declarationId"] },
+            { "required": ["sdkArtifactFactId"] }
+          ]
+        },
         {
           "if": { "properties": { "decision": { "const": "recommend" } } },
           "then": { "required": ["recommendedSdkName"] }

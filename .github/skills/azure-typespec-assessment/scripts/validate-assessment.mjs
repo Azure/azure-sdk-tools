@@ -143,6 +143,12 @@ function validateSdkNamingDimension(naming, semanticItems, errors) {
     if (finding.reviewUnitId && !semanticIds.has(finding.reviewUnitId)) {
       errors.push(`${prefix} links unknown semantic intent ${finding.reviewUnitId}.`);
     }
+    if (!finding.declarationId && !finding.sdkArtifactFactId) {
+      errors.push(`${prefix} has no canonical declaration or SDK artifact evidence.`);
+    }
+    if (finding.sourceLocation && !finding.declarationId) {
+      errors.push(`${prefix} has a source location without declaration evidence.`);
+    }
   }
   for (const [index, blocker] of naming.blockers.entries()) {
     if (!blocker?.trim()) errors.push(`SDK Naming blocker ${index + 1} is empty.`);

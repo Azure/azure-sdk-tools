@@ -654,6 +654,7 @@ void test("assembler includes SDK naming findings without changing REST/downstre
         {
           id: "sdk-naming-0123456789abcdef",
           reviewUnitId: "semantic-1",
+          declarationId: "declaration-1",
           declaration: "Contoso.Widget.enabled",
           currentSdkName: "Enabled",
           recommendedSdkName: "IsEnabled",

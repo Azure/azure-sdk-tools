@@ -134,6 +134,7 @@ The materializer writes one `assessment-judgment.json` conforming to `scripts\as
     "findings": [
       {
         "id": "sdk-naming-...",
+        "declarationId": "declaration-...",
         "declaration": "WidgetProperties.enabled",
         "currentSdkName": "Enabled",
         "recommendedSdkName": "IsEnabled",
@@ -142,7 +143,8 @@ The materializer writes one `assessment-judgment.json` conforming to `scripts\as
         "rule": "Boolean properties should use a verb prefix.",
         "rationale": "The member represents a boolean state.",
         "compatibilityEvidence": "The declaration is confirmed unshipped.",
-        "verification": "proposed"
+        "verification": "proposed",
+        "sourceLocation": "specification/widget/models.tsp:42"
       }
     ],
     "blockers": []
@@ -163,9 +165,12 @@ All IDs and URLs must come from the bounded inputs or validated inference
 output. Every `applicable-fail` decision must also provide a concise finding
 title and `high`, `medium`, or `low` severity for structured assessment data.
 SDK naming is materialized from `sdkNamingReview`. Finding IDs are derived
-deterministically. Status is `failed` when findings exist, `passed` only when
-every supplied target is reviewed and no blockers exist, and otherwise
-`not-assessed`.
+deterministically. Every finding must resolve to a changed declaration ID from
+the canonical source index or an SDK artifact fact ID referenced by canonical
+model-input evidence. Declaration-backed source locations are derived during
+materialization; arbitrary model-supplied locations are rejected. Status is
+`failed` when findings exist, `passed` only when every supplied target is
+reviewed and no blockers exist, and otherwise `not-assessed`.
 
 Documentation Completeness is not part of the Agent judgment. The compiler
 evidence records documentation presence for changed declarations. Assembly

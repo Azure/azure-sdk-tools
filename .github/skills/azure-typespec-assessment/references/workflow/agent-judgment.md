@@ -42,7 +42,7 @@ Keep this exact compact shape for bounded planning responses too:
 
 - `summary: string`;
 - `coverage: Array<{ language, serviceType, profile?, status, rationale }>`;
-- `findings: Array<{ reviewUnitId?, declaration, currentSdkName, recommendedSdkName?, languageScope, decision, rule, rationale, compatibilityEvidence, verification, sourceLocation? }>`;
+- `findings: Array<{ reviewUnitId?, declarationId?, sdkArtifactFactId?, declaration, currentSdkName, recommendedSdkName?, languageScope, decision, rule, rationale, compatibilityEvidence, verification }>`; every finding references at least one canonical changed declaration or referenced SDK artifact. Copy IDs from bounded inputs. Do not author `sourceLocation`; the materializer derives it from declaration evidence.
 - `blockers: string[]`.
 
 Use the schema enums exactly. In particular, use lowercase `arm`,

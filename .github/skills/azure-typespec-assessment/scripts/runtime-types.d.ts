@@ -846,6 +846,8 @@ export interface SdkNamingCoverage {
 
 export interface AgentSdkNamingFinding {
   reviewUnitId?: string;
+  declarationId?: string;
+  sdkArtifactFactId?: string;
   declaration: string;
   currentSdkName: string;
   recommendedSdkName?: string;

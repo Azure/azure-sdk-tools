@@ -121,10 +121,11 @@ The setup command:
 6. Exports `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
 7. Prepends the fixture `node_modules/.bin` to PATH so graders use its TypeSpec compiler.
 
-`prepare-skill-bundle.mjs` stages `azure-typespec-author` and its
-`azsdk-common-typespec-naming` dependency under `artifacts/typespec-author-skills`. Forced and
-trigger runs must use that bundle so the authoring workflow can invoke the shared naming skill.
-No-skill runs continue to use an empty skill directory.
+`prepare-skill-bundle.mjs` stages `azure-typespec-author`, its
+`azsdk-common-typespec-naming` dependency, and the assessment/generation skills used by
+routing boundary cases under `artifacts/typespec-author-skills`. Forced and trigger runs
+must use that bundle so trial workspaces receive only `SKILL.md` and references, never
+eval specs, fixtures, or graders. No-skill runs continue to use an empty skill directory.
 
 On a managed device that blocks `registry.npmjs.org`, set the approved feed before setup:
 

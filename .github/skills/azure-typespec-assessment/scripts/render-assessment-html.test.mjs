@@ -2047,6 +2047,7 @@ void test("SDK naming findings render coverage, evidence, verification, and sema
       {
         id: "sdk-naming-0123456789abcdef",
         reviewUnitId: "semantic-widget",
+        declarationId: "declaration-widget-enabled",
         declaration: "Widget.enabled",
         currentSdkName: "Enabled",
         recommendedSdkName: "IsEnabled",

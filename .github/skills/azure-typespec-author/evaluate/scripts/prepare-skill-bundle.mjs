@@ -3,7 +3,12 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 export function prepareSkillBundle(repoRoot, outputDirectory) {
-  const skills = ["azure-typespec-author", "azsdk-common-typespec-naming"];
+  const skills = [
+    "azure-typespec-author",
+    "azsdk-common-typespec-naming",
+    "azure-typespec-assessment",
+    "azsdk-common-generate-sdk-locally",
+  ];
   for (const skill of skills) {
     const source = path.join(repoRoot, ".github", "skills", skill);
     for (const entry of ["SKILL.md", "references"]) {

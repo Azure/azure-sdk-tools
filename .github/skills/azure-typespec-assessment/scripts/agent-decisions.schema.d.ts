@@ -89,6 +89,8 @@ export type SdkNamingFinding = {
   [k: string]: unknown;
 } & {
   reviewUnitId?: string;
+  declarationId?: string;
+  sdkArtifactFactId?: string;
   declaration: string;
   currentSdkName: string;
   recommendedSdkName?: string;
@@ -98,7 +100,6 @@ export type SdkNamingFinding = {
   rationale: string;
   compatibilityEvidence: string;
   verification: "proposed" | "supplied-generated" | "applied";
-  sourceLocation?: string;
 };
 
 export interface TypeSpecAssessmentCompactAgentDecisions {

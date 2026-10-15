@@ -4,8 +4,8 @@ type: capability
 area: naming
 environment: &skills
   skills:
-    - ../../..
-    - ../../../../azsdk-common-typespec-naming
+    - ../../../../../../artifacts/typespec-author-skills/azure-typespec-author
+    - ../../../../../../artifacts/typespec-author-skills/azsdk-common-typespec-naming
 tags:
   area: azure-typespec-author
   type: ci-gate
@@ -53,9 +53,9 @@ stimuli:
   - name: anti-trigger-readonly-typespec-assessment
     environment:
       skills:
-        - ../../..
-        - ../../../../azsdk-common-typespec-naming
-        - ../../../../azure-typespec-assessment
+        - ../../../../../../artifacts/typespec-author-skills/azure-typespec-author
+        - ../../../../../../artifacts/typespec-author-skills/azsdk-common-typespec-naming
+        - ../../../../../../artifacts/typespec-author-skills/azure-typespec-assessment
     prompt: |
       Assess the TypeSpec diff for specification/widget against origin/main for REST breaking changes.
       For now, identify and invoke the applicable skill; do not run the assessment or modify TypeSpec.
@@ -67,9 +67,9 @@ stimuli:
   - name: anti-trigger-generate-csharp-sdk
     environment:
       skills:
-        - ../../..
-        - ../../../../azsdk-common-typespec-naming
-        - ../../../../azsdk-common-generate-sdk-locally
+        - ../../../../../../artifacts/typespec-author-skills/azure-typespec-author
+        - ../../../../../../artifacts/typespec-author-skills/azsdk-common-typespec-naming
+        - ../../../../../../artifacts/typespec-author-skills/azsdk-common-generate-sdk-locally
     prompt: |
       Generate the C# SDK locally from specification/widget/resource-manager/Microsoft.Widget
       into sdk/widget/Azure.ResourceManager.Widget. The TypeSpec is ready.

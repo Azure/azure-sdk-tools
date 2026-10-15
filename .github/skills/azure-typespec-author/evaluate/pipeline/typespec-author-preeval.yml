@@ -27,14 +27,18 @@ steps:
           ;;
       esac
 
-      echo "Overlaying azure-typespec-author skill from: $BRANCH_REF"
+      echo "Overlaying authoring and naming skills from: $BRANCH_REF"
       git fetch origin "$BRANCH_REF"
       rm -rf .github/skills/azure-typespec-author/SKILL.md \
-             .github/skills/azure-typespec-author/references
+             .github/skills/azure-typespec-author/references \
+             .github/skills/azsdk-common-typespec-naming/SKILL.md \
+             .github/skills/azsdk-common-typespec-naming/references
       git checkout FETCH_HEAD -- \
         .github/skills/azure-typespec-author/SKILL.md \
-        .github/skills/azure-typespec-author/references
-      echo "Skill source overlaid from $BRANCH_REF"
+        .github/skills/azure-typespec-author/references \
+        .github/skills/azsdk-common-typespec-naming/SKILL.md \
+        .github/skills/azsdk-common-typespec-naming/references
+      echo "Authoring and naming skill sources overlaid from $BRANCH_REF"
     displayName: 'Overlay skill source from SkillBranch (if set)'
     env:
       SKILL_BRANCH: $(SkillBranch)

@@ -11,6 +11,8 @@ export type SdkNamingFinding = {
 } & {
   id: string;
   reviewUnitId?: string;
+  declarationId?: string;
+  sdkArtifactFactId?: NonemptyString;
   declaration: NonemptyString;
   currentSdkName: NonemptyString;
   recommendedSdkName?: NonemptyString;

@@ -4,8 +4,8 @@ type: capability
 area: naming
 environment: &skills
   skills:
-    - ../../..
-    - ../../../../azsdk-common-typespec-naming
+    - ../../../../../../artifacts/typespec-author-skills/azure-typespec-author
+    - ../../../../../../artifacts/typespec-author-skills/azsdk-common-typespec-naming
 tags:
   area: azure-typespec-author
   suite: naming
@@ -128,8 +128,8 @@ stimuli:
   - name: 007001-authoring-delegates-client-tsp-to-customization
     environment:
       skills:
-        - ../../..
-        - ../../../../azsdk-common-typespec-naming
+        - ../../../../../../artifacts/typespec-author-skills/azure-typespec-author
+        - ../../../../../../artifacts/typespec-author-skills/azsdk-common-typespec-naming
       files:
         - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/customization-mcp.mjs
           dest: customization-mcp.mjs

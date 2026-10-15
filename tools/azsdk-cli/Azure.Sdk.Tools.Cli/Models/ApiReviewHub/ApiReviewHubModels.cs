@@ -25,11 +25,55 @@ public class ReviewPullRequestCreationRequest
     [JsonPropertyName("packageName")]
     public required string PackageName { get; set; }
 
+    [JsonPropertyName("packageType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PackageType { get; set; }
+
     [JsonPropertyName("baseTag")]
     public string BaseTag { get; set; } = string.Empty;
 
     [JsonPropertyName("targetBranch")]
     public required GitBranchReference TargetBranch { get; set; }
+
+    [JsonPropertyName("pipelineRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PipelineRef { get; set; }
+
+    [JsonPropertyName("toolsRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ToolsRef { get; set; }
+
+    [JsonPropertyName("languageToolsRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LanguageToolsRef { get; set; }
+}
+
+public class MarkPackageReleasedRequest
+{
+    public required string Language { get; set; }
+    public required string PackageName { get; set; }
+    public required string Version { get; set; }
+    public required string ApiHash { get; set; }
+    public string RepoOwner { get; set; } = string.Empty;
+    public required DateTimeOffset ReleasedOn { get; set; }
+    public bool DryRun { get; set; } = true;
+}
+
+public class ApiReviewHubMarkReleasedResult
+{
+    public Guid PackageId { get; set; }
+    public Guid PackageVersionId { get; set; }
+    public required string PackageName { get; set; }
+    public required string Language { get; set; }
+    public required string Version { get; set; }
+    public required string ReleasedApiHash { get; set; }
+    public required string ApprovalStatus { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ApprovalRecordId { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AppliedInheritanceRule { get; set; }
+    public bool IsReleased { get; set; }
+    public DateTimeOffset? ReleasedOn { get; set; }
 }
 
 public class ReviewPullRequestCreationAcceptedResponse
@@ -80,6 +124,10 @@ public class OperationStatus
 
 public class ApiReviewHubApprovalRecord
 {
+    [JsonPropertyName("id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Id { get; set; }
+
     [JsonPropertyName("apiHash")]
     public string ApiHash { get; set; } = string.Empty;
 
@@ -159,7 +207,7 @@ public class ApiViewReleaseStatusResult
     public string? Error { get; set; }
 }
 
-public class ApiReviewReleaseStatusResult
+public class PackageReleaseStatusResult
 {
     [JsonPropertyName("isApproved")]
     public bool IsApproved { get; set; }
@@ -225,7 +273,7 @@ public class ApiReviewHubResponse : CommandResponse
     }
 }
 
-public class ApiReviewReleaseStatusResponse : CommandResponse
+public class PackageReleaseStatusResponse : CommandResponse
 {
     private const string Yellow = "\u001b[33m";
     private const string Red = "\u001b[31m";
@@ -233,7 +281,7 @@ public class ApiReviewReleaseStatusResponse : CommandResponse
 
     [JsonPropertyName("result")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ApiReviewReleaseStatusResult? Result { get; set; }
+    public PackageReleaseStatusResult? Result { get; set; }
 
     [JsonPropertyName("details")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

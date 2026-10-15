@@ -13,10 +13,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 [Description("API Review Hub operations including review pull request creation")]
 public class ApiReviewHubTool(
     IApiReviewHubService apiReviewHubService,
-    IApiReviewReleaseStatusService apiReviewReleaseStatusService,
     ILogger<ApiReviewHubTool> logger) : MCPMultiCommandTool
 {
-    private static readonly IReadOnlyDictionary<string, string> DefaultTargetRepos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    internal static readonly IReadOnlyDictionary<string, string> DefaultTargetRepos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["python"] = "azure-sdk-for-python",
         ["java"] = "azure-sdk-for-java",
@@ -24,20 +23,33 @@ public class ApiReviewHubTool(
         ["js"] = "azure-sdk-for-js",
         ["go"] = "azure-sdk-for-go",
         ["cpp"] = "azure-sdk-for-cpp",
-        ["swift"] = "azure-sdk-for-ios",
         ["rust"] = "azure-sdk-for-rust"
+    };
+    private static readonly IReadOnlyDictionary<string, string> LanguageAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["net"] = "csharp",
+        [".net"] = "csharp",
+        ["dotnet"] = "csharp",
+        ["c#"] = "csharp",
+        ["cs"] = "csharp",
+        ["c++"] = "cpp",
+        ["javascript"] = "js",
+        ["typescript"] = "js",
+        ["ts"] = "js",
+        ["golang"] = "go",
+        ["py"] = "python"
     };
 
     private static readonly string[] SupportedLanguages = [.. DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
     private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
 
     private const string CreateCommandName = "create";
-    private const string GetApprovalStatusCommandName = "get-approval-status";
     private const string RequestReviewPullRequestToolName = "azsdk_apireviewhub_request_review_pr";
-    private const string GetApprovalStatusToolName = "azsdk_apireview_get_approval_status";
     private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
     private const string DefaultTargetOwner = "Azure";
-    private const string DefaultApiViewReleaseStatusEndpoint = "https://apiview.dev/AutoReview/GetReviewStatus";
+    private const string PipelineRefEnvironmentVariable = "AZSDK_API_REVIEW_PIPELINE_REF";
+    private const string ToolsRefEnvironmentVariable = "AZSDK_API_REVIEW_TOOLS_REF";
+    private const string LanguageToolsRefEnvironmentVariable = "AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ApiReviewHub];
 
@@ -49,21 +61,7 @@ public class ApiReviewHubTool(
         Required = true
     };
 
-    private readonly Option<string> packageVersionOption = new("--package-version")
-    {
-        Description = "The package version to check.",
-        Required = true
-    };
-
-    private readonly Option<string> apiHashOption = new("--api-hash")
-    {
-        Description = "The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned."
-    };
-
-    private readonly Option<string> repoOwnerOption = new("--repo-owner")
-    {
-        Description = "The GitHub repository owner to query in API Review Hub. Optional; when omitted, the service default is used."
-    };
+    private readonly Option<string> packageTypeOption = CreatePackageTypeOption();
 
     private readonly Option<string> baseTagOption = new("--base-tag")
     {
@@ -105,20 +103,13 @@ public class ApiReviewHubTool(
         {
             languageOption,
             packageNameOption,
+            packageTypeOption,
             baseTagOption,
             targetOwnerOption,
             targetRepoOption,
             targetBranchOption,
             noWaitOption,
             pollIntervalSecondsOption
-        },
-        new McpCommand(GetApprovalStatusCommandName, "Check API review release approval status using APIView and API Review Hub", GetApprovalStatusToolName)
-        {
-            languageOption,
-            packageNameOption,
-            packageVersionOption,
-            apiHashOption,
-            repoOwnerOption
         }
     ];
 
@@ -127,47 +118,34 @@ public class ApiReviewHubTool(
         return parseResult.CommandResult.Command.Name switch
         {
             CreateCommandName => await HandleCreateCommand(parseResult, ct),
-            GetApprovalStatusCommandName => await HandleGetApprovalStatusCommand(parseResult, ct),
             _ => new DefaultCommandResponse { ResponseError = $"Unknown command: {parseResult.CommandResult.Command.Name}" }
         };
     }
 
     private async Task<CommandResponse> HandleCreateCommand(ParseResult parseResult, CancellationToken ct)
     {
-        return await RequestReviewPullRequest(
-            parseResult.GetValue(languageOption) ?? string.Empty,
-            parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(targetOwnerOption) ?? string.Empty,
-            ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
-            parseResult.GetValue(targetBranchOption) ?? string.Empty,
-            parseResult.GetValue(baseTagOption),
-            !parseResult.GetValue(noWaitOption),
-            parseResult.GetValue(pollIntervalSecondsOption),
-            ct);
-    }
-
-    private async Task<CommandResponse> HandleGetApprovalStatusCommand(ParseResult parseResult, CancellationToken ct)
-    {
-        var response = await GetApprovalStatus(
-            parseResult.GetValue(languageOption) ?? string.Empty,
-            parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(packageVersionOption) ?? string.Empty,
-            parseResult.GetValue(apiHashOption) ?? string.Empty,
-            parseResult.GetValue(repoOwnerOption) ?? string.Empty,
-            ct);
-
-        if (IsJsonOutput(parseResult))
+        var packageName = parseResult.GetValue(packageNameOption) ?? string.Empty;
+        try
         {
-            response.Details = null;
+            return await RequestReviewPullRequestCore(
+                parseResult.GetValue(languageOption) ?? string.Empty,
+                packageName,
+                parseResult.GetValue(targetOwnerOption) ?? string.Empty,
+                ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
+                parseResult.GetValue(targetBranchOption) ?? string.Empty,
+                parseResult.GetValue(packageTypeOption),
+                parseResult.GetValue(baseTagOption),
+                !parseResult.GetValue(noWaitOption),
+                parseResult.GetValue(pollIntervalSecondsOption),
+                GetEnvironmentVariable(PipelineRefEnvironmentVariable),
+                GetEnvironmentVariable(ToolsRefEnvironmentVariable),
+                GetEnvironmentVariable(LanguageToolsRefEnvironmentVariable),
+                ct);
         }
-
-        return response;
-    }
-
-    private static bool IsJsonOutput(ParseResult parseResult)
-    {
-        var outputFormat = parseResult.GetValue(SharedOptions.Format);
-        return string.Equals(outputFormat, "json", StringComparison.OrdinalIgnoreCase);
+        catch (Exception ex)
+        {
+            return CreateErrorResponse(ex, packageName);
+        }
     }
 
     [McpServerTool(Name = RequestReviewPullRequestToolName), Description("Request API Review Hub creation of a review pull request for a package API change.")]
@@ -177,6 +155,7 @@ public class ApiReviewHubTool(
         [Description("The GitHub owner for the target working branch.")] string targetOwner,
         [Description("The GitHub repository for the target working branch. By default, the command selects the appropriate repo based on the language.")] string targetRepo,
         [Description("The target working branch name.")] string targetBranch,
+        [Description("The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: mgmt, data, client, spring, functions. Client, spring, and functions are sent to API Review Hub as data packages.")] string? packageType = null,
         [Description("The optional release tag or ref used as the base API surface.")] string? baseTag = null,
         [Description("Poll API Review Hub until the operation completes.")] bool waitForCompletion = true,
         [Description("Seconds to wait between API Review Hub operation status polls.")] int pollIntervalSeconds = 10,
@@ -184,39 +163,92 @@ public class ApiReviewHubTool(
     {
         try
         {
-            var request = new ReviewPullRequestCreationRequest
-            {
-                Language = language,
-                PackageName = packageName,
-                BaseTag = baseTag ?? string.Empty,
-                TargetBranch = new GitBranchReference
-                {
-                    Owner = targetOwner,
-                    Repo = targetRepo,
-                    Name = targetBranch
-                }
-            };
-
-            var result = await apiReviewHubService.RequestReviewPullRequestAsync(
-                request,
-                DefaultEndpoint,
+            return await RequestReviewPullRequestCore(
+                language,
+                packageName,
+                targetOwner,
+                targetRepo,
+                targetBranch,
+                packageType,
+                baseTag,
                 waitForCompletion,
-                TimeSpan.FromSeconds(Math.Max(1, pollIntervalSeconds)),
+                pollIntervalSeconds,
+                null,
+                null,
+                null,
                 ct);
-
-            return new ApiReviewHubResponse
-            {
-                Result = result
-            };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to request API Review Hub review PR for {packageName}", packageName);
-            return new ApiReviewHubResponse
-            {
-                ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
-            };
+            return CreateErrorResponse(ex, packageName);
         }
+    }
+
+    private async Task<ApiReviewHubResponse> RequestReviewPullRequestCore(
+        string language,
+        string packageName,
+        string targetOwner,
+        string targetRepo,
+        string targetBranch,
+        string? packageType,
+        string? baseTag,
+        bool waitForCompletion,
+        int pollIntervalSeconds,
+        string? pipelineRef,
+        string? toolsRef,
+        string? languageToolsRef,
+        CancellationToken ct)
+    {
+        if (!SupportedLanguages.Contains(language, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                $"Unsupported language '{language}'. Supported values: {SupportedLanguagesDescription}.",
+                nameof(language));
+        }
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = language,
+            PackageName = packageName,
+            PackageType = string.IsNullOrWhiteSpace(packageType) ? null : ApiReviewPackageType.Normalize(packageType),
+            BaseTag = baseTag ?? string.Empty,
+            TargetBranch = new GitBranchReference
+            {
+                Owner = targetOwner,
+                Repo = targetRepo,
+                Name = targetBranch
+            },
+            PipelineRef = pipelineRef,
+            ToolsRef = toolsRef,
+            LanguageToolsRef = languageToolsRef
+        };
+
+        var result = await apiReviewHubService.RequestReviewPullRequestAsync(
+            request,
+            DefaultEndpoint,
+            waitForCompletion,
+            TimeSpan.FromSeconds(Math.Max(1, pollIntervalSeconds)),
+            ct);
+
+        return new ApiReviewHubResponse
+        {
+            Result = result
+        };
+    }
+
+    private ApiReviewHubResponse CreateErrorResponse(Exception ex, string packageName)
+    {
+        logger.LogError(ex, "Failed to request API Review Hub review PR for {packageName}", packageName);
+        return new ApiReviewHubResponse
+        {
+            ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
+        };
+    }
+
+    private static string? GetEnvironmentVariable(string name)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
     private static string ResolveTargetRepo(string? language, string? targetRepo)
@@ -259,191 +291,30 @@ public class ApiReviewHubTool(
         return option;
     }
 
-    [McpServerTool(Name = GetApprovalStatusToolName), Description("Check API review release approval status using APIView and API Review Hub.")]
-    public async Task<ApiReviewReleaseStatusResponse> GetApprovalStatus(
-        [Description("The SDK language.")] string language,
-        [Description("The package name.")] string packageName,
-        [Description("The package version to check.")] string packageVersion,
-        [Description("The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned.")] string apiHash = "",
-        [Description("The GitHub repository owner to query in API Review Hub. Optional; when omitted, the service default is used.")] string repoOwner = "",
-        CancellationToken ct = default)
+    private static Option<string> CreatePackageTypeOption()
     {
-        try
+        var option = new Option<string>("--package-type")
         {
-            var result = await apiReviewReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, language, packageName, packageVersion, apiHash, repoOwner, ct);
-            var response = new ApiReviewReleaseStatusResponse
-            {
-                Result = result,
-                Details = BuildDetails(result, packageName, packageVersion, apiHash)
-            };
-
-            if (!result.IsApproved)
-            {
-                response.ResponseError = BuildFailureMessage(result, packageName, packageVersion);
-            }
-
-            return response;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to get API review release approval status for {packageName}", packageName);
-            return new ApiReviewReleaseStatusResponse
-            {
-                ResponseError = $"Failed to get API review release approval status for {packageName}: {ex.Message}"
-            };
-        }
-    }
-
-    private static List<string> BuildDetails(ApiReviewReleaseStatusResult result, string packageName, string packageVersion, string apiHash)
-    {
-        var details = new List<string>();
-
-        details.Add("== API Review Hub (Primary) ==");
-        if (result.ReviewHub.StatusCode is >= 200 and < 300)
-        {
-            details.Add($"Status Code: {result.ReviewHub.StatusCode}");
-            details.Add($"Approved: {result.ReviewHub.IsApproved}");
-            details.Add($"Reason: {result.ReviewHub.Reason ?? "none"}");
-            if (!string.IsNullOrWhiteSpace(result.ReviewHub.AppliedInheritanceRule))
-            {
-                details.Add($"Applied Inheritance Rule: {result.ReviewHub.AppliedInheritanceRule}");
-            }
-            if (result.ReviewHub.Details?.Count > 0)
-            {
-                details.AddRange(result.ReviewHub.Details);
-            }
-
-            AddApprovalDetails(details, result.ReviewHub.Approvals, apiHash);
-        }
-        else
-        {
-            details.Add($"WARNING: Primary query failed for {packageName} {packageVersion}.");
-            if (result.ReviewHub.StatusCode is not null)
-            {
-                details.Add($"Status Code: {result.ReviewHub.StatusCode}");
-            }
-            if (!string.IsNullOrWhiteSpace(result.ReviewHub.Error))
-            {
-                details.Add(result.ReviewHub.Error);
-            }
-        }
-
-        if (result.ApiView != null)
-        {
-            details.Add(string.Empty);
-            details.Add("== APIView (Legacy) ==");
-            if (result.ApiView.StatusCode is >= 200 and < 300
-                || string.Equals(result.ApiView.Reason, "reviewNotFound", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(result.ApiView.Reason, "languageNotSupported", StringComparison.OrdinalIgnoreCase))
-            {
-                details.Add("Queried because the primary API Review Hub result was not approved or could not be retrieved.");
-                if (result.ApiView.StatusCode is not null)
-                {
-                    details.Add($"Status Code: {result.ApiView.StatusCode}");
-                }
-                details.Add($"Approved: {result.ApiView.IsApproved}");
-                details.Add($"Package Name Approved: {result.ApiView.PackageNameApproved}");
-                details.Add($"Reason: {result.ApiView.Reason}");
-                details.AddRange(result.ApiView.Details);
-            }
-            else
-            {
-                details.Add($"WARNING: Fallback query failed for {packageName} {packageVersion}.");
-                if (result.ApiView.StatusCode is not null)
-                {
-                    details.Add($"Status Code: {result.ApiView.StatusCode}");
-                }
-                if (!string.IsNullOrWhiteSpace(result.ApiView.Error))
-                {
-                    details.Add(result.ApiView.Error);
-                }
-            }
-        }
-
-        details.Add(string.Empty);
-        details.Add("== Final Result ==");
-        details.Add($"Approved: {result.IsApproved}");
-        if (result.IsApproved)
-        {
-            details.Add($"Source: {GetSourceLabel(result.FinalSource)}");
-        }
-        else
-        {
-            details.Add($"Reason: {result.Reason}");
-        }
-
-        return details;
-    }
-
-    private static string BuildFailureMessage(ApiReviewReleaseStatusResult result, string packageName, string packageVersion)
-    {
-        return result.Reason switch
-        {
-            "rejected" => $"API review release gate is rejected for {packageName} {packageVersion}.",
-            "staleArtifact" => $"API review release gate cannot be approved for {packageName} {packageVersion} because the release candidate artifact is not the one that was approved.",
-            "missingApiHash" => $"API review release gate cannot be approved for {packageName} {packageVersion} because no API hash was provided.",
-            "repositoryNotSupported" => $"API review release gate cannot be evaluated by API Review Hub for {packageName} {packageVersion} because this repository is not currently supported.",
-            "reviewNotFound" => $"API review release gate is not approved for {packageName} {packageVersion} because no APIView review was found.",
-            "apiViewLanguageNotSupported" => $"API review release gate is not approved for {packageName} {packageVersion} because APIView does not support this language for release gating.",
-            "queryFailed" => $"API review release gate status could not be determined for {packageName} {packageVersion} because both API Review Hub and APIView status queries failed.",
-            _ => $"API review release gate is not approved for {packageName} {packageVersion}."
+            Description = $"The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Client, spring, and functions are sent to API Review Hub as data packages."
         };
-    }
 
-    private static void AddApprovalDetails(List<string> details, IReadOnlyList<ApiReviewHubApprovalRecord>? approvals, string apiHash)
-    {
-        if (approvals?.Count is not > 0)
+        option.Validators.Add(result =>
         {
-            details.Add("Approval records returned by service: none");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(apiHash))
-        {
-            details.Add("No API hash was provided. Approval records returned by the service:");
-        }
-        else
-        {
-            details.Add($"Provided API hash: {apiHash}");
-            details.Add("Approval records returned by the service:");
-        }
-
-        foreach (var approval in approvals.OrderByDescending(approval => ApiHashMatches(approval.ApiHash, apiHash)).ThenByDescending(approval => approval.LastUpdatedOn, StringComparer.Ordinal))
-        {
-            var matchText = ApiHashMatches(approval.ApiHash, apiHash) ? " [provided hash]" : string.Empty;
-            var versionText = string.IsNullOrWhiteSpace(approval.Version) ? string.Empty : $" (version {approval.Version})";
-            details.Add($"- {approval.Status}: {approval.ApiHash}{matchText}{versionText}");
-
-            if (!string.IsNullOrWhiteSpace(approval.LastUpdatedBy) || !string.IsNullOrWhiteSpace(approval.LastUpdatedOn))
+            string? value = result.GetValueOrDefault<string>();
+            if (!string.IsNullOrWhiteSpace(value) && !ApiReviewPackageType.SupportedValues.Contains(value, StringComparer.OrdinalIgnoreCase))
             {
-                details.Add($"  Updated by: {approval.LastUpdatedBy ?? "unknown"}{FormatOnSuffix(approval.LastUpdatedOn)}");
+                result.AddError($"Invalid package type '{value}'. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}.");
             }
+        });
 
-            if (!string.IsNullOrWhiteSpace(approval.PullRequestUrl))
-            {
-                details.Add($"  Pull request: {approval.PullRequestUrl}");
-            }
-        }
+        return option;
     }
 
-    private static bool ApiHashMatches(string approvalApiHash, string requestedApiHash)
+    internal static string? ResolveLanguage(string language)
     {
-        return !string.IsNullOrWhiteSpace(requestedApiHash)
-            && string.Equals(approvalApiHash, requestedApiHash, StringComparison.OrdinalIgnoreCase);
+        string? canonical = DefaultTargetRepos.Keys.FirstOrDefault(
+            value => value.Equals(language, StringComparison.OrdinalIgnoreCase));
+        return canonical ?? LanguageAliases.GetValueOrDefault(language);
     }
 
-    private static string FormatOnSuffix(string? lastUpdatedOn)
-    {
-        return string.IsNullOrWhiteSpace(lastUpdatedOn) ? string.Empty : $" on {lastUpdatedOn}";
-    }
-
-    private static string GetSourceLabel(string finalSource)
-    {
-        return finalSource switch
-        {
-            "ApiReviewHub" => "API Review Hub (Primary)",
-            "APIView" => "APIView (Legacy)",
-            _ => finalSource
-        };
-    }
 }

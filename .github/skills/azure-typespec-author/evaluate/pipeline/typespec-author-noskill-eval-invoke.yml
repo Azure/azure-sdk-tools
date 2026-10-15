@@ -4,6 +4,7 @@ parameters:
   - name: UseAzSdkAuthentication
     type: boolean
     default: false
+  # Required by the common eval-shard template; TypeSpec uses pass@k instead.
   - name: threshold
     type: number
     default: 0.8
@@ -32,7 +33,7 @@ steps:
             --shard-name "$(shardName)" \
             --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
             --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
-            --threshold ${{ parameters.threshold }}
+            --runs $(TypeSpecAuthorEvalRuns)
       env:
         GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
         AZSDK_EVAL_MCP_KIND: $(AZSDK_EVAL_MCP_KIND)
@@ -44,7 +45,7 @@ steps:
           --shard-name "$(shardName)" \
           --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
           --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
-          --threshold ${{ parameters.threshold }}
+          --runs $(TypeSpecAuthorEvalRuns)
       displayName: 'vally eval $(shardName)'
       workingDirectory: ${{ parameters.vallyRoot }}
       env:

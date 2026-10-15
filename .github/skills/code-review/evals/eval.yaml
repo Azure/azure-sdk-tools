@@ -1,0 +1,83 @@
+name: code-review-eval
+description: Routing and boundary tests for the azsdk-cli code-review skill
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  area: code-review
+  type: ci-gate
+
+defaults:
+  runs: 1
+  timeout: "120s"
+  model: gpt-5.4
+  executor: copilot-sdk
+
+scoring:
+  threshold: 0.8
+
+stimuli:
+  - name: trigger-ccr-review-azsdk-cli-pr
+    prompt: |
+      Run a CCR review of this azsdk-cli PR. Review only this excerpt and do not modify files.
+
+      diff --git a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/WidgetService.cs b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/WidgetService.cs
+      - await client.WaitForCompletionAsync(ct).WaitAsync(TimeSpan.FromMinutes(5), ct);
+      + await client.WaitForCompletionAsync(ct);
+    graders:
+      - type: skill-invocation
+        config:
+          required: [code-review]
+
+  - name: trigger-copilot-review-azsdk-cli-diff
+    prompt: |
+      Use GitHub Copilot code review on this tools/azsdk-cli diff. Review only this excerpt and do not modify files.
+
+      diff --git a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/WidgetService.cs b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/WidgetService.cs
+      - await client.WaitForCompletionAsync(ct).WaitAsync(TimeSpan.FromMinutes(5), ct);
+      + await client.WaitForCompletionAsync(ct);
+    graders:
+      - type: skill-invocation
+        config:
+          required: [code-review]
+
+  - name: trigger-copilot-review-azsdk-cli
+    prompt: |
+      Run GitHub Copilot code review for this azsdk-cli change. Review only this excerpt and do not modify files.
+
+      diff --git a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/WidgetService.cs b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/WidgetService.cs
+      - await client.WaitForCompletionAsync(ct).WaitAsync(TimeSpan.FromMinutes(5), ct);
+      + await client.WaitForCompletionAsync(ct);
+    graders:
+      - type: skill-invocation
+        config:
+          required: [code-review]
+
+  - name: anti-trigger-implement-azsdk-cli-tool
+    prompt: "I need to implement a new azsdk-cli command for package validation. Identify the repository workflow that applies; do not inspect or modify files."
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: [code-review]
+
+  - name: anti-trigger-fix-azsdk-cli-pipeline
+    prompt: "I need to fix a failing build for tools/azsdk-cli. Identify the repository workflow that applies; do not inspect or modify files."
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: [code-review]
+
+  - name: anti-trigger-run-azsdk-cli-analyzers
+    prompt: "I need to run the MCP001-MCP007 analyzers and fix their errors. Identify the repository workflow that applies; do not inspect or modify files."
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: [code-review]
+
+  - name: anti-trigger-review-unrelated-tool
+    prompt: "I need a regression review of tools/release-plan-dashboard. Identify the repository workflow that applies; do not inspect or modify files."
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: [code-review]

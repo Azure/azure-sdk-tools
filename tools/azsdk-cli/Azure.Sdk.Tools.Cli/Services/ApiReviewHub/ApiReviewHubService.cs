@@ -23,6 +23,15 @@ public interface IApiReviewHubService
         string apiHash,
         string repoOwner,
         CancellationToken ct);
+
+    Task<ApiReviewHubMarkReleasedResult> MarkPackageReleasedAsync(
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        string repositoryOwner,
+        CancellationToken ct,
+        bool dryRun = false);
 }
 
 public class ApiReviewHubService(
@@ -33,6 +42,8 @@ public class ApiReviewHubService(
     TimeSpan? operationTimeout = null) : IApiReviewHubService
 {
     private static readonly TimeSpan DefaultOperationTimeout = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan TokenRefreshOffset = TimeSpan.FromMinutes(5);
+    private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 
     private static readonly JsonSerializerOptions serializerOptions = new()
     {
@@ -52,7 +63,8 @@ public class ApiReviewHubService(
     {
         endpoint = endpoint.TrimEnd('/');
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
-        var authorization = await GetAuthorizationAsync(endpoint, ct);
+        var accessToken = await GetAccessTokenAsync(endpoint, ct);
+        var authorization = CreateAuthorizationHeader(accessToken);
 
         logger.LogInformation("Requesting API Review Hub review PR for {packageName} from {endpoint}", request.PackageName, endpoint);
         ReviewPullRequestCreationAcceptedResponse accepted;
@@ -83,6 +95,12 @@ public class ApiReviewHubService(
         var loggedPipelineUrl = false;
         while (true)
         {
+            if (accessToken.ExpiresOn - _timeProvider.GetUtcNow() <= TokenRefreshOffset)
+            {
+                accessToken = await GetAccessTokenAsync(endpoint, ct);
+                authorization = CreateAuthorizationHeader(accessToken);
+            }
+
             var operation = await GetJsonAsync<OperationStatus>(httpClient, $"{endpoint}/api/operations/{accepted.OperationId}", authorization, ct);
             LogOperationProgress(operation, startedAt, ref loggedPipelineUrl);
 
@@ -116,7 +134,7 @@ public class ApiReviewHubService(
     {
         endpoint = endpoint.TrimEnd('/');
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
-        var authorization = await GetAuthorizationAsync(endpoint, ct);
+        var authorization = CreateAuthorizationHeader(await GetAccessTokenAsync(endpoint, ct));
 
         var uriBuilder = new UriBuilder($"{endpoint}/api/releases/check-approval");
         var query = new List<string>
@@ -141,6 +159,32 @@ public class ApiReviewHubService(
         return result;
     }
 
+    public async Task<ApiReviewHubMarkReleasedResult> MarkPackageReleasedAsync(
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        string repositoryOwner,
+        CancellationToken ct,
+        bool dryRun = false)
+    {
+        var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
+        var authorization = CreateAuthorizationHeader(await GetAccessTokenAsync(DefaultEndpoint, ct));
+        var request = new MarkPackageReleasedRequest
+        {
+            Language = language,
+            PackageName = packageName,
+            Version = packageVersion,
+            ApiHash = apiHash,
+            RepoOwner = repositoryOwner,
+            ReleasedOn = _timeProvider.GetUtcNow(),
+            DryRun = dryRun
+        };
+
+        logger.LogInformation("Marking {packageName} {packageVersion} as released in API Review Hub", packageName, packageVersion);
+        return await PostJsonAsync<ApiReviewHubMarkReleasedResult>(httpClient, $"{DefaultEndpoint}/api/releases/mark-released", request, authorization, ct);
+    }
+
     private void LogOperationProgress(OperationStatus operation, DateTimeOffset startedAt, ref bool loggedPipelineUrl)
     {
         if (!loggedPipelineUrl && !string.IsNullOrWhiteSpace(operation.PipelineUrl))
@@ -163,12 +207,13 @@ public class ApiReviewHubService(
             : elapsed.ToString(@"m\:ss");
     }
 
-    private async Task<AuthenticationHeaderValue> GetAuthorizationAsync(string endpoint, CancellationToken ct)
+    private async Task<AccessToken> GetAccessTokenAsync(string endpoint, CancellationToken ct)
     {
         var tokenScope = $"{GetAppIdUri(endpoint)}/.default";
-        var token = await azureService.GetCredential().GetTokenAsync(new TokenRequestContext([tokenScope]), ct);
-        return new AuthenticationHeaderValue("Bearer", token.Token);
+        return await azureService.GetCredential().GetTokenAsync(new TokenRequestContext([tokenScope]), ct);
     }
+
+    private static AuthenticationHeaderValue CreateAuthorizationHeader(AccessToken token) => new("Bearer", token.Token);
 
     private static async Task<T> PostJsonAsync<T>(HttpClient httpClient, string url, object body, AuthenticationHeaderValue authorization, CancellationToken ct)
     {

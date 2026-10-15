@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { getVallyShardVerdict } from "../../../../../eng/common/scripts/eval/lib/verdict.ts";
+import { getPassAtKVerdict, setJunitPassAtKThreshold } from "./typespec-author-pass-at-k.ts";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SHARED_EVAL_SCRIPT_DIR = path.resolve(SCRIPT_DIR, "../../../../../eng/common/scripts/eval");
@@ -12,9 +12,7 @@ type ShardRunOptions = {
   shardName: string;
   outputDir: string;
   extraArgs?: string;
-  // Pipeline pass-rate gate for results.jsonl. It intentionally does not
-  // override Vally's per-eval scoring threshold.
-  threshold?: number;
+  runs?: number;
 };
 
 function normalizeExtraArgs(extraArgs: string): string[] {
@@ -25,12 +23,16 @@ function normalizeExtraArgs(extraArgs: string): string[] {
   return extraArgs.split(/\s+/).filter(Boolean);
 }
 
-export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", threshold = 0.8 }: ShardRunOptions) {
+export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", runs = 1 }: ShardRunOptions) {
+  if (!Number.isInteger(runs) || runs < 1) {
+    throw new Error("--runs must be a positive integer.");
+  }
+
   const evalArgList = evalArgs.split(/\s+/).filter(Boolean);
   const extraArgList = normalizeExtraArgs(extraArgs);
 
   console.log(
-    `Running: vally eval ${evalArgs} --junit --output-dir "${outputDir}" ${extraArgList.join(" ")}`
+    `Running: vally eval ${evalArgs} --junit --output-dir "${outputDir}" --runs ${runs} ${extraArgList.join(" ")}`
   );
 
   const vallyArgs = [
@@ -45,6 +47,8 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", thres
     "--junit",
     "--output-dir",
     outputDir,
+    "--runs",
+    String(runs),
     ...extraArgList,
   ];
 
@@ -55,9 +59,10 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", thres
   });
   const vallyExit = proc.status ?? 1;
 
-  // Do not pass threshold to Vally. It is the pipeline pass-rate gate applied
-  // to completed results, not an override for each eval's scoring threshold.
-  const verdict = (getVallyShardVerdict as any)({ resultsDir: outputDir, threshold });
+  const updatedJunitFiles = setJunitPassAtKThreshold(outputDir, runs);
+  console.log(`Configured ${updatedJunitFiles} JUnit file(s) for pass@${runs} summary gating.`);
+
+  const verdict = getPassAtKVerdict(outputDir);
   for (const line of verdict.lines) {
     console.log(`  ${line}`);
   }
@@ -72,7 +77,7 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", thres
   if (verdict.passed) {
     if (verdict.hadExecutionErrors) {
       console.log(
-        `Shard '${shardName}' passed the pass-rate threshold; vally flagged execution errors (post-run teardown noise, not blocking).`
+        `Shard '${shardName}' passed pass@${runs}; vally flagged execution errors (post-run teardown noise, not blocking).`
       );
     }
     if (vallyExit !== 0) {
@@ -85,7 +90,7 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", thres
   }
 
   console.log(
-    `##vso[task.logissue type=error]Shard '${shardName}' FAILED - one or more evals are below the pass-rate threshold.`
+    `##vso[task.logissue type=error]Shard '${shardName}' FAILED - one or more stimuli have no passing trial.`
   );
   return 1;
 }
@@ -107,8 +112,8 @@ function parseArgs(argv: string[]): ShardRunOptions {
       case "--extra-args":
         options.extraArgs = next();
         break;
-      case "--threshold":
-        options.threshold = Number(next());
+      case "--runs":
+        options.runs = Number(next());
         break;
       default:
         throw new Error(`Unknown argument: ${argv[index]}`);

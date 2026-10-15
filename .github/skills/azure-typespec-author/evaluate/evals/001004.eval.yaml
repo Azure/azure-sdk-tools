@@ -7,10 +7,10 @@ area: "versioning"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: gpt-5.6-sol # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -27,12 +27,10 @@ stimuli:
           dest: employee.tsp
         - src: ../fixtures/001-share-version-new-feature/main.tsp
           dest: main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/001-share-version-new-feature/readme.md
           dest: readme.md
         - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -45,7 +43,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -65,25 +63,28 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: 'Lifecycle\.Read, Lifecycle\.Create'
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_api_version
+        type: "file-matches"
+        name: "file-matches-api-version"
         config:
           pattern: "2025-05-04-preview"
           path: "main.tsp"
@@ -96,23 +97,21 @@ stimuli:
       mode: "no-skill"
     prompt: "change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only"
     environment: *shared_environment
+    rubric:
+      - EmployeeProperties.provisioningState has Lifecycle.Read and Lifecycle.Create visibility only in API version 2025-05-04-preview.
+      - Earlier API versions retain the original Lifecycle.Read visibility.
+      - Changes use valid TypeSpec versioning and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: 'Lifecycle\.Read, Lifecycle\.Create'
-      - type: "file-matches"
-        config:
-          path: "main.tsp"
-          pattern: "2025-05-04-preview"
+            - "^(edit|apply_patch|bash|powershell)$"
+      - *file_matches
+      - *file_matches_api_version
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
-          model: "claude-opus-4.6"
+          model: "gpt-5.6-sol"
           scoring: "scale_1_10"
           threshold: 0.88
     constraints:

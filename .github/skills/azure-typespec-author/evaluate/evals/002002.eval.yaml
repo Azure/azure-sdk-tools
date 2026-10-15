@@ -7,10 +7,10 @@ area: "armtemplate"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: gpt-5.6-sol # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -20,19 +20,17 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      add an extension resource named asset
+      In API version `2024-10-01-preview`, add an Asset extension resource that can be attached to any ARM resource. It should have an optional, read-only provisioning state and support the standard operations for an ARM extension resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
           dest: employee.tsp
         - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
           dest: main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/Microsoft.Widget/Widget/readme.md
           dest: readme.md
         - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -45,7 +43,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -59,35 +57,40 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author add an extension resource named asset
+      @azure-typespec-author In API version `2024-10-01-preview`, add an Asset extension resource that can be attached to any ARM resource. It should have an optional, read-only provisioning state and support the standard operations for an ARM extension resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "model Asset is ExtensionResource<AssetProperties>"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_interface
+        type: "file-matches"
+        name: "file-matches-interface"
         config:
           pattern: "interface Assets|interface AssetOps"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_property
+        type: "file-matches"
+        name: "file-matches-property"
         config:
           pattern: "provisioningState"
           path: "*.tsp"
@@ -98,25 +101,17 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "add an extension resource named asset"
+    prompt: |
+      In API version `2024-10-01-preview`, add an Asset extension resource that can be attached to any ARM resource. It should have an optional, read-only provisioning state and support the standard operations for an ARM extension resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "model Asset is ExtensionResource<AssetProperties>"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "interface Assets|interface AssetOps"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "provisioningState"
+            - "^(edit|apply_patch|bash|powershell)$"
+      - *file_matches
+      - *file_matches_interface
+      - *file_matches_property
     constraints:
       max_turns: 6
       max_tokens: 100000

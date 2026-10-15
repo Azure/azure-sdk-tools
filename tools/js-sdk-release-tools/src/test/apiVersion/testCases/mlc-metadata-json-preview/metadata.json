@@ -1,8 +1,0 @@
-{
-  "apiVersion": "2024-03-01-preview",
-  "emitterVersion": "0.47.1",
-  "crossLanguageDefinitions": {
-    "CrossLanguagePackageId": "Microsoft.Test",
-    "CrossLanguageDefinitionId": {}
-  }
-}

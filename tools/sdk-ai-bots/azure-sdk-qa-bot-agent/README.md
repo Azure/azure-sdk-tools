@@ -19,12 +19,15 @@ azure-sdk-qa-bot-agent/
 └── TROUBLESHOOTING.md
 ```
 
-The project has two independently runnable components:
+The project has three independently runnable components:
 
 | Component | Description | Entrypoint | Port |
 |-----------|-------------|------------|------|
-| **Agent** | AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 |
+| **Chat Agent** | AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 |
+| **Chatbot Evolution Agent** | KB-quality analyst that diagnoses negative-feedback turns and files KB-gap GitHub issues | `agents/chatbot_evolution_agent/init.py` | 8088 |
 | **Server** | Backend API that the Teams App communicates with (FastAPI) | `server.py` | 8089 |
+
+> Both hosted agents bind port `8088`. Run **one at a time** locally.
 
 ## Getting Started
 
@@ -101,18 +104,67 @@ Ensure your Azure identity has:
 
 ## Running and Debugging Locally
 
-### Debugging the Agent (F5 with AI Toolkit)
+### Debugging the Chat Agent
 
 Use this to develop and test the AI agent itself (prompt tuning, tool integration, etc.).
 
 1. Install the [AI Toolkit](https://marketplace.visualstudio.com/items?itemName=ms-windows-ai-studio.windows-ai-studio) extension for VS Code.
 2. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/agents to work with AI Toolkit Agent Inspector. 1) Ensure the agent is serverized as an HTTP server. 2) Install 'agent-dev-cli' and use 'agentdev' to launch the agent. 3) Add VS Code configuration (tasks.json and launch.json) for debugging.`
 3. Copilot will automatically generate the debug configuration (`.vscode/launch.json` and `.vscode/tasks.json`) for the project.
-4. Press **F5** to start debugging.
+4. Press **F5** and select the agent to debug:
+   - **Debug Chat Agent HTTP Server** launches `agents/chat_agent/init.py`.
+   - **Debug Azure MCP Server Agent HTTP Server** launches `agents/azure_mcp_server_agent/init.py`.
 
 This launches the agent via `agentdev run` on `http://localhost:8088/` with `debugpy` attached, and opens the AI Toolkit Agent Inspector for interactive testing.
 
 ![Agent Playground](images/agent_playground.png)
+
+### Debugging the Chatbot Evolution Agent
+
+The Chatbot Evolution Agent is a hosted Foundry agent like the chat agent, but driven by the daily feedback-job scan (`scripts/run_feedback_jobs.py`), which runs it in-process via `services/chatbot_evolution_agent_service.py`, instead of by Teams. There are two things you may want to debug — the agent's reasoning, or the end-to-end scan→feedback flow.
+
+**1. Iterate on the agent itself (Agent Inspector).**
+
+Same AI Toolkit workflow as the chat agent, just pointed at the chatbot evolution agent entrypoint.
+
+1. Install the [AI Toolkit](https://marketplace.visualstudio.com/items?itemName=ms-windows-ai-studio.windows-ai-studio) extension for VS Code.
+2. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent to work with AI Toolkit Agent Inspector. 1) Ensure the agent is serverized as an HTTP server. 2) Install 'agent-dev-cli' and use 'agentdev' to launch the agent. 3) Add VS Code configuration (tasks.json and launch.json) for debugging.`
+3. Copilot will generate the debug configuration (`.vscode/launch.json` and `.vscode/tasks.json`) pointing at `agents/chatbot_evolution_agent/init.py`. If you already have the chat agent config, just swap the task command to:
+
+   ```text
+   ${command:python.interpreterPath} -m debugpy --listen 127.0.0.1:5679 -m agentdev run agents/chatbot_evolution_agent/init.py --verbose --port 8088
+   ```
+
+4. Press **F5** to start debugging, then use the Agent Inspector to send a JSON payload shaped like a `ChatbotEvolutionAgentInput`:
+
+```json
+{
+  "mode": "analysis",
+  "conversation_id": "<a real conversation id from Cosmos>",
+  "conversation_type": "teams_channel",
+  "evaluation_time": "2026-01-01T00:00:00+00:00",
+}
+```
+
+The agent derives `tenant_id` from `fetch_conversation`, then calls `fetch_chat_trace` / `search_knowledge_base` and may file a real GitHub issue or ADO work item — use a throwaway conversation when iterating.
+
+**2. Debug the feedback loop end-to-end.**
+
+`ChatbotEvolutionAgentService` runs the hosted chatbot evolution agent synchronously against the *deployed* Foundry agent, using the chat agent's shared streaming response client with a 600-second job limit and no invocation-level retries. Its settings (`AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_NAME`, `AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_VERSION`, `CHATBOT_EVOLUTION_AGENT_ENABLED`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+
+The daily poller treats the global `ADO_ISSUE_CLOSED_STATE` App Configuration value as terminal, defaulting to `Closed`.
+
+The scan refreshes ongoing thread metadata after human-only replies as well as bot replies. Before processing enabled Agent jobs, it recovers `created`/`running` feedback inactive for at least 20 minutes into retryable `failed` state; conditional writes prevent overwriting concurrent updates.
+
+Ongoing threads without an active feedback workflow are automatically marked `finished`/`correct` after at least 144 hours since the latest conversation message, without invoking the Evolution Agent and regardless of user feedback. The scan verifies the actual transcript. Automatic closures are marked with `auto_closed_at`; a newer reply reopens them on ingestion and restarts the inactivity clock, including replies persisted while closure was in progress. Agent-assessed conclusions remain immutable to message ingestion. The recorded reasoning identifies automatic closure, and no confidence score is assigned. Negative feedback is still saved, but does not reopen automatically closed records; it can reopen Agent-assessed correct records. Dry runs and disabled Agent processing do not auto-close records.
+
+To exercise the loop locally:
+
+1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (ingests active threads and runs the hosted chatbot evolution agent in-process to analyze `ongoing` records and validate remediated failures). Use `--dry-run` to ingest records without invoking the agent. Set breakpoints in `services/chatbot_evolution_agent_service.py` to step through a run.
+2. Inspect outcomes in:
+   - **Script logs** — the service logs a bounded preview of the Agent's structured result.
+   - **Cosmos `qa-records` container** — partitioned by `/tenant_id`; each thread row carries `qa_status` (`ongoing → finished | failed`) and an embedded `feedback.status` for Agent work (`created → running → pending_validation → done | failed`).
+   - **Foundry tracing** — the hosted agent's tool calls are visible in the Foundry portal under the agent's run history.
 
 ### Debugging the Server
 
@@ -132,6 +184,9 @@ This launches the agent via `agentdev run` on `http://localhost:8088/` with `deb
 2. Press **F5** to start debugging the server.
 3. Install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension.
 4. Run tests under `tests/api_test.rest` to verify the server is working.
+5. Open `http://localhost:8089/dashboard/qa-records` to inspect QA and
+   feedback lifecycle records. The dashboard supports tenant, status,
+   updated-time, and conversation ID filters.
 
 ## Testing Remote Endpoints
 
@@ -176,9 +231,9 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 
 - **Pipeline**: [agent-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
 - **Deploy script**: [scripts/deploy_hosted_agent.py](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/scripts/deploy_hosted_agent.py)
-- **Parameters**: `environment` (dev/prod), `agentName` (chat_agent)
+- **Parameters**: `environment` (dev/prod), `agentName` (`chat_agent` or `chatbot_evolution_agent`)
 - **What it does**:
-  1. Builds the Docker image from `agents/chat_agent/Dockerfile`
+  1. Builds the Docker image from `agents/<agentName>/Dockerfile`
   2. Pushes to `azuresdkqabotcontainer.azurecr.io`
   3. Runs `deploy_hosted_agent.py` to create a new agent version via Foundry API
 
@@ -186,6 +241,7 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 
 ```bash
 python scripts/deploy_hosted_agent.py chat_agent --tag <image-tag>
+python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 ```
 
 ### Server Deploy
@@ -193,21 +249,27 @@ python scripts/deploy_hosted_agent.py chat_agent --tag <image-tag>
 Builds the backend API (FastAPI) container image and deploys to Azure App Service.
 
 - **Pipeline**: [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
-- **Parameters**: `environment` (dev/preview/prod), `slot` (default/agent)
+- **Parameters**: `environment` (dev/preview/prod), `deploymentTarget` (all/server/knowledge-sync; default: `all`)
+- **Deployment targets**:
+   - `all`: deploy the server, then knowledge sync. Preview deploys only the server.
+   - `server`: deploy only the backend container.
+   - `knowledge-sync`: build, test, and deploy only the knowledge sync WebJob in dev/prod.
 - **What it does**:
-  1. Resolves image tag from `_version.py` (prod) or git short SHA (dev)
-  2. Builds and pushes image to ACR via `az acr build`
-  3. Deploys to App Service using container image reference
+   1. `DeployServer` resolves the image tag from `_version.py` (preview/prod) or git short SHA (dev), builds and pushes to ACR (except prod, which reuses the image), validates the image, updates App Service, and checks server health.
+   2. `DeployKnowledgeSync` builds, tests, packages and publishes the knowledge sync ZIP, and deploys the scheduled WebJob. With `all`, it runs after server success and provisions the SSH key; with `knowledge-sync`, it runs independently using existing settings. Preview omits this job.
+
+WebJob deployment may restart the backend when applying App Service prerequisites,
+even when its container image is unchanged. See the [knowledge sync deployment guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/README.md).
 
 ### Logic App Deploy
 
 Deploys the Logic App ARM template for Teams channel message mirroring.
 
 - **Pipeline**: [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
-- **Parameters**: `environment` (dev/test/prod)
+- **Parameters**: `team` (azure_sdk/azure_mcp_server), `environment` (dev/test/prod)
 - **What it does**:
-  1. Runs `az deployment group create` with environment-specific ARM template parameters
-  2. Idempotent — safe to re-run
+   1. Runs `az deployment group create` with environment-specific ARM template parameters
+   2. Idempotent — safe to re-run
 
 ### CI Pipeline
 

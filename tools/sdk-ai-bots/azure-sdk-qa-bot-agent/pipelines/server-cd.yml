@@ -16,12 +16,14 @@ parameters:
       - dev
       - preview
       - prod
-  - name: slot
-    displayName: 'Target Slot'
+  - name: deploymentTarget
+    displayName: 'Deployment Target'
     type: string
-    default: default
+    default: all
     values:
-      - default
+      - all
+      - server
+      - knowledge-sync
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -36,6 +38,10 @@ variables:
     value: 'azure-sdk-qa-bot-agent-server'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: syncWorkingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
+  - name: webjobName
+    value: 'knowledge-sync'
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -43,10 +49,25 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: DeployPipeline
-        displayName: 'Deploy Server (${{ parameters.environment }} / ${{ parameters.slot }})'
+        displayName: 'Deploy ${{ parameters.deploymentTarget }} (${{ parameters.environment }})'
         jobs:
-          - job: RunDeploy
-            displayName: 'Run Deploy Flow'
+          - ${{ if and(eq(parameters.deploymentTarget, 'knowledge-sync'), eq(parameters.environment, 'preview')) }}:
+            - job: ValidateDeployment
+              displayName: 'Reject Knowledge Sync Preview Deployment'
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              steps:
+                - checkout: none
+                - bash: |
+                    echo 'Knowledge sync deployment is supported only for dev and prod.' >&2
+                    exit 1
+                  displayName: 'Reject Knowledge Sync Preview Deployment'
+
+          - job: DeployServer
+            displayName: 'Deploy Server'
+            condition: and(succeeded(), ${{ ne(parameters.deploymentTarget, 'knowledge-sync') }})
             pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
@@ -84,7 +105,7 @@ extends:
 
               # 3. Build & push (prod reuses existing image)
               - task: AzureCLI@2
-                condition: ne('${{ parameters.environment }}','prod')
+                condition: and(succeeded(), ne('${{ parameters.environment }}','prod'))
                 displayName: 'Build & Push Image'
                 continueOnError: false
                 inputs:
@@ -133,22 +154,13 @@ extends:
                   scriptLocation: inlineScript
                   inlineScript: |
                     set -euo pipefail
-                    SLOT="${{ parameters.slot }}"
-                    if [ -n "$SLOT" ] && [ "$SLOT" != "default" ]; then
-                      TARGET="$(APP_NAME)/$SLOT"
-                      SLOT_ARG="--slot $SLOT"
-                    else
-                      TARGET="$(APP_NAME)"
-                      SLOT_ARG=""
-                    fi
-                    echo "Updating container image $(imageName):$(imageTag) for app $TARGET"
+                    echo "Updating container image $(imageName):$(imageTag) for app $(APP_NAME)"
                     ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
                     echo "ACR: $ACR_LOGIN_SERVER"
                     set +e
                     OUTPUT=$(az webapp config container set \
                       --name "$(APP_NAME)" \
                       --resource-group "$(RESOURCE_GROUP)" \
-                      $SLOT_ARG \
                       --container-image-name "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)" \
                       --container-registry-url "https://$ACR_LOGIN_SERVER" 2>&1)
                     STATUS=$?
@@ -156,8 +168,6 @@ extends:
                     echo "$OUTPUT"
                     [ $STATUS -eq 0 ] || { echo "Failed to update container" >&2; exit $STATUS; }
                     echo "Container configuration updated"
-                    az webapp restart --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" $SLOT_ARG
-                    echo "Webapp restart requested"
                 env:
                   APP_NAME: $(APP_NAME)
                   RESOURCE_GROUP: $(RESOURCE_GROUP)
@@ -175,15 +185,7 @@ extends:
                   scriptLocation: inlineScript
                   inlineScript: |
                     set -euo pipefail
-                    SLOT="${{ parameters.slot }}"
-                    if [ -n "$SLOT" ] && [ "$SLOT" != "default" ]; then
-                      TARGET="$(APP_NAME)/$SLOT"
-                      SLOT_ARG="--slot $SLOT"
-                    else
-                      TARGET="$(APP_NAME)"
-                      SLOT_ARG=""
-                    fi
-                    APP_URL=$(az webapp show --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" $SLOT_ARG --query defaultHostName -o tsv)
+                    APP_URL=$(az webapp show --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" --query defaultHostName -o tsv)
                     echo "App URL: https://$APP_URL"
 
                     # Acquire Entra ID token for EasyAuth
@@ -197,15 +199,15 @@ extends:
                       echo "Health check OK"
                     else
                       echo "Health endpoint returned $HTTP_STATUS" >&2
+                      exit 1
                     fi
                     ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
                     echo "=== Deployment Summary ==="
                     echo "Environment: ${{ parameters.environment }}"
-                    echo "Slot: ${{ parameters.slot }}"
                     echo "Version: $(appVersion)"
                     echo "Image Tag: $(imageTag)"
                     echo "Resource Group: $(RESOURCE_GROUP)"
-                    echo "App Service: $TARGET"
+                    echo "App Service: $(APP_NAME)"
                     echo "Image: $ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
                     echo "Health Status: $HTTP_STATUS"
                     echo "URL: https://$APP_URL"
@@ -216,3 +218,104 @@ extends:
                   ACR_NAME: $(ACR_NAME)
                   ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
                   IMAGE_NAME: $(imageName)
+
+          - ${{ if in(parameters.environment, 'dev', 'prod') }}:
+            - job: DeployKnowledgeSync
+              displayName: 'Deploy Scheduled Knowledge Sync'
+              dependsOn: DeployServer
+              condition: and(not(canceled()), or(and(${{ eq(parameters.deploymentTarget, 'all') }}, eq(dependencies.DeployServer.result, 'Succeeded')), and(${{ eq(parameters.deploymentTarget, 'knowledge-sync') }}, eq(dependencies.DeployServer.result, 'Skipped'))))
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              templateContext:
+                outputs:
+                  - output: pipelineArtifact
+                    path: $(Build.ArtifactStagingDirectory)/knowledge-sync
+                    artifact: knowledge-sync
+                    displayName: 'Publish Scheduled Knowledge Sync ZIP'
+                    condition: succeededOrFailed()
+              steps:
+                - checkout: self
+                  displayName: 'Checkout repository'
+                  persistCredentials: true
+                  continueOnError: false
+
+                - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
+                - task: NodeTool@0
+                  displayName: 'Use Node.js 24.x for Scheduled Knowledge Sync'
+                  inputs:
+                    versionSpec: '24.x'
+
+                - bash: npm ci
+                  displayName: 'Install Scheduled Knowledge Sync Dependencies'
+                  workingDirectory: $(syncWorkingDirectory)
+
+                - bash: npm test -- --no-file-parallelism
+                  displayName: 'Test Scheduled Knowledge Sync'
+                  workingDirectory: $(syncWorkingDirectory)
+
+                - bash: npm run build:webjob -- $(Build.ArtifactStagingDirectory)/knowledge-sync/knowledge-sync.zip
+                  displayName: 'Build and Package Scheduled Knowledge Sync'
+                  workingDirectory: $(syncWorkingDirectory)
+
+                - ${{ if eq(parameters.deploymentTarget, 'all') }}:
+                  - task: DownloadSecureFile@1
+                    name: sshPrivateKey
+                    displayName: 'Download Knowledge Sync SSH Key'
+                    inputs:
+                      secureFile: 'EMU-SSH-PRIVATE-KEY'
+
+                  - task: AzureCLI@2
+                    displayName: 'Configure Knowledge Sync SSH Key'
+                    inputs:
+                      azureSubscription: $(SERVICE_CONNECTION)
+                      scriptType: bash
+                      scriptLocation: inlineScript
+                      inlineScript: |
+                        node --input-type=module <<'NODE'
+                        import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+                        import { tmpdir } from 'node:os';
+                        import { join } from 'node:path';
+                        import { execFileSync } from 'node:child_process';
+                        let directory;
+                        try {
+                          const value = readFileSync(process.env.SSH_KEY_FILE, 'utf8').trim();
+                          const key = value.startsWith('-----BEGIN ') ? value : Buffer.from(value, 'base64').toString('utf8').trim();
+                          if (!/^-----BEGIN (OPENSSH|RSA|EC|DSA|ENCRYPTED)? ?PRIVATE KEY-----/.test(key)) {
+                            throw new Error('Invalid key format');
+                          }
+                          directory = mkdtempSync(join(tmpdir(), 'ssh-setting-'));
+                          const settings = join(directory, 'settings.json');
+                          writeFileSync(settings, JSON.stringify({ SSH_PRIVATE_KEY: Buffer.from(key + '\n').toString('base64') }), { mode: 0o600 });
+                          execFileSync('az', ['webapp', 'config', 'appsettings', 'set',
+                            '--name', process.env.APP_NAME, '--resource-group', process.env.RESOURCE_GROUP,
+                            '--settings', '@' + settings, '--only-show-errors', '--output', 'none'],
+                            { stdio: ['ignore', 'pipe', 'pipe'], timeout: 120000 });
+                          console.log('Knowledge sync SSH setting configured.');
+                        } catch {
+                          console.error('SSH setting configuration failed; check secure file format and App Service permissions.');
+                          process.exitCode = 1;
+                        } finally {
+                          if (directory) rmSync(directory, { recursive: true, force: true });
+                        }
+                        NODE
+                    env:
+                      SSH_KEY_FILE: $(sshPrivateKey.secureFilePath)
+                      APP_NAME: $(APP_NAME)
+                      RESOURCE_GROUP: $(RESOURCE_GROUP)
+
+                - task: AzureCLI@2
+                  displayName: 'Deploy Scheduled Knowledge Sync WebJob'
+                  continueOnError: false
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: node "$(syncWorkingDirectory)/scripts/deploy-webjob.mjs"
+                  env:
+                    WEBJOB_ZIP: $(Build.ArtifactStagingDirectory)/knowledge-sync/knowledge-sync.zip
+                    APP_NAME: $(APP_NAME)
+                    RESOURCE_GROUP: $(RESOURCE_GROUP)
+                    WEBJOB_NAME: $(webjobName)

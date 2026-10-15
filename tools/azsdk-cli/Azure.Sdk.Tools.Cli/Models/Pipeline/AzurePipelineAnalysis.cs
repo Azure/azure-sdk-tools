@@ -9,13 +9,12 @@ public class AzurePipelineAnalysis
     public required AzurePipelineBuild PipelineBuild { get; set; }
 
     /// <summary>
-    /// Failed tests recovered from the build's test artifacts, keyed by the platform the artifact was
-    /// published for (for example "Ubuntu2404_NET80_PackageRef_Debug"). Null when no failed tests were
-    /// recovered.
+    /// Failed tests recovered from the build's test artifacts, one entry per artifact file. Null when none
+    /// were recovered.
     /// </summary>
     [JsonPropertyName("failed_pipeline_tests")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public Dictionary<string, List<string>>? FailedPipelineTests { get; set; }
+    public List<FailedTestArtifact>? FailedPipelineTests { get; set; }
 
     /// <summary>
     /// Task-level failures recovered from the build's logs. Null when no failing tasks were found.
@@ -31,6 +30,23 @@ public class AzurePipelineAnalysis
     [JsonPropertyName("errors")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? Errors { get; set; }
+}
+
+/// <summary>
+/// One test-result artifact: the file its failures were parsed from, the platform it was published for, and
+/// the failing test titles. Pass the path to azsdk_get_failed_test_case_data / azsdk_get_failed_test_run_data
+/// for full details.
+/// </summary>
+public class FailedTestArtifact
+{
+    [JsonPropertyName("artifact_file_path")]
+    public required string ArtifactFilePath { get; set; }
+
+    [JsonPropertyName("platform")]
+    public required string Platform { get; set; }
+
+    [JsonPropertyName("failed_test_titles")]
+    public List<string> FailedTestTitles { get; set; } = [];
 }
 
 public record AzurePipelineBuild(

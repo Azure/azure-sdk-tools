@@ -11,6 +11,8 @@ paths:
     - eval-authoring-skill/evals/
     - eval-authoring-tool/evals/
     - eval-authoring-workflow/evals/
+    - azsdk-common-sdk-breaking-change/evals/
+    - code-review/evals/
   results: results/
   evalFilenames: ["eval.yaml", "*.eval.yaml"]
 
@@ -25,6 +27,7 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
+        cwd: .
         args: ["../../artifacts/mcp/cli/azsdk.dll", "start"]
         timeout: "60s"
         env:
@@ -35,5 +38,6 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
+        cwd: .
         args: ["../../artifacts/mcp/mock/azsdk-mock.dll"]
         timeout: "60s"

@@ -14,6 +14,9 @@ parameters:
 - name: PublishToPyPi
   type: boolean
   default: false
+- name: ReleaseOnMainOnly
+  type: boolean
+  default: false
 - name: ArtifactName
   type: string
   default: ''
@@ -79,6 +82,8 @@ extends:
                 os: linux
 
               steps:
+                - template: /eng/common/pipelines/templates/steps/python-auth-dev-feed.yml
+
                 - task: UsePythonVersion@0
                   displayName: 'Use Python $(PythonTestVersion)'
                   inputs:
@@ -95,6 +100,8 @@ extends:
                 os: linux
 
               steps:
+                - template: /eng/common/pipelines/templates/steps/python-auth-dev-feed.yml
+
                 - task: UsePythonVersion@0
                   displayName: 'Use Python ${{ parameters.PythonVersion }}'
                   inputs:
@@ -106,7 +113,10 @@ extends:
         - stage: 'ReleaseToFeed'
           displayName: "Release to ${{ parameters.FeedName }}"
           dependsOn: Build
-          condition: and(succeeded(), ne('${{ parameters.FeedName }}', ''))
+          ${{ if eq(parameters.ReleaseOnMainOnly, true) }}:
+            condition: and(succeeded(), ne('${{ parameters.FeedName }}', ''), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+          ${{ else }}:
+            condition: and(succeeded(), ne('${{ parameters.FeedName }}', ''))
           variables:
             - template: /eng/pipelines/templates/variables/globals.yml
             - template: /eng/pipelines/templates/variables/image.yml
@@ -149,7 +159,10 @@ extends:
           - stage: 'ReleaseToPyPi'
             displayName: "Release to PyPI"
             dependsOn: Build
-            condition: Succeeded()
+            ${{ if eq(parameters.ReleaseOnMainOnly, true) }}:
+              condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+            ${{ else }}:
+              condition: succeeded()
             jobs:
             - deployment: PublishPackage
               displayName: "Publish to PyPI via ESRP"

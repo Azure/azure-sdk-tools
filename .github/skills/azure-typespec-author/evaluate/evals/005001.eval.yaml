@@ -7,10 +7,10 @@ area: "warning"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: gpt-5.6-sol # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -27,12 +27,10 @@ stimuli:
           dest: main.tsp
         - src: ../fixtures/005001-warning-suppress-warning/models.tsp
           dest: models.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
           dest: stubs.tsp
         - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
@@ -43,7 +41,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -63,25 +61,28 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "#suppress"
           path: "models.tsp"
-      - type: "file-matches"
+      - &file_matches_fixme_justification
+        type: "file-matches"
+        name: "file-matches-fixme-justification"
         config:
           pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
           path: "models.tsp"
@@ -98,15 +99,9 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
-      - type: "file-matches"
-        config:
-          path: "models.tsp"
-          pattern: "#suppress"
-      - type: "file-matches"
-        config:
-          path: "models.tsp"
-          pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
+            - "^(edit|apply_patch|bash|powershell)$"
+      - *file_matches
+      - *file_matches_fixme_justification
     constraints:
       max_turns: 6
       max_tokens: 1000000

@@ -16,7 +16,7 @@ public static class DotNetRequirements
 
     public class DotNetSdkRequirement : Requirement
     {
-        public override string Name => "Dotnet SDK";
+        public override string Name => ".NET SDK";
         public override string? MinVersion => "9.0.306";
         public override string[] CheckCommand => ["dotnet", "--version"];
         public override string? NotAutoInstallableReason => NotInstallableReasons.LanguageRuntime;

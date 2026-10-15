@@ -13,7 +13,7 @@ from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
-from config.app_config import get as cfg
+from config.app_config import Settings, get as cfg
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
@@ -24,8 +24,33 @@ COMPACTION_TARGET_TOKENS = 80000
 
 _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
-_openai_client: AsyncOpenAI | None = None
+_openai_clients: dict[str, AsyncOpenAI] = {}
 _embedding_client: AsyncAzureOpenAI | None = None
+
+
+def create_project_client(
+    settings: Settings,
+) -> AIProjectClient:
+    """Create a project client from an explicit configuration scope."""
+    endpoint = settings("AI_FOUNDRY_PROJECT_ENDPOINT", None)
+    if not endpoint:
+        raise RuntimeError(
+            "AI_FOUNDRY_PROJECT_ENDPOINT is required in App Configuration."
+        )
+    return AIProjectClient(
+        endpoint=endpoint,
+        credential=get_credential(),
+        allow_preview=True,
+    )
+
+
+def create_openai_client(
+    project_client: AIProjectClient,
+    settings: Settings,
+) -> AsyncOpenAI:
+    """Create a hosted-agent OpenAI client from an explicit config scope."""
+    agent_name = settings("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
+    return project_client.get_openai_client(agent_name=agent_name)
 
 
 def get_agent_client() -> FoundryChatClient:
@@ -48,27 +73,19 @@ def get_project_client() -> AIProjectClient:
     """Return the shared AIProjectClient (created once on first call)."""
     global _project_client
     if _project_client is None:
-        endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
-        if not endpoint:
-            raise RuntimeError(
-                "AI_FOUNDRY_PROJECT_ENDPOINT is required in App Configuration."
-            )
-        _project_client = AIProjectClient(
-            endpoint=endpoint,
-            credential=get_credential(),
-            allow_preview=True,
-        )
+        _project_client = create_project_client(cfg)
     return _project_client
 
 
-def get_openai_client() -> AsyncOpenAI:
-    """Return the shared OpenAI client (created once on first call)."""
-    global _openai_client
-    if _openai_client is None:
-        agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
+def get_openai_client(agent_name: str | None = None) -> AsyncOpenAI:
+    """Return the OpenAI client for a hosted agent."""
+    resolved_name = agent_name or cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
+    if resolved_name not in _openai_clients:
         # Hosted agents in refreshed preview must be called via per-agent endpoint.
-        _openai_client = get_project_client().get_openai_client(agent_name=agent_name)
-    return _openai_client
+        _openai_clients[resolved_name] = get_project_client().get_openai_client(
+            agent_name=resolved_name
+        )
+    return _openai_clients[resolved_name]
 
 
 def get_embedding_client() -> AsyncAzureOpenAI:
@@ -116,13 +133,13 @@ def _get_token_provider():
 
 async def close_clients() -> None:
     """Close all clients.  Safe to call even if never created."""
-    global _agent_client, _project_client, _openai_client, _embedding_client
+    global _agent_client, _project_client, _embedding_client
     if _embedding_client is not None:
         await _embedding_client.close()
         _embedding_client = None
-    if _openai_client is not None:
-        await _openai_client.close()
-        _openai_client = None
+    for client in _openai_clients.values():
+        await client.close()
+    _openai_clients.clear()
     if _agent_client is not None:
         _agent_client = None
     if _project_client is not None:
@@ -131,18 +148,20 @@ async def close_clients() -> None:
 
 
 # -- Stateless warm-session cache ------------------------------------------
-# Stateless requests (no customer conversation_id) share one warm sandbox via a
-# stable agent_session_id captured from the first stateless response. No
-# `conversation` is threaded, so history is never shared across callers.
-_stateless_session_id: str | None = None
+# Stateless requests (no customer conversation_id) share one warm sandbox per
+# agent via a stable agent_session_id captured from the first stateless response.
+# No `conversation` is threaded, so history is never shared across callers.
+_stateless_session_ids: dict[str, str] = {}
 
 
-def get_stateless_session_id() -> str | None:
+def get_stateless_session_id(agent_name: str) -> str | None:
     """Return the cached warm sandbox id for stateless requests, if any."""
-    return _stateless_session_id
+    return _stateless_session_ids.get(agent_name)
 
 
-def set_stateless_session_id(session_id: str | None) -> None:
+def set_stateless_session_id(agent_name: str, session_id: str | None) -> None:
     """Cache (or clear) the warm sandbox id reused by stateless requests."""
-    global _stateless_session_id
-    _stateless_session_id = session_id
+    if session_id is None:
+        _stateless_session_ids.pop(agent_name, None)
+    else:
+        _stateless_session_ids[agent_name] = session_id

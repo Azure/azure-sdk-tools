@@ -275,10 +275,13 @@ public class PipelineAnalysisHelperTests
 
         var (analyses, warnings) = await helper.AnalyzePipelineAsync([Build]);
 
+        var artifact = analyses.Single().FailedPipelineTests!.Single();
         Assert.Multiple(() =>
         {
+            Assert.That(artifact.ArtifactFilePath, Is.EqualTo("test-results.trx"));
+            Assert.That(artifact.Platform, Is.EqualTo(Platform));
             Assert.That(
-                analyses.Single().FailedPipelineTests![Platform],
+                artifact.FailedTestTitles,
                 Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
             Assert.That(warnings, Is.Empty);
         });
@@ -313,7 +316,7 @@ public class PipelineAnalysisHelperTests
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
         Assert.That(
-            analyses.Single().FailedPipelineTests![Platform],
+            analyses.Single().FailedPipelineTests!.SelectMany(a => a.FailedTestTitles),
             Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
     }
 
@@ -334,10 +337,10 @@ public class PipelineAnalysisHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(
-                failedTests["Ubuntu2404_NET80"],
+                failedTests.Single(a => a.Platform == "Ubuntu2404_NET80").FailedTestTitles,
                 Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
             Assert.That(
-                failedTests["Windows2022_NET80"],
+                failedTests.Single(a => a.Platform == "Windows2022_NET80").FailedTestTitles,
                 Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.HonorsTimeout" }));
         });
     }
@@ -355,7 +358,9 @@ public class PipelineAnalysisHelperTests
 
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
-        Assert.That(analyses.Single().FailedPipelineTests!.Keys, Is.EqualTo(new[] { "Ubuntu2404_NET80" }));
+        Assert.That(
+            analyses.Single().FailedPipelineTests!.Select(a => a.Platform),
+            Is.EqualTo(new[] { "Ubuntu2404_NET80" }));
     }
 
     [Test]

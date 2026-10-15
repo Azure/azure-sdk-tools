@@ -517,7 +517,8 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `VersioningReviewRequired` | CI | Versioning review needed | Yes | ⚠️ Label auto, assignment manual |
 | `ARM-Review-Required` | CI | ARM spec — routes to ARM team | Yes | ✅ Fully automated |
 | `ARMSignedOff` | ARM team | ARM review approved | Unblocks | ✅ Manual label, gate automated |
-| `APIStewardshipBoard-SignedOff` | Stewardship board | Data-plane REST API spec approved (stewardship review) | No (transitioning) | ⚠️ Process in transition |
+| `data-plane-review-requested` | CI | New data-plane API version — routes to data-plane review board | Yes | ✅ Fully automated |
+| `data-plane-review-signoff` | Data-plane review board | Data-plane REST API spec approved | Unblocks | ✅ Manual label, gate automated |
 | `package-name-review-required` | CI | New package name detected | Yes | ✅ Fully automated |
 | `package-name-<lang>-pending` | CI | Per-language package name pending review | Yes | ✅ Fully automated |
 | `package-name-<lang>-approved` | Architect | Package name approved for language | Unblocks | ✅ Manual label, gate automated |
@@ -544,7 +545,7 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `review-out-of-date` | ARH | Review PR stale | No | 🔜 Part of ARH |
 | `architecture-review-needed` | ARH | Flags for architect review | No | 🔜 Part of ARH |
 
-> **📋 Proposal: Label naming consistency** — Current labels use mixed conventions: `PascalCase` (`BreakingChangeReviewRequired`, `ARMSignedOff`, `APIStewardshipBoard-SignedOff`), `kebab-case` (`auto-sdk-build-fix`, `release-plan-linked`, `package-name-<lang>-approved`), and hybrid (`ARM-Review-Required`). Consider standardizing to `kebab-case` (e.g., `breaking-change-review-required`, `arm-signed-off`) for new labels, with backward-compatible aliasing for existing ones.
+> **📋 Proposal: Label naming consistency** — Current labels use mixed conventions: `PascalCase` (`BreakingChangeReviewRequired`, `ARMSignedOff`), `kebab-case` (`auto-sdk-build-fix`, `release-plan-linked`, `package-name-<lang>-approved`, `data-plane-review-signoff`), and hybrid (`ARM-Review-Required`). Consider standardizing to `kebab-case` (e.g., `breaking-change-review-required`, `arm-signed-off`) for new labels, with backward-compatible aliasing for existing ones.
 
 ### Approval gates (3 workstreams converging)
 
@@ -613,7 +614,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 | 6 | Breaking change resolution: agent-assisted for suppression suggestions and break categorization (API correction, intentional evolution, inadvertent). Agent can invoke authoring skill to suggest alternatives. Full automation not feasible -- versioned removals/type changes require human judgment. Source location data needed for unversioned change suggestions. | 1, 2 | @markcowl / @chunyu3 | No | Partially addressed |
 | 7 | Breaking change label routing undefined for data-plane: `BreakingChangeReviewRequired` (spec-level) applies but has no review team. `BreakingChange-{Language}-Sdk` (SDK-level) currently only applies to management plane. | 2 | @raych1 / @markcowl / @lmazuel | No | Open |
 | 8 | SDK breaking change detection integration in progress | 4 | @chunyu3 / @raych1 | No | In progress |
-| 9 | Data-plane review gates undefined: (a) spec-level breaking change review team/routing has no replacement after stewardship board dissolution, (b) SDK-level breaking change label (`BreakingChange-{Language}-Sdk`) not applied to data-plane today, (c) `APIStewardshipBoard-SignedOff` label -- process in transition, no replacement defined | 2, 4 | @samvaity / @prkannap / @lmazuel | No | Open |
+| 9 | Data-plane review gates: (a) spec-level breaking change review team/routing, (b) SDK-level breaking change label (`BreakingChange-{Language}-Sdk`) not applied to data-plane today, (c) data-plane spec sign-off now gated by `data-plane-review-signoff` (applied on `data-plane-review-requested`), replacing the retired `APIStewardshipBoard-SignedOff` | 2, 4 | @samvaity / @prkannap / @lmazuel | No | (c) Done; (a)(b) Open |
 | 10 | Release pipeline provisioning delay for new RPs | 5 | EngSys | No | In progress |
 | 11 | API review feedback agent needs ARH compatibility | 4 | azsdk-cli team | No | Open |
 | 12 | Release gate transition (APIView → ARH) | 5 | @tjprescott / EngSys | No | In progress — pipelines will check both APIView and ARH, then transition to ARH only |

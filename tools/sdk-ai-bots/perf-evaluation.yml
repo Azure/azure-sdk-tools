@@ -25,6 +25,7 @@ parameters:
       - general
       - releasesupport
       - authoring
+      - mcpserver
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml

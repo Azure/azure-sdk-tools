@@ -44,6 +44,6 @@ not need the full authoring workflow.
 ## Apply
 
 After authorization, invoke `azsdk-common-typespec-naming` in apply mode. It
-delegates SDK-only overrides to `azsdk_customized_code_update` with
-`editScope: SpecInputs`. The customization tool is the sole writer for
-`client.tsp`; do not duplicate its mutation with file-edit or shell tools.
+applies the planned language-scoped decorators directly to the loaded
+`client.tsp`. The naming skill owns this scoped edit; the authoring workflow
+continues to own ordinary TypeSpec declarations and validation.

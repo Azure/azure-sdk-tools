@@ -19,7 +19,7 @@ DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls
 
 The `azure-typespec-author` skill **must** be invoked immediately in all modes (including plan mode) for any task that involves creating and modifying TypeSpec (`.tsp`) files except for `client.tsp` under the specification directory in this repository. **This skill MUST be used regardless of how simple the task appears** — there are no "simple" TypeSpec edits. Even trivial-seeming changes (adding a single enum value, one property, one operation) require the full workflow because versioning decorators, validation, and compliance checks are mandatory.
 
-For naming-only `client.tsp` requests, invoke `azsdk-common-typespec-naming` directly; it applies authorized SDK overrides as scoped TypeSpec edits. Other SDK customizations remain with the existing customization workflow. This exception does not bypass naming guidance.
+For naming-only `client.tsp` requests, invoke `azsdk-common-typespec-naming` directly; it applies authorized SDK overrides through the customization tool. Other SDK customizations remain with the existing customization workflow. This exception does not bypass naming guidance.
 
 This includes but is not limited to:
 
@@ -31,10 +31,10 @@ This includes but is not limited to:
 
 ## MCP Tools
 
-| Tool                                              | Purpose                                                                                                                                                                                                  |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tool                                              | Purpose                                                                                                                                                                                              |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for requests **not** covered by the nine categories in [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search (`web_fetch`) instead. |
-| `azure-sdk-mcp:azsdk_run_typespec_validation`     | Validate TypeSpec                                                                                                                                                                                        |
+| `azure-sdk-mcp:azsdk_run_typespec_validation`     | Validate TypeSpec                                                                                                                                                                                    |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
 
@@ -46,7 +46,7 @@ Install `azsdk-common-typespec-naming` alongside this skill. Invoke it by name f
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
 - **Mandatory for ALL `.tsp` edits** — even a single `?` change can be breaking.
 - **Minimal, scoped edits** — only change what the request requires.
-- **Keep source and client plans separate** — Step 3 plans ordinary TypeSpec source changes. Step 4 offers an explicit opt-out from the [client configuration workflow](references/client-configuration.md), which is recommended and included by default for SDK-visible changes. The authoring skill owns declaration edits; the naming skill owns scoped `client.tsp` edits.
+- **Keep source and client plans separate** — Step 3 plans ordinary TypeSpec source changes. Step 4 offers an explicit opt-out from the [client configuration workflow](references/client-configuration.md), which is recommended and included by default for SDK-visible changes. The authoring skill owns declaration edits; the customization tool owns `client.tsp` edits.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
 - **Do not stop for plan confirmation** — once the request and project evidence
@@ -104,9 +104,11 @@ do not invoke the naming skill when the user opts out.
 
 Make minimal `.tsp` declaration edits following the source plan from Step 3. If
 Step 4 produced a client configuration plan, use
-`azsdk-common-typespec-naming` in apply mode for the scoped `client.tsp` edit.
-Confirm only unresolved material ambiguities; do not ask the user to approve the
-plan before applying an otherwise fully specified request.
+`azsdk-common-typespec-naming` in apply mode; it calls
+`azsdk_customized_code_update` with `SpecInputs`. The agent must not edit
+`client.tsp` directly—the customization tool is the authorized writer. Confirm
+only unresolved material ambiguities; do not ask the user to approve the plan
+before applying an otherwise fully specified request.
 
 ### Step 6: Validate
 

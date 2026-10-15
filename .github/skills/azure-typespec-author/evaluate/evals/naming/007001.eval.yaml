@@ -125,18 +125,19 @@ stimuli:
           pattern: '"decorators"\s*:\s*\[\s*\]'
       - *notApplied
 
-  - name: 007001-authoring-delegates-client-tsp-to-naming
+  - name: 007001-authoring-delegates-client-tsp-to-customization
     environment:
       skills:
         - ../../../../../../artifacts/typespec-author-skills/azure-typespec-author
         - ../../../../../../artifacts/typespec-author-skills/azsdk-common-typespec-naming
       files:
-        - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/standalone-apply/main.tsp
-          dest: main.tsp
-        - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/standalone-apply/client.tsp
-          dest: client.tsp
-        - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/standalone-apply/tspconfig.yaml
-          dest: tspconfig.yaml
+        - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/customization-mcp.mjs
+          dest: customization-mcp.mjs
+      mcpServers:
+        azure-sdk-mcp:
+          type: stdio
+          command: node
+          args: ["customization-mcp.mjs"]
     prompt: |
       Invoke azure-typespec-author and execute only Step 5's approved SDK naming
       handoff. The ordinary declaration edit is already complete. The confirmed
@@ -147,33 +148,27 @@ stimuli:
       by the generation entrypoint and the TypeSpec project root is the absolute
       current working directory (resolve it locally). No SDK package exists.
       These are all confirmed facts; do not create a project or inspect eval fixtures.
-      Delegate the scoped client.tsp edit to the naming skill and stop after its result;
-      the next authoring step will run TypeSpec validation. Do not change main.tsp,
-      dependencies or SDK code. Return JSON "applied" and "generatedNamesVerified".
-      Do not compile or generate an SDK in this bounded handoff.
+      The customization MCP tool is available. Do not edit client.tsp directly.
+      Stop after the handoff result; the next authoring step will run TypeSpec
+      validation. Return JSON "applied" and "generatedNamesVerified". Do not compile
+      or generate an SDK in this bounded handoff.
     constraints: *bounded
     graders:
       - *naming
       - type: tool-calls
         config:
           required:
-            - name: "^(edit|apply_patch)$"
+            - name: "^azure-sdk-mcp[-:]azsdk_customized_code_update$"
+              args:
+                editScope: "^SpecInputs$"
+                tspProjectPath: '^(?:[A-Za-z]:[\\/]|/)'
+                customizationRequest: '(?is)(?=.*(?:csharp|C#))(?=.*WidgetProperties\.enabled)(?=.*IsEnabled)(?=.*wire)(?=.*(?:Java|Python)).+'
           disallowed:
-            - name: "azsdk_"
-            - name: "^(create|task)$"
-      - type: file-matches
-        config:
-          path: client.tsp
-          pattern: '@@clientName\(\s*(?:Widget\.)?WidgetProperties\.enabled\s*,\s*"IsEnabled"\s*,\s*"csharp"\s*\)'
-      - type: file-matches
-        name: file-matches-existing-language-overrides
-        config:
-          path: client.tsp
-          pattern: '(?s)"EnabledForJava"\s*,\s*"java".*"enabled_for_python"\s*,\s*"python"'
-      - type: file-not-matches
-        config:
-          path: main.tsp
-          pattern: "clientName"
+            - name: "^(edit|create|apply_patch)$"
+            - name: "azsdk_(?:package_generate_code|package_build_code|run_typespec_validation)"
+            - name: "azsdk_customized_code_update"
+              args:
+                packagePath: ".+"
       - type: output-matches
         config:
           pattern: '"applied"\s*:\s*true'

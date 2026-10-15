@@ -35,7 +35,9 @@ steps:
             --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
             --runs $(TypeSpecAuthorEvalRuns)
       env:
-        GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+        ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+          COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+          GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
         AZSDK_EVAL_MCP_KIND: $(AZSDK_EVAL_MCP_KIND)
 
   - ${{ else }}:
@@ -49,5 +51,7 @@ steps:
       displayName: 'vally eval $(shardName)'
       workingDirectory: ${{ parameters.vallyRoot }}
       env:
-        GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+        ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+          COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+          GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
         AZSDK_EVAL_MCP_KIND: $(AZSDK_EVAL_MCP_KIND)

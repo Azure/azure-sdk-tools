@@ -338,6 +338,7 @@ class ChatbotEvolutionAgentService:
         record.updated_at = now
 
         if mode == ChatbotEvolutionAgentMode.analysis:
+            record.auto_closed_at = None
             record.reasoning = result.reasoning
             record.confidence = result.confidence
             record.evaluated_at = now

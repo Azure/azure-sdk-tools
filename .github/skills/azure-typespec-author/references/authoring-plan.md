@@ -38,7 +38,7 @@ choices, continue to application without asking the user to confirm the plan.
 
 > These steps apply to both ARM and data-plane services. The same versioning decorators (`@added`, `@removed`, `@renamedFrom`, `@typeChangedFrom`) apply regardless of service type.
 
-### Case 2 — Add Data-Plane Operations
+### Case 2 — Data-Plane Operations
 
 Key guidance for data-plane:
 

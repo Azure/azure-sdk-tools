@@ -417,6 +417,32 @@ def test_stewardship_local_dataset():
     assert datasets["basic"][0] == datasets["perf"][0]
 
 
+def test_stewardship_cases_are_customer_questions_and_expert_answers():
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    for target in ("basic", "perf"):
+        records, _ = resolve_records(
+            str(root / "evaluation_datasets" / target / "stewardship.jsonl"),
+            script_dir=root,
+        )
+        for row in records:
+            title, separator, question = row["query"].partition("\n\nquestion: ")
+            assert title.startswith("title: ") and separator, row["testcase"]
+            assert re.search(r"\b(?:I|my|we|our)\b", question, re.IGNORECASE), row["testcase"]
+            assert not re.search(
+                r"\b(?:give guidance only|do not approve|do not (?:change|apply) labels)\b",
+                question,
+                re.IGNORECASE,
+            ), row["testcase"]
+            assert not re.match(
+                r"(?:Explain|Establish|Inspect|Discuss|State that|Do not|"
+                r"Use (?:the )?(?:current|maintained))\b",
+                row["ground_truth"],
+            ), row["testcase"]
+
+
 def _run_completion_cli(tenant_override=None, *, scenario="stewardship", tenant_map=None, status=200):
     from contextlib import ExitStack
     from types import SimpleNamespace

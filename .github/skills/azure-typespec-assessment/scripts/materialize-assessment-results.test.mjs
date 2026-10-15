@@ -168,7 +168,7 @@ function sourceChange() {
     path: "specification/widget/models.tsp",
     status: "modified",
     origins: ["committed"],
-    hunks: [],
+    hunks: [{ id: "hunk-1", lines: ["+  required?: boolean;"] }],
     declarations: [
       {
         id: "declaration-1",
@@ -261,6 +261,7 @@ void test("materializes SDK naming findings with stable IDs and evidence state",
     evidenceSets: {
       "evidence-semantic-1": {
         sourceChangeIds: ["source-1"],
+        hunkIds: ["hunk-1"],
         evidenceFactIds: [],
       },
     },
@@ -377,6 +378,7 @@ void test("rejects declaration evidence outside the referenced review unit", () 
     evidenceSets: {
       "evidence-semantic-1": {
         sourceChangeIds: ["source-other"],
+        hunkIds: ["hunk-1"],
         evidenceFactIds: [],
       },
     },
@@ -390,6 +392,85 @@ void test("rejects declaration evidence outside the referenced review unit", () 
     assert.throws(
       () => materializeAssessmentResults({ work }),
       /is not owned by review unit semantic-1/,
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+void test("rejects declaration evidence from another hunk in the same source change", () => {
+  const work = fixture({
+    sourceChanges: [sourceChange()],
+    semanticReviewUnits: [semanticUnit()],
+    evidenceSets: {
+      "evidence-semantic-1": {
+        sourceChangeIds: ["source-1"],
+        hunkIds: ["hunk-other"],
+        evidenceFactIds: [],
+      },
+    },
+  });
+  try {
+    const decisions = completedDecisions(work);
+    decisions.sdkNamingReview.findings = [
+      namingFinding({ reviewUnitId: "semantic-1" }),
+    ];
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), decisions);
+    assert.throws(
+      () => materializeAssessmentResults({ work }),
+      /is not owned by review unit semantic-1/,
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+void test("materializes declaration evidence omitted from the bounded qualified-name summary", () => {
+  const change = sourceChange();
+  change.declarations = Array.from({ length: 25 }, (_, index) => ({
+    ...change.declarations[0],
+    id: `declaration-${index + 1}`,
+    qualifiedName: `ScenarioParameter.property${index + 1}`,
+    source: {
+      ...change.declarations[0].source,
+      startLine: 12 + index,
+      endLine: 12 + index,
+    },
+  }));
+  const omittedDeclaration = change.declarations[24];
+  const unit = {
+    ...semanticUnit(),
+    qualifiedNames: change.declarations
+      .slice(0, 24)
+      .map((declaration) => declaration.qualifiedName),
+  };
+  const work = fixture({
+    sourceChanges: [change],
+    semanticReviewUnits: [unit],
+    evidenceSets: {
+      "evidence-semantic-1": {
+        sourceChangeIds: ["source-1"],
+        hunkIds: ["hunk-1"],
+        evidenceFactIds: [],
+      },
+    },
+  });
+  try {
+    const decisions = completedDecisions(work);
+    decisions.sdkNamingReview.findings = [
+      namingFinding({
+        reviewUnitId: "semantic-1",
+        declarationId: omittedDeclaration.id,
+        declaration: omittedDeclaration.qualifiedName,
+      }),
+    ];
+    writeJson(path.join(work, "agent-workspace", "agent-decisions.json"), decisions);
+    const result = materializeAssessmentResults({ work });
+    const judgment = /** @type {AssessmentJudgment} */ (readJson(result.judgmentPath));
+    assert.equal(judgment.sdkNaming?.findings[0].declarationId, "declaration-25");
+    assert.equal(
+      judgment.sdkNaming?.findings[0].sourceLocation,
+      "specification/widget/models.tsp:36",
     );
   } finally {
     fs.rmSync(work, { recursive: true, force: true });

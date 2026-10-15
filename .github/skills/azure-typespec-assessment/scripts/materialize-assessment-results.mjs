@@ -1124,15 +1124,16 @@ function materializeSdkNaming(review, modelInput, sourceChanges) {
         const evidenceSet = reviewUnit.evidenceSetId
           ? modelInput.evidenceSets?.[reviewUnit.evidenceSetId]
           : undefined;
-        const qualifiedNames = Array.isArray(reviewUnit.qualifiedNames)
-          ? reviewUnit.qualifiedNames.filter((name) => typeof name === "string")
-          : [];
         const sourceChangeIds = Array.isArray(evidenceSet?.sourceChangeIds)
           ? evidenceSet.sourceChangeIds
           : [];
+        const hunkIds = Array.isArray(evidenceSet?.hunkIds) ? evidenceSet.hunkIds : [];
+        const declarationHunkIds = Array.isArray(resolved.declaration.hunkIds)
+          ? resolved.declaration.hunkIds
+          : [];
         if (
-          !qualifiedNames.includes(resolved.declaration.qualifiedName) ||
-          !sourceChangeIds.includes(resolved.sourceChange.id)
+          !sourceChangeIds.includes(resolved.sourceChange.id) ||
+          !declarationHunkIds.some((hunkId) => hunkIds.includes(hunkId))
         ) {
           throw new Error(
             `${label} declaration ${finding.declarationId} is not owned by review unit ${finding.reviewUnitId}.`,

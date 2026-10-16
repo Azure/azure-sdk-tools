@@ -679,31 +679,19 @@
           }
         },
         {
-          "description": "JavaScript SDK release tools documentation",
-          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
-          "folder": "azure_sdk_tools_docs",
+          "description": "Contributing guidelines for Azure SDK for JavaScript",
+          "path": "/CONTRIBUTING.md",
+          "folder": "azure_sdk_for_js_docs",
           "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"
           }
-        }
-      ]
-    },
-    {
-      "repository": {
-        "url": "https://github.com/Azure/azure-sdk-for-js.wiki.git",
-        "path": "azure-sdk-for-js.wiki",
-        "branch": "master",
-        "authType": "public",
-        "issueTracker": {
-          "provider": "github",
-          "repository": "Azure/azure-sdk-for-js"
-        }
-      },
-      "paths": [
+        },
         {
-          "description": "Wiki documentation for Azure SDK for JavaScript",
-          "folder": "azure_sdk_for_js_wiki",
+          "description": "JavaScript SDK release tools documentation",
+          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
+          "folder": "azure_sdk_tools_docs",
+          "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"
           }

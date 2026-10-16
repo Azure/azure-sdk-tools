@@ -207,6 +207,24 @@ async def test_branch_lookup_logs_selection_without_message_content(monkeypatch,
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("content", [
+    "[branch:feature/foo]question",
+    "[branch:feature/foo]问题",
+    "title: [branch:feature/foo]question",
+    "<p>[branch:feature/foo]</p><p>question</p>",
+    "[branch:feature/foo]<br />question",
+    "<div>[branch:feature/foo]</div><div>question</div>",
+    "<p><span>[branch:feature/</span><b>foo]</b></p><p>question</p>",
+])
+async def test_branch_routing_accepts_content_without_whitespace(monkeypatch, content):
+    monkeypatch.setenv("AI_FOUNDRY_AGENT_ROUTING", "enable")
+    project = _project_with_versions([_version("42")])
+    service = ChatService(project_client=project)
+    assert await service._resolve_request_version(content, "agent") == "42"
+    project.agents.list_versions.assert_called_once_with("agent", order="desc")
+
+
+@pytest.mark.asyncio
 async def test_request_version_selection(monkeypatch):
     monkeypatch.setenv("AI_FOUNDRY_AGENT_ROUTING", "enable")
     project = _project_with_versions([_version("42")])
@@ -231,6 +249,7 @@ async def test_request_version_selection(monkeypatch):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("content", [
     "[branch:feature/foo]", "[branch:] q", "[branch:feature/foo] [branch:feature/bar] q",
+    "[branch:feature/foo][branch:feature/bar]q",
     "title: [branch:feature/foo]", "title: [branch:] q",
     "title: [branch:feature/foo] [branch:feature/bar] q",
 ])

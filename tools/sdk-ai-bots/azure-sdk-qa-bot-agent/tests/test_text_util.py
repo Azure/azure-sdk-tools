@@ -109,7 +109,14 @@ def test_preprocess_message_plain_text_passthrough() -> None:
 
 @pytest.mark.parametrize("message,expected", [
     ("[branch:feature/foo] question", "question"),
+    ("[branch:feature/foo]question", "question"),
+    ("[branch:feature/foo]问题", "问题"),
+    ("title: [branch:feature/foo]question", "title: question"),
     ("<p>[branch:feature/foo] question</p>", "question"),
+    ("<p>[branch:feature/foo]</p><p>question</p>", "question"),
+    ("[branch:feature/foo]<br />question", "question"),
+    ("<div>[branch:feature/foo]</div><div>question</div>", "question"),
+    ("<p><span>[branch:feature/</span><b>foo]</b></p><p>question</p>", "question"),
     (
         'title: [branch:jiaqizhang-dev-api-stewardship-chatbot] test message\n\n<p>test</p>"',
         'title: test message test"',

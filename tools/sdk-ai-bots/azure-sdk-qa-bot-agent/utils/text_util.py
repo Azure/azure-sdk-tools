@@ -40,7 +40,7 @@ _LINK_RE = re.compile(
 )
 _HTML_TAG_RE = re.compile(r"<[^>]*>")
 _WHITESPACE_RE = re.compile(r"\s+")
-BRANCH_PREFIX_RE = re.compile(r"^\s*(title:\s*)?\[branch:([^\]]+)\](?:\s+|$)")
+BRANCH_PREFIX_RE = re.compile(r"^\s*(title:\s*)?\[branch:([^\]]+)\]\s*")
 
 
 # ---------------------------------------------------------------------------

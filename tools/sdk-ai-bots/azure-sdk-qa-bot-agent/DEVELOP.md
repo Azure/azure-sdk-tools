@@ -7,8 +7,8 @@ instructions and tools. You can change and test either component independently.
 ## Develop the agent
 
 1. Make your changes on a working branch. Start with
-   [agent instructions](agents/chat_agent/instruction.md),
-   [tenant prompts](prompts/tenants/), or [tools](tools/), depending on the change.
+   [agent instructions](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chat_agent/instruction.md),
+   [tenant prompts](https://github.com/Azure/azure-sdk-tools/tree/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/prompts/tenants), or [tools](https://github.com/Azure/azure-sdk-tools/tree/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools), depending on the change.
    Commit and push the branch.
 2. Open [azure-sdk-qa-bot-ai-foundry-agent-cd](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
    and select **Run pipeline**. Choose your working branch, set `environment` to
@@ -49,7 +49,7 @@ and `server.log`. You can ask Copilot to analyze the failed cases, identify prom
 or tool changes, and improve the implementation. Push the changes, deploy the agent
 again, and rerun the same scenarios to compare results.
 
-See the [evaluation guide](../azure-sdk-qa-bot-evaluation/README.md) for grading
+See the [evaluation guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/README.md) for grading
 details and result formats.
 
 ## Test in a dev channel
@@ -79,4 +79,4 @@ A missing branch deployment returns an error instead of using a different versio
 New branch deployments can take up to a minute to appear in the server's refreshed
 settings.
 
-For deployment or runtime failures, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+For deployment or runtime failures, see [TROUBLESHOOTING.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/TROUBLESHOOTING.md).

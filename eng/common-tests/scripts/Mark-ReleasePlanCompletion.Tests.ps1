@@ -15,8 +15,10 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         Set-Content -LiteralPath $script:stubPath -Value ($stubLines -join [Environment]::NewLine)
 
         function Invoke-CompletionTest {
-            param([string]$Path, [string]$ReleasePlanId = '100', [string]$SdkPullRequest = '')
-            & $script:completionScript -PackageInfoFilePath $Path -AzsdkExePath $script:stubPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest
+            param([string]$Path, [string]$ReleasePlanId = '100', [string]$SdkPullRequest = '', [string]$PipelineUrl = '')
+            $pipelineArgs = @{}
+            if ($PipelineUrl) { $pipelineArgs['PipelineUrl'] = $PipelineUrl }
+            & $script:completionScript -PackageInfoFilePath $Path -AzsdkExePath $script:stubPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest @pipelineArgs
         }
 
         function Get-CapturedArgument {
@@ -71,8 +73,8 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         Get-CapturedArgument $call '--api-version' | Should -BeNullOrEmpty
     }
 
-    It 'uses the legacy package lookup when neither an ID nor an SDK PR is supplied' {
-        $warnings = @(Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0 3>&1 | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+    It 'uses the legacy package lookup with informational logging when neither correlation input is supplied' {
+        $messages = @(Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0 3>&1 6>&1)
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
         $call = $global:ReleaseStatusTestCalls[0]
@@ -83,19 +85,54 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         Get-CapturedArgument $call '--sdk-release-type' | Should -Be 'stable'
         Get-CapturedArgument $call '--release-plan-id' | Should -BeNullOrEmpty
         Get-CapturedArgument $call '--sdk-pull-request' | Should -BeNullOrEmpty
-        ($warnings | ForEach-Object { $_.Message }) -join ' ' | Should -Match 'LEGACY_RELEASE_PLAN_LOOKUP'
+        @($messages | Where-Object { $_ -is [System.Management.Automation.WarningRecord] }).Count | Should -Be 0
+        ($messages | Out-String) | Should -Match 'LEGACY_RELEASE_PLAN_LOOKUP'
     }
 
-    It 'skips the legacy lookup when the package version is missing or unparseable' -TestCases @(
-        @{ Version = $null }, @{ Version = 'not-a-version' }
+    It 'updates status without optional version fields for <Kind> metadata on the <Lookup> path' -TestCases @(
+        foreach ($metadata in @(
+            @{ Kind = 'missing'; Version = $null },
+            @{ Kind = 'non-string'; Version = 123 },
+            @{ Kind = 'unparseable'; Version = 'not-a-version' }
+        )) {
+            foreach ($lookup in @(
+                @{ Lookup = 'manual'; ReleasePlanId = '100'; SdkPullRequest = '' },
+                @{ Lookup = 'automatic'; ReleasePlanId = '0'; SdkPullRequest = 'https://github.com/Azure/azure-sdk-for-python/pull/100' },
+                @{ Lookup = 'legacy'; ReleasePlanId = '0'; SdkPullRequest = '' }
+            )) {
+                $metadata + $lookup
+            }
+        }
     ) {
-        param($Version)
+        param($Kind, $Version, $Lookup, $ReleasePlanId, $SdkPullRequest)
         $script:packageInfo.Version = $Version
         $script:packageInfo | ConvertTo-Json | Set-Content -LiteralPath $script:packageInfoPath
 
-        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0 3>$null
+        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest
 
-        $global:ReleaseStatusTestCalls.Count | Should -Be 0
+        $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        $call = $global:ReleaseStatusTestCalls[0]
+        Get-CapturedArgument $call '--status' | Should -Be 'Released'
+        Get-CapturedArgument $call '--package-version' | Should -BeNullOrEmpty
+        Get-CapturedArgument $call '--sdk-release-type' | Should -BeNullOrEmpty
+        if ($ReleasePlanId -ne '0') {
+            Get-CapturedArgument $call '--release-plan-id' | Should -Be $ReleasePlanId
+        }
+        [string](Get-CapturedArgument $call '--sdk-pull-request') | Should -Be $SdkPullRequest
+    }
+
+    It 'forwards the release pipeline URL for the <Lookup> path' -TestCases @(
+        @{ Lookup = 'manual'; ReleasePlanId = '100'; SdkPullRequest = '' },
+        @{ Lookup = 'automatic'; ReleasePlanId = '0'; SdkPullRequest = 'https://github.com/Azure/azure-sdk-for-python/pull/100' },
+        @{ Lookup = 'legacy'; ReleasePlanId = '0'; SdkPullRequest = '' }
+    ) {
+        param($Lookup, $ReleasePlanId, $SdkPullRequest)
+        $pipelineUrl = 'https://dev.azure.com/azure-sdk/internal/_build/results?buildId=12345'
+
+        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest -PipelineUrl $pipelineUrl
+
+        $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -Be $pipelineUrl
     }
 
     It 'forwards the SDK PR without a legacy warning when no plan ID is supplied' {
@@ -180,16 +217,20 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
     }
 
-    It 'does not retry a failed correlated update through the legacy lookup' -TestCases @(
-        @{ ReleasePlanId = '100'; SdkPullRequest = '' },
-        @{ ReleasePlanId = '0'; SdkPullRequest = 'https://github.com/Azure/azure-sdk-for-python/pull/100' }
+    It 'logs a failed status update as information without retrying or warning on the <Lookup> path' -TestCases @(
+        @{ Lookup = 'manual'; ReleasePlanId = '100'; SdkPullRequest = '' },
+        @{ Lookup = 'automatic'; ReleasePlanId = '0'; SdkPullRequest = 'https://github.com/Azure/azure-sdk-for-python/pull/100' },
+        @{ Lookup = 'legacy'; ReleasePlanId = '0'; SdkPullRequest = '' }
     ) {
-        param($ReleasePlanId, $SdkPullRequest)
+        param($Lookup, $ReleasePlanId, $SdkPullRequest)
         $global:ReleaseStatusTestExitCode = 1
 
-        { Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest } | Should -Not -Throw
+        $messages = @(Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest 3>&1 6>&1)
 
+        $LASTEXITCODE | Should -Be 0
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
+        @($messages | Where-Object { $_ -is [System.Management.Automation.WarningRecord] }).Count | Should -Be 0
+        ($messages | Out-String) | Should -Match 'Exit code: 1'
         $call = $global:ReleaseStatusTestCalls[0]
         Get-CapturedArgument $call '--package-name' | Should -Be 'azure-test'
         Get-CapturedArgument $call '--language' | Should -Be 'Python'
@@ -207,6 +248,7 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         $template | Should -Match "SdkPullRequest: ''"
         $template | Should -Match '-ReleasePlanId.+parameters\.ReleasePlanId'
         $template | Should -Match '-SdkPullRequest.+parameters\.SdkPullRequest'
+        $template | Should -Match ([regex]::Escape('-PipelineUrl "$(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)"'))
         $template | Should -Not -Match 'ApiVersion|api-version'
     }
 }

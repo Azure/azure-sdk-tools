@@ -11,6 +11,8 @@
 - `api-review create` and `azsdk_apireviewhub_request_review_pr` no longer support Swift.
 - `--package-type` and the corresponding MCP parameter now normalize `client`, `spring`, and `functions` to API Review Hub's `data` package type.
 
+- Defer loading CodeownersUtils until a CODEOWNERS operation needs it, avoiding DLL locks from idle local MCP servers.
+
 ### Other Changes
 
 - Refactored the API Review Hub pipeline to build shared tooling once and dispatch isolated base and target artifact-generation jobs.

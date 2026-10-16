@@ -438,10 +438,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("assets.json", false, "./ eng/ .gitignore")]
-        [InlineData("assets.json", true, "python/recordings eng/ .gitignore")]
-        [InlineData("sdk/storage/assets.json", false, "sdk/storage eng/ .gitignore")]
-        [InlineData("sdk/storage/assets.json", true, "python/recordings/sdk/storage eng/ .gitignore")]
+        [InlineData("assets.json", false, "")]
+        [InlineData("assets.json", true, "\"python/recordings\" eng")]
+        [InlineData("sdk/storage/assets.json", false, "\"sdk/storage\" eng")]
+        [InlineData("sdk/storage/assets.json", true, "\"python/recordings/sdk/storage\" eng")]
+        [InlineData("sdk/service with spaces/assets.json", true, "\"python/recordings/sdk/service with spaces\" eng")]
         public async Task ResolveCheckPathsResolvesProperly(string assetsJsonPath, bool includePrefix, string expectedResult)
         {
             var expectedPaths = new string[]

@@ -22,6 +22,7 @@ from typing import overload, Protocol
 from urllib.parse import quote
 
 from azure.appconfiguration.aio import AzureAppConfigurationClient
+from azure.core.exceptions import AzureError
 
 from utils.azure_credential import get_credential
 
@@ -98,7 +99,18 @@ async def init() -> None:
     async with _settings_refresh_lock:
         if _settings is not None and monotonic() < _settings_refresh_at:
             return
-        snapshot = await load(endpoint)
+        try:
+            snapshot = await load(endpoint)
+        except (AzureError, TimeoutError):
+            if _settings is None:
+                raise
+            _settings_refresh_at = monotonic() + CONFIG_REFRESH_INTERVAL_SECONDS
+            _logger.exception(
+                "App Configuration refresh failed; retaining cached settings and "
+                "retrying in %d seconds.",
+                CONFIG_REFRESH_INTERVAL_SECONDS,
+            )
+            return
         _settings = snapshot.settings
         _settings_refresh_at = monotonic() + CONFIG_REFRESH_INTERVAL_SECONDS
         _logger.info("Loaded %d settings from App Configuration", len(_settings))

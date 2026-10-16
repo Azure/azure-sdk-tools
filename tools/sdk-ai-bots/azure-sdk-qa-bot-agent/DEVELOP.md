@@ -24,7 +24,8 @@ Commit and push your server changes, then run
 [Server CD](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
 from your working branch with `environment=dev` and `deploymentTarget=server`.
 This updates the shared dev backend for everyone; agent branch tags select an
-agent version, not a separate backend.
+agent version, not a separate backend. Server deployment automatically enables
+branch routing in dev and disables it in preview and production.
 
 After deployment, test through a dev channel or run an evaluation pipeline from
 the same branch. Deploy the agents needed by your selected scenarios from that

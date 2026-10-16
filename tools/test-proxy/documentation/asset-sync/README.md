@@ -74,6 +74,11 @@ retained, and subsequent fetches use the blobless filter; old trees that were no
 downloaded previously can still require lazy fetching. Switching to a different
 tag retains the existing behavior of discarding local changes.
 
+Breadcrumb updates still read the stored entries to detect external changes.
+When the requested entry's hash and tag already match, its file is left unchanged.
+Missing or changed entries are still persisted, and deleted breadcrumb files are
+recreated on the next restore.
+
 ## The `assets.json` and how it enables external recordings
 
 An `assets.json` contains _targeting_ information for use by the test-proxy when restoring (or updating) recordings "below" a specific path.

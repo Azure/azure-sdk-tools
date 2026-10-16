@@ -1,0 +1,20 @@
+{
+	"mcpServers": {
+		"azure-sdk-mcp": {
+			"type": "local",
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"./tools/azsdk-cli/Azure.Sdk.Tools.Cli",
+				"--configuration",
+				"Debug",
+				"--",
+				"mcp"
+			],
+			"tools": [
+				"*"
+			]
+		}
+	}
+}

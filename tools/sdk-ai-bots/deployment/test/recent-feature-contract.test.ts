@@ -478,6 +478,16 @@ test("deploys scheduled knowledge sync with the agent server", () => {
   assert.match(stage, /WEBJOB_NAME: knowledge-sync/);
 });
 
+test("keeps WebJob tools without reinstalling Node in the backend image", () => {
+  const dockerfile = read("../azure-sdk-qa-bot-agent/Dockerfile");
+  const launcher = read("../azure-sdk-qa-bot-knowledge-sync/webjob/run.sh");
+
+  assert.match(dockerfile, /tdnf install -y .*git openssh-clients/);
+  assert.doesNotMatch(dockerfile, /nodejs\.org|npm install|tdnf install[^\n]*nodejs/);
+  assert.match(launcher, /NODE="\$JOB_ROOT\/runtime\/bin\/node"/);
+  assert.match(launcher, /exec "\$NODE"/);
+});
+
 test("subscribes the additional dev .NET channel", () => {
   const suite = parse(read("infra/environments/environment-suite.yaml"));
   const channels = read("config/dev/channel.yaml");

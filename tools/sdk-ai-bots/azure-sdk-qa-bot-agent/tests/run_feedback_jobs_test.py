@@ -356,6 +356,7 @@ async def test_run_validates_before_analysis() -> None:
     qa_service = MagicMock()
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
     qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
+    qa_service.close_inactive_threads = AsyncMock(return_value=0)
     qa_service.list_analyzable = AsyncMock(
         return_value=[_record(qa_status=QAStatus.ongoing)]
     )
@@ -403,6 +404,9 @@ async def test_run_validates_before_analysis() -> None:
         await run_feedback_jobs._run(_args())
 
     evolution.recover_stale_jobs.assert_awaited_once_with(
+        tenant_id=None, excluded_channels=set()
+    )
+    qa_service.close_inactive_threads.assert_awaited_once_with(
         tenant_id=None, excluded_channels=set()
     )
     assert events == ["validation", "analysis"]

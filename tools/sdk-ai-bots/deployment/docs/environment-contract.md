@@ -165,6 +165,11 @@ they cross different contracts:
 | `SERVICE_AGENT_SERVER_IMAGE_NAME` | azd-owned full image actually published for agent-server. Bicep prefers it during reprovisioning so it does not restore a placeholder image. |
 | `BOT_ID` / `AZURE_CLIENT_ID` | The frontend UAMI client ID under two external contracts: Bot Framework application ID and Azure Identity's standard selector. |
 
+App Configuration seeding also writes `STORAGE_CONFIG_CONTAINER=bot-configs`
+and `CHANNEL_CONFIG_BLOB=channel.yaml`, matching the deployment's routing upload.
+The daily feedback job requires both keys to exclude testing channels before
+processing QA records; it does not default them when a store is newly created.
+
 The `preprovision` hook detects drift on every `azd provision` and fails fast
 if the azd env is out of sync, pointing you back at this script. Pipelines
 are unaffected — they read the suite directly via

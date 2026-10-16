@@ -42,8 +42,8 @@ exception with an owner and due date.
 - [ ] Postprovision completed App Configuration, Search reconciliation,
       `AI-SEARCH-APIKEY`, and bot-config upload without skipped required values.
 - [ ] `WEB_FETCH_ALLOWED_DOMAINS` contains the approved production domains.
-- [ ] The configured GitHub App private-key secret exists and runtime identities
-      can read it.
+- [ ] The configured GitHub App signing key exists and the frontend identity
+      selected by the WebJob's `BOT_CLIENT_ID` can sign with it.
 - [ ] The Teams managed-API connection reports `Connected`.
 - [ ] The Azure Bot `MsTeamsChannel` exists.
 - [ ] The approved Teams app version is published in the tenant catalog.
@@ -51,8 +51,10 @@ exception with an owner and due date.
 
 ## Data and Recovery
 
-- [ ] Knowledge sync and wiki build definitions have completed successfully and
+- [ ] The knowledge-sync WebJob and wiki build have completed successfully and
       both Search indexer triggers were accepted.
+- [ ] The production daily feedback pipeline runs with the evolution gate
+      enabled, including stale-job recovery and 144-hour inactivity closure.
 - [ ] Cosmos DB continuous backup is enabled and its restore procedure is known.
 - [ ] The selected Blob recovery method is enabled, tested, and documented in
       the [rollback runbook](runbook-rollback.md).

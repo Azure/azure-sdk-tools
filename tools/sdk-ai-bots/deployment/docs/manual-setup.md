@@ -209,9 +209,12 @@ approved versions can be installed or upgraded by the frontend postdeploy hook.
 
 ### External credentials and notifications
 
-- The GitHub App private key is expected in the vault configured by
-  `GITHUB_APP_KEYVAULT_URL` and `GITHUB_APP_KEY_NAME`. Ensure the runtime
-  identities can read that existing secret; this deployment does not create it.
+- The GitHub App signing key is expected in the vault configured by
+  `GITHUB_APP_KEYVAULT_URL` and `GITHUB_APP_KEY_NAME`; this deployment does not
+  create it. The frontend identity selected by the WebJob's `BOT_CLIENT_ID`
+  needs key `Sign` permission through a legacy access policy, or Key Vault
+  Crypto User on an RBAC-enabled vault. Reading a private-key secret is not
+  sufficient: the frontend and WebJob use Key Vault's remote signing API.
 - Authorize `tools - sdk-ai-bots - deploy` to use the
   `EMU-SSH-PRIVATE-KEY` secure file. The dev/prod agent-server path injects it
   into the App Service without placing the key in pipeline arguments or logs.

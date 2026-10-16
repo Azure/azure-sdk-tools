@@ -168,6 +168,8 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
     ),
 
     // ── Blob container names ─────────────────────────────────────────────
+    STORAGE_CONFIG_CONTAINER: "bot-configs",
+    CHANNEL_CONFIG_BLOB: "channel.yaml",
     STORAGE_FEEDBACK_CONTAINER: "feedback",
     STORAGE_KNOWLEDGE_CONTAINER: "knowledge",
     STORAGE_RECORDS_CONTAINER: "records",

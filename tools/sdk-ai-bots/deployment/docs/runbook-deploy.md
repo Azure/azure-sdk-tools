@@ -24,10 +24,16 @@ generation and feedback processing use their specialized scheduled pipelines.
 
 | Related job | YAML definition |
 | --- | --- |
-| Knowledge sync fallback/manual workflow | `azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml` |
+| Knowledge-sync-only fallback (dev/prod) | `azure-sdk-qa-bot-agent/pipelines/server-cd.yml`, `deploymentTarget=knowledge-sync` |
 | Generated wiki | `azure-sdk-qa-bot-wiki-index/build_wiki.yml` |
 | Hosted-agent deployment | `azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` |
 | Feedback/evolution jobs | `azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` |
+
+The knowledge-sync-only fallback requires the backend CD definition's existing
+variable groups and service connection, plus previously configured App Service
+settings and SSH key. It does not provision those prerequisites. The old
+standalone knowledge-sync pipeline was removed; do not restore its schedule
+alongside the WebJob.
 
 ## 2. Pre-deployment Checks
 
@@ -112,7 +118,11 @@ or runtime dependencies.
    primary/candidate RBAC.
 8. Inspect Application Insights for new 4xx/5xx, authentication, dependency, or
    startup errors.
-9. Record the source revision and resulting App Service or Foundry versions.
+9. In production, confirm the daily feedback pipeline runs with
+   `CHATBOT_EVOLUTION_AGENT_ENABLED=true`. It recovers stale jobs and closes
+   eligible QA threads after 144 inactive hours before agent analysis; closure
+   occurs on the next scheduled scan, not at an exact wall-clock deadline.
+10. Record the source revision and resulting App Service or Foundry versions.
 
 For a knowledge or wiki run, also confirm the expected blobs were written and
 the corresponding Search indexer start request was accepted.

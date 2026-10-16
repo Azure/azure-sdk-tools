@@ -32,6 +32,13 @@ test("seeds hosted-agent deployment settings", () => {
   assert.equal(values.AI_FOUNDRY_RAI_POLICY_ID, "Microsoft.DefaultV2");
 });
 
+test("seeds the routing blob required by the daily feedback job", () => {
+  const values = fixedAppConfigValues({});
+
+  assert.equal(values.STORAGE_CONFIG_CONTAINER, "bot-configs");
+  assert.equal(values.CHANNEL_CONFIG_BLOB, "channel.yaml");
+});
+
 test("points the legacy Search agent key at the configured knowledge base", () => {
   const values = fixedAppConfigValues({});
 

@@ -20,9 +20,9 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         # Mocks called from the publisher have another script scope; use one isolated fixture.
         $id = [Guid]::NewGuid().ToString()
         $script:f = $global:EvalPublicationFixture = @{
-            bundle = (Join-Path $TestDrive "$id.zip"); result = (Join-Path $TestDrive "$id.json")
+            bundle = (Join-Path $TestDrive "$id.zip"); logs = @(); stored = $false
             calls = @(); uploadFails = $false; showFails = $false; storageToken = $script:identityToken
-            notifyTokenFails = $false; status = 200; headers = @{}; responseFailures = 0; finalReceiptFails = $false; httpCalls = 0
+            notifyTokenFails = $false; status = 200; headers = @{}; responseFailures = 0; httpCalls = 0
             realWebRequest = $script:realWebRequest
             nodePath = $script:nodePath
             dashboardUrl = 'https://synthetic-dashboard.test-region.azurewebsites.net/api/refresh'
@@ -36,7 +36,7 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         $f.existing = @{ properties = @{ contentLength = $f.bytes.Length }; metadata = @{
             schema = '1'; sha256 = $f.hash; publisher = $script:owner; storedat = '2026-09-21T00:00:00.000Z'
         } }
-        $f.arguments = @{ StorageAccountName = 'evaltestsummary'; BundlePath = $f.bundle; ResultPath = $f.result;
+        $f.arguments = @{ StorageAccountName = 'evaltestsummary'; BundlePath = $f.bundle;
             DashboardRefreshUrl = $f.dashboardUrl; DashboardResource = $f.dashboardResource }
         $script:publishArgs = $f.arguments
 
@@ -53,18 +53,20 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
             if ($Arguments[0] -ne 'storage' -or $Arguments[1] -ne 'blob') { throw 'Unexpected CLI command.' }
             if ($Arguments[2] -eq 'upload') {
                 if ($f.uploadFails) { $global:LASTEXITCODE = 1; return 'PRIVATE_UPLOAD_RESPONSE_MUST_NOT_APPEAR' }
+                $f.stored = $true
                 return '{"etag":"fake-etag"}'
             }
             if ($Arguments[2] -eq 'show') {
                 if ($f.showFails) { $global:LASTEXITCODE = 1; return 'PRIVATE_STORAGE_RESPONSE_MUST_NOT_APPEAR' }
+                $f.stored = $true
                 return $f.existing | ConvertTo-Json -Depth 5 -Compress
             }
             throw 'Unexpected storage operation; delete/overwrite/container creation is forbidden.'
         }
         Mock Invoke-WebRequest {
             $f = $global:EvalPublicationFixture; $f.httpCalls++
-            $receipt = Get-Content -LiteralPath $f.result -Raw | ConvertFrom-Json
-            $receipt.status | Should -Be 'stored'; $receipt.notification.status | Should -Be 'pending'
+            $f.stored | Should -BeTrue
+            @($f.logs | Where-Object { $_ -like 'Result archive stored:*' }).Count | Should -Be 1
             $Uri.AbsoluteUri | Should -BeExactly $f.dashboardUrl
             $Headers.Authorization | Should -Be 'Bearer fake-notification-token'
             $MaximumRedirection | Should -Be 0; $ConnectionTimeoutSeconds | Should -Be 180; $SkipHttpErrorCheck | Should -BeTrue
@@ -72,9 +74,9 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
             $signal = $Body | ConvertFrom-Json -AsHashtable
             @($signal.Keys | Sort-Object) | Should -Be @('blobName', 'sha256')
             $signal.blobName | Should -Be $f.name; $signal.sha256 | Should -Be $f.hash
-            if ($f.finalReceiptFails) { New-Item -Path "$($f.result).tmp" -ItemType Directory | Out-Null }
             return [pscustomobject]@{ StatusCode = $f.status; Headers = $f.headers; Content = (@{ status = 'succeeded'; failureCount = $f.responseFailures } | ConvertTo-Json -Compress) }
         }
+        Mock Write-Host { $global:EvalPublicationFixture.logs += [string]$Object }
         Mock Start-Sleep { }
     }
 
@@ -92,8 +94,8 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         $arguments | Should -Contain 'schema=1'; $arguments | Should -Contain "sha256=$($f.hash)"
         $arguments | Should -Contain "publisher=$script:owner"
         ($arguments | Where-Object { $_ -like 'storedat=*' }) | Should -Match 'Z$'
-        $receipt = Get-Content $f.result -Raw | ConvertFrom-Json
-        $receipt.status | Should -Be 'stored'; $receipt.duplicate | Should -BeFalse; $receipt.notification.status | Should -Be 'succeeded'
+        $f.logs | Should -Contain "Result archive stored: $($f.name) (duplicate: False)."
+        $f.logs | Should -Contain 'Dashboard refresh succeeded.'
         Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
         (Get-FileHash $f.bundle).Hash.ToLowerInvariant() | Should -Be $f.hash
     }
@@ -101,8 +103,8 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
     It 'adopts an identical existing archive after collision or a lost upload response' {
         $f.uploadFails = $true
         & $script:publisher @script:publishArgs
-        $receipt = Get-Content $f.result -Raw | ConvertFrom-Json
-        $receipt.duplicate | Should -BeTrue; $receipt.notification.status | Should -Be 'succeeded'
+        $f.logs | Should -Contain "Result archive stored: $($f.name) (duplicate: True)."
+        $f.logs | Should -Contain 'Dashboard refresh succeeded.'
         $f.existing.metadata.storedat | Should -Be '2026-09-21T00:00:00.000Z'
         @($f.calls | Where-Object { $_[0] -eq 'storage' }).Count | Should -Be 2
     }
@@ -115,7 +117,7 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         $f.uploadFails = $true; $f.existing.metadata.storedat = $Value
         & $script:publisher @script:publishArgs
         $f.existing.metadata.storedat | Should -BeExactly $Value
-        (Get-Content $f.result -Raw | ConvertFrom-Json).duplicate | Should -BeTrue
+        $f.logs | Should -Contain "Result archive stored: $($f.name) (duplicate: True)."
     }
 
     It 'never adopts a collision with different <Field>' -ForEach @(
@@ -140,40 +142,29 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
 
     It 'fails unavailable storage without notifying or logging raw CLI output' {
         $f.uploadFails = $true; $f.showFails = $true
-        { & $script:publisher @script:publishArgs } | Should -Throw '*publication_failed*'
-        $receipt = Get-Content $f.result -Raw
-        $receipt | Should -Not -Match 'PRIVATE_|SECRET_|Bearer'
-        ($receipt | ConvertFrom-Json).status | Should -Be 'failed'
+        $message = ''
+        try { & $script:publisher @script:publishArgs } catch { $message = $_.Exception.Message }
+        $message | Should -Match 'publication_failed'
+        $message | Should -Not -Match 'PRIVATE_|SECRET_|Bearer'
+        $f.logs | Should -BeNullOrEmpty
         Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
     }
 
-    It 'does not notify when the first storage receipt cannot be retained' {
-        New-Item -Path "$($f.result).tmp" -ItemType Directory | Out-Null
-        { & $script:publisher @script:publishArgs } | Should -Throw '*receipt_failed*'
-        Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
-        @($f.calls | Where-Object { $_[0] -eq 'storage' -and $_[2] -eq 'upload' }).Count | Should -Be 1
-    }
-
-    It 'never truncates a pre-existing receipt staging file' {
-        Set-Content -LiteralPath "$($f.result).tmp" -Value 'preserve existing bytes' -NoNewline
-        { & $script:publisher @script:publishArgs } | Should -Throw '*receipt_failed*'
-        Get-Content -LiteralPath "$($f.result).tmp" -Raw | Should -BeExactly 'preserve existing bytes'
-        Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
-    }
-
-    It 'preserves the first stored receipt when notification status cannot be saved' {
-        $f.finalReceiptFails = $true
-        & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
-        $receipt = Get-Content $f.result -Raw | ConvertFrom-Json
-        $receipt.status | Should -Be 'stored'; $receipt.notification.status | Should -Be 'pending'
-        "$warnings" | Should -Match 'original storage receipt is retained'
+    It 'publishes without writing local status files or changing the saved archive and descriptor' {
+        $before = @(Get-ChildItem -LiteralPath $TestDrive -Recurse -File | Select-Object -ExpandProperty FullName | Sort-Object)
+        $descriptor = Get-Content -LiteralPath "$($f.bundle).json" -Raw
+        & $script:publisher @script:publishArgs
+        @(Get-ChildItem -LiteralPath $TestDrive -Recurse -File | Select-Object -ExpandProperty FullName | Sort-Object) | Should -Be $before
+        Get-Content -LiteralPath "$($f.bundle).json" -Raw | Should -BeExactly $descriptor
+        (Get-FileHash $f.bundle -Algorithm SHA256).Hash.ToLowerInvariant() | Should -Be $f.hash
+        Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
     }
 
     It 'treats notification HTTP <Status> as permanent while retaining stored success' -ForEach @(@{ Status = 302 }, @{ Status = 401 }, @{ Status = 403 }) {
         $f.status = $Status
-        & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
-        $receipt = Get-Content $f.result -Raw | ConvertFrom-Json
-        $receipt.status | Should -Be 'stored'; $receipt.notification.status | Should -Be 'failed'
+        & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
+        "$warnings" | Should -Match 'dashboard refresh failed'
+        $f.stored | Should -BeTrue
         Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
         Assert-MockCalled Start-Sleep -Times 0 -Exactly
     }
@@ -186,8 +177,9 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
                 [Management.Automation.ErrorCategory]::InvalidOperation, $null)
             throw $record
         }
-        & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
-        (Get-Content $f.result -Raw | ConvertFrom-Json).status | Should -Be 'stored'
+        & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
+        "$warnings" | Should -Match 'dashboard refresh failed'
+        $f.stored | Should -BeTrue
         Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
         Assert-MockCalled Start-Sleep -Times 0 -Exactly
     }
@@ -227,11 +219,11 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
                     -ContentType $ContentType -Body $Body -Headers $Headers -MaximumRedirection $MaximumRedirection `
                     -ConnectionTimeoutSeconds 5 -OperationTimeoutSeconds 5 -SkipHttpErrorCheck
             }
-            & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
+            & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
             Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
             Assert-MockCalled Start-Sleep -Times 0 -Exactly
-            $receipt = Get-Content $f.result -Raw | ConvertFrom-Json
-            $receipt.status | Should -Be 'stored'; $receipt.notification.status | Should -Be 'failed'
+            "$warnings" | Should -Match 'dashboard refresh failed'
+            $f.stored | Should -BeTrue
             $server.Kill($true); $server.WaitForExit()
             @($server.StandardOutput.ReadToEnd().Trim() -split '\r?\n') | Should -Be @('/probe')
         } finally {
@@ -242,18 +234,20 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
 
     It 'bounds transient notification retries to four and honors capped backpressure' {
         $f.status = 429; $f.headers = @{ 'Retry-After' = '9999' }
-        & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
+        & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
         Assert-MockCalled Invoke-WebRequest -Times 4 -Exactly
         Assert-MockCalled Start-Sleep -Times 3 -Exactly -ParameterFilter { $Milliseconds -eq 60000 }
-        (Get-Content $f.result -Raw | ConvertFrom-Json).status | Should -Be 'stored'
+        "$warnings" | Should -Match 'dashboard refresh failed'
+        $f.stored | Should -BeTrue
     }
 
     It 'ignores non-finite Retry-After values without failing an already-stored build' -ForEach @(@{ Value = 'NaN' }, @{ Value = 'Infinity' }) {
         $f.status = 429; $f.headers = @{ 'Retry-After' = $Value }
-        & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
+        & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
         Assert-MockCalled Invoke-WebRequest -Times 4 -Exactly
         Assert-MockCalled Start-Sleep -Times 3 -Exactly
-        (Get-Content $f.result -Raw | ConvertFrom-Json).status | Should -Be 'stored'
+        "$warnings" | Should -Match 'dashboard refresh failed'
+        $f.stored | Should -BeTrue
     }
 
     It 'accepts a later successful signal without re-uploading' {
@@ -264,23 +258,24 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
         & $script:publisher @script:publishArgs
         Assert-MockCalled Invoke-WebRequest -Times 2 -Exactly
         @($f.calls | Where-Object { $_[0] -eq 'storage' -and $_[2] -eq 'upload' }).Count | Should -Be 1
-        (Get-Content $f.result -Raw | ConvertFrom-Json).notification.status | Should -Be 'succeeded'
+        $f.logs | Should -Contain 'Dashboard refresh succeeded.'
     }
 
     It 'does not count an import-failure response as notification success' {
         $f.responseFailures = 1
-        & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
+        & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
         Assert-MockCalled Invoke-WebRequest -Times 4 -Exactly
-        (Get-Content $f.result -Raw | ConvertFrom-Json).notification.status | Should -Be 'failed'
+        "$warnings" | Should -Match 'dashboard refresh failed'
+        $f.logs | Should -Not -Contain 'Dashboard refresh succeeded.'
     }
 
     It 'notification token failure cannot erase stored success or leak the token error' {
         $f.notifyTokenFails = $true
         & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
         Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
-        $receipt = Get-Content $f.result -Raw
-        ($receipt | ConvertFrom-Json).status | Should -Be 'stored'
-        $receipt + "$warnings" | Should -Not -Match 'SECRET_|fake-notification-token'
+        $f.stored | Should -BeTrue
+        "$warnings" | Should -Match 'dashboard refresh failed'
+        ($f.logs -join ' ') + "$warnings" | Should -Not -Match 'SECRET_|fake-notification-token'
     }
 
     It 'uses the configured dashboard URL and resource instead of production constants' {
@@ -292,7 +287,7 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
         Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
         $tokenCalls = @($f.calls | Where-Object { $_[0] -eq 'account' -and $_ -contains $f.dashboardResource })
         $tokenCalls.Count | Should -Be 1
-        (Get-Content $f.result -Raw | ConvertFrom-Json).notification.status | Should -Be 'succeeded'
+        $f.logs | Should -Contain 'Dashboard refresh succeeded.'
     }
 
     It 'retains uploaded results without requesting or sending a token for invalid <Field>' -ForEach @(
@@ -316,9 +311,7 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
     ) {
         $f.arguments[$Field] = $Value
         & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
-        $receipt = Get-Content $f.result -Raw | ConvertFrom-Json
-        $receipt.status | Should -Be 'stored'
-        $receipt.notification.errorCode | Should -Be 'notification_configuration'
+        $f.stored | Should -BeTrue
         "$warnings" | Should -Match 'configuration is missing or invalid'
         Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
         Assert-MockCalled Start-Sleep -Times 0 -Exactly
@@ -350,22 +343,4 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
         Assert-MockCalled az -Times 0 -Exactly
     }
 
-    It 'refuses a receipt path that replaces the archive or descriptor' -ForEach @(@{ Suffix = '' }, @{ Suffix = '.json' }) {
-        $f.arguments.ResultPath = "$($f.bundle)$Suffix"
-        { & $script:publisher @script:publishArgs } | Should -Throw '*invalid_bundle*'
-        Assert-MockCalled az -Times 0 -Exactly
-        (Get-FileHash $f.bundle).Hash.ToLowerInvariant() | Should -Be $f.hash
-    }
-
-    It 'rejects a receipt temporary-path alias before credentials and preserves saved bytes' {
-        $f.arguments.ResultPath = $f.bundle.Substring(0, $f.bundle.Length - 4)
-        $alias = "$($f.arguments.ResultPath).tmp"
-        Copy-Item -LiteralPath $f.bundle -Destination $alias
-        Copy-Item -LiteralPath "$($f.bundle).json" -Destination "$alias.json"
-        $f.arguments.BundlePath = $alias
-        { & $script:publisher @script:publishArgs } | Should -Throw '*invalid_bundle*'
-        Assert-MockCalled az -Times 0 -Exactly
-        (Get-FileHash $alias -Algorithm SHA256).Hash.ToLowerInvariant() | Should -Be $f.hash
-        Test-Path -LiteralPath "$alias.json" | Should -BeTrue
-    }
 }

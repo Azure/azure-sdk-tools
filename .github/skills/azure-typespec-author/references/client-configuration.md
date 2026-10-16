@@ -28,11 +28,17 @@ approve the source changes while declining the client configuration portion.
 
 1. Identify confirmed SDK languages, ARM/data-plane context, changed
    declarations, and release compatibility evidence.
-2. Read the existing `client.tsp` and generation entrypoint **without editing**
-   them. Record existing `@clientName`/`@@clientName` overrides, whether the
-   customization file is loaded, and whether proposed targets resolve.
-3. Invoke `azsdk-common-typespec-naming` in guidance mode. It selects only
-   applicable profiles; currently C# ARM is covered.
+2. When a project is available, read the existing `client.tsp` and generation
+   entrypoint **without editing** them. Record existing
+   `@clientName`/`@@clientName` overrides, whether the customization file is
+   loaded, and whether proposed targets resolve. For planning from supplied
+   facts only, use that evidence and leave project-dependent checks unverified;
+   do not block recommendations for confirmed new, unshipped names on the
+   absence of project files.
+3. Invoke `azsdk-common-typespec-naming` in guidance mode, then read its naming
+   dispatcher and matching profile references. Invocation alone is not naming
+   analysis. Apply those rules to the proposed SDK names even when client
+   configuration was included by default rather than explicitly requested.
 4. Produce a distinct client configuration plan containing targets, current and
    proposed SDK names, language scopes, compatibility evidence, exceptions,
    uncovered targets, and blockers. Preserve shipped SDK names, wire contracts,

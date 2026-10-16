@@ -127,6 +127,11 @@ routing boundary cases under `artifacts/typespec-author-skills`. Forced and trig
 must use that bundle so trial workspaces receive only `SKILL.md` and references, never
 eval specs, fixtures, or graders. No-skill runs continue to use an empty skill directory.
 
+`evals/001014.eval.yaml` is a bounded, offline source-planning regression for
+preview replacement and complete reversal of an excluded default-value bridge.
+It complements the live edit/compile coverage in `evals/001005.eval.yaml` and
+does not require MCP binaries or installed TypeSpec fixture dependencies.
+
 On a managed device that blocks `registry.npmjs.org`, set the approved feed before setup:
 
 ```bash

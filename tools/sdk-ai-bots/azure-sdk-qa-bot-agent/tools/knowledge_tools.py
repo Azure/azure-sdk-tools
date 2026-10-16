@@ -209,9 +209,11 @@ class KnowledgeTools:
             "Pick from the sources exposed by the active skill or tenant context. "
             "Example: ['typespec_docs', 'azure_api_guidelines']. "
             "Usually omit this parameter: with `tenant_id`, the default searches every "
-            "source configured for that tenant. Restrict sources only in a targeted "
-            "follow-up for a named evidence gap. Without `tenant_id`, omitting this "
-            "parameter searches the whole knowledge base.",
+            "source configured for that tenant. For Azure TypeSpec polymorphism or "
+            "future-proof SDK shapes, initially use ['typespec_azure_docs'] to prioritize "
+            "current client-emitter guidance over generic TypeSpec docs; otherwise "
+            "restrict sources only in a targeted follow-up for a named evidence gap. "
+            "Without `tenant_id`, omitting this parameter searches the whole knowledge base.",
         ] = None,
         tenant_id: Annotated[
             str | None,

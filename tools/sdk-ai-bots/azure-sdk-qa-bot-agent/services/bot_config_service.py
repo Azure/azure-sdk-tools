@@ -8,9 +8,10 @@ import time
 from typing import Any
 
 import yaml
+from azure.core.exceptions import AzureError
 
 from config.app_config import get as cfg
-from models.bot_config import ChannelConfigResponse
+from models.bot_config import BotSettings, ChannelConfigResponse
 from utils.azure_storage import download_blob
 
 logger = logging.getLogger(__name__)
@@ -30,13 +31,32 @@ class BotConfigService:
 
         for entry in parsed.get("channels", []) or []:
             if entry.get("id") == channel_id:
+                bot_settings = entry.get("bot_settings")
                 return ChannelConfigResponse(
                     channel_id=channel_id,
                     tenant_id=entry.get("tenant") or default_tenant,
+                    bot_settings=BotSettings.model_validate(
+                        {} if bot_settings is None else bot_settings
+                    ),
                 )
 
         logger.info("No channel-specific tenant configured for channel: %s", channel_id)
         return ChannelConfigResponse(channel_id=channel_id, tenant_id=default_tenant)
+
+    async def get_bot_settings(
+        self, conversation_id: str | None, channel_id: str | None = None
+    ) -> BotSettings:
+        thread_channel = (
+            conversation_id.split(";messageid=", 1)[0]
+            if conversation_id and ";messageid=" in conversation_id
+            else None
+        )
+        if channel_id and thread_channel and channel_id != thread_channel:
+            raise ValueError("Channel ID does not match conversation ID")
+        resolved = thread_channel or channel_id
+        if not resolved:
+            return BotSettings()
+        return (await self.get_channel_config(resolved)).bot_settings
 
     async def _get_config(self) -> dict[str, Any]:
         now = time.monotonic()
@@ -48,18 +68,30 @@ class BotConfigService:
             if self._channel_config is not None and now < self._cache_expires_at:
                 return self._channel_config
 
-            self._channel_config = await self._load_config()
+            parsed = await self._load_config()
+            if parsed is None:
+                return {}
+            self._channel_config = parsed
             self._cache_expires_at = now + self._get_cache_ttl_seconds()
             return self._channel_config
 
-    async def _load_config(self) -> dict[str, Any]:
+    async def _load_config(self) -> dict[str, Any] | None:
         container = cfg("STORAGE_CONFIG_CONTAINER", "bot-configs")
         blob = cfg("CHANNEL_CONFIG_BLOB", "channel.yaml")
-        data = await download_blob(container, blob)
-        if not data:
-            raise RuntimeError(
-                f"Channel config blob is empty or missing: {container}/{blob}"
+        try:
+            data = await download_blob(container, blob)
+        except (AzureError, TimeoutError, RuntimeError):
+            logger.exception(
+                "Cannot retrieve channel settings from %s/%s; using default settings with optional features disabled",
+                container, blob,
             )
+            return None
+        if not data:
+            logger.warning(
+                "Channel config blob is empty or missing: %s/%s; using default settings with optional features disabled",
+                container, blob,
+            )
+            return None
 
         parsed = yaml.safe_load(data.decode("utf-8")) or {}
         if not isinstance(parsed, dict):

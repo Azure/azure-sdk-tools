@@ -213,5 +213,230 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 }
             }
         }
+
+        [Test]
+        public async Task Test_ParseTypeSpecProjectAsync_installs_pnpm_dependencies_with_corepack()
+        {
+            var (repoRoot, projectPath) = CreateTypeSpecProject(
+                packageJson: """{"packageManager":"pnpm@12.6.0"}""",
+                lockFileName: "pnpm-lock.yaml");
+            WriteMetadata(projectPath, ValidMetadata);
+            var processHelper = new Mock<IProcessHelper>();
+            processHelper
+                .Setup(x => x.Run(It.Is<ProcessOptions>(o => IsCommand(o, "corepack", "pnpm", "install", "--frozen-lockfile")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+            var helper = new TypeSpecHelper(gitHelper, processHelper.Object);
+
+            try
+            {
+                var result = await helper.ParseTypeSpecProjectAsync(projectPath, CreateSuccessfulNpxHelper().Object, NullLogger.Instance, CancellationToken.None);
+
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result!.Packages, Has.Count.EqualTo(1));
+                processHelper.Verify(
+                    x => x.Run(It.Is<ProcessOptions>(o =>
+                        IsCommand(o, "corepack", "pnpm", "install", "--frozen-lockfile")
+                        && o.WorkingDirectory == repoRoot), It.IsAny<CancellationToken>()),
+                    Times.Once);
+            }
+            finally
+            {
+                Directory.Delete(repoRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public async Task Test_ParseTypeSpecProjectAsync_retains_npm_ci_install()
+        {
+            var (repoRoot, projectPath) = CreateTypeSpecProject(lockFileName: "package-lock.json");
+            WriteMetadata(projectPath, ValidMetadata);
+            var processHelper = new Mock<IProcessHelper>();
+            processHelper
+                .Setup(x => x.Run(It.Is<ProcessOptions>(o => IsCommand(o, "npm", "ci")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+            var helper = new TypeSpecHelper(gitHelper, processHelper.Object);
+
+            try
+            {
+                var result = await helper.ParseTypeSpecProjectAsync(projectPath, CreateSuccessfulNpxHelper().Object, NullLogger.Instance, CancellationToken.None);
+
+                Assert.That(result, Is.Not.Null);
+                processHelper.Verify(
+                    x => x.Run(It.Is<ProcessOptions>(o =>
+                        IsCommand(o, "npm", "ci")
+                        && o.WorkingDirectory == repoRoot), It.IsAny<CancellationToken>()),
+                    Times.Once);
+            }
+            finally
+            {
+                Directory.Delete(repoRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public async Task Test_ParseTypeSpecProjectAsync_skips_install_without_lockfile()
+        {
+            var (repoRoot, projectPath) = CreateTypeSpecProject();
+            WriteMetadata(projectPath, ValidMetadata);
+            var processHelper = new Mock<IProcessHelper>();
+            var helper = new TypeSpecHelper(gitHelper, processHelper.Object);
+
+            try
+            {
+                var result = await helper.ParseTypeSpecProjectAsync(projectPath, CreateSuccessfulNpxHelper().Object, NullLogger.Instance, CancellationToken.None);
+
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result!.Packages, Has.Count.EqualTo(1));
+                processHelper.Verify(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+            }
+            finally
+            {
+                Directory.Delete(repoRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public void Test_ParseTypeSpecProjectAsync_reports_install_failure()
+        {
+            var (repoRoot, projectPath) = CreateTypeSpecProject(
+                packageJson: """{"packageManager":"pnpm@12.6.0"}""",
+                lockFileName: "pnpm-lock.yaml");
+            var installResult = new ProcessResult { ExitCode = 42 };
+            installResult.AppendStderr("install failed");
+            var processHelper = new Mock<IProcessHelper>();
+            processHelper
+                .Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(installResult);
+            var npxHelper = new Mock<INpxHelper>();
+            var helper = new TypeSpecHelper(gitHelper, processHelper.Object);
+
+            try
+            {
+                var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    helper.ParseTypeSpecProjectAsync(projectPath, npxHelper.Object, NullLogger.Instance, CancellationToken.None));
+
+                Assert.That(exception!.Message, Does.Contain("corepack pnpm install --frozen-lockfile failed with exit code 42"));
+                Assert.That(exception.Message, Does.Contain("install failed"));
+                npxHelper.Verify(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+            }
+            finally
+            {
+                Directory.Delete(repoRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public void Test_ParseTypeSpecProjectAsync_reports_emitter_failure()
+        {
+            var (repoRoot, projectPath) = CreateTypeSpecProject();
+            var emitterResult = new ProcessResult { ExitCode = 23 };
+            emitterResult.AppendStderr("emitter failed");
+            var npxHelper = new Mock<INpxHelper>();
+            npxHelper
+                .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(emitterResult);
+            var helper = new TypeSpecHelper(gitHelper, Mock.Of<IProcessHelper>());
+
+            try
+            {
+                var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    helper.ParseTypeSpecProjectAsync(projectPath, npxHelper.Object, NullLogger.Instance, CancellationToken.None));
+
+                Assert.That(exception!.Message, Does.Contain("TypeSpec metadata emitter failed with exit code 23"));
+                Assert.That(exception.Message, Does.Contain("emitter failed"));
+            }
+            finally
+            {
+                Directory.Delete(repoRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public async Task Test_ParseTypeSpecProjectAsync_returns_empty_packages_for_successful_empty_metadata()
+        {
+            var (repoRoot, projectPath) = CreateTypeSpecProject();
+            WriteMetadata(projectPath, "languages: {}");
+            var helper = new TypeSpecHelper(gitHelper, Mock.Of<IProcessHelper>());
+
+            try
+            {
+                var result = await helper.ParseTypeSpecProjectAsync(projectPath, CreateSuccessfulNpxHelper().Object, NullLogger.Instance, CancellationToken.None);
+
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result!.Packages, Is.Empty);
+            }
+            finally
+            {
+                Directory.Delete(repoRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public void Test_ParseTypeSpecProjectAsync_reports_missing_emitter_output()
+        {
+            var (repoRoot, projectPath) = CreateTypeSpecProject();
+            var helper = new TypeSpecHelper(gitHelper, Mock.Of<IProcessHelper>());
+
+            try
+            {
+                var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    helper.ParseTypeSpecProjectAsync(projectPath, CreateSuccessfulNpxHelper().Object, NullLogger.Instance, CancellationToken.None));
+
+                Assert.That(exception!.Message, Does.Contain("completed without producing"));
+                Assert.That(exception.Message, Does.Contain("typespec-metadata.yaml"));
+            }
+            finally
+            {
+                Directory.Delete(repoRoot, recursive: true);
+            }
+        }
+
+        private const string ValidMetadata = """
+            languages:
+              JavaScript:
+                packageName: "@azure/arm-contoso"
+            """;
+
+        private static (string RepoRoot, string ProjectPath) CreateTypeSpecProject(string? packageJson = null, string? lockFileName = null)
+        {
+            var repoRoot = Path.Combine(TestContext.CurrentContext.WorkDirectory, "TypeSpecHelperTests", Guid.NewGuid().ToString("N"));
+            var projectPath = Path.Combine(repoRoot, "specification", "contoso", "Contoso.Management");
+            Directory.CreateDirectory(projectPath);
+            File.WriteAllText(Path.Combine(projectPath, "main.tsp"), string.Empty);
+            File.WriteAllText(Path.Combine(projectPath, "tspconfig.yaml"), "extends: '@azure-tools/typespec-azure-rulesets/resource-manager'");
+
+            if (packageJson != null)
+            {
+                File.WriteAllText(Path.Combine(repoRoot, "package.json"), packageJson);
+            }
+            if (lockFileName != null)
+            {
+                File.WriteAllText(Path.Combine(repoRoot, lockFileName), string.Empty);
+            }
+
+            return (repoRoot, projectPath);
+        }
+
+        private static void WriteMetadata(string projectPath, string metadata)
+        {
+            var metadataDirectory = Path.Combine(projectPath, "tsp-output", "@azure-tools", "typespec-metadata");
+            Directory.CreateDirectory(metadataDirectory);
+            File.WriteAllText(Path.Combine(metadataDirectory, "typespec-metadata.yaml"), metadata);
+        }
+
+        private static Mock<INpxHelper> CreateSuccessfulNpxHelper()
+        {
+            var npxHelper = new Mock<INpxHelper>();
+            npxHelper
+                .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+            return npxHelper;
+        }
+
+        private static bool IsCommand(ProcessOptions options, string command, params string[] args)
+        {
+            return (options.Command == command || options.Args.Contains(command))
+                && args.All(options.Args.Contains);
+        }
     }
 }

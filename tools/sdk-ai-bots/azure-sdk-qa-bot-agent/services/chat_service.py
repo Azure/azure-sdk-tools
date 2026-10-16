@@ -10,7 +10,12 @@ import os
 import re
 from urllib.parse import urlparse
 
-from config.app_config import Settings, get as cfg, get_agent_deployment_key
+from config.app_config import (
+    AGENT_DEPLOYMENTS_CONFIG_KEY,
+    Settings,
+    get as cfg,
+    parse_agent_deployments,
+)
 from config.tenant_config import (
     TenantConfig,
     get_tenant_config,
@@ -346,7 +351,10 @@ class ChatService:
             question = text[prefix.end():].lstrip()
             if not question or re.match(r"^(?:title:\s*)?\[branch:", question):
                 raise AgentRoutingError("Supply one prefix followed by a question.")
-            version = self._settings(get_agent_deployment_key(target, agent_name))
+            registry = parse_agent_deployments(
+                self._settings(AGENT_DEPLOYMENTS_CONFIG_KEY, "{}")
+            )
+            version = registry.get(target, {}).get(agent_name)
             if version is None:
                 raise AgentRoutingError(f"No deployment of '{agent_name}' for '{target}'.", 404)
             return version

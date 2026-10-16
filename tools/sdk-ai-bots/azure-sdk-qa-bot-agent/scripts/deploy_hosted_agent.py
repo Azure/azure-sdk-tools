@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import asyncio
+import json
 import os
 import re
 import subprocess
@@ -116,24 +117,37 @@ def _wait_for_version_active(
 
 
 def _publish_version(
-    client: AzureAppConfigurationClient, key: str, version: str
+    client: AzureAppConfigurationClient, branch: str, agent_name: str, version: str
 ) -> None:
-    """Use ETags so a slower deployment cannot overwrite a newer active version."""
+    """Merge into the JSON registry with ETags to preserve concurrent deployments."""
+    key = app_config.AGENT_DEPLOYMENTS_CONFIG_KEY
     for _ in range(5):
         try:
             current = client.get_configuration_setting(key=key)
         except ResourceNotFoundError:
             current = None
+        registry = (
+            app_config.parse_agent_deployments(current.value or "")
+            if current is not None
+            else {}
+        )
+        agents = registry.setdefault(branch, {})
+        previous_version = agents.get(agent_name)
+        if previous_version is not None and int(previous_version) >= int(version):
+            print(f"Registry {branch}/{agent_name} already points to version {previous_version}.")
+            return
+        agents[agent_name] = version
+        value = json.dumps(registry, separators=(",", ":"))
         try:
             if current is None:
-                client.add_configuration_setting(ConfigurationSetting(key=key, value=version))
+                client.add_configuration_setting(
+                    ConfigurationSetting(key=key, value=value, content_type="application/json")
+                )
             else:
-                if int(current.value or "") >= int(version):
-                    print(f"Registry {key} already points to version {current.value}.")
-                    return
-                current.value = version
+                current.value = value
+                current.content_type = "application/json"
                 client.set_configuration_setting(current, match_condition=MatchConditions.IfNotModified)
-            print(f"Registered {key} -> version {version}.")
+            print(f"Registered {branch}/{agent_name} -> version {version}.")
             return
         except (ResourceExistsError, ResourceModifiedError):
             continue
@@ -333,8 +347,7 @@ def main() -> None:
                     base_url=args.appconfig_endpoint, credential=credential
                 ) as client:
                     _publish_version(
-                        client, app_config.get_agent_deployment_key(branch, agent.name),
-                        agent_version,
+                        client, branch, agent.name, agent_version,
                     )
         else:
             if branch is not None:

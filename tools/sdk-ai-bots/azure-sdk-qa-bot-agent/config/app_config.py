@@ -13,13 +13,13 @@ on demand once its one-minute interval expires.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from asyncio import Lock
 from dataclasses import dataclass
 from time import monotonic
 from typing import overload, Protocol
-from urllib.parse import quote
 
 from azure.appconfiguration.aio import AzureAppConfigurationClient
 from azure.core.exceptions import AzureError
@@ -30,6 +30,7 @@ _logger = logging.getLogger(__name__)
 
 _settings: dict[str, str] | None = None
 CONFIG_REFRESH_INTERVAL_SECONDS = 60
+AGENT_DEPLOYMENTS_CONFIG_KEY = "agent-deployments"
 _settings_refresh_at = 0.0
 _settings_refresh_lock = Lock()
 
@@ -81,9 +82,22 @@ async def load(endpoint: str) -> AppConfigSnapshot:
     return AppConfigSnapshot(endpoint=endpoint, settings=settings)
 
 
-def get_agent_deployment_key(branch: str, agent_name: str) -> str:
-    """Build a deployment key from a branch name, preserving its path and case."""
-    return f"agent-deployments:{quote(branch, safe='')}:{quote(agent_name, safe='')}"
+def parse_agent_deployments(value: str) -> dict[str, dict[str, str]]:
+    """Parse the branch-to-agent-version JSON registry."""
+    data = json.loads(value)
+    if not isinstance(data, dict):
+        raise ValueError("Agent deployment registry must be a JSON object.")
+    registry: dict[str, dict[str, str]] = {}
+    for branch, agents in data.items():
+        if not isinstance(branch, str) or not isinstance(agents, dict):
+            raise ValueError("Agent deployment registry must map branches to agent objects.")
+        versions: dict[str, str] = {}
+        for agent_name, version in agents.items():
+            if not isinstance(agent_name, str) or not isinstance(version, str):
+                raise ValueError("Agent deployment registry must map agent names to version strings.")
+            versions[agent_name] = version
+        registry[branch] = versions
+    return registry
 
 
 async def init() -> None:

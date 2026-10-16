@@ -33,7 +33,7 @@ async def test_startup_failure_propagates(monkeypatch, error):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("settings", [{"agent-deployments:branch:agent": "42"}, {}])
+@pytest.mark.parametrize("settings", [{"agent-deployments": '{"branch":{"agent":"42"}}'}, {}])
 @pytest.mark.parametrize("error", [ServiceRequestError("unavailable"), TimeoutError()])
 async def test_refresh_retains_snapshot_and_delays_retry(
     monkeypatch, caplog, settings, error
@@ -105,3 +105,23 @@ async def test_unexpected_refresh_errors_propagate(monkeypatch):
         await app_config.refresh()
 
     assert app_config._settings_refresh_at == 0.0
+
+
+def test_parse_agent_deployments_preserves_branch_and_agent_names():
+    assert app_config.parse_agent_deployments(
+        '{"feature/Case/path":{"chat-agent":"42","mcp-agent":"17"},'
+        '"other-branch":{"chat-agent":"43"}}'
+    ) == {
+        "feature/Case/path": {"chat-agent": "42", "mcp-agent": "17"},
+        "other-branch": {"chat-agent": "43"},
+    }
+    assert app_config.parse_agent_deployments("{}") == {}
+
+
+@pytest.mark.parametrize("value", [
+    "", "not json", "null", "[]", '{"branch":"42"}',
+    '{"branch":{"agent":42}}', '{"branch":{"agent":null}}',
+])
+def test_parse_agent_deployments_rejects_invalid_registry(value):
+    with pytest.raises(ValueError):
+        app_config.parse_agent_deployments(value)

@@ -3,6 +3,7 @@ BeforeAll {
     $script:publisher = Join-Path $PSScriptRoot '../../common/scripts/eval/publisher/Publish-EvalResults.ps1'
     # Keep the cmdlet itself: Pester can intercept module-qualified calls too.
     $script:realWebRequest = Get-Command Microsoft.PowerShell.Utility\Invoke-WebRequest -CommandType Cmdlet
+    $script:nodePath = (Get-Command node -CommandType Application | Select-Object -First 1).Source
     function az {
         param([Parameter(ValueFromRemainingArguments)] [string[]] $Arguments)
         throw 'Real Azure CLI calls are forbidden in these tests.'
@@ -23,6 +24,9 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
             calls = @(); uploadFails = $false; showFails = $false; storageToken = $script:identityToken
             notifyTokenFails = $false; status = 200; headers = @{}; responseFailures = 0; finalReceiptFails = $false; httpCalls = 0
             realWebRequest = $script:realWebRequest
+            nodePath = $script:nodePath
+            dashboardUrl = 'https://synthetic-dashboard.test-region.azurewebsites.net/api/refresh'
+            dashboardResource = 'api://00000000-0000-4000-8000-000000000042'
             name = 'v1/azure-sdk/internal/8255/1001/1/dashboard-bundle.zip'
         }
         $f.bytes = [Text.Encoding]::UTF8.GetBytes('SAVED_ARCHIVE_FIXTURE_NO_EVALUATIONS')
@@ -32,7 +36,8 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         $f.existing = @{ properties = @{ contentLength = $f.bytes.Length }; metadata = @{
             schema = '1'; sha256 = $f.hash; publisher = $script:owner; storedat = '2026-09-21T00:00:00.000Z'
         } }
-        $f.arguments = @{ StorageAccountName = 'evaltestsummary'; BundlePath = $f.bundle; ResultPath = $f.result }
+        $f.arguments = @{ StorageAccountName = 'evaltestsummary'; BundlePath = $f.bundle; ResultPath = $f.result;
+            DashboardRefreshUrl = $f.dashboardUrl; DashboardResource = $f.dashboardResource }
         $script:publishArgs = $f.arguments
 
         Mock az {
@@ -41,7 +46,7 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
             $global:LASTEXITCODE = 0
             if ($Arguments[0] -eq 'account' -and $Arguments[1] -eq 'get-access-token') {
                 if ($Arguments -contains 'https://storage.azure.com/') { return @{ accessToken = $f.storageToken } | ConvertTo-Json -Compress }
-                if ($Arguments -notcontains 'api://258998df-81ec-460c-bdd7-56a9bdde1e48') { throw 'Unexpected token destination.' }
+                if ($Arguments -notcontains $f.dashboardResource) { throw 'Unexpected token destination.' }
                 if ($f.notifyTokenFails) { $global:LASTEXITCODE = 1; return 'SECRET_TOKEN_ERROR_MUST_NOT_APPEAR' }
                 return '{"accessToken":"fake-notification-token"}'
             }
@@ -60,7 +65,7 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
             $f = $global:EvalPublicationFixture; $f.httpCalls++
             $receipt = Get-Content -LiteralPath $f.result -Raw | ConvertFrom-Json
             $receipt.status | Should -Be 'stored'; $receipt.notification.status | Should -Be 'pending'
-            $Uri | Should -Be 'https://azsdk-eval-bue6a7dwanatgpb3.westus3-01.azurewebsites.net/api/refresh'
+            $Uri.AbsoluteUri | Should -BeExactly $f.dashboardUrl
             $Headers.Authorization | Should -Be 'Bearer fake-notification-token'
             $MaximumRedirection | Should -Be 0; $ConnectionTimeoutSeconds | Should -Be 180; $SkipHttpErrorCheck | Should -BeTrue
             ([Text.Encoding]::UTF8.GetByteCount($Body) -le 2048) | Should -BeTrue
@@ -188,8 +193,14 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
     }
 
     It 'does not retry or follow a real loopback HTTP <Status> redirect' -Tag 'IntegrationTest' -ForEach @(@{ Status = 302 }, @{ Status = 307 }) {
+        # Hosted agents can expose both UseNode's executable and a preinstalled Node.
+        # Reproduce that shape so the fixture never joins multiple paths into one filename.
+        Mock Get-Command {
+            $f = $global:EvalPublicationFixture
+            return @([pscustomobject]@{ Source = $f.nodePath }, [pscustomobject]@{ Source = 'second-node-path-must-not-be-used' })
+        } -ParameterFilter { $Name -eq 'node' -and $CommandType -eq 'Application' }
         $start = [Diagnostics.ProcessStartInfo]::new()
-        $start.FileName = (Get-Command node -CommandType Application).Source
+        $start.FileName = (Get-Command node -CommandType Application | Select-Object -First 1).Source
         $start.UseShellExecute = $false; $start.RedirectStandardOutput = $true; $start.RedirectStandardError = $true
         $start.ArgumentList.Add('--input-type=module'); $start.ArgumentList.Add('-e')
         $start.ArgumentList.Add(@"
@@ -209,7 +220,7 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
             $f.loopbackUri = "http://127.0.0.1:$port/probe"
             Mock Invoke-WebRequest {
                 $f = $global:EvalPublicationFixture
-                $Uri | Should -Be 'https://azsdk-eval-bue6a7dwanatgpb3.westus3-01.azurewebsites.net/api/refresh'
+                $Uri.AbsoluteUri | Should -BeExactly $f.dashboardUrl
                 ([uri]$f.loopbackUri).Host | Should -Be '127.0.0.1'
                 $cmdlet = $f.realWebRequest
                 return & $cmdlet -Uri $f.loopbackUri -Method Post `
@@ -270,6 +281,49 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
         $receipt = Get-Content $f.result -Raw
         ($receipt | ConvertFrom-Json).status | Should -Be 'stored'
         $receipt + "$warnings" | Should -Not -Match 'SECRET_|fake-notification-token'
+    }
+
+    It 'uses the configured dashboard URL and resource instead of production constants' {
+        $f.dashboardUrl = 'https://another-dashboard.azurewebsites.net/api/refresh'
+        $f.dashboardResource = 'api://11111111-1111-4111-8111-111111111111'
+        $f.arguments.DashboardRefreshUrl = $f.dashboardUrl
+        $f.arguments.DashboardResource = $f.dashboardResource
+        & $script:publisher @script:publishArgs
+        Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
+        $tokenCalls = @($f.calls | Where-Object { $_[0] -eq 'account' -and $_ -contains $f.dashboardResource })
+        $tokenCalls.Count | Should -Be 1
+        (Get-Content $f.result -Raw | ConvertFrom-Json).notification.status | Should -Be 'succeeded'
+    }
+
+    It 'retains uploaded results without requesting or sending a token for invalid <Field>' -ForEach @(
+        @{ Field = 'DashboardRefreshUrl'; Value = '' },
+        @{ Field = 'DashboardRefreshUrl'; Value = '$(EvalDashboardRefreshUrl)' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'http://synthetic-dashboard.azurewebsites.net/api/refresh' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://attacker.example/api/refresh' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://synthetic-dashboard.azurewebsites.net.attacker.example/api/refresh' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://user:password@synthetic-dashboard.azurewebsites.net/api/refresh' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://synthetic-dashboard.azurewebsites.net:444/api/refresh' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://synthetic-dashboard.azurewebsites.net/api/refresh?url=other' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://synthetic-dashboard.azurewebsites.net/api/refresh#fragment' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://synthetic-dashboard.azurewebsites.net/not-refresh' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://synthetic-dashboard.azurewebsites.net/extra/../api/refresh' },
+        @{ Field = 'DashboardRefreshUrl'; Value = 'https://synthetic-dashboard.azurewebsites.net/api/refresh ' },
+        @{ Field = 'DashboardResource'; Value = '' },
+        @{ Field = 'DashboardResource'; Value = '$(EvalDashboardResource)' },
+        @{ Field = 'DashboardResource'; Value = 'https://attacker.example/.default' },
+        @{ Field = 'DashboardResource'; Value = 'api://not-a-guid' },
+        @{ Field = 'DashboardResource'; Value = 'api://00000000-0000-4000-8000-000000000042/.default' }
+    ) {
+        $f.arguments[$Field] = $Value
+        & $script:publisher @script:publishArgs -WarningVariable warnings -WarningAction SilentlyContinue
+        $receipt = Get-Content $f.result -Raw | ConvertFrom-Json
+        $receipt.status | Should -Be 'stored'
+        $receipt.notification.errorCode | Should -Be 'notification_configuration'
+        "$warnings" | Should -Match 'configuration is missing or invalid'
+        Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
+        Assert-MockCalled Start-Sleep -Times 0 -Exactly
+        @($f.calls | Where-Object { $_[0] -eq 'account' -and $_ -notcontains 'https://storage.azure.com/' }).Count | Should -Be 0
+        @($f.calls | Where-Object { $_[0] -eq 'storage' -and $_[2] -eq 'upload' }).Count | Should -Be 1
     }
 
     It 'validates storage identity before upload' {

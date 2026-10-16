@@ -6,7 +6,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 
 | Name | Command | Description |
 |------|---------|-------------|
-| azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'. |
+| azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by work item ID or release plan ID. Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support. Already abandoned plans are unchanged. |
 | azsdk_analyze_log_file | `azsdk ci log analyze` | Analyzes a log file for errors and issues |
 | azsdk_analyze_pipeline | `azsdk ci analyze` | Analyzes and returns structured failure data and logs from an Azure Pipeline build. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number. |
 | azsdk_apireviewhub_request_review_pr | `azsdk api-review create` | Request API Review Hub creation of a review pull request for a package API change. |

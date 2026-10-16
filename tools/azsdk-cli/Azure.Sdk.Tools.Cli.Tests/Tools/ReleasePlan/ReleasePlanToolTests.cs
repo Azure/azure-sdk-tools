@@ -3595,6 +3595,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Abandon_ReleasePlan_With_WorkItemId_Success()
         {
+            releasePlanTool = CreateManualAbandonmentTool();
             // Act
             var result = await releasePlanTool.AbandonReleasePlan(workItemId: 100, releasePlanId: 0);
 
@@ -3608,6 +3609,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Abandon_ReleasePlan_With_ReleasePlanId_Success()
         {
+            releasePlanTool = CreateManualAbandonmentTool();
             // Act
             var result = await releasePlanTool.AbandonReleasePlan(workItemId: 0, releasePlanId: 123);
 
@@ -3632,6 +3634,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Abandon_ReleasePlan_With_Both_Ids_Success()
         {
+            releasePlanTool = CreateManualAbandonmentTool();
             // Act - when both are provided, workItemId takes precedence
             var result = await releasePlanTool.AbandonReleasePlan(workItemId: 100, releasePlanId: 123);
 
@@ -3640,6 +3643,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(result.Details);
             Assert.That(result.Details.Count, Is.GreaterThan(0));
             Assert.That(result.Details[0], Does.Contain("abandoned"));
+        }
+
+        private ReleasePlanTool CreateManualAbandonmentTool()
+        {
+            // Manual abandonment now requires an actual revision and a fresh matching snapshot.
+            // Keep these fixtures local rather than changing the shared mock's unrelated behavior.
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 100, ReleasePlanId = 123, Revision = 1, Status = "New", SDKInfo = []
+            };
+            service.Setup(s => s.GetReleasePlanForWorkItemAsync(100, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            service.Setup(s => s.GetReleasePlanAsync(123, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            service.Setup(s => s.UpdateWorkItemAsync(100, It.IsAny<Dictionary<string, string>>(), 1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem
+                {
+                    Id = 100, Rev = 2, Fields = new Dictionary<string, object> { ["System.State"] = "Abandoned" }
+                });
+            return new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
         }
 
         // ======================== UpdateReleasePlan Tests ========================

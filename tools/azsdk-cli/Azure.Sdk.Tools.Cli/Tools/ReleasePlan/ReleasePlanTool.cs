@@ -646,11 +646,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// <remarks>
         /// Either workItemId or releasePlanId must be provided. If both are provided, workItemId takes precedence.
         /// </remarks>
-        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'.")]
+        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by work item ID or release plan ID. Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support. Already abandoned plans are unchanged.")]
         public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default)
         {
             try
             {
+                ct.ThrowIfCancellationRequested();
+                if (workItemId < 0 || releasePlanId < 0)
+                {
+                    return new ReleaseWorkflowResponse { ResponseError = "Work item ID and release plan ID must be positive when supplied." };
+                }
                 if (workItemId == 0 && releasePlanId == 0)
                 {
                     return new ReleaseWorkflowResponse { ResponseError = "Either work item ID or release plan ID must be provided." };
@@ -666,17 +671,80 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleaseWorkflowResponse { ResponseError = "Failed to find release plan." };
                 }
 
+                ct.ThrowIfCancellationRequested();
+                if (releasePlan.WorkItemId <= 0
+                    || (workItemId > 0 && releasePlan.WorkItemId != workItemId)
+                    || (workItemId == 0 && releasePlan.ReleasePlanId != releasePlanId))
+                {
+                    throw new InvalidOperationException("The retrieved release plan does not match the requested identity.");
+                }
+                if (string.Equals(releasePlan.Status, "Abandoned", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new ReleaseWorkflowResponse
+                    {
+                        Status = "Success",
+                        Details = [$"Release plan {releasePlan.WorkItemId} is already abandoned; no changes made."]
+                    };
+                }
+
+                ValidateManualAbandonment(releasePlan);
+                // Capture values, not the mutable service model, before awaiting the fresh read.
+                var targetId = releasePlan.WorkItemId;
+                var revision = releasePlan.Revision;
+                var planId = releasePlan.ReleasePlanId;
+                var status = releasePlan.Status;
+                var isTest = releasePlan.IsTestReleasePlan;
+                var pullRequests = GetManualAbandonmentPullRequests(releasePlan);
+                var freshPlan = await devOpsService.GetReleasePlanForWorkItemAsync(targetId, ct);
+                ct.ThrowIfCancellationRequested();
+                if (freshPlan == null || freshPlan.WorkItemId != targetId || freshPlan.ReleasePlanId != planId
+                    || freshPlan.Revision != revision || freshPlan.IsTestReleasePlan != isTest
+                    || !string.Equals(freshPlan.Status, status, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("The release plan changed during abandonment validation. No changes made; review the current plan before trying again.");
+                }
+                ValidateManualAbandonment(freshPlan);
+                var freshPullRequests = GetManualAbandonmentPullRequests(freshPlan);
+                if (!pullRequests.SetEquals(freshPullRequests))
+                {
+                    throw new InvalidOperationException("The linked SDK pull requests changed during abandonment validation. No changes made.");
+                }
+
+                // GitHub reads are live, independent of stored ADO PR statuses. This does not make
+                // a GitHub merge and an ADO state update a cross-service atomic transaction.
+                foreach (var url in freshPullRequests.Order(StringComparer.Ordinal))
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var parts = new Uri(url).AbsolutePath.Trim('/').Split('/');
+                    var pr = await githubService.GetPullRequestAsync(parts[0], parts[1],
+                        int.Parse(parts[3], CultureInfo.InvariantCulture), ct).WaitAsync(ct);
+                    ct.ThrowIfCancellationRequested();
+                    if (pr == null || pr.State.Value is not (ItemState.Open or ItemState.Closed))
+                    {
+                        throw new InvalidOperationException($"Could not verify the current SDK pull request state for {url}. No changes made.");
+                    }
+                    if (pr.Merged)
+                    {
+                        throw new InvalidOperationException(ManualAbandonmentReleaseProtection);
+                    }
+                }
+
                 // Update the work item status to "Abandoned"
                 var fieldsToUpdate = new Dictionary<string, string>
                 {
                     { "System.State", "Abandoned" }
                 };
 
-                var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
+                ct.ThrowIfCancellationRequested();
+                var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(targetId, fieldsToUpdate, revision, ct);
+                ct.ThrowIfCancellationRequested();
 
-                if (updatedWorkItem == null)
+                if (updatedWorkItem == null || updatedWorkItem.Id != targetId
+                    || updatedWorkItem.Fields == null
+                    || !updatedWorkItem.Fields.TryGetValue("System.State", out var savedState)
+                    || !string.Equals(savedState?.ToString(), "Abandoned", StringComparison.OrdinalIgnoreCase))
                 {
-                    logger.LogError("Failed to abandon release plan {WorkItemId}: work item update returned null", releasePlan.WorkItemId);
+                    logger.LogError("Failed to verify saved abandonment for release plan {WorkItemId}", releasePlan.WorkItemId);
                     return new ReleaseWorkflowResponse
                     {
                         ResponseError = $"Failed to abandon release plan {releasePlan.WorkItemId}: work item update failed."
@@ -690,11 +758,57 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     Details = [$"Release plan {releasePlan.WorkItemId} has been successfully abandoned."]
                 };
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
+                ct.ThrowIfCancellationRequested();
                 logger.LogError(ex, "Failed to abandon release plan");
                 return new ReleaseWorkflowResponse { ResponseError = $"Failed to abandon release plan: {ex.Message}" };
             }
+        }
+
+        private const string ManualAbandonmentReleaseProtection = "Cannot abandon a release plan after any SDK pull request has merged or any SDK is recorded as Released. Request a language-exclusion exception for the unreleased languages and contact SDK Release Support.";
+
+        private static void ValidateManualAbandonment(ReleasePlanWorkItem plan)
+        {
+            if (string.Equals(plan.Status, "Finished", StringComparison.OrdinalIgnoreCase)
+                || plan.SDKInfo?.Any(sdk => string.Equals(sdk?.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)) == true)
+            {
+                throw new InvalidOperationException(ManualAbandonmentReleaseProtection);
+            }
+            if (plan.Revision <= 0 || plan.SDKInfo == null || plan.SDKInfo.Any(sdk => sdk == null))
+            {
+                throw new InvalidOperationException("Cannot verify the release plan revision or SDK details. No changes made.");
+            }
+            if (!new[] { "New", "Not Started", "In Progress" }.Contains(plan.Status, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Cannot abandon a release plan with an unknown or inactive state. No changes made.");
+            }
+        }
+
+        private static HashSet<string> GetManualAbandonmentPullRequests(ReleasePlanWorkItem plan)
+        {
+            var urls = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var sdk in plan.SDKInfo.Where(sdk => !string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl)))
+            {
+                var language = SdkLanguageHelpers.GetSdkLanguage(sdk.Language?.Trim() ?? "");
+                var repo = SdkLanguageHelpers.GetRepoName(language)
+                    ?? throw new InvalidOperationException("Cannot verify the language of a linked SDK pull request.");
+                var uri = new Uri(sdk.SdkPullRequestUrl, UriKind.Absolute);
+                var parts = uri.AbsolutePath.Trim('/').Split('/');
+                // The shared canonical helper validates all URL components and language/repository
+                // correspondence. Private SDK repos have the same language with an existing -pr suffix.
+                var isPrivate = parts.Length == 4 && string.Equals(parts[1], $"{repo}-pr", StringComparison.OrdinalIgnoreCase);
+                var publicUrl = isPrivate
+                    ? new UriBuilder(uri) { Path = $"/{parts[0]}/{repo}/{parts[2]}/{parts[3]}" }.Uri.AbsoluteUri
+                    : sdk.SdkPullRequestUrl;
+                var canonical = DevOpsService.NormalizeSdkPullRequestUrl(publicUrl, language.ToWorkItemString());
+                urls.Add(isPrivate ? canonical.Replace($"/{repo}/", $"/{repo}-pr/", StringComparison.Ordinal) : canonical);
+            }
+            return urls;
         }
 
         /// <summary>

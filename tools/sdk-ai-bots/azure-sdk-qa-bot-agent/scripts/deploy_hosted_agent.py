@@ -131,7 +131,7 @@ def main() -> None:
     args = parser.parse_args()
 
     branch = None
-    if os.environ.get("AI_FOUNDRY_AGENT_ROUTING") == "enable":
+    if os.environ.get("ENABLE_AI_FOUNDRY_AGENT_ROUTING") == "true":
         branch = os.environ["BUILD_SOURCEBRANCH"].removeprefix("refs/heads/")
 
     asyncio.run(app_config.init())

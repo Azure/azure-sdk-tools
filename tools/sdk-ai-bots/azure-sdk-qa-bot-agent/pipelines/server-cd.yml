@@ -153,8 +153,8 @@ extends:
                   appSettings: |
                     [
                       {
-                        "name": "AI_FOUNDRY_AGENT_ROUTING",
-                        "value": "${{ iif(eq(parameters.environment, 'dev'), 'enable', 'disable') }}",
+                        "name": "ENABLE_AI_FOUNDRY_AGENT_ROUTING",
+                        "value": "${{ iif(eq(parameters.environment, 'dev'), 'true', 'false') }}",
                         "slotSetting": false
                       }
                     ]

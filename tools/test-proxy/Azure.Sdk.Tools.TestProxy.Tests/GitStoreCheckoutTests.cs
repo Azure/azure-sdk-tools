@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -79,10 +80,102 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             string excludedBlob = _git.Run("rev-parse HEAD:java/sdk/service/recording.json", config).StdOut.Trim();
             Assert.False(_git.TryRun($"--no-lazy-fetch cat-file -e {excludedBlob}", config.AssetsRepoLocation, out _));
+            string unrelatedCommit = _git.Run("rev-parse recordings_v2", _remotePath).StdOut.Trim();
+            Assert.False(_git.TryRun($"--no-lazy-fetch cat-file -e {unrelatedCommit}", config.AssetsRepoLocation, out _));
+            Assert.False(_git.TryRun("show-ref --verify --quiet refs/tags/recordings_v2", config.AssetsRepoLocation, out _));
+            Assert.Equal("--no-tags", _git.Run("config --get remote.origin.tagOpt", config).StdOut.Trim());
 
             _git.Commands.Clear();
             await _store.Restore(config.AssetsJsonLocation);
             Assert.Empty(_git.Commands);
+        }
+
+        [Fact]
+        public async Task RestorePreservesSelectedTagHistoryWithoutShallowCloning()
+        {
+            var config = await CreateConfiguration();
+            await _store.UpdateAssetsJson("recordings_v2", config);
+            await _store.Restore(config.AssetsJsonLocation);
+
+            Assert.Equal("false", _git.Run("rev-parse --is-shallow-repository", config).StdOut.Trim());
+            Assert.Equal(
+                _git.Run("rev-parse recordings_v1", _remotePath).StdOut.Trim(),
+                _git.Run("rev-parse HEAD^", config).StdOut.Trim());
+        }
+
+        [Fact]
+        public async Task RestoreSupportsAnnotatedTags()
+        {
+            _git.Run("tag --no-sign --annotate recordings_annotated --message annotated recordings_v1", _remotePath);
+            var config = await CreateConfiguration();
+            await _store.UpdateAssetsJson("recordings_annotated", config);
+            await _store.Restore(config.AssetsJsonLocation);
+
+            Assert.Equal("tag", _git.Run("cat-file -t refs/tags/recordings_annotated", config).StdOut.Trim());
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+        }
+
+        [Fact]
+        public async Task RestoreReportsMissingTagDuringTargetedClone()
+        {
+            var config = await CreateConfiguration();
+            await _store.UpdateAssetsJson("INVALID_TAG", config);
+
+            var error = await Assert.ThrowsAsync<HttpException>(() => _store.Restore(config.AssetsJsonLocation));
+
+            Assert.Contains("--revision=refs/tags/INVALID_TAG", error.Message);
+            Assert.Contains("had a non-zero exit code 128", error.Message);
+        }
+
+        [Fact]
+        public async Task NewStoreReusesConfigurationWithoutGitCommandsOrDiscardingChanges()
+        {
+            var config = await CreateConfiguration();
+            await _store.Restore(config.AssetsJsonLocation);
+            string recordingPath = Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json");
+            File.WriteAllText(recordingPath, "unpublished recording");
+            var reopenedStore = new GitStore { GitHandler = _git };
+            _git.Commands.Clear();
+
+            await reopenedStore.Restore(config.AssetsJsonLocation);
+
+            Assert.Empty(_git.Commands);
+            Assert.Equal("unpublished recording", File.ReadAllText(recordingPath));
+        }
+
+        [Fact]
+        public async Task FailedConfigurationIsRetriedInsteadOfMarkedComplete()
+        {
+            var config = await CreateConfiguration();
+            _git.FailCommandOnce = "update-index --index-version=4";
+            await Assert.ThrowsAsync<HttpException>(() => _store.Restore(config.AssetsJsonLocation));
+            _git.Commands.Clear();
+
+            await _store.Restore(config.AssetsJsonLocation);
+
+            Assert.Contains("config --local index.version 4", _git.Commands);
+            AssertOptimized(config);
+            var reopenedStore = new GitStore { GitHandler = _git };
+            _git.Commands.Clear();
+            await reopenedStore.Restore(config.AssetsJsonLocation);
+            Assert.Empty(_git.Commands);
+        }
+
+        [Fact]
+        public async Task RestorePersistsConfigurationInWorktreeGitDirectory()
+        {
+            var config = await CreateConfiguration();
+            _git.Run($"remote add origin git@github.com:{_repositoryName}.git", _remotePath);
+            _git.Run($"worktree add --detach \"{config.AssetsRepoLocation}\" recordings_v1", _remotePath);
+            await _store.BreadCrumb.Update(config);
+            await _store.Restore(config.AssetsJsonLocation);
+            var reopenedStore = new GitStore { GitHandler = _git };
+            _git.Commands.Clear();
+
+            await reopenedStore.Restore(config.AssetsJsonLocation);
+
+            Assert.Equal(new[] { "rev-parse --absolute-git-dir" }, _git.Commands);
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
         }
 
         [Theory]
@@ -119,6 +212,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             AssertOptimized(config);
             Assert.False(Directory.Exists(Path.Join(config.AssetsRepoLocation, "python", "sdk", "new service")));
             Assert.True(File.Exists(Path.Join(config.AssetsRepoLocation, "eng", "common", "tool.txt")));
+            TestHelpers.WriteTestFile("new recording", Path.Join(config.AssetsRepoLocation, "python", "sdk", "new service", "recording.json"));
+            Assert.Equal(0, await _store.Push(config.AssetsJsonLocation));
         }
 
         [Fact]
@@ -183,14 +278,32 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var config = await CreateConfiguration();
             await _store.Restore(config.AssetsJsonLocation);
             File.WriteAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json"), "updated recording");
+            Assert.False(_git.TryRun("show-ref --verify --quiet refs/heads/main", config.AssetsRepoLocation, out _));
+            _git.Commands.Clear();
 
             Assert.Equal(0, await _store.Push(config.AssetsJsonLocation));
 
+            Assert.Contains("fetch origin refs/heads/main:refs/heads/main", _git.Commands);
             var pushedConfig = await _store.ParseConfigurationFile(config.AssetsJsonLocation);
             Assert.NotEqual("recordings_v1", pushedConfig.Tag);
             Assert.Equal("updated recording", _git.Run($"show {pushedConfig.Tag}:python/sdk/service/recording.json", _remotePath).StdOut.Trim());
             Assert.Equal("other language", _git.Run($"show {pushedConfig.Tag}:java/sdk/service/recording.json", _remotePath).StdOut.Trim());
             AssertOptimized(pushedConfig);
+        }
+
+        [Fact]
+        public async Task FailedMainFetchPreservesRecordingsForPushRetry()
+        {
+            var config = await CreateConfiguration();
+            await _store.Restore(config.AssetsJsonLocation);
+            string recordingPath = Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json");
+            File.WriteAllText(recordingPath, "updated recording");
+            _git.FailCommandOnce = "fetch origin refs/heads/main:refs/heads/main";
+
+            await Assert.ThrowsAsync<HttpException>(() => _store.Push(config.AssetsJsonLocation));
+
+            Assert.Equal("updated recording", File.ReadAllText(recordingPath));
+            Assert.Equal(0, await _store.Push(config.AssetsJsonLocation));
         }
 
         [Fact]
@@ -255,6 +368,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             private readonly string _repositoryName;
 
             public List<string> Commands { get; } = new List<string>();
+            public string FailCommandOnce { get; set; }
 
             public LocalGitProcessHandler(string remotePath, string repositoryName)
             {
@@ -283,6 +397,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             public override CommandResult Run(string arguments, string workingDirectory)
             {
                 Commands.Add(arguments);
+                if (arguments == FailCommandOnce)
+                {
+                    FailCommandOnce = null;
+                    throw new GitProcessException(new CommandResult
+                    {
+                        Arguments = arguments,
+                        ExitCode = 1,
+                        StdErr = "Injected Git failure."
+                    });
+                }
                 return base.Run(arguments, workingDirectory);
             }
         }

@@ -48,10 +48,12 @@ Git **2.51.0 or newer** is required on `PATH`.
 
 Asset repositories use:
 
-- Blobless partial clones (`--filter=blob:none`): commit and tree history is
-  downloaded up front, while recording contents are fetched as needed. Compared
-  with treeless clones, this trades a larger initial metadata download for fewer
-  on-demand tree requests during checkout.
+- Targeted blobless partial clones (`--filter=blob:none --no-tags`): only the
+  requested tag's history is cloned, rather than metadata for every recording
+  tag. The selected history is not shallow, while recording contents are fetched
+  as needed. Other tags are fetched explicitly when requested. With an empty
+  tag, the default branch is cloned instead. Push fetches `main` on demand for its
+  engineering-file updates.
 - Cone-mode sparse checkout with a sparse index: the selected recording directory
   and `eng` are included recursively. Root files, including `.gitignore`, and files
   immediately inside ancestor directories are also included. Other directories
@@ -61,8 +63,10 @@ Asset repositories use:
   loading and checkout's bulk fetching of missing blobs are already Git defaults;
   the index checksum remains enabled.
 
-Existing caches are upgraded in place on their first restore by each proxy
-instance. Restoring the same tag preserves staged, unstaged, and untracked
+Existing caches are upgraded in place on their first restore. Successful setup
+is recorded by a versioned marker in the repository's Git metadata, so later
+proxy instances reuse that configuration without running setup commands again.
+Restoring the same tag preserves staged, unstaged, and untracked
 recordings, without cleaning or checking out the tag again. Existing objects are
 retained, and subsequent fetches use the blobless filter; old trees that were not
 downloaded previously can still require lazy fetching. Switching to a different

@@ -28,6 +28,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     /// </summary>
     public class GitStore : IAssetsStore
     {
+        private const string RepositoryConfigurationMarker = "test-proxy-config-v1";
+
         private HttpClient httpClient = new HttpClient();
         private IConsoleWrapper _consoleWrapper;
         public GitProcessHandler GitHandler = new GitProcessHandler();
@@ -172,6 +174,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     string gitUserEmail = GetGitOwnerEmail(config);
                     string assetMessage = "Automatic asset update from test-proxy.";
                     string configurationString = $"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\"";
+
+                    if (!GitHandler.TryRun("show-ref --verify --quiet refs/heads/main", config.AssetsRepoLocation, out var mainResult))
+                    {
+                        if (mainResult.ExitCode != 1)
+                        {
+                            throw new GitProcessException(mainResult);
+                        }
+
+                        // Targeted restores do not download main until its engineering files are needed for push.
+                        GitHandler.Run("fetch origin refs/heads/main:refs/heads/main", config);
+                    }
 
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
@@ -441,7 +454,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled = true)
         {
             bool alreadyCheckedOut = Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag;
-            bool configureRepository = !_configuredRepositories.ContainsKey(config.AssetsRepoLocation.ToString());
+            string repositoryLocation = config.AssetsRepoLocation.ToString();
+            bool configureRepository = !_configuredRepositories.ContainsKey(repositoryLocation);
+            string configurationMarker = null;
+
+            if (configureRepository)
+            {
+                configurationMarker = GetRepositoryConfigurationMarker(config);
+                configureRepository = !Directory.Exists(configurationMarker);
+                if (!configureRepository)
+                {
+                    _configuredRepositories.TryAdd(repositoryLocation, true);
+                }
+            }
 
             if (alreadyCheckedOut && !configureRepository)
             {
@@ -506,13 +531,29 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 Assets.AddOrUpdate(config.AssetsJsonRelativeLocation.ToString(), config.Tag, (key, oldValue) => config.Tag);
 
                 HideOrigin(config);
-                _configuredRepositories.TryAdd(config.AssetsRepoLocation.ToString(), true);
+                if (configureRepository)
+                {
+                    // Publish only after successful setup; an atomic directory marker is reusable across processes.
+                    Directory.CreateDirectory(configurationMarker);
+                }
+                _configuredRepositories.TryAdd(repositoryLocation, true);
             }
             catch(GitProcessException e)
             {
                 HideOrigin(config);
                 throw GenerateInvokeException(e.Result);
             }
+        }
+
+        private string GetRepositoryConfigurationMarker(GitAssetsConfiguration config)
+        {
+            string gitDirectory = Path.Join(config.AssetsRepoLocation, ".git");
+            if (File.Exists(gitDirectory))
+            {
+                gitDirectory = GitHandler.Run("rev-parse --absolute-git-dir", config).StdOut.Trim();
+            }
+
+            return Path.Join(gitDirectory, RepositoryConfigurationMarker);
         }
 
         public string GetGitOwnerName(GitAssetsConfiguration config)
@@ -652,8 +693,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     try
                     {
                         var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                        string revision = string.IsNullOrEmpty(config.Tag)
+                            ? "--single-branch"
+                            : $"--revision=refs/tags/{config.Tag}";
                         // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                        GitHandler.Run($"-c protocol.version=2 clone -c core.longpaths=true --no-checkout --filter=blob:none {cloneUrl} .", config);
+                        GitHandler.Run($"-c protocol.version=2 clone -c core.longpaths=true --no-checkout --filter=blob:none --no-tags {revision} {cloneUrl} .", config);
                         GitHandler.Run("config --local core.safecrlf false", config);
                     }
                     catch (GitProcessException e)

@@ -39,23 +39,6 @@ The application uses `config/knowledge-config.json` to define which repositories
 - Documentation paths within repositories  
 - Processing options and filters
 
-The .NET source retains `/doc` and the Resource Manager docs and adds
-C# emitter docs/READMEs, the `mitigate-breaking-changes` and
-`mgmt-review-comment-resolution` skill directories (including any Markdown
-references), the Azure.Core test framework README, test proxy onboarding,
-tsp-client README, and client customization guidance. All use
-`azure_sdk_for_net_docs` with repository-relative citations. Upstream
-`microsoft/typespec` C# emitter docs use the separate
-`typespec_csharp_emitter_docs` folder and `scope: unbranded`.
-
-All entries sharing `azure_sdk_for_net_docs` use the same `scope: branded`
-metadata without a service-plane label, keeping both management- and data-plane
-documentation available to the .NET tenant. The configured paths select sparse
-checkout contents; the existing repository-relative processor scans the shared
-checkout for each entry, rather than enforcing a per-entry scan boundary.
-
-Changing configuration does not itself index or deploy these sources.
-
 ## Building and Running
 
 ### Prerequisites

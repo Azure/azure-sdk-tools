@@ -31,20 +31,6 @@ The project has three independently runnable components:
 
 ## Getting Started
 
-### Tenant Answer Guidelines
-
-Tenant configuration in `config/tenant_config.py` selects answer guidelines from
-`prompts/tenants/`. Python uses `language_python.md`, .NET uses `language_dotnet.md`,
-and the other language tenants use the shared `language_channel.md`.
-The .NET guideline covers generation, review/approval routing, compatibility,
-response handling, and evidence-based CI troubleshooting. Its management SDK
-skill links are recommendations for users in their SDK checkout, not bot-executed
-actions or substitutes for reviewer approval.
-
-The .NET tenant can search both Azure-branded `azure_sdk_for_net_docs` and
-unbranded upstream `typespec_csharp_emitter_docs`. Upstream emitter guidance
-must be checked against the Azure package and pinned emitter version.
-
 ### Prerequisites
 
 - Python 3.10 or higher

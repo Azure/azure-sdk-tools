@@ -53,11 +53,6 @@ The `reviewed` field is one of `"todo"` (newly curated, awaiting review),
 `"pass"` (accepted; promoted into official datasets) or `"abandoned"` (reviewed
 and dropped, or a leftover `todo` finalized at promote time).
 
-The .NET dataset is `evaluation_datasets/basic/dotnet.jsonl`, with scenario
-`dotnet`, routed to `Language - DotNet` (`dotnet_channel_qa_bot`). Its expected
-answers describe the diagnosis and next steps, not observations available only
-in the historical source thread; those remain in the `source` provenance.
-
 Validate any file/folder:
 
 ```bash

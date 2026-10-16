@@ -140,7 +140,6 @@ async def request_id_middleware(request: Request, call_next):
     request_id = str(uuid4())
     token = _request_id_ctx_var.set(request_id)
     try:
-        await app_config.refresh()
         response = await call_next(request)
     finally:
         _request_id_ctx_var.reset(token)

@@ -13,7 +13,6 @@ Usage:
 
 import argparse
 import asyncio
-import json
 import os
 import re
 import subprocess
@@ -41,9 +40,7 @@ from azure.ai.projects.models import (
     RaiConfig,
 )
 from azure.identity import AzureCliCredential
-from azure.appconfiguration import AzureAppConfigurationClient, ConfigurationSetting
-from azure.core import MatchConditions
-from azure.core.exceptions import ResourceNotFoundError, ResourceExistsError, ResourceModifiedError
+from azure.core.exceptions import ResourceNotFoundError
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -114,44 +111,6 @@ def _wait_for_version_active(
 
     print(f"  Timed out after {timeout}s.")
     return False
-
-
-def _publish_version(
-    client: AzureAppConfigurationClient, branch: str, agent_name: str, version: str
-) -> None:
-    """Merge into the JSON registry with ETags to preserve concurrent deployments."""
-    key = app_config.AGENT_DEPLOYMENTS_CONFIG_KEY
-    for _ in range(5):
-        try:
-            current = client.get_configuration_setting(key=key)
-        except ResourceNotFoundError:
-            current = None
-        registry = (
-            app_config.parse_agent_deployments(current.value or "")
-            if current is not None
-            else {}
-        )
-        agents = registry.setdefault(branch, {})
-        previous_version = agents.get(agent_name)
-        if previous_version is not None and int(previous_version) >= int(version):
-            print(f"Registry {branch}/{agent_name} already points to version {previous_version}.")
-            return
-        agents[agent_name] = version
-        value = json.dumps(registry, separators=(",", ":"))
-        try:
-            if current is None:
-                client.add_configuration_setting(
-                    ConfigurationSetting(key=key, value=value, content_type="application/json")
-                )
-            else:
-                current.value = value
-                current.content_type = "application/json"
-                client.set_configuration_setting(current, match_condition=MatchConditions.IfNotModified)
-            print(f"Registered {branch}/{agent_name} -> version {version}.")
-            return
-        except (ResourceExistsError, ResourceModifiedError):
-            continue
-    raise RuntimeError("Agent activated, but branch mapping publication conflicted repeatedly.")
 
 
 def main() -> None:
@@ -312,6 +271,10 @@ def main() -> None:
         rai_config = RaiConfig(rai_policy_name=rai_policy_id)
         print(f"  Guardrail: {rai_policy_id}")
 
+        metadata = {"enableVnextExperience": "true"}
+        if branch is not None:
+            metadata["branchname"] = branch
+
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(
@@ -326,7 +289,7 @@ def main() -> None:
                 environment_variables=env_vars,
                 rai_config=rai_config,
             ),
-            metadata={"enableVnextExperience": "true"},
+            metadata=metadata,
         )
         print(f"Created — agent: {agent.name}, version: {agent.version}")
         if str(agent.version) != next_version:
@@ -342,18 +305,10 @@ def main() -> None:
         agent_version = str(agent.version)
         if _wait_for_version_active(project, agent.name, agent_version):
             print(f"Done — agent {agent.name} v{agent_version} is active.")
-            if branch is not None:
-                with AzureAppConfigurationClient(
-                    base_url=args.appconfig_endpoint, credential=credential
-                ) as client:
-                    _publish_version(
-                        client, branch, agent.name, agent_version,
-                    )
         else:
             if branch is not None:
                 raise RuntimeError(
-                    f"Agent {agent.name} v{agent_version} did not reach active status; "
-                    "the deployment registry was not updated."
+                    f"Agent {agent.name} v{agent_version} did not reach active status."
                 )
             print(
                 f"WARNING: Agent {agent.name} v{agent_version} did not reach active status. "

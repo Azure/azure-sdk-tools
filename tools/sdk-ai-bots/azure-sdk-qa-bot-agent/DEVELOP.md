@@ -14,9 +14,11 @@ instructions and tools. You can change and test either component independently.
    and select **Run pipeline**. Choose your working branch, set `environment` to
    `dev`, and select the agent you are developing.
 3. Wait for deployment to finish. The log shows the created agent version and
-   confirms when it is active. Deployment automatically updates your branch's agent
-   version in the `AGENT_DEPLOYMENTS_REGISTRY` JSON registry in Azure App Configuration;
-   you do not need to update a version number in code.
+   confirms when it is active. Dev deployment records your branch in the Foundry
+   agent version's `metadata.branchname`.
+   No branch registry is stored in App Configuration, and you do not need to update
+   a version number in code. Older versions without branch metadata must be redeployed
+   to use branch routing.
 4. Test the deployed version using an evaluation pipeline or a dev channel message.
 
 ## Develop the server
@@ -74,11 +76,12 @@ test
 Replace the example branch with your working branch and the message with your
 test question.
 
-The tag selects your branch's deployed version for that message only. Without a
-tag, the server uses the configured agent version, or latest if none is configured.
+The tag selects your branch's newest active Foundry version for that agent and
+message only, skipping failed or provisioning versions. If listing omits readiness,
+the server checks version details; versions with unknown readiness are not selected.
+Without a tag, the server uses the configured agent version, or latest if none is configured.
 A missing branch deployment returns an error instead of using a different version.
 
-New branch deployments can take up to a minute to appear in the server's refreshed
-settings.
+Each branch-tagged request looks up the matching version directly in Foundry.
 
 For deployment or runtime failures, see [TROUBLESHOOTING.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/TROUBLESHOOTING.md).

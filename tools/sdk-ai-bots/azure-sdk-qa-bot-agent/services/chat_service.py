@@ -10,12 +10,7 @@ import os
 import re
 from urllib.parse import urlparse
 
-from config.app_config import (
-    AGENT_DEPLOYMENTS_CONFIG_KEY,
-    Settings,
-    get as cfg,
-    parse_agent_deployments,
-)
+from config.app_config import Settings, get as cfg
 from config.tenant_config import (
     TenantConfig,
     get_tenant_config,
@@ -40,6 +35,7 @@ from skills.tenant_skills import (
     get_skill_to_tenant_map,
 )
 from utils.azure_ai_foundry import (
+    get_branch_agent_version,
     get_openai_client,
     get_project_client,
     get_stateless_session_id,
@@ -133,12 +129,20 @@ class ChatService:
         tenant_config = get_tenant_config(req.tenant_id)
         agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
         agent_version = configured_agent_version or None
-        request_agent_version = self._resolve_request_version(
+        request_agent_version = await self._resolve_request_version(
             req.message.content, agent_name
         )
         if request_agent_version is not None:
             agent_version = request_agent_version
         agent = await self._get_agent(project_client, agent_name, agent_version)
+        logger.info(
+            "Resolved agent=%s version=%s source=%s tenant=%s.",
+            agent.name, agent.version,
+            "branch" if request_agent_version is not None else (
+                "configured" if configured_agent_version else "latest"
+            ),
+            req.tenant_id,
+        )
         openai_client = self._get_openai_client(agent_name)
 
         # Stateless calls (no customer conversation_id) skip conversation
@@ -329,7 +333,7 @@ class ChatService:
                 exc_info=True,
             )
 
-    def _resolve_request_version(
+    async def _resolve_request_version(
         self, content: str, agent_name: str,
     ) -> str | None:
         text = preprocess_html_content(content)
@@ -351,12 +355,11 @@ class ChatService:
             question = text[prefix.end():].lstrip()
             if not question or re.match(r"^(?:title:\s*)?\[branch:", question):
                 raise AgentRoutingError("Supply one prefix followed by a question.")
-            registry = parse_agent_deployments(
-                self._settings(AGENT_DEPLOYMENTS_CONFIG_KEY, "{}")
+            version = await get_branch_agent_version(
+                self._get_project_client(), agent_name, target
             )
-            version = registry.get(target, {}).get(agent_name)
             if version is None:
-                raise AgentRoutingError(f"No deployment of '{agent_name}' for '{target}'.", 404)
+                raise AgentRoutingError(f"No active deployment of '{agent_name}' for '{target}'.", 404)
             return version
         return None
 

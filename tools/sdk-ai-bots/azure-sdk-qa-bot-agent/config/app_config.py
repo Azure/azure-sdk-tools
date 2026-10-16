@@ -6,33 +6,24 @@ Reuses the shared async credential from ``utils.azure_credential``.
 Every other module reads config through the ``settings`` dict exposed here
 instead of calling ``os.getenv`` directly.
 
-Call ``await init()`` during application startup before any calls to ``get()``.
-The server calls ``refresh()`` before requests to refresh the shared snapshot
-on demand once its one-minute interval expires.
+Call ``await init()`` once during application startup (inside the async
+event loop) before any calls to ``get()``.
 """
 
 from __future__ import annotations
 
-import json
 import logging
 import os
-from asyncio import Lock
 from dataclasses import dataclass
-from time import monotonic
 from typing import overload, Protocol
 
 from azure.appconfiguration.aio import AzureAppConfigurationClient
-from azure.core.exceptions import AzureError
 
 from utils.azure_credential import get_credential
 
 _logger = logging.getLogger(__name__)
 
 _settings: dict[str, str] | None = None
-CONFIG_REFRESH_INTERVAL_SECONDS = 60
-AGENT_DEPLOYMENTS_CONFIG_KEY = "AGENT_DEPLOYMENTS_REGISTRY"
-_settings_refresh_at = 0.0
-_settings_refresh_lock = Lock()
 
 
 class Settings(Protocol):
@@ -82,58 +73,22 @@ async def load(endpoint: str) -> AppConfigSnapshot:
     return AppConfigSnapshot(endpoint=endpoint, settings=settings)
 
 
-def parse_agent_deployments(value: str) -> dict[str, dict[str, str]]:
-    """Parse the branch-to-agent-version JSON registry."""
-    data = json.loads(value)
-    if not isinstance(data, dict):
-        raise ValueError("Agent deployment registry must be a JSON object.")
-    registry: dict[str, dict[str, str]] = {}
-    for branch, agents in data.items():
-        if not isinstance(branch, str) or not isinstance(agents, dict):
-            raise ValueError("Agent deployment registry must map branches to agent objects.")
-        versions: dict[str, str] = {}
-        for agent_name, version in agents.items():
-            if not isinstance(agent_name, str) or not isinstance(version, str):
-                raise ValueError("Agent deployment registry must map agent names to version strings.")
-            versions[agent_name] = version
-        registry[branch] = versions
-    return registry
-
-
 async def init() -> None:
-    """Load the shared settings snapshot at startup or when its interval expires."""
-    global _settings, _settings_refresh_at
-    if _settings is not None and monotonic() < _settings_refresh_at:
+    """Load all settings from Azure App Configuration.
+
+    Must be awaited once at startup before calling ``get()``.
+    """
+    global _settings
+    if _settings is not None:
         return
 
     endpoint = os.environ.get("AZURE_APPCONFIG_ENDPOINT")
     if not endpoint:
         raise RuntimeError("AZURE_APPCONFIG_ENDPOINT environment variable is required.")
 
-    async with _settings_refresh_lock:
-        if _settings is not None and monotonic() < _settings_refresh_at:
-            return
-        try:
-            snapshot = await load(endpoint)
-        except (AzureError, TimeoutError):
-            if _settings is None:
-                raise
-            _settings_refresh_at = monotonic() + CONFIG_REFRESH_INTERVAL_SECONDS
-            _logger.exception(
-                "App Configuration refresh failed; retaining cached settings and "
-                "retrying in %d seconds.",
-                CONFIG_REFRESH_INTERVAL_SECONDS,
-            )
-            return
-        _settings = snapshot.settings
-        _settings_refresh_at = monotonic() + CONFIG_REFRESH_INTERVAL_SECONDS
-        _logger.info("Loaded %d settings from App Configuration", len(_settings))
-
-
-async def refresh() -> None:
-    """Refresh initialized settings when due; initialization belongs to startup."""
-    if _settings is not None:
-        await init()
+    snapshot = await load(endpoint)
+    _settings = snapshot.settings
+    _logger.info("Loaded %d settings from App Configuration", len(_settings))
 
 
 @overload

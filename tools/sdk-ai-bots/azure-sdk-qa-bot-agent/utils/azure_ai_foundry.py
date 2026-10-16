@@ -11,6 +11,7 @@ import re
 from agent_framework import TruncationStrategy
 from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
+from azure.core.exceptions import ResourceNotFoundError
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
 from config.app_config import Settings, get as cfg
@@ -86,6 +87,53 @@ def get_openai_client(agent_name: str | None = None) -> AsyncOpenAI:
             agent_name=resolved_name
         )
     return _openai_clients[resolved_name]
+
+
+async def get_branch_agent_version(
+    project_client: AIProjectClient, agent_name: str, branch: str
+) -> str | None:
+    """Find the newest active version tagged with the requested branch."""
+    logger.info("Looking up Foundry agent=%s branch=%s newest-first.", agent_name, branch)
+    try:
+        async for candidate in project_client.agents.list_versions(agent_name, order="desc"):
+            if (candidate.metadata or {}).get("branchname") != branch:
+                continue
+            # List responses may omit readiness; check details before selecting.
+            if candidate.status is None:
+                logger.info(
+                    "Checking readiness for agent=%s version=%s branch=%s.",
+                    agent_name, candidate.version, branch,
+                )
+                try:
+                    candidate = await project_client.agents.get_version(agent_name, candidate.version)
+                except ResourceNotFoundError:
+                    logger.info(
+                        "Skipping deleted agent=%s version=%s branch=%s.",
+                        agent_name, candidate.version, branch,
+                    )
+                    continue
+            status = str(candidate.status or "").lower().rsplit(".", 1)[-1]
+            if status in ("active", "succeeded"):
+                logger.info(
+                    "Selected Foundry agent=%s version=%s branch=%s status=%s.",
+                    agent_name, candidate.version, branch, status,
+                )
+                return candidate.version
+            if status:
+                logger.info(
+                    "Skipping inactive agent=%s version=%s branch=%s status=%s.",
+                    agent_name, candidate.version, branch, status,
+                )
+            if not status:
+                logger.warning(
+                    "Skipping agent %s v%s: Foundry did not return readiness status.",
+                    agent_name, candidate.version,
+                )
+    except ResourceNotFoundError:
+        logger.info("Foundry agent=%s was not found for branch=%s.", agent_name, branch)
+        return None
+    logger.info("No active Foundry version found for agent=%s branch=%s.", agent_name, branch)
+    return None
 
 
 def get_embedding_client() -> AsyncAzureOpenAI:

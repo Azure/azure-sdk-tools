@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -259,6 +259,9 @@ test("deploys the image tag selected by the pipeline", () => {
   assert.match(frontend, /remoteBuild: true/);
   assert.doesNotMatch(frontend, /predeploy:/);
   assert.doesNotMatch(project, /function-app|azure-sdk-qa-bot-function/);
+  for (const path of ["Dockerfile", "src/services/StorageService.ts", "tsconfig.json", "scripts/tsconfig.json"]) {
+    assert.equal(existsSync(resolve(deploymentRoot, "../azure-sdk-qa-bot-function", path)), false);
+  }
   assert.match(localSync, /buildAzdEnvironmentValues/);
 });
 
@@ -282,7 +285,15 @@ test("builds frontend TypeScript inside the native container context", () => {
   const dockerfile = read("../azure-sdk-qa-bot/Dockerfile");
   const dockerignore = read("../azure-sdk-qa-bot/.dockerignore");
 
-  assert.match(dockerfile, /RUN npm run build && npm prune --omit=dev/);
+  const stages = dockerfile.split(/^FROM /m).slice(1);
+  assert.equal(stages.length, 2);
+  assert.match(stages[0], /nodejs:20 AS build/);
+  assert.match(stages[0], /RUN npm ci\s/);
+  assert.match(stages[0], /RUN npm run build/);
+  assert.match(stages[1], /nodejs:20/);
+  assert.match(stages[1], /COPY --from=build \/app\/lib \.\/lib/);
+  assert.match(stages[1], /RUN npm ci --omit=dev/);
+  assert.doesNotMatch(stages[1], /COPY --from=build .*node_modules/);
   assert.doesNotMatch(dockerignore, /^src$/m);
   assert.doesNotMatch(dockerignore, /^\*\.ts$/m);
   assert.doesNotMatch(dockerignore, /^tsconfig\.json$/m);

@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.54 (Unreleased)
+## 0.6.55 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,21 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.54 (2026-10-15)
+
+### Features Added
+
+- `api-review create` supports API Review Hub pipeline ref overrides through `AZSDK_API_REVIEW_PIPELINE_REF`, `AZSDK_API_REVIEW_TOOLS_REF`, and `AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF`. These overrides are intentionally unavailable to the MCP tool.
+
+### Breaking Changes
+
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` no longer support Swift.
+- `--package-type` and the corresponding MCP parameter now normalize `client`, `spring`, and `functions` to API Review Hub's `data` package type.
+
+### Other Changes
+
+- Refactored the API Review Hub pipeline to build shared tooling once and dispatch isolated base and target artifact-generation jobs.
 
 ## 0.6.53 (2026-10-12)
 
@@ -22,6 +37,7 @@
 - Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or SDK PR never falls back to the package lookup, including invalid or unlinked SDK PRs.
 - Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
 - Fixed serialization for ADO `Sku` product type in Product Onboarding.
+- Fixed `azsdk_package_detect_breaking_change` to avoid an unexpected exception when `hasBreakingChange` is false and `changes` is null or empty.
 
 ## 0.6.52 (2026-10-05)
 

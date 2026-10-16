@@ -291,6 +291,14 @@ initial Foundry deployment before `agent-postdeploy.ts` reconciles runtime
 state. The deployment pipeline separately packages and deploys the
 knowledge-sync WebJob after agent-server readiness.
 
+The frontend uses a separate build stage for TypeScript and installs runtime
+dependencies with `npm ci --omit=dev` in the final image. Do not copy the build
+stage's `node_modules` into that image. Both stages retain Node 20 because the
+Bot Framework connector's `node-fetch@2` gzip handling fails on Node 22 and
+later during Teams signing-key validation. The backend image no longer installs
+Node.js: MCP tools run in hosted-agent images, and the knowledge-sync ZIP bundles
+its own Node runtime.
+
 ### When to Add a Hook
 
 Prefer Bicep for declarative ARM resources and native azd service deployment

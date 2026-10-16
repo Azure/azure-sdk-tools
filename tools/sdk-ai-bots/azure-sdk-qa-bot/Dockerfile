@@ -5,7 +5,7 @@
 # during Bot Framework JWKS validation → `AuthenticationError: Signing Key
 # could not be retrieved` for every incoming Teams activity). Do not bump to
 # 22/24 until botframework-connector switches to native fetch.
-FROM mcr.microsoft.com/azurelinux/base/nodejs:20
+FROM mcr.microsoft.com/azurelinux/base/nodejs:20 AS build
 
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
@@ -18,6 +18,18 @@ RUN npm ci
 
 COPY . .
 
-RUN npm run build && npm prune --omit=dev
+RUN npm run build
+
+FROM mcr.microsoft.com/azurelinux/base/nodejs:20
+
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+WORKDIR /app
+
+COPY . .
+COPY --from=build /app/lib ./lib
+
+RUN npm ci --omit=dev
 
 CMD [ "npm", "run", "start" ]

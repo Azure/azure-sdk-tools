@@ -50,6 +50,8 @@ not need the full authoring workflow.
 ## Apply
 
 After authorization, invoke `azsdk-common-typespec-naming` in apply mode. It
-delegates SDK-only overrides to `azsdk_customized_code_update` with
-`editScope: SpecInputs`. The customization tool is the sole writer for
-`client.tsp`; do not duplicate its mutation with file-edit or shell tools.
+prefers `azsdk_customized_code_update` with `editScope: SpecInputs` for SDK-only
+overrides. If the customization tool is unavailable, follow the naming skill's
+scoped direct-edit fallback, including its evidence and validation requirements.
+Do not duplicate a tool mutation or automatically retry failed/partial tool
+edits through the fallback.

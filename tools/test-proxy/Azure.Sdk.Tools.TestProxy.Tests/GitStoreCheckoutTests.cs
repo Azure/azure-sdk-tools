@@ -62,9 +62,21 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public async Task RestoreUsesBloblessConeCheckoutAndSparseIndex()
         {
             var config = await CreateConfiguration();
+            _git.Commands.Clear();
+
             await _store.Restore(config.AssetsJsonLocation);
 
+            Assert.DoesNotContain(_git.Commands, command =>
+                command.StartsWith("config --local ", StringComparison.Ordinal) ||
+                command.StartsWith("update-index ", StringComparison.Ordinal));
+            string clone = Assert.Single(_git.Commands.Where(command => command.Contains(" clone ", StringComparison.Ordinal)));
+            Assert.Contains("-c core.safecrlf=false", clone);
+            Assert.Contains("-c protocol.version=2", clone);
+            Assert.Contains("-c index.version=4", clone);
+            Assert.Contains("-c core.untrackedCache=true", clone);
             AssertOptimized(config);
+            Assert.Equal("false", _git.Run("config --get core.safecrlf", config).StdOut.Trim());
+            Assert.Equal("true", _git.Run("config --get core.longpaths", config).StdOut.Trim());
             Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
             Assert.True(File.Exists(Path.Join(config.AssetsRepoLocation, "eng", "common", "tool.txt")));
             Assert.True(File.Exists(Path.Join(config.AssetsRepoLocation, ".gitignore")));
@@ -147,6 +159,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public async Task FailedConfigurationIsRetriedInsteadOfMarkedComplete()
         {
             var config = await CreateConfiguration();
+            _git.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 git@github.com:{_repositoryName}.git .", config);
+            _git.Run("checkout recordings_v1", config);
+            await _store.BreadCrumb.Update(config);
             _git.FailCommandOnce = "update-index --index-version=4";
             await Assert.ThrowsAsync<HttpException>(() => _store.Restore(config.AssetsJsonLocation));
             _git.Commands.Clear();
@@ -154,6 +169,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await _store.Restore(config.AssetsJsonLocation);
 
             Assert.Contains("config --local index.version 4", _git.Commands);
+            Assert.Contains("update-index --index-version=4", _git.Commands);
             AssertOptimized(config);
             var reopenedStore = new GitStore { GitHandler = _git };
             _git.Commands.Clear();

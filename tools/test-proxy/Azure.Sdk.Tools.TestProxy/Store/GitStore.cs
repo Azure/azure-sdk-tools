@@ -453,6 +453,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// clone looks the same as being on the wrong tag. This variable allows us to prevent over-active cleaning that would result in exceptions.</param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled = true)
         {
+            CheckoutRepoAtConfig(config, cleanEnabled, settingsConfiguredDuringClone: false);
+        }
+
+        private void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled, bool settingsConfiguredDuringClone)
+        {
             bool alreadyCheckedOut = Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag;
             string repositoryLocation = config.AssetsRepoLocation.ToString();
             bool configureRepository = !_configuredRepositories.ContainsKey(repositoryLocation);
@@ -480,7 +485,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 SetSafeDirectory(config);
                 SetOrigin(config);
 
-                if (configureRepository)
+                if (configureRepository && !settingsConfiguredDuringClone)
                 {
                     GitHandler.Run(config,
                         "config --local remote.origin.partialCloneFilter blob:none",
@@ -518,7 +523,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
                 }
 
-                if (configureRepository)
+                if (configureRepository && !settingsConfiguredDuringClone)
                 {
                     // index.version only affects new indexes, so convert existing caches explicitly.
                     GitHandler.Run("update-index --index-version=4", config);
@@ -697,15 +702,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             ? "--single-branch"
                             : $"--revision=refs/tags/{config.Tag}";
                         // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                        GitHandler.Run($"-c protocol.version=2 clone -c core.longpaths=true --no-checkout --filter=blob:none --no-tags {revision} {cloneUrl} .", config);
-                        GitHandler.Run("config --local core.safecrlf false", config);
+                        GitHandler.Run("-c protocol.version=2 clone -c core.longpaths=true -c core.safecrlf=false " +
+                            "-c protocol.version=2 -c index.version=4 -c core.untrackedCache=true " +
+                            $"--no-checkout --filter=blob:none --no-tags {revision} {cloneUrl} .", config);
                     }
                     catch (GitProcessException e)
                     {
                         throw GenerateInvokeException(e.Result);
                     }
 
-                    CheckoutRepoAtConfig(config, cleanEnabled: false);
+                    CheckoutRepoAtConfig(config, cleanEnabled: false, settingsConfiguredDuringClone: true);
                     workCompleted = true;
                 }
             });

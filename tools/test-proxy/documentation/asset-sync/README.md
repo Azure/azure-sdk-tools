@@ -61,7 +61,9 @@ Asset repositories use:
   sparse checkout to select the entire assets repository.
 - Protocol v2, index v4 path compression, and the untracked cache. Threaded index
   loading and checkout's bulk fetching of missing blobs are already Git defaults;
-  the index checksum remains enabled.
+  the index checksum remains enabled. Fresh clones persist their settings during
+  `git clone` and create v4 indexes directly, avoiding separate configuration and
+  index-conversion commands. Existing caches still use explicit migration.
 
 Existing caches are upgraded in place on their first restore. Successful setup
 is recorded by a versioned marker in the repository's Git metadata, so later

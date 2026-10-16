@@ -273,12 +273,15 @@ def retrieve_channel_tenant_map(credential: Any) -> dict[str, str]:
     return mapping
 
 
-def resolve_tenant_for_scenario(scenario: str, channel_tenant_map: dict[str, str] | None) -> str | None:
+def resolve_tenant_for_scenario(scenario: str, channel_tenant_map: dict[str, str] | None) -> str:
     """Resolve the bot tenant_id for a scenario from the channel->tenant map."""
     if not channel_tenant_map:
-        return None
+        raise ValueError("Cannot resolve evaluation tenant without a channel->tenant map")
     channel = SCENARIO_TO_CHANNEL.get(scenario, scenario)
-    return channel_tenant_map.get(channel) or channel_tenant_map.get("default")
+    tenant = channel_tenant_map.get(channel) or channel_tenant_map.get("default")
+    if not tenant:
+        raise ValueError(f"No evaluation tenant configured for scenario {scenario!r}")
+    return tenant
 
 
 def _coerce_score(value: Any) -> float:
@@ -354,6 +357,58 @@ def _extract_tool_calls(output_items: list[dict[str, Any]]) -> list[dict[str, An
     return tool_calls
 
 
+def _grounding_invalid_reason(item: dict[str, Any], result: Any) -> str | None:
+    context = item.get("context", "") or ""
+    response = item.get("response", "") or ""
+    if not context.strip():
+        return "missing_context"
+    if context.strip() == response.strip():
+        return "answer_used_as_context"
+    try:
+        documents = json.loads(context)
+    except json.JSONDecodeError:
+        documents = None
+    else:
+        if not documents:
+            return "missing_document_content"
+    if isinstance(documents, list) and not any(
+        isinstance(doc, dict)
+        and isinstance(content := doc.get("document_content") or doc.get("content"), str)
+        and content.strip()
+        for doc in documents
+    ):
+        return "missing_document_content"
+
+    score = _get(result, "score", None)
+    if (
+        not isinstance(score, (int, float))
+        or isinstance(score, bool)
+        or not 1 <= score <= 5
+        or not isinstance(_get(result, "passed", None), bool)
+    ):
+        return "invalid_grader_result"
+
+    sample = _get(result, "sample", {}) or {}
+    for message in _get(sample, "input", []) or []:
+        content = _get(message, "content", "")
+        if not isinstance(content, str):
+            continue
+        try:
+            payload = json.loads(content)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(payload, dict) or "context" not in payload:
+            continue
+        if payload.get("context") == payload.get("response"):
+            return "answer_used_as_rendered_context"
+        if payload.get("context") != context:
+            return "rendered_context_mismatch"
+        if payload.get("response") != response:
+            return "rendered_response_mismatch"
+        return None
+    return "rendered_context_unavailable"
+
+
 def output_items_to_rows(
     output_items: list[Any],
     evaluators: list[str],
@@ -374,6 +429,10 @@ def output_items_to_rows(
 
     for oi in output_items:
         item = _get(oi, "datasource_item", {}) or {}
+        if isinstance(item, dict) and isinstance(item.get("item"), dict):
+            item = item["item"]
+        if not isinstance(item, dict) or not item:
+            raise ValueError("Evaluation output item is missing its datasource item")
         results = _get(oi, "results", []) or []
         context = item.get("context", "") or ""
         response_id = item.get("response_id", "") or ""
@@ -399,11 +458,26 @@ def output_items_to_rows(
             name = _get(r, "name", None)
             if not name:
                 continue
+            if name == "groundedness":
+                row["inputs.execution"]["groundedness_grader_result"] = _serialize_response_item(r)
+                reason = _grounding_invalid_reason(item, r)
+                if reason:
+                    logger.warning(
+                        "Groundedness not assessable for %s: %s", row["inputs.testcase"], reason
+                    )
+                    row["outputs.groundedness.groundedness_result"] = "not_assessable"
+                    row["outputs.groundedness.groundedness_reason"] = reason
+                    continue
             score = _coerce_score(_get(r, "score", 0.0))
             passed = bool(_get(r, "passed", False))
             per_metric[name] = score
             row[f"outputs.{name}.{name}"] = score
             row[f"outputs.{name}.{name}_result"] = "pass" if passed else "fail"
+
+        if "groundedness" in evaluators and "outputs.groundedness.groundedness_result" not in row:
+            logger.warning("Groundedness result missing for %s", row["inputs.testcase"])
+            row["outputs.groundedness.groundedness_result"] = "not_assessable"
+            row["outputs.groundedness.groundedness_reason"] = "missing_grader_result"
 
         if want_bot_evals and ("similarity" in per_metric or "response_completeness" in per_metric):
             composite = (

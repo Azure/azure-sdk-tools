@@ -15,7 +15,7 @@ instructions and tools. You can change and test either component independently.
    `dev`, and select the agent you are developing.
 3. Wait for deployment to finish. The log shows the created agent version and
    confirms when it is active. Deployment automatically updates your branch's agent
-   version in the `agent-deployments` JSON registry in Azure App Configuration;
+   version in the `AGENT_DEPLOYMENTS_REGISTRY` JSON registry in Azure App Configuration;
    you do not need to update a version number in code.
 4. Test the deployed version using an evaluation pipeline or a dev channel message.
 

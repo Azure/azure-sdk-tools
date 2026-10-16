@@ -33,7 +33,7 @@ async def test_startup_failure_propagates(monkeypatch, error):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("settings", [{"agent-deployments": '{"branch":{"agent":"42"}}'}, {}])
+@pytest.mark.parametrize("settings", [{"AGENT_DEPLOYMENTS_REGISTRY": '{"branch":{"agent":"42"}}'}, {}])
 @pytest.mark.parametrize("error", [ServiceRequestError("unavailable"), TimeoutError()])
 async def test_refresh_retains_snapshot_and_delays_retry(
     monkeypatch, caplog, settings, error

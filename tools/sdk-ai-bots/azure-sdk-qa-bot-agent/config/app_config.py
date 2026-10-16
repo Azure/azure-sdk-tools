@@ -30,7 +30,7 @@ _logger = logging.getLogger(__name__)
 
 _settings: dict[str, str] | None = None
 CONFIG_REFRESH_INTERVAL_SECONDS = 60
-AGENT_DEPLOYMENTS_CONFIG_KEY = "agent-deployments"
+AGENT_DEPLOYMENTS_CONFIG_KEY = "AGENT_DEPLOYMENTS_REGISTRY"
 _settings_refresh_at = 0.0
 _settings_refresh_lock = Lock()
 

@@ -6,16 +6,20 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^20.19.43",
+    "@types/node": "^26.6.3",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^10.10.0",
     "globals": "^17.12.0",
     "json-schema-to-typescript": "^15.0.4",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
   },
   "scripts": {
+    "build": "tsc --noEmit",
     "lint": "eslint . && tsc --noEmit",
-    "test": "node --test scripts/*.test.mjs"
+    "test": "vitest",
+    "test:ci": "vitest run --coverage --reporter=verbose"
   },
   "type": "module"
 }

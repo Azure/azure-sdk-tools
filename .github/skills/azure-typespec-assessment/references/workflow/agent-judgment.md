@@ -23,38 +23,6 @@ Also read only:
 - the [official document catalog](../reference-document-links.md);
 - the [documentation checks](../document-quality.md).
 
-For SDK naming with known targets, or when explicitly requested, invoke
-`azsdk-common-typespec-naming` in review mode and read its selected references.
-Invoke it before classifying missing target context or unsupported profiles;
-direct reference reads and delegated subtasks do not replace the handoff. Reuse
-the supplied changed declarations, language and release evidence; do not start
-another repository scan, generation or customization. Missing evidence or a
-missing naming profile never means passed: missing required evidence is
-`not-assessed`, while a confirmed target with no applicable profile is
-`not-covered`. Write the result to `sdkNamingReview` in
-`agent-decisions.json`: a summary, one coverage entry per supplied target,
-findings, and blockers. Findings record the declaration, supplied current SDK
-name, recommendation when permitted, language scope, rule, rationale,
-compatibility evidence, verification state, optional source location, and
-optional owning `reviewUnitId`. Do not insert local naming rules into fetched
-Azure Guidelines provenance.
-Keep this exact compact shape for bounded planning responses too:
-
-- `summary: string`;
-- `coverage: Array<{ language, serviceType, profile?, status, rationale }>`;
-- `findings: Array<{ reviewUnitId?, declarationId?, sdkArtifactFactId?, declaration, currentSdkName, recommendedSdkName?, languageScope, decision, rule, rationale, compatibilityEvidence, verification }>`; every finding references at least one canonical changed declaration or referenced SDK artifact. Copy IDs from bounded inputs. Do not author `sourceLocation`; the materializer derives it from declaration evidence.
-- `blockers: string[]`.
-
-Use the schema enums exactly. In particular, use lowercase `arm`,
-`not-covered` for a confirmed target with no applicable profile,
-`not-assessed` for missing target context or required evidence, and
-`supplied-generated` when the current emitted or generated SDK name was
-supplied. `not-covered` takes precedence once the target is confirmed and no
-profile exists; record missing generated-name or compatibility evidence as
-blockers instead of changing that coverage status. Do not rename properties,
-add properties such as `summary` to coverage entries, or pass through auxiliary
-handoff metadata.
-
 Do not recursively list the work directory, broadly search report artifacts,
 inspect raw compiler output, or repeatedly read schemas and canonical inputs.
 Use `agent-workspace\agent-decisions.draft.json` only as the structural
@@ -77,11 +45,6 @@ raw AutoRest/TCGC output, compiler logs, unrelated unchanged source, prior
 answers, or use catalog descriptions as guidance. Candidate and review-unit
 evidence omitted from the bounded input is available only through declared
 canonical artifact references; do not scan unrelated artifact entries.
-The naming review is read-only and evidence-bound: use `reviewed` only for an
-applicable profile with sufficient supplied context, `not-covered` when no
-profile applies, and `not-assessed` when language, service type, compatibility,
-or generated-name evidence is missing. Distinguish proposed names from supplied
-generated names and already-applied changes.
 
 Documentation Completeness is assembled deterministically from
 `dimensions/document-quality-input.json`. The Agent neither reads that artifact

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { isMain, parseArgs, readJsonObject, runMain } from "./cli.mjs";
 import { assembleCompliance, readComplianceCatalog } from "./compliance-assessment.mjs";
-import { canonicalJson, stableId } from "./stable-id.mjs";
+import { canonicalJson } from "./stable-id.mjs";
 import {
   readWorkflowState,
   resolveWorkPath,
@@ -823,7 +823,6 @@ function materializeSearch(decisions, requests, catalog, resolvedDeclarations) {
  * @param {Map<string, CatalogEntry>} catalogById
  * @param {Map<string, MaterializedComplianceDocument>} fetchedById
  * @param {Map<string, string[]>} resolvedDeclarations
- * @param {SourceChange[]} sourceChanges
  * @returns {AssessmentJudgment}
  */
 function materializeJudgment(
@@ -834,7 +833,6 @@ function materializeJudgment(
   catalogById,
   fetchedById,
   resolvedDeclarations,
-  sourceChanges,
 ) {
   exactCoverage(
     modelInput.semanticReviewUnits.map((item) => item.reviewUnitId),
@@ -988,224 +986,14 @@ function materializeJudgment(
       rationale: judgment.rationale,
     };
   });
-  const sdkNaming = materializeSdkNaming(decisions.sdkNamingReview, modelInput, sourceChanges);
   return {
     schemaVersion: 1,
     semanticIntents: decisions.semanticSummaries,
     restDecisions: decisions.restDecisions,
     downstreamDecisions: decisions.downstreamDecisions,
     complianceDecisions,
-    sdkNaming,
     overallConfidence: decisions.overallConfidence,
     blockers: decisions.blockers,
-  };
-}
-
-/**
- * @param {CompactDecisions["sdkNamingReview"]} review
- * @param {AssessmentModelInput} modelInput
- * @param {SourceChange[]} sourceChanges
- */
-function materializeSdkNaming(review, modelInput, sourceChanges) {
-  if (review === undefined) {
-    return {
-      status: /** @type {const} */ ("not-assessed"),
-      summary: "SDK naming was not assessed.",
-      coverage: [],
-      findings: [],
-      blockers: [
-        "sdk-naming-not-assessed: no bounded SDK naming review was supplied by the Agent.",
-      ],
-    };
-  }
-  assertKeys(review, ["summary", "coverage", "findings", "blockers"], "SDK naming review");
-  requireText(review.summary, "SDK naming review.summary");
-  requireArray(review.coverage, "SDK naming review.coverage");
-  requireArray(review.findings, "SDK naming review.findings");
-  requireArray(review.blockers, "SDK naming review.blockers");
-  const coverageKeys = [];
-  for (const [index, coverage] of review.coverage.entries()) {
-    const label = `SDK naming coverage ${index + 1}`;
-    assertKeys(coverage, ["language", "serviceType", "profile", "status", "rationale"], label);
-    requireText(coverage.language, `${label}.language`);
-    requireText(coverage.rationale, `${label}.rationale`);
-    if (!["arm", "data-plane", "unknown"].includes(coverage.serviceType)) {
-      throw new Error(`${label}.serviceType is invalid.`);
-    }
-    if (!["reviewed", "not-covered", "not-assessed"].includes(coverage.status)) {
-      throw new Error(`${label}.status is invalid.`);
-    }
-    if (coverage.profile !== undefined) requireText(coverage.profile, `${label}.profile`);
-    coverageKeys.push(`${coverage.language}\u0000${coverage.serviceType}\u0000${coverage.profile ?? ""}`);
-  }
-  const duplicateCoverage = duplicates(coverageKeys);
-  if (duplicateCoverage.length) {
-    throw new Error("SDK naming review contains duplicate coverage targets.");
-  }
-  const reviewUnits = new Map(
-    modelInput.semanticReviewUnits.map((item) => [item.reviewUnitId, item]),
-  );
-  const declarations = new Map(
-    sourceChanges.flatMap((sourceChange) =>
-      sourceChange.declarations.map((declaration) => [
-        declaration.id,
-        { declaration, sourceChange },
-      ]),
-    ),
-  );
-  const referencedSdkArtifactIds = new Set(
-    Object.values(modelInput.evidenceSets ?? {}).flatMap((evidenceSet) =>
-      Array.isArray(evidenceSet.evidenceFactIds) ? evidenceSet.evidenceFactIds : [],
-    ),
-  );
-  const findings = review.findings.map((finding, index) => {
-    const label = `SDK naming finding ${index + 1}`;
-    assertKeys(
-      finding,
-      [
-        "reviewUnitId",
-        "declarationId",
-        "sdkArtifactFactId",
-        "declaration",
-        "currentSdkName",
-        "recommendedSdkName",
-        "languageScope",
-        "decision",
-        "rule",
-        "rationale",
-        "compatibilityEvidence",
-        "verification",
-      ],
-      label,
-    );
-    for (const field of [
-      "declaration",
-      "currentSdkName",
-      "languageScope",
-      "rule",
-      "rationale",
-      "compatibilityEvidence",
-    ]) {
-      requireText(finding[field], `${label}.${field}`);
-    }
-    if (!["recommend", "blocked"].includes(finding.decision)) {
-      throw new Error(`${label}.decision is invalid.`);
-    }
-    if (finding.decision === "recommend") {
-      requireText(finding.recommendedSdkName, `${label}.recommendedSdkName`);
-    } else if (finding.recommendedSdkName !== undefined) {
-      requireText(finding.recommendedSdkName, `${label}.recommendedSdkName`);
-    }
-    if (!["proposed", "supplied-generated", "applied"].includes(finding.verification)) {
-      throw new Error(`${label}.verification is invalid.`);
-    }
-    const reviewUnit = finding.reviewUnitId
-      ? reviewUnits.get(finding.reviewUnitId)
-      : undefined;
-    if (finding.reviewUnitId && !reviewUnit) {
-      throw new Error(`${label} references unknown review unit ${finding.reviewUnitId}.`);
-    }
-    if (!finding.declarationId && !finding.sdkArtifactFactId) {
-      throw new Error(`${label} must reference canonical declaration or SDK artifact evidence.`);
-    }
-    let sourceLocation;
-    if (finding.declarationId) {
-      requireText(finding.declarationId, `${label}.declarationId`);
-      const resolved = declarations.get(finding.declarationId);
-      if (!resolved) {
-        throw new Error(`${label} references unknown declaration ${finding.declarationId}.`);
-      }
-      if (finding.declaration !== resolved.declaration.qualifiedName) {
-        throw new Error(
-          `${label}.declaration does not match canonical declaration ${finding.declarationId}.`,
-        );
-      }
-      if (reviewUnit) {
-        const evidenceSet = reviewUnit.evidenceSetId
-          ? modelInput.evidenceSets?.[reviewUnit.evidenceSetId]
-          : undefined;
-        const sourceChangeIds = Array.isArray(evidenceSet?.sourceChangeIds)
-          ? evidenceSet.sourceChangeIds
-          : [];
-        const hunkIds = Array.isArray(evidenceSet?.hunkIds) ? evidenceSet.hunkIds : [];
-        const declarationHunkIds = Array.isArray(resolved.declaration.hunkIds)
-          ? resolved.declaration.hunkIds
-          : [];
-        if (
-          !sourceChangeIds.includes(resolved.sourceChange.id) ||
-          !declarationHunkIds.some((hunkId) => hunkIds.includes(hunkId))
-        ) {
-          throw new Error(
-            `${label} declaration ${finding.declarationId} is not owned by review unit ${finding.reviewUnitId}.`,
-          );
-        }
-      }
-      const { startLine, endLine } = resolved.declaration.source;
-      sourceLocation = `${resolved.sourceChange.path}:${startLine}${
-        endLine === startLine ? "" : `-${endLine}`
-      }`;
-    }
-    if (finding.sdkArtifactFactId) {
-      requireText(finding.sdkArtifactFactId, `${label}.sdkArtifactFactId`);
-      const fact = modelInput.facts?.[finding.sdkArtifactFactId];
-      if (!fact || !isSdkArtifactFact(fact)) {
-        throw new Error(
-          `${label} references unknown or non-SDK artifact ${finding.sdkArtifactFactId}.`,
-        );
-      }
-      if (!referencedSdkArtifactIds.has(finding.sdkArtifactFactId)) {
-        throw new Error(
-          `${label} SDK artifact ${finding.sdkArtifactFactId} is not referenced by canonical evidence.`,
-        );
-      }
-    }
-    const materialized = {
-      ...finding,
-      ...(sourceLocation === undefined ? {} : { sourceLocation }),
-    };
-    return {
-      id: stableId("sdk-naming", materialized),
-      ...materialized,
-    };
-  });
-  if (duplicates(findings.map((finding) => finding.id)).length) {
-    throw new Error("SDK naming review contains duplicate findings.");
-  }
-
-  /** @param {import("./runtime-types.js").AssessmentFact} fact */
-  function isSdkArtifactFact(fact) {
-    return (
-      (fact.comparisonRole === "baseline" || fact.comparisonRole === "target") &&
-      typeof fact.factKind === "string" &&
-      Boolean(
-        fact.crossLanguageDefinitionId ||
-          fact.identity ||
-          fact.name ||
-          fact.clientName ||
-          fact.operation ||
-          fact.properties?.length ||
-          fact.values?.length,
-      )
-    );
-  }
-  review.blockers.forEach((blocker, index) => {
-    requireText(blocker, `SDK naming review.blockers[${index}]`);
-    if (/^unresolved:/i.test(blocker)) {
-      throw new Error(`SDK naming review.blockers[${index}] is unresolved.`);
-    }
-  });
-  const fullyReviewed =
-    review.coverage.length > 0 &&
-    review.coverage.every((coverage) => coverage.status === "reviewed") &&
-    review.blockers.length === 0;
-  return {
-    status: /** @type {"passed" | "failed" | "not-assessed"} */ (
-      findings.length ? "failed" : fullyReviewed ? "passed" : "not-assessed"
-    ),
-    summary: review.summary,
-    coverage: review.coverage,
-    findings,
-    blockers: review.blockers,
   };
 }
 
@@ -1227,7 +1015,6 @@ export function validateCompactDecisions(decisions) {
       "failedRetrievals",
       "searchBlockers",
       "complianceJudgments",
-      "sdkNamingReview",
       "overallConfidence",
       "blockers",
     ],
@@ -1252,15 +1039,6 @@ export function validateCompactDecisions(decisions) {
   }
   if (decisions.inferenceResults !== undefined) {
     requireArray(decisions.inferenceResults, "Agent decisions.inferenceResults");
-  }
-  if (decisions.sdkNamingReview !== undefined) {
-    if (
-      typeof decisions.sdkNamingReview !== "object" ||
-      decisions.sdkNamingReview === null ||
-      Array.isArray(decisions.sdkNamingReview)
-    ) {
-      throw new Error("Agent decisions.sdkNamingReview must be an object.");
-    }
   }
   if (!isSeverity(decisions.overallConfidence)) {
     throw new Error("Agent decisions.overallConfidence is invalid.");
@@ -1466,7 +1244,6 @@ export function materializeAssessmentResults({ work, decisions: decisionsPath = 
       catalogById,
       fetchedById,
       resolvedDeclarations,
-      sourceChanges,
     );
     if (requests.length) {
       assertSearchEvidence(evidence);

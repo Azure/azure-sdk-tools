@@ -15,8 +15,8 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 ### Workflow & Utility Skills
 
-`azsdk-common-typespec-naming` owns the shared naming rules consumed by TypeSpec
-authoring and assessment. Install it alongside either consumer; it is distributed
+`azsdk-common-typespec-naming` owns the shared naming rules for TypeSpec authoring
+and standalone naming review. Install it alongside authoring; it is distributed
 by the existing shared-skill sync. Guidance/review are read-only; authorized
 customizations use `azsdk_customized_code_update` with `SpecInputs`.
 

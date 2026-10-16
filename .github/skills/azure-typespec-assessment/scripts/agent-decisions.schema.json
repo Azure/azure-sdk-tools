@@ -49,7 +49,6 @@
       "type": "array",
       "items": { "$ref": "#/$defs/complianceJudgment" }
     },
-    "sdkNamingReview": { "$ref": "#/$defs/sdkNamingReview" },
     "overallConfidence": { "enum": ["high", "medium", "low"] },
     "blockers": {
       "type": "array",
@@ -161,78 +160,6 @@
           "then": { "required": ["crossLanguageDefinitionId"] }
         }
       ]
-    },
-    "sdkNamingCoverage": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["language", "serviceType", "status", "rationale"],
-      "properties": {
-        "language": { "type": "string", "minLength": 1 },
-        "serviceType": { "enum": ["arm", "data-plane", "unknown"] },
-        "profile": { "type": "string", "minLength": 1 },
-        "status": { "enum": ["reviewed", "not-covered", "not-assessed"] },
-        "rationale": { "type": "string", "minLength": 1 }
-      }
-    },
-    "sdkNamingFinding": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "declaration",
-        "currentSdkName",
-        "languageScope",
-        "decision",
-        "rule",
-        "rationale",
-        "compatibilityEvidence",
-        "verification"
-      ],
-      "properties": {
-        "reviewUnitId": { "type": "string", "pattern": "^semantic-" },
-        "declarationId": { "type": "string", "pattern": "^declaration-" },
-        "sdkArtifactFactId": { "type": "string", "minLength": 1 },
-        "declaration": { "type": "string", "minLength": 1 },
-        "currentSdkName": { "type": "string", "minLength": 1 },
-        "recommendedSdkName": { "type": "string", "minLength": 1 },
-        "languageScope": { "type": "string", "minLength": 1 },
-        "decision": { "enum": ["recommend", "blocked"] },
-        "rule": { "type": "string", "minLength": 1 },
-        "rationale": { "type": "string", "minLength": 1 },
-        "compatibilityEvidence": { "type": "string", "minLength": 1 },
-        "verification": { "enum": ["proposed", "supplied-generated", "applied"] }
-      },
-      "allOf": [
-        {
-          "anyOf": [
-            { "required": ["declarationId"] },
-            { "required": ["sdkArtifactFactId"] }
-          ]
-        },
-        {
-          "if": { "properties": { "decision": { "const": "recommend" } } },
-          "then": { "required": ["recommendedSdkName"] }
-        }
-      ]
-    },
-    "sdkNamingReview": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["summary", "coverage", "findings", "blockers"],
-      "properties": {
-        "summary": { "type": "string", "minLength": 1 },
-        "coverage": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/sdkNamingCoverage" }
-        },
-        "findings": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/sdkNamingFinding" }
-        },
-        "blockers": {
-          "type": "array",
-          "items": { "type": "string", "minLength": 1 }
-        }
-      }
     },
     "catalogScore": {
       "type": "object",

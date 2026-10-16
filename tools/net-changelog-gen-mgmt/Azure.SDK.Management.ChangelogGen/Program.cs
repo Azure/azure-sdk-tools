@@ -67,12 +67,19 @@ namespace Azure.SDK.ChangelogGen
                         Logger.Log("Skip API comparison for preview version");
                     }
 
-                    Logger.Log("Start checking Swagger Tag");
-                    Logger.Log("  Check Autorest.md at: " + context.AutorestMdFile);
+                    SpecHelper.ValidateTypeSpecInput(context.TypeSpecLocationFile, context.MetadataFile);
+                    Logger.Log("Start checking TypeSpec API versions");
+                    Logger.Log("  Check metadata.json at: " + context.MetadataFile);
                     Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
-                    string curAutorestMd = File.ReadAllText(context.AutorestMdFile);
-                    string baseAutorestMd = baselineTree.GetFileContent(context.AutorestMdGithubKey);
-                    result.SpecVersionChange = CompareSpecVersionTag(curAutorestMd, baseAutorestMd, SpecHelper.GenerateGitHubPathToAutorestMd(context.AutorestMdGithubKey));
+                    string curMetadata = File.ReadAllText(context.MetadataFile);
+                    if (baselineTree.TryGetFileContent(context.MetadataGithubKey, out string baseMetadata))
+                    {
+                        result.SpecVersionChange = CompareApiVersions(curMetadata, baseMetadata);
+                    }
+                    else
+                    {
+                        Logger.Warning($"Skip TypeSpec API version comparison because metadata.json was not found in baseline tag {context.BaselineGithubTag}");
+                    }
 
                     Logger.Log("Start checking Azure Core");
                     Logger.Log("  Check AzureCore changelog at: " + context.AzureCoreChangeLogMdFile);
@@ -138,25 +145,28 @@ namespace Azure.SDK.ChangelogGen
             }
         }
 
-        private static StringValueChange? CompareSpecVersionTag(string curAutorestMd, string baseAutorestMd, string source)
+        public static StringValueChange? CompareApiVersions(string curMetadata, string baseMetadata)
         {
-            string curVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(curAutorestMd, out string specPath));
-            string baselineVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(baseAutorestMd, out _));
+            IReadOnlyDictionary<string, string> curApiVersions = SpecHelper.GetApiVersions(curMetadata);
+            IReadOnlyDictionary<string, string> baseApiVersions = SpecHelper.GetApiVersions(baseMetadata);
+            string curVersion = FormatApiVersions(curApiVersions);
+            string baseVersion = FormatApiVersions(baseApiVersions);
 
-            if (!string.IsNullOrEmpty(specPath))
-                source = specPath;
-            if (string.Equals(curVersionTag, baselineVersionTag, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(curVersion, baseVersion, StringComparison.OrdinalIgnoreCase))
             {
-                Logger.Log($"No change found in Spec Tag: {baselineVersionTag} -> {curVersionTag}\n" +
-                    $"Tag parsed from {source}");
+                Logger.Log($"No change found in TypeSpec API versions: {baseVersion} -> {curVersion}");
                 return null;
             }
-            else
-            {
-                Logger.Log($"Spec Tag change detected: {baselineVersionTag} -> {curVersionTag}");
-                return new StringValueChange(curVersionTag, baselineVersionTag,
-                    $"Upgraded api-version tag from '{baselineVersionTag}' to '{curVersionTag}'. Tag detail available at {source}");
-            }
+
+            Logger.Log($"TypeSpec API version change detected: {baseVersion} -> {curVersion}");
+            return new StringValueChange(curVersion, baseVersion,
+                $"Upgraded TypeSpec API version from '{baseVersion}' to '{curVersion}'.");
+        }
+
+        private static string FormatApiVersions(IReadOnlyDictionary<string, string> apiVersions)
+        {
+            return string.Join(";", apiVersions.OrderBy(version => version.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(version => $"{version.Key}: {version.Value}"));
         }
 
         public static ChangeSet CompareApi(string curApiFileContent, string baselineApiFileContent)

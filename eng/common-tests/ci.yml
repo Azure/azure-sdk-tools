@@ -34,7 +34,7 @@ extends:
       - task: UseNode@1
         displayName: Use Node.js for eval result unit tests
         inputs:
-          version: 22.x
+          version: 24.x
       - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
         parameters:
           npmrcPath: $(Agent.TempDirectory)/eval-unit-tests.npmrc
@@ -42,12 +42,16 @@ extends:
       # No Vally CLI install, evaluation, model call, or publishing service connection.
       - pwsh: |
           $ErrorActionPreference = 'Stop'
-          npm ci --prefix publisher --omit=dev --ignore-scripts --no-audit --no-fund --userconfig "$(Agent.TempDirectory)/eval-unit-tests.npmrc"
+          npm install --prefix "$(Agent.TempDirectory)/eval-pnpm" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund pnpm@12.6.0
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned pnpm bootstrap failed.' }
+          node "$(Agent.TempDirectory)/eval-pnpm/node_modules/pnpm/bin/pnpm.mjs" --dir publisher --ignore-workspace install --pm-on-fail=ignore --frozen-lockfile --prod --ignore-scripts
           if ($LASTEXITCODE -ne 0) { throw 'Archive dependency restore failed.' }
           node --experimental-strip-types --test test/*.test.ts publisher/test/*.test.ts
           if ($LASTEXITCODE -ne 0) { throw 'Eval result unit tests failed.' }
         workingDirectory: $(Build.SourcesDirectory)/eng/common/scripts/eval
         displayName: Run eval result unit tests (no evaluations)
+        env:
+          NPM_CONFIG_USERCONFIG: $(Agent.TempDirectory)/eval-unit-tests.npmrc
     # Keep the common runner's tags/reports/coverage, and make failed tests fail this job.
     # The shared template still installs Pester and publishes the generated reports.
     CustomTestSteps:

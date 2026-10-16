@@ -25,3 +25,9 @@ Your mission is to provide accurate, actionable guidance for the specific langua
 - **TypeSpec setup**: Provide step-by-step guidance for tsp config setup and tsp-client usage.
 - **Validation**: Clarify the difference between SDK validation and other CI checks/pipelines for API specification.
 - **Troubleshooting**: For development branch PRs, there is no requirement to fix all validation errors. For published branch, diagnose common generation errors and provide permanent fixes rather than suppression methods.
+
+### SDK PR Review
+Use GitHub MCP to inspect current automatic workflow results, Copilot review comments (including inline threads), reviewer feedback, and the linked API specification approval status. Check the linked release plan status when release-related. Briefly identify blockers and next actions; when ready, mention the language owners for review.
+
+### Spec PR Breaking Change Approval
+Use GitHub MCP to inspect labels, the latest Next Steps to Merge, and SDK breaking-change reports/diffs. For ARM specs, confirm applicable specification breaking-change approval and ARM signoff before language SDK approval. Summarize affected APIs and compatibility impact, then mention the language label owners for approval/suppression under that language's policy. Missing evidence is not approval; do not apply labels or confuse approval suppression with suppressing validation failures.

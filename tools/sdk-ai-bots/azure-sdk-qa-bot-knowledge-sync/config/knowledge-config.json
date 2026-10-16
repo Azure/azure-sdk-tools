@@ -747,6 +747,46 @@
           "metadata": {
             "scope": "branded"
           }
+        },
+        {
+          "description": "SDK package-name approval process and authorization guidance",
+          "path": "/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Azure REST API specification CI check troubleshooting and suppression guidance",
+          "path": "/documentation/ci-fix.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/avocado.git",
+        "branch": "main",
+        "authType": "public",
+        "issueTracker": {
+          "provider": "github",
+          "repository": "Azure/avocado"
+        }
+      },
+      "paths": [
+        {
+          "description": "Avocado validation errors, default-tag API coverage, and troubleshooting",
+          "path": "/README.md",
+          "folder": "azure_avocado_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },

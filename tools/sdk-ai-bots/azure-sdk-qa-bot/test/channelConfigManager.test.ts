@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ChannelConfigManager } from '../src/config/channel.js';
+import { readFileSync } from 'node:fs';
 
 // Mock config module
 vi.mock('../src/config/config.js', () => ({
@@ -70,6 +71,35 @@ describe('ChannelConfigManager', () => {
   });
 
   describe('Blob Storage Loading and Watching', () => {
+    it.each([
+      ['dev', '19:17b23ff1d5d54cc293dcf673d32a5b7f@thread.tacv2', 'Azure API Stewardship Board'],
+      ['test', '19:1897c1bd6c6145efb62167733e1b8c82@thread.tacv2', 'Azure SDK QA bot forAPI Stewardship Board Testing'],
+      ['prod', '19:3ebb18fded0e47938f998e196a52952f@thread.tacv2', 'API Stewardship Board - General'],
+    ])('routes the checked-in %s Board channel to its tenant and matching backend', async (environment, channelId, name) => {
+      const yaml = readFileSync(new URL('../config/channel.yaml', import.meta.url), 'utf8');
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(yaml);
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date());
+
+      await manager.initialize();
+
+      const board = manager.getConfig().channels.filter(channel =>
+        channel.id === channelId);
+      expect(board).toHaveLength(1);
+      expect(board[0]).toMatchObject({
+        name,
+        tenant: 'api_stewardship_board_qa_bot',
+      });
+      const listenerTeam = environment === 'prod' ? 'api_stewardship_board' : 'azure_sdk';
+      const listener = JSON.parse(readFileSync(new URL(
+        `../../azure-sdk-qa-bot-agent/pipelines/logicapp/parameters.${listenerTeam}.${environment}.json`,
+        import.meta.url,
+      ), 'utf8'));
+      expect(listener.parameters.teamsChannelIds.value).toContain(channelId);
+      expect(board[0].endpoint).toBe(listener.parameters.serverBaseUrl.value);
+      expect(manager.getConfig().default.tenant).toBe('general_qa_bot');
+      expect(manager.getConfig().channels.find(channel => channel.name === 'TypeSpec Discussion')
+        ?.tenant).toBe('typespec_channel_qa_bot');
+    });
     it('should initialize blob client and load configuration', async () => {
       // Mock BlobClientManager methods
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(mockConfigYaml);

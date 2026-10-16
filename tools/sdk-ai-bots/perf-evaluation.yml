@@ -26,6 +26,7 @@ parameters:
       - releasesupport
       - authoring
       - mcpserver
+      - stewardship
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -88,13 +89,23 @@ extends:
                       scriptType: bash
                       scriptLocation: inlineScript
                       workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
-                      inlineScript: |
-                        python evals_run.py \
-                          --dataset "qa-bot-perf-${{ scenario }}:latest" \
-                          --run_context "perf-evaluation" \
-                          --max_concurrency 2 \
-                          --baseline_check False \
-                          --cache_result full
+                      ${{ if eq(scenario, 'stewardship') }}:
+                        inlineScript: |
+                          python evals_run.py \
+                            --dataset "evaluation_datasets/perf/stewardship.jsonl" \
+                            --tenant-id "api_stewardship_board_qa_bot" \
+                            --run_context "perf-evaluation" \
+                            --max_concurrency 2 \
+                            --baseline_check False \
+                            --cache_result full
+                      ${{ else }}:
+                        inlineScript: |
+                          python evals_run.py \
+                            --dataset "qa-bot-perf-${{ scenario }}:latest" \
+                            --run_context "perf-evaluation" \
+                            --max_concurrency 2 \
+                            --baseline_check False \
+                            --cache_result full
                     env:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                       AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)

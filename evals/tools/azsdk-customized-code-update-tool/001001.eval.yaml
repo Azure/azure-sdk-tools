@@ -1,0 +1,102 @@
+name: azsdk-customized-code-update-tool-eval
+description: Evaluation for the azsdk_customized_code_update mcp tool
+version: "1.0"
+type: capability
+
+tags:
+  tier: unit
+  area: typespec
+
+environment: azsdk-mcp-live
+
+# Execution configuration
+defaults:
+  runs: 1 # Trials per stimulus
+  timeout: "660s" # Seconds per trial
+  model: gpt-5.6-sol # Model for agent execution
+  executor: copilot-sdk # Which executor to use
+
+scoring:
+  threshold: 1.0
+
+# Test cases
+stimuli:
+  - name: 001001-rename-model-SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: API review feedback requires renaming SDK model
+        'Employee' to 'Staff' for Go.
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@clientName(Microsoft.Widget.Employee, "Staff", "go")'
+  
+  - name: 001001-rename-model-CodeCustom
+    prompt: |
+      First, use the shell to resolve
+      azure-sdk-for-js/sdk/widget/arm-widget against your current working
+      directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: API review feedback requires renaming SDK model
+        'Employee' to 'Staff' for Javascript.
+      - packagePath: use the exact absolute path returned by the shell
+      - editScope: "CustomCode"
+
+      Do not pass a relative path or literal placeholder text as
+      packagePath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+        - src: ../../../artifacts/mcp/cli
+          dest: .artifacts/mcp/cli
+      commands:
+        - git init
+        - git remote add origin https://github.com/Azure/azure-rest-api-specs.git
+        - git clone --depth 1 --filter=blob:none --sparse https://github.com/Azure/azure-sdk-for-js.git azure-sdk-for-js
+        - git -C azure-sdk-for-js sparse-checkout set eng/common/tsp-client
+        - npm ci --prefix azure-sdk-for-js/eng/common/tsp-client
+        - .\.artifacts\mcp\cli\azsdk.exe package generate --local-sdk-repo-path "%CD%\azure-sdk-for-js" --tsp-config-path "%CD%\specification\widget\resource-manager\Microsoft.Widget\Widget\tspconfig.yaml" --output json
+        - node -e "const fs=require('node:fs'); const p='azure-sdk-for-js/sdk/widget/arm-widget/package.json'; if (!fs.existsSync(p)) throw new Error('JavaScript SDK generation did not create '+p)"
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update

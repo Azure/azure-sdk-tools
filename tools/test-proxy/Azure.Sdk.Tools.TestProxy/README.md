@@ -85,6 +85,9 @@ For a more detailed explanation of how the test proxy works, along with links to
 
 ## Installation
 
+Git **2.51.0 or newer** must be installed and available on `PATH`, whether using
+the .NET tool or a standalone executable.
+
 ### Via Local Compile or .NET
 
 1. [Install the .NET 10.0 SDK (LTS)](https://dotnet.microsoft.com/download/dotnet/10.0)

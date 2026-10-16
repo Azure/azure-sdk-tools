@@ -35,10 +35,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         class GitMinVersion
         {
-            // As per https://github.com/Azure/azure-sdk-tools/issues/4146, the min version of git
-            // that supports what we need is 2.25.0.
+            // Require a baseline that is at least a year old to ensure compatibility with a wide set of setups.
             public static int Major = 2;
-            public static int Minor = 25;
+            public static int Minor = 51;
             public static int Patch = 0;
             public static string minVersionString = $"{Major}.{Minor}.{Patch}";
         }
@@ -387,8 +386,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// Verify that the version of git running on the machine is greater equal the git minimum version.
         /// This is more for the people running the CLI/TestProxy locally than for lab machines which seem
-        /// to be running on the latest, released versions. The reason is that any git version less than
-        /// 2.37.0 won't have the cone/no-cone options used by sparse-checkout.
+        /// to be running on the latest, released versions. The baseline includes sparse-index support
+        /// and partial-clone fixes without requiring a recently released version.
         /// </summary>
         /// <exception cref="GitProcessException">Thrown by the internal call to Run.</exception>
         /// <exception cref="GitVersionException">Thrown if the version doesn't meet the min or if we can't determine it.</exception>

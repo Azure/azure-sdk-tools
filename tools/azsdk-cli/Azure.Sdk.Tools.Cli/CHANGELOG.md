@@ -1,14 +1,19 @@
 # Release History
 
-## 0.6.54 (Unreleased)
+## 0.6.54 (2026-10-15)
 
 ### Features Added
 
+- `api-review create` supports API Review Hub pipeline ref overrides through `AZSDK_API_REVIEW_PIPELINE_REF`, `AZSDK_API_REVIEW_TOOLS_REF`, and `AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF`. These overrides are intentionally unavailable to the MCP tool.
+
 ### Breaking Changes
 
-### Bugs Fixed
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` no longer support Swift.
+- `--package-type` and the corresponding MCP parameter now normalize `client`, `spring`, and `functions` to API Review Hub's `data` package type.
 
 ### Other Changes
+
+- Refactored the API Review Hub pipeline to build shared tooling once and dispatch isolated base and target artifact-generation jobs.
 
 ## 0.6.53 (2026-10-12)
 

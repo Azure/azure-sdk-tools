@@ -1,0 +1,17 @@
+@model string
+@{
+    var replyAreaId = String.Empty;
+    if (!String.IsNullOrEmpty(Model))
+    {
+        replyAreaId = $"data-reply-id={Model}";
+    }
+}
+
+<div class="review-thread-reply" @replyAreaId>
+    <div class="reply-cell align-middle">
+        <img avatar username="@User.GetGitHubLogin()" size="28" class="comment-icon" height="28"  aria-label="User Avatar"/>
+    </div>
+    <div class="reply-cell col-12 px-3">
+        <button type="button" class="review-thread-reply-button text-muted text-start form-control">Reply...</button>
+    </div>
+</div>

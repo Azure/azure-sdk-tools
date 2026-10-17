@@ -1,0 +1,2047 @@
+{
+    "Version": 0,
+    "VersionString": "0",
+    "Name": "Microsoft.PetStore",
+    "Language": "Swagger",
+    "PackageName": "Microsoft.PetStore",
+    "ServiceName": null,
+    "PackageDisplayName": null,
+    "Tokens": [
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "petstore.json",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-General",
+            "NavigateToId": null,
+            "Value": "General",
+            "Kind": 17,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "swagger",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "2.0",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "info",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "title",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Swagger Petstore",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "version",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "1.0.0",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "host",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "petstore.swagger.io",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "schemes",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "http",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "consumes",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "application/json",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "produces",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "application/json",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 19,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths",
+            "NavigateToId": null,
+            "Value": "Path",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets",
+            "NavigateToId": null,
+            "Value": "/pets",
+            "Kind": 17,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets-0-operationId-Pet_List",
+            "NavigateToId": null,
+            "Value": "GET",
+            "Kind": 17,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pet_List",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "List all pets",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets-0-operationId-Pet_List-Parameters",
+            "NavigateToId": null,
+            "Value": "Parameters",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets-0-operationId-Pet_List-QueryParameters",
+            "NavigateToId": null,
+            "Value": "QueryParameters",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 20,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "1",
+            "Kind": 22,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "4",
+            "Kind": 23,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Name",
+            "Kind": 24,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Type/Format",
+            "Kind": 24,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Required",
+            "Kind": 24,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Description",
+            "Kind": 24,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 25,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "limit",
+            "Kind": 7,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 26,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 25,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "integer/int32",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 26,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 25,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "False",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 26,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 25,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "How many items to return at one time (max 100)",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 26,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 21,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets-0-operationId-Pet_List-Responses",
+            "NavigateToId": null,
+            "Value": "Responses",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "200",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "description",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "An paged array of pets",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Schema",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pets",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "array",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "\u003C",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pet",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "\u003E",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pet",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "id",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "integer",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "name",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "tag",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "default",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "description",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "unexpected error",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Schema",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Error",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "code",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "integer",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "message",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 19,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets-1-operationId-Pet_Create",
+            "NavigateToId": null,
+            "Value": "POST",
+            "Kind": 17,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pet_Create",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Create a pet",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets-1-operationId-Pet_Create-Parameters",
+            "NavigateToId": null,
+            "Value": "Parameters",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets-1-operationId-Pet_Create-Responses",
+            "NavigateToId": null,
+            "Value": "Responses",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "201",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "description",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Null response",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "default",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "description",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "unexpected error",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Schema",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Error",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "code",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "integer",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "message",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 19,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 19,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets/{petId}",
+            "NavigateToId": null,
+            "Value": "/pets/{petId}",
+            "Kind": 17,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets/{petId}-0-operationId-Pet_Get",
+            "NavigateToId": null,
+            "Value": "GET",
+            "Kind": 17,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pet_Get",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Info for a specific pet",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets/{petId}-0-operationId-Pet_Get-Parameters",
+            "NavigateToId": null,
+            "Value": "Parameters",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets/{petId}-0-operationId-Pet_Get-PathParameters",
+            "NavigateToId": null,
+            "Value": "PathParameters",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 20,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "1",
+            "Kind": 22,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "4",
+            "Kind": 23,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Name",
+            "Kind": 24,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Type/Format",
+            "Kind": 24,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Required",
+            "Kind": 24,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Description",
+            "Kind": 24,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 25,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "petId",
+            "Kind": 7,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 26,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 25,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 26,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 25,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "True",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 26,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 25,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "The id of the pet to retrieve",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 26,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 21,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": "-petstore.json-Paths-/pets/{petId}-0-operationId-Pet_Get-Responses",
+            "NavigateToId": null,
+            "Value": "Responses",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "200",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "description",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Expected response to a valid request",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Schema",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pets",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "array",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "\u003C",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pet",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "\u003E",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Pet",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "id",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "integer",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "name",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "tag",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "default",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "description",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "unexpected error",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Schema",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "Error",
+            "Kind": 6,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "code",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ": ",
+            "Kind": 3,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "integer",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "message",
+            "Kind": 9,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 1,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 19,
+            "CrossLanguageDefId": null
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 19,
+            "CrossLanguageDefId": null
+        }
+    ],
+    "Navigation": [
+        {
+            "Text": "petstore.json",
+            "NavigationId": null,
+            "ChildItems": [
+                {
+                    "Text": "General",
+                    "NavigationId": "-petstore.json-General",
+                    "ChildItems": [],
+                    "Tags": {}
+                },
+                {
+                    "Text": "Paths",
+                    "NavigationId": "-petstore.json-Paths",
+                    "ChildItems": [
+                        {
+                            "Text": "/pets",
+                            "NavigationId": "-petstore.json-Paths-/pets",
+                            "ChildItems": [
+                                {
+                                    "Text": "List - get",
+                                    "NavigationId": "-petstore.json-Paths-/pets-0-operationId-Pet_List",
+                                    "ChildItems": [],
+                                    "Tags": {}
+                                },
+                                {
+                                    "Text": "Create - post",
+                                    "NavigationId": "-petstore.json-Paths-/pets-1-operationId-Pet_Create",
+                                    "ChildItems": [],
+                                    "Tags": {}
+                                }
+                            ],
+                            "Tags": {}
+                        },
+                        {
+                            "Text": "/pets/{petId}",
+                            "NavigationId": "-petstore.json-Paths-/pets/{petId}",
+                            "ChildItems": [
+                                {
+                                    "Text": "Get - get",
+                                    "NavigationId": "-petstore.json-Paths-/pets/{petId}-0-operationId-Pet_Get",
+                                    "ChildItems": [],
+                                    "Tags": {}
+                                }
+                            ],
+                            "Tags": {}
+                        }
+                    ],
+                    "Tags": {}
+                }
+            ],
+            "Tags": {}
+        }
+    ],
+    "Diagnostics": null
+}

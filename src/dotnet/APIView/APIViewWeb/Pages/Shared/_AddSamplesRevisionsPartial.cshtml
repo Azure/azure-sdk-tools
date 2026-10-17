@@ -1,0 +1,58 @@
+@using APIViewWeb.Helpers;
+@using APIViewWeb.LeanModels;
+@using APIViewWeb.Pages.Assemblies;
+@model ReviewListItemModel
+
+<div class="offcanvas offcanvas-end border-start" tabindex="-1" id="upload-samples-context" aria-labelledby="upload-samples-contextt-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasLabel">Add Usage Samples</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="form-group">
+            <label>Pick an upload method:</label>
+
+            <ul class="nav nav-pills nav-fill mb-3">
+                <li class="nav-item">
+                    <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#md-text">Markdown Text</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#md-file">Markdown File</a>
+                </li>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content border rounded px-3">
+                <div class="tab-pane active pt-2" id="md-text">
+                    <form asp-page="Samples" asp-page-handler="Upload" method="post">
+                        <div class="form-group ">
+                            <label for="uploadSamplesRevisionTitleA">Enter a sample title (Optional) </label>
+                            <input name="RevisionTitle" id="uploadSamplesRevisionTitleA" class="form-control" type="text" /> <br />
+                            <div class="edit-samples-content">
+                                <textarea name="SampleString" class="form-control" rows="25" placeholder="Enter your markdown formatted usage sample here"></textarea>
+                            </div>
+                            <input name="ReviewId" hidden value="@Model.Id" />
+                            <div class="d-grid gap-2 my-2">
+                                <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane pt-2" id="md-file">
+                    <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+                        <label for="uploadSamplesRevisionTitleB"> Enter a sample title (Optional) </label>
+                        <input name="RevisionTitle" id="uploadSamplesRevisionTitleB" class="form-control" type="text" /> <br />
+                        <input name="ReviewId" hidden value="@Model.Id" />
+                        <div class="input-group mb-3 custom-file-label">
+                            <label for="uploadMarkdownSample" class="input-group-text small mb-0">Select usage sample for this review</label>
+                            <input name="File" type="file" class="form-control" id="uploadMarkdownSample">
+                        </div>
+                        <div class="d-grid gap-2 my-2">
+                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Upload</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,8 @@
+# TypeSpec output
+tsp-output/
+
+# Node modules
+node_modules/
+
+# Package lock file
+package-lock.json

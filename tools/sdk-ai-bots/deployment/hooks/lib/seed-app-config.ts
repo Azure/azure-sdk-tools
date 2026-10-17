@@ -194,7 +194,6 @@ export function derivedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, s
 
   const searchServiceName = required("SEARCH_SERVICE_NAME");
   const storageAccountName = required("STORAGE_ACCOUNT_NAME");
-  const keyVaultName = required("KEY_VAULT_NAME");
   const aiResourceName = required("AI_RESOURCE_NAME");
   const cosmosAccountName = required("COSMOS_DB_ACCOUNT_NAME");
 
@@ -210,7 +209,6 @@ export function derivedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, s
     AOAI_CHAT_COMPLETIONS_ENDPOINT: `https://${aiResourceName}.openai.azure.com`,
     AZURE_OPENAI_ENDPOINT: `https://${aiResourceName}.openai.azure.com`,
     AZURE_COSMOSDB_ENDPOINT: `https://${cosmosAccountName}.documents.azure.com`,
-    KEYVAULT_ENDPOINT: `https://${keyVaultName}.vault.azure.net`,
     STORAGE_ACCOUNT_NAME: storageAccountName,
     STORAGE_ACCOUNT_RESOURCE_ID:
       `/subscriptions/${required("AZURE_SUBSCRIPTION_ID")}/resourceGroups/${required("AZURE_RESOURCE_GROUP")}` +

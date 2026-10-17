@@ -35,7 +35,6 @@ environments:
         serverApplicationIdUri: string # api:// or https:// URI
         resourceGroupPrefix: string
         location: string
-        keyVaultName: string
         appConfigName: string
         containerRegistryName: string
         frontendSiteName: string
@@ -86,7 +85,7 @@ npm run sync-env-suite -- --environment <env>
 This script reads the per-env block from `environment-suite.yaml` and calls
 `azd env set` for each mapped key (`AZURE_SUBSCRIPTION_ID`,
 `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`,
-`CONTAINER_REGISTRY_NAME`, `KEY_VAULT_NAME`, `APP_CONFIG_NAME`,
+`CONTAINER_REGISTRY_NAME`, `APP_CONFIG_NAME`,
 `AZURE_APPCONFIG_ENDPOINT`, `CANDIDATE_APPCONFIG_ENDPOINT`,
 `CHATBOT_EVOLUTION_AGENT_ENABLED`, `SERVER_APPLICATION_CLIENT_ID`,
 `SERVER_APPLICATION_ID_URI`) plus every entry in
@@ -118,12 +117,12 @@ fresh and pipeline-managed environments. The existing dev environment sets it
 to `false` because its runtime assignments and delete lock are already present,
 while local developers have Contributor access without
 `Microsoft.Authorization/*/Write`. In that mode the final postprovision hook
-also leaves protected Storage, Key Vault, App Configuration, and Search data
+also leaves protected Storage, App Configuration, and Search data
 unchanged.
 
 Existing environments can also carry adopted live-state values in
 `bicepOverrides`. These include stable resource IDs and principal IDs, JSON
-maps of user-assigned identities, Key Vault access policies, Cosmos
+maps of user-assigned identities, Cosmos
 capabilities, Search knowledge-retrieval tier, model capacities, and telemetry
 retention. JSON-valued entries remain strings in YAML and are decoded by the
 layer's `main.bicepparam`. Do not copy these values to a fresh environment:

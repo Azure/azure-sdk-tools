@@ -68,7 +68,7 @@ group, region, identity, or resource name, or if a Delete/Modify operation is
 not understood.
 
 The preview covers infrastructure changes and preprovision checks. It does not
-preview postprovision writes to App Configuration, Key Vault, Search, or bot
+preview postprovision writes to App Configuration, Search, or bot
 routing, or postdeploy changes to Foundry and Teams. Review the selected
 environment's reconciliation steps before approving apply.
 

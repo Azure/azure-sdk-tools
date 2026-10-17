@@ -12,9 +12,6 @@ param managedIdentityNameOverride string = ''
 @description('Name of the shared action group.')
 param actionGroupNameOverride string = ''
 
-@description('Name of the shared Key Vault.')
-param keyVaultNameOverride string = ''
-
 @description('Name of the shared App Configuration store.')
 param appConfigNameOverride string = ''
 
@@ -51,9 +48,6 @@ param deploymentPrincipalType string = 'ServicePrincipal'
 @description('Whether this deployment manages Azure RBAC assignments. Disable only when an existing environment has equivalent assignments managed outside this deployment.')
 param manageAuthorizationResources bool = true
 
-@description('Existing Key Vault access policies that must survive incremental updates. Hosted-agent platform identities may require key Sign and Verify access.')
-param keyVaultAccessPolicies array = []
-
 @description('User-assigned identities attached to the Search service, keyed by full resource ID.')
 param searchUserAssignedIdentities object = {}
 
@@ -75,7 +69,6 @@ param enableEpisodeVectorIndex bool = false
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var managedIdentityName = !empty(managedIdentityNameOverride) ? managedIdentityNameOverride : 'qabot-identity-${suffix}'
 var actionGroupName = !empty(actionGroupNameOverride) ? actionGroupNameOverride : 'qabot-alert-${suffix}'
-var keyVaultName = !empty(keyVaultNameOverride) ? keyVaultNameOverride : 'qabot-keyvault-${suffix}'
 var appConfigName = !empty(appConfigNameOverride) ? appConfigNameOverride : 'qabot-config-${suffix}'
 var searchServiceName = !empty(searchServiceNameOverride) ? searchServiceNameOverride : 'qabot-search-${suffix}'
 var containerRegistryName = !empty(containerRegistryNameOverride) ? containerRegistryNameOverride : 'qabotcontainer${suffix}'
@@ -103,28 +96,6 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
       }
     ]
   }
-}
-
-resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
-  name: keyVaultName
-  properties: {
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    // Must match the subscription's tenant — the managed identities and
-    // developer principals that access this vault live in the subscription's
-    // tenant, and a mismatched tenantId makes every data-plane token fail with
-    // 'AggregatedAuthenticationFailure' (S2S17001), crashing the backend.
-    tenantId: subscription().tenantId
-    networkAcls: {
-      bypass: 'None'
-      defaultAction: 'Allow'
-    }
-    accessPolicies: keyVaultAccessPolicies
-    enableRbacAuthorization: true
-  }
-  location: location
 }
 
 resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025-08-01-preview' = {
@@ -627,8 +598,6 @@ var roleIds = {
   storageBlobDataReader: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
   storageQueueDataContributor: '974c5e8b-45b9-4653-ba55-5f855dd0fb88'
   storageTableDataContributor: '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
-  keyVaultSecretsUser: '4633458b-17de-408a-b874-0445c86b69e6'
-  keyVaultSecretsOfficer: 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
   appConfigurationDataReader: '516239f1-63e1-4d78-a4de-a74fb236a071'
   searchIndexDataContributor: '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
   searchServiceContributor: '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
@@ -678,17 +647,6 @@ resource identityStorageTableContributor 'Microsoft.Authorization/roleAssignment
   scope: storageAccount
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.storageTableDataContributor)
-    principalId: userAssignedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Read secrets from Key Vault at runtime.
-resource identityKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  name: guid(vault.id, userAssignedIdentity.id, roleIds.keyVaultSecretsUser)
-  scope: vault
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.keyVaultSecretsUser)
     principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
@@ -779,17 +737,6 @@ resource developerAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2
   }
 }
 
-// Manage Key Vault secrets for developers.
-resource developerKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
-  name: guid(vault.id, developerGroupObjectId, roleIds.keyVaultSecretsOfficer)
-  scope: vault
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.keyVaultSecretsOfficer)
-    principalId: developerGroupObjectId
-    principalType: developerPrincipalType
-  }
-}
-
 // Manage the container registry for developers.
 resource developerAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !containerRegistryIsExisting && !empty(developerGroupObjectId)) {
   name: guid(registry!.id, developerGroupObjectId, roleIds.contributor)
@@ -831,16 +778,6 @@ resource deploymentAppConfigDataReader 'Microsoft.Authorization/roleAssignments@
   scope: configurationStore
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.appConfigurationDataReader)
-    principalId: deploymentPrincipalObjectId
-    principalType: deploymentPrincipalType
-  }
-}
-
-resource deploymentKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
-  name: guid(vault.id, deploymentPrincipalObjectId, roleIds.keyVaultSecretsUser)
-  scope: vault
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.keyVaultSecretsUser)
     principalId: deploymentPrincipalObjectId
     principalType: deploymentPrincipalType
   }
@@ -903,9 +840,6 @@ output MANAGED_IDENTITY_RESOURCE_ID string = userAssignedIdentity.id
 
 @description('Principal (object) ID of the user-assigned managed identity (qabot-identity).')
 output MANAGED_IDENTITY_PRINCIPAL_ID string = userAssignedIdentity.properties.principalId
-
-@description('Key Vault name.')
-output KEY_VAULT_NAME string = vault.name
 
 @description('App Configuration store name.')
 output APP_CONFIG_NAME string = configurationStore.name

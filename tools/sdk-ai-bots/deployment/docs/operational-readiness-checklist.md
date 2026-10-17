@@ -31,8 +31,9 @@ exception with an owner and due date.
       identity and the same Entra tenant as Teams.
 - [ ] Agent-server Easy Auth uses the expected backend application client ID and
       Application ID URI.
-- [ ] Runtime identities have only the required App Configuration, Key Vault,
-      Storage, Search, Cosmos DB, ACR, and AI Services roles.
+- [ ] Runtime identities have only the required App Configuration, Storage,
+      Search, Cosmos DB, ACR, and AI Services roles, plus signing access to the
+      external GitHub App key.
 - [ ] The evolution-agent identity has production access plus only the required
       candidate-dev access.
 - [ ] No client secrets or credentials appear in repository or pipeline YAML.
@@ -40,14 +41,13 @@ exception with an owner and due date.
 ## Runtime Configuration and Integrations
 
 - [ ] Postprovision completed App Configuration, Search reconciliation,
-      `AI-SEARCH-APIKEY`, and bot-config upload without skipped required values.
+      and bot-config upload without skipped required values.
 - [ ] `WEB_FETCH_ALLOWED_DOMAINS` contains the approved production domains.
 - [ ] The configured GitHub App signing key exists and the frontend identity
       selected by the WebJob's `BOT_CLIENT_ID` can sign with it.
 - [ ] The Teams managed-API connection reports `Connected`.
 - [ ] The Azure Bot `MsTeamsChannel` exists.
 - [ ] The approved Teams app version is published in the tenant catalog.
-- [ ] `TeamsWebhookUrl` exists when deployment notifications are required.
 
 ## Data and Recovery
 

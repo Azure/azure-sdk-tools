@@ -24,7 +24,6 @@ export interface EnvironmentConfig {
   serverApplicationClientId: string;
   serverApplicationIdUri: string;
   resourceGroupPrefix: string;
-  keyVaultName: string;
   appConfigName: string;
   containerRegistryName: string;
   frontendSiteName: string;
@@ -174,7 +173,6 @@ export function getEnvSuiteValues(
 const OVERRIDE_ALIAS_KEYS = new Set([
   "MANAGED_IDENTITY_NAME",
   "ACTION_GROUP_NAME",
-  "KEY_VAULT_NAME",
   "APP_CONFIG_NAME",
   "SEARCH_SERVICE_NAME",
   "CONTAINER_REGISTRY_NAME",
@@ -218,8 +216,6 @@ export function buildAzdEnvironmentValues(
     AGENT_SERVER_SITE_NAME_OVERRIDE: environment.agentServerSiteName,
     CONTAINER_REGISTRY_NAME: environment.containerRegistryName,
     CONTAINER_REGISTRY_NAME_OVERRIDE: environment.containerRegistryName,
-    KEY_VAULT_NAME: environment.keyVaultName,
-    KEY_VAULT_NAME_OVERRIDE: environment.keyVaultName,
     APP_CONFIG_NAME: environment.appConfigName,
     APP_CONFIG_NAME_OVERRIDE: environment.appConfigName,
     AZURE_APPCONFIG_ENDPOINT: `https://${environment.appConfigName}.azconfig.io`,

@@ -24,7 +24,6 @@ const REQUIRED_KEYS = [
   "serverApplicationIdUri",
   "resourceGroupPrefix",
   "location",
-  "keyVaultName",
   "appConfigName",
   "containerRegistryName",
   "teamsGroupId",

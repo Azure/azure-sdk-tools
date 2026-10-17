@@ -173,7 +173,7 @@ The registered provision hooks are:
    preserve a connected one, and enable the workflow only after consent. This
    probe is required to avoid replacing delegated OAuth state.
 - **Logic App postprovision: `postprovision.ts`.** Uploads per-environment bot
-   routing, seeds Key Vault and App Configuration, and reconciles Azure AI
+   routing, seeds App Configuration, and reconciles Azure AI
    Search data-plane objects after the final layer outputs exist. These are
    data-plane and content operations rather than ARM resource declarations.
    Despite its generic filename, this is a Logic App layer hook, not a root

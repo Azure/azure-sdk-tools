@@ -72,12 +72,6 @@ grant_role 5e0bd9bd-7b93-4f28-af87-19fc36ad61bd "$ai_scope"
 grant_role 53ca6127-db72-4b80-b1b0-d745d6d5456d "$ai_scope"
 
 if [[ "$access_profile" == "primary" ]]; then
-  key_vault_endpoint=$(read_setting KEYVAULT_ENDPOINT)
-  key_vault_name=${key_vault_endpoint#https://}
-  key_vault_name=${key_vault_name%%.*}
-  key_vault_scope="/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${AZURE_RESOURCE_GROUP}/providers/Microsoft.KeyVault/vaults/${key_vault_name}"
-  grant_role 4633458b-17de-408a-b874-0445c86b69e6 "$key_vault_scope"
-
   app_insights_scope=$(read_setting AGENT_APPLICATIONINSIGHTS_RESOURCE_ID)
   grant_role 43d0d8ad-25c7-4714-9337-8ba259a9fe05 "$app_insights_scope"
 

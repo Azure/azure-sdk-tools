@@ -155,10 +155,6 @@ infra:
             - frontend
             - agent-server
 hooks:
-    postdown:
-        shell: sh
-        run: cd deployment && ./node_modules/.bin/tsx hooks/postdown.ts
-        interactive: true
     predeploy:
         shell: sh
         run: cd deployment && ./node_modules/.bin/tsx hooks/predeploy.ts

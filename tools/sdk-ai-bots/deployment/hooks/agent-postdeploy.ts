@@ -150,7 +150,6 @@ async function ensureAgentIdentityRbac(): Promise<void> {
   const aiScope = scopeFor("Microsoft.CognitiveServices/accounts", process.env.AI_RESOURCE_NAME?.trim());
   const storageScope = scopeFor("Microsoft.Storage/storageAccounts", process.env.STORAGE_ACCOUNT_NAME?.trim());
   const searchScope = scopeFor("Microsoft.Search/searchServices", process.env.SEARCH_SERVICE_NAME?.trim());
-  const kvScope = scopeFor("Microsoft.KeyVault/vaults", process.env.KEY_VAULT_NAME?.trim());
 
   // [role, scope, critical] — critical grants abort the hook on failure.
   const grants: Array<[string, string | undefined, boolean]> = [
@@ -161,7 +160,6 @@ async function ensureAgentIdentityRbac(): Promise<void> {
     ["Storage Table Data Contributor", storageScope, false],
     ["Storage Queue Data Contributor", storageScope, false],
     ["Search Index Data Contributor", searchScope, false],
-    ["Key Vault Secrets User", kvScope, false],
   ];
 
   log(`Granting data-plane roles to hosted agent identity ${principalId}`);

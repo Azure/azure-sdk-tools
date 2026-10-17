@@ -25,9 +25,12 @@ is `tools/sdk-ai-bots/azure.yaml`, the Bicep entry points under
 - **Data jobs:** Knowledge sync runs as a scheduled WebJob on `agent-server`.
   Generated-wiki and feedback/evolution pipelines remain independent jobs.
 
-Shared infrastructure includes ACR, Storage, Cosmos DB, Key Vault, App
+Shared infrastructure includes ACR, Storage, Cosmos DB, App
 Configuration, Azure AI Search, AI Services, Log Analytics, Application
 Insights, alerts, and managed identities.
+
+GitHub App authentication uses a signing key in an externally managed Key
+Vault. The deployment references that vault but does not provision it.
 
 ## Infrastructure Graph
 
@@ -117,8 +120,8 @@ lifecycle hooks:
 
 - preprovision validates the environment contract, checks quota, detects local
   drift, and records the deployment principal;
-- postprovision uploads per-environment bot routing, seeds the Search API key,
-  reconciles Search objects, and seeds App Configuration;
+- postprovision uploads per-environment bot routing, reconciles Search objects,
+  and seeds App Configuration;
 - agent hooks reconcile Foundry settings, hosted identity, RBAC, and Entra
   authorization;
 - frontend postdeploy probes `/health` and, when interactive Teams provisioning

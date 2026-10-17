@@ -101,7 +101,7 @@ The provisioning identity must be able to:
 - create the target resource group for a new environment;
 - create and update the resources declared by all six Bicep layers;
 - create role assignments for workload and deployment identities;
-- read/write the required App Configuration, Key Vault, Storage, Search, ACR,
+- read/write the required App Configuration, Storage, Search, ACR,
   Cosmos DB, and AI Services control/data planes.
 
 For a new environment, resource-group creation requires subscription-scope
@@ -170,7 +170,6 @@ Provisioning creates the six-layer resource graph. The final postprovision
 hook also:
 
 - uploads source-controlled bot routing;
-- retrieves and stores `AI-SEARCH-APIKEY` in the deployment Key Vault;
 - creates or updates Search indexes, data sources, skillsets, indexers,
   knowledge source, and knowledge base;
 - seeds runtime App Configuration values, including the web-fetch allow-list.
@@ -203,7 +202,7 @@ Pipeline deployments skip interactive Teams provisioning by default. When
 enabled in an authenticated session, the frontend postdeploy hook can install
 or upgrade an approved package.
 
-### External credentials and notifications
+### External credentials
 
 - The GitHub App signing key is expected in the vault configured by
   `GITHUB_APP_KEYVAULT_URL` and `GITHUB_APP_KEY_NAME`; this deployment does not
@@ -216,9 +215,6 @@ or upgrade an approved package.
   into the App Service without placing the key in pipeline arguments or logs.
 - Before the first WebJob deployment, disable and drain the previous dev/prod
   Azure DevOps knowledge-sync schedules to prevent concurrent writers.
-- `TeamsWebhookUrl` in the deployment Key Vault is optional. Add it only when
-  Teams deployment notifications are required. A missing value skips
-  notification without failing deployment.
 - Do not create a Cosmos DB connection-string secret for the Logic App; its
   connection uses managed identity.
 

@@ -30,6 +30,17 @@ test("loads typed environment and hyphenated component names", () => {
   );
 });
 
+test("does not require or export application-vault settings", () => {
+  const suite = loadEnvironmentSuite();
+  for (const environment of ["dev", "preview", "prod"]) {
+    const values = buildAzdEnvironmentValues(suite, environment);
+    assert.equal(suite.environments[environment].keyVaultName, undefined);
+    assert.equal(values.KEY_VAULT_NAME, undefined);
+    assert.equal(values.KEY_VAULT_NAME_OVERRIDE, undefined);
+    assert.equal(values.KEY_VAULT_ACCESS_POLICIES, undefined);
+  }
+});
+
 test("builds the complete local azd environment mapping", () => {
   const suite = loadEnvironmentSuite();
   const values = buildAzdEnvironmentValues(suite, "dev");

@@ -34,7 +34,6 @@ test("adopts the existing dev infrastructure contract without losing live state"
     { name: "EnableServerless" },
     { name: "EnableNoSQLVectorSearch" },
   ]);
-  assert.equal(JSON.parse(dev.KEY_VAULT_ACCESS_POLICIES).length, 2);
   assert.equal(Object.keys(JSON.parse(dev.CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES)).length, 2);
   assert.equal(dev.CONTAINER_REGISTRY_IS_EXISTING, "true");
   assert.equal(Object.keys(JSON.parse(dev.SEARCH_USER_ASSIGNED_IDENTITIES)).length, 1);
@@ -48,7 +47,6 @@ test("adopts the existing dev infrastructure contract without losing live state"
   assert.equal(prod.AGENT_LOG_WORKSPACE_NAME, "azuresdkqabot-log");
   assert.equal(prod.GPT_4_1_CAPACITY, "200");
 
-  assert.match(shared, /accessPolicies: keyVaultAccessPolicies/);
   assert.match(shared, /capabilities: cosmosCapabilities/);
   assert.match(shared, /knowledgeRetrieval: searchKnowledgeRetrieval/);
   assert.match(shared, /type: empty\(searchUserAssignedIdentities\) \? 'SystemAssigned'/);
@@ -168,7 +166,6 @@ test("keeps dev developer roles separate from the deployment principal", () => {
   const suite = read("infra/environments/environment-suite.yaml");
   const preprovision = read("hooks/preprovision.ts");
   const seedAppConfig = read("hooks/lib/seed-app-config.ts");
-  const seedKeyVault = read("hooks/lib/seed-key-vault.ts");
   const shared = read("infra/layers/shared-resources/main.bicep");
   const agent = read("infra/layers/agent/main.bicep");
   const dev = suite.match(/\n    dev:\n([\s\S]*?)\n    preview:/)?.[1] ?? "";
@@ -177,11 +174,9 @@ test("keeps dev developer roles separate from the deployment principal", () => {
   assert.match(dev, /DEVELOPER_PRINCIPAL_TYPE: 'Group'/);
   assert.doesNotMatch(preprovision, /"env", "set", "DEVELOPER_PRINCIPAL_ID"/);
   assert.doesNotMatch(seedAppConfig, /DEPLOYMENT_PRINCIPAL_ID.*\|\|.*DEVELOPER_PRINCIPAL_ID/s);
-  assert.doesNotMatch(seedKeyVault, /DEPLOYMENT_PRINCIPAL_ID.*\|\|.*DEVELOPER_PRINCIPAL_ID/s);
   for (const resourceName of [
     "deploymentStorageBlobContributor",
     "deploymentAppConfigDataReader",
-    "deploymentKeyVaultSecretsUser",
     "deploymentAcrContributor",
     "deploymentSearchServiceContributor",
     "deploymentCosmosDataContributor",
@@ -201,7 +196,6 @@ test("targets the existing shared dev environment", () => {
   assert.equal(dev.resourceGroupPrefix, "azure-sdk-qa-bot-dev");
   assert.equal(dev.location, "westus2");
   assert.equal(dev.aiLocation, "swedencentral");
-  assert.equal(dev.keyVaultName, "azuresdkqabot-dev-kv");
   assert.equal(dev.appConfigName, "azuresdkqabot-dev-config");
   assert.equal(dev.containerRegistryName, "azuresdkqabotdevcontainer");
   assert.equal(dev.frontendSiteName, "azsdkqabotdev");
@@ -277,7 +271,7 @@ test("runs hooks with the package-local TypeScript runtime", () => {
   assert.doesNotMatch(project, /npx(?: --yes)? tsx/);
   assert.equal(
     (project.match(/\.\/node_modules\/\.bin\/tsx/g) ?? []).length,
-    14,
+    13,
   );
 });
 
@@ -297,6 +291,31 @@ test("builds frontend TypeScript inside the native container context", () => {
   assert.doesNotMatch(dockerignore, /^src$/m);
   assert.doesNotMatch(dockerignore, /^\*\.ts$/m);
   assert.doesNotMatch(dockerignore, /^tsconfig\.json$/m);
+});
+
+test("does not provision or access an application secret vault", () => {
+  const shared = read("infra/layers/shared-resources/main.bicep");
+  const project = read("../azure.yaml");
+  const postprovision = read("hooks/postprovision.ts");
+  const hostedAccess = read("scripts/grant-agent-data-access.sh");
+  const agentPostdeploy = read("hooks/agent-postdeploy.ts");
+  const stage = read("pipelines/templates/component-deploy-stage.yml");
+
+  assert.doesNotMatch(shared, /Microsoft\.KeyVault|keyVault|KEY_VAULT/);
+  assert.doesNotMatch(project, /postdown|notify/);
+  assert.doesNotMatch(postprovision, /seedKeyVault|seed-key-vault/);
+  assert.doesNotMatch(`${hostedAccess}\n${agentPostdeploy}`, /KEYVAULT_ENDPOINT|KEY_VAULT_NAME|Key Vault Secrets/);
+  assert.doesNotMatch(stage, /notify\.yml|TeamsWebhookUrl/);
+  assert.match(hostedAccess, /GITHUB_APP_KEYVAULT_URL/);
+  assert.match(hostedAccess, /permissions\.keys\[\]/);
+  for (const path of [
+    "hooks/lib/seed-key-vault.ts",
+    "hooks/postdown.ts",
+    "pipelines/templates/notify.yml",
+    "../azure-sdk-qa-bot-agent/utils/azure_keyvault.py",
+  ]) {
+    assert.equal(existsSync(resolve(deploymentRoot, path)), false, path);
+  }
 });
 
 test("keeps rollout configuration limited to active behavior", () => {

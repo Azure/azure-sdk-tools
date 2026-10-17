@@ -19,8 +19,9 @@ The system uses three authorization planes:
 
 1. **Azure control plane:** create, configure, or delete Azure resources and
    Azure RBAC assignments. Bicep and `azd provision` operate primarily here.
-2. **Service data plane:** read or write Blob, Table, Queue, Key Vault, App
-   Configuration, Search, Cosmos DB, OpenAI, and Foundry data.
+2. **Service data plane:** read or write Blob, Table, Queue, App Configuration,
+   Search, Cosmos DB, OpenAI, and Foundry data, and sign with the external
+   GitHub App key in Key Vault.
 3. **Entra and delegated authorization:** validate application tokens, assign
    application roles, install the Teams app, and authorize the Teams managed
    connector.
@@ -107,6 +108,16 @@ backend workload authorization from being conflated.
 Azure AI Search has a system-assigned identity. It reads source blobs and calls
 AI Services for integrated vectorization and knowledge-base model operations.
 
+### External GitHub signing vault
+
+GitHub App authentication uses a non-exportable key in an externally managed
+vault. Agents and knowledge sync select it through `GITHUB_APP_KEYVAULT_URL`;
+the frontend uses `GITHUB_APP_KEY_VAULT_NAME`. Runtime identities use the key's
+remote signing API to obtain GitHub App installation tokens.
+
+The vault and key are external prerequisites, not resources provisioned by this
+deployment. The private key is not retrieved or stored as a secret.
+
 ### Foundry project identity
 
 The Foundry project has a system-assigned identity. It receives `AcrPull` on the
@@ -147,9 +158,6 @@ Declared in
 - **Storage Table Data Contributor**
   (`0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3`) on Storage for table and conversation
   state operations.
-- **Key Vault Secrets User**
-  (`4633458b-17de-408a-b874-0445c86b69e6`) on the application vault for runtime
-  secret reads.
 - **App Configuration Data Reader**
   (`516239f1-63e1-4d78-a4de-a74fb236a071`) on App Configuration.
 - **Search Index Data Contributor**
@@ -199,7 +207,6 @@ When `DEVELOPER_PRINCIPAL_ID` is non-empty, Bicep grants:
 
 - Storage Blob Data Contributor;
 - App Configuration Data Reader;
-- Key Vault Secrets Officer;
 - Contributor on ACR;
 - Cosmos DB Built-in Data Contributor;
 - Search Service Contributor
@@ -208,7 +215,7 @@ When `DEVELOPER_PRINCIPAL_ID` is non-empty, Bicep grants:
 - Foundry Project Manager
   (`eadc314b-1a2d-4efa-be10-5d325db5065e`).
 
-These roles support local deployment, data inspection, secret management,
+These roles support local deployment, data inspection,
 Search administration, and hosted-agent management.
 
 ### Deployment roles
@@ -218,23 +225,16 @@ grants it the roles required by unattended deployment:
 
 - Storage Blob Data Contributor for bot configuration upload;
 - App Configuration Data Reader for configuration access;
-- Key Vault Secrets User for secret reads;
 - Contributor on ACR for remote builds and registry management;
 - Search Service Contributor for Search control-plane operations;
 - Cosmos DB Built-in Data Contributor for deployment and scheduled jobs;
 - Cognitive Services OpenAI User;
 - Foundry Project Manager for `azd deploy agent`.
 
-Postprovision seeding requires write permissions beyond the persistent reader
-roles. The seeding helpers grant only `DEPLOYMENT_PRINCIPAL_ID` these roles
-idempotently:
-
-- **App Configuration Data Owner**
-  (`5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b`);
-- **Key Vault Secrets Officer**.
-
-They never fall back to `DEVELOPER_PRINCIPAL_ID`. App Configuration seeding,
-Key Vault seeding, bot configuration upload, and Search reconciliation are
+Postprovision seeding grants **App Configuration Data Owner**
+(`5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b`) to `DEPLOYMENT_PRINCIPAL_ID`
+idempotently. It never falls back to `DEVELOPER_PRINCIPAL_ID`.
+App Configuration seeding, bot configuration upload, and Search reconciliation are
 explained in the [deployment process reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/maintainer-guide.md#azd-hook-workflow).
 
 ## Dynamic Hosted-Agent Roles
@@ -250,8 +250,7 @@ agent identity:
 - Storage Blob Data Owner;
 - Storage Table Data Contributor;
 - Storage Queue Data Contributor;
-- Search Index Data Contributor;
-- Key Vault Secrets User.
+- Search Index Data Contributor.
 
 Failure to grant App Configuration Data Reader fails the hook because the agent
 cannot initialize. Other grant failures are logged and should be investigated
@@ -266,13 +265,9 @@ defined by [`grant-agent-data-access.sh`](https://github.com/Azure/azure-sdk-too
 This includes the application data roles plus GitHub signing-vault and Cosmos
 DB access required by its tools and memory provider.
 
-Foundry also maintains Key Vault `Sign` and `Verify` access policies for the
-hosted Azure MCP Server agent identities. The existing dev environment adopts
-those policies in its environment contract so an incremental Key Vault update
-does not remove them. The dev container registry, Search service, and AI
-Services account likewise preserve their pre-existing user-assigned
-identities. Fresh environments use the layer defaults instead of inheriting
-these environment-specific identity maps.
+The dev container registry, Search service, and AI Services account preserve
+their pre-existing user-assigned identities. Fresh environments use the layer
+defaults instead of inheriting these environment-specific identity maps.
 
 The GitHub signing vault still uses legacy Key Vault access policies. Agent
 access reconciliation checks for `Sign` and `Verify` there instead of creating
@@ -295,7 +290,6 @@ The **candidate** profile grants:
 
 The **primary** profile adds:
 
-- Key Vault Secrets User on the application vault;
 - Monitoring Reader (`43d0d8ad-25c7-4714-9337-8ba259a9fe05`) on agent
   Application Insights;
 - Key Vault Crypto User (`12338af0-0e69-4776-bea7-57ae8d297424`) on the GitHub
@@ -372,7 +366,7 @@ connection bootstrap and organizational governance, not these Bicep layers.
 - Do not replace managed identity with storage keys or service API keys unless a
   service integration explicitly requires one.
 - Do not commit `.azure/<environment>/.env`; it is local azd state.
-- Treat Secrets Officer, Search Service Contributor, Foundry Project Manager,
+- Treat App Configuration Data Owner, Search Service Contributor, Foundry Project Manager,
   and role-assignment permissions as privileged grants.
 - Preserve the Teams managed connection after consent; replacing it can discard
   delegated OAuth state.

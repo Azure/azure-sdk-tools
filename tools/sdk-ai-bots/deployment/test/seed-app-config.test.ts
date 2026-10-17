@@ -78,17 +78,25 @@ test("injects the chat agent Application Insights resource ID", () => {
     CONTAINER_REGISTRY_NAME: "registry",
     COSMOS_DB_ACCOUNT_NAME: "cosmos",
     FOUNDRY_PROJECT_ENDPOINT: "https://example.services.ai.azure.com/api/projects/project/",
-    KEY_VAULT_NAME: "vault",
     SEARCH_SERVICE_NAME: "search",
     STORAGE_ACCOUNT_NAME: "storage",
   });
 
   assert.equal(values.AGENT_APPLICATIONINSIGHTS_RESOURCE_ID, resourceId);
   assert.equal(values.AZURE_OPENAI_ENDPOINT, "https://ai-resource.openai.azure.com");
+  assert.equal(values.KEYVAULT_ENDPOINT, undefined);
   assert.equal(
     values.STORAGE_ACCOUNT_RESOURCE_ID,
     "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/resource-group/providers/Microsoft.Storage/storageAccounts/storage",
   );
+});
+
+test("retains only the externally managed GitHub signing vault configuration", () => {
+  const values = fixedAppConfigValues({});
+
+  assert.equal(values.GITHUB_APP_KEYVAULT_URL, "https://azuresdkengkeyvault.vault.azure.net");
+  assert.equal(values.GITHUB_APP_KEY_NAME, "azure-sdk-automation");
+  assert.equal(values.KEYVAULT_ENDPOINT, undefined);
 });
 
 test("retries the opaque App Configuration RBAC propagation error", () => {

@@ -9,13 +9,11 @@ param deploymentPrincipalType = readEnvironmentVariable('DEPLOYMENT_PRINCIPAL_TY
 param manageAuthorizationResources = readEnvironmentVariable('MANAGE_AUTHORIZATION_RESOURCES', 'true') == 'true'
 param managedIdentityNameOverride = readEnvironmentVariable('MANAGED_IDENTITY_NAME_OVERRIDE', '')
 param actionGroupNameOverride = readEnvironmentVariable('ACTION_GROUP_NAME_OVERRIDE', '')
-param keyVaultNameOverride = readEnvironmentVariable('KEY_VAULT_NAME_OVERRIDE', '')
 param appConfigNameOverride = readEnvironmentVariable('APP_CONFIG_NAME_OVERRIDE', '')
 param searchServiceNameOverride = readEnvironmentVariable('SEARCH_SERVICE_NAME_OVERRIDE', '')
 param containerRegistryNameOverride = readEnvironmentVariable('CONTAINER_REGISTRY_NAME_OVERRIDE', '')
 param storageAccountNameOverride = readEnvironmentVariable('STORAGE_ACCOUNT_NAME_OVERRIDE', '')
 param cosmosDbAccountNameOverride = readEnvironmentVariable('COSMOS_DB_ACCOUNT_NAME_OVERRIDE', '')
-param keyVaultAccessPolicies = json(readEnvironmentVariable('KEY_VAULT_ACCESS_POLICIES', '[]'))
 param searchUserAssignedIdentities = json(readEnvironmentVariable('SEARCH_USER_ASSIGNED_IDENTITIES', '{}'))
 param containerRegistryUserAssignedIdentities = json(readEnvironmentVariable('CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES', '{}'))
 param containerRegistryIsExisting = readEnvironmentVariable('CONTAINER_REGISTRY_IS_EXISTING', 'false') == 'true'

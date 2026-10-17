@@ -4,14 +4,13 @@
  * Ported from ../../azd-experiments/hooks/postprovision.ts.
  *
  * Runs after the final Logic App layer. Reconciles Search data-plane objects,
- * seeds Key Vault / App Configuration, and uploads bot configuration. Layer outputs are persisted by azd;
+ * seeds App Configuration, and uploads bot configuration. Layer outputs are persisted by azd;
  * role-assignment adoption and Teams environment generation belong to their
  * owning layers.
  */
 
 import { uploadBotConfigs } from "./lib/upload-bot-configs.js";
 import { seedAppConfiguration } from "./lib/seed-app-config.js";
-import { seedKeyVaultSecrets } from "./lib/seed-key-vault.js";
 import { reconcileSearchResources } from "./lib/setup-search.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
@@ -30,17 +29,6 @@ function uploadPerEnvBotConfigs(): void {
     envName: ENV_NAME,
     storageAccountName: STORAGE_ACCOUNT_NAME,
     log,
-  });
-}
-
-function seedKeyVaultSecretsStep(): void {
-  log("Seeding Key Vault secrets...");
-  seedKeyVaultSecrets({
-    keyVaultName: process.env.KEY_VAULT_NAME ?? "",
-    resourceGroup: RESOURCE_GROUP,
-    searchServiceName: process.env.SEARCH_SERVICE_NAME ?? "",
-    env: process.env,
-    log: (m) => log(m),
   });
 }
 
@@ -83,7 +71,6 @@ function printSummary(): void {
   log(`Starting postprovision for environment '${ENV_NAME}'`);
   if (MANAGE_AUTHORIZATION_RESOURCES) {
     uploadPerEnvBotConfigs();
-    seedKeyVaultSecretsStep();
     await setupSearchResources();
     updateAppConfiguration();
   } else {

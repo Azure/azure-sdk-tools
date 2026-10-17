@@ -40,7 +40,6 @@ environments:
         serverApplicationClientId: '830f1656-8b36-4e8e-9781-87ccdd038644'
         serverApplicationIdUri: 'api://azure-sdk-qa-bot-dev'
         resourceGroupPrefix: 'azure-sdk-qa-bot-dev'
-        keyVaultName: 'azuresdkqabot-dev-kv'
         appConfigName: 'azuresdkqabot-dev-config'
         containerRegistryName: 'azuresdkqabotdevcontainer'
         # Site names for CD pipelines. These are passed as Bicep parameters so
@@ -119,7 +118,6 @@ environments:
             AGENT_APPLICATIONINSIGHTS_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Insights/components/azuresdkqabot-dev-agent'
             CONTAINER_REGISTRY_USER_ASSIGNED_IDENTITIES: '{"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity":{},"/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity":{}}'
             CONTAINER_REGISTRY_IS_EXISTING: 'true'
-            KEY_VAULT_ACCESS_POLICIES: '[{"tenantId":"72f988bf-86f1-41af-91ab-2d7cd011db47","objectId":"0d592d27-c3a0-487b-b5ac-245d9fcea5a7","permissions":{"keys":["Verify","Sign"],"secrets":[],"certificates":[]}},{"tenantId":"72f988bf-86f1-41af-91ab-2d7cd011db47","objectId":"eb14b1bf-9a84-425e-a4bc-1a0c4a4298bf","permissions":{"keys":["Verify","Sign"],"secrets":[],"certificates":[]}}]'
             ACR_NAME: 'azuresdkqabotdevcontainer'
             AZURE_CONTAINER_REGISTRY_ENDPOINT: 'azuresdkqabotdevcontainer.azurecr.io'
             FRONTEND_APP_INSIGHTS_NAME: 'azsdkqabotdev-insights'
@@ -155,7 +153,6 @@ environments:
         serverApplicationClientId: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_CLIENT_ID'
         serverApplicationIdUri: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_ID_URI'
         resourceGroupPrefix: 'rg-azuresdkqabot-preview'
-        keyVaultName: 'azsdkqabot-kv-preview'
         appConfigName: 'azsdkqabot-config-preview'
         containerRegistryName: 'azsdkqabotacrpreview'
         frontendSiteName: 'azsdkqabot-preview'
@@ -188,7 +185,6 @@ environments:
         serverApplicationClientId: '899da762-d510-48f2-911a-db9ea0cc41fd'
         serverApplicationIdUri: 'api://azure-sdk-qa-bot'
         resourceGroupPrefix: 'azure-sdk-qa-bot'
-        keyVaultName: 'azuresdkqabot-keyvalut'
         appConfigName: 'azuresdkqabot-config'
         containerRegistryName: 'azuresdkqabotcontainer'
         # Site names for CD pipelines (must match the resources currently

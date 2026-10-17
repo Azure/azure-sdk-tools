@@ -143,7 +143,7 @@ function checkResourceQuotas(): void {
     log("SKIP_QUOTA_CHECK=1 — skipping quota verification.");
     return;
   }
-  log(`Checking resource quotas in '${LOCATION}'...`);
+  log(`Checking additional quota requirements in '${LOCATION}' (AI: '${process.env.AZURE_AI_LOCATION || LOCATION}')...`);
   if (!SUBSCRIPTION_ID) {
     log("  AZURE_SUBSCRIPTION_ID not set — skipping quota check.");
     return;
@@ -153,11 +153,9 @@ function checkResourceQuotas(): void {
     subscriptionId: SUBSCRIPTION_ID,
     location: LOCATION,
     envName: ENV_NAME,
+    env: process.env,
   });
 
-  for (const p of result.unreachable) {
-    log(`  ${p} @ ${LOCATION}: unable to query usages (skipping)`);
-  }
   for (const w of result.warnings) log(`  ⚠ ${w}`);
 
   if (result.ok) {

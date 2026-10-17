@@ -1,261 +1,275 @@
-/**
- * Reusable resource-quota verification helpers.
- *
- * Used by:
- *   - hooks/preprovision.ts   (fail-fast gate before `azd provision`)
- *   - scripts/check-quotas.ts (standalone CLI for on-demand checks)
- *
- * Each provider's `locations/{loc}/usages` endpoint returns a uniform
- * `{value: [{name, currentValue, limit}]}` shape, which we normalise below.
- */
+import {
+  type CommandRunner,
+  runCommand,
+} from "../../scripts/lib/cli.js";
+import {
+  buildAzdEnvironmentValues,
+  loadEnvironmentSuite,
+} from "./env-suite.js";
 
-import { execSync } from "child_process";
-
-export type QuotaTarget = {
+interface QuotaDemand {
   provider: string;
   apiVersion: string;
-  /**
-   * Optional whitelist of `name.value` strings for the provider's usages
-   * endpoint. When set, only matching entries are considered. Used to narrow
-   * the report to just the quotas this deployment actually consumes.
-   */
-  filter?: (nameValue: string) => boolean;
-};
-
-export type UsageItem = {
-  name?: { value?: string; localizedValue?: string };
-  currentValue?: number;
-  limit?: number;
-};
-
-export type ExhaustedQuota = {
-  provider: string;
-  label: string;
+  region: string;
   nameValue: string;
+  required: number;
+}
+
+export interface ExhaustedQuota extends QuotaDemand {
+  label: string;
   current: number;
   limit: number;
-};
+}
 
-export type RegionEvaluation = {
-  exhausted: ExhaustedQuota[];
-  warnings: string[];
-  unreachable: string[];
-};
-
-export type QuotaCheckResult = {
+export interface QuotaCheckResult {
   ok: boolean;
   warnings: string[];
-  unreachable: string[];
   exhausted: ExhaustedQuota[];
-  alternatives: string[];
-  /** Human-readable failure message; empty when `ok` is true. */
   message: string;
-};
-
-/**
- * Whitelist of quota keys this deployment actually consumes. Everything else
- * returned by the provider usage endpoints is filtered out so the report
- * stays focused. Keep these in sync with:
- *   - Microsoft.Storage:           infra/layers/shared-resources/main.bicep (storageAccount)
- *   - Microsoft.Search:            infra/layers/shared-resources/main.bicep (searchService SKU)
- *   - Microsoft.CognitiveServices: infra/layers/agent/main.bicep (account kind/sku + model deployments)
- */
-const CS_ACCOUNT_KIND = "AIServices"; // Microsoft.CognitiveServices/accounts.kind
-const CS_ACCOUNT_SKU = "S0";
-const CS_MODEL_SKU = "GlobalStandard";
-const OPENAI_MODELS = [
-  "gpt-4.1",
-  "gpt-5.6-sol",
-  "gpt-5.1",
-  "gpt-5-mini",
-  "text-embedding-3-small",
-];
-
-const STORAGE_QUOTAS = new Set(["StorageAccounts"]);
-const SEARCH_QUOTAS = new Set(["standard"]); // sharedResources.bicep uses Standard SKU
-const COGNITIVE_QUOTAS = new Set<string>([
-  `${CS_ACCOUNT_KIND}.${CS_ACCOUNT_SKU}.AccountCount`,
-  ...OPENAI_MODELS.map((m) => `OpenAI.${CS_MODEL_SKU}.${m}`),
-]);
-
-/** Providers whose usage APIs we poll. Order controls display order only. */
-export const QUOTA_TARGETS: QuotaTarget[] = [
-  {
-    provider: "Microsoft.Storage",
-    apiVersion: "2023-05-01",
-    filter: (n) => STORAGE_QUOTAS.has(n),
-  },
-  {
-    provider: "Microsoft.Search",
-    apiVersion: "2023-11-01",
-    filter: (n) => SEARCH_QUOTAS.has(n),
-  },
-  {
-    provider: "Microsoft.CognitiveServices",
-    apiVersion: "2023-05-01",
-    filter: (n) => COGNITIVE_QUOTAS.has(n),
-  },
-];
-
-/**
- * Curated fallback regions probed when the primary target is exhausted.
- * Ordered by proximity to westus2 and by broad service availability
- * (all three providers, including Cognitive Services / OpenAI).
- */
-export const CANDIDATE_REGIONS = [
-  "westus2",
-  "westus3",
-  "eastus",
-  "eastus2",
-  "centralus",
-  "southcentralus",
-  "northcentralus",
-  "westeurope",
-  "northeurope",
-  "uksouth",
-  "japaneast",
-  "australiaeast",
-  "southeastasia",
-];
-
-/** Call `az rest` for a provider's usages endpoint. Returns null on error. */
-export function fetchUsages(
-  subscriptionId: string,
-  provider: string,
-  region: string,
-  apiVersion: string
-): UsageItem[] | null {
-  const url =
-    `https://management.azure.com/subscriptions/${subscriptionId}` +
-    `/providers/${provider}/locations/${region}/usages?api-version=${apiVersion}`;
-  try {
-    const raw = execSync(`az rest --method GET --url "${url}"`, {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    });
-    const parsed = JSON.parse(raw) as { value?: UsageItem[] };
-    return parsed.value ?? [];
-  } catch {
-    return null;
-  }
 }
 
-/**
- * Poll every {@link QUOTA_TARGETS} entry for the given region and classify
- * each usage item as exhausted (>= 100%), warning (>= 80%), or fine.
- */
-export function evaluateRegion(subscriptionId: string, region: string): RegionEvaluation {
-  const exhausted: ExhaustedQuota[] = [];
-  const warnings: string[] = [];
-  const unreachable: string[] = [];
-
-  for (const { provider, apiVersion, filter } of QUOTA_TARGETS) {
-    const items = fetchUsages(subscriptionId, provider, region, apiVersion);
-    if (items === null) {
-      unreachable.push(provider);
-      continue;
-    }
-    for (const item of items) {
-      const nameValue = item.name?.value ?? "";
-      if (filter && !filter(nameValue)) continue;
-      const label = item.name?.localizedValue ?? (nameValue || "unknown");
-      const current = Number(item.currentValue ?? 0);
-      const limit = Number(item.limit ?? 0);
-      if (limit <= 0) continue; // unlimited or N/A
-      const util = current / limit;
-      if (current >= limit) {
-        exhausted.push({ provider, label, nameValue, current, limit });
-      } else if (util >= 0.8) {
-        warnings.push(
-          `${provider} @ ${region} — ${label}: ${current}/${limit} ` +
-            `(${Math.round(util * 100)}% used)`
-        );
-      }
-    }
-  }
-  return { exhausted, warnings, unreachable };
-}
-
-/**
- * Given exhausted quotas in one region, probe {@link CANDIDATE_REGIONS} and
- * return the first `maxSuggestions` where every exhausted quota has headroom.
- * Only re-queries providers that were exhausted, to keep probe cost bounded.
- */
-export function suggestAlternativeRegions(
-  subscriptionId: string,
-  originalExhausted: ExhaustedQuota[],
-  excludeRegion: string,
-  maxSuggestions = 3
-): string[] {
-  const exhaustedProviders = new Set(originalExhausted.map((e) => e.provider));
-  const exhaustedKeys = new Set(
-    originalExhausted.map((e) => `${e.provider}::${e.nameValue}`)
-  );
-  const candidates = CANDIDATE_REGIONS.filter((r) => r !== excludeRegion);
-  const good: string[] = [];
-
-  for (const region of candidates) {
-    let ok = true;
-    for (const { provider, apiVersion, filter } of QUOTA_TARGETS) {
-      if (!exhaustedProviders.has(provider)) continue;
-      const items = fetchUsages(subscriptionId, provider, region, apiVersion);
-      if (items === null) {
-        ok = false;
-        break;
-      }
-      for (const item of items) {
-        const nameValue = item.name?.value ?? "";
-        if (filter && !filter(nameValue)) continue;
-        const key = `${provider}::${nameValue}`;
-        if (!exhaustedKeys.has(key)) continue;
-        const current = Number(item.currentValue ?? 0);
-        const limit = Number(item.limit ?? 0);
-        if (limit <= 0 || current >= limit) {
-          ok = false;
-          break;
-        }
-      }
-      if (!ok) break;
-    }
-    if (ok) good.push(region);
-    if (good.length >= maxSuggestions) break;
-  }
-  return good;
-}
-
-/**
- * End-to-end orchestration: evaluate the target region, and if any quota is
- * exhausted, probe alternatives and assemble a human-readable message.
- * Never throws — callers decide how to react.
- */
-export function runQuotaCheck(opts: {
+export interface QuotaCheckOptions {
   subscriptionId: string;
   location: string;
   envName?: string;
-}): QuotaCheckResult {
-  const { subscriptionId, location, envName } = opts;
+  env?: NodeJS.ProcessEnv;
+}
 
-  const { exhausted, warnings, unreachable } = evaluateRegion(subscriptionId, location);
+const MODEL_SETTINGS = [
+  { name: "gpt-4.1", capacityKey: "GPT_4_1_CAPACITY", defaultCapacity: 1 },
+  { name: "gpt-5.6-sol", capacityKey: "GPT_5_6_SOL_CAPACITY", defaultCapacity: 500 },
+  { name: "gpt-5.1", capacityKey: "GPT_5_1_CAPACITY", defaultCapacity: 1 },
+  { name: "gpt-5-mini", capacityKey: "GPT_5_MINI_CAPACITY", defaultCapacity: 1 },
+  { name: "text-embedding-3-small", capacityKey: "TEXT_EMBEDDING_3_SMALL_CAPACITY", defaultCapacity: 1 },
+];
 
-  if (exhausted.length === 0) {
-    return { ok: true, warnings, unreachable, exhausted, alternatives: [], message: "" };
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function record(value: unknown, description: string): Record<string, unknown> {
+  if (!isRecord(value)) throw new Error(`Invalid Azure response: ${description} must be an object.`);
+  return value;
+}
+
+function capacity(value: unknown, description: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    throw new Error(`Cannot verify quota: ${description} must be a non-negative number.`);
+  }
+  return value;
+}
+
+function normalizedRegion(region: string): string {
+  return region.toLowerCase().replaceAll(" ", "");
+}
+
+export function runQuotaCheck(
+  options: QuotaCheckOptions,
+  run: CommandRunner = runCommand,
+): QuotaCheckResult {
+  const defaults = options.envName
+    ? buildAzdEnvironmentValues(loadEnvironmentSuite(), options.envName)
+    : {};
+  const env = { ...defaults, ...(options.env ?? process.env) };
+  const resourceGroup = env.AZURE_RESOURCE_GROUP?.trim();
+  if (!options.subscriptionId || !options.location || !resourceGroup) {
+    throw new Error(
+      "Quota verification requires a subscription, location, and AZURE_RESOURCE_GROUP. " +
+        "Select an environment or supply its deployment values.",
+    );
+  }
+  const aiLocation = env.AZURE_AI_LOCATION?.trim() || options.location;
+  const baseUrl = `https://management.azure.com/subscriptions/${encodeURIComponent(options.subscriptionId)}`;
+  const groupUrl = `${baseUrl}/resourceGroups/${encodeURIComponent(resourceGroup)}`;
+  const warnings: string[] = [];
+  const demands: QuotaDemand[] = [];
+
+  function get(url: string): unknown {
+    let raw: string;
+    try {
+      raw = run("az", ["rest", "--method", "GET", "--url", url, "--output", "json"], { capture: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/\b(ResourceNotFound|ResourceGroupNotFound|ParentResourceNotFound)\b/.test(message)) {
+        return null;
+      }
+      throw new Error(`Cannot verify quota: reading ${url} failed: ${message}`, { cause: error });
+    }
+    try {
+      const value: unknown = JSON.parse(raw);
+      if (!isRecord(value)) throw new Error("Expected an ARM response object.");
+      return value;
+    } catch (error) {
+      throw new Error(`Cannot verify quota: ${url} returned invalid JSON.`, { cause: error });
+    }
   }
 
-  const summary = exhausted
-    .map((e) => `  ✗ ${e.provider} @ ${location} — ${e.label}: ${e.current}/${e.limit}`)
-    .join("\n");
+  function list(url: string, allowMissing = false): unknown[] {
+    const items: unknown[] = [];
+    let next: string | undefined = url;
+    while (next) {
+      const response = get(next);
+      if (response === null && allowMissing) return items;
+      const body = record(response, next);
+      if (!Array.isArray(body.value)) {
+        throw new Error(`Cannot verify quota: ${next} has no resource or usage list.`);
+      }
+      items.push(...body.value);
+      if (body.nextLink !== undefined && typeof body.nextLink !== "string") {
+        throw new Error(`Cannot verify quota: ${next} returned an invalid nextLink.`);
+      }
+      next = body.nextLink;
+      if (next && new URL(next).origin !== "https://management.azure.com") {
+        throw new Error("Cannot verify quota: Azure returned a nextLink outside the ARM endpoint.");
+      }
+    }
+    return items;
+  }
 
-  const alternatives = suggestAlternativeRegions(subscriptionId, exhausted, location);
-  const suggestion =
-    alternatives.length > 0
-      ? `\n\nRegions with headroom for the exhausted quotas: ${alternatives.join(", ")}.\n` +
-        `To retarget, edit .environments.${envName || "<env>"}.location in ` +
-         `infra/environments/environment-suite.yaml, then run npm run sync-env-suite -- --environment ${envName || "<env>"}.`
-      : `\n\nNo alternative region among the probed candidates has headroom. ` +
-        `Request a quota increase in the Azure portal (Subscription → Usage + quotas).`;
+  let groupResources: unknown[] | undefined;
+  function resource(
+    resourceType: string,
+    nameKey: string,
+    apiVersion: string,
+  ): { name: string; body: Record<string, unknown> } | null {
+    const override = env[`${nameKey}_OVERRIDE`];
+    const name = (override ?? env[nameKey])?.trim();
+    if (!name) {
+      groupResources ??= list(`${groupUrl}/resources?api-version=2021-04-01`, true);
+      if (groupResources.some((item) => {
+        const type = record(item, "resource").type;
+        if (typeof type !== "string") {
+          throw new Error("Cannot verify existing allocation: a resource has no type.");
+        }
+        return type.toLowerCase() === resourceType.toLowerCase();
+      })) {
+        throw new Error(
+          `Cannot verify existing allocation for ${resourceType}: ${nameKey}_OVERRIDE ` +
+            "is unresolved and the resource group already contains this resource type.",
+        );
+      }
+      return null;
+    }
+    const body = get(`${groupUrl}/providers/${resourceType}/${encodeURIComponent(name)}?api-version=${apiVersion}`);
+    return body === null ? null : { name, body: record(body, name) };
+  }
 
-  const message =
-    `One or more quotas are exhausted in '${location}':\n` + summary + suggestion;
+  function reusable(
+    existing: ReturnType<typeof resource>,
+    region: string,
+    sku?: string,
+    kind?: string,
+  ): boolean {
+    if (!existing) return false;
+    if (typeof existing.body.location !== "string") {
+      throw new Error(`Cannot verify quota: ${existing.name} has no location.`);
+    }
+    if (normalizedRegion(existing.body.location) !== normalizedRegion(region)) return false;
+    if (sku) {
+      const existingSku = record(existing.body.sku, `${existing.name} SKU`).name;
+      if (typeof existingSku !== "string") {
+        throw new Error(`Cannot verify quota: ${existing.name} has no SKU name.`);
+      }
+      if (existingSku !== sku) return false;
+    }
+    if (kind) {
+      if (typeof existing.body.kind !== "string") {
+        throw new Error(`Cannot verify quota: ${existing.name} has no account kind.`);
+      }
+      if (existing.body.kind !== kind) return false;
+    }
+    return true;
+  }
 
-  return { ok: false, warnings, unreachable, exhausted, alternatives, message };
+  const storage = resource("Microsoft.Storage/storageAccounts", "STORAGE_ACCOUNT_NAME", "2023-05-01");
+  demands.push({
+    provider: "Microsoft.Storage", apiVersion: "2023-05-01",
+    region: options.location, nameValue: "StorageAccounts",
+    required: reusable(storage, options.location) ? 0 : 1,
+  });
+  const search = resource("Microsoft.Search/searchServices", "SEARCH_SERVICE_NAME", "2023-11-01");
+  demands.push({
+    provider: "Microsoft.Search", apiVersion: "2023-11-01",
+    region: options.location, nameValue: "standard",
+    required: reusable(search, options.location, "standard") ? 0 : 1,
+  });
+  const account = resource("Microsoft.CognitiveServices/accounts", "AI_RESOURCE_NAME", "2023-05-01");
+  const reuseAccount = reusable(account, aiLocation, "S0", "AIServices");
+  demands.push({
+    provider: "Microsoft.CognitiveServices", apiVersion: "2023-05-01",
+    region: aiLocation, nameValue: "AIServices.S0.AccountCount",
+    required: reuseAccount ? 0 : 1,
+  });
+  const deployments = reuseAccount && account
+    ? list(`${groupUrl}/providers/Microsoft.CognitiveServices/accounts/${encodeURIComponent(account.name)}/deployments?api-version=2023-05-01`)
+        .map((item) => record(item, "model deployment"))
+    : [];
+
+  for (const model of MODEL_SETTINGS) {
+    const rawCapacity = env[model.capacityKey] ?? String(model.defaultCapacity);
+    const desired = Number(rawCapacity);
+    if (!rawCapacity.trim() || !Number.isInteger(desired) || desired < 0) {
+      throw new Error(`${model.capacityKey} must be a non-negative integer.`);
+    }
+    const sku = model.name === "gpt-4.1"
+      ? (env.GPT_4_1_SKU_NAME ?? "GlobalStandard")
+      : "GlobalStandard";
+    const existing = deployments.find((deployment) => deployment.name === model.name);
+    let allocated = 0;
+    if (existing) {
+      const existingModel = record(record(existing.properties, "deployment properties").model, "deployment model");
+      const existingSku = record(existing.sku, "deployment SKU");
+      if (typeof existingModel.name !== "string" || typeof existingSku.name !== "string") {
+        throw new Error(`Cannot verify quota: ${model.name} has no model or SKU name.`);
+      }
+      if (existingModel.name === model.name && existingSku.name === sku) {
+        allocated = capacity(existingSku.capacity, `${model.name} existing capacity`);
+      }
+    }
+    demands.push({
+      provider: "Microsoft.CognitiveServices", apiVersion: "2023-05-01",
+      region: aiLocation, nameValue: `OpenAI.${sku}.${model.name}`,
+      required: Math.max(0, desired - allocated),
+    });
+  }
+
+  const usageLists = new Map<string, unknown[]>();
+  const exhausted: ExhaustedQuota[] = [];
+  for (const demand of demands) {
+    if (demand.required === 0) continue;
+    const url = `${baseUrl}/providers/${demand.provider}/locations/${encodeURIComponent(demand.region)}/usages?api-version=${demand.apiVersion}`;
+    let usages = usageLists.get(url);
+    if (!usages) {
+      usages = list(url);
+      usageLists.set(url, usages);
+    }
+    const usage = usages.find((item) =>
+      isRecord(item) && isRecord(item.name) && item.name.value === demand.nameValue);
+    if (!isRecord(usage) || !isRecord(usage.name)) {
+      throw new Error(
+        `Cannot verify quota: ${demand.provider} @ ${demand.region} did not return ${demand.nameValue}.`,
+      );
+    }
+    const current = capacity(usage.currentValue, `${demand.nameValue} current usage`);
+    const limit = capacity(usage.limit, `${demand.nameValue} quota limit`);
+    const label = typeof usage.name.localizedValue === "string"
+      ? usage.name.localizedValue : demand.nameValue;
+    if (current + demand.required > limit) {
+      exhausted.push({ ...demand, current, limit, label });
+    } else if (limit > 0 && (current + demand.required) / limit >= 0.8) {
+      warnings.push(
+        `${demand.provider} @ ${demand.region} — ${label}: ` +
+          `${current}/${limit} used; additional allocation ${demand.required}.`,
+      );
+    }
+  }
+  const message = exhausted.length === 0 ? "" :
+    "Insufficient quota for additional deployment allocations:\n" +
+    exhausted.map((item) =>
+      `  ${item.provider} @ ${item.region} — ${item.label}: ` +
+      `${item.current}/${item.limit} used; additional allocation ${item.required}; ` +
+      `available ${Math.max(0, item.limit - item.current)}.`,
+    ).join("\n") +
+    "\nRequest quota in the listed regions or reduce the planned allocation increases.";
+  return { ok: exhausted.length === 0, warnings, exhausted, message };
 }

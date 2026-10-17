@@ -184,7 +184,7 @@ test("keeps dev developer roles separate from the deployment principal", () => {
     assert.match(shared, new RegExp(`resource ${resourceName} `));
   }
   assert.match(agent, /resource deploymentOpenAiUserRoleAssignment /);
-  assert.match(agent, /resource deploymentFoundryProjectManagerRoleAssignment /);
+  assert.doesNotMatch(agent, /resource deploymentFoundryProjectManagerRoleAssignment /);
 });
 
 test("targets the existing shared dev environment", () => {
@@ -271,7 +271,7 @@ test("runs hooks with the package-local TypeScript runtime", () => {
   assert.doesNotMatch(project, /npx(?: --yes)? tsx/);
   assert.equal(
     (project.match(/\.\/node_modules\/\.bin\/tsx/g) ?? []).length,
-    13,
+    14,
   );
 });
 

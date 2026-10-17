@@ -20,6 +20,15 @@ steps:
     parameters:
       environment: ${{ parameters.environment }}
 
+  - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+    parameters:
+      npmrcPath: $(Agent.TempDirectory)/sdk-ai-bots-hosted-agent.npmrc
+      registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+
+  - script: npm ci --omit=dev --userconfig "$(resolvedNpmrcPath)"
+    displayName: 'Install deployment permission-check dependencies'
+    workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment
+
   - task: PipAuthenticate@1
     displayName: 'Authenticate pip to Azure Artifacts'
     inputs:
@@ -59,6 +68,21 @@ steps:
         export AZURE_CORE_WELCOME_MESSAGE=false
         az version >/dev/null 2>&1 || true
         az config set core.welcome_message=false 2>/dev/null || true
+
+        export FOUNDRY_PROJECT_ENDPOINT
+        FOUNDRY_PROJECT_ENDPOINT=$(az appconfig kv show \
+          --endpoint "$AZURE_APPCONFIG_ENDPOINT" \
+          --auth-mode login \
+          --key AI_FOUNDRY_PROJECT_ENDPOINT \
+          --query value \
+          --output tsv)
+        if [ -z "$FOUNDRY_PROJECT_ENDPOINT" ] || [ "$FOUNDRY_PROJECT_ENDPOINT" = "null" ]; then
+          echo "##[error]AI_FOUNDRY_PROJECT_ENDPOINT is required before checking deployment access."
+          exit 1
+        fi
+
+        "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/node_modules/.bin/tsx" \
+          "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/ensure-agent-deploy-access.ts"
 
         python -m pip install --upgrade pip
         python -m pip install keyring artifacts-keyring --retries 5 --timeout 60

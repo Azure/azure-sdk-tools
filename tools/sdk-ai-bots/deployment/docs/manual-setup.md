@@ -152,10 +152,6 @@ or production environment, provide an approved first-state bootstrap pipeline;
 those environments disable local provision and deploy through
 `localDeployAllowed`.
 
-Dev provisioning manages role assignments and resource locks. The workstation
-identity therefore needs the same authorization-management permissions required
-of the provisioning pipeline; Contributor alone is insufficient.
-
 The command below is for dev only:
 
 ```bash

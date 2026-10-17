@@ -111,14 +111,14 @@ pipeline WIF grants separate from developer access. The developer principal is
 configuration-owned and must be set explicitly in `bicepOverrides`; the hook
 never substitutes the deployment identity when it is absent.
 
-`manageAuthorizationResources` is `true` for dev, preview, and prod. Provisioning
-manages the declared Azure RBAC assignments and resource locks, and the final
-postprovision hook uploads bot routing, reconciles Search, and seeds App
-Configuration. The provisioning identity must have the required authorization
-write permissions; Contributor alone is insufficient.
-
-Set this flag to `false` only for an explicitly pre-authorized environment whose
-authorization and data-plane configuration are managed outside this deployment.
+`manageAuthorizationResources` defaults through the environment contract and
+controls Azure RBAC assignments and resource locks in Bicep. Keep it `true` for
+fresh and pipeline-managed environments. The existing dev environment sets it
+to `false` because its runtime assignments and delete lock are already present,
+while local developers have Contributor access without
+`Microsoft.Authorization/*/Write`. In that mode the final postprovision hook
+also leaves protected Storage, App Configuration, and Search data
+unchanged.
 
 Existing environments can also carry adopted live-state values in
 `bicepOverrides`. These include stable resource IDs and principal IDs, JSON

@@ -59,7 +59,6 @@ function runLoader(environment: string, overrides: NodeJS.ProcessEnv = {}) {
 test("preserves every JSON-valued dev Bicep override through pipeline logging", () => {
   const result = runLoader("dev");
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.equal(result.values.MANAGE_AUTHORIZATION_RESOURCES, "true");
   const overrides = suite.environments.dev.bicepOverrides;
   assert.ok(overrides);
 

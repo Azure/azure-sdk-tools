@@ -17,6 +17,7 @@ on:
       - '.github/workflows/*event*'
       - '.github/workflows/post-apiview.yml'
       - '.github/workflows/protected-files.yml'
+      - '.github/workflows/verify-links.yml'
       # Skills synced from azure-sdk-tools
       - '.github/skills/azsdk-common-*/**'
 

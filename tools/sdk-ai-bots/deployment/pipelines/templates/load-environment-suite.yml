@@ -61,7 +61,11 @@ steps:
             local name="$1"
             local val="$2"
             export "${name}=${val}"
-            echo "##vso[task.setvariable variable=${name}]${val}"
+            local escaped="$val"
+            escaped="${escaped//'%'/'%AZP25'}"
+            escaped="${escaped//$'\n'/'%0A'}"
+            escaped="${escaped//$'\r'/'%0D'}"
+            echo "##vso[task.setvariable variable=${name}]${escaped}"
             echo "  ${name} = ${val}"
           }
 
@@ -153,8 +157,9 @@ steps:
           # Environment-specific values override the common mappings above.
           # Keys are environment variables consumed by the layer parameter adapters.
           OVERRIDE_INPUT_KEYS=' MANAGED_IDENTITY_NAME ACTION_GROUP_NAME KEY_VAULT_NAME APP_CONFIG_NAME SEARCH_SERVICE_NAME CONTAINER_REGISTRY_NAME STORAGE_ACCOUNT_NAME COSMOS_DB_ACCOUNT_NAME AI_RESOURCE_NAME AI_PROJECT_NAME AGENT_SERVER_SITE_NAME INTEGRATION_ACCOUNT_NAME TEAMS_CONNECTION_NAME LOGIC_APP_WORKFLOW_NAME AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME LOGIC_APP_ALERT_NAME AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME '
-          while IFS=$'\t' read -r name val; do
+          while IFS= read -r name; do
             [ -z "$name" ] && continue
+            val=$(yq -r ".environments.${ENV}.bicepOverrides.${name} | tostring" "$SUITE")
             if [[ "$val" == REPLACE_WITH_* ]]; then
               echo "##[error]${name} is still a placeholder for env=${ENV}"
               exit 1
@@ -165,7 +170,7 @@ steps:
             else
               set_var_from_pipeline_or_default "$name" "$val"
             fi
-          done < <(yq -r ".environments.${ENV}.bicepOverrides // {} | to_entries[] | [.key, (.value | tostring)] | @tsv" "$SUITE")
+          done < <(yq -r ".environments.${ENV}.bicepOverrides // {} | keys | .[]" "$SUITE")
 
           # A pipeline may override a resource name that is not present in the
           # selected environment's bicepOverrides. Keep the canonical value

@@ -130,6 +130,11 @@ layer's `main.bicepparam`. Do not copy these values to a fresh environment:
 first read the target resource state and use preview to prove that no identity,
 policy, immutable partition key, or model capacity will be removed.
 
+The pipeline loader reads each override as a raw scalar. Do not pass these
+values through `yq @tsv`: its CSV-style quoting changes embedded JSON quotes.
+Azure Pipelines logging commands escape percent signs and line breaks while
+preserving the original value for subsequent tasks.
+
 The dev registry sets `CONTAINER_REGISTRY_IS_EXISTING=true` because it retains
 identities from both dev and production. A resource-group-scoped developer
 cannot reassign the production identity, so shared-resource provisioning reads

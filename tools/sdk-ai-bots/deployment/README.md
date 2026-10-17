@@ -44,6 +44,10 @@ Each document has one responsibility.
 Run local deployment utilities from this directory through npm. Their CLI
 options use kebab-case, and their behavior is covered by `npm test`.
 
+The pipeline-loader regression tests execute Bash and Mike Farah's `yq` v4,
+the same tools required by the Azure DevOps environment-loading step. Both must
+be on `PATH` when running `npm test`.
+
 | Command | Purpose |
 | --- | --- |
 | `npm run validate-env-suite -- --environment dev` | Validate one environment and its Teams routing. Omit `--environment` to validate all environments. |

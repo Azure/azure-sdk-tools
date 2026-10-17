@@ -1,4 +1,4 @@
-# Build Authoring Plan
+# Build TypeSpec Source Plan
 
 > Prerequisite: Steps 1 (Analyze Project) and 2 (Intake) must be complete.
 
@@ -18,20 +18,40 @@ For a request containing both covered and uncovered changes, use the MCP tool fo
 
 ### 3.1.2 Generate Authoring Plan
 
-Synthesize the retrieved knowledge in step 3.1.1 into a concrete plan.
+Synthesize the retrieved knowledge in step 3.1.1 into a concrete plan. Do not
+call `azsdk_typespec_generate_authoring_plan`; the agent owns this synthesis.
 
 Document your final plan with references to supporting documents, and ensure the plan follows the retrieved context above.
+When the request and project evidence already determine the material API
+choices, continue to application without asking the user to confirm the plan.
 
 ---
 
-## 3.2 Case-Specific Authoring Plan
+## 3.2 Case-Specific TypeSpec Source Plan
 
 ### Case 1 — API Versioning
 
 > API Versioning **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [3.1.1 Retrieve knowledge](#311-retrieve-knowledge)) — you **MUST** call `web_fetch` on the matching versioning doc and follow its steps. Do **not** call the MCP tool `azsdk_typespec_retrieve_knowledge` or `azsdk_typespec_generate_authoring_plan` for this case.
 
-1. Create the new version's `examples/<new-version>/` folder by copying the latest retained version's `examples/` into it, and update `api-version` in each `.json` file.
-2. Update `readme.md`.
+1. Determine the version transition from the `Versions` enum, not source
+   comments. For [preview after preview](https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/),
+   replace the latest preview enum member and wire value with the new preview;
+   do not append another preview while retaining the superseded one. Preserve
+   stable versions and rebase carried-over versioning decorators to the new
+   preview. If no stable version exists, follow the reference's simpler case:
+   keep only the new preview and remove versioning decorators.
+2. For preview after preview, plan each excluded preview feature's complete
+   reversal. When excluding a default
+   introduced with an `@removed`/`@renamedFrom` old property and an `@added` new
+   property, remove both bridged declarations and restore one original
+   property without the default or that bridge. Merely removing `= value`
+   leaves the excluded transition in place. Keep scaffolding for features
+   being carried over.
+3. Copy the latest existing version's examples into
+   `examples/<new-version>/` and update `api-version` in each `.json` file
+   before removing any superseded preview's example folder. Retain stable
+   versions' example folders.
+4. Update `readme.md`.
 
 > These steps apply to both ARM and data-plane services. The same versioning decorators (`@added`, `@removed`, `@renamedFrom`, `@typeChangedFrom`) apply regardless of service type.
 
@@ -43,3 +63,8 @@ Key guidance for data-plane:
 2. Define operations inside an `interface` block.
 3. Add `/** */` documentation to all operations.
 4. Data-plane services use `@azure-tools/typespec-azure-core`, not `@azure-tools/typespec-azure-resource-manager`.
+
+The plan produced here covers ordinary TypeSpec source declarations only. Do not
+mix `client.tsp` customizations into it. Continue to the separate
+[optional client configuration step](client-configuration.md) after this plan is
+complete.

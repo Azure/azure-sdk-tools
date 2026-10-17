@@ -80,12 +80,6 @@ stimuli:
         config:
           pattern: "model Employee is TrackedResource<EmployeeProperties>"
           path: "*.tsp"
-      - &file_matches_import
-        type: "file-matches"
-        name: "file-matches-import"
-        config:
-          pattern: "import\\s+\"\\./[^\"]+\\.tsp\";"
-          path: "main.tsp"
       - &file_matches_age_property
         type: "file-matches"
         name: "file-matches-age-property"
@@ -96,13 +90,13 @@ stimuli:
         type: "file-matches"
         name: "file-matches-visibility"
         config:
-          pattern: '@visibility\(Lifecycle\.Read\)'
+          pattern: '@visibility\(Lifecycle\.Read\)|DefaultProvisioningStateProperty'
           path: "*.tsp"
       - &file_matches_provisioning_state
         type: "file-matches"
         name: "file-matches-provisioning-state"
         config:
-          pattern: "ResourceProvisioningState"
+          pattern: "ResourceProvisioningState|DefaultProvisioningStateProperty"
           path: "*.tsp"
       - &file_matches_create_operation
         type: "file-matches"
@@ -142,7 +136,6 @@ stimuli:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
       - *file_matches
-      - *file_matches_import
       - *file_matches_age_property
       - *file_matches_visibility
       - *file_matches_provisioning_state

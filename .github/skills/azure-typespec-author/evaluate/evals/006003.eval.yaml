@@ -61,7 +61,7 @@ stimuli:
     type: file-matches
     config:
       path: main.tsp
-      pattern: ResourceList<WidgetSuite
+      pattern: "ResourceList\\s*<\\s*WidgetSuite"
   - &id004
     type: file-matches
     name: file-matches-documentation

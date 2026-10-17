@@ -1,6 +1,6 @@
 # Azure TypeSpec Author Skill Evaluations
 
-This directory contains [Vally](https://aka.ms/vally) evaluations for the
+This directory contains [Vally](https://aka.ms/vally) evaluation cases for the
 `azure-typespec-author` skill.
 
 ## Supported Local Environment
@@ -92,12 +92,13 @@ Expected executable paths start with Linux locations such as `/usr/` or `/home/`
 The runtime command must list both `Microsoft.NETCore.App 8.x` and
 `Microsoft.AspNetCore.App 8.x`.
 
-### 2. Prepare MCP binaries and fixtures
+### 2. Prepare MCP binaries, fixtures, and skills
 
 #### Native Windows
 
 ```powershell
 node scripts/setup-environment.js --mcp-kind live | Invoke-Expression
+node scripts/prepare-skill-bundle.mjs
 $env:EVALUATE_USE_HOST_COPILOT_HOME = "1"
 ```
 
@@ -107,6 +108,7 @@ From the `evaluate/` directory, prepare the live MCP:
 
 ```bash
 eval "$(node scripts/setup-environment.js --mcp-kind live)"
+node scripts/prepare-skill-bundle.mjs
 ```
 
 The setup command:
@@ -119,11 +121,23 @@ The setup command:
 6. Exports `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
 7. Prepends the fixture `node_modules/.bin` to PATH so graders use its TypeSpec compiler.
 
+`prepare-skill-bundle.mjs` stages `azure-typespec-author`, its
+`azsdk-common-typespec-naming` dependency, and the assessment/generation skills used by
+routing boundary cases under `artifacts/typespec-author-skills`. Forced and trigger runs
+must use that bundle so trial workspaces receive only `SKILL.md` and references, never
+eval specs, fixtures, or graders. No-skill runs continue to use an empty skill directory.
+
+`evals/001014.eval.yaml` is a bounded, offline source-planning regression for
+preview replacement and complete reversal of an excluded default-value bridge.
+It complements the live edit/compile coverage in `evals/001005.eval.yaml` and
+does not require MCP binaries or installed TypeSpec fixture dependencies.
+
 On a managed device that blocks `registry.npmjs.org`, set the approved feed before setup:
 
 ```bash
 export npm_config_registry="https://packagefeedproxy.microsoft.io/npm/"
 eval "$(node scripts/setup-environment.js --mcp-kind live)"
+node scripts/prepare-skill-bundle.mjs
 ```
 
 Verify the prepared environment:
@@ -160,7 +174,7 @@ Native Windows:
 vally eval `
   --eval-spec evals/001001.eval.yaml `
   --tag mode=forced `
-  --skill-dir .. `
+  --skill-dir ../../../../artifacts/typespec-author-skills `
   --workers 1 `
   --output-dir ./result-001001 `
   --workspace ./debug-001001 `
@@ -173,7 +187,7 @@ Linux or WSL2:
 vally eval \
   --eval-spec evals/001001.eval.yaml \
   --tag mode=forced \
-  --skill-dir .. \
+  --skill-dir ../../../../artifacts/typespec-author-skills \
   --workers 1 \
   --output-dir ./result-001001 \
   --workspace ./debug-001001 \
@@ -188,7 +202,7 @@ and TypeSpec compilation graders.
 ```bash
 vally eval \
   --suite forced \
-  --skill-dir .. \
+  --skill-dir ../../../../artifacts/typespec-author-skills \
   --workers 1 \
   --output-dir ./result-forced \
   --workspace ./debug-forced \
@@ -201,6 +215,8 @@ Useful suites:
 |---|---|
 | `forced` | All forced-mode cases |
 | `trigger` | All skill-trigger cases |
+| `naming-forced` | Optional client configuration planning and customization ownership |
+| `naming-trigger` | Authoring and naming-skill routing boundaries |
 | `versioning-forced` | Versioning forced cases |
 | `armtemplate-forced` | ARM forced cases |
 | `longrunningoperation-forced` | LRO forced cases |
@@ -208,7 +224,8 @@ Useful suites:
 | `warning-forced` | Warning forced cases |
 | `dataplane-forced` | Data-plane forced cases |
 
-The same domain names are available with `-trigger` and `-no-skill` suffixes.
+The same domain names are available with `-trigger` and `-no-skill` suffixes except for the
+naming suites, which intentionally do not run in the no-skill baseline.
 
 ### 5. Run trigger mode with mock MCP
 
@@ -216,6 +233,7 @@ Prepare the mock environment:
 
 ```bash
 eval "$(node scripts/setup-environment.js --mcp-kind mock)"
+node scripts/prepare-skill-bundle.mjs
 export EVALUATE_USE_HOST_COPILOT_HOME=1
 ```
 
@@ -224,7 +242,7 @@ Run the trigger suite:
 ```bash
 vally eval \
   --suite trigger \
-  --skill-dir .. \
+  --skill-dir ../../../../artifacts/typespec-author-skills \
   --workers 1 \
   --output-dir ./result-trigger \
   --workspace ./debug-trigger \
@@ -295,8 +313,8 @@ Local setup rewrites only the root `environment:` entry in each eval file. Resto
 ## Pipeline
 
 The manual benchmark pipeline is `eng/pipelines/azure-typespec-author-benchmark.yml`. It builds the
-selected MCP, generates area-based forced and trigger shard matrices, runs each area, publishes
-result/debug artifacts, and produces separate summaries.
+selected MCP, stages the two-skill bundle, generates area-based forced and trigger shard matrices,
+runs each area, publishes result/debug artifacts, and produces separate summaries.
 
 | Parameter | Purpose |
 |---|---|

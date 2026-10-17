@@ -20,10 +20,6 @@ services:
             tag: ${AZD_IMAGE_TAG}
             remoteBuild: true
         hooks:
-            predeploy:
-                shell: sh
-                run: cd ../../../deployment && ./node_modules/.bin/tsx scripts/ensure-agent-deploy-access.ts
-                interactive: true
             postdeploy:
                 shell: sh
                 run: cd ../../../deployment && ./node_modules/.bin/tsx hooks/agent-postdeploy.ts

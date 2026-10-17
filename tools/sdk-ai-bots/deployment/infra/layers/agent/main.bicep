@@ -424,6 +424,16 @@ resource deploymentOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignm
   }
 }
 
+resource deploymentFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
+  scope: account
+  name: guid(account.id, deploymentPrincipalObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e'))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e')
+    principalId: deploymentPrincipalObjectId
+    principalType: deploymentPrincipalType
+  }
+}
+
 // The hosted agent pulls its image from the shared container registry using the
 // Foundry project's system-assigned managed identity (confirmed as the image-
 // pull principal by the Foundry hosted-agent docs and the azd agent extension's

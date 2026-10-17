@@ -228,18 +228,8 @@ grants it the roles required by unattended deployment:
 - Contributor on ACR for remote builds and registry management;
 - Search Service Contributor for Search control-plane operations;
 - Cosmos DB Built-in Data Contributor for deployment and scheduled jobs;
-- Cognitive Services OpenAI User.
-
-Before creating hosted-agent versions, deployment checks the current caller's
-effective `Microsoft.CognitiveServices/accounts/AIServices/agents/write`
-permission on the target project. Existing permissions, including inherited
-grants, are reused without creating another assignment. If the permission is
-missing, deployment ensures project-scoped **Foundry User** and waits for the
-permission to become effective.
-
-This check also runs when `manageAuthorizationResources=false`. Creating a
-missing grant requires role-assignment write permission at the project scope;
-otherwise an administrator must bootstrap the grant before deployment.
+- Cognitive Services OpenAI User;
+- Foundry Project Manager for `azd deploy agent`.
 
 Postprovision seeding grants **App Configuration Data Owner**
 (`5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b`) to `DEPLOYMENT_PRINCIPAL_ID`

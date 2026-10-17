@@ -184,7 +184,7 @@ test("keeps dev developer roles separate from the deployment principal", () => {
     assert.match(shared, new RegExp(`resource ${resourceName} `));
   }
   assert.match(agent, /resource deploymentOpenAiUserRoleAssignment /);
-  assert.doesNotMatch(agent, /resource deploymentFoundryProjectManagerRoleAssignment /);
+  assert.match(agent, /resource deploymentFoundryProjectManagerRoleAssignment /);
 });
 
 test("targets the existing shared dev environment", () => {
@@ -271,7 +271,7 @@ test("runs hooks with the package-local TypeScript runtime", () => {
   assert.doesNotMatch(project, /npx(?: --yes)? tsx/);
   assert.equal(
     (project.match(/\.\/node_modules\/\.bin\/tsx/g) ?? []).length,
-    14,
+    13,
   );
 });
 
@@ -363,17 +363,21 @@ test("grants Search access to Foundry embedding deployments", () => {
   );
 });
 
-test("can reuse pre-authorized environments without privileged ARM writes", () => {
-  const suite = read("infra/environments/environment-suite.yaml");
+test("manages dev authorization and postprovision reconciliation through the normal deployment", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
   const postprovision = read("hooks/postprovision.ts");
 
-  assert.match(suite, /dev:[\s\S]*manageAuthorizationResources: false[\s\S]*localDeployAllowed: true/);
+  assert.equal(suite.environments.dev.manageAuthorizationResources, true);
+  assert.equal(suite.environments.dev.localDeployAllowed, true);
   for (const layer of ["shared-resources", "agent", "frontend"]) {
     const bicep = read(`infra/layers/${layer}/main.bicep`);
     assert.match(bicep, /param manageAuthorizationResources bool = true/);
     assert.match(bicep, /if \(manageAuthorizationResources/);
   }
-  assert.match(postprovision, /skipping privileged data-plane reconciliation/);
+  assert.match(
+    postprovision,
+    /if \(MANAGE_AUTHORIZATION_RESOURCES\) \{[\s\S]*?uploadPerEnvBotConfigs\(\);[\s\S]*?await setupSearchResources\(\);[\s\S]*?updateAppConfiguration\(\);/,
+  );
 });
 
 test("uses BOT_ID as the single frontend identity client ID", () => {

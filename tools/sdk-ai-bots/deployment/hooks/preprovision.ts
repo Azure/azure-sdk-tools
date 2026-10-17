@@ -26,7 +26,6 @@ import {
 } from "./lib/env-suite.js";
 import { enforceProvisionGuard } from "./lib/provision-guard.js";
 import { runQuotaCheck } from "./lib/quota-check.js";
-import { getCurrentPrincipal } from "./lib/ensure-role-assignment.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
@@ -175,7 +174,37 @@ function checkResourceQuotas(): void {
 function ensureAccessPrincipals(): void {
   log("Detecting the current deployment principal...");
   try {
-    const { principalId, principalType } = getCurrentPrincipal();
+    const token = execFileSync(
+      "az",
+      [
+        "account",
+        "get-access-token",
+        "--resource",
+        "https://management.azure.com/",
+        "--query",
+        "accessToken",
+        "--output",
+        "tsv",
+      ],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    ).trim();
+    const payloadSegment = token.split(".")[1];
+    if (!payloadSegment) throw new Error("ARM access token is not a JWT");
+
+    const payload = JSON.parse(
+      Buffer.from(payloadSegment.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"),
+    ) as { oid?: string; idtyp?: string };
+    const principalId = payload.oid?.trim();
+    if (!principalId) throw new Error("ARM access token has no oid claim");
+
+    const accountType = execFileSync(
+      "az",
+      ["account", "show", "--query", "user.type", "--output", "tsv"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    ).trim().toLowerCase();
+    const principalType = accountType === "serviceprincipal" || payload.idtyp === "app"
+      ? "ServicePrincipal"
+      : "User";
 
     execFileSync("azd", ["env", "set", "DEPLOYMENT_PRINCIPAL_ID", principalId], { stdio: "inherit" });
     execFileSync("azd", ["env", "set", "DEPLOYMENT_PRINCIPAL_TYPE", principalType], { stdio: "inherit" });

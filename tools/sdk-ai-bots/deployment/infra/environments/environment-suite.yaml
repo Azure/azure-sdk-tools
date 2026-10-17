@@ -142,9 +142,7 @@ environments:
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
             AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-dev-logicapp-alert'
             AI_RESOURCE_RESTORE: 'false'
-        # The shared environment already has runtime RBAC assignments and
-        # delete locks. Local provisioning must not attempt privileged writes.
-        manageAuthorizationResources: false
+        manageAuthorizationResources: true
         localDeployAllowed: true
 
     preview:

@@ -118,11 +118,6 @@ also include their own preview-to-apply manual gate.
 The production evolution and feedback workflows also need the configured
 candidate service connection.
 
-Agent deployment reuses existing Foundry agent-write permissions. If a grant is
-missing, the signed-in deployment identity must be authorized to assign Foundry
-User at the target project scope, or an administrator must create that grant
-before the deployment runs.
-
 ## 6. Register the Pipeline Definitions
 
 Create these 5 definitions from their existing YAML paths and use the exact
@@ -156,6 +151,10 @@ dev environment once from an authorized workstation. Before creating a preview
 or production environment, provide an approved first-state bootstrap pipeline;
 those environments disable local provision and deploy through
 `localDeployAllowed`.
+
+Dev provisioning manages role assignments and resource locks. The workstation
+identity therefore needs the same authorization-management permissions required
+of the provisioning pipeline; Contributor alone is insufficient.
 
 The command below is for dev only:
 

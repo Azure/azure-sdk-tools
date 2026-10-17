@@ -204,11 +204,6 @@ The registered deploy hooks are:
 - **Project predeploy: `predeploy.ts`.** Runs for every service and rejects a
    local deploy when the selected environment disables it. Native azd knows how
    to deploy a service but does not own this release policy.
-- **Agent predeploy: `ensure-agent-deploy-access.ts`.** Checks the signed-in
-   caller's effective agent-write permission on the target Foundry project.
-   Existing access is reused; a missing grant is assigned as project-scoped
-   Foundry User when the caller is authorized to create role assignments.
-   Deployment waits for permission propagation before creating the agent.
 - **Frontend postdeploy: `frontend-postdeploy.ts`.** Runs Teams Toolkit
    provisioning, publishes when requested or when installation drift exists,
    installs or upgrades the app in the configured team through Microsoft Graph,
@@ -224,12 +219,10 @@ The registered deploy hooks are:
 
 Frontend and `agent-server` have no custom predeploy hook. They use azd's native
 package, remote publish, and container deployment lifecycle; the frontend
-Dockerfile compiles TypeScript inside the remote build. azd and the
-`azure.ai.agents` extension own the chat agent's image build and initial Foundry
-deployment; its predeploy hook ensures caller access, and `agent-postdeploy.ts`
-reconciles runtime state. The shared hosted-agent pipeline runs the same access
-check before deploying the Azure MCP Server or evolution agent.
-The deployment pipeline separately packages and deploys the
+Dockerfile compiles TypeScript inside the remote build. `agent` also has no
+predeploy hook; azd and the `azure.ai.agents` extension own its image build and
+initial Foundry deployment before `agent-postdeploy.ts` reconciles runtime
+state. The deployment pipeline separately packages and deploys the
 knowledge-sync WebJob after agent-server readiness.
 
 ### Rerunning a Hook

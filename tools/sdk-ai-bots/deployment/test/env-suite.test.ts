@@ -49,7 +49,7 @@ test("builds the complete local azd environment mapping", () => {
   assert.equal(values.AZURE_SUBSCRIPTION_ID, suite.environments.dev.subscriptionId);
   assert.equal(values.AZURE_LOCATION, "westus2");
   assert.equal(values.AZURE_AI_LOCATION, suite.environments.dev.aiLocation);
-  assert.equal(values.MANAGE_AUTHORIZATION_RESOURCES, "false");
+  assert.equal(values.MANAGE_AUTHORIZATION_RESOURCES, "true");
   assert.equal(values.AGENT_IMAGE_REPOSITORY, "sdk-ai-bots/agent-dev");
   assert.equal(values.AZURE_AI_DEPLOYMENTS_LOCATION, undefined);
   assert.equal(values.ACR_NAME, "azuresdkqabotdevcontainer");

@@ -16,6 +16,3 @@ node_modules/
 # Re-include shared script helpers for the same reason.
 !scripts/lib/
 !scripts/lib/**
-
-# This source-controlled review artifact is intentionally named as a report.
-!docs/azd-deployment-journey-report.md

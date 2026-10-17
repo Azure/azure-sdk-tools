@@ -95,12 +95,14 @@ Easy Auth-protected `/ping` endpoint before the frontend and dev/prod WebJob
 stages proceed. The production-only evolution branch does not gate frontend
 deployment.
 
-`qa-bot-deploy.yml` defaults to `component=all`. Selecting `agent-server`,
-`agent`, or `frontend` provisions that layer and its dependencies, then deploys
-only that component. Dev/prod `agent-server` deployments also update the
-knowledge-sync WebJob. Selecting `shared-resources` or `logic-app` provisions
-that infrastructure scope without an application deploy. Component CI remains
-separate from provisioning and deployment.
+`qa-bot-deploy.yml` defaults to `component=all`. A component-scoped run
+provisions the selected layer and its dependencies. Selecting `agent` deploys
+both the chat agent and Azure MCP Server agent; selecting `frontend` deploys
+only the frontend. Dev/prod `agent-server` deployments also update the
+knowledge-sync WebJob, while preview deploys only the server. Selecting
+`shared-resources` or `logic-app` provisions that infrastructure scope without
+an application deploy. Component CI remains separate from provisioning and
+deployment.
 
 Both Logic Apps call the authenticated agent-server `/config/channel` endpoint
 to resolve each channel's tenant. The backend reads
@@ -119,15 +121,17 @@ lifecycle hooks:
   reconciles Search objects, and seeds App Configuration;
 - agent hooks reconcile Foundry settings, hosted identity, RBAC, and Entra
   authorization;
-- frontend postdeploy synchronizes Teams environment values, installs or
-  updates the approved Teams app in both configured groups, and probes
-  `/health`;
+- frontend postdeploy probes `/health` and, when interactive Teams provisioning
+  is enabled, installs or updates the approved Teams app in both configured
+  groups;
 - the knowledge-sync deployment stage packages and deploys the scheduled
   WebJob after agent-server readiness.
 
 Application images use azd native remote Docker builds. After infrastructure
 apply, the selected application deployment stage establishes runtime state and
-postdeploy reconciliation as described in the [deploy runbook](runbook-deploy.md).
+postdeploy reconciliation as described in the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
+Pipeline deployments skip interactive Teams provisioning by default; tenant
+catalog publication and group installation require a Microsoft 365 session.
 
 ## Data Flows
 
@@ -169,8 +173,8 @@ The feedback pipeline operates independently of knowledge sync.
   first normal deployment.
 - Application rollout targets the production service resources directly.
   Release completion requires the endpoint, workflow, Teams, and telemetry
-  checks in the [deploy runbook](runbook-deploy.md).
+  checks in the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
 - Code recovery redeploys the affected component from a known-good source
-  revision. Data recovery follows the [rollback runbook](runbook-rollback.md).
+  revision. Data recovery follows the [rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md).
 
-Continue with the [manual setup guide](manual-setup.md).
+Continue with the [manual setup guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md).

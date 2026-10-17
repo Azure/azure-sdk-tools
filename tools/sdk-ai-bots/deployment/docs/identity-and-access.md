@@ -9,7 +9,7 @@ and its deployment system. It covers permissions declared in this repository.
 Effective Azure access can also include assignments inherited from a
 subscription, management group, resource group, or external tenant policy.
 
-The [deployment maintainer guide](maintainer-guide.md#sources-of-truth) defines
+The [deployment process reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/maintainer-guide.md#sources-of-truth) defines
 file ownership. This reference is the canonical description of principals,
 roles, consent, and grant lifecycles.
 
@@ -34,7 +34,7 @@ flowchart LR
     PIPELINE[Deployment service principal] -->|deploy| AZURE[Azure resources]
     DEVELOPERS[Developer group] -->|interactive development| AZURE
     FRONTEND[Frontend identity] -->|bot and storage| CHATBOT[Chatbot system]
-    SHARED[Shared runtime identity] -->|backend and function data| CHATBOT
+    SHARED[Shared runtime identity] -->|backend and knowledge sync| CHATBOT
     SEARCH[Search identity] -->|source blobs and models| CHATBOT
     PROJECT[Foundry project identity] -->|pull agent image| ACR[Container registry]
     AGENT[Hosted-agent identity] -->|runtime data| CHATBOT
@@ -45,14 +45,10 @@ flowchart LR
 
 ### Deployment principal
 
-Azure DevOps uses one Azure Resource Manager service connection per
-environment:
+Azure DevOps selects an Azure Resource Manager service connection for each
+environment through `pipelines/templates/service-connection.yml`.
 
-- dev: `Azure SDK Engineering System`;
-- preview: `azuresdkqabot-preview`;
-- prod: `Azure SDK Engineering System`.
-
-[`azd-auth.yml`](../pipelines/templates/azd-auth.yml) authenticates `az` and
+[`azd-auth.yml`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml) authenticates `az` and
 `azd` through workload identity federation. It reads the object ID from the ARM
 token and exports:
 
@@ -72,13 +68,8 @@ The pipeline identity must never be copied into `DEVELOPER_PRINCIPAL_ID`.
 ### Developer principal
 
 `DEVELOPER_PRINCIPAL_ID` and `DEVELOPER_PRINCIPAL_TYPE` identify the principal
-for interactive development. Dev and prod currently use the security group:
-
-- name: `AzureSDKChatBot_Developer`;
-- object ID: `2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5`;
-- principal type: `Group`.
-
-The environment suite owns this mapping. If no developer principal is
+for interactive development. The environment suite's `bicepOverrides` owns
+this mapping. If no developer principal is
 configured, developer role assignments are skipped. The preprovision hook does
 not substitute the active deployment principal.
 
@@ -146,7 +137,7 @@ All listed scopes are resource scope unless noted otherwise.
 ### Shared runtime identity roles
 
 Declared in
-[`shared-resources/main.bicep`](../infra/layers/shared-resources/main.bicep):
+[`shared-resources/main.bicep`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/layers/shared-resources/main.bicep):
 
 - **Storage Blob Data Owner**
   (`b7e6dc6d-f1e8-4753-8033-0f276bb0955b`) on Storage for Blob read, write, and
@@ -171,13 +162,12 @@ Declared in
 
 The agent layer also grants **Cognitive Services OpenAI User**
 (`5e0bd9bd-7b93-4f28-af87-19fc36ad61bd`) on the AI Services account. The agent
-postprovision hook creates or adopts **Foundry User**
-(`53ca6127-db72-4b80-b1b0-d745d6d5456d`) because an existing assignment with a
-different GUID cannot always be represented safely by Bicep.
+postprovision hook reconciles **Foundry User**
+(`53ca6127-db72-4b80-b1b0-d745d6d5456d`) for the shared identity.
 
 ### Frontend identity roles
 
-Declared in [`frontend/main.bicep`](../infra/layers/frontend/main.bicep):
+Declared in [`frontend/main.bicep`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/layers/frontend/main.bicep):
 
 - **Monitoring Metrics Publisher**
   (`3913510d-42f4-4e42-8a64-420c390055eb`) on frontend Application Insights;
@@ -188,11 +178,6 @@ Declared in [`frontend/main.bicep`](../infra/layers/frontend/main.bicep):
 The frontend uses managed identity and resource endpoints directly. It does not
 retrieve storage account keys, so it does not require a management-plane
 Storage role.
-
-Each assignment name is derived from the scope, frontend managed identity
-resource ID, and role definition ID. Before changing deterministic assignment
-names in an existing environment, review what-if output and complete any
-required role-assignment migration through an approved change.
 
 ### Search identity roles
 
@@ -250,13 +235,13 @@ idempotently:
 
 They never fall back to `DEVELOPER_PRINCIPAL_ID`. App Configuration seeding,
 Key Vault seeding, bot configuration upload, and Search reconciliation are
-explained in the [maintainer guide](maintainer-guide.md#azd-hook-workflow).
+explained in the [deployment process reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/maintainer-guide.md#azd-hook-workflow).
 
 ## Dynamic Hosted-Agent Roles
 
 ### Chat agent
 
-[`agent-postdeploy.ts`](../hooks/agent-postdeploy.ts) grants the deployed chat
+[`agent-postdeploy.ts`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/agent-postdeploy.ts) grants the deployed chat
 agent identity:
 
 - App Configuration Data Reader, which is startup-critical;
@@ -277,7 +262,7 @@ before considering the deployment healthy.
 The shared hosted-agent deployment template writes the deployed
 `AZURE_MCP_SERVER_AGENT_NAME` and `AZURE_MCP_SERVER_AGENT_VERSION` to App
 Configuration, then grants the agent identity the primary access profile
-defined by [`grant-agent-data-access.sh`](../scripts/grant-agent-data-access.sh).
+defined by [`grant-agent-data-access.sh`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/scripts/grant-agent-data-access.sh).
 This includes the application data roles plus GitHub signing-vault and Cosmos
 DB access required by its tools and memory provider.
 
@@ -296,7 +281,7 @@ an Azure RBAC assignment; RBAC is used only when the target vault has
 
 ### Evolution agent
 
-[`grant-agent-data-access.sh`](../scripts/grant-agent-data-access.sh) defines two
+[`grant-agent-data-access.sh`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/scripts/grant-agent-data-access.sh) defines two
 profiles.
 
 The **candidate** profile grants:
@@ -336,7 +321,7 @@ tenant consent, and team membership are external to this repository.
 ### Frontend to agent-server
 
 The agent-server is protected by App Service Easy Auth. Its Entra registration
-is managed by [`create-entra-app.ts`](../scripts/create-entra-app.ts), which
+is managed by [`create-entra-app.ts`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/scripts/create-entra-app.ts), which
 defines:
 
 - delegated scope `access_as_user`;
@@ -393,27 +378,7 @@ connection bootstrap and organizational governance, not these Bicep layers.
   delegated OAuth state.
 - Reapply hosted-agent roles after creating a new hosted-agent identity.
 
-## Reviewing Permission Changes
-
-For every permission change, answer these questions in the PR:
-
-1. Which principal performs the operation?
-2. Is the operation control-plane, data-plane, or delegated OAuth?
-3. Why is the existing role insufficient?
-4. What is the narrowest valid scope?
-5. Is the identity known during Bicep provisioning, or only after deployment?
-6. Does the change affect dev, preview, prod, or the candidate environment?
-7. Is the assignment persistent, dynamic, or external to this repository?
-
-Validate Bicep and deployment contracts after changing roles:
-
-```bash
-cd tools/sdk-ai-bots/deployment
-npm ci
-npm run typecheck
-npm test
-npm run validate-env-suite
-```
+## Verify Access
 
 Use `az role assignment list` and `az cosmosdb sql role assignment list` for
 read-only verification against a deployed environment. Include

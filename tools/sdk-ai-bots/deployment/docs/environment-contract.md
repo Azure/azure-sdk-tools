@@ -63,7 +63,7 @@ flags actively drive provisioning and deployment. Approval is expressed by the
 pipeline stage graph. Component health paths drive local smoke tests, and the
 full-stack pipeline gates frontend deployment on the agent-server readiness
 probe. Release health follows the verification steps in the
-[deploy runbook](runbook-deploy.md).
+[deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
 
 ## Validation
 
@@ -130,21 +130,14 @@ layer's `main.bicepparam`. Do not copy these values to a fresh environment:
 first read the target resource state and use preview to prove that no identity,
 policy, immutable partition key, or model capacity will be removed.
 
-The pipeline loader reads each override as a raw scalar. Do not pass these
-values through `yq @tsv`: its CSV-style quoting changes embedded JSON quotes.
-Azure Pipelines logging commands escape percent signs and line breaks while
-preserving the original value for subsequent tasks.
-
 The dev registry sets `CONTAINER_REGISTRY_IS_EXISTING=true` because it retains
 identities from both dev and production. A resource-group-scoped developer
 cannot reassign the production identity, so shared-resource provisioning reads
 the registry as an existing resource rather than issuing a registry PUT.
 
-The dev block also pins stable cross-layer outputs because the pre-existing
-resource group has no historical azd layer deployments to refresh. Container
-image outputs remain azd-owned and are deliberately excluded; parameter
-adapters accept a saved image only when it belongs to the selected
-environment's ACR.
+For the adopted dev environment, the suite supplies stable cross-layer
+outputs. Container image outputs remain azd-owned; a saved image must belong
+to the selected environment's ACR.
 
 The existing agent-server site has a `digital-avatar` slot. Dev therefore sets
 `AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=production` so local and pipeline deployment
@@ -170,10 +163,12 @@ they cross different contracts:
 | `SERVICE_AGENT_SERVER_IMAGE_NAME` | azd-owned full image actually published for agent-server. Bicep prefers it during reprovisioning so it does not restore a placeholder image. |
 | `BOT_ID` / `AZURE_CLIENT_ID` | The frontend UAMI client ID under two external contracts: Bot Framework application ID and Azure Identity's standard selector. |
 
-App Configuration seeding also writes `STORAGE_CONFIG_CONTAINER=bot-configs`
-and `CHANNEL_CONFIG_BLOB=channel.yaml`, matching the deployment's routing upload.
-The daily feedback job requires both keys to exclude testing channels before
-processing QA records; it does not default them when a store is newly created.
+Postprovision seeds the routing settings used by the backend and feedback jobs:
+
+| App Configuration key | Deployed value |
+| --- | --- |
+| `STORAGE_CONFIG_CONTAINER` | `bot-configs` |
+| `CHANNEL_CONFIG_BLOB` | `channel.yaml` |
 
 The `preprovision` hook detects drift on every `azd provision` and fails fast
 if the azd env is out of sync, pointing you back at this script. Pipelines

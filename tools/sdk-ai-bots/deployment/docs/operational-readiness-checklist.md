@@ -53,14 +53,14 @@ exception with an owner and due date.
 
 - [ ] The knowledge-sync WebJob and wiki build have completed successfully and
       both Search indexer triggers were accepted.
-- [ ] The production daily feedback pipeline runs with the evolution gate
-      enabled, including stale-job recovery and 144-hour inactivity closure.
+- [ ] The production daily feedback pipeline has completed with the evolution
+      gate enabled and the required primary/candidate access.
 - [ ] Cosmos DB continuous backup is enabled and its restore procedure is known.
 - [ ] The selected Blob recovery method is enabled, tested, and documented in
-      the [rollback runbook](runbook-rollback.md).
+      the [rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md).
 - [ ] A known-good source revision is recorded for each deployed component.
 - [ ] Operators have reviewed the known-good redeployment and data-recovery
-      procedures in the [rollback runbook](runbook-rollback.md).
+      procedures in the [rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md).
 
 ## Observability and Verification
 

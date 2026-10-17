@@ -1,7 +1,7 @@
 # Manual Setup Guide
 
 Use this guide once for each new deployment environment. Complete the sections
-in order. Routine deployments use the [deploy runbook](runbook-deploy.md).
+in order. Routine deployments use the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
 
 ## 1. Install Local Prerequisites
 
@@ -12,7 +12,7 @@ workstation. Azure DevOps agents install their own dependencies.
 - Azure Developer CLI (`azd`) 1.32.0 or later
 - Bicep CLI 0.30 or later (`az bicep install`)
 - Node.js 20 or later and npm
-- `yq` v4 for extension setup and pipeline YAML checks
+- Bash and `yq` v4 for environment loading, extension setup, and deployment checks
 - Docker only for optional local image builds; pipelines build remotely in ACR
 
 Install and validate the deployment tooling:
@@ -31,15 +31,10 @@ Choose the subscription, tenant, resource-group name, and locations for each of
 `dev`, `preview`, and `prod`. Environments may share a subscription, but they
 must have isolated resource groups and globally unique resource names.
 
-The agent layer deploys these models serially:
-
-- `gpt-4.1` version `2025-04-14`, capacity 1
-- `gpt-5.6-sol` version `2026-07-09`, capacity 500
-- `gpt-5.1` version `2025-11-13`, capacity 1
-- `gpt-5-mini` version `2025-08-07`, capacity 1
-- `text-embedding-3-small` version `1`, capacity 1
-
-Check availability and quota in each selected AI region before provisioning:
+Review the model names, versions, SKUs, and capacities in the agent Bicep layer
+and the selected environment's `bicepOverrides`. Use the environment-specific
+capacities, not only the layer defaults, when checking availability and quota
+in each selected AI region:
 
 ```bash
 az cognitiveservices usage list \
@@ -48,9 +43,7 @@ az cognitiveservices usage list \
   --output table
 ```
 
-Request quota or choose another supported region before proceeding. Model child
-deployments are intentionally serialized because concurrent writes to one AI
-Services account can return `RequestConflict`.
+Request quota or choose another supported region before proceeding.
 
 ## 3. Bootstrap the Backend Entra Application
 
@@ -81,7 +74,7 @@ not create a multitenant bot or client secret.
 
 Populate the selected environment in
 `deployment/infra/environments/environment-suite.yaml` according to the
-[environment contract](environment-contract.md). Use `bicepOverrides` for
+[environment contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md). Use `bicepOverrides` for
 adopted resource names and set `candidateEnvironment` when chatbot evolution is
 enabled.
 
@@ -143,13 +136,13 @@ from `deployment/pipelines/orchestrators`.
 
 The application deployment definition accepts `component=all` (the default),
 `shared-resources`, `agent`, `frontend`, `agent-server`, or `logic-app`. Use
-`all` for the full environment. Application selections provision and deploy one
-service; dev/prod `agent-server` deployments also update the scheduled
-knowledge-sync WebJob. `shared-resources` and `logic-app` are provision-only
-selections.
+`all` for the full environment. Selecting `agent` deploys the chat and Azure MCP
+Server agents. Dev/prod `agent-server` deployments also update the scheduled
+knowledge-sync WebJob; preview deploys only the server. `frontend` deploys the
+frontend, while `shared-resources` and `logic-app` are provision-only selections.
 
 Wiki generation, hosted-agent deployment, and feedback jobs use the
-package-owned definitions listed in the [deploy runbook](runbook-deploy.md).
+package-owned definitions listed in the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
 
 ## 7. Bootstrap Dev Layer State
 
@@ -204,8 +197,11 @@ npm run deploy:logic-app -- --env dev
 ### Teams app publication
 
 Bicep creates the Azure Bot and `MsTeamsChannel`. Verify both after the first
-apply. Publish the generated Teams package to the tenant catalog once; later
-approved versions can be installed or upgraded by the frontend postdeploy hook.
+apply. Publish the generated Teams package to the tenant catalog and install it
+in both configured Teams groups through an authorized Microsoft 365 session.
+Pipeline deployments skip interactive Teams provisioning by default. When
+enabled in an authenticated session, the frontend postdeploy hook can install
+or upgrade an approved package.
 
 ### External credentials and notifications
 
@@ -213,8 +209,8 @@ approved versions can be installed or upgraded by the frontend postdeploy hook.
   `GITHUB_APP_KEYVAULT_URL` and `GITHUB_APP_KEY_NAME`; this deployment does not
   create it. The frontend identity selected by the WebJob's `BOT_CLIENT_ID`
   needs key `Sign` permission through a legacy access policy, or Key Vault
-  Crypto User on an RBAC-enabled vault. Reading a private-key secret is not
-  sufficient: the frontend and WebJob use Key Vault's remote signing API.
+  Crypto User on an RBAC-enabled vault, for the remote signing API used by the
+  frontend and WebJob.
 - Authorize `tools - sdk-ai-bots - deploy` to use the
   `EMU-SSH-PRIVATE-KEY` secure file. The dev/prod agent-server path injects it
   into the App Service without placing the key in pipeline arguments or logs.
@@ -230,8 +226,15 @@ Storage soft delete and seven-day continuous Cosmos backup are provisioned. If
 the recovery plan requires blob-version restoration, enable and test blob
 versioning before production use.
 
+### Existing-environment cutover
+
+Keep a legacy Function App until both Logic Apps have successfully called
+agent-server `/activity/convert`. After verification, remove obsolete Function
+App resources and the `ado-token` secret through an approved cleanup change.
+They are not runtime dependencies of this deployment.
+
 ## 9. Validate Readiness and Deploy
 
-Complete the [operational readiness checklist](operational-readiness-checklist.md),
-then follow the [deploy runbook](runbook-deploy.md). The runbook owns routine
+Complete the [operational readiness checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md),
+then follow the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md). The runbook owns routine
 apply, application deployment, verification, and re-provisioning procedures.

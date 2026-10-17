@@ -1,64 +1,27 @@
 <!-- cspell:words appconfig bicepparam postdeploy postprovision -->
 <!-- cspell:words predeploy preprovision -->
 
-# Deployment Maintainer Guide
+# Deployment Process Reference
 
-This guide is for developers changing the SDK AI bot deployment implementation.
-For routine deployment or incident recovery, use the
-[deploy runbook](runbook-deploy.md) or [rollback runbook](runbook-rollback.md).
+This reference describes pipeline execution, lifecycle hooks, and image
+selection in the active SDK AI bot deployment. For step-by-step deployment or
+incident recovery, use the
+[deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md) or [rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md).
 For the deployed topology, start with the
-[deployment architecture](deployment-architecture.md).
+[deployment architecture](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/deployment-architecture.md).
 For principal ownership and role scopes, use the
-[identity and access reference](identity-and-access.md).
-
-## Azure Developer CLI Background
-
-The [Azure Developer CLI (`azd`)](https://learn.microsoft.com/azure/developer/azure-developer-cli/overview)
-is the deployment engine for this project. It connects application source,
-infrastructure as code, named environments, and lifecycle hooks through
-`tools/sdk-ai-bots/azure.yaml`.
-
-The important azd concepts in this repository are:
-
-- **Project:** `tools/sdk-ai-bots/azure.yaml` defines the complete SDK AI bot
-  project.
-- **Service:** each entry under `services` tells azd how to build and deploy one
-  application workload.
-- **Infrastructure layer:** each entry under `infra.layers` points to one Bicep
-  entry point and declares its dependencies.
-- **Environment:** azd stores local values and captured Bicep outputs under
-  `.azure/<environment>`. This generated state is not a source of truth and must
-  not be committed.
-- **Hook:** commands declared in `azure.yaml` run before or after azd lifecycle
-  events to reconcile state that Bicep or the service deployer does not own.
-
-The common commands map to different responsibilities:
-
-- `azd provision [<layer>]` previews or applies Bicep infrastructure and
-   captures layer outputs.
-- `azd deploy <service>` builds, publishes, and deploys one application
-   service, including its hooks.
-- `azd env refresh <environment> --layer <layer>` rehydrates outputs on a fresh
-   pipeline agent.
-- `azd env set <key> <value>` persists an input consumed by Bicep, azd, or a
-   hook.
-
-The pipeline composes provision and deploy commands separately so the preview,
-approval, infrastructure scope, and application service are explicit.
+[identity and access reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/identity-and-access.md).
 
 The project currently requires azd `>=1.32.0` and pins the
-`azure.ai.agents` extension in `azure.yaml`. Keep the pin intentional: an
-extension update can change hosted-agent packaging, publication, environment
-outputs, or deployment behavior.
+`azure.ai.agents` extension in `azure.yaml`. Install the required extension
+before provisioning or deploying hosted agents.
 
 ## Sources of Truth
 
-Change the file that owns the state. Do not duplicate a value in a hook or
-pipeline when an owning contract already exists.
+Use these files to identify the desired configuration and deployment steps:
 
 - **Services, layer graph, hooks, and tool versions:**
    `tools/sdk-ai-bots/azure.yaml`
-- **Service image repositories:** `tools/sdk-ai-bots/azure.yaml`
 - **Subscription IDs, locations, resource names, routing, and health paths:**
    `deployment/infra/environments/environment-suite.yaml`
 - **Azure resource shape and base configuration:**
@@ -69,14 +32,11 @@ pipeline when an owning contract already exists.
 - **Preview, approval, apply, deployment order, and authentication:**
    `deployment/pipelines/`
 - **Local validation and operator utilities:** `deployment/scripts/`
-- **Executable deployment contracts:** `deployment/test/`
 
 `environment-suite.yaml` is canonical configuration. Local azd state is derived
 from it by `scripts/sync-env-suite.ts`; pipeline variables are derived from it
-by `pipelines/templates/load-environment-suite.yml`. The TypeScript suite module
-owns local derivation, validation, and operator lookup so maintainers do not
-need to keep shell-specific YAML parsers synchronized. When adding a value,
-update the local and pipeline mappings if both execution paths need it.
+by `pipelines/templates/load-environment-suite.yml`. Local azd state under
+`.azure/<environment>` is generated state and must not be committed.
 
 ## Execution Model
 
@@ -112,28 +72,10 @@ create the azd environment, and refresh required layer outputs before invoking
 azd. Removing an `azd env refresh` call can break resource discovery even when
 the resource exists in Azure.
 
-The shared dev resource group predates layered azd deployment state. Its
-environment contract therefore adopts stable live identities, policies,
-Cosmos capabilities and partition keys, model sizing, and resource IDs.
-Whenever the shared environment is changed out of band, update those adopted
-values only after comparing old and new resource state. Never resolve a
-preview by accepting identity removal or model downscaling. API-only
-read-only/default fields should remain unmanaged.
-
-Saved App Service image outputs are trusted only when their registry prefix
-matches `AZURE_CONTAINER_REGISTRY_ENDPOINT`. This prevents a retargeted local
-azd environment from provisioning a site with an image or managed identity
-left over from another subscription.
-
-The dev ACR is externally managed by the shared-resources layer because it
-retains a production UAMI that dev-scoped deployers cannot reassign. The layer
-still reads its endpoint and uses its existing role assignments. The existing
-agent-server `digital-avatar` slot also makes an explicit
-`AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=production` mandatory.
-
-Each Logic App workflow has its own `RunsFailed` metric alert. Azure rejects a
-single-resource metric criterion when the alert contains two workflow scopes,
-so do not merge those alerts into one multi-scope resource.
+For adopted resource names, identities, policies, model capacities, registry
+ownership, and the dev App Service target, use the
+[environment contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md). Compare those values with the
+target resource state before approving a preview.
 
 Full-stack application deployment is a graph, not a serial list. `agent` starts
 after provisioning. The Azure MCP Server agent follows `agent`; `agent-server`
@@ -220,10 +162,7 @@ The registered provision hooks are:
    registration also protects a targeted `azd provision <layer>` that does not
    execute `resource-group`.
 - **Agent postprovision: `agent-postprovision.ts`.** Creates or adopts the
-   Foundry User role assignment for the shared managed identity. This uses an
-   idempotent Azure CLI operation because an equivalent assignment may already
-   exist under a different role-assignment GUID, which a fixed Bicep resource
-   cannot safely adopt.
+   Foundry User role assignment for the shared managed identity.
 - **Frontend postprovision: `frontend-postprovision.ts`.** Generates the Teams
    Toolkit `env/.env.azd` file from committed Teams settings and the newly
    captured Bicep outputs. Teams Toolkit configuration is not an ARM resource,
@@ -272,16 +211,11 @@ The registered deploy hooks are:
    native azd. The pipeline normally sets `AZD_SKIP_TEAMS_PROVISION=1`; local
    interactive runs can perform the Teams work. Teams failures and health
    timeout are warnings unless strict Teams mode is enabled.
-- **Channel configuration:** the Logic App calls the agent-server's
-   `/config/channel` endpoint with the shared managed identity. The backend owns
-   Blob access, YAML parsing, and the five-minute cache. The workflow consumes
-   the endpoint's `tenant_id` response when saving a conversation.
 - **Agent postdeploy: `agent-postdeploy.ts`.** Grants the newly created hosted
    agent identity its data-plane roles, ensures the latest Foundry agent version
    contains `AZURE_APPCONFIG_ENDPOINT`, and probes `/ping`. The hosted identity
    and version are created during deployment, so their principal ID and version
-   definition are unavailable to Bicep beforehand. The environment injection
-   also compensates for behavior not handled by the pinned azd agent extension.
+   definition are unavailable to Bicep beforehand.
 
 Frontend and `agent-server` have no custom predeploy hook. They use azd's native
 package, remote publish, and container deployment lifecycle; the frontend
@@ -291,30 +225,9 @@ initial Foundry deployment before `agent-postdeploy.ts` reconciles runtime
 state. The deployment pipeline separately packages and deploys the
 knowledge-sync WebJob after agent-server readiness.
 
-The frontend uses a separate build stage for TypeScript and installs runtime
-dependencies with `npm ci --omit=dev` in the final image. Do not copy the build
-stage's `node_modules` into that image. Both stages retain Node 20 because the
-Bot Framework connector's `node-fetch@2` gzip handling fails on Node 22 and
-later during Teams signing-key validation. The backend image no longer installs
-Node.js: MCP tools run in hosted-agent images, and the knowledge-sync ZIP bundles
-its own Node runtime.
+### Rerunning a Hook
 
-### When to Add a Hook
-
-Prefer Bicep for declarative ARM resources and native azd service deployment
-for supported hosts. Add a hook only when the operation requires one of these
-boundaries:
-
-- execution immediately before or after one layer or service;
-- Azure, Foundry, Search, Teams, or Graph data-plane operations;
-- inspection and preservation of state that an ARM deployment could replace;
-- local or pipeline context that Bicep cannot observe;
-- generated artifacts or configuration needed by another deployment tool.
-
-Keep hooks idempotent because pipeline retries and manual reruns are expected.
-Document which failures are fatal, wait for eventual consistency where needed,
-and never store secrets in azd environment files. To debug one registration,
-use `azd hooks run <hook> --layer <layer> -e dev` or
+To rerun one hook in dev, use `azd hooks run <hook> --layer <layer> -e dev` or
 `azd hooks run <hook> --service <service> -e dev`. This executes the hook's
 real side effects without running the wrapped Bicep or service action, so use
 it only against an intended environment.
@@ -334,81 +247,19 @@ The handoff is:
 3. Agent postdeploy independently reconstructs the selected chat-agent image
    from the ACR endpoint, environment name, and `AZD_IMAGE_TAG` before it clones
    a Foundry version to inject runtime environment variables.
-4. The evolution-agent deployment passes the same value to
+4. The Azure MCP Server and evolution-agent deployments pass their selected tag to
    `deploy_hosted_agent.py`.
 
-Do not compute a second tag after the display step. The value shown to an
-operator must be the value consumed by the real deployment. Frontend automatic
-tags are computed from existing ACR tags by `scripts/resolve-image-version.ts`;
-the azd-managed agent and agent-server use a build-based tag when no override
-is supplied.
+Record the image version shown before each deployment. Frontend automatic tags
+derive from existing ACR tags; azd-managed agent and agent-server deployments
+use a build-based tag when no override is supplied.
 
-## Safe Change Recipes
-
-### Add or change an Azure resource
-
-1. Change the owning layer's `main.bicep`.
-2. Add or change the corresponding `main.bicepparam` adapter.
-3. Export any value needed by downstream layers, services, or hooks.
-4. Update dependent layer declarations in `azure.yaml` when the graph changes.
-5. Update the environment suite and both environment loaders for new fixed
-   inputs.
-6. Run preview before apply and inspect deletes, replacements, role assignments,
-   and resource moves.
-
-### Add an azd service
-
-1. Add the service to `azure.yaml` with its source path, host, language, and
-   build settings.
-2. Add or identify its infrastructure layer and expose the standard azd target
-   outputs, including service resource name and endpoint where applicable.
-3. Add its component metadata to `environment-suite.yaml`.
-4. Extend the orchestrator's `component` values and thread the value through
-   the reusable templates.
-5. Add service hooks only for behavior that the host deployer or Bicep cannot
-   own.
-6. Add focused contract tests and update architecture, pipeline, setup, deploy,
-   and rollback documentation as applicable.
-
-### Change a hook
-
-1. Identify whether it is project-, layer-, or service-scoped in `azure.yaml`.
-2. Keep it idempotent because provision and deploy are routinely retried.
-3. Treat missing outputs on first deployment separately from transient Azure
-   failures.
-4. Avoid persisting secrets in azd environment files or logs.
-5. Add a unit test for extracted logic or a deployment contract test for hook
-   registration and ordering.
-
-### Change pipeline behavior
-
-1. Keep `qa-bot-deploy.yml` as the single deployment entry point.
-2. Put reusable behavior in `pipelines/templates`; keep the orchestrator focused
-   on scope and ordering.
-3. Thread new parameters through both full-stack and component-scoped paths.
-4. Preserve preview and manual approval before every normal apply.
-5. Use the environment-specific federated service connection and do not add
-   credentials to YAML.
-6. Validate both an empty optional value and an explicit queue-time value.
-
-### Tear down one layer
-
-All layers share one resource group. Enable azd deployment stacks before using
-`azd down <layer>` so layer cleanup follows stack ownership instead of
-resource-group deletion behavior:
-
-```bash
-azd config set alpha.deployment.stacks on
-```
-
-## Invariants and Common Failure Modes
+## Operational Boundaries
 
 - Never hard-code an environment-specific subscription, resource name, endpoint,
   or image tag in `azure.yaml`, Bicep, hooks, or pipeline templates.
 - Keep `DEVELOPER_PRINCIPAL_ID` configuration-owned. Never default it to the
   deployment principal; omitted developer identity means skip developer roles.
-- Bicep outputs are contracts. Renaming one requires updating downstream
-  `main.bicepparam` files, hooks, environment refreshes, and tests.
 - Preview and apply must use the same Bicep entry point and parameter adapter.
 - Re-provisioning can restore placeholder container images. The matching
   application deploy must run afterward.
@@ -418,32 +269,6 @@ azd config set alpha.deployment.stacks on
   commit it.
 - Keep wiki generation and feedback processing outside the azd service graph.
   Knowledge sync is a WebJob coupled to the agent-server deployment path.
-
-## Validation Before Review
-
-From `tools/sdk-ai-bots/deployment`:
-
-```bash
-npm ci
-npm run typecheck
-npm test
-yq eval '.' pipelines/orchestrators/qa-bot-deploy.yml \
-   pipelines/templates/*.yml >/dev/null
-npm run validate-env-suite
-```
-
-Also run the build and tests for any changed application package. For an
-infrastructure change, run the appropriate azd preview against dev and review
-its complete output. Do not apply merely to test whether a template compiles.
-
-Before requesting review, verify:
-
-- full-stack and component-scoped paths both receive new parameters;
-- local dev and pipeline execution derive equivalent environment values;
-- hooks are idempotent and do not expose secrets;
-- image versions shown before deployment are exactly those deployed;
-- documentation links and deployment contract tests pass;
-- no generated `.azure/` files are staged.
 
 ## azd References
 

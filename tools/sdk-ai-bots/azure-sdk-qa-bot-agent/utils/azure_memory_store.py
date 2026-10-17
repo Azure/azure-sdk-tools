@@ -72,8 +72,8 @@ async def _ensure_memory_store(
     description: str,
 ) -> str:
     """Create a memory store if it doesn't already exist. Returns the name."""
-    chat_model = cfg("MEMORY_STORE_REASONING_MODEL", "gpt-5.4")
-    embedding_model = cfg("MEMORY_STORE_EMBEDDING_MODEL", "text-embedding-ada-002")
+    chat_model = cfg("MEMORY_STORE_REASONING_MODEL", "gpt-5.6-sol")
+    embedding_model = cfg("MEMORY_STORE_EMBEDDING_MODEL", "text-embedding-3-small")
 
     try:
         await project_client.beta.memory_stores.get(store_name)

@@ -47,6 +47,7 @@ from azure.ai.projects.models import AgentVersionDetails
 from openai import (
     AsyncOpenAI,
     NotFoundError,
+    OpenAIError,
 )
 from openai.types.responses import Response as OpenAIResponse
 from utils.azure_ai_foundry_agent import HostedAgentClient, ConversationBrokenError
@@ -56,6 +57,7 @@ from openai.types.responses import (
     ResponseOutputMessage,
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
+from openai.types.chat import ChatCompletionMessageParam
 from config.tenant_config import TenantID
 from typing import cast
 from utils.background_tasks import BackgroundTaskTracker
@@ -70,6 +72,8 @@ BOT_SENDER_ID = "azure-sdk-qa-bot"
 BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+_MAX_CITATION_CANDIDATES = 20
+_MAX_CITATION_EVIDENCE_CHARS = 1200
 
 
 class ChatService:
@@ -256,7 +260,9 @@ class ChatService:
                 agent_conversation_id,
             )
 
-        chat_response = self._postprocess(req, response, agent_conversation_id)
+        chat_response = await self._postprocess(
+            req, response, agent_conversation_id
+        )
         chat_response.trace_id = trace_id
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(
@@ -535,7 +541,7 @@ class ChatService:
     def _build_memory_scope_message(memory_scope: str) -> str:
         return f"[memory_scope] value={memory_scope}"
 
-    def _postprocess(
+    async def _postprocess(
         self,
         req: ChatRequest,
         response: OpenAIResponse,
@@ -559,6 +565,13 @@ class ChatService:
         answer, references = self._extract_references_from_text(
             output_text, tool_references
         )
+        if (
+            not references
+            and self._settings("ENABLE_CITATION_REPAIR", "true").lower() == "true"
+        ):
+            candidates = self._extract_reference_candidates(response.output)
+            if candidates:
+                references = await self._select_references(answer, candidates)
 
         # Build full_context from search tool results when requested.
         # Keys use "document_" prefix for compatibility with the eval pipeline.
@@ -582,6 +595,188 @@ class ChatService:
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
         return resp
+
+    async def _select_references(
+        self,
+        answer: str,
+        candidates: list[Reference],
+    ) -> list[Reference]:
+        """Select supporting references from URLs observed in tool results."""
+        bounded_candidates = candidates[:_MAX_CITATION_CANDIDATES]
+        evidence = [
+            {
+                "title": candidate.title,
+                "url": candidate.link,
+                "source": candidate.source,
+                "content": candidate.content[:_MAX_CITATION_EVIDENCE_CHARS],
+            }
+            for candidate in bounded_candidates
+        ]
+        messages: list[ChatCompletionMessageParam] = [
+            {
+                "role": "system",
+                "content": (
+                    "Select only the candidate sources that directly support factual "
+                    "claims in the answer. Return JSON with one field named `urls`, "
+                    "whose value is an array of exact candidate URLs. Do not select a "
+                    "source merely because it is topically related. Return an empty "
+                    "array when no candidate directly supports the answer."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {"answer": answer, "candidates": evidence},
+                    ensure_ascii=False,
+                ),
+            },
+        ]
+
+        try:
+            client = self._get_project_client().get_openai_client()
+            completion = await client.chat.completions.create(
+                model=self._settings(
+                    "AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-4o-mini"
+                ),
+                messages=messages,
+                response_format={"type": "json_object"},
+            )
+        except OpenAIError:
+            logger.exception("Citation selection request failed")
+            return []
+
+        if not completion.choices:
+            logger.warning("Citation selection returned no choices")
+            return []
+
+        raw_content = completion.choices[0].message.content or ""
+        try:
+            payload = json.loads(raw_content)
+        except json.JSONDecodeError:
+            logger.warning("Citation selection returned invalid JSON")
+            return []
+
+        if not isinstance(payload, dict):
+            logger.warning("Citation selection returned a non-object response")
+            return []
+
+        selected_urls = payload.get("urls")
+        if not isinstance(selected_urls, list) or not all(
+            isinstance(url, str) for url in selected_urls
+        ):
+            logger.warning("Citation selection returned an invalid urls field")
+            return []
+
+        candidates_by_url = {
+            candidate.link: candidate for candidate in bounded_candidates
+        }
+        selected: list[Reference] = []
+        seen: set[str] = set()
+        for url in selected_urls:
+            candidate = candidates_by_url.get(url)
+            if candidate is None:
+                logger.warning("Citation selection rejected unknown URL: %s", url)
+                continue
+            if url not in seen:
+                selected.append(candidate)
+                seen.add(url)
+
+        logger.info(
+            "Citation repair selected %d of %d candidate references",
+            len(selected),
+            len(bounded_candidates),
+        )
+        return selected
+
+    @staticmethod
+    def _extract_reference_candidates(
+        items: list[ResponseOutputItem],
+    ) -> list[Reference]:
+        """Collect and deduplicate references from native, MCP, and web tool output."""
+        candidates: dict[str, Reference] = {}
+
+        def _decode(value: object) -> object:
+            decoded = value
+            for _ in range(4):
+                if not isinstance(decoded, str):
+                    break
+                stripped = decoded.strip()
+                if not stripped or stripped[0] not in "[{\"":
+                    break
+                try:
+                    decoded = json.loads(stripped)
+                except json.JSONDecodeError:
+                    break
+            return decoded
+
+        def _visit(value: object) -> None:
+            value = _decode(value)
+            if isinstance(value, list):
+                for entry in value:
+                    _visit(entry)
+                return
+            if not isinstance(value, dict):
+                return
+
+            link = next(
+                (
+                    value[key]
+                    for key in ("link", "url", "html_url")
+                    if isinstance(value.get(key), str)
+                    and urlparse(value[key]).scheme in {"http", "https"}
+                ),
+                None,
+            )
+            if link:
+                title = next(
+                    (
+                        value[key]
+                        for key in ("title", "name", "path")
+                        if isinstance(value.get(key), str) and value[key].strip()
+                    ),
+                    urlparse(link).netloc,
+                )
+                source = (
+                    value.get("source", "")
+                    if isinstance(value.get("source"), str)
+                    else ""
+                )
+                content = next(
+                    (
+                        value[key]
+                        for key in ("content", "body", "text", "fragment", "snippet")
+                        if isinstance(value.get(key), str)
+                    ),
+                    "",
+                )
+                existing = candidates.get(link)
+                if existing is None:
+                    candidates[link] = Reference(
+                        title=title,
+                        source=source,
+                        link=link,
+                        content=content,
+                    )
+                elif content and content not in existing.content:
+                    existing.content = (
+                        f"{existing.content}\n{content}".strip()
+                    )[: 2 * _MAX_CITATION_EVIDENCE_CHARS]
+
+            for nested in value.values():
+                _visit(nested)
+
+        for item in items or []:
+            if isinstance(item, ResponseOutputMessage):
+                extras = item.model_extra or {}
+                if extras.get("call_id") and extras.get("output"):
+                    _visit(extras["output"])
+                continue
+
+            dumped = item.model_dump(mode="json")
+            if dumped.get("type") == "web_search_call":
+                _visit(dumped.get("action", {}))
+
+        return list(candidates.values())
 
     @staticmethod
     def _extract_references_from_text(

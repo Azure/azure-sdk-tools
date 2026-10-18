@@ -1656,6 +1656,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Update_SDK_Details_reports_metadata_emitter_failure()
+        {
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
+            mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("TypeSpec metadata emitter failed with exit code 1. Output: compile failed"));
+            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
+
+            Assert.That(updateStatus.ResponseError, Does.Contain("TypeSpec metadata emitter failed with exit code 1"));
+            Assert.That(updateStatus.Message, Is.Null);
+        }
+
+        [Test]
         public async Task Test_Update_SDK_Details_skips_update_when_no_packages_resolved()
         {
             // When the TypeSpec project resolves zero packages, the tool must skip the update entirely

@@ -1,0 +1,20 @@
+{
+  "VersionString": "2026.10.18-replacement",
+  "Name": "msft-apiview15-e2e-codefile-20261018.json",
+  "Language": "Python",
+  "PackageName": "msft-apiview15-e2e-package",
+  "PackageVersion": "2.0.0",
+  "Tokens": [
+    {
+      "Value": "def contributor_controlled_inert_surface(value: str) -\u003E str:",
+      "Kind": 0
+    },
+    {
+      "Value": "",
+      "Kind": 1
+    }
+  ],
+  "Diagnostics": [],
+  "ReviewLines": [],
+  "ContentGenerationInProgress": false
+}

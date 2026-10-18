@@ -160,6 +160,19 @@ extends:
                   arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
                   zipAfterPublish: true
 
+              # Inert fork-PR provenance fixture: this demonstrates that the
+              # public PR input controls exact bytes and paths in the APIView
+              # pipeline artifact. It targets only synthetic local-lab IDs.
+              - pwsh: |
+                  $destination = Join-Path '$(Build.ArtifactStagingDirectory)' 'msft-apiview15-e2e-review-20261018/msft-apiview15-e2e-revision-20261018/msft-apiview15-e2e-codefile-20261018.json'
+                  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
+                  Copy-Item -LiteralPath '$(Build.SourcesDirectory)/src/dotnet/APIView/ArtifactCallbackE2EFixtures/msft-apiview15-e2e-codefile-20261018.json' -Destination $destination
+                  $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $destination).Hash.ToLowerInvariant()
+                  Write-Host "Published inert APIView artifact provenance fixture: $destination"
+                  Write-Host "Fixture SHA-256: $digest"
+                displayName: 'Publish inert APIView artifact provenance fixture'
+                condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+
               - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
                 parameters:
                   ArtifactName: 'APIView'

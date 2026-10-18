@@ -49,9 +49,8 @@ not need the full authoring workflow.
 
 ## Apply
 
-After authorization, invoke `azsdk-common-typespec-naming` in apply mode. It
-prefers `azsdk_customized_code_update` with `editScope: SpecInputs` for SDK-only
-overrides. If the customization tool is unavailable, follow the naming skill's
-scoped direct-edit fallback, including its evidence and validation requirements.
-Do not duplicate a tool mutation or automatically retry failed/partial tool
-edits through the fallback.
+After authorization, invoke `azsdk-common-typespec-naming` in apply mode. Follow
+its scoped direct-edit workflow for SDK-only naming overrides, including its
+evidence, preservation and validation requirements. Do not call
+`azsdk_customized_code_update` for naming-only changes, even when available.
+Other SDK customizations remain with their existing workflows.

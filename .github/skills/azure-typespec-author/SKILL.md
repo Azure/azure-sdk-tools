@@ -19,7 +19,7 @@ DO NOT USE FOR: naming-only client.tsp SDK overrides, SDK generation, releasing 
 
 The `azure-typespec-author` skill **must** be invoked immediately in all modes (including plan mode) for any task that involves creating and modifying TypeSpec (`.tsp`) files except for `client.tsp` under the specification directory in this repository. **This skill MUST be used regardless of how simple the task appears** — there are no "simple" TypeSpec edits. Even trivial-seeming changes (adding a single enum value, one property, one operation) require the full workflow because versioning decorators, validation, and compliance checks are mandatory.
 
-For naming-only `client.tsp` requests, invoke `azsdk-common-typespec-naming` directly; it applies authorized SDK overrides through the customization tool or its scoped fallback when unavailable. Other SDK customizations remain with the existing customization workflow. This exception does not bypass naming guidance.
+For naming-only `client.tsp` requests, invoke `azsdk-common-typespec-naming` directly; it applies authorized SDK overrides through scoped direct edits, not the customization tool. Other SDK customizations remain with the existing customization workflow. This exception does not bypass naming guidance.
 
 This includes but is not limited to:
 
@@ -104,9 +104,9 @@ do not invoke the naming skill when the user opts out.
 
 Make minimal `.tsp` declaration edits following the source plan from Step 3. If
 Step 4 produced a client configuration plan, use
-`azsdk-common-typespec-naming` in apply mode; it calls
-`azsdk_customized_code_update` with `SpecInputs` when available, or follows its
-scoped direct-edit fallback when unavailable. Do not bypass that workflow. Confirm
+`azsdk-common-typespec-naming` in apply mode; it directly edits scoped naming
+overrides and necessary imports/loading without calling the customization tool.
+Do not bypass that workflow. Confirm
 only unresolved material ambiguities; do not ask the user to approve the plan
 before applying an otherwise fully specified request.
 

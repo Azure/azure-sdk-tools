@@ -125,7 +125,7 @@ stimuli:
           pattern: '"decorators"\s*:\s*\[\s*\]'
       - *notApplied
 
-  - name: 007001-authoring-delegates-client-tsp-to-customization
+  - name: 007001-authoring-handoff-edits-client-tsp-directly
     environment:
       skills:
         - ../../../../../../artifacts/typespec-author-skills/azure-typespec-author
@@ -133,6 +133,12 @@ stimuli:
       files:
         - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/customization-mcp.mjs
           dest: customization-mcp.mjs
+        - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/standalone-apply/main.tsp
+          dest: main.tsp
+        - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/standalone-apply/tspconfig.yaml
+          dest: tspconfig.yaml
+        - src: ../../../../azsdk-common-typespec-naming/evals/fixtures/standalone-apply/existing-client.tsp
+          dest: client.tsp
       mcpServers:
         azure-sdk-mcp:
           type: stdio
@@ -144,11 +150,12 @@ stimuli:
       client configuration plan from Step 4: C# ARM WidgetProperties.enabled is a
       new/unshipped boolean;
       its C# SDK name should be IsEnabled, wire name enabled unchanged, all Java
-      and Python overrides preserved. There are no collisions. client.tsp is loaded
-      by the generation entrypoint and the TypeSpec project root is the absolute
+      and Python overrides preserved. There are no collisions. main.tsp is the
+      generation entrypoint and the TypeSpec project root is the absolute
       current working directory (resolve it locally). No SDK package exists.
-      These are all confirmed facts; do not create a project or inspect eval fixtures.
-      The customization MCP tool is available. Do not edit client.tsp directly.
+      The target namespace is Widget and installed TCGC supports scoped @@clientName.
+      Inspect project files but do not inspect eval fixture implementations.
+      The customization MCP tool is available; follow the naming skill's workflow.
       Stop after the handoff result; the next authoring step will run TypeSpec
       validation. Return JSON "applied" and "generatedNamesVerified". Do not compile
       or generate an SDK in this bounded handoff.
@@ -158,17 +165,21 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - name: "^azure-sdk-mcp[-:]azsdk_customized_code_update$"
-              args:
-                editScope: "^SpecInputs$"
-                tspProjectPath: '^(?:[A-Za-z]:[\\/]|/)'
-                customizationRequest: '(?is)(?=.*(?:csharp|C#))(?=.*WidgetProperties\.enabled)(?=.*IsEnabled)(?=.*wire)(?=.*(?:Java|Python)).+'
-          disallowed:
             - name: "^(edit|create|apply_patch)$"
-            - name: "azsdk_(?:package_generate_code|package_build_code|run_typespec_validation)"
-            - name: "azsdk_customized_code_update"
-              args:
-                packagePath: ".+"
+          disallowed:
+            - name: "azsdk_"
+      - type: file-matches
+        config:
+          path: client.tsp
+          pattern: '@@clientName\(\s*(?:Widget\.)?WidgetProperties\.enabled\s*,\s*"IsEnabled"\s*,\s*"csharp"\s*\)\s*;'
+      - type: file-matches
+        config:
+          path: main.tsp
+          pattern: 'import\s+"\.\/client\.tsp"\s*;'
+      - type: file-matches
+        config:
+          path: client.tsp
+          pattern: '(?s)@@clientName\(WidgetProperties.enabled, "enabled", "java"\);\s+@@clientName\(WidgetProperties.enabled, "enabled", "python"\);\s+// Preserve this trailing customization\.\s+@@clientName\(WidgetProperties, "WidgetSettings", "python"\);'
       - type: output-matches
         config:
           pattern: '"applied"\s*:\s*true'

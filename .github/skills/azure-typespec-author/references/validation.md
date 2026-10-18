@@ -34,7 +34,7 @@ such as `node_modules`, `packages`, restored tools, or fixture links.
 Run when Step 4 produced a client configuration plan. If the user opted out,
 report the client configuration check as skipped without making a naming claim.
 
-For naming customizations applied by the tool or its direct-edit fallback:
+For naming customizations applied through the naming skill's scoped direct edits:
 
 1. Inspect the resulting diff read-only. Verify the planned target and
    language-scoped `@@clientName`, unchanged wire names and other-language

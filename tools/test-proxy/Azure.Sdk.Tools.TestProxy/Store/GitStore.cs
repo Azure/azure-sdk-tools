@@ -13,6 +13,7 @@ using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using Azure.Sdk.tools.TestProxy.Common;
 using Microsoft.Security.Utilities;
+using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -61,6 +62,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private ConcurrentDictionary<string, TaskQueue> InitTasks = new ConcurrentDictionary<string, TaskQueue>();
 
         public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _publicOrigins = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _configuredOrigins = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _sparseDirectories = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, bool> _safeDirectories = new ConcurrentDictionary<string, bool>();
 
         public GitStore()
         {
@@ -148,7 +153,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 return -1;
             }
 
-            SetOrigin(config);
             var pendingChanges = DetectPendingChanges(config);
             var generatedTagName = config.TagPrefix;
             bool codeCommitted = false;
@@ -165,14 +169,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 try
                 {
+                    SetOrigin(config);
                     string branchGuid = Guid.NewGuid().ToString().Substring(0, 8);
                     string gitUserName = GetGitOwnerName(config);
                     string gitUserEmail = GetGitOwnerEmail(config);
                     string assetMessage = "Automatic asset update from test-proxy.";
                     string configurationString = $"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\"";
 
-                    GitHandler.Run($"branch {branchGuid}", config);
-                    GitHandler.Run($"checkout {branchGuid}", config);
+                    GitHandler.Run(new[] { "switch", "-c", branchGuid }, config);
+                    GitHandler.Run(new[] { "fetch", "--no-tags", "--filter=blob:none", "origin", "refs/heads/main:refs/heads/main" }, config);
 
                     /*
                      * This code works by generating a patch file for SPECIFICALLY the eng folder from main.
@@ -250,9 +255,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
                 await UpdateAssetsJson(generatedTagName, config);
                 await BreadCrumb.Update(config);
+                HideOrigin(config);
             }
 
-            HideOrigin(config);
             return 0;
         }
 
@@ -330,8 +335,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
-                    Clean(config);
-                    CheckoutRepoAtConfig(config, cleanEnabled: false);
+                    var targetAlreadyFetched = Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var currentTag) && currentTag == config.Tag;
+                    CheckoutRepoAtConfig(config, cleanEnabled: true, targetAlreadyFetched: targetAlreadyFetched);
                     await BreadCrumb.Update(config);
                 }
             }
@@ -343,7 +348,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             try
             {
-                GitHandler.Run("checkout .", config);
                 GitHandler.Run("clean -xdf", config);
             }
             catch (GitProcessException e)
@@ -368,9 +372,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private void SetSafeDirectory(GitAssetsConfiguration config)
         {
             // Workaround for git directory ownership checks that may fail when running in a container as a different user.
-            if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER"))
+            var repository = config.AssetsRepoLocation.ToString();
+            if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER") && !_safeDirectories.ContainsKey(repository))
             {
-                GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
+                GitHandler.Run(new[] { "config", "--global", "--add", "safe.directory", repository }, config);
+                _safeDirectories.TryAdd(repository, true);
             }
         }
 
@@ -403,31 +409,43 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         private void SetOrigin(GitAssetsConfiguration config)
         {
-            var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-
-            // in cases of failure to initialize a real git repo. we need to NOT run git remote set-url
-            if (config.IsAssetsRepoInitialized())
-            {
-                GitHandler.Run($"remote set-url origin {cloneUrl}", config);
-            }
-            else
-            {
-                _consoleWrapper.WriteLine($"The assets folder within \"{config.AssetsRepoLocation.ToString()}\" was not properly initialized, and as such the proxy is skipping override of the origin url.");
-            }
+            UpdateOrigin(config, ResolveOrigin(config, honorToken: true));
         }
 
         private void HideOrigin(GitAssetsConfiguration config)
         {
-            var publicOrigin = GetCloneUrl(config.AssetsRepo, config.RepoRoot, honorToken: false);
-            
-            if (config.IsAssetsRepoInitialized())
+            UpdateOrigin(config, ResolveOrigin(config, honorToken: false));
+        }
+
+        private string ResolveOrigin(GitAssetsConfiguration config, bool honorToken)
+        {
+            var publicOrigin = _publicOrigins.GetOrAdd(config.AssetsRepoLocation.ToString(),
+                _ => GetCloneUrl(config.AssetsRepo, config.RepoRoot, honorToken: false));
+            var token = honorToken ? Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR) : null;
+            if (!string.IsNullOrWhiteSpace(token) && publicOrigin.StartsWith("https://", StringComparison.Ordinal))
             {
-                GitHandler.Run($"remote set-url origin {publicOrigin}", config);
+                return $"https://x-access-token:{token}@github.com/{config.AssetsRepo}";
             }
-            else
+
+            return publicOrigin;
+        }
+
+        private void UpdateOrigin(GitAssetsConfiguration config, string origin)
+        {
+            if (!config.IsAssetsRepoInitialized())
             {
                 _consoleWrapper.WriteLine($"The assets folder within \"{config.AssetsRepoLocation.ToString()}\" was not properly initialized, and as such the proxy is skipping override of the origin url.");
+                return;
             }
+
+            var repository = config.AssetsRepoLocation.ToString();
+            if (_configuredOrigins.TryGetValue(repository, out var currentOrigin) && currentOrigin == origin)
+            {
+                return;
+            }
+
+            GitHandler.Run(new[] { "remote", "set-url", "origin", origin }, config);
+            _configuredOrigins[repository] = origin;
         }
 
         /// <summary>
@@ -438,38 +456,36 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// clone looks the same as being on the wrong tag. This variable allows us to prevent over-active cleaning that would result in exceptions.</param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled = true)
         {
+            CheckoutRepoAtConfig(config, cleanEnabled, targetAlreadyFetched: false);
+        }
+
+        private void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled, bool targetAlreadyFetched)
+        {
             // we are already on a targeted tag and as such don't want to discard our recordings
-            if (Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag)
+            if (!targetAlreadyFetched && Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag)
             {
                 return;
             }
-            // if we are NOT on our targeted tag, before we attempt to switch we need to reset without asking for permission
-            else if (cleanEnabled)
-            {
-                Clean(config);
-            }
-
-            var checkoutPaths = ResolveCheckoutPaths(config);
 
             try
             {
                 SetSafeDirectory(config);
 
-                if (!string.IsNullOrEmpty(config.Tag))
+                if (!targetAlreadyFetched && !string.IsNullOrEmpty(config.Tag))
                 {
                     SetOrigin(config);
 
-                    // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
-                    // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
-                    GitHandler.Run($"fetch origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
+                    GitHandler.Run(new[] { "fetch", "--no-tags", "--filter=blob:none", "origin", $"refs/tags/{config.Tag}:refs/tags/{config.Tag}" }, config);
                 }
 
-                // Set non-cone mode otherwise path filters will not work in git >= 2.37.0
-                // See https://github.blog/2022-06-27-highlights-from-git-2-37/#tidbits
-                GitHandler.Run($"sparse-checkout set --no-cone {checkoutPaths}", config);
-                // The -c advice.detachedHead=false removes the verbose detatched head state
-                // warning that happens when syncing sparse-checkout to a particular Tag
-                GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
+                if (cleanEnabled)
+                {
+                    Clean(config);
+                }
+
+                ConfigureSparseCheckout(config);
+                var checkoutTarget = targetAlreadyFetched || string.IsNullOrEmpty(config.Tag) ? "HEAD" : $"refs/tags/{config.Tag}";
+                GitHandler.Run(new[] { "-c", "advice.detachedHead=false", "checkout", "--detach", "--force", checkoutTarget, "--" }, config);
 
                 // the first argument, the key, is the path to the assets json relative location
                 // the second argument, the value, is the value we want to set the json elative location to
@@ -484,6 +500,27 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 HideOrigin(config);
                 throw GenerateInvokeException(e.Result);
             }
+        }
+
+        private void ConfigureSparseCheckout(GitAssetsConfiguration config)
+        {
+            var repository = config.AssetsRepoLocation.ToString();
+            var checkoutDirectory = ResolveCheckoutDirectory(config);
+            if (_sparseDirectories.TryGetValue(repository, out var currentDirectory) && currentDirectory == checkoutDirectory)
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(checkoutDirectory))
+            {
+                GitHandler.Run(new[] { "sparse-checkout", "disable" }, config);
+            }
+            else
+            {
+                GitHandler.Run(new[] { "sparse-checkout", "set", "--cone", "--sparse-index", "--skip-checks", checkoutDirectory, "eng" }, config);
+            }
+
+            _sparseDirectories[repository] = checkoutDirectory;
         }
 
         public string GetGitOwnerName(GitAssetsConfiguration config)
@@ -612,6 +649,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
                     Directory.CreateDirectory(assetRepo.ToString());
+                    _publicOrigins.TryRemove(assetRepo.ToString(), out _);
+                    _configuredOrigins.TryRemove(assetRepo.ToString(), out _);
+                    _sparseDirectories.TryRemove(assetRepo.ToString(), out _);
+                    Assets.TryRemove(config.AssetsJsonRelativeLocation.ToString(), out _);
                     initialized = false;
                 }
 
@@ -619,19 +660,31 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     try
                     {
-                        var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-                        // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                        GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
-                        GitHandler.Run("config --local core.safecrlf false", config);
-                        GitHandler.Run($"sparse-checkout init", config);
+                        var cloneUrl = ResolveOrigin(config, honorToken: true);
+                        var cloneArguments = new List<string>
+                        {
+                            "clone",
+                            "-c",
+                            "core.longpaths=true",
+                            "-c",
+                            "core.safecrlf=false",
+                            "--no-checkout",
+                            "--filter=blob:none",
+                            "--no-tags",
+                            string.IsNullOrEmpty(config.Tag) ? "--single-branch" : $"--revision=refs/tags/{config.Tag}",
+                            cloneUrl,
+                            "."
 
+                        };
+                        GitHandler.Run(cloneArguments, config);
+                        _configuredOrigins[assetRepo.ToString()] = cloneUrl;
                     }
                     catch (GitProcessException e)
                     {
                         throw GenerateInvokeException(e.Result);
                     }
 
-                    CheckoutRepoAtConfig(config, cleanEnabled: false);
+                    CheckoutRepoAtConfig(config, cleanEnabled: false, targetAlreadyFetched: true);
                     workCompleted = true;
                 }
             });
@@ -647,16 +700,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="NotImplementedException"></exception>
         public string ResolveCheckoutPaths(GitAssetsConfiguration config)
         {
-            var combinedPath = new NormalizedString(Path.Join(config.AssetsRepoPrefixPath ?? String.Empty, config.AssetsJsonRelativeLocation)).ToString();
+            var checkoutDirectory = ResolveCheckoutDirectory(config);
 
-            if (combinedPath.ToLower() == AssetsJsonFileName)
+            if (string.IsNullOrEmpty(checkoutDirectory))
             {
                 return "./ eng/ .gitignore";
             }
             else
             {
-                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1)) + " eng/ .gitignore";
+                return checkoutDirectory + " eng/ .gitignore";
             }
+        }
+
+        private string ResolveCheckoutDirectory(GitAssetsConfiguration config)
+        {
+            var combinedPath = Path.Join(config.AssetsRepoPrefixPath ?? string.Empty, config.AssetsJsonRelativeLocation);
+            return new NormalizedString(Path.GetDirectoryName(combinedPath) ?? string.Empty).ToString();
         }
         #endregion
 

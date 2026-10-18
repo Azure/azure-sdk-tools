@@ -310,7 +310,7 @@ The Evolution agent owns the loop through two guarded tools:
 2. Call `validate_agent_response` with `target="candidate"` and the original bad case.
 3. If validation fails, revise the candidate and repeat within the attempt limit. If it passes, create the issue with the answer and trace ID as evidence.
 
-After all agent sessions finish, fail, or time out, the feedback pipeline triggers the knowledge-sync pipeline once if any session mutated the KB. The feedback job waits for restoration from the authoritative sources and is marked failed if restoration does not succeed.
+The feedback pipeline does not trigger knowledge sync after candidate mutation. Operators must use the existing knowledge-sync process when candidate content needs to be restored from authoritative sources.
 
 ### 2.6 Issue creation
 

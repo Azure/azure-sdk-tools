@@ -1,0 +1,28 @@
+parameters:
+  - name: environment
+    type: string
+    values: [dev, preview, prod]
+  - name: imageTag
+    type: string
+    default: auto
+  - name: dependsOn
+    type: string
+    default: DeployAgent
+
+stages:
+  - stage: DeployAzureMcpServerAgent
+    displayName: 'Deploy Azure MCP Server agent (${{ parameters.environment }})'
+    dependsOn: ${{ parameters.dependsOn }}
+    jobs:
+      - job: Deploy
+        timeoutInMinutes: 60
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        steps:
+          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/hosted-agent-deploy-steps.yml
+            parameters:
+              agentName: azure_mcp_server_agent
+              environment: ${{ parameters.environment }}
+              imageTag: ${{ parameters.imageTag }}

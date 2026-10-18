@@ -6,15 +6,10 @@ yarn-error.log*
 .npm
 .pnpm-debug.log*
 
-# TypeScript source files (we only need compiled lib)
-src
-*.ts
-!*.d.ts
-tsconfig.json
-
 # Build and development files
 .git
 .gitignore
+lib
 README.md
 *.md
 .env*
@@ -72,10 +67,6 @@ logs
 tmp
 temp
 .tmp
-
-# Keep lib directory (compiled output)
-!lib
-!lib/**
 
 # Keep essential runtime files
 !package.json

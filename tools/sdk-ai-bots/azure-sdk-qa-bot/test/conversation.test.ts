@@ -7,6 +7,7 @@ import {
   ContactCard,
 } from '../src/input/ConversationHandler.js';
 import { Reference } from '../src/backend/rag.js';
+import { ManagedIdentityCredential } from '@azure/identity';
 
 const testTimestamp = new Date('2023-10-01T12:00:00Z');
 
@@ -64,7 +65,7 @@ const testMessageWithContactCard: ConversationMessage = {
 // Mock Azure Table Storage client and related classes
 vi.mock('@azure/data-tables', () => {
   return {
-    TableClient: vi.fn().mockImplementation(() => {
+    TableClient: vi.fn().mockImplementation(function () {
       return {
         createEntity: vi.fn().mockResolvedValue({
           partitionKey: 'test-conversation',
@@ -108,7 +109,7 @@ vi.mock('@azure/data-tables', () => {
         }),
       };
     }),
-    TableServiceClient: vi.fn().mockImplementation(() => {
+    TableServiceClient: vi.fn().mockImplementation(function () {
       return {
         createTable: vi.fn().mockResolvedValue({}),
       };
@@ -122,8 +123,12 @@ vi.mock('@azure/data-tables', () => {
 // Mock Azure Identity
 vi.mock('@azure/identity', () => {
   return {
-    DefaultAzureCredential: vi.fn().mockImplementation(() => ({})),
-    ManagedIdentityCredential: vi.fn().mockImplementation(() => ({})),
+    DefaultAzureCredential: vi.fn().mockImplementation(function () {
+      return {};
+    }),
+    ManagedIdentityCredential: vi.fn().mockImplementation(function () {
+      return {};
+    }),
   };
 });
 
@@ -132,6 +137,7 @@ vi.mock('../src/config/config.js', () => {
   return {
     default: {
       MicrosoftAppId: 'test-bot-id',
+      userManagedIdentityClientID: 'test-managed-identity-id',
       azureStorageUrl: 'https://test-storage.table.core.windows.net/',
       azureTableNameForConversation: 'conversations',
     },
@@ -159,6 +165,7 @@ describe('ConversationHandler', () => {
   it('should initialize correctly', async () => {
     await handler.initialize();
     expect(handler).toBeDefined();
+    expect(ManagedIdentityCredential).toHaveBeenCalledWith('test-managed-identity-id');
   });
 
   it('should save a message', async () => {

@@ -11,7 +11,7 @@ from models.feedback import (
     parse_issue_reference,
 )
 from models.qa_dashboard import OverviewCounts, OverviewRow, QAOverview
-from utils.channel_policy import is_testing_channel
+from utils.channel_policy import is_channel_conversation_id, is_testing_channel
 
 
 _ACCURACY_EXCLUDED_CLASSIFICATIONS = (
@@ -94,6 +94,8 @@ async def aggregate_overview(
     def row_for(document: dict[str, Any], *, message: bool = False) -> OverviewRow | None:
         channel = _channel(document, message=message)
         if channel in excluded or (channel_id and channel != channel_id):
+            return None
+        if channel is not None and not is_channel_conversation_id(channel):
             return None
         if channel not in groups:
             groups[channel] = OverviewRow(

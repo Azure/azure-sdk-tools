@@ -143,8 +143,7 @@ If you need to make updates to the config, either push them to main and file a n
       ```
 
 1. The coding agent MCP configuration needs to be updated
-      - Navigate to https://github.com/YOUR_ORGANIZATION/YOUR_REPOSITORY/settings/copilot/coding_agent
-      - OR go the repository homepage, click `Settings`, under `Code and automation` expand `Copilot`, select `Coding agent`
+  - Go to the repository homepage, click `Settings`, under `Code and automation` expand `Copilot`, select `Coding agent`
       - Paste the below configuration into the text box under `MCP Configuration`, then click `Save MCP Configuration`
       - Update the tools list to include any MCP tools for testing, or change the value to `"tools": ["*"]` to include all
 

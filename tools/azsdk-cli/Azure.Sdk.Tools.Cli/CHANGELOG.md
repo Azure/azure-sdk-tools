@@ -1,20 +1,45 @@
 # Release History
 
-## 0.6.53 (Unreleased)
+## 0.6.55 (Unreleased)
 
 ### Features Added
-
-- `release-plan update-release-status` resolves the release plan from a supplied `--release-plan-id` first, then from a supplied `--sdk-pull-request` linked to exactly one in-progress plan, and validates the language/package entry inside that plan. Only when neither input is supplied does the original package-name lookup run as a transitional fallback and log `LEGACY_RELEASE_PLAN_LOOKUP`, so existing release pipelines keep working. No API version is required.
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 - Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans are unchanged; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support instead of abandoning a partially completed release.
-- Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or SDK PR never falls back to the package lookup, including invalid or unlinked SDK PRs.
-- Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
 
 ### Other Changes
+
+## 0.6.54 (2026-10-15)
+
+### Features Added
+
+- `api-review create` supports API Review Hub pipeline ref overrides through `AZSDK_API_REVIEW_PIPELINE_REF`, `AZSDK_API_REVIEW_TOOLS_REF`, and `AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF`. These overrides are intentionally unavailable to the MCP tool.
+
+### Breaking Changes
+
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` no longer support Swift.
+- `--package-type` and the corresponding MCP parameter now normalize `client`, `spring`, and `functions` to API Review Hub's `data` package type.
+
+### Other Changes
+
+- Refactored the API Review Hub pipeline to build shared tooling once and dispatch isolated base and target artifact-generation jobs.
+
+## 0.6.53 (2026-10-12)
+
+### Features Added
+
+- `release-plan update-release-status` resolves the release plan from a supplied `--release-plan-id` first, then from a supplied `--sdk-pull-request` linked to exactly one in-progress plan, and validates the language/package entry inside that plan. Only when neither input is supplied does the original package-name lookup run as a transitional fallback and log `LEGACY_RELEASE_PLAN_LOOKUP`, so existing release pipelines keep working. No API version is required.
+- Added support for Attestation Status field updates in Product Onboarding.
+
+### Bugs Fixed
+
+- Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or SDK PR never falls back to the package lookup, including invalid or unlinked SDK PRs.
+- Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
+- Fixed serialization for ADO `Sku` product type in Product Onboarding.
+- Fixed `azsdk_package_detect_breaking_change` to avoid an unexpected exception when `hasBreakingChange` is false and `changes` is null or empty.
 
 ## 0.6.52 (2026-10-05)
 

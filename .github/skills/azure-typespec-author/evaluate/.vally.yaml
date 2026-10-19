@@ -7,7 +7,7 @@
 # artifact layout while fixing the MCP kind in the environment name.
 #
 # The benchmark pipelines invoke suite branches from this file directly with --suite.
-# Vally 0.6.0 supports parallel execution across multiple eval files, so pipeline
+# Vally 0.14.0 supports execution across multiple eval files, so pipeline
 # runs do not need consolidated suite eval files plus tag filtering.
 
 paths:
@@ -26,7 +26,7 @@ environments:
         type: stdio
         command: node
         cwd: ../../../..
-        args: [".github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.js"]
+        args: [".github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.cjs"]
         timeout: 5m
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
@@ -45,13 +45,13 @@ environments:
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md
         dest: .github/copilot-instructions.md
-      - src: ../scripts/run-prebuilt-mcp.js
-        dest: tools/run-prebuilt-mcp.js
+      - src: ../scripts/run-prebuilt-mcp.cjs
+        dest: tools/run-prebuilt-mcp.cjs
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: node
-        args: ["tools/run-prebuilt-mcp.js"]
+        args: ["tools/run-prebuilt-mcp.cjs"]
         timeout: 5m
         env:
           AZSDK_EVAL_MCP_KIND: "live"
@@ -63,13 +63,13 @@ environments:
 
   azsdk-mcp-mock-local:
     files:
-      - src: ../scripts/run-prebuilt-mcp.js
-        dest: tools/run-prebuilt-mcp.js
+      - src: ../scripts/run-prebuilt-mcp.cjs
+        dest: tools/run-prebuilt-mcp.cjs
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: node
-        args: ["tools/run-prebuilt-mcp.js"]
+        args: ["tools/run-prebuilt-mcp.cjs"]
         timeout: "60s"
         env:
           AZSDK_EVAL_MCP_KIND: "mock"

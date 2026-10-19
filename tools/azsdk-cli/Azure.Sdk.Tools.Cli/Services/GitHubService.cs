@@ -165,6 +165,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
         public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IssueComment> CreatePullRequestCommentAsync(string repoOwner, string repoName, int pullRequestNumber, string body, CancellationToken ct);
+        public Task<PullRequest> ClosePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct);
         public Task<string> GetBranchHeadShaAsync(string repoOwner, string repoName, string branchName, CancellationToken ct);
@@ -1105,6 +1106,16 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
             var comment = await gitHubClient.Issue.Comment.Create(repoOwner, repoName, pullRequestNumber, body).WaitAsync(ct);
             ct.ThrowIfCancellationRequested();
             return comment;
+        }
+
+        public async Task<PullRequest> ClosePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            // Send only state: never resend a stale title or body. Commenting is a separate request.
+            var pullRequest = await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber,
+                new PullRequestUpdate { State = ItemState.Closed }).WaitAsync(ct);
+            ct.ThrowIfCancellationRequested();
+            return pullRequest;
         }
 
         public async Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)

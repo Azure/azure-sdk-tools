@@ -142,6 +142,11 @@ namespace Azure.Sdk.Tools.Cli.Services
     {
         public Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync(CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
+        /// <summary>
+        /// Resolves a unique positive Release Plan ID, optionally including Abandoned plans.
+        /// Closed and Duplicate plans remain excluded; the two-argument overload excludes Abandoned.
+        /// </summary>
+        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, bool includeAbandoned, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
@@ -186,7 +191,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
         Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest);
         Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest);
-        Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest);
+        Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(ProductOnboardingWorkItem existingWorkItem, ProductOnboardingStatus status, CancellationToken ct, bool isTest);
         Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct);
     }
 
@@ -285,11 +290,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             return releasePlan;
         }
 
-        public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
+        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
+        {
+            return GetReleasePlanAsync(releasePlanId, includeAbandoned: false, ct);
+        }
+
+        /// <inheritdoc cref="IDevOpsService.GetReleasePlanAsync(int, bool, CancellationToken)" />
+        public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, bool includeAbandoned, CancellationToken ct)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
-            // First find the API spec work item
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            var excludedStates = includeAbandoned ? "'Closed','Duplicate'" : "'Closed','Duplicate','Abandoned'";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ({excludedStates})";
             var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
             if (releasePlanWorkItems.Count == 0)
             {
@@ -2558,6 +2569,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             var wi = new ProductOnboardingWorkItem { };
             wi.SetFromProductOnboardingStatus(status);
+            wi.DataPlaneAttestationStatus = "Pending";
+            wi.ManagementPlaneAttestationStatus = "Pending";
             if (isTest)
             {
                 SetTestValue(wi);
@@ -2567,14 +2580,26 @@ namespace Azure.Sdk.Tools.Cli.Services
                 await CreateWorkItemAsync(wi, ProductOnboardingWorkItem.WorkItemTypeValue, GetProductOnboardingWorkItemTitle(status), ct: ct));
         }
 
-        public async Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+        public async Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(ProductOnboardingWorkItem existingWorkItem, ProductOnboardingStatus status, CancellationToken ct, bool isTest)
         {
             var wi = new ProductOnboardingWorkItem
             {
-                WorkItemId = workItemId,
+                WorkItemId = existingWorkItem.WorkItemId,
                 Title = GetProductOnboardingWorkItemTitle(status),
             };
             wi.SetFromProductOnboardingStatus(status);
+
+            wi.DataPlaneAttestationStatus
+                = (existingWorkItem.DataPlane == wi.DataPlane)
+                    ? existingWorkItem.DataPlaneAttestationStatus
+                    : ProductOnboardingWorkItem.PendingAttestationValue
+                ;
+
+            wi.ManagementPlaneAttestationStatus
+                = (existingWorkItem.ManagementPlane == wi.ManagementPlane)
+                    ? existingWorkItem.ManagementPlaneAttestationStatus
+                    : ProductOnboardingWorkItem.PendingAttestationValue
+                ;
 
             IList<PropertyInfo> properties = new List<PropertyInfo>();
             foreach (

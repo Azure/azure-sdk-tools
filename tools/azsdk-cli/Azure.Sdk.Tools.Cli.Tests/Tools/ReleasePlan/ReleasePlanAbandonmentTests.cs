@@ -20,7 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private Mock<INotificationService> _notifications = null!;
         private ReleasePlanTool _tool = null!;
         private ReleasePlanWorkItem _plan = null!;
-        private ReleasePlanWorkItem _fresh = null!;
 
         [SetUp]
         public void Setup()
@@ -29,10 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             _github = new Mock<IGitHubService>(MockBehavior.Strict);
             _notifications = new Mock<INotificationService>(MockBehavior.Strict);
             _plan = Plan();
-            _fresh = Plan();
-            _devOps.SetupSequence(s => s.GetReleasePlanForWorkItemAsync(42, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(() => _plan).ReturnsAsync(() => _fresh);
-            _devOps.Setup(s => s.GetReleasePlanAsync(123, It.IsAny<CancellationToken>())).ReturnsAsync(() => _plan);
+            _devOps.Setup(s => s.GetReleasePlanAsync(123, true, It.IsAny<CancellationToken>())).ReturnsAsync(() => _plan);
             _devOps.Setup(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new WorkItem { Id = 42, Rev = 8, Fields = new Dictionary<string, object> { ["System.State"] = "Abandoned" } });
             _tool = new ReleasePlanTool(_devOps.Object, Mock.Of<IGitHelper>(), Mock.Of<ITypeSpecHelper>(),
@@ -56,11 +52,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private void SetSdks(params SDKInfo[] sdks)
         {
             _plan.SDKInfo = sdks.ToList();
-            _fresh.SDKInfo = sdks.Select(s => new SDKInfo
-            {
-                Language = s.Language, SdkPullRequestUrl = s.SdkPullRequestUrl,
-                ReleaseStatus = s.ReleaseStatus, PullRequestStatus = s.PullRequestStatus
-            }).ToList();
         }
 
         private static PullRequest Pr(string state = "open", bool merged = false, bool draft = false)
@@ -83,31 +74,30 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(_devOps.Invocations.Any(i => i.Method.Name.StartsWith("Update", StringComparison.Ordinal)), Is.False);
             Assert.That(_notifications.Invocations, Is.Empty);
             Assert.That(_plan.Status, Is.EqualTo("In Progress"));
-            Assert.That(_fresh.Status, Is.EqualTo("In Progress"));
         }
 
-        [TestCase(0, 0)]
-        [TestCase(-1, 0)]
-        [TestCase(0, -1)]
-        [TestCase(42, -1)]
-        public async Task InvalidIds_NoReadsOrWrites(int workItemId, int releasePlanId)
+        [TestCase(0)]
+        [TestCase(-1)]
+        public async Task InvalidIds_NoReadsOrWrites(int releasePlanId)
         {
-            var response = await _tool.AbandonReleasePlan(workItemId, releasePlanId);
+            var response = await _tool.AbandonReleasePlan(releasePlanId);
             Assert.That(response.ResponseError, Is.Not.Null);
             Assert.That(_devOps.Invocations, Is.Empty);
             NoWrites();
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public async Task NoSdkLinks_AllowsLegacyPlans_WithGuardedStateOnlyWrite(bool byReleasePlanId)
+        [Test]
+        public async Task NoSdkLinks_DistinctPlanAndWorkItemIds_OneReadAndGuardedStateOnlyWrite()
         {
-            var response = await _tool.AbandonReleasePlan(byReleasePlanId ? 0 : 42, byReleasePlanId ? 123 : 0);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Null);
             Assert.That(response.Status, Is.EqualTo("Success"));
+            Assert.That(response.Details.Single(), Is.EqualTo("Release plan 123 has been successfully abandoned."));
             _devOps.Verify(s => s.UpdateWorkItemAsync(42,
                 It.Is<Dictionary<string, string>>(f => f.Count == 1 && f["System.State"] == "Abandoned"),
                 7, It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.GetReleasePlanAsync(123, true, It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(_devOps.Invocations.Count, Is.EqualTo(2));
             Assert.That(_github.Invocations, Is.Empty);
             Assert.That(_notifications.Invocations, Is.Empty);
             Assert.That(_plan.Status, Is.EqualTo("In Progress"));
@@ -123,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Lookup("azure-sdk-for-net", 1, Pr(merged: mergedIndex == 0));
             Lookup("azure-sdk-for-python", 2, Pr(merged: mergedIndex == 1));
             Lookup("azure-sdk-for-js", 3, Pr(merged: mergedIndex == 2));
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Does.Contain("exception").And.Contain("unreleased").And.Contain("SDK Release Support"));
             NoWrites();
         }
@@ -131,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase("open", false)]
         [TestCase("open", true)]
         [TestCase("closed", false)]
-        public async Task AllUnmergedMixedLanguages_AllowsOpenDraftAndClosed(string state, bool draft)
+        public async Task Eligibility_AllUnmergedMixedLanguages_AllowsOpenDraftAndClosed(string state, bool draft)
         {
             SetSdks(Sdk("c#", "azure-sdk-for-net", 1), Sdk("typescript", "azure-sdk-for-js", 2),
                 Sdk("Python", "azure-sdk-for-python", 3), Sdk("Go", "azure-sdk-for-go", 4), Sdk("Java", "azure-sdk-for-java", 5));
@@ -141,9 +131,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Lookup(uri.Segments[2].Trim('/'), int.Parse(uri.Segments[4]), Pr(state, draft: draft));
                 sdk.PullRequestStatus = "Merged";
             }
-            var response = await _tool.AbandonReleasePlan(42);
-            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(await _tool.IsEligibleToAbandonAsync(_plan), Is.True);
             Assert.That(_github.Invocations.Count, Is.EqualTo(5));
+            Assert.That(_devOps.Invocations, Is.Empty);
             _github.Verify(g => g.IsPullRequestApprovedAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
@@ -152,25 +142,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             SetSdks(Sdk("Python", "azure-sdk-for-python-pr", 1));
             Lookup("azure-sdk-for-python-pr", 1, Pr(merged: true));
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Not.Null);
             _github.VerifyAll();
             NoWrites();
         }
 
         [Test]
-        public async Task MixedOpenDraftClosed_DeduplicatesCanonicalLinksAndIgnoresCachedStatuses()
+        public async Task Eligibility_MixedOpenDraftClosed_DeduplicatesCanonicalLinksAndIgnoresCachedStatuses()
         {
             SetSdks(Sdk(".NET", "azure-sdk-for-net", 1), Sdk("Python", "azure-sdk-for-python", 2),
                 Sdk("JavaScript", "azure-sdk-for-js", 3), Sdk("Python", "azure-sdk-for-python", 2));
             _plan.SDKInfo[3].SdkPullRequestUrl = "https://github.com/azure/AZURE-SDK-FOR-PYTHON/pull/0002/";
-            _fresh.SDKInfo.Reverse();
             Lookup("azure-sdk-for-net", 1, Pr());
             Lookup("azure-sdk-for-python", 2, Pr(draft: true));
             Lookup("azure-sdk-for-js", 3, Pr("closed"));
-            var response = await _tool.AbandonReleasePlan(42);
-            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(await _tool.IsEligibleToAbandonAsync(_plan), Is.True);
             Assert.That(_github.Invocations.Count, Is.EqualTo(3));
+            Assert.That(_devOps.Invocations, Is.Empty);
         }
 
         [TestCase("New")]
@@ -179,13 +168,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task KnownActiveStateWithoutSdkLinks_AllowsAbandonment(string status)
         {
             _plan.Status = status;
-            _fresh.Status = status;
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Null);
         }
 
         [TestCase("null-plan")]
-        [TestCase("workitem")]
         [TestCase("zero-workitem")]
         [TestCase("sdk-list")]
         [TestCase("sdk-entry")]
@@ -194,12 +181,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             switch (invalid)
             {
                 case "null-plan": _plan = null!; break;
-                case "workitem": _plan.WorkItemId = 100; break;
                 case "zero-workitem": _plan.WorkItemId = 0; break;
                 case "sdk-list": _plan.SDKInfo = null!; break;
                 case "sdk-entry": _plan.SDKInfo.Add(null!); break;
             }
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Not.Null);
             Assert.That(_devOps.Invocations.Any(i => i.Method.Name.StartsWith("Update", StringComparison.Ordinal)), Is.False);
             Assert.That(_github.Invocations, Is.Empty);
@@ -210,12 +196,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             SetSdks(Sdk("Python", "azure-sdk-for-python", 1));
             _github.Setup(g => g.GetPullRequestAsync("Azure", "azure-sdk-for-python", 1, It.IsAny<CancellationToken>()))
-                .Callback(() => _fresh.Revision++).ReturnsAsync(Pr());
+                .Callback(() => _plan.Revision++).ReturnsAsync(Pr());
             _devOps.Setup(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException("ADO /rev conflict"));
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Does.Contain("/rev conflict"));
             _devOps.Verify(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.GetReleasePlanAsync(123, true, It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(_devOps.Invocations.Count, Is.EqualTo(2));
             Assert.That(_notifications.Invocations, Is.Empty);
         }
 
@@ -225,9 +213,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task AnyRecordedRelease_BlocksWithoutGithubRead(string status)
         {
             SetSdks(new SDKInfo { Language = "Python", ReleaseStatus = status }, Sdk("Java", "azure-sdk-for-java", 1));
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Does.Contain("SDK Release Support"));
             Assert.That(_github.Invocations, Is.Empty);
+            NoWrites();
+        }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        public async Task Eligibility_AnyRecordedRelease_IsFalseWithoutLiveReads(int releasedIndex)
+        {
+            SetSdks(new SDKInfo { Language = ".NET" }, new SDKInfo { Language = "Python" }, new SDKInfo { Language = "Java" });
+            _plan.SDKInfo[releasedIndex].ReleaseStatus = "Released";
+            Assert.That(await _tool.IsEligibleToAbandonAsync(_plan), Is.False);
+            Assert.That(_github.Invocations, Is.Empty);
+            Assert.That(_devOps.Invocations, Is.Empty);
             NoWrites();
         }
 
@@ -246,7 +247,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task MalformedCanonicalUrl_BlocksBeforeWrites(string url)
         {
             SetSdks(new SDKInfo { Language = "Python", SdkPullRequestUrl = url });
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Not.Null);
             Assert.That(_github.Invocations, Is.Empty);
             NoWrites();
@@ -272,7 +273,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 setup.ReturnsAsync(failure == "null" ? null! : Pr("unrecognized"));
             }
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Not.Null);
             NoWrites();
         }
@@ -280,11 +281,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase("Finished")]
         [TestCase("finished")]
         [TestCase("unknown")]
+        [TestCase("Closed")]
+        [TestCase("Duplicate")]
         [TestCase("")]
         public async Task FinishedOrUnknownState_Blocks(string status)
         {
             _plan.Status = status;
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Not.Null);
             Assert.That(_devOps.Invocations.Any(i => i.Method.Name.StartsWith("Update", StringComparison.Ordinal)), Is.False);
             Assert.That(_github.Invocations, Is.Empty);
@@ -296,39 +299,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             _plan.Status = status;
             _plan.Revision = 0;
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Null);
-            Assert.That(response.Details.Single(), Does.Contain("already abandoned"));
+            Assert.That(response.Details.Single(), Is.EqualTo("Release plan 123 is already abandoned; no state changes made."));
             Assert.That(_devOps.Invocations.Count, Is.EqualTo(1));
             Assert.That(_github.Invocations, Is.Empty);
         }
 
-        [TestCase("revision")]
-        [TestCase("workitem")]
-        [TestCase("planid")]
-        [TestCase("state")]
-        [TestCase("environment")]
-        [TestCase("links")]
-        [TestCase("released")]
-        [TestCase("null")]
-        public async Task RefreshChanges_RejectWithoutRetryOrLiveRead(string change)
+        [TestCase("Finished")]
+        [TestCase("Abandoned")]
+        public async Task Eligibility_FinishedOrAbandoned_IsFalseWithoutReadsOrWrites(string status)
         {
-            switch (change)
-            {
-                case "revision": _fresh.Revision++; break;
-                case "workitem": _fresh.WorkItemId++; break;
-                case "planid": _fresh.ReleasePlanId++; break;
-                case "state": _fresh.Status = "Finished"; break;
-                case "environment": _fresh.IsTestReleasePlan = true; break;
-                case "links": _fresh.SDKInfo.Add(Sdk("Python", "azure-sdk-for-python", 1)); break;
-                case "released": _fresh.SDKInfo.Add(new SDKInfo { ReleaseStatus = "Released" }); break;
-                case "null": _fresh = null!; break;
-            }
-            var response = await _tool.AbandonReleasePlan(42);
-            Assert.That(response.ResponseError, Is.Not.Null);
-            Assert.That(_devOps.Invocations.Count, Is.EqualTo(2));
+            _plan.Status = status;
+            Assert.That(await _tool.IsEligibleToAbandonAsync(_plan), Is.False);
+            Assert.That(_devOps.Invocations, Is.Empty);
             Assert.That(_github.Invocations, Is.Empty);
-            Assert.That(_devOps.Invocations.Any(i => i.Method.Name.StartsWith("Update", StringComparison.Ordinal)), Is.False);
         }
 
         [TestCase(0)]
@@ -336,14 +321,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task InvalidRevision_NoWrites(int revision)
         {
             _plan.Revision = revision;
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Not.Null);
             NoWrites();
         }
 
         [TestCase("conflict")]
         [TestCase("null")]
-        [TestCase("state")]
         public async Task UpdateFailure_NoSuccessOrRetry(string failure)
         {
             var setup = _devOps.Setup(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()));
@@ -353,12 +337,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }
             else
             {
-                setup.ReturnsAsync(failure == "null" ? null! : new WorkItem
-                {
-                    Id = 42, Fields = new Dictionary<string, object> { ["System.State"] = "In Progress" }
-                });
+                setup.ReturnsAsync((WorkItem)null!);
             }
-            var response = await _tool.AbandonReleasePlan(42);
+            var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Not.Null);
             Assert.That(response.Status, Is.Not.EqualTo("Success"));
             _devOps.Verify(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()), Times.Once);
@@ -367,7 +348,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
         [TestCase("before")]
         [TestCase("github")]
-        [TestCase("refresh")]
+        [TestCase("lookup")]
+        [TestCase("lookup-null")]
         [TestCase("update")]
         [TestCase("saved-update")]
         public void CallerCancellation_Propagates(string phase)
@@ -383,10 +365,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 _github.Setup(g => g.GetPullRequestAsync("Azure", "azure-sdk-for-python", 1, cts.Token))
                     .Callback(() => cts.Cancel()).ThrowsAsync(new OperationCanceledException(cts.Token));
             }
-            else if (phase == "refresh")
+            else if (phase == "lookup" || phase == "lookup-null")
             {
-                _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(42, cts.Token))
-                    .Callback(() => cts.Cancel()).ReturnsAsync(_plan);
+                _devOps.Setup(s => s.GetReleasePlanAsync(123, true, cts.Token))
+                    .Callback(() => cts.Cancel()).ReturnsAsync(phase == "lookup-null" ? null! : _plan);
             }
             else if (phase == "saved-update")
             {
@@ -401,7 +383,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 _devOps.Setup(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, cts.Token))
                     .Callback(() => cts.Cancel()).ThrowsAsync(new OperationCanceledException(cts.Token));
             }
-            Assert.ThrowsAsync<OperationCanceledException>(async () => await _tool.AbandonReleasePlan(42, ct: cts.Token));
+            Assert.ThrowsAsync<OperationCanceledException>(async () => await _tool.AbandonReleasePlan(123, ct: cts.Token));
             if (phase != "update" && phase != "saved-update")
             {
                 NoWrites();

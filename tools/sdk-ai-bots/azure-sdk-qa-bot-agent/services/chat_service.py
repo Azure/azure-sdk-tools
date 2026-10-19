@@ -86,30 +86,13 @@ class ChatService:
         self._settings = settings or cfg
         self._project_client = project_client
         self._openai_client = openai_client
-        self._openai_clients: dict[str, AsyncOpenAI] = {}
         self._stateless_session_ids: dict[str, str] = {}
 
     def _get_project_client(self) -> AIProjectClient:
         return self._project_client or get_project_client()
 
     def _get_openai_client(self, agent_name: str | None = None) -> AsyncOpenAI:
-        if self._project_client is None and self._openai_client is None:
-            # Production default — use module-level per-agent clients.
-            return get_openai_client(agent_name)
-        if self._project_client is not None:
-            # Injected project client — create per-agent endpoint clients
-            # so multi-tenant callers (e.g. the evolution agent's chat tool)
-            # hit the correct per-agent endpoint for each tenant.
-            resolved = agent_name or self._settings(
-                "AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent"
-            )
-            if resolved not in self._openai_clients:
-                self._openai_clients[resolved] = (
-                    self._project_client.get_openai_client(agent_name=resolved)
-                )
-            return self._openai_clients[resolved]
-        # Test-only: injected single client, no project client.
-        return self._openai_client
+        return self._openai_client or get_openai_client(agent_name)
 
     def _get_stateless_session_id(self, agent_name: str) -> str | None:
         if self._project_client is None and self._openai_client is None:
@@ -200,7 +183,7 @@ class ChatService:
         conversation_items.extend(additional_items)
 
         agent_ref: dict = {
-            "name": agent_name,
+            "name": agent.name,
             "version": agent.version,
             "type": AgentReferenceType.agent_reference.value,
         }
@@ -676,7 +659,7 @@ class ChatService:
         """Unwrap a tool output to the innermost JSON string.
 
         The hosted-agent output is typically double-serialised:
-        ``'["{\ "key\": \"value\"}"]\'`` → ``'{"key": "value"}'``.
+        ``'["{\\"key\\": \\"value\\"}"]'`` → ``'{"key": "value"}'``.
         This peels off outer layers until it reaches the JSON object string
         that Pydantic's ``model_validate_json`` can parse directly.
         """

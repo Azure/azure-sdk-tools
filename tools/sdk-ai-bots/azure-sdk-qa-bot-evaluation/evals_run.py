@@ -53,7 +53,7 @@ ALL_EVALUATORS = [
 OUTPUT_FIELDS: dict[str, list[str]] = {
     "similarity": ["similarity"],
     "response_completeness": ["response_completeness"],
-    "groundedness": ["groundedness"],
+    "groundedness": ["groundedness", "groundedness_result", "groundedness_reason"],
     "relevance": ["relevance"],
     "coherence": ["coherence"],
     "fluency": ["fluency"],
@@ -165,11 +165,7 @@ def main(argv: list[str] | None = None) -> int:
             # so the Foundry list is not flooded with date/build/random-suffixed entries.
             dataset_label = _dataset_label(args.dataset, scenario)
             name = f"{dataset_label}-{args.run_context}"
-            tenant_map = None
-            try:
-                tenant_map = retrieve_channel_tenant_map(credential)
-            except Exception as exc:  # noqa: BLE001
-                logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
+            tenant_map = retrieve_channel_tenant_map(credential)
             tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
             all_results = runner.evaluate_run_completion(
                 evals_client,
@@ -208,7 +204,7 @@ def _cache_results(
     mode = mode.lower()
     if mode == "score":
         now = datetime.now()
-        out = script_dir / f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}"
+        out = script_dir / f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%M-%S-%f')}"
         with out.open("a", encoding="utf-8") as fh:
             for name, test_results in all_results.items():
                 fh.write(f"\n-----------{name}----------------------\n")
@@ -221,8 +217,8 @@ def _cache_results(
     cache_dir = script_dir / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     for name, result in all_results.items():
-        out = cache_dir / f"{name.split('_')[0]}-result-{now.strftime('%Y-%m-%d-%H-%S')}.json"
-        with out.open("w", encoding="utf-8") as fh:
+        out = cache_dir / f"{name.split('_')[0]}-result-{now.strftime('%Y-%m-%d-%H-%M-%S-%f')}-{name}.json"
+        with out.open("x", encoding="utf-8") as fh:
             json.dump(result, fh, indent=4)
 
     for name, results in all_results.items():
@@ -233,7 +229,7 @@ def _cache_results(
                 if metric in suppression["evaluators"]:
                     continue
                 if metric == "groundedness":
-                    if ret.get("groundedness_result") == "fail":
+                    if ret.get("groundedness_result") != "pass":
                         is_failed = True
                 elif ret.get(f"{metric}_result") not in (None, "pass"):
                     is_failed = True
@@ -241,8 +237,8 @@ def _cache_results(
                 failed.append(ret)
                 logging.info("test case: %s - Failed", ret.get("testcase"))
         if failed:
-            out = cache_dir / f"{name.split('_')[0]}-failed-cases-{now.strftime('%Y-%m-%d-%H-%S')}.json"
-            with out.open("w", encoding="utf-8") as fh:
+            out = cache_dir / f"{name.split('_')[0]}-failed-cases-{now.strftime('%Y-%m-%d-%H-%M-%S-%f')}-{name}.json"
+            with out.open("x", encoding="utf-8") as fh:
                 json.dump(failed, fh, indent=4)
 
 

@@ -84,7 +84,7 @@ contributors don't re-curate the same cases); `evaluation_datasets/basic/`, `eva
 
 ## Part 2 — Running evaluations
 
-We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached results after grading. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
+We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's `full_context` (retrieved documentation and supplied text, with source provenance) is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached results after grading. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
 
 ```bash
 # Concurrent /completion collection + inline grading:
@@ -100,7 +100,9 @@ python evals_run.py --dataset evaluation_datasets/basic/typespec.jsonl --is_ci F
 
 Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE` or `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py` locally (defaults to `http://localhost:8089`). `AI_FOUNDRY_AGENT_NAME` selects the Hosted Agent whose stored responses are retrieved and defaults to `azure-sdk-chat-agent`. Tenant routing is resolved from `BOT_CONFIG_CONTAINER` / `BOT_CONFIG_CHANNEL_BLOB`.
 
-Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`.
+Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`. Filenames include the run identity and a timestamp with minutes and microseconds; existing files are never overwritten.
+
+If the channel-to-tenant map cannot be loaded, evaluation stops rather than silently evaluating the default bot.
 
 Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately. A normal response ID can retrieve the original stored response on demand; synthetic IDs such as `content-filter` have no stored response.
 
@@ -120,6 +122,25 @@ All evaluators are builtin LLM evaluators that read the collected bot answer via
 | `bot_evals` | local composite | weighted `similarity` + `response_completeness` |
 
 LLM-graded evaluators use the 1-5 `EVALUATE_THRESHOLD`.
+
+Groundedness is **not assessable** (`N/A`, `groundedness_result: "not_assessable"`)
+when source evidence is missing, contains only document metadata, or is the answer
+itself. The rendered grader input must also contain the same source context and
+answer as the submitted item; unavailable or mismatched grader input cannot yield
+a valid groundedness pass. Invalid or missing provider scores are also not
+assessable. The original provider result is retained under
+`execution.groundedness_grader_result`, with the local validity reason stored as
+`groundedness_reason`. These checks apply to local reports, caches, and the gate;
+the Foundry portal may still display the original provider score.
+
+Not-assessable cases are counted separately from passes and answer failures in
+`groundedness_not_assessable_rate` and included in failed-case artifacts. They block
+the grounding gate unless that evaluator is explicitly suppressed (then the run
+warns); testcase suppression does not turn missing evidence into a pass.
+This means grounding could not be verified, **not** that the answer was proven
+wrong. Other evaluators and the `bot_evals` weights are unchanged. Even with valid
+evidence delivery, an LLM grounding score alone does not establish factual accuracy,
+policy applicability, or approval.
 
 `expected_references` / `expected_knowledges` are kept in the schema for future use
 but are not scored by an evaluator.

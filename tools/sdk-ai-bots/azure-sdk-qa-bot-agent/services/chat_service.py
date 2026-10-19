@@ -86,13 +86,41 @@ class ChatService:
         self._settings = settings or cfg
         self._project_client = project_client
         self._openai_client = openai_client
+        self._openai_clients: dict[str, AsyncOpenAI] = {}
         self._stateless_session_ids: dict[str, str] = {}
 
     def _get_project_client(self) -> AIProjectClient:
         return self._project_client or get_project_client()
 
     def _get_openai_client(self, agent_name: str | None = None) -> AsyncOpenAI:
-        return self._openai_client or get_openai_client(agent_name)
+        if self._project_client is None and self._openai_client is None:
+            # Production default \u2014 use module-level per-agent clients.
+            return get_openai_client(agent_name)
+        if self._project_client is not None:
+            # Injected project client \u2014 create per-agent endpoint clients
+            # so multi-tenant callers (e.g. the evolution agent's chat tool)
+            # hit the correct per-agent endpoint for each tenant.
+            resolved = agent_name or self._settings(
+                "AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent"
+            )
+            if resolved not in self._openai_clients:
+                project_endpoint = getattr(
+                    getattr(self._project_client, "_config", None),
+                    "endpoint",
+                    "<unknown>",
+                )
+                logger.info(
+                    "Creating per-agent OpenAI client: agent=%s, "
+                    "project_endpoint=%s",
+                    resolved,
+                    project_endpoint,
+                )
+                self._openai_clients[resolved] = (
+                    self._project_client.get_openai_client(agent_name=resolved)
+                )
+            return self._openai_clients[resolved]
+        # Test-only: injected single client, no project client.
+        return self._openai_client
 
     def _get_stateless_session_id(self, agent_name: str) -> str | None:
         if self._project_client is None and self._openai_client is None:
@@ -183,7 +211,7 @@ class ChatService:
         conversation_items.extend(additional_items)
 
         agent_ref: dict = {
-            "name": agent.name,
+            "name": agent_name,
             "version": agent.version,
             "type": AgentReferenceType.agent_reference.value,
         }
@@ -659,7 +687,7 @@ class ChatService:
         """Unwrap a tool output to the innermost JSON string.
 
         The hosted-agent output is typically double-serialised:
-        ``'["{\\"key\\": \\"value\\"}"]'`` → ``'{"key": "value"}'``.
+        ``'["{\\'key\\': \\'value\\'}"\']'`` \u2192 ``'{"key": "value"}'``.
         This peels off outer layers until it reaches the JSON object string
         that Pydantic's ``model_validate_json`` can parse directly.
         """
@@ -729,7 +757,7 @@ class ChatService:
         """Detect the routed tenant from load_skill calls.
 
         When the agent calls ``load_skill("<skill-name>")``, map the skill
-        name back to a tenant ID using the reverse skill→tenant map.
+        name back to a tenant ID using the reverse skill\u2192tenant map.
         """
         if not items:
             return None
@@ -748,7 +776,7 @@ class ChatService:
                     tenant_id = skill_to_tenant.get(skill_name)
                     if tenant_id:
                         logger.info(
-                            "Routed via skill %s → tenant %s", skill_name, tenant_id
+                            "Routed via skill %s \u2192 tenant %s", skill_name, tenant_id
                         )
                         return tenant_id
                 except (json.JSONDecodeError, AttributeError):

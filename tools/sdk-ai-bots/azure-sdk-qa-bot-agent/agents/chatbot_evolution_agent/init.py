@@ -1,10 +1,10 @@
-"""Azure SDK QA Bot — Hosted Chatbot Evolution Agent.
+"""Azure SDK QA Bot \u2014 Hosted Chatbot Evolution Agent.
 
 Self-contained entrypoint for the hosted chatbot evolution agent container.
 Runs as an HTTP server on port 8088 using the Responses protocol.
 Deployed to Microsoft Foundry as a container agent.
 
-The Chatbot Evolution Agent is a KB-quality analyst — it analyzes past chat
+The Chatbot Evolution Agent is a KB-quality analyst \u2014 it analyzes past chat
 turns that received negative feedback (explicit thumbs-down or implicit expert
 correction) and either files a KB-gap issue or records a structured
 classification for downstream Agent Optimizer dataset curation.
@@ -19,7 +19,7 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-# sys.path — add the project root so top-level packages resolve.
+# sys.path \u2014 add the project root so top-level packages resolve.
 _project_root = str(Path(__file__).resolve().parent.parent.parent)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
@@ -99,12 +99,29 @@ async def main() -> None:
     monitor_tools = MonitorTools()
     conversation_tools = ConversationTools()
     candidate_project_client = create_project_client(candidate_config.get)
+    logger.info(
+        "Candidate project client endpoint: %s",
+        getattr(
+            getattr(candidate_project_client, "_config", None),
+            "endpoint",
+            "<unknown>",
+        ),
+    )
     candidate_chat_service = ChatService(
         settings=candidate_config.get,
         project_client=candidate_project_client,
     )
+    prod_project_client = get_project_client()
+    logger.info(
+        "Prod project client endpoint: %s",
+        getattr(
+            getattr(prod_project_client, "_config", None),
+            "endpoint",
+            "<unknown>",
+        ),
+    )
     prod_chat_service = ChatService(
-        project_client=get_project_client(),
+        project_client=prod_project_client,
     )
     chatagent_tools = ChatAgentTools(
         candidate_chat_service=candidate_chat_service,
@@ -150,7 +167,7 @@ async def main() -> None:
             "create_evolution_ado_mcp_tool failed to initialize, skipped"
         )
 
-    # Compaction provider — compact history before and after each turn.
+    # Compaction provider \u2014 compact history before and after each turn.
     compaction_provider = CompactionProvider(
         before_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=2),
         after_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=1),

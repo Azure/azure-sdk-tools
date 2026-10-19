@@ -13,7 +13,7 @@
 ### Bugs Fixed
 
 - Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support instead of abandoning a partially completed release.
-- Corrected the development guide's Coding Agent settings instructions to avoid a broken placeholder GitHub link.
+- Corrected development-guide links and Coding Agent settings instructions to use valid absolute, locale-neutral URLs instead of relative or placeholder links.
 
 ### Other Changes
 

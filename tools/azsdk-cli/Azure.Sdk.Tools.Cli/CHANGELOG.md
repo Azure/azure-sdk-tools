@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- `release-plan abandon` now accepts only `--release-plan-id`; `azsdk_abandon_release_plan` accepts only `releasePlanId`. The work item ID input is no longer supported for manual abandonment.
+
 ### Bugs Fixed
 
 - Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans are unchanged; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support instead of abandoning a partially completed release.

@@ -96,9 +96,11 @@ When testing is enabled, release plans will be automatically generated in the te
 
 ### Manual release-plan abandonment
 
+Use `azsdk release-plan abandon --release-plan-id <Release Plan ID>` or supply `releasePlanId` to `azsdk_abandon_release_plan`. Supply the user-facing Release Plan ID, not the Azure DevOps work item ID. Manual abandonment no longer accepts `--work-item-id` or `workItemId`; other commands retain their existing ID contracts.
+
 `azsdk release-plan abandon` and `azsdk_abandon_release_plan` refuse abandonment when the plan is finished, any SDK is recorded as Released, or any linked SDK PR has merged. Teams should request a language-exclusion exception for the unreleased languages and contact SDK Release Support instead of abandoning a partially completed release. There is no force or approval override input.
 
-Open PRs, drafts, and PRs closed without merging do not themselves block manual abandonment. Plans with no SDK links remain supported. The command validates canonical SDK PR URLs, reads current GitHub merge state rather than cached ADO PR statuses, rereads the plan, and uses an ADO revision precondition. Unreadable PRs, malformed data, or concurrent plan changes fail without a state write or automatic retry; already abandoned plans are successful no-ops. The GitHub reads and ADO write are not a cross-service atomic transaction. Monthly overdue cleanup retains its separate existing eligibility policy.
+Open PRs, drafts, and PRs closed without merging do not themselves block manual abandonment. Plans with no SDK links remain supported. The command reads the plan once (including Abandoned plans), validates canonical SDK PR URLs, reads current GitHub merge state rather than cached ADO PR statuses, and uses that snapshot's ADO revision precondition. Unreadable PRs, malformed data, or revision conflicts fail without a state write or automatic retry; already abandoned plans are successful no-ops. The GitHub reads and ADO write are not a cross-service atomic transaction. Monthly overdue cleanup retains its separate existing eligibility policy.
 
 ### Test with GitHub Coding Agent
 

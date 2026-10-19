@@ -337,7 +337,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon inactive release plans after one full overdue calendar month") { dryRunOpt },
             new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(getServiceDetailsCommandName, "Get service and product details (service tree ID, service ID, package display name) in service tree for TypeSpec project", GetServiceDetailsToolName) { typeSpecProjectOpt, },
-            new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan", AbandonReleasePlanToolName) { workItemIdOpt, releasePlanNumberOpt, },
+            new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan by Release Plan ID", AbandonReleasePlanToolName) { releasePlanNumberOpt, },
             new McpCommand(getKpiAttestationStatusCommandName, "Get KPI attestation status for a product by product ID and release plan type", GetKPIAttestationStatusToolName) { kpiProductIdOpt, releasePlanTypeOpt, kpiTypeSpecProjectPathOpt, kpiIsTestReleasePlanOpt, },
             new McpCommand(updateReleasePlanCommandName, "Update an existing release plan", UpdateReleasePlanToolName)
             {
@@ -410,7 +410,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 case getServiceDetailsCommandName:
                     return await GetProductByTypeSpecPath(commandParser.GetValue(typeSpecProjectOpt), ct);
                 case abandonReleasePlanCommandName:
-                    return await AbandonReleasePlan(workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt), ct: ct);
+                    return await AbandonReleasePlan(releasePlanId: commandParser.GetValue(releasePlanNumberOpt), ct: ct);
 
                 case getKpiAttestationStatusCommandName:
                     return await GetKPIAttestationStatus(commandParser.GetValue(kpiProductIdOpt), commandParser.GetValue(releasePlanTypeOpt), commandParser.GetValue(kpiTypeSpecProjectPathOpt), commandParser.GetValue(kpiIsTestReleasePlanOpt), ct);
@@ -640,93 +640,41 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// <summary>
         /// Abandons a release plan by updating its status to 'Abandoned'.
         /// </summary>
-        /// <param name="workItemId">The work item ID of the release plan (optional).</param>
-        /// <param name="releasePlanId">The release plan ID (optional).</param>
+        /// <param name="releasePlanId">The positive user-facing Release Plan ID, not the work item ID.</param>
         /// <returns>A response indicating success or failure of the operation.</returns>
-        /// <remarks>
-        /// Either workItemId or releasePlanId must be provided. If both are provided, workItemId takes precedence.
-        /// </remarks>
-        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by work item ID or release plan ID. Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support. Already abandoned plans are unchanged.")]
-        public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default)
+        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by Release Plan ID (not work item ID). Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support. Already abandoned plans are unchanged.")]
+        public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int releasePlanId = 0, CancellationToken ct = default)
         {
             try
             {
                 ct.ThrowIfCancellationRequested();
-                if (workItemId < 0 || releasePlanId < 0)
+                if (releasePlanId <= 0)
                 {
-                    return new ReleaseWorkflowResponse { ResponseError = "Work item ID and release plan ID must be positive when supplied." };
-                }
-                if (workItemId == 0 && releasePlanId == 0)
-                {
-                    return new ReleaseWorkflowResponse { ResponseError = "Either work item ID or release plan ID must be provided." };
+                    return new ReleaseWorkflowResponse { ResponseError = "A positive Release Plan ID is required to abandon a release plan." };
                 }
 
-                // Get the release plan to verify it exists
-                var releasePlan = workItemId != 0
-                    ? await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct)
-                    : await devOpsService.GetReleasePlanAsync(releasePlanId, ct);
+                var releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, includeAbandoned: true, ct);
+                ct.ThrowIfCancellationRequested();
 
                 if (releasePlan == null)
                 {
                     return new ReleaseWorkflowResponse { ResponseError = "Failed to find release plan." };
                 }
 
-                ct.ThrowIfCancellationRequested();
-                if (releasePlan.WorkItemId <= 0
-                    || (workItemId > 0 && releasePlan.WorkItemId != workItemId)
-                    || (workItemId == 0 && releasePlan.ReleasePlanId != releasePlanId))
-                {
-                    throw new InvalidOperationException("The retrieved release plan does not match the requested identity.");
-                }
                 if (string.Equals(releasePlan.Status, "Abandoned", StringComparison.OrdinalIgnoreCase))
                 {
                     return new ReleaseWorkflowResponse
                     {
                         Status = "Success",
-                        Details = [$"Release plan {releasePlan.WorkItemId} is already abandoned; no changes made."]
+                        Details = [$"Release plan {releasePlanId} is already abandoned; no changes made."]
                     };
                 }
 
-                ValidateManualAbandonment(releasePlan);
-                // Capture values, not the mutable service model, before awaiting the fresh read.
                 var targetId = releasePlan.WorkItemId;
                 var revision = releasePlan.Revision;
-                var planId = releasePlan.ReleasePlanId;
-                var status = releasePlan.Status;
-                var isTest = releasePlan.IsTestReleasePlan;
-                var pullRequests = GetManualAbandonmentPullRequests(releasePlan);
-                var freshPlan = await devOpsService.GetReleasePlanForWorkItemAsync(targetId, ct);
-                ct.ThrowIfCancellationRequested();
-                if (freshPlan == null || freshPlan.WorkItemId != targetId || freshPlan.ReleasePlanId != planId
-                    || freshPlan.Revision != revision || freshPlan.IsTestReleasePlan != isTest
-                    || !string.Equals(freshPlan.Status, status, StringComparison.OrdinalIgnoreCase))
+                if (!await IsEligibleToAbandonAsync(releasePlan, ct))
                 {
-                    throw new InvalidOperationException("The release plan changed during abandonment validation. No changes made; review the current plan before trying again.");
-                }
-                ValidateManualAbandonment(freshPlan);
-                var freshPullRequests = GetManualAbandonmentPullRequests(freshPlan);
-                if (!pullRequests.SetEquals(freshPullRequests))
-                {
-                    throw new InvalidOperationException("The linked SDK pull requests changed during abandonment validation. No changes made.");
-                }
-
-                // GitHub reads are live, independent of stored ADO PR statuses. This does not make
-                // a GitHub merge and an ADO state update a cross-service atomic transaction.
-                foreach (var url in freshPullRequests.Order(StringComparer.Ordinal))
-                {
-                    ct.ThrowIfCancellationRequested();
-                    var parts = new Uri(url).AbsolutePath.Trim('/').Split('/');
-                    var pr = await githubService.GetPullRequestAsync(parts[0], parts[1],
-                        int.Parse(parts[3], CultureInfo.InvariantCulture), ct).WaitAsync(ct);
-                    ct.ThrowIfCancellationRequested();
-                    if (pr == null || pr.State.Value is not (ItemState.Open or ItemState.Closed))
-                    {
-                        throw new InvalidOperationException($"Could not verify the current SDK pull request state for {url}. No changes made.");
-                    }
-                    if (pr.Merged)
-                    {
-                        throw new InvalidOperationException(ManualAbandonmentReleaseProtection);
-                    }
+                    throw new InvalidOperationException(ManualAbandonmentReleaseProtection);
                 }
 
                 // Update the work item status to "Abandoned"
@@ -739,15 +687,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(targetId, fieldsToUpdate, revision, ct);
                 ct.ThrowIfCancellationRequested();
 
-                if (updatedWorkItem == null || updatedWorkItem.Id != targetId
-                    || updatedWorkItem.Fields == null
-                    || !updatedWorkItem.Fields.TryGetValue("System.State", out var savedState)
-                    || !string.Equals(savedState?.ToString(), "Abandoned", StringComparison.OrdinalIgnoreCase))
+                if (updatedWorkItem == null)
                 {
                     logger.LogError("Failed to verify saved abandonment for release plan {WorkItemId}", releasePlan.WorkItemId);
                     return new ReleaseWorkflowResponse
                     {
-                        ResponseError = $"Failed to abandon release plan {releasePlan.WorkItemId}: work item update failed."
+                        ResponseError = $"Failed to abandon release plan {releasePlanId}: the state update failed."
                     };
                 }
                 logger.LogInformation("Successfully abandoned release plan {WorkItemId}", releasePlan.WorkItemId);
@@ -755,7 +700,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return new ReleaseWorkflowResponse
                 {
                     Status = "Success",
-                    Details = [$"Release plan {releasePlan.WorkItemId} has been successfully abandoned."]
+                    Details = [$"Release plan {releasePlanId} has been successfully abandoned."]
                 };
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -772,14 +717,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private const string ManualAbandonmentReleaseProtection = "Cannot abandon a release plan after any SDK pull request has merged or any SDK is recorded as Released. Request a language-exclusion exception for the unreleased languages and contact SDK Release Support.";
 
-        private static void ValidateManualAbandonment(ReleasePlanWorkItem plan)
+        /// <summary>
+        /// Checks one release-plan snapshot and live SDK PR states. Unverifiable data throws;
+        /// callers must use the snapshot revision for their guarded write without retrying.
+        /// </summary>
+        public async Task<bool> IsEligibleToAbandonAsync(ReleasePlanWorkItem plan, CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
+            ArgumentNullException.ThrowIfNull(plan);
             if (string.Equals(plan.Status, "Finished", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(plan.Status, "Abandoned", StringComparison.OrdinalIgnoreCase)
                 || plan.SDKInfo?.Any(sdk => string.Equals(sdk?.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)) == true)
             {
-                throw new InvalidOperationException(ManualAbandonmentReleaseProtection);
+                return false;
             }
-            if (plan.Revision <= 0 || plan.SDKInfo == null || plan.SDKInfo.Any(sdk => sdk == null))
+            if (plan.WorkItemId <= 0 || plan.Revision <= 0 || plan.SDKInfo == null || plan.SDKInfo.Any(sdk => sdk == null))
             {
                 throw new InvalidOperationException("Cannot verify the release plan revision or SDK details. No changes made.");
             }
@@ -787,6 +739,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 throw new InvalidOperationException("Cannot abandon a release plan with an unknown or inactive state. No changes made.");
             }
+            // Live GitHub checks and the guarded ADO write are not cross-service atomic.
+            foreach (var url in GetManualAbandonmentPullRequests(plan).Order(StringComparer.Ordinal))
+            {
+                ct.ThrowIfCancellationRequested();
+                var parts = new Uri(url).AbsolutePath.Trim('/').Split('/');
+                var pr = await githubService.GetPullRequestAsync(parts[0], parts[1],
+                    int.Parse(parts[3], CultureInfo.InvariantCulture), ct).WaitAsync(ct);
+                ct.ThrowIfCancellationRequested();
+                if (pr == null || pr.State.Value is not (ItemState.Open or ItemState.Closed))
+                {
+                    throw new InvalidOperationException($"Could not verify the current SDK pull request state for {url}. No changes made.");
+                }
+                if (pr.Merged)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static HashSet<string> GetManualAbandonmentPullRequests(ReleasePlanWorkItem plan)

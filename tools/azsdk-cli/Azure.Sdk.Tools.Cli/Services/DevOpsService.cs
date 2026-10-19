@@ -142,6 +142,11 @@ namespace Azure.Sdk.Tools.Cli.Services
     {
         public Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync(CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
+        /// <summary>
+        /// Resolves a unique positive Release Plan ID, optionally including Abandoned plans.
+        /// Closed and Duplicate plans remain excluded; the two-argument overload excludes Abandoned.
+        /// </summary>
+        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, bool includeAbandoned, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
@@ -285,11 +290,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             return releasePlan;
         }
 
-        public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
+        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
+        {
+            return GetReleasePlanAsync(releasePlanId, includeAbandoned: false, ct);
+        }
+
+        /// <inheritdoc cref="IDevOpsService.GetReleasePlanAsync(int, bool, CancellationToken)" />
+        public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, bool includeAbandoned, CancellationToken ct)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
-            // First find the API spec work item
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            var excludedStates = includeAbandoned ? "'Closed','Duplicate'" : "'Closed','Duplicate','Abandoned'";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ({excludedStates})";
             var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
             if (releasePlanWorkItems.Count == 0)
             {

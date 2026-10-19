@@ -16,15 +16,15 @@ stimuli:
       suite: versioning
       mode: trigger
     prompt: |
-      Plan the TypeSpec source changes only. Project analysis and intake are complete,
-      including user confirmation of the feature exclusions below. Retrieve and follow the
-      authoritative preview-after-preview versioning guide at
+      Plan the TypeSpec source changes only. Project analysis is complete, and all user
+      decisions are supplied below. Complete intake by grounding once in the authoritative
+      preview-after-preview versioning guide at
       https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/.
       The supplied main.tsp and employee.tsp are the relevant existing ARM declarations. Add
       2025-05-04-preview, exclude the preview's added age default, and carry all other
       features forward. Client configuration is explicitly opted out.
 
-      Use the files and retrieved document to build the source plan only; do not edit files,
+      Reuse that intake grounding and the files to build the source plan only; do not edit files,
       compile, or generate. Return JSON with: "versions": the ordered wire API versions after
       the change; "ageDeclaration": the complete planned age property including decorators;
       "oldAgeRetained": whether a renamed age companion remains; "workLocationVersion" and
@@ -48,15 +48,6 @@ stimuli:
             - azure-typespec-author
           disallowed:
             - azsdk-common-typespec-naming
-      - type: tool-calls
-        config:
-          required:
-            - name: ^web_fetch$
-              pattern: 02-preview-after-preview
-            - name: ^(view|powershell|bash|rg)$
-              pattern: main\.tsp|employee\.tsp
-          disallowed:
-            - name: ^(edit|create|apply_patch)$
       - &a4
         type: output-matches
         config:
@@ -90,15 +81,15 @@ stimuli:
       suite: versioning
       mode: forced
     prompt: |
-      @azure-typespec-author Plan the TypeSpec source changes only. Project analysis and intake are complete,
-      including user confirmation of the feature exclusions below. Retrieve and follow the
-      authoritative preview-after-preview versioning guide at
+      @azure-typespec-author Plan the TypeSpec source changes only. Project analysis is complete, and all user
+      decisions are supplied below. Complete intake by grounding once in the authoritative
+      preview-after-preview versioning guide at
       https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/.
       The supplied main.tsp and employee.tsp are the relevant existing ARM declarations. Add
       2025-05-04-preview, exclude the preview's added age default, and carry all other
       features forward. Client configuration is explicitly opted out.
 
-      Use the files and retrieved document to build the source plan only; do not edit files,
+      Reuse that intake grounding and the files to build the source plan only; do not edit files,
       compile, or generate. Return JSON with: "versions": the ordered wire API versions after
       the change; "ageDeclaration": the complete planned age property including decorators;
       "oldAgeRetained": whether a renamed age companion remains; "workLocationVersion" and
@@ -115,15 +106,15 @@ stimuli:
       suite: versioning
       mode: no-skill
     prompt: |
-      Plan the TypeSpec source changes only. Project analysis and intake are complete,
-      including user confirmation of the feature exclusions below. Retrieve and follow the
-      authoritative preview-after-preview versioning guide at
+      Plan the TypeSpec source changes only. Project analysis is complete, and all user
+      decisions are supplied below. Complete intake by grounding once in the authoritative
+      preview-after-preview versioning guide at
       https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/.
       The supplied main.tsp and employee.tsp are the relevant existing ARM declarations. Add
       2025-05-04-preview, exclude the preview's added age default, and carry all other
       features forward. Client configuration is explicitly opted out.
 
-      Use the files and retrieved document to build the source plan only; do not edit files,
+      Reuse that intake grounding and the files to build the source plan only; do not edit files,
       compile, or generate. Return JSON with: "versions": the ordered wire API versions after
       the change; "ageDeclaration": the complete planned age property including decorators;
       "oldAgeRetained": whether a renamed age companion remains; "workLocationVersion" and

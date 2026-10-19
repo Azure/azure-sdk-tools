@@ -94,17 +94,19 @@ The runtime command must list both `Microsoft.NETCore.App 8.x` and
 
 ### 2. Prepare MCP binaries, fixtures, and skills
 
+Run from the `evaluate` directory.
+
 #### Native Windows
 
 ```powershell
-node scripts/setup-environment.js --mcp-kind live | Invoke-Expression
-node scripts/prepare-skill-bundle.mjs
+node scripts\setup-environment.js --mcp-kind live | Invoke-Expression
+node scripts\prepare-skill-bundle.mjs
 $env:EVALUATE_USE_HOST_COPILOT_HOME = "1"
 ```
 
 #### Linux or WSL2
 
-From the `evaluate/` directory, prepare the live MCP:
+Prepare the live MCP:
 
 ```bash
 eval "$(node scripts/setup-environment.js --mcp-kind live)"
@@ -129,9 +131,11 @@ eval specs, fixtures, or graders. No-skill runs continue to use an empty skill d
 
 `evals/001014.eval.yaml` is a bounded source-planning regression for
 preview replacement and complete reversal of an excluded default-value bridge.
-It retrieves the authoritative versioning guide through `web_fetch` rather than
-grading a copied rule in the skill. It complements the live edit/compile
-coverage in `evals/001005.eval.yaml` and includes trigger, forced, and no-skill modes.
+It uses authoritative versioning grounding rather than grading a copied rule in the
+skill. Ground once during intake and reuse that evidence during planning; do not
+require a second knowledge lookup after completed intake. It complements the live
+edit/compile coverage in `evals/001005.eval.yaml` and includes trigger, forced, and
+no-skill modes.
 
 Naming cases follow the existing flat, numbered `evals/NNNNNN.eval.yaml` layout.
 Cases `007001` through `007008` compare the same task and output/file assertions
@@ -181,12 +185,12 @@ Native Windows:
 
 ```powershell
 vally eval `
-  --eval-spec evals/001001.eval.yaml `
+  --eval-spec evals\001001.eval.yaml `
   --tag mode=forced `
-  --skill-dir ../../../../artifacts/typespec-author-skills `
+  --skill-dir ..\..\..\..\artifacts\typespec-author-skills `
   --workers 1 `
-  --output-dir ./result-001001 `
-  --workspace ./debug-001001 `
+  --output-dir .\result-001001 `
+  --workspace .\debug-001001 `
   --verbose
 ```
 
@@ -236,13 +240,12 @@ Useful suites:
 
 The same domain names are available with `-trigger` and `-no-skill` suffixes.
 
-### 5. Run trigger mode with mock MCP
+### 5. Run trigger mode with live MCP
 
-Prepare the mock environment:
+Use the live environment and staged skill bundle prepared above; do not switch
+trigger runs to the mock MCP:
 
 ```bash
-eval "$(node scripts/setup-environment.js --mcp-kind mock)"
-node scripts/prepare-skill-bundle.mjs
 export EVALUATE_USE_HOST_COPILOT_HOME=1
 ```
 
@@ -258,8 +261,11 @@ vally eval \
   --verbose
 ```
 
-Setup changes eval files to `environment: azsdk-mcp-mock-local`. Do not commit that local override;
+Setup changes eval files to `environment: azsdk-mcp-local`. Do not commit that local override;
 restore `environment: azsdk-mcp` before committing.
+
+Use `--mcp-kind mock` only for isolated mock-server development. The benchmark's forced and trigger
+tracks default to the live MCP so they exercise the production tool surface.
 
 ### 6. Run a no-skill baseline
 
@@ -296,6 +302,13 @@ Each run writes:
 - `results.jsonl`: complete trial and grader data
 - `eval-results.md`: readable pass/fail summary
 - `azure-typespec-author-eval/**/events.jsonl`: executor events when session logs are kept
+
+Forced and trigger cases primarily use declarative file, compile, prompt, and skill-invocation
+graders. Only cases 001005 through 001008 retain tool-call assertions in those modes for
+validation and knowledge-route behavior; this exception does not extend to new 001014 or 007xxx
+cases. Tool-boundary coverage belongs in the dedicated naming and mock-workflow eval suites.
+No-skill cases retain their `tsp compile .` graders for edit scenarios; planning-only and read-only
+naming cases do not require compilation.
 
 | Symptom | Resolution |
 |---|---|

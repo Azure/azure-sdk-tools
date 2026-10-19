@@ -41,14 +41,11 @@ Defaults: never async → GET, LIST, HEAD. Default async → PUT, DELETE. Defaul
 Collect from user:
 
 1. **Target version** (e.g. `2026-01-01-preview` or `2026-01-01`)
-2. **Features to exclude**:
+2. **Features to exclude, Do not assume the user wants to carry over all features** — follow this procedure exactly:
    1. Read the latest version's `.tsp` files and enumerate all resources, operations, models, and properties.
-   2. Carry existing features forward unless the user identifies exclusions.
-   3. When the target version and requested changes are explicit, do not pause
-      to ask whether anything else should be excluded.
-   4. Ask about exclusions only when the request explicitly leaves that choice
-      open or project evidence reveals incompatible alternatives that could
-      change the versioned API surface.
+   2. Present the list to the user as a numbered checklist.
+   3. Ask: _"All features will be carried over to the new version. Are there any you want to exclude? List by number, or say 'none'."_
+   4. Wait for the user's response before proceeding.
 
 ---
 
@@ -66,7 +63,7 @@ Collect: target resource, operation type (CRUD, list, or custom action), operati
 
 ## 2.3 Confirm
 
-Summarize the resolved intake:
+Display and wait for user confirmation:
 
 ```
 Case:           [Name]
@@ -74,7 +71,3 @@ Target Version: [version]
 Changes:        [summary]
 Defaults:       [applied defaults]
 ```
-
-Do not wait for confirmation when the request and project evidence resolve the
-material choices. Ask only about an unresolved ambiguity that could change the
-wire contract or version semantics.

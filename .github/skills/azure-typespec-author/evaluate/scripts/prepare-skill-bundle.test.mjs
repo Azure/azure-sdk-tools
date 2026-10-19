@@ -95,7 +95,7 @@ test("missing naming dependency fails before changing the existing bundle", (t) 
   );
 });
 
-test("naming benchmark evals mount only staged skill definitions", () => {
+test("numbered naming cases compare task quality without mounting baseline skills", () => {
   const evalDirectory = path.join(
     repoRoot,
     ".github",
@@ -103,24 +103,53 @@ test("naming benchmark evals mount only staged skill definitions", () => {
     "azure-typespec-author",
     "evaluate",
     "evals",
-    "naming",
   );
-  for (const file of ["007001.eval.yaml", "routing.eval.yaml"]) {
+  const files = fs
+    .readdirSync(evalDirectory)
+    .filter((file) => /^007\d{3}\.eval\.yaml$/.test(file));
+  assert.equal(files.length, 14);
+  for (const file of files) {
     const content = fs.readFileSync(path.join(evalDirectory, file), "utf8");
-    assert.match(
-      content,
-      /artifacts\/typespec-author-skills\/azure-typespec-author/,
-    );
-    assert.match(
-      content,
-      /artifacts\/typespec-author-skills\/azsdk-common-typespec-naming/,
-    );
-    assert.doesNotMatch(content, /^\s*-\s+\.\.\/\.\.\/\.\.\s*$/m);
-    assert.doesNotMatch(
-      content,
-      /^\s*-\s+\.\.\/\.\.\/\.\.\/\.\.\/(?:azsdk-common-typespec-naming|azure-typespec-assessment|azsdk-common-generate-sdk-locally)\s*$/m,
-    );
+    assert.match(content, /^environment: azsdk-mcp$/m);
+    assert.doesNotMatch(content, /^\s*skills:/m);
+    assert.match(content, /^\s+mode: trigger$/m);
+    if (Number(file.slice(3, 6)) > 8) continue;
+    assert.match(content, /^\s+mode: forced$/m);
+    assert.match(content, /^\s+mode: no-skill$/m);
+    const baseline = content.slice(content.indexOf("    mode: no-skill"));
+    assert.doesNotMatch(baseline, /type: skill-invocation/);
+    assert.doesNotMatch(baseline, /pattern: .*naming.*\\\.md/);
+    assert.match(baseline, /graders:\s*\n/);
   }
+});
+
+test("shared eval discovery includes naming without overriding baseline skill selection", () => {
+  const config = fs.readFileSync(
+    path.join(
+      repoRoot,
+      ".github",
+      "skills",
+      "azure-typespec-author",
+      "evaluate",
+      ".vally.yaml",
+    ),
+    "utf8",
+  );
+  assert.doesNotMatch(config, /^\s*skills:/m);
+  assert.doesNotMatch(config, /evals\/naming\//);
+  assert.match(
+    config,
+    /naming-no-skill:\s+evals: \["evals\/\*\.eval\.yaml"\]\s+filter: \{ suite: naming, mode: no-skill \}/,
+  );
+  const pipeline = fs.readFileSync(
+    path.join(repoRoot, "eng", "pipelines", "azure-typespec-author-benchmark.yml"),
+    "utf8",
+  );
+  assert.doesNotMatch(pipeline, /evals\/naming\//);
+  assert.match(
+    pipeline,
+    /--skill-dir \$\(Build\.SourcesDirectory\)\/artifacts\/typespec-author-skills/,
+  );
 });
 
 test("SkillBranch overlays authoring and naming before bundle preparation", () => {

@@ -127,10 +127,19 @@ routing boundary cases under `artifacts/typespec-author-skills`. Forced and trig
 must use that bundle so trial workspaces receive only `SKILL.md` and references, never
 eval specs, fixtures, or graders. No-skill runs continue to use an empty skill directory.
 
-`evals/001014.eval.yaml` is a bounded, offline source-planning regression for
+`evals/001014.eval.yaml` is a bounded source-planning regression for
 preview replacement and complete reversal of an excluded default-value bridge.
-It complements the live edit/compile coverage in `evals/001005.eval.yaml` and
-does not require MCP binaries or installed TypeSpec fixture dependencies.
+It retrieves the authoritative versioning guide through `web_fetch` rather than
+grading a copied rule in the skill. It complements the live edit/compile
+coverage in `evals/001005.eval.yaml` and includes trigger, forced, and no-skill modes.
+
+Naming cases follow the existing flat, numbered `evals/NNNNNN.eval.yaml` layout.
+Cases `007001` through `007008` compare the same task and output/file assertions
+across trigger, forced, and no-skill modes. No-skill graders omit skill invocation
+and bundled-reference reads, and no eval explicitly mounts skills. The command's
+`--skill-dir` selects either the staged bundle or an empty baseline directory.
+Cases `007009` through `007014` are trigger-only routing checks; they do not
+measure baseline task quality.
 
 On a managed device that blocks `registry.npmjs.org`, set the approved feed before setup:
 
@@ -217,6 +226,7 @@ Useful suites:
 | `trigger` | All skill-trigger cases |
 | `naming-forced` | Optional client configuration planning and customization ownership |
 | `naming-trigger` | Authoring and naming-skill routing boundaries |
+| `naming-no-skill` | Naming task quality without installed skills |
 | `versioning-forced` | Versioning forced cases |
 | `armtemplate-forced` | ARM forced cases |
 | `longrunningoperation-forced` | LRO forced cases |
@@ -224,8 +234,7 @@ Useful suites:
 | `warning-forced` | Warning forced cases |
 | `dataplane-forced` | Data-plane forced cases |
 
-The same domain names are available with `-trigger` and `-no-skill` suffixes except for the
-naming suites, which intentionally do not run in the no-skill baseline.
+The same domain names are available with `-trigger` and `-no-skill` suffixes.
 
 ### 5. Run trigger mode with mock MCP
 
@@ -294,6 +303,7 @@ Each run writes:
 | WSL resolves Vally from `/mnt/c` | Install Vally and Node inside WSL; remove Windows paths from the WSL PATH |
 | Missing `Microsoft.AspNetCore.App 8.x` | Install `aspnetcore-runtime-8.0` inside WSL |
 | `sessionFs.setProvider` | Run with `--workers 1` |
+| `Session filesystem path escapes root` on native Windows | Use Linux or WSL2 for Vally execution; lint and fixture tests can still run natively |
 | `require is not defined in ES module scope` | Ensure evals use `check-node-dependencies.cjs` |
 | Compiler reports TypeSpec 1.8.0 | Rerun setup through `eval`; verify fixture `.bin` is first on PATH |
 | pnpm symlink returns `EPERM` | Move the checkout from `/mnt/c` or `/mnt/d` to the WSL filesystem |
@@ -313,7 +323,7 @@ Local setup rewrites only the root `environment:` entry in each eval file. Resto
 ## Pipeline
 
 The manual benchmark pipeline is `eng/pipelines/azure-typespec-author-benchmark.yml`. It builds the
-selected MCP, stages the two-skill bundle, generates area-based forced and trigger shard matrices,
+selected MCP, stages authoring/naming skills and routing competitors, generates area-based forced and trigger shard matrices,
 runs each area, publishes result/debug artifacts, and produces separate summaries.
 
 | Parameter | Purpose |

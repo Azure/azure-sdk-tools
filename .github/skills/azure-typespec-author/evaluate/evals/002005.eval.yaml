@@ -90,13 +90,13 @@ stimuli:
         type: "file-matches"
         name: "file-matches-visibility"
         config:
-          pattern: '@visibility\(Lifecycle\.Read\)|DefaultProvisioningStateProperty'
+          pattern: '@visibility\(Lifecycle\.Read\)'
           path: "*.tsp"
       - &file_matches_provisioning_state
         type: "file-matches"
         name: "file-matches-provisioning-state"
         config:
-          pattern: "ResourceProvisioningState|DefaultProvisioningStateProperty"
+          pattern: "ResourceProvisioningState"
           path: "*.tsp"
       - &file_matches_create_operation
         type: "file-matches"

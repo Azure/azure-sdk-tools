@@ -1,84 +1,154 @@
-name: azure-typespec-author-preview-planning-eval
+name: azure-typespec-author-eval
 description: Preview replacement and excluded-default source planning regression.
 type: capability
 area: versioning
-environment:
-  skills:
-    - ../../../../../artifacts/typespec-author-skills/azure-typespec-author
-  files:
-    - src: ../fixtures/001005-version-add-preview-after-preview/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/001005-version-add-preview-after-preview/employee.tsp
-      dest: employee.tsp
-tags:
-  area: azure-typespec-author
-  suite: versioning
-  mode: forced
+environment: azsdk-mcp
 defaults:
   runs: 1
-  timeout: "180s"
+  timeout: 660s
   model: gpt-5.6-sol
   executor: copilot-sdk
 scoring:
-  threshold: 1.0
+  threshold: 1
 stimuli:
-  - name: 001014-preview-replacement-reverses-excluded-default
+  - name: 001014-preview-replacement-reverses-excluded-default-trigger
+    tags:
+      suite: versioning
+      mode: trigger
     prompt: |
-      Invoke azure-typespec-author for Step 3 source planning only. Project
-      analysis, intake, and grounding from the authoritative preview-after-preview
-      versioning guide are complete. The supplied main.tsp and employee.tsp are
-      the relevant existing ARM declarations. Add 2025-05-04-preview, exclude
-      the preview's added age default, and carry all other features forward.
-      Client configuration is explicitly opted out.
+      Plan the TypeSpec source changes only. Project analysis and intake are complete,
+      including user confirmation of the feature exclusions below. Retrieve and follow the
+      authoritative preview-after-preview versioning guide at
+      https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/.
+      The supplied main.tsp and employee.tsp are the relevant existing ARM declarations. Add
+      2025-05-04-preview, exclude the preview's added age default, and carry all other
+      features forward. Client configuration is explicitly opted out.
 
-      Use the files and bundled references to build the source plan only; do
-      not edit files, fetch network content, call MCP, compile, or generate.
-      Return JSON with:
-      "versions": the ordered wire API versions after the change;
-      "ageDeclaration": the complete planned age property including decorators;
-      "oldAgeRetained": whether a renamed age companion remains;
-      "workLocationVersion" and "assetsTypeChangeVersion": the planned version
-      decorator arguments as wire API versions;
-      "exampleVersions": version folders to retain under the TypeSpec project's
-      examples directory (all existing version folders currently match the enum);
-      "applied": whether changes have been applied.
-    constraints:
+      Use the files and retrieved document to build the source plan only; do not edit files,
+      compile, or generate. Return JSON with: "versions": the ordered wire API versions after
+      the change; "ageDeclaration": the complete planned age property including decorators;
+      "oldAgeRetained": whether a renamed age companion remains; "workLocationVersion" and
+      "assetsTypeChangeVersion": the planned version decorator arguments as wire API versions;
+      "exampleVersions": version folders to retain under the TypeSpec project's examples
+      directory (all existing version folders currently match the enum); "applied": whether
+      changes have been applied.
+    environment:
+      files: &a1
+        - src: ../fixtures/001005-version-add-preview-after-preview/main.tsp
+          dest: main.tsp
+        - src: ../fixtures/001005-version-add-preview-after-preview/employee.tsp
+          dest: employee.tsp
+    constraints: &a2
       max_turns: 14
       max_tokens: 20000
-    graders:
+    graders: &a3
       - type: skill-invocation
         config:
-          required: [azure-typespec-author]
-          disallowed: [azsdk-common-typespec-naming]
+          required:
+            - azure-typespec-author
+          disallowed:
+            - azsdk-common-typespec-naming
       - type: tool-calls
         config:
           required:
-            - name: "^(view|powershell|bash|rg)$"
-              pattern: "authoring-plan\\.md"
-              result: "(?is)replace the latest preview.*remove both bridged declarations"
-            - name: "^(view|powershell|bash|rg)$"
-              pattern: "main\\.tsp|employee\\.tsp"
+            - name: ^web_fetch$
+              pattern: 02-preview-after-preview
+            - name: ^(view|powershell|bash|rg)$
+              pattern: main\.tsp|employee\.tsp
           disallowed:
-            - name: "azsdk_"
-            - name: "^(edit|create|apply_patch|web_fetch|web_search)$"
-      - type: output-matches
+            - name: ^(edit|create|apply_patch)$
+      - &a4
+        type: output-matches
         config:
           pattern: '"versions"\s*:\s*\[\s*"2021-10-01"\s*,\s*"2025-05-04-preview"\s*\]'
-      - type: output-matches
+      - &a5
+        type: output-matches
         config:
           pattern: '"ageDeclaration"\s*:\s*"(?:/\*\*[^"]*\*/(?:\\[rn]|\s)*)?age\?\s*:\s*int32\s*;"'
-      - type: output-matches
+      - &a6
+        type: output-matches
         config:
           pattern: '"oldAgeRetained"\s*:\s*false'
-      - type: output-matches
+      - &a7
+        type: output-matches
         config:
           pattern: '"workLocationVersion"\s*:\s*"2025-05-04-preview"'
-      - type: output-matches
+      - &a8
+        type: output-matches
         config:
           pattern: '"assetsTypeChangeVersion"\s*:\s*"2025-05-04-preview"'
-      - type: output-matches
+      - &a9
+        type: output-matches
         config:
           pattern: '"exampleVersions"\s*:\s*\[\s*"2021-10-01"\s*,\s*"2025-05-04-preview"\s*\]'
-      - type: output-matches
+      - &a10
+        type: output-matches
         config:
           pattern: '"applied"\s*:\s*false'
+  - name: 001014-preview-replacement-reverses-excluded-default-forced
+    tags:
+      suite: versioning
+      mode: forced
+    prompt: |
+      @azure-typespec-author Plan the TypeSpec source changes only. Project analysis and intake are complete,
+      including user confirmation of the feature exclusions below. Retrieve and follow the
+      authoritative preview-after-preview versioning guide at
+      https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/.
+      The supplied main.tsp and employee.tsp are the relevant existing ARM declarations. Add
+      2025-05-04-preview, exclude the preview's added age default, and carry all other
+      features forward. Client configuration is explicitly opted out.
+
+      Use the files and retrieved document to build the source plan only; do not edit files,
+      compile, or generate. Return JSON with: "versions": the ordered wire API versions after
+      the change; "ageDeclaration": the complete planned age property including decorators;
+      "oldAgeRetained": whether a renamed age companion remains; "workLocationVersion" and
+      "assetsTypeChangeVersion": the planned version decorator arguments as wire API versions;
+      "exampleVersions": version folders to retain under the TypeSpec project's examples
+      directory (all existing version folders currently match the enum); "applied": whether
+      changes have been applied.
+    environment:
+      files: *a1
+    constraints: *a2
+    graders: *a3
+  - name: 001014-preview-replacement-reverses-excluded-default-no-skill
+    tags:
+      suite: versioning
+      mode: no-skill
+    prompt: |
+      Plan the TypeSpec source changes only. Project analysis and intake are complete,
+      including user confirmation of the feature exclusions below. Retrieve and follow the
+      authoritative preview-after-preview versioning guide at
+      https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/.
+      The supplied main.tsp and employee.tsp are the relevant existing ARM declarations. Add
+      2025-05-04-preview, exclude the preview's added age default, and carry all other
+      features forward. Client configuration is explicitly opted out.
+
+      Use the files and retrieved document to build the source plan only; do not edit files,
+      compile, or generate. Return JSON with: "versions": the ordered wire API versions after
+      the change; "ageDeclaration": the complete planned age property including decorators;
+      "oldAgeRetained": whether a renamed age companion remains; "workLocationVersion" and
+      "assetsTypeChangeVersion": the planned version decorator arguments as wire API versions;
+      "exampleVersions": version folders to retain under the TypeSpec project's examples
+      directory (all existing version folders currently match the enum); "applied": whether
+      changes have been applied.
+    environment:
+      files: *a1
+    constraints: *a2
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: ^web_fetch$
+              pattern: 02-preview-after-preview
+            - name: ^(view|powershell|bash|rg)$
+              pattern: main\.tsp|employee\.tsp
+          disallowed:
+            - name: ^(edit|create|apply_patch)$
+      - *a4
+      - *a5
+      - *a6
+      - *a7
+      - *a8
+      - *a9
+      - *a10
+version: "1.0"

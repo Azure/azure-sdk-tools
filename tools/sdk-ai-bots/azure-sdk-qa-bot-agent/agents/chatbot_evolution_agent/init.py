@@ -99,27 +99,11 @@ async def main() -> None:
     monitor_tools = MonitorTools()
     conversation_tools = ConversationTools()
     candidate_project_client = create_project_client(candidate_config.get)
-    logger.info(
-        "Candidate project client endpoint: %s",
-        getattr(
-            getattr(candidate_project_client, "_config", None),
-            "endpoint",
-            "<unknown>",
-        ),
-    )
     candidate_chat_service = ChatService(
         settings=candidate_config.get,
         project_client=candidate_project_client,
     )
     prod_project_client = get_project_client()
-    logger.info(
-        "Prod project client endpoint: %s",
-        getattr(
-            getattr(prod_project_client, "_config", None),
-            "endpoint",
-            "<unknown>",
-        ),
-    )
     prod_chat_service = ChatService(
         project_client=prod_project_client,
     )

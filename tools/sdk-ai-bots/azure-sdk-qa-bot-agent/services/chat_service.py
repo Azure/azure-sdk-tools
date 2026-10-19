@@ -183,7 +183,7 @@ class ChatService:
         conversation_items.extend(additional_items)
 
         agent_ref: dict = {
-            "name": agent.name,
+            "name": agent_name,
             "version": agent.version,
             "type": AgentReferenceType.agent_reference.value,
         }
@@ -659,7 +659,7 @@ class ChatService:
         """Unwrap a tool output to the innermost JSON string.
 
         The hosted-agent output is typically double-serialised:
-        ``'["{\\"key\\": \\"value\\"}"]'`` → ``'{"key": "value"}'``.
+        ``'["{\\\'key\\\': \\\'value\\\'}"]\'`` \u2192 ``'{"key": "value"}'``.
         This peels off outer layers until it reaches the JSON object string
         that Pydantic's ``model_validate_json`` can parse directly.
         """
@@ -729,7 +729,7 @@ class ChatService:
         """Detect the routed tenant from load_skill calls.
 
         When the agent calls ``load_skill("<skill-name>")``, map the skill
-        name back to a tenant ID using the reverse skill→tenant map.
+        name back to a tenant ID using the reverse skill\u2192tenant map.
         """
         if not items:
             return None
@@ -748,7 +748,7 @@ class ChatService:
                     tenant_id = skill_to_tenant.get(skill_name)
                     if tenant_id:
                         logger.info(
-                            "Routed via skill %s → tenant %s", skill_name, tenant_id
+                            "Routed via skill %s \u2192 tenant %s", skill_name, tenant_id
                         )
                         return tenant_id
                 except (json.JSONDecodeError, AttributeError):

@@ -477,7 +477,7 @@ class ChatbotEvolutionAgentService:
                 f"Chatbot evolution agent '{agent_name}' "
                 f"(version={agent_version or 'latest'}) not found in AI Foundry."
             )
-        return FoundryAgentReference(name=agent.name, version=agent.version)
+        return FoundryAgentReference(name=agent_name, version=agent.version)
 
     async def _invoke_agent(self, payload: ChatbotEvolutionAgentInput) -> str:
         """Call the hosted Chatbot Evolution Agent and return its JSON text."""

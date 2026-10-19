@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Azure.SDK.ChangelogGen.Compare;
 using Azure.SDK.ChangelogGen.Utilities;
 
 namespace Azure.SDK.ChangelogGen.Tests
@@ -69,7 +70,7 @@ namespace Azure.SDK.ChangelogGen.Tests
                 { "apiVersions": { "Microsoft.ApiCenter": "2024-06-01-preview" } }
                 """;
 
-            Assert.IsNull(Program.CompareApiVersions(content, content));
+            Assert.AreEqual(0, Program.CompareApiVersions(content, content).Count);
         }
 
         [TestMethod]
@@ -82,9 +83,10 @@ namespace Azure.SDK.ChangelogGen.Tests
                 { "apiVersions": { "Microsoft.ApiCenter": "2023-04-01" } }
                 """;
 
-            var change = Program.CompareApiVersions(current, baseline);
+            var changes = Program.CompareApiVersions(current, baseline);
 
-            Assert.IsNotNull(change);
+            Assert.AreEqual(1, changes.Count);
+            StringValueChange change = changes[0];
             Assert.AreEqual("Microsoft.ApiCenter: 2023-04-01", change.OldValue);
             Assert.AreEqual("Microsoft.ApiCenter: 2024-06-01-preview", change.NewValue);
         }

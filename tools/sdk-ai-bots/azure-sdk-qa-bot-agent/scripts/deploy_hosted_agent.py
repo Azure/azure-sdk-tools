@@ -306,12 +306,8 @@ def main() -> None:
         if _wait_for_version_active(project, agent.name, agent_version):
             print(f"Done — agent {agent.name} v{agent_version} is active.")
         else:
-            if branch is not None:
-                raise RuntimeError(
-                    f"Agent {agent.name} v{agent_version} did not reach active status."
-                )
-            print(
-                f"WARNING: Agent {agent.name} v{agent_version} did not reach active status. "
+            raise RuntimeError(
+                f"Agent {agent.name} v{agent_version} did not reach active status. "
                 "Check the Azure portal or run: az rest --method GET "
                 f'--url "{project_endpoint}/agents/{agent.name}/versions/{agent_version}" '
                 '--resource "https://ai.azure.com"'

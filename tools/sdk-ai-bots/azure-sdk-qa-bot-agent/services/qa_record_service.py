@@ -209,9 +209,15 @@ class QARecordService:
         if not tenant_id:
             return None
 
-        sorted_items = sorted(items, key=lambda m: m.created_at)
-        first_message = sorted_items[0] if sorted_items else None
-        last_message = sorted_items[-1] if sorted_items else None
+        ordered = sorted(items, key=lambda m: m.created_at)
+        now = _now()
+        has_expert_reply = any(
+            m.sender_role == "user"
+            and getattr(m, "sender_id", None)
+            and m.sender_id != ordered[0].sender_id
+            for m in ordered
+            if m.sender_role == "user"
+        )
 
         return QARecord(
             id=QARecord.build_id(conversation_type, conversation_id),
@@ -220,12 +226,14 @@ class QARecordService:
             conversation_type=conversation_type,
             channel_id=QARecordService._channel_key(items, conversation_id),
             message_link=QARecordService._message_link(items),
-            conversation_created_at=first_message.created_at if first_message else None,
-            last_activity_at=last_message.created_at if last_message else None,
-            message_count=len(sorted_items),
             qa_status=QAStatus.ongoing,
-            verdict=BotAnswerVerdict.Unknown,
-            updated_at=_now(),
+            has_expert_reply=has_expert_reply,
+            message_count=len(ordered),
+            conversation_created_at=ordered[0].created_at if ordered else None,
+            last_activity_at=ordered[-1].created_at if ordered else None,
+            first_seen_at=now,
+            created_at=now,
+            updated_at=now,
         )
 
     @staticmethod
@@ -233,7 +241,7 @@ class QARecordService:
         items: Sequence[ConversationMessageItem],
         conversation_id: str | None = None,
     ) -> str | None:
-        """Resolve channel identity for channel-level exclusion.
+        """Derive the Teams channel id a thread belongs to.
 
         Prefers a message's ``extra_info.channel_id`` and falls back to the
         channel segment of ``conversation_id`` (everything before the
@@ -260,16 +268,13 @@ class QARecordService:
         return None
 
     @staticmethod
-    def _message_link(
-        items: Sequence[ConversationMessageItem],
-    ) -> str | None:
-        """Return the first message link found in the items."""
-        for m in items:
-            if m.extra_info and m.extra_info.message_link:
-                return m.extra_info.message_link
+    def _message_link(items: Sequence[ConversationMessageItem]) -> str | None:
+        """Prefer a stored Teams permalink from any message's extra_info."""
+        for m in sorted(items, key=lambda x: x.created_at):
+            link = getattr(m.extra_info, "message_link", None) if m.extra_info else None
+            if link:
+                return link
         return None
-
-    # -- Inactivity auto-close ---------------------------------------------
 
     async def close_inactive_threads(
         self,
@@ -277,20 +282,14 @@ class QARecordService:
         tenant_id: str | None = None,
         excluded_channels: set[str] | None = None,
     ) -> int:
-        """Mark long-inactive ongoing threads as finished/correct.
-
-        Threads without any message activity for at least
-        ``_INACTIVE_THREAD_TIMEOUT`` are closed without Agent review.
-        Records that already have feedback (Agent has started work) are
-        skipped, as are records in excluded channels.
-        """
-        excluded_channels = excluded_channels or set()
-        conversations = ConversationService()
+        """Auto-close inactive ongoing threads regardless of user feedback."""
         now = _now()
         cutoff = now - _INACTIVE_THREAD_TIMEOUT
+        excluded_channels = excluded_channels or set()
         docs = await query_qa_records_by_qa_status(
             qa_status=QAStatus.ongoing.value, tenant_id=tenant_id
         )
+        conversations = ConversationService()
         closed = 0
         for doc in docs:
             record = QARecord.from_cosmos(doc)
@@ -298,14 +297,19 @@ class QARecordService:
                 record.qa_status != QAStatus.ongoing
                 or record.feedback is not None
                 or self.channel_key_of(record) in excluded_channels
+                or (
+                    record.last_activity_at is not None
+                    and record.last_activity_at > cutoff
+                )
             ):
                 continue
-            try:
-                messages = await conversations.get_messages_by_conversation_id(
-                    conversation_id=record.conversation_id,
-                    conversation_type=record.conversation_type,
-                )
-            except Exception:
+
+            # Verify the actual transcript before relying on possibly stale metadata.
+            messages = await conversations.get_messages_by_conversation_id(
+                conversation_id=record.conversation_id,
+                conversation_type=record.conversation_type,
+            )
+            if not messages:
                 logger.warning(
                     "Cannot auto-close QA record %s: conversation unavailable",
                     record.id,

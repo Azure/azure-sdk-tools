@@ -40,6 +40,7 @@ from azure.ai.projects.models import (
     RaiConfig,
 )
 from azure.identity import AzureCliCredential
+from azure.core.exceptions import ResourceNotFoundError
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -78,7 +79,7 @@ def _wait_for_version_active(
 ) -> bool:
     """Poll until the hosted agent version reaches 'active' status.
 
-    Uses the SDK (``project.agents.get``) instead of raw ``az rest`` so that
+    Uses the SDK (``project.agents.get_version``) instead of raw ``az rest`` so that
     authentication, api-version, and response parsing are handled
     automatically.
 
@@ -91,42 +92,20 @@ def _wait_for_version_active(
     )
     deadline = time.time() + timeout
     while time.time() < deadline:
-        try:
-            info = project.agents.get(agent_name)
-            latest = info.versions.latest if info.versions else None
-            if latest is None:
-                print("  WARNING: No version information returned — retrying...")
-                time.sleep(poll_interval)
-                continue
-
-            if str(latest.version) != agent_version:
-                print(
-                    f"  Latest version is {latest.version}, waiting for {agent_version}..."
-                )
-                time.sleep(poll_interval)
-                continue
-
-            # Try known attribute names for status
-            status = ""
-            for attr in ("provisioning_state", "provisioningState", "status"):
-                val = getattr(latest, attr, None)
-                if val:
-                    # Enum str() may produce "enumclass.value" — extract
-                    # the trailing segment after the last dot.
-                    raw = str(val).lower()
-                    status = raw.rsplit(".", 1)[-1]
-                    break
-
-            if status in ("active", "succeeded"):
-                print(f"  Version status is '{status}'.")
-                return True
-            if status in ("failed", "error", "deleted"):
-                print(f"  Version entered terminal state: '{status}'.")
-                return False
-
-            print(f"  Status: {status or 'unknown'} — retrying in {poll_interval}s...")
-        except Exception as exc:
-            print(f"  WARNING: Failed to check version status: {exc}")
+        info = project.agents.get_version(agent_name=agent_name, agent_version=agent_version)
+        status = ""
+        for attr in ("provisioning_state", "provisioningState", "status"):
+            val = getattr(info, attr, None)
+            if val:
+                status = str(val).lower().rsplit(".", 1)[-1]
+                break
+        if status in ("active", "succeeded"):
+            print(f"  Version status is '{status}'.")
+            return True
+        if status in ("failed", "error", "deleting", "deleted", "canceled", "cancelled"):
+            print(f"  Version entered terminal state: '{status}'.")
+            return False
+        print(f"  Status: {status or 'unknown'} — retrying in {poll_interval}s...")
 
         time.sleep(poll_interval)
 
@@ -150,6 +129,10 @@ def main() -> None:
         help="Override App Configuration endpoint",
     )
     args = parser.parse_args()
+
+    branch = None
+    if os.environ.get("ENABLE_AI_FOUNDRY_AGENT_ROUTING") == "true":
+        branch = os.environ["BUILD_SOURCEBRANCH"].removeprefix("refs/heads/")
 
     asyncio.run(app_config.init())
 
@@ -267,7 +250,7 @@ def main() -> None:
         try:
             existing = project.agents.get(image_name)
             latest_version = int(existing.versions.latest.version)
-        except Exception:
+        except ResourceNotFoundError:
             latest_version = 0
         next_version = str(latest_version + 1)
 
@@ -288,6 +271,10 @@ def main() -> None:
         rai_config = RaiConfig(rai_policy_name=rai_policy_id)
         print(f"  Guardrail: {rai_policy_id}")
 
+        metadata = {"enableVnextExperience": "true"}
+        if branch is not None:
+            metadata["branchname"] = branch
+
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(
@@ -302,7 +289,7 @@ def main() -> None:
                 environment_variables=env_vars,
                 rai_config=rai_config,
             ),
-            metadata={"enableVnextExperience": "true"},
+            metadata=metadata,
         )
         print(f"Created — agent: {agent.name}, version: {agent.version}")
         if str(agent.version) != next_version:
@@ -319,14 +306,15 @@ def main() -> None:
         if _wait_for_version_active(project, agent.name, agent_version):
             print(f"Done — agent {agent.name} v{agent_version} is active.")
         else:
-            print(
-                f"WARNING: Agent {agent.name} v{agent_version} did not reach active status. "
+            raise RuntimeError(
+                f"Agent {agent.name} v{agent_version} did not reach active status. "
                 "Check the Azure portal or run: az rest --method GET "
                 f'--url "{project_endpoint}/agents/{agent.name}/versions/{agent_version}" '
                 '--resource "https://ai.azure.com"'
             )
     finally:
         project.close()
+        credential.close()
 
 
 if __name__ == "__main__":

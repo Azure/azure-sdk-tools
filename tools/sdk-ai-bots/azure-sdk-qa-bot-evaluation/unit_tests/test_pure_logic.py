@@ -485,6 +485,47 @@ def test_record_run_result_empty_rows_no_crash():
     assert recorded[-1]["total_evals"] == 0
 
 
+def test_agent_branch_prefix_preserves_evaluation_query():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    session = MagicMock()
+    session.__aenter__ = AsyncMock(return_value=session)
+    session.__aexit__ = AsyncMock(return_value=False)
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok"}),
+    })())
+    for branch in ("feature/Case/path", "refs/heads/feature/Case/path"):
+        with patch.dict(os.environ, {"EVAL_AGENT_BRANCH": branch}):
+            collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+        for tenant in (None, "azure_mcp_server"):
+            asyncio.run(collector._call_bot_api("unchanged query", tenant, session))
+            request = session.post.call_args.kwargs
+            assert request["headers"] == {"Content-Type": "application/json; charset=utf8"}
+            assert request["json"]["message"]["content"] == "[branch:feature/Case/path] unchanged query"
+            assert request["json"]["tenant_id"] == (tenant or "general_qa_bot")
+    records = [{"testcase": "branch-test", "query": "unchanged query", "ground_truth": "expected"}]
+    with patch("aiohttp.ClientSession", return_value=session):
+        results = collector.collect(records, None)
+    assert results[0]["query"] == records[0]["query"] == "unchanged query"
+
+
+def test_without_eval_branch_keeps_message_unchanged():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    with patch.dict(os.environ, {"BUILD_SOURCEBRANCH": "refs/heads/main"}, clear=True):
+        collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+    session = MagicMock()
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok"}),
+    })())
+    asyncio.run(collector._call_bot_api("unchanged query", None, session))
+    assert session.post.call_args.kwargs["json"]["message"]["content"] == "unchanged query"
+
+
 def _run_all() -> int:
     funcs = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

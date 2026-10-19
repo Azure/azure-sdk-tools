@@ -79,6 +79,8 @@ _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
 
 class AgentRoutingError(ValueError):
+    # Default to 422 for invalid routing input, consistent with FastAPI validation;
+    # disabled routing and missing deployments explicitly use 403 and 404.
     def __init__(self, message: str, status_code: int = 422) -> None:
         super().__init__(message)
         self.status_code = status_code

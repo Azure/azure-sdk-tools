@@ -18,7 +18,10 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 `azsdk-common-typespec-naming` owns the shared naming rules for TypeSpec authoring
 and standalone naming review. Install it alongside authoring; it is distributed
 by the existing shared-skill sync. Guidance/review are read-only; authorized
-customizations use `azsdk_customized_code_update` with `SpecInputs`.
+name-only customizations directly edit language-scoped overrides in `client.tsp`,
+preserving shipped names, other languages, and wire contracts. General SDK
+customization remains owned by `azsdk-common-generate-sdk-locally` and its
+`azsdk_customized_code_update` workflow.
 
 | Skill                                                                                         | Triggers                                                                      | Description                                                   |
 | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |

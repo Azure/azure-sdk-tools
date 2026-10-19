@@ -100,7 +100,6 @@ Run from the `evaluate` directory.
 
 ```powershell
 node scripts\setup-environment.js --mcp-kind live | Invoke-Expression
-node scripts\prepare-skill-bundle.mjs
 $env:EVALUATE_USE_HOST_COPILOT_HOME = "1"
 ```
 
@@ -110,7 +109,6 @@ Prepare the live MCP:
 
 ```bash
 eval "$(node scripts/setup-environment.js --mcp-kind live)"
-node scripts/prepare-skill-bundle.mjs
 ```
 
 The setup command:
@@ -123,25 +121,27 @@ The setup command:
 6. Exports `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
 7. Prepends the fixture `node_modules/.bin` to PATH so graders use its TypeSpec compiler.
 
-`prepare-skill-bundle.mjs` stages `azure-typespec-author`, its
-`azsdk-common-typespec-naming` dependency, and the assessment/generation skills used by
-routing boundary cases under `artifacts/typespec-author-skills`. Forced and trigger runs
-must use that bundle so trial workspaces receive only `SKILL.md` and references, never
-eval specs, fixtures, or graders. No-skill runs continue to use an empty skill directory.
+`.vally.yaml` declares the authoring and shared naming skills, plus the
+assessment/generation competitors used by routing-boundary cases. Vally mounts
+these inside each trial so reference reads use accessible workspace paths.
+Environment setup removes evaluator content from the mounted copies before the
+agent starts; only `SKILL.md` and references remain.
 
-`evals/001014.eval.yaml` is a bounded source-planning regression for
-preview replacement and complete reversal of an excluded default-value bridge.
-It uses authoritative versioning grounding rather than grading a copied rule in the
-skill. Ground once during intake and reuse that evidence during planning; do not
-require a second knowledge lookup after completed intake. It complements the live
-edit/compile coverage in `evals/001005.eval.yaml` and includes trigger, forced, and
-no-skill modes.
+The existing shard runner selects the mode without modifying the checked-in
+configuration. It clears explicit skill mounts for no-skill runs. When `SkillBranch`
+predates shared naming, the overlay removes candidate naming sources and the runner
+omits that absent dependency only if the selected authoring skill does not require it.
+A missing dependency declared by the selected skill remains an error.
+The runner materializes only definitions and references, avoiding copies of
+the authoring fixtures and their installed dependencies into every trial.
 
 Naming cases follow the existing flat, numbered `evals/NNNNNN.eval.yaml` layout.
 Cases `007001` through `007008` compare the same task and output/file assertions
 across trigger, forced, and no-skill modes. No-skill graders omit skill invocation
-and bundled-reference reads, and no eval explicitly mounts skills. The command's
-`--skill-dir` selects either the staged bundle or an empty baseline directory.
+and bundled-reference reads. Trigger continuations may dispatch directly to naming;
+forced cases still require the authoring handoff. Opt-out and documentation-only
+continuations must not invoke naming. Output and file assertions are unchanged
+across modes.
 Cases `007009` through `007014` are trigger-only routing checks; they do not
 measure baseline task quality.
 
@@ -150,7 +150,6 @@ On a managed device that blocks `registry.npmjs.org`, set the approved feed befo
 ```bash
 export npm_config_registry="https://packagefeedproxy.microsoft.io/npm/"
 eval "$(node scripts/setup-environment.js --mcp-kind live)"
-node scripts/prepare-skill-bundle.mjs
 ```
 
 Verify the prepared environment:
@@ -187,7 +186,6 @@ Native Windows:
 vally eval `
   --eval-spec evals\001001.eval.yaml `
   --tag mode=forced `
-  --skill-dir ..\..\..\..\artifacts\typespec-author-skills `
   --workers 1 `
   --output-dir .\result-001001 `
   --workspace .\debug-001001 `
@@ -200,7 +198,6 @@ Linux or WSL2:
 vally eval \
   --eval-spec evals/001001.eval.yaml \
   --tag mode=forced \
-  --skill-dir ../../../../artifacts/typespec-author-skills \
   --workers 1 \
   --output-dir ./result-001001 \
   --workspace ./debug-001001 \
@@ -215,7 +212,6 @@ and TypeSpec compilation graders.
 ```bash
 vally eval \
   --suite forced \
-  --skill-dir ../../../../artifacts/typespec-author-skills \
   --workers 1 \
   --output-dir ./result-forced \
   --workspace ./debug-forced \
@@ -224,25 +220,25 @@ vally eval \
 
 Useful suites:
 
-| Suite | Coverage |
-|---|---|
-| `forced` | All forced-mode cases |
-| `trigger` | All skill-trigger cases |
-| `naming-forced` | Optional client configuration planning and customization ownership |
-| `naming-trigger` | Authoring and naming-skill routing boundaries |
-| `naming-no-skill` | Naming task quality without installed skills |
-| `versioning-forced` | Versioning forced cases |
-| `armtemplate-forced` | ARM forced cases |
-| `longrunningoperation-forced` | LRO forced cases |
-| `decorators-forced` | Decorator forced cases |
-| `warning-forced` | Warning forced cases |
-| `dataplane-forced` | Data-plane forced cases |
+| Suite                         | Coverage                                                           |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `forced`                      | All forced-mode cases                                              |
+| `trigger`                     | All skill-trigger cases                                            |
+| `naming-forced`               | Optional client configuration planning and customization ownership |
+| `naming-trigger`              | Authoring and naming-skill routing boundaries                      |
+| `naming-no-skill`             | Naming task quality without installed skills                       |
+| `versioning-forced`           | Versioning forced cases                                            |
+| `armtemplate-forced`          | ARM forced cases                                                   |
+| `longrunningoperation-forced` | LRO forced cases                                                   |
+| `decorators-forced`           | Decorator forced cases                                             |
+| `warning-forced`              | Warning forced cases                                               |
+| `dataplane-forced`            | Data-plane forced cases                                            |
 
 The same domain names are available with `-trigger` and `-no-skill` suffixes.
 
 ### 5. Run trigger mode with live MCP
 
-Use the live environment and staged skill bundle prepared above; do not switch
+Use the live environment and configured skills prepared above; do not switch
 trigger runs to the mock MCP:
 
 ```bash
@@ -254,7 +250,6 @@ Run the trigger suite:
 ```bash
 vally eval \
   --suite trigger \
-  --skill-dir ../../../../artifacts/typespec-author-skills \
   --workers 1 \
   --output-dir ./result-trigger \
   --workspace ./debug-trigger \
@@ -270,16 +265,17 @@ tracks default to the live MCP so they exercise the production tool surface.
 ### 6. Run a no-skill baseline
 
 ```bash
-mkdir -p ./no-skills
-
-vally eval \
-  --suite no-skill \
-  --skill-dir ./no-skills \
-  --workers 1 \
+node --experimental-strip-types pipeline/typespec-author-invoke-shard.ts \
+  --eval-args "-e evals/*.eval.yaml" \
+  --shard-name local-no-skill \
   --output-dir ./result-no-skill \
-  --workspace ./debug-no-skill \
-  --verbose
+  --extra-args "--tag mode=no-skill --workers 1"
 ```
+
+Use the shard runner for baselines: Vally's explicit `environment.skills` takes
+precedence over `--skill-dir`, so pointing `--skill-dir` at an empty directory alone
+does not remove configured skills. The runner uses the pinned Vally installation
+from `eng/common/scripts/eval`; run `npm ci` there first.
 
 ## Manual Fixture Setup
 
@@ -305,30 +301,30 @@ Each run writes:
 
 Forced and trigger cases primarily use declarative file, compile, prompt, and skill-invocation
 graders. Only cases 001005 through 001008 retain tool-call assertions in those modes for
-validation and knowledge-route behavior; this exception does not extend to new 001014 or 007xxx
-cases. Tool-boundary coverage belongs in the dedicated naming and mock-workflow eval suites.
+validation and knowledge-route behavior. The bounded `007xxx` naming cases also
+check reference reads and the no-MCP/direct-edit boundary.
 No-skill cases retain their `tsp compile .` graders for edit scenarios; planning-only and read-only
 naming cases do not require compilation.
 
-| Symptom | Resolution |
-|---|---|
-| Native Vally installation fails | Install the Visual Studio C++ workload or use WSL2 |
-| WSL resolves Vally from `/mnt/c` | Install Vally and Node inside WSL; remove Windows paths from the WSL PATH |
-| Missing `Microsoft.AspNetCore.App 8.x` | Install `aspnetcore-runtime-8.0` inside WSL |
-| `sessionFs.setProvider` | Run with `--workers 1` |
+| Symptom                                                  | Resolution                                                                           |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Native Vally installation fails                          | Install the Visual Studio C++ workload or use WSL2                                   |
+| WSL resolves Vally from `/mnt/c`                         | Install Vally and Node inside WSL; remove Windows paths from the WSL PATH            |
+| Missing `Microsoft.AspNetCore.App 8.x`                   | Install `aspnetcore-runtime-8.0` inside WSL                                          |
+| `sessionFs.setProvider`                                  | Run with `--workers 1`                                                               |
 | `Session filesystem path escapes root` on native Windows | Use Linux or WSL2 for Vally execution; lint and fixture tests can still run natively |
-| `require is not defined in ES module scope` | Ensure evals use `check-node-dependencies.cjs` |
-| Compiler reports TypeSpec 1.8.0 | Rerun setup through `eval`; verify fixture `.bin` is first on PATH |
-| pnpm symlink returns `EPERM` | Move the checkout from `/mnt/c` or `/mnt/d` to the WSL filesystem |
-| MCP initialize connection closes | Run the MCP DLL directly and inspect its missing Linux runtime message |
+| `require is not defined in ES module scope`              | Ensure evals use `check-node-dependencies.cjs`                                       |
+| Compiler reports TypeSpec 1.8.0                          | Rerun setup through `eval`; verify fixture `.bin` is first on PATH                   |
+| pnpm symlink returns `EPERM`                             | Move the checkout from `/mnt/c` or `/mnt/d` to the WSL filesystem                    |
+| MCP initialize connection closes                         | Run the MCP DLL directly and inspect its missing Linux runtime message               |
 
 ## Environments
 
-| Environment | Use |
-|---|---|
-| `azsdk-mcp` | CI pipeline; selects live/mock through `AZSDK_EVAL_MCP_KIND` |
-| `azsdk-mcp-local` | Local live MCP under Linux/WSL |
-| `azsdk-mcp-mock-local` | Local mock MCP under Linux/WSL |
+| Environment            | Use                                                          |
+| ---------------------- | ------------------------------------------------------------ |
+| `azsdk-mcp`            | CI pipeline; selects live/mock through `AZSDK_EVAL_MCP_KIND` |
+| `azsdk-mcp-local`      | Local live MCP under Linux/WSL                               |
+| `azsdk-mcp-mock-local` | Local mock MCP under Linux/WSL                               |
 
 Local setup rewrites only the root `environment:` entry in each eval file. Restore these entries to
 `azsdk-mcp` before committing.
@@ -339,10 +335,10 @@ The manual benchmark pipeline is `eng/pipelines/azure-typespec-author-benchmark.
 selected MCP, stages authoring/naming skills and routing competitors, generates area-based forced and trigger shard matrices,
 runs each area, publishes result/debug artifacts, and produces separate summaries.
 
-| Parameter | Purpose |
-|---|---|
+| Parameter     | Purpose                        |
+| ------------- | ------------------------------ |
 | `SkillBranch` | Skill source branch to overlay |
-| `McpKind` | `live` or `mock` |
-| `Runs` | Trials per stimulus |
+| `McpKind`     | `live` or `mock`               |
+| `Runs`        | Trials per stimulus            |
 
 Pipeline eval files must use `environment: azsdk-mcp`.

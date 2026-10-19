@@ -26,14 +26,13 @@ stimuli:
     constraints: &a1
       max_turns: 14
       max_tokens: 20000
-    graders: &a2
+    graders:
       - type: skill-invocation
         config:
-          required:
-            - azure-typespec-author
           disallowed:
             - azsdk-common-typespec-naming
-      - type: tool-calls
+      - &a2
+        type: tool-calls
         config:
           disallowed:
             - name: azsdk_
@@ -58,7 +57,16 @@ stimuli:
       JSON "sdkLanguageRequired" and "namingChangesPlanned". Do not edit, fetch docs, invoke
       MCP, compile or generate.
     constraints: *a1
-    graders: *a2
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+          disallowed:
+            - azsdk-common-typespec-naming
+      - *a2
+      - *a3
+      - *a4
   - name: 007008-unrelated-authoring-has-no-sdk-intake-no-skill
     tags:
       suite: naming

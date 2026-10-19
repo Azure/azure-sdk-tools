@@ -47,13 +47,13 @@ stimuli:
     constraints: &a2
       max_turns: 14
       max_tokens: 20000
-    graders: &a3
+    graders:
       - type: skill-invocation
         config:
           required:
-            - azure-typespec-author
             - azsdk-common-typespec-naming
-      - type: tool-calls
+      - &a3
+        type: tool-calls
         config:
           required:
             - name: ^(edit|create|apply_patch)$
@@ -73,7 +73,7 @@ stimuli:
         type: file-matches
         config:
           path: client.tsp
-          pattern: (?s)@@clientName\(WidgetProperties.enabled, "enabled", "java"\);\s+@@clientName\(WidgetProperties.enabled, "enabled", "python"\);\s+// Preserve this trailing customization\.\s+@@clientName\(WidgetProperties, "WidgetSettings", "python"\);
+          pattern: '(?sm)(?=.*^\s*import "@azure-tools/typespec-client-generator-core";)(?=.*^\s*using Azure\.ClientGenerator\.Core;)(?=.*^\s*namespace Widget;)(?=.*^\s*@@clientName\(WidgetProperties\.enabled, "enabled", "java"\);)(?=.*^\s*@@clientName\(WidgetProperties\.enabled, "enabled", "python"\);)(?=.*^\s*// Preserve this trailing customization\.\s*$)(?=.*^\s*@@clientName\(WidgetProperties, "WidgetSettings", "python"\);)'
       - &a7
         type: output-matches
         config:
@@ -100,7 +100,18 @@ stimuli:
       Do not compile or generate an SDK in this bounded handoff.
     environment: *a1
     constraints: *a2
-    graders: *a3
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+            - azsdk-common-typespec-naming
+      - *a3
+      - *a4
+      - *a5
+      - *a6
+      - *a7
+      - *a8
   - name: 007004-authoring-handoff-edits-client-tsp-directly-no-skill
     tags:
       suite: naming

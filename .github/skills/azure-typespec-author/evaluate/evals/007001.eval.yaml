@@ -31,13 +31,13 @@ stimuli:
     constraints: &a1
       max_turns: 14
       max_tokens: 20000
-    graders: &a2
+    graders:
       - type: skill-invocation
         config:
           required:
-            - azure-typespec-author
             - azsdk-common-typespec-naming
-      - type: tool-calls
+      - &a2
+        type: tool-calls
         config:
           required:
             - name: ^(view|powershell|bash|rg)$
@@ -82,7 +82,18 @@ stimuli:
       objects. Also include top-level "scope" (the TCGC language identifier), "applied", and
       "generatedNamesVerified".
     constraints: *a1
-    graders: *a2
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+            - azsdk-common-typespec-naming
+      - *a2
+      - *a3
+      - *a4
+      - *a5
+      - *a6
+      - *a7
   - name: 007001-plan-csharp-names-before-authoring-no-skill
     tags:
       suite: naming

@@ -28,13 +28,13 @@ stimuli:
     constraints: &a1
       max_turns: 14
       max_tokens: 20000
-    graders: &a2
+    graders:
       - type: skill-invocation
         config:
           required:
-            - azure-typespec-author
             - azsdk-common-typespec-naming
-      - type: tool-calls
+      - &a2
+        type: tool-calls
         config:
           required:
             - name: ^(view|powershell|bash|rg)$
@@ -68,7 +68,16 @@ stimuli:
       ("covered" or "not-covered"), "decorators" (only justified SDK overrides), and
       "applied". Do not invent language conventions.
     constraints: *a1
-    graders: *a2
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+            - azsdk-common-typespec-naming
+      - *a2
+      - *a3
+      - *a4
+      - *a5
   - name: 007003-unsupported-target-does-not-borrow-csharp-rules-no-skill
     tags:
       suite: naming

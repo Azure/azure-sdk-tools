@@ -17,6 +17,15 @@ paths:
 
 environments:
   azsdk-mcp:
+    skills: &sdkSkills
+      - ../..
+      - ../../../azsdk-common-typespec-naming
+      # Competitors must be available to the routing-boundary cases.
+      - ../../../azure-typespec-assessment
+      - ../../../azsdk-common-generate-sdk-locally
+    commands: &cleanSkillInputs
+      - >-
+        node -e "const fs=require('fs');for(const dir of ['azure-typespec-author','azsdk-common-typespec-naming','azure-typespec-assessment','azsdk-common-generate-sdk-locally']){if(!fs.existsSync(dir))continue;for(const entry of fs.readdirSync(dir)){if(entry!=='SKILL.md'&&entry!=='references')fs.rmSync(dir+'/'+entry,{recursive:true,force:true});}}"
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md
         dest: .github/copilot-instructions.md
@@ -25,7 +34,10 @@ environments:
         type: stdio
         command: node
         cwd: ../../../..
-        args: [".github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.cjs"]
+        args:
+          [
+            ".github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.cjs",
+          ]
         timeout: 5m
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
@@ -41,6 +53,8 @@ environments:
           AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
 
   azsdk-mcp-local:
+    skills: *sdkSkills
+    commands: *cleanSkillInputs
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md
         dest: .github/copilot-instructions.md
@@ -61,6 +75,8 @@ environments:
           AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
 
   azsdk-mcp-mock-local:
+    skills: *sdkSkills
+    commands: *cleanSkillInputs
     files:
       - src: ../scripts/run-prebuilt-mcp.cjs
         dest: tools/run-prebuilt-mcp.cjs

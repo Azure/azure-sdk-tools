@@ -35,29 +35,31 @@ steps:
              .github/skills/azsdk-common-typespec-naming/references
       git checkout FETCH_HEAD -- \
         .github/skills/azure-typespec-author/SKILL.md \
-        .github/skills/azure-typespec-author/references \
-        .github/skills/azsdk-common-typespec-naming/SKILL.md \
-        .github/skills/azsdk-common-typespec-naming/references
-      echo "Authoring and naming skill sources overlaid from $BRANCH_REF"
-    displayName: 'Overlay skill source from SkillBranch (if set)'
+        .github/skills/azure-typespec-author/references
+      if git cat-file -e FETCH_HEAD:.github/skills/azsdk-common-typespec-naming/SKILL.md 2>/dev/null; then
+        git checkout FETCH_HEAD -- \
+          .github/skills/azsdk-common-typespec-naming/SKILL.md \
+          .github/skills/azsdk-common-typespec-naming/references
+      else
+        echo "Selected branch predates the naming skill; candidate naming sources remain removed."
+      fi
+      echo "Skill sources overlaid from $BRANCH_REF"
+    displayName: "Overlay skill source from SkillBranch (if set)"
     env:
       SKILL_BRANCH: $(SkillBranch)
-
-  - script: node .github/skills/azure-typespec-author/evaluate/scripts/prepare-skill-bundle.mjs
-    displayName: 'Stage authoring and shared naming skills'
 
   - script: |
       set -e
       npm ci --legacy-peer-deps --userconfig $(Build.SourcesDirectory)/.npmrc
       echo "##vso[task.prependpath]$(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval/node_modules/.bin"
-    displayName: 'Install TypeSpec toolchain (pinned)'
+    displayName: "Install TypeSpec toolchain (pinned)"
     workingDirectory: $(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval
 
   - script: |
       set -e
       echo "tsp version:"
       tsp --version
-    displayName: 'Verify TypeSpec toolchain on PATH'
+    displayName: "Verify TypeSpec toolchain on PATH"
 
   - script: |
       set -e
@@ -68,4 +70,4 @@ steps:
       pnpm install --dir "$FIXTURE_DIR"
       echo "##vso[task.setvariable variable=FIXTURE_NODE_MODULES]$FIXTURE_DIR/node_modules"
       echo "##vso[task.prependpath]$FIXTURE_DIR/node_modules/.bin"
-    displayName: 'Prepare fixture files and node_modules'
+    displayName: "Prepare fixture files and node_modules"

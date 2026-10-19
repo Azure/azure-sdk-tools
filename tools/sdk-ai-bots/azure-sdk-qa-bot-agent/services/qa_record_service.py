@@ -18,6 +18,7 @@ from models.conversation import (
 )
 from models.qa_record import FeedbackStatus, QARecord, QAStatus
 from services.conversation_service import ConversationService
+from utils.channel_policy import is_channel_conversation_id
 from utils.azure_cosmosdb import (
     get_conversation_message_container,
     query_qa_records_by_qa_status,
@@ -28,55 +29,57 @@ from utils.azure_cosmosdb import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Threads without activity for at least this long are automatically
+# marked as finished/correct without Agent review.
 _INACTIVE_THREAD_TIMEOUT = timedelta(hours=144)
 
 
 class QARecordService:
-    """Build QA records from messages and expose workflow queries."""
+    """Aggregate conversation messages into QA records and query lifecycle states."""
 
-    # -- Aggregation: messages -> QA records -------------------------------
+    def __init__(self) -> None:
+        self._conversation_service = ConversationService()
 
-    async def get_messages_in_period(
+    # -- Message ingestion -------------------------------------------------
+
+    async def get_recent_messages(
         self,
-        start: datetime,
-        end: datetime,
+        *,
+        since: datetime,
+        tenant_id: str | None = None,
     ) -> list[ConversationMessageItem]:
-        """Return full threads with any message in the scan window."""
-        if start.tzinfo is not None:
-            start = start.astimezone(timezone.utc)
-        if end.tzinfo is not None:
-            end = end.astimezone(timezone.utc)
-        start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+        """Return all conversation messages created since ``since``."""
         container = await get_conversation_message_container()
-
-        # Cosmos cannot aggregate this cross-partition query reliably, so first
-        # collect qualifying partitions, then fetch each complete thread.
-        window_query = (
-            "SELECT c.conversation_partition AS partition FROM c "
+        query = (
+            "SELECT * FROM c "
             "WHERE c.document_type = @dtype "
-            "AND c.created_at >= @start AND c.created_at < @end"
+            "AND c.created_at >= @since"
         )
-        window_params: list[dict[str, object]] = [
+        parameters: list[dict[str, object]] = [
             {
                 "name": "@dtype",
                 "value": ConversationDocumentType.message.value,
             },
-            {"name": "@start", "value": start.isoformat()},
-            {"name": "@end", "value": end.isoformat()},
+            {"name": "@since", "value": since.isoformat()},
         ]
-        partitions: set[str] = set()
-        async for row in container.query_items(
-            query=window_query,
-            parameters=window_params,
+        if tenant_id:
+            query += " AND c.tenant_id = @tenant_id"
+            parameters.append({"name": "@tenant_id", "value": tenant_id})
+        items: list[ConversationMessageItem] = []
+        async for raw in container.query_items(
+            query=query,
+            parameters=parameters,
         ):
-            partition = row.get("partition")
-            if partition:
-                partitions.add(partition)
-        if not partitions:
-            return []
+            items.append(ConversationMessageItem.model_validate(raw))
+        return sorted(items, key=lambda message: message.created_at)
 
-        # Return every message from each qualifying partition, including
-        # messages outside the activity window, so the Agent sees full context.
+    async def get_thread_messages(
+        self,
+        partitions: set[str],
+    ) -> list[ConversationMessageItem]:
+        """Return all messages belonging to the given thread partition keys."""
+        container = await get_conversation_message_container()
         messages_query = (
             "SELECT * FROM c "
             "WHERE c.document_type = @dtype "
@@ -122,6 +125,10 @@ class QARecordService:
                 continue
             if candidate.channel_id and candidate.channel_id in excluded_channels:
                 continue
+            if candidate.channel_id and not is_channel_conversation_id(
+                candidate.channel_id
+            ):
+                continue
 
             existing_doc = await read_qa_record(
                 record_id=candidate.id, tenant_id=candidate.tenant_id
@@ -138,60 +145,53 @@ class QARecordService:
             )
             if needs_creation_time_backfill:
                 existing.conversation_created_at = candidate.conversation_created_at
-            if (
-                existing.qa_status == QAStatus.finished
-                and existing.auto_closed_at is not None
-                and existing.feedback is None
-                and candidate.last_activity_at is not None
-                and (
-                    existing.last_activity_at is None
-                    or candidate.last_activity_at > existing.last_activity_at
-                )
-            ):
+
+            if existing.auto_closed_at is not None:
+                # Reopen: new activity arrived after the auto-close window.
                 existing.qa_status = QAStatus.ongoing
                 existing.verdict = BotAnswerVerdict.Unknown
+                existing.auto_closed_at = None
                 existing.reasoning = None
                 existing.confidence = None
-                existing.evaluated_at = None
-                existing.auto_closed_at = None
+                existing.updated_at = _now()
+                await upsert_qa_record(existing.to_cosmos())
+                touched.append(existing)
                 logger.info(
-                    "New activity detected for auto-closed QA record %s; requeueing",
+                    "Reopened auto-closed QA record %s after new activity",
                     existing.id,
                 )
-            if existing.qa_status in (QAStatus.finished, QAStatus.failed):
-                # Agent-concluded threads are immutable to the scanner.
-                if needs_creation_time_backfill:
-                    await replace_qa_record_if_unchanged(
-                        existing.to_cosmos(), etag=existing_doc["_etag"]
-                    )
-                touched.append(existing)
                 continue
 
-            # Refresh the ongoing thread's latest-turn metadata.
-            existing.message_link = candidate.message_link or existing.message_link
-            existing.message_count = candidate.message_count
-            existing.has_expert_reply = candidate.has_expert_reply
-            existing.last_activity_at = candidate.last_activity_at
-            existing.updated_at = _now()
-            if await replace_qa_record_if_unchanged(
-                existing.to_cosmos(), etag=existing_doc["_etag"]
-            ):
+            if (
+                existing.qa_status == QAStatus.ongoing
+                and existing.feedback is None
+            ) or needs_creation_time_backfill:
+                # Refresh thread metadata for ongoing records not yet picked
+                # up by the Agent, or backfill creation time.
+                existing.last_activity_at = candidate.last_activity_at
+                existing.message_count = candidate.message_count
+                if candidate.channel_id:
+                    existing.channel_id = candidate.channel_id
+                if candidate.message_link:
+                    existing.message_link = candidate.message_link
+                existing.updated_at = _now()
+                await upsert_qa_record(existing.to_cosmos())
                 touched.append(existing)
+
         return touched
 
+    @staticmethod
     def build_record(
-        self, items: Sequence[ConversationMessageItem]
+        items: Sequence[ConversationMessageItem],
     ) -> QARecord | None:
-        """Assemble a candidate ``ongoing`` QA record from a thread's messages.
-
-        Requires the thread to have at least one bot answer (otherwise it is
-        not a QA thread); returns ``None`` when there is no bot answer or the
-        coordinates needed to key the record are missing.
-        """
-        has_bot_answer = any(
-            m.sender_role.value in ("system", "assistant") for m in items
+        """Derive a ``QARecord`` from raw conversation messages."""
+        if not items:
+            return None
+        has_bot = any(
+            m.sender_role in ("assistant", "system")
+            for m in items
         )
-        if not has_bot_answer:
+        if not has_bot:
             return None
 
         conversation_id = next(
@@ -205,35 +205,27 @@ class QARecordService:
 
         tenant_id = next(
             (m.tenant_id for m in items if m.tenant_id), None
-        ) or "unknown"
-
-        ordered = sorted(items, key=lambda m: m.created_at)
-        poster_id = next(
-            (m.sender_id for m in ordered if m.sender_role.value == "user"), None
         )
-        has_expert_reply = any(
-            m.sender_role.value == "user"
-            and poster_id is not None
-            and m.sender_id != poster_id
-            for m in ordered
-        )
+        if not tenant_id:
+            return None
 
-        now = _now()
+        sorted_items = sorted(items, key=lambda m: m.created_at)
+        first_message = sorted_items[0] if sorted_items else None
+        last_message = sorted_items[-1] if sorted_items else None
+
         return QARecord(
             id=QARecord.build_id(conversation_type, conversation_id),
             tenant_id=tenant_id,
             conversation_id=conversation_id,
             conversation_type=conversation_type,
-            channel_id=self._channel_key(items, conversation_id),
-            message_link=self._message_link(items),
+            channel_id=QARecordService._channel_key(items, conversation_id),
+            message_link=QARecordService._message_link(items),
+            conversation_created_at=first_message.created_at if first_message else None,
+            last_activity_at=last_message.created_at if last_message else None,
+            message_count=len(sorted_items),
             qa_status=QAStatus.ongoing,
-            has_expert_reply=has_expert_reply,
-            message_count=len(ordered),
-            conversation_created_at=ordered[0].created_at if ordered else None,
-            last_activity_at=ordered[-1].created_at if ordered else None,
-            first_seen_at=now,
-            created_at=now,
-            updated_at=now,
+            verdict=BotAnswerVerdict.Unknown,
+            updated_at=_now(),
         )
 
     @staticmethod
@@ -241,7 +233,7 @@ class QARecordService:
         items: Sequence[ConversationMessageItem],
         conversation_id: str | None = None,
     ) -> str | None:
-        """Derive the Teams channel id a thread belongs to.
+        """Resolve channel identity for channel-level exclusion.
 
         Prefers a message's ``extra_info.channel_id`` and falls back to the
         channel segment of ``conversation_id`` (everything before the
@@ -268,13 +260,16 @@ class QARecordService:
         return None
 
     @staticmethod
-    def _message_link(items: Sequence[ConversationMessageItem]) -> str | None:
-        """Prefer a stored Teams permalink from any message's extra_info."""
-        for m in sorted(items, key=lambda x: x.created_at):
-            link = getattr(m.extra_info, "message_link", None) if m.extra_info else None
-            if link:
-                return link
+    def _message_link(
+        items: Sequence[ConversationMessageItem],
+    ) -> str | None:
+        """Return the first message link found in the items."""
+        for m in items:
+            if m.extra_info and m.extra_info.message_link:
+                return m.extra_info.message_link
         return None
+
+    # -- Inactivity auto-close ---------------------------------------------
 
     async def close_inactive_threads(
         self,
@@ -282,14 +277,20 @@ class QARecordService:
         tenant_id: str | None = None,
         excluded_channels: set[str] | None = None,
     ) -> int:
-        """Auto-close inactive ongoing threads regardless of user feedback."""
+        """Mark long-inactive ongoing threads as finished/correct.
+
+        Threads without any message activity for at least
+        ``_INACTIVE_THREAD_TIMEOUT`` are closed without Agent review.
+        Records that already have feedback (Agent has started work) are
+        skipped, as are records in excluded channels.
+        """
+        excluded_channels = excluded_channels or set()
+        conversations = ConversationService()
         now = _now()
         cutoff = now - _INACTIVE_THREAD_TIMEOUT
-        excluded_channels = excluded_channels or set()
         docs = await query_qa_records_by_qa_status(
             qa_status=QAStatus.ongoing.value, tenant_id=tenant_id
         )
-        conversations = ConversationService()
         closed = 0
         for doc in docs:
             record = QARecord.from_cosmos(doc)
@@ -297,19 +298,14 @@ class QARecordService:
                 record.qa_status != QAStatus.ongoing
                 or record.feedback is not None
                 or self.channel_key_of(record) in excluded_channels
-                or (
-                    record.last_activity_at is not None
-                    and record.last_activity_at > cutoff
-                )
             ):
                 continue
-
-            # Verify the actual transcript before relying on possibly stale metadata.
-            messages = await conversations.get_messages_by_conversation_id(
-                conversation_id=record.conversation_id,
-                conversation_type=record.conversation_type,
-            )
-            if not messages:
+            try:
+                messages = await conversations.get_messages_by_conversation_id(
+                    conversation_id=record.conversation_id,
+                    conversation_type=record.conversation_type,
+                )
+            except Exception:
                 logger.warning(
                     "Cannot auto-close QA record %s: conversation unavailable",
                     record.id,

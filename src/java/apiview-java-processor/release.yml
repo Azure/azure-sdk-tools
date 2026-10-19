@@ -20,19 +20,19 @@ extends:
         jobs:
           - job: Build
             pool:
-              name: $(WINDOWSPOOL)
-              image: $(WINDOWSVMIMAGE)
-              os: windows
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
 
             steps:
               - template: /eng/common/pipelines/templates/steps/maven-authenticate.yml
 
-              - task: Maven@3
+              - task: Maven@4
                 displayName: Build and test
                 inputs:
                   mavenPomFile: src/java/apiview-java-processor/pom.xml
                   goals: clean verify
-                  options: --batch-mode --no-transfer-progress
+                  options: --batch-mode --no-transfer-progress -Prelease
                   javaHomeOption: JDKVersion
                   jdkVersionOption: '1.8'
                   jdkArchitectureOption: x64
@@ -40,20 +40,21 @@ extends:
                   testResultsFiles: src/java/apiview-java-processor/target/surefire-reports/TEST-*.xml
 
               - pwsh: |
-                  $projectDirectory = "$(Build.SourcesDirectory)\src\java\apiview-java-processor"
-                  [xml]$pom = Get-Content -Path "$projectDirectory\pom.xml"
+                  $projectDirectory = Join-Path "$(Build.SourcesDirectory)" "src/java/apiview-java-processor"
+                  [xml]$pom = Get-Content -Path (Join-Path $projectDirectory "pom.xml")
                   $version = $pom.project.version
-                  $jarPath = "$projectDirectory\target\apiview-java-processor-$version.jar"
-                  $stagingDirectory = "$(Build.ArtifactStagingDirectory)\apiview-java-processor"
-
-                  if (-not (Test-Path -Path $jarPath)) {
-                    throw "Expected package was not produced: $jarPath"
-                  }
+                  $stagingDirectory = Join-Path "$(Build.ArtifactStagingDirectory)" "apiview-java-processor"
 
                   New-Item -ItemType Directory -Force -Path $stagingDirectory | Out-Null
-                  Copy-Item -Path $jarPath -Destination $stagingDirectory
-                  Copy-Item -Path "$projectDirectory\pom.xml" `
-                    -Destination "$stagingDirectory\apiview-java-processor-$version.pom"
+                  foreach ($suffix in @("", "-sources", "-javadoc")) {
+                    $jarPath = Join-Path $projectDirectory "target/apiview-java-processor-$version$suffix.jar"
+                    if (-not (Test-Path -Path $jarPath -PathType Leaf)) {
+                      throw "Expected package was not produced: $jarPath"
+                    }
+                    Copy-Item -Path $jarPath -Destination $stagingDirectory
+                  }
+                  Copy-Item -Path (Join-Path $projectDirectory "pom.xml") `
+                    -Destination (Join-Path $stagingDirectory "apiview-java-processor-$version.pom")
                 displayName: Stage Maven package
 
               - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
@@ -85,6 +86,12 @@ extends:
               os: windows
 
             steps:
+              - checkout: self
+                path: s
+
+              - checkout: azure-sdk-build-tools
+                path: azure-sdk-build-tools
+
               - download: current
                 displayName: Download Maven package
                 artifact: apiview-java-processor
@@ -101,9 +108,13 @@ extends:
                   [xml]$pom = Get-Content -Path $pomFile.FullName
                   $version = $pom.project.version
                   $jarPath = "$packageDirectory\apiview-java-processor-$version.jar"
+                  $sourcesPath = "$packageDirectory\apiview-java-processor-$version-sources.jar"
+                  $javadocPath = "$packageDirectory\apiview-java-processor-$version-javadoc.jar"
 
-                  if (-not (Test-Path -Path $jarPath)) {
-                    throw "Expected package artifact was not downloaded: $jarPath"
+                  foreach ($artifactPath in @($jarPath, $sourcesPath, $javadocPath)) {
+                    if (-not (Test-Path -Path $artifactPath -PathType Leaf)) {
+                      throw "Expected package artifact was not downloaded: $artifactPath"
+                    }
                   }
 
                   $packageUrl = "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-java/maven/v1/com/azure/apiview-java-processor/$version/apiview-java-processor-$version.pom"
@@ -120,6 +131,8 @@ extends:
                   Write-Host "##vso[task.setvariable variable=PackageVersion]$version"
                   Write-Host "##vso[task.setvariable variable=PackageJarPath]$jarPath"
                   Write-Host "##vso[task.setvariable variable=PackagePomPath]$($pomFile.FullName)"
+                  Write-Host "##vso[task.setvariable variable=PackageSourcesPath]$sourcesPath"
+                  Write-Host "##vso[task.setvariable variable=PackageJavadocPath]$javadocPath"
                 displayName: Validate package version
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
@@ -158,17 +171,13 @@ extends:
                       }
                     ]
 
-              - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
-                parameters:
-                  ArtifactName: apiview-java-processor-signed
-                  ArtifactPath: $(Pipeline.Workspace)/apiview-java-processor
-                  CustomCondition: succeeded()
+              - template: tools/gpg/gpg.yml@azure-sdk-build-tools
 
-              - task: Maven@3
-                displayName: Publish package
+              - task: Maven@4
+                displayName: GPG sign and publish package
                 inputs:
                   mavenPomFile: src/java/apiview-java-processor/pom.xml
-                  goals: org.apache.maven.plugins:maven-deploy-plugin:3.1.4:deploy-file
+                  goals: org.apache.maven.plugins:maven-gpg-plugin:3.2.8:sign-and-deploy-file
                   options: >-
                     --batch-mode
                     --no-transfer-progress
@@ -180,8 +189,17 @@ extends:
                     -Dpackaging=jar
                     -Dfile="$(PackageJarPath)"
                     -DpomFile="$(PackagePomPath)"
+                    -Dsources="$(PackageSourcesPath)"
+                    -Djavadoc="$(PackageJavadocPath)"
+                    -Dgpgexe="$(Pipeline.Workspace)/azure-sdk-build-tools/tools/gpg/bin/gpg.exe"
                     -DgeneratePom=false
                   javaHomeOption: JDKVersion
                   jdkVersionOption: '1.8'
                   jdkArchitectureOption: x64
                   publishJUnitResults: false
+
+              - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+                parameters:
+                  ArtifactName: apiview-java-processor-signed
+                  ArtifactPath: $(Pipeline.Workspace)/apiview-java-processor
+                  CustomCondition: succeeded()

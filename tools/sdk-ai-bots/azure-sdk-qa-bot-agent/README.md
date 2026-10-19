@@ -265,11 +265,6 @@ even when its container image is unchanged. See the [knowledge sync deployment g
 
 Deploys the Logic App ARM template for Teams channel message mirroring.
 
-Messages whose resolved content is null, empty, or whitespace-only are skipped before
-conversation saving and reply processing. Non-empty messages mentioning an application
-whose display name contains `Azure SDK Q&A Bot` are saved but excluded from automatic
-replies; mentions of other applications do not suppress automatic reply processing.
-
 - **Pipeline**: [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
 - **Parameters**: `team` (azure_sdk/azure_mcp_server), `environment` (dev/test/prod)
 - **What it does**:

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Exclude older JUnit from summaries and selected test files when it does not match the latest verified timeline attempt; keep missing results incomplete.
+- Keep shared publisher tests independent of Tools-only CI/Pester/redirect files, while retaining those checks in Tools and testing consumer copies.
 - Retain one complete, latest-attempt evaluation archive per build in Blob storage.
 - Use authenticated Azure CLI publication instead of a custom Node Azure SDK transport.
 - Read the storage account from pipeline-owned configuration and keep publishing policy in YAML.

@@ -377,6 +377,24 @@
           }
         },
         {
+          "description": ".NET provisioning C# emitter documentation",
+          "path": "/eng/packages/http-client-csharp-provisioning/docs",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET provisioning C# emitter overview",
+          "path": "/eng/packages/http-client-csharp-provisioning/README.md",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
           "description": ".NET management SDK breaking-change mitigation skill and references",
           "path": "/.github/skills/mitigate-breaking-changes",
           "folder": "azure_sdk_for_net_docs",

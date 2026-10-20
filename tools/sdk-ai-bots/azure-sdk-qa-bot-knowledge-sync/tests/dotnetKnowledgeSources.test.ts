@@ -26,6 +26,8 @@ describe('.NET knowledge configuration', () => {
             '/eng/packages/http-client-csharp-mgmt/README.md',
             '/eng/packages/http-client-csharp/.tspd/docs',
             '/eng/packages/http-client-csharp/README.md',
+            '/eng/packages/http-client-csharp-provisioning/docs',
+            '/eng/packages/http-client-csharp-provisioning/README.md',
             '/.github/skills/mitigate-breaking-changes',
             '/.github/skills/mgmt-review-comment-resolution',
             '/sdk/core/Azure.Core.TestFramework/README.md',
@@ -53,12 +55,14 @@ describe('.NET knowledge configuration', () => {
         ConfigurationLoader.setConfigPath(configPath);
         const sources = ConfigurationLoader.getDocumentationSources()
             .filter(source => source.folder === 'azure_sdk_for_net_docs');
-        expect(sources).toHaveLength(12);
+        expect(sources).toHaveLength(14);
         const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dotnet-metadata-'));
         tempDirs.push(root);
         for (const relativePath of [
             'eng/packages/http-client-csharp-mgmt/docs/emitter.md',
             'eng/packages/http-client-csharp/.tspd/docs/emitter.md',
+            'eng/packages/http-client-csharp-provisioning/docs/custom-code-attributes.md',
+            'eng/packages/http-client-csharp-provisioning/README.md',
             '.github/skills/mitigate-breaking-changes/SKILL.md',
             'sdk/core/Azure.Core.TestFramework/README.md',
         ]) {
@@ -81,7 +85,7 @@ describe('.NET knowledge configuration', () => {
         }
         const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dotnet-citations-'));
         tempDirs.push(root);
-        for (const emitter of ['http-client-csharp', 'http-client-csharp-mgmt']) {
+        for (const emitter of ['http-client-csharp', 'http-client-csharp-mgmt', 'http-client-csharp-provisioning']) {
             const relativePath = path.join('eng', 'packages', emitter, 'README.md');
             const file = path.join(root, relativePath);
             fs.mkdirSync(path.dirname(file), { recursive: true });

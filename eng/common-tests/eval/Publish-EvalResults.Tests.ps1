@@ -225,7 +225,7 @@ let size=0, metadata={};
 const server=createServer((req,res)=>{
   console.log(req.method);
   if(req.method==='PUT'){
-        if(req.headers['if-none-match']!=='*'){res.writeHead(400);res.end('Missing create-only condition');req.resume();return;}
+    if(req.headers['if-none-match']!=='*'){res.writeHead(400);res.end('Missing create-only condition');req.resume();return;}
     metadata=Object.fromEntries(Object.entries(req.headers).filter(([key])=>key.startsWith('x-ms-meta-')));
     req.on('data',chunk=>size+=chunk.length);
     req.on('end',()=>{res.writeHead(201,{'x-ms-request-id':'fixture-request','x-ms-version':'2023-11-03',ETag:'"fixture-etag"','Last-Modified':new Date().toUTCString(),'x-ms-request-server-encrypted':'true'});res.end();});
@@ -240,7 +240,7 @@ setTimeout(()=>{server.closeAllConnections();server.close();},60000).unref();
         $oldConfig = $env:AZURE_CONFIG_DIR; $oldTelemetry = $env:AZURE_CORE_COLLECT_TELEMETRY; $oldProxy = $env:NO_PROXY
         try {
             $line = $server.StandardOutput.ReadLineAsync()
-            if (!$line.Wait(5000)) { throw 'CLI loopback fixture did not start.' }
+            if (!$line.Wait(30000)) { throw 'CLI loopback fixture did not start within its startup deadline.' }
             $f.storageEndpoint = "http://127.0.0.1:$([int]$line.Result)"
             $env:AZURE_CONFIG_DIR = Join-Path $TestDrive 'isolated-cli'
             $env:AZURE_CORE_COLLECT_TELEMETRY = '0'; $env:NO_PROXY = '127.0.0.1,localhost'

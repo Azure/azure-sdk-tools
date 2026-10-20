@@ -246,6 +246,14 @@
                       },
                       {
                         "not": {
+                          "equals": [
+                            "@outputs('Resolved_message_details')?['from']?['user']?['displayName']",
+                            "@null"
+                          ]
+                        }
+                      },
+                      {
+                        "not": {
                           "startsWith": [
                             "@outputs('Resolved_message_details')?['body']?['plainTextContent']",
                             "Your feedback is received"

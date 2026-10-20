@@ -210,12 +210,11 @@ Useful suites:
 
 The same domain names are available with `-trigger` and `-no-skill` suffixes.
 
-### 5. Run trigger mode with mock MCP
+### 5. Run trigger mode with live MCP
 
-Prepare the mock environment:
+Use the live environment prepared above:
 
 ```bash
-eval "$(node scripts/setup-environment.js --mcp-kind mock)"
 export EVALUATE_USE_HOST_COPILOT_HOME=1
 ```
 
@@ -231,8 +230,11 @@ vally eval \
   --verbose
 ```
 
-Setup changes eval files to `environment: azsdk-mcp-mock-local`. Do not commit that local override;
+Setup changes eval files to `environment: azsdk-mcp-local`. Do not commit that local override;
 restore `environment: azsdk-mcp` before committing.
+
+Use `--mcp-kind mock` only for isolated mock-server development. The benchmark's forced and trigger
+tracks default to the live MCP so they exercise the production tool surface.
 
 ### 6. Run a no-skill baseline
 
@@ -269,6 +271,11 @@ Each run writes:
 - `results.jsonl`: complete trial and grader data
 - `eval-results.md`: readable pass/fail summary
 - `azure-typespec-author-eval/**/events.jsonl`: executor events when session logs are kept
+
+Forced and trigger cases primarily use declarative file, compile, prompt, and skill-invocation
+graders. Cases 001005 through 001008 intentionally retain tool-call assertions for validation and
+knowledge-route behavior. No-skill cases retain `tsp compile .` graders so their output must still
+be valid TypeSpec.
 
 | Symptom | Resolution |
 |---|---|

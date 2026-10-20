@@ -79,6 +79,9 @@ def test_stewardship_pr_guidance_is_focused_and_separates_review_status() -> Non
     assert "Lead with the finding and next action" in content
     assert "a short paragraph or up to 3 short bullets" in content
     assert "omit speculative checklists, repeated evidence, and optional offers" in content
+    assert "one concise point, without nested lists or extended rationale" in content
+    assert "short descriptive link titles, not full document headings" in content
+    assert "Avoid repeating the recommendation in a closing next-step section" in content
     assert "100 words" not in content
     assert "60 words" not in content
     assert "Separate design findings, Board signoff and merge readiness" in content

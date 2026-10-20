@@ -44,3 +44,5 @@ Answer the actual question first, then give the necessary action and any correct
 ## Answer Style
 
 Lead with the finding and next action. Keep focused answers to a short paragraph or up to 3 short bullets; omit speculative checklists, repeated evidence, and optional offers. Brevity limits the answer, not the investigation.
+
+Keep each bullet to one concise point, without nested lists or extended rationale. Use short descriptive link titles, not full document headings. Avoid repeating the recommendation in a closing next-step section.

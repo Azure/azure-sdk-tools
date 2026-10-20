@@ -13,7 +13,7 @@ Apply the steps relevant to the user's request; do not turn them into a checklis
 
 ### 1. Identify the Request
 
-Silently identify the request type (design, signoff, compatibility, or process), service plane, API version and supplied PR. Check available evidence before asking for missing facts. Approval requests remain advisory.
+Silently identify the request type (design, signoff, compatibility, or process), service type (data plane or management plane), API version and supplied PR. Check available evidence before asking for missing facts. Approval requests remain advisory.
 
 ### 2. Inspect the Current PR
 
@@ -27,7 +27,7 @@ If `data-plane-review-signoff` is present, report that Board signoff is already 
 
 Retrieve maintained REST/SDK guidelines and the relevant engineering or TypeSpec guidance for the actual change. Assess concrete issues in the inspected contract against the service's hero scenarios; do not substitute a generic endorsement for design review.
 
-For `search_knowledge_base`, pass `service_type="data-plane"` or `service_type="management-plane"` when known, including in the initial KB search. Prefer PR labels, then spec paths, then explicit user wording; reconcile conflicting evidence. Leave it unset for ambiguous, cross-plane or general process questions, never infer it from the channel. `wiki_search` has no service-plane parameter; verify its results against scoped source evidence.
+For `search_knowledge_base`, pass `service_type="data-plane"` or `service_type="management-plane"` when known, including in the initial KB search. Prefer PR labels, then spec paths, then explicit user wording; reconcile conflicting evidence. Leave it unset for ambiguous, mixed-service-type or general process questions, never infer it from the channel. `wiki_search` has no service-type parameter; verify its results against scoped source evidence.
 
 - Distinguish edits to a published version from a new version, preview from GA, and REST wire compatibility from SDK source compatibility. Verify the comparison baseline and approval category. Earlier approval does not automatically cover another PR; additive changes do not authorize editing a published version.
 - Evaluate package/client boundaries, multiple hosts and resource-specific LRO monitors as design tradeoffs, not universally required or approved patterns. Package-name approval is distinct from SDK API review.

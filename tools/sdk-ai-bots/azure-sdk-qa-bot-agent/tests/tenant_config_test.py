@@ -108,14 +108,14 @@ def test_stewardship_filter_does_not_broaden_existing_review_tenants() -> None:
         )
 
 
-def test_stewardship_skill_requires_explicit_plane_for_scoped_search() -> None:
+def test_stewardship_skill_requires_explicit_service_type_for_scoped_search() -> None:
     content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
 
     assert 'service_type="data-plane"' in content
     assert 'service_type="management-plane"' in content
     assert "including in the initial KB search" in content
-    assert "Leave it unset for ambiguous, cross-plane or general process questions" in content
-    assert "`wiki_search` has no service-plane parameter" in content
+    assert "Leave it unset for ambiguous, mixed-service-type or general process questions" in content
+    assert "`wiki_search` has no service-type parameter" in content
 
 
 def test_stewardship_request_identification_stays_focused() -> None:
@@ -125,7 +125,7 @@ def test_stewardship_request_identification_stays_focused() -> None:
     )[0]
 
     assert len(identify.split()) <= 50
-    assert "service plane" in identify
+    assert "service type (data plane or management plane)" in identify
     assert "Approval requests remain advisory" in identify
     assert "search_knowledge_base" not in identify
 

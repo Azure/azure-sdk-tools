@@ -124,10 +124,28 @@ def test_stewardship_request_identification_stays_focused() -> None:
         "### 2. Inspect the Current PR", 1
     )[0]
 
-    assert len(identify.split()) <= 50
+    assert len(identify.split()) <= 75
     assert "service type (data plane or management plane)" in identify
     assert "Approval requests remain advisory" in identify
     assert "search_knowledge_base" not in identify
+
+
+def test_stewardship_routes_arm_reviews_to_arm_office_hours() -> None:
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    assert config is not None
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    skill = next(
+        s for s in create_tenant_skills("azure-sdk-chat-agent")
+        if s.frontmatter.name == "api-stewardship-board"
+    )
+    arm_office_hours = "https://armwiki.azurewebsites.net/introduction/office_hours.html"
+
+    assert "Data-plane API design" in config.scope
+    assert any(arm_office_hours in exclusion for exclusion in config.exclusions)
+    assert f"[ARM Office Hours]({arm_office_hours})" in content
+    assert "stop this Board review workflow" in content
+    assert "Do not apply data-plane review guidance" in content
+    assert "Direct ARM/management-plane reviews to ARM Office Hours" in skill.frontmatter.description
 
 
 @pytest.mark.parametrize(

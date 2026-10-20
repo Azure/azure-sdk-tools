@@ -672,7 +672,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Safe review-scheduler troubleshooting and evidence-based operational referrals",
         ],
         exclusions=[
-            "ARM contract and management-plane review decisions — refer to maintained ARM guidance",
+            "ARM/management-plane reviews — direct to ARM Office Hours: https://armwiki.azurewebsites.net/introduction/office_hours.html",
             "Detailed TypeSpec authoring or emitter failures — use the TypeSpec skill",
             "Detailed spec PR check investigation — use the API Spec Review skill",
             "Repository access and release-plan lifecycle — use the SDK Onboarding skill",

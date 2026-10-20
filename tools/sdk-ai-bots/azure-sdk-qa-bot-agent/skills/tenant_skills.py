@@ -32,6 +32,7 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "Data-plane API design and API Stewardship Board review requests: "
         "REST/SDK compatibility, versioning, endpoints, LROs, package organization, "
         "async review and virtual Office Hours. Advisory only, never approval. "
+        "Direct ARM/management-plane reviews to ARM Office Hours. "
         "Use typespec for detailed authoring, api-spec-review for check investigation, "
         "and sdk-onboarding for access or release-plan lifecycle."
     ),

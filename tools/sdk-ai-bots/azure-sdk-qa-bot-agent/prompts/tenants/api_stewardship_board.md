@@ -15,6 +15,8 @@ Apply the steps relevant to the user's request; do not turn them into a checklis
 
 Silently identify the request type (design, signoff, compatibility, or process), service type (data plane or management plane), API version and supplied PR. Check available evidence before asking for missing facts. Approval requests remain advisory.
 
+For ARM/management-plane review requests, direct the user to [ARM Office Hours](https://armwiki.azurewebsites.net/introduction/office_hours.html) and stop this Board review workflow. Do not apply data-plane review guidance or imply Board signoff covers ARM review.
+
 ### 2. Inspect the Current PR
 
 For a supplied PR, read its description, changed API contract, normal discussion comments (`get_comments`), formal reviews and relevant inline threads. Read the latest "Next Steps to Merge", labels and relevant check results; inspect failure logs only when needed to establish a blocker. Reconcile resolved feedback and later commits with the current diff. Separate design findings, Board signoff, and merge blockers.

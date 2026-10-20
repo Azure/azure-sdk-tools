@@ -68,19 +68,18 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
     assert "[skill_guideline]" in content
     assert "Advisory only" in skill.frontmatter.description
     assert "Never approve changes" in content
-    assert "omission from generated artifacts is not runtime authorization" in content
-    assert "Do not infer that a workflow-role error requires role elevation" in content
-    assert "Do not repeat old recurring-meeting schedules" in content
+    assert "repair infrastructure or prescribe permission changes" in content
+    assert "Use current guidance" in content
+    assert "not historical schedules or workarounds" in content
 
 
 def test_stewardship_pr_guidance_is_focused_and_separates_review_status() -> None:
     content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
 
-    assert "at most 100 words, including references" in content
-    assert "Separate design findings, Board signoff, and merge blockers" in content
-    assert "Do not list passing checks" in content
-    assert "Do not add a sample review comment" in content
-    assert "rather than substituting passing checks for that evidence" in content
+    assert "at most 100 words including references" in content
+    assert "Separate design findings, Board signoff and merge readiness" in content
+    assert "No check inventories" in content
+    assert "Keep the body under 60 words" in content
     steps = [
         "### 1. Identify the Request",
         "### 2. Inspect the Current PR",
@@ -90,13 +89,34 @@ def test_stewardship_pr_guidance_is_focused_and_separates_review_status() -> Non
     ]
     positions = [content.index(step) for step in steps]
     assert positions == sorted(positions)
-    assert "normal discussion comments (`get_comments`)" in content
-    assert "rather than the generic PR merge-readiness response" in content
-    assert "Do not justify an absence of design findings using signoff" in content
-    assert "Target 60-80 words" in content
-    assert "Before sending, count the words including link titles" in content
-    assert "Keep the body under 60 words" in content
-    assert "replace with current verified findings" in content
+    assert "discussion comments (`get_comments`)" in content
+    assert "Green checks and signoff do not prove design correctness" in content
+    assert "Brevity limits the answer, not the investigation" in content
+    guideline = content.split("[skill_guideline]", 1)[1]
+    assert len(guideline.split()) <= 500
+
+
+def test_stewardship_check_support_prioritizes_reported_failure() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+
+    assert "For check failures, lead with the reported check" in content
+    assert "linked comments" in content
+    assert "Passing checks do not establish that the user's problem is resolved" in content
+    assert "do not invent an automation diagnosis" in content
+    assert "Inspect linked error evidence before asking" in content
+    assert "approval does not transfer to another PR" in content
+    assert "Keep signoff secondary to check failures" in content
+
+
+def test_stewardship_blocker_diagnosis_does_not_depend_on_merge_summary() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+
+    assert "not the sole source of blockers" in content
+    assert "independently inspect current-head" in content
+    assert "branch-policy evidence" in content
+    assert "whose blocking status is unverified" in content
+    assert "single source of truth for merge blockers" not in content
+    assert "complete, authoritative list of merge blockers" not in content
 
 
 def test_stewardship_filter_does_not_broaden_existing_review_tenants() -> None:
@@ -113,9 +133,9 @@ def test_stewardship_skill_requires_explicit_service_type_for_scoped_search() ->
 
     assert 'service_type="data-plane"' in content
     assert 'service_type="management-plane"' in content
-    assert "including in the initial KB search" in content
-    assert "Leave it unset for ambiguous, mixed-service-type or general process questions" in content
-    assert "`wiki_search` has no service-type parameter" in content
+    assert "including the initial search" in content
+    assert "leave it unset when ambiguous or general" in content
+    assert "`wiki_search` has no service-type filter" in content
 
 
 def test_stewardship_request_identification_stays_focused() -> None:
@@ -126,7 +146,6 @@ def test_stewardship_request_identification_stays_focused() -> None:
 
     assert len(identify.split()) <= 75
     assert "service type (data plane or management plane)" in identify
-    assert "Approval requests remain advisory" in identify
     assert "search_knowledge_base" not in identify
 
 
@@ -144,7 +163,6 @@ def test_stewardship_routes_arm_reviews_to_arm_office_hours() -> None:
     assert any(arm_office_hours in exclusion for exclusion in config.exclusions)
     assert f"[ARM Office Hours]({arm_office_hours})" in content
     assert "stop this Board review workflow" in content
-    assert "Do not apply data-plane review guidance" in content
     assert "Direct ARM/management-plane reviews to ARM Office Hours" in skill.frontmatter.description
 
 

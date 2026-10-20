@@ -37,17 +37,19 @@ extends:
                   npmrcPath: $(Build.SourcesDirectory)/.npmrc
                   registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
 
-              - script: npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
-                displayName: Install exact production Vally and SDK
+              - script: >-
+                  npm update @github/copilot --package-lock-only --include=optional
+                  --ignore-scripts --no-audit --no-fund
+                  --userconfig "$(Build.SourcesDirectory)/.npmrc"
+                displayName: Regenerate runtime-only lock using authenticated package metadata
                 workingDirectory: eng/common/scripts/eval
 
-              # Isolated comparison only: no production manifest or lockfile is updated.
-              - script: >-
-                  npm install --prefix "$(Build.SourcesDirectory)/artifacts/mcp-upgrade"
-                  --no-save --package-lock=false --no-audit --no-fund
-                  --userconfig "$(Build.SourcesDirectory)/.npmrc"
-                  @github/copilot-sdk@1.0.24 @github/copilot@1.0.101
-                displayName: Install isolated stable SDK and runtime comparison
+              - script: node eng/pipelines/copilot-app-mcp-lock-check.mjs
+                displayName: Verify runtime-only lock and preserve generated metadata
+
+              - script: npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+                displayName: Install normal Vally runner from the updated lock
+                workingDirectory: eng/common/scripts/eval
 
               # Reuse the exact mock binary from the failed production run, not a rebuild.
               - task: DownloadPipelineArtifact@2
@@ -66,8 +68,22 @@ extends:
 
               - template: /eng/common/pipelines/templates/steps/login-to-copilot.yml
 
-              - script: node eng/pipelines/copilot-app-mcp-versions.mjs
-                displayName: Compare pinned and stable runtimes with sanitized MCP diagnostics
-                workingDirectory: $(Build.SourcesDirectory)
+              # This is the ordinary production runner, without SDK observers or CLI-path overrides.
+              - script: >-
+                  node --experimental-strip-types "$(Build.SourcesDirectory)/eng/common/scripts/eval/invoke-eval-shard.ts"
+                  --eval-args "-e tools/prompt-to-tool-github.eval.yaml -e tools/prompt-to-tool-apiview.eval.yaml"
+                  --shard-name runtime-fix
+                  --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/runtime-fix"
+                  --threshold 0.8
+                displayName: Verify normal Vally runner against GitHub and APIView MCP evals
+                workingDirectory: evals
                 env:
                   COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
+
+              - script: >-
+                  node --experimental-strip-types "$(Build.SourcesDirectory)/eng/common/scripts/eval/lib/shard-results.ts"
+                  --results-root "$(Build.SourcesDirectory)/artifacts/vally-results/runtime-fix"
+                  --output-directory "$(Build.SourcesDirectory)/artifacts/mcp-controls/eval-result"
+                  --shard-name runtime-fix --attempt 1
+                displayName: Preserve actual eval verdict and completeness
+                condition: always()

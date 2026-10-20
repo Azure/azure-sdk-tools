@@ -73,6 +73,26 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
     assert "Do not repeat old recurring-meeting schedules" in content
 
 
+def test_stewardship_pr_guidance_is_focused_and_separates_review_status() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+
+    assert "at most 100 words, including references" in content
+    assert "Separate design findings, Board signoff, and merge blockers" in content
+    assert "Do not list passing checks" in content
+    assert "Do not add a sample review comment" in content
+    assert "rather than substituting passing checks for that evidence" in content
+    steps = [
+        "### 1. Identify the Request",
+        "### 2. Inspect the Current PR",
+        "### 3. Assess the Design or Compatibility Question",
+        "### 4. Resolve Review-Process or Tooling Questions",
+        "### 5. Report the Finding and Necessary Next Action",
+    ]
+    positions = [content.index(step) for step in steps]
+    assert positions == sorted(positions)
+    assert "normal discussion comments (`get_comments`)" in content
+
+
 def test_stewardship_filter_does_not_broaden_existing_review_tenants() -> None:
     for tenant_id in (TenantID.API_SPEC_REVIEW_BOT, TenantID.TYPESPEC_CHANNEL_QA_BOT):
         config = get_tenant_config(tenant_id)

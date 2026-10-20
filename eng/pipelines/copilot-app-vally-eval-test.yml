@@ -1,31 +1,78 @@
-# Temporary feature-branch probe: publisher tests only, no evals, service connection or live storage.
+# One explicitly approved replay of a retained real main-build bundle. No evaluations.
 trigger: none
 pr: none
 
+parameters:
+  - name: publishRetainedWorkflowBundle
+    type: boolean
+    default: false
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
 extends:
-  template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    TargetDirectory: eng/common-tests/eval
-    TargetTags: UnitTest,IntegrationTest
-    PreTestSteps:
-      - task: UseNode@1
-        inputs:
-          version: 24.x
-      - pwsh: |
-          $ErrorActionPreference = 'Stop'
-          $version = az version --output json | ConvertFrom-Json
-          Write-Host "Azure CLI version: $($version.'azure-cli')"
-        displayName: Report CLI version only
-    CustomTestSteps:
-      - pwsh: |
-          $ErrorActionPreference = 'Stop'
-          $config = New-PesterConfiguration
-          $config.Run.PassThru = $true
-          $config.TestResult.Enabled = $true
-          $config.CodeCoverage.Enabled = $true
-          $config.CodeCoverage.Path = '$(Build.SourcesDirectory)/eng/common/scripts/eval/publisher/Publish-EvalResults.ps1'
-          $config.Filter.Tag = @('UnitTest', 'IntegrationTest')
-          $result = Invoke-Pester -Configuration $config
-          if ($result.FailedCount -gt 0) { throw 'Publisher-only feature tests failed.' }
-        workingDirectory: $(Build.SourcesDirectory)/eng/common-tests/eval
-        displayName: Run only publisher tests with fake Azure and localhost storage
+    ${{ if and(parameters.publishRetainedWorkflowBundle, eq(variables['System.CollectionUri'], 'https://dev.azure.com/azure-sdk/'), eq(variables['System.TeamProject'], 'internal'), eq(variables['System.DefinitionId'], '8424'), eq(variables['Build.Repository.Name'], 'Azure/azure-sdk-tools'), eq(variables['Build.SourceBranch'], 'refs/heads/test/eval-cli-linux-probe'), eq(variables['Build.Reason'], 'Manual')) }}:
+      AllowAzureStorage: true
+    stages:
+      - ${{ if and(parameters.publishRetainedWorkflowBundle, eq(variables['System.CollectionUri'], 'https://dev.azure.com/azure-sdk/'), eq(variables['System.TeamProject'], 'internal'), eq(variables['System.DefinitionId'], '8424'), eq(variables['Build.Repository.Name'], 'Azure/azure-sdk-tools'), eq(variables['Build.SourceBranch'], 'refs/heads/test/eval-cli-linux-probe'), eq(variables['Build.Reason'], 'Manual')) }}:
+        - stage: Replay
+          displayName: Replay retained workflow build 6975803
+          jobs:
+            - job: PublishRetainedBundle
+              timeoutInMinutes: 20
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              workspace:
+                clean: all
+              steps:
+                - checkout: self
+                  clean: true
+                  fetchDepth: 1
+                - task: DownloadPipelineArtifact@2
+                  displayName: Download exact retained main-build ZIP and descriptor
+                  inputs:
+                    buildType: specific
+                    project: $(System.TeamProjectId)
+                    definition: '8255'
+                    buildVersionToDownload: specific
+                    pipelineId: '6975803'
+                    artifactName: eval-summary-1
+                    allowPartiallySucceededBuilds: true
+                    allowFailedBuilds: true
+                    itemPattern: |
+                      dashboard-bundle.zip
+                      dashboard-bundle.zip.json
+                    targetPath: $(Pipeline.Workspace)/eval-real-replay
+                - task: PowerShell@2
+                  displayName: Verify pinned saved bytes, main-build provenance and protected configuration
+                  inputs:
+                    targetType: filePath
+                    filePath: eng/scripts/Invoke-EvalPublicationReplay.ps1
+                    arguments: -Mode Validate -ArtifactDirectory "$(Pipeline.Workspace)/eval-real-replay" -ConfigurationPath "$(Agent.TempDirectory)/eval-real-replay.json"
+                    pwsh: true
+                  env:
+                    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                - task: AzureCLI@2
+                  displayName: Publish original workflow results, notify dashboard and verify stored bytes
+                  condition: and(succeeded(), eq(variables['System.DefinitionId'], '8424'), eq(variables['Build.SourceBranch'], 'refs/heads/test/eval-cli-linux-probe'), eq(variables['Build.Reason'], 'Manual'))
+                  inputs:
+                    azureSubscription: eval-dashboard-sc
+                    scriptType: pscore
+                    scriptLocation: scriptPath
+                    scriptPath: eng/scripts/Invoke-EvalPublicationReplay.ps1
+                    arguments: -Mode Publish -ArtifactDirectory "$(Pipeline.Workspace)/eval-real-replay" -ConfigurationPath "$(Agent.TempDirectory)/eval-real-replay.json"
+      - ${{ else }}:
+        - stage: NoPublication
+          jobs:
+            - job: Explain
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              steps:
+                - checkout: none
+                - pwsh: throw 'This one-off replay requires explicit manual approval on its exact internal test branch and definition.'

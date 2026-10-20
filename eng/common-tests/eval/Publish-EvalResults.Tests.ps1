@@ -259,9 +259,17 @@ setTimeout(()=>{server.closeAllConnections();server.close();},60000).unref();
                     $native.Add($Arguments[$i])
                 }
                 $native.AddRange([string[]]@('--blob-endpoint', $f.storageEndpoint, '--sas-token', 'sig=synthetic-not-a-credential'))
-                & $f.realAzPath @native
-                $global:LASTEXITCODE = $LASTEXITCODE
-                if ($LASTEXITCODE -eq 0 -and $Arguments[2] -eq 'upload') { $f.stored = $true }
+                $nativeOutput = & $f.realAzPath @native 2>&1
+                $nativeExit = $LASTEXITCODE
+                if ($nativeExit -ne 0) {
+                    # This command has only synthetic input and a localhost destination.
+                    # Show argument-parser messages only; never relax the upload assertion.
+                    $parserError = @($nativeOutput | ForEach-Object { [string]$_ } | Where-Object { $_ -match '^ERROR: (unrecognized arguments:|argument )' }) -join ' '
+                    if ($parserError) { Write-Warning "Localhost CLI parser failure: $parserError" -WarningAction Continue }
+                }
+                $global:LASTEXITCODE = $nativeExit
+                if ($nativeExit -eq 0 -and $Arguments[2] -eq 'upload') { $f.stored = $true }
+                $nativeOutput
             }
             & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
             $f.logs | Should -Contain "Result archive stored: $($f.name) (duplicate: False)."

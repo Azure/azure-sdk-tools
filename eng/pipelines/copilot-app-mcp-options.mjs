@@ -23,6 +23,14 @@ export function optionCases() {
     ];
 }
 
+export function selectCases(startupOnly) {
+    const cases = optionCases();
+    if (!startupOnly) return cases;
+    const control = cases.find(({ name }) => name === 'vally-native-fs-control');
+    const candidate = cases.find(({ explicitStart }) => explicitStart);
+    return [control, ...[1, 2, 3].map((trial) => ({ ...candidate, name: `${candidate.name}-${trial}` }))];
+}
+
 export async function startConfiguredMock(session, config, before) {
     const name = 'azure-sdk-mcp';
     assert.equal(before.mcp3pEnabled, true, 'Do not start MCP when third-party servers are not policy-enabled');
@@ -31,7 +39,7 @@ export async function startConfiguredMock(session, config, before) {
     assert.equal(config[name].command, 'dotnet');
     assert.deepEqual(config[name].args, ['../artifacts/mcp/mock/azsdk-mock.dll']);
     assert.ok(path.isAbsolute(config[name].cwd));
-    await session.rpc.mcp.startServer({ name, config: config[name] });
+    await session.rpc.mcp.startServer({ serverName: name, config: config[name] });
 }
 
 async function main() {
@@ -94,12 +102,13 @@ async function main() {
         if (activeCase.explicitStart) {
             await startConfiguredMock(session, config.mcpServers, record.before);
             record.afterExplicitStart = await inspectMcp(session);
+            assert.equal(record.afterExplicitStart.requiredToolAvailable, true, 'Explicit startup did not expose the required mock tool');
         }
         return session;
     };
     process.chdir(context.dir);
     try {
-        for (const testCase of optionCases()) {
+        for (const testCase of selectCases(process.argv.includes('--startup-only'))) {
             activeCase = testCase;
             active = { name: testCase.name, tokenName: testCase.tokenName ?? 'COPILOT_GITHUB_TOKEN' };
             activeSession = undefined;
@@ -193,7 +202,10 @@ async function main() {
         console.log(`MCP_OPTIONS_SUMMARY ${summary}`);
     }
     // This diagnostic is only green if it proves at least one real successful MCP invocation.
-    if (!records.some(({ result }) => result?.requiredToolSucceeded)) process.exitCode = 1;
+    const candidates = records.filter(({ name }) => name.startsWith('vally-explicit-session-start'));
+    if (process.argv.includes('--startup-only')) {
+        if (candidates.length !== 3 || !candidates.every(({ result }) => result?.requiredToolSucceeded)) process.exitCode = 1;
+    } else if (!records.some(({ result }) => result?.requiredToolSucceeded)) process.exitCode = 1;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

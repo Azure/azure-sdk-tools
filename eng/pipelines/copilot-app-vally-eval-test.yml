@@ -58,8 +58,8 @@ extends:
 
               - template: /eng/common/pipelines/templates/steps/login-to-copilot.yml
 
-              - script: node eng/pipelines/copilot-app-mcp-options.mjs
-                displayName: Isolate App-auth session options and test MCP startup fix
+              - script: node eng/pipelines/copilot-app-mcp-options.mjs --startup-only
+                displayName: Verify explicit MCP startup against control in three trials
                 workingDirectory: $(Build.SourcesDirectory)
                 env:
                   COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)

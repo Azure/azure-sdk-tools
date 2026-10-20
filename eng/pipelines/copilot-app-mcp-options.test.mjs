@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import test from 'node:test';
-import { optionCases, startConfiguredMock } from './copilot-app-mcp-options.mjs';
+import { optionCases, selectCases, startConfiguredMock } from './copilot-app-mcp-options.mjs';
 
 test('matrix distinguishes native session-fs, auth auto-detection and token name', () => {
     const cases = optionCases();
@@ -13,6 +13,15 @@ test('matrix distinguishes native session-fs, auth auto-detection and token name
     assert.deepEqual(direct.map(({ nativeFs, useLoggedInUser }) => [nativeFs, useLoggedInUser]), [[false, true], [false, false], [true, true], [true, false]]);
     assert.equal(cases.filter(({ explicitStart }) => explicitStart).length, 1);
     assert.equal(cases.filter(({ tokenName }) => tokenName).length, 1);
+});
+
+test('startup-only verification keeps a negative control and requires three real candidate trials', () => {
+    const cases = selectCases(true);
+    assert.equal(cases.length, 4);
+    assert.equal(cases[0].name, 'vally-native-fs-control');
+    assert.equal(cases.filter(({ explicitStart }) => explicitStart).length, 3);
+    assert.equal(new Set(cases.map(({ name }) => name)).size, 4);
+    assert.equal(selectCases(false).length, 8);
 });
 
 test('ephemeral start respects disabled, filtered and third-party-MCP policy', async () => {
@@ -30,7 +39,7 @@ test('ephemeral start reuses only the exact configured mock without persistent c
     const session = { rpc: { mcp: { startServer: async (params) => calls.push(params) } } };
     const server = { command: 'dotnet', args: ['../artifacts/mcp/mock/azsdk-mock.dll'], cwd: path.resolve('evals'), tools: ['*'] };
     await startConfiguredMock(session, { 'azure-sdk-mcp': server }, { mcp3pEnabled: true, disabledServers: [], filteredServers: [] });
-    assert.deepEqual(calls, [{ name: 'azure-sdk-mcp', config: server }]);
+    assert.deepEqual(calls, [{ serverName: 'azure-sdk-mcp', config: server }]);
     await assert.rejects(startConfiguredMock(session, { 'azure-sdk-mcp': { ...server, args: ['azsdk.dll', 'start'] } }, { mcp3pEnabled: true }));
     assert.equal(calls.length, 1);
 });

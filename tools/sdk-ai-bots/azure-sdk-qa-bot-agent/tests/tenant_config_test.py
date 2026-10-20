@@ -113,9 +113,21 @@ def test_stewardship_skill_requires_explicit_plane_for_scoped_search() -> None:
 
     assert 'service_type="data-plane"' in content
     assert 'service_type="management-plane"' in content
-    assert "include it in the initial KB search" in content
+    assert "including in the initial KB search" in content
     assert "Leave it unset for ambiguous, cross-plane or general process questions" in content
     assert "`wiki_search` has no service-plane parameter" in content
+
+
+def test_stewardship_request_identification_stays_focused() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    identify = content.split("### 1. Identify the Request\n", 1)[1].split(
+        "### 2. Inspect the Current PR", 1
+    )[0]
+
+    assert len(identify.split()) <= 50
+    assert "service plane" in identify
+    assert "Approval requests remain advisory" in identify
+    assert "search_knowledge_base" not in identify
 
 
 @pytest.mark.parametrize(

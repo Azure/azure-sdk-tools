@@ -92,7 +92,8 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         $arguments[$arguments.IndexOf('--file') + 1] | Should -Be $f.bundle
         $arguments[$arguments.IndexOf('--auth-mode') + 1] | Should -Be 'login'
         $arguments[$arguments.IndexOf('--overwrite') + 1] | Should -Be 'false'
-        $arguments[$arguments.IndexOf('--if-none-match') + 1] | Should -Be '*'
+        $arguments | Should -Contain '--if-none-match=*'
+        $arguments | Should -Not -Contain '*'
         $arguments | Should -Contain '--no-progress'
         $arguments | Should -Contain 'schema=1'; $arguments | Should -Contain "sha256=$($f.hash)"
         $arguments | Should -Contain "publisher=$script:owner"
@@ -224,6 +225,7 @@ let size=0, metadata={};
 const server=createServer((req,res)=>{
   console.log(req.method);
   if(req.method==='PUT'){
+        if(req.headers['if-none-match']!=='*'){res.writeHead(400);res.end('Missing create-only condition');req.resume();return;}
     metadata=Object.fromEntries(Object.entries(req.headers).filter(([key])=>key.startsWith('x-ms-meta-')));
     req.on('data',chunk=>size+=chunk.length);
     req.on('end',()=>{res.writeHead(201,{'x-ms-request-id':'fixture-request','x-ms-version':'2023-11-03',ETag:'"fixture-etag"','Last-Modified':new Date().toUTCString(),'x-ms-request-server-encrypted':'true'});res.end();});

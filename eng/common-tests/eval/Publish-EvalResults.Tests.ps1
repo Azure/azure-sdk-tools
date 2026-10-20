@@ -480,3 +480,33 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
     }
 
 }
+
+# These checks belong to Tools, not to the eng/common files copied into consumers.
+Describe 'Tools publisher CI integration' -Tag 'UnitTest' {
+    It 'runs every shared Node suite and discovers the tagged publisher PowerShell suite' {
+        $eng = Join-Path $PSScriptRoot '../..'
+        $ci = Get-Content -LiteralPath (Join-Path $eng 'common-tests/ci.yml') -Raw
+        $ci | Should -Match 'TargetDirectory: eng/common-tests'
+        $ci | Should -Match 'TargetTags: UnitTest,IntegrationTest'
+        $ci | Should -Match 'CustomTestSteps:[\s\S]*config.Filter.Tag = @\(''UnitTest'', ''IntegrationTest''\)'
+        $ci | Should -Match 'if \(\$result.FailedCount -gt 0\) \{ throw'
+        $ci | Should -Match 'node --experimental-strip-types --test test/\*\.test\.ts publisher/test/\*\.test\.ts'
+        $ci | Should -Match 'version: 24\.x'
+        $ci | Should -Match 'npm install --prefix.*pnpm@12\.6\.0'
+        $ci | Should -Match 'pnpm/bin/pnpm\.mjs.*--dir publisher --ignore-workspace install --pm-on-fail=ignore --frozen-lockfile --prod --ignore-scripts'
+        $ci | Should -Match 'NPM_CONFIG_USERCONFIG: \$\(Agent.TempDirectory\)/eval-unit-tests\.npmrc'
+        $ci | Should -Not -Match 'vally eval|azureSubscription:|npm ci'
+        $suite = Get-Content -LiteralPath (Join-Path $eng 'common-tests/eval/Publish-EvalResults.Tests.ps1') -Raw
+        $suite | Should -Match 'Describe ''Azure CLI evaluation publication'' -Tag ''UnitTest'''
+        $suite | Should -Match 'Microsoft.PowerShell.Utility\\Invoke-WebRequest'
+        $suite | Should -Match 'server\.listen\(0,''127\.0\.0\.1'''
+        $package = Get-Content -LiteralPath (Join-Path $eng 'common/scripts/eval/publisher/package.json') -Raw | ConvertFrom-Json
+        $package.scripts.test | Should -BeExactly 'node --experimental-strip-types --test test/*.test.ts'
+    }
+
+    It 'keeps the Tools redirect storage policy behind the existing trust checks' {
+        $redirect = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../pipelines/templates/stages/1es-redirect.yml') -Raw
+        $redirect | Should -Match 'networkIsolationPolicy: DefaultDeny, CFSClean, CFSClean2, CFSClean3, AzureStorage'
+        $redirect | Should -Match 'parameters.AllowAzureStorage.*parameters.Use1ESOfficial.*System.TeamProject.*PullRequest.*refs/pull/'
+    }
+}

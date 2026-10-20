@@ -17,13 +17,16 @@ templates.
 
 Shards now retain the newest invocation's raw JSONL, JUnit and a completion marker
 via [shard-results](lib/shard-results.ts), including failed evaluations.
-Summary checks the full Prepare matrix and selects each expected shard's highest
-attempt once for Markdown, the Tests tab and bundling. Missing, interrupted or
+Summary checks the full Prepare matrix and selects the artifact matching each
+shard's latest timeline attempt once for Markdown, the Tests tab and bundling. Missing, interrupted or
 corrupt results remain incomplete; later failed attempts never fall back to older
 successful artifacts. A separate step reads the current-build timeline with
 `System.AccessToken` and three bounded transient retries, saving the latest attempt
 evidence beside the summary. Rendering reads that file and needs no token or network.
-Unverified or ambiguous attempts cannot authorize publication. The legacy JUnit-only
+If that exact attempt has no artifact, older JUnit is not copied or counted.
+Missing or invalid timeline evidence also excludes unverified diagnostics and blocks publication.
+Matching latest-attempt JUnit remains available when its result data is incomplete.
+The legacy JUnit-only
 summary remains supported. No historical build download or reconstruction is involved.
 The bundler accepts exactly one already-selected attempt per expected shard; it
 does not repeat Summary's selection or accept an ambiguous list of attempts.
@@ -143,10 +146,16 @@ With **Node 24.14.1+ and pnpm 12.6.0**, run `pnpm --ignore-workspace install
 --pm-on-fail=ignore --frozen-lockfile --prod --ignore-scripts` and
 `pnpm --ignore-workspace --pm-on-fail=ignore test` from `publisher`,
 then `node --experimental-strip-types --test` from this directory.
-Publisher tests require **PowerShell 7.4+ and
-Pester 5 and Azure CLI**; pipeline upload uses the agent's authenticated Azure CLI. The existing
-common-tests PR pipeline runs all shared/archive Node tests and discovers the tagged
-PowerShell suite under `eng/common-tests/eval`; failures fail the CI job.
+These shared Node tests do not need Tools-owned CI files, PowerShell tests or
+the consuming repository's redirect settings. A consumer-copy regression runs
+them without Tools files or Git history, with absent and different redirect templates.
+
+In Tools, run `Invoke-Pester -Path eng/common-tests/eval/Publish-EvalResults.Tests.ps1 -CI`
+from the repository root for the **PowerShell 7.4+ / Pester 5 / Azure CLI** tests. That Tools-only
+suite also checks the Tools CI wiring and network policy. The existing common-tests
+PR pipeline runs both the shared/archive Node tests and this tagged PowerShell suite;
+failures fail the CI job. Other repositories do not need to copy this Tools test setup.
+Pipeline upload uses the agent's authenticated Azure CLI.
 CI restores only the locked archive dependency, not the Vally evaluator.
 Regression coverage includes the actual HTTP
 cmdlet against loopback, invalid collision metadata, upload-before-notification

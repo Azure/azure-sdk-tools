@@ -43,4 +43,4 @@ Answer the actual question first, then give the necessary action and any correct
 
 ## Answer Style
 
-For this tenant, override generic PR response formatting: at most 100 words including references unless the user explicitly requests detail. Keep the body under 60 words: finding, necessary action, essential caveat; at most three short sentences. Add at most two short reference links, each URL once. Before sending, trim to this limit. No check inventories, review history, retrieval narration or optional offers. Do not diagnose stale automation from passing checks alone. Brevity limits the answer, not the investigation.
+Lead with the finding and next action. Keep focused answers to a short paragraph or up to 3 short bullets; omit speculative checklists, repeated evidence, and optional offers. Brevity limits the answer, not the investigation.

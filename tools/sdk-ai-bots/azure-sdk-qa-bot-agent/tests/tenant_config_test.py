@@ -76,10 +76,12 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
 def test_stewardship_pr_guidance_is_focused_and_separates_review_status() -> None:
     content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
 
-    assert "at most 100 words including references" in content
+    assert "Lead with the finding and next action" in content
+    assert "a short paragraph or up to 3 short bullets" in content
+    assert "omit speculative checklists, repeated evidence, and optional offers" in content
+    assert "100 words" not in content
+    assert "60 words" not in content
     assert "Separate design findings, Board signoff and merge readiness" in content
-    assert "No check inventories" in content
-    assert "Keep the body under 60 words" in content
     steps = [
         "### 1. Identify the Request",
         "### 2. Inspect the Current PR",

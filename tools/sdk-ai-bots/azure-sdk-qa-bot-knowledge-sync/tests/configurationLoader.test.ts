@@ -94,7 +94,8 @@ describe('ConfigurationLoader', () => {
       }),
       expect.objectContaining({
         path: '/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md',
-        folder: 'azure_sdk_tools_docs'
+        folder: 'azure_sdk_for_js_docs',
+        relativeByRepoPath: true
       })
     ]));
     expect(config.sources.some(

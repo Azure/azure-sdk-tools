@@ -41,6 +41,14 @@ extends:
                 displayName: Install exact production Vally and SDK
                 workingDirectory: eng/common/scripts/eval
 
+              # Isolated comparison only: no production manifest or lockfile is updated.
+              - script: >-
+                  npm install --prefix "$(Build.SourcesDirectory)/artifacts/mcp-upgrade"
+                  --no-save --package-lock=false --no-audit --no-fund
+                  --userconfig "$(Build.SourcesDirectory)/.npmrc"
+                  @github/copilot-sdk@1.0.24 @github/copilot@1.0.101
+                displayName: Install isolated stable SDK and runtime comparison
+
               # Reuse the exact mock binary from the failed production run, not a rebuild.
               - task: DownloadPipelineArtifact@2
                 displayName: Download exact failed-run mock MCP artifact
@@ -53,13 +61,13 @@ extends:
                   artifactName: mcp-servers
                   targetPath: $(Build.SourcesDirectory)/artifacts/mcp
 
-              - script: node --test eng/pipelines/copilot-app-mcp-probe.test.mjs eng/pipelines/copilot-app-mcp-options.test.mjs
+              - script: node --test eng/pipelines/copilot-app-mcp-probe.test.mjs eng/pipelines/copilot-app-mcp-options.test.mjs eng/pipelines/copilot-app-mcp-versions.test.mjs
                 displayName: Test diagnostic assertions offline
 
               - template: /eng/common/pipelines/templates/steps/login-to-copilot.yml
 
-              - script: node eng/pipelines/copilot-app-mcp-options.mjs --startup-only
-                displayName: Verify explicit MCP startup against control in three trials
+              - script: node eng/pipelines/copilot-app-mcp-versions.mjs
+                displayName: Compare pinned and stable runtimes with sanitized MCP diagnostics
                 workingDirectory: $(Build.SourcesDirectory)
                 env:
                   COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)

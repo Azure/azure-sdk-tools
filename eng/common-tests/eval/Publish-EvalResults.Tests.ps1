@@ -4,6 +4,7 @@ BeforeAll {
     # Keep the cmdlet itself: Pester can intercept module-qualified calls too.
     $script:realWebRequest = Get-Command Microsoft.PowerShell.Utility\Invoke-WebRequest -CommandType Cmdlet
     $script:nodePath = (Get-Command node -CommandType Application | Select-Object -First 1).Source
+    $script:realAzPath = (Get-Command az -CommandType Application | Select-Object -First 1).Source
     function az {
         param([Parameter(ValueFromRemainingArguments)] [string[]] $Arguments)
         throw 'Real Azure CLI calls are forbidden in these tests.'
@@ -25,6 +26,7 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
             notifyTokenFails = $false; status = 200; headers = @{}; responseFailures = 0; httpCalls = 0
             realWebRequest = $script:realWebRequest
             nodePath = $script:nodePath
+            realAzPath = $script:realAzPath
             dashboardUrl = 'https://synthetic-dashboard.test-region.azurewebsites.net/api/refresh'
             dashboardResource = 'api://00000000-0000-4000-8000-000000000042'
             name = 'v1/azure-sdk/internal/8255/1001/1/dashboard-bundle.zip'
@@ -90,7 +92,9 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         $arguments[$arguments.IndexOf('--file') + 1] | Should -Be $f.bundle
         $arguments[$arguments.IndexOf('--auth-mode') + 1] | Should -Be 'login'
         $arguments[$arguments.IndexOf('--overwrite') + 1] | Should -Be 'false'
-        $arguments[$arguments.IndexOf('--if-none-match') + 1] | Should -Be '*'
+        $arguments | Should -Contain '--if-none-match=*'
+        $arguments | Should -Not -Contain '*'
+        $arguments | Should -Contain '--no-progress'
         $arguments | Should -Contain 'schema=1'; $arguments | Should -Contain "sha256=$($f.hash)"
         $arguments | Should -Contain "publisher=$script:owner"
         ($arguments | Where-Object { $_ -like 'storedat=*' }) | Should -Match 'Z$'
@@ -148,6 +152,138 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         $message | Should -Not -Match 'PRIVATE_|SECRET_|Bearer'
         $f.logs | Should -BeNullOrEmpty
         Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
+    }
+
+    It 'keeps native stderr out of successful JSON, including token responses' {
+        Mock az {
+            param([string[]] $Arguments)
+            $f = $global:EvalPublicationFixture; $f.calls += ,@($Arguments)
+            $global:LASTEXITCODE = 0
+            Write-Error 'SYNTHETIC_PRIVATE_STDERR_NOT_JSON' -ErrorAction Continue
+            if ($Arguments[0] -eq 'account') {
+                return @{ accessToken = $(if ($Arguments -contains 'https://storage.azure.com/') { $f.storageToken } else { 'fake-notification-token' }) } | ConvertTo-Json -Compress
+            }
+            $Arguments[2] | Should -Be 'upload'
+            $f.stored = $true
+            return '{"etag":"fake-etag"}'
+        }
+        & $script:publisher @script:publishArgs
+        $f.logs | Should -Contain 'Dashboard refresh succeeded.'
+        ($f.logs -join ' ') | Should -Not -Match 'SYNTHETIC_PRIVATE_STDERR'
+        @($f.calls | Where-Object { $_[0] -eq 'storage' -and $_[2] -eq 'show' }).Count | Should -Be 0
+    }
+
+    It 'reports only fixed upload and verification error codes, never raw CLI content' {
+        Mock az {
+            param([string[]] $Arguments)
+            $f = $global:EvalPublicationFixture
+            if ($Arguments[0] -eq 'account') {
+                $global:LASTEXITCODE = 0
+                return @{ accessToken = $f.storageToken } | ConvertTo-Json -Compress
+            }
+            $global:LASTEXITCODE = 1
+            if ($Arguments[2] -eq 'upload') { return 'ERROR: (AuthorizationPermissionMismatch) PRIVATE_BEARER_SECRET https://private.example/?sig=SECRET' }
+            return 'ERROR: (BlobNotFound) PRIVATE_RESPONSE_CONTENT'
+        }
+        $message = ''
+        try { & $script:publisher @script:publishArgs } catch { $message = $_.Exception.Message }
+        $message | Should -Match 'Upload: exit=1, code=AuthorizationPermissionMismatch'
+        $message | Should -Match 'Current operation: exit=1, code=BlobNotFound'
+        $message | Should -Not -Match 'PRIVATE_|SECRET|https://|Bearer'
+        Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
+    }
+
+    It 'sanitizes invalid successful CLI JSON without treating it as stored data' {
+        Mock az {
+            param([string[]] $Arguments)
+            $f = $global:EvalPublicationFixture
+            if ($Arguments[0] -eq 'account') {
+                $global:LASTEXITCODE = 0
+                return @{ accessToken = $f.storageToken } | ConvertTo-Json -Compress
+            }
+            if ($Arguments[2] -eq 'show') { $global:LASTEXITCODE = 1; return 'ERROR: (BlobNotFound) SECRET_SHOW_RESPONSE' }
+            $global:LASTEXITCODE = 0
+            return 'SECRET_INVALID_JSON'
+        }
+        $message = ''
+        try { & $script:publisher @script:publishArgs } catch { $message = $_.Exception.Message }
+        $message | Should -Match 'Upload: exit=0, code=invalid_cli_json'
+        $message | Should -Not -Match 'SECRET_'
+        Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
+    }
+
+    It 'publishes through the real Azure CLI against loopback without a fallback read' -Tag 'IntegrationTest' {
+        $f.arguments.StorageAccountName = 'loopbackfixture'
+        $f.arguments.DashboardRefreshUrl = ''
+        $start = [Diagnostics.ProcessStartInfo]::new()
+        $start.FileName = $f.nodePath
+        $start.UseShellExecute = $false; $start.RedirectStandardOutput = $true; $start.RedirectStandardError = $true
+        $start.ArgumentList.Add('--input-type=module'); $start.ArgumentList.Add('-e')
+        $start.ArgumentList.Add(@'
+import {createServer} from 'node:http';
+let size=0, metadata={};
+const server=createServer((req,res)=>{
+  console.log(req.method);
+  if(req.method==='PUT'){
+    if(req.headers['if-none-match']!=='*'){res.writeHead(400);res.end('Missing create-only condition');req.resume();return;}
+    metadata=Object.fromEntries(Object.entries(req.headers).filter(([key])=>key.startsWith('x-ms-meta-')));
+    req.on('data',chunk=>size+=chunk.length);
+    req.on('end',()=>{res.writeHead(201,{'x-ms-request-id':'fixture-request','x-ms-version':'2023-11-03',ETag:'"fixture-etag"','Last-Modified':new Date().toUTCString(),'x-ms-request-server-encrypted':'true'});res.end();});
+  }else if(req.method==='HEAD'){
+    res.writeHead(200,{...metadata,'Content-Length':size,'x-ms-blob-type':'BlockBlob','x-ms-request-id':'fixture-read',ETag:'"fixture-etag"','Last-Modified':new Date().toUTCString()});res.end();
+  }else{res.writeHead(400);res.end();}
+});
+server.listen(0,'127.0.0.1',()=>console.log(server.address().port));
+setTimeout(()=>{server.closeAllConnections();server.close();},60000).unref();
+'@)
+        $server = [Diagnostics.Process]::Start($start)
+        $oldConfig = $env:AZURE_CONFIG_DIR; $oldTelemetry = $env:AZURE_CORE_COLLECT_TELEMETRY; $oldProxy = $env:NO_PROXY
+        try {
+            $line = $server.StandardOutput.ReadLineAsync()
+            if (!$line.Wait(30000)) { throw 'CLI loopback fixture did not start within its startup deadline.' }
+            $f.storageEndpoint = "http://127.0.0.1:$([int]$line.Result)"
+            $env:AZURE_CONFIG_DIR = Join-Path $TestDrive 'isolated-cli'
+            $env:AZURE_CORE_COLLECT_TELEMETRY = '0'; $env:NO_PROXY = '127.0.0.1,localhost'
+            Mock az {
+                param([string[]] $Arguments)
+                $f = $global:EvalPublicationFixture; $f.calls += ,@($Arguments)
+                if ($Arguments[0] -eq 'account') {
+                    $global:LASTEXITCODE = 0
+                    return @{ accessToken = $f.storageToken } | ConvertTo-Json -Compress
+                }
+                ([uri]$f.storageEndpoint).Host | Should -Be '127.0.0.1'
+                $Arguments[0] | Should -Be 'storage'; $Arguments[1] | Should -Be 'blob'
+                $Arguments[2] | Should -BeIn @('upload', 'show')
+                # No login, account keys or production endpoint: replace only the test transport.
+                $native = [Collections.Generic.List[string]]::new()
+                for ($i = 0; $i -lt $Arguments.Length; $i++) {
+                    if ($Arguments[$i] -eq '--auth-mode') { $i++; continue }
+                    $native.Add($Arguments[$i])
+                }
+                $native.AddRange([string[]]@('--blob-endpoint', $f.storageEndpoint, '--sas-token', 'sig=synthetic-not-a-credential'))
+                $nativeOutput = & $f.realAzPath @native 2>&1
+                $nativeExit = $LASTEXITCODE
+                if ($nativeExit -ne 0) {
+                    # This command has only synthetic input and a localhost destination.
+                    # Show argument-parser messages only; never relax the upload assertion.
+                    $parserError = @($nativeOutput | ForEach-Object { [string]$_ } | Where-Object { $_ -match '^ERROR: (unrecognized arguments:|argument )' }) -join ' '
+                    if ($parserError) { Write-Warning "Localhost CLI parser failure: $parserError" -WarningAction Continue }
+                }
+                $global:LASTEXITCODE = $nativeExit
+                if ($nativeExit -eq 0 -and $Arguments[2] -eq 'upload') { $f.stored = $true }
+                $nativeOutput
+            }
+            & $script:publisher @script:publishArgs -WarningAction SilentlyContinue
+            $f.logs | Should -Contain "Result archive stored: $($f.name) (duplicate: False)."
+            @($f.calls | Where-Object { $_[0] -eq 'storage' -and $_[2] -eq 'show' }).Count | Should -Be 0
+            $server.Kill($true); $server.WaitForExit()
+            @($server.StandardOutput.ReadToEnd().Trim() -split '\r?\n') | Should -Be @('PUT')
+            Assert-MockCalled Invoke-WebRequest -Times 0 -Exactly
+        } finally {
+            if (!$server.HasExited) { $server.Kill($true); $server.WaitForExit() }
+            $server.Dispose()
+            $env:AZURE_CONFIG_DIR = $oldConfig; $env:AZURE_CORE_COLLECT_TELEMETRY = $oldTelemetry; $env:NO_PROXY = $oldProxy
+        }
     }
 
     It 'publishes without writing local status files or changing the saved archive and descriptor' {

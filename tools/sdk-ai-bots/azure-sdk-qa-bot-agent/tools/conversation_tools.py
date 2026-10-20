@@ -34,6 +34,7 @@ class FeedbackMessage(BaseModel):
     id: str
     role: str
     sender_name: str
+    sender_id: str | None = None
     content: str
     created_at: str
     message_link: str | None = None
@@ -115,6 +116,7 @@ class ConversationTools:
                 id=m.id,
                 role=m.sender_role.value,
                 sender_name=m.sender_name,
+                sender_id=m.sender_id,
                 content=m.content or "",
                 created_at=m.created_at.isoformat() if m.created_at else "",
                 message_link=(

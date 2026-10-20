@@ -24,7 +24,7 @@ Use a supplied baseline without asking again. Existing-report replay does not
 need this question; for PR assessment, use the PR's actual target baseline.
 
 For every fresh assessment, the coordinator is the first operational command.
-For a PR, run `run-assessment-analysis.mjs --pr <url-or-number> --repo <repo>
+For a PR, run `run-assessment-analysis.ts --pr <url-or-number> --repo <repo>
 --output <work>` immediately. For local code, run it immediately with
 `--base`, `--specification`, `--repo`, and `--output` once the baseline is
 known. Do not run separate Git status/diff/fetch/worktree, PR metadata,
@@ -32,6 +32,23 @@ dependency, or project-discovery commands first. Diagnose only a concrete
 blocker returned by the coordinator.
 
 Follow the [complete workflow](references/workflow.md). Apply the [classification rules](references/classification.md), including the detailed [downstream cases](references/downstream-breaking-cases.md), perform the [Azure Guidelines search](references/agentic-search.md) against the [official document catalog](references/reference-document-links.md), check [documentation completeness](references/document-quality.md), and produce exactly the [required outputs](references/output-contract.md).
+
+## Required completion
+
+After guarded finalization succeeds, the assessment is not complete until the
+rendered report is served and linked:
+
+1. Start `scripts/serve-assessment.ts --file <work-directory>/assessment.html`
+   through the host's attached background or long-lived process mechanism.
+2. Immediately read startup output from the running process through the host's
+   process-output reader. Do not wait for process completion or a completion
+   notification: the server is intentionally long-lived.
+3. Capture the printed `http://127.0.0.1:<port>/assessment.html` URL and confirm
+   the process remains running.
+4. Return that URL as the clickable **Assessment report** link and include the
+   absolute `assessment.json` path for structured results.
+
+Do not substitute a `file:` URL or only return filesystem paths.
 
 ## Boundaries
 
@@ -46,5 +63,5 @@ Follow the [complete workflow](references/workflow.md). Apply the [classificatio
 - Check documentation deterministically from compiler results only for newly added operation, model, enum, and interface declarations. A declaration is complete when the compiler returns a nonempty effective document, including inherited documentation. Missing or empty documentation creates a finding with the exact TypeSpec declaration. Never compare documentation text with code or send documentation to the Agent.
 - Report Azure Guidelines and Documentation Completeness independently with explicit coverage. Documentation with no eligible newly added declarations is `not-applicable`; unavailable compiler evidence remains `not-assessed`.
 - Overall safety covers REST and downstream SDK impact only.
-- After successful materialization, complete the assessment with one guarded invocation of `finalize-assessment.mjs --work <work-directory>`. Do not separately assemble, validate, and render. Completion requires validated `assessment.json` and `assessment.html`; `model-input.json`, the Agent index, or a partial blocker is not completion.
+- After successful materialization, run one guarded invocation of `finalize-assessment.ts --work <work-directory>`. Do not separately assemble, validate, and render. Finalization requires validated `assessment.json` and `assessment.html`; user-facing completion additionally requires the served report link described above. `model-input.json`, the Agent index, filesystem paths without the link, or a partial blocker is not completion.
 - Retain blockers as **Potential limits** in the report appendix and stop after assessment. Do not author fixes or remediate TypeSpec.

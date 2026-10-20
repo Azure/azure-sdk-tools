@@ -11,13 +11,13 @@
 ################
 # Automation
 ################
-/.github/CODEOWNERS                    @azure/azure-sdk-eng @jsquire
+/.github/CODEOWNERS                    @azure/azure-sdk-eng
 
 ###########
 # Eng Sys
 ###########
 /eng/                                  @azure/azure-sdk-eng
-/.config/1espt/                        @benbp
+/.config/1espt/                        @chidozieononiwu @raych1 
 
 ###########
 # Files used to manage spelling version and installation
@@ -36,23 +36,22 @@
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @danieljurek
 /tools/fxlister/                        @KrzysztofCwalina
-/tools/github/                          @jsquire @lmazuel
-/tools/github-event-processor/          @jsquire
+/tools/github/                          @JonathanGiles @lmazuel
+/tools/github-event-processor/          @JonathanGiles
 /tools/github-team-user-store/          @danieljurek
-/tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
+/tools/issue-labeler/                   @JonathanGiles
 /tools/keyvault-mock-attestation/       @maorleger
-/tools/perf-automation/                 @mikeharder @benbp
+/tools/perf-automation/                 @chidozieononiwu @raych1 
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
-/tools/pipeline-generator/              @benbp
-/tools/pipeline-witness/                @hallipr
+/tools/pipeline-generator/              @chidozieononiwu @raych1 
+/tools/pipeline-witness/                @chidozieononiwu @raych1 
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @antkmsft
 /tools/tsp-client/                      @catalinaperalta
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @zedy-wj
-/tools/perf-regression-finder/          @jsquire
-/tools/release-plan-dashboard/          @praveenkuttappan
+/tools/perf-regression-finder/          @JonathanGiles
 
 #####################
 # Attestation
@@ -88,10 +87,10 @@
 ###########
 # .NET Client Tools
 ###########
-/src/dotnet/                            @azure/azsdknet @jsquire
+/src/dotnet/                            @azure/azsdknet @JonathanGiles
 /src/dotnet/APIView/                    @tjprescott @praveenkuttappan
 /tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang
-/tools/snippet-generator/               @Azure/azsdknet @jsquire
+/tools/snippet-generator/               @Azure/azsdknet @JonathanGiles
 
 ###########
 # APIView parsers
@@ -99,7 +98,7 @@
 /tools/apiview/                                     @tjprescott @praveenkuttappan
 /tools/apiview/emitters/typespec-apiview/           @timotheeguerin
 /tools/apiview/parsers/cpp-api-parser/              @LarryOsterman
-/tools/apiview/parsers/csharp-api-parser/           @azure/azsdknet @jsquire
+/tools/apiview/parsers/csharp-api-parser/           @azure/azsdknet @JonathanGiles
 /tools/apiview/parsers/js-api-parser/               @jeremymeng @maorleger
 /src/swift/                                         @tjprescott
 /src/java/apiview-java-processor/                   @JonathanGiles @alzimmermsft
@@ -120,7 +119,6 @@
 /tools/sdk-ai-bots/azure-sdk-qa-bot-backend         @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot                 @chunyu3 @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
-/tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index      @lirenhe @chunyu3 @JiaqiZhang-Dev
 
 # Add owners for notifications for specific pipelines

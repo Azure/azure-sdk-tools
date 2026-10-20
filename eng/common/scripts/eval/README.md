@@ -108,8 +108,11 @@ compressed-size cap is checked afterward. Full ZIP decoding remains in contract
 tests rather than reopening the archive in production. JSONL is decoded once and
 parsed directly as text, with byte limits on both source and serialized records.
 
-Uploads use `--auth-mode login --overwrite false --if-none-match '*'` with the **same
+Uploads use `--auth-mode login --overwrite false --if-none-match=*` with the **same
 saved ZIP**; Azure CLI owns transport retries, without another script/task retry loop.
+The condition is one argument so Linux does not expand a standalone `*` into file names.
+`--no-progress` keeps CLI progress out of captured command results. JSON is parsed
+from stdout only; captured native stderr is never mixed into JSON or echoed.
 Request/socket timeouts and the task deadline bound execution. Existing archives must match metadata,
 owner, checksum and size. Changed content needs a new Summary attempt, not an overwrite.
 The publisher never deletes archives; the dashboard's separate identity stays read-only.
@@ -148,7 +151,7 @@ the consuming repository's redirect settings. A consumer-copy regression runs
 them without Tools files or Git history, with absent and different redirect templates.
 
 In Tools, run `Invoke-Pester -Path eng/common-tests/eval/Publish-EvalResults.Tests.ps1 -CI`
-from the repository root for the **PowerShell 7.4+ / Pester 5** tests. That Tools-only
+from the repository root for the **PowerShell 7.4+ / Pester 5 / Azure CLI** tests. That Tools-only
 suite also checks the Tools CI wiring and network policy. The existing common-tests
 PR pipeline runs both the shared/archive Node tests and this tagged PowerShell suite;
 failures fail the CI job. Other repositories do not need to copy this Tools test setup.
@@ -157,6 +160,9 @@ CI restores only the locked archive dependency, not the Vally evaluator.
 Regression coverage includes the actual HTTP
 cmdlet against loopback, invalid collision metadata, upload-before-notification
 ordering and publication without local status files.
+One integration test also runs the real Azure CLI against a localhost-only Blob
+fixture with synthetic credentials and an isolated CLI profile. It verifies one
+successful upload does not trigger a fallback read. No production storage is used.
 Construction regressions exercise the exact entry/trial boundaries, aggregate
 expanded bytes, final compressed bytes, required inputs and UTF-8 JSONL limits.
 The loopback fixture selects the first Node application when CI has multiple Node
@@ -168,6 +174,8 @@ separate from local checks and should use an already approved evaluation run.
 
 The task logs the stored Blob name and notification outcome. Failures include a
 bounded operation/error code, never raw Azure responses, tokens or result contents.
+CLI failures include the exit code and a fixed known storage error code, when
+available. If the fallback read also fails, the original upload code is retained.
 Token acquisition failures require checking the
 service connection; Blob 403 requires checking its data-role scope; network failures
 require checking approved egress. Preserve the original archive for conflicts, and

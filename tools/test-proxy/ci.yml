@@ -28,24 +28,27 @@ extends:
     ReleaseBinaries: true
     SkipReleaseStage: false
     PublishEnvironment: 'package-publish'
+    # Force-create git tags/releases to work around the CFSClean network isolation
+    # policy bypass for this pipeline. Tracked by https://github.com/Azure/azure-sdk-tools/issues/16602
+    ForceCreate: true
     StandaloneExeMatrix:
     - rid: osx-arm64
-      framework: net8.0
+      framework: net10.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: osx-x64
-      framework: net8.0
+      framework: net10.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: win-x64
-      framework: net8.0
+      framework: net10.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: win-arm64
-      framework: net8.0
+      framework: net10.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: linux-x64
-      framework: net8.0
+      framework: net10.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: linux-arm64
-      framework: net8.0
+      framework: net10.0
       assembly: Azure.Sdk.Tools.TestProxy
 
     TestPreSteps:

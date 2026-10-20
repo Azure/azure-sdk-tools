@@ -1,6 +1,9 @@
 """Tests for tenant skill and knowledge-source configuration."""
 
+import asyncio
 from pathlib import Path
+
+from agent_framework import FileSkillsSource
 
 from config.tenant_config import (
     SRC_AZURE_MCP_SERVER_DOCS,
@@ -152,6 +155,20 @@ def test_azure_mcp_server_instruction_limits_retrieval_rounds() -> None:
     assert 'Escalate to `search_mode="deep"` only when quick retrieval leaves a specific evidence gap' in instruction
     assert "Do not escalate merely to confirm an already supported answer" in instruction
     assert "Never repeat a tool call with identical arguments" in instruction
+
+
+def test_azure_mcp_server_pr_review_help_skill_is_discoverable() -> None:
+    root = Path(__file__).parents[1]
+    skills = asyncio.run(
+        FileSkillsSource(root / "skills" / "azure_mcp_server").get_skills()
+    )
+    instruction = (
+        root / "agents" / "azure_mcp_server_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert [skill.frontmatter.name for skill in skills] == ["pr-review-help"]
+    assert "onboarding buddy" in skills[0].frontmatter.description
+    assert "load the `pr-review-help` skill" in instruction
 
 
 def test_azure_mcp_server_agent_registers_wiki_search() -> None:

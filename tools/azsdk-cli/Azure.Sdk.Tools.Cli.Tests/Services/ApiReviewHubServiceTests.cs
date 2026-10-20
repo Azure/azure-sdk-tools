@@ -17,6 +17,7 @@ public class ApiReviewHubServiceTests
 {
     private Mock<IHttpClientFactory> httpClientFactoryMock = null!;
     private Mock<IAzureService> azureServiceMock = null!;
+    private Mock<TokenCredential> credentialMock = null!;
     private ApiReviewHubService service = null!;
 
     [SetUp]
@@ -25,7 +26,7 @@ public class ApiReviewHubServiceTests
         httpClientFactoryMock = new Mock<IHttpClientFactory>();
         azureServiceMock = new Mock<IAzureService>();
 
-        var credentialMock = new Mock<TokenCredential>();
+        credentialMock = new Mock<TokenCredential>();
         credentialMock
             .Setup(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AccessToken("mock-token", DateTimeOffset.UtcNow.AddHours(1)));
@@ -381,6 +382,75 @@ public class ApiReviewHubServiceTests
 
         Assert.That(exception!.Message, Does.Contain("op-timeout"));
         Assert.That(exception.Message, Does.Contain("timed out"));
+    }
+
+    [Test]
+    public async Task RequestReviewPullRequestAsync_RefreshesAuthorizationNearExpiry()
+    {
+        credentialMock
+            .SetupSequence(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccessToken("request-token", DateTimeOffset.UtcNow.AddMinutes(1)))
+            .ReturnsAsync(new AccessToken("poll-token-1", DateTimeOffset.UtcNow.AddHours(1)))
+            .ReturnsAsync(new AccessToken("poll-token-2", DateTimeOffset.UtcNow.AddHours(1)));
+
+        var authorizationParameters = new List<string?>();
+        var pollCount = 0;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+                authorizationParameters.Add(request.Headers.Authorization?.Parameter))
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                if (request.Method == HttpMethod.Post)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.Accepted)
+                    {
+                        Content = new StringContent("""{"operationId":"op-refresh","status":"accepted"}""", Encoding.UTF8, "application/json")
+                    };
+                }
+
+                pollCount++;
+                var status = pollCount == 1 ? "running" : "succeeded";
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent($$"""{"operationId":"op-refresh","status":"{{status}}"}""", Encoding.UTF8, "application/json")
+                };
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            PackageType = "client",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        var result = await service.RequestReviewPullRequestAsync(
+            request,
+            "https://api-review-hub-test.azurewebsites.net",
+            waitForCompletion: true,
+            pollInterval: TimeSpan.Zero,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo("succeeded"));
+        Assert.That(authorizationParameters, Is.EqualTo(new[] { "request-token", "poll-token-1", "poll-token-1" }));
+        credentialMock.Verify(
+            x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
     }
 
     [Test]

@@ -2,8 +2,8 @@
 
 The pipeline ingests active Teams threads, invokes the Agent to evaluate every
 eligible conversation, checks remediation issues, and invokes Agent validation
-after an issue closes. Conversation completion and correctness are judged only
-inside the Agent.
+after an issue closes. The Agent judges completion and correctness, except for
+automatic closure after 144 hours of inactivity regardless of user feedback.
 
 Usage::
 
@@ -119,10 +119,13 @@ async def _run(args: argparse.Namespace) -> None:
     await evolution_service.recover_stale_jobs(
         tenant_id=args.tenant, excluded_channels=excluded_channels
     )
+    auto_closed = await qa_service.close_inactive_threads(
+        tenant_id=args.tenant, excluded_channels=excluded_channels
+    )
 
     counts = {
         "ongoing": 0,
-        "finished": 0,
+        "finished": auto_closed,
         "issues": 0,
         "waiting_validation": 0,
         "validated": 0,

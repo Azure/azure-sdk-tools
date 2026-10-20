@@ -60,7 +60,7 @@ Link the skill and suggest using it with Copilot in the author's checkout, provi
 - Prefer mitigation over `eng/apicompatbaselines` suppressions. Follow reviewer requests about PR-added baselines without substituting suppressions or deleting unrelated baselines. Intentional breaks or suppressions need explicit authorized owner approval.
 
 ### Generated-Code Defects, Samples, and Tests
-- For suspected generated-code defects, inspect the generated output, inputs, and supported customizations before assigning a cause. Verify that generation consumed any customization changes. Distinguish a supported SDK workaround from an upstream generator fix; do not patch generated files as the lasting solution.
+- For suspected generated-code defects, inspect the generated output, inputs, and supported customizations before assigning a cause. After changing generation inputs or customizations, rerun the applicable generation workflow and inspect the output before diagnosing why a change did not take effect. Distinguish a supported SDK workaround from an upstream generator fix; do not patch generated files as the lasting solution.
 - Update hand-maintained samples to the intended API. Distinguish recording/API-version mismatches from spec/generator defects; do not prescribe rerecording without confirming service behavior and the intended version.
 
 ### CI and Infrastructure Troubleshooting

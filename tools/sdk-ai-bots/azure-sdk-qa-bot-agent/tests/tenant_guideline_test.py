@@ -18,7 +18,11 @@ def test_dotnet_tenant_loads_dedicated_guideline():
     assert "# Tenant: Azure .NET SDK Assistant" in guideline
     assert "{{tenant_id}}" not in guideline
     assert "ApiCompat" in guideline
-    assert "Verify that generation consumed any customization changes." in guideline
+    assert (
+        "After changing generation inputs or customizations, rerun the applicable "
+        "generation workflow and inspect the output before diagnosing why a change "
+        "did not take effect."
+    ) in guideline
     assert "mgmt-review-comment-resolution/SKILL.md" in guideline
     assert "mitigate-breaking-changes/SKILL.md" in guideline
     assert "Skills do not replace reviewer approval" in guideline

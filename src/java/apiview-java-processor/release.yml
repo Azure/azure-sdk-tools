@@ -191,7 +191,7 @@ extends:
                     -DpomFile="$(PackagePomPath)"
                     -Dsources="$(PackageSourcesPath)"
                     -Djavadoc="$(PackageJavadocPath)"
-                    -Dgpgexe="$(Pipeline.Workspace)/azure-sdk-build-tools/tools/gpg/bin/gpg.exe"
+                    -Dgpg.executable="$(Pipeline.Workspace)/azure-sdk-build-tools/tools/gpg/bin/gpg.exe"
                     -DgeneratePom=false
                   javaHomeOption: JDKVersion
                   jdkVersionOption: '1.8'

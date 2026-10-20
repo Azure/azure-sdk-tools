@@ -53,7 +53,7 @@ environment: azsdk-mcp-live
 defaults:
   runs: 1
   timeout: 30m
-  model: gpt-5.4
+  model: gpt-5.6-terra
   executor: copilot-sdk
 
 stimuli:
@@ -153,12 +153,12 @@ stimuli:
       # graders above only verify the agent *did* the right things across
       # turns, not that it *reported* them back to the user correctly at the
       # end. Tools can fire successfully while the final message hallucinates
-      # IDs / URLs. This grader uses gpt-5.4 as judge against a free-form
+      # IDs / URLs. This grader uses gpt-5.6-terra as judge against a free-form
       # rubric so minor wording variants (`WI 29262`, `work-item #29262`) all
       # pass.
       - type: prompt
         config:
-          model: gpt-5.4
+          model: gpt-5.6-terra
           scoring: binary
           threshold: 1.0
           prompt: |

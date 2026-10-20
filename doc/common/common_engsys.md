@@ -108,6 +108,9 @@ Roll out a new language job as non-blocking at the pipeline boundary, keeping th
 validator's real failure exit status and diagnostics. Prove a valid package
 passes, malformed documentation fails, and a comment-only fix passes in public
 PR builds, including a PR-only co-built dependency case, before making the check
-required. Java is the first integration; other languages follow only after it is
-proven. Rollback removes the language job/template inclusion from YAML, rather
-than relying on queue-time variables unavailable to automatic PR triggers.
+required. Establish a real generator-failing documentation fixture first: this
+runner cannot detect errors that the generator itself silently accepts. The
+initial rollout targets Java; no language job is enabled by the shared runner
+alone, and other languages follow only after Java is proven. Rollback removes
+the language job/template inclusion from YAML, rather than relying on queue-time
+variables unavailable to automatic PR triggers.

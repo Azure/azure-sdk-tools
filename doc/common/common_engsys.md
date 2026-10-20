@@ -3,6 +3,7 @@
 * [Code Structure](#code-structure)
 * [Updating](#updating)
 * [eng/common sync](#engcommon-sync)
+* [Local reference documentation validation](#local-reference-documentation-validation)
 
 ## Code Structure
 
@@ -45,3 +46,68 @@ This process is set up in such a way to make it easier for changes to be tested 
 
 [pipeline]: https://dev.azure.com/azure-sdk/internal/_build?definitionId=1372&_a=summary
 [yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/sync-eng-common.yml
+
+## Local reference documentation validation
+
+`eng/common/scripts/Validate-DocsMsPackages.ps1` validates reference documentation
+against packages produced by the current build, without publishing packages,
+checking out a documentation repository, or updating documentation metadata.
+Unlike `Update-DocsMsMetadata.ps1`, it does not resolve development versions or
+download the target package from a feed.
+
+For example, after downloading the build's `packages` artifact:
+
+```powershell
+eng/common/scripts/Validate-DocsMsPackages.ps1 `
+  -PackageInfoDirectory '<downloaded packages>/PackageInfo' `
+  -ArtifactRoot '<downloaded packages>' `
+  -OutputDirectory '<validation output>'
+```
+
+The corresponding step template is
+`eng/common/pipelines/templates/steps/validate-docsms-packages.yml`, with the same
+three required parameters. The calling language job supplies runtime/tool setup
+and downloads the current run's artifact. Package selection comes from the
+downloaded `PackageInfo` files, not the pipeline's compile-time artifact list, so
+automatic service/package selection is supported.
+
+Language repositories implement `Validate-<language>-LocalDocsMsPackage` in their
+language settings (or a script loaded by those settings). `common.ps1` exposes
+the hook through `$ValidateLocalDocsMsPackageFn`. The hook receives:
+
+| Parameter | Meaning |
+| --- | --- |
+| `PackageInfo` | The unmodified package metadata from the current build. |
+| `ArtifactRoot` | Absolute path to the downloaded artifacts, including co-built dependencies. |
+| `OutputDirectory` | Absolute, package-specific output directory based on the PackageInfo filename. |
+
+Return exactly one `[pscustomobject]` with a `Status` of `Passed`, `Skipped`, or
+`Failed`, and a string `Reason`. A skip or failure must include a nonempty reason.
+Write generator output to the host/logging stream, not the success stream.
+Throw for infrastructure failures such as missing tools, missing/ambiguous
+required files, or package identity/version mismatches. The hook must select the
+exact local package and relevant co-built dependencies; it must not silently
+substitute published copies. Other dependencies may come from public feeds.
+The public PR path must not require internal feed credentials.
+
+The runner honors `ArtifactDetails.skipPublishDocMs` (Boolean or string `true`)
+before invoking a hook. Language-specific eligibility, including non-publishable
+packages, belongs in the hook. An existing artifact and PackageInfo directory
+with no eligible packages is a logged successful no-op. Missing directories,
+invalid metadata, an unavailable hook for an eligible package, and invalid hook
+results fail explicitly. The runner attempts all packages, reports package names
+(including groups where present) and causes, and fails after aggregating errors.
+Each package's generator output can be retained in `OutputDirectory` for diagnosis.
+
+Existing feed-based publishing hooks, their Boolean results, and
+`DocsMsPackagesAllValid` remain unchanged. Reuse underlying generator/configuration
+helpers when implementing local hooks so documentation settings stay consistent
+with publishing.
+
+Roll out a new language job as non-blocking at the pipeline boundary, keeping the
+validator's real failure exit status and diagnostics. Prove a valid package
+passes, malformed documentation fails, and a comment-only fix passes in public
+PR builds, including a PR-only co-built dependency case, before making the check
+required. Java is the first integration; other languages follow only after it is
+proven. Rollback removes the language job/template inclusion from YAML, rather
+than relying on queue-time variables unavailable to automatic PR triggers.

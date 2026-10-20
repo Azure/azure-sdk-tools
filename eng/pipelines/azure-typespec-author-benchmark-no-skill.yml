@@ -19,7 +19,6 @@ parameters:
 
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
-  - group: AzSDK_Eval_Variable_group
   - name: TypeSpecAuthorEvalExtraArgs
     value: '--tag mode=no-skill --skill-dir /tmp/no-skills'
   - name: AZSDK_EVAL_MCP_KIND
@@ -39,10 +38,8 @@ extends:
     UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
-    # Keep timeout scaling aligned with the with-skill benchmark.
+    # Keep each shard below the installation token's one-hour lifetime.
     ${{ if eq(parameters.Runs, 1) }}:
       shardTimeoutInMinutes: 50
-    ${{ elseif eq(parameters.Runs, 2) }}:
-      shardTimeoutInMinutes: 80
     ${{ else }}:
-      shardTimeoutInMinutes: 120
+      shardTimeoutInMinutes: 55

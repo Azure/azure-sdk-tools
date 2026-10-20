@@ -100,7 +100,29 @@ This server is intended to run in **local mcp mode only** and will utilize your 
 
 This input does not look up a plan by package name, request an API version, update ADO status, or create another tracking system. Automatic release correlation uses the triggering SDK PR and existing ADO release-plan links in the separate status-update work.
 
-**Rollout:** the receiving pipeline on the selected branch must declare `ReleasePlanId` before callers supply it. Existing pipelines remain compatible when the ID is omitted or zero. If Azure DevOps rejects `ReleasePlanId` as an unexpected parameter, the CLI returns an actionable failure and never retries without that ID. Pilot one template package, then add the input to the remaining CI YAML entry points and release templates, including management-specific files. Coordinate PR trigger controls before broad YAML changes. This CLI-only change does not modify or preflight those templates and must not be treated as completion of the pipeline rollout. See [the rollout issue](https://github.com/Azure/azure-sdk-tools/issues/17130).
+**Compatibility:** merging or releasing this optional CLI input does not change existing requests: an omitted/zero ID adds no pipeline parameter. A positive ID is not safe to use with an unsupported pipeline. Azure DevOps can reject the queue request as `Unexpected parameter 'ReleasePlanId'`; the CLI reports which selected branch needs updating and never retries by dropping the ID.
+
+**Rollout:** first declare `ReleasePlanId` in the receiving pipeline entry point and forward it through the release templates on the branch being released. Then enable ID-bearing calls for that pipeline. Start with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130), validate its handoff, and expand to the remaining CI YAML files, including management-specific files. Confirm PR trigger controls before broad YAML changes. This CLI-only PR does not modify or preflight those templates, and neither a missing ID nor queue rejection should be worked around by automatically submitting an uncorrelated release.
+
+## Release-plan status updates
+
+`azsdk release-plan update-release-status` uses existing Azure DevOps release-plan metadata, with no API-version input or mapping:
+
+- **Manual:** supply `--release-plan-id` from the requester. This is the release-plan ID, not an interchangeable ADO work item ID.
+- **Automatic:** supply `--sdk-pull-request` with the full SDK PR URL that triggered the release build. The command finds exactly one in-progress plan linked through `Custom.SDKPullRequestFor{language}` and updates that resolved work item without another ID lookup.
+- **Both:** `--language` and `--package-name` identify exactly one SDK entry inside the plan resolved by the ID or SDK PR. Language aliases are normalized; package names match exactly. In these two paths they never select a substitute plan.
+
+No manual ID and no SDK PR means the original package-name lookup is used (**transitional**) and logs `LEGACY_RELEASE_PLAN_LOOKUP`. A supplied ID or SDK PR never falls back: invalid, missing, or ambiguous correlation produces an error with no writes, even if another package-name candidate exists. Conflicting language/package/PR information also produces an error with no writes. Manual lookup reuses the existing release-plan ID method; new plans use their work item ID as the release-plan ID, while historical display IDs remain supported. Once every release pipeline forwards an ID or SDK PR, the fallback is removed and only those two inputs are accepted.
+
+Package version and release pipeline URL remain optional result metadata. SDK release type is used only by the legacy package lookup, not to revalidate explicit correlation. Already released SDK fields are not overwritten: non-conflicting retries on an in-progress plan repeat the fresh, guarded completion check to recover from a partial failure; retries by ID on a finished plan remain no-ops. A conflicting known version is rejected. Parent revision checks guard status writes and the fresh completion check. Revision conflicts are reported, not silently retried within the same invocation.
+
+The shared completion-script and template changes are a separate rollout. They will forward the requester-supplied `ReleasePlanId` or triggering `SdkPullRequest` to this command, without inheriting plan IDs from package metadata.
+
+For automatic releases, the existing resolver already passes the selected SDK PR to progress updates. Forwarding that PR through release-stage completion is part of the separate shared-pipeline and language-template rollout. This CLI change does not change release eligibility.
+
+**Rollout:** publish the backward-compatible CLI first, then deploy the shared completion adapters through the `eng/common` sync process. Wire the manual `ReleasePlanId` and automatic SDK PR through language-specific release templates, starting with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130). Until callers supply correlation, this command retains the original package-name lookup. Remove the fallback in a follow-up only after every pipeline forwards an input. API-version extraction in #16868 is not a dependency.
+
+This uses existing ADO metadata, not a new tracking system or immutable generation snapshot. Historical incorrect dashboard data is not repaired automatically.
 
 ## Retained customization repair attempts
 

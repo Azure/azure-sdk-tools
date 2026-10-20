@@ -2459,6 +2459,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     };
                 }
 
+                if (releasePlan?.ApiReleaseType == ApiReleaseType.PrivatePreview)
+                {
+                    // The retrieved plan still has the previous PR link; check the URL just saved.
+                    releasePlan.ActiveSpecPullRequest = specPullRequestUrl;
+                    releasePlan = await MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(releasePlan, specPullRequestUrl, ct);
+                    var finished = releasePlan.Status == "Finished";
+                    return new ReleaseWorkflowResponse
+                    {
+                        Status = "Success",
+                        Details =
+                        [
+                            $"Successfully updated spec pull request URL to {specPullRequestUrl} in release plan.",
+                            finished ? "Private Preview release plan is Finished because the linked specification pull request is merged."
+                                : "Private Preview release plan is awaiting the linked specification pull request merge."
+                        ],
+                        NextSteps = finished ? [] : ["Merge the linked specification pull request to complete the Private Preview release plan."]
+                    };
+                }
+
                 return new ReleaseWorkflowResponse
                 {
                     Status = "Success",

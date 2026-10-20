@@ -121,15 +121,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             Assert.That(parameters.Count, Is.EqualTo(language == "Java" ? 1 : 0));
         }
 
-        [TestCase(null)]
-        [TestCase(0)]
-        [TestCase(35307)]
-        public async Task ReleasePlanId_UnsupportedPipelineDoesNotRetryWithoutCorrelation(int? releasePlanId)
+        [TestCase("Python", null)]
+        [TestCase("Python", 0)]
+        [TestCase("Python", 35307)]
+        [TestCase("Java", null)]
+        [TestCase("Java", 0)]
+        [TestCase("Java", 35307)]
+        public async Task ReleasePlanId_UnsupportedPipelineDoesNotRetryWithoutCorrelation(string language, int? releasePlanId)
         {
             var calls = new List<Dictionary<string, string>>();
             var devOps = new Mock<IDevOpsService>();
-            devOps.Setup(s => s.GetPackageWorkItemAsync("azure-template", "Python", "", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(await devOpsService.GetPackageWorkItemAsync("azure-template", "Python"));
+            devOps.Setup(s => s.GetPackageWorkItemAsync("azure-template", language, "", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(await devOpsService.GetPackageWorkItemAsync("azure-template", language));
             devOps.Setup(s => s.RunPipelineAsync(1, It.IsAny<Dictionary<string, string>>(), "release/test", It.IsAny<CancellationToken>()))
                 .Returns((int _, Dictionary<string, string> parameters, string _, CancellationToken _) =>
                 {
@@ -142,25 +145,54 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 logger, new InputSanitizer(), new Mock<IEnvironmentHelper>().Object);
 
             var result = releasePlanId.HasValue
-                ? await tool.ReleasePackageAsync("azure-template", "Python", "release/test", releasePlanId: releasePlanId.Value)
-                : await tool.ReleasePackageAsync("azure-template", "Python", "release/test");
+                ? await tool.ReleasePackageAsync("azure-template", language, "release/test", releasePlanId: releasePlanId.Value)
+                : await tool.ReleasePackageAsync("azure-template", language, "release/test");
 
             Assert.That(calls, Has.Count.EqualTo(1), "An unsupported ID must not trigger an uncorrelated second release request.");
+            var parameters = calls.Single();
+            if (language == "Java")
+            {
+                Assert.That(parameters["release_azuretemplate"], Is.EqualTo("true"));
+            }
             if (releasePlanId > 0)
             {
-                Assert.That(calls.Single()["ReleasePlanId"], Is.EqualTo("35307"));
+                Assert.That(parameters["ReleasePlanId"], Is.EqualTo("35307"));
                 Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Failed"));
                 Assert.That(result.ResponseError, Does.Contain("does not support the ReleasePlanId parameter"));
-                Assert.That(result.ReleaseStatusDetails, Does.Contain("not retried"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("release/test").And.Contain("35307").And.Contain("not retried"));
                 Assert.That(result.NextSteps, Has.Some.Contains("selected branch"));
                 Assert.That(result.PipelineBuildId, Is.Zero);
+                Assert.That(result.ReleasePipelineRunUrl, Is.Null.Or.Empty);
             }
             else
             {
-                Assert.That(calls.Single(), Is.Empty);
+                Assert.That(parameters, Does.Not.ContainKey("ReleasePlanId"));
+                Assert.That(parameters.Count, Is.EqualTo(language == "Java" ? 1 : 0));
                 Assert.That(result.ResponseError, Is.Null);
                 Assert.That(result.ReleasePipelineStatus, Is.Not.EqualTo("Failed"));
             }
+        }
+
+        [TestCase("Pipeline access denied")]
+        [TestCase("Unexpected parameter 'AnotherParameter'")]
+        public async Task ReleasePlanId_UnrelatedQueueFailureIsNotReportedAsUnsupportedId(string error)
+        {
+            var devOps = new Mock<IDevOpsService>();
+            devOps.Setup(s => s.GetPackageWorkItemAsync("azure-template", "Python", "", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(await devOpsService.GetPackageWorkItemAsync("azure-template", "Python"));
+            devOps.Setup(s => s.RunPipelineAsync(1, It.IsAny<Dictionary<string, string>>(), "release/test", It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException(error));
+            var tool = new SdkReleaseTool(devOps.Object, mockApiViewService.Object, mockPackageReleaseStatusService.Object,
+                logger, new InputSanitizer(), new Mock<IEnvironmentHelper>().Object);
+
+            var result = await tool.ReleasePackageAsync("azure-template", "Python", "release/test", releasePlanId: 35307);
+
+            Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseError, Does.Contain(error).And.Not.Contain("does not support the ReleasePlanId parameter"));
+            Assert.That(result.PipelineBuildId, Is.Zero);
+            devOps.Verify(s => s.RunPipelineAsync(1,
+                It.Is<Dictionary<string, string>>(p => p.Count == 1 && p["ReleasePlanId"] == "35307"),
+                "release/test", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [TestCase(-1)]

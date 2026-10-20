@@ -60,12 +60,6 @@
         "description": "Full resource ID of the user-assigned managed identity for the bot"
       }
     },
-    "functionAppResourceId": {
-      "type": "string",
-      "metadata": {
-        "description": "Full resource ID of the convertActivity Azure Function"
-      }
-    },
     "teamsConnectionResourceId": {
       "type": "string",
       "metadata": {
@@ -421,12 +415,19 @@
                           },
                           "actions": {
                             "convertActivity": {
-                              "type": "Function",
+                              "type": "Http",
                               "inputs": {
+                                "authentication": {
+                                  "audience": "[parameters('serverAudience')]",
+                                  "identity": "[parameters('serverIdentityResourceId')]",
+                                  "type": "ManagedServiceIdentity"
+                                },
                                 "body": "@outputs('Resolved_message_details')",
-                                "function": {
-                                  "id": "[concat(parameters('functionAppResourceId'), '/functions/convertActivity')]"
-                                }
+                                "headers": {
+                                  "Content-Type": "application/json"
+                                },
+                                "method": "POST",
+                                "uri": "[concat(parameters('serverBaseUrl'), '/activity/convert')]"
                               }
                             },
                             "Scope": {

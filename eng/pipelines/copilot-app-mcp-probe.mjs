@@ -19,7 +19,17 @@ export function buildCases(servers, configDir) {
         { name: 'no-mcp-inference-control', servers: undefined },
         { name: 'configured-relative-cwd', servers: configured },
         { name: 'absolute-cwd-only', servers: absolute },
+        { name: 'absolute-cwd-older-model', servers: structuredClone(absolute), model: 'gpt-5.6-sol' },
+        { name: 'direct-sdk-absolute-cwd', servers: structuredClone(absolute), directSdk: true },
     ];
+}
+
+export function sdkImportPath(packageDir, packageJson) {
+    // require.resolve chooses the CJS build, which is a DIFFERENT class/prototype.
+    // Vally imports the ESM SDK, so instrumentation must use the same import condition.
+    const entry = packageJson.exports['.'].import.default;
+    assert.equal(typeof entry, 'string');
+    return path.resolve(packageDir, entry);
 }
 
 export function redact(text, secret) {
@@ -76,7 +86,9 @@ async function main() {
     const output = path.join(source, 'artifacts/mcp-controls');
     await mkdir(output, { recursive: true });
     const require = createRequire(path.join(source, 'eng/common/scripts/eval/package.json'));
-    const { CopilotClient } = await import(pathToFileURL(require.resolve('@github/copilot-sdk')).href);
+    const sdkDir = path.join(source, 'eng/common/scripts/eval/node_modules/@github/copilot-sdk');
+    const sdkPackage = JSON.parse(await readFile(path.join(sdkDir, 'package.json'), 'utf8'));
+    const { CopilotClient, approveAll } = await import(pathToFileURL(sdkImportPath(sdkDir, sdkPackage)).href);
     const { CopilotSdkExecutor } = await import(pathToFileURL(require.resolve('@microsoft/vally/executor')).href);
     const { ProjectContext } = await import(pathToFileURL(require.resolve('@microsoft/vally/config')).href);
     const context = await ProjectContext.load(path.join(source, 'evals'));
@@ -112,21 +124,61 @@ async function main() {
                 ? 'Get details for GitHub user octocat. Use the available Azure SDK MCP tools instead of shell commands or a CLI. Do not inspect or edit workspace files.'
                 : 'Reply with exactly AUTH_OK and nothing else. Do not use tools.';
             try {
+                if (testCase.directSdk) {
+                    // Independent control: same token/runtime/model/mock, without Vally or session-fs.
+                    const client = new CopilotClient({
+                        cwd: context.dir,
+                        env: { ...process.env, COPILOT_HOME: workspace },
+                        useLoggedInUser: false,
+                    });
+                    let session;
+                    try {
+                        const servers = structuredClone(testCase.servers);
+                        servers['azure-sdk-mcp'].tools = ['*'];
+                        servers['azure-sdk-mcp'].timeout = 30000;
+                        session = await client.createSession({
+                            model: 'gpt-6.1-sol',
+                            workingDirectory: workspace,
+                            configDirectory: workspace,
+                            mcpServers: servers,
+                            onPermissionRequest: approveAll,
+                        });
+                        const calls = [];
+                        const results = [];
+                        session.on((event) => {
+                            if (event.type === 'tool.execution_start') calls.push(event.data);
+                            if (event.type === 'tool.execution_complete') results.push(event.data);
+                        });
+                        const response = await session.sendAndWait({ prompt }, 90000);
+                        active.directSdk = {
+                            output: response?.data.content,
+                            toolNames: calls.map(({ toolName }) => toolName),
+                            requiredToolSucceeded: calls.some(({ toolName, toolCallId }) =>
+                                toolName.endsWith(REQUIRED_TOOL) && results.some((result) => result.toolCallId === toolCallId && result.success)),
+                        };
+                    } finally {
+                        if (session) await session.disconnect();
+                        await client.stop();
+                    }
+                    assert.ok(active.sessionCreated, 'Session observer did not attach to the SDK');
+                    continue;
+                }
                 const trajectory = await executor.execute({ name: testCase.name, prompt }, {
-                    model: 'gpt-6.1-sol',
+                    model: testCase.model ?? 'gpt-6.1-sol',
                     timeout: 90000,
                     workDir: workspace,
                     mcpServers: testCase.servers,
                     sessionLog: { rootDir: path.join(workspace, 'session'), sessionID: randomUUID() },
                 });
+                assert.ok(active.sessionCreated, 'Session observer did not attach to the SDK used by Vally');
                 active.trajectory = summarizeTrajectory(trajectory);
             } catch (error) {
                 active.error = error.message;
             } finally {
                 await executor.shutdown();
                 await rm(workspace, { recursive: true, force: true });
+                console.log(`MCP_CONTROL ${redact(JSON.stringify(active), token)}`);
             }
-            console.log(`MCP_CONTROL ${redact(JSON.stringify(active), token)}`);
         }
     } finally {
         process.chdir(originalCwd);

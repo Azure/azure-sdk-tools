@@ -41,9 +41,17 @@ extends:
                 displayName: Install exact production Vally and SDK
                 workingDirectory: eng/common/scripts/eval
 
-              - template: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
-                parameters:
-                  TestType: mock
+              # Reuse the exact mock binary from the failed production run, not a rebuild.
+              - task: DownloadPipelineArtifact@2
+                displayName: Download exact failed-run mock MCP artifact
+                inputs:
+                  buildType: specific
+                  project: internal
+                  definition: '8255'
+                  buildVersionToDownload: specific
+                  pipelineId: '6980135'
+                  artifactName: mcp-servers
+                  targetPath: $(Build.SourcesDirectory)/artifacts/mcp
 
               - script: node --test eng/pipelines/copilot-app-mcp-probe.test.mjs
                 displayName: Test diagnostic assertions offline

@@ -1,17 +1,27 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import test from 'node:test';
-import { buildCases, inspectMcp, redact, summarizeTrajectory } from './copilot-app-mcp-probe.mjs';
+import { buildCases, inspectMcp, redact, sdkImportPath, summarizeTrajectory } from './copilot-app-mcp-probe.mjs';
 
 test('path control changes only cwd and does not mutate the configured server', () => {
     const servers = { 'azure-sdk-mcp': { type: 'stdio', command: 'dotnet', cwd: '.', args: ['../artifacts/mcp/mock/azsdk-mock.dll'], timeout: '30s' } };
     const before = structuredClone(servers);
     const cases = buildCases(servers, path.resolve('evals'));
-    assert.equal(cases.length, 3);
+    assert.equal(cases.length, 5);
     assert.equal(cases[0].servers, undefined);
     assert.deepEqual(cases[1].servers, before);
     assert.deepEqual(cases[2].servers, { 'azure-sdk-mcp': { ...before['azure-sdk-mcp'], cwd: path.resolve('evals') } });
+    assert.deepEqual(cases[3].servers, cases[2].servers);
+    assert.equal(cases[3].model, 'gpt-5.6-sol');
+    assert.deepEqual(cases[4].servers, cases[2].servers);
+    assert.equal(cases[4].directSdk, true);
     assert.deepEqual(servers, before);
+});
+
+test('session instrumentation imports the same ESM SDK as Vally, not the separate CJS class', () => {
+    const packageJson = { exports: { '.': { import: { default: './dist/index.js' }, require: { default: './dist/cjs/index.js' } } } };
+    assert.equal(sdkImportPath('/sdk', packageJson), path.resolve('/sdk/dist/index.js'));
+    assert.notEqual(sdkImportPath('/sdk', packageJson), path.resolve('/sdk/dist/cjs/index.js'));
 });
 
 test('does not silently probe a live server', () => {

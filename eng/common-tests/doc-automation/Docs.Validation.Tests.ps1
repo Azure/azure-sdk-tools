@@ -18,10 +18,11 @@ Describe 'Local reference documentation validation' -Tag 'UnitTest' {
         }
 
         function Invoke-TestValidation {
-            & $script:validationScript `
+            # Capture expected pipeline error commands so negative tests cannot fail the CI task.
+            $script:validationMessages = @(& $script:validationScript `
                 -PackageInfoDirectory $script:packageInfoDirectory `
                 -ArtifactRoot $script:artifactRoot `
-                -OutputDirectory $script:outputDirectory
+                -OutputDirectory $script:outputDirectory 6>&1)
         }
     }
 
@@ -231,10 +232,11 @@ Describe 'Local reference documentation validation' -Tag 'UnitTest' {
         Set-TestPackageInfo
         $metadataPath = Join-Path $script:packageInfoDirectory 'package.json'
         $before = Get-Content -LiteralPath $metadataPath -Raw
-        $messages = @(Invoke-TestValidation 6>&1)
+        Invoke-TestValidation
 
         Get-Content -LiteralPath $metadataPath -Raw | Should -BeExactly $before
-        ($messages -join "`n") | Should -Not -Match 'task.setvariable|DocsMsPackagesAllValid'
+        ($script:validationMessages -join "`n") | Should -Match 'Documentation validation: 1 passed'
+        ($script:validationMessages -join "`n") | Should -Not -Match 'task.setvariable|DocsMsPackagesAllValid'
         @(Get-ChildItem -LiteralPath $script:artifactRoot -Recurse -File).Count | Should -Be 1
     }
 
@@ -255,7 +257,7 @@ function Validate-Unknown-LocalDocsMsPackage {
 "@
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($command))
         $PSNativeCommandUseErrorActionPreference = $false
-        $output = & (Get-Process -Id $PID).Path -NoProfile -NonInteractive -EncodedCommand $encoded 2>&1
+        $output = & (Get-Process -Id $PID).Path -NoProfile -NonInteractive -EncodedCommand $encoded *>&1
 
         $LASTEXITCODE | Should -Be $ExpectedExitCode -Because ($output -join "`n")
     }

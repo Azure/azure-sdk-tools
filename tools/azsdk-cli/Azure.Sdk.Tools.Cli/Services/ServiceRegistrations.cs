@@ -24,8 +24,6 @@ using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
-using Azure.Sdk.Tools.CodeownersUtils.Caches;
-using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -74,23 +72,32 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
-            services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
+            services.AddSingleton<ICodeownersGenerateHelper>(sp => ActivatorUtilities.CreateInstance<CodeownersGenerateHelper>(sp));
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
-            services.AddSingleton<RepoLabelCache>();
-            services.AddSingleton<ITeamUserCache, TeamUserCache>();
-            services.AddSingleton<UserOrgVisibilityCache>();
-            services.AddSingleton<ICacheValidator, CacheValidator>();
-            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
-            services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
+            services.AddSingleton<CodeownersCaches>(sp => new CodeownersCaches(sp.GetRequiredService<HttpClient>()));
+            services.AddSingleton<ICodeownersManagementHelper>(sp => ActivatorUtilities.CreateInstance<CodeownersManagementHelper>(
+                sp, sp.GetRequiredService<CodeownersCaches>().TeamUsers));
+            services.AddSingleton<ICheckPackageHelper>(_ => new CheckPackageHelper());
             services.AddSingleton<ICodeownersAuditHelper, CodeownersAuditHelper>();
 
-            services.AddSingleton<IAuditRule, InvalidOwnerRule>();
+            services.AddSingleton<IAuditRule>(sp => ActivatorUtilities.CreateInstance<InvalidOwnerRule>(
+                sp, sp.GetRequiredService<CodeownersCaches>().TeamUsers,
+                sp.GetRequiredService<CodeownersCaches>().UserOrgVisibility,
+                sp.GetRequiredService<CodeownersCaches>().Validator));
             services.AddSingleton<IAuditRule, MalformedTeamRule>();
-            services.AddSingleton<IAuditRule, TeamNotWriteRule>();
-            services.AddSingleton<IAuditRule, LabelNotInRepoLabelsRule>();
+            services.AddSingleton<IAuditRule>(sp => ActivatorUtilities.CreateInstance<TeamNotWriteRule>(
+                sp, sp.GetRequiredService<CodeownersCaches>().TeamUsers,
+                sp.GetRequiredService<CodeownersCaches>().Validator));
+            services.AddSingleton<IAuditRule>(sp => new LabelNotInRepoLabelsRule(
+                sp.GetRequiredService<CodeownersCaches>().RepoLabels,
+                sp.GetRequiredService<CodeownersCaches>().Validator));
             services.AddSingleton<IAuditRule, ServiceAttentionMisuseRule>();
             services.AddSingleton<IAuditRule, LabelOwnerMissingOwnersRule>();
             services.AddSingleton<IAuditRule, LabelOwnerMissingLabelsRule>();
+            services.AddSingleton(sp => new Lazy<ICodeownersGenerateHelper>(() => sp.GetRequiredService<ICodeownersGenerateHelper>()));
+            services.AddSingleton(sp => new Lazy<ICodeownersManagementHelper>(() => sp.GetRequiredService<ICodeownersManagementHelper>()));
+            services.AddSingleton(sp => new Lazy<ICheckPackageHelper>(() => sp.GetRequiredService<ICheckPackageHelper>()));
+            services.AddSingleton(sp => new Lazy<ICodeownersAuditHelper>(() => sp.GetRequiredService<ICodeownersAuditHelper>()));
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();

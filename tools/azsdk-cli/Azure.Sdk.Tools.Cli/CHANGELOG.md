@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- Defer loading CodeownersUtils until a CODEOWNERS operation needs it, avoiding DLL locks from idle local MCP servers.
+
 ### Other Changes
 
 ## 0.6.54 (2026-10-15)

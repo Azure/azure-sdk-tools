@@ -89,12 +89,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         };
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersValidatorHelper codeownersValidatorHelper;
-        private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
-        private readonly ICodeownersManagementHelper codeownersManagementHelper;
-        private readonly ICheckPackageHelper checkPackageHelper;
+        private readonly Lazy<ICodeownersGenerateHelper> _codeownersGenerateHelper;
+        private readonly Lazy<ICodeownersManagementHelper> _codeownersManagementHelper;
+        private readonly Lazy<ICheckPackageHelper> _checkPackageHelper;
+        private ICodeownersGenerateHelper codeownersGenerateHelper => GetCodeownersHelper(_codeownersGenerateHelper);
+        private ICodeownersManagementHelper codeownersManagementHelper => GetCodeownersHelper(_codeownersManagementHelper);
+        private ICheckPackageHelper checkPackageHelper => GetCodeownersHelper(_checkPackageHelper);
         private readonly IGitHelper gitHelper;
         private readonly IDevOpsService devOpsService;
-        private readonly ICodeownersAuditHelper codeownersAuditHelper;
+        private readonly Lazy<ICodeownersAuditHelper> _codeownersAuditHelper;
+        private ICodeownersAuditHelper codeownersAuditHelper => GetCodeownersHelper(_codeownersAuditHelper);
+        private readonly Lazy<bool> _configureLogging;
 
         // Export section command options
         private readonly Option<string> codeownersPathOption = new("--codeowners-path")
@@ -196,24 +201,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ILogger<CodeownersTool> logger,
             ILoggerFactory? loggerFactory,
             ICodeownersValidatorHelper codeownersValidator,
-            ICodeownersGenerateHelper codeownersGenerateHelper,
+            Lazy<ICodeownersGenerateHelper> codeownersGenerateHelper,
             IGitHelper gitHelper,
-            ICodeownersManagementHelper codeownersManagementHelper,
-            ICheckPackageHelper checkPackageHelper,
+            Lazy<ICodeownersManagementHelper> codeownersManagementHelper,
+            Lazy<ICheckPackageHelper> checkPackageHelper,
             IDevOpsService devOpsService,
-            ICodeownersAuditHelper codeownersAuditHelper
+            Lazy<ICodeownersAuditHelper> codeownersAuditHelper
         )
         {
             this.logger = logger;
             this.codeownersValidatorHelper = codeownersValidator;
-            this.codeownersGenerateHelper = codeownersGenerateHelper;
-            this.codeownersManagementHelper = codeownersManagementHelper;
-            this.checkPackageHelper = checkPackageHelper;
+            _codeownersGenerateHelper = codeownersGenerateHelper;
+            _codeownersManagementHelper = codeownersManagementHelper;
+            _checkPackageHelper = checkPackageHelper;
             this.gitHelper = gitHelper;
             this.devOpsService = devOpsService;
-            this.codeownersAuditHelper = codeownersAuditHelper;
+            _codeownersAuditHelper = codeownersAuditHelper;
+            _configureLogging = new Lazy<bool>(() =>
+            {
+                CodeownersUtils.Utils.Log.Configure(loggerFactory);
+                return true;
+            });
+        }
 
-            CodeownersUtils.Utils.Log.Configure(loggerFactory);
+        private T GetCodeownersHelper<T>(Lazy<T> helper)
+        {
+            _ = _configureLogging.Value;
+            return helper.Value;
         }
 
         protected override List<Command> GetCommands() =>
@@ -497,6 +511,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             var lines = (await File.ReadAllLinesAsync(codeownersPath, ct)).ToList();
             var exportedLines = new List<string>();
 
+            _ = _configureLogging.Value;
             foreach (var sectionName in sections)
             {
                 var (headerStart, contentStart, sectionEnd) = CodeownersSectionFinder.FindSection(lines, sectionName);
@@ -573,6 +588,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     cacheSource = $"{CacheBaseUrl}/{parts[0].ToLowerInvariant()}/{parts[1]}/CODEOWNERS.cache";
                 }
 
+                _ = _configureLogging.Value;
                 var entries = CodeownersParser.ParseCodeownersFile(cacheSource);
                 return checkPackageHelper.CheckPackage(directoryPath, resolvedRepo, entries);
             }

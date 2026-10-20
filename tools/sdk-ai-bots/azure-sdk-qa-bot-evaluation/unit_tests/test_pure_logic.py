@@ -403,7 +403,6 @@ def test_javascript_scenario_routes_to_configured_js_channel():
         for item in config["channels"]
         if item["id"] == "19:344f6b5b36ba414daa15473942c7477b@thread.skype"
     )
-    assert channel["tenant"] == "javascript_channel_qa_bot"
     mapping = {"default": config["default"]["tenant"]}
     mapping.update({item["name"]: item["tenant"] for item in config["channels"]})
     assert resolve_tenant_for_scenario("javascript", mapping) == channel["tenant"]

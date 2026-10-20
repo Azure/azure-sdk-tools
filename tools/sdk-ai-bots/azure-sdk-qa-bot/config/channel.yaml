@@ -221,7 +221,7 @@ channels:
 
   - name: Language – JS ＆ TS 🥷
     id: 19:344f6b5b36ba414daa15473942c7477b@thread.skype
-    tenant: javascript_channel_qa_bot
+    tenant: typespec_channel_qa_bot
     endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
 
   - name: Low level - Java

@@ -16,6 +16,7 @@ parameters:
       - typespec
       - onboarding
       - python
+      - javascript
       - apispec
       - authoring
       - mcpserver

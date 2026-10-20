@@ -124,11 +124,49 @@ LLM-graded evaluators use the 1-5 `EVALUATE_THRESHOLD`.
 `expected_references` / `expected_knowledges` are kept in the schema for future use
 but are not scored by an evaluator.
 
+### JavaScript/TypeScript scenarios
+
+`evaluation_datasets/basic/javascript.jsonl` contains 7 core cases, and
+`evaluation_datasets/perf/javascript.jsonl` contains 13 additional cases. Both sets
+are manually authored, self-contained questions grounded in the linked public JS
+documentation, not historical Teams posts, replies, or PR/check state. They cover
+pnpm development, Node/browser tests and recordings, TypeSpec compatibility and
+emitter configuration, dependencies, and release preparation.
+
+Basic covers core workflows and critical safeguards: scoped builds, test targets
+and modes, publishing recordings, dependency approval,
+breaking-change boundaries, and release readiness. Perf extends this coverage with
+dependency/workspace variations, shell-specific commands, initial recording setup,
+and specific migration and emitter options. The split is based on coverage and
+impact, not question difficulty or runtime performance.
+
+JS source-customization initialization and regeneration cases are excluded pending
+the new customization design. TypeSpec naming and compatibility cases remain;
+they do not depend on the JS source-customization workflow.
+
+Compatibility examples are explicitly hypothetical. No case depends on a real
+thread, named person, numbered PR/issue, date, approval history, or incident outcome.
+
+Both pipeline scenario lists include `javascript`. The runner resolves that scenario
+through the exact `Language – JS ＆ TS 🥷` channel name to
+`javascript_channel_qa_bot`. The deployed channel-config blob must also contain this
+mapping; editing the checked-in YAML does not publish it.
+
+Validate the local datasets without Azure access:
+
+```bash
+python -m dataset.validate evaluation_datasets/basic/javascript.jsonl evaluation_datasets/perf/javascript.jsonl --require-reviewed
+```
+
+The completion-mode runner reads these local files even when passed the
+`qa-bot-basic-javascript:latest` or `qa-bot-perf-javascript:latest` dataset name.
+No Foundry dataset upload or registry entry is required for these pipeline runs.
+
 ## Pipelines
 
 | Pipeline | Purpose |
 |---|---|
-| `offline-evaluation.yml` | PR gate; starts agent server.py, evaluates the curated `basic` sets via local /completion. |
+| `offline-evaluation.yml` | Nightly/manual basic regression checks; starts agent server.py and evaluates via local /completion. |
 | `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
 | `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
 

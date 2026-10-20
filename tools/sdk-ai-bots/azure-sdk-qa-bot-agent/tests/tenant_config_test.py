@@ -91,6 +91,12 @@ def test_stewardship_pr_guidance_is_focused_and_separates_review_status() -> Non
     positions = [content.index(step) for step in steps]
     assert positions == sorted(positions)
     assert "normal discussion comments (`get_comments`)" in content
+    assert "rather than the generic PR merge-readiness response" in content
+    assert "Do not justify an absence of design findings using signoff" in content
+    assert "Target 60-80 words" in content
+    assert "Before sending, count the words including link titles" in content
+    assert "Keep the body under 60 words" in content
+    assert "replace with current verified findings" in content
 
 
 def test_stewardship_filter_does_not_broaden_existing_review_tenants() -> None:
@@ -100,6 +106,16 @@ def test_stewardship_filter_does_not_broaden_existing_review_tenants() -> None:
         assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
             "search.ismatch('design*', 'title')"
         )
+
+
+def test_stewardship_skill_requires_explicit_plane_for_scoped_search() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+
+    assert 'service_type="data-plane"' in content
+    assert 'service_type="management-plane"' in content
+    assert "include it in the initial KB search" in content
+    assert "Leave it unset for ambiguous, cross-plane or general process questions" in content
+    assert "`wiki_search` has no service-plane parameter" in content
 
 
 @pytest.mark.parametrize(

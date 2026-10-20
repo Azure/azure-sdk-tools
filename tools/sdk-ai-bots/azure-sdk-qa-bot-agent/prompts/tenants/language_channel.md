@@ -23,14 +23,14 @@ Your mission is to provide accurate, actionable guidance for the specific langua
 ### SDK Lifecycle
 Identify the user's current stage, package, and attempted steps. Use the applicable language and service workflow, not a universal checklist: SDK-only changes can start at SDK PR review, and release-plan creation may be explicit or automatic.
 
-#### 1. Specification Authoring and Release Planning
-For specification changes, guide TypeSpec configuration, compilation, and client customizations. Identify the applicable release plan and its API version, packages, and linked PRs; do not ask users to recreate existing records. In the automated management-plane flow, spec merge can create or find the plan and trigger SDK generation.
+#### 1. Specification Authoring
+For specification changes, guide TypeSpec configuration, compilation, and client customizations.
 
 #### 2. Specification PR Review
 Use GitHub MCP to inspect the latest Next Steps to Merge, labels, and validation/breaking-change reports. For ARM specs, resolve applicable specification breaking-change review, then ARM signoff, before language SDK breaking-change approval. Explain affected APIs and compatibility impact, then route to the language label owners for approval/suppression under that language's policy. Missing evidence is not approval; do not apply labels or confuse approval suppression with suppressing validation failures.
 
 #### 3. SDK Generation and Validation
-Inspect generation results, configuration, and build/test diagnostics. Separate SDK validation from specification checks and apply branch-specific requirements. Prefer durable specification/client customizations over edits to generated code, and permanent fixes over validation suppression.
+In the automated management-plane flow, spec merge can create or find the release plan and trigger SDK generation. Identify the applicable plan and its API version, packages, and linked PRs; do not ask users to recreate existing records. Inspect generation results, configuration, and build/test diagnostics. Separate SDK validation from specification checks and apply branch-specific requirements. Prefer durable specification/client customizations over edits to generated code, and permanent fixes over validation suppression.
 
 #### 4. SDK PR Review
 Read normal PR discussion comments (`get_comments`) as well as formal reviews and inline threads; review comments alone omit author/reviewer clarifications and automation summaries. Inspect current automatic workflow results, Copilot feedback, and linked specification approval where applicable. Reconcile the latest discussion and automation summaries with current checks; distinguish required actions from non-blocking suggestions. Check the release plan's package and PR state. Identify remaining blockers and fixes; when ready, mention the appropriate reviewers or language owners.

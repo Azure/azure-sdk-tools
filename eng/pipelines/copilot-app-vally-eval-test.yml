@@ -53,13 +53,13 @@ extends:
                   artifactName: mcp-servers
                   targetPath: $(Build.SourcesDirectory)/artifacts/mcp
 
-              - script: node --test eng/pipelines/copilot-app-mcp-probe.test.mjs
+              - script: node --test eng/pipelines/copilot-app-mcp-probe.test.mjs eng/pipelines/copilot-app-mcp-options.test.mjs
                 displayName: Test diagnostic assertions offline
 
               - template: /eng/common/pipelines/templates/steps/login-to-copilot.yml
 
-              - script: node eng/pipelines/copilot-app-mcp-probe.mjs
-                displayName: Compare App-auth MCP policy, relative path, absolute path
+              - script: node eng/pipelines/copilot-app-mcp-options.mjs
+                displayName: Isolate App-auth session options and test MCP startup fix
                 workingDirectory: $(Build.SourcesDirectory)
                 env:
                   COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)

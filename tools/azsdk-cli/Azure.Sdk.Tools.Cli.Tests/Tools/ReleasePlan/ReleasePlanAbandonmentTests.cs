@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             _github = new Mock<IGitHubService>(MockBehavior.Strict);
             _notifications = new Mock<INotificationService>(MockBehavior.Strict);
             _plan = Plan();
-            _devOps.Setup(s => s.GetReleasePlanAsync(123, true, It.IsAny<CancellationToken>())).ReturnsAsync(() => _plan);
+            _devOps.Setup(s => s.GetReleasePlanAsync(123, It.IsAny<CancellationToken>(), true)).ReturnsAsync(() => _plan);
             _devOps.Setup(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new WorkItem { Id = 42, Rev = 8, Fields = new Dictionary<string, object> { ["System.State"] = "Abandoned" } });
             _tool = new ReleasePlanTool(_devOps.Object, Mock.Of<IGitHelper>(), Mock.Of<ITypeSpecHelper>(),
@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             _devOps.Verify(s => s.UpdateWorkItemAsync(42,
                 It.Is<Dictionary<string, string>>(f => f.Count == 1 && f["System.State"] == "Abandoned"),
                 7, It.IsAny<CancellationToken>()), Times.Once);
-            _devOps.Verify(s => s.GetReleasePlanAsync(123, true, It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.GetReleasePlanAsync(123, It.IsAny<CancellationToken>(), true), Times.Once);
             Assert.That(_devOps.Invocations.Count, Is.EqualTo(2));
             Assert.That(_github.Invocations, Is.Empty);
             Assert.That(_notifications.Invocations, Is.Empty);
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Lookup("azure-sdk-for-python", 2, Pr(merged: mergedIndex == 1));
             Lookup("azure-sdk-for-js", 3, Pr(merged: mergedIndex == 2));
             var response = await _tool.AbandonReleasePlan(123);
-            Assert.That(response.ResponseError, Does.Contain("exception").And.Contain("unreleased").And.Contain("SDK Release Support"));
+            Assert.That(response.ResponseError, Does.Contain("exception").And.Contain("unreleased").And.Contain("contact SDK Release Support channel on Teams"));
             NoWrites();
         }
 
@@ -138,13 +138,57 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task PrivateSdkRepository_UsesActualRepositoryForLiveRead()
+        public async Task PrivateSdkRepository_BlocksBeforeRemoteReadOrWrite()
         {
             SetSdks(Sdk("Python", "azure-sdk-for-python-pr", 1));
-            Lookup("azure-sdk-for-python-pr", 1, Pr(merged: true));
             var response = await _tool.AbandonReleasePlan(123);
-            Assert.That(response.ResponseError, Is.Not.Null);
-            _github.VerifyAll();
+            Assert.That(response.ResponseError, Does.Contain("public Azure SDK repository"));
+            Assert.That(_github.Invocations, Is.Empty);
+            NoWrites();
+        }
+
+        [TestCase(".NET", "azure-sdk-for-net")]
+        [TestCase("dotnet", "azure-sdk-for-net")]
+        [TestCase("c#", "azure-sdk-for-net")]
+        [TestCase("csharp", "azure-sdk-for-net")]
+        [TestCase("Java", "azure-sdk-for-java")]
+        [TestCase("JavaScript", "azure-sdk-for-js")]
+        [TestCase("js", "azure-sdk-for-js")]
+        [TestCase("typescript", "azure-sdk-for-js")]
+        [TestCase("Python", "azure-sdk-for-python")]
+        [TestCase("Go", "azure-sdk-for-go")]
+        [TestCase("Rust", "azure-sdk-for-rust")]
+        [TestCase("C++", "azure-sdk-for-cpp")]
+        [TestCase("cpp", "azure-sdk-for-cpp")]
+        public async Task SupportedLanguageAliases_UseKnownPublicRepository(string language, string repo)
+        {
+            SetSdks(Sdk(language, repo, int.MaxValue));
+            Lookup(repo, int.MaxValue, Pr());
+            var response = await _tool.AbandonReleasePlan(123);
+            Assert.That(response.ResponseError, Is.Null);
+            _github.Verify(g => g.GetPullRequestAsync("Azure", repo, int.MaxValue, It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("unsupported")]
+        public async Task UnknownLinkedLanguage_BlocksBeforeRemoteReadOrWrite(string? language)
+        {
+            SetSdks(Sdk(language!, "azure-sdk-for-python", 1));
+            var response = await _tool.AbandonReleasePlan(123);
+            Assert.That(response.ResponseError, Does.Contain("language"));
+            Assert.That(_github.Invocations, Is.Empty);
+            NoWrites();
+        }
+
+        [Test]
+        public async Task InvalidLinkAfterValidLink_ValidatesAllBeforeRemoteReadOrWrite()
+        {
+            SetSdks(Sdk("Python", "azure-sdk-for-python", 1), Sdk("Java", "azure-sdk-for-java-pr", 2));
+            var response = await _tool.AbandonReleasePlan(123);
+            Assert.That(response.ResponseError, Does.Contain("public Azure SDK repository"));
+            Assert.That(_github.Invocations, Is.Empty);
             NoWrites();
         }
 
@@ -153,7 +197,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             SetSdks(Sdk(".NET", "azure-sdk-for-net", 1), Sdk("Python", "azure-sdk-for-python", 2),
                 Sdk("JavaScript", "azure-sdk-for-js", 3), Sdk("Python", "azure-sdk-for-python", 2));
-            _plan.SDKInfo[3].SdkPullRequestUrl = "https://github.com/azure/AZURE-SDK-FOR-PYTHON/pull/0002/";
+            _plan.SDKInfo[3].Language = " python ";
+            _plan.SDKInfo[3].SdkPullRequestUrl = "HTTPS://GITHUB.COM/azure/AZURE-SDK-FOR-PYTHON/pull/0002/";
             Lookup("azure-sdk-for-net", 1, Pr());
             Lookup("azure-sdk-for-python", 2, Pr(draft: true));
             Lookup("azure-sdk-for-js", 3, Pr("closed"));
@@ -202,7 +247,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Does.Contain("/rev conflict"));
             _devOps.Verify(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()), Times.Once);
-            _devOps.Verify(s => s.GetReleasePlanAsync(123, true, It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.GetReleasePlanAsync(123, It.IsAny<CancellationToken>(), true), Times.Once);
             Assert.That(_devOps.Invocations.Count, Is.EqualTo(2));
             Assert.That(_notifications.Invocations, Is.Empty);
         }
@@ -214,7 +259,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             SetSdks(new SDKInfo { Language = "Python", ReleaseStatus = status }, Sdk("Java", "azure-sdk-for-java", 1));
             var response = await _tool.AbandonReleasePlan(123);
-            Assert.That(response.ResponseError, Does.Contain("SDK Release Support"));
+            Assert.That(response.ResponseError, Does.Contain("contact SDK Release Support channel on Teams"));
             Assert.That(_github.Invocations, Is.Empty);
             NoWrites();
         }
@@ -234,6 +279,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
         [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/0")]
         [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/2147483648")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/9999999999999999999999999999999999")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/0000")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/-1")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/+1")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/1\n")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/1/\n")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/1//")]
+        [TestCase("https://github.com/Azure/azure-sdk-for-python/pull/%31")]
+        [TestCase("https://github.com/Other/azure-sdk-for-python/pull/1")]
+        [TestCase("https://github.com:443/Azure/azure-sdk-for-python/pull/1")]
         [TestCase("https://github.com/Azure/azure-sdk-for-java/pull/1")]
         [TestCase("https://github.com/Azure/azure-sdk-for-fake/pull/1")]
         [TestCase("http://github.com/Azure/azure-sdk-for-python/pull/1")]
@@ -367,7 +422,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }
             else if (phase == "lookup" || phase == "lookup-null")
             {
-                _devOps.Setup(s => s.GetReleasePlanAsync(123, true, cts.Token))
+                _devOps.Setup(s => s.GetReleasePlanAsync(123, cts.Token, true))
                     .Callback(() => cts.Cancel()).ReturnsAsync(phase == "lookup-null" ? null! : _plan);
             }
             else if (phase == "saved-update")

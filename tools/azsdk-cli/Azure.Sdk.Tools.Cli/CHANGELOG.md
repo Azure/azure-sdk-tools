@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- After manual abandonment is saved, linked open unmerged SDK PRs receive plan-specific comments and are then closed regardless of author. Already abandoned plans retry cleanup without rewriting ADO state; exact primary work-item markers suppress duplicate notes. Comment failures prevent closing that PR, and cleanup failures return success with warnings and retry guidance. Commenting and closure are separate GitHub writes; closed and merged PRs are never changed.
+- After manual abandonment is saved, linked open unmerged SDK PRs are closed regardless of author, then receive a plan-specific notice. Already abandoned plans can finish cleanup of open PRs without rewriting ADO state. Cleanup failures return success with warnings and manual follow-up guidance. A failed notice may leave the PR closed; rerunning does not repair missing notices on closed PRs. Closed and merged PRs are never changed.
 
 ### Breaking Changes
 
@@ -12,8 +12,10 @@
 
 ### Bugs Fixed
 
-- Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support instead of abandoning a partially completed release.
+- Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release.
+- Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.
 - Corrected development-guide links and Coding Agent settings instructions to use valid absolute, locale-neutral URLs instead of relative or placeholder links.
+- Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
 
 ### Other Changes
 

@@ -141,12 +141,11 @@ namespace Azure.Sdk.Tools.Cli.Services
     public interface IDevOpsService
     {
         public Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync(CancellationToken ct);
-        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
         /// <summary>
         /// Resolves a unique positive Release Plan ID, optionally including Abandoned plans.
-        /// Closed and Duplicate plans remain excluded; the two-argument overload excludes Abandoned.
+        /// Closed and Duplicate plans remain excluded; Abandoned plans are excluded by default.
         /// </summary>
-        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, bool includeAbandoned, CancellationToken ct);
+        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct, bool includeAbandoned = false);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
@@ -290,13 +289,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             return releasePlan;
         }
 
-        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
-        {
-            return GetReleasePlanAsync(releasePlanId, includeAbandoned: false, ct);
-        }
-
-        /// <inheritdoc cref="IDevOpsService.GetReleasePlanAsync(int, bool, CancellationToken)" />
-        public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, bool includeAbandoned, CancellationToken ct)
+        /// <inheritdoc cref="IDevOpsService.GetReleasePlanAsync(int, CancellationToken, bool)" />
+        public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct, bool includeAbandoned = false)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
             var excludedStates = includeAbandoned ? "'Closed','Duplicate'" : "'Closed','Duplicate','Abandoned'";

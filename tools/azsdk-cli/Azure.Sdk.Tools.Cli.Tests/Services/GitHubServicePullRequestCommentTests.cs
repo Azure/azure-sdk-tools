@@ -35,6 +35,9 @@ public class GitHubServicePullRequestCommentTests
         // Replace only the fixture transport: no environment changes, credential lookup, or network access.
         typeof(GitConnection).GetField("_gitHubClient", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(_service, new GitHubClient(connection));
+        var anonymousConnection = new Connection(new ProductHeaderValue("offline-anonymous-test"), new HttpClientAdapter(() => _handler.Object));
+        typeof(GitConnection).GetField("_anonymousGitHubClient", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(_service, new GitHubClient(anonymousConnection));
     }
 
     private static HttpResponseMessage Response(string json, HttpStatusCode status = HttpStatusCode.OK) => new(status)
@@ -43,66 +46,89 @@ public class GitHubServicePullRequestCommentTests
     };
 
     [Test]
-    public async Task CreateComment_OneAuthenticatedIssueCommentPost_WithExactBodyAndPrivateRepo()
+    public async Task CloseWithComment_StateOnlyPatchThenExactAuthenticatedPost()
     {
-        const string body = "<!-- azsdk-abandoned-release-plan:42 -->\nPlan abandoned.";
+        const string body = "<!-- azsdk-abandoned-release-plan:123 -->\nPlan abandoned.";
+        var methods = new List<HttpMethod>();
         _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .Returns<HttpRequestMessage, CancellationToken>(async (request, ct) =>
             {
-                Assert.Multiple(() =>
-                {
-                    Assert.That(request.Method, Is.EqualTo(HttpMethod.Post));
-                    Assert.That(request.RequestUri!.AbsoluteUri, Is.EqualTo("https://api.github.com/repos/Azure/azure-sdk-for-python-pr/issues/1/comments"));
-                    Assert.That(request.Headers.Authorization?.Parameter, Is.EqualTo("existing-test-identity"));
-                });
+                methods.Add(request.Method);
+                Assert.That(request.Headers.Authorization?.Parameter, Is.EqualTo("existing-test-identity"));
                 using var json = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
+                if (request.Method == HttpMethod.Patch)
+                {
+                    Assert.That(request.RequestUri!.AbsoluteUri, Is.EqualTo("https://api.github.com/repos/Azure/azure-sdk-for-python/pulls/1"));
+                    Assert.That(json.RootElement.EnumerateObject().Select(p => p.Name), Is.EqualTo(new[] { "state" }));
+                    Assert.That(json.RootElement.GetProperty("state").GetString(), Is.EqualTo("closed"));
+                    return Response("{\"number\":1,\"state\":\"closed\"}");
+                }
+                Assert.That(request.RequestUri!.AbsoluteUri, Is.EqualTo("https://api.github.com/repos/Azure/azure-sdk-for-python/issues/1/comments"));
+                Assert.That(json.RootElement.EnumerateObject().Select(p => p.Name), Is.EqualTo(new[] { "body" }));
                 Assert.That(json.RootElement.GetProperty("body").GetString(), Is.EqualTo(body));
                 return Response("{\"id\":17,\"body\":\"saved\"}", HttpStatusCode.Created);
             });
-        var comment = await _service.CreatePullRequestCommentAsync("Azure", "azure-sdk-for-python-pr", 1, body, CancellationToken.None);
-        Assert.That(comment.Id, Is.EqualTo(17));
-        VerifyCalls(1);
+        var pr = await _service.ClosePullRequestAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None, body);
+        Assert.That(pr.State.Value, Is.EqualTo(ItemState.Closed));
+        Assert.That(methods, Is.EqualTo(new[] { HttpMethod.Patch, HttpMethod.Post }));
+        VerifyCalls(2);
     }
 
     [TestCase(HttpStatusCode.Forbidden)]
     [TestCase(HttpStatusCode.NotFound)]
     [TestCase(HttpStatusCode.InternalServerError)]
-    public void CreateComment_ErrorDoesNotRetryPost(HttpStatusCode status)
+    public void CommentError_AfterClose_PropagatesWithoutRetry(HttpStatusCode status)
     {
+        var methods = new List<HttpMethod>();
         _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(() => Response("{\"message\":\"offline failure\"}", status));
+            .Returns<HttpRequestMessage, CancellationToken>((request, _) =>
+            {
+                methods.Add(request.Method);
+                return Task.FromResult(request.Method == HttpMethod.Patch ? Response("{\"state\":\"closed\"}") : Response("{\"message\":\"offline failure\"}", status));
+            });
         Assert.CatchAsync<ApiException>(async () =>
-            await _service.CreatePullRequestCommentAsync("Azure", "azure-sdk-for-python", 1, "note", CancellationToken.None));
-        VerifyCalls(1);
+            await _service.ClosePullRequestAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None, "note"));
+        Assert.That(methods, Is.EqualTo(new[] { HttpMethod.Patch, HttpMethod.Post }));
+        VerifyCalls(2);
     }
 
     [Test]
-    public void CreateComment_PreCanceled_DoesNotStartTransport()
+    public void CloseWithComment_PreCanceled_DoesNotStartTransport()
     {
         using var cts = new CancellationTokenSource();
         cts.Cancel();
         Assert.CatchAsync<OperationCanceledException>(async () =>
-            await _service.CreatePullRequestCommentAsync("Azure", "azure-sdk-for-python", 1, "note", cts.Token));
+            await _service.ClosePullRequestAsync("Azure", "azure-sdk-for-python", 1, cts.Token, "note"));
         VerifyCalls(0);
     }
 
     [Test]
-    public void CreateComment_CancellationAfterPostStarts_PropagatesWithoutRetry()
+    public async Task CancellationDuringComment_WaitsForTransportThenPropagates()
     {
         using var cts = new CancellationTokenSource();
         var pending = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback(() => cts.Cancel()).Returns(pending.Task);
+            .Returns<HttpRequestMessage, CancellationToken>((request, _) =>
+            {
+                if (request.Method == HttpMethod.Patch) { return Task.FromResult(Response("{\"state\":\"closed\"}")); }
+                cts.Cancel();
+                entered.SetResult();
+                return pending.Task;
+            });
+        var operation = _service.ClosePullRequestAsync("Azure", "azure-sdk-for-python", 1, cts.Token, "note");
         try
         {
-            Assert.CatchAsync<OperationCanceledException>(async () =>
-                await _service.CreatePullRequestCommentAsync("Azure", "azure-sdk-for-python", 1, "note", cts.Token));
-            VerifyCalls(1);
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.That(operation.IsCompleted, Is.False, "Octokit cannot cancel an accepted write.");
         }
         finally
         {
-            pending.SetResult(Response("{\"id\":17}"));
+            pending.TrySetResult(Response("{\"id\":17}"));
         }
+        var ex = Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.That(ex!.CancellationToken, Is.EqualTo(cts.Token));
+        VerifyCalls(2);
     }
 
     [Test]
@@ -132,10 +158,11 @@ public class GitHubServicePullRequestCommentTests
         VerifyCalls(2);
     }
 
-    [TestCase("azure-sdk-for-python")]
-    [TestCase("azure-sdk-for-python-pr")]
-    public async Task Close_OneAuthenticatedPatchWithOnlyState(string repo)
+    [TestCase(null)]
+    [TestCase("")]
+    public async Task Close_NoComment_OneAuthenticatedPatchWithOnlyState(string? comment)
     {
+        const string repo = "azure-sdk-for-python";
         _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .Returns<HttpRequestMessage, CancellationToken>(async (request, ct) =>
             {
@@ -150,7 +177,7 @@ public class GitHubServicePullRequestCommentTests
                 Assert.That(json.RootElement.GetProperty("state").GetString(), Is.EqualTo("closed"));
                 return Response("{\"number\":17,\"state\":\"closed\"}");
             });
-        var pr = await _service.ClosePullRequestAsync("Azure", repo, 17, CancellationToken.None);
+        var pr = await _service.ClosePullRequestAsync("Azure", repo, 17, CancellationToken.None, comment);
         Assert.That(pr.State.Value, Is.EqualTo(ItemState.Closed));
         VerifyCalls(1);
     }
@@ -163,7 +190,7 @@ public class GitHubServicePullRequestCommentTests
         _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(() => Response("{\"message\":\"offline failure\"}", status));
         Assert.CatchAsync<ApiException>(async () =>
-            await _service.ClosePullRequestAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None));
+            await _service.ClosePullRequestAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None, "must not post"));
         VerifyCalls(1);
     }
 
@@ -178,22 +205,71 @@ public class GitHubServicePullRequestCommentTests
     }
 
     [Test]
-    public void Close_CancellationDuringPatch_PropagatesWithoutRetry()
+    public async Task Close_CancellationDuringPatch_WaitsThenSkipsComment()
     {
         using var cts = new CancellationTokenSource();
         var pending = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback(() => cts.Cancel()).Returns(pending.Task);
+            .Callback(() => { cts.Cancel(); entered.SetResult(); }).Returns(pending.Task);
+        var operation = _service.ClosePullRequestAsync("Azure", "azure-sdk-for-python", 1, cts.Token, "must not post");
         try
         {
-            Assert.CatchAsync<OperationCanceledException>(async () =>
-                await _service.ClosePullRequestAsync("Azure", "azure-sdk-for-python", 1, cts.Token));
-            VerifyCalls(1);
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.That(operation.IsCompleted, Is.False);
         }
         finally
         {
-            pending.SetResult(Response("{\"state\":\"closed\"}"));
+            pending.TrySetResult(Response("{\"state\":\"closed\"}"));
         }
+        Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(10)));
+        VerifyCalls(1);
+    }
+
+    [TestCase("Azure", "azure-sdk-for-python")]
+    [TestCase("Azure", "azure-sdk-for-net")]
+    [TestCase("Azure", "azure-sdk-for-java")]
+    [TestCase("Azure", "azure-sdk-for-js")]
+    [TestCase("Azure", "azure-sdk-for-go")]
+    [TestCase("custom-owner", "custom.repo_1")]
+    [TestCase("custom-owner", ".github")]
+    public async Task UrlLookup_UsesFixedApiAndAnonymousRead(string owner, string repo)
+    {
+        _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Returns<HttpRequestMessage, CancellationToken>((request, _) =>
+            {
+                Assert.That(request.Method, Is.EqualTo(HttpMethod.Get));
+                Assert.That(request.RequestUri!.AbsoluteUri, Is.EqualTo($"https://api.github.com/repos/{owner}/{repo}/pulls/17"));
+                Assert.That(request.Headers.Authorization, Is.Null);
+                return Task.FromResult(Response("{\"number\":17,\"state\":\"open\"}"));
+            });
+        var pr = await _service.GetPullRequestAsync($"https://github.com/{owner}/{repo}/pull/00017/", CancellationToken.None);
+        Assert.That(pr.Number, Is.EqualTo(17));
+        VerifyCalls(1);
+    }
+
+    [TestCase("http://github.com/Azure/repo/pull/1")]
+    [TestCase("https://github.com.evil/Azure/repo/pull/1")]
+    [TestCase("https://token@github.com/Azure/repo/pull/1")]
+    [TestCase("https://github.com:443/Azure/repo/pull/1")]
+    [TestCase("https://github.com/Azure/repo/pull/0")]
+    [TestCase("https://github.com/Azure/repo/pull/-1")]
+    [TestCase("https://github.com/Azure/repo/pull/2147483648")]
+    [TestCase("https://github.com/Azure/repo/pull/1?x=1")]
+    [TestCase("https://github.com/Azure/repo/pull/1#fragment")]
+    [TestCase("https://github.com/Azure/repo/pull/1\n")]
+    [TestCase("https://github.com/Azure/repo/issues/1")]
+    [TestCase("https://github.com/Azure/../pull/1")]
+    [TestCase("https://github.com/-bad/repo/pull/1")]
+    [TestCase("https://github.com/bad--owner/repo/pull/1")]
+    [TestCase("https://github.com/Azure/./pull/1")]
+    [TestCase("https://github.com/Azure/re%70o/pull/1")]
+    [TestCase("")]
+    [TestCase(null)]
+    public void UrlLookup_InvalidUrlRejectedBeforeTransport(string? url)
+    {
+        Assert.CatchAsync<ArgumentException>(async () => await _service.GetPullRequestAsync(url!, CancellationToken.None));
+        VerifyCalls(0);
     }
 
     private void VerifyCalls(int count)

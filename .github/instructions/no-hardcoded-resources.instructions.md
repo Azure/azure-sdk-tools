@@ -11,8 +11,10 @@ Ignore test fixtures, mocks, and documentation unless they are used at runtime.
 
 ## Severity: HIGH — hardcoded Azure or external resources
 
-Flag every instance below as a **HIGH** severity issue. Quote the offending value and
-state which parameter, variable, or configuration setting should replace it.
+Flag every instance below as a **HIGH** severity issue. Quote only non-secret values;
+redact secrets, tokens, keys, and credentials embedded in connection strings or URLs.
+State which parameter, variable, or configuration setting should replace the value.
+For exposed credentials, also recommend revocation or rotation.
 
 ### Pipelines (YAML, templates, scripts invoked by pipelines)
 

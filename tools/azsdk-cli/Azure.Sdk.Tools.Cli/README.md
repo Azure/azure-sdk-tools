@@ -94,6 +94,42 @@ In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
 
+## Release-plan status updates
+
+`azsdk release-plan update-release-status` uses existing Azure DevOps release-plan metadata, with no API-version input or mapping:
+
+- **Manual:** supply `--release-plan-id` from the requester. This is the release-plan ID, not an interchangeable ADO work item ID.
+- **Automatic:** supply `--sdk-pull-request` with the full SDK PR URL that triggered the release build. The command finds exactly one in-progress plan linked through `Custom.SDKPullRequestFor{language}` and updates that resolved work item without another ID lookup.
+- **Both:** `--language` and `--package-name` identify exactly one SDK entry inside the plan resolved by the ID or SDK PR. Language aliases are normalized; package names match exactly. In these two paths they never select a substitute plan.
+
+No manual ID and no SDK PR means the original package-name lookup is used (**transitional**) and logs `LEGACY_RELEASE_PLAN_LOOKUP`. A supplied ID or SDK PR never falls back: invalid, missing, or ambiguous correlation produces an error with no writes, even if another package-name candidate exists. Conflicting language/package/PR information also produces an error with no writes. Manual lookup reuses the existing release-plan ID method; new plans use their work item ID as the release-plan ID, while historical display IDs remain supported. Once every release pipeline forwards an ID or SDK PR, the fallback is removed and only those two inputs are accepted.
+
+Package version and release pipeline URL remain optional result metadata. SDK release type is used only by the legacy package lookup, not to revalidate explicit correlation. Already released SDK fields are not overwritten: non-conflicting retries on an in-progress plan repeat the fresh, guarded completion check to recover from a partial failure; retries by ID on a finished plan remain no-ops. A conflicting known version is rejected. Parent revision checks guard status writes and the fresh completion check. Revision conflicts are reported, not silently retried within the same invocation.
+
+The shared completion-script and template changes are a separate rollout. They will forward the requester-supplied `ReleasePlanId` or triggering `SdkPullRequest` to this command, without inheriting plan IDs from package metadata.
+
+For automatic releases, the existing resolver already passes the selected SDK PR to progress updates. Forwarding that PR through release-stage completion is part of the separate shared-pipeline and language-template rollout. This CLI change does not change release eligibility.
+
+**Rollout:** publish the backward-compatible CLI first, then deploy the shared completion adapters through the `eng/common` sync process. Wire the manual `ReleasePlanId` and automatic SDK PR through language-specific release templates, starting with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130). Until callers supply correlation, this command retains the original package-name lookup. Remove the fallback in a follow-up only after every pipeline forwards an input. API-version extraction in #16868 is not a dependency.
+
+This uses existing ADO metadata, not a new tracking system or immutable generation snapshot. Historical incorrect dashboard data is not repaired automatically.
+
+## Retained customization repair attempts
+
+`azsdk tsp client customized-update` / `azsdk_customized_code_update` accepts `--max-attempts` / `maxAttempts` (1..10, default 1). Multiple attempts currently require `CustomCode`; `All` and `SpecInputs` retain their single-pass behavior.
+
+```text
+azsdk tsp client customized-update --package-path <package-root> --edit-scope CustomCode --customization-request "Repair the custom-code build failures" --max-attempts 3 --output json
+```
+
+One command invocation keeps the same Copilot session and feeds actual validation failures back into its existing conversation. Earlier tool calls, edits, and feedback remain available. Repeated outer CLI invocations preserve files but start new conversations. A repair attempt is a patch proposal evaluated by host code, not an individual tool call or an Exit reminder; the existing per-language agent-turn allowance is retained.
+
+After each proposal, the command awaits the existing .NET/Java preparation and regeneration, then builds. JavaScript/Python retain their existing build/check behavior. Preparation fallback policy, pinned `tsp-location.yaml` inputs, and optional local spec handling are unchanged. A green build does not skip a requested semantic customization, and a classifier no-op must still pass an SDK build in custom-code scope. The session stops on success, no additional patches, cancellation, or the attempt limit.
+
+The existing response adds only `attemptsUsed` (default 0). Initial builds do not count; evaluated no-progress proposals do. Failures retain the final actual diagnostics in `buildResult` and `response_error`, the stopping reason/error code, known `appliedPatches`, and existing `specChangeRequired` / `next_steps` guidance for useful PR comments. `success` is not set by the agent's claim.
+
+This feature adds no source receipt, artifact/checkpoint format, strict preparation policy, dependency bootstrap, or publication protocol. Existing repository generation prerequisites still apply. It retains existing tool/path restrictions and does not claim whole-repository change attestation or cross-process conversation resume.
+
 ## Telemetry Configuration
 Telemetry collection is on by default.
 

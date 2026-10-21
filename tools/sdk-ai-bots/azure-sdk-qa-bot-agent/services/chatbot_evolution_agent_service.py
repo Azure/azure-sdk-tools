@@ -8,24 +8,37 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import cast
 
 from azure.ai.projects.aio import AIProjectClient
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 
 from config.app_config import get as cfg
+from config.tenant_config import get_knowledge_source
 from models.conversation import BotAnswerVerdict
 from models.feedback import (
+    AzureDevOpsIssueReference,
     ChatbotEvolutionAgentInput,
     ChatbotEvolutionAgentMode,
     ChatbotEvolutionAgentOutcome,
     ChatbotEvolutionAgentResult,
     FoundryAgentReference,
+    GitHubIssueReference,
+    is_fallback_issue_reference,
+    parse_issue_reference,
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
+from services.qa_record_service import QARecordService
 from utils.azure_ai_foundry import get_project_client
-from utils.azure_cosmosdb import read_qa_record, upsert_qa_record
+from utils.azure_ai_foundry_agent import HostedAgentClient
+from utils.azure_cosmosdb import (
+    query_qa_records_by_feedback_status,
+    read_qa_record,
+    replace_qa_record_if_unchanged,
+    upsert_qa_record,
+)
+from utils.knowledge_config import KbIssueTarget, get_kb_targets
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +48,7 @@ _ALLOWED_OUTCOMES = {
             ChatbotEvolutionAgentOutcome.conversation_ongoing,
             ChatbotEvolutionAgentOutcome.no_issue,
             ChatbotEvolutionAgentOutcome.issue_created,
+            ChatbotEvolutionAgentOutcome.issue_reused,
             ChatbotEvolutionAgentOutcome.remediation_failed,
             ChatbotEvolutionAgentOutcome.processing_failed,
         }
@@ -43,6 +57,7 @@ _ALLOWED_OUTCOMES = {
         {
             ChatbotEvolutionAgentOutcome.validation_passed,
             ChatbotEvolutionAgentOutcome.validation_failed,
+            ChatbotEvolutionAgentOutcome.validation_skipped,
             ChatbotEvolutionAgentOutcome.processing_failed,
         }
     ),
@@ -50,6 +65,7 @@ _ALLOWED_OUTCOMES = {
 
 # Hard cap on Agent wall-clock time for one synchronous pipeline job.
 _JOB_TIMEOUT_SECS = 600
+_STALE_JOB_TIMEOUT = timedelta(minutes=20)
 
 # Keep informational logs bounded; the structured result is persisted in
 # Cosmos, so logs need only a diagnostic preview.
@@ -85,6 +101,57 @@ class ChatbotEvolutionAgentService:
 
     # -- Public job lifecycle ----------------------------------------------
 
+    async def recover_stale_jobs(
+        self,
+        *,
+        tenant_id: str | None = None,
+        excluded_channels: set[str] | None = None,
+    ) -> int:
+        """Make abandoned jobs retryable without invoking the Agent."""
+        cutoff = _now() - _STALE_JOB_TIMEOUT
+        excluded_channels = excluded_channels or set()
+        recovered = 0
+        for status in (FeedbackStatus.created, FeedbackStatus.running):
+            docs = await query_qa_records_by_feedback_status(
+                feedback_status=status.value, tenant_id=tenant_id
+            )
+            for doc in docs:
+                record = QARecord.from_cosmos(doc)
+                feedback = record.feedback
+                if (
+                    feedback is None
+                    or feedback.status
+                    not in (FeedbackStatus.created, FeedbackStatus.running)
+                    or QARecordService.channel_key_of(record) in excluded_channels
+                ):
+                    continue
+                updated_at = (
+                    feedback.updated_at or feedback.created_at or record.updated_at
+                )
+                if updated_at > cutoff:
+                    continue
+                mode = (
+                    ChatbotEvolutionAgentMode.validation
+                    if feedback.issue_url
+                    else ChatbotEvolutionAgentMode.analysis
+                )
+                self._finalize_failed(
+                    record,
+                    mode=mode,
+                    error=f"agent_{mode.value}_abandoned: inactive for at least 20 minutes",
+                )
+                if await replace_qa_record_if_unchanged(
+                    record.to_cosmos(), etag=doc["_etag"]
+                ):
+                    recovered += 1
+                    logger.warning(
+                        "Recovered abandoned %s job %s (last update: %s)",
+                        mode.value,
+                        record.id,
+                        updated_at.isoformat(),
+                    )
+        return recovered
+
     async def run_job(
         self,
         record_id: str,
@@ -111,6 +178,7 @@ class ChatbotEvolutionAgentService:
                     f"Agent returned outcome={result.outcome.value} "
                     f"for mode={mode.value}"
                 )
+            await self._validate_issue_route(result)
             self._apply_result(record, result, mode=mode)
         except Exception as exc:
             logger.exception(
@@ -196,6 +264,69 @@ class ChatbotEvolutionAgentService:
 
     # -- Structured outcome mapping ---------------------------------------
 
+    async def _validate_issue_route(
+        self,
+        result: ChatbotEvolutionAgentResult,
+    ) -> None:
+        if (
+            result.outcome
+            not in (
+                ChatbotEvolutionAgentOutcome.issue_created,
+                ChatbotEvolutionAgentOutcome.issue_reused,
+            )
+            or result.source_id is None
+            or result.issue_url is None
+        ):
+            return
+
+        source_targets = await get_kb_targets(result.source_id)
+        issue = parse_issue_reference(result.issue_url)
+        if result.source_url is None:
+            if (
+                source_targets
+                or not result.source_id.startswith("static_")
+                or get_knowledge_source(result.source_id) is None
+            ):
+                raise ValueError(
+                    "KB issue source_id does not identify an unconfigured "
+                    "registered static source"
+                )
+            if not is_fallback_issue_reference(issue):
+                raise ValueError(
+                    "KB sources without a repository must use Azure/azure-sdk-pr"
+                )
+            return
+
+        matching_targets = tuple(
+            target
+            for target in source_targets
+            if target.source_url == result.source_url
+        )
+        if not matching_targets:
+            raise ValueError(
+                "KB issue source_id and source_url do not match authoritative "
+                "configuration"
+            )
+
+        if is_fallback_issue_reference(issue):
+            return
+
+        configured_targets = {
+            source_target.issue_target for source_target in matching_targets
+        }
+        if len(configured_targets) != 1:
+            raise ValueError(
+                "KB source has ambiguous configured issue destinations"
+            )
+        configured_target = configured_targets.pop()
+        if configured_target is None or not _issue_matches_target(
+            issue,
+            configured_target,
+        ):
+            raise ValueError(
+                "KB issue must use its configured tracker or Azure/azure-sdk-pr"
+            )
+
     def _apply_result(
         self,
         record: QARecord,
@@ -207,9 +338,20 @@ class ChatbotEvolutionAgentService:
         record.updated_at = now
 
         if mode == ChatbotEvolutionAgentMode.analysis:
+            record.auto_closed_at = None
             record.reasoning = result.reasoning
             record.confidence = result.confidence
             record.evaluated_at = now
+            assessment_failed = (
+                result.outcome == ChatbotEvolutionAgentOutcome.processing_failed
+            )
+            record.has_expert_interaction = (
+                None if assessment_failed else result.has_expert_interaction
+            )
+            record.expert_interaction_reason = (
+                None if assessment_failed
+                else result.expert_interaction_reason
+            )
 
             if result.outcome == ChatbotEvolutionAgentOutcome.conversation_ongoing:
                 record.qa_status = QAStatus.ongoing
@@ -242,7 +384,11 @@ class ChatbotEvolutionAgentService:
                 record.feedback = None
                 return
 
-            if result.outcome == ChatbotEvolutionAgentOutcome.issue_created:
+            if result.outcome in (
+                ChatbotEvolutionAgentOutcome.issue_created,
+                ChatbotEvolutionAgentOutcome.issue_reused,
+            ):
+                assert result.issue_url is not None
                 record.qa_status = QAStatus.failed
                 record.verdict = BotAnswerVerdict.Incorrect
                 record.feedback.status = FeedbackStatus.pending_validation
@@ -269,6 +415,8 @@ class ChatbotEvolutionAgentService:
             record.feedback.status = FeedbackStatus.validation_passed
         elif result.outcome == ChatbotEvolutionAgentOutcome.validation_failed:
             record.feedback.status = FeedbackStatus.validation_failed
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_skipped:
+            record.feedback.status = FeedbackStatus.validation_skipped
         else:
             raise ValueError(
                 f"Unsupported validation outcome: {result.outcome.value}"
@@ -293,6 +441,8 @@ class ChatbotEvolutionAgentService:
             record.qa_status = QAStatus.failed
             record.verdict = BotAnswerVerdict.Unknown
             record.evaluated_at = now
+            record.has_expert_interaction = None
+            record.expert_interaction_reason = None
         else:
             feedback.validation_reasoning = error
             feedback.validated_at = now
@@ -349,13 +499,22 @@ class ChatbotEvolutionAgentService:
                 },
             )
         ]
-        raw_response = await openai_client.responses.with_raw_response.create(
-            input=input_items,
-            store=True,
-            stream=False,
-            extra_body={"agent_reference": agent_ref.to_extra_body()},
+        # Do not add invocation retries to a job that can update KBs and issues.
+        agent_client = HostedAgentClient(
+            openai_client,
+            max_retries=1,
+            stream_timeout=_JOB_TIMEOUT_SECS,
         )
-        response = raw_response.parse()
+        trace_id, response = await agent_client.invoke(
+            conversation_items=input_items,
+            agent_ref=agent_ref.to_extra_body(),
+        )
+        logger.info(
+            "Evolution agent trace: trace_id=%s, response_id=%s, conversation=%s",
+            trace_id,
+            response.id,
+            payload.conversation_id,
+        )
         if response.status != "completed":
             raise RuntimeError(
                 f"Agent response {response.id} ended with status={response.status}: "
@@ -373,6 +532,27 @@ class ChatbotEvolutionAgentService:
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _issue_matches_target(
+    issue: GitHubIssueReference | AzureDevOpsIssueReference,
+    target: KbIssueTarget,
+) -> bool:
+    if target.provider == "github":
+        return (
+            isinstance(issue, GitHubIssueReference)
+            and target.owner is not None
+            and target.repo is not None
+            and issue.owner.casefold() == target.owner.casefold()
+            and issue.repository.casefold() == target.repo.casefold()
+        )
+    return (
+        isinstance(issue, AzureDevOpsIssueReference)
+        and target.organization is not None
+        and target.project is not None
+        and issue.organization.casefold() == target.organization.casefold()
+        and issue.project.casefold() == target.project.casefold()
+    )
 
 
 __all__ = ["ChatbotEvolutionAgentService"]

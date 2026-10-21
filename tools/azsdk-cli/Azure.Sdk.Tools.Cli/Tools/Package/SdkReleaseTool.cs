@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private readonly Option<int> releasePlanIdOpt = new("--release-plan-id")
         {
-            Description = "Optional release-plan ID supplied by the requester for this manual release. Omit or use 0 when there is no plan. The release pipeline must declare ReleasePlanId.",
+            Description = "Optional release-plan ID supplied by the requester for this manual release. Omit or use 0 when there is no plan. The release pipeline must forward ReleasePlanId for plan updates.",
             Required = false,
         };
 
@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await ReleasePackageAsync(packageName, language, branch, checkReady, releasePlanId, ct);
         }
 
-        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. For a manual release associated with a plan, pass the requester's releasePlanId; the pipeline must support the ReleasePlanId parameter. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead.")]
+        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. For a manual release associated with a plan, pass the requester's releasePlanId; the pipeline must forward ReleasePlanId for plan updates. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead.")]
         public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool checkReady = false,
             [Description("Optional release-plan ID supplied by the requester, not an interchangeable ADO work item ID. Omit or use 0 for releases without a plan.")] int releasePlanId = 0, CancellationToken ct = default)
         {
@@ -222,22 +222,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         branch,
                         System.Text.Json.JsonSerializer.Serialize(templateParams));
 
-                    Build releasePipelineRun;
-                    try
-                    {
-                        releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), templateParams, branch, ct);
-                    }
-                    catch (Exception ex) when (releasePlanId > 0
-                        && ex.Message.Contains("Unexpected parameter", StringComparison.OrdinalIgnoreCase)
-                        && ex.Message.Contains("ReleasePlanId", StringComparison.OrdinalIgnoreCase))
-                    {
-                        response.ReleasePipelineStatus = "Failed";
-                        response.ReleaseStatusDetails = $"The release pipeline on branch '{branch}' does not support the ReleasePlanId parameter. The request was rejected; it was not retried without release-plan ID {releasePlanId}.";
-                        response.ResponseError = response.ReleaseStatusDetails;
-                        response.NextSteps = ["Update the release pipeline on the selected branch to declare and forward ReleasePlanId, then retry with the same release-plan ID."];
-                        logger.LogError(ex, "Release pipeline {buildDefinitionId} on branch {branch} does not support ReleasePlanId.", buildDefinitionId, branch);
-                        return response;
-                    }
+                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), templateParams, branch, ct);
                     if (releasePipelineRun != null)
                     {
                         response.ReleasePipelineRunUrl = DevOpsService.GetPipelineUrl(releasePipelineRun.Id);

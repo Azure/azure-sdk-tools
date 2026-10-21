@@ -100,9 +100,7 @@ This server is intended to run in **local mcp mode only** and will utilize your 
 
 This input does not look up a plan by package name, request an API version, update ADO status, or create another tracking system. Automatic release correlation uses the triggering SDK PR and existing ADO release-plan links in the separate status-update work.
 
-**Compatibility:** merging or releasing this optional CLI input does not change existing requests: an omitted/zero ID adds no pipeline parameter. A positive ID is not safe to use with an unsupported pipeline. Azure DevOps can reject the queue request as `Unexpected parameter 'ReleasePlanId'`; the CLI reports which selected branch needs updating and never retries by dropping the ID.
-
-**Rollout:** first declare `ReleasePlanId` in the receiving pipeline entry point and forward it through the release templates on the branch being released. Then enable ID-bearing calls for that pipeline. Start with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130), validate its handoff, and expand to the remaining CI YAML files, including management-specific files. Confirm PR trigger controls before broad YAML changes. This CLI-only PR does not modify or preflight those templates, and neither a missing ID nor queue rejection should be worked around by automatically submitting an uncorrelated release.
+**Rollout:** merge and release this optional CLI input first, then wire `ReleasePlanId` through the receiving pipeline entry point and release templates on the branch being released. A queued run does not verify that the pipeline consumes the ID or updates the plan. Start with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130), validate its handoff, and expand to the remaining CI YAML files, including management-specific files. Confirm PR trigger controls before broad YAML changes. This CLI-only PR does not modify or preflight those templates.
 
 ## Release-plan status updates
 

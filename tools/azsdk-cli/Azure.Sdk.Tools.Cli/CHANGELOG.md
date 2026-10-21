@@ -10,7 +10,6 @@
 
 ### Bugs Fixed
 
-- Manual releases report unsupported `ReleasePlanId` pipeline parameters with rollout guidance and never retry by dropping the supplied plan ID.
 - Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
 
 ### Other Changes

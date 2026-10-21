@@ -16,6 +16,7 @@ public static class ApiReleaseTypeExtensions
     private const string AdoPrivatePreview = "APEX Private Preview";
     private const string AdoPublicPreview = "APEX Public Preview";
     private const string AdoGA = "GA";
+    private const string LegacyAdoGA = "APEX GA";
 
     /// <summary>
     /// Converts a user-supplied string to an ApiReleaseType enum value (case-insensitive).
@@ -64,7 +65,9 @@ public static class ApiReleaseTypeExtensions
             return ApiReleaseType.PublicPreview;
         }
 
-        if (adoValue.Equals(AdoGA, StringComparison.OrdinalIgnoreCase))
+        // Older release plans used APEX GA. Accept it on reads; new writes still use GA.
+        if (adoValue.Equals(AdoGA, StringComparison.OrdinalIgnoreCase)
+            || adoValue.Equals(LegacyAdoGA, StringComparison.OrdinalIgnoreCase))
         {
             return ApiReleaseType.GA;
         }

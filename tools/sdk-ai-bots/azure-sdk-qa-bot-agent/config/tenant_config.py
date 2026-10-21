@@ -429,6 +429,15 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB,
 )
 
+_SDK_SOURCES = _sources(
+    SRC_AZURE_SDK_GUIDELINES,
+    SRC_AZURE_SDK_DOCS_ENG,
+    SRC_AZURE_SDK_INTERNAL_WIKI,
+    SRC_TYPESPEC_AZURE_DOCS,
+    SRC_AZURE_REST_API_SPECS_WIKI,
+    SRC_AZURE_REST_API_SPECS_DOCS,
+)
+
 # ---------------------------------------------------------------------------
 # Tenant config map
 # ---------------------------------------------------------------------------
@@ -443,14 +452,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Python SDK testing and development",
             "Python SDK release processes and pipeline issues",
         ],
-        sources=_sources(
-            SRC_AZURE_SDK_FOR_PYTHON_DOCS,
-            SRC_AZURE_SDK_GUIDELINES,
-            SRC_AZURE_SDK_DOCS_ENG,
-            SRC_AZURE_SDK_INTERNAL_WIKI,
-            SRC_TYPESPEC_AZURE_DOCS,
-            SRC_AZURE_REST_API_SPECS_WIKI,
-        ),
+        sources=[
+            *_sources(SRC_AZURE_SDK_FOR_PYTHON_DOCS),
+            *_SDK_SOURCES,
+        ],
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('python', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-python', 'title') or search.ismatch('generate*', 'title')",
@@ -470,14 +475,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             ".NET SDK testing and development",
             ".NET SDK release processes and pipeline issues",
         ],
-        sources=_sources(
-            SRC_AZURE_SDK_FOR_NET_DOCS,
-            SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
-            SRC_AZURE_SDK_GUIDELINES,
-            SRC_AZURE_SDK_DOCS_ENG,
-            SRC_TYPESPEC_AZURE_DOCS,
-            SRC_AZURE_REST_API_SPECS_WIKI,
-        ),
+        sources=[
+            *_sources(SRC_AZURE_SDK_FOR_NET_DOCS, SRC_TYPESPEC_CSHARP_EMITTER_DOCS),
+            *_SDK_SOURCES,
+        ],
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('dotnet', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-csharp', 'title') or search.ismatch('generate*', 'title')",
@@ -497,14 +498,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Go SDK testing and development",
             "Go SDK release processes and pipeline issues",
         ],
-        sources=_sources(
-            SRC_AZURE_SDK_FOR_GO_DOCS,
-            SRC_AZURE_SDK_GUIDELINES,
-            SRC_AZURE_SDK_DOCS_ENG,
-            SRC_TYPESPEC_AZURE_DOCS,
-            SRC_AZURE_REST_API_SPECS_WIKI,
-            SRC_AZURE_REST_API_SPECS_DOCS,
-        ),
+        sources=[
+            *_sources(SRC_AZURE_SDK_FOR_GO_DOCS),
+            *_SDK_SOURCES,
+        ],
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('golang', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-go', 'title') or search.ismatch('generate*', 'title')",
@@ -521,15 +518,14 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Java SDK testing and development",
             "Java SDK release processes and pipeline issues",
         ],
-        sources=_sources(
-            SRC_AZURE_SDK_FOR_JAVA_DOCS,
-            SRC_AZURE_SDK_FOR_JAVA_WIKI,
-            SRC_AZURE_SDK_GUIDELINES,
-            SRC_AUTOREST_JAVA_DOCS,
-            SRC_AZURE_SDK_DOCS_ENG,
-            SRC_TYPESPEC_AZURE_DOCS,
-            SRC_AZURE_REST_API_SPECS_WIKI,
-        ),
+        sources=[
+            *_sources(
+                SRC_AZURE_SDK_FOR_JAVA_DOCS,
+                SRC_AZURE_SDK_FOR_JAVA_WIKI,
+                SRC_AUTOREST_JAVA_DOCS,
+            ),
+            *_SDK_SOURCES,
+        ],
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('java', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-java', 'title') or search.ismatch('generate*', 'title')",
@@ -546,15 +542,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "JavaScript SDK testing and development",
             "JavaScript SDK release processes and pipeline issues",
         ],
-        sources=_sources(
-            SRC_AZURE_SDK_FOR_JS_DOCS,
-            SRC_AZURE_SDK_FOR_JS_WIKI,
-            SRC_AZURE_SDK_GUIDELINES,
-            SRC_AZURE_SDK_DOCS_ENG,
-            SRC_TYPESPEC_AZURE_DOCS,
-            SRC_AZURE_REST_API_SPECS_WIKI,
-            SRC_AZURE_SDK_TOOLS_DOCS,
-        ),
+        sources=[
+            *_sources(SRC_AZURE_SDK_FOR_JS_DOCS, SRC_AZURE_SDK_FOR_JS_WIKI),
+            *_SDK_SOURCES,
+        ],
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-ts', 'title') or search.ismatch('generate*', 'title')",

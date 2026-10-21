@@ -45,7 +45,7 @@ The tool can now be run by typing `azsdk` into the shell.
 
 **To use the MCP server immediately**
 
-See the [mcp quick start docs](./Azure.Sdk.Tools.Cli/README.md#quick-start).
+See the [mcp quick start docs](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/README.md#quick-start).
 
 ### Prerequisites
 
@@ -80,7 +80,7 @@ To quickly run local changes in CLI mode:
 dotnet run --project Azure.Sdk.Tools.Cli -- --help
 ```
 
-See the [development docs](./Azure.Sdk.Tools.Cli/README.md) for more detailed instructions on how to run this tool as an MCP server or CLI app.
+See the [development docs](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/README.md) for more detailed instructions on how to run this tool as an MCP server or CLI app.
 
 On Windows, run `azsdk.bat <arguments>` from this directory. The launcher first stops this repository's running `azsdk.exe` MCP servers to release build-output DLL locks, including servers started with global `--debug` or `--output` (`-o`) options before `mcp` or `start`. Cleanup diagnostics go to stderr. It then forwards all arguments to `dotnet run --project Azure.Sdk.Tools.Cli --` and returns its exit code. This disconnects those MCP servers; unrelated processes and other repository copies are left running.
 
@@ -154,7 +154,7 @@ If you need to make updates to the config, either push them to main and file a n
       ```
 
 1. The coding agent MCP configuration needs to be updated
-      - Navigate to https://github.com/YOUR_ORGANIZATION/YOUR_REPOSITORY/settings/copilot/coding_agent
+      - Navigate to `https://github.com/YOUR_ORGANIZATION/YOUR_REPOSITORY/settings/copilot/coding_agent`, replacing the placeholders with your organization and repository names
       - OR go the repository homepage, click `Settings`, under `Code and automation` expand `Copilot`, select `Coding agent`
       - Paste the below configuration into the text box under `MCP Configuration`, then click `Save MCP Configuration`
       - Update the tools list to include any MCP tools for testing, or change the value to `"tools": ["*"]` to include all
@@ -223,7 +223,7 @@ Release any required tool changes before updating Copilot Instructions to ensure
 
 ## Project Structure and Information
 
-This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/dotnet/standard/commandline/) app and an MCP server using the [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
+This project is both a [System.CommandLine](https://learn.microsoft.com/dotnet/standard/commandline/) app and an MCP server using the [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
 
 ### Directory Structure
 
@@ -373,8 +373,8 @@ New tools can be created with copilot chat/agent:
 Help me create a new tool using #new-tool.md as a reference
 ```
 
-Or manually, see [docs/new-tool.md](./docs/new-tool.md) for more details.
+Or manually, see [docs/new-tool.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/new-tool.md) for more details.
 
 ## Data Collection
 
-The software may collect information about you and your use of the software and send it to Microsoft. Microsoft may use this information to provide services and improve our products and services. You may turn off the telemetry as described in the repository. There are also some features in the software that may enable you and Microsoft to collect data from users of your applications. If you use these features, you must comply with applicable law, including providing appropriate notices to users of your applications together with a copy of Microsoft's [privacy statement](https://www.microsoft.com/privacy/privacystatement) and [data privacy statement](https://www.microsoft.com/en-us/privacy/data-privacy-notice). You can learn more about data collection and use in the help documentation and our privacy statement. Your use of the software operates as your consent to these practices.
+The software may collect information about you and your use of the software and send it to Microsoft. Microsoft may use this information to provide services and improve our products and services. You may turn off the telemetry as described in the repository. There are also some features in the software that may enable you and Microsoft to collect data from users of your applications. If you use these features, you must comply with applicable law, including providing appropriate notices to users of your applications together with a copy of Microsoft's [privacy statement](https://www.microsoft.com/privacy/privacystatement) and [data privacy statement](https://www.microsoft.com/privacy/data-privacy-notice). You can learn more about data collection and use in the help documentation and our privacy statement. Your use of the software operates as your consent to these practices.

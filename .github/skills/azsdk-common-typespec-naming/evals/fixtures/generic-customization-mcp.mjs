@@ -85,8 +85,7 @@ export function handleRequest(request) {
       }
 
       const args = isRecord(params.arguments) ? params.arguments : {};
-      const editScope =
-        args.editScope === undefined ? "All" : args.editScope;
+      const editScope = args.editScope === undefined ? "All" : args.editScope;
       if (
         typeof args.customizationRequest !== "string" ||
         !args.customizationRequest.trim() ||
@@ -97,8 +96,7 @@ export function handleRequest(request) {
           (typeof args.tspProjectPath !== "string" ||
             !args.tspProjectPath.trim())) ||
         (editScope !== "SpecInputs" &&
-          (typeof args.packagePath !== "string" ||
-            !args.packagePath.trim()))
+          (typeof args.packagePath !== "string" || !args.packagePath.trim()))
       ) {
         return reply({
           isError: true,

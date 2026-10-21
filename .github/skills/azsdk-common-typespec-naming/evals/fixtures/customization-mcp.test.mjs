@@ -197,7 +197,10 @@ await test("generic fixture advertises production customization scopes and optio
   ]);
   assert.equal(schema.properties.editScope.default, "All");
   assert.match(schema.properties.packagePath.description, /CustomCode and All/);
-  assert.match(schema.properties.tspProjectPath.description, /SpecInputs and All/);
+  assert.match(
+    schema.properties.tspProjectPath.description,
+    /SpecInputs and All/,
+  );
 });
 
 await test("generic fixture accepts every scope with its required paths", () => {

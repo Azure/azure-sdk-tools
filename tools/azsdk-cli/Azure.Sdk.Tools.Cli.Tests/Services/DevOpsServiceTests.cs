@@ -1361,7 +1361,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public async Task GetReleasePlanAsync_IncludeAbandonedControlsQueryAndPreservesMapping(bool includeAbandoned)
         {
             _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(35000, 100, "Abandoned"));
-            var result = await _devOpsService.GetReleasePlanAsync(100, includeAbandoned, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanAsync(100, CancellationToken.None, includeAbandoned);
             Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.ReleasePlanID] = '100'"));
             Assert.That(_connection.LastCapturedQuery, Does.Contain(includeAbandoned
                 ? "[System.State] NOT IN ('Closed','Duplicate')"
@@ -1377,7 +1377,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         {
             _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(35000, 100, "Abandoned"));
             _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(35001, 100, "In Progress"));
-            Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.GetReleasePlanAsync(100, true, CancellationToken.None));
+            Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.GetReleasePlanAsync(100, CancellationToken.None, true));
             Assert.That(_connection.CapturedPatches, Is.Empty);
         }
 
@@ -1385,7 +1385,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         [TestCase(-1)]
         public void GetReleasePlanAsync_IncludeAbandonedInvalidIdDoesNotQuery(int id)
         {
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _devOpsService.GetReleasePlanAsync(id, true, CancellationToken.None));
+            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _devOpsService.GetReleasePlanAsync(id, CancellationToken.None, true));
             Assert.That(_connection.LastCapturedQuery, Is.Null);
         }
 
@@ -1400,7 +1400,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var service = new DevOpsService(_logger, connection.Object);
             if (includeAbandoned)
             {
-                var result = await service.GetReleasePlanAsync(100, true, CancellationToken.None);
+                var result = await service.GetReleasePlanAsync(100, CancellationToken.None, true);
                 Assert.That(result.Status, Is.EqualTo("Abandoned"));
                 Assert.That(result.WorkItemId, Is.EqualTo(35000));
                 Assert.That(result.ReleasePlanId, Is.EqualTo(100));

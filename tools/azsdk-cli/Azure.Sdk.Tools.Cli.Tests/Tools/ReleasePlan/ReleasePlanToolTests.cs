@@ -931,7 +931,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
             var mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(777, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>(), false)).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, It.IsAny<bool>(), ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
@@ -982,7 +982,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
             var mockGitHub = new Mock<IGitHubService>(MockBehavior.Strict);
             var mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
-            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>(), false))
                 .ReturnsAsync(new ReleasePlanWorkItem { ReleasePlanId = 77, SDKInfo = [sdk] });
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, mockGitHub.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
@@ -996,7 +996,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             using var document = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Mcp).Format(response));
             Assert.That(document.RootElement.GetProperty("release_plan_details").GetProperty("SDKInfo")[0].TryGetProperty("PullRequestStatus", out _), Is.False);
             mockGitHub.VerifyNoOtherCalls();
-            mockDevOps.Verify(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>(), false), Times.Once);
             mockDevOps.VerifyNoOtherCalls();
         }
 
@@ -1183,7 +1183,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 SDKReleaseMonth = "August 2026"
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            mockDevOps.Setup(x => x.GetReleasePlanAsync(releasePlan.ReleasePlanId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(releasePlan.ReleasePlanId, It.IsAny<CancellationToken>(), false)).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync([releasePlan]);
             var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, 24, 0, 0, 0, TimeSpan.Zero));
@@ -1763,6 +1763,142 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.Status, Is.EqualTo("Success"));
             Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
             Assert.That(response.NextSteps, Has.Some.Contains("SDK generation should be triggered"));
+        }
+
+        [TestCase(false, "", "closed", true)]
+        [TestCase(true, "", "closed", true)]
+        [TestCase(false, "https://github.com/Azure/azure-rest-api-specs-pr/pull/11111", "closed", true)]
+        [TestCase(false, "https://github.com/Azure/azure-rest-api-specs-pr/pull/11111", "open", false)]
+        [TestCase(false, "https://github.com/Azure/azure-rest-api-specs-pr/pull/11111", "closed", false)]
+        public async Task Test_update_spec_pull_request_private_preview_checks_new_link(bool useReleasePlanId, string previousPr, string prState, bool merged)
+        {
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs-pr/pull/12345";
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 100,
+                ReleasePlanId = 1,
+                Status = "In Progress",
+                ApiReleaseType = ApiReleaseType.PrivatePreview,
+                ActiveSpecPullRequest = previousPr
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            if (useReleasePlanId)
+            {
+                service.Setup(s => s.GetReleasePlanAsync(1, It.IsAny<CancellationToken>(), false)).ReturnsAsync(plan);
+            }
+            else
+            {
+                service.Setup(s => s.GetReleasePlanForWorkItemAsync(100, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            }
+            var linked = false;
+            service.Setup(s => s.UpdateSpecPullRequestAsync(100, specPr, It.IsAny<CancellationToken>()))
+                .Callback(() => linked = true)
+                .ReturnsAsync(true);
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            github.Setup(g => g.GetPullRequestAsync("Azure", "azure-rest-api-specs-pr", 12345, It.IsAny<CancellationToken>()))
+                .Callback(() => Assert.That(linked, Is.True, "Persist the new PR link before checking completion."))
+                .ReturnsAsync(CreateMaintenancePullRequest(prState, merged));
+            if (merged)
+            {
+                service.Setup(s => s.UpdateWorkItemAsync(100,
+                    It.Is<Dictionary<string, string>>(fields => fields.Count == 1 && fields["System.State"] == "Finished"),
+                    It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 100 });
+            }
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                github.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+
+            var response = await tool.UpdateSpecPullRequestInReleasePlan(specPr,
+                workItemId: useReleasePlanId ? 0 : 100, releasePlanId: useReleasePlanId ? 1 : 0);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.Status, Is.EqualTo("Success"));
+            Assert.That(plan.Status, Is.EqualTo(merged ? "Finished" : "In Progress"));
+            Assert.That(plan.ActiveSpecPullRequest, Is.EqualTo(specPr));
+            Assert.That(response.NextSteps ?? [], Has.None.Contains("SDK"));
+            if (merged)
+            {
+                Assert.That(response.Details, Has.Some.Contains("Finished"));
+                Assert.That(response.NextSteps ?? [], Is.Empty);
+            }
+            else
+            {
+                Assert.That(response.NextSteps, Has.Some.Contains("Merge the linked specification pull request"));
+            }
+            github.Verify(g => g.GetPullRequestAsync("Azure", "azure-rest-api-specs-pr", 12345, It.IsAny<CancellationToken>()), Times.Once);
+            service.Verify(s => s.UpdateWorkItemAsync(100, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+                merged ? Times.Once() : Times.Never());
+        }
+
+        [TestCase(ApiReleaseType.PublicPreview)]
+        [TestCase(ApiReleaseType.GA)]
+        public async Task Test_update_spec_pull_request_public_plan_preserves_sdk_next_steps(ApiReleaseType releaseType)
+        {
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs/pull/12345";
+            var plan = new ReleasePlanWorkItem { WorkItemId = 100, ApiReleaseType = releaseType, Status = "In Progress" };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(s => s.GetReleasePlanForWorkItemAsync(100, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            service.Setup(s => s.UpdateSpecPullRequestAsync(100, specPr, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                github.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+
+            var response = await tool.UpdateSpecPullRequestInReleasePlan(specPr, workItemId: 100);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(plan.Status, Is.EqualTo("In Progress"));
+            Assert.That(response.NextSteps, Has.Some.Contains("SDK generation should be triggered"));
+            service.Verify(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            github.VerifyNoOtherCalls();
+        }
+
+        [TestCase("link")]
+        [TestCase("lookup")]
+        [TestCase("completion")]
+        public async Task Test_update_spec_pull_request_private_preview_reports_failure_without_claiming_finished(string failure)
+        {
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs-pr/pull/12345";
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 100,
+                ApiReleaseType = ApiReleaseType.PrivatePreview,
+                Status = "In Progress"
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(s => s.GetReleasePlanForWorkItemAsync(100, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            service.Setup(s => s.UpdateSpecPullRequestAsync(100, specPr, It.IsAny<CancellationToken>())).ReturnsAsync(failure != "link");
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            if (failure == "lookup")
+            {
+                github.Setup(g => g.GetPullRequestAsync("Azure", "azure-rest-api-specs-pr", 12345, It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new InvalidOperationException("Cannot read specification PR."));
+            }
+            else if (failure == "completion")
+            {
+                github.Setup(g => g.GetPullRequestAsync("Azure", "azure-rest-api-specs-pr", 12345, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(CreateMaintenancePullRequest("closed", true));
+                service.Setup(s => s.UpdateWorkItemAsync(100, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new InvalidOperationException("Cannot persist Finished state."));
+            }
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                github.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+
+            var response = await tool.UpdateSpecPullRequestInReleasePlan(specPr, workItemId: 100);
+
+            Assert.That(response.ResponseError, Is.Not.Null);
+            Assert.That(response.Status, Is.Not.EqualTo("Success"));
+            Assert.That(plan.Status, Is.EqualTo("In Progress"));
+            if (failure != "completion")
+            {
+                service.Verify(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            }
+            if (failure == "link")
+            {
+                github.VerifyNoOtherCalls();
+            }
         }
 
         [Test]
@@ -3660,7 +3796,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 WorkItemId = 100, ReleasePlanId = 123, Revision = 1, Status = "New", SDKInfo = []
             };
-            service.Setup(s => s.GetReleasePlanAsync(123, true, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            service.Setup(s => s.GetReleasePlanAsync(123, It.IsAny<CancellationToken>(), true)).ReturnsAsync(plan);
             service.Setup(s => s.UpdateWorkItemAsync(100, It.IsAny<Dictionary<string, string>>(), 1, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem
                 {

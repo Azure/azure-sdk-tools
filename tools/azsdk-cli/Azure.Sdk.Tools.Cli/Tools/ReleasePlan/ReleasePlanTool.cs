@@ -642,7 +642,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// </summary>
         /// <param name="releasePlanId">The positive user-facing Release Plan ID, not the work item ID.</param>
         /// <returns>A response indicating success or failure of the operation.</returns>
-        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by Release Plan ID (not work item ID). Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support. Already abandoned plans are unchanged.")]
+        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by Release Plan ID (not work item ID). Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support channel on Teams. Already abandoned plans are unchanged.")]
         public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int releasePlanId = 0, CancellationToken ct = default)
         {
             try
@@ -653,7 +653,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleaseWorkflowResponse { ResponseError = "A positive Release Plan ID is required to abandon a release plan." };
                 }
 
-                var releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, includeAbandoned: true, ct);
+                var releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, ct, includeAbandoned: true);
                 ct.ThrowIfCancellationRequested();
 
                 if (releasePlan == null)
@@ -715,7 +715,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private const string ManualAbandonmentReleaseProtection = "Cannot abandon a release plan after any SDK pull request has merged or any SDK is recorded as Released. Request a language-exclusion exception for the unreleased languages and contact SDK Release Support.";
+        private const string ManualAbandonmentReleaseProtection = "Cannot abandon a release plan after any SDK pull request has merged or any SDK is recorded as Released. Request a language-exclusion exception for the unreleased languages and contact SDK Release Support channel on Teams.";
 
         /// <summary>
         /// Checks one release-plan snapshot and live SDK PR states. Unverifiable data throws;
@@ -740,16 +740,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 throw new InvalidOperationException("Cannot abandon a release plan with an unknown or inactive state. No changes made.");
             }
             // Live GitHub checks and the guarded ADO write are not cross-service atomic.
-            foreach (var url in GetManualAbandonmentPullRequests(plan).Order(StringComparer.Ordinal))
+            foreach (var (repoName, number) in GetSdkPullRequests(plan))
             {
                 ct.ThrowIfCancellationRequested();
-                var parts = new Uri(url).AbsolutePath.Trim('/').Split('/');
-                var pr = await githubService.GetPullRequestAsync(parts[0], parts[1],
-                    int.Parse(parts[3], CultureInfo.InvariantCulture), ct).WaitAsync(ct);
+                var pr = await githubService.GetPullRequestAsync("Azure", repoName, number, ct).WaitAsync(ct);
                 ct.ThrowIfCancellationRequested();
                 if (pr == null || pr.State.Value is not (ItemState.Open or ItemState.Closed))
                 {
-                    throw new InvalidOperationException($"Could not verify the current SDK pull request state for {url}. No changes made.");
+                    throw new InvalidOperationException($"Could not verify the current SDK pull request state for https://github.com/Azure/{repoName}/pull/{number}. No changes made.");
                 }
                 if (pr.Merged)
                 {
@@ -759,26 +757,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return true;
         }
 
-        private static HashSet<string> GetManualAbandonmentPullRequests(ReleasePlanWorkItem plan)
+        private static HashSet<(string RepoName, int Number)> GetSdkPullRequests(ReleasePlanWorkItem plan)
         {
-            var urls = new HashSet<string>(StringComparer.Ordinal);
+            var pullRequests = new HashSet<(string RepoName, int Number)>();
             foreach (var sdk in plan.SDKInfo.Where(sdk => !string.IsNullOrWhiteSpace(sdk.SdkPullRequestUrl)))
             {
                 var language = SdkLanguageHelpers.GetSdkLanguage(sdk.Language?.Trim() ?? "");
                 var repo = SdkLanguageHelpers.GetRepoName(language)
                     ?? throw new InvalidOperationException("Cannot verify the language of a linked SDK pull request.");
-                var uri = new Uri(sdk.SdkPullRequestUrl, UriKind.Absolute);
-                var parts = uri.AbsolutePath.Trim('/').Split('/');
-                // The shared canonical helper validates all URL components and language/repository
-                // correspondence. Private SDK repos have the same language with an existing -pr suffix.
-                var isPrivate = parts.Length == 4 && string.Equals(parts[1], $"{repo}-pr", StringComparison.OrdinalIgnoreCase);
-                var publicUrl = isPrivate
-                    ? new UriBuilder(uri) { Path = $"/{parts[0]}/{repo}/{parts[2]}/{parts[3]}" }.Uri.AbsoluteUri
-                    : sdk.SdkPullRequestUrl;
-                var canonical = DevOpsService.NormalizeSdkPullRequestUrl(publicUrl, language.ToWorkItemString());
-                urls.Add(isPrivate ? canonical.Replace($"/{repo}/", $"/{repo}-pr/", StringComparison.Ordinal) : canonical);
+                var match = Regex.Match(sdk.SdkPullRequestUrl,
+                    $@"\Ahttps://github\.com/Azure/{Regex.Escape(repo)}/pull/(?<number>[0-9]+)/?\z",
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+                if (!match.Success || !int.TryParse(match.Groups["number"].Value, NumberStyles.None,
+                    CultureInfo.InvariantCulture, out var number) || number <= 0)
+                {
+                    throw new InvalidOperationException("Cannot verify a linked SDK pull request URL. Expected a public Azure SDK repository matching its language and a positive pull request number. No changes made.");
+                }
+                pullRequests.Add((repo, number));
             }
-            return urls;
+            return pullRequests;
         }
 
         /// <summary>
@@ -2540,6 +2537,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleaseWorkflowResponse
                     {
                         ResponseError = "Failed to update TypeSpec pull request URL in release plan."
+                    };
+                }
+
+                if (releasePlan?.ApiReleaseType == ApiReleaseType.PrivatePreview)
+                {
+                    // The retrieved plan still has the previous PR link; check the URL just saved.
+                    releasePlan.ActiveSpecPullRequest = specPullRequestUrl;
+                    releasePlan = await MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(releasePlan, specPullRequestUrl, ct);
+                    var finished = releasePlan.Status == "Finished";
+                    return new ReleaseWorkflowResponse
+                    {
+                        Status = "Success",
+                        Details =
+                        [
+                            $"Successfully updated spec pull request URL to {specPullRequestUrl} in release plan.",
+                            finished ? "Private Preview release plan is Finished because the linked specification pull request is merged."
+                                : "Private Preview release plan is awaiting the linked specification pull request merge."
+                        ],
+                        NextSteps = finished ? [] : ["Merge the linked specification pull request to complete the Private Preview release plan."]
                     };
                 }
 

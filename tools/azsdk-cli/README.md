@@ -100,7 +100,11 @@ Use `azsdk release-plan abandon --release-plan-id <Release Plan ID>` or supply `
 
 `azsdk release-plan abandon` and `azsdk_abandon_release_plan` refuse abandonment when the plan is finished, any SDK is recorded as Released, or any linked SDK PR has merged. Teams should request a language-exclusion exception for the unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release. There is no force or approval override input.
 
-Open PRs, drafts, and PRs closed without merging do not themselves block manual abandonment. Plans with no SDK links remain supported. The command reads the plan once (including Abandoned plans), validates SDK PR URLs against the public Azure SDK repository for each recorded language, reads current GitHub merge state rather than cached ADO PR statuses, and uses that snapshot's ADO revision precondition. Private SDK repositories are not supported. Unreadable PRs, malformed data, or revision conflicts fail without a state write or automatic retry; already abandoned plans are successful no-ops. The GitHub reads and ADO write are not a cross-service atomic transaction. Monthly overdue cleanup retains its separate existing eligibility policy.
+Open PRs, drafts, and PRs closed without merging do not themselves block abandonment. Plans with no SDK links remain supported. Linked PRs must belong to the public Azure SDK repository for their recorded language; private SDK repositories are not supported. Unverifiable or concurrently changed plans are not abandoned.
+
+After saving Abandoned, the command closes linked open unmerged SDK PRs and then adds an abandonment notice, preserving their titles and bodies. This includes drafts and human-authored or shared PRs: review shared work with its owners before abandoning. Already abandoned plans can finish cleanup of open PRs without changing the plan again. Closed and merged PRs are always left unchanged.
+
+Closing and commenting are separate actions. Cleanup failures leave the plan Abandoned and return warnings; a PR may be closed without its notice. Review linked PRs and add missing notices manually, since rerunning does not repair notices on closed PRs. Cancellation propagates with guidance when a write may have committed. Monthly cleanup and direct ADO edits do not perform this manual PR cleanup.
 
 ### Test with GitHub Coding Agent
 

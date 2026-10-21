@@ -642,9 +642,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// </summary>
         /// <param name="releasePlanId">The positive user-facing Release Plan ID, not the work item ID.</param>
         /// <returns>A response indicating success or failure of the operation.</returns>
-        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by Release Plan ID (not work item ID). Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support channel on Teams. Already abandoned plans are unchanged.")]
+        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by Release Plan ID (not work item ID). Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support channel on Teams. After saving Abandoned, closes linked open unmerged SDK PRs regardless of author, then adds an abandonment notice. Already abandoned plans retry cleanup without ADO state updates. Closed and merged PRs remain unchanged, even when a notice is missing. Cleanup failures return success with warnings and manual follow-up guidance.")]
         public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int releasePlanId = 0, CancellationToken ct = default)
         {
+            var saveStarted = false;
+            var abandonmentKnown = false;
             try
             {
                 ct.ThrowIfCancellationRequested();
@@ -663,11 +665,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (string.Equals(releasePlan.Status, "Abandoned", StringComparison.OrdinalIgnoreCase))
                 {
-                    return new ReleaseWorkflowResponse
+                    abandonmentKnown = true;
+                    var response = new ReleaseWorkflowResponse
                     {
                         Status = "Success",
-                        Details = [$"Release plan {releasePlanId} is already abandoned; no changes made."]
+                        Details = [$"Release plan {releasePlanId} is already abandoned; no state changes made."]
                     };
+                    await CloseAbandonedPullRequestsAsync(releasePlan, response, ct);
+                    return response;
                 }
 
                 var targetId = releasePlan.WorkItemId;
@@ -684,7 +689,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 };
 
                 ct.ThrowIfCancellationRequested();
+                saveStarted = true;
                 var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(targetId, fieldsToUpdate, revision, ct);
+                abandonmentKnown = updatedWorkItem != null;
                 ct.ThrowIfCancellationRequested();
 
                 if (updatedWorkItem == null)
@@ -697,15 +704,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 logger.LogInformation("Successfully abandoned release plan {WorkItemId}", releasePlan.WorkItemId);
 
-                return new ReleaseWorkflowResponse
+                var success = new ReleaseWorkflowResponse
                 {
                     Status = "Success",
                     Details = [$"Release plan {releasePlanId} has been successfully abandoned."]
                 };
+                await CloseAbandonedPullRequestsAsync(releasePlan, success, ct);
+                return success;
             }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            catch (Exception ex) when (ct.IsCancellationRequested)
             {
-                throw;
+                if (saveStarted || abandonmentKnown)
+                {
+                    var warning = abandonmentKnown
+                        ? $"Release plan {releasePlanId} remains Abandoned. Cancellation stops waiting, not an accepted server write. Review all linked SDK PR states and add the abandonment notice manually where missing; a PR may already be closed."
+                        : $"Abandonment of release plan {releasePlanId} was canceled during saving. The state update may already have committed; inspect the plan and linked SDK PRs before any retry.";
+                    outputHelper.OutputConsoleWarning(warning);
+                    throw new OperationCanceledException(warning, ex, ct);
+                }
+                if (ex is OperationCanceledException)
+                {
+                    throw;
+                }
+                throw new OperationCanceledException("Release plan abandonment was canceled.", ex, ct);
             }
             catch (Exception ex)
             {

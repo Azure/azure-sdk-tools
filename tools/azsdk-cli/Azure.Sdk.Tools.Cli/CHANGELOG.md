@@ -14,7 +14,7 @@
 ### Bugs Fixed
 
 - Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
-- Release approval checks now enforce API Review Hub's overall decision for supported repositories; optional API review, inherited API approval, or legacy APIView approval cannot bypass missing package name approval. Missing required approval flags fail the check rather than falling back to legacy approval. Unsupported-repository and failed-query fallback behavior is preserved.
+- Release approval checks now include API Review Hub package name approval; optional API review or inherited API approval does not waive it. An approved API Review Hub result skips APIView; otherwise, complete APIView approval is also sufficient, including after an invalid API Review Hub response. Individual approvals are never combined across providers.
 
 ### Other Changes
 

@@ -43,7 +43,6 @@ public class PackageReleaseStatusService(
             result.IsApproved = false;
             result.FinalSource = "None";
             result.Reason = "invalidResponse";
-            return result;
         }
         catch (Exception ex)
         {
@@ -81,7 +80,7 @@ public class PackageReleaseStatusService(
             var apiViewResult = await apiViewReleaseStatusService.GetApprovalStatusAsync(language, packageName, packageVersion, ct);
             result.ApiView = apiViewResult;
 
-            if (!IsSuccessfulStatusCode(result.ReviewHub.StatusCode) || IsReviewHubNotApplicable(result.ReviewHub))
+            if (apiViewResult.IsApproved || !IsSuccessfulStatusCode(result.ReviewHub.StatusCode) || IsReviewHubNotApplicable(result.ReviewHub))
             {
                 result.IsApproved = apiViewResult.IsApproved;
                 result.FinalSource = "APIView";

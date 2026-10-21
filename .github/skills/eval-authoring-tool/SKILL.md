@@ -4,8 +4,8 @@ description: 'Author and validate hermetic single-tool Vally evals under evals/t
 license: MIT
 metadata:
   author: Microsoft
-  version: "1.0.0"
-compatibility: "copilot-chat, @microsoft/vally-cli 0.7.0"
+  version: "1.1.0"
+compatibility: "copilot-chat, @microsoft/vally-cli 0.14.0"
 ---
 
 # Tool Eval Authoring
@@ -25,7 +25,7 @@ DO NOT USE FOR: skill routing or capability evals (use eval-authoring-skill), mu
 3. Add stimuli to the matching `prompt-to-tool-<area>.eval.yaml`; create a separate file only when it needs fixtures or outcome grading.
 4. Use realistic, concrete prompts with multiple natural phrasings and collision cases that disallow the nearest competing tool. Make `tool-calls` the primary signal; avoid the anti-patterns in the guide (vacuous keyword-only grading, missing `scoring.threshold`).
 5. Keep the unit tier hermetic (`environment: azsdk-mcp-mock`, `tags.tier: unit`, established area tag). Avoid git worktrees and production writes.
-6. Validate locally per the guide's "Running evals locally" section, building the mock MCP first. Do not finish or open a PR until it passes; inspect recorded tool names and arguments on failure.
+6. Run strict eval-spec lint, then validate locally per the guide's "Running evals locally" section, building the mock MCP first. Do not finish or open a PR until both lint and the focused eval pass; inspect recorded tool names and arguments on failure.
 
 ## Rules
 

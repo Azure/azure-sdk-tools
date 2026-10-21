@@ -27,10 +27,13 @@ parameters:
   values:
     - live
     - mock
+- name: Runs
+  displayName: Vally trials per stimulus
+  type: number
+  default: 1
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
-- group: AzSDK_Eval_Variable_group
 - name: SkillBranch
   value: ${{ parameters.SkillBranch }}
 
@@ -62,7 +65,7 @@ extends:
         displayName: Eval forced track
         dependsOn: PrepareForced
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode=forced --skill-dir ..'
+          TypeSpecAuthorEvalExtraArgs: '--tag mode=forced'
         jobs:
           - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
             parameters:
@@ -70,7 +73,12 @@ extends:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               mcpEnvironment: ${{ parameters.McpKind }}
               azureSubscription: azuresdkqabot-dev
-              shardTimeoutInMinutes: 50
+              runs: ${{ parameters.Runs }}
+              # Keep each shard below the installation token's one-hour lifetime.
+              ${{ if eq(parameters.Runs, 1) }}:
+                shardTimeoutInMinutes: 50
+              ${{ else }}:
+                shardTimeoutInMinutes: 55
 
       - stage: SummaryForced
         displayName: Summary forced track
@@ -96,7 +104,7 @@ extends:
         displayName: Eval trigger track
         dependsOn: PrepareTrigger
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger --skill-dir ..'
+          TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger'
         jobs:
           - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
             parameters:
@@ -104,7 +112,12 @@ extends:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               mcpEnvironment: ${{ parameters.McpKind }}
               azureSubscription: azuresdkqabot-dev
-              shardTimeoutInMinutes: 30
+              runs: ${{ parameters.Runs }}
+              # Keep each shard below the installation token's one-hour lifetime.
+              ${{ if eq(parameters.Runs, 1) }}:
+                shardTimeoutInMinutes: 50
+              ${{ else }}:
+                shardTimeoutInMinutes: 55
 
       - stage: SummaryTrigger
         displayName: Summary trigger track

@@ -5,9 +5,8 @@ type: capability # capability | regression
 area: "longrunningoperation"
 # Root-level environment
 environment: azsdk-mcp
-
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -27,12 +26,10 @@ stimuli:
           dest: employee.tsp
         - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
           dest: main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/Microsoft.Widget/Widget/readme.md
           dest: readme.md
         - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -46,11 +43,6 @@ stimuli:
       commands:
         - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
           required:
@@ -66,18 +58,13 @@ stimuli:
       @azure-typespec-author Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
     environment: *shared_environment
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:
@@ -87,15 +74,21 @@ stimuli:
         config:
           pattern: 'ArmAsyncOperationHeader\s*<\s*(FinalResult\s*=\s*Employee|ArmOperationStatus\s*,\s*string\s*,\s*Employee)\s*>'
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_create_operation
+        type: "file-matches"
+        name: "file-matches-create-operation"
         config:
           pattern: "createOrUpdate is ArmResourceCreateOrReplaceAsync<"
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_update_operation
+        type: "file-matches"
+        name: "file-matches-update-operation"
         config:
           pattern: "update is ArmResourcePatchSync<Employee"
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_delete_operation
+        type: "file-matches"
+        name: "file-matches-delete-operation"
         config:
           pattern: "delete is ArmResourceDeleteWithoutOkAsync<Employee>"
           path: "employee.tsp"
@@ -108,6 +101,10 @@ stimuli:
       mode: "no-skill"
     prompt: "Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template."
     environment: *shared_environment
+    rubric:
+      - The Employees createOrUpdate operation still uses ArmResourceCreateOrReplaceAsync<Employee> and returns Azure-AsyncOperation without Retry-After in the 201 response.
+      - Existing update and delete operations remain unchanged.
+      - Changes are limited to the requested response-header customization and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:
@@ -117,18 +114,9 @@ stimuli:
         config:
           path: "employee.tsp"
           pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "createOrUpdate is ArmResourceCreateOrReplaceAsync<"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "update is ArmResourcePatchSync<Employee"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "delete is ArmResourceDeleteWithoutOkAsync<Employee>"
+      - *file_matches_create_operation
+      - *file_matches_update_operation
+      - *file_matches_delete_operation
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."

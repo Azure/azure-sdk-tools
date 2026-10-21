@@ -27,7 +27,7 @@ namespace PipelineGenerator.CommandParserOptions
         [Option('a', "agentpool", Required = false, Default = "Hosted", HelpText = "Name of the agent pool to use when pool isn't specified. Default: hosted")]
         public string Agentpool { get; set; }
 
-        [Option('c', "convention", Required = true, HelpText = "The convention to build pipelines for: [ci|up|upweekly|tests|testsweekly]")]
+        [Option('c', "convention", Required = true, HelpText = "The convention to build pipelines for: [ci|up|tests]")]
         public string Convention { get; set; }
 
         [Option('v', "variablegroups", Required = false, HelpText = "Variable groups to link, separated by a space, e.g. --variablegroups 1 9 64")]

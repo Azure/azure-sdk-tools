@@ -12,6 +12,7 @@ class KnowledgeRetrieveRequest(BaseModel):
     search_mode: str | None = None
     sources: list[str] | None = None
     top_k: int | None = None
+    with_wiki_search: bool | None = False
 
 class KnowledgeRetrieveResponse(BaseModel):
     """Response from knowledge retrieval."""

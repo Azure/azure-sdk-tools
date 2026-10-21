@@ -5,7 +5,7 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 ENV ENABLE_INSTRUMENTATION=true
 ENV OTEL_EXPERIMENTAL_RESOURCE_DETECTORS=otel
-ARG AZSDK_CLI_VERSION=0.6.3
+ARG AZSDK_CLI_VERSION=0.6.49
 ARG NODE_VERSION=22.12.0
 ARG ADO_MCP_VERSION=2.7.0
 
@@ -33,6 +33,7 @@ RUN pip install --no-cache-dir --pre -r requirements.txt
 COPY config/ ./config/
 COPY models/ ./models/
 COPY prompts/ ./prompts/
+COPY services/ ./services/
 COPY skills/ ./skills/
 COPY tools/ ./tools/
 COPY utils/ ./utils/

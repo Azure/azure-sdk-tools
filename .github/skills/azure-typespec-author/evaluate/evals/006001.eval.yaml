@@ -4,7 +4,7 @@ version: '1.0'
 type: capability
 area: "dataplane"
 environment: azsdk-mcp
-config:
+defaults:
   runs: 1
   timeout: 660s
   model: gpt-5.6-sol
@@ -23,19 +23,11 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/006001-dp-add-create-operation/tspconfig.yaml
       dest: tspconfig.yaml
     commands:
     - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
-  - &id002
-    type: tool-calls
-    config:
-      required:
-      - "^(edit|apply_patch|bash|powershell)$"
-      - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:
       required:
@@ -49,8 +41,11 @@ stimuli:
     mode: forced
   prompt: '@azure-typespec-author Add a create or update operation for the WidgetSuite resource to the Widgets interface. The operation should allow creating or updating a Widget asynchronously.'
   environment: *id001
+  rubric: &shared_rubric
+  - The Widgets interface includes an asynchronous create-or-update operation for WidgetSuite using an appropriate Azure.Core resource operation template.
+  - The operation has a descriptive @doc decorator.
+  - Changes are limited to the requested operation and contain no unrelated edits.
   graders:
-  - *id002
   - type: run-command
     config:
       command: tsp compile .
@@ -62,6 +57,7 @@ stimuli:
       pattern: LongRunningResourceCreateOrUpdate<WidgetSuite>|ResourceCreateOrReplace<WidgetSuite>|ResourceCreateOrUpdate<WidgetSuite>
   - &id004
     type: file-matches
+    name: file-matches-documentation
     config:
       path: main.tsp
       pattern: '@doc\('
@@ -81,6 +77,7 @@ stimuli:
     mode: no-skill
   prompt: Add a create or update operation for the WidgetSuite resource to the Widgets interface. The operation should allow creating or updating a Widget asynchronously.
   environment: *id001
+  rubric: *shared_rubric
   graders:
   - type: tool-calls
     config:

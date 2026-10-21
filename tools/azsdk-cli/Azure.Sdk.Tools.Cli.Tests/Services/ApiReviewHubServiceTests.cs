@@ -17,6 +17,7 @@ public class ApiReviewHubServiceTests
 {
     private Mock<IHttpClientFactory> httpClientFactoryMock = null!;
     private Mock<IAzureService> azureServiceMock = null!;
+    private Mock<TokenCredential> credentialMock = null!;
     private ApiReviewHubService service = null!;
 
     [SetUp]
@@ -25,7 +26,7 @@ public class ApiReviewHubServiceTests
         httpClientFactoryMock = new Mock<IHttpClientFactory>();
         azureServiceMock = new Mock<IAzureService>();
 
-        var credentialMock = new Mock<TokenCredential>();
+        credentialMock = new Mock<TokenCredential>();
         credentialMock
             .Setup(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AccessToken("mock-token", DateTimeOffset.UtcNow.AddHours(1)));
@@ -64,7 +65,7 @@ public class ApiReviewHubServiceTests
             {
                 Content = new StringContent(
                     """
-                    {"packageId":"11111111-1111-1111-1111-111111111111","packageVersionId":"22222222-2222-2222-2222-222222222222","packageName":"azure-test","language":"python","version":"1.0.0","releasedApiHash":"api-hash","approvalStatus":"Approved","isReleased":false,"releasedOn":null}
+                    {"packageId":"11111111-1111-1111-1111-111111111111","packageVersionId":"22222222-2222-2222-2222-222222222222","packageName":"azure-test","language":"python","version":"1.0.0","releasedApiHash":"api-hash","approvalStatus":"Approved","approvalRecordId":"approval-record-id","appliedInheritanceRule":"prereleaseToPrerelease","isReleased":false,"releasedOn":null}
                     """,
                     Encoding.UTF8,
                     "application/json")
@@ -89,6 +90,8 @@ public class ApiReviewHubServiceTests
         Assert.That(result.PackageName, Is.EqualTo("azure-test"));
         Assert.That(result.PackageVersionId, Is.EqualTo(Guid.Parse("22222222-2222-2222-2222-222222222222")));
         Assert.That(result.ApprovalStatus, Is.EqualTo("Approved"));
+        Assert.That(result.ApprovalRecordId, Is.EqualTo("approval-record-id"));
+        Assert.That(result.AppliedInheritanceRule, Is.EqualTo("prereleaseToPrerelease"));
         Assert.That(result.IsReleased, Is.False);
     }
 
@@ -158,6 +161,7 @@ public class ApiReviewHubServiceTests
                       "details": [],
                       "approvals": [
                         {
+                                                    "id": "approval-record-id",
                           "apiHash": "hash-1",
                           "version": "4.12.0b3",
                           "status": "approved",
@@ -181,6 +185,7 @@ public class ApiReviewHubServiceTests
         Assert.That(result.AppliedInheritanceRule, Is.EqualTo("prereleaseToStable"));
         Assert.That(result.Approvals, Is.Not.Null);
         Assert.That(result.Approvals!.Count, Is.EqualTo(1));
+        Assert.That(result.Approvals[0].Id, Is.EqualTo("approval-record-id"));
         Assert.That(result.Approvals[0].Version, Is.EqualTo("4.12.0b3"));
     }
 
@@ -362,6 +367,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {
@@ -376,6 +382,75 @@ public class ApiReviewHubServiceTests
 
         Assert.That(exception!.Message, Does.Contain("op-timeout"));
         Assert.That(exception.Message, Does.Contain("timed out"));
+    }
+
+    [Test]
+    public async Task RequestReviewPullRequestAsync_RefreshesAuthorizationNearExpiry()
+    {
+        credentialMock
+            .SetupSequence(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccessToken("request-token", DateTimeOffset.UtcNow.AddMinutes(1)))
+            .ReturnsAsync(new AccessToken("poll-token-1", DateTimeOffset.UtcNow.AddHours(1)))
+            .ReturnsAsync(new AccessToken("poll-token-2", DateTimeOffset.UtcNow.AddHours(1)));
+
+        var authorizationParameters = new List<string?>();
+        var pollCount = 0;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+                authorizationParameters.Add(request.Headers.Authorization?.Parameter))
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                if (request.Method == HttpMethod.Post)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.Accepted)
+                    {
+                        Content = new StringContent("""{"operationId":"op-refresh","status":"accepted"}""", Encoding.UTF8, "application/json")
+                    };
+                }
+
+                pollCount++;
+                var status = pollCount == 1 ? "running" : "succeeded";
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent($$"""{"operationId":"op-refresh","status":"{{status}}"}""", Encoding.UTF8, "application/json")
+                };
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            PackageType = "client",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        var result = await service.RequestReviewPullRequestAsync(
+            request,
+            "https://api-review-hub-test.azurewebsites.net",
+            waitForCompletion: true,
+            pollInterval: TimeSpan.Zero,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo("succeeded"));
+        Assert.That(authorizationParameters, Is.EqualTo(new[] { "request-token", "poll-token-1", "poll-token-1" }));
+        credentialMock.Verify(
+            x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
     }
 
     [Test]
@@ -412,6 +487,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             TargetBranch = new GitBranchReference
             {
                 Owner = "Azure",
@@ -428,6 +504,7 @@ public class ApiReviewHubServiceTests
             CancellationToken.None);
 
         Assert.That(requestBody, Does.Contain("\"baseTag\":\"\""));
+        Assert.That(requestBody, Does.Contain("\"packageType\":\"client\""));
     }
 
     [Test]
@@ -466,6 +543,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {
@@ -522,6 +600,7 @@ public class ApiReviewHubServiceTests
         {
             Language = "python",
             PackageName = "pkg",
+            PackageType = "client",
             BaseTag = "v1.0.0",
             TargetBranch = new GitBranchReference
             {

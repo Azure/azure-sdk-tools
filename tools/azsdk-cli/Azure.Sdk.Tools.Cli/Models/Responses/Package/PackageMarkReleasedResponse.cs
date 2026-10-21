@@ -22,6 +22,9 @@ public class PackageMarkReleasedResponse : CommandResponse
     public bool ApiReviewHubSucceeded { get; set; }
 
     [JsonIgnore]
+    public bool ApiReviewHubSkipped { get; set; }
+
+    [JsonIgnore]
     public string ApiReviewHubMessage { get; set; } = string.Empty;
 
     [JsonIgnore]
@@ -34,16 +37,23 @@ public class PackageMarkReleasedResponse : CommandResponse
     {
         StringBuilder output = new();
         output.AppendLine($"Package: {PackageName} {Version}");
-        output.AppendLine($"API Review Hub: {(ApiReviewHubSucceeded ? "SUCCEEDED" : "FAILED")} - {ApiReviewHubMessage}");
+        string apiReviewHubStatus = ApiReviewHubSkipped ? "SKIPPED" : ApiReviewHubSucceeded ? "SUCCEEDED" : "FAILED";
+        output.AppendLine($"API Review Hub: {apiReviewHubStatus} - {ApiReviewHubMessage}");
         output.AppendLine($"APIView: {(ApiViewSucceeded ? "SUCCEEDED" : "FAILED")} - {ApiViewMessage}");
         return output.ToString();
     }
 
     public override string ToString()
     {
-        string output = Format().TrimEnd();
-        return SupportChannel == null
-            ? output
-            : $"{output}{Environment.NewLine}{SupportChannel}";
+        List<string> messages = [Format().TrimEnd()];
+        if (PermissionGuidance is { } permissionGuidance)
+        {
+            messages.Add(permissionGuidance);
+        }
+        if (SupportChannel is { } supportChannel)
+        {
+            messages.Add(supportChannel);
+        }
+        return string.Join(Environment.NewLine, messages);
     }
 }

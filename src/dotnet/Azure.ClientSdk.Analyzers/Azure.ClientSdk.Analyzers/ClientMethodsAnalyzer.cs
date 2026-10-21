@@ -29,7 +29,6 @@ namespace Azure.ClientSdk.Analyzers
         {
             Descriptors.AZC0002,
             Descriptors.AZC0003,
-            Descriptors.AZC0004,
             Descriptors.AZC0017,
             Descriptors.AZC0018,
             Descriptors.AZC0019,
@@ -273,7 +272,7 @@ namespace Azure.ClientSdk.Analyzers
                     continue;
                 }
 
-                // Skip property accessors (getters/setters) as AZC0004 should only apply to actual methods
+                // Client method rules only apply to actual methods, not property accessors.
                 if (methodSymbol.AssociatedSymbol is IPropertySymbol)
                 {
                     continue;
@@ -287,11 +286,7 @@ namespace Azure.ClientSdk.Analyzers
 
                     var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.TypeParameters, methodSymbol.Parameters);
 
-                    if (syncMember == null)
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
-                    }
-                    else
+                    if (syncMember != null)
                     {
                         CheckClientMethod(context, syncMember);
                     }

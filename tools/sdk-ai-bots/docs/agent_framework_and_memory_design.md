@@ -84,7 +84,7 @@ The system consists of two deployable services and a set of offline pipelines:
 | --- | --- |
 | **Backend Server** (`azure-sdk-qa-bot-agent/server.py`) | A FastAPI service that the Teams App communicates with. Handles chat requests by calling the hosted Chat Agent via the Azure AI Foundry SDK, manages conversations, feedback, and memory episode extraction. |
 | **Chat Agent** (`azure-sdk-qa-bot-agent/agents/chat_agent/`) | A hosted container agent deployed to Microsoft Foundry. Binds a model, instructions, tools, skills, and memory context providers into a single `Agent` instance, exposed via the Responses protocol. |
-| **Knowledge Sync** (`azure-sdk-qa-bot-knowledge-sync/`) | An Azure Function that syncs documents from sources daily, detects changes, updates Azure Storage, and triggers Azure AI Search reindexing. |
+| **Knowledge Sync** (`azure-sdk-qa-bot-knowledge-sync/`) | A scheduled App Service WebJob that syncs documents from sources daily, detects changes, updates Azure Storage, and triggers Azure AI Search reindexing. |
 
 ### 2.2 Agent Design
 
@@ -97,7 +97,7 @@ The agent is configured with the following components:
 | Component | Purpose |
 | --- | --- |
 | **Instruction** | System prompt defining the agent's role, behavior, and response format. |
-| **Tools** | `KnowledgeTools.search_knowledge_base` (AI Search), `WebTools.web_fetch`, `PipelineTools.azsdk_analyze_pipeline`, `web_search` (Bing grounding), ADO MCP tool, GitHub MCP tool. |
+| **Tools** | `KnowledgeTools.search_knowledge_base` and `KnowledgeTools.wiki_search` (AI Search), `WebTools.web_fetch`, `web_search` (Bing grounding), ADO MCP tool, Azure SDK MCP tool, GitHub MCP tool. |
 | **Skills** | Tenant-specific skills auto-generated from tenant config. Each tenant becomes a `Skill` with a description (for routing) and content (QA guideline + knowledge source names). The agent self-routes to the correct tenant. |
 | **Context Providers** | `SkillsProvider` (injects active skill context), `MemoryContextProvider` (injects user + expert memories), `CompactionProvider` (compacts tool-call history to manage context size). |
 
@@ -107,11 +107,12 @@ Tools are capabilities the agent can invoke during reasoning:
 
 | Tool | Type | Description |
 | --- | --- | --- |
-| `search_knowledge_base` | `FunctionTool` | Queries Azure AI Search with multiple queries using a mixed strategy (quick vector search or deep agentic search). Automatically expands results by header hierarchy to return full section context. |
+| `search_knowledge_base` | `FunctionTool` | Retrieves raw source chunks with fused vector and BM25 search, plus agentic retrieval in deep mode. Automatically expands results by header hierarchy to return full section context. |
+| `wiki_search` | `FunctionTool` | Retrieves synthesized wiki pages and the bounded source chunks referenced by those pages. |
 | `web_fetch` | `FunctionTool` | Fetches and extracts content from a given URL. |
 | `azsdk_analyze_pipeline` | `FunctionTool` | Analyzes Azure SDK CI pipeline runs to diagnose failures. |
 | `web_search` | Built-in | Bing web search for grounding with real-time information. |
-| ADO MCP | MCP Server | Azure DevOps integration for work item queries. |
+| ADO MCP | MCP Server | Read-only Azure DevOps pipeline and build lookup. |
 | GitHub MCP | MCP Server | GitHub integration for issue/PR lookup. |
 
 #### 2.2.3 Skills
@@ -136,7 +137,7 @@ Imported knowledge sources include:
 - RPC guidelines
 - ......
 
-An Azure Function syncs all documents from sources daily. The function detects changed and deleted files and updates them in Azure Storage. It then automatically triggers Azure AI Search to reindex the index for adopting the changed documents.
+The Knowledge Sync Service runs as a scheduled WebJob to sync documents from sources daily. It detects changed and deleted files and updates them in Azure Storage, then triggers Azure AI Search to reindex the changed documents.
 
 #### 2.3.2 Data Preprocessing & Indexing
 
@@ -149,12 +150,14 @@ All knowledge is converted to markdown format for consistency.
 
 An Azure AI Search Indexer automatically splits markdown files into chunks using **Markdown** parsing mode with **H3** header depth.
 
-#### 2.3.3 Knowledge Retrieval (search_knowledge_base)
+#### 2.3.3 Knowledge Retrieval
 
 The `search_knowledge_base` tool supports two search modes:
 
-- **Quick** — Vector search only. Fast, good for straightforward factual lookups.
-- **Deep** — Agentic search + vector search in parallel. The LLM breaks a complex query into smaller focused subqueries for better coverage. Each subquery is semantically reranked. Better for complex or multi-faceted questions.
+- **Quick** — Vector and BM25 keyword search in parallel.
+- **Deep** — Agentic, vector, and BM25 keyword search in parallel. The agentic retriever decomposes a complex query into focused subqueries for better coverage.
+
+The ranked lists are fused with reciprocal-rank fusion before deduplication and hierarchy expansion. `wiki_search` uses the same retrieval pipeline over wiki pages, then routes each selected page through `chunk_refs` to its original source chunks.
 
 Both modes use:
 

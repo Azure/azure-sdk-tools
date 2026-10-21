@@ -9,35 +9,22 @@ conversation mapping.
 
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Sequence, cast
-
-from openai.types.shared_params.reasoning_effort import ReasoningEffort
 
 logger = logging.getLogger(__name__)
 
-from config.app_config import get as cfg
 from models.conversation import (
-    BotAnswerVerdict,
     ConversationDocumentType,
-    ConversationEvaluationItem,
     ConversationMappingItem,
     ConversationMessage,
     ConversationMessageItem,
     ConversationType,
     Role,
 )
-from utils.azure_ai_foundry import get_project_client
 from utils.azure_cosmosdb import (
     get_conversation_mapping_container,
     get_conversation_message_container,
-)
-
-_EVAL_PROMPT_PATH = (
-    Path(__file__).resolve().parent.parent / "prompts" / "conversation_evaluation.md"
 )
 
 
@@ -281,7 +268,44 @@ class ConversationService:
         )
         return items
 
-    async def get_messages_by_conversation(
+    async def get_message_by_trace_id(
+        self,
+        trace_id: str,
+    ) -> ConversationMessageItem | None:
+        """Look up a bot message by its OTel trace id (cross-partition).
+
+        Enables resolving a conversation from a user-supplied trace id when
+        neither the conversation id nor the bot response id is known. The
+        returned message carries ``conversation_id``/``conversation_type`` and
+        an id shaped ``bot-{response_id}``.
+        """
+        if not trace_id:
+            return None
+
+        container = await get_conversation_message_container()
+
+        query = (
+            "SELECT * FROM c "
+            "WHERE c.trace_id = @trace_id "
+            "AND c.document_type = @dtype "
+            "ORDER BY c.created_at DESC"
+        )
+        parameters: list[dict[str, object]] = [
+            {"name": "@trace_id", "value": trace_id},
+            {"name": "@dtype", "value": ConversationDocumentType.message.value},
+        ]
+
+        async for raw in container.query_items(
+            query=query,
+            parameters=parameters,
+            max_item_count=1,
+        ):
+            return ConversationMessageItem.model_validate(raw)
+
+        logger.info("No conversation message found for trace_id=%s", trace_id)
+        return None
+
+    async def get_messages_by_conversation_id(
         self,
         conversation_id: str,
         conversation_type: ConversationType,
@@ -310,6 +334,7 @@ class ConversationService:
             items.append(ConversationMessageItem.model_validate(raw))
 
         return items
+
 
     async def get_messages_in_period(
         self,
@@ -419,174 +444,3 @@ class ConversationService:
             end_iso,
         )
         return items
-
-    # ------------------------------------------------------------------
-    # Conversation quality evaluation
-    #
-    # These helpers judge a *single* conversation with an LLM. They are
-    # conversation-faced only: they take conversation messages and return a
-    # verdict. They know nothing about the channel (Teams/Slack), message
-    # links, batching, or scheduling — those belong to the caller.
-    # ------------------------------------------------------------------
-
-    _eval_prompt: str | None = None
-
-    @staticmethod
-    def group_by_conversation(
-        messages: Sequence[ConversationMessageItem],
-    ) -> dict[str, list[ConversationMessageItem]]:
-        """Group messages by their conversation partition, preserving order."""
-        conversations: dict[str, list[ConversationMessageItem]] = {}
-        for msg in messages:
-            conversations.setdefault(msg.conversation_partition, []).append(msg)
-        return conversations
-
-    async def evaluate_conversation(
-        self,
-        messages: Sequence[ConversationMessageItem],
-    ) -> ConversationEvaluationItem | None:
-        """Judge whether the bot answered a single conversation correctly.
-
-        Builds a labelled transcript from ``messages`` and asks an LLM for a
-        ``correct`` / ``incorrect`` / ``unknown`` verdict.
-
-        Args:
-            messages: All messages of one conversation, in any order.
-
-        Returns:
-            A :class:`ConversationEvaluationItem`, or ``None`` when the
-            conversation has no user question or no bot answer to judge.
-        """
-        context = self._build_transcript(messages)
-        if context is None:
-            return None
-
-        transcript, has_expert_reply = context
-
-        ordered = sorted(messages, key=lambda m: m.created_at)
-        first = ordered[0]
-
-        verdict, reasoning, confidence = await self._evaluate_transcript(transcript)
-
-        return ConversationEvaluationItem(
-            conversation_id=first.conversation_id or first.conversation_partition,
-            conversation_partition=first.conversation_partition,
-            transcript=transcript,
-            message_count=len(ordered),
-            has_expert_reply=has_expert_reply,
-            verdict=verdict,
-            reasoning=reasoning,
-            confidence=confidence,
-            evaluated_at=datetime.now(timezone.utc),
-        )
-
-    @staticmethod
-    def _build_transcript(
-        messages: Sequence[ConversationMessageItem],
-    ) -> tuple[str, bool] | None:
-        """Build a labelled transcript of the whole conversation.
-
-        The conversation is multi-turn: the original poster asks, the bot
-        auto-replies, the poster may ask follow-ups (each answered by the
-        bot), and at some point either the poster stops asking or a human
-        expert joins — after which the bot no longer auto-replies.
-
-        Each message is labelled so the LLM can tell apart the original
-        poster, the bot, and other humans (experts)::
-
-            [User] ...          — the original poster
-            [Bot] ...           — an automated bot reply
-            [Expert: Name] ...  — a human other than the poster
-
-        Returns ``(transcript, has_expert_reply)`` or ``None`` when the
-        conversation has no user question or no bot answer to judge.
-        """
-        ordered = sorted(messages, key=lambda m: m.created_at)
-
-        question_msg = next(
-            (
-                m
-                for m in ordered
-                if m.sender_role == Role.User and (m.content or "").strip()
-            ),
-            None,
-        )
-        if question_msg is None:
-            return None
-
-        has_bot_answer = any(
-            m.sender_role in (Role.System, Role.Assistant) and (m.content or "").strip()
-            for m in ordered
-        )
-        if not has_bot_answer:
-            return None
-
-        poster_id = question_msg.sender_id
-        has_expert_reply = False
-        lines: list[str] = []
-
-        for m in ordered:
-            content = (m.content or "").strip()
-            if not content:
-                continue
-            if m.sender_role in (Role.System, Role.Assistant):
-                lines.append(f"[Bot]\n{content}")
-            elif m.sender_role == Role.User and m.sender_id == poster_id:
-                lines.append(f"[User]\n{content}")
-            else:
-                # A human other than the original poster — an expert.
-                has_expert_reply = True
-                name = m.sender_name or "expert"
-                lines.append(f"[Expert: {name}]\n{content}")
-
-        return "\n\n".join(lines), has_expert_reply
-
-    def _load_eval_prompt(self) -> str:
-        prompt = type(self)._eval_prompt
-        if prompt is None:
-            prompt = _EVAL_PROMPT_PATH.read_text(encoding="utf-8")
-            type(self)._eval_prompt = prompt
-        return prompt
-
-    async def _evaluate_transcript(
-        self, transcript: str
-    ) -> tuple[BotAnswerVerdict, str, float]:
-        """Call the LLM to judge the bot's answers across the whole thread."""
-        model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "")
-        reasoning_effort = cast(
-            ReasoningEffort,
-            cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT"),
-        )
-        openai_client = get_project_client().get_openai_client()
-
-        response = await openai_client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": self._load_eval_prompt()},
-                {"role": "user", "content": transcript},
-            ],
-            response_format={"type": "json_object"},
-            reasoning_effort=reasoning_effort,
-        )
-        raw = (response.choices[0].message.content or "").strip()
-        return self._parse_evaluation(raw)
-
-    @staticmethod
-    def _parse_evaluation(raw: str) -> tuple[BotAnswerVerdict, str, float]:
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
-            logger.warning("Evaluation returned invalid JSON: %s", raw[:200])
-            return BotAnswerVerdict.Unknown, "Model returned invalid JSON.", 0.0
-
-        try:
-            verdict = BotAnswerVerdict(str(data.get("verdict", "")).lower())
-        except ValueError:
-            verdict = BotAnswerVerdict.Unknown
-        reasoning = str(data.get("reasoning", ""))
-        try:
-            confidence = float(data.get("confidence", 0.0))
-        except (TypeError, ValueError):
-            confidence = 0.0
-        confidence = min(1.0, max(0.0, confidence))
-        return verdict, reasoning, confidence

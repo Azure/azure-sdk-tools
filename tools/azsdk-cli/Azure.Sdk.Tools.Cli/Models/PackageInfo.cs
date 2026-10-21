@@ -152,6 +152,18 @@ public class PackageInfo
     public SdkLanguage Language { get; set; }
 
     /// <summary>
+    /// API version from TypeSpec metadata (e.g., "2026-05-02-preview").
+    /// </summary>
+    [JsonIgnore]
+    public string? ApiVersion { get; set; }
+
+    /// <summary>
+    /// SDK type from TypeSpec metadata (e.g., "preview", "stable").
+    /// </summary>
+    [JsonIgnore]
+    public string? TypeSpecSdkType { get; set; }
+
+    /// <summary>
     /// Absolute path to the samples directory.
     /// </summary>
     [JsonIgnore]

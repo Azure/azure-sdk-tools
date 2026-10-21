@@ -5,9 +5,8 @@ type: capability # capability | regression
 area: "armtemplate"
 # Root-level environment
 environment: azsdk-mcp
-
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -29,12 +28,10 @@ stimuli:
           dest: employee.tsp
         - src: ../fixtures/002004-ARM-define-extension-resource/main.tsp
           dest: main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/Microsoft.Widget/Widget/readme.md
           dest: readme.md
         - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -44,11 +41,6 @@ stimuli:
       commands:
         - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
           required:
@@ -64,36 +56,38 @@ stimuli:
       @azure-typespec-author Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>"
           path: "badgeAssignment.tsp"
-      - type: "file-matches"
+      - &file_matches_visibility
+        type: "file-matches"
+        name: "file-matches-visibility"
         config:
           pattern: '@visibility\(Lifecycle\.Read\)'
           path: "badgeAssignment.tsp"
-      - type: "file-matches"
+      - &file_matches_resource_operations
+        type: "file-matches"
+        name: "file-matches-resource-operations"
         config:
           pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<'
           path: "badgeAssignment.tsp"
-      - type: "file-matches"
+      - &file_matches_list_operation
+        type: "file-matches"
+        name: "file-matches-list-operation"
         config:
           pattern: 'Extension\.ListByTarget<'
           path: "badgeAssignment.tsp"
@@ -106,27 +100,19 @@ stimuli:
       mode: "no-skill"
     prompt: 'Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.'
     environment: *shared_environment
+    rubric:
+      - BadgeAssignment is defined as an extension resource that can be attached to an Employee resource.
+      - It has the expected read-only property behavior and standard extension-resource CRUD and list-by-target operations.
+      - The implementation follows TypeSpec Azure guidelines and contains no unrelated edits.
     graders:
       - type: "tool-calls"
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "badgeAssignment.tsp"
-          pattern: "model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>"
-      - type: "file-matches"
-        config:
-          path: "badgeAssignment.tsp"
-          pattern: '@visibility\(Lifecycle\.Read\)'
-      - type: "file-matches"
-        config:
-          path: "badgeAssignment.tsp"
-          pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<'
-      - type: "file-matches"
-        config:
-          path: "badgeAssignment.tsp"
-          pattern: 'Extension\.ListByTarget<'
+      - *file_matches
+      - *file_matches_visibility
+      - *file_matches_resource_operations
+      - *file_matches_list_operation
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."

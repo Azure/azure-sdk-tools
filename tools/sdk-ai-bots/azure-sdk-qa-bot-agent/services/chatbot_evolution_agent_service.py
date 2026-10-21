@@ -1,0 +1,558 @@
+"""Run Chatbot Evolution Agent analysis and validation jobs.
+
+The service invokes the hosted agent synchronously, parses its fixed JSON
+result, and owns the corresponding QA-record lifecycle transitions.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+from datetime import datetime, timedelta, timezone
+from typing import cast
+
+from azure.ai.projects.aio import AIProjectClient
+from openai.types.responses.response_input_item_param import ResponseInputItemParam
+
+from config.app_config import get as cfg
+from config.tenant_config import get_knowledge_source
+from models.conversation import BotAnswerVerdict
+from models.feedback import (
+    AzureDevOpsIssueReference,
+    ChatbotEvolutionAgentInput,
+    ChatbotEvolutionAgentMode,
+    ChatbotEvolutionAgentOutcome,
+    ChatbotEvolutionAgentResult,
+    FoundryAgentReference,
+    GitHubIssueReference,
+    is_fallback_issue_reference,
+    parse_issue_reference,
+)
+from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
+from services.qa_record_service import QARecordService
+from utils.azure_ai_foundry import get_project_client
+from utils.azure_ai_foundry_agent import HostedAgentClient
+from utils.azure_cosmosdb import (
+    query_qa_records_by_feedback_status,
+    read_qa_record,
+    replace_qa_record_if_unchanged,
+    upsert_qa_record,
+)
+from utils.knowledge_config import KbIssueTarget, get_kb_targets
+
+logger = logging.getLogger(__name__)
+
+_ALLOWED_OUTCOMES = {
+    ChatbotEvolutionAgentMode.analysis: frozenset(
+        {
+            ChatbotEvolutionAgentOutcome.conversation_ongoing,
+            ChatbotEvolutionAgentOutcome.no_issue,
+            ChatbotEvolutionAgentOutcome.issue_created,
+            ChatbotEvolutionAgentOutcome.issue_reused,
+            ChatbotEvolutionAgentOutcome.remediation_failed,
+            ChatbotEvolutionAgentOutcome.processing_failed,
+        }
+    ),
+    ChatbotEvolutionAgentMode.validation: frozenset(
+        {
+            ChatbotEvolutionAgentOutcome.validation_passed,
+            ChatbotEvolutionAgentOutcome.validation_failed,
+            ChatbotEvolutionAgentOutcome.validation_skipped,
+            ChatbotEvolutionAgentOutcome.processing_failed,
+        }
+    ),
+}
+
+# Hard cap on Agent wall-clock time for one synchronous pipeline job.
+_JOB_TIMEOUT_SECS = 600
+_STALE_JOB_TIMEOUT = timedelta(minutes=20)
+
+# Keep informational logs bounded; the structured result is persisted in
+# Cosmos, so logs need only a diagnostic preview.
+_AGENT_REPLY_LOG_PREVIEW_CHARS = 4000
+
+
+class ChatbotEvolutionAgentService:
+    """Own the synchronous lifecycle of hosted evolution-agent jobs."""
+
+    _AGENT_NAME_KEY = "AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_NAME"
+    _AGENT_VERSION_KEY = "AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_VERSION"
+    _DEFAULT_AGENT_NAME = "azure-sdk-chatbot-evolution-agent"
+
+    def __init__(
+        self,
+        *,
+        project_client: AIProjectClient | None = None,
+    ) -> None:
+        self._project_client = project_client
+
+    # -- Configuration helpers --------------------------------------------
+
+    def _agent_name(self) -> str:
+        return cfg(self._AGENT_NAME_KEY, self._DEFAULT_AGENT_NAME)
+
+    def _agent_version(self) -> str | None:
+        return cfg(self._AGENT_VERSION_KEY, "") or None
+
+    def _get_project_client(self) -> AIProjectClient:
+        if self._project_client is None:
+            self._project_client = get_project_client()
+        return self._project_client
+
+    # -- Public job lifecycle ----------------------------------------------
+
+    async def recover_stale_jobs(
+        self,
+        *,
+        tenant_id: str | None = None,
+        excluded_channels: set[str] | None = None,
+    ) -> int:
+        """Make abandoned jobs retryable without invoking the Agent."""
+        cutoff = _now() - _STALE_JOB_TIMEOUT
+        excluded_channels = excluded_channels or set()
+        recovered = 0
+        for status in (FeedbackStatus.created, FeedbackStatus.running):
+            docs = await query_qa_records_by_feedback_status(
+                feedback_status=status.value, tenant_id=tenant_id
+            )
+            for doc in docs:
+                record = QARecord.from_cosmos(doc)
+                feedback = record.feedback
+                if (
+                    feedback is None
+                    or feedback.status
+                    not in (FeedbackStatus.created, FeedbackStatus.running)
+                    or QARecordService.channel_key_of(record) in excluded_channels
+                ):
+                    continue
+                updated_at = (
+                    feedback.updated_at or feedback.created_at or record.updated_at
+                )
+                if updated_at > cutoff:
+                    continue
+                mode = (
+                    ChatbotEvolutionAgentMode.validation
+                    if feedback.issue_url
+                    else ChatbotEvolutionAgentMode.analysis
+                )
+                self._finalize_failed(
+                    record,
+                    mode=mode,
+                    error=f"agent_{mode.value}_abandoned: inactive for at least 20 minutes",
+                )
+                if await replace_qa_record_if_unchanged(
+                    record.to_cosmos(), etag=doc["_etag"]
+                ):
+                    recovered += 1
+                    logger.warning(
+                        "Recovered abandoned %s job %s (last update: %s)",
+                        mode.value,
+                        record.id,
+                        updated_at.isoformat(),
+                    )
+        return recovered
+
+    async def run_job(
+        self,
+        record_id: str,
+        tenant_id: str,
+        *,
+        mode: ChatbotEvolutionAgentMode = ChatbotEvolutionAgentMode.analysis,
+    ) -> ChatbotEvolutionAgentResult | None:
+        """Run analysis or validation for one persisted QA record."""
+        record = await self._load_job(record_id, tenant_id)
+        if record is None or not self._can_run(record, mode):
+            return None
+
+        await self._transition(record, FeedbackStatus.created)
+        await self._transition(record, FeedbackStatus.running)
+        payload = self._build_input(record, mode)
+
+        try:
+            agent_text = await asyncio.wait_for(
+                self._invoke_agent(payload), timeout=_JOB_TIMEOUT_SECS
+            )
+            result = ChatbotEvolutionAgentResult.model_validate_json(agent_text)
+            if result.outcome not in _ALLOWED_OUTCOMES[mode]:
+                raise ValueError(
+                    f"Agent returned outcome={result.outcome.value} "
+                    f"for mode={mode.value}"
+                )
+            await self._validate_issue_route(result)
+            self._apply_result(record, result, mode=mode)
+        except Exception as exc:
+            logger.exception(
+                "Chatbot evolution agent %s failed for job %s",
+                mode.value,
+                record.id,
+            )
+            persisted = await self._load_job(record.id, record.tenant_id)
+            if persisted is not None:
+                record = persisted
+            self._finalize_failed(
+                record,
+                mode=mode,
+                error=f"agent_{mode.value}_failed: {exc}",
+            )
+            await upsert_qa_record(record.to_cosmos())
+            return None
+
+        preview = agent_text.strip()
+        if len(preview) > _AGENT_REPLY_LOG_PREVIEW_CHARS:
+            preview = preview[:_AGENT_REPLY_LOG_PREVIEW_CHARS] + " ...[truncated]"
+        logger.info("Evolution job %s agent result: %s", record.id, preview)
+        await upsert_qa_record(record.to_cosmos())
+        return result
+
+    # -- Cosmos helpers ----------------------------------------------------
+
+    async def _load_job(self, record_id: str, tenant_id: str) -> QARecord | None:
+        doc = await read_qa_record(record_id=record_id, tenant_id=tenant_id)
+        if doc is None:
+            logger.warning("QA record %s not found in tenant %s", record_id, tenant_id)
+            return None
+        return QARecord.from_cosmos(doc)
+
+    # -- Eligibility and transitions --------------------------------------
+
+    @staticmethod
+    def _can_run(
+        record: QARecord,
+        mode: ChatbotEvolutionAgentMode,
+    ) -> bool:
+        feedback_status = record.feedback.status if record.feedback else None
+        if mode == ChatbotEvolutionAgentMode.analysis:
+            can_run = (
+                record.qa_status == QAStatus.ongoing
+                and feedback_status is None
+            ) or (
+                feedback_status == FeedbackStatus.failed
+                and not bool(record.feedback and record.feedback.issue_url)
+            )
+        else:
+            can_run = (
+                feedback_status in (
+                    FeedbackStatus.pending_validation,
+                    FeedbackStatus.failed,
+                )
+                and bool(record.feedback and record.feedback.issue_url)
+            )
+        if not can_run:
+            logger.info(
+                "QA record %s is not eligible for %s (qa=%s, feedback=%s)",
+                record.id,
+                mode.value,
+                record.qa_status.value,
+                feedback_status.value if feedback_status else None,
+            )
+        return can_run
+
+    async def _transition(
+        self,
+        record: QARecord,
+        status: FeedbackStatus,
+    ) -> None:
+        feedback = record.feedback
+        if feedback is None:
+            feedback = FeedbackState(created_at=_now())
+            record.feedback = feedback
+        feedback.status = status
+        feedback.error = None
+        feedback.updated_at = _now()
+        record.updated_at = _now()
+        await upsert_qa_record(record.to_cosmos())
+
+    # -- Structured outcome mapping ---------------------------------------
+
+    async def _validate_issue_route(
+        self,
+        result: ChatbotEvolutionAgentResult,
+    ) -> None:
+        if (
+            result.outcome
+            not in (
+                ChatbotEvolutionAgentOutcome.issue_created,
+                ChatbotEvolutionAgentOutcome.issue_reused,
+            )
+            or result.source_id is None
+            or result.issue_url is None
+        ):
+            return
+
+        source_targets = await get_kb_targets(result.source_id)
+        issue = parse_issue_reference(result.issue_url)
+        if result.source_url is None:
+            if (
+                source_targets
+                or not result.source_id.startswith("static_")
+                or get_knowledge_source(result.source_id) is None
+            ):
+                raise ValueError(
+                    "KB issue source_id does not identify an unconfigured "
+                    "registered static source"
+                )
+            if not is_fallback_issue_reference(issue):
+                raise ValueError(
+                    "KB sources without a repository must use Azure/azure-sdk-pr"
+                )
+            return
+
+        matching_targets = tuple(
+            target
+            for target in source_targets
+            if target.source_url == result.source_url
+        )
+        if not matching_targets:
+            raise ValueError(
+                "KB issue source_id and source_url do not match authoritative "
+                "configuration"
+            )
+
+        if is_fallback_issue_reference(issue):
+            return
+
+        configured_targets = {
+            source_target.issue_target for source_target in matching_targets
+        }
+        if len(configured_targets) != 1:
+            raise ValueError(
+                "KB source has ambiguous configured issue destinations"
+            )
+        configured_target = configured_targets.pop()
+        if configured_target is None or not _issue_matches_target(
+            issue,
+            configured_target,
+        ):
+            raise ValueError(
+                "KB issue must use its configured tracker or Azure/azure-sdk-pr"
+            )
+
+    def _apply_result(
+        self,
+        record: QARecord,
+        result: ChatbotEvolutionAgentResult,
+        *,
+        mode: ChatbotEvolutionAgentMode = ChatbotEvolutionAgentMode.analysis,
+    ) -> None:
+        now = _now()
+        record.updated_at = now
+
+        if mode == ChatbotEvolutionAgentMode.analysis:
+            record.auto_closed_at = None
+            record.reasoning = result.reasoning
+            record.confidence = result.confidence
+            record.evaluated_at = now
+            assessment_failed = (
+                result.outcome == ChatbotEvolutionAgentOutcome.processing_failed
+            )
+            record.has_expert_interaction = (
+                None if assessment_failed else result.has_expert_interaction
+            )
+            record.expert_interaction_reason = (
+                None if assessment_failed
+                else result.expert_interaction_reason
+            )
+
+            if result.outcome == ChatbotEvolutionAgentOutcome.conversation_ongoing:
+                record.qa_status = QAStatus.ongoing
+                record.verdict = BotAnswerVerdict.Unknown
+                record.feedback = None
+                return
+
+            assert record.feedback is not None
+            record.feedback.updated_at = now
+            record.feedback.error = None
+
+            if result.outcome == ChatbotEvolutionAgentOutcome.processing_failed:
+                record.qa_status = QAStatus.failed
+                record.verdict = BotAnswerVerdict.Unknown
+                record.feedback.status = FeedbackStatus.failed
+                record.feedback.error = "agent_processing_failed"
+                return
+
+            if result.outcome == ChatbotEvolutionAgentOutcome.remediation_failed:
+                record.qa_status = QAStatus.failed
+                record.verdict = BotAnswerVerdict.Incorrect
+                record.feedback.status = FeedbackStatus.failed
+                record.feedback.error = "agent_remediation_failed"
+                record.feedback.classification = result.classification
+                return
+
+            if result.outcome == ChatbotEvolutionAgentOutcome.no_issue:
+                record.qa_status = QAStatus.finished
+                record.verdict = BotAnswerVerdict.Correct
+                record.feedback = None
+                return
+
+            if result.outcome in (
+                ChatbotEvolutionAgentOutcome.issue_created,
+                ChatbotEvolutionAgentOutcome.issue_reused,
+            ):
+                assert result.issue_url is not None
+                record.qa_status = QAStatus.failed
+                record.verdict = BotAnswerVerdict.Incorrect
+                record.feedback.status = FeedbackStatus.pending_validation
+                record.feedback.issue_url = result.issue_url
+                record.feedback.classification = result.classification
+                return
+
+            raise ValueError(
+                f"Unsupported analysis outcome: {result.outcome.value}"
+            )
+
+        assert record.feedback is not None
+        record.feedback.updated_at = now
+        record.feedback.validation_reasoning = result.reasoning
+        record.feedback.validated_at = now
+        record.feedback.error = None
+
+        if result.outcome == ChatbotEvolutionAgentOutcome.processing_failed:
+            record.feedback.status = FeedbackStatus.failed
+            record.feedback.error = "agent_processing_failed"
+            return
+
+        if result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
+            record.feedback.status = FeedbackStatus.validation_passed
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_failed:
+            record.feedback.status = FeedbackStatus.validation_failed
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_skipped:
+            record.feedback.status = FeedbackStatus.validation_skipped
+        else:
+            raise ValueError(
+                f"Unsupported validation outcome: {result.outcome.value}"
+            )
+
+    def _finalize_failed(
+        self,
+        record: QARecord,
+        *,
+        mode: ChatbotEvolutionAgentMode,
+        error: str,
+    ) -> None:
+        now = _now()
+        feedback = record.feedback
+        if feedback is None:
+            feedback = FeedbackState(created_at=now)
+            record.feedback = feedback
+        feedback.status = FeedbackStatus.failed
+        feedback.error = error
+        feedback.updated_at = now
+        if mode == ChatbotEvolutionAgentMode.analysis:
+            record.qa_status = QAStatus.failed
+            record.verdict = BotAnswerVerdict.Unknown
+            record.evaluated_at = now
+            record.has_expert_interaction = None
+            record.expert_interaction_reason = None
+        else:
+            feedback.validation_reasoning = error
+            feedback.validated_at = now
+        record.updated_at = now
+
+    # -- Foundry invocation ------------------------------------------------
+
+    def _build_input(
+        self,
+        record: QARecord,
+        mode: ChatbotEvolutionAgentMode,
+    ) -> ChatbotEvolutionAgentInput:
+        return ChatbotEvolutionAgentInput(
+            conversation_id=record.conversation_id,
+            conversation_type=record.conversation_type,
+            evaluation_time=_now(),
+            mode=mode,
+            issue_url=record.feedback.issue_url if record.feedback else None,
+        )
+
+    async def _resolve_agent_reference(self) -> FoundryAgentReference:
+        project_client = self._get_project_client()
+        agent_name = self._agent_name()
+        agent_version = self._agent_version()
+        if agent_version:
+            agent = await project_client.agents.get_version(agent_name, agent_version)
+        else:
+            details = await project_client.agents.get(agent_name)
+            agent = details.versions.latest if details else None
+        if agent is None:
+            raise RuntimeError(
+                f"Chatbot evolution agent '{agent_name}' "
+                f"(version={agent_version or 'latest'}) not found in AI Foundry."
+            )
+        return FoundryAgentReference(name=agent.name, version=agent.version)
+
+    async def _invoke_agent(self, payload: ChatbotEvolutionAgentInput) -> str:
+        """Call the hosted Chatbot Evolution Agent and return its JSON text."""
+        project_client = self._get_project_client()
+        openai_client = project_client.get_openai_client(agent_name=self._agent_name())
+        agent_ref = await self._resolve_agent_reference()
+
+        # The Responses SDK accepts an untyped mapping at this boundary; the
+        # message content itself comes from the validated Pydantic input model.
+        input_items = [
+            cast(
+                ResponseInputItemParam,
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": payload.to_json()}
+                    ],
+                },
+            )
+        ]
+        # Do not add invocation retries to a job that can update KBs and issues.
+        agent_client = HostedAgentClient(
+            openai_client,
+            max_retries=1,
+            stream_timeout=_JOB_TIMEOUT_SECS,
+        )
+        trace_id, response = await agent_client.invoke(
+            conversation_items=input_items,
+            agent_ref=agent_ref.to_extra_body(),
+        )
+        logger.info(
+            "Evolution agent trace: trace_id=%s, response_id=%s, conversation=%s",
+            trace_id,
+            response.id,
+            payload.conversation_id,
+        )
+        if response.status != "completed":
+            raise RuntimeError(
+                f"Agent response {response.id} ended with status={response.status}: "
+                f"{response.error}"
+            )
+        if not response.output_text:
+            raise RuntimeError(f"Agent response {response.id} returned no output")
+        return response.output_text
+
+
+# ---------------------------------------------------------------------------
+# Module-level helpers
+# ---------------------------------------------------------------------------
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _issue_matches_target(
+    issue: GitHubIssueReference | AzureDevOpsIssueReference,
+    target: KbIssueTarget,
+) -> bool:
+    if target.provider == "github":
+        return (
+            isinstance(issue, GitHubIssueReference)
+            and target.owner is not None
+            and target.repo is not None
+            and issue.owner.casefold() == target.owner.casefold()
+            and issue.repository.casefold() == target.repo.casefold()
+        )
+    return (
+        isinstance(issue, AzureDevOpsIssueReference)
+        and target.organization is not None
+        and target.project is not None
+        and issue.organization.casefold() == target.organization.casefold()
+        and issue.project.casefold() == target.project.casefold()
+    )
+
+
+__all__ = ["ChatbotEvolutionAgentService"]

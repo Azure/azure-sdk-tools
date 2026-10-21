@@ -22,6 +22,7 @@ parameters:
       - onboarding
       - python
       - javascript
+      - go
       - apispec
       - general
       - releasesupport

@@ -17,6 +17,7 @@ parameters:
       - onboarding
       - python
       - javascript
+      - go
       - apispec
       - authoring
       - mcpserver

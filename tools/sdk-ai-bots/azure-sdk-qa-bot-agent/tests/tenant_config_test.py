@@ -1,14 +1,17 @@
 """Tests for tenant skill and knowledge-source configuration."""
 
 import asyncio
+import json
 from pathlib import Path
 
 from agent_framework import FileSkillsSource
 
 from config.tenant_config import (
     SRC_AZURE_MCP_SERVER_DOCS,
-    SRC_AZURE_SDK_FOR_JS_DOCS,
+    SRC_AZURE_REST_API_SPECS_DOCS,
+    SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_DOCS_ENG,
+    SRC_AZURE_SDK_FOR_JS_DOCS,
     TenantID,
     get_knowledge_source,
     get_tenant_config,
@@ -60,6 +63,34 @@ def test_tenants_use_azure_sdk_agent_by_default() -> None:
     assert config is not None
     assert config.agent.name == "azure-sdk-chat-agent"
     assert config.agent.name_config_key == "AI_FOUNDRY_AGENT_NAME"
+
+
+def test_go_tenant_includes_sdk_breaking_change_guides() -> None:
+    config = get_tenant_config(TenantID.GOLANG_CHANNEL_QA_BOT)
+    assert config is not None
+    sources = {source.name: source for source in config.sources}
+    assert sources[SRC_AZURE_REST_API_SPECS_WIKI].get_link("SDK-Breaking-Changes.md") == (
+        "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+    )
+    assert config.source_filter[SRC_AZURE_REST_API_SPECS_WIKI] == "search.ismatch('SDK', 'title')"
+    assert sources[SRC_AZURE_REST_API_SPECS_DOCS].get_link("documentation/ci-fix.md") == (
+        "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/ci-fix.md"
+    )
+    assert SRC_AZURE_REST_API_SPECS_DOCS not in config.source_filter
+
+    sync_path = (
+        Path(__file__).parents[2] / "azure-sdk-qa-bot-knowledge-sync"
+        / "config" / "knowledge-config.json"
+    )
+    sync_config = json.loads(sync_path.read_text(encoding="utf-8"))
+    specs = next(
+        source for source in sync_config["sources"]
+        if source["repository"]["url"] == "https://github.com/Azure/azure-rest-api-specs.git"
+    )
+    guide = next(item for item in specs["paths"] if item["path"] == "/documentation/ci-fix.md")
+    assert guide["folder"] == SRC_AZURE_REST_API_SPECS_DOCS
+    assert guide["relativeByRepoPath"] is True
+    assert guide["metadata"]["scope"] == "branded"
 
 
 def test_tenant_skills_are_partitioned_by_agent() -> None:

@@ -5,12 +5,16 @@
 ### Features Added
 
 - Added optional `--release-plan-id` / `releasePlanId` to SDK package release. A supplied positive ID is forwarded as the `ReleasePlanId` release-pipeline parameter; omitted/zero IDs preserve the existing queue payload.
+- `package get-approval-status` and `azsdk_package_get_approval_status` now report API approval and package name approval separately alongside the overall release decision and diagnostics.
 
 ### Breaking Changes
+
+- Approval status JSON/MCP responses now expose `result.reviewHub.isApiApproved`, `isPackageNameApproved`, and `apiApprovals` (renamed from `approvals`).
 
 ### Bugs Fixed
 
 - Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
+- Release approval checks now enforce API Review Hub's overall decision for supported repositories; optional API review, inherited API approval, or legacy APIView approval cannot bypass missing package name approval. Missing required approval flags fail the check rather than falling back to legacy approval. Unsupported-repository and failed-query fallback behavior is preserved.
 
 ### Other Changes
 

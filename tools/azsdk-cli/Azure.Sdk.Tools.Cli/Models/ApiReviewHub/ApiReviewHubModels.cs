@@ -122,7 +122,7 @@ public class OperationStatus
     public string? FailureReason { get; set; }
 }
 
-public class ApiReviewHubApprovalRecord
+public class ApiReviewHubApiApprovalRecord
 {
     [JsonPropertyName("id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -163,6 +163,14 @@ public class ApiReviewHubReleaseGateResult
     [JsonPropertyName("isApproved")]
     public bool IsApproved { get; set; }
 
+    [JsonRequired]
+    [JsonPropertyName("isApiApproved")]
+    public bool IsApiApproved { get; set; }
+
+    [JsonRequired]
+    [JsonPropertyName("isPackageNameApproved")]
+    public bool IsPackageNameApproved { get; set; }
+
     [JsonPropertyName("reason")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Reason { get; set; }
@@ -179,9 +187,9 @@ public class ApiReviewHubReleaseGateResult
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Error { get; set; }
 
-    [JsonPropertyName("approvals")]
+    [JsonPropertyName("apiApprovals")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IReadOnlyList<ApiReviewHubApprovalRecord>? Approvals { get; set; } = [];
+    public IReadOnlyList<ApiReviewHubApiApprovalRecord>? ApiApprovals { get; set; } = [];
 }
 
 public class ApiViewReleaseStatusResult

@@ -12,6 +12,7 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
       * [Setup](#setup)
       * [Build](#build)
       * [Run](#run)
+      * [Package release approval](#package-release-approval)
       * [Test](#test)
       * [Test with GitHub Coding Agent](#test-with-github-coding-agent)
       * [Release](#release)
@@ -80,6 +81,22 @@ dotnet run --project Azure.Sdk.Tools.Cli -- --help
 ```
 
 See the [development docs](./Azure.Sdk.Tools.Cli/README.md) for more detailed instructions on how to run this tool as an MCP server or CLI app.
+
+On Windows, run `azsdk.bat <arguments>` from this directory. The launcher first stops this repository's running `azsdk.exe` MCP servers to release build-output DLL locks, then forwards all arguments to `dotnet run --project Azure.Sdk.Tools.Cli --` and returns its exit code. This disconnects those MCP servers; unrelated processes and other repository copies are left running.
+
+### Package release approval
+
+```sh
+azsdk package get-approval-status --language python --package-name azure-example --package-version 1.0.0 --api-hash <hash>
+```
+
+The command reports overall release approval, API approval, and package name approval separately. API Review Hub's overall `isApproved` decision requires both `isApiApproved` and `isPackageNameApproved`. Optional API review (`reviewNotRequired`) and inherited API approval do not waive package name approval. Only a persisted package name status of `approved` satisfies that requirement; missing, pending, or superseded approvals produce `packageNameNotApproved`, taking precedence over API failure reasons. Additional API context remains in `details`.
+
+Use `--output json` for structured CLI output. The existing `result.reviewHub` object includes `isApproved`, `isApiApproved`, `isPackageNameApproved`, `reason`, `details`, `appliedInheritanceRule`, and API evidence in `apiApprovals` (formerly `approvals`). Inheritance and evidence record shapes are unchanged. JSON CLI output omits the top-level human-readable `details`; structured diagnostic details remain under `result.reviewHub`. MCP responses expose the same result object.
+
+Exit code `0` means the final release decision is approved; an unapproved decision or failed lookup returns `1`. APIView remains the fallback when the repository is unsupported by API Review Hub or its query fails. For a valid response from a supported repository, APIView diagnostics cannot override an unapproved overall decision, including `unknownPackage`. Unsupported repositories and unknown packages report both API Review Hub approval flags as false. Missing required approval flags make the response invalid and fail the command rather than allowing legacy approval to bypass the check.
+
+The endpoint remains `GET /api/releases/check-approval`; language, package name, version, optional API hash, and optional repository owner parameters are unchanged.
 
 ### Test
 

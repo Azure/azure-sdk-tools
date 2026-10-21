@@ -11,6 +11,7 @@ from config.tenant_config import (
     SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_DOCS_ENG,
+    SRC_AZURE_SDK_FOR_JS_DOCS,
     TenantID,
     get_knowledge_source,
     get_tenant_config,
@@ -20,6 +21,24 @@ from skills.tenant_skills import (
     create_tenant_skills,
     get_skill_name_for_tenant,
 )
+
+
+def test_javascript_tenant_uses_repository_docs_instead_of_wiki() -> None:
+    config = get_tenant_config(TenantID.JAVASCRIPT_CHANNEL_QA_BOT)
+
+    assert config is not None
+    assert SRC_AZURE_SDK_FOR_JS_DOCS in [source.name for source in config.sources]
+    assert "azure_sdk_for_js_wiki" not in [source.name for source in config.sources]
+    assert get_knowledge_source("azure_sdk_for_js_wiki") is None
+
+
+def test_javascript_contributing_guide_resolves_to_repository_root() -> None:
+    source = get_knowledge_source(SRC_AZURE_SDK_FOR_JS_DOCS)
+
+    assert source is not None
+    assert source.get_link("CONTRIBUTING.md") == (
+        "https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md"
+    )
 
 
 def test_azure_mcp_server_tenant_uses_curated_sources() -> None:

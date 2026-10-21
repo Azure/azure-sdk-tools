@@ -35,6 +35,11 @@ parameters:
   - name: targetRef
     type: string
     default: ''
+  - name: baseCommit
+    type: string
+    default: ''
+  - name: targetCommit
+    type: string
   - name: pipelineRef
     type: string
     default: refs/heads/main
@@ -107,6 +112,12 @@ variables:
     readonly: true
   - name: ApiReviewTargetRef
     value: ${{ parameters.targetRef }}
+    readonly: true
+  - name: ApiReviewBaseCommit
+    value: ${{ parameters.baseCommit }}
+    readonly: true
+  - name: ApiReviewTargetCommit
+    value: ${{ parameters.targetCommit }}
     readonly: true
 
 stages:

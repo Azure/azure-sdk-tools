@@ -26,7 +26,7 @@ tags:
 defaults:
   runs: 1
   timeout: 5m
-  model: gpt-5.4
+  model: gpt-6.1-sol
   executor: copilot-sdk
 
 stimuli:
@@ -99,7 +99,7 @@ stimuli:
           pattern: "(?i)(retry the pipeline|not fixable by (a )?code|unfixable|infrastructure issue)"
       - type: prompt
         config:
-          model: gpt-5.4
+          model: gpt-6.1-sol
           scoring: binary
           threshold: 1.0
           prompt: |

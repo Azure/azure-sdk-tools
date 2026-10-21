@@ -144,6 +144,21 @@ extends:
                       exit 1
                     fi
 
+              - task: AzureAppServiceSettings@1
+                displayName: 'Configure Agent Routing'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  appName: $(APP_NAME)
+                  resourceGroupName: $(RESOURCE_GROUP)
+                  appSettings: |
+                    [
+                      {
+                        "name": "ENABLE_AI_FOUNDRY_AGENT_ROUTING",
+                        "value": "${{ iif(eq(parameters.environment, 'dev'), 'true', 'false') }}",
+                        "slotSetting": false
+                      }
+                    ]
+
               # 5. Deploy App Service
               - task: AzureCLI@2
                 displayName: 'Update App Service'

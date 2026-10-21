@@ -38,14 +38,14 @@ extends:
                   registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
 
               - script: >-
-                  npm update @github/copilot-sdk --package-lock-only --include=optional
+                  npm install @microsoft/vally-cli@0.19.0 --save-exact --package-lock-only --include=optional
                   --ignore-scripts --no-audit --no-fund
                   --userconfig "$(Build.SourcesDirectory)/.npmrc"
-                displayName: Regenerate matching SDK and runtime lock using authenticated metadata
+                displayName: Restore supported Vally 0.19 evaluator and its pinned SDK bundle
                 workingDirectory: eng/common/scripts/eval
 
               - script: node eng/pipelines/copilot-app-mcp-lock-check.mjs
-                displayName: Verify SDK and runtime-only lock and preserve generated metadata
+                displayName: Verify supported evaluator versions and preserve generated metadata
 
               - script: npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
                 displayName: Install normal Vally runner from the updated lock

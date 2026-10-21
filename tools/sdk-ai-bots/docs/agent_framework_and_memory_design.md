@@ -84,7 +84,7 @@ The system consists of two deployable services and a set of offline pipelines:
 | --- | --- |
 | **Backend Server** (`azure-sdk-qa-bot-agent/server.py`) | A FastAPI service that the Teams App communicates with. Handles chat requests by calling the hosted Chat Agent via the Azure AI Foundry SDK, manages conversations, feedback, and memory episode extraction. |
 | **Chat Agent** (`azure-sdk-qa-bot-agent/agents/chat_agent/`) | A hosted container agent deployed to Microsoft Foundry. Binds a model, instructions, tools, skills, and memory context providers into a single `Agent` instance, exposed via the Responses protocol. |
-| **Knowledge Sync** (`azure-sdk-qa-bot-knowledge-sync/`) | An Azure Function that syncs documents from sources daily, detects changes, updates Azure Storage, and triggers Azure AI Search reindexing. |
+| **Knowledge Sync** (`azure-sdk-qa-bot-knowledge-sync/`) | A scheduled App Service WebJob that syncs documents from sources daily, detects changes, updates Azure Storage, and triggers Azure AI Search reindexing. |
 
 ### 2.2 Agent Design
 
@@ -97,7 +97,7 @@ The agent is configured with the following components:
 | Component | Purpose |
 | --- | --- |
 | **Instruction** | System prompt defining the agent's role, behavior, and response format. |
-| **Tools** | `KnowledgeTools.search_knowledge_base` and `KnowledgeTools.wiki_search` (AI Search), `WebTools.web_fetch`, `PipelineTools.azsdk_analyze_pipeline`, `web_search` (Bing grounding), ADO MCP tool, GitHub MCP tool. |
+| **Tools** | `KnowledgeTools.search_knowledge_base` and `KnowledgeTools.wiki_search` (AI Search), `WebTools.web_fetch`, `web_search` (Bing grounding), ADO MCP tool, Azure SDK MCP tool, GitHub MCP tool. |
 | **Skills** | Tenant-specific skills auto-generated from tenant config. Each tenant becomes a `Skill` with a description (for routing) and content (QA guideline + knowledge source names). The agent self-routes to the correct tenant. |
 | **Context Providers** | `SkillsProvider` (injects active skill context), `MemoryContextProvider` (injects user + expert memories), `CompactionProvider` (compacts tool-call history to manage context size). |
 
@@ -137,7 +137,7 @@ Imported knowledge sources include:
 - RPC guidelines
 - ......
 
-An Azure Function syncs all documents from sources daily. The function detects changed and deleted files and updates them in Azure Storage. It then automatically triggers Azure AI Search to reindex the index for adopting the changed documents.
+The Knowledge Sync Service runs as a scheduled WebJob to sync documents from sources daily. It detects changed and deleted files and updates them in Azure Storage, then triggers Azure AI Search to reindex the changed documents.
 
 #### 2.3.2 Data Preprocessing & Indexing
 

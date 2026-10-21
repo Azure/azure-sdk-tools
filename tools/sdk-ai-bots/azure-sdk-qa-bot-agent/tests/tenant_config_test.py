@@ -65,6 +65,19 @@ def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     assert "[skill_guideline]" not in content
 
 
+def test_dotnet_skill_composes_common_and_specific_guidelines_once() -> None:
+    content = build_skill_content(TenantID.DOTNET_CHANNEL_QA_BOT)
+
+    assert content.count("[skill_guideline]") == 1
+    assert content.count("# Tenant: Azure SDK Language Channel Assistant") == 1
+    assert content.count("# .NET-Specific Answer Guidelines") == 1
+    assert content.index("### SDK Lifecycle") < content.index(
+        "# .NET-Specific Answer Guidelines"
+    )
+    assert "{{tenant_id}}" not in content
+    assert "mgmt-review-comment-resolution/SKILL.md" in content
+
+
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:
     source = get_knowledge_source(SRC_AZURE_MCP_SERVER_DOCS)
 

@@ -359,6 +359,9 @@ class TenantConfig:
     default filter; tenants can override a source's filter via
     ``source_filter``. ``enable_wiki_cross_document_pages`` controls access to
     synthesized entity and concept pages, which are not knowledge sources.
+
+    ``qa_guideline_files`` lists guideline files in application order, such as
+    shared language guidance followed by a language-specific supplement.
     """
 
     display_name: str = ""
@@ -368,7 +371,7 @@ class TenantConfig:
     exclusions: list[str] = field(default_factory=list)
     sources: list[KnowledgeSource] = field(default_factory=list)
     source_filter: dict[str, str] = field(default_factory=dict)
-    qa_guideline_file: str = ""
+    qa_guideline_files: list[str] = field(default_factory=list)
     enable_routing: bool = False
     agent: AgentConfig = field(default_factory=AgentConfig)
     enable_wiki_cross_document_pages: bool = True
@@ -453,7 +456,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-python', 'title') or search.ismatch('generate*', 'title')",
             SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
-        qa_guideline_file="tenants/language_python.md",
+        qa_guideline_files=[
+            "tenants/language_channel.md",
+            "tenants/language_python.md",
+        ],
     ),
     TenantID.DOTNET_CHANNEL_QA_BOT: TenantConfig(
         display_name=".NET (C#) SDK",
@@ -477,7 +483,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-csharp', 'title') or search.ismatch('generate*', 'title')",
             SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
-        qa_guideline_file="tenants/language_dotnet.md",
+        qa_guideline_files=[
+            "tenants/language_channel.md",
+            "tenants/language_dotnet.md",
+        ],
     ),
     TenantID.GOLANG_CHANNEL_QA_BOT: TenantConfig(
         display_name="Go SDK",
@@ -500,7 +509,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-go', 'title') or search.ismatch('generate*', 'title')",
             SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
-        qa_guideline_file="tenants/language_channel.md",
+        qa_guideline_files=["tenants/language_channel.md"],
     ),
     TenantID.JAVA_CHANNEL_QA_BOT: TenantConfig(
         display_name="Java SDK",
@@ -525,7 +534,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-java', 'title') or search.ismatch('generate*', 'title')",
             SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
-        qa_guideline_file="tenants/language_channel.md",
+        qa_guideline_files=["tenants/language_channel.md"],
     ),
     TenantID.JAVASCRIPT_CHANNEL_QA_BOT: TenantConfig(
         display_name="JavaScript SDK",
@@ -550,7 +559,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-ts', 'title') or search.ismatch('generate*', 'title')",
             SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
-        qa_guideline_file="tenants/language_channel.md",
+        qa_guideline_files=["tenants/language_channel.md"],
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: TenantConfig(
         display_name="TypeSpec",
@@ -570,7 +579,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
             SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
-        qa_guideline_file="tenants/typespec.md",
+        qa_guideline_files=["tenants/typespec.md"],
         enable_routing=True,
     ),
     TenantID.TYPESPEC_EMITTER_QA_BOT: TenantConfig(
@@ -590,7 +599,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_TYPESPEC_DOCS: "search.ismatch('/.*extending-typespec.*emitter-framework.*/', 'title', 'full', 'any')",
         },
-        qa_guideline_file="tenants/typespec.md",
+        qa_guideline_files=["tenants/typespec.md"],
     ),
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
         display_name="Azure SDK Onboarding",
@@ -613,7 +622,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_STATIC_CPEX_DOCS,
         ),
-        qa_guideline_file="tenants/azure_sdk_onboarding.md",
+        qa_guideline_files=["tenants/azure_sdk_onboarding.md"],
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: TenantConfig(
         display_name="Azure TypeSpec Authoring",
@@ -625,7 +634,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "TypeSpec code generation and Azure Templates",
         ],
         sources=_AZURE_TYPESPEC_AUTHORING_SOURCES,
-        qa_guideline_file="tenants/azure_typespec_authoring.md",
+        qa_guideline_files=["tenants/azure_typespec_authoring.md"],
     ),
     TenantID.API_SPEC_REVIEW_BOT: TenantConfig(
         display_name="API Spec Review",
@@ -658,7 +667,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
             SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
-        qa_guideline_file="tenants/api_spec_review.md",
+        qa_guideline_files=["tenants/api_spec_review.md"],
         enable_routing=True,
     ),
     TenantID.AZURE_MCP_SERVER: TenantConfig(
@@ -705,13 +714,13 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_AZURE_SDK_INTERNAL_WIKI,
         ),
-        qa_guideline_file="tenants/azsdk_tools_agent.md",
+        qa_guideline_files=["tenants/azsdk_tools_agent.md"],
     ),
     TenantID.GENERAL_QA_BOT: TenantConfig(
         display_name="General",
         skill_name="general-azure-sdk",
         scope="Questions that don't clearly fit any single domain above. General specialist with all knowledge sources.",
-        qa_guideline_file="tenants/general.md",
+        qa_guideline_files=["tenants/general.md"],
         enable_routing=True,
     ),
 }
@@ -757,17 +766,18 @@ def get_tenant_sources_display(tenant_id: TenantID) -> list[dict[str, str]]:
 
 
 def load_tenant_qa_guideline(tenant_id: TenantID) -> str:
-    """Load the tenant-specific QA guideline markdown from prompts/.
+    """Load and concatenate configured guideline files in order.
 
-    Returns an empty string if the tenant or file is not found.
+    Returns an empty string for an unconfigured tenant or an empty file list.
+    Every configured file must exist.
     """
     config = get_tenant_config(tenant_id)
-    if config is None or not config.qa_guideline_file:
+    if config is None or not config.qa_guideline_files:
         return ""
-    guideline_path = _PROMPTS_DIR / config.qa_guideline_file
-    if not guideline_path.exists():
-        return ""
-    content = guideline_path.read_text(encoding="utf-8").strip()
+    content = "\n\n".join(
+        (_PROMPTS_DIR / filename).read_text(encoding="utf-8").strip()
+        for filename in config.qa_guideline_files
+    )
     # Substitute dynamic parameters
     content = content.replace("{{tenant_id}}", tenant_id.value)
     return content

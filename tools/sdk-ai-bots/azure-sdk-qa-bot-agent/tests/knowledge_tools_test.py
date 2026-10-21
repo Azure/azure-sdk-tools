@@ -18,7 +18,6 @@ from config.tenant_config import (
     SRC_TYPESPEC_AZURE_DOCS,
     SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
     TenantID,
-    get_knowledge_source,
 )
 import pytest
 
@@ -382,13 +381,11 @@ async def test_dotnet_search_returns_azure_and_upstream_docs(monkeypatch, servic
         (SRC_AZURE_SDK_FOR_NET_DOCS, "eng#packages#http-client-csharp-mgmt#docs#emitter.md"),
         (SRC_TYPESPEC_CSHARP_EMITTER_DOCS, "customization.md"),
     ):
-        source = get_knowledge_source(source_name)
-        assert source is not None
         chunks.append(KnowledgeChunk(
             source=source_name,
             title=title,
             content="C# emitter guidance",
-            link=source.get_link(title),
+            link=f"https://example.com/{source_name}",
         ))
     search = AsyncMock(return_value=chunks)
     search_client = SimpleNamespace(

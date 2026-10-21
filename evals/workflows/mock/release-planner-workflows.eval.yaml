@@ -51,6 +51,7 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
+    # Resolve relative creation targets at runtime so they never become past due.
     turns:
       - |
         Create a public preview release plan for the Contoso Widget Manager.
@@ -59,7 +60,7 @@ stimuli:
           - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
           - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
           - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-          - target release timeline: "June 2026"
+          - target release timeline: "next calendar month (resolve to an explicit month and year using the current date)"
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
@@ -93,7 +94,7 @@ stimuli:
           - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
           - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
           - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-          - target release timeline: "June 2026"
+          - target release timeline: "next calendar month (resolve to an explicit month and year using the current date)"
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
@@ -144,7 +145,7 @@ stimuli:
       Using the release-planner
       flow, generate SDK for all languages for the Contoso Widget Manager
       release plan. Here is the context you need:
-        - release plan work item ID: "29262"
+        - release plan work item ID: "35000"
         - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
     constraints:
       max_turns: 8
@@ -174,7 +175,7 @@ stimuli:
       Using the release-planner
       flow, update the API spec pull request on an existing Contoso Widget
       Manager release plan. Here is the context you need:
-        - release plan work item ID: "29262"
+        - release plan work item ID: "35000"
         - new spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38500"
     constraints:
       max_turns: 6
@@ -199,7 +200,7 @@ stimuli:
       flow, refresh the SDK package-name details on an existing Contoso
       Widget Manager release plan from the on-disk TypeSpec emitter
       configuration. Here is the context you need:
-        - release plan work item ID: "29262"
+        - release plan work item ID: "35000"
         - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
         - tspconfig path: "specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml"
     constraints:
@@ -242,7 +243,7 @@ stimuli:
       Generate SDK for all languages from my TypeSpec project
       specification/contosowidgetmanager/Contoso.WidgetManager and link the SDK
       pull requests to the release plan. Here is the context you need:
-        - release plan work item ID: "29262"
+        - release plan work item ID: "35000"
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -292,11 +293,14 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
+      # Nest an SDK Git fixture so repo checks resolve Python, not the specs repo.
       files:
-        - src: ../../fixtures/README.md
-          dest: sdk/contosowidgetmanager/azure-contoso-widgetmanager/README.md
+        - src: ../../fixtures/sdk-repos/azure-sdk-for-python
+          dest: azure-sdk-for-python
+      commands:
+        - git -C azure-sdk-for-python init -q && git -C azure-sdk-for-python remote add origin https://github.com/Azure/azure-sdk-for-python.git && git -C azure-sdk-for-python add . && git -C azure-sdk-for-python -c user.email=vally@local -c user.name=vally commit -qm "seed Python SDK fixture"
     prompt: |
-      Run SDK generation for all languages for release 29262. My TypeSpec project is
+      Run SDK generation for all languages for release plan work item 35000. My TypeSpec project is
       specification/contosowidgetmanager/Contoso.WidgetManager.
     constraints:
       max_turns: 8
@@ -330,7 +334,7 @@ stimuli:
       for the Contoso Widget Manager from
       specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml, then
       build it and run the checks locally. My local azure-sdk-for-python target
-      package is at sdk/contosowidgetmanager/azure-contoso-widgetmanager.
+      package is at azure-sdk-for-python/sdk/contosowidgetmanager/azure-contoso-widgetmanager.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -378,7 +382,7 @@ stimuli:
     environment: *bothGenerateSkills
     prompt: |
       I don't have any SDK repos cloned. Generate the SDK for the Contoso Widget
-      Manager release plan (work item 29262) and open the SDK pull requests for me.
+      Manager release plan (work item 35000) and open the SDK pull requests for me.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -408,7 +412,7 @@ stimuli:
     environment: *bothGenerateSkills
     prompt: |
       Generate the SDK for all languages for my private preview release plan
-      (work item 29262) for the Contoso Widget Manager.
+      (work item 35001) for the Contoso Widget Manager.
     constraints:
       max_turns: 8
       max_tokens: 12000

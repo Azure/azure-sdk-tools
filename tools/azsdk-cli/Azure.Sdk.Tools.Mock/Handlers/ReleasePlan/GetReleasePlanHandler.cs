@@ -40,6 +40,20 @@ public class GetReleasePlanHandler : IMockToolHandler
             return new ReleasePlanResponse { ResponseError = "API release type is required when API version is provided. Allowed values: Private Preview, Public Preview, GA" };
         }
 
+        // Explicit unknown IDs must not fall through to a different plan's path or PR selector.
+        if ((workItemId != "0" && workItemId is not ("35000" or "35001"))
+            || (releasePlanId != "0" && releasePlanId is not ("50001" or "50002")))
+        {
+            return MockToolFactory.GetDefaultResponse();
+        }
+
+        if (workItemId == "35001" || releasePlanId == "50002")
+        {
+            return workItemId == "35000" || releasePlanId == "50001"
+                ? MockToolFactory.GetDefaultResponse()
+                : PrivatePreviewReleasePlanResponse();
+        }
+
         var isKnownSpecPullRequest = string.Equals(
             specPullRequestUrl,
             "https://github.com/Azure/azure-rest-api-specs/pull/38387",
@@ -59,6 +73,27 @@ public class GetReleasePlanHandler : IMockToolHandler
             ? ContosoReleasePlanResponse(isKnownSpecPullRequest ? specPullRequestUrl : DefaultSpecPullRequestUrl)
             : MockToolFactory.GetDefaultResponse();
     }
+
+    private static ReleasePlanResponse PrivatePreviewReleasePlanResponse() => new()
+    {
+        TypeSpecProject = ContosoTypeSpecProjectPath,
+        PackageType = SdkType.Dataplane,
+        Message = "Release plan found",
+        ReleasePlanDetails = new ReleasePlanWorkItem
+        {
+            WorkItemId = 35001,
+            ReleasePlanId = 50002,
+            Title = "Release Plan - Contoso.WidgetManager Private Preview",
+            Status = "Active",
+            ApiReleaseType = ApiReleaseType.PrivatePreview,
+            IsDataPlane = true,
+            SpecType = "TypeSpec",
+            SpecAPIVersion = "2024-01-01-preview",
+            ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs-pr/pull/12346",
+            APISpecProjectPath = ContosoTypeSpecProjectPath,
+            SDKReleaseType = "beta"
+        }
+    };
 
     private static ReleasePlanResponse ContosoReleasePlanResponse(string activeSpecPullRequestUrl) => new()
     {

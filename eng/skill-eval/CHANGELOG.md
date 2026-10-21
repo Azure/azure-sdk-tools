@@ -13,3 +13,7 @@
   Keep Tools-specific schema coverage outside the synced shared unit tests.
 - Document upgrade benefits and the unresolved compatibility blocker in the
   separately owned TypeSpec author benchmark, whose files and pipelines are unchanged.
+- Repair hermetic eval skill mounts, relative creation dates, release-plan IDs and
+  local SDK fixtures; align mock setup, generation and PR-link responses with their contracts.
+- Add mock-handler regressions and offline fixture-materialization checks without
+  relaxing behavior assertions, safety guards or model timeouts.

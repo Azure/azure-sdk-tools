@@ -16,6 +16,8 @@ parameters:
       - typespec
       - onboarding
       - python
+      - javascript
+      - go
       - apispec
       - authoring
       - mcpserver
@@ -76,6 +78,7 @@ extends:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                       AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
                       AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                      ENABLE_AI_FOUNDRY_AGENT_ROUTING: 'true'
                   - script: |
                       pip install -r requirements.txt
                     displayName: 'install requirements'
@@ -112,6 +115,7 @@ extends:
                       BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                       BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                       EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
+                      EVAL_AGENT_BRANCH: $(Build.SourceBranch)
                 templateContext:
                   outputs:
                     - output: pipelineArtifact

@@ -679,31 +679,19 @@
           }
         },
         {
-          "description": "JavaScript SDK release tools documentation",
-          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
-          "folder": "azure_sdk_tools_docs",
+          "description": "Contributing guidelines for Azure SDK for JavaScript",
+          "path": "/CONTRIBUTING.md",
+          "folder": "azure_sdk_for_js_docs",
           "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"
           }
-        }
-      ]
-    },
-    {
-      "repository": {
-        "url": "https://github.com/Azure/azure-sdk-for-js.wiki.git",
-        "path": "azure-sdk-for-js.wiki",
-        "branch": "master",
-        "authType": "public",
-        "issueTracker": {
-          "provider": "github",
-          "repository": "Azure/azure-sdk-for-js"
-        }
-      },
-      "paths": [
+        },
         {
-          "description": "Wiki documentation for Azure SDK for JavaScript",
-          "folder": "azure_sdk_for_js_wiki",
+          "description": "JavaScript SDK release tools documentation",
+          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
+          "folder": "azure_sdk_for_js_docs",
+          "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"
           }
@@ -731,6 +719,15 @@
           }
         },
         {
+          "description": "Azure REST API specs CI troubleshooting, SDK breaking-change review prerequisites, and reviewer contacts",
+          "path": "/documentation/ci-fix.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
           "description": "TypeSpec suppressions CLI and CI approval workflow documentation for Azure REST API specs",
           "path": "/eng/tools/typespec-suppressions/README.md",
           "folder": "azure_rest_api_specs_docs",
@@ -751,15 +748,6 @@
         {
           "description": "SDK package-name approval process and authorization guidance",
           "path": "/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md",
-          "folder": "azure_rest_api_specs_docs",
-          "relativeByRepoPath": true,
-          "metadata": {
-            "scope": "branded"
-          }
-        },
-        {
-          "description": "Azure REST API specification CI check troubleshooting and suppression guidance",
-          "path": "/documentation/ci-fix.md",
           "folder": "azure_rest_api_specs_docs",
           "relativeByRepoPath": true,
           "metadata": {

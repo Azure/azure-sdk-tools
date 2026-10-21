@@ -77,7 +77,6 @@ SRC_AZURE_SDK_FOR_GO_DOCS = "azure_sdk_for_go_docs"
 SRC_AZURE_SDK_FOR_JAVA_DOCS = "azure_sdk_for_java_docs"
 SRC_AZURE_SDK_FOR_JAVA_WIKI = "azure_sdk_for_java_wiki"
 SRC_AZURE_SDK_FOR_JS_DOCS = "azure_sdk_for_js_docs"
-SRC_AZURE_SDK_FOR_JS_WIKI = "azure_sdk_for_js_wiki"
 SRC_AUTOREST_JAVA_DOCS = "autorest_java_docs"
 
 # -- Cross-language SDK resources --
@@ -256,12 +255,6 @@ _register(
         name=SRC_AZURE_SDK_FOR_JS_DOCS,
         description="Azure SDK for JavaScript/TypeScript documentation covering installation, usage patterns, and API reference.",
         base_url="https://github.com/Azure/azure-sdk-for-js/blob/main/",
-    ),
-    KnowledgeSource(
-        name=SRC_AZURE_SDK_FOR_JS_WIKI,
-        description="Azure SDK for JavaScript/TypeScript wiki with guides, troubleshooting, and development best practices.",
-        base_url="https://github.com/Azure/azure-sdk-for-js/wiki/",
-        trim_format=True,
     ),
     KnowledgeSource(
         name=SRC_AUTOREST_JAVA_DOCS,
@@ -494,6 +487,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
+            SRC_AZURE_REST_API_SPECS_DOCS,
         ),
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('golang', 'title')",
@@ -538,7 +532,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_JS_DOCS,
-            SRC_AZURE_SDK_FOR_JS_WIKI,
             SRC_AZURE_SDK_GUIDELINES,
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,

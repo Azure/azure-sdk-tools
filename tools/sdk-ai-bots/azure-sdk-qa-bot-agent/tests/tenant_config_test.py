@@ -15,6 +15,7 @@ from config.tenant_config import (
     SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_DOCS_ENG,
+    SRC_AZURE_SDK_FOR_JS_DOCS,
     SRC_AZURE_SDK_GUIDELINES,
     SRC_TYPESPEC_AZURE_DOCS,
     SRC_TYPESPEC_DOCS,
@@ -236,6 +237,24 @@ def test_stewardship_sources_have_matching_sync_configuration() -> None:
     assert all(p["folder"] == SRC_AZURE_REST_API_SPECS_DOCS for p in specs["paths"])
 
 
+def test_javascript_tenant_uses_repository_docs_instead_of_wiki() -> None:
+    config = get_tenant_config(TenantID.JAVASCRIPT_CHANNEL_QA_BOT)
+
+    assert config is not None
+    assert SRC_AZURE_SDK_FOR_JS_DOCS in [source.name for source in config.sources]
+    assert "azure_sdk_for_js_wiki" not in [source.name for source in config.sources]
+    assert get_knowledge_source("azure_sdk_for_js_wiki") is None
+
+
+def test_javascript_contributing_guide_resolves_to_repository_root() -> None:
+    source = get_knowledge_source(SRC_AZURE_SDK_FOR_JS_DOCS)
+
+    assert source is not None
+    assert source.get_link("CONTRIBUTING.md") == (
+        "https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md"
+    )
+
+
 def test_azure_mcp_server_tenant_uses_curated_sources() -> None:
     config = get_tenant_config(TenantID.AZURE_MCP_SERVER)
 
@@ -258,6 +277,34 @@ def test_tenants_use_azure_sdk_agent_by_default() -> None:
     assert config is not None
     assert config.agent.name == "azure-sdk-chat-agent"
     assert config.agent.name_config_key == "AI_FOUNDRY_AGENT_NAME"
+
+
+def test_go_tenant_includes_sdk_breaking_change_guides() -> None:
+    config = get_tenant_config(TenantID.GOLANG_CHANNEL_QA_BOT)
+    assert config is not None
+    sources = {source.name: source for source in config.sources}
+    assert sources[SRC_AZURE_REST_API_SPECS_WIKI].get_link("SDK-Breaking-Changes.md") == (
+        "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+    )
+    assert config.source_filter[SRC_AZURE_REST_API_SPECS_WIKI] == "search.ismatch('SDK', 'title')"
+    assert sources[SRC_AZURE_REST_API_SPECS_DOCS].get_link("documentation/ci-fix.md") == (
+        "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/ci-fix.md"
+    )
+    assert SRC_AZURE_REST_API_SPECS_DOCS not in config.source_filter
+
+    sync_path = (
+        Path(__file__).parents[2] / "azure-sdk-qa-bot-knowledge-sync"
+        / "config" / "knowledge-config.json"
+    )
+    sync_config = json.loads(sync_path.read_text(encoding="utf-8"))
+    specs = next(
+        source for source in sync_config["sources"]
+        if source["repository"]["url"] == "https://github.com/Azure/azure-rest-api-specs.git"
+    )
+    guide = next(item for item in specs["paths"] if item["path"] == "/documentation/ci-fix.md")
+    assert guide["folder"] == SRC_AZURE_REST_API_SPECS_DOCS
+    assert guide["relativeByRepoPath"] is True
+    assert guide["metadata"]["scope"] == "branded"
 
 
 def test_tenant_skills_are_partitioned_by_agent() -> None:

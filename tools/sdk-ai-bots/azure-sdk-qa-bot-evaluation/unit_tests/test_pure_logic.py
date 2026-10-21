@@ -12,7 +12,11 @@ Run:
 from __future__ import annotations
 
 import os
+import re
 import sys
+from pathlib import Path
+
+import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -583,7 +587,7 @@ def test_offline_pipeline_stewardship_uses_local_dataset_and_override():
     path = Path(__file__).resolve().parents[2] / "offline-evaluation.yml"
     pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
     scenarios = pipeline["parameters"][0]["default"]
-    assert scenarios == ["typespec", "onboarding", "python", "apispec", "authoring", "mcpserver", "sdkagent", "stewardship"]
+    assert scenarios == ["typespec", "onboarding", "python", "javascript", "go", "apispec", "authoring", "mcpserver", "sdkagent", "stewardship"]
     jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
     steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
     inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Evals (${{ scenario }})")
@@ -604,7 +608,7 @@ def test_perf_pipeline_stewardship_uses_local_dataset_and_override():
     path = Path(__file__).resolve().parents[2] / "perf-evaluation.yml"
     pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
     scenarios = pipeline["parameters"][0]["default"]
-    assert scenarios == ["typespec", "onboarding", "python", "apispec", "general", "releasesupport", "authoring", "mcpserver", "stewardship"]
+    assert scenarios == ["typespec", "onboarding", "python", "javascript", "go", "apispec", "general", "releasesupport", "authoring", "mcpserver", "stewardship"]
     jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
     steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
     inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Perf Evals (${{ scenario }})")
@@ -615,6 +619,72 @@ def test_perf_pipeline_stewardship_uses_local_dataset_and_override():
     assert "qa-bot-perf-stewardship" not in board
     assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in existing
     assert "--tenant-id" not in existing
+
+
+def test_javascript_scenario_routes_to_configured_js_channel():
+    root = Path(__file__).resolve().parents[2]
+    config = yaml.safe_load(
+        (root / "azure-sdk-qa-bot" / "config" / "channel.yaml").read_text(encoding="utf-8")
+    )
+    channel = next(
+        item
+        for item in config["channels"]
+        if item["id"] == "19:344f6b5b36ba414daa15473942c7477b@thread.skype"
+    )
+    mapping = {"default": config["default"]["tenant"]}
+    mapping.update({item["name"]: item["tenant"] for item in config["channels"]})
+    assert resolve_tenant_for_scenario("javascript", mapping) == channel["tenant"]
+    assert resolve_tenant_for_scenario("unknown", mapping) == config["default"]["tenant"]
+
+
+def test_javascript_datasets_are_documentation_only_and_resolve_locally():
+    root = Path(__file__).resolve().parents[1]
+    queries = set()
+    historical_context = re.compile(
+        r"https?://|(?:\bPR|\bpull request|\bissue)\s*#?\d+\b"
+        r"|\b\d{4}-\d{2}-\d{2}\b|19:\S+@thread"
+        r"|\b(?:yesterday|last week|last month)\b",
+        re.IGNORECASE,
+    )
+    for target, count in (("basic", 7), ("perf", 13)):
+        path = root / "evaluation_datasets" / target / "javascript.jsonl"
+        assert validate_file(path, require_reviewed=True) == count
+        records, scenario = resolve_records(
+            f"qa-bot-{target}-javascript:latest", script_dir=root
+        )
+        assert scenario == "javascript"
+        assert len(records) == count
+        for case in records:
+            assert case["scenario"] == scenario
+            assert case["tenant"] is None
+            assert case["source"] == "manual:javascript-documentation"
+            assert case["expected_references"]
+            for field in ("query", "ground_truth"):
+                assert "dev-tool customization" not in case[field]
+            assert "http" not in case["query"]
+            for reference in case["expected_references"]:
+                assert "modular-customization.md" not in reference["link"]
+                assert reference["link"].startswith((
+                    "https://github.com/Azure/azure-sdk-for-js/blob/main/",
+                    "https://azure.github.io/typespec-azure/docs/emitters/clients/typespec-ts/",
+                ))
+            for field in ("testcase", "query", "ground_truth"):
+                assert not historical_context.search(case[field]), (path, field)
+            query = " ".join(case["query"].lower().split())
+            assert query not in queries
+            queries.add(query)
+
+
+def test_javascript_scenario_is_in_both_evaluation_pipelines():
+    root = Path(__file__).resolve().parents[2]
+    for name in ("offline-evaluation.yml", "perf-evaluation.yml"):
+        pipeline = yaml.safe_load((root / name).read_text(encoding="utf-8"))
+        scenarios = next(
+            item["default"]
+            for item in pipeline["parameters"]
+            if item["name"] == "scenarios"
+        )
+        assert scenarios.count("javascript") == 1
 
 
 def test_output_items_to_rows_completion_item_response():
@@ -712,6 +782,47 @@ def test_record_run_result_empty_rows_no_crash():
     er = EvalsResult(metrics={"bot_evals": None}, suppressions=None)
     recorded = er.record_run_result({"rows": []})
     assert recorded[-1]["total_evals"] == 0
+
+
+def test_agent_branch_prefix_preserves_evaluation_query():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    session = MagicMock()
+    session.__aenter__ = AsyncMock(return_value=session)
+    session.__aexit__ = AsyncMock(return_value=False)
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok"}),
+    })())
+    for branch in ("feature/Case/path", "refs/heads/feature/Case/path"):
+        with patch.dict(os.environ, {"EVAL_AGENT_BRANCH": branch}):
+            collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+        for tenant in (None, "azure_mcp_server"):
+            asyncio.run(collector._call_bot_api("unchanged query", tenant, session))
+            request = session.post.call_args.kwargs
+            assert request["headers"] == {"Content-Type": "application/json; charset=utf8"}
+            assert request["json"]["message"]["content"] == "[branch:feature/Case/path] unchanged query"
+            assert request["json"]["tenant_id"] == (tenant or "general_qa_bot")
+    records = [{"testcase": "branch-test", "query": "unchanged query", "ground_truth": "expected"}]
+    with patch("aiohttp.ClientSession", return_value=session):
+        results = collector.collect(records, None)
+    assert results[0]["query"] == records[0]["query"] == "unchanged query"
+
+
+def test_without_eval_branch_keeps_message_unchanged():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    with patch.dict(os.environ, {"BUILD_SOURCEBRANCH": "refs/heads/main"}, clear=True):
+        collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+    session = MagicMock()
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok"}),
+    })())
+    asyncio.run(collector._call_bot_api("unchanged query", None, session))
+    assert session.post.call_args.kwargs["json"]["message"]["content"] == "unchanged query"
 
 
 def _run_all() -> int:

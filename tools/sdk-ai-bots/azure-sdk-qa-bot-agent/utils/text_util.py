@@ -40,6 +40,7 @@ _LINK_RE = re.compile(
 )
 _HTML_TAG_RE = re.compile(r"<[^>]*>")
 _WHITESPACE_RE = re.compile(r"\s+")
+BRANCH_PREFIX_RE = re.compile(r"^\s*(title:\s*)?\[branch:([^\]]+)\]\s*")
 
 
 # ---------------------------------------------------------------------------
@@ -145,12 +146,13 @@ def replace_keywords(text: str) -> str:
 
 
 def preprocess_message(text: str) -> str:
-    """Full preprocessing pipeline: HTML handling -> keyword replacement.
+    """Full preprocessing pipeline: HTML handling -> branch tag removal -> keyword replacement.
 
     This mirrors the Go backend's ``PreprocessHTMLContent`` +
     ``PreprocessInput`` flow.
     """
     result = preprocess_html_content(text)
+    result = BRANCH_PREFIX_RE.sub(lambda match: match.group(1) or "", result, count=1)
     result = replace_keywords(result)
     logger.info("Preprocessed message: %s", result)
     return result

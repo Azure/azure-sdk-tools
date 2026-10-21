@@ -12,8 +12,8 @@ pr: none
 # Perf evaluation: large, incrementally-grown per-scenario datasets.
 #
 # Evaluates via completion mode (concurrent /completion collection + inline grading)
-# against the deployed bot's $(BOT_SERVICE_ENDPOINT) for the qa-bot-perf-<scenario>
-# datasets. Can also be run manually.
+# against a local backend started with development configuration for the
+# qa-bot-perf-<scenario> datasets. Can also be run manually.
 parameters:
   - name: scenarios
     type: object
@@ -21,6 +21,8 @@ parameters:
       - typespec
       - onboarding
       - python
+      - javascript
+      - go
       - apispec
       - general
       - releasesupport
@@ -78,6 +80,7 @@ extends:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                       AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
                       AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                      ENABLE_AI_FOUNDRY_AGENT_ROUTING: 'true'
                   - script: |
                       pip install -r requirements.txt
                     displayName: 'install requirements'
@@ -114,6 +117,7 @@ extends:
                       BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                       BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                       EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
+                      EVAL_AGENT_BRANCH: $(Build.SourceBranch)
                 templateContext:
                   outputs:
                     - output: pipelineArtifact

@@ -17,6 +17,7 @@ parameters:
       - onboarding
       - python
       - dotnet
+      - javascript
       - go
       - apispec
       - authoring

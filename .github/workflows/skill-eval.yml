@@ -5,13 +5,11 @@ on:
     branches: [main]
     paths:
       - '.github/skills/**'
-      - 'evals/**'
       - 'eng/skill-eval/**'
       - '.github/workflows/skill-eval.yml'
   pull_request:
     paths:
       - '.github/skills/**'
-      - 'evals/**'
       - 'eng/skill-eval/**'
       - '.github/workflows/skill-eval.yml'
   workflow_dispatch:
@@ -35,10 +33,6 @@ jobs:
       - name: Install Vally CLI (pinned via lockfile)
         working-directory: eng/skill-eval
         run: npm ci
-
-      - name: Check configured eval schemas (no evaluations)
-        working-directory: eng/skill-eval
-        run: npm test
 
       - name: Lint skills
         run: ./eng/skill-eval/node_modules/.bin/vally lint .

@@ -28,12 +28,16 @@ stimuli:
 
   - name: basic-trigger
     prompt: "I need to create a new skill for Azure SDK. What's the correct SKILL.md format?"
+    environment:
+      skills:
+        - ..
     graders:
       - type: output-contains
         config:
           substring: "skill"
-    constraints:
-      expect_skills: ["skill-authoring"]
+      - type: skill-invocation
+        config:
+          required: ["skill-authoring"]
 
   - name: anti-trigger
     prompt: "How do I authenticate with Azure Active Directory in my Python app?"

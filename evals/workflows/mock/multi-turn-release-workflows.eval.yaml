@@ -63,12 +63,14 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
-      # Nest an SDK Git fixture so repo checks resolve Python, not the specs repo.
+      # Local-generation scenarios need a target SDK repo to generate into;
+      # without one the agent correctly refuses to call
+      # azsdk_package_generate_code and hunts for a clone instead.
       files:
-        - src: ../../fixtures/sdk-repos/azure-sdk-for-python
-          dest: azure-sdk-for-python
-      commands:
-        - git -C azure-sdk-for-python init -q && git -C azure-sdk-for-python remote add origin https://github.com/Azure/azure-sdk-for-python.git && git -C azure-sdk-for-python add . && git -C azure-sdk-for-python -c user.email=vally@local -c user.name=vally commit -qm "seed Python SDK fixture"
+        - src: ../../fixtures/sdk-repos/azure-sdk-for-python/README.md
+          dest: azure-sdk-for-python/README.md
+        - src: ../../fixtures/sdk-repos/azure-sdk-for-python/sdk/contosowidgetmanager/README.md
+          dest: azure-sdk-for-python/sdk/contosowidgetmanager/README.md
     # Resolve relative creation targets at runtime so they never become past due.
     turns:
       - |
@@ -243,7 +245,7 @@ stimuli:
         build just the Python SDK locally from
         specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
         My local azure-sdk-for-python target package is at
-        azure-sdk-for-python/sdk/contosowidgetmanager/azure-contoso-widgetmanager.
+        sdk/contosowidgetmanager/azure-contoso-widgetmanager.
     constraints:
       max_turns: 16
       max_tokens: 22000
@@ -275,7 +277,7 @@ stimuli:
         just the Python SDK for the Contoso Widget Manager from
         specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
         My local azure-sdk-for-python target package is at
-        azure-sdk-for-python/sdk/contosowidgetmanager/azure-contoso-widgetmanager.
+        sdk/contosowidgetmanager/azure-contoso-widgetmanager.
       - |
         Actually, I need this for every language now. Kick off SDK generation for
         all languages using release plan work item 35000, TypeSpec project

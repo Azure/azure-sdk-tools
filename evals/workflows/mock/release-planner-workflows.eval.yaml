@@ -293,12 +293,9 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
-      # Nest an SDK Git fixture so repo checks resolve Python, not the specs repo.
       files:
-        - src: ../../fixtures/sdk-repos/azure-sdk-for-python
-          dest: azure-sdk-for-python
-      commands:
-        - git -C azure-sdk-for-python init -q && git -C azure-sdk-for-python remote add origin https://github.com/Azure/azure-sdk-for-python.git && git -C azure-sdk-for-python add . && git -C azure-sdk-for-python -c user.email=vally@local -c user.name=vally commit -qm "seed Python SDK fixture"
+        - src: ../../fixtures/README.md
+          dest: sdk/contosowidgetmanager/azure-contoso-widgetmanager/README.md
     prompt: |
       Run SDK generation for all languages for release plan work item 35000. My TypeSpec project is
       specification/contosowidgetmanager/Contoso.WidgetManager.
@@ -334,7 +331,7 @@ stimuli:
       for the Contoso Widget Manager from
       specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml, then
       build it and run the checks locally. My local azure-sdk-for-python target
-      package is at azure-sdk-for-python/sdk/contosowidgetmanager/azure-contoso-widgetmanager.
+      package is at sdk/contosowidgetmanager/azure-contoso-widgetmanager.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -412,7 +409,7 @@ stimuli:
     environment: *bothGenerateSkills
     prompt: |
       Generate the SDK for all languages for my private preview release plan
-      (work item 35001) for the Contoso Widget Manager.
+      (work item 29262) for the Contoso Widget Manager.
     constraints:
       max_turns: 8
       max_tokens: 12000

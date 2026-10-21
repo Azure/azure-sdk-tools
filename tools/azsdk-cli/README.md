@@ -82,7 +82,9 @@ dotnet run --project Azure.Sdk.Tools.Cli -- --help
 
 See the [development docs](./Azure.Sdk.Tools.Cli/README.md) for more detailed instructions on how to run this tool as an MCP server or CLI app.
 
-On Windows, run `azsdk.bat <arguments>` from this directory. The launcher first stops this repository's running `azsdk.exe` MCP servers to release build-output DLL locks, then forwards all arguments to `dotnet run --project Azure.Sdk.Tools.Cli --` and returns its exit code. This disconnects those MCP servers; unrelated processes and other repository copies are left running.
+On Windows, run `azsdk.bat <arguments>` from this directory. The launcher first stops this repository's running `azsdk.exe` MCP servers to release build-output DLL locks, including servers started with global `--debug` or `--output` (`-o`) options before `mcp` or `start`. Cleanup diagnostics go to stderr. It then forwards all arguments to `dotnet run --project Azure.Sdk.Tools.Cli --` and returns its exit code. This disconnects those MCP servers; unrelated processes and other repository copies are left running.
+
+Run the launcher regression tests on Windows with `powershell.exe -NoProfile -Command "Invoke-Pester .\tests\azsdk.Tests.ps1"`.
 
 ### Package release approval
 

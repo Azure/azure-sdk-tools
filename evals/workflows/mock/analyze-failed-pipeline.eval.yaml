@@ -18,7 +18,7 @@ environment: azsdk-mcp-mock
 defaults:
   runs: 1
   timeout: 5m
-  model: gpt-5.4
+  model: gpt-6.1-sol
   executor: copilot-sdk
 
 stimuli:
@@ -89,7 +89,7 @@ stimuli:
           pattern: "(?i)(re-?record|missing recording|retry the pipeline|service outage)"
       - type: prompt
         config:
-          model: gpt-5.4
+          model: gpt-6.1-sol
           scoring: binary
           threshold: 1.0
           prompt: |

@@ -1,5 +1,17 @@
 # Release History
 
+## 0.6.55 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
+
+### Other Changes
+
 ## 0.6.54 (2026-10-15)
 
 ### Features Added

@@ -62,7 +62,7 @@ python -m dataset.validate evaluation_datasets/basic --require-reviewed
 
 ### Historical API spec review category
 
-The [API spec review corpus](evaluation_datasets/api-spec-review/README.md) is a separate historical category, not part of `basic`, `perf`, or the scheduled perf matrix. Its topic files explicitly set `tenant` to `api_spec_review_bot`; per-record tenant routing takes precedence over scenario-derived defaults. Evaluate these files by local path, and see the [evaluation report](results/api-spec-review/evaluation-report.md) and [expert knowledge report](results/api-spec-review/expert-knowledge-report.md) for provenance, coverage, and remediation outcomes.
+The [API spec review corpus](evaluation_datasets/api-spec-review/README.md) is a separate historical category, not part of `basic`, `perf`, or the scheduled perf matrix. Its topic files explicitly set `tenant` to `api_spec_review_bot`; per-record tenant routing takes precedence over scenario-derived defaults. Evaluate these files by local path, and see the [evaluation report](results/api-spec-review/evaluation-report.md) and [expert knowledge report](results/api-spec-review/expert-knowledge-report.md) for provenance, coverage, and remediation outcomes. The [expert answering-pattern report](results/api-spec-review/expert-answering-patterns-report.md) separately analyzes diagnostic behavior, supporting historical exchanges, and the tenant-prompt refinement.
 
 ## Part 1 — Dataset preparation
 

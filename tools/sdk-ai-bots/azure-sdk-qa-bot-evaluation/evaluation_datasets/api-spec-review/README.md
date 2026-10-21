@@ -24,4 +24,4 @@ python evals_run.py --dataset evaluation_datasets\api-spec-review\auth.jsonl --b
 
 The existing upload and promotion CLIs still target `basic` and `perf`; do not move this corpus into perf merely to use those workflows. The old perf Foundry asset is retained only as provenance for the completed historical replay.
 
-Reports: [evaluation results](../../results/api-spec-review/evaluation-report.md) and [expert knowledge and KB coverage](../../results/api-spec-review/expert-knowledge-report.md).
+Reports: [evaluation results](../../results/api-spec-review/evaluation-report.md), [expert knowledge and KB coverage](../../results/api-spec-review/expert-knowledge-report.md), and [expert answering patterns](../../results/api-spec-review/expert-answering-patterns-report.md).

@@ -54,7 +54,7 @@ Use these steps in priority order; skip irrelevant steps and stop when the reque
 
 2. **Action-required workflows:** If a failing status links to an Actions run, inspect one linked run with `actions_get(method="get_workflow_run")` before any changed-file, diff, review, comment, or overflow-retry calls; reserve calls for this diagnosis. If `status="completed"` and `conclusion="action_required"`, your next call must be `web_fetch` on the run's returned `html_url`, before inspecting more runs. This may signal a permission or maintainer-approval gate, but the API status alone does not establish the cause.
    For permission issues or workflow approval gates in Azure SDK repositories, direct users to [request access](https://aka.ms/azsdk/access) and set their Azure organization membership to [Public](https://docs.github.com/en/account-and-profile/how-tos/organization-membership/publicizing-or-hiding-organization-membership).
-   Once the gate is confirmed, give the unblocking action and stop unless code/design review or another independent facet was explicitly requested; do not invent code fixes for a workflow approval gate.
+   Focus on the unblocking actions; include findings only when they help the user act. Stop unless code/design review or another independent facet was explicitly requested; do not invent code fixes for a workflow approval gate.
 
 3. **Validation failures:** Diagnose actual failures from logs or check output; red status alone does not establish a code defect. Read only the code needed to resolve the failure, not a broad code review.
 

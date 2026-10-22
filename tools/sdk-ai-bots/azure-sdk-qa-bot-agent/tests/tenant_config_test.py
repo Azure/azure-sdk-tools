@@ -457,7 +457,7 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
         "[Public](https://docs.github.com/en/account-and-profile/how-tos/"
         "organization-membership/publicizing-or-hiding-organization-membership)"
     ) in gate
-    assert "give the unblocking action and stop" in gate
+    assert "Focus on the unblocking actions; include findings only when they help the user act" in gate
     assert "unless code/design review or another independent facet was explicitly requested" in gate
     assert "if the user's write access is missing or unknown" not in pr_review
     assert "verify repository/CI-trigger permissions" not in pr_review

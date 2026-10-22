@@ -80,7 +80,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk release-plan list-overdue` |  |
 |  | `azsdk quokka` |  |
 |  | `azsdk pkg mark-released` | Mark a package as released in API Review Hub and APIView |
-|  | `azsdk pkg get-approval-status` | Check API review release approval status using APIView and API Review Hub |
+|  | `azsdk pkg get-approval-status` | Check release approval status, including API and package name approval, using APIView and API Review Hub |
 |  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
 |  | `azsdk pkg samples generate` | Generates sample files |
 |  | `azsdk pkg readme generate` | Generate README content for a package |
@@ -105,4 +105,3 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk list` |  |
-

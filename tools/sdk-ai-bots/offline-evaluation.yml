@@ -94,7 +94,6 @@ extends:
                         inlineScript: |
                           python evals_run.py \
                             --dataset "evaluation_datasets/basic/stewardship.jsonl" \
-                            --tenant-id "api_stewardship_board_qa_bot" \
                             --run_context "offline-evaluation" \
                             --max_concurrency 2 \
                             --baseline_check True \

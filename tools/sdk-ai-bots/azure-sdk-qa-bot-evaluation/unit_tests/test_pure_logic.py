@@ -447,7 +447,7 @@ def test_stewardship_cases_are_customer_questions_and_expert_answers():
             ), row["testcase"]
 
 
-def _run_completion_cli(tenant_override=None, *, scenario="stewardship", tenant_map=None, status=200):
+def _run_completion_cli(*, scenario="stewardship", tenant_map=None, status=200):
     from contextlib import ExitStack
     from types import SimpleNamespace
     from unittest.mock import MagicMock, patch
@@ -493,8 +493,6 @@ def _run_completion_cli(tenant_override=None, *, scenario="stewardship", tenant_
         {"testcase": "two", "query": "q2", "ground_truth": "a", "tenant": "another-ignored-tenant"},
     ]
     argv = ["--dataset", "evaluation_datasets/basic/stewardship.jsonl", "--baseline_check", "False"]
-    if tenant_override is not None:
-        argv.extend(["--tenant-id", tenant_override])
 
     with ExitStack() as stack:
         stack.enter_context(patch.dict(os.environ, {
@@ -502,9 +500,7 @@ def _run_completion_cli(tenant_override=None, *, scenario="stewardship", tenant_
             "AZURE_EVALUATION_MODEL_NAME": "unused-model",
             "EVALUATE_THRESHOLD": "3",
         }))
-        stack.enter_context(patch.dict(sys.modules, {
-            "azure.ai.projects": SimpleNamespace(AIProjectClient=lambda **kwargs: project),
-        }))
+        stack.enter_context(patch("azure.ai.projects.AIProjectClient", return_value=project))
         stack.enter_context(patch("aiohttp.ClientSession", Session))
         stack.enter_context(patch.object(evals_run, "load_dotenv"))
         stack.enter_context(patch.object(evals_run, "credential_for", return_value=object()))
@@ -518,16 +514,17 @@ def _run_completion_cli(tenant_override=None, *, scenario="stewardship", tenant_
             evals_run,
             "retrieve_channel_tenant_map",
             return_value=tenant_map,
-            side_effect=AssertionError("override must bypass Blob") if tenant_override is not None else None,
         ))
         exit_code = evals_run.main(argv)
-        assert lookup.call_count == (0 if tenant_override is not None else 1)
+        assert lookup.call_count == 1
 
     return exit_code, posts
 
 
-def test_cli_override_reaches_real_completion_runner():
-    exit_code, posts = _run_completion_cli("api_stewardship_board_qa_bot")
+def test_cli_stewardship_channel_routing_reaches_real_completion_runner():
+    exit_code, posts = _run_completion_cli(
+        tenant_map={"API Stewardship Board - General": "api_stewardship_board_qa_bot"},
+    )
     assert exit_code == 0
     assert len(posts) == 2
     assert all(url.endswith("/completion") for url, _ in posts)
@@ -549,37 +546,16 @@ def test_cli_default_routing_reaches_completion_unchanged():
 
 
 def test_cli_rejected_tenant_does_not_fall_back():
-    exit_code, posts = _run_completion_cli("unregistered_tenant", status=400)
+    exit_code, posts = _run_completion_cli(
+        tenant_map={"API Stewardship Board - General": "unregistered_tenant"},
+        status=400,
+    )
     assert exit_code == 1
     assert len(posts) == 2
     assert all(payload["tenant_id"] == "unregistered_tenant" for _, payload in posts)
 
 
-def test_cli_invalid_tenant_override_fails_before_credentials():
-    from unittest.mock import patch
-
-    import evals_run
-
-    for value in ("", " ", "api stewardship", " api_stewardship_board_qa_bot"):
-        with patch.object(evals_run, "credential_for", side_effect=AssertionError("must not authenticate")):
-            try:
-                evals_run.main(["--dataset", "unused.jsonl", "--tenant-id", value])
-            except SystemExit as exc:
-                assert exc.code == 2
-            else:
-                raise AssertionError("expected invalid override to fail argument parsing")
-
-
-def test_default_blob_lookup_failure_preserves_general_fallback():
-    from unittest.mock import patch
-
-    import evals_run
-
-    with patch.object(evals_run, "retrieve_channel_tenant_map", side_effect=RuntimeError("offline")):
-        assert evals_run._resolve_run_tenant("typespec", object(), None) is None
-
-
-def test_offline_pipeline_stewardship_uses_local_dataset_and_override():
+def test_offline_pipeline_stewardship_uses_local_dataset_and_channel_routing():
     from pathlib import Path
 
     import yaml
@@ -594,13 +570,13 @@ def test_offline_pipeline_stewardship_uses_local_dataset_and_override():
     board = inputs["${{ if eq(scenario, 'stewardship') }}"]["inlineScript"]
     existing = inputs["${{ else }}"]["inlineScript"]
     assert '--dataset "evaluation_datasets/basic/stewardship.jsonl"' in board
-    assert '--tenant-id "api_stewardship_board_qa_bot"' in board
+    assert "--tenant-id" not in board
     assert "qa-bot-basic-stewardship" not in board
     assert '--dataset "qa-bot-basic-${{ scenario }}:latest"' in existing
     assert "--tenant-id" not in existing
 
 
-def test_perf_pipeline_stewardship_uses_local_dataset_and_override():
+def test_perf_pipeline_stewardship_uses_local_dataset_and_channel_routing():
     from pathlib import Path
 
     import yaml
@@ -615,7 +591,7 @@ def test_perf_pipeline_stewardship_uses_local_dataset_and_override():
     board = inputs["${{ if eq(scenario, 'stewardship') }}"]["inlineScript"]
     existing = inputs["${{ else }}"]["inlineScript"]
     assert '--dataset "evaluation_datasets/perf/stewardship.jsonl"' in board
-    assert '--tenant-id "api_stewardship_board_qa_bot"' in board
+    assert "--tenant-id" not in board
     assert "qa-bot-perf-stewardship" not in board
     assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in existing
     assert "--tenant-id" not in existing

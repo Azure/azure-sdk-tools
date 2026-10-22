@@ -93,23 +93,6 @@ def _dataset_label(dataset_spec: str, scenario: str) -> str:
     return f"qa-bot-{scenario}"
 
 
-def _tenant_id(value: str) -> str:
-    if not value or any(char.isspace() for char in value):
-        raise argparse.ArgumentTypeError("tenant ID must be non-empty and contain no whitespace")
-    return value
-
-
-def _resolve_run_tenant(scenario: str, credential: Any, tenant_override: str | None) -> str | None:
-    if tenant_override is not None:
-        return _tenant_id(tenant_override)
-    tenant_map = None
-    try:
-        tenant_map = retrieve_channel_tenant_map(credential)
-    except Exception as exc:  # noqa: BLE001
-        logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
-    return resolve_tenant_for_scenario(scenario, tenant_map)
-
-
 def main(argv: list[str] | None = None) -> int:
     # Ensure emoji in log/table output don't crash a non-UTF-8 console (e.g. Windows cp1252).
     for stream in (sys.stdout, sys.stderr):
@@ -123,12 +106,6 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run QA bot evaluation on the Foundry evals surface.")
     parser.add_argument("--dataset", required=True, help="<path.jsonl> | qa-bot-<target>-<scenario>[:version]")
     parser.add_argument("--max_concurrency", type=int, default=8, help="parallel /completion calls")
-    parser.add_argument(
-        "--tenant-id",
-        type=_tenant_id,
-        default=None,
-        help="explicit run-level bot tenant ID; bypasses Blob channel routing (not dataset row tenants)",
-    )
     parser.add_argument("--evaluators", type=str, default=None, help="comma-separated subset; default all")
     parser.add_argument(
         "--run_context",
@@ -188,7 +165,12 @@ def main(argv: list[str] | None = None) -> int:
             # so the Foundry list is not flooded with date/build/random-suffixed entries.
             dataset_label = _dataset_label(args.dataset, scenario)
             name = f"{dataset_label}-{args.run_context}"
-            tenant_id = _resolve_run_tenant(scenario, credential, args.tenant_id)
+            tenant_map = None
+            try:
+                tenant_map = retrieve_channel_tenant_map(credential)
+            except Exception as exc:  # noqa: BLE001
+                logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
+            tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
             all_results = runner.evaluate_run_completion(
                 evals_client,
                 records,

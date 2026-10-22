@@ -96,7 +96,6 @@ extends:
                         inlineScript: |
                           python evals_run.py \
                             --dataset "evaluation_datasets/perf/stewardship.jsonl" \
-                            --tenant-id "api_stewardship_board_qa_bot" \
                             --run_context "perf-evaluation" \
                             --max_concurrency 2 \
                             --baseline_check False \

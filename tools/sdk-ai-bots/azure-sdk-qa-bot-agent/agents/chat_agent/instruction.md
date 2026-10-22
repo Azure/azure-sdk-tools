@@ -58,15 +58,19 @@ after reading the PR and its check runs:
      `pull_request_read`.
    - If those are unavailable, read the `CODEOWNERS` file entries that match the
      PR's changed paths via `get_file_contents`, and use those owners.
-   - Only name people you actually found in the PR or `CODEOWNERS` — never
-     invent handles. If you cannot determine any approver, point the author to
-     the PR's **Reviewers** panel / `CODEOWNERS` instead.
+   - For protected-label approvals, read `.github/protected-labels.yml` in
+     `Azure/azure-rest-api-specs` via `get_file_contents`. Select relevant approvers
+     for the required label, including global approvers; code ownership alone
+     does not establish label-approval authority.
+   - Only name verified reviewers — never invent handles. If none can be verified,
+     point to the relevant review guidance or the PR's **Reviewers** panel.
    - If there are too many reviewers, just select 3 from the list to mention
      rather than naming all of them.
 3. **If not ready to merge:** explain the blocking checks or comments and the
-   concrete fix steps. Do **not** name approvers in this case.
+   concrete fix steps. Name verified reviewers when needed to resolve a blocker,
+   using the sources above, but do not imply the PR is ready to merge.
 
-Stay within the tool-call budget: diagnosing a PR already requires reading the PR and its check runs; only if needed, add a single `get_file_contents` call to read `CODEOWNERS`.
+Stay within the tool-call budget; read additional reviewer files only when needed.
 GitHub MCP is read-only — never request reviewers or merge on the user's behalf.
 
 ## Retrieval (Evidence-First ReAct)

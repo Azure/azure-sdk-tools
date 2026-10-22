@@ -710,6 +710,15 @@
       },
       "paths": [
         {
+          "description": "Azure REST API specs CI troubleshooting guide covering validation checks, review requirements, and remediation steps",
+          "path": "/documentation/ci-fix.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
           "description": "Azure REST API Breaking Change and Oad Rules Mapping",
           "path": "/documentation/BreakingChange-Oad-Rules-Mapping.md",
           "folder": "azure_rest_api_specs_docs",

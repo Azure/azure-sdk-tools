@@ -591,7 +591,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         scope="Azure API specification and SDK onboarding, release plan lifecycle, Azure MCP, and retirement processes.",
         topics=[
             "Prerequisites and setup for onboarding Azure API or SDK",
-            "Permission issues for specification repo or SDK repo access, workflow visibility",
             "Release plan creation, status, readiness, lifecycle, and troubleshooting",
             "SDK development, SDK generation (reproduce SDK validation locally), SDK release tooling and guidance",
             "Service, API and SDK deprecation guidance",
@@ -634,7 +633,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Language-specific SDK generation/validation errors — route to that language's SDK tenant",
             "TypeSpec validation errors — route to typespec_channel_qa_bot",
             "API design or spec authoring questions — route to typespec_channel_qa_bot",
-            "Permission or access issues for API spec repos — route to azure_sdk_onboarding",
         ],
         sources=_sources(
             SRC_STATIC_AZURE_DOCS,
@@ -668,9 +666,9 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "ARM/management-plane reviews — direct to ARM Office Hours: https://armwiki.azurewebsites.net/introduction/office_hours.html",
             "Detailed TypeSpec authoring or emitter failures — use the TypeSpec skill",
             "Detailed spec PR check investigation — use the API Spec Review skill",
-            "Repository access and release-plan lifecycle — use the SDK Onboarding skill",
+            "Release-plan lifecycle — use the SDK Onboarding skill",
             "Language-specific SDK failures — use the corresponding language skill",
-            "Approvals, approval labels, merges, scheduler repairs, and permission changes",
+            "Performing approvals, approval-label changes, merges, scheduler repairs, or permission changes",
         ],
         sources=_sources(
             SRC_AZURE_API_GUIDELINES,

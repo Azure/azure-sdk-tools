@@ -73,8 +73,8 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
     assert "Give evidence-backed advice, not Board decisions" in content
     assert "Use `typespec` for detailed authoring" in content
     assert "`api-spec-review` for check investigation" in content
-    assert "`sdk-onboarding` for access or release-plan lifecycle" in content
-    assert "repair infrastructure or prescribe permission changes" in content
+    assert "`sdk-onboarding` for release-plan lifecycle" in content
+    assert "repair infrastructure or prescribe resource-specific permission changes" in content
     assert "Use maintained Board guidance" in content
     assert "async reviews, materials, lead times, Office Hours and support" in content
 
@@ -451,12 +451,15 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     gate = pr_review.split("**Action-required workflows:**", 1)[1].split("**Validation failures:**", 1)[0]
     assert "**Workflow permissions**" not in pr_review
     assert "For permission issues or workflow approval gates in Azure SDK repositories" in gate
-    assert "direct users to [request access](https://aka.ms/azsdk/access)" in gate
-    assert "set their Azure organization membership to [Public]" in gate
+    assert "recommend self-service access" in gate
+    assert "[request access](https://aka.ms/azsdk/access)" in gate
+    assert "set Azure organization membership to [Public]" in gate
     assert (
         "[Public](https://docs.github.com/en/account-and-profile/how-tos/"
         "organization-membership/publicizing-or-hiding-organization-membership)"
     ) in gate
+    assert "rather than asking another maintainer to approve the run" in gate
+    assert "Distinguish access setup from approval of a pending run" in gate
     assert "Focus on the unblocking actions; include findings only when they help the user act" in gate
     assert "unless code/design review or another independent facet was explicitly requested" in gate
     assert "if the user's write access is missing or unknown" not in pr_review
@@ -464,6 +467,27 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     assert "For approval gates, ask a maintainer to approve the run instead" not in pr_review
     prompt = (root / "prompts" / "tenants" / "api_spec_review.md").read_text(encoding="utf-8")
     assert "When a pipeline appears stuck or a check is not triggered" not in prompt
+
+
+def test_tenant_skills_do_not_route_permission_help_to_onboarding() -> None:
+    for skill in create_tenant_skills("azure-sdk-chat-agent"):
+        if skill.frontmatter.name in ("api-spec-review", "sdk-onboarding"):
+            description = skill.frontmatter.description.lower()
+            assert "repository access" not in description
+            assert "permission" not in description
+    for tenant_id in (
+        TenantID.API_SPEC_REVIEW_BOT,
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT,
+        TenantID.AZURE_SDK_ONBOARDING,
+    ):
+        config = get_tenant_config(tenant_id)
+        assert config is not None
+        assert not any(
+            ("access" in exclusion.lower() or "permission" in exclusion.lower())
+            and "onboarding" in exclusion.lower()
+            for exclusion in config.exclusions
+        )
+        assert not any("permission" in topic.lower() for topic in config.topics)
 
 
 def test_pr_review_response_matches_customer_question_with_useful_context() -> None:

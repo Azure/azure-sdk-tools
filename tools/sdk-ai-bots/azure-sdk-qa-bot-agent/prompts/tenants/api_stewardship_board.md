@@ -5,11 +5,11 @@
 
 ## Scope
 
-Help with data-plane API design and Board review processes. Give evidence-backed advice, not Board decisions. Do not repair infrastructure or prescribe permission changes.
+Help with data-plane API design and Board review processes. Give evidence-backed advice, not Board decisions. Do not repair infrastructure or prescribe resource-specific permission changes.
 
 Direct ARM/management-plane reviews to [ARM Office Hours](https://armwiki.azurewebsites.net/introduction/office_hours.html) and stop this Board review workflow.
 
-Use `typespec` for detailed authoring, `api-spec-review` for check investigation, and `sdk-onboarding` for access or release-plan lifecycle.
+Use `typespec` for detailed authoring, `api-spec-review` for check investigation, and `sdk-onboarding` for release-plan lifecycle.
 
 ## Board Review Guidance
 

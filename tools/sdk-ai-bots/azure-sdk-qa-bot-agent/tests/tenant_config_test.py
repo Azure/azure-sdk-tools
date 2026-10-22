@@ -91,8 +91,8 @@ def test_stewardship_pr_guidance_delegates_shared_rules_and_preserves_board_poli
     assert "up to 3 short bullets" not in content
     assert "Brevity limits the answer, not the investigation" not in content
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
-    assert "Use concise prose or bullets and short descriptive link titles" in pr_review
-    assert "without repeating links or recommendations" in pr_review
+    assert "cite inline with short titles" in pr_review
+    assert "avoid repeated links/recommendations" in pr_review
     assert "All your tools are read-only" in instruction
     assert "Separate design findings, Board signoff and merge readiness" in content
     assert "Green checks and signoff do not prove design correctness" in content
@@ -114,18 +114,15 @@ def test_stewardship_check_support_uses_shared_failure_diagnosis() -> None:
     assert "check diagnosis" in content
     assert "**Check failures**" not in content
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
-    assert "Start with the reported check" in pr_review
-    assert "inspect linked error evidence before asking" in pr_review
-    assert "Passing checks do not establish that the user's problem is resolved" in pr_review
-    assert "Do not invent an automation diagnosis" in pr_review
-    assert "or tell users to wait based only on a pending status" in pr_review
-    assert "verified fix or specific support handoff" in pr_review
+    assert "Inspect the reported check's logs/output before asking for details" in pr_review
+    assert "Passing checks alone do not resolve the reported problem" in pr_review
+    assert "Do not invent fixes or advise waiting from pending status alone" in pr_review
+    assert "verified fix or specific support path" in pr_review
     other_tools = instruction.split("## Other Tools\n", 1)[1].split("\n## ", 1)[0]
     assert "**Check failures**" not in other_tools
-    assert "Read linked comments and relevant discussion (`get_comments`)" in instruction
-    assert "This may signal a permission or maintainer-approval gate" in instruction
-    assert "the API status alone does not establish the cause" in instruction
-    assert "your next call must be `web_fetch` on the run's returned `html_url`" in instruction
+    assert "`get_comments`" in pr_review
+    assert "pending/action-required alone proves neither a permission gate nor a code defect" in pr_review
+    assert "`web_fetch` the returned `html_url` next, before other calls" in pr_review
 
 
 def test_stewardship_blocker_diagnosis_uses_shared_merge_summary_policy() -> None:
@@ -139,11 +136,10 @@ def test_stewardship_blocker_diagnosis_uses_shared_merge_summary_policy() -> Non
     )
 
     assert '"Next Steps to Merge"' not in content
-    assert 'use "Next Steps to Merge" from `pull_request_read` as a summary' in instruction
-    assert "verify current-head required checks" in instruction
-    assert "conflicts and available branch-policy evidence independently" in instruction
-    assert "An unlisted check is not necessarily nonblocking" in instruction
-    assert "a red optional check is not necessarily blocking" in instruction
+    assert 'use "Next Steps to Merge" as a summary, not complete policy' in instruction
+    assert "Verify current-head required checks" in instruction
+    assert "conflicts and available branch policies" in instruction
+    assert "Do not assume red optional checks block merge or omitted checks are nonblocking" in instruction
     assert "follow the shared **PR Review Workflow**" in spec_prompt
     assert "single source of truth for merge blockers" not in instruction
     assert "complete, authoritative list of merge blockers" not in spec_prompt
@@ -165,12 +161,10 @@ def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
     )
     positions = [pr_review.index(f"{index}. {step}") for index, step in enumerate(steps, start=1)]
     assert positions == sorted(positions)
-    assert "Use these steps in priority order; skip irrelevant steps" in pr_review
-    assert "do not batch later retrieval with this preflight" in pr_review
-    assert "These PR-specific investigation and response rules take precedence" in pr_review
-    assert "over general batching, latency and formatting guidance" in pr_review
-    assert "Batch only independent calls and allow necessary dependent follow-ups" in pr_review
-    assert "within the tool-call budget" in pr_review
+    assert "Follow these steps by priority; skip irrelevant steps and stop once answered" in pr_review
+    assert "wait for both before later calls" in pr_review
+    assert "For PRs, these rules override general batching, latency and formatting" in pr_review
+    assert "batch independent calls, allow necessary dependent calls within budget" in pr_review
     assert "at most 8 tool calls per turn total" in instruction
     assert "GitHub MCP is read-only" in pr_review
 
@@ -415,11 +409,11 @@ def test_merge_and_workflow_guidance_is_in_pr_review_workflow() -> None:
         assert rule not in other_tools
         assert instruction.count(rule) == 1
     assert "**Validation failures:**" in pr_review
-    assert "For general review requests on a draft" in pr_review
+    assert "For general draft reviews" in pr_review
     assert "**Review approval:**" in pr_review
-    assert "required checks, reviews and merge conditions are satisfied" in pr_review
+    assert "required checks/reviews and other merge conditions hold" in pr_review
     assert "GitHub MCP is read-only" in pr_review
-    assert "Only name people you actually found" in pr_review
+    assert "verified requested reviewers/code owners from the PR or matching `CODEOWNERS` entries" in pr_review
 
 
 def test_chat_agent_fetches_explicit_workflow_action_required_reason() -> None:
@@ -428,18 +422,13 @@ def test_chat_agent_fetches_explicit_workflow_action_required_reason() -> None:
     ).read_text(encoding="utf-8")
 
     assert "**Action-required workflows:**" in instruction
-    assert "read the PR and `get_status` first" in instruction
-    assert "Wait for both results before later calls" in instruction
-    assert "do not batch later retrieval with this preflight" in instruction
-    assert "If a failing or pending status links to an Actions run" in instruction
-    assert 'inspect one linked run with `actions_get(method="get_workflow_run")`' in instruction
-    assert "before any changed-file, diff, review, comment, or overflow-retry calls" in instruction
-    assert "reserve calls for this diagnosis" in instruction
-    assert 'If `status="completed"` and `conclusion="action_required"`' in instruction
-    assert "your next call must be `web_fetch` on the run's returned `html_url`" in instruction
-    assert "before inspecting more runs" in instruction
-    assert "This may signal a permission or maintainer-approval gate" in instruction
-    assert "the API status alone does not establish the cause" in instruction
+    assert "Read the PR and `get_status` via `pull_request_read`" in instruction
+    assert "wait for both before later calls" in instruction
+    assert "Diagnose failed/pending checks before code, feedback or overflow retries" in instruction
+    assert 'first inspect one run with `actions_get(method="get_workflow_run")`' in instruction
+    assert 'On `status="completed"` and `conclusion="action_required"`' in instruction
+    assert "`web_fetch` the returned `html_url` next, before other calls" in instruction
+    assert "pending/action-required alone proves neither a permission gate nor a code defect" in instruction
     assert "Use GitHub MCP for GitHub content" in instruction
     assert "**Only exception:** fetch a completed/action-required workflow run" in instruction
     assert "not unrelated GitHub pages" in instruction
@@ -460,11 +449,10 @@ def test_chat_agent_prioritizes_resolution_and_diagnoses_pending_pr_checks() -> 
     assert "consider the Azure SDK Tools Agent as a fallback when it can help" in answer_rules
     assert "explain the specific action and remaining gap" in answer_rules
     assert "always recommend the Azure SDK Tools Agent" not in answer_rules
-    assert "For pending checks, inspect linked check/run details" in gate
-    assert "distinguish queued/running work from untriggered or approval-gated workflows" in gate
-    assert "pending status alone does not establish the cause" in gate
-    assert "Use the KB to find relevant trigger/rerun guidance and prerequisites" in gate
-    assert "explain the action that fits the observed check state" in gate
+    assert "Inspect linked check/run details" in gate
+    assert "Distinguish queued/running checks from untriggered or approval-gated work" in gate
+    assert "pending/action-required alone proves neither a permission gate nor a code defect" in gate
+    assert "Use KB-backed trigger/rerun guidance and prerequisites appropriate to the observed state" in gate
 
 
 def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
@@ -473,19 +461,16 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     gate = pr_review.split("**Action-required workflows:**", 1)[1].split("**Validation failures:**", 1)[0]
     assert "**Workflow permissions**" not in pr_review
-    assert "For Azure SDK repository permission issues" in gate
-    assert "pipelines/checks that are stuck, not triggered, or awaiting approval" in gate
-    assert "recommend self-service access" in gate
-    assert "[request access](https://aka.ms/azsdk/access)" in gate
-    assert "set Azure organization membership to [Public]" in gate
+    assert "For Azure SDK permission issues, stuck/untriggered checks or approval gates" in gate
+    assert "recommend [requesting access](https://aka.ms/azsdk/access)" in gate
     assert (
-        "[Public](https://docs.github.com/en/account-and-profile/how-tos/"
+        "[Public Azure membership](https://docs.github.com/en/account-and-profile/how-tos/"
         "organization-membership/publicizing-or-hiding-organization-membership)"
     ) in gate
-    assert "rather than asking another maintainer to approve the run" in gate
-    assert "Distinguish access setup from approval of a pending run" in gate
-    assert "Focus on the unblocking actions; include findings only when they help the user act" in gate
-    assert "unless code/design review or another independent facet was explicitly requested" in gate
+    assert "not another maintainer's approval" in gate
+    assert "access setup does not approve runs" in gate
+    assert "Give unblocking actions, not code fixes for gates" in gate
+    assert "Stop unless code/design review or other independent work was explicitly requested" in gate
     assert "if the user's write access is missing or unknown" not in pr_review
     assert "verify repository/CI-trigger permissions" not in pr_review
     assert "For approval gates, ask a maintainer to approve the run instead" not in pr_review
@@ -520,14 +505,12 @@ def test_pr_review_response_matches_customer_question_with_useful_context() -> N
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     normalized = " ".join(pr_review.split())
-    assert "Tailor the answer to the question" in normalized
-    assert "Give the conclusion, useful next action and material review gaps" in normalized
-    assert "not an inventory of PR metadata or check statuses unless requested" in normalized
-    assert "For general PR help, diagnose blockers rather than automatically reviewing code" in normalized
-    assert "stop when the request is answered" in normalized
-    assert "When review approval is the next action, identify requested reviewers / code owners" in normalized
-    assert "do not invent code fixes for a workflow approval gate" in normalized
-    assert "Only name people you actually found" in pr_review
+    assert "Give conclusions, useful actions and coverage gaps, not status inventories unless requested" in normalized
+    assert "when code/design review is explicit or no blocker answers a general review" in normalized
+    assert "stop once answered" in normalized
+    assert "When approval is next, mention up to 3 verified requested reviewers/code owners" in normalized
+    assert "not code fixes for gates" in normalized
+    assert "Never invent handles" in pr_review
     assert "GitHub MCP is read-only" in pr_review
 
 
@@ -536,19 +519,18 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
         Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
-    assert "Diagnose actual failures from logs or check output" in pr_review
+    assert "Inspect the reported check's logs/output" in pr_review
     assert "red status alone does not establish a code defect" in pr_review
-    assert "Read only the code needed to resolve the failure, not a broad code review" in pr_review
+    assert "Read only code needed for diagnosis" in pr_review
     preflight = pr_review.split("1. **Read the PR and statuses.**", 1)[1].split("\n2.", 1)[0]
-    assert "Check the PR state and draft flag" in preflight
-    assert "For general review requests on a draft" in preflight
-    assert "give a brief conclusion and clarify whether code review or check diagnosis is wanted, then stop" in preflight
-    assert "Omit status inventories and merge-process background" in preflight
-    assert "investigate further only when explicitly requested" in preflight
+    assert "Check state/draft flag" in preflight
+    assert "For general draft reviews" in preflight
+    assert "give a brief conclusion, clarify whether code review or check diagnosis is wanted" in preflight
+    assert "then stop unless explicitly requested" in preflight
     assert "Draft state alone does not require a deep code review; still diagnose relevant check failures" not in pr_review
-    assert "For an explicit code/API-design review, continue even if the PR is draft or checks are red" in pr_review
-    assert "When code/design review is requested, or no blocker already answers a general review request" in pr_review
-    assert "When relevant to the question, read overall reviews" in pr_review
+    assert "Explicit code/design review proceeds even on draft/red-check PRs" in pr_review
+    assert "when code/design review is explicit or no blocker answers a general review" in pr_review
+    assert "Read relevant `get_reviews`, `get_review_comments` and `get_comments`" in pr_review
     assert "follow the relevant **PR Review Workflow** steps; skip irrelevant steps" in instruction
     assert "read the PR, its failing check runs, and their logs before answering" not in instruction
 
@@ -559,8 +541,8 @@ def test_pr_review_cites_inline_without_changing_general_reference_format() -> N
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     formatting = instruction.split("## Formatting & References\n", 1)[1].split("\n## ", 1)[0]
-    assert "cite sources inline and add references only when useful" in pr_review
-    assert "without repeating links or recommendations" in pr_review
+    assert "cite inline with short titles" in pr_review
+    assert "Add references only when useful; avoid repeated links/recommendations" in pr_review
     assert "Append a References section" in formatting
     assert "**References**" in formatting
 
@@ -571,11 +553,9 @@ def test_pr_review_assesses_purpose_and_changed_file_evidence() -> None:
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     normalized = " ".join(pr_review.split())
-    assert "read the PR description and relevant diffs before forming recommendations" in normalized
-    assert "Start `get_files` with `perPage=1`" in normalized
-    assert "fetch additional pages only as needed" in normalized
-    assert "Assess changes alongside checks and existing feedback" in normalized
-    assert "state review coverage gaps" in normalized
+    assert "Read the description and relevant diffs" in normalized
+    assert "Start `get_files` at `perPage=1`; page only as needed" in normalized
+    assert "Assess changes alongside checks and feedback; state coverage gaps" in normalized
 
 
 def test_latest_copilot_overall_review_selection_requires_paginated_evidence() -> None:
@@ -584,11 +564,11 @@ def test_latest_copilot_overall_review_selection_requires_paginated_evidence() -
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     normalized = " ".join(pr_review.split())
-    assert "For `copilot-pull-request-reviewer[bot]`, consider only the latest overall review" in normalized
-    assert "by `submitted_at` after checking the necessary native pages" in normalized
-    assert "response order or one page does not establish the latest review" in normalized
-    assert "If retrieval is incomplete, qualify it as the latest retrieved review" in normalized
-    assert "Keep human reviews and unresolved inline findings in scope regardless of age" in normalized
+    assert "For `copilot-pull-request-reviewer[bot]`, select the latest overall review" in normalized
+    assert "by `submitted_at` across necessary pages" in normalized
+    assert "order/one page is insufficient" in normalized
+    assert 'Qualify incomplete retrieval as "latest retrieved."' in normalized
+    assert "Keep human reviews and unresolved inline findings regardless of age" in normalized
 
 
 def test_pr_review_reads_existing_reviews_and_compares_inline_feedback_with_current_diff() -> None:
@@ -598,10 +578,9 @@ def test_pr_review_reads_existing_reviews_and_compares_inline_feedback_with_curr
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     feedback = pr_review.split("**Review existing feedback.**", 1)[1].split("**Understand the changes.**", 1)[0]
     normalized = " ".join(feedback.split())
-    assert "read overall reviews (`get_reviews`) and relevant inline threads (`get_review_comments`)" in normalized
-    assert "Compare findings with replies and the current diff" in normalized
-    assert "distinguish outstanding feedback from already-addressed points" in normalized
-    assert "consider only the latest overall review" in normalized
+    assert "Read relevant `get_reviews`, `get_review_comments` and `get_comments`" in normalized
+    assert "compare replies/current diffs to identify unresolved findings" in normalized
+    assert "select the latest overall review" in normalized
 
 
 def test_chat_agent_cross_checks_spec_merge_summary_with_live_evidence() -> None:
@@ -610,13 +589,12 @@ def test_chat_agent_cross_checks_spec_merge_summary_with_live_evidence() -> None
     ).read_text(encoding="utf-8")
 
     assert "**Merge blockers:**" in instruction
-    assert '"Next Steps to Merge" from `pull_request_read` as a summary' in instruction
+    assert '"Next Steps to Merge" as a summary, not complete policy' in instruction
     assert "`azure-rest-api-specs` / `azure-rest-api-specs-pr`" in instruction
     assert "current-head required checks" in instruction
-    assert "An unlisted check is not necessarily nonblocking" in instruction
-    assert "a red optional check is not necessarily blocking" in instruction
-    assert "Distinguish workflow execution gates" in instruction
-    assert "State uncertainty when requirements or evidence are unclear" in instruction
+    assert "Do not assume red optional checks block merge or omitted checks are nonblocking" in instruction
+    assert "Separate execution gates, merge checks and reviews" in instruction
+    assert "qualify missing evidence" in instruction
     assert "single source of truth for merge blockers" not in instruction
 
 

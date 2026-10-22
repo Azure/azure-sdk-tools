@@ -188,16 +188,17 @@ class KnowledgeTools:
             "The index embeds the full source body, so complete natural sentences "
             "retrieve far better than stripped keyword fragments. "
             "The search combines semantic/vector and BM25 keyword retrieval. "
-            "Provide the queries as an **exact-to-abstract ladder** — "
-            "start with the user's wording and get more abstract, so the set "
-            "covers both exact-wording recall and conceptual-topic recall. "
-            "QUERY 1 (REQUIRED) — the most exact version of the request. Preserve "
-            "the user's wording and concrete identifiers. If the request includes "
+            "Choose queries for the current question or evidence gap from the "
+            "conversation and retrieved context, preserving the user's goal. "
+            "Do not keep repeating the original request when new evidence "
+            "changes the problem to solve. "
+            "QUERY 1 (REQUIRED) — the most exact version of that question or gap. "
+            "Preserve relevant wording and concrete identifiers. If it includes "
             "a concise title or subject plus a longer description, use the title "
             "alone as one query and search the description separately. "
             "QUERY 2 (optional) — a standalone normalized restatement. Resolve "
             "follow-up context and obvious synonyms while retaining details needed "
-            "to identify the request. "
+            "to identify the current problem. "
             "QUERY 3 (optional) — the **most abstract / core question**: "
             "distill to the underlying concept the docs are titled by, as one "
             "short question or topic phrase. "
@@ -243,8 +244,8 @@ class KnowledgeTools:
 
         Each query runs vector and keyword search in parallel, plus agentic
         search in deep mode, then all results are merged and deduplicated. Use
-        multiple queries to cover different facets of the user's problem —
-        the original question, related concepts, and potential solutions.
+        multiple queries only for distinct relevant facets; choose follow-up
+        queries from the current evidence gaps, not a fixed opening search.
         """
         # Resolve sources: explicit list wins; otherwise fall back to the
         # tenant's configured sources, or the whole registry when no tenant.

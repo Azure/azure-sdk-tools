@@ -390,13 +390,13 @@ def test_resolve_tenant_for_scenario():
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
-    assert resolve_tenant_for_scenario("stewardship", m) == "api_stewardship_board_qa_bot"
-    assert resolve_tenant_for_scenario("stewardship", {"default": "tenant-default"}) == "tenant-default"
+    assert resolve_tenant_for_scenario("apistewardshipboard", m) == "api_stewardship_board_qa_bot"
+    assert resolve_tenant_for_scenario("apistewardshipboard", {"default": "tenant-default"}) == "tenant-default"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
 
 
-def test_stewardship_local_dataset():
+def test_apistewardshipboard_dataset():
     from pathlib import Path
 
     from dataset.schema import normalize_query
@@ -404,11 +404,14 @@ def test_stewardship_local_dataset():
     root = Path(__file__).resolve().parents[1]
     datasets = {}
     for target in ("basic", "perf"):
-        dataset = root / "evaluation_datasets" / target / "stewardship.jsonl"
+        dataset = root / "evaluation_datasets" / target / "apistewardshipboard.jsonl"
         count = validate_file(dataset, require_reviewed=True)
-        records, scenario = resolve_records(str(dataset), script_dir=root)
+        records, scenario = resolve_records(
+            f"qa-bot-{target}-apistewardshipboard:latest", script_dir=root
+        )
+        assert resolve_records(str(dataset), script_dir=root) == (records, scenario)
         assert count == len(records)
-        assert scenario == "stewardship"
+        assert scenario == "apistewardshipboard"
         assert all(row["scenario"] == scenario for row in records)
         assert all(row["tenant"] == "api_stewardship_board_qa_bot" for row in records)
         assert all(row["reviewed"] == "pass" for row in records)
@@ -421,14 +424,14 @@ def test_stewardship_local_dataset():
     assert datasets["basic"][0] == datasets["perf"][0]
 
 
-def test_stewardship_cases_are_customer_questions_and_expert_answers():
+def test_apistewardshipboard_cases_are_customer_questions_and_expert_answers():
     import re
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
     for target in ("basic", "perf"):
         records, _ = resolve_records(
-            str(root / "evaluation_datasets" / target / "stewardship.jsonl"),
+            str(root / "evaluation_datasets" / target / "apistewardshipboard.jsonl"),
             script_dir=root,
         )
         for row in records:
@@ -447,7 +450,7 @@ def test_stewardship_cases_are_customer_questions_and_expert_answers():
             ), row["testcase"]
 
 
-def _run_completion_cli(*, scenario="stewardship", tenant_map=None, status=200):
+def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, status=200):
     from contextlib import ExitStack
     from types import SimpleNamespace
     from unittest.mock import MagicMock, patch
@@ -492,7 +495,7 @@ def _run_completion_cli(*, scenario="stewardship", tenant_map=None, status=200):
         {"testcase": "one", "query": "q1", "ground_truth": "a", "tenant": "ignored-row-tenant"},
         {"testcase": "two", "query": "q2", "ground_truth": "a", "tenant": "another-ignored-tenant"},
     ]
-    argv = ["--dataset", "evaluation_datasets/basic/stewardship.jsonl", "--baseline_check", "False"]
+    argv = ["--dataset", "evaluation_datasets/basic/apistewardshipboard.jsonl", "--baseline_check", "False"]
 
     with ExitStack() as stack:
         stack.enter_context(patch.dict(os.environ, {
@@ -521,7 +524,7 @@ def _run_completion_cli(*, scenario="stewardship", tenant_map=None, status=200):
     return exit_code, posts
 
 
-def test_cli_stewardship_channel_routing_reaches_real_completion_runner():
+def test_cli_apistewardshipboard_channel_routing_reaches_real_completion_runner():
     exit_code, posts = _run_completion_cli(
         tenant_map={"API Stewardship Board - General": "api_stewardship_board_qa_bot"},
     )
@@ -537,7 +540,7 @@ def test_cli_default_routing_reaches_completion_unchanged():
     for scenario, mapping, expected in [
         ("typespec", {"TypeSpec Discussion": "tenant-ts", "default": "tenant-default"}, "tenant-ts"),
         ("unknown", {"default": "tenant-default"}, "tenant-default"),
-        ("stewardship", None, "general_qa_bot"),
+        ("apistewardshipboard", None, "general_qa_bot"),
     ]:
         exit_code, posts = _run_completion_cli(scenario=scenario, tenant_map=mapping)
         assert exit_code == 0
@@ -555,7 +558,7 @@ def test_cli_rejected_tenant_does_not_fall_back():
     assert all(payload["tenant_id"] == "unregistered_tenant" for _, payload in posts)
 
 
-def test_offline_pipeline_stewardship_uses_local_dataset_and_channel_routing():
+def test_offline_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
     from pathlib import Path
 
     import yaml
@@ -563,20 +566,17 @@ def test_offline_pipeline_stewardship_uses_local_dataset_and_channel_routing():
     path = Path(__file__).resolve().parents[2] / "offline-evaluation.yml"
     pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
     scenarios = pipeline["parameters"][0]["default"]
-    assert scenarios == ["typespec", "onboarding", "python", "javascript", "go", "apispec", "authoring", "mcpserver", "sdkagent", "stewardship"]
+    assert scenarios == ["typespec", "onboarding", "python", "javascript", "go", "apispec", "authoring", "mcpserver", "sdkagent", "apistewardshipboard"]
     jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
     steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
     inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Evals (${{ scenario }})")
-    board = inputs["${{ if eq(scenario, 'stewardship') }}"]["inlineScript"]
-    existing = inputs["${{ else }}"]["inlineScript"]
-    assert '--dataset "evaluation_datasets/basic/stewardship.jsonl"' in board
-    assert "--tenant-id" not in board
-    assert "qa-bot-basic-stewardship" not in board
-    assert '--dataset "qa-bot-basic-${{ scenario }}:latest"' in existing
-    assert "--tenant-id" not in existing
+    script = inputs["inlineScript"]
+    assert '--dataset "qa-bot-basic-${{ scenario }}:latest"' in script
+    assert "evaluation_datasets/" not in script
+    assert "--tenant-id" not in script
 
 
-def test_perf_pipeline_stewardship_uses_local_dataset_and_channel_routing():
+def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
     from pathlib import Path
 
     import yaml
@@ -584,17 +584,14 @@ def test_perf_pipeline_stewardship_uses_local_dataset_and_channel_routing():
     path = Path(__file__).resolve().parents[2] / "perf-evaluation.yml"
     pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
     scenarios = pipeline["parameters"][0]["default"]
-    assert scenarios == ["typespec", "onboarding", "python", "javascript", "go", "apispec", "general", "releasesupport", "authoring", "mcpserver", "stewardship"]
+    assert scenarios == ["typespec", "onboarding", "python", "javascript", "go", "apispec", "general", "releasesupport", "authoring", "mcpserver", "apistewardshipboard"]
     jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
     steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
     inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Perf Evals (${{ scenario }})")
-    board = inputs["${{ if eq(scenario, 'stewardship') }}"]["inlineScript"]
-    existing = inputs["${{ else }}"]["inlineScript"]
-    assert '--dataset "evaluation_datasets/perf/stewardship.jsonl"' in board
-    assert "--tenant-id" not in board
-    assert "qa-bot-perf-stewardship" not in board
-    assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in existing
-    assert "--tenant-id" not in existing
+    script = inputs["inlineScript"]
+    assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in script
+    assert "evaluation_datasets/" not in script
+    assert "--tenant-id" not in script
 
 
 def test_javascript_scenario_routes_to_configured_js_channel():

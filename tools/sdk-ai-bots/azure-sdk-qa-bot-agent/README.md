@@ -102,6 +102,10 @@ Ensure your Azure identity has:
    az login  # select the Azure SDK Engineering System subscription
    ```
 
+### GitHub Actions diagnostics
+
+GitHub MCP results retain their native JSON fields and trusted-author filtering within the 8,000-character output limit. Oversized job-log responses return explicit overflow metadata with bounded, verbatim `log_excerpts`, preferring error context and falling back to a labeled tail when no error is recognized. Excerpts include line numbers relative to the returned log tail and explicitly flag clipped lines; they are incomplete evidence, not a root-cause diagnosis. Other oversized GitHub responses retain the existing pagination/retry behavior.
+
 ## Running and Debugging Locally
 
 ### Debugging the Chat Agent

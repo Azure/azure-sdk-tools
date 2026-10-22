@@ -132,6 +132,9 @@ but are not scored by an evaluator.
 | `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
 | `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
 
+The API Stewardship Board scenario is `apistewardshipboard` for both basic and perf
+datasets, using the same `qa-bot-<target>-<scenario>:latest` naming as other scenarios.
+
 Offline/perf start a local development backend and always use the running pipeline's
 branch name via `EVAL_AGENT_BRANCH`. No additional pipeline parameters are needed.
 Branch deployments must already exist: targeting a branch does not build/deploy it.

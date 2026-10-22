@@ -73,6 +73,31 @@ describe('ConfigurationLoader', () => {
     expect(() => ConfigurationLoader.getDocumentationSources()).toThrow();
   });
 
+  it('syncs the Azure MCP new-command guide with repository-relative citation paths', () => {
+    const guidePath = '/servers/Azure.Mcp.Server/docs/new-command.md';
+    const config = ConfigurationLoader.loadConfig();
+    const mcpSource = config.sources.find(
+      source => source.repository.url === 'https://github.com/microsoft/mcp.git'
+    );
+
+    expect(mcpSource?.paths).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: guidePath,
+        folder: 'azure_mcp_server_docs',
+        relativeByRepoPath: true
+      })
+    ]));
+    const repository = ConfigurationLoader.getRepositoryConfigs().find(
+      repo => repo.url === 'https://github.com/microsoft/mcp.git'
+    );
+    expect(repository?.sparseCheckout).toContain(guidePath);
+    const sources = ConfigurationLoader.getDocumentationSources().filter(
+      source => source.folder === 'azure_mcp_server_docs'
+    );
+    expect(sources.length).toBeGreaterThan(0);
+    expect(sources.every(source => source.path === 'docs/mcp')).toBe(true);
+  });
+
   it('uses repository documentation and contributing guidance instead of the JS wiki', () => {
     const config = ConfigurationLoader.loadConfig();
     const jsSource = config.sources.find(

@@ -431,7 +431,7 @@ def test_chat_agent_fetches_explicit_workflow_action_required_reason() -> None:
     assert "read the PR and `get_status` first" in instruction
     assert "Wait for both results before later calls" in instruction
     assert "do not batch later retrieval with this preflight" in instruction
-    assert "If a failing status links to an Actions run" in instruction
+    assert "If a failing or pending status links to an Actions run" in instruction
     assert 'inspect one linked run with `actions_get(method="get_workflow_run")`' in instruction
     assert "before any changed-file, diff, review, comment, or overflow-retry calls" in instruction
     assert "reserve calls for this diagnosis" in instruction
@@ -444,6 +444,27 @@ def test_chat_agent_fetches_explicit_workflow_action_required_reason() -> None:
     assert "**Only exception:** fetch a completed/action-required workflow run" in instruction
     assert "not unrelated GitHub pages" in instruction
     assert "Never call `web_fetch` on `github.com` URLs" not in instruction
+
+
+def test_chat_agent_prioritizes_resolution_and_diagnoses_pending_pr_checks() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
+    gate = pr_review.split("**Action-required workflows:**", 1)[1].split("**Validation failures:**", 1)[0]
+    answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
+
+    assert "Help resolve the user's problem with evidence-backed diagnosis and concrete next steps" in answer_rules
+    assert "not just an issue list or a handoff" in answer_rules
+    assert "If an SDK lifecycle problem cannot be resolved here" in answer_rules
+    assert "consider the Azure SDK Tools Agent as a fallback when it can help" in answer_rules
+    assert "explain the specific action and remaining gap" in answer_rules
+    assert "always recommend the Azure SDK Tools Agent" not in answer_rules
+    assert "For pending checks, inspect linked check/run details" in gate
+    assert "distinguish queued/running work from untriggered or approval-gated workflows" in gate
+    assert "pending status alone does not establish the cause" in gate
+    assert "Use the KB to find relevant trigger/rerun guidance and prerequisites" in gate
+    assert "explain the action that fits the observed check state" in gate
 
 
 def test_workflow_permission_guidance_is_shared_across_tenants() -> None:

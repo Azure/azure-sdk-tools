@@ -114,6 +114,7 @@ stimuli:
       are unchanged and valid.
 
       Review only the mounted inputs and the skill's SKILL.md and references.
+      Use only skill, view, glob, and grep tools; do not use shell tools.
       Do not inspect eval definitions or fixture copies inside the skill directory.
       Do not modify files, run builds, contact external services, or post comments.
       Return only JSON with a findings array. Each finding must have path, line
@@ -134,11 +135,11 @@ stimuli:
         type: tool-calls
         config:
           required:
-            - name: "^(view|powershell|bash)$"
+            - name: "^view$"
           disallowed:
-            - name: "^(edit|create|apply_patch|web_fetch)$"
-            - name: "^azure-sdk-mcp[-_]"
-            - name: "^(view|grep|powershell|bash)$"
+            # Reject every tool outside the native read-only set, including shells.
+            - name: "^(?!(skill|view|glob|grep)$).+$"
+            - name: "^(view|grep|glob)$"
               pattern: '[/\\]evals[/\\]'
       - &unchanged_workspace
         type: diff-empty
@@ -182,6 +183,7 @@ stimuli:
       when the five-minute deadline expires.
 
       Review only the mounted inputs and the skill's SKILL.md and references.
+      Use only skill, view, glob, and grep tools; do not use shell tools.
       Do not inspect eval definitions or fixture copies inside the skill directory.
       Do not modify files, run builds, contact external services, or post comments.
       Return only JSON with a findings array. Each finding must have path, line
@@ -274,6 +276,7 @@ stimuli:
       Deterministic analyzer diagnostics are handled separately from this review.
 
       Review only the mounted inputs and the skill's SKILL.md and references.
+      Use only skill, view, glob, and grep tools; do not use shell tools.
       Do not inspect eval definitions or fixture copies inside the skill directory.
       Do not modify files, run builds, contact external services, or post comments.
       Return only JSON with a findings array. Each finding must have path, line

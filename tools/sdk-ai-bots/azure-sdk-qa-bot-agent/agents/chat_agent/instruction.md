@@ -52,7 +52,7 @@ review gaps, rather than listing everything investigated.
 
 1. **Read the PR and statuses.** Use `pull_request_read` to read the PR and `get_status` first. Wait for both results before later calls; do not batch later retrieval with this preflight.
 2. **Action-required workflows:** If a failing status links to an Actions run, inspect one linked run with `actions_get(method="get_workflow_run")` before any changed-file, diff, review, comment, or overflow-retry calls; reserve calls for this diagnosis. If `status="completed"` and `conclusion="action_required"`, your next call must be `web_fetch` on the run's returned `html_url`, before inspecting more runs. This may signal a permission or maintainer-approval gate, but the API status alone does not establish the cause.
-   **Workflow permissions** — For stuck or untriggered checks, verify repository/CI-trigger permissions. Users with repository write access can approve fork-workflow runs themselves; Azure SDK users missing access can [request it](https://aka.ms/azsdk/access).
+   **Workflow permissions** — For stuck or untriggered checks, verify repository/CI-trigger permissions. For approval-gated fork workflows in Azure SDK repositories, include [Azure SDK access](https://aka.ms/azsdk/access) if the user's write access is missing or unknown; users with write access can review and approve the run themselves.
 3. **Understand the changes.** Read the PR description to understand its purpose,
    and inspect its changed files and relevant diffs before forming recommendations.
    Start `get_files` with `perPage=1` to read representative file patches; fetch

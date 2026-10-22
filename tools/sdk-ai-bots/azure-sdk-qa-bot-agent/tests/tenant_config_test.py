@@ -460,8 +460,10 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     assert instruction.count("**Workflow permissions**") == 1
     assert "For stuck or untriggered checks" in pr_review
     assert "verify repository/CI-trigger permissions" in pr_review
-    assert "Users with repository write access can approve fork-workflow runs themselves" in pr_review
-    assert "Azure SDK users missing access can [request it](https://aka.ms/azsdk/access)" in pr_review
+    assert "For approval-gated fork workflows in Azure SDK repositories" in pr_review
+    assert "include [Azure SDK access](https://aka.ms/azsdk/access)" in pr_review
+    assert "if the user's write access is missing or unknown" in pr_review
+    assert "users with write access can review and approve the run themselves" in pr_review
     assert "For approval gates, ask a maintainer to approve the run instead" not in pr_review
     prompt = (root / "prompts" / "tenants" / "api_spec_review.md").read_text(encoding="utf-8")
     assert "When a pipeline appears stuck or a check is not triggered" not in prompt

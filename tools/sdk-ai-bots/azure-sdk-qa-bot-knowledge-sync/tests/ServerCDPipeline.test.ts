@@ -28,7 +28,7 @@ describe('server CD job separation', () => {
         expect(server.condition).toBe("and(succeeded(), ${{ ne(parameters.deploymentTarget, 'knowledge-sync') }})");
         expect(server.steps.map((step: any) => step.displayName)).toEqual([
             'Checkout repository', 'Resolve Image Tag', 'Build & Push Image',
-            'Validate Image Exists', 'Update App Service', 'Health Check'
+            'Validate Image Exists', 'Configure Agent Routing', 'Update App Service', 'Health Check'
         ]);
         expect(server.steps[2].condition).toBe("and(succeeded(), ne('${{ parameters.environment }}','prod'))");
         expect(JSON.stringify(server.steps)).not.toContain('deploymentTarget');

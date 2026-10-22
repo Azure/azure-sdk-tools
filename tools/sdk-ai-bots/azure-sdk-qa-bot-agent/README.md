@@ -188,6 +188,10 @@ To exercise the loop locally:
    feedback lifecycle records. The dashboard supports tenant, status,
    updated-time, and conversation ID filters.
 
+The overview at `/dashboard/overview` excludes personal chats and synthetic
+non-channel conversation IDs from reports. This display-only filter does not
+prevent conversation messages or QA records from being stored.
+
 ## Testing Remote Endpoints
 
 The main endpoint for querying the bot is `/agent/chat`. See [tests/api_test.rest](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tests/api_test.rest) for example requests.

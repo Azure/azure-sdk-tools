@@ -18,7 +18,6 @@ from models.conversation import (
 )
 from models.qa_record import FeedbackStatus, QARecord, QAStatus
 from services.conversation_service import ConversationService
-from utils.channel_policy import is_channel_conversation_id
 from utils.azure_cosmosdb import (
     get_conversation_message_container,
     query_qa_records_by_qa_status,
@@ -122,10 +121,6 @@ class QARecordService:
             if candidate is None:
                 continue
             if candidate.channel_id and candidate.channel_id in excluded_channels:
-                continue
-            if candidate.channel_id and not is_channel_conversation_id(
-                candidate.channel_id
-            ):
                 continue
 
             existing_doc = await read_qa_record(

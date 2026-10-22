@@ -1,20 +1,126 @@
 # Release History
 
-## 0.6.46 (Unreleased)
+## 0.6.55 (Unreleased)
 
 ### Features Added
 
-- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
+- Added optional `--release-plan-id` / `releasePlanId` to SDK package release. A supplied positive ID is forwarded as the `ReleasePlanId` release-pipeline parameter; omitted/zero IDs preserve the existing queue payload.
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
+- Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
+
+### Other Changes
+
+## 0.6.54 (2026-10-15)
+
+### Features Added
+
+- `api-review create` supports API Review Hub pipeline ref overrides through `AZSDK_API_REVIEW_PIPELINE_REF`, `AZSDK_API_REVIEW_TOOLS_REF`, and `AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF`. These overrides are intentionally unavailable to the MCP tool.
+
+### Breaking Changes
+
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` no longer support Swift.
+- `--package-type` and the corresponding MCP parameter now normalize `client`, `spring`, and `functions` to API Review Hub's `data` package type.
+
+### Other Changes
+
+- Refactored the API Review Hub pipeline to build shared tooling once and dispatch isolated base and target artifact-generation jobs.
+
+## 0.6.53 (2026-10-12)
+
+### Features Added
+
+- `release-plan update-release-status` resolves the release plan from a supplied `--release-plan-id` first, then from a supplied `--sdk-pull-request` linked to exactly one in-progress plan, and validates the language/package entry inside that plan. Only when neither input is supplied does the original package-name lookup run as a transitional fallback and log `LEGACY_RELEASE_PLAN_LOOKUP`, so existing release pipelines keep working. No API version is required.
+- Added support for Attestation Status field updates in Product Onboarding.
+
+### Bugs Fixed
+
+- Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or SDK PR never falls back to the package lookup, including invalid or unlinked SDK PRs.
+- Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
+- Fixed serialization for ADO `Sku` product type in Product Onboarding.
+- Fixed `azsdk_package_detect_breaking_change` to avoid an unexpected exception when `hasBreakingChange` is false and `changes` is null or empty.
+
+## 0.6.52 (2026-10-05)
+
+### Features Added
+
+- Support optional spec commit SHA on release-plan creation and updates.
+
+### Breaking Changes
+
+- Release-plan metadata updates now require the exact Azure DevOps work item ID. PR/path-only lookup and Release Plan ID fallback are no longer used by this update command.
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept an optional package type (`mgmt`, `client`, `spring`, or `functions`). API Review Hub requires it for new packages and validates it against stored metadata for existing packages.
+
+### Bugs Fixed
+
+- SDK generation uses the release plan's saved spec commit when present; existing branch/PR behavior is preserved for plans without a saved commit.
+
+## 0.6.51 (2026-10-01)
+
+### Features Added
+
+- Added monthly cleanup and state-specific reminders for overdue release plans, with a one-calendar-month grace period, protection for approved or merged SDK PRs and released SDKs, and reason-specific owner emails with calculated dates.
+- Added `release-plan abandon-overdue --dry-run` to preview eligible plans, skipped-plan links, and summary counts without updates or emails.
+
+## 0.6.50 (2026-09-30)
+
+### Features Added
+
+- `azsdk_package_get_approval_status` now accepts common SDK language aliases.
+
+### Bugs Fixed
+
+- `azsdk_release_sdk` now queries the package approval service for current API review status instead of relying on the Azure DevOps package work item field.
+- Completing a management-plane release plan now queues pipeline 8254 for the nearest newer In Progress Public Preview or GA release plan for the same TypeSpec project, passing `ReleasePlanId`. The pending plan is related to the completed plan, and its submitter and SDK support aliases are notified after the run is queued.
+- If follow-up SDK generation cannot be queued for an identified pending plan, its notification directs the submitter to use the azsdk agent to generate SDKs and consult the release plan dashboard. Automation responses include queued plan/run details, metadata warnings, and failure guidance.
+- Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
+- Preserve detected SDK changes when classification or catalog loading fails, and reject invalid detector reports instead of silently falling back.
+
+## 0.6.49 (2026-09-21)
+
+- Added `--max-attempts` / `maxAttempts` to customized-update for bounded custom-code repairs in one retained conversation, with `attemptsUsed` in the existing response.
+
+- Added optional `--additional-arguments` support to `package build` (and `azsdk_package_build_code`) for passing additional arguments to the build command.
+
+### Breaking Changes
+
+- Release plan JSON/MCP responses no longer include `SDKInfo.PullRequestStatus`, which was sourced from potentially stale Azure DevOps data. SDK PR URLs and the dashboard link remain available for checking current PR status; generation and release statuses are unchanged.
+
+### Bugs Fixed
+
+- Customized-code repairs validate classifier no-op results and retain final build/regeneration diagnostics when attempts are exhausted.
+- Release plan creation and target-month updates now reject malformed or past target months, while allowing the current UTC month and future months.
+- Linking a spec PR now sets idle SDK generation to `Not applicable` instead of `In progress`, while preserving recorded in-progress runs. `Pending` still blocks duplicate requests; stale `In progress` states can be retried when the pipeline is finished, missing, invalid, or inaccessible.
+
+## 0.6.47 (2026-09-16)
+
+### Breaking Changes
+
+- Release-plan lookup by TypeSpec project path and API version now also requires and matches the API release type.
+
+### Bugs Fixed
+
+- Release plan updates now use package names emitted from TypeSpec metadata without applying legacy package-prefix validation.
+
+## 0.6.46 (2026-09-15)
+
+### Features Added
+
+- `azsdk release-plan get` and `azsdk_get_release_plan` now accept an optional `--api-version`/`apiVersion` selector with a required TypeSpec project path, matching the version stored on the release plan's child API Spec work item.
+- Implemented the three-edit-scope workflow in the `azsdk_customized_code_update` tool.
+- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
+- Create release plan now checks for an existing plan with the same API version and falls back to matching by TypeSpec project and release-plan type only when the API version is unknown.
+- Create and update release plan tools now automatically mark a private preview release plan as `Finished` when its spec pull request has been merged.
+
+### Bugs Fixed
+
+- Skip SDK generation when the requested language is already marked `Released` in the release plan.
 - Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
 - Ignored release-table headers and separators so packages without planned release dates remain blocked.
 - Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.
-
-### Other Changes
 
 ## 0.6.45 (2026-09-08)
 

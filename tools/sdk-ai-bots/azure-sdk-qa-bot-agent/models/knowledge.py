@@ -85,6 +85,7 @@ class KnowledgeChunk(BaseModel):
     header1: str = Field(default="", validation_alias="header_1")
     header2: str = Field(default="", validation_alias="header_2")
     header3: str = Field(default="", validation_alias="header_3")
+    ordinal_position: int = 0
     page_type: str = ""
     chunk_refs: list[str] = Field(default_factory=list, validation_alias="chunk_refs_str")
     rerank_score: float = Field(default=0.0, validation_alias="@search.reranker_score")
@@ -97,6 +98,15 @@ class KnowledgeChunk(BaseModel):
         if isinstance(v, (int, float)):
             return float(v)
         return float(str(v))
+
+    @field_validator("ordinal_position", mode="before")
+    @classmethod
+    def _coerce_ordinal_position(cls, v: object) -> int:
+        if v is None:
+            return 0
+        if isinstance(v, (int, float, str)):
+            return int(v)
+        return int(str(v))
 
     @field_validator("page_type", mode="before")
     @classmethod

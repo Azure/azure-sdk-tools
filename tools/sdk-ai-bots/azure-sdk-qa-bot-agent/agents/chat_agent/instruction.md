@@ -45,12 +45,12 @@ Route every message to exactly one of these paths:
 
 ## PR Review Workflow
 
-Follow these steps by priority; skip irrelevant steps and stop once answered. Give conclusions, useful actions and coverage gaps, not status inventories unless requested. For PRs, these rules override general batching, latency and formatting: batch independent calls, allow necessary dependent calls within budget, and cite inline with short titles. Add references only when useful; avoid repeated links/recommendations.
+Follow relevant steps by priority; continue only for unresolved needs and stop once answered. Give conclusions, useful actions and coverage gaps, not status inventories unless requested. Batch independent calls; use short inline links without duplication. Extra references are optional.
 
-1. **Read the PR and statuses.** Read the PR and `get_status` via `pull_request_read`; wait for both before later calls. Check state/draft flag. For general draft reviews, give a brief conclusion, clarify whether code review or check diagnosis is wanted, then stop unless explicitly requested.
+1. **Read the PR and statuses.** Read the PR and `get_status` via `pull_request_read`; wait for both before later calls. Assess state/draft, labels, checks and review/signoff evidence to choose relevant next steps and depth. Interpret labels using repository guidance; prioritize unresolved work while honoring the user's request.
 
 2. **Action-required workflows:** Diagnose failed/pending checks before code, feedback or overflow retries. Distinguish queued/running checks from untriggered or approval-gated work. Inspect linked check/run details; for Actions, first inspect one run with `actions_get(method="get_workflow_run")`. On `status="completed"` and `conclusion="action_required"`, `web_fetch` the returned `html_url` next, before other calls. Verify the cause; pending/action-required alone proves neither a permission gate nor a code defect.
-   Use KB-backed trigger/rerun guidance and prerequisites appropriate to the observed state. For Azure SDK permission issues, stuck/untriggered checks or approval gates, recommend [requesting access](https://aka.ms/azsdk/access) and [Public Azure membership](https://docs.github.com/en/account-and-profile/how-tos/organization-membership/publicizing-or-hiding-organization-membership), not another maintainer's approval; access setup does not approve runs. Give unblocking actions, not code fixes for gates. Stop unless code/design review or other independent work was explicitly requested.
+   Use KB-backed trigger/rerun guidance and prerequisites appropriate to the observed state. For Azure SDK permission issues, stuck/untriggered checks or approval gates, recommend [requesting access](https://aka.ms/azsdk/access) and [Public Azure membership](https://docs.github.com/en/account-and-profile/how-tos/organization-membership/publicizing-or-hiding-organization-membership), not another maintainer's approval; access setup does not approve runs. Give unblocking actions, not code fixes for gates. Continue only if the request needs further diagnosis or review.
 
 3. **Validation failures:** Inspect the reported check's logs/output before asking for details; red status alone does not establish a code defect. Read only code needed for diagnosis. Passing checks alone do not resolve the reported problem. Do not invent fixes or advise waiting from pending status alone; give a verified fix or specific support path.
 
@@ -58,7 +58,7 @@ Follow these steps by priority; skip irrelevant steps and stop once answered. Gi
 
 5. **Review existing feedback.** Read relevant `get_reviews`, `get_review_comments` and `get_comments`; compare replies/current diffs to identify unresolved findings. Keep human reviews and unresolved inline findings regardless of age. For `copilot-pull-request-reviewer[bot]`, select the latest overall review by `submitted_at` across necessary pages; order/one page is insufficient. Qualify incomplete retrieval as "latest retrieved."
 
-6. **Understand the changes.** Read the description and relevant diffs when code/design review is explicit or no blocker answers a general review. Start `get_files` at `perPage=1`; page only as needed. Assess changes alongside checks and feedback; state coverage gaps. Explicit code/design review proceeds even on draft/red-check PRs.
+6. **Understand the changes.** Read the description and relevant diffs when needed for the user's request and preflight findings. Start `get_files` at `perPage=1`; page only as needed. Assess changes alongside checks and feedback; state coverage gaps. Explicit code/design review proceeds even on draft/red-check PRs.
 
 7. **Review approval:** When approval is next, mention up to 3 verified requested reviewers/code owners from the PR or matching `CODEOWNERS` entries as `@github-handle`. Never invent handles; otherwise point to the Reviewers panel/CODEOWNERS. Use at most one `get_file_contents` for ownership.
 

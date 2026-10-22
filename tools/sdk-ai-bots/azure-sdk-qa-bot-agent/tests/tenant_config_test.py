@@ -91,8 +91,8 @@ def test_stewardship_pr_guidance_delegates_shared_rules_and_preserves_board_poli
     assert "up to 3 short bullets" not in content
     assert "Brevity limits the answer, not the investigation" not in content
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
-    assert "cite inline with short titles" in pr_review
-    assert "avoid repeated links/recommendations" in pr_review
+    assert "short inline links without duplication" in pr_review
+    assert "Extra references are optional" in pr_review
     assert "All your tools are read-only" in instruction
     assert "Separate design findings, Board signoff and merge readiness" in content
     assert "Green checks and signoff do not prove design correctness" in content
@@ -161,10 +161,9 @@ def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
     )
     positions = [pr_review.index(f"{index}. {step}") for index, step in enumerate(steps, start=1)]
     assert positions == sorted(positions)
-    assert "Follow these steps by priority; skip irrelevant steps and stop once answered" in pr_review
+    assert "Follow relevant steps by priority; continue only for unresolved needs and stop once answered" in pr_review
     assert "wait for both before later calls" in pr_review
-    assert "For PRs, these rules override general batching, latency and formatting" in pr_review
-    assert "batch independent calls, allow necessary dependent calls within budget" in pr_review
+    assert "Batch independent calls" in pr_review
     assert "at most 8 tool calls per turn total" in instruction
     assert "GitHub MCP is read-only" in pr_review
 
@@ -409,7 +408,7 @@ def test_merge_and_workflow_guidance_is_in_pr_review_workflow() -> None:
         assert rule not in other_tools
         assert instruction.count(rule) == 1
     assert "**Validation failures:**" in pr_review
-    assert "For general draft reviews" in pr_review
+    assert "Assess state/draft, labels, checks and review/signoff evidence" in pr_review
     assert "**Review approval:**" in pr_review
     assert "required checks/reviews and other merge conditions hold" in pr_review
     assert "GitHub MCP is read-only" in pr_review
@@ -470,7 +469,7 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     assert "not another maintainer's approval" in gate
     assert "access setup does not approve runs" in gate
     assert "Give unblocking actions, not code fixes for gates" in gate
-    assert "Stop unless code/design review or other independent work was explicitly requested" in gate
+    assert "Continue only if the request needs further diagnosis or review" in gate
     assert "if the user's write access is missing or unknown" not in pr_review
     assert "verify repository/CI-trigger permissions" not in pr_review
     assert "For approval gates, ask a maintainer to approve the run instead" not in pr_review
@@ -506,12 +505,29 @@ def test_pr_review_response_matches_customer_question_with_useful_context() -> N
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     normalized = " ".join(pr_review.split())
     assert "Give conclusions, useful actions and coverage gaps, not status inventories unless requested" in normalized
-    assert "when code/design review is explicit or no blocker answers a general review" in normalized
+    assert "when needed for the user's request and preflight findings" in normalized
     assert "stop once answered" in normalized
     assert "When approval is next, mention up to 3 verified requested reviewers/code owners" in normalized
     assert "not code fixes for gates" in normalized
     assert "Never invent handles" in pr_review
     assert "GitHub MCP is read-only" in pr_review
+
+
+def test_pr_preflight_uses_status_and_labels_to_select_next_steps() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
+    preflight = pr_review.split("1. **Read the PR and statuses.**", 1)[1].split("\n2.", 1)[0]
+    changes = pr_review.split("6. **Understand the changes.**", 1)[1].split("\n7.", 1)[0]
+
+    assert "Assess state/draft, labels, checks and review/signoff evidence" in preflight
+    assert "to choose relevant next steps and depth" in preflight
+    assert "Interpret labels using repository guidance" in preflight
+    assert "prioritize unresolved work while honoring the user's request" in preflight
+    assert "when needed for the user's request and preflight findings" in changes
+    assert "For verified signoff" not in pr_review
+    assert "neither verified signoff nor blockers" not in pr_review
 
 
 def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None:
@@ -523,13 +539,12 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
     assert "red status alone does not establish a code defect" in pr_review
     assert "Read only code needed for diagnosis" in pr_review
     preflight = pr_review.split("1. **Read the PR and statuses.**", 1)[1].split("\n2.", 1)[0]
-    assert "Check state/draft flag" in preflight
-    assert "For general draft reviews" in preflight
-    assert "give a brief conclusion, clarify whether code review or check diagnosis is wanted" in preflight
-    assert "then stop unless explicitly requested" in preflight
+    assert "Assess state/draft, labels, checks and review/signoff evidence" in preflight
+    assert "to choose relevant next steps and depth" in preflight
+    assert "honoring the user's request" in preflight
     assert "Draft state alone does not require a deep code review; still diagnose relevant check failures" not in pr_review
     assert "Explicit code/design review proceeds even on draft/red-check PRs" in pr_review
-    assert "when code/design review is explicit or no blocker answers a general review" in pr_review
+    assert "when needed for the user's request and preflight findings" in pr_review
     assert "Read relevant `get_reviews`, `get_review_comments` and `get_comments`" in pr_review
     assert "follow the relevant **PR Review Workflow** steps; skip irrelevant steps" in instruction
     assert "read the PR, its failing check runs, and their logs before answering" not in instruction
@@ -541,8 +556,8 @@ def test_pr_review_cites_inline_without_changing_general_reference_format() -> N
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     formatting = instruction.split("## Formatting & References\n", 1)[1].split("\n## ", 1)[0]
-    assert "cite inline with short titles" in pr_review
-    assert "Add references only when useful; avoid repeated links/recommendations" in pr_review
+    assert "short inline links without duplication" in pr_review
+    assert "Extra references are optional" in pr_review
     assert "Append a References section" in formatting
     assert "**References**" in formatting
 

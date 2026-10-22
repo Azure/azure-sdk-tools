@@ -90,7 +90,8 @@ Azure DevOps repository read access and access to the configured Azure resources
 
 SSH checkout uses the base64-encoded `SSH_PRIVATE_KEY` App Service setting.
 Backend CD provisions it from the ADO Secure File named EMU-SSH-PRIVATE-KEY
-for dev and production. Authorize the backend CD pipeline to use that secure file;
+for both `all` and `knowledge-sync` deployments in dev and production.
+Authorize the backend CD pipeline to use that secure file;
 it may contain the original PEM/OpenSSH private key or its base64-encoded value.
 The key is not included in the container image or WebJob ZIP. Local execution
 requires the same environment variable for SSH repositories.
@@ -117,8 +118,8 @@ Select the backend CD parameter `deploymentTarget`:
 - `all` (default): deploy the server, then knowledge sync; preview deploys only the server.
 - `server`: deploy only the server.
 - `knowledge-sync`: build, test, and deploy only the knowledge-sync WebJob in dev
-	or production, skipping the server and SSH key provisioning. Existing App Service
-	settings must already be configured. Preview rejects this target.
+	or production, including SSH key provisioning while skipping the server.
+	Other required App Service settings must already be configured. Preview rejects this target.
 
 For a standalone deployment, set `WEBJOB_ZIP`, `APP_NAME`, `RESOURCE_GROUP`, and
 `WEBJOB_NAME` on the deployment machine, then run `node scripts/deploy-webjob.mjs`.

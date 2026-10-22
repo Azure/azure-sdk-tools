@@ -256,7 +256,7 @@ Builds the backend API (FastAPI) container image and deploys to Azure App Servic
    - `knowledge-sync`: build, test, and deploy only the knowledge sync WebJob in dev/prod.
 - **What it does**:
    1. `DeployServer` resolves the image tag from `_version.py` (preview/prod) or git short SHA (dev), builds and pushes to ACR (except prod, which reuses the image), validates the image, updates App Service, and checks server health.
-   2. `DeployKnowledgeSync` builds, tests, packages and publishes the knowledge sync ZIP, and deploys the scheduled WebJob. With `all`, it runs after server success and provisions the SSH key; with `knowledge-sync`, it runs independently using existing settings. Preview omits this job.
+   2. `DeployKnowledgeSync` builds, tests, packages and publishes the knowledge sync ZIP, provisions the SSH key, and deploys the scheduled WebJob. With `all`, it runs after server success; with `knowledge-sync`, it runs independently and provisions the same key while using the other existing settings. Preview omits this job.
 
 WebJob deployment may restart the backend when applying App Service prerequisites,
 even when its container image is unchanged. See the [knowledge sync deployment guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/README.md).

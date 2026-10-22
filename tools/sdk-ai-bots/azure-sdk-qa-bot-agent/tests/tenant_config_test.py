@@ -460,6 +460,11 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     assert instruction.count("**Workflow permissions**") == 1
     assert "For permission issues or workflow approval gates in Azure SDK repositories" in pr_review
     assert "direct users to [request access](https://aka.ms/azsdk/access)" in pr_review
+    assert "set their Azure organization membership to [Public]" in pr_review
+    assert (
+        "[Public](https://docs.github.com/en/account-and-profile/how-tos/"
+        "organization-membership/publicizing-or-hiding-organization-membership)"
+    ) in pr_review
     assert "if the user's write access is missing or unknown" not in pr_review
     assert "verify repository/CI-trigger permissions" not in pr_review
     assert "For approval gates, ask a maintainer to approve the run instead" not in pr_review

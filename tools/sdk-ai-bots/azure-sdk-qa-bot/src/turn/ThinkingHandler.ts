@@ -1,10 +1,11 @@
-import { CardFactory, MessageFactory, TurnContext } from 'botbuilder';
+import { Activity, CardFactory, Mention, MessageFactory, TurnContext } from 'botbuilder';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
 import { TenantConfigManager, KnownTenants } from '../config/tenant.js';
 import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
+import type { ChannelBotSettings } from '../config/channel.js';
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
 import { sendActivityWithRetry, updateActivityWithRetry } from '../activityUtils.js';
@@ -67,33 +68,39 @@ export class ThinkingHandler {
     }
   }
 
-  // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
-    const { answer, isError } = this.generateAnswer(reply);
-    const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
-    const traceId = isCompletionResponsePayload(reply) ? reply.trace_id : undefined;
-    const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant, currentChannelTenant);
-    const entity: AIEntity = {
-      ...this.aiGeneratedEntity,
-    };
-    if (traceId) {
-      entity.usageInfo = {
-        type: 'https://schema.org/Message',
-        '@type': 'CreativeWork',
-        name: 'Internal Tracking',
-        description: `Trace ID: ${traceId}`,
+  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string, botSettings?: ChannelBotSettings) {
+    const completion = isCompletionResponsePayload(reply) ? reply : undefined;
+    try {
+      try {
+        await this.safeCancelTimer();
+      } catch (error) {
+        logger.warn('Failed to stop Thinking timer; proceeding with reply delivery', { error, meta: this.meta });
+      }
+      const { answer, mentions } = this.generateAnswer(reply, currentChannelTenant, botSettings);
+      const entity: AIEntity = {
+        ...this.aiGeneratedEntity,
       };
-    }
-    const updated: Partial<TurnContext> = {
-      type: 'message',
-      id: this.resourceId,
-      text: formattedAnswer,
-      entities: [entity],
-      conversation: this.context.activity.conversation,
-    } as any;
+      if (completion?.trace_id) {
+        entity.usageInfo = {
+          type: 'https://schema.org/Message',
+          '@type': 'CreativeWork',
+          name: 'Internal Tracking',
+          description: `Trace ID: ${completion.trace_id}`,
+        };
+      }
+      const activity: Partial<Activity> = {
+        type: 'message',
+        id: this.resourceId,
+        text: answer,
+        entities: [entity, ...mentions],
+        conversation: this.context.activity.conversation,
+      };
 
-    const response = await updateActivityWithRetry(this.context, updated);
-    if (response) {
+      const response = await updateActivityWithRetry(this.context, activity);
+      if (!response || !response.id?.trim()) {
+        logger.error('No Teams activity ID for reply; not retrying', { meta: this.meta });
+        return;
+      }
       await this.saveCurrentConversationMessage(
         this.context.activity.conversation.id,
         this.context.activity.id,
@@ -103,32 +110,45 @@ export class ThinkingHandler {
         replyStartTime,
         this.meta
       );
+    } catch (error) {
+      logger.error('Unable to finish Teams reply; not posting another activity', { error, meta: this.meta });
     }
   }
 
-  private generateAnswer(reply: CompletionResponsePayload | RagApiError): { answer: string; isError: boolean } {
+  private generateAnswer(
+    reply: CompletionResponsePayload | RagApiError,
+    currentChannelTenant?: string,
+    botSettings?: ChannelBotSettings
+  ): { answer: string; mentions: Mention[] } {
     if (!isCompletionResponsePayload(reply)) {
       const shouldRetryLater = reply.code === 'LLM_SERVICE_FAILURE' || reply.code === 'SEARCH_FAILURE';
       const retryMessage = shouldRetryLater ? ' Please try again later.' : '';
       const errorReply = `🚫Sorry, I'm having some ${reply.category} issues right now and can't answer your question.${retryMessage} Error: ${reply.message}.`;
-      return { answer: errorReply, isError: true };
+      return { answer: errorReply, mentions: [] };
     }
 
-    // received reply successfully
-    const answerWithReferences = this.addReferencesToReply(reply);
-    return { answer: answerWithReferences, isError: false };
-  }
-
-  /**
-   * Format the answer with conditional footer based on route_tenant.
-   * For error responses, returns the answer as-is without footer.
-   */
-  private async formatAnswer(answer: string, isError: boolean, routeTenant?: string, currentChannelTenant?: string): Promise<string> {
-    // For error responses, return plain text without footer
-    if (isError) {
-      return answer;
+    let confidence = reply.confidence;
+    let notifyExperts = reply.notify_experts === true && botSettings?.allow_notify_experts === true;
+    if ((reply.notify_experts !== undefined && typeof reply.notify_experts !== 'boolean') ||
+        (confidence != null && (!['high', 'medium', 'low'].includes(confidence.level) ||
+          typeof confidence.summary !== 'string' ||
+          !Array.isArray(confidence.unresolved_needs) ||
+          !confidence.unresolved_needs.every(need => typeof need === 'string') ||
+          typeof confidence.needs_expert_help !== 'boolean'))) {
+      logger.warn('Invalid confidence response; displaying the answer without confidence or mentions', { meta: this.meta });
+      confidence = undefined;
+      notifyExperts = false;
     }
-
+    let answer = this.addReferencesToReply(reply);
+    if (botSettings?.show_confidence_label && confidence) {
+      const level = confidence.level[0].toUpperCase() + confidence.level.slice(1);
+      answer = `**Confidence: ${level}**\n\n${answer}`;
+    }
+    if (confidence?.summary) answer += `\n\n${confidence.summary}`;
+    if (confidence?.unresolved_needs.length) {
+      answer += `\n\n**Unresolved needs**\n${confidence.unresolved_needs.map(need => `- ${need}`).join('\n')}`;
+    }
+    const routeTenant = reply.route_tenant;
     const footerParts: string[] = [];
 
     if (routeTenant) {
@@ -152,11 +172,24 @@ export class ThinkingHandler {
       footerParts.push(`🚀 **Try the Azure TypeSpec Author skill** to write API specifications in TypeSpec! Check out the Quick Start and samples [here](https://azure.github.io/typespec-azure/docs/getstarted/typespec-authoring-skill/).`);
     }
 
-    if (footerParts.length === 0) {
-      return answer;
+    const mentions: Mention[] = [];
+    if (notifyExperts) {
+      if (!botSettings.experts.length) {
+        logger.warn('Expert notification authorized without recipients; displaying the answer without mentions', { meta: this.meta });
+      } else {
+        const escape = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        mentions.push(...botSettings.experts.map(expert => ({
+          type: 'mention',
+          mentioned: { id: expert.id, name: expert.name },
+          text: `<at>${escape(expert.name)}</at>`,
+        })));
+        answer += `\n\n${mentions.map(mention => mention.text).join(' ')}, could you help with the unresolved parts?`;
+      }
     }
-
-    return `${answer}\n\n---\n\n${footerParts.join('\n\n')}`;
+    if (footerParts.length) {
+      answer += `\n\n---\n\n${footerParts.join('\n\n')}`;
+    }
+    return { answer, mentions };
   }
 
   private async startCore(resourceId: string) {

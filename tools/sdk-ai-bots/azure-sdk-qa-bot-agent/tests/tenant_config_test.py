@@ -205,6 +205,29 @@ def test_shared_retrieval_uses_original_batch_and_latency_constraints() -> None:
     assert "only to resolve remaining review questions" in pr_review
 
 
+def test_shared_verdict_checks_take_precedence_over_answer_style() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
+
+    assert "Check applicability before a verdict" in answer_rules
+    assert "takes precedence over direct-answer style" in answer_rules
+    assert "pair each case-specific verdict with the source passage and request facts" in answer_rules
+    assert "check relevant exceptions before declaring an outcome required or forbidden" in answer_rules
+    assert "A Wiki conclusion needs supporting source passages covering the same case" in answer_rules
+    assert "violating a requirement does not establish an alternative classification" in answer_rules
+    assert "Treat an unmatched prerequisite as unresolved, not an assumption" in answer_rules
+    assert "give conditional guidance and ask for that fact" in answer_rules
+    assert "Do not transfer rules between different lifecycles, branches, or SDKs" in answer_rules
+    assert "keep the case-specific verdict conditional" in answer_rules
+    assert "Lead with the strongest conclusion the evidence establishes" in answer_rules
+    assert "If applicability is unresolved, state that condition first instead of assuming it" in answer_rules
+    retrieval = instruction.split("## Retrieval (Evidence-First ReAct)\n", 1)[1].split("\n## ", 1)[0]
+    assert "For a short question, include its exact wording in an opening query" in retrieval
+    assert "Do not introduce unstated constraints into search queries" in retrieval
+
+
 def test_shared_skill_selection_follows_new_evidence_without_user_handoff() -> None:
     instruction = (
         Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"

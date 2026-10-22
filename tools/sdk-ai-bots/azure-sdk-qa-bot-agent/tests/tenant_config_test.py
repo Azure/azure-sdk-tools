@@ -67,8 +67,15 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
     assert "[skill_tenant_id]: api_stewardship_board_qa_bot" in content
     assert f"- {SRC_AZURE_AVOCADO_DOCS}:" in content
     assert "[skill_guideline]" in content
-    assert "Advisory only" in skill.frontmatter.description
+    assert "Data-plane API design and API Stewardship Board review guidance" in skill.frontmatter.description
+    assert "REST/SDK compatibility" in skill.frontmatter.description
+    assert "long-running operations" in skill.frontmatter.description
+    assert "Advisory only" not in skill.frontmatter.description
+    assert "Use typespec" not in skill.frontmatter.description
     assert "Give evidence-backed advice, not Board decisions" in content
+    assert "Use `typespec` for detailed authoring" in content
+    assert "`api-spec-review` for check investigation" in content
+    assert "`sdk-onboarding` for access or release-plan lifecycle" in content
     assert "repair infrastructure or prescribe permission changes" in content
     assert "Use maintained Board guidance" in content
     assert "async reviews, materials, lead times, Office Hours and support" in content
@@ -85,7 +92,6 @@ def test_stewardship_pr_guidance_delegates_shared_rules_and_preserves_board_poli
     assert "## Answer Style" not in content
     assert "up to 3 short bullets" not in content
     assert "Brevity limits the answer, not the investigation" not in content
-    assert "Brevity limits the answer, not the investigation" in instruction
     assert "Prefer short bullets with one idea each" in instruction
     assert "Use short descriptive link titles" in instruction
     assert "do not repeat the recommendation in a closing next-step section" in instruction
@@ -210,7 +216,7 @@ def test_stewardship_routes_arm_reviews_to_arm_office_hours() -> None:
     assert any(arm_office_hours in exclusion for exclusion in config.exclusions)
     assert f"[ARM Office Hours]({arm_office_hours})" in content
     assert "stop this Board review workflow" in content
-    assert "Direct ARM/management-plane reviews to ARM Office Hours" in skill.frontmatter.description
+    assert "ARM Office Hours" not in skill.frontmatter.description
 
 
 @pytest.mark.parametrize(

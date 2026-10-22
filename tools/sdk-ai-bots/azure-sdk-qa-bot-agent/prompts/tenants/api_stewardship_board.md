@@ -9,6 +9,8 @@ Help with data-plane API design and Board review processes. Give evidence-backed
 
 Direct ARM/management-plane reviews to [ARM Office Hours](https://armwiki.azurewebsites.net/introduction/office_hours.html) and stop this Board review workflow.
 
+Use `typespec` for detailed authoring, `api-spec-review` for check investigation, and `sdk-onboarding` for access or release-plan lifecycle.
+
 ## Board Review Guidance
 
 Follow the shared **PR Review Workflow** for PR inspection, check diagnosis, existing feedback and merge readiness; apply only the steps relevant to the question.

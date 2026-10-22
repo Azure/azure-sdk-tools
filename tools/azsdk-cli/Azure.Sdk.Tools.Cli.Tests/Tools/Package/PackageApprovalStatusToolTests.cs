@@ -70,7 +70,7 @@ public class PackageApprovalStatusToolTests
                 ReviewHub = new ApiReviewHubReleaseGateResult
                 {
                     StatusCode = 200,
-                    IsApproved = true,
+                    IsReleaseApproved = true,
                     IsApiApproved = true,
                     IsPackageNameApproved = true,
                     Reason = "approved",
@@ -141,7 +141,7 @@ public class PackageApprovalStatusToolTests
             ReviewHub = new ApiReviewHubReleaseGateResult
             {
                 StatusCode = 200,
-                IsApproved = isApproved,
+                IsReleaseApproved = isApproved,
                 IsApiApproved = isApiApproved,
                 IsPackageNameApproved = isPackageNameApproved,
                 Reason = reason,
@@ -190,7 +190,7 @@ public class PackageApprovalStatusToolTests
             ReviewHub = new ApiReviewHubReleaseGateResult
             {
                 StatusCode = 200,
-                IsApproved = isApproved,
+                IsReleaseApproved = isApproved,
                 IsApiApproved = true,
                 IsPackageNameApproved = isApproved,
                 Reason = isApproved ? "approved" : "packageNameNotApproved",
@@ -243,6 +243,7 @@ public class PackageApprovalStatusToolTests
         {
             Assert.That(structuredResult.GetProperty("isApproved").GetBoolean(), Is.EqualTo(isApproved));
             Assert.That(reviewHub.GetProperty("isApproved").GetBoolean(), Is.EqualTo(isApproved));
+            Assert.That(reviewHub.TryGetProperty("isReleaseApproved", out _), Is.False);
             Assert.That(reviewHub.GetProperty("isApiApproved").GetBoolean(), Is.True);
             Assert.That(reviewHub.GetProperty("isPackageNameApproved").GetBoolean(), Is.EqualTo(isApproved));
             Assert.That(reviewHub.GetProperty("reason").GetString(), Is.EqualTo(result.Reason));

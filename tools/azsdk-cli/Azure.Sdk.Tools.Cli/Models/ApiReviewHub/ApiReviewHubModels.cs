@@ -161,7 +161,7 @@ public class ApiReviewHubReleaseGateResult
     public int? StatusCode { get; set; }
 
     [JsonPropertyName("isApproved")]
-    public bool IsApproved { get; set; }
+    public bool IsReleaseApproved { get; set; }
 
     [JsonRequired]
     [JsonPropertyName("isApiApproved")]

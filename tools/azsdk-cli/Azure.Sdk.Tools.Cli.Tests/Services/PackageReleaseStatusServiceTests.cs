@@ -30,7 +30,7 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = true,
+                IsReleaseApproved = true,
                 IsApiApproved = true,
                 IsPackageNameApproved = true,
                 Reason = "approved"
@@ -53,7 +53,7 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = false,
+                IsReleaseApproved = false,
                 IsApiApproved = true,
                 IsPackageNameApproved = false,
                 Reason = "missingApproval"
@@ -114,7 +114,7 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = false,
+                IsReleaseApproved = false,
                 Reason = "repositoryNotSupported"
             });
         apiViewServiceMock
@@ -144,7 +144,7 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "java", "azure-keyvault-keys", "4.12.0b3", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = false,
+                IsReleaseApproved = false,
                 Reason = "repositoryNotSupported"
             });
         apiViewServiceMock
@@ -168,7 +168,7 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "cpp", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = false,
+                IsReleaseApproved = false,
                 Reason = "repositoryNotSupported"
             });
 
@@ -195,7 +195,7 @@ public class PackageReleaseStatusServiceTests
     {
         var reviewHub = new ApiReviewHubReleaseGateResult
         {
-            IsApproved = false,
+            IsReleaseApproved = false,
             IsApiApproved = isApiApproved,
             IsPackageNameApproved = isPackageNameApproved,
             Reason = reason,

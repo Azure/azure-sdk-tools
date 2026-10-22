@@ -18,6 +18,8 @@
 
 ### Other Changes
 
+- Renamed the API Review Hub release gate model's C# property to `IsReleaseApproved`; JSON/MCP responses retain `isApproved`.
+
 ## 0.6.54 (2026-10-15)
 
 ### Features Added

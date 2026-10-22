@@ -135,7 +135,7 @@ public class ApiReviewHubServiceTests
 
         var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", language, "pkg", packageVersion, "hash", "", CancellationToken.None);
 
-        Assert.That(result.IsApproved, Is.False);
+        Assert.That(result.IsReleaseApproved, Is.False);
         Assert.That(result.StatusCode, Is.EqualTo(200));
         Assert.That(result.Reason, Is.EqualTo("rejected"));
         Assert.That(result.Details, Is.EqualTo(new[] { "At least one architect has requested changes for this API." }));
@@ -351,7 +351,7 @@ public class ApiReviewHubServiceTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsApproved, Is.EqualTo(isApproved));
+            Assert.That(result.IsReleaseApproved, Is.EqualTo(isApproved));
             Assert.That(result.IsApiApproved, Is.EqualTo(isApiApproved));
             Assert.That(result.IsPackageNameApproved, Is.EqualTo(isPackageNameApproved));
             Assert.That(result.Reason, Is.EqualTo(reason));

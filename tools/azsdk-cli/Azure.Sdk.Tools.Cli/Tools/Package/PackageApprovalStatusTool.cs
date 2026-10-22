@@ -107,7 +107,7 @@ public class PackageApprovalStatusTool(
         if (result.ReviewHub.StatusCode is >= 200 and < 300)
         {
             details.Add($"Status Code: {result.ReviewHub.StatusCode}");
-            details.Add($"Release Approved: {result.ReviewHub.IsApproved}");
+            details.Add($"Release Approved: {result.ReviewHub.IsReleaseApproved}");
             details.Add($"API Approved: {result.ReviewHub.IsApiApproved}");
             details.Add($"Package Name Approved: {result.ReviewHub.IsPackageNameApproved}");
             details.Add($"Reason: {result.ReviewHub.Reason ?? "none"}");

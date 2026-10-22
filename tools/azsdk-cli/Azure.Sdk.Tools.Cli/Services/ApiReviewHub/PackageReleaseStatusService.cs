@@ -24,10 +24,10 @@ public class PackageReleaseStatusService(
             var reviewHubResult = await apiReviewHubService.GetReleaseGateStatusAsync(endpoint, language, packageName, packageVersion, apiHash, repoOwner, ct);
             reviewHubResult.StatusCode ??= (int)HttpStatusCode.OK;
             result.ReviewHub = reviewHubResult;
-            result.IsApproved = reviewHubResult.IsApproved;
+            result.IsApproved = reviewHubResult.IsReleaseApproved;
             result.FinalSource = "ApiReviewHub";
-            result.Reason = reviewHubResult.Reason ?? (reviewHubResult.IsApproved ? "approved" : "notApproved");
-            if (reviewHubResult.IsApproved)
+            result.Reason = reviewHubResult.Reason ?? (reviewHubResult.IsReleaseApproved ? "approved" : "notApproved");
+            if (reviewHubResult.IsReleaseApproved)
             {
                 return result;
             }

@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
+from models.feedback import RootCauseClassification
 from models.conversation import (
     ConversationMessageItem,
     ConversationType,
@@ -140,8 +141,12 @@ def test_dashboard_identity_falls_back_to_local_development(
 
 
 @pytest.mark.asyncio
-async def test_list_records_applies_filters_and_pagination() -> None:
-    container = _FakeContainer(_record().to_cosmos(), count=101)
+@pytest.mark.parametrize("feedback_status", ["pending_validation", "validation_skipped"])
+async def test_list_records_applies_filters_and_pagination(feedback_status) -> None:
+    record = _record()
+    assert record.feedback is not None
+    record.feedback.status = FeedbackStatus(feedback_status)
+    container = _FakeContainer(record.to_cosmos(), count=101)
     service = QADashboardService()
     start = datetime(2026, 8, 1, tzinfo=timezone.utc)
     end = datetime(2026, 8, 8, tzinfo=timezone.utc)
@@ -174,7 +179,8 @@ async def test_list_records_applies_filters_and_pagination() -> None:
             tenant_id="tenant-a",
             channel_id="channel-a",
             qa_status=QAStatus.failed,
-            feedback_status=FeedbackStatusFilter.pending_validation,
+            feedback_status=FeedbackStatusFilter(feedback_status),
+            classification=RootCauseClassification.insufficient_content,
             updated_from=start,
             updated_to=end,
             conversation_id="conversation",
@@ -190,6 +196,8 @@ async def test_list_records_applies_filters_and_pagination() -> None:
     assert result.items[0].id == "teams_channel:conversation-1"
     assert result.items[0].conversation_title == "How do I fix this?"
     assert result.items[0].channel_name == "Channel A"
+    assert result.items[0].feedback is not None
+    assert result.items[0].feedback.status.value == feedback_status
 
     records_call = container.calls[1]
     assert records_call["partition_key"] == "tenant-a"
@@ -202,9 +210,12 @@ async def test_list_records_applies_filters_and_pagination() -> None:
     }
     assert parameters["@qa_status"] == "failed"
     assert parameters["@channel_id"] == "channel-a"
-    assert parameters["@feedback_status"] == "pending_validation"
+    assert parameters["@feedback_status"] == feedback_status
     assert parameters["@offset"] == 50
     assert parameters["@limit"] == 50
+    for call in container.calls[:2]:
+        assert "c.feedback.classification = @classification" in call["query"]
+        assert {p["name"]: p["value"] for p in call["parameters"]}["@classification"] == "insufficient_content"
 
 
 @pytest.mark.asyncio
@@ -234,6 +245,7 @@ async def test_list_records_clamps_page_after_total_shrinks() -> None:
         for item in container.calls[1]["parameters"]
     }
     assert records_parameters["@offset"] == 0
+    assert all("@classification" not in call["query"] for call in container.calls)
 
 
 @pytest.mark.asyncio
@@ -347,7 +359,8 @@ async def test_list_records_rejects_reversed_time_range() -> None:
 
 
 @pytest.mark.asyncio
-async def test_dashboard_routes() -> None:
+@pytest.mark.parametrize("feedback_status", ["pending_validation", "validation_skipped"])
+async def test_dashboard_routes(feedback_status) -> None:
     import server
 
     page = QARecordPage(
@@ -377,7 +390,8 @@ async def test_dashboard_routes() -> None:
                     "tenant_id": "tenant-a",
                     "channel_id": "channel-a",
                     "qa_status": "failed",
-                    "feedback_status": "pending_validation",
+                    "feedback_status": feedback_status,
+                    "classification": "insufficient_content",
                 },
             )
             detail_response = await client.get(
@@ -397,6 +411,10 @@ async def test_dashboard_routes() -> None:
                 },
             )
             page_response = await client.get("/dashboard/qa-records")
+            overview_page_response = await client.get("/dashboard/overview")
+            invalid_response = await client.get(
+                "/api/dashboard/qa-records", params={"classification": "invalid"}
+            )
 
     assert api_response.status_code == 200
     assert api_response.json()["total"] == 1
@@ -412,7 +430,14 @@ async def test_dashboard_routes() -> None:
     }
     assert page_response.status_code == 200
     assert "Chatbot Evolution Dashboard" in page_response.text
+    assert overview_page_response.status_code == 200
+    assert "text/html" in overview_page_response.headers["content-type"]
+    assert 'href="/dashboard/overview"' in page_response.text
+    assert 'href="/dashboard/qa-records"' in overview_page_response.text
     service.list_records.assert_awaited_once()
+    assert service.list_records.await_args.kwargs["feedback_status"] == FeedbackStatusFilter(feedback_status)
+    assert service.list_records.await_args.kwargs["classification"] == RootCauseClassification.insufficient_content
+    assert invalid_response.status_code == 422
     service.get_record_detail.assert_awaited_once()
 
 
@@ -427,7 +452,16 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "Conversation status" in html
     assert "Evolution status" in html
     assert "<th>Answer assessment</th>" not in html
-    assert "<th>Root cause</th>" not in html
+    assert "<th>Root cause</th>" in html
+    assert 'id="classification"' in html
+    assert "All root causes" in html
+    assert "Insufficient documentation" in html
+    assert 'addParameter(parameters, "classification", elements.classification.value)' in html
+    assert "rootCause.replaceChildren(statusBadge(classification, classificationLabel(classification)))" in html
+    assert 'rootCause.title = "No root cause recorded"' in html
+    for classification in RootCauseClassification:
+        assert f".status-{classification.value} {{" in html
+    assert "empty.colSpan = 8" in html
     assert "Bot answered correctly" in html
     assert "Needs evolution" in html
     assert "Bot answered incorrectly" not in html

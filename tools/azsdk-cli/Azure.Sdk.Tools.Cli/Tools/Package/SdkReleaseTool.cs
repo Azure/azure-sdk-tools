@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
@@ -9,7 +10,9 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
+using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
@@ -19,6 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public partial class SdkReleaseTool(
         IDevOpsService devopsService,
         IAPIViewService apiViewService,
+        IPackageReleaseStatusService packageReleaseStatusService,
         ILogger<SdkReleaseTool> logger,
         IInputSanitizer inputSanitizer,
         IEnvironmentHelper environmentHelper) : MCPTool
@@ -61,13 +65,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Description = "Verify package release readiness without triggering the release pipeline",
             Required = false,
         };
-        
+
+        private readonly Option<int> releasePlanIdOpt = new("--release-plan-id")
+        {
+            Description = "Optional release-plan ID supplied by the requester for this manual release. Omit or use 0 when there is no plan. The release pipeline must forward ReleasePlanId for plan updates.",
+            Required = false,
+        };
+
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
 
         protected override Command GetCommand() =>
             new McpCommand(commandName, "Run the release pipeline for the package", ReleaseSdkToolName)
             {
-                packageNameOpt, languageOpt, branchOpt, checkReadyOpt
+                packageNameOpt, languageOpt, branchOpt, checkReadyOpt, releasePlanIdOpt
             };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -76,11 +86,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var language = parseResult.GetValue(languageOpt);
             var branch = parseResult.GetValue(branchOpt);
             var checkReady = parseResult.GetValue(checkReadyOpt);
-            return await ReleasePackageAsync(packageName, language, branch, checkReady, ct);
+            var releasePlanId = parseResult.GetValue(releasePlanIdOpt);
+            return await ReleasePackageAsync(packageName, language, branch, checkReady, releasePlanId, ct);
         }
 
-        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead.")]
-        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool checkReady = false, CancellationToken ct = default)
+        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. For a manual release associated with a plan, pass the requester's releasePlanId; the pipeline must forward ReleasePlanId for plan updates. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead.")]
+        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool checkReady = false,
+            [Description("Optional release-plan ID supplied by the requester, not an interchangeable ADO work item ID. Omit or use 0 for releases without a plan.")] int releasePlanId = 0, CancellationToken ct = default)
         {
             try
             {
@@ -88,6 +100,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     PackageName = packageName
                 };
+                if (releasePlanId < 0)
+                {
+                    response.ReleaseStatusDetails = "Release plan ID must be a positive integer, or 0 when no release plan is supplied.";
+                    response.ReleasePipelineStatus = "Failed";
+                    response.ResponseError = response.ReleaseStatusDetails;
+                    return response;
+                }
                 language = inputSanitizer.SanitizeLanguage(language);
                 response.SetLanguage(language);
 
@@ -176,6 +195,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (buildDefinitionId != null)
                 {
                     var templateParams = new Dictionary<string, string>();
+                    if (releasePlanId > 0)
+                    {
+                        templateParams["ReleasePlanId"] = releasePlanId.ToString(CultureInfo.InvariantCulture);
+                    }
 
                     // Java pipelines require release_<safeName>=true to select a package (azure-sdk-for-java#48465).
                     if (SdkLanguageHelpers.GetSdkLanguage(language) == SdkLanguage.Java)
@@ -269,7 +292,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Classify the version, not the planned-release label. Stable post-releases and
                 // build metadata must not skip the GA APIView approval gate.
                 bool isPreviewRelease = IsPreviewVersion(package.Version, language);
-                bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
+                bool isDataPlanePackage = package.PackageType.IsDataPlane();
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
                 {
@@ -289,8 +312,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Check if API view is approved if stable version for data plane or .NET
                 if ((isDataPlanePackage || language.Equals(".NET")) && !isPreviewRelease)
                 {
+                    string canonicalLanguage = ApiReviewHubTool.ResolveLanguage(language)
+                        ?? throw new InvalidOperationException($"Unsupported SDK language '{language}' for package approval lookup.");
+                    var approvalStatus = await packageReleaseStatusService.GetApprovalStatusAsync(
+                        PackageApprovalStatusTool.DefaultEndpoint,
+                        canonicalLanguage,
+                        packageName,
+                        package.Version,
+                        "",
+                        "",
+                        ct);
+                    // TODO: Pass the release artifact API hash to Review Hub and remove this workaround
+                    // once the agent can retrieve the hash.
+                    bool missingApiHash =
+                        string.Equals(approvalStatus.Reason, "missingApiHash", StringComparison.OrdinalIgnoreCase);
+                    // IsApproved covers both "approved" and "reviewNotRequired".
+                    bool apiCheckPassed = approvalStatus.IsApproved || missingApiHash;
+                    package.APIViewStatus = apiCheckPassed ? "Approved" : "Pending";
+                    package.ApiViewValidationDetails = $"Package approval status queried from {approvalStatus.FinalSource}: {approvalStatus.Reason}.";
 
-                    if (!package.IsApiViewApproved)
+                    if (!apiCheckPassed)
                     {
                         package.IsPackageReady = false;
                         package.PackageReadinessDetails += $"API view is not approved for GA release of package '{packageName}'. ";

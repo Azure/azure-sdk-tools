@@ -90,9 +90,9 @@ def test_stewardship_pr_guidance_delegates_shared_rules_and_preserves_board_poli
     assert "## Answer Style" not in content
     assert "up to 3 short bullets" not in content
     assert "Brevity limits the answer, not the investigation" not in content
-    assert "Prefer short bullets with one idea each" in instruction
-    assert "Use short descriptive link titles" in instruction
-    assert "do not repeat the recommendation in a closing next-step section" in instruction
+    pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
+    assert "Use concise prose or bullets and short descriptive link titles" in pr_review
+    assert "without repeating links or recommendations" in pr_review
     assert "All your tools are read-only" in instruction
     assert "Separate design findings, Board signoff and merge readiness" in content
     assert "Green checks and signoff do not prove design correctness" in content
@@ -113,12 +113,15 @@ def test_stewardship_check_support_uses_shared_failure_diagnosis() -> None:
 
     assert "check diagnosis" in content
     assert "**Check failures**" not in content
-    assert "Start with the reported check" in instruction
-    assert "inspect linked error evidence before asking" in instruction
-    assert "Passing checks do not establish that the user's problem is resolved" in instruction
-    assert "Do not invent an automation diagnosis" in instruction
-    assert "or tell users to wait based only on a pending status" in instruction
-    assert "verified fix or specific support handoff" in instruction
+    pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
+    assert "Start with the reported check" in pr_review
+    assert "inspect linked error evidence before asking" in pr_review
+    assert "Passing checks do not establish that the user's problem is resolved" in pr_review
+    assert "Do not invent an automation diagnosis" in pr_review
+    assert "or tell users to wait based only on a pending status" in pr_review
+    assert "verified fix or specific support handoff" in pr_review
+    other_tools = instruction.split("## Other Tools\n", 1)[1].split("\n## ", 1)[0]
+    assert "**Check failures**" not in other_tools
     assert "Read linked comments and relevant discussion (`get_comments`)" in instruction
     assert "This may signal a permission or maintainer-approval gate" in instruction
     assert "the API status alone does not establish the cause" in instruction
@@ -164,11 +167,10 @@ def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
     assert positions == sorted(positions)
     assert "Use these steps in priority order; skip irrelevant steps" in pr_review
     assert "do not batch later retrieval with this preflight" in pr_review
-    assert "**Batch independent calls, not dependent steps.**" in instruction
-    assert "Wait for a result before calls that depend on its evidence" in instruction
-    assert "do not skip necessary investigation to meet the latency target" in instruction
-    assert "**ALL needed tools in a single parallel batch**" not in instruction
-    assert "A third turn is allowed only" not in instruction
+    assert "These PR-specific investigation and response rules take precedence" in pr_review
+    assert "over general batching, latency and formatting guidance" in pr_review
+    assert "Batch only independent calls and allow necessary dependent follow-ups" in pr_review
+    assert "within the tool-call budget" in pr_review
     assert "at most 8 tool calls per turn total" in instruction
     assert "GitHub MCP is read-only" in pr_review
 
@@ -450,7 +452,8 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     gate = pr_review.split("**Action-required workflows:**", 1)[1].split("**Validation failures:**", 1)[0]
     assert "**Workflow permissions**" not in pr_review
-    assert "For permission issues or workflow approval gates in Azure SDK repositories" in gate
+    assert "For Azure SDK repository permission issues" in gate
+    assert "pipelines/checks that are stuck, not triggered, or awaiting approval" in gate
     assert "recommend self-service access" in gate
     assert "[request access](https://aka.ms/azsdk/access)" in gate
     assert "set Azure organization membership to [Public]" in gate
@@ -529,15 +532,16 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
     assert "read the PR, its failing check runs, and their logs before answering" not in instruction
 
 
-def test_chat_agent_cites_inline_without_requiring_duplicate_references() -> None:
+def test_pr_review_cites_inline_without_changing_general_reference_format() -> None:
     instruction = (
         Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
+    pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     formatting = instruction.split("## Formatting & References\n", 1)[1].split("\n## ", 1)[0]
-    assert "Cite sources inline" in formatting
-    assert "add other references only when useful, without repeating links" in formatting
-    assert "Append a References section" not in formatting
-    assert "**References**" not in formatting
+    assert "cite sources inline and add references only when useful" in pr_review
+    assert "without repeating links or recommendations" in pr_review
+    assert "Append a References section" in formatting
+    assert "**References**" in formatting
 
 
 def test_pr_review_assesses_purpose_and_changed_file_evidence() -> None:

@@ -53,6 +53,15 @@ The `reviewed` field is one of `"todo"` (newly curated, awaiting review),
 `"pass"` (accepted; promoted into official datasets) or `"abandoned"` (reviewed
 and dropped, or a leftover `todo` finalized at promote time).
 
+Ground truths should answer the recorded question using supported facts and
+correctness-changing qualifications. Do not require details from the source
+thread that were omitted from the anonymized question, unrelated tooling,
+or repeated capability disclaimers. State the applicable authorization or
+review requirement instead. Keep conditional guidance conditional, and do not
+remove a real compatibility or approval requirement just to match a bot answer.
+This is especially important because the completeness evaluator compares the
+answer with `ground_truth` without receiving the question or source evidence.
+
 Validate any file/folder:
 
 ```bash

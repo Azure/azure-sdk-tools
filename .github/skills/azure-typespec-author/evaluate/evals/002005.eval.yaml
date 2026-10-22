@@ -91,31 +91,31 @@ stimuli:
         type: "file-matches"
         name: "file-matches-visibility"
         config:
-          pattern: '@visibility\(Lifecycle\.Read\)'
+          pattern: '(@visibility\(Lifecycle\.Read\)|DefaultProvisioningStateProperty)'
           path: "*.tsp"
       - &file_matches_provisioning_state
         type: "file-matches"
         name: "file-matches-provisioning-state"
         config:
-          pattern: "ResourceProvisioningState"
+          pattern: "(ResourceProvisioningState|DefaultProvisioningStateProperty)"
           path: "*.tsp"
       - &file_matches_create_operation
         type: "file-matches"
         name: "file-matches-create-operation"
         config:
-          pattern: "ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>"
+          pattern: "(ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>|TrackedResourceOperations<Employee,\s*EmployeeProperties>)"
           path: "*.tsp"
       - &file_matches_parent_list_operation
         type: "file-matches"
         name: "file-matches-parent-list-operation"
         config:
-          pattern: "ArmResourceListByParent<Employee>"
+          pattern: "(ArmResourceListByParent<Employee>|TrackedResourceOperations<Employee,\s*EmployeeProperties>)"
           path: "*.tsp"
       - &file_matches_subscription_list_operation
         type: "file-matches"
         name: "file-matches-subscription-list-operation"
         config:
-          pattern: "ArmListBySubscription<Employee>"
+          pattern: "(ArmListBySubscription<Employee>|TrackedResourceOperations<Employee,\s*EmployeeProperties>)"
           path: "*.tsp"
       - &semantic_resource_contract
         type: "prompt"

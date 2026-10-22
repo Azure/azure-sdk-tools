@@ -19,7 +19,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (extensible enum with known values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -55,11 +55,11 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      @azure-typespec-author In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (extensible enum with known values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     rubric: &shared_rubric
       - Employee has a synchronous POST resource action named notify in API version 2024-10-01-preview.
-      - The request contains string message content and a priority limited to Low, Medium, or High.
+      - The request contains string message content and a priority defined as an extensible enum with known values Low, Medium, and High.
       - The response contains a string notification identifier and status, and changes are limited to the requested action.
     graders:
       - type: "run-command"
@@ -145,7 +145,7 @@ stimuli:
           threshold: 0.88
           model: "gpt-5.6-sol"
           scoring: "scale_1_10"
-          prompt: "Verify the operation contract without requiring particular request or response model names: Employee has a synchronous POST action named notify in API version 2024-10-01-preview; its request contains string message content and a Priority enum limited to Low, Medium, and High; its response contains a string notification identifier and status; and there are no unrelated edits."
+          prompt: "Verify the operation contract without requiring particular request or response model names: Employee has a synchronous POST action named notify in API version 2024-10-01-preview; its request contains string message content and a Priority extensible enum with known values Low, Medium, and High; its response contains a string notification identifier and status; and there are no unrelated edits."
     constraints:
       max_turns: 5
       max_tokens: 1000000
@@ -154,7 +154,7 @@ stimuli:
       suite: "armtemplate"
       mode: "no-skill"
     prompt: |
-      In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (extensible enum with known values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     rubric: *shared_rubric
     graders:

@@ -67,7 +67,7 @@ def test_dotnet_guideline_links_skills_to_the_relevant_problem():
 def test_dotnet_guideline_routes_ga_approval_by_package_plane(routing):
     guideline = load_tenant_qa_guideline(TenantID.DOTNET_CHANNEL_QA_BOT)
     release_guidance = guideline.split(
-        "### .NET Review and Release Requirements\n", 1
+        "### .NET SDK PR / APIView Review and Release Requirements\n", 1
     )[1].split("### Management-Plane SDK PR Review\n", 1)[0]
     assert routing in release_guidance
     assert "`Azure.ResourceManager.*` indicates management-plane" in release_guidance
@@ -102,7 +102,8 @@ def test_shared_sections_are_not_duplicated_in_dotnet_supplement(heading):
 @pytest.mark.parametrize(
     "guidance",
     [
-        "management API review, data-plane review",
+        "Distinguish .NET SDK PR review and APIView approval from REST API spec review.",
+        "For changes to shared engineering files such as `eng/`, route review requests to the relevant CODEOWNERS.",
         ".NET APIView/owner approvals",
         "LocalSpecRepo",
         "dotnet build /t:GenerateCode",

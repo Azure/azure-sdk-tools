@@ -5,8 +5,8 @@
 
 Establish the API version, released baseline, SDK/spec revision, and emitter version only as relevant to the .NET problem.
 
-### .NET Review and Release Requirements
-- Distinguish management API review, data-plane review, and engineering-directory CODEOWNERS.
+### .NET SDK PR / APIView Review and Release Requirements
+- Distinguish .NET SDK PR review and APIView approval from REST API spec review. For changes to shared engineering files such as `eng/`, route review requests to the relevant CODEOWNERS.
 - Identify pending .NET APIView/owner approvals; do not tell authors to approve their own APIView or bypass checks.
 - For .NET release blockers, check APIView and changelog/version readiness alongside the release pipeline. Route publishing/feed/network incidents to Engineering System with the package, pipeline URL, and error.
 - For missing GA API approval, identify each impacted package as management-plane (ARM) or data-plane using the package name and repository/package metadata. `Azure.ResourceManager.*` indicates management-plane; do not assume every other package is data-plane. If the plane is unclear, verify the package metadata or ask the author before selecting a contact.

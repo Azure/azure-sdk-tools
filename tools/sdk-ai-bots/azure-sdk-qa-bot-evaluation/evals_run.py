@@ -1,9 +1,9 @@
 """Entry point: run QA bot evaluation on the Foundry OpenAI-evals surface.
 
 We call the bot ``/completion`` endpoint **concurrently** (bounded by
-``--max_concurrency``), collect each answer + retrieved context + references, then
-grade them as inline eval data where the builtin LLM evaluators read
-``{{item.response}}`` / ``{{item.context}}``. Parallelizing the slow
+``--max_concurrency``), collect each answer + context + references, retrieve its
+stored Hosted Agent response, then grade the data inline. The builtin LLM evaluators
+read ``{{item.response}}`` / ``{{item.context}}``. Parallelizing the slow
 answer-generation step is the main lever for evaluation speed.
 
 Examples:
@@ -128,6 +128,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
         model = os.environ["AZURE_EVALUATION_MODEL_NAME"]
+        agent_name = os.environ.get("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
         threshold = int(os.environ.get("EVALUATE_THRESHOLD", "3"))
     except KeyError as exc:
         logging.error("Missing required environment variable: %s", exc)
@@ -153,9 +154,11 @@ def main(argv: list[str] | None = None) -> int:
     all_results: dict[str, Any] = {}
 
     try:
-        with AIProjectClient(endpoint=endpoint, credential=credential) as project_client:
-            openai_client = project_client.get_openai_client()
-
+        with (
+            AIProjectClient(endpoint=endpoint, credential=credential, allow_preview=True) as project_client,
+            project_client.get_openai_client() as evals_client,
+            project_client.get_openai_client(agent_name=agent_name) as response_client,
+        ):
             records, scenario = resolve_records(args.dataset, script_dir=script_dir)
             logging.info("Resolved %d records for scenario=%s", len(records), scenario)
             # Stable evaluation name = dataset identity + run context (local / pipeline),
@@ -169,7 +172,12 @@ def main(argv: list[str] | None = None) -> int:
                 logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
             tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
             all_results = runner.evaluate_run_completion(
-                openai_client, records, scenario, tenant_id=tenant_id, evaluation_name=name
+                evals_client,
+                records,
+                scenario,
+                tenant_id=tenant_id,
+                evaluation_name=name,
+                response_client=response_client,
             )
 
         _cache_results(args.cache_result, script_dir, all_results, metrics, suppression, evals_result)

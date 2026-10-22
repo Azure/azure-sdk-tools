@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public enum ManagementPlaneApplicability
 {
     Unknown,
-    NotApplicable,
+    Unsure,
     No,
     Yes,
 }
@@ -15,21 +15,21 @@ public static class ManagementPlaneApplicabilityExtensions
 {
     private static IReadOnlyDictionary<string, ManagementPlaneApplicability> userInputToManagementPlaneApplicability
         = new List<(string Key, ManagementPlaneApplicability Value)>{
-            ( "N/A", ManagementPlaneApplicability.NotApplicable ),
+            ( "I don't know", ManagementPlaneApplicability.Unsure ),
             ( "No", ManagementPlaneApplicability.No ),
             ( "Yes", ManagementPlaneApplicability.Yes ),
         }.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
 
     private static IReadOnlyDictionary<string, ManagementPlaneApplicability> adoFieldValueToManagementPlaneApplicability
         = new List<(string Key, ManagementPlaneApplicability Value)>{
-            ( "unsure", ManagementPlaneApplicability.NotApplicable ),
+            ( "unsure", ManagementPlaneApplicability.Unsure ),
             ( "No", ManagementPlaneApplicability.No ),
             ( "Yes", ManagementPlaneApplicability.Yes ),
         }.ToDictionary(kv => kv.Key, kv => kv.Value);
 
     private static IReadOnlyDictionary<ManagementPlaneApplicability, string> managementPlaneApplicabilityToAdoFieldValue
         = new List<(ManagementPlaneApplicability Key, string Value)>{
-            ( ManagementPlaneApplicability.NotApplicable, "unsure" ),
+            ( ManagementPlaneApplicability.Unsure, "unsure" ),
             ( ManagementPlaneApplicability.No, "No" ),
             ( ManagementPlaneApplicability.Yes , "Yes" ),
         }.ToDictionary(kv => kv.Key, kv => kv.Value);

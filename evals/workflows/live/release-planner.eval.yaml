@@ -41,9 +41,6 @@ type: capability
 
 tags:
   area: release-plan
-metadata:
-  repos:
-    - name: Azure/azure-rest-api-specs
 
 # Bound to the live env because the scenario asserts real DevOps writes
 # (test-area path) + real generation pipeline. Mock can't satisfy those

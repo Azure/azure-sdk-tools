@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https: http:; img-src 'self' data:; base-uri 'none'; object-src 'none'">
+  <title>Azure SDK Metrics</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./snapshots.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">SDK</span>
+        <div class="brand-copy">
+          <h1>Azure SDK Metrics</h1>
+        </div>
+      </div>
+      <section class="repository-filter" aria-label="Repository selection">
+        <label for="repository-select">Repository</label>
+        <select id="repository-select" aria-label="Repository"></select>
+      </section>
+    </div>
+  </header>
+
+  <main>
+    <p id="status" class="status" role="status" aria-live="polite" hidden></p>
+
+    <section id="repository-empty" class="panel empty-state" aria-labelledby="empty-heading" hidden>
+      <span class="empty-mark" aria-hidden="true">--</span>
+      <h2 id="empty-heading">No measurements yet</h2>
+      <p id="repository-state" role="status" aria-live="polite" hidden></p>
+    </section>
+
+    <div id="measurements" hidden>
+      <section class="panel overview" aria-labelledby="overview-heading">
+        <div class="section-header">
+          <div>
+            <h2 id="overview-heading">Source overview</h2>
+            <p>Handwritten and generated source, weighted by line count.</p>
+          </div>
+        </div>
+        <p id="observation-info" class="observation-meta">No observation loaded.</p>
+
+        <div class="kpis" aria-label="Filtered portfolio summary">
+          <article class="panel kpi featured">
+            <p>Custom source</p>
+            <strong id="custom-percent">N/A</strong>
+            <small id="custom-fraction">No measured lines</small>
+          </article>
+          <article class="panel kpi">
+            <p>Total source lines</p>
+            <strong id="total-lines">0</strong>
+            <small>Physical lines, including comments and blanks</small>
+          </article>
+          <article class="panel kpi">
+            <p>Libraries in view</p>
+            <strong id="library-count">0</strong>
+            <small id="service-count">0 services</small>
+          </article>
+          <article class="panel kpi generated">
+            <p>Generated source lines</p>
+            <strong id="generated-lines">0</strong>
+            <small id="generated-percent">No measured lines</small>
+          </article>
+        </div>
+
+        <div class="filters" role="group" aria-label="Snapshot and library filters">
+          <label class="observation-filter">Observation<select id="snapshot-select" aria-label="Observation"></select></label>
+          <label>Category<select id="category-filter"><option value="">All categories</option><option value="management">Management</option><option value="data-plane">Data-plane</option><option value="provisioning">Provisioning</option></select></label>
+          <label>Service<select id="service-filter"><option value="">All services</option></select></label>
+          <label class="search-label">Find a library<input id="library-search" type="search" placeholder="Azure.Storage, Identity, Compute..." autocomplete="off"></label>
+        </div>
+        <div class="overview-notes">
+          <p>Filters apply to the overview, charts and history.</p>
+          <details class="measurement-note">
+            <summary>Source provenance, not customization debt</summary>
+            <p id="measurement-description">Percentages divide summed custom lines by summed total lines, not averages of library percentages. Source classification uses file-level signals; custom code is not a measure of debt or API impact.</p>
+          </details>
+        </div>
+      </section>
+
+      <div class="chart-grid">
+        <section class="panel chart-panel" aria-labelledby="breakdown-heading">
+          <div class="section-header">
+            <div><h2 id="breakdown-heading">Where the code lives</h2><p id="breakdown-note">Custom and generated source.</p></div>
+          </div>
+          <div class="chart-controls">
+            <label>Group by<select id="breakdown-group"><option value="category">Category</option><option value="service">Service</option></select></label>
+            <label>Measure<select id="breakdown-measure"><option value="percent">Share of source (%)</option><option value="lines">Line counts</option></select></label>
+          </div>
+          <div class="legend"><span class="custom-key">Custom</span><span class="generated-key">Generated</span></div>
+          <div class="chart-container"><canvas id="breakdown-chart" role="img" aria-label="Source provenance breakdown"></canvas></div>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable provenance breakdown">
+            <table class="small-table"><caption class="visually-hidden">Breakdown values</caption><thead><tr><th scope="col">Group</th><th scope="col">Custom</th><th scope="col">Generated</th><th scope="col">Custom %</th></tr></thead><tbody id="breakdown-values"></tbody></table>
+          </div>
+        </section>
+
+        <section class="panel chart-panel" aria-labelledby="history-heading">
+          <div class="section-header">
+            <div><h2 id="history-heading">Change over time</h2><p id="history-note">No observations loaded.</p></div>
+          </div>
+          <div class="chart-controls history-controls">
+            <label>Range<select id="history-range"><option value="all">All observations</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 365 days</option></select></label>
+            <label>Scope<select id="history-scope"><option value="">Filtered portfolio</option></select></label>
+            <label class="checkbox" title="Compare libraries present in every compatible observation."><input id="fixed-cohort" type="checkbox" checked>Fixed library cohort</label>
+          </div>
+          <div class="legend"><span class="custom-key">Custom source</span></div>
+          <div class="chart-container"><canvas id="history-chart" role="img" aria-label="Custom source percentage over time"></canvas></div>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable historical observations">
+            <table class="small-table"><caption class="visually-hidden">Historical observations and cohort changes</caption><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Revision</th><th scope="col">Libraries</th><th scope="col">Custom %</th><th scope="col">Added / removed</th></tr></thead><tbody id="history-values"></tbody></table>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel library-panel" aria-labelledby="libraries-heading">
+        <div class="section-header">
+          <div><h2 id="libraries-heading">Library explorer</h2><p id="library-table-note">Select a library for details and its history.</p></div>
+        </div>
+        <div class="table-scroll library-scroll" tabindex="0" role="region" aria-label="Scrollable library measurements">
+          <table id="library-table">
+            <caption class="visually-hidden">Filtered libraries. Activate a column header to sort.</caption>
+            <thead><tr>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort="library">Library<span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort="service">Service<span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort="category">Category<span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort="customRatio">Custom %<span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" aria-sort="descending"><button type="button" class="sort-button" data-sort="customLines">Custom lines<span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort="totalLines">Total lines<span class="sort-indicator" aria-hidden="true"></span></button></th>
+            </tr></thead>
+            <tbody id="library-values"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="library-detail" class="panel detail-panel" aria-labelledby="detail-heading" hidden>
+        <div class="section-header"><h2 id="detail-heading">Library detail</h2><button id="close-detail" type="button">Close detail</button></div>
+        <p id="detail-meta"></p><div id="detail-stats" class="detail-stats"></div>
+        <p id="detail-source"></p>
+        <details id="file-evidence" hidden><summary>File-level provenance evidence</summary><p id="file-evidence-note"></p><div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable file provenance evidence"><table class="small-table"><thead><tr><th scope="col">Path</th><th scope="col">Lines</th><th scope="col">Provenance</th><th scope="col">Evidence</th></tr></thead><tbody id="file-values"></tbody></table></div></details>
+      </section>
+      <footer>
+        <p id="contract-info">Snapshot schema v1.0 / physical source lines</p>
+        <p id="deployment-info"></p>
+        <p id="freshness" class="freshness" role="status" hidden></p>
+        <p>Missing observations are gaps, not zeros.</p>
+      </footer>
+    </div>
+  </main>
+</body>
+</html>

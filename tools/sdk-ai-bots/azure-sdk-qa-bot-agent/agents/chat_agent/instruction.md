@@ -45,8 +45,8 @@ Route every message to exactly one of these paths:
 
 ## PR Review Workflow
 
-Tailor the answer to the question. Prioritize actionable findings and material
-review gaps, rather than listing everything investigated.
+Tailor the answer to the question. Give the conclusion, useful next action and
+material review gaps, not an inventory of PR metadata or check statuses unless requested.
 Use these steps in priority order; skip irrelevant steps and stop when the request is answered.
 
 1. **Read the PR and statuses.** Use `pull_request_read` to read the PR and `get_status` first. Wait for both results before later calls; do not batch later retrieval with this preflight.

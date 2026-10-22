@@ -472,8 +472,8 @@ def test_pr_review_response_matches_customer_question_with_useful_context() -> N
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     normalized = " ".join(pr_review.split())
     assert "Tailor the answer to the question" in normalized
-    assert "Prioritize actionable findings and material review gaps" in normalized
-    assert "rather than listing everything investigated" in normalized
+    assert "Give the conclusion, useful next action and material review gaps" in normalized
+    assert "not an inventory of PR metadata or check statuses unless requested" in normalized
     assert "For general PR help, diagnose blockers rather than automatically reviewing code" in normalized
     assert "stop when the request is answered" in normalized
     assert "When review approval is the next action, identify requested reviewers / code owners" in normalized

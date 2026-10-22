@@ -24,6 +24,7 @@ import os
 import re
 import time as _time
 from datetime import datetime, timedelta, timezone
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
@@ -31,9 +32,10 @@ from pydantic import BaseModel
 from azure.keyvault.keys.crypto.aio import CryptographyClient
 from azure.keyvault.keys.crypto import SignatureAlgorithm
 from agent_framework import MCPStreamableHTTPTool
+from mcp import types as mcp_types
 
 from config.app_config import get as cfg
-from tools import truncating_mcp_parser
+from tools import _MCP_MAX_OUTPUT_CHARS, truncating_mcp_parser
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
@@ -381,14 +383,56 @@ def _redact_untrusted_authors(text: str) -> str:
     return json.dumps(_scrub_untrusted_authors(data))
 
 
-def _github_mcp_parser(result):
-    """Redact untrusted authored content, then truncate (see truncating_mcp_parser)."""
-    from mcp import types as mcp_types
+def _process_github_result(result: mcp_types.CallToolResult) -> str | None:
+    """Return complete redacted JSON or explicit overflow/retry metadata."""
+    if result.isError or not result.content:
+        return None
+    values: list[Any] = []
+    for content in result.content:
+        if not isinstance(content, mcp_types.TextContent):
+            return None
+        try:
+            value = json.loads(content.text)
+        except ValueError:
+            return None
+        values.append(_scrub_untrusted_authors(value))
+    output = json.dumps(values[0] if len(values) == 1 else values)
+    if len(output) <= _MCP_MAX_OUTPUT_CHARS:
+        return output
+    logger.info("GitHub tool response exceeds output budget (%d chars)", len(output))
+    return json.dumps({
+        "status": "overflow",
+        "complete": False,
+        "current_page_complete": False,
+        "output_characters": len(output),
+        "budget_characters": _MCP_MAX_OUTPUT_CHARS,
+        "source_text_items": len(values),
+        "returned_objects": 0,
+        "error": (
+            "The complete current response exceeds the output budget. No objects "
+            "or next-page cursor were returned. If perPage is supported, reduce it progressively "
+            "(10 -> 5 -> 2 -> 1), choosing a smaller value than the failed call; "
+            "never repeat identical overflow arguments or increase perPage. "
+            "For cursor pagination retry the same after cursor; do not advance it. "
+            "For numbered pages, changing perPage changes page boundaries: restart "
+            "at page=1 if already past page 1, deduplicate IDs, and rescan to avoid "
+            "skipped items. If perPage=1 still overflows, stop and report that the "
+            "single thread/body cannot be retrieved completely within this budget. "
+            "If pagination is unavailable, report the response-size limit."
+        ),
+    })
 
-    for item in result.content:
+
+def _github_mcp_parser(result: mcp_types.CallToolResult) -> str:
+    """Redact GitHub results and mark oversized pages incomplete."""
+    processed = _process_github_result(result)
+    if processed is not None:
+        return processed
+    redacted = result.model_copy(deep=True)
+    for item in redacted.content:
         if isinstance(item, mcp_types.TextContent) and item.text:
             item.text = _redact_untrusted_authors(item.text)
-    return truncating_mcp_parser(result)
+    return truncating_mcp_parser(redacted)
 
 
 # -- public ----------------------------------------------------------------

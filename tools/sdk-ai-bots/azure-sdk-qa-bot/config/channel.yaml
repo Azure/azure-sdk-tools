@@ -4,11 +4,6 @@ default:
 
 channels:
   # production
-  - name: API Stewardship Board - General
-    id: 19:3ebb18fded0e47938f998e196a52952f@thread.tacv2
-    tenant: api_stewardship_board_qa_bot
-    endpoint: https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net
-
   - name: TypeSpec Discussion
     id: 19:906c1efbbec54dc8949ac736633e6bdf@thread.skype
     tenant: typespec_channel_qa_bot
@@ -534,12 +529,6 @@ channels:
     tenant: typespec_channel_qa_bot
     endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
 
-  # test
-  - name: Azure SDK QA bot forAPI Stewardship Board Testing
-    id: 19:1897c1bd6c6145efb62167733e1b8c82@thread.tacv2
-    tenant: api_stewardship_board_qa_bot
-    endpoint: https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net
-
   #  dev
   - name: Azure SDK QA bot for TypeSpec Testing
     id: 19:rMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1@thread.tacv2
@@ -557,11 +546,6 @@ channels:
     tenant: azure_sdk_onboarding
 
   # dev internal
-  - name: Azure API Stewardship Board
-    id: 19:17b23ff1d5d54cc293dcf673d32a5b7f@thread.tacv2
-    tenant: api_stewardship_board_qa_bot
-    endpoint: https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net
-
   - name: Azure SDK QA Bot - Demo
     id: 19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2
     endpoint: https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net

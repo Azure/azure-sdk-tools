@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -33,11 +34,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
         private readonly static string MockProductId = "12345678-1234-5678-9012-123456789012";
         private readonly static string MockProductName = "Product Name";
-        private readonly static string MockProductType = "SKU";
+        private readonly static string MockProductTypeUserInput = "SKU";
+        private readonly static string MockProductTypeAdo = "Sku";
         private readonly static string MockProductLifecycle = "In Dev";
         private readonly static string MockServiceId = "87654321-4321-8765-1234-210987654321";
         private readonly static string MockServiceName = "Service Name";
-        private readonly static bool MockNeedsSdk = true;
         private readonly static string MockDataPlane = "Yes";
         private readonly static string MockManagementPlane = "No";
         private readonly static string MockSubmitter = "@handle";
@@ -50,11 +51,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var response = await productOnboardingTool.OnboardProduct(
                 productId: Guid.Parse(NonexistentId),
                 productName: MockProductName,
-                productType: MockProductType,
+                productType: MockProductTypeUserInput,
                 productLifecycle: MockProductLifecycle,
                 serviceId: Guid.Parse(NonexistentId),
                 serviceName: MockServiceName,
-                needsSdk: MockNeedsSdk,
                 dataPlane: MockDataPlane,
                 managementPlane: MockManagementPlane,
                 submitter: MockSubmitter,
@@ -64,13 +64,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(response.ProductOnboardingDetails?.ProductId, Is.EqualTo(NonexistentId));
             Assert.That(response.ProductOnboardingDetails?.ProductName, Is.EqualTo(MockProductName));
-            Assert.That(response.ProductOnboardingDetails?.ProductType, Is.EqualTo(MockProductType));
+            Assert.That(response.ProductOnboardingDetails?.ProductType, Is.EqualTo(MockProductTypeAdo));
             Assert.That(response.ProductOnboardingDetails?.ProductLifecycle, Is.EqualTo(MockProductLifecycle));
             Assert.That(response.ProductOnboardingDetails?.ServiceId, Is.EqualTo(NonexistentId));
             Assert.That(response.ProductOnboardingDetails?.ServiceName, Is.EqualTo(MockServiceName));
             Assert.That(response.ProductOnboardingDetails?.DataPlane, Is.EqualTo(MockDataPlane));
             Assert.That(response.ProductOnboardingDetails?.ManagementPlane, Is.EqualTo(MockManagementPlane));
             Assert.That(response.ProductOnboardingDetails?.Submitter, Is.EqualTo(MockSubmitter));
+            Assert.That(response.ProductOnboardingDetails?.DataPlaneAttestationStatus, Is.EqualTo(ProductOnboardingWorkItem.PendingAttestationValue));
+            Assert.That(response.ProductOnboardingDetails?.ManagementPlaneAttestationStatus, Is.EqualTo(ProductOnboardingWorkItem.PendingAttestationValue));
         }
 
         [Test]
@@ -80,11 +82,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var response = await productOnboardingTool.OnboardProduct(
                 productId: Guid.Parse(MockProductId),
                 productName: MockProductName,
-                productType: MockProductType,
+                productType: MockProductTypeUserInput,
                 productLifecycle: MockProductLifecycle,
                 serviceId: Guid.Parse(MockServiceId),
                 serviceName: MockServiceName,
-                needsSdk: MockNeedsSdk,
                 dataPlane: MockDataPlane,
                 managementPlane: MockManagementPlane,
                 submitter: MockSubmitter,
@@ -94,13 +95,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(response.ProductOnboardingDetails?.ProductId, Is.EqualTo(MockProductId));
             Assert.That(response.ProductOnboardingDetails?.ProductName, Is.EqualTo(MockProductName));
-            Assert.That(response.ProductOnboardingDetails?.ProductType, Is.EqualTo(MockProductType));
+            Assert.That(response.ProductOnboardingDetails?.ProductType, Is.EqualTo(MockProductTypeAdo));
             Assert.That(response.ProductOnboardingDetails?.ProductLifecycle, Is.EqualTo(MockProductLifecycle));
             Assert.That(response.ProductOnboardingDetails?.ServiceId, Is.EqualTo(MockServiceId));
             Assert.That(response.ProductOnboardingDetails?.ServiceName, Is.EqualTo(MockServiceName));
             Assert.That(response.ProductOnboardingDetails?.DataPlane, Is.EqualTo(MockDataPlane));
             Assert.That(response.ProductOnboardingDetails?.ManagementPlane, Is.EqualTo(MockManagementPlane));
             Assert.That(response.ProductOnboardingDetails?.Submitter, Is.EqualTo(MockSubmitter));
+            Assert.That(response.ProductOnboardingDetails?.DataPlaneAttestationStatus, Is.EqualTo(ProductOnboardingWorkItem.PendingAttestationValue));
+            Assert.That(response.ProductOnboardingDetails?.ManagementPlaneAttestationStatus, Is.EqualTo("Not applicable"));
         }
     }
 }

@@ -29,8 +29,14 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.DataScope")]
         public string DataPlane { get; set; } = string.Empty;
 
+        [FieldName("Custom.DataplaneAttestationStatus")]
+        public string DataPlaneAttestationStatus { get; set; } = string.Empty;
+
         [FieldName("Custom.MgmtScope")]
         public string ManagementPlane { get; set; } = string.Empty;
+
+        [FieldName("Custom.ManagementPlaneAttestationStatus")]
+        public string ManagementPlaneAttestationStatus { get; set; } = string.Empty;
 
         [FieldName("Custom.OnboardingQuestionnaireSubmittedby")]
         public string Submitter { get; set; } = string.Empty;
@@ -42,6 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         public static string WorkItemTypeFieldName { get; } = "System.WorkItemType";
         public static string WorkItemTypeValue { get; } = "Triage";
+        public static string PendingAttestationValue { get; } = "Pending";
 
         public ProductOnboardingStatus ToProductOnboardingStatus()
             => new ()
@@ -72,7 +79,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
             response.ManagementPlane = status.ManagementPlane;
             response.Submitter = status.Submitter;
 
-            response.NeedsSDK = (response.DataPlane == DataPlaneApplicability.Yes || response.ManagementPlane == ManagementPlaneApplicability.Yes);
             return response;
         }
 

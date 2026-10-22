@@ -12,7 +12,11 @@ Run:
 from __future__ import annotations
 
 import os
+import re
 import sys
+from pathlib import Path
+
+import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -29,10 +33,12 @@ from dataset.schema import (  # noqa: E402
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
+    FoundryEvalsRunner,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
     resolve_tenant_for_scenario,
+    resolve_records,
 )
 from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E402
 
@@ -307,19 +313,163 @@ def test_extract_context_from_full_context_json():
     assert extract_title_and_link_from_context("not-json") == []
 
 
+def test_retrieve_and_normalize_stored_response_tool_calls():
+    response = {
+        "output": [
+            {"type": "reasoning", "id": "reasoning-1", "summary": []},
+            {
+                "type": "function_call",
+                "id": "function-1",
+                "call_id": "call-1",
+                "name": "search_knowledge_base",
+                "arguments": '{"queries":["q"]}',
+            },
+            {
+                "type": "function_call_output",
+                "id": "output-1",
+                "call_id": "call-1",
+                "output": '{"results":[{"title":"Document"}]}',
+            },
+            {
+                "type": "web_search_call",
+                "id": "web-1",
+                "status": "completed",
+                "action": {
+                    "type": "search",
+                    "query": "Azure SDK",
+                    "sources": [{"url": "https://example.com"}],
+                },
+            },
+            {"type": "message", "id": "message-1", "role": "assistant", "content": []},
+        ]
+    }
+
+    class FakeResponses:
+        @staticmethod
+        def retrieve(response_id, *, include):
+            assert response_id == "response-1"
+            assert include == ["web_search_call.action.sources"]
+            return response
+
+    class FakeClient:
+        responses = FakeResponses()
+
+    items = [
+        {"testcase": "traceable", "response_id": "response-1", "context": "documents"},
+        {"testcase": "blocked", "response_id": "content-filter", "context": ""},
+    ]
+    tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(FakeClient(), items)
+
+    assert tool_calls_by_response_id["content-filter"] == []
+    assert tool_calls_by_response_id["response-1"] == [
+        {
+            "tool_name": "search_knowledge_base",
+            "arguments": {"queries": ["q"]},
+            "output": {"results": [{"title": "Document"}]},
+        },
+        {
+            "tool_name": "web_search",
+            "arguments": {
+                "type": "search",
+                "query": "Azure SDK",
+            },
+            "output": [{"url": "https://example.com"}],
+        },
+    ]
+    assert items[0]["context"] == "documents"
+
+
 def test_resolve_tenant_for_scenario():
-    m = {"default": "tenant-default", "TypeSpec Discussion": "tenant-ts"}
+    m = {
+        "default": "tenant-default",
+        "TypeSpec Discussion": "tenant-ts",
+        "Azure MCP Server - General": "azure_mcp_server",
+        "AzSDK Tools Agent": "tenant-sdkagent",
+    }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
+    assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
+    assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
 
 
+def test_javascript_scenario_routes_to_configured_js_channel():
+    root = Path(__file__).resolve().parents[2]
+    config = yaml.safe_load(
+        (root / "azure-sdk-qa-bot" / "config" / "channel.yaml").read_text(encoding="utf-8")
+    )
+    channel = next(
+        item
+        for item in config["channels"]
+        if item["id"] == "19:344f6b5b36ba414daa15473942c7477b@thread.skype"
+    )
+    mapping = {"default": config["default"]["tenant"]}
+    mapping.update({item["name"]: item["tenant"] for item in config["channels"]})
+    assert resolve_tenant_for_scenario("javascript", mapping) == channel["tenant"]
+    assert resolve_tenant_for_scenario("unknown", mapping) == config["default"]["tenant"]
+
+
+def test_javascript_datasets_are_documentation_only_and_resolve_locally():
+    root = Path(__file__).resolve().parents[1]
+    queries = set()
+    historical_context = re.compile(
+        r"https?://|(?:\bPR|\bpull request|\bissue)\s*#?\d+\b"
+        r"|\b\d{4}-\d{2}-\d{2}\b|19:\S+@thread"
+        r"|\b(?:yesterday|last week|last month)\b",
+        re.IGNORECASE,
+    )
+    for target, count in (("basic", 7), ("perf", 13)):
+        path = root / "evaluation_datasets" / target / "javascript.jsonl"
+        assert validate_file(path, require_reviewed=True) == count
+        records, scenario = resolve_records(
+            f"qa-bot-{target}-javascript:latest", script_dir=root
+        )
+        assert scenario == "javascript"
+        assert len(records) == count
+        for case in records:
+            assert case["scenario"] == scenario
+            assert case["tenant"] is None
+            assert case["source"] == "manual:javascript-documentation"
+            assert case["expected_references"]
+            for field in ("query", "ground_truth"):
+                assert "dev-tool customization" not in case[field]
+            assert "http" not in case["query"]
+            for reference in case["expected_references"]:
+                assert "modular-customization.md" not in reference["link"]
+                assert reference["link"].startswith((
+                    "https://github.com/Azure/azure-sdk-for-js/blob/main/",
+                    "https://azure.github.io/typespec-azure/docs/emitters/clients/typespec-ts/",
+                ))
+            for field in ("testcase", "query", "ground_truth"):
+                assert not historical_context.search(case[field]), (path, field)
+            query = " ".join(case["query"].lower().split())
+            assert query not in queries
+            queries.add(query)
+
+
+def test_javascript_scenario_is_in_both_evaluation_pipelines():
+    root = Path(__file__).resolve().parents[2]
+    for name in ("offline-evaluation.yml", "perf-evaluation.yml"):
+        pipeline = yaml.safe_load((root / name).read_text(encoding="utf-8"))
+        scenarios = next(
+            item["default"]
+            for item in pipeline["parameters"]
+            if item["name"] == "scenarios"
+        )
+        assert scenarios.count("javascript") == 1
+
+
 def test_output_items_to_rows_completion_item_response():
     # In completion mode the answer/references live in the datasource_item.
+    tool_call = {"tool_name": "file_access_read"}
+    context = "grounding context"
     output_items = [
         {
             "datasource_item": {
-                "testcase": "t", "ground_truth": "gt", "response": "collected answer",
+                "testcase": "t", "query": "question", "ground_truth": "gt",
+                "response": "collected answer",
+                "context": context,
+                "response_id": "response-1",
                 "references": [{"title": "R", "link": "http://r"}],
                 "knowledges": [{"title": "K", "link": "http://k"}],
             },
@@ -327,10 +477,56 @@ def test_output_items_to_rows_completion_item_response():
             "sample": None,
         }
     ]
-    rows = output_items_to_rows(output_items, ["similarity"])["rows"]
+    rows = output_items_to_rows(
+        output_items,
+        ["similarity"],
+        tool_calls_by_response_id={"response-1": [tool_call]},
+    )["rows"]
+    assert rows[0]["inputs.query"] == "question"
     assert rows[0]["inputs.response"] == "collected answer"
+    assert rows[0]["inputs.context"] == context
+    assert rows[0]["inputs.execution"] == {
+        "response_id": "response-1",
+        "tool_calls": [tool_call],
+    }
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
+
+
+def test_record_run_result_preserves_local_tool_calls():
+    from _evals_result import EvalsResult
+
+    er = EvalsResult(metrics={"similarity": None}, suppressions=None)
+    recorded = er.record_run_result(
+        {
+            "rows": [
+                {
+                    "inputs.testcase": "traceable",
+                    "inputs.query": "question",
+                    "inputs.ground_truth": "gt",
+                    "inputs.expected_references": [],
+                    "inputs.expected_knowledges": [],
+                    "inputs.response": "answer",
+                    "inputs.context": "context",
+                    "inputs.execution": {
+                        "response_id": "response-1",
+                        "tool_calls": [{"tool_name": "search_knowledge_base"}],
+                    },
+                    "inputs.references": [],
+                    "inputs.knowledges": [],
+                    "outputs.similarity.similarity": 5.0,
+                    "outputs.similarity.similarity_result": "pass",
+                }
+            ]
+        }
+    )
+
+    assert recorded[0]["query"] == "question"
+    assert recorded[0]["actual"]["context"] == "context"
+    assert recorded[0]["execution"] == {
+        "response_id": "response-1",
+        "tool_calls": [{"tool_name": "search_knowledge_base"}],
+    }
 
 
 def test_failed_row_counts_as_failure_in_gate():
@@ -339,8 +535,7 @@ def test_failed_row_counts_as_failure_in_gate():
     from _evals_result import EvalsResult
 
     evaluators = ["bot_evals", "groundedness"]
-    metrics = {e: None for e in evaluators}
-    er = EvalsResult(metrics=metrics, suppressions=None)
+    er = EvalsResult(metrics={e: None for e in evaluators}, suppressions=None)
     runner = FoundryEvalsRunner(evaluators, er, model="m")
     row = runner._failed_row({"testcase": "lost", "ground_truth": "gt"})
     assert row["outputs.bot_evals.bot_evals_result"] == "fail"
@@ -359,6 +554,47 @@ def test_record_run_result_empty_rows_no_crash():
     er = EvalsResult(metrics={"bot_evals": None}, suppressions=None)
     recorded = er.record_run_result({"rows": []})
     assert recorded[-1]["total_evals"] == 0
+
+
+def test_agent_branch_prefix_preserves_evaluation_query():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    session = MagicMock()
+    session.__aenter__ = AsyncMock(return_value=session)
+    session.__aexit__ = AsyncMock(return_value=False)
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok"}),
+    })())
+    for branch in ("feature/Case/path", "refs/heads/feature/Case/path"):
+        with patch.dict(os.environ, {"EVAL_AGENT_BRANCH": branch}):
+            collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+        for tenant in (None, "azure_mcp_server"):
+            asyncio.run(collector._call_bot_api("unchanged query", tenant, session))
+            request = session.post.call_args.kwargs
+            assert request["headers"] == {"Content-Type": "application/json; charset=utf8"}
+            assert request["json"]["message"]["content"] == "[branch:feature/Case/path] unchanged query"
+            assert request["json"]["tenant_id"] == (tenant or "general_qa_bot")
+    records = [{"testcase": "branch-test", "query": "unchanged query", "ground_truth": "expected"}]
+    with patch("aiohttp.ClientSession", return_value=session):
+        results = collector.collect(records, None)
+    assert results[0]["query"] == records[0]["query"] == "unchanged query"
+
+
+def test_without_eval_branch_keeps_message_unchanged():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    with patch.dict(os.environ, {"BUILD_SOURCEBRANCH": "refs/heads/main"}, clear=True):
+        collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+    session = MagicMock()
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok"}),
+    })())
+    asyncio.run(collector._call_bot_api("unchanged query", None, session))
+    assert session.post.call_args.kwargs["json"]["message"]["content"] == "unchanged query"
 
 
 def _run_all() -> int:

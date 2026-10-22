@@ -35,6 +35,8 @@ class TenantID(str, Enum):
     AZURE_SDK_ONBOARDING = "azure_sdk_onboarding"
     AZURE_TYPESPEC_AUTHORING = "azure_typespec_authoring"
     API_SPEC_REVIEW_BOT = "api_spec_review_bot"
+    AZURE_MCP_SERVER = "azure_mcp_server"
+    AZSDK_TOOLS_AGENT_QA_BOT = "azsdk_tools_agent_qa_bot"
     AZURE_SDK_QA_BOT = "azure_sdk_qa_bot"
 
 
@@ -73,7 +75,6 @@ SRC_AZURE_SDK_FOR_GO_DOCS = "azure_sdk_for_go_docs"
 SRC_AZURE_SDK_FOR_JAVA_DOCS = "azure_sdk_for_java_docs"
 SRC_AZURE_SDK_FOR_JAVA_WIKI = "azure_sdk_for_java_wiki"
 SRC_AZURE_SDK_FOR_JS_DOCS = "azure_sdk_for_js_docs"
-SRC_AZURE_SDK_FOR_JS_WIKI = "azure_sdk_for_js_wiki"
 SRC_AUTOREST_JAVA_DOCS = "autorest_java_docs"
 
 # -- Cross-language SDK resources --
@@ -83,6 +84,10 @@ SRC_AZURE_SDK_INTERNAL_WIKI = "azure-sdk-internal-wiki"
 
 # -- SDK tools --
 SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
+SRC_AZSDK_CLI_DOCS = "azsdk_cli_docs"
+
+# -- Azure MCP Server --
+SRC_AZURE_MCP_SERVER_DOCS = "azure_mcp_server_docs"
 
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
@@ -245,12 +250,6 @@ _register(
         base_url="https://github.com/Azure/azure-sdk-for-js/blob/main/",
     ),
     KnowledgeSource(
-        name=SRC_AZURE_SDK_FOR_JS_WIKI,
-        description="Azure SDK for JavaScript/TypeScript wiki with guides, troubleshooting, and development best practices.",
-        base_url="https://github.com/Azure/azure-sdk-for-js/wiki/",
-        trim_format=True,
-    ),
-    KnowledgeSource(
         name=SRC_AUTOREST_JAVA_DOCS,
         description="AutoRest Java code generator documentation for Azure SDK Java generation from OpenAPI specs.",
         base_url="https://github.com/Azure/autorest.java/blob/main/",
@@ -263,7 +262,7 @@ _register(
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_DOCS_ENG,
-        description="Azure SDK engineering documentation covering onboarding, release processes, and engineering systems.",
+        description="Internal Azure SDK engineering documentation for onboarding, releases, engineering systems, and Azure MCP guidance.",
         link_fn=lambda title: (
             "https://eng.ms/docs/products/azure-developer-experience"
             if _trim_file_format(title.replace("#", "/")) == "index"
@@ -302,6 +301,17 @@ _register(
         description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
         base_url="https://github.com/Azure/azure-sdk-for-js/blob/main/",
     ),
+    # -- Azure MCP Server --
+    KnowledgeSource(
+        name=SRC_AZURE_MCP_SERVER_DOCS,
+        description="Curated Azure MCP Server documentation and team Q&A covering setup, authentication, onboarding and merge practices, support history, troubleshooting, and release changes.",
+        base_url="https://github.com/microsoft/mcp/blob/main/",
+    ),
+    KnowledgeSource(
+        name=SRC_AZSDK_CLI_DOCS,
+        description="Azure SDK CLI (azsdk) agent documentation: CLI command guidelines, MCP tools reference, design specs, and custom-agent and skills authoring guidelines for the Azure SDK Tools Agent. Use for questions about what the agent/CLI can do, MCP tool behavior, design/architecture, and agent/skill development.",
+        base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
+    ),
 )
 
 
@@ -313,6 +323,15 @@ def get_knowledge_source(name: str) -> KnowledgeSource | None:
 # ---------------------------------------------------------------------------
 # Tenant config data class
 # ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class AgentConfig:
+    """Hosted agent assignment for a tenant."""
+
+    name: str = "azure-sdk-chat-agent"
+    name_config_key: str = "AI_FOUNDRY_AGENT_NAME"
+    version_config_key: str = "AI_FOUNDRY_AGENT_VERSION"
 
 
 @dataclass(frozen=True)
@@ -338,6 +357,7 @@ class TenantConfig:
     source_filter: dict[str, str] = field(default_factory=dict)
     qa_guideline_file: str = ""
     enable_routing: bool = False
+    agent: AgentConfig = field(default_factory=AgentConfig)
     enable_wiki_cross_document_pages: bool = True
 
 
@@ -460,6 +480,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
+            SRC_AZURE_REST_API_SPECS_DOCS,
         ),
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('golang', 'title')",
@@ -504,7 +525,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_JS_DOCS,
-            SRC_AZURE_SDK_FOR_JS_WIKI,
             SRC_AZURE_SDK_GUIDELINES,
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,
@@ -561,15 +581,19 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
         display_name="Azure SDK Onboarding",
         skill_name="sdk-onboarding",
-        scope="Azure API specification & SDK onboarding process, SDK lifecycle, Azure MCP, and retirement processes.",
+        scope="Azure API specification and SDK onboarding, release plan lifecycle, Azure MCP, and retirement processes.",
         topics=[
             "Prerequisites and setup for onboarding Azure API or SDK",
             "Permission issues for specification repo or SDK repo access, workflow visibility",
+            "Release plan creation, status, readiness, lifecycle, and troubleshooting",
             "SDK development, SDK generation (reproduce SDK validation locally), SDK release tooling and guidance",
             "Service, API and SDK deprecation guidance",
             "API documentation publishing",
             "AzSDK agent, Azure MCP tool usage guidance",
             "Creating new service based on TypeSpec or OpenAPI (Swagger)",
+        ],
+        exclusions=[
+            "API specification authoring, PR review, validation, or merge questions — route to api_spec_review_bot",
         ],
         sources=_sources(
             SRC_AZURE_SDK_DOCS_ENG,
@@ -595,6 +619,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         scope="Azure REST API specification PR review process and failing checks (not API design questions).",
         topics=[
             "Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories",
+            "Specification PR authoring requirements, validation, review status, scheduling, blockers, and merge process",
             "How to fix specification PR pipeline errors, SDK validation errors, check failures or CI failures",
             "How to suppress specification PR pipeline errors, SDK validation errors, check failures or CI failures",
         ],
@@ -621,6 +646,52 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,
+    ),
+    TenantID.AZURE_MCP_SERVER: TenantConfig(
+        display_name="Azure MCP Server",
+        skill_name="azure-mcp-server",
+        scope="Azure MCP Server setup, usage, service onboarding, authentication, remote hosting, troubleshooting, support, and contribution workflows.",
+        topics=[
+            "Azure MCP Server installation, configuration, commands, and troubleshooting",
+            "Authentication for local, remote, OBO, user, and service-principal scenarios",
+            "Service onboarding, tool design, pull requests, and integration testing",
+            "Remote or managed hosting options and production integration",
+            "Azure MCP Server telemetry, support, known issues, and release changes",
+            "Azure Skills and Azure MCP Server capability boundaries",
+        ],
+        sources=_sources(SRC_AZURE_MCP_SERVER_DOCS, SRC_AZURE_SDK_DOCS_ENG),
+        source_filter={
+            SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('mcp*', 'title')",
+        },
+        enable_routing=False,
+        agent=AgentConfig(
+            name="azure-mcp-server-agent",
+            name_config_key="AZURE_MCP_SERVER_AGENT_NAME",
+            version_config_key="AZURE_MCP_SERVER_AGENT_VERSION",
+        ),
+    ),
+    TenantID.AZSDK_TOOLS_AGENT_QA_BOT: TenantConfig(
+        display_name="AzSDK Tools Agent",
+        skill_name="azsdk-tools-agent",
+        scope=(
+            "Azure SDK Tools Agent (azsdk CLI/MCP) usage and troubleshooting: agent/MCP "
+            "setup and reliability, tool capabilities, and authoring azsdk CLI tools and skills."
+        ),
+        topics=[
+            "azsdk CLI / MCP server setup, connection, and reliability (mcp.json, VS Code / Copilot CLI, cold-start/timeout)",
+            "Azure SDK Tools Agent capabilities and tool usage (generation, validation, review, release)",
+            "Triage errors reported by the agent and route downstream failures to the appropriate specialist",
+            "Authoring azsdk CLI tools and skills (custom agents, CLI command and skill guidelines)",
+        ],
+        exclusions=[
+            "Release plan creation, status, readiness, and lifecycle questions — route to azure_sdk_onboarding; issues using or debugging an azsdk release-plan tool remain in this tenant",
+        ],
+        sources=_sources(
+            SRC_AZSDK_CLI_DOCS,
+            SRC_AZURE_SDK_DOCS_ENG,
+            SRC_AZURE_SDK_INTERNAL_WIKI,
+        ),
+        qa_guideline_file="tenants/azsdk_tools_agent.md",
     ),
     TenantID.GENERAL_QA_BOT: TenantConfig(
         display_name="General",

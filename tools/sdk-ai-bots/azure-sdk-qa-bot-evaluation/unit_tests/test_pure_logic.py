@@ -558,6 +558,47 @@ def test_record_run_result_empty_rows_no_crash():
     assert recorded[-1]["total_evals"] == 0
 
 
+def test_main_retrieves_responses_from_the_tenants_environment_selected_agent():
+    from unittest.mock import MagicMock, call, patch
+    import evals_run
+    from _evals_result import VerificationResult
+
+    for tenant_id, overrides, expected in (
+        ("azure_mcp_server", {"AZURE_MCP_SERVER_AGENT_NAME": "mcp-deployment"}, "mcp-deployment"),
+        ("azure_mcp_server", {"AI_FOUNDRY_AGENT_NAME": "general-deployment"}, "azure-mcp-server-agent"),
+        ("python_channel_qa_bot", {"AI_FOUNDRY_AGENT_NAME": "general-deployment"}, "general-deployment"),
+        (None, {}, "azure-sdk-chat-agent"),
+    ):
+        project = MagicMock()
+        runner = MagicMock()
+        runner.evaluate_run_completion.return_value = {}
+        result = MagicMock()
+        result.verify_results.return_value = VerificationResult.PASS
+        environment = {
+            "AZURE_AI_PROJECT_ENDPOINT": "https://project.example",
+            "AZURE_EVALUATION_MODEL_NAME": "model",
+            **overrides,
+        }
+        with (
+            patch.dict(os.environ, environment, clear=True),
+            patch.object(evals_run, "load_dotenv"),
+            patch.object(evals_run, "credential_for"),
+            patch.object(evals_run, "resolve_records", return_value=([], "mcpserver")),
+            patch.object(evals_run, "retrieve_channel_tenant_map", return_value={}),
+            patch.object(evals_run, "resolve_tenant_for_scenario", return_value=tenant_id),
+            patch.object(evals_run, "FoundryEvalsRunner", return_value=runner),
+            patch.object(evals_run, "EvalsResult", return_value=result),
+            patch("azure.ai.projects.AIProjectClient") as project_type,
+        ):
+            project_type.return_value.__enter__.return_value = project
+            assert evals_run.main([
+                "--dataset", "qa-bot-basic-mcpserver:latest",
+                "--baseline_check", "False", "--is_ci", "False",
+            ]) == 0
+        assert project.get_openai_client.call_args_list == [call(), call(agent_name=expected)]
+        assert runner.evaluate_run_completion.call_args.kwargs["tenant_id"] == tenant_id
+
+
 def test_agent_branch_prefix_preserves_evaluation_query():
     import asyncio
     from unittest.mock import AsyncMock, MagicMock, patch

@@ -386,8 +386,9 @@ def _github_mcp_parser(result):
     from mcp import types as mcp_types
 
     for item in result.content:
-        if isinstance(item, mcp_types.TextContent) and item.text:
-            item.text = _redact_untrusted_authors(item.text)
+        content = item.resource if isinstance(item, mcp_types.EmbeddedResource) else item
+        if isinstance(content, (mcp_types.TextContent, mcp_types.TextResourceContents)) and content.text:
+            content.text = _redact_untrusted_authors(content.text)
     return truncating_mcp_parser(result)
 
 

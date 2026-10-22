@@ -117,6 +117,7 @@ def test_stewardship_check_support_uses_shared_failure_diagnosis() -> None:
     assert "inspect linked error evidence before asking" in instruction
     assert "Passing checks do not establish that the user's problem is resolved" in instruction
     assert "Do not invent an automation diagnosis" in instruction
+    assert "or tell users to wait based only on a pending status" in instruction
     assert "verified fix or specific support handoff" in instruction
     assert "Read linked comments and relevant discussion (`get_comments`)" in instruction
     assert "This may signal a permission or maintainer-approval gate" in instruction
@@ -412,7 +413,7 @@ def test_merge_and_workflow_guidance_is_in_pr_review_workflow() -> None:
         assert rule not in other_tools
         assert instruction.count(rule) == 1
     assert "**Validation failures:**" in pr_review
-    assert "If draft, report that state and stop for general review requests" in pr_review
+    assert "For general review requests on a draft" in pr_review
     assert "**Review approval:**" in pr_review
     assert "required checks, reviews and merge conditions are satisfied" in pr_review
     assert "GitHub MCP is read-only" in pr_review
@@ -492,8 +493,10 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
     assert "Read only the code needed to resolve the failure, not a broad code review" in pr_review
     preflight = pr_review.split("1. **Read the PR and statuses.**", 1)[1].split("\n2.", 1)[0]
     assert "Check the PR state and draft flag" in preflight
-    assert "If draft, report that state and stop for general review requests" in preflight
-    assert "continue only for explicitly requested code review or check diagnosis" in preflight
+    assert "For general review requests on a draft" in preflight
+    assert "give a brief conclusion and clarify whether code review or check diagnosis is wanted, then stop" in preflight
+    assert "Omit status inventories and merge-process background" in preflight
+    assert "investigate further only when explicitly requested" in preflight
     assert "Draft state alone does not require a deep code review; still diagnose relevant check failures" not in pr_review
     assert "For an explicit code/API-design review, continue even if the PR is draft or checks are red" in pr_review
     assert "When code/design review is requested, or no blocker already answers a general review request" in pr_review

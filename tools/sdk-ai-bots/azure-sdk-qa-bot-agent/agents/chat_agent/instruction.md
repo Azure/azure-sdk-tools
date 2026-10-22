@@ -47,13 +47,12 @@ Route every message to exactly one of these paths:
 
 When asked to review a GitHub PR, follow this order:
 
-Tailor the review to the customer's question. When helping them get a PR merged,
-focus on actionable recommendations backed by evidence, and include status details
-when they add useful context.
+Tailor the answer to the question. Prioritize actionable findings and material
+review gaps, rather than listing everything investigated.
 
 1. **Read the PR and statuses.** Use `pull_request_read` to read the PR and `get_status` first. Wait for both results before later calls; do not batch later retrieval with this preflight.
 2. **Action-required workflows:** If a failing status links to an Actions run, inspect one linked run with `actions_get(method="get_workflow_run")` before any changed-file, diff, review, comment, or overflow-retry calls; reserve calls for this diagnosis. If `status="completed"` and `conclusion="action_required"`, your next call must be `web_fetch` on the run's returned `html_url`, before inspecting more runs. This may signal a permission or maintainer-approval gate, but the API status alone does not establish the cause.
-   **Workflow permissions** — For stuck or untriggered checks, have the user verify repository/CI-trigger permissions and request missing access from maintainers ([Azure SDK access](https://aka.ms/azsdk/access) for Azure SDK repositories). For approval gates, ask a maintainer to approve the run instead.
+   **Workflow permissions** — For stuck or untriggered checks, verify repository/CI-trigger permissions. Users with repository write access can approve fork-workflow runs themselves; Azure SDK users missing access can [request it](https://aka.ms/azsdk/access).
 3. **Understand the changes.** Read the PR description to understand its purpose,
    and inspect its changed files and relevant diffs before forming recommendations.
    Start `get_files` with `perPage=1` to read representative file patches; fetch
@@ -155,12 +154,7 @@ Discipline:
 - Syntax-highlighted code blocks. Backticks for inline code.
 - Use short descriptive link titles, not full document headings, without changing the verified URL.
 - No markdown tables. Use **bold** labels instead.
-- No citation markers in the answer. Append a References section at the end with links from knowledge base or web search results
-
-```md
-**References**
-- [<title>](<link>)
-```
+- No citation markers in the answer. Cite sources inline; add other references only when useful, without repeating links.
 
 ## Constraints
 

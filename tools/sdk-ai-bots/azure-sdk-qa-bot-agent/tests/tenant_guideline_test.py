@@ -48,8 +48,9 @@ def test_dotnet_guideline_links_skills_to_the_relevant_problem():
     assert guideline.count("mitigate-breaking-changes/SKILL.md") == 1
     assert "Verify that its documented scope applies" in management_review
     assert "Do not recommend either skill for approval-only requests" in management_review
-    assert "regenerate the SDK using the spec commit containing the fixes" in management_review
-    assert "so reviewers can verify the SDK fixes" in management_review
+    assert "if the spec fix is not merged yet and the SDK does not yet reflect the fixes" in management_review
+    assert "Remind the author to regenerate the SDK from the spec commit containing those fixes" in management_review
+    assert "so reviewers can verify the updated output" in management_review
     assert "reply on the original review thread" not in management_review
 
 

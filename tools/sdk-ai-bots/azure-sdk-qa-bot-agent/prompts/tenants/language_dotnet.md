@@ -27,7 +27,7 @@ Explain the fix first, then recommend:
 Link the skill and suggest using it with Copilot in the author's checkout, providing the PR/package, feedback, and spec revision or released baseline. Verify that its documented scope applies, including prerequisites and repository access. Do not recommend either skill for approval-only requests or unrelated CI failures.
 
 #### Verify the SDK Fix Before Re-review
-- Remind the author to regenerate the SDK using the spec commit containing the fixes so reviewers can verify the SDK fixes. After the spec fix merges, update the SDK reference to the merged revision and regenerate. Verify the SDK diff and relevant samples/tests, ApiCompat, and APIView; editing the spec alone does not update the SDK.
+- Remind the author to regenerate the SDK from the spec commit containing those fixes if the spec fix is not merged yet and the SDK does not yet reflect the fixes, so reviewers can verify the updated output. Before requesting re-review, confirm the expected changes appear in the SDK diff and check relevant samples/tests, ApiCompat, and APIView.
 
 ### Generation and Spec Review Fixes
 - For stale generation/conflicts, sync the SDK branch with its target and verify `tsp-location.yaml`. Updating the SDK/pinned emitter is distinct from updating the spec checkout. Confirm the package/project before suggesting `dotnet build /t:GenerateCode`; for local specs, verify the supported `LocalSpecRepo` invocation and path.

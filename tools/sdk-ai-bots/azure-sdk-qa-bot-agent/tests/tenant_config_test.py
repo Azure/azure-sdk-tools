@@ -152,17 +152,18 @@ def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
         Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
-    steps = [
+    steps = (
         "**Read the PR and statuses.**",
         "**Action-required workflows:**",
-        "**Understand the changes.**",
-        "**Review existing feedback.**",
+        "**Validation failures:**",
         "**Merge blockers:**",
-        "**Assess merge readiness.**",
-    ]
-    assert [pr_review.index(step) for step in steps] == sorted(
-        pr_review.index(step) for step in steps
+        "**Review existing feedback.**",
+        "**Understand the changes.**",
+        "**Review approval:**",
     )
+    positions = [pr_review.index(f"{index}. {step}") for index, step in enumerate(steps, start=1)]
+    assert positions == sorted(positions)
+    assert "Use these steps in priority order; skip irrelevant steps" in pr_review
     assert "do not batch later retrieval with this preflight" in pr_review
     assert "**Batch independent calls, not dependent steps.**" in instruction
     assert "Wait for a result before calls that depend on its evidence" in instruction
@@ -412,18 +413,10 @@ def test_merge_and_workflow_guidance_is_in_pr_review_workflow() -> None:
         assert pr_review.count(rule) == 1
         assert rule not in other_tools
         assert instruction.count(rule) == 1
-    steps = (
-        "**Read the PR and statuses.**",
-        "**Action-required workflows:**",
-        "**Workflow permissions**",
-        "**Understand the changes.**",
-        "**Review existing feedback.**",
-        "**Merge blockers:**",
-        "**Assess merge readiness.**",
-        "**If ready to merge:**",
-        "**If not ready to merge:**",
-    )
-    assert [pr_review.index(step) for step in steps] == sorted(pr_review.index(step) for step in steps)
+    assert "**Validation failures:**" in pr_review
+    assert "Draft state alone does not require a deep code review" in pr_review
+    assert "**Review approval:**" in pr_review
+    assert "required checks, reviews and merge conditions are satisfied" in pr_review
     assert "GitHub MCP is read-only" in pr_review
     assert "Only name people you actually found" in pr_review
 
@@ -456,15 +449,17 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     root = Path(__file__).parents[1]
     instruction = (root / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
-    assert "**Workflow permissions**" in pr_review
-    assert instruction.count("**Workflow permissions**") == 1
-    assert "For permission issues or workflow approval gates in Azure SDK repositories" in pr_review
-    assert "direct users to [request access](https://aka.ms/azsdk/access)" in pr_review
-    assert "set their Azure organization membership to [Public]" in pr_review
+    gate = pr_review.split("**Action-required workflows:**", 1)[1].split("**Validation failures:**", 1)[0]
+    assert "**Workflow permissions**" not in pr_review
+    assert "For permission issues or workflow approval gates in Azure SDK repositories" in gate
+    assert "direct users to [request access](https://aka.ms/azsdk/access)" in gate
+    assert "set their Azure organization membership to [Public]" in gate
     assert (
         "[Public](https://docs.github.com/en/account-and-profile/how-tos/"
         "organization-membership/publicizing-or-hiding-organization-membership)"
-    ) in pr_review
+    ) in gate
+    assert "give the unblocking action and stop" in gate
+    assert "unless code/design review or another independent facet was explicitly requested" in gate
     assert "if the user's write access is missing or unknown" not in pr_review
     assert "verify repository/CI-trigger permissions" not in pr_review
     assert "For approval gates, ask a maintainer to approve the run instead" not in pr_review
@@ -481,13 +476,28 @@ def test_pr_review_response_matches_customer_question_with_useful_context() -> N
     assert "Tailor the answer to the question" in normalized
     assert "Prioritize actionable findings and material review gaps" in normalized
     assert "rather than listing everything investigated" in normalized
-    assert "give the specific approval-request action if approval is still needed" in normalized
-    assert 'rather than saying "wait for approval."' in normalized
-    assert "give concrete fixes or workflow-unblocking steps" in normalized
-    assert "Identify who needs to act when supported by that evidence" in normalized
+    assert "For general PR help, diagnose blockers rather than automatically reviewing code" in normalized
+    assert "stop when the request is answered" in normalized
+    assert "When review approval is the next action, identify requested reviewers / code owners" in normalized
     assert "do not invent code fixes for a workflow approval gate" in normalized
     assert "Only name people you actually found" in pr_review
     assert "GitHub MCP is read-only" in pr_review
+
+
+def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
+    assert "Diagnose actual failures from logs or check output" in pr_review
+    assert "red status alone does not establish a code defect" in pr_review
+    assert "Read only the code needed to resolve the failure, not a broad code review" in pr_review
+    assert "Draft state alone does not require a deep code review; still diagnose relevant check failures" in pr_review
+    assert "For an explicit code/API-design review, continue even if the PR is draft or checks are red" in pr_review
+    assert "When code/design review is requested, or no blocker already answers a general review request" in pr_review
+    assert "When relevant to the question, read overall reviews" in pr_review
+    assert "follow the relevant **PR Review Workflow** steps; skip irrelevant steps" in instruction
+    assert "read the PR, its failing check runs, and their logs before answering" not in instruction
 
 
 def test_chat_agent_cites_inline_without_requiring_duplicate_references() -> None:
@@ -507,12 +517,11 @@ def test_pr_review_assesses_purpose_and_changed_file_evidence() -> None:
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     normalized = " ".join(pr_review.split())
-    assert "Read the PR description to understand its purpose" in normalized
-    assert "inspect its changed files and relevant diffs before forming recommendations" in normalized
-    assert "Start `get_files` with `perPage=1` to read representative file patches" in normalized
-    assert "fetch additional pages only as needed, rather than requesting all changed files" in normalized
-    assert "Assess the actual changes alongside checks and existing review feedback" in normalized
-    assert "State any gaps in review coverage" in normalized
+    assert "read the PR description and relevant diffs before forming recommendations" in normalized
+    assert "Start `get_files` with `perPage=1`" in normalized
+    assert "fetch additional pages only as needed" in normalized
+    assert "Assess changes alongside checks and existing feedback" in normalized
+    assert "state review coverage gaps" in normalized
 
 
 def test_latest_copilot_overall_review_selection_requires_paginated_evidence() -> None:
@@ -533,9 +542,9 @@ def test_pr_review_reads_existing_reviews_and_compares_inline_feedback_with_curr
         Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
-    feedback = pr_review.split("4. **Review existing feedback.**", 1)[1].split("\n5.", 1)[0]
+    feedback = pr_review.split("**Review existing feedback.**", 1)[1].split("**Understand the changes.**", 1)[0]
     normalized = " ".join(feedback.split())
-    assert "Read overall reviews (`get_reviews`) and relevant inline threads (`get_review_comments`)" in normalized
+    assert "read overall reviews (`get_reviews`) and relevant inline threads (`get_review_comments`)" in normalized
     assert "Compare findings with replies and the current diff" in normalized
     assert "distinguish outstanding feedback from already-addressed points" in normalized
     assert "consider only the latest overall review" in normalized

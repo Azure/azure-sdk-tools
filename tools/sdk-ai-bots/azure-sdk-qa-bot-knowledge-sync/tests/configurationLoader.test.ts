@@ -73,24 +73,30 @@ describe('ConfigurationLoader', () => {
     expect(() => ConfigurationLoader.getDocumentationSources()).toThrow();
   });
 
-  it('syncs the Azure MCP new-command guide with repository-relative citation paths', () => {
-    const guidePath = '/servers/Azure.Mcp.Server/docs/new-command.md';
+  it('syncs Azure MCP contribution and evaluator guides with repository-relative citation paths', () => {
+    const expectedPaths = [
+      '/CONTRIBUTING.md',
+      '/.github/skills/add-azure-mcp-tools/SKILL.md',
+      '/servers/Azure.Mcp.Server/docs/new-command.md',
+      '/eng/tools/ToolDescriptionEvaluator/Quickstart.md',
+      '/eng/tools/ToolDescriptionEvaluator/README.md'
+    ];
     const config = ConfigurationLoader.loadConfig();
     const mcpSource = config.sources.find(
       source => source.repository.url === 'https://github.com/microsoft/mcp.git'
     );
 
-    expect(mcpSource?.paths).toEqual(expect.arrayContaining([
+    expect(mcpSource?.paths).toEqual(expect.arrayContaining(expectedPaths.map(path =>
       expect.objectContaining({
-        path: guidePath,
+        path,
         folder: 'azure_mcp_server_docs',
         relativeByRepoPath: true
       })
-    ]));
+    )));
     const repository = ConfigurationLoader.getRepositoryConfigs().find(
       repo => repo.url === 'https://github.com/microsoft/mcp.git'
     );
-    expect(repository?.sparseCheckout).toContain(guidePath);
+    expect(repository?.sparseCheckout).toEqual(expect.arrayContaining(expectedPaths));
     const sources = ConfigurationLoader.getDocumentationSources().filter(
       source => source.folder === 'azure_mcp_server_docs'
     );

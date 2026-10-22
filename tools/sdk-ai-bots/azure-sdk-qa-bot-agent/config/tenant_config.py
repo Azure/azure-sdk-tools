@@ -226,7 +226,7 @@ _register(
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_NET_DOCS,
-        description="Azure SDK for .NET development documentation covering C# emitters, TypeSpec customization, management SDK review and compatibility skills, testing, and test proxy onboarding.",
+        description="Azure SDK for .NET development documentation covering C# emitters, TypeSpec customization, API review, compatibility, testing, and test proxy onboarding.",
         base_url="https://github.com/Azure/azure-sdk-for-net/blob/main/",
     ),
     KnowledgeSource(

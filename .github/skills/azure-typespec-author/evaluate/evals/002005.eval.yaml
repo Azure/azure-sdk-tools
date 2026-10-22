@@ -103,19 +103,19 @@ stimuli:
         type: "file-matches"
         name: "file-matches-create-operation"
         config:
-          pattern: "(ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>|TrackedResourceOperations<Employee,\s*EmployeeProperties>)"
+          pattern: "(ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>|TrackedResourceOperations<Employee,\\s*EmployeeProperties>)"
           path: "*.tsp"
       - &file_matches_parent_list_operation
         type: "file-matches"
         name: "file-matches-parent-list-operation"
         config:
-          pattern: "(ArmResourceListByParent<Employee>|TrackedResourceOperations<Employee,\s*EmployeeProperties>)"
+          pattern: "(ArmResourceListByParent<Employee>|TrackedResourceOperations<Employee,\\s*EmployeeProperties>)"
           path: "*.tsp"
       - &file_matches_subscription_list_operation
         type: "file-matches"
         name: "file-matches-subscription-list-operation"
         config:
-          pattern: "(ArmListBySubscription<Employee>|TrackedResourceOperations<Employee,\s*EmployeeProperties>)"
+          pattern: "(ArmListBySubscription<Employee>|TrackedResourceOperations<Employee,\\s*EmployeeProperties>)"
           path: "*.tsp"
       - &semantic_resource_contract
         type: "prompt"

@@ -414,7 +414,7 @@ def test_merge_and_workflow_guidance_is_in_pr_review_workflow() -> None:
         assert rule not in other_tools
         assert instruction.count(rule) == 1
     assert "**Validation failures:**" in pr_review
-    assert "Draft state alone does not require a deep code review" in pr_review
+    assert "If draft, report that state and stop for general review requests" in pr_review
     assert "**Review approval:**" in pr_review
     assert "required checks, reviews and merge conditions are satisfied" in pr_review
     assert "GitHub MCP is read-only" in pr_review
@@ -492,7 +492,11 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
     assert "Diagnose actual failures from logs or check output" in pr_review
     assert "red status alone does not establish a code defect" in pr_review
     assert "Read only the code needed to resolve the failure, not a broad code review" in pr_review
-    assert "Draft state alone does not require a deep code review; still diagnose relevant check failures" in pr_review
+    preflight = pr_review.split("1. **Read the PR and statuses.**", 1)[1].split("\n2.", 1)[0]
+    assert "Check the PR state and draft flag" in preflight
+    assert "If draft, report that state and stop for general review requests" in preflight
+    assert "continue only for explicitly requested code review or check diagnosis" in preflight
+    assert "Draft state alone does not require a deep code review; still diagnose relevant check failures" not in pr_review
     assert "For an explicit code/API-design review, continue even if the PR is draft or checks are red" in pr_review
     assert "When code/design review is requested, or no blocker already answers a general review request" in pr_review
     assert "When relevant to the question, read overall reviews" in pr_review

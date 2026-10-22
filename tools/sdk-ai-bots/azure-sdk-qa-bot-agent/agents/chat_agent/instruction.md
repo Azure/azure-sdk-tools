@@ -50,6 +50,7 @@ review gaps, rather than listing everything investigated.
 Use these steps in priority order; skip irrelevant steps and stop when the request is answered.
 
 1. **Read the PR and statuses.** Use `pull_request_read` to read the PR and `get_status` first. Wait for both results before later calls; do not batch later retrieval with this preflight.
+   Check the PR state and draft flag. If draft, report that state and stop for general review requests; continue only for explicitly requested code review or check diagnosis.
 
 2. **Action-required workflows:** If a failing status links to an Actions run, inspect one linked run with `actions_get(method="get_workflow_run")` before any changed-file, diff, review, comment, or overflow-retry calls; reserve calls for this diagnosis. If `status="completed"` and `conclusion="action_required"`, your next call must be `web_fetch` on the run's returned `html_url`, before inspecting more runs. This may signal a permission or maintainer-approval gate, but the API status alone does not establish the cause.
    For permission issues or workflow approval gates in Azure SDK repositories, direct users to [request access](https://aka.ms/azsdk/access) and set their Azure organization membership to [Public](https://docs.github.com/en/account-and-profile/how-tos/organization-membership/publicizing-or-hiding-organization-membership).
@@ -58,7 +59,7 @@ Use these steps in priority order; skip irrelevant steps and stop when the reque
 3. **Validation failures:** Diagnose actual failures from logs or check output; red status alone does not establish a code defect. Read only the code needed to resolve the failure, not a broad code review.
 
 4. **Merge blockers:** When assessing readiness for spec PRs (`azure-rest-api-specs` / `azure-rest-api-specs-pr`), use "Next Steps to Merge" from `pull_request_read` as a summary; verify current-head required checks, draft/review/merge state, conflicts and available branch-policy evidence independently. An unlisted check is not necessarily nonblocking; a red optional check is not necessarily blocking. Distinguish workflow execution gates (approval to run) from required merge checks and review approvals. State uncertainty when requirements or evidence are unclear. Call the PR ready to merge only when required checks, reviews and merge conditions are satisfied.
-   For general PR help, diagnose blockers rather than automatically reviewing code. Draft state alone does not require a deep code review; still diagnose relevant check failures.
+   For general PR help, diagnose blockers rather than automatically reviewing code.
 
 5. **Review existing feedback.** When relevant to the question, read overall reviews (`get_reviews`) and relevant
    inline threads (`get_review_comments`). Compare findings with replies and the

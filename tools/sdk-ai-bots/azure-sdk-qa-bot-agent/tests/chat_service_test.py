@@ -470,7 +470,9 @@ async def test_routing_http_message_and_errors(monkeypatch):
     from models.chat import ChatResponse
     from services.chat_service import AgentRoutingError
 
-    chat = AsyncMock(return_value=ChatResponse(id="response", answer="ok", has_result=True))
+    chat = AsyncMock(return_value=ChatResponse(
+        id="response", answer="ok", has_result=True, agent_name="returned-agent",
+    ))
     monkeypatch.setattr(server._chat_service, "chat", chat)
     payload = {"tenant_id": "general_qa_bot", "message": {
         "role": "user", "content": "[branch:feature/foo] question",
@@ -479,6 +481,7 @@ async def test_routing_http_message_and_errors(monkeypatch):
         for path in ("/completion", "/agent/chat"):
             response = await client.post(path, json=payload, headers={"X-Agent-Version": "42"})
             assert response.status_code == 200
+            assert response.json()["agent_name"] == "returned-agent"
             assert chat.call_args.kwargs == {}
             assert chat.call_args.args[0].message.content == "[branch:feature/foo] question"
         for status in (403, 404):
@@ -504,6 +507,39 @@ async def test_version_values_reach_foundry_and_errors_propagate(monkeypatch, ve
     assert exc.value is failure
     project.agents.get_version.assert_awaited_once_with("agent", version)
     project.agents.get.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tenant_id", ["general_qa_bot", "azure_mcp_server"])
+async def test_chat_returns_the_invoked_agent_name(monkeypatch, tenant_id):
+    import services.chat_service as chat_service
+    from utils.background_tasks import BackgroundTaskTracker
+
+    project = MagicMock()
+    agent = SimpleNamespace(name="actual-deployment", version="42")
+    service = ChatService(
+        project_client=project, openai_client=MagicMock(),
+        settings=lambda key, default=None: default,
+    )
+    service._get_agent = AsyncMock(return_value=agent)
+    service._resolve_request_version = AsyncMock(return_value="42")
+    service._save_bot_answer_to_conversation = AsyncMock()
+    response = SimpleNamespace(
+        id="response-1", status="completed", output=[], output_text="answer",
+    )
+    hosted = MagicMock()
+    hosted.invoke = AsyncMock(return_value=("trace-1", response))
+    monkeypatch.setattr(chat_service, "HostedAgentClient", MagicMock(return_value=hosted))
+
+    result = await service.chat(ChatRequest(
+        tenant_id=tenant_id, message=ChatMessage(role="user", content="question"),
+    ))
+    await asyncio.sleep(0)
+    await BackgroundTaskTracker.instance().shutdown()
+
+    assert result.agent_name == "actual-deployment"
+    assert result.model_dump(mode="json")["agent_name"] == "actual-deployment"
+    assert hosted.invoke.call_args.kwargs["agent_ref"]["name"] == result.agent_name
 
 
 @pytest.mark.asyncio

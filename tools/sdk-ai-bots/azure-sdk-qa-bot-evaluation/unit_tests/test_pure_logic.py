@@ -314,6 +314,9 @@ def test_extract_context_from_full_context_json():
 
 
 def test_retrieve_and_normalize_stored_response_tool_calls():
+    from contextlib import nullcontext
+    from unittest.mock import MagicMock
+
     response = {
         "output": [
             {"type": "reasoning", "id": "reasoning-1", "summary": []},
@@ -355,10 +358,13 @@ def test_retrieve_and_normalize_stored_response_tool_calls():
         responses = FakeResponses()
 
     items = [
-        {"testcase": "traceable", "response_id": "response-1", "context": "documents"},
+        {"testcase": "traceable", "response_id": "response-1", "agent_name": "returned-agent", "context": "documents"},
         {"testcase": "blocked", "response_id": "content-filter", "context": ""},
     ]
-    tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(FakeClient(), items)
+    project = MagicMock()
+    project.get_openai_client.return_value = nullcontext(FakeClient())
+    tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(project, items)
+    project.get_openai_client.assert_called_once_with(agent_name="returned-agent")
 
     assert tool_calls_by_response_id["content-filter"] == []
     assert tool_calls_by_response_id["response-1"] == [
@@ -558,16 +564,15 @@ def test_record_run_result_empty_rows_no_crash():
     assert recorded[-1]["total_evals"] == 0
 
 
-def test_main_retrieves_responses_from_the_tenants_environment_selected_agent():
+def test_main_passes_project_for_response_selected_agents():
     from unittest.mock import MagicMock, call, patch
     import evals_run
     from _evals_result import VerificationResult
 
-    for tenant_id, overrides, expected in (
-        ("azure_mcp_server", {"AZURE_MCP_SERVER_AGENT_NAME": "mcp-deployment"}, "mcp-deployment"),
-        ("azure_mcp_server", {"AI_FOUNDRY_AGENT_NAME": "general-deployment"}, "azure-mcp-server-agent"),
-        ("python_channel_qa_bot", {"AI_FOUNDRY_AGENT_NAME": "general-deployment"}, "general-deployment"),
-        (None, {}, "azure-sdk-chat-agent"),
+    for tenant_id in (
+        "azure_mcp_server",
+        "python_channel_qa_bot",
+        None,
     ):
         project = MagicMock()
         runner = MagicMock()
@@ -577,7 +582,8 @@ def test_main_retrieves_responses_from_the_tenants_environment_selected_agent():
         environment = {
             "AZURE_AI_PROJECT_ENDPOINT": "https://project.example",
             "AZURE_EVALUATION_MODEL_NAME": "model",
-            **overrides,
+            "AI_FOUNDRY_AGENT_NAME": "must-not-be-used",
+            "AZURE_MCP_SERVER_AGENT_NAME": "must-not-be-used-either",
         }
         with (
             patch.dict(os.environ, environment, clear=True),
@@ -595,8 +601,76 @@ def test_main_retrieves_responses_from_the_tenants_environment_selected_agent():
                 "--dataset", "qa-bot-basic-mcpserver:latest",
                 "--baseline_check", "False", "--is_ci", "False",
             ]) == 0
-        assert project.get_openai_client.call_args_list == [call(), call(agent_name=expected)]
+        assert project.get_openai_client.call_args_list == [call()]
         assert runner.evaluate_run_completion.call_args.kwargs["tenant_id"] == tenant_id
+        assert runner.evaluate_run_completion.call_args.kwargs["project_client"] is project
+
+
+def test_retrieval_uses_each_response_agent_and_closes_clients():
+    from unittest.mock import MagicMock, call
+
+    project = MagicMock()
+    clients = {name: MagicMock() for name in ("first-agent", "second-agent")}
+    project.get_openai_client.side_effect = lambda *, agent_name: clients[agent_name]
+    for client in clients.values():
+        client.__enter__.return_value.responses.retrieve.return_value = {"output": []}
+    items = [
+        {"response_id": "response-1", "agent_name": "first-agent"},
+        {"response_id": "response-2", "agent_name": "second-agent"},
+        {"response_id": "response-3", "agent_name": "first-agent"},
+    ]
+
+    assert FoundryEvalsRunner._retrieve_tool_calls(project, items) == {
+        "response-1": [], "response-2": [], "response-3": [],
+    }
+    assert project.get_openai_client.call_args_list == [
+        call(agent_name="first-agent"), call(agent_name="second-agent"),
+    ]
+    for name, ids in (
+        ("first-agent", ["response-1", "response-3"]),
+        ("second-agent", ["response-2"]),
+    ):
+        assert clients[name].__enter__.return_value.responses.retrieve.call_args_list == [
+            call(response_id, include=["web_search_call.action.sources"]) for response_id in ids
+        ]
+        clients[name].__exit__.assert_called_once()
+        assert clients[name].__exit__.call_args.args[-3:] == (None, None, None)
+
+
+def test_retrieval_rejects_missing_agent_without_guessing():
+    from unittest.mock import MagicMock
+
+    for name in (None, "", "   ", 42):
+        project = MagicMock()
+        try:
+            FoundryEvalsRunner._retrieve_tool_calls(
+                project,
+                [{"testcase": "missing-agent", "response_id": "response-1", "agent_name": name}],
+            )
+        except ValueError as exc:
+            assert "missing-agent" in str(exc)
+            assert "no agent name" in str(exc)
+        else:
+            raise AssertionError("Missing agent name must fail explicitly")
+        project.get_openai_client.assert_not_called()
+
+
+def test_retrieval_propagates_errors_and_closes_client():
+    from unittest.mock import MagicMock
+
+    project = MagicMock()
+    client = project.get_openai_client.return_value
+    client.__exit__.return_value = False
+    client.__enter__.return_value.responses.retrieve.side_effect = RuntimeError("retrieval failed")
+    try:
+        FoundryEvalsRunner._retrieve_tool_calls(
+            project, [{"response_id": "response-1", "agent_name": "returned-agent"}],
+        )
+    except RuntimeError as exc:
+        assert str(exc) == "retrieval failed"
+    else:
+        raise AssertionError("Retrieval errors must propagate")
+    client.__exit__.assert_called_once()
 
 
 def test_agent_branch_prefix_preserves_evaluation_query():
@@ -608,7 +682,7 @@ def test_agent_branch_prefix_preserves_evaluation_query():
     session.__aenter__ = AsyncMock(return_value=session)
     session.__aexit__ = AsyncMock(return_value=False)
     session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
-        "status": 200, "json": AsyncMock(return_value={"answer": "ok"}),
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok", "agent_name": "returned-agent"}),
     })())
     for branch in ("feature/Case/path", "refs/heads/feature/Case/path"):
         with patch.dict(os.environ, {"EVAL_AGENT_BRANCH": branch}):
@@ -623,6 +697,7 @@ def test_agent_branch_prefix_preserves_evaluation_query():
     with patch("aiohttp.ClientSession", return_value=session):
         results = collector.collect(records, None)
     assert results[0]["query"] == records[0]["query"] == "unchanged query"
+    assert results[0]["agent_name"] == "returned-agent"
 
 
 def test_without_eval_branch_keeps_message_unchanged():

@@ -220,7 +220,7 @@ class ChatService:
         conversation_items.extend(additional_items)
 
         agent_ref: dict = {
-            "name": agent_name,
+            "name": agent.name,
             "version": agent.version,
             "type": AgentReferenceType.agent_reference.value,
         }
@@ -727,7 +727,7 @@ class ChatService:
         """Unwrap a tool output to the innermost JSON string.
 
         The hosted-agent output is typically double-serialised:
-        ``'["{\\"key\\": \\"value\\"}"\']'`` → ``'{"key": "value"}'``.
+        ``'["{\\"key\\": \\"value\\"}"]'`` → ``'{"key": "value"}'``.
         This peels off outer layers until it reaches the JSON object string
         that Pydantic's ``model_validate_json`` can parse directly.
         """

@@ -33,7 +33,7 @@ from utils.azure_cosmosdb import (
     read_qa_record,
 )
 from utils.azure_storage import download_blob
-from utils.channel_policy import is_channel_conversation_id
+from utils.channel_policy import _CHANNEL_ID_PREFIX, is_channel_conversation_id
 from utils.text_util import preprocess_html_content
 
 _PAGE_SIZE = 50
@@ -142,7 +142,7 @@ class QADashboardService:
         async for value in container.query_items(
             query=(
                 "SELECT DISTINCT VALUE c.channel_id FROM c "
-                "WHERE STARTSWITH(c.channel_id, '19:')"
+                f"WHERE STARTSWITH(c.channel_id, '{_CHANNEL_ID_PREFIX}')"
             ),
         ):
             if isinstance(value, str) and is_channel_conversation_id(value):
@@ -221,7 +221,7 @@ class QADashboardService:
     ) -> tuple[list[str], list[dict[str, Any]]]:
         conditions: list[str] = [
             "STARTSWITH(IIF(IS_STRING(c.channel_id) AND c.channel_id != '', "
-            "c.channel_id, c.conversation_id), '19:')"
+            f"c.channel_id, c.conversation_id), '{_CHANNEL_ID_PREFIX}')"
         ]
         parameters: list[dict[str, Any]] = []
 

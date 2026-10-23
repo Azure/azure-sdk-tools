@@ -1,0 +1,43 @@
+name: Skill Eval coverage comment
+
+on:
+  workflow_run:
+    workflows: [Skill Evaluations]
+    types: [completed]
+
+permissions: {}
+
+# Serialize updates for the same source branch, including fork branches.
+concurrency:
+  group: skill-eval-coverage-${{ github.event.workflow_run.head_repository.id }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    steps:
+      # Never check out the PR head or execute/download its code or artifacts with write access.
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Install trusted coverage checker dependency
+        run: npm ci --prefix eng/common/scripts/skill-eval-coverage --ignore-scripts --no-audit --no-fund
+
+      # Recompute from immutable API blobs; do not trust a report produced by PR code.
+      # Run even when lint failed. Its independent, blocking result is unchanged.
+      - name: Update coverage comment (present or missing)
+        run: node eng/common/scripts/skill-eval-coverage/github.ts --post-comment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

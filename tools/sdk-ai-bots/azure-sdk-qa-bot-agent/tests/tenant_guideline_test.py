@@ -80,6 +80,41 @@ def test_dotnet_guideline_routes_ga_approval_by_package_plane(routing):
 
 
 @pytest.mark.parametrize(
+    "guidance",
+    [
+        "ask for missing values rather than guessing",
+        '`azsdk_package_get_approval_status` with `language="dotnet"`, `packageName`, and `packageVersion`',
+        '`azsdk_apiview_get_review_url` with `language="dotnet"`, `package`, and the same `version`',
+        "Do not infer current approval from the APIView SPA, comments, or old build logs.",
+        "failed URL lookup does not override a meaningful approval-status result",
+        '`result.isApproved=false` can be a successful lookup of an unapproved gate',
+        '`response_error` or `operation_status="Failed"`',
+        "do not treat that wrapper alone as a query/access failure",
+        "HTTP 201 means package-name approval only; HTTP 202 means neither",
+        "Empty comments prove neither approval nor rejection",
+        "historical reviewer comments are not current approval evidence",
+        "use the returned final source and fallback result",
+        "valid APIView fallback may still report approval",
+        "Do not claim an exact revision is approved unless the evidence identifies that revision.",
+        "An APIView `activeApiRevisionId` is not an ARH API hash",
+        "hash-specific gate was not verified",
+        'report approval as unknown and explain the query/access problem, not "unapproved."',
+        "If one source fails but another returns meaningful status",
+        "A missing review is not proof of explicit rejection.",
+        "If tools are unavailable, state that live status could not be checked",
+        "do not request reviews or mutate approvals",
+        "This API gate alone does not establish whole-release readiness",
+    ],
+)
+def test_dotnet_live_approval_guidance_preserves_evidence_boundaries(guidance):
+    guideline = load_tenant_qa_guideline(TenantID.DOTNET_CHANNEL_QA_BOT)
+    live_approval = guideline.split(
+        "#### Live API Approval Status\n", 1
+    )[1].split("### Management-Plane SDK PR Review\n", 1)[0]
+    assert guidance in live_approval
+
+
+@pytest.mark.parametrize(
     "heading",
     [
         "### SDK Lifecycle",

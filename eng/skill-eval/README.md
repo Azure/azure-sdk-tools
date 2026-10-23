@@ -14,6 +14,10 @@ This folder exists solely to give the [Skill Evaluations GitHub Actions workflow
 
 ## Local skill linting
 
+Use Node.js 24 to match the lint, coverage-check and trusted-reporting jobs. The
+coverage checker requires Node 24.14.1 or later. Dependency `engines` entries state
+minimum supported versions; they do not select the runtime used by these jobs.
+
 Reproduce exactly what CI does by installing from the same lockfile and invoking the local binary:
 
 ```sh

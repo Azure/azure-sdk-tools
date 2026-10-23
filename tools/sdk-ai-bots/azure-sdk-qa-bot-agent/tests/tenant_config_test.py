@@ -4,9 +4,10 @@ import asyncio
 import json
 from pathlib import Path
 
-from agent_framework import FileSkillsSource
 import pytest
+from agent_framework import FileSkillsSource
 
+from config import tenant_config
 from config.tenant_config import (
     SRC_AZURE_API_GUIDELINES,
     SRC_AZURE_AVOCADO_DOCS,
@@ -38,6 +39,7 @@ def test_stewardship_tenant_uses_shared_agent_and_maintained_sources() -> None:
     assert config.agent.name_config_key == "AI_FOUNDRY_AGENT_NAME"
     assert config.display_name == "API Stewardship Board - General"
     assert config.skill_name == "api-stewardship-board"
+    assert config.qa_guideline_files == ["tenants/api_stewardship_board.md"]
     assert config.enable_routing
     assert not config.enable_wiki_cross_document_pages
     assert [source.name for source in config.sources] == [
@@ -353,6 +355,84 @@ def test_stewardship_sources_have_matching_sync_configuration() -> None:
     assert all(p["folder"] == SRC_AZURE_REST_API_SPECS_DOCS for p in specs["paths"])
 
 
+@pytest.mark.parametrize(
+    ("tenant_id", "extra_sources", "guideline_language", "emitter_language"),
+    [
+        (
+            TenantID.PYTHON_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_PYTHON_DOCS,
+            ],
+            "python",
+            "python",
+        ),
+        (
+            TenantID.DOTNET_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_NET_DOCS,
+                tenant_config.SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
+            ],
+            "dotnet",
+            "csharp",
+        ),
+        (
+            TenantID.GOLANG_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_GO_DOCS,
+            ],
+            "golang",
+            "go",
+        ),
+        (
+            TenantID.JAVA_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_JAVA_DOCS,
+                tenant_config.SRC_AZURE_SDK_FOR_JAVA_WIKI,
+                tenant_config.SRC_AUTOREST_JAVA_DOCS,
+            ],
+            "java",
+            "java",
+        ),
+        (
+            TenantID.JAVASCRIPT_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_JS_DOCS,
+            ],
+            "typescript",
+            "ts",
+        ),
+    ],
+)
+def test_language_tenants_include_shared_sources_and_preserve_filters(
+    tenant_id, extra_sources, guideline_language, emitter_language
+) -> None:
+    config = get_tenant_config(tenant_id)
+    assert config is not None
+    common_sources = [
+        tenant_config.SRC_AZURE_SDK_GUIDELINES,
+        SRC_AZURE_SDK_DOCS_ENG,
+        tenant_config.SRC_AZURE_SDK_INTERNAL_WIKI,
+        tenant_config.SRC_TYPESPEC_AZURE_DOCS,
+        SRC_AZURE_REST_API_SPECS_WIKI,
+        SRC_AZURE_REST_API_SPECS_DOCS,
+    ]
+    assert [source.name for source in tenant_config._SDK_SOURCES] == common_sources
+    names = [source.name for source in config.sources]
+    assert len(names) == len(set(names))
+    assert set(names) == set(common_sources + extra_sources)
+    assert config.sources is not tenant_config._SDK_SOURCES
+    assert config.source_filter == {
+        tenant_config.SRC_AZURE_SDK_GUIDELINES: (
+            f"search.ismatch('{guideline_language}', 'title')"
+        ),
+        tenant_config.SRC_TYPESPEC_AZURE_DOCS: (
+            f"search.ismatch('typespec-{emitter_language}', 'title') "
+            "or search.ismatch('generate*', 'title')"
+        ),
+        SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
+    }
+
+
 def test_javascript_tenant_uses_repository_docs_instead_of_wiki() -> None:
     config = get_tenant_config(TenantID.JAVASCRIPT_CHANNEL_QA_BOT)
 
@@ -443,6 +523,19 @@ def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     assert "onboarding, releases, engineering systems" in content
     assert "Azure MCP guidance" in content
     assert "[skill_guideline]" not in content
+
+
+def test_dotnet_skill_composes_common_and_specific_guidelines_once() -> None:
+    content = build_skill_content(TenantID.DOTNET_CHANNEL_QA_BOT)
+
+    assert content.count("[skill_guideline]") == 1
+    assert content.count("# Tenant: Azure SDK Language Channel Assistant") == 1
+    assert content.count("# .NET-Specific Answer Guidelines") == 1
+    assert content.index("### SDK Lifecycle") < content.index(
+        "# .NET-Specific Answer Guidelines"
+    )
+    assert "{{tenant_id}}" not in content
+    assert "mgmt-review-comment-resolution/SKILL.md" in content
 
 
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:

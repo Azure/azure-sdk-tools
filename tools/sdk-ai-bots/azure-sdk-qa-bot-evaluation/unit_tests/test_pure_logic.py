@@ -386,12 +386,14 @@ def test_resolve_tenant_for_scenario():
         "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
         "API Stewardship Board - General": "api_stewardship_board_qa_bot",
+        "Language - DotNet": "dotnet_channel_qa_bot",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
     assert resolve_tenant_for_scenario("apistewardshipboard", m) == "api_stewardship_board_qa_bot"
     assert resolve_tenant_for_scenario("apistewardshipboard", {"default": "tenant-default"}) == "tenant-default"
+    assert resolve_tenant_for_scenario("dotnet", m) == "dotnet_channel_qa_bot"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
 
@@ -566,7 +568,7 @@ def test_offline_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
     path = Path(__file__).resolve().parents[2] / "offline-evaluation.yml"
     pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
     scenarios = pipeline["parameters"][0]["default"]
-    assert scenarios == ["typespec", "onboarding", "python", "javascript", "go", "apispec", "authoring", "mcpserver", "sdkagent", "apistewardshipboard"]
+    assert scenarios == ["typespec", "onboarding", "python", "dotnet", "javascript", "go", "apispec", "authoring", "mcpserver", "sdkagent", "apistewardshipboard"]
     jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
     steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
     inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Evals (${{ scenario }})")
@@ -584,7 +586,7 @@ def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
     path = Path(__file__).resolve().parents[2] / "perf-evaluation.yml"
     pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
     scenarios = pipeline["parameters"][0]["default"]
-    assert scenarios == ["typespec", "onboarding", "python", "javascript", "go", "apispec", "general", "releasesupport", "authoring", "mcpserver", "apistewardshipboard"]
+    assert scenarios == ["typespec", "onboarding", "python", "dotnet", "javascript", "go", "apispec", "general", "releasesupport", "authoring", "mcpserver", "apistewardshipboard"]
     jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
     steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
     inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Perf Evals (${{ scenario }})")

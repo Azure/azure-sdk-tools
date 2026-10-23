@@ -452,6 +452,74 @@ def test_apistewardshipboard_cases_are_customer_questions_and_expert_answers():
             ), row["testcase"]
 
 
+def test_apistewardshipboard_preserves_expert_conclusions_and_case_context():
+    root = Path(__file__).resolve().parents[1]
+    records, _ = resolve_records(
+        str(root / "evaluation_datasets" / "perf" / "apistewardshipboard.jsonl"),
+        script_dir=root,
+    )
+    cases = {row["testcase"]: row for row in records}
+    expectations = {
+        "Previously approved break repeats in new preview": {
+            "query": ("latest GA",),
+            "ground_truth": ("every new preview", "re-approved", "next stable"),
+            "source": ("1787603383879",),
+        },
+        "TypeSpec migration without a new API version": {
+            "ground_truth": ("does not need API Stewardship Board review", "DefaultValueChanged"),
+            "source": ("1775678660583", "1775678867344"),
+        },
+        "Separate SDK package versus additional client": {
+            "query": ("same service", "version independently"),
+            "ground_truth": ("existing package", "maintenance"),
+            "source": ("1790198371681",),
+        },
+        "Resource-specific LRO monitor is allowed": {
+            "ground_truth": ("yes", "separate endpoints", "different resources"),
+            "source": ("1779411536613",),
+        },
+        "Scheduler role-like error does not justify elevation": {
+            "ground_truth": ("no additional permissions", "locked meeting slot", "backend fix"),
+            "source": ("1776726962353", "1776814126219"),
+        },
+        "Unknown InternalARMContracts synchronization rule": {
+            "ground_truth": ("ARM Office Hours", "does not establish"),
+            "source": ("1791914122933",),
+        },
+        "Additive preview versioning review and exception routing": {
+            "ground_truth": ("approved", "recordkeeping", "CPEX"),
+            "source": ("1788893117225",),
+        },
+        "New-version default change needs compatibility review": {
+            "query": ("upcoming API versions", "existing connections"),
+            "ground_truth": ("new API versions", "unchanged", "not approved"),
+            "source": ("no expert reply",),
+        },
+        "Published contract correction across main and release branches": {
+            "ground_truth": ("two PRs", "main", "release-", "SDK"),
+            "source": ("1788197041926", "1788201530309"),
+        },
+        "Multiple versions need explicit SDK generation and review": {
+            "query": ("MultipleNewApiVersions",),
+            "ground_truth": ("api-version", "tspconfig.yaml", "every SDK language"),
+            "source": ("1788326574286",),
+        },
+        "AFEC-gated limited preview is not public preview": {
+            "query": ("AFEC", "white-glove", "limited"),
+            "ground_truth": ("not public preview", "private preview", "feature flags"),
+            "source": ("1766001736240", "1766001828993"),
+        },
+        "Legacy meeting cancellation after async review": {
+            "ground_truth": ("manual cancellation", "scheduler", "not automatically"),
+            "source": ("1780421016315",),
+        },
+    }
+    for testcase, fields in expectations.items():
+        for field, required in fields.items():
+            for text in required:
+                assert text.casefold() in cases[testcase][field].casefold(), (testcase, field, text)
+
+
 def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, status=200):
     from contextlib import ExitStack
     from types import SimpleNamespace

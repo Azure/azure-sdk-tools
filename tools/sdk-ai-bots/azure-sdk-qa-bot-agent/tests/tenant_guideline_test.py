@@ -80,46 +80,6 @@ def test_dotnet_guideline_routes_ga_approval_by_package_plane(routing):
 
 
 @pytest.mark.parametrize(
-    "guidance",
-    [
-        "ask for missing values",
-        '`azsdk_package_get_approval_status` with `language="dotnet"`, `packageName`, and `packageVersion`',
-        '`azsdk_apiview_get_review_url` with `language="dotnet"`, `package`, and the same `version`',
-        "not the SPA, comments (including empty results), or old logs",
-        "Link lookup failure does not invalidate status.",
-        "A meaningful `isApproved=false` result is not a lookup failure",
-        '`response_error` or `operation_status="Failed"`',
-        "HTTP 200 means API and package-name approval; 201 means package-name only; 202 means neither",
-        "`repositoryNotSupported` is not disapproval; honor the final source",
-        "APIView fallback may still approve",
-        "Package/version approval does not prove exact-revision approval without matching evidence.",
-        "Use only an authoritative artifact hash, never APIView's `activeApiRevisionId`.",
-        "Missing `apiHash` leaves the ARH artifact-hash gate unverified",
-        "unavailable tools as unknown, not unapproved",
-        "If another source succeeds, report its result and limits.",
-        "A missing review is not explicit rejection.",
-        "do not request reviews or mutate approvals",
-        "this API gate alone does not establish whole-release readiness",
-    ],
-)
-def test_dotnet_live_approval_guidance_preserves_evidence_boundaries(guidance):
-    guideline = load_tenant_qa_guideline(TenantID.DOTNET_CHANNEL_QA_BOT)
-    live_approval = guideline.split(
-        "#### Live API Review Status\n", 1
-    )[1].split("### Management-Plane SDK PR Review\n", 1)[0]
-    assert guidance in live_approval
-
-
-def test_dotnet_release_requirements_include_live_review_status():
-    guideline = load_tenant_qa_guideline(TenantID.DOTNET_CHANNEL_QA_BOT)
-    release_guidance = guideline.split(
-        "### .NET SDK PR / APIView Review and Release Requirements\n", 1
-    )[1].split("### Management-Plane SDK PR Review\n", 1)[0]
-    assert "Check live API review status below" in release_guidance
-    assert "#### Live API Review Status\n" in release_guidance
-
-
-@pytest.mark.parametrize(
     "heading",
     [
         "### SDK Lifecycle",

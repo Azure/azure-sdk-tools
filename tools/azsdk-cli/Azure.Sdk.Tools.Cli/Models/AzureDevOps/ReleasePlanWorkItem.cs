@@ -150,10 +150,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [JsonIgnore]
         public string ReleasedVersion { get; set; } = string.Empty;
 
-        // Internal correlation with the release run recorded during auto-release preparation.
-        [JsonIgnore]
-        public string ReleasePipelineUrl { get; set; } = string.Empty;
-
         // Retain the stored ADO value for internal release-plan selection, but do not expose
         // it as current PR status. GitHub and the release plan dashboard provide that information.
         [JsonIgnore]

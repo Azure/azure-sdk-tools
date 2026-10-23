@@ -38,7 +38,6 @@ internal class ReleasePlanResponseSerializationTests
         var sdk = details.GetProperty("SDKInfo")[0];
 
         Assert.That(sdk.TryGetProperty("PullRequestStatus", out _), Is.False);
-        Assert.That(sdk.TryGetProperty("ReleasePipelineUrl", out _), Is.False);
         Assert.That(sdk.GetProperty("Language").GetString(), Is.EqualTo("Python"));
         Assert.That(sdk.GetProperty("PackageName").GetString(), Is.EqualTo("azure-mgmt-contoso"));
         Assert.That(sdk.GetProperty("SdkPullRequestUrl").GetString(), Is.EqualTo(releasePlan.SDKInfo[0].SdkPullRequestUrl));
@@ -62,7 +61,6 @@ internal class ReleasePlanResponseSerializationTests
         using var document = JsonDocument.Parse(json);
 
         Assert.That(document.RootElement.EnumerateObject().Any(property => property.Name.Equals("PullRequestStatus", StringComparison.OrdinalIgnoreCase)), Is.False);
-        Assert.That(document.RootElement.EnumerateObject().Any(property => property.Name.Equals("ReleasePipelineUrl", StringComparison.OrdinalIgnoreCase)), Is.False);
         Assert.That(sdkInfo.PullRequestStatus, Is.EqualTo("Merged"));
     }
 
@@ -85,7 +83,6 @@ internal class ReleasePlanResponseSerializationTests
         using var document = JsonDocument.Parse(result.Content.OfType<TextContentBlock>().Single().Text);
         var sdk = document.RootElement.GetProperty("release_plan_details").GetProperty("sdkInfo")[0];
         Assert.That(sdk.EnumerateObject().Any(property => property.Name.Equals("PullRequestStatus", StringComparison.OrdinalIgnoreCase)), Is.False);
-        Assert.That(sdk.EnumerateObject().Any(property => property.Name.Equals("ReleasePipelineUrl", StringComparison.OrdinalIgnoreCase)), Is.False);
         Assert.That(sdk.GetProperty("sdkPullRequestUrl").GetString(), Is.EqualTo(sdkInfo.SdkPullRequestUrl));
         Assert.That(sdk.GetProperty("generationStatus").GetString(), Is.EqualTo("Failed"));
         Assert.That(sdk.GetProperty("releaseStatus").GetString(), Is.EqualTo("Pending"));
@@ -111,7 +108,6 @@ internal class ReleasePlanResponseSerializationTests
         PackageName = "azure-mgmt-contoso",
         SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/1",
         GenerationPipelineUrl = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1",
-        ReleasePipelineUrl = "https://example.test/build/100",
         GenerationStatus = "Failed",
         ReleaseStatus = "Pending",
         PullRequestStatus = "Merged",

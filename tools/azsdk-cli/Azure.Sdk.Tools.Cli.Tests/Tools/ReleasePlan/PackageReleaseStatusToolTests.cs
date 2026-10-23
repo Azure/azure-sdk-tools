@@ -605,6 +605,78 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(_devOps.Invocations.Select(i => i.Method.Name), Is.EqualTo(new[] { nameof(IDevOpsService.GetReleasePlansForPackageAsync) }));
         }
 
+        [TestCase(false, null)]
+        [TestCase(true, null)]
+        [TestCase(false, "beta")]
+        [TestCase(true, "BETA")]
+        [TestCase(false, "stable")]
+        public async Task LegacyLookup_TwoActiveBetaPlans_DoesNotChooseEither(bool reverseOrder, string? releaseType)
+        {
+            _plan.SDKReleaseType = "beta";
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            other.SDKReleaseType = "beta";
+            other.SDKInfo.Single(s => s.Language == "JavaScript").PullRequestStatus = "Merged";
+            List<ReleasePlanWorkItem> candidates = reverseOrder ? [_plan, other] : [other, _plan];
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("@azure/test", "JavaScript", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(candidates);
+
+            var result = await UpdateAsync(releasePlanId: 0, language: "JavaScript", packageName: "@azure/test",
+                sdkReleaseType: releaseType, version: "9.0.0-beta.5");
+
+            Assert.That(result.ResponseError, Does.Contain("Multiple in-progress release plans")
+                .And.Contain("100").And.Contain("200").And.Contain("--release-plan-id").And.Contain("--sdk-pull-request"));
+            Assert.That(result.ReleaseStatus, Is.Empty);
+            AssertNoWrites();
+            Assert.That(candidates.SelectMany(p => p.SDKInfo).All(s => s.ReleaseStatus == "Pending"), Is.True);
+        }
+
+        [TestCase("beta")]
+        [TestCase("stable")]
+        public async Task LegacyLookup_ReleaseTypeDoesNotDisambiguateActivePlans(string releaseType)
+        {
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            other.SDKReleaseType = "beta";
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan, other]);
+
+            var result = await UpdateAsync(releasePlanId: 0, sdkReleaseType: releaseType);
+
+            Assert.That(result.ResponseError, Does.Contain("Multiple in-progress release plans"));
+            AssertNoWrites();
+        }
+
+        [Test]
+        public async Task AutomaticSdkPr_TwoActiveBetaPlans_UpdatesOnlyTheLinkedPlan()
+        {
+            const string sdkPr = "https://github.com/Azure/azure-sdk-for-js/pull/100";
+            _plan.SDKReleaseType = "beta";
+            _plan.SDKInfo.Single(s => s.Language == "JavaScript").SdkPullRequestUrl = sdkPr;
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            other.SDKReleaseType = "beta";
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("@azure/test", "JavaScript", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([other, _plan]);
+
+            var result = await UpdateAsync(releasePlanId: 0, language: "JavaScript", packageName: "@azure/test",
+                sdkReleaseType: "beta", sdkPr: sdkPr, version: "9.0.0-beta.5");
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanId, Is.EqualTo(_plan.ReleasePlanId));
+            Assert.That(_writes.Single().Id, Is.EqualTo(_plan.WorkItemId));
+            Assert.That(_writes.Single().Fields, Is.EquivalentTo(new Dictionary<string, string>
+            {
+                ["Custom.ReleaseStatusForJavaScript"] = "Released",
+                ["Custom.ReleasedVersionForJavaScript"] = "9.0.0-beta.5"
+            }));
+            Assert.That(other.SDKInfo.All(s => s.ReleaseStatus == "Pending"), Is.True);
+            _devOps.Verify(s => s.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
         [TestCase(".NET", "Azure.Test", "Dotnet")]
         [TestCase("Java", "azure-test", "Java")]
         [TestCase("JavaScript", "@azure/test", "JavaScript")]

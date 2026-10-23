@@ -73,6 +73,8 @@ _GITHUB_READONLY_TOOLS: tuple[str, ...] = (
     # actions (read-only)
     "actions_list",
     "actions_get",
+    # Upstream omits the "actions_" prefix here; allowed_tools must match exactly.
+    # https://github.com/github/github-mcp-server/blob/main/pkg/github/actions.go
     "get_job_logs",
 )
 # Trusted-author filtering

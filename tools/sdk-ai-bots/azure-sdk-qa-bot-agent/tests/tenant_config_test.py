@@ -42,6 +42,12 @@ def test_stewardship_tenant_uses_shared_agent_and_maintained_sources() -> None:
     assert config.qa_guideline_files == ["tenants/api_stewardship_board.md"]
     assert config.enable_routing
     assert not config.enable_wiki_cross_document_pages
+    assert (
+        "Internal API modeling, documentation/SDK exposure, and service-side access boundaries"
+    ) in config.topics
+    assert (
+        "API deprecation, retirement, affected versions, and customer-notification requirements"
+    ) in config.topics
     assert [source.name for source in config.sources] == [
         SRC_AZURE_API_GUIDELINES,
         SRC_TYPESPEC_DOCS,
@@ -73,12 +79,68 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
         "Data-plane API design and API Stewardship Board review guidance."
     )
     assert "Give evidence-backed advice, not Board decisions" in content
-    assert "Use `typespec` for detailed authoring" in content
-    assert "`api-spec-review` for validator-specific diagnosis" in content
-    assert "`sdk-onboarding` for release-plan lifecycle" in content
+    assert "Use `typespec` for detailed authoring" not in content
+    assert "`api-spec-review` for validator-specific diagnosis" not in content
+    assert "`sdk-onboarding` for release-plan lifecycle" not in content
     assert "repair infrastructure or prescribe resource-specific permission changes" in content
     assert "Use maintained Board guidance" in content
     assert "async reviews, materials, lead times, Office Hours and support" in content
+
+
+def test_stewardship_specialist_routes_are_injected_from_tenant_config() -> None:
+    from services.chat_service import ChatService
+
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    assert config is not None
+    message = ChatService()._build_tenant_system_message(
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT
+    )
+    scope, skill_content = message.split(
+        "\n[skill] name=api-stewardship-board ", 1
+    )
+    assert "[tenant_scope]" in scope
+    for exclusion in (
+        "Detailed TypeSpec authoring or emitter failures — use the TypeSpec skill",
+        "Detailed spec PR check investigation — use the API Spec Review skill",
+        "Breaking-change exception requests — use the API Spec Review skill for the applicable authorized-reviewer process",
+        "Release-plan lifecycle — use the SDK Onboarding skill",
+    ):
+        assert exclusion in config.exclusions
+        assert f"- {exclusion}" in scope
+        assert exclusion not in skill_content
+
+
+def test_stewardship_guideline_follows_a_request_to_answer_workflow() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    guideline = content.split("[skill_guideline]\n", 1)[1]
+    assert [line for line in guideline.splitlines() if line.startswith("## ")] == [
+        "## Scope",
+        "## 1. Understand the request",
+        "## 2. Gather evidence",
+        "## 3. Apply the relevant policy",
+        "## 4. Recommend the next action",
+    ]
+    context = guideline.split("## 1. Understand the request\n", 1)[1].split("\n## ", 1)[0]
+    evidence = guideline.split("## 2. Gather evidence\n", 1)[1].split("\n## ", 1)[0]
+    policy = guideline.split("## 3. Apply the relevant policy\n", 1)[1].split("\n## ", 1)[0]
+    answer = guideline.split("## 4. Recommend the next action\n", 1)[1]
+
+    assert "latest confirmed thread resolution" in context
+    assert "distinguish proposals from decisions and preserve withdrawals" in context
+    assert "Follow the shared **PR Review Workflow**" in evidence
+    assert "Retrieve maintained guidance for the unresolved question" in evidence
+    assert "As applicable:" in policy
+    assert (
+        "REST signoff, breaking-change exceptions, SDK/API review and package-name approval separate"
+    ) in policy
+    assert "live `.github/protected-labels.yml`" in policy
+    assert "SDK/documentation visibility from service authorization" in policy
+    assert "preview classification from policy and availability, not AFEC alone" in policy
+    assert "retirement, verify affected versions, applicable notice requirements and approval evidence" in policy
+    assert "do not generalize prior approvals" in policy
+    assert "next useful action from current evidence, rather than restart completed review work" in answer
+    assert "Use maintained Board guidance" in answer
+    assert "Do not send users back to this channel to repeat their question" in answer
 
 
 def test_stewardship_pr_guidance_delegates_shared_rules_and_preserves_board_policy() -> None:
@@ -265,7 +327,7 @@ def test_stewardship_skill_requires_explicit_service_type_for_scoped_search() ->
 
 def test_stewardship_scope_keeps_arm_referral_separate_from_search_details() -> None:
     content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
-    scope = content.split("## Scope\n", 1)[1].split("## Board Review Guidance", 1)[0]
+    scope = content.split("## Scope\n", 1)[1].split("\n## ", 1)[0]
 
     assert len(scope.split()) <= 75
     assert "data-plane API design" in scope

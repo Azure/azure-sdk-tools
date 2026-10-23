@@ -666,14 +666,17 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         scope="Data-plane API design and API Stewardship Board review guidance; advisory only, without approval authority.",
         topics=[
             "Data-plane REST and SDK design, endpoints, LROs, clients, packages, and naming",
+            "Internal API modeling, documentation/SDK exposure, and service-side access boundaries",
             "Board review requests, readiness, async reviews, virtual Office Hours, and signoff process",
             "REST versus SDK compatibility, preview/GA versioning, migration, and validation triage",
+            "API deprecation, retirement, affected versions, and customer-notification requirements",
             "Safe review-scheduler troubleshooting and evidence-based operational referrals",
         ],
         exclusions=[
             "ARM/management-plane reviews — direct to ARM Office Hours: https://armwiki.azurewebsites.net/introduction/office_hours.html",
             "Detailed TypeSpec authoring or emitter failures — use the TypeSpec skill",
             "Detailed spec PR check investigation — use the API Spec Review skill",
+            "Breaking-change exception requests — use the API Spec Review skill for the applicable authorized-reviewer process",
             "Release-plan lifecycle — use the SDK Onboarding skill",
             "Language-specific SDK failures — use the corresponding language skill",
             "Performing approvals, approval-label changes, merges, scheduler repairs, or permission changes",

@@ -33,6 +33,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService
                 .Setup(x => x.GetReleasePlansBySdkPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync([]);
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansByReleasePipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
             logger = new TestLogger<PackageReleaseStatusTool>();
             mockNotificationService = new Mock<INotificationService>();
             mockNotificationService

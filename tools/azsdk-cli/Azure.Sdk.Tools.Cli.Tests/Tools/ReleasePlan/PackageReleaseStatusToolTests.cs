@@ -32,6 +32,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(() => _plan);
             _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => [_plan]);
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
             _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => _plan);
             _devOps.Setup(s => s.GetActiveReleasePlansByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
@@ -675,6 +677,149 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }));
             Assert.That(other.SDKInfo.All(s => s.ReleaseStatus == "Pending"), Is.True);
             _devOps.Verify(s => s.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase(".NET", "Azure.Test", "Dotnet")]
+        [TestCase("Java", "azure-test", "Java")]
+        [TestCase("JavaScript", "@azure/test", "JavaScript")]
+        [TestCase("Python", "azure-test", "Python")]
+        [TestCase("Go", "sdk/test/aztest", "Go")]
+        public async Task ReleasePipelineCorrelation_TwoBetaPlans_UpdatesOnlyTheRecordedRun(string language, string packageName, string fieldId)
+        {
+            const string pipeline = "https://example.test/build/100";
+            _plan.SDKReleaseType = "beta";
+            _plan.SDKInfo.Single(s => s.Language == language).ReleasePipelineUrl = pipeline;
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            other.SDKReleaseType = "beta";
+            other.SDKInfo.Single(s => s.Language == language).ReleasePipelineUrl = "https://example.test/build/200";
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync(packageName, language, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([other, _plan]);
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync(pipeline, packageName, language, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan]);
+
+            var result = await UpdateAsync(releasePlanId: 0, language: language, packageName: packageName,
+                sdkReleaseType: "beta", pipeline: pipeline, version: "1.2.3-beta.1");
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanId, Is.EqualTo(_plan.ReleasePlanId));
+            Assert.That(_writes.Single().Id, Is.EqualTo(_plan.WorkItemId));
+            Assert.That(_writes.Single().Revision, Is.EqualTo(7));
+            Assert.That(_writes.Single().Fields, Is.EquivalentTo(new Dictionary<string, string>
+            {
+                [$"Custom.ReleaseStatusFor{fieldId}"] = "Released",
+                [$"Custom.ReleasedVersionFor{fieldId}"] = "1.2.3-beta.1",
+                [$"Custom.ReleasePipelineFor{fieldId}"] = pipeline
+            }));
+            Assert.That(other.SDKInfo.All(s => s.ReleaseStatus == "Pending"), Is.True);
+            _devOps.Verify(s => s.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+            _devOps.Verify(s => s.GetReleasePlanAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+            _devOps.Verify(s => s.GetReleasePlansBySdkPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase("missing")]
+        [TestCase("different-run")]
+        [TestCase("other-language")]
+        [TestCase("different-package")]
+        [TestCase("multiple-runs")]
+        public async Task ReleasePipelineCorrelation_WithoutOneExactAssociation_DoesNotWrite(string conflict)
+        {
+            const string pipeline = "https://example.test/build/100";
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            var python = _plan.SDKInfo.Single(s => s.Language == "Python");
+            switch (conflict)
+            {
+                case "different-run": python.ReleasePipelineUrl = "https://example.test/build/200"; break;
+                case "other-language": _plan.SDKInfo.Single(s => s.Language == "Java").ReleasePipelineUrl = pipeline; break;
+                case "different-package": python.PackageName = "azure-other"; python.ReleasePipelineUrl = pipeline; break;
+                case "multiple-runs": python.ReleasePipelineUrl = pipeline; other.SDKInfo.Single(s => s.Language == "Python").ReleasePipelineUrl = pipeline; break;
+            }
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([other, _plan]);
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync(pipeline, "azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(conflict switch
+                {
+                    "other-language" or "different-package" => [_plan],
+                    "multiple-runs" => [other, _plan],
+                    _ => []
+                });
+
+            var result = await UpdateAsync(releasePlanId: 0, pipeline: pipeline);
+
+            Assert.That(result.ResponseError, Is.Not.Null);
+            Assert.That(result.ReleaseStatus, Is.Empty);
+            AssertNoWrites();
+        }
+
+        [TestCase("state")]
+        [TestCase("revision")]
+        [TestCase("environment")]
+        [TestCase("id")]
+        [TestCase("duplicate-language")]
+        public async Task ReleasePipelineCorrelation_RevalidatesTheMatchedPlan(string conflict)
+        {
+            const string pipeline = "https://example.test/build/100";
+            _plan.SDKInfo.Single(s => s.Language == "Python").ReleasePipelineUrl = pipeline;
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            switch (conflict)
+            {
+                case "state": _plan.Status = "Abandoned"; break;
+                case "revision": _plan.Revision = 0; break;
+                case "environment": _plan.IsTestReleasePlan = true; break;
+                case "id": _plan.ReleasePlanId = 0; break;
+                case "duplicate-language": _plan.SDKInfo.Add(new SDKInfo { Language = "Python", PackageName = "azure-test" }); break;
+            }
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([other, _plan]);
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync(pipeline, "azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan]);
+
+            var result = await UpdateAsync(releasePlanId: 0, pipeline: pipeline);
+
+            Assert.That(result.ResponseError, Does.Contain("No release plan updated"));
+            Assert.That(result.ReleaseStatus, Is.Empty);
+            AssertNoWrites();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task ReleasePipelineCorrelation_RetryCannotReleaseTheOtherPlan(bool retryFailedFinish)
+        {
+            const string pipeline = "https://example.test/build/100";
+            _plan.SDKInfo.Single(s => s.Language == "Python").ReleasePipelineUrl = pipeline;
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            var candidates = new[] { other, _plan };
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => candidates.Where(p => p.SDKInfo.Single(s => s.Language == "Python").ReleaseStatus != "Released").ToList());
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync(pipeline, "azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => candidates.Where(p => p.SDKInfo.Single(s => s.Language == "Python").ReleasePipelineUrl == pipeline).ToList());
+            if (retryFailedFinish)
+            {
+                foreach (var sdk in _plan.SDKInfo.Where(s => s.Language != "Python")) sdk.ReleaseStatus = "Released";
+                _devOps.SetupSequence(s => s.GetReleasePlanForWorkItemAsync(_plan.WorkItemId, It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new Exception("Temporary completion read failure"))
+                    .ReturnsAsync(_plan);
+            }
+
+            var initial = await UpdateAsync(releasePlanId: 0, pipeline: pipeline, version: "1.2.3");
+            var retry = await UpdateAsync(releasePlanId: 0, pipeline: pipeline, version: "1.2.3");
+
+            Assert.That(initial.ResponseError, Is.Null);
+            Assert.That(retry.ResponseError, Is.Null);
+            Assert.That(retry.ReleasePlanId, Is.EqualTo(_plan.ReleasePlanId));
+            Assert.That(retry.ReleasePlanFinished, Is.EqualTo(retryFailedFinish));
+            Assert.That(_writes.Count(w => w.Fields.ContainsKey("Custom.ReleaseStatusForPython")), Is.EqualTo(1));
+            Assert.That(_devOps.Invocations.Where(i => i.Method.Name == nameof(IDevOpsService.UpdateWorkItemAsync))
+                .All(i => (int)i.Arguments[0] == _plan.WorkItemId), Is.True);
+            Assert.That(other.SDKInfo.All(s => s.ReleaseStatus == "Pending"), Is.True);
+            Assert.That(other.SDKInfo.All(s => s.ReleasePipelineUrl == string.Empty), Is.True);
         }
 
         [TestCase(".NET", "Azure.Test", "Dotnet")]

@@ -13,7 +13,8 @@
 
 ### Bugs Fixed
 
-- Package-only release status updates now reject multiple active release plans without changing any plan. Supply a release-plan ID or triggering SDK PR to identify the correct plan; SDK release type and merged PR status no longer choose an arbitrary match.
+- Release completion can correlate the exact run already recorded for the selected language/package during auto-release preparation, including callers that do not forward the SDK PR. Released and finished entries remain discoverable for safe retries. The shared completion script supplies the current run URL for direct Azure Pipelines invocations.
+- Package-only release status updates reject multiple active release plans unless exactly one matches the recorded release run. Otherwise, supply a release-plan ID or triggering SDK PR; SDK release type and merged PR status no longer choose an arbitrary match.
 - Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
 - Release approval checks now include API Review Hub package name approval; optional API review or inherited API approval does not waive it. An approved API Review Hub result skips APIView; otherwise, complete APIView approval is also sufficient, including after an invalid API Review Hub response. Individual approvals are never combined across providers.
 

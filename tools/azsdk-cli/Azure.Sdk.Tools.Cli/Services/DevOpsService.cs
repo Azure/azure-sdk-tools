@@ -146,6 +146,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansByReleasePipelineAsync(string releasePipelineUrl, string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
@@ -411,6 +412,27 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansByReleasePipelineAsync(string releasePipelineUrl, string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
+        {
+            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
+            var escapedPipelineUrl = releasePipelineUrl.Replace("'", "''");
+            var escapedPackageName = packageName.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan'";
+            query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
+            query += $" AND [Custom.ReleasePipelineFor{languageId}] = '{escapedPipelineUrl}'";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            // Keep released/finished entries visible so completion retries cannot select another plan.
+            // The caller validates the mapped snapshot's state, package, run and revision before writes.
+            var workItems = await FetchWorkItemsAsync(query, ct);
+            var plans = new List<ReleasePlanWorkItem>();
+            foreach (var workItem in workItems)
+            {
+                plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
+            }
+            return plans;
+        }
+
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
         {
             var normalizedUrl = NormalizeSdkPullRequestUrl(sdkPullRequest, language);
@@ -502,6 +524,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         GenerationStatus = generationStatus,
                         ReleaseStatus = releaseStatus,
                         ReleasedVersion = workItem.Fields.TryGetValue($"Custom.ReleasedVersionFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                        ReleasePipelineUrl = workItem.Fields.TryGetValue($"Custom.ReleasePipelineFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                         PullRequestStatus = pullRequestStatus,
                         PackageName = packageName,
                         ReleaseExclusionStatus = exclusionStatus

@@ -53,15 +53,6 @@ The `reviewed` field is one of `"todo"` (newly curated, awaiting review),
 `"pass"` (accepted; promoted into official datasets) or `"abandoned"` (reviewed
 and dropped, or a leftover `todo` finalized at promote time).
 
-Ground truths should answer the recorded question using supported facts and
-correctness-changing qualifications. Do not require details from the source
-thread that were omitted from the anonymized question, unrelated tooling,
-or repeated capability disclaimers. State the applicable authorization or
-review requirement instead. Keep conditional guidance conditional, and do not
-remove a real compatibility or approval requirement just to match a bot answer.
-This is especially important because the completeness evaluator compares the
-answer with `ground_truth` without receiving the question or source evidence.
-
 Validate any file/folder:
 
 ```bash
@@ -140,9 +131,6 @@ but are not scored by an evaluator.
 | `offline-evaluation.yml` | PR gate; starts agent server.py, evaluates the curated `basic` sets via local /completion. |
 | `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
 | `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
-
-The API Stewardship Board scenario is `apistewardshipboard` for both basic and perf
-datasets, using the same `qa-bot-<target>-<scenario>:latest` naming as other scenarios.
 
 Offline/perf start a local development backend and always use the running pipeline's
 branch name via `EVAL_AGENT_BRANCH`. No additional pipeline parameters are needed.

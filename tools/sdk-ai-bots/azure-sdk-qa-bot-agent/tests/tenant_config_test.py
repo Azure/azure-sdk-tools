@@ -232,7 +232,7 @@ def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
     assert positions == sorted(positions)
     assert "Follow relevant steps by priority, not as a checklist" in pr_review
     assert "continue only for unresolved needs and stop once answered" in pr_review
-    assert "wait for both before later calls" in pr_review
+    assert "wait for all three before later calls" in pr_review
     assert "ALL needed tools in a single parallel batch" in instruction
     assert "at most 8 tool calls per turn total" in instruction
 
@@ -265,7 +265,7 @@ def test_shared_retrieval_uses_original_batch_and_latency_constraints() -> None:
     assert "Batch independent calls; sequence dependent calls" not in constraints
     assert "A third turn is allowed only" in rules["6"]
     assert "at most 8 tool calls per turn total" in rules["1"]
-    assert "wait for both before later calls" in pr_review
+    assert "wait for all three before later calls" in pr_review
     assert "only to resolve remaining review questions" in pr_review
 
 
@@ -649,8 +649,8 @@ def test_chat_agent_explains_workflow_action_required_evidence() -> None:
     ).read_text(encoding="utf-8")
 
     assert "**Checks stuck, untriggered, pending or awaiting approval:**" in instruction
-    assert "Read the PR and `get_status` via `pull_request_read`" in instruction
-    assert "wait for both before later calls" in instruction
+    assert "Read the PR, `get_status` and `get_check_runs` via `pull_request_read` in parallel" in instruction
+    assert "wait for all three before later calls" in instruction
     assert "Run details (`actions_get` for Actions) establish the workflow state" in instruction
     assert "For completed `action_required` runs or an unexplained approval report" in instruction
     assert "inspect the returned `html_url` with `web_fetch`" in instruction
@@ -769,7 +769,7 @@ def test_pr_review_response_matches_customer_question_with_useful_context() -> N
     assert "Never invent handles" in pr_review
 
 
-def test_pr_preflight_uses_status_and_labels_to_select_next_steps() -> None:
+def test_pr_preflight_uses_statuses_check_runs_and_labels_to_select_next_steps() -> None:
     instruction = (
         Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
@@ -781,7 +781,11 @@ def test_pr_preflight_uses_status_and_labels_to_select_next_steps() -> None:
     assert "to choose relevant next steps and depth" in preflight
     assert "Interpret labels using repository guidance" in preflight
     assert "prioritize unresolved work while honoring the user's request" in preflight
-    assert "Use returned run links" in preflight
+    assert "Read the PR, `get_status` and `get_check_runs` via `pull_request_read` in parallel" in preflight
+    assert "wait for all three before later calls" in preflight
+    assert "Assess both commit statuses and check runs" in preflight
+    assert "check-run `details_url` (or `html_url`)" in preflight
+    assert "status-context `target_url` links" in preflight
     assert "investigate the reported check before expanding the check inventory" in preflight
     assert "when needed for the user's request and preflight findings" in changes
     assert "For verified signoff" not in pr_review

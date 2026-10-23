@@ -394,7 +394,8 @@ def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
     for value in values:
         if not isinstance(value, dict):
             continue
-        candidates = value.get("logs") if isinstance(value.get("logs"), list) else [value]
+        logs = value.get("logs")
+        candidates = logs if isinstance(logs, list) else [value]
         for candidate in candidates:
             if (
                 isinstance(candidate, dict)

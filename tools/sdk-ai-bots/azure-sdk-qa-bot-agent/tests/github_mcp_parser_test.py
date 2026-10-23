@@ -86,6 +86,23 @@ def test_failed_run_logs_and_multiple_content_items_are_supported() -> None:
     assert {item["job_id"] for item in parsed["log_excerpts"]} == {41, 42, 43}
 
 
+@pytest.mark.parametrize("logs", [None, {}, "not-a-list"])
+def test_non_list_logs_preserves_single_job_fallback(logs: object) -> None:
+    _, parsed = _parse({
+        "job_id": 42,
+        "logs": logs,
+        "logs_content": "noise" * 2000 + "\nError: missing configuration",
+    })
+
+    assert parsed["log_excerpts"] == [{
+        "job_id": 42,
+        "selection": "error_context",
+        "start_line": 2,
+        "end_line": 2,
+        "content": "Error: missing configuration",
+    }]
+
+
 @pytest.mark.parametrize(
     "next_group",
     ["##[group]Run actions/upload-artifact", "##[start-action display=Cleanup]"],

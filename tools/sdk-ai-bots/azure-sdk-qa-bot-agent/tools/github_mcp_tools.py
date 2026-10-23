@@ -115,10 +115,12 @@ class _GitHubTokenManager:
         token: str,
         expires_at: datetime | None,
         mcp_headers: dict[str, str],
+        installation_owner: str,
     ) -> None:
         self._token = token
         self._expires_at = expires_at
         self._mcp_headers = mcp_headers
+        self._installation_owner = installation_owner
         self._lock = asyncio.Lock()
 
     @property
@@ -145,7 +147,9 @@ class _GitHubTokenManager:
             if not self._needs_refresh():
                 return
             logger.info("Refreshing GitHub App installation token...")
-            token, new_expires_at = await _acquire_github_app_token()
+            token, new_expires_at = await _acquire_github_app_token(
+                self._installation_owner
+            )
             self._token = token
             self._expires_at = new_expires_at
             logger.info(
@@ -293,7 +297,9 @@ async def _get_installation_token(jwt: str, owner: str) -> tuple[str, datetime]:
         return token, expires_at
 
 
-async def _acquire_github_app_token() -> tuple[str, datetime]:
+async def _acquire_github_app_token(
+    installation_owner: str | None = None,
+) -> tuple[str, datetime]:
     """Acquire a new GitHub App installation token (no endpoint validation).
 
     Use this for background token refresh where we only need a fresh token
@@ -303,7 +309,11 @@ async def _acquire_github_app_token() -> tuple[str, datetime]:
     app_id = cfg("GITHUB_APP_ID")
     key_name = cfg("GITHUB_APP_KEY_NAME")
     vault_url = cfg("GITHUB_APP_KEYVAULT_URL")
-    owner = cfg("GITHUB_APP_INSTALLATION_OWNER", _DEFAULT_INSTALLATION_OWNER)
+    owner = (
+        installation_owner
+        if installation_owner is not None
+        else cfg("GITHUB_APP_INSTALLATION_OWNER", _DEFAULT_INSTALLATION_OWNER)
+    )
     if not app_id or not key_name or not vault_url:
         raise RuntimeError(
             "Missing GitHub App config. Need GITHUB_APP_ID, "
@@ -314,16 +324,20 @@ async def _acquire_github_app_token() -> tuple[str, datetime]:
     return await _get_installation_token(jwt, owner)
 
 
-async def _get_github_app_token() -> tuple[str, datetime]:
+async def _get_github_app_token(
+    installation_owner: str | None = None,
+) -> tuple[str, datetime]:
     """Get a GitHub MCP token using GitHub App + Key Vault config.
 
     Acquires a fresh installation token.  Endpoint validation is left
     to the caller (``create_github_mcp_tool``).
     """
-    return await _acquire_github_app_token()
+    return await _acquire_github_app_token(installation_owner)
 
 
-async def _get_github_token() -> tuple[str, datetime | None]:
+async def _get_github_token(
+    installation_owner: str | None = None,
+) -> tuple[str, datetime | None]:
     """Get GitHub MCP token.
 
     Returns:
@@ -335,7 +349,7 @@ async def _get_github_token() -> tuple[str, datetime | None]:
     if static_token:
         return static_token, None
 
-    token, expires_at = await _get_github_app_token()
+    token, expires_at = await _get_github_app_token(installation_owner)
     return token, expires_at
 
 
@@ -476,6 +490,7 @@ async def create_github_mcp_tool(
     *,
     readonly: bool = True,
     extra_allowed_tools: tuple[str, ...] = (),
+    installation_owner: str | None = None,
 ) -> MCPStreamableHTTPTool:
     """Create a local MCP tool for GitHub with auto-refreshing auth.
 
@@ -494,6 +509,9 @@ async def create_github_mcp_tool(
         extra_allowed_tools: Additional client-side allowed tool names
             appended to the read-only base set. Only effective when the
             server also permits them (i.e. ``readonly=False`` for writes).
+        installation_owner: GitHub App installation to use for acquisition
+            and refresh. Defaults to the configured owner. Does not override
+            an explicit ``GITHUB_TOKEN``.
 
     Supports two authentication modes (checked in order):
 
@@ -508,7 +526,12 @@ async def create_github_mcp_tool(
     * ``GITHUB_APP_KEYVAULT_URL``
     * ``GITHUB_APP_INSTALLATION_OWNER`` (default ``Azure``)
     """
-    token, expires_at = await _get_github_token()
+    owner = (
+        installation_owner
+        if installation_owner is not None
+        else cfg("GITHUB_APP_INSTALLATION_OWNER", _DEFAULT_INSTALLATION_OWNER)
+    )
+    token, expires_at = await _get_github_token(owner)
     if not token:
         raise RuntimeError("Failed to obtain GitHub token for MCP auth.")
 
@@ -518,7 +541,7 @@ async def create_github_mcp_tool(
 
     mcp_headers = _build_mcp_headers(readonly)
     allowed_tools = list(_GITHUB_READONLY_TOOLS) + list(extra_allowed_tools)
-    token_mgr = _GitHubTokenManager(token, expires_at, mcp_headers)
+    token_mgr = _GitHubTokenManager(token, expires_at, mcp_headers, owner)
 
     # Build a custom httpx client with an event hook that injects auth +
     # toolset headers on *every* outbound request.  This is necessary
@@ -565,7 +588,7 @@ async def create_github_mcp_tool(
         logger.info(
             "GitHub MCP tool configured via GitHub App token (owner=%s, "
             "expires=%s, readonly=%s, extra_tools=%s)",
-            cfg("GITHUB_APP_INSTALLATION_OWNER", _DEFAULT_INSTALLATION_OWNER),
+            owner,
             expires_at.isoformat() if expires_at else "unknown",
             readonly,
             list(extra_allowed_tools),

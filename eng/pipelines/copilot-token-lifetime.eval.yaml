@@ -1,0 +1,29 @@
+name: installation-token-executor-and-judge-control
+description: Harmless model and judge requests; no MCP, file fixtures, or live writes.
+type: capability
+defaults:
+  runs: 1
+  timeout: 90s
+  model: gpt-6.1-sol
+  executor: copilot-sdk
+stimuli:
+  - name: executor-only
+    prompt: Reply with exactly TOKEN_LIFETIME_OK. Do not use any tools.
+    constraints:
+      max_turns: 2
+      max_tokens: 12000
+    graders:
+      - type: output-contains
+        config:
+          value: TOKEN_LIFETIME_OK
+  - name: executor-and-judge
+    prompt: Reply with only the number that equals 3 plus 4. Do not use any tools.
+    constraints:
+      max_turns: 2
+      max_tokens: 12000
+    graders:
+      - type: prompt
+        config:
+          model: gpt-6.1-sol
+          scoring: binary
+          prompt: Pass only if the assistant's answer is the number 7.

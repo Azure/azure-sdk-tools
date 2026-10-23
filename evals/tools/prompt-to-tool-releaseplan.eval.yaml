@@ -24,35 +24,35 @@ scoring:
 stimuli:
   # ==== azsdk_abandon_release_plan triggers ====
   - name: invoke-azsdk-abandon-release-plan-1
-    prompt: "Abandon the release plan for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Abandon the release plan for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-2
-    prompt: "Cancel and abandon my release plan for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Cancel and abandon my release plan for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-3
-    prompt: "Mark the release plan for work item 12345 as abandoned. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Mark the release plan for work item 35000 as abandoned. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-4
-    prompt: "Abandon my release plan for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Abandon my release plan for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-5
-    prompt: "Cancel the release plan for my service for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Cancel the release plan for my service for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -93,14 +93,14 @@ stimuli:
 
   # ==== azsdk_get_release_plan triggers ====
   - name: invoke-azsdk-get-release-plan-1
-    prompt: "Get the release plan for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Get the release plan for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_release_plan"
   - name: invoke-azsdk-get-release-plan-2
-    prompt: "Show me the release plan details for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Show me the release plan details for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -192,14 +192,14 @@ stimuli:
 
   # ==== azsdk_link_namespace_approval_issue triggers ====
   - name: invoke-azsdk-link-namespace-approval-issue-1
-    prompt: "Link namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 to release plan 12345. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Link namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 to release plan work item 35000. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_link_namespace_approval_issue"
   - name: invoke-azsdk-link-namespace-approval-issue-2
-    prompt: "Associate namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 with release plan 12345. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Associate namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 with release plan work item 35000. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -208,14 +208,14 @@ stimuli:
 
   # ==== azsdk_link_sdk_pull_request_to_release_plan triggers ====
   - name: invoke-azsdk-link-sdk-pull-request-to-release-plan-1
-    prompt: "Link my SDK pull request https://github.com/Azure/azure-sdk-for-net/pull/45001 to release plan 12345. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Link my SDK pull request https://github.com/Azure/azure-sdk-for-net/pull/45001 to release plan work item 35000. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_link_sdk_pull_request_to_release_plan"
   - name: invoke-azsdk-link-sdk-pull-request-to-release-plan-2
-    prompt: "Link SDK pull request https://github.com/Azure/azure-sdk-for-net/pull/5678 to release plan 12345. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Link SDK pull request https://github.com/Azure/azure-sdk-for-net/pull/5678 to release plan work item 35000. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -224,14 +224,14 @@ stimuli:
 
   # ==== azsdk_run_generate_sdk triggers ====
   - name: invoke-azsdk-run-generate-sdk-1
-    prompt: "Generate the Python SDK from TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager using the generation pipeline for release plan work item 12345 and SDK release type beta. Start generation directly without retrieving the release plan or checking spec readiness. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Generate the Python SDK from TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager using the generation pipeline for release plan work item 35000 and SDK release type beta. Start generation directly without retrieving the release plan or checking spec readiness. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_run_generate_sdk"
   - name: invoke-azsdk-run-generate-sdk-2
-    prompt: "Run generation pipeline work item 12345 for the .NET SDK from TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager with SDK release type beta. Start generation directly without retrieving the release plan or checking spec readiness. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Run the generation pipeline for release plan work item 35000 for the .NET SDK from TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager with SDK release type beta. Start generation directly without retrieving the release plan or checking spec readiness. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -240,14 +240,14 @@ stimuli:
 
   # ==== azsdk_update_api_spec_pull_request_in_release_plan triggers ====
   - name: invoke-azsdk-update-api-spec-pull-request-in-release-plan-1
-    prompt: "Update the TypeSpec spec PR URL to https://github.com/Azure/azure-rest-api-specs/pull/38387 in release plan 12345. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Update the TypeSpec spec PR URL to https://github.com/Azure/azure-rest-api-specs/pull/38387 in release plan work item 35000. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_api_spec_pull_request_in_release_plan"
   - name: invoke-azsdk-update-api-spec-pull-request-in-release-plan-2
-    prompt: "Update the TypeSpec pull request URL to https://github.com/Azure/azure-rest-api-specs/pull/38387 in my release plan 12345. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Update the TypeSpec pull request URL to https://github.com/Azure/azure-rest-api-specs/pull/38387 in my release plan work item 35000. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -256,14 +256,14 @@ stimuli:
 
   # ==== azsdk_update_language_exclusion_justification triggers ====
   - name: invoke-azsdk-update-language-exclusion-justification-1
-    prompt: "Update the language exclusion justification for Python in release plan 12345 to 'No Python customers yet.' Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Update the language exclusion justification for Python in release plan work item 35000 to 'No Python customers yet.' Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_language_exclusion_justification"
   - name: invoke-azsdk-update-language-exclusion-justification-2
-    prompt: "Set the justification explaining why Python is excluded from release plan 12345 to 'No Python customers yet.' Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Set the justification explaining why Python is excluded from release plan work item 35000 to 'No Python customers yet.' Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -272,35 +272,35 @@ stimuli:
 
   # ==== azsdk_update_release_plan triggers ====
   - name: invoke-azsdk-update-release-plan-1
-    prompt: "Update release plan 12345 with my TypeSpec project path specification/contosowidgetmanager/Contoso.WidgetManager and API version 2022-11-01-preview. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Update release plan work item 35000 with my TypeSpec project path specification/contosowidgetmanager/Contoso.WidgetManager and SDK release type beta. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-2
-    prompt: "Update release plan 12345 (TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager) with spec PR URL https://github.com/Azure/azure-rest-api-specs/pull/38387 and SDK release type 'beta'. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update release plan work item 35000 (TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager) with spec PR URL https://github.com/Azure/azure-rest-api-specs/pull/38387 and SDK release type 'beta'. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-3
-    prompt: "Update the existing release plan 12345 for the Contoso Widget Manager service, setting the SDK release type to 'beta'. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Update the existing release plan work item 35000 for the Contoso Widget Manager service (TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager), setting the SDK release type to 'beta'. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-4
-    prompt: "Update release plan 12345 for TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager, setting the SDK release type to 'beta'. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update release plan work item 35000 for TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager, setting the SDK release type to 'beta'. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-5
-    prompt: "Update the TypeSpec project path to specification/contosowidgetmanager/Contoso.WidgetManager in release plan 12345. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Update the TypeSpec project path to specification/contosowidgetmanager/Contoso.WidgetManager in release plan work item 35000. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -314,14 +314,14 @@ stimuli:
   # "wrong" tool; prompt wording ("do this directly") did not move the pass rate above
   # threshold (held at 0–3/5). Re-add once the workflow/grader allows the read-before-write.
   # - name: invoke-azsdk-update-sdk-details-in-release-plan-1
-  #   prompt: "Update the SDK details (package name azure-contoso-widgetmanager) in release plan 12345. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+  #   prompt: "Update the SDK details (package name azure-contoso-widgetmanager) in release plan work item 35000. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
   #   graders:
   #     - type: tool-calls
   #       config:
   #         required:
   #           - name: "azsdk_update_sdk_details_in_release_plan"
   # - name: invoke-azsdk-update-sdk-details-in-release-plan-2
-  #   prompt: "Change the SDK package name to azure-contoso-widgetmanager in release plan 12345. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+  #   prompt: "Change the SDK package name to azure-contoso-widgetmanager in release plan work item 35000. Do this directly without first retrieving the release plan. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
   #   graders:
   #     - type: tool-calls
   #       config:
@@ -329,6 +329,7 @@ stimuli:
   #           - name: "azsdk_update_sdk_details_in_release_plan"
 
   # ==== full-context single-tool checks (ported from standalone scenario evals) ====
+  # Resolve relative creation targets at runtime so they never become past due.
   - name: create-release-plan
     prompt: |
       Create a release plan for the Contoso Widget Manager, no need to get it afterwards only create.
@@ -336,7 +337,7 @@ stimuli:
       TypeSpec project located at "specification/contosowidgetmanager/Contoso.WidgetManager".
       Use service tree ID "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f",
       product tree ID "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e",
-      target release timeline "December 2025",
+      target release timeline "next calendar month (resolve to an explicit month and year using the current date)",
       API version "2022-11-01-preview",
       SDK release type "beta",
       and link it to the spec pull request "https://github.com/Azure/azure-rest-api-specs/pull/38387".
@@ -353,12 +354,12 @@ stimuli:
             - name: "azsdk_verify_setup"
   - name: link-namespace-approval-issue
     prompt: |
-      Link namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 to release plan 12345.
+      Link namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 to release plan work item 35000.
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 5
       max_tokens: 5000
-    # TODO: assert releasePlanWorkItemId=12345 and namespaceApprovalIssue URL — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
+    # TODO: assert releasePlanWorkItemId=35000 and namespaceApprovalIssue URL — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
     graders:
       - type: tool-calls
         config:

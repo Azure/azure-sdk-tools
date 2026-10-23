@@ -42,8 +42,8 @@ class _FakeContainer:
         if "COUNT(1)" in query:
             yield self.count
         elif "DISTINCT VALUE c.channel_id" in query:
-            yield "channel-b"
-            yield "channel-a"
+            yield "19:channel-b@thread.tacv2"
+            yield "19:channel-a@thread.tacv2"
         else:
             yield self.document
 
@@ -55,7 +55,7 @@ def _record() -> QARecord:
         tenant_id="tenant-a",
         conversation_id="conversation-1",
         conversation_type=ConversationType.teams_channel,
-        channel_id="channel-a",
+        channel_id="19:channel-a@thread.tacv2",
         qa_status=QAStatus.failed,
         conversation_created_at=now,
         feedback=FeedbackState(
@@ -160,8 +160,8 @@ async def test_list_records_applies_filters_and_pagination(feedback_status) -> N
             "services.qa_dashboard_service._load_channel_names",
             new=AsyncMock(
                 return_value={
-                    "channel-a": "Channel A",
-                    "channel-b": "Channel B",
+                    "19:channel-a@thread.tacv2": "Channel A",
+                    "19:channel-b@thread.tacv2": "Channel B",
                 }
             ),
         ),
@@ -177,7 +177,7 @@ async def test_list_records_applies_filters_and_pagination(feedback_status) -> N
         result = await service.list_records(
             page=2,
             tenant_id="tenant-a",
-            channel_id="channel-a",
+            channel_id="19:channel-a@thread.tacv2",
             qa_status=QAStatus.failed,
             feedback_status=FeedbackStatusFilter(feedback_status),
             classification=RootCauseClassification.insufficient_content,
@@ -190,8 +190,8 @@ async def test_list_records_applies_filters_and_pagination(feedback_status) -> N
     assert result.page == 2
     assert result.page_size == 50
     assert result.channels == [
-        DashboardChannel(id="channel-a", name="Channel A"),
-        DashboardChannel(id="channel-b", name="Channel B"),
+        DashboardChannel(id="19:channel-a@thread.tacv2", name="Channel A"),
+        DashboardChannel(id="19:channel-b@thread.tacv2", name="Channel B"),
     ]
     assert result.items[0].id == "teams_channel:conversation-1"
     assert result.items[0].conversation_title == "How do I fix this?"
@@ -209,13 +209,120 @@ async def test_list_records_applies_filters_and_pagination(feedback_status) -> N
         item["name"]: item["value"] for item in records_call["parameters"]
     }
     assert parameters["@qa_status"] == "failed"
-    assert parameters["@channel_id"] == "channel-a"
+    assert parameters["@channel_id"] == "19:channel-a@thread.tacv2"
     assert parameters["@feedback_status"] == feedback_status
     assert parameters["@offset"] == 50
     assert parameters["@limit"] == 50
     for call in container.calls[:2]:
         assert "c.feedback.classification = @classification" in call["query"]
         assert {p["name"]: p["value"] for p in call["parameters"]}["@classification"] == "insufficient_content"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("channel_fields", [
+    {},
+    {"channel_id": None},
+    {"channel_id": ""},
+    {"channel_id": "19:channel-a@thread.tacv2"},
+])
+async def test_list_records_excludes_personal_and_copilot_chats_before_pagination(
+    channel_fields,
+) -> None:
+    channel_id = "19:channel-a@thread.tacv2"
+    documents = []
+    for index in range(51):
+        document = _record().to_cosmos()
+        document.pop("channel_id")
+        document.update(channel_fields)
+        document.update(
+            id=f"teams_channel:{channel_id};messageid={index}",
+            conversation_id=f"{channel_id};messageid={index}",
+        )
+        documents.append(document)
+    for conversation_id in ("a:personal-chat", "copilot-sydney-test"):
+        for metadata in ({}, {"channel_id": conversation_id}):
+            document = _record().to_cosmos()
+            document.pop("channel_id")
+            document.update(metadata)
+            document.update(
+                id=f"teams_channel:{conversation_id}",
+                conversation_id=conversation_id,
+            )
+            documents.insert(0, document)
+        # Explicit non-channel metadata takes precedence over the fallback ID.
+        documents.insert(0, {
+            **_record().to_cosmos(),
+            "channel_id": conversation_id,
+            "conversation_id": f"{channel_id};messageid=invalid",
+        })
+
+    class Container:
+        def __init__(self):
+            self.calls = []
+
+        async def query_items(self, **kwargs):
+            self.calls.append(kwargs)
+            query = kwargs["query"]
+            if "DISTINCT VALUE c.channel_id" in query:
+                assert "STARTSWITH(c.channel_id, '19:')" in query
+                # Also exercise the dropdown's defensive filtering.
+                for value in (channel_id, "a:personal-chat", "copilot-sydney-test"):
+                    yield value
+                return
+
+            assert (
+                "STARTSWITH(IIF(IS_STRING(c.channel_id) AND c.channel_id != '', "
+                "c.channel_id, c.conversation_id), '19:')"
+            ) in query
+            eligible = [
+                document for document in documents
+                if (document.get("channel_id") or document["conversation_id"]).startswith("19:")
+            ]
+            parameters = {item["name"]: item["value"] for item in kwargs["parameters"]}
+            if "@conversation_id" in parameters:
+                eligible = [
+                    document for document in eligible
+                    if parameters["@conversation_id"] in document["conversation_id"]
+                ]
+            if "COUNT(1)" in query:
+                yield len(eligible)
+            else:
+                offset, limit = parameters["@offset"], parameters["@limit"]
+                for document in eligible[offset:offset + limit]:
+                    yield document
+
+    container = Container()
+    with (
+        patch("services.qa_dashboard_service.get_qa_records_container",
+              new=AsyncMock(return_value=container)),
+        patch("services.qa_dashboard_service._load_channel_names",
+              new=AsyncMock(return_value={channel_id: "Channel A"})),
+        patch("services.qa_dashboard_service._load_conversation_titles",
+              new=AsyncMock(return_value={})),
+    ):
+        service = QADashboardService()
+        first = await service.list_records(page=1)
+        second = await service.list_records(page=2)
+        for conversation_id in ("a:personal-chat", "copilot-sydney-test"):
+            excluded = await service.list_records(page=2, conversation_id=conversation_id)
+            assert excluded.total == 0
+            assert excluded.page == 1
+            assert excluded.items == []
+
+    assert first.total == second.total == 51
+    assert first.page == 1 and second.page == 2
+    assert len(first.items) == 50 and len(second.items) == 1
+    assert all(
+        item.conversation_id.startswith(f"{channel_id};messageid=")
+        for item in [*first.items, *second.items]
+    )
+    assert first.channels == second.channels == [
+        DashboardChannel(id=channel_id, name="Channel A"),
+    ]
+    assert container.calls[0]["query"].split(" WHERE ", 1)[1] == (
+        container.calls[1]["query"].split(" WHERE ", 1)[1].split(" ORDER BY ", 1)[0]
+    )
+    assert len(documents) == 57
 
 
 @pytest.mark.asyncio
@@ -230,7 +337,7 @@ async def test_list_records_clamps_page_after_total_shrinks() -> None:
         ),
         patch(
             "services.qa_dashboard_service._load_channel_names",
-            new=AsyncMock(return_value={"channel-a": "Channel A"}),
+            new=AsyncMock(return_value={"19:channel-a@thread.tacv2": "Channel A"}),
         ),
         patch(
             "services.qa_dashboard_service._load_conversation_titles",
@@ -327,7 +434,7 @@ async def test_get_record_detail_builds_timeline() -> None:
         ),
         patch(
             "services.qa_dashboard_service._load_channel_names",
-            new=AsyncMock(return_value={"channel-a": "Channel A"}),
+            new=AsyncMock(return_value={"19:channel-a@thread.tacv2": "Channel A"}),
         ),
     ):
         detail = await QADashboardService(
@@ -368,7 +475,7 @@ async def test_dashboard_routes(feedback_status) -> None:
         total=1,
         page=1,
         page_size=50,
-        channels=[DashboardChannel(id="channel-a", name="Channel A")],
+        channels=[DashboardChannel(id="19:channel-a@thread.tacv2", name="Channel A")],
     )
     detail = QADashboardDetail(
         record=_dashboard_record(),
@@ -388,7 +495,7 @@ async def test_dashboard_routes(feedback_status) -> None:
                 "/api/dashboard/qa-records",
                 params={
                     "tenant_id": "tenant-a",
-                    "channel_id": "channel-a",
+                    "channel_id": "19:channel-a@thread.tacv2",
                     "qa_status": "failed",
                     "feedback_status": feedback_status,
                     "classification": "insufficient_content",

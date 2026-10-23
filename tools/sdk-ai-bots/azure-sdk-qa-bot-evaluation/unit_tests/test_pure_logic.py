@@ -564,6 +564,26 @@ def test_record_run_result_empty_rows_no_crash():
     assert recorded[-1]["total_evals"] == 0
 
 
+def test_monitor_onboarding_case_has_no_live_issue_or_pr_dependencies():
+    records, _ = resolve_records(
+        "evaluation_datasets/basic/mcpserver.jsonl",
+        script_dir=Path(__file__).resolve().parents[1],
+    )
+    case = next(
+        row for row in records
+        if row["testcase"] == "How should new Azure Monitor traces tools be onboarded and reviewed?"
+    )
+    assert "http" not in case["query"]
+    for field in ("query", "ground_truth"):
+        assert not re.search(r"(?:/issues/|/pull/|#)\d+", case[field])
+        assert "Alan Zimmer" not in case[field]
+    assert "existing Azure Monitor toolset" in case["query"]
+    assert "non-confidential" in case["query"]
+    assert "public microsoft/mcp repository" in case["ground_truth"]
+    assert "add-azure-mcp-tools" in case["ground_truth"]
+    assert "recorded live tests" in case["ground_truth"]
+
+
 def test_main_passes_project_for_response_selected_agents():
     from unittest.mock import MagicMock, call, patch
     import evals_run

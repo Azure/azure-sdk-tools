@@ -16,7 +16,6 @@ parameters:
   type: object
   default:
   - Azure/azure-sdk-for-java
-  - Azure/azure-sdk-for-android
   - Azure/azure-sdk-for-js
   - Azure/azure-sdk-for-python
   - Azure/azure-sdk-for-net

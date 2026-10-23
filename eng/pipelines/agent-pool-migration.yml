@@ -32,14 +32,6 @@ parameters:
       ExcludePaths: '^\.\\eng\\common\\'
       IncludeFromExcludedPaths: ""
     - RepoOwner: Azure
-      RepoName: azure-sdk-for-android
-      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\tests\\resources\\session-records\\'
-      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
-    - RepoOwner: Azure
-      RepoName: azure-sdk-for-c
-      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\'
-      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
-    - RepoOwner: Azure
       RepoName: azure-sdk-for-cpp
       ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\'
       IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'

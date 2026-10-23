@@ -6,8 +6,6 @@ Azure/azure-sdk-for-python
 Azure/azure-sdk-for-python-pr
 Azure/azure-sdk-for-js
 Azure/azure-sdk-for-js-pr
-Azure/azure-sdk-for-c
-Azure/azure-sdk-for-c-pr
 Azure/azure-sdk-for-cpp
 Azure/azure-sdk-for-go
 Azure/azure-sdk-for-go-pr

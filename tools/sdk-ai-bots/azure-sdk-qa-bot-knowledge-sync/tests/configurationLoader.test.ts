@@ -72,6 +72,40 @@ describe('ConfigurationLoader', () => {
     ConfigurationLoader.setConfigPath(missing);
     expect(() => ConfigurationLoader.getDocumentationSources()).toThrow();
   });
+
+  it('uses repository documentation and contributing guidance instead of the JS wiki', () => {
+    const config = ConfigurationLoader.loadConfig();
+    const jsSource = config.sources.find(
+      source => source.repository.url === 'https://github.com/Azure/azure-sdk-for-js.git'
+    );
+
+    expect(jsSource).toBeDefined();
+    expect(jsSource?.paths).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: '/documentation',
+        folder: 'azure_sdk_for_js_docs',
+        relativeByRepoPath: true
+      }),
+      expect.objectContaining({
+        path: '/CONTRIBUTING.md',
+        folder: 'azure_sdk_for_js_docs',
+        relativeByRepoPath: true,
+        metadata: { scope: 'branded' }
+      }),
+      expect.objectContaining({
+        path: '/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md',
+        folder: 'azure_sdk_for_js_docs',
+        relativeByRepoPath: true
+      })
+    ]));
+    expect(config.sources.some(
+      source => source.repository.url === 'https://github.com/Azure/azure-sdk-for-js.wiki.git'
+    )).toBe(false);
+    expect(config.sources.flatMap(source => source.paths).some(
+      docPath => docPath.folder === 'azure_sdk_for_js_wiki'
+    )).toBe(false);
+  });
+
   afterAll(() => {
     for (const dir of tempDirs) {
       try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }

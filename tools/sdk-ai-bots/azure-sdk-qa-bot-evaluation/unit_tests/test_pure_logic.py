@@ -12,7 +12,11 @@ Run:
 from __future__ import annotations
 
 import os
+import re
 import sys
+from pathlib import Path
+
+import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -34,6 +38,7 @@ from _evals_runner import (  # noqa: E402
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
     resolve_tenant_for_scenario,
+    resolve_records,
 )
 from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E402
 
@@ -380,12 +385,80 @@ def test_resolve_tenant_for_scenario():
         "TypeSpec Discussion": "tenant-ts",
         "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
+        "Language - DotNet": "dotnet_channel_qa_bot",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
+    assert resolve_tenant_for_scenario("dotnet", m) == "dotnet_channel_qa_bot"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
+
+
+def test_javascript_scenario_routes_to_configured_js_channel():
+    root = Path(__file__).resolve().parents[2]
+    config = yaml.safe_load(
+        (root / "azure-sdk-qa-bot" / "config" / "channel.yaml").read_text(encoding="utf-8")
+    )
+    channel = next(
+        item
+        for item in config["channels"]
+        if item["id"] == "19:344f6b5b36ba414daa15473942c7477b@thread.skype"
+    )
+    mapping = {"default": config["default"]["tenant"]}
+    mapping.update({item["name"]: item["tenant"] for item in config["channels"]})
+    assert resolve_tenant_for_scenario("javascript", mapping) == channel["tenant"]
+    assert resolve_tenant_for_scenario("unknown", mapping) == config["default"]["tenant"]
+
+
+def test_javascript_datasets_are_documentation_only_and_resolve_locally():
+    root = Path(__file__).resolve().parents[1]
+    queries = set()
+    historical_context = re.compile(
+        r"https?://|(?:\bPR|\bpull request|\bissue)\s*#?\d+\b"
+        r"|\b\d{4}-\d{2}-\d{2}\b|19:\S+@thread"
+        r"|\b(?:yesterday|last week|last month)\b",
+        re.IGNORECASE,
+    )
+    for target, count in (("basic", 7), ("perf", 13)):
+        path = root / "evaluation_datasets" / target / "javascript.jsonl"
+        assert validate_file(path, require_reviewed=True) == count
+        records, scenario = resolve_records(
+            f"qa-bot-{target}-javascript:latest", script_dir=root
+        )
+        assert scenario == "javascript"
+        assert len(records) == count
+        for case in records:
+            assert case["scenario"] == scenario
+            assert case["tenant"] is None
+            assert case["source"] == "manual:javascript-documentation"
+            assert case["expected_references"]
+            for field in ("query", "ground_truth"):
+                assert "dev-tool customization" not in case[field]
+            assert "http" not in case["query"]
+            for reference in case["expected_references"]:
+                assert "modular-customization.md" not in reference["link"]
+                assert reference["link"].startswith((
+                    "https://github.com/Azure/azure-sdk-for-js/blob/main/",
+                    "https://azure.github.io/typespec-azure/docs/emitters/clients/typespec-ts/",
+                ))
+            for field in ("testcase", "query", "ground_truth"):
+                assert not historical_context.search(case[field]), (path, field)
+            query = " ".join(case["query"].lower().split())
+            assert query not in queries
+            queries.add(query)
+
+
+def test_javascript_scenario_is_in_both_evaluation_pipelines():
+    root = Path(__file__).resolve().parents[2]
+    for name in ("offline-evaluation.yml", "perf-evaluation.yml"):
+        pipeline = yaml.safe_load((root / name).read_text(encoding="utf-8"))
+        scenarios = next(
+            item["default"]
+            for item in pipeline["parameters"]
+            if item["name"] == "scenarios"
+        )
+        assert scenarios.count("javascript") == 1
 
 
 def test_output_items_to_rows_completion_item_response():

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Globalization;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
@@ -18,6 +19,19 @@ public class ReleaseSdkHandler : IMockToolHandler
     {
         var packageName = arguments?.GetValueOrDefault("packageName")?.ToString() ?? "";
         var language = arguments?.GetValueOrDefault("language")?.ToString() ?? ".NET";
+        if (int.TryParse(arguments?.GetValueOrDefault("releasePlanId")?.ToString(), NumberStyles.Integer,
+            CultureInfo.InvariantCulture, out var releasePlanId) && releasePlanId < 0)
+        {
+            const string error = "Release plan ID must be a positive integer, or 0 when no release plan is supplied.";
+            return new SdkReleaseResponse
+            {
+                PackageName = packageName,
+                ReleasePipelineStatus = "Failed",
+                ReleaseStatusDetails = error,
+                ResponseError = error
+            };
+        }
+
         var checkReady = arguments?.GetValueOrDefault("checkReady")?.ToString()
             ?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
 

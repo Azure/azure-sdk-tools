@@ -48,10 +48,6 @@ parameters:
       ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\'
       IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
-      RepoName: azure-sdk-for-ios
-      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\'
-      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
-    - RepoOwner: Azure
       RepoName: azure-sdk-for-java
       ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\resources\\session-records\\'
       IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'

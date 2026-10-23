@@ -10,7 +10,6 @@ param(
         'Azure/azure-sdk-for-rust'
         'Azure/azure-sdk-for-c'
         'Azure/azure-sdk-for-cpp'
-        'Azure/azure-sdk-for-ios'
         'Azure/azure-sdk-for-android'
         'Azure/azure-dev'
         'Azure/typespec-azure'

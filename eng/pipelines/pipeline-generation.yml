@@ -21,7 +21,6 @@ parameters:
   - Azure/azure-sdk-for-python
   - Azure/azure-sdk-for-net
   - Azure/azure-sdk-for-cpp
-  - Azure/azure-sdk-for-ios
   - Azure/azure-sdk-for-go
   - Azure/azure-sdk-for-rust
 

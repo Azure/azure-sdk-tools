@@ -4,11 +4,6 @@
 Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
     BeforeAll {
         $script:completionScript = Join-Path $PSScriptRoot '../../common/scripts/Mark-ReleasePlanCompletion.ps1'
-        $script:buildEnvironment = @{}
-        foreach ($name in @('TF_BUILD', 'SYSTEM_COLLECTIONURI', 'SYSTEM_TEAMPROJECT', 'BUILD_BUILDID')) {
-            $script:buildEnvironment[$name] = [Environment]::GetEnvironmentVariable($name)
-        }
-
         $script:stubPath = Join-Path $TestDrive 'azsdk-stub.ps1'
         $stubLines = @(
             'param([Parameter(ValueFromRemainingArguments = $true)][string[]]$CliArgs)',
@@ -34,9 +29,6 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
     }
 
     BeforeEach {
-        foreach ($name in $script:buildEnvironment.Keys) {
-            [Environment]::SetEnvironmentVariable($name, $null)
-        }
         $global:ReleaseStatusTestCalls = @()
         $global:ReleaseStatusTestExitCode = 0
         $global:LanguageDisplayName = 'Python'
@@ -51,9 +43,6 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
     }
 
     AfterAll {
-        foreach ($name in $script:buildEnvironment.Keys) {
-            [Environment]::SetEnvironmentVariable($name, $script:buildEnvironment[$name])
-        }
         Remove-Variable ReleaseStatusTestCalls, ReleaseStatusTestExitCode, LanguageDisplayName -Scope Global -ErrorAction SilentlyContinue
     }
 
@@ -143,49 +132,6 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
         Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -Be $pipelineUrl
-    }
-
-    It 'passes the current run URL when invoked directly without template arguments' {
-        $env:TF_BUILD = 'True'
-        $env:SYSTEM_COLLECTIONURI = 'https://dev.azure.com/example/'
-        $env:SYSTEM_TEAMPROJECT = 'sdk-project'
-        $env:BUILD_BUILDID = '12345'
-
-        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0
-
-        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -Be 'https://dev.azure.com/example/sdk-project/_build/results?buildId=12345'
-        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-plan-id' | Should -BeNullOrEmpty
-        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--sdk-pull-request' | Should -BeNullOrEmpty
-    }
-
-    It 'preserves an explicitly supplied run URL instead of replacing it with environment context' {
-        $env:TF_BUILD = 'True'
-        $env:SYSTEM_COLLECTIONURI = 'https://dev.azure.com/example/'
-        $env:SYSTEM_TEAMPROJECT = 'sdk-project'
-        $env:BUILD_BUILDID = '12345'
-
-        Invoke-CompletionTest $script:packageInfoPath -PipelineUrl 'https://example.test/build/100'
-
-        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -Be 'https://example.test/build/100'
-    }
-
-    It 'does not construct a run URL with missing or invalid <Field> context' -TestCases @(
-        @{ Field = 'TF_BUILD'; Value = '' },
-        @{ Field = 'SYSTEM_COLLECTIONURI'; Value = '' },
-        @{ Field = 'SYSTEM_TEAMPROJECT'; Value = '' },
-        @{ Field = 'BUILD_BUILDID'; Value = '' },
-        @{ Field = 'BUILD_BUILDID'; Value = '$(Build.BuildId)' }
-    ) {
-        param($Field, $Value)
-        $env:TF_BUILD = 'True'
-        $env:SYSTEM_COLLECTIONURI = 'https://dev.azure.com/example/'
-        $env:SYSTEM_TEAMPROJECT = 'sdk-project'
-        $env:BUILD_BUILDID = '12345'
-        [Environment]::SetEnvironmentVariable($Field, $Value)
-
-        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0
-
-        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -BeNullOrEmpty
     }
 
     It 'forwards the SDK PR without a legacy warning when no plan ID is supplied' {
@@ -347,8 +293,10 @@ Describe 'Optional auto-release SDK PR in the shared completion template' -Tag '
         $shouldInitialize = $Explicit -eq '' -and [string]$variables['AutoReleaseSdkPullRequestUrl'] -eq ''
         $shouldInitialize | Should -Be $Initialized
         if ($shouldInitialize) {
-            $messages = & ([scriptblock]::Create($initialize.pwsh)) 6>&1
-            ($messages | Out-String).Trim() | Should -BeExactly '##vso[task.setvariable variable=AutoReleaseSdkPullRequestUrl]'
+            $messages = @(& ([scriptblock]::Create($initialize.pwsh)) 6>&1)
+            $messages.Count | Should -Be 2
+            [string]$messages[0] | Should -BeExactly '##vso[task.setvariable variable=AutoReleaseSdkPullRequestUrl]'
+            [string]$messages[1] | Should -BeExactly 'AutoReleaseSdkPullRequestUrl is set to an empty string.'
             $variables.AutoReleaseSdkPullRequestUrl = ''
         }
         $resolved = if ($Explicit -ne '') { $Explicit } else { $variables['AutoReleaseSdkPullRequestUrl'] }

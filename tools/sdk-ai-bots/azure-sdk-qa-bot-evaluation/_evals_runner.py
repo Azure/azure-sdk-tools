@@ -41,7 +41,7 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
     "onboarding": "Azure SDK Onboarding",
     "go": "Language - Go",
     "java": "Language - Java",
-    "net": "Language - DotNet",
+    "dotnet": "Language - DotNet",
     "javascript": "Language – JS ＆ TS 🥷",
     "general": "General",
     "releasesupport": "SDK release support",

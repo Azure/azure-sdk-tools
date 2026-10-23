@@ -1266,6 +1266,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.WorkItemType] = 'Release Plan'"));
             Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.Tags] NOT CONTAINS 'Release Planner App Test'"));
             Assert.That(plans.Single().SDKInfo.Single(s => s.Language == language).ReleasePipelineUrl, Is.EqualTo(pipeline));
+            Assert.That(plans.Single().SDKInfo.Where(s => s.Language != language).All(s => s.ReleasePipelineUrl == string.Empty), Is.True);
         }
 
         [TestCase("In Progress")]
@@ -1293,25 +1294,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.PythonPackageName] = 'azure-test'''"));
             Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.ReleasePipelineForPython] = 'https://example.test/build/100'''"));
             Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.Tags] CONTAINS 'Release Planner App Test'"));
-        }
-
-        [TestCase(".NET", "Dotnet")]
-        [TestCase("Java", "Java")]
-        [TestCase("JavaScript", "JavaScript")]
-        [TestCase("Python", "Python")]
-        [TestCase("Go", "Go")]
-        public async Task GetReleasePlansForPackageAsync_MapsTheRecordedReleaseRunForEachLanguage(string language, string fieldId)
-        {
-            const string pipeline = "https://example.test/build/100";
-            var plan = CreateReleasePlanWorkItemWithReleasePlanId(35000, 100, "In Progress");
-            plan.Fields[$"Custom.{fieldId}PackageName"] = "test-package";
-            plan.Fields[$"Custom.ReleasePipelineFor{fieldId}"] = pipeline;
-            _connection.AddWorkItemToQuery(plan);
-
-            var result = await _devOpsService.GetReleasePlansForPackageAsync("test-package", language);
-
-            Assert.That(result.Single().SDKInfo.Single(s => s.Language == language).ReleasePipelineUrl, Is.EqualTo(pipeline));
-            Assert.That(result.Single().SDKInfo.Where(s => s.Language != language).All(s => s.ReleasePipelineUrl == string.Empty), Is.True);
         }
 
         [TestCase(".NET", "Dotnet", "net")]

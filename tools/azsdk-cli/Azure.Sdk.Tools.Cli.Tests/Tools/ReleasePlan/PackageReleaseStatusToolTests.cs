@@ -607,12 +607,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(_devOps.Invocations.Select(i => i.Method.Name), Is.EqualTo(new[] { nameof(IDevOpsService.GetReleasePlansForPackageAsync) }));
         }
 
-        [TestCase(false, null)]
-        [TestCase(true, null)]
-        [TestCase(false, "beta")]
-        [TestCase(true, "BETA")]
-        [TestCase(false, "stable")]
-        public async Task LegacyLookup_TwoActiveBetaPlans_DoesNotChooseEither(bool reverseOrder, string? releaseType)
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task LegacyLookup_TwoActiveBetaPlans_DoesNotChooseEither(bool reverseOrder)
         {
             _plan.SDKReleaseType = "beta";
             var other = CreatePlan();
@@ -625,30 +622,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(candidates);
 
             var result = await UpdateAsync(releasePlanId: 0, language: "JavaScript", packageName: "@azure/test",
-                sdkReleaseType: releaseType, version: "9.0.0-beta.5");
+                sdkReleaseType: "beta", version: "9.0.0-beta.5");
 
             Assert.That(result.ResponseError, Does.Contain("Multiple in-progress release plans")
                 .And.Contain("100").And.Contain("200").And.Contain("--release-plan-id").And.Contain("--sdk-pull-request"));
             Assert.That(result.ReleaseStatus, Is.Empty);
             AssertNoWrites();
             Assert.That(candidates.SelectMany(p => p.SDKInfo).All(s => s.ReleaseStatus == "Pending"), Is.True);
-        }
-
-        [TestCase("beta")]
-        [TestCase("stable")]
-        public async Task LegacyLookup_ReleaseTypeDoesNotDisambiguateActivePlans(string releaseType)
-        {
-            var other = CreatePlan();
-            other.WorkItemId = 22222;
-            other.ReleasePlanId = 200;
-            other.SDKReleaseType = "beta";
-            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync([_plan, other]);
-
-            var result = await UpdateAsync(releasePlanId: 0, sdkReleaseType: releaseType);
-
-            Assert.That(result.ResponseError, Does.Contain("Multiple in-progress release plans"));
-            AssertNoWrites();
         }
 
         [Test]

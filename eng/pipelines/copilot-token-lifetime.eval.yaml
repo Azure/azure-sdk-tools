@@ -15,9 +15,11 @@ stimuli:
     graders:
       - type: output-contains
         config:
-          value: TOKEN_LIFETIME_OK
+          substring: TOKEN_LIFETIME_OK
   - name: executor-and-judge
     prompt: Reply with only the number that equals 3 plus 4. Do not use any tools.
+    rubric:
+      - The final answer is the number 7, allowing surrounding whitespace but no other text.
     constraints:
       max_turns: 2
       max_tokens: 12000

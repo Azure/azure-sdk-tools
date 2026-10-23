@@ -45,6 +45,12 @@ extends:
               - script: node --test eng/pipelines/copilot-token-lifetime.test.mjs
                 displayName: Verify diagnostic isolation and assertions offline
 
+              - script: >-
+                  node ../eng/common/scripts/eval/node_modules/@microsoft/vally-cli/dist/index.js
+                  lint . --eval-spec ../eng/pipelines/copilot-token-lifetime.eval.yaml --strict
+                displayName: Validate both control graders before minting a token
+                workingDirectory: evals
+
               - template: /eng/common/pipelines/templates/steps/login-to-copilot.yml
 
               - script: node eng/pipelines/copilot-token-lifetime.mjs --phase original

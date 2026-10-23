@@ -649,15 +649,19 @@ class ChatService:
     def _extract_references_from_text(
         text: str, tool_references: list[Reference] | None = None
     ) -> tuple[str, list[Reference]]:
-        """Parse the **References** section from agent output text.
+        """Parse a References section without discarding unrecognized entries.
 
         Returns ``(answer_without_references, extracted_references)``.
         The extracted references are enriched with ``source`` and ``content``
         from *tool_references* when a matching link or title is found,
         preserving compatibility with the old backend response shape.
         """
-        # Locate the **References** header
-        header_match = re.search(r"\n*\*\*References\*\*\s*\n", text)
+        header_match = re.search(
+            r"^[ \t]*(?:#{1,6}[ \t]+)?(?:\*\*References\*\*|References)"
+            r"[ \t]*:?[ \t]*\r?$",
+            text,
+            re.MULTILINE | re.IGNORECASE,
+        )
         if not header_match:
             return text, []
 
@@ -693,12 +697,27 @@ class ChatService:
                     return matched
             return None
 
-        # Extract markdown links: - [title](link)
         extracted: list[Reference] = []
-        for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block):
-            title = m.group(1).strip()
-            link = m.group(2)
-            matched = _match_reference(link, title)
+        for line in refs_block.splitlines():
+            if not line.strip():
+                continue
+            entry = re.fullmatch(r"\s*(?:[-*+]|\d+[.)])\s+(.+?)\s*", line)
+            if entry is None:
+                logger.warning("Preserving references section with unrecognized formatting")
+                return text, []
+            label = entry.group(1)
+            markdown_link = re.fullmatch(r"\[([^\]]+)\]\(([^)]+)\)", label)
+            if markdown_link:
+                title = markdown_link.group(1).strip()
+                link = markdown_link.group(2)
+                matched = _match_reference(link, title)
+            else:
+                matched = title_lookup.get(label)
+                if matched is None or not matched.link:
+                    logger.warning("Preserving references section with an unresolved entry")
+                    return text, []
+                title = matched.title
+                link = matched.link
             source = matched.source if matched else ""
             content = matched.content if matched else ""
             # When the title from the knowledge base includes source info
@@ -714,7 +733,7 @@ class ChatService:
                 )
             )
 
-        return answer, extracted
+        return (answer, extracted) if extracted else (text, [])
 
     @staticmethod
     def _unwrap_json(raw_output) -> str | None:

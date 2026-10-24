@@ -87,15 +87,15 @@ async def main() -> None:
     _background_tasks.add(memory_init_task)
     memory_init_task.add_done_callback(_background_tasks.discard)
 
-    async def _init_mcp(factory):
+    async def _init_mcp(factory, **kwargs):
         try:
-            return await factory()
+            return await factory(**kwargs)
         except Exception:
             logger.exception("%s failed to initialize, skipped", factory.__name__)
             return None
 
     mcp_tools = await asyncio.gather(
-        _init_mcp(create_github_mcp_tool),
+        _init_mcp(create_github_mcp_tool, installation_owner="Microsoft"),
         _init_mcp(create_mslearn_mcp_tool),
     )
     tools.extend(tool for tool in mcp_tools if tool is not None)

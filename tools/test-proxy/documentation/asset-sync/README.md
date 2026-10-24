@@ -1,6 +1,7 @@
 # Asset Sync (Retrieve External Test Recordings)
 
 - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
+  - [Git requirements and checkout performance](#git-requirements-and-checkout-performance)
   - [The `assets.json` and how it enables external recordings](#the-assetsjson-and-how-it-enables-external-recordings)
     - [How does the test-proxy relate to the `assets.json`?](#how-does-the-test-proxy-relate-to-the-assetsjson)
   - [Restore, push, reset when proxy is waiting for requests](#restore-push-reset-when-proxy-is-waiting-for-requests)
@@ -40,6 +41,43 @@ With the addition of asset-sync capabilities, the test-proxy now responds to a n
 The header `x-recording-assets-file` will contain a value of where the `assets.json` is located within the language repo, expressed as a relative path. EG `sdk/tables/assets.json`.
 
 The combination of the the `assets.json` context and the original test-path will allow the test-proxy to restore a set of recordings to a path, then _load_ the recording from that newly gathered data. The path to the recording file within the external assets repo can be _predictably_ calculated and retrieved given just the location of the `assets.json` within the code repo, the requested file name during playback or record start, and the properties within the assets.json itself. The diagram above has colors to show how the paths are used in context.
+
+## Git requirements and checkout performance
+
+Git **2.51.0 or newer** is required on `PATH`.
+
+Asset repositories use:
+
+- Targeted blobless partial clones (`--filter=blob:none --no-tags`): only the
+  requested tag's history is cloned, rather than metadata for every recording
+  tag. The selected history is not shallow, while recording contents are fetched
+  as needed. Other tags are fetched explicitly when requested. With an empty
+  tag, the default branch is cloned instead. Push fetches `main` on demand for its
+  engineering-file updates.
+- Cone-mode sparse checkout with a sparse index: the selected recording directory
+  and `eng` are included recursively. Root files, including `.gitignore`, and files
+  immediately inside ancestor directories are also included. Other directories
+  remain excluded. An `assets.json` at the repository root with no prefix disables
+  sparse checkout to select the entire assets repository.
+- Protocol v2, index v4 path compression, and the untracked cache. Threaded index
+  loading and checkout's bulk fetching of missing blobs are already Git defaults;
+  the index checksum remains enabled. Fresh clones persist their settings during
+  `git clone` and create v4 indexes directly, avoiding separate configuration and
+  index-conversion commands. Existing caches still use explicit migration.
+
+Existing caches are upgraded in place on their first restore. Successful setup
+is recorded by a versioned marker in the repository's Git metadata, so later
+proxy instances reuse that configuration without running setup commands again.
+Restoring the same tag preserves staged, unstaged, and untracked
+recordings, without cleaning or checking out the tag again. Existing objects are
+retained, and subsequent fetches use the blobless filter; old trees that were not
+downloaded previously can still require lazy fetching. Switching to a different
+tag retains the existing behavior of discarding local changes.
+
+Breadcrumb updates still read the stored entries to detect external changes.
+When the requested entry's hash and tag already match, its file is left unchanged.
+Missing or changed entries are still persisted, and deleted breadcrumb files are
+recreated on the next restore.
 
 ## The `assets.json` and how it enables external recordings
 

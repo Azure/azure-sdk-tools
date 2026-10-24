@@ -149,6 +149,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         /// <summary>
         /// Updates an existing breadcrumb file with an assets configuration. Add/Update only. Should never remove.
+        /// Unchanged entries are not rewritten.
         /// </summary>
         /// <param name="configuration"></param>
         /// <returns></returns>
@@ -169,7 +170,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     var readLines = await ReadAllLinesSharedAsync(breadcrumbFile);
                     var lines = readLines.Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
-                    lines[targetKey] = new BreadcrumbLine(configuration);
+                    var updatedLine = new BreadcrumbLine(configuration);
+                    if (lines.TryGetValue(targetKey, out var currentLine) &&
+                        currentLine.ShortHash == updatedLine.ShortHash &&
+                        currentLine.Tag == (updatedLine.Tag ?? string.Empty))
+                    {
+                        return;
+                    }
+
+                    lines[targetKey] = updatedLine;
                     linesForWriting = lines.Values.Select(x => x.ToString());
                 }
                 

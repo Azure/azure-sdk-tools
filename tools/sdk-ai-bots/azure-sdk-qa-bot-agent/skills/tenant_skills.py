@@ -28,6 +28,9 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
+    TenantID.API_STEWARDSHIP_BOARD_QA_BOT: (
+        "Data-plane API design and API Stewardship Board review guidance."
+    ),
     TenantID.API_SPEC_REVIEW_BOT: (
         "Azure REST API specification authoring and PR review: requirements, "
         "validation errors, LintDiff, Avocado, breaking changes, review status, "
@@ -35,12 +38,10 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "Prefer this skill whenever a specification PR, validation check, or "
         "breaking-change comparison is the primary issue. Use typespec instead "
         "when the primary task is a language-level model or code transformation, "
-        "even if a PR check exposed it. Do not use this skill for "
-        "repository access or permission requests; use sdk-onboarding instead."
+        "even if a PR check exposed it."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
-        "repository access and permissions (including specification repositories), "
         "Azure SDK Tools Agent usage, and release plan creation, status, readiness, "
         "lifecycle, and troubleshooting. Use typespec instead for specification "
         "service-folder organization or RPaaS registration paths coupled to that "

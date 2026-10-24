@@ -72,6 +72,34 @@ describe('ConfigurationLoader', () => {
     ConfigurationLoader.setConfigPath(missing);
     expect(() => ConfigurationLoader.getDocumentationSources()).toThrow();
   });
+  it('selects maintained Stewardship documents without ingesting authorization YAML', () => {
+    const config = ConfigurationLoader.loadConfig();
+    const avocado = config.sources.find(source =>
+      source.repository.url === 'https://github.com/Azure/avocado.git');
+    expect(avocado?.repository.branch).toBe('main');
+    expect(avocado?.paths).toEqual([
+      expect.objectContaining({
+        path: '/README.md',
+        folder: 'azure_avocado_docs',
+        relativeByRepoPath: true,
+        metadata: { scope: 'branded' },
+      }),
+    ]);
+    const specs = config.sources.find(source =>
+      source.repository.url === 'https://github.com/Azure/azure-rest-api-specs.git');
+    expect(specs?.paths.map(item => item.path)).toEqual([
+      '/documentation/BreakingChange-Oad-Rules-Mapping.md',
+      '/documentation/ci-fix.md',
+      '/eng/tools/typespec-suppressions/README.md',
+      '/.github/arm-leases/README.md',
+      '/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md',
+    ]);
+    expect(ConfigurationLoader.getRepositoryConfigs().find(repo => repo.name === 'avocado')
+      ?.sparseCheckout).toEqual(['/README.md']);
+    expect(ConfigurationLoader.getDocumentationSources().filter(source =>
+      source.folder === 'azure_rest_api_specs_docs'))
+      .toHaveLength(5);
+  });
 
   it('uses repository documentation and contributing guidance instead of the JS wiki', () => {
     const config = ConfigurationLoader.loadConfig();

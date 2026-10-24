@@ -163,6 +163,17 @@ def test_azure_mcp_internal_docs_are_scoped_to_mcp_title_tokens():
     )
 
 
+def test_stewardship_internal_docs_include_support_plan_and_faq_tokens():
+    got = _resolve_source_filters(
+        [SRC_AZURE_SDK_DOCS_ENG], TenantID.API_STEWARDSHIP_BOARD_QA_BOT.value
+    )
+    assert got[SRC_AZURE_SDK_DOCS_ENG] == (
+        "context_id eq 'azure-sdk-docs-eng' and "
+        "(search.ismatch('design* OR plan* OR support* OR faqs*', 'title', 'full', 'any'))"
+    )
+    assert _wiki_page_filters(TenantID.API_STEWARDSHIP_BOARD_QA_BOT.value, got) == got
+
+
 def test_combined_source_filters_keep_or_clauses_grouped():
     got = combine_source_filters(
         {

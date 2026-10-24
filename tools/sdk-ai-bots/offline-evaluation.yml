@@ -23,6 +23,7 @@ parameters:
       - authoring
       - mcpserver
       - sdkagent
+      - apistewardshipboard
 
 #
 # Starts the agent server.py locally, then evaluates via completion mode:

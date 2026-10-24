@@ -51,9 +51,13 @@ class Container:
                 yield doc
 
 
+def _channel_id(name):
+    return f"19:{name}@thread.tacv2" if name is not None else None
+
+
 def qa(channel="a", verdict="correct", expert=False, **changes):
     return {
-        "tenant_id": "tenant", "channel_id": channel,
+        "tenant_id": "tenant", "channel_id": _channel_id(channel),
         "conversation_created_at": START.isoformat(),
         "verdict": verdict, "has_expert_interaction": expert,
         **changes,
@@ -62,8 +66,8 @@ def qa(channel="a", verdict="correct", expert=False, **changes):
 
 def message(channel="a", role="user", should_reply=True, **changes):
     return {
-        "tenant_id": "tenant", "extra_info": {"channel_id": channel},
-        "conversation_id": f"{channel};messageid=thread",
+        "tenant_id": "tenant", "extra_info": {"channel_id": _channel_id(channel)},
+        "conversation_id": f"{_channel_id(channel)};messageid=thread",
         "created_at": (START + timedelta(seconds=int(role in ("assistant", "system")))).isoformat(),
         "sender_role": role,
         "document_type": "conversation_message", "should_reply": should_reply,
@@ -78,8 +82,10 @@ def storage(monkeypatch):
     monkeypatch.setattr("services.qa_dashboard_service.get_qa_records_container", AsyncMock(return_value=qa_container))
     monkeypatch.setattr("services.qa_dashboard_service.get_conversation_message_container", AsyncMock(return_value=messages))
     monkeypatch.setattr("services.qa_dashboard_service._load_channel_names", AsyncMock(return_value={
-        "a": "Channel A", "b": "Channel B", "test": " SDK Testing ",
-        "smoke": "smoke-tests", "auto": "Azure SDK QA Bot - Auto Reply - Test",
+        _channel_id(key): name for key, name in {
+            "a": "Channel A", "b": "Channel B", "test": " SDK Testing ",
+            "smoke": "smoke-tests", "auto": "Azure SDK QA Bot - Auto Reply - Test",
+        }.items()
     }))
     return qa_container, messages
 
@@ -180,9 +186,9 @@ async def test_answer_rate_counts_questions_once_not_bot_replies(storage):
     ]
     result = await QADashboardService().get_overview(start=START, end=END)
     assert result.totals.conversations == 0
-    unanswered = next(row for row in result.rows if row.channel_id == "unanswered")
+    unanswered = next(row for row in result.rows if row.channel_id == _channel_id("unanswered"))
     assert unanswered.questions == 2 and unanswered.answer_rate.rate == 0
-    answered = next(row for row in result.rows if row.channel_id == "a")
+    answered = next(row for row in result.rows if row.channel_id == _channel_id("a"))
     assert answered.answered_questions == 1 and answered.answer_rate.rate == 100
     assert result.totals.answer_rate.model_dump() == {
         "numerator": 1, "denominator": 3, "rate": pytest.approx(100 / 3),
@@ -269,20 +275,20 @@ async def test_answer_rate_timestamp_ties_do_not_depend_on_storage_order(storage
 async def test_scopes_channel_fallback_and_shared_test_policy(storage):
     records, messages = storage
     records.documents = [qa(channel) for channel in ("a", "b", "test", "smoke", "auto")]
-    records.documents += [qa("a", tenant_id="other"), qa(None, conversation_id="test;messageid=123")]
+    records.documents += [qa("a", tenant_id="other"), qa(None, conversation_id=f"{_channel_id('test')};messageid=123")]
     messages.documents = [message(channel) for channel in ("a", "b", "test", "smoke", "auto")]
-    messages.documents += [message("a", tenant_id=None), message("a", tenant_id="other"), message(extra_info=None, conversation_id="test;messageid=123")]
+    messages.documents += [message("a", tenant_id=None), message("a", tenant_id="other"), message(extra_info=None, conversation_id=f"{_channel_id('test')};messageid=123")]
     report = await QADashboardService().get_overview(start=START, end=END)
     assert report.totals.conversations == 3
     assert report.totals.questions == 4
-    assert [row.channel_id for row in report.rows] == ["a", "b"]
+    assert [row.channel_id for row in report.rows] == [_channel_id("a"), _channel_id("b")]
     assert report.rows[0].conversations == 2
     assert report.rows[0].questions == 3
-    scoped = await QADashboardService().get_overview(start=START, end=END, channel_id="a")
+    scoped = await QADashboardService().get_overview(start=START, end=END, channel_id=_channel_id("a"))
     assert len(scoped.rows) == 1
     assert scoped.totals.conversations == scoped.rows[0].conversations == 2
     assert scoped.totals.questions == scoped.rows[0].questions == 3
-    excluded = await QADashboardService().get_overview(start=START, end=END, channel_id="test")
+    excluded = await QADashboardService().get_overview(start=START, end=END, channel_id=_channel_id("test"))
     assert excluded.rows == []
     for call in records.calls + messages.calls:
         assert "partition_key" not in call
@@ -300,7 +306,7 @@ async def test_same_channel_consolidates_all_stored_tenants(storage, tenant_fiel
         document.update(tenant_fields)
     records.documents = [qa(), legacy_record]
     messages.documents = [message(), legacy_message]
-    result = await QADashboardService().get_overview(start=START, end=END, channel_id="a")
+    result = await QADashboardService().get_overview(start=START, end=END, channel_id=_channel_id("a"))
     assert len(result.rows) == 1
     assert result.rows[0].conversations == result.totals.conversations == 2
     assert result.rows[0].questions == result.totals.questions == 2
@@ -309,14 +315,59 @@ async def test_same_channel_consolidates_all_stored_tenants(storage, tenant_fiel
     assert all("tenant_id" not in row for row in [*data["rows"], data["totals"]])
 
 
+@pytest.mark.parametrize("conversation_id", [
+    pytest.param("a:personal-chat", id="personal-chat"),
+    pytest.param("copilot-sydney-test", id="copilot-chat"),
+])
+@pytest.mark.parametrize("use_metadata", [False, True])
+@pytest.mark.asyncio
+async def test_non_channel_conversations_do_not_affect_overview(storage, conversation_id, use_metadata):
+    records, messages = storage
+    non_channel_record = qa(
+        channel_id=conversation_id if use_metadata else None,
+        verdict="incorrect", expert=True, feedback=issue_feedback(),
+        conversation_id=conversation_id,
+    )
+    non_channel_messages = [
+        message(
+            role=role, conversation_id=conversation_id,
+            extra_info={"channel_id": conversation_id} if use_metadata else None,
+        )
+        for role in ("user", "assistant")
+    ]
+    channel_conversation_id = f"{_channel_id('a')};messageid=thread"
+    records.documents = [
+        qa("a" if use_metadata else None, conversation_id=channel_conversation_id),
+        non_channel_record,
+    ]
+    messages.documents = [
+        message(
+            role=role, conversation_id=channel_conversation_id,
+            extra_info={"channel_id": _channel_id("a")} if use_metadata else None,
+        )
+        for role in ("user", "assistant")
+    ] + non_channel_messages
+
+    report = await QADashboardService().get_overview(start=START, end=END)
+
+    assert [row.channel_id for row in report.rows] == [_channel_id("a")]
+    assert report.totals.model_dump() == OverviewRow(
+        channel_name="Total", conversations=1, correct=1, questions=1, answered_questions=1,
+    ).model_dump()
+    scoped = await QADashboardService().get_overview(
+        start=START, end=END, channel_id=conversation_id,
+    )
+    assert scoped.rows == []
+
+
 @pytest.mark.asyncio
 async def test_rows_sort_by_channel_name_then_id(storage, monkeypatch):
     monkeypatch.setattr("services.qa_dashboard_service._load_channel_names", AsyncMock(return_value={
-        "a": "Shared", "b": "shared", "c": "Alpha",
+        _channel_id("a"): "Shared", _channel_id("b"): "shared", _channel_id("c"): "Alpha",
     }))
     storage[0].documents = [qa("b"), qa("a"), qa("c")]
     result = await QADashboardService().get_overview(start=START, end=END)
-    assert [row.channel_id for row in result.rows] == ["c", "a", "b"]
+    assert [row.channel_id for row in result.rows] == [_channel_id("c"), _channel_id("a"), _channel_id("b")]
 
 
 @pytest.mark.asyncio
@@ -351,7 +402,7 @@ async def test_undated_mock_results_never_create_rows_or_change_metrics(storage,
 
     monkeypatch.setattr(records, "query_items", unfiltered_query)
     result = await QADashboardService().get_overview(start=START, end=END)
-    assert [row.channel_id for row in result.rows] == (["a"] if dated_record else [])
+    assert [row.channel_id for row in result.rows] == ([_channel_id("a")] if dated_record else [])
     expected = OverviewRow(
         channel_name="Total", conversations=int(dated_record),
         correct=int(dated_record),
@@ -676,11 +727,11 @@ async def test_issue_scope_uses_conversation_cohort_and_current_status(storage):
         qa("a", conversation_created_at=END.isoformat(), feedback=issue_feedback(number=5)),
         qa("a", conversation_created_at=None, feedback=issue_feedback(number=6)),
     ]
-    report = await QADashboardService().get_overview(start=START, end=END, channel_id="a")
+    report = await QADashboardService().get_overview(start=START, end=END, channel_id=_channel_id("a"))
     assert report.totals.findings == report.totals.tracked_issues == report.totals.resolved_cases == 1
     assert report.totals.resolved_rate.rate == 100
     assert report.totals.root_causes == {"reasoning_gap": 1}
-    empty = await QADashboardService().get_overview(start=START, end=END, channel_id="test")
+    empty = await QADashboardService().get_overview(start=START, end=END, channel_id=_channel_id("test"))
     assert empty.totals.tracked_issues == empty.totals.findings == 0
     assert empty.totals.resolved_rate.rate is None
 
@@ -710,7 +761,7 @@ async def test_overview_route_validates_and_serializes(storage):
     storage[0].documents = [qa(feedback=issue_feedback())]
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="http://test") as client:
         response = await client.get("/api/dashboard/overview", params={
-            "start": START.isoformat(), "end": END.isoformat(), "channel_id": "a",
+            "start": START.isoformat(), "end": END.isoformat(), "channel_id": _channel_id("a"),
         })
         assert response.status_code == 200
         assert response.json()["totals"]["accuracy"]["rate"] == 100
@@ -718,7 +769,7 @@ async def test_overview_route_validates_and_serializes(storage):
         assert response.json()["totals"]["tracked_issues"] == 1
         assert response.json()["totals"]["root_causes"] == {"reasoning_gap": 1}
         assert "tenant_id" not in response.json()
-        assert response.json()["channel_id"] == "a"
+        assert response.json()["channel_id"] == _channel_id("a")
         assert "notes" not in response.json()
         for row in [*response.json()["rows"], response.json()["totals"]]:
             assert "tenant_id" not in row

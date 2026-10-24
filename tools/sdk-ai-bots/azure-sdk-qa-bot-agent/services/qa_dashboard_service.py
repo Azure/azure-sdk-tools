@@ -33,6 +33,7 @@ from utils.azure_cosmosdb import (
     read_qa_record,
 )
 from utils.azure_storage import download_blob
+from utils.channel_policy import _CHANNEL_ID_PREFIX, is_channel_conversation_id
 from utils.text_util import preprocess_html_content
 
 _PAGE_SIZE = 50
@@ -135,15 +136,16 @@ class QADashboardService:
             items.append(QARecord.from_cosmos(document))
 
         channel_ids: set[str] = {
-            item.channel_id for item in items if item.channel_id
+            item.channel_id for item in items
+            if item.channel_id and is_channel_conversation_id(item.channel_id)
         }
         async for value in container.query_items(
             query=(
                 "SELECT DISTINCT VALUE c.channel_id FROM c "
-                "WHERE IS_DEFINED(c.channel_id) AND NOT IS_NULL(c.channel_id)"
+                f"WHERE STARTSWITH(c.channel_id, '{_CHANNEL_ID_PREFIX}')"
             ),
         ):
-            if isinstance(value, str) and value:
+            if isinstance(value, str) and is_channel_conversation_id(value):
                 channel_ids.add(value)
 
         channel_names, titles = await asyncio.gather(
@@ -217,7 +219,10 @@ class QADashboardService:
         conversation_id: str | None,
         classification: RootCauseClassification | None = None,
     ) -> tuple[list[str], list[dict[str, Any]]]:
-        conditions: list[str] = []
+        conditions: list[str] = [
+            "STARTSWITH(IIF(IS_STRING(c.channel_id) AND c.channel_id != '', "
+            f"c.channel_id, c.conversation_id), '{_CHANNEL_ID_PREFIX}')"
+        ]
         parameters: list[dict[str, Any]] = []
 
         if tenant_id:

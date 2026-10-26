@@ -30,6 +30,17 @@ from services.qa_dashboard_service import QADashboardService
 from utils.dashboard_identity import get_dashboard_identity
 
 
+@pytest.fixture(autouse=True)
+def configured_channel_ids(monkeypatch):
+    get_ids = AsyncMock(return_value=[
+        "19:channel-a@thread.tacv2", "19:channel-b@thread.tacv2",
+    ])
+    monkeypatch.setattr(
+        "services.qa_dashboard_service._bot_config_service.get_channel_ids", get_ids,
+    )
+    return get_ids
+
+
 class _FakeContainer:
     def __init__(self, document: dict, *, count: int = 1) -> None:
         self.document = document
@@ -219,16 +230,27 @@ async def test_list_records_applies_filters_and_pagination(feedback_status) -> N
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("channel_id", [
+    "19:channel-a@thread.tacv2",
+    "configured-channel-without-prefix",
+])
 @pytest.mark.parametrize("channel_fields", [
     {},
     {"channel_id": None},
     {"channel_id": ""},
     {"channel_id": "19:channel-a@thread.tacv2"},
 ])
-async def test_list_records_excludes_personal_and_copilot_chats_before_pagination(
-    channel_fields,
+async def test_list_records_only_includes_configured_channels_before_pagination(
+    channel_id, channel_fields, configured_channel_ids,
 ) -> None:
-    channel_id = "19:channel-a@thread.tacv2"
+    configured_channel_ids.return_value = [channel_id]
+    if channel_fields.get("channel_id"):
+        channel_fields = {"channel_id": channel_id}
+    excluded_ids = (
+        "a:personal-chat", "copilot-sydney-test",
+        "19:group-chat@thread.skype", "19:unconfigured-channel@thread.tacv2",
+        f"{channel_id}-unconfigured",
+    )
     documents = []
     for index in range(51):
         document = _record().to_cosmos()
@@ -239,7 +261,7 @@ async def test_list_records_excludes_personal_and_copilot_chats_before_paginatio
             conversation_id=f"{channel_id};messageid={index}",
         )
         documents.append(document)
-    for conversation_id in ("a:personal-chat", "copilot-sydney-test"):
+    for conversation_id in excluded_ids:
         for metadata in ({}, {"channel_id": conversation_id}):
             document = _record().to_cosmos()
             document.pop("channel_id")
@@ -264,21 +286,31 @@ async def test_list_records_excludes_personal_and_copilot_chats_before_paginatio
             self.calls.append(kwargs)
             query = kwargs["query"]
             if "DISTINCT VALUE c.channel_id" in query:
-                assert "STARTSWITH(c.channel_id, '19:')" in query
+                assert "ARRAY_CONTAINS(@enabled_channel_ids, c.channel_id)" in query
+                assert kwargs["parameters"] == [
+                    {"name": "@enabled_channel_ids", "value": [channel_id]}
+                ]
                 # Also exercise the dropdown's defensive filtering.
-                for value in (channel_id, "a:personal-chat", "copilot-sydney-test"):
+                for value in (channel_id, *excluded_ids):
                     yield value
                 return
 
             assert (
-                "STARTSWITH(IIF(IS_STRING(c.channel_id) AND c.channel_id != '', "
-                "c.channel_id, c.conversation_id), '19:')"
+                "ARRAY_CONTAINS(@enabled_channel_ids, "
+                "IIF(IS_STRING(c.channel_id) AND c.channel_id != '', c.channel_id, "
+                "IIF(CONTAINS(c.conversation_id, ';messageid='), "
+                "SUBSTRING(c.conversation_id, 0, INDEX_OF(c.conversation_id, ';messageid=')), "
+                "c.conversation_id)))"
             ) in query
+            parameters = {item["name"]: item["value"] for item in kwargs["parameters"]}
+            assert parameters["@enabled_channel_ids"] == [channel_id]
             eligible = [
                 document for document in documents
-                if (document.get("channel_id") or document["conversation_id"]).startswith("19:")
+                if (
+                    document.get("channel_id")
+                    or document["conversation_id"].split(";messageid=", 1)[0]
+                ) in parameters["@enabled_channel_ids"]
             ]
-            parameters = {item["name"]: item["value"] for item in kwargs["parameters"]}
             if "@conversation_id" in parameters:
                 eligible = [
                     document for document in eligible
@@ -303,7 +335,7 @@ async def test_list_records_excludes_personal_and_copilot_chats_before_paginatio
         service = QADashboardService()
         first = await service.list_records(page=1)
         second = await service.list_records(page=2)
-        for conversation_id in ("a:personal-chat", "copilot-sydney-test"):
+        for conversation_id in excluded_ids:
             excluded = await service.list_records(page=2, conversation_id=conversation_id)
             assert excluded.total == 0
             assert excluded.page == 1
@@ -322,7 +354,31 @@ async def test_list_records_excludes_personal_and_copilot_chats_before_paginatio
     assert container.calls[0]["query"].split(" WHERE ", 1)[1] == (
         container.calls[1]["query"].split(" WHERE ", 1)[1].split(" ORDER BY ", 1)[0]
     )
-    assert len(documents) == 57
+    assert len(documents) == 51 + 3 * len(excluded_ids)
+
+
+@pytest.mark.asyncio
+async def test_list_records_with_no_configured_channels_is_empty(configured_channel_ids) -> None:
+    configured_channel_ids.return_value = []
+    class Container:
+        async def query_items(self, **kwargs):
+            assert "ARRAY_CONTAINS(@enabled_channel_ids," in kwargs["query"]
+            parameters = {item["name"]: item["value"] for item in kwargs["parameters"]}
+            assert parameters["@enabled_channel_ids"] == []
+            if "COUNT(1)" in kwargs["query"]:
+                yield 0
+
+    with (
+        patch("services.qa_dashboard_service.get_qa_records_container",
+              new=AsyncMock(return_value=Container())),
+        patch("services.qa_dashboard_service._load_channel_names",
+              new=AsyncMock(return_value={})),
+    ):
+        result = await QADashboardService().list_records(page=2)
+
+    assert result.total == 0
+    assert result.page == 1
+    assert result.items == result.channels == []
 
 
 @pytest.mark.asyncio
@@ -389,6 +445,7 @@ async def test_list_records_filters_not_started_feedback() -> None:
 
 def test_validation_passed_filter_includes_legacy_done_with_issue() -> None:
     conditions, parameters = QADashboardService._build_filters(
+        enabled_channel_ids=[],
         tenant_id=None,
         channel_id=None,
         qa_status=None,
@@ -402,7 +459,8 @@ def test_validation_passed_filter_includes_legacy_done_with_issue() -> None:
     assert "c.feedback.status = 'done'" in query
     assert "IS_STRING(c.feedback.issue_url)" in query
     assert {item["name"]: item["value"] for item in parameters} == {
-        "@feedback_status": "validation_passed"
+        "@feedback_status": "validation_passed",
+        "@enabled_channel_ids": [],
     }
 
 

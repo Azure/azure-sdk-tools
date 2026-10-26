@@ -81,9 +81,16 @@ def storage(monkeypatch):
     messages = Container([], messages=True)
     monkeypatch.setattr("services.qa_dashboard_service.get_qa_records_container", AsyncMock(return_value=qa_container))
     monkeypatch.setattr("services.qa_dashboard_service.get_conversation_message_container", AsyncMock(return_value=messages))
+    monkeypatch.setattr(
+        "services.qa_dashboard_service._bot_config_service.get_channel_ids",
+        AsyncMock(return_value=[
+            _channel_id(key) for key in ("a", "b", "c", "unanswered", "test", "smoke", "auto")
+        ]),
+    )
     monkeypatch.setattr("services.qa_dashboard_service._load_channel_names", AsyncMock(return_value={
         _channel_id(key): name for key, name in {
-            "a": "Channel A", "b": "Channel B", "test": " SDK Testing ",
+            "a": "Channel A", "b": "Channel B", "unanswered": "Unanswered",
+            "test": " SDK Testing ",
             "smoke": "smoke-tests", "auto": "Azure SDK QA Bot - Auto Reply - Test",
         }.items()
     }))
@@ -318,6 +325,9 @@ async def test_same_channel_consolidates_all_stored_tenants(storage, tenant_fiel
 @pytest.mark.parametrize("conversation_id", [
     pytest.param("a:personal-chat", id="personal-chat"),
     pytest.param("copilot-sydney-test", id="copilot-chat"),
+    pytest.param("19:group-chat@thread.skype", id="group-chat"),
+    pytest.param("19:unconfigured-channel@thread.tacv2", id="unconfigured-channel"),
+    pytest.param(f"{_channel_id('a')}-unconfigured", id="similar-channel-id"),
 ])
 @pytest.mark.parametrize("use_metadata", [False, True])
 @pytest.mark.asyncio
@@ -371,14 +381,37 @@ async def test_rows_sort_by_channel_name_then_id(storage, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_unknown_channel_messages_remain_visible_without_dated_conversations(storage):
+@pytest.mark.parametrize("channel_ids", [[], ["configured-without-prefix"]])
+async def test_overview_uses_configured_ids_not_names_or_id_format(storage, monkeypatch, channel_ids):
+    monkeypatch.setattr(
+        "services.qa_dashboard_service._bot_config_service.get_channel_ids",
+        AsyncMock(return_value=channel_ids),
+    )
+    storage[0].documents = [
+        qa(), qa(channel_id="configured-without-prefix"),
+        qa(channel_id=None, conversation_id="configured-without-prefix;messageid=thread"),
+    ]
+    storage[1].documents = [
+        message(),
+        message(extra_info={"channel_id": "configured-without-prefix"}),
+        message(extra_info=None, conversation_id="configured-without-prefix;messageid=thread"),
+    ]
+
+    result = await QADashboardService().get_overview(start=START, end=END)
+
+    assert [row.channel_id for row in result.rows] == channel_ids
+    assert result.totals.conversations == (2 if channel_ids else 0)
+    assert result.totals.questions == (2 if channel_ids else 0)
+
+
+@pytest.mark.asyncio
+async def test_unknown_channel_messages_are_excluded(storage):
     records, messages = storage
     records.documents = [qa(None, conversation_created_at=None)]
     messages.documents = [message(extra_info=None, conversation_id=None)]
     result = await QADashboardService().get_overview(start=START, end=END)
-    assert len(result.rows) == 1
-    assert result.rows[0].channel_name == "Unknown channel"
-    assert result.totals.questions == 1
+    assert result.rows == []
+    assert result.totals.questions == 0
     assert result.totals.conversations == 0
     assert result.totals.accuracy.rate is None
 

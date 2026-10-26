@@ -38,6 +38,11 @@ class BotConfigService:
         logger.info("No channel-specific tenant configured for channel: %s", channel_id)
         return ChannelConfigResponse(channel_id=channel_id, tenant_id=default_tenant)
 
+    async def get_channel_ids(self) -> list[str]:
+        """Return the configured channel IDs."""
+        parsed = await self._get_config()
+        return [entry["id"] for entry in parsed.get("channels", []) or []]
+
     async def _get_config(self) -> dict[str, Any]:
         now = time.monotonic()
         if self._channel_config is not None and now < self._cache_expires_at:

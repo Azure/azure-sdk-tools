@@ -25,6 +25,7 @@ from models.qa_dashboard import (
     QAOverview,
 )
 from models.qa_record import QARecord, QAStatus
+from services.bot_config_service import BotConfigService
 from services.conversation_service import ConversationService
 from services.qa_overview import aggregate_overview, validate_report_window
 from utils.azure_cosmosdb import (
@@ -33,11 +34,11 @@ from utils.azure_cosmosdb import (
     read_qa_record,
 )
 from utils.azure_storage import download_blob
-from utils.channel_policy import _CHANNEL_ID_PREFIX, is_channel_conversation_id
 from utils.text_util import preprocess_html_content
 
 _PAGE_SIZE = 50
 _TITLE_LIMIT = 140
+_bot_config_service = BotConfigService()
 
 
 class QADashboardService:
@@ -55,11 +56,15 @@ class QADashboardService:
         channel_id: str | None = None,
     ) -> QAOverview:
         start, end = validate_report_window(start, end)
-        channel_names = await _load_channel_names()
+        channel_names, enabled_channel_ids = await asyncio.gather(
+            _load_channel_names(),
+            _bot_config_service.get_channel_ids(),
+        )
         return await aggregate_overview(
             qa_container=await get_qa_records_container(),
             message_container=await get_conversation_message_container(),
-            channel_names=channel_names, start=start, end=end,
+            channel_names=channel_names, enabled_channel_ids=enabled_channel_ids,
+            start=start, end=end,
             channel_id=channel_id,
         )
 
@@ -83,7 +88,9 @@ class QADashboardService:
         ):
             raise ValueError("updated_from must not be after updated_to")
 
+        enabled_channel_ids = await _bot_config_service.get_channel_ids()
         conditions, filter_parameters = self._build_filters(
+            enabled_channel_ids=enabled_channel_ids,
             tenant_id=tenant_id,
             channel_id=channel_id,
             qa_status=qa_status,
@@ -137,15 +144,18 @@ class QADashboardService:
 
         channel_ids: set[str] = {
             item.channel_id for item in items
-            if item.channel_id and is_channel_conversation_id(item.channel_id)
+            if item.channel_id and item.channel_id in enabled_channel_ids
         }
         async for value in container.query_items(
             query=(
                 "SELECT DISTINCT VALUE c.channel_id FROM c "
-                f"WHERE STARTSWITH(c.channel_id, '{_CHANNEL_ID_PREFIX}')"
+                "WHERE ARRAY_CONTAINS(@enabled_channel_ids, c.channel_id)"
             ),
+            parameters=[
+                {"name": "@enabled_channel_ids", "value": enabled_channel_ids}
+            ],
         ):
-            if isinstance(value, str) and is_channel_conversation_id(value):
+            if isinstance(value, str) and value in enabled_channel_ids:
                 channel_ids.add(value)
 
         channel_names, titles = await asyncio.gather(
@@ -210,6 +220,7 @@ class QADashboardService:
     @staticmethod
     def _build_filters(
         *,
+        enabled_channel_ids: list[str],
         tenant_id: str | None,
         channel_id: str | None,
         qa_status: QAStatus | None,
@@ -220,10 +231,15 @@ class QADashboardService:
         classification: RootCauseClassification | None = None,
     ) -> tuple[list[str], list[dict[str, Any]]]:
         conditions: list[str] = [
-            "STARTSWITH(IIF(IS_STRING(c.channel_id) AND c.channel_id != '', "
-            f"c.channel_id, c.conversation_id), '{_CHANNEL_ID_PREFIX}')"
+            "ARRAY_CONTAINS(@enabled_channel_ids, "
+            "IIF(IS_STRING(c.channel_id) AND c.channel_id != '', c.channel_id, "
+            "IIF(CONTAINS(c.conversation_id, ';messageid='), "
+            "SUBSTRING(c.conversation_id, 0, INDEX_OF(c.conversation_id, ';messageid=')), "
+            "c.conversation_id)))"
         ]
-        parameters: list[dict[str, Any]] = []
+        parameters: list[dict[str, Any]] = [
+            {"name": "@enabled_channel_ids", "value": enabled_channel_ids}
+        ]
 
         if tenant_id:
             conditions.append("c.tenant_id = @tenant_id")

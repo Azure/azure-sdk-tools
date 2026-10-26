@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -105,3 +106,23 @@ async def test_get_channel_config_reuses_cached_config(monkeypatch) -> None:
     assert downloads == 1
     assert first_response.tenant_id == "python_channel_qa_bot"
     assert second_response.tenant_id == "typespec_channel_qa_bot"
+
+
+@pytest.mark.asyncio
+async def test_get_channel_ids_uses_cached_config_without_requiring_names(monkeypatch) -> None:
+    download = AsyncMock(return_value=b"""
+channels:
+  - id: channel-without-prefix
+    name: Channel A
+  - id: channel-without-name
+  - id: channel-with-empty-name
+    name: ''
+""")
+    monkeypatch.setattr("services.bot_config_service.download_blob", download)
+    monkeypatch.setattr("services.bot_config_service.cfg", lambda key, default=None: default)
+    service = BotConfigService()
+    expected = ["channel-without-prefix", "channel-without-name", "channel-with-empty-name"]
+
+    assert await service.get_channel_ids() == expected
+    assert await service.get_channel_ids() == expected
+    download.assert_awaited_once_with("bot-configs", "channel.yaml")

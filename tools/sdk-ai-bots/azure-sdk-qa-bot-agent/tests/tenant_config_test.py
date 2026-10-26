@@ -18,6 +18,7 @@ from config.tenant_config import (
     SRC_AZURE_SDK_DOCS_ENG,
     SRC_AZURE_SDK_FOR_JS_DOCS,
     SRC_AZURE_SDK_GUIDELINES,
+    SRC_STATIC_CPEX_DOCS,
     SRC_TYPESPEC_AZURE_DOCS,
     SRC_TYPESPEC_DOCS,
     TenantID,
@@ -62,16 +63,21 @@ def test_stewardship_tenant_uses_shared_agent_and_maintained_sources() -> None:
     assert SRC_AZURE_SDK_DOCS_ENG not in config.source_filter
 
 
+@pytest.mark.parametrize(
+    "tenant_id",
+    [TenantID.API_STEWARDSHIP_BOARD_QA_BOT, TenantID.API_SPEC_REVIEW_BOT],
+)
 @pytest.mark.parametrize("service_type", [None, "data-plane"])
-def test_stewardship_engineering_docs_keep_source_scope_without_title_restrictions(
+def test_review_engineering_docs_keep_source_scope_without_title_restrictions(
+    tenant_id: TenantID,
     service_type: str | None,
 ) -> None:
     from tools.knowledge_tools import _resolve_source_filters
 
-    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    config = get_tenant_config(tenant_id)
     filters = _resolve_source_filters(
         [source.name for source in config.sources],
-        TenantID.API_STEWARDSHIP_BOARD_QA_BOT.value,
+        tenant_id.value,
         service_type,
     )
 
@@ -85,6 +91,14 @@ def test_stewardship_engineering_docs_keep_source_scope_without_title_restrictio
     ) == (
         "https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review"
     )
+
+
+def test_api_spec_review_preserves_other_source_filters() -> None:
+    config = get_tenant_config(TenantID.API_SPEC_REVIEW_BOT)
+
+    assert config.source_filter == {
+        SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
+    }
 
 
 def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
@@ -329,13 +343,12 @@ def test_shared_skill_selection_follows_new_evidence_without_user_handoff() -> N
     assert "use ONLY the preloaded `typespec-authoring` skill" in skills
 
 
-def test_stewardship_filter_does_not_broaden_existing_review_tenants() -> None:
-    for tenant_id in (TenantID.API_SPEC_REVIEW_BOT, TenantID.TYPESPEC_CHANNEL_QA_BOT):
-        config = get_tenant_config(tenant_id)
-        assert config is not None
-        assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
-            "search.ismatch('design*', 'title')"
-        )
+def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
+    config = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
+    assert config is not None
+    assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
+        "search.ismatch('design*', 'title')"
+    )
 
 
 def test_stewardship_skill_requires_explicit_service_type_for_scoped_search() -> None:

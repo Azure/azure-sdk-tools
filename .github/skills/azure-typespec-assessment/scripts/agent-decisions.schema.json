@@ -184,12 +184,7 @@
     "guidance": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "section",
-        "excerpt",
-        "queryTerms",
-        "examples"
-      ],
+      "required": ["section", "excerpt", "queryTerms", "examples"],
       "properties": {
         "section": { "type": "string", "minLength": 1 },
         "excerpt": { "type": "string", "minLength": 1 },
@@ -267,13 +262,7 @@
     "complianceJudgment": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "reviewUnitId",
-        "applicableGuidance",
-        "decision",
-        "actual",
-        "rationale"
-      ],
+      "required": ["reviewUnitId", "applicableGuidance", "decision", "actual", "rationale"],
       "properties": {
         "reviewUnitId": { "type": "string", "pattern": "^semantic-" },
         "applicableGuidance": {
@@ -294,12 +283,7 @@
           "items": { "type": "string", "pattern": "^declaration-" }
         },
         "decision": {
-          "enum": [
-            "applicable-pass",
-            "applicable-fail",
-            "no-applicable-guidance",
-            "not-assessed"
-          ]
+          "enum": ["applicable-pass", "applicable-fail", "no-applicable-guidance", "not-assessed"]
         },
         "title": { "type": "string", "minLength": 1 },
         "severity": { "enum": ["high", "medium", "low"] },
@@ -356,10 +340,7 @@
           "then": { "required": ["title", "severity"] },
           "else": {
             "not": {
-              "anyOf": [
-                { "required": ["title"] },
-                { "required": ["severity"] }
-              ]
+              "anyOf": [{ "required": ["title"] }, { "required": ["severity"] }]
             }
           }
         }

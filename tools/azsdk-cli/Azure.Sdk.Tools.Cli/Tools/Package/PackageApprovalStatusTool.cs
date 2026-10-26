@@ -17,7 +17,7 @@ public class PackageApprovalStatusTool(
 {
     private static readonly string[] SupportedLanguages = [.. ApiReviewHubTool.DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
     private const string GetApprovalStatusToolName = "azsdk_package_get_approval_status";
-    private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
+    internal const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
@@ -35,7 +35,7 @@ public class PackageApprovalStatusTool(
 
     protected override Command GetCommand() => new(
         "get-approval-status",
-        "Check API review release approval status using APIView and API Review Hub")
+        "Check release approval status, including API and package name approval, using APIView and API Review Hub")
     {
         languageOption,
         packageNameOption,
@@ -62,9 +62,9 @@ public class PackageApprovalStatusTool(
         return response;
     }
 
-    [McpServerTool(Name = GetApprovalStatusToolName), Description("Check API review release approval status using APIView and API Review Hub.")]
+    [McpServerTool(Name = GetApprovalStatusToolName), Description("Check release approval status, including API and package name approval, using APIView and API Review Hub. Common language aliases are normalized; ask the user to select a language when the input is unsupported or ambiguous.")]
     public async Task<PackageReleaseStatusResponse> GetApprovalStatus(
-        [Description("The SDK language.")] string language,
+        [Description("The SDK language. Common aliases such as .NET, dotnet, C#, JavaScript, TypeScript, and C++ are accepted. Ask the user to select a supported language if no high-confidence match exists.")] string language,
         [Description("The package name.")] string packageName,
         [Description("The package version to check.")] string packageVersion,
         [Description("The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned.")] string apiHash = "",
@@ -73,7 +73,9 @@ public class PackageApprovalStatusTool(
     {
         try
         {
-            var result = await packageReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, language, packageName, packageVersion, apiHash, repoOwner, ct);
+            string canonicalLanguage = ApiReviewHubTool.ResolveLanguage(language)
+                ?? throw new ArgumentException($"Unsupported SDK language '{language}'.", nameof(language));
+            var result = await packageReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, canonicalLanguage, packageName, packageVersion, apiHash, repoOwner, ct);
             var response = new PackageReleaseStatusResponse
             {
                 Result = result,
@@ -105,7 +107,9 @@ public class PackageApprovalStatusTool(
         if (result.ReviewHub.StatusCode is >= 200 and < 300)
         {
             details.Add($"Status Code: {result.ReviewHub.StatusCode}");
-            details.Add($"Approved: {result.ReviewHub.IsApproved}");
+            details.Add($"Release Approved: {result.ReviewHub.IsReleaseApproved}");
+            details.Add($"API Approved: {result.ReviewHub.IsApiApproved}");
+            details.Add($"Package Name Approved: {result.ReviewHub.IsPackageNameApproved}");
             details.Add($"Reason: {result.ReviewHub.Reason ?? "none"}");
             if (!string.IsNullOrWhiteSpace(result.ReviewHub.AppliedInheritanceRule))
             {
@@ -116,7 +120,7 @@ public class PackageApprovalStatusTool(
                 details.AddRange(result.ReviewHub.Details);
             }
 
-            AddApprovalDetails(details, result.ReviewHub.Approvals, apiHash);
+            AddApiApprovalDetails(details, result.ReviewHub.ApiApprovals, apiHash);
         }
         else
         {
@@ -182,6 +186,8 @@ public class PackageApprovalStatusTool(
     {
         return result.Reason switch
         {
+            "packageNameNotApproved" => $"Release gate is not approved for {packageName} {packageVersion} because the package name is not approved.",
+            "invalidResponse" => $"Release approval status could not be determined for {packageName} {packageVersion} because API Review Hub returned an invalid response.",
             "rejected" => $"API review release gate is rejected for {packageName} {packageVersion}.",
             "staleArtifact" => $"API review release gate cannot be approved for {packageName} {packageVersion} because the release candidate artifact is not the one that was approved.",
             "missingApiHash" => $"API review release gate cannot be approved for {packageName} {packageVersion} because no API hash was provided.",
@@ -193,25 +199,25 @@ public class PackageApprovalStatusTool(
         };
     }
 
-    private static void AddApprovalDetails(List<string> details, IReadOnlyList<ApiReviewHubApprovalRecord>? approvals, string apiHash)
+    private static void AddApiApprovalDetails(List<string> details, IReadOnlyList<ApiReviewHubApiApprovalRecord>? apiApprovals, string apiHash)
     {
-        if (approvals?.Count is not > 0)
+        if (apiApprovals?.Count is not > 0)
         {
-            details.Add("Approval records returned by service: none");
+            details.Add("API approval records returned by service: none");
             return;
         }
 
         if (string.IsNullOrWhiteSpace(apiHash))
         {
-            details.Add("No API hash was provided. Approval records returned by the service:");
+            details.Add("No API hash was provided. API approval records returned by the service:");
         }
         else
         {
             details.Add($"Provided API hash: {apiHash}");
-            details.Add("Approval records returned by the service:");
+            details.Add("API approval records returned by the service:");
         }
 
-        foreach (var approval in approvals.OrderByDescending(approval => ApiHashMatches(approval.ApiHash, apiHash)).ThenByDescending(approval => approval.LastUpdatedOn, StringComparer.Ordinal))
+        foreach (var approval in apiApprovals.OrderByDescending(approval => ApiHashMatches(approval.ApiHash, apiHash)).ThenByDescending(approval => approval.LastUpdatedOn, StringComparer.Ordinal))
         {
             var matchText = ApiHashMatches(approval.ApiHash, apiHash) ? " [provided hash]" : string.Empty;
             var versionText = string.IsNullOrWhiteSpace(approval.Version) ? string.Empty : $" (version {approval.Version})";
@@ -219,7 +225,7 @@ public class PackageApprovalStatusTool(
 
             if (!string.IsNullOrWhiteSpace(approval.Id))
             {
-                details.Add($"  Approval record ID: {approval.Id}");
+                details.Add($"  API approval record ID: {approval.Id}");
             }
 
             if (!string.IsNullOrWhiteSpace(approval.LastUpdatedBy) || !string.IsNullOrWhiteSpace(approval.LastUpdatedOn))
@@ -257,13 +263,13 @@ public class PackageApprovalStatusTool(
 
     private static Option<string> CreateLanguageOption()
     {
-        var option = RequiredOption("--language", $"The SDK language. Supported values: {string.Join(", ", SupportedLanguages)}.");
+        var option = RequiredOption("--language", $"The SDK language. Supported canonical values: {string.Join(", ", SupportedLanguages)}. Common aliases are accepted.");
         option.Validators.Add(result =>
         {
             string? value = result.GetValueOrDefault<string>();
-            if (!string.IsNullOrWhiteSpace(value) && !SupportedLanguages.Contains(value, StringComparer.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(value) && ApiReviewHubTool.ResolveLanguage(value) is null)
             {
-                result.AddError($"Invalid language '{value}'. Supported values: {string.Join(", ", SupportedLanguages)}.");
+                result.AddError($"Invalid language '{value}'. Supported canonical values: {string.Join(", ", SupportedLanguages)}.");
             }
         });
         return option;

@@ -160,41 +160,27 @@ foreach ($triage in $triages) {
 
         AddAttestationEntry $productServiceTreeId $KPI_ID_Onboarding $COMPLETED $productType $url $productName
 
-        # Maps the current lifecycle stage to the required DATAPLANE KPIs needed to advance to the next lifecycle stages
-        $lifecycleToDataKpis = @{
-            "In Dev" = @($KPI_ID_Data_Private_Preview, $KPI_ID_Data_Public_Preview, $KPI_ID_Data_GA)
-            "Private Preview" = @($KPI_ID_Data_Public_Preview, $KPI_ID_Data_GA)
-            "Public Preview" = @($KPI_ID_Data_GA)
-        }
+        $kpiIds = @($KPI_ID_Data_Private_Preview, $KPI_ID_Data_Public_Preview, $KPI_ID_Data_GA)
 
         if ($dataAttestationStatus -ne "Completed") {
             if ($dataScope -eq "Yes") {
                 Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Completed"
             } else {
-                if ($lifecycleToDataKpis.ContainsKey($productLifecycle)) {
-                    foreach ($kpiId in $lifecycleToDataKpis[$productLifecycle]) {
-                        AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url $productName
-                    }
+                foreach ($kpiId in $kpiIds) {
+                    AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url $productName
                 }
                 Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
             }
         }
 
-        # Maps the current lifecycle stage to the required MANGEMENT PLANE KPIs needed to advance to the next lifecycle stages
-        $lifecycleToMgmtKpis = @{
-            "In Dev" = @($KPI_ID_Mgmt_Private_Preview, $KPI_ID_Mgmt_Public_Preview, $KPI_ID_Mgmt_GA)
-            "Private Preview" = @($KPI_ID_Mgmt_Public_Preview, $KPI_ID_Mgmt_GA)
-            "Public Preview" = @($KPI_ID_Mgmt_GA)
-        }
+        $kpiIds = @($KPI_ID_Mgmt_Private_Preview, $KPI_ID_Mgmt_Public_Preview, $KPI_ID_Mgmt_GA)
 
         if ($mgmtAttestationStatus -ne "Completed") {
             if ($mgmtScope -eq "Yes") {
                 Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Completed"
             } else {
-                if ($lifecycleToMgmtKpis.ContainsKey($productLifecycle)) {
-                    foreach ($kpiId in $lifecycleToMgmtKpis[$productLifecycle]) {
-                        AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url $productName
-                    }
+                foreach ($kpiId in $kpiIds) {
+                    AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url $productName
                 }
                 Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
             }

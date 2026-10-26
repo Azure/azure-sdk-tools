@@ -458,9 +458,12 @@ async def test_agent_startup_always_enables_assessment_and_keeps_normal_runtime(
     client, project = MagicMock(), MagicMock()
     monkeypatch.setattr(entrypoint, "get_agent_client", lambda: client)
     monkeypatch.setattr(entrypoint, "get_project_client", lambda: project)
-    for name in ("KnowledgeTools", "WebTools", "PipelineTools"):
+    for name in ("KnowledgeTools", "WebTools"):
         monkeypatch.setattr(entrypoint, name, MagicMock())
     monkeypatch.setattr(entrypoint, "create_ado_mcp_tool", AsyncMock(return_value=None))
+    azsdk_tool = object()
+    azsdk_factory = AsyncMock(return_value=azsdk_tool)
+    monkeypatch.setattr(entrypoint, "create_azsdk_mcp_tool", azsdk_factory)
     monkeypatch.setattr(entrypoint, "create_github_mcp_tool", AsyncMock(return_value=None))
     monkeypatch.setattr(entrypoint, "create_tenant_skills", MagicMock(return_value=[]))
     skills, memory, compaction = object(), object(), object()
@@ -488,6 +491,8 @@ async def test_agent_startup_always_enables_assessment_and_keeps_normal_runtime(
     assert options["context_providers"] == [skills, memory, compaction]
     assert len(options["middleware"]) == 1
     assert isinstance(options["middleware"][0], ToolOutputSecurityMiddleware)
+    assert azsdk_tool in options["tools"]
+    azsdk_factory.assert_awaited_once_with()
     assert client.get_web_search_tool.return_value in options["tools"]
     client.get_web_search_tool.assert_called_once_with(search_context_size="medium")
     memory_factory.assert_called_once_with(project)

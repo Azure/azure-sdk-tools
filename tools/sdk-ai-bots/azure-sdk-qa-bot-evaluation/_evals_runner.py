@@ -43,8 +43,8 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
     "onboarding": "Azure SDK Onboarding",
     "go": "Language - Go",
     "java": "Language - Java",
-    "net": "Language - DotNet",
-    "javascript": "Language - JavaScript",
+    "dotnet": "Language - DotNet",
+    "javascript": "Language – JS ＆ TS 🥷",
     "general": "General",
     "releasesupport": "SDK release support",
     "authoring": "Authoring Test",
@@ -152,6 +152,9 @@ class CompletionCollector:
         self._timeout_seconds = timeout_seconds
         self._max_retries = max_retries
         self._assessment_report = assessment_report
+        self._agent_branch = os.environ.get("EVAL_AGENT_BRANCH")
+        if self._agent_branch is not None:
+            self._agent_branch = self._agent_branch.removeprefix("refs/heads/")
 
     def collect(self, records: list[dict[str, Any]], tenant_id: str | None) -> list[dict[str, Any]]:
         """Return enriched items (one per input record) in original order.
@@ -218,6 +221,8 @@ class CompletionCollector:
         headers = {"Content-Type": "application/json; charset=utf8"}
         if self._access_token:
             headers["Authorization"] = f"Bearer {self._access_token}"
+        if self._agent_branch is not None:
+            question = f"[branch:{self._agent_branch}] {question}"
         payload = {
             "tenant_id": tenant_id if tenant_id is not None else "general_qa_bot",
             "message": {"role": "user", "content": question},

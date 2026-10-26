@@ -166,6 +166,35 @@ def test_collection_keeps_input_order_and_duplicate_title_failure_identity(tmp_p
     assert "assessment_report" not in _completion_item(items[0])
 
 
+@pytest.mark.parametrize("branch", ["feature/confidence", "refs/heads/feature/confidence"])
+def test_branch_routing_preserves_assessment_and_original_question(tmp_path, monkeypatch, branch):
+    rows = records()[:1]
+    ledger = report(tmp_path, rows)
+    monkeypatch.setenv("EVAL_AGENT_BRANCH", branch)
+    session = MagicMock()
+    session.__aenter__ = AsyncMock(return_value=session)
+    session.__aexit__ = AsyncMock(return_value=False)
+    session.post.return_value.__aenter__ = AsyncMock(return_value=SimpleNamespace(
+        status=200, json=AsyncMock(return_value=response()),
+    ))
+    monkeypatch.setattr("aiohttp.ClientSession", MagicMock(return_value=session))
+    collector = CompletionCollector(
+        api_url="http://unused.invalid", access_token=None, assessment_report=ledger,
+    )
+
+    items = collector.collect(rows, "api_spec_review_bot")
+
+    payload = session.post.call_args.kwargs["json"]
+    assert payload["message"]["content"] == "[branch:feature/confidence] Question one"
+    assert payload["tenant_id"] == "api_spec_review_bot"
+    assert items[0]["query"] == ledger.data["cases"][0]["question"] == rows[0]["query"]
+    assert items[0]["case_id"] == ledger.data["cases"][0]["case_id"]
+    assert ledger.data["cases"][0]["state"] == "valid"
+    assert ledger.data["cases"][0]["assessment"] == metadata()
+    assert _completion_item(items[0])["query"] == rows[0]["query"]
+    assert "assessment" not in _completion_item(items[0])
+
+
 def test_reordered_grades_join_by_case_id_not_title_and_leave_scores_unchanged(tmp_path):
     ledger = report(tmp_path)
     items = []

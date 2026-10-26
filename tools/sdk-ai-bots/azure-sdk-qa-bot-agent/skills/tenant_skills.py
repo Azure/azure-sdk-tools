@@ -29,13 +29,22 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     TenantID.API_SPEC_REVIEW_BOT: (
-        "Azure REST API specification PR review: validation errors, LintDiff, "
-        "Avocado, breaking changes, merge process in azure-rest-api-specs repos."
+        "Azure REST API specification authoring and PR review: requirements, "
+        "validation errors, LintDiff, Avocado, breaking changes, review status, "
+        "scheduling, blockers, and merge process in azure-rest-api-specs repos. "
+        "Prefer this skill whenever a specification PR, validation check, or "
+        "breaking-change comparison is the primary issue. Use typespec instead "
+        "when the primary task is a language-level model or code transformation, "
+        "even if a PR check exposed it. Do not use this skill for "
+        "repository access or permission requests; use sdk-onboarding instead."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
-        "permissions, Azure SDK Tools Agent usage, and release plan creation, status, "
-        "readiness, lifecycle, and troubleshooting."
+        "repository access and permissions (including specification repositories), "
+        "Azure SDK Tools Agent usage, and release plan creation, status, readiness, "
+        "lifecycle, and troubleshooting. Use typespec instead for specification "
+        "service-folder organization or RPaaS registration paths coupled to that "
+        "folder layout."
     ),
     TenantID.AZSDK_TOOLS_AGENT_QA_BOT: (
         "Azure SDK Tools Agent (azsdk CLI/MCP): agent and MCP server setup and "
@@ -46,11 +55,15 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: (
         "Advanced TypeSpec authoring: ARM and data-plane API design, Azure Templates, "
-        "decorators, code generation, RPC compliance."
+        "decorators, code generation, RPC compliance, and complete transformations "
+        "of supplied TypeSpec code. Keep this preloaded skill for Authoring tenant "
+        "requests, including requests to apply diagnostics or suppressions."
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: (
         "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
-        "migration from OpenAPI, validation, tspconfig."
+        "migration from OpenAPI, validation, tspconfig, specification service-folder "
+        "organization, and RPaaS registration paths coupled to that layout. Do not "
+        "replace a preloaded typespec-authoring skill for Authoring tenant requests."
     ),
     TenantID.TYPESPEC_EMITTER_QA_BOT: (
         "TypeSpec emitter framework (EF v2) and Alloy framework guidance: "

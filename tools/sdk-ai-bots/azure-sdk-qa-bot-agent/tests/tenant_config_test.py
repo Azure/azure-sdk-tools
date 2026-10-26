@@ -1,10 +1,19 @@
 """Tests for tenant skill and knowledge-source configuration."""
 
+import asyncio
+import json
 from pathlib import Path
 
+import pytest
+from agent_framework import FileSkillsSource
+
+from config import tenant_config
 from config.tenant_config import (
     SRC_AZURE_MCP_SERVER_DOCS,
+    SRC_AZURE_REST_API_SPECS_DOCS,
+    SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_DOCS_ENG,
+    SRC_AZURE_SDK_FOR_JS_DOCS,
     TenantID,
     get_knowledge_source,
     get_tenant_config,
@@ -14,6 +23,102 @@ from skills.tenant_skills import (
     create_tenant_skills,
     get_skill_name_for_tenant,
 )
+
+
+@pytest.mark.parametrize(
+    ("tenant_id", "extra_sources", "guideline_language", "emitter_language"),
+    [
+        (
+            TenantID.PYTHON_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_PYTHON_DOCS,
+            ],
+            "python",
+            "python",
+        ),
+        (
+            TenantID.DOTNET_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_NET_DOCS,
+                tenant_config.SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
+            ],
+            "dotnet",
+            "csharp",
+        ),
+        (
+            TenantID.GOLANG_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_GO_DOCS,
+            ],
+            "golang",
+            "go",
+        ),
+        (
+            TenantID.JAVA_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_JAVA_DOCS,
+                tenant_config.SRC_AZURE_SDK_FOR_JAVA_WIKI,
+                tenant_config.SRC_AUTOREST_JAVA_DOCS,
+            ],
+            "java",
+            "java",
+        ),
+        (
+            TenantID.JAVASCRIPT_CHANNEL_QA_BOT,
+            [
+                tenant_config.SRC_AZURE_SDK_FOR_JS_DOCS,
+            ],
+            "typescript",
+            "ts",
+        ),
+    ],
+)
+def test_language_tenants_include_shared_sources_and_preserve_filters(
+    tenant_id, extra_sources, guideline_language, emitter_language
+) -> None:
+    config = get_tenant_config(tenant_id)
+    assert config is not None
+    common_sources = [
+        tenant_config.SRC_AZURE_SDK_GUIDELINES,
+        SRC_AZURE_SDK_DOCS_ENG,
+        tenant_config.SRC_AZURE_SDK_INTERNAL_WIKI,
+        tenant_config.SRC_TYPESPEC_AZURE_DOCS,
+        SRC_AZURE_REST_API_SPECS_WIKI,
+        SRC_AZURE_REST_API_SPECS_DOCS,
+    ]
+    assert [source.name for source in tenant_config._SDK_SOURCES] == common_sources
+    names = [source.name for source in config.sources]
+    assert len(names) == len(set(names))
+    assert set(names) == set(common_sources + extra_sources)
+    assert config.sources is not tenant_config._SDK_SOURCES
+    assert config.source_filter == {
+        tenant_config.SRC_AZURE_SDK_GUIDELINES: (
+            f"search.ismatch('{guideline_language}', 'title')"
+        ),
+        tenant_config.SRC_TYPESPEC_AZURE_DOCS: (
+            f"search.ismatch('typespec-{emitter_language}', 'title') "
+            "or search.ismatch('generate*', 'title')"
+        ),
+        SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
+    }
+
+
+def test_javascript_tenant_uses_repository_docs_instead_of_wiki() -> None:
+    config = get_tenant_config(TenantID.JAVASCRIPT_CHANNEL_QA_BOT)
+
+    assert config is not None
+    assert SRC_AZURE_SDK_FOR_JS_DOCS in [source.name for source in config.sources]
+    assert "azure_sdk_for_js_wiki" not in [source.name for source in config.sources]
+    assert get_knowledge_source("azure_sdk_for_js_wiki") is None
+
+
+def test_javascript_contributing_guide_resolves_to_repository_root() -> None:
+    source = get_knowledge_source(SRC_AZURE_SDK_FOR_JS_DOCS)
+
+    assert source is not None
+    assert source.get_link("CONTRIBUTING.md") == (
+        "https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md"
+    )
 
 
 def test_azure_mcp_server_tenant_uses_curated_sources() -> None:
@@ -40,6 +145,34 @@ def test_tenants_use_azure_sdk_agent_by_default() -> None:
     assert config.agent.name_config_key == "AI_FOUNDRY_AGENT_NAME"
 
 
+def test_go_tenant_includes_sdk_breaking_change_guides() -> None:
+    config = get_tenant_config(TenantID.GOLANG_CHANNEL_QA_BOT)
+    assert config is not None
+    sources = {source.name: source for source in config.sources}
+    assert sources[SRC_AZURE_REST_API_SPECS_WIKI].get_link("SDK-Breaking-Changes.md") == (
+        "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+    )
+    assert config.source_filter[SRC_AZURE_REST_API_SPECS_WIKI] == "search.ismatch('SDK', 'title')"
+    assert sources[SRC_AZURE_REST_API_SPECS_DOCS].get_link("documentation/ci-fix.md") == (
+        "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/ci-fix.md"
+    )
+    assert SRC_AZURE_REST_API_SPECS_DOCS not in config.source_filter
+
+    sync_path = (
+        Path(__file__).parents[2] / "azure-sdk-qa-bot-knowledge-sync"
+        / "config" / "knowledge-config.json"
+    )
+    sync_config = json.loads(sync_path.read_text(encoding="utf-8"))
+    specs = next(
+        source for source in sync_config["sources"]
+        if source["repository"]["url"] == "https://github.com/Azure/azure-rest-api-specs.git"
+    )
+    guide = next(item for item in specs["paths"] if item["path"] == "/documentation/ci-fix.md")
+    assert guide["folder"] == SRC_AZURE_REST_API_SPECS_DOCS
+    assert guide["relativeByRepoPath"] is True
+    assert guide["metadata"]["scope"] == "branded"
+
+
 def test_tenant_skills_are_partitioned_by_agent() -> None:
     sdk_skills = create_tenant_skills("azure-sdk-chat-agent")
     mcp_skills = create_tenant_skills("azure-mcp-server-agent")
@@ -60,6 +193,19 @@ def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     assert "onboarding, releases, engineering systems" in content
     assert "Azure MCP guidance" in content
     assert "[skill_guideline]" not in content
+
+
+def test_dotnet_skill_composes_common_and_specific_guidelines_once() -> None:
+    content = build_skill_content(TenantID.DOTNET_CHANNEL_QA_BOT)
+
+    assert content.count("[skill_guideline]") == 1
+    assert content.count("# Tenant: Azure SDK Language Channel Assistant") == 1
+    assert content.count("# .NET-Specific Answer Guidelines") == 1
+    assert content.index("### SDK Lifecycle") < content.index(
+        "# .NET-Specific Answer Guidelines"
+    )
+    assert "{{tenant_id}}" not in content
+    assert "mgmt-review-comment-resolution/SKILL.md" in content
 
 
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:
@@ -152,6 +298,20 @@ def test_azure_mcp_server_instruction_limits_retrieval_rounds() -> None:
     assert 'Escalate to `search_mode="deep"` only when quick retrieval leaves a specific evidence gap' in instruction
     assert "Do not escalate merely to confirm an already supported answer" in instruction
     assert "Never repeat a tool call with identical arguments" in instruction
+
+
+def test_azure_mcp_server_pr_review_help_skill_is_discoverable() -> None:
+    root = Path(__file__).parents[1]
+    skills = asyncio.run(
+        FileSkillsSource(root / "skills" / "azure_mcp_server").get_skills()
+    )
+    instruction = (
+        root / "agents" / "azure_mcp_server_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert [skill.frontmatter.name for skill in skills] == ["pr-review-help"]
+    assert "onboarding buddy" in skills[0].frontmatter.description
+    assert "load the `pr-review-help` skill" in instruction
 
 
 def test_azure_mcp_server_agent_registers_wiki_search() -> None:

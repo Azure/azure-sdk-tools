@@ -15,6 +15,8 @@ import os
 import sys
 from pathlib import Path
 
+import yaml
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dataset.schema import (  # noqa: E402
@@ -386,7 +388,7 @@ def test_resolve_tenant_for_scenario():
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
     assert resolve_tenant_for_scenario("apispec", m) == "tenant-apispec"
-    assert resolve_tenant_for_scenario("apispec_confidence", m) == "tenant-apispec"
+    assert resolve_tenant_for_scenario("apispecconfidence", m) == "tenant-apispec"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
@@ -395,17 +397,22 @@ def test_resolve_tenant_for_scenario():
 
 def test_confidence_inspection_dataset_resolves_for_the_offline_pipeline():
     script_dir = Path(__file__).resolve().parents[1]
-    dataset = script_dir / "evaluation_datasets" / "basic" / "apispec_confidence.jsonl"
+    pipeline = yaml.safe_load((script_dir.parent / "offline-evaluation.yml").read_text(encoding="utf-8"))
+    scenarios = next(parameter["default"] for parameter in pipeline["parameters"] if parameter["name"] == "scenarios")
+    assert "apispecconfidence" in scenarios
+    assert all(scenario.isascii() and scenario.isalnum() for scenario in scenarios)
+    dataset = script_dir / "evaluation_datasets" / "basic" / "apispecconfidence.jsonl"
     assert validate_file(dataset, require_reviewed=True) == 15
     expected = None
     for specification in (
         str(dataset.relative_to(script_dir)),
-        "qa-bot-basic-apispec_confidence:latest",
+        "qa-bot-basic-apispecconfidence:latest",
     ):
         records, scenario = resolve_records(specification, script_dir=script_dir)
-        assert scenario == "apispec_confidence"
+        assert scenario == "apispecconfidence"
         assert len(records) == 15
         assert all(record["tenant"] == "api_spec_review_bot" for record in records)
+        assert all(record["scenario"] == scenario for record in records)
         if expected is None:
             expected = records
         else:

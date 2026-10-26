@@ -17,6 +17,7 @@ parameters:
       - onboarding
       - python
       - apispec
+      - apispecconfidence
       - authoring
       - mcpserver
       - sdkagent

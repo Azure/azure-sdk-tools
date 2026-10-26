@@ -136,12 +136,13 @@ This reporting change does not deploy an agent or run an evaluation.
 
 ### Confidence inspection questions
 
-`evaluation_datasets/basic/apispec_confidence.jsonl` contains the 15 approved confidence-pilot questions and routes them to the API Spec Review tenant.
-To inspect only these cases, queue `offline-evaluation.yml` with `scenarios` set to `[apispec_confidence]`.
+`evaluation_datasets/basic/apispecconfidence.jsonl` contains the 15 approved confidence-pilot questions and routes them to the API Spec Review tenant.
+The default offline-pipeline scenario list includes `apispecconfidence`.
+To inspect only these cases, queue `offline-evaluation.yml` with `scenarios` set to `[apispecconfidence]`.
 Completion mode resolves the dataset from the checked-in JSONL, so this run does not require uploading a Foundry dataset asset.
-The default nightly scenario list is unchanged.
+Scenario IDs must be ASCII alphanumeric: pipeline job names embed them directly, and cache/baseline filenames use the prefix before the first underscore.
 
-Use the resulting `evaluation-results-apispec_confidence` artifact to inspect each chat answer and its assessment values, reasons and provisional band.
+Use the resulting `evaluation-results-apispecconfidence` artifact to inspect each chat answer and its assessment values, reasons and provisional band.
 Reference answers are adapted from earlier local model outputs and are provisional compatibility inputs for the normal evaluation format, not independently validated ground truth or expected confidence labels.
 Existing external evaluators and pipeline gates still run unchanged; their scores do not validate the confidence assessment.
 

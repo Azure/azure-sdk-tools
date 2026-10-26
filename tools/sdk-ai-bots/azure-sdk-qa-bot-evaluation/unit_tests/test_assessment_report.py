@@ -430,7 +430,8 @@ def test_report_finalization_error_cannot_turn_into_success(tmp_path, monkeypatc
     assert evals_run.main(CLI) == 1
 
 
-def test_assessment_execution_metadata_stays_out_of_baseline(tmp_path, monkeypatch):
+@pytest.mark.parametrize("scenario", ["apispec", "apispecconfidence"])
+def test_assessment_cache_and_baseline_stay_scenario_scoped(tmp_path, monkeypatch, scenario):
     import _evals_result
 
     monkeypatch.setattr(_evals_result, "__file__", str(tmp_path / "_evals_result.py"))
@@ -440,7 +441,17 @@ def test_assessment_execution_metadata_stays_out_of_baseline(tmp_path, monkeypat
         "actual": {"answer": "Complete answer", "context": "Existing document context"},
         "execution": {"response_id": "response-1", "assessment_report": {"assessment": metadata()}},
     }
-    result.establish_baseline({"apispec_run": [case, {"total_evals": 1}]}, is_ci=True)
-    baseline = json.loads((tmp_path / "results" / ".log" / "apispec-test.json").read_text())
+    results = {f"{scenario}_evalrun_1234": [case, {"total_evals": 1}]}
+    result.establish_baseline(results, is_ci=True)
+    baseline = json.loads((tmp_path / "results" / ".log" / f"{scenario}-test.json").read_text())
     assert "execution" not in baseline[0] and "assessment" not in json.dumps(baseline)
     assert baseline[0]["actual"] == {"answer": "Complete answer"}
+
+    case["similarity_result"] = "fail"
+    evals_run._cache_results(
+        "full", tmp_path, results, {"similarity": ["similarity"]}, {"evaluators": []}, result,
+    )
+    cache = tmp_path / "cache"
+    assert len(list(cache.glob("*.json"))) == 2
+    assert json.loads(next(cache.glob(f"{scenario}-result-*.json")).read_text()) == results[next(iter(results))]
+    assert json.loads(next(cache.glob(f"{scenario}-failed-cases-*.json")).read_text()) == [case]

@@ -38,7 +38,7 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
     "advocacy": "Advocacy",
     "ai": "AI Discussion",
     "apispec": "API Spec Review",
-    "apispec_confidence": "API Spec Review",
+    "apispecconfidence": "API Spec Review",
     "apiview": "APIView",
     "onboarding": "Azure SDK Onboarding",
     "go": "Language - Go",

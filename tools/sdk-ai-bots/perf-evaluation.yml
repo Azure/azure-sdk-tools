@@ -21,6 +21,9 @@ parameters:
       - typespec
       - onboarding
       - python
+      - dotnet
+      - javascript
+      - go
       - apispec
       - general
       - releasesupport

@@ -106,7 +106,14 @@ class ChatService:
         return self._project_client or get_project_client()
 
     def _get_openai_client(self, agent_name: str | None = None) -> AsyncOpenAI:
-        return self._openai_client or get_openai_client(agent_name)
+        if self._openai_client is not None:
+            return self._openai_client
+        if self._project_client is not None:
+            resolved = agent_name or self._settings(
+                "AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent"
+            )
+            return self._project_client.get_openai_client(agent_name=resolved)
+        return get_openai_client(agent_name)
 
     def _get_stateless_session_id(
         self, agent_name: str, agent_version: str

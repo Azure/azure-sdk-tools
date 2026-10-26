@@ -109,7 +109,7 @@ async def test_get_channel_config_reuses_cached_config(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_channel_ids_uses_cached_config_without_requiring_names(monkeypatch) -> None:
+async def test_get_channels_reuses_cache_and_keeps_ids_without_names(monkeypatch) -> None:
     download = AsyncMock(return_value=b"""
 channels:
   - id: channel-without-prefix
@@ -121,8 +121,12 @@ channels:
     monkeypatch.setattr("services.bot_config_service.download_blob", download)
     monkeypatch.setattr("services.bot_config_service.cfg", lambda key, default=None: default)
     service = BotConfigService()
-    expected = ["channel-without-prefix", "channel-without-name", "channel-with-empty-name"]
+    expected = {
+        "channel-without-prefix": "Channel A",
+        "channel-without-name": "channel-without-name",
+        "channel-with-empty-name": "channel-with-empty-name",
+    }
 
-    assert await service.get_channel_ids() == expected
-    assert await service.get_channel_ids() == expected
+    assert await service.get_channels() == expected
+    assert await service.get_channels() == expected
     download.assert_awaited_once_with("bot-configs", "channel.yaml")

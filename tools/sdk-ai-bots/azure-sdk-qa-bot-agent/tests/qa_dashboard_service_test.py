@@ -30,17 +30,6 @@ from services.qa_dashboard_service import QADashboardService
 from utils.dashboard_identity import get_dashboard_identity
 
 
-@pytest.fixture(autouse=True)
-def configured_channel_ids(monkeypatch):
-    get_ids = AsyncMock(return_value=[
-        "19:channel-a@thread.tacv2", "19:channel-b@thread.tacv2",
-    ])
-    monkeypatch.setattr(
-        "services.qa_dashboard_service._bot_config_service.get_channel_ids", get_ids,
-    )
-    return get_ids
-
-
 class _FakeContainer:
     def __init__(self, document: dict, *, count: int = 1) -> None:
         self.document = document
@@ -168,7 +157,7 @@ async def test_list_records_applies_filters_and_pagination(feedback_status) -> N
             new=AsyncMock(return_value=container),
         ),
         patch(
-            "services.qa_dashboard_service._load_channel_names",
+            "services.qa_dashboard_service._bot_config_service.get_channels",
             new=AsyncMock(
                 return_value={
                     "19:channel-a@thread.tacv2": "Channel A",
@@ -241,9 +230,8 @@ async def test_list_records_applies_filters_and_pagination(feedback_status) -> N
     {"channel_id": "19:channel-a@thread.tacv2"},
 ])
 async def test_list_records_only_includes_configured_channels_before_pagination(
-    channel_id, channel_fields, configured_channel_ids,
+    channel_id, channel_fields,
 ) -> None:
-    configured_channel_ids.return_value = [channel_id]
     if channel_fields.get("channel_id"):
         channel_fields = {"channel_id": channel_id}
     excluded_ids = (
@@ -327,7 +315,7 @@ async def test_list_records_only_includes_configured_channels_before_pagination(
     with (
         patch("services.qa_dashboard_service.get_qa_records_container",
               new=AsyncMock(return_value=container)),
-        patch("services.qa_dashboard_service._load_channel_names",
+        patch("services.qa_dashboard_service._bot_config_service.get_channels",
               new=AsyncMock(return_value={channel_id: "Channel A"})),
         patch("services.qa_dashboard_service._load_conversation_titles",
               new=AsyncMock(return_value={})),
@@ -358,8 +346,7 @@ async def test_list_records_only_includes_configured_channels_before_pagination(
 
 
 @pytest.mark.asyncio
-async def test_list_records_with_no_configured_channels_is_empty(configured_channel_ids) -> None:
-    configured_channel_ids.return_value = []
+async def test_list_records_with_no_configured_channels_is_empty() -> None:
     class Container:
         async def query_items(self, **kwargs):
             assert "ARRAY_CONTAINS(@enabled_channel_ids," in kwargs["query"]
@@ -371,7 +358,7 @@ async def test_list_records_with_no_configured_channels_is_empty(configured_chan
     with (
         patch("services.qa_dashboard_service.get_qa_records_container",
               new=AsyncMock(return_value=Container())),
-        patch("services.qa_dashboard_service._load_channel_names",
+        patch("services.qa_dashboard_service._bot_config_service.get_channels",
               new=AsyncMock(return_value={})),
     ):
         result = await QADashboardService().list_records(page=2)
@@ -392,7 +379,7 @@ async def test_list_records_clamps_page_after_total_shrinks() -> None:
             new=AsyncMock(return_value=container),
         ),
         patch(
-            "services.qa_dashboard_service._load_channel_names",
+            "services.qa_dashboard_service._bot_config_service.get_channels",
             new=AsyncMock(return_value={"19:channel-a@thread.tacv2": "Channel A"}),
         ),
         patch(
@@ -422,7 +409,7 @@ async def test_list_records_filters_not_started_feedback() -> None:
             new=AsyncMock(return_value=container),
         ),
         patch(
-            "services.qa_dashboard_service._load_channel_names",
+            "services.qa_dashboard_service._bot_config_service.get_channels",
             new=AsyncMock(return_value={}),
         ),
         patch(
@@ -491,7 +478,7 @@ async def test_get_record_detail_builds_timeline() -> None:
             new=AsyncMock(return_value=_record().to_cosmos()),
         ),
         patch(
-            "services.qa_dashboard_service._load_channel_names",
+            "services.qa_dashboard_service._bot_config_service.get_channels",
             new=AsyncMock(return_value={"19:channel-a@thread.tacv2": "Channel A"}),
         ),
     ):

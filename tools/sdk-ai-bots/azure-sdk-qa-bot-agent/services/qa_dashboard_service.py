@@ -6,9 +6,6 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
-import yaml
-
-from config import app_config
 from models.feedback import RootCauseClassification
 from models.conversation import (
     ConversationDocumentType,
@@ -33,7 +30,6 @@ from utils.azure_cosmosdb import (
     get_qa_records_container,
     read_qa_record,
 )
-from utils.azure_storage import download_blob
 from utils.text_util import preprocess_html_content
 
 _PAGE_SIZE = 50
@@ -56,14 +52,11 @@ class QADashboardService:
         channel_id: str | None = None,
     ) -> QAOverview:
         start, end = validate_report_window(start, end)
-        channel_names, enabled_channel_ids = await asyncio.gather(
-            _load_channel_names(),
-            _bot_config_service.get_channel_ids(),
-        )
+        channels = await _bot_config_service.get_channels()
         return await aggregate_overview(
             qa_container=await get_qa_records_container(),
             message_container=await get_conversation_message_container(),
-            channel_names=channel_names, enabled_channel_ids=enabled_channel_ids,
+            channel_names=channels, enabled_channel_ids=list(channels),
             start=start, end=end,
             channel_id=channel_id,
         )
@@ -88,7 +81,8 @@ class QADashboardService:
         ):
             raise ValueError("updated_from must not be after updated_to")
 
-        enabled_channel_ids = await _bot_config_service.get_channel_ids()
+        channels = await _bot_config_service.get_channels()
+        enabled_channel_ids = list(channels)
         conditions, filter_parameters = self._build_filters(
             enabled_channel_ids=enabled_channel_ids,
             tenant_id=tenant_id,
@@ -158,30 +152,27 @@ class QADashboardService:
             if isinstance(value, str) and value in enabled_channel_ids:
                 channel_ids.add(value)
 
-        channel_names, titles = await asyncio.gather(
-            _load_channel_names(),
-            _load_conversation_titles(items),
-        )
+        titles = await _load_conversation_titles(items)
         dashboard_items = [
             _dashboard_record(
                 item,
                 title=titles.get(item.id),
-                channel_names=channel_names,
+                channel_names=channels,
             )
             for item in items
         ]
-        channels = [
-            DashboardChannel(id=value, name=channel_names.get(value, value))
+        dashboard_channels = [
+            DashboardChannel(id=value, name=channels.get(value, value))
             for value in channel_ids
         ]
-        channels.sort(key=lambda item: (item.name.casefold(), item.id))
+        dashboard_channels.sort(key=lambda item: (item.name.casefold(), item.id))
 
         return QARecordPage(
             items=dashboard_items,
             total=total,
             page=page,
             page_size=_PAGE_SIZE,
-            channels=channels,
+            channels=dashboard_channels,
         )
 
     async def get_record_detail(
@@ -204,7 +195,7 @@ class QADashboardService:
                 record.conversation_id,
                 record.conversation_type,
             ),
-            _load_channel_names(),
+            _bot_config_service.get_channels(),
         )
         dashboard_record = _dashboard_record(
             record,
@@ -299,28 +290,6 @@ class QADashboardService:
             )
 
         return conditions, parameters
-
-
-async def _load_channel_names() -> dict[str, str]:
-    container = app_config.get("STORAGE_CONFIG_CONTAINER")
-    blob = app_config.get("CHANNEL_CONFIG_BLOB")
-    if not container or not blob:
-        raise RuntimeError("Storage channel configuration is not configured")
-    data = await download_blob(container, blob)
-    if not data:
-        raise RuntimeError("Storage channel configuration is empty")
-    try:
-        parsed = yaml.safe_load(data.decode("utf-8")) or {}
-    except (UnicodeDecodeError, yaml.YAMLError) as exc:
-        raise RuntimeError("Storage channel configuration is invalid") from exc
-
-    names: dict[str, str] = {}
-    for entry in parsed.get("channels", []) or []:
-        channel_id = entry.get("id")
-        name = entry.get("name")
-        if isinstance(channel_id, str) and isinstance(name, str):
-            names[channel_id] = name
-    return names
 
 
 async def _load_conversation_titles(

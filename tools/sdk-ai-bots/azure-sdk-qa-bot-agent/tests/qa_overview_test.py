@@ -81,13 +81,7 @@ def storage(monkeypatch):
     messages = Container([], messages=True)
     monkeypatch.setattr("services.qa_dashboard_service.get_qa_records_container", AsyncMock(return_value=qa_container))
     monkeypatch.setattr("services.qa_dashboard_service.get_conversation_message_container", AsyncMock(return_value=messages))
-    monkeypatch.setattr(
-        "services.qa_dashboard_service._bot_config_service.get_channel_ids",
-        AsyncMock(return_value=[
-            _channel_id(key) for key in ("a", "b", "c", "unanswered", "test", "smoke", "auto")
-        ]),
-    )
-    monkeypatch.setattr("services.qa_dashboard_service._load_channel_names", AsyncMock(return_value={
+    monkeypatch.setattr("services.qa_dashboard_service._bot_config_service.get_channels", AsyncMock(return_value={
         _channel_id(key): name for key, name in {
             "a": "Channel A", "b": "Channel B", "unanswered": "Unanswered",
             "test": " SDK Testing ",
@@ -372,7 +366,7 @@ async def test_non_channel_conversations_do_not_affect_overview(storage, convers
 
 @pytest.mark.asyncio
 async def test_rows_sort_by_channel_name_then_id(storage, monkeypatch):
-    monkeypatch.setattr("services.qa_dashboard_service._load_channel_names", AsyncMock(return_value={
+    monkeypatch.setattr("services.qa_dashboard_service._bot_config_service.get_channels", AsyncMock(return_value={
         _channel_id("a"): "Shared", _channel_id("b"): "shared", _channel_id("c"): "Alpha",
     }))
     storage[0].documents = [qa("b"), qa("a"), qa("c")]
@@ -384,8 +378,8 @@ async def test_rows_sort_by_channel_name_then_id(storage, monkeypatch):
 @pytest.mark.parametrize("channel_ids", [[], ["configured-without-prefix"]])
 async def test_overview_uses_configured_ids_not_names_or_id_format(storage, monkeypatch, channel_ids):
     monkeypatch.setattr(
-        "services.qa_dashboard_service._bot_config_service.get_channel_ids",
-        AsyncMock(return_value=channel_ids),
+        "services.qa_dashboard_service._bot_config_service.get_channels",
+        AsyncMock(return_value={channel_id: "Channel A" for channel_id in channel_ids}),
     )
     storage[0].documents = [
         qa(), qa(channel_id="configured-without-prefix"),

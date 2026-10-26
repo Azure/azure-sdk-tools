@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 MAX_TOOL_CALL_ITERATIONS = 5
 MAX_TOOL_CALLS_PER_TURN = 10
+GITHUB_APP_INSTALLATION_OWNER = "Microsoft"
 _background_tasks: set[asyncio.Task] = set()
 
 
@@ -95,7 +96,9 @@ async def main() -> None:
             return None
 
     mcp_tools = await asyncio.gather(
-        _init_mcp(create_github_mcp_tool, installation_owner="Microsoft"),
+        _init_mcp(
+            create_github_mcp_tool, installation_owner=GITHUB_APP_INSTALLATION_OWNER
+        ),
         _init_mcp(create_mslearn_mcp_tool),
     )
     tools.extend(tool for tool in mcp_tools if tool is not None)

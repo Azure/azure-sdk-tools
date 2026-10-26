@@ -578,7 +578,7 @@ OR
 - Pull request is open
 - Pull request has "no-recent-activity" label
 - Pull request was last modified more than 7 days ago
-- Pull request title does not start with the exact, case-sensitive prefix `[AutoPR `, including the trailing space (applies to all repositories, including pull requests already labeled "no-recent-activity")
+- Pull request is draft or its title does not start with the exact, case-sensitive prefix `[AutoPR `, including the trailing space (only non-draft AutoPRs are protected, across all repositories, including those already labeled "no-recent-activity")
 
 ### Actions
 
@@ -616,7 +616,7 @@ OR
 - Pull request is open
 - Pull request does NOT have "no-recent-activity" label
 - Pull request was last updated more than 60 days ago
-- Pull request title does not start with the exact, case-sensitive prefix `[AutoPR `, including the trailing space (applies to all repositories)
+- Pull request is draft or its title does not start with the exact, case-sensitive prefix `[AutoPR `, including the trailing space (only non-draft AutoPRs are protected, across all repositories)
 
 ### Actions
 

@@ -199,8 +199,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
 
         [Category("static")]
         [TestCaseSource(nameof(StalePullRequestTitleCases))]
-        public async Task TestStalePullRequestTitleExclusion(string rule, string title, bool excluded)
+        public async Task TestStalePullRequestTitleExclusion(string rule, string title, bool matchesPrefix, bool draft)
         {
+            bool excluded = matchesPrefix && !draft;
             var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
             mockGitHubEventClient.RulesConfiguration.Rules[rule] = RuleState.On;
             var rawJson = TestHelpers.GetTestEventPayload("Tests.JsonEventPayloads/ScheduledEvent_payload.json");
@@ -214,6 +215,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     number,
                     title = issueTitle,
                     state = "open",
+                    draft,
                     user = new { login = "FakeUser1" },
                     labels = new[] { new { name = closeStalePullRequests ? TriageLabelConstants.NoRecentActivity : "test-label" } }
                 }));
@@ -221,6 +223,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
 
             var issue = CreateIssue(1, title);
             var ordinaryIssue = CreateIssue(2, "Update SDK");
+            mockGitHubEventClient.PullRequests[issue.Number] =
+                SimpleJsonSerializer.Deserialize<PullRequest>(JsonSerializer.Serialize(new { draft }));
             mockGitHubEventClient.SearchIssuesResultReturn = new SearchIssuesResult(2, false, new[] { issue, ordinaryIssue });
 
             var scheduledEventProcessing = CreateScheduledEventProcessingInstance();
@@ -236,6 +240,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             Assert.That(comments.Exists(comment => comment.IssueOrPullRequestNumber == issue.Number), Is.EqualTo(!excluded));
             Assert.That(updates.Exists(update => update.IssueOrPRNumber == ordinaryIssue.Number), Is.True);
             Assert.That(comments.Exists(comment => comment.IssueOrPullRequestNumber == ordinaryIssue.Number), Is.True);
+            Assert.That(mockGitHubEventClient.RequestedPullRequests,
+                Is.EqualTo(matchesPrefix ? new[] { issue.Number } : new int[0]));
             foreach (var update in updates)
             {
                 if (closeStalePullRequests)
@@ -255,17 +261,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         {
             foreach (string rule in new[] { RulesConstants.IdentifyStalePullRequests, RulesConstants.CloseStalePullRequests })
             {
-                yield return new TestCaseData(rule, "[AutoPR sdk] Update SDK", true);
-                yield return new TestCaseData(rule, "[AutoPR ", true);
-                yield return new TestCaseData(rule, "[AutoPR  Update SDK", true);
-                yield return new TestCaseData(rule, "[autopr sdk] Update SDK", false);
-                yield return new TestCaseData(rule, "[AutoPr sdk] Update SDK", false);
-                yield return new TestCaseData(rule, "[AutoPR] Update SDK", false);
-                yield return new TestCaseData(rule, "[AutoPR\tUpdate SDK", false);
-                yield return new TestCaseData(rule, " [AutoPR sdk] Update SDK", false);
-                yield return new TestCaseData(rule, "Update [AutoPR sdk]", false);
-                yield return new TestCaseData(rule, "Update SDK", false);
-                yield return new TestCaseData(rule, "", false);
+                foreach (bool draft in new[] { false, true })
+                {
+                    yield return new TestCaseData(rule, "[AutoPR sdk] Update SDK", true, draft);
+                    yield return new TestCaseData(rule, "[AutoPR ", true, draft);
+                    yield return new TestCaseData(rule, "[AutoPR  Update SDK", true, draft);
+                    yield return new TestCaseData(rule, "[autopr sdk] Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "[AutoPr sdk] Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "[AutoPR] Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "[AutoPR\tUpdate SDK", false, draft);
+                    yield return new TestCaseData(rule, " [AutoPR sdk] Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "Update [AutoPR sdk]", false, draft);
+                    yield return new TestCaseData(rule, "Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "", false, draft);
+                }
             }
         }
 

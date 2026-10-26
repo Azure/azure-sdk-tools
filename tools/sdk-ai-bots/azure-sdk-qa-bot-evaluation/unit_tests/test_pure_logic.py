@@ -405,7 +405,7 @@ def test_confidence_inspection_dataset_resolves_for_the_offline_pipeline():
     assert "apispecconfidence" in scenarios
     assert all(scenario.isascii() and scenario.isalnum() for scenario in scenarios)
     dataset = script_dir / "evaluation_datasets" / "basic" / "apispecconfidence.jsonl"
-    assert validate_file(dataset, require_reviewed=True) == 15
+    assert validate_file(dataset, require_reviewed=True) == 22
     expected = None
     for specification in (
         str(dataset.relative_to(script_dir)),
@@ -413,13 +413,26 @@ def test_confidence_inspection_dataset_resolves_for_the_offline_pipeline():
     ):
         records, scenario = resolve_records(specification, script_dir=script_dir)
         assert scenario == "apispecconfidence"
-        assert len(records) == 15
+        assert len(records) == 22
         assert all(record["tenant"] == "api_spec_review_bot" for record in records)
         assert all(record["scenario"] == scenario for record in records)
         if expected is None:
             expected = records
         else:
             assert records == expected
+
+
+def test_confidence_inspection_probes_distinguish_reference_origins_without_rating_labels():
+    script_dir = Path(__file__).resolve().parents[1]
+    records, _ = resolve_records("qa-bot-basic-apispecconfidence:latest", script_dir=script_dir)
+    probes = records[15:]
+    assert len(probes) == 7
+    for prefix, count in (("historical-post:", 3), ("synthetic:", 3), ("feedback-issue:", 1)):
+        assert sum(record["source"].startswith(prefix) for record in probes) == count
+    for record in probes:
+        assert record["ground_truth"].strip()
+        assert "teams.microsoft.com" not in record["source"]
+        assert not {"assessment", "expected_aspects", "expected_band", "provisional_band", "routing"} & record.keys()
 
 
 def test_javascript_scenario_routes_to_configured_js_channel():

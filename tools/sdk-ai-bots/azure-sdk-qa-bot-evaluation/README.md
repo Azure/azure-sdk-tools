@@ -136,14 +136,19 @@ This reporting change does not deploy an agent or run an evaluation.
 
 ### Confidence inspection questions
 
-`evaluation_datasets/basic/apispecconfidence.jsonl` contains the 15 approved confidence-pilot questions and routes them to the API Spec Review tenant.
+`evaluation_datasets/basic/apispecconfidence.jsonl` contains 22 accepted confidence-inspection questions and routes them to the API Spec Review tenant.
+The original 15 questions are followed by three historical-post adaptations, three synthetic missing-information questions and one feedback-issue reconstruction.
 The default offline-pipeline scenario list includes `apispecconfidence`.
 To inspect only these cases, queue `offline-evaluation.yml` with `scenarios` set to `[apispecconfidence]`.
 Completion mode resolves the dataset from the checked-in JSONL, so this run does not require uploading a Foundry dataset asset.
 Scenario IDs must be ASCII alphanumeric: pipeline job names embed them directly, and cache/baseline filenames use the prefix before the first underscore.
 
 Use the resulting `evaluation-results-apispecconfidence` artifact to inspect each chat answer and its assessment values, reasons and provisional band.
-Reference answers are adapted from earlier local model outputs and are provisional compatibility inputs for the normal evaluation format, not independently validated ground truth or expected confidence labels.
+The original 15 reference answers are adapted from earlier local model outputs.
+Additional references use historical bot/human replies with their limitations, corroborating primary guidance, expected clarification for synthetic questions, or the correction recorded in [Azure/azure-sdk-pr#3094](https://github.com/Azure/azure-sdk-pr/issues/3094).
+The `source` field distinguishes these origins; historical bot suggestions are not treated as independently confirmed expert decisions.
+All reference answers remain provisional compatibility inputs for the normal evaluation format, not independently validated ground truth or expected confidence labels.
+The added questions can expose unsupported claims or unresolved requests, but do not predetermine a Fail rating or a Low band.
 Existing external evaluators and pipeline gates still run unchanged; their scores do not validate the confidence assessment.
 
 ### Evaluators

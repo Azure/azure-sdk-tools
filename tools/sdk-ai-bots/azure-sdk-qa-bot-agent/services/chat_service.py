@@ -27,6 +27,7 @@ from models.chat import (
 )
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
+from models.identity import ResolveGitHubUsersResult
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
@@ -649,6 +650,15 @@ class ChatService:
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
+        identities = tool_results.get("resolve_github_users")
+        if (
+            req.conversation_type == ConversationType.teams_channel
+            and isinstance(identities, ResolveGitHubUsersResult)
+        ):
+            resp.mentions = [
+                mention for mention in identities.mentions.values()
+                if mention.text in answer
+            ] or None
         return resp
 
     @staticmethod
@@ -770,11 +780,15 @@ class ChatService:
 
         # Decode each tool output using its registered response model
         for item in items:
-            if not isinstance(item, ResponseOutputMessage):
+            if item.type == "function_call_output":
+                call_id = item.call_id
+                output = item.output
+            elif isinstance(item, ResponseOutputMessage):
+                extras = item.model_extra or {}
+                call_id = extras.get("call_id") or ""
+                output = extras.get("output", None)
+            else:
                 continue
-            extras = item.model_extra or {}
-            call_id = extras.get("call_id") or ""
-            output = extras.get("output", None)
             tool_name = call_id_to_name.get(call_id, "") if call_id else ""
             if not tool_name or not output:
                 continue
@@ -786,7 +800,18 @@ class ChatService:
             try:
                 json_str = self._unwrap_json(output)
                 if json_str:
-                    results[tool_name] = response_model.model_validate_json(json_str)
+                    decoded = response_model.model_validate_json(json_str)
+                    previous = results.get(tool_name)
+                    if isinstance(previous, ResolveGitHubUsersResult) and isinstance(
+                        decoded, ResolveGitHubUsersResult
+                    ):
+                        for login in decoded.mentions:
+                            previous.errors.pop(login, None)
+                        for login in decoded.errors:
+                            previous.mentions.pop(login, None)
+                        decoded.mentions = previous.mentions | decoded.mentions
+                        decoded.errors = previous.errors | decoded.errors
+                    results[tool_name] = decoded
             except Exception as e:
                 logger.warning("Failed to decode tool output for %s: %s", tool_name, e)
 

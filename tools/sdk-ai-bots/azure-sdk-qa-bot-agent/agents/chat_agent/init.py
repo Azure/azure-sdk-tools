@@ -46,6 +46,7 @@ from utils.azure_memory_store import (
 )
 from utils.memory_context_provider import MemoryContextProvider
 from utils.tool_security import ToolOutputSecurityMiddleware
+from models.evidence_assessment import GeneratedAssessmentAnswer
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,7 @@ async def main() -> None:
     )
     agent_dir = Path(__file__).parent
     instructions = _load_instructions(agent_dir / "instruction.md")
+    instructions += "\n\n" + _load_instructions(agent_dir / "evidence_assessment.md")
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
         agent_config = yaml.safe_load(f)
     agent_name = agent_config["name"]
@@ -162,6 +164,7 @@ async def main() -> None:
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
             "include": ["web_search_call.action.sources"],
+            "response_format": GeneratedAssessmentAnswer,
         },
     )
 

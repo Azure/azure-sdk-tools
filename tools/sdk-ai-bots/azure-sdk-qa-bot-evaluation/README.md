@@ -104,6 +104,36 @@ Results appear on the Evaluation tab of the Azure AI Foundry portal (each run pr
 
 Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately. A normal response ID can retrieve the original stored response on demand; synthetic IDs such as `content-filter` have no stored response.
 
+### Offline assessment reports
+
+The offline pipeline enables `--assessment_report --cache_result full`.
+The flag is opt-in for shared evaluation code; online and performance pipelines are unchanged.
+It writes `cache/assessment/<scenario>/<unique-invocation-id>/report.md` and `results.json` inside the existing `evaluation-results-<scenario>` pipeline artifact.
+Download that artifact from the offline run to inspect the report.
+
+The report includes every input question, the complete processed backend answer, response ID, schema/rubric versions, the answering model's five aspect values and reasons, and its application-derived provisional band.
+Existing external evaluator scores and pass/fail results are shown separately and keep their existing gates, suppressions and baselines.
+The band measures provisional evidence sufficiency, not correctness probability.
+Questions and complete answers render as literal text, and table content is escaped rather than interpreted as active Markdown or HTML.
+
+Assessment metadata comes directly from the backend's optional `ChatResponse.assessment`, validated with the shared lightweight backend model.
+It is not recovered from stored assistant output and does not require another model call.
+Assessment metadata stays out of grader inputs; an input-index `case_id` is added only for report-enabled runs so duplicate titles and reordered grading output cannot mix up cases.
+The existing answer, ground truth, document context and grader criteria are unchanged.
+Cached execution details retain the metadata under `execution.assessment_report`, outside baseline serialization.
+
+Reports distinguish valid, abstained, legacy/missing, unsupported-version, malformed, synthetic content-filter and collection-failure cases.
+Abstention shows unavailable aspects, not five `not_applicable` ratings.
+Checkpoints are written during collection and grading; finalization preserves available results on initialization, retrieval, grading, caching or verification failure without turning failures into successful runs.
+Diagnostics omit raw exceptions and SDK response bodies, which may contain credentials.
+The existing `always()` artifact publication is best effort and cannot recover unwritten files after hard cancellation or host loss.
+Confirm artifact access and retention are appropriate for the questions and answers before a live run.
+
+The offline job starts a local backend, but that backend still invokes a deployed hosted answering agent.
+A compatible hosted generation schema and the intended project/agent configuration are prerequisites for real assessment results; older deployments produce explicit legacy/unavailable rows.
+Stored-response permissions remain necessary for existing tool-call reporting, not for extracting assessment fields.
+This reporting change does not deploy an agent or run an evaluation.
+
 ### Evaluators
 
 All evaluators are builtin LLM evaluators that read the collected bot answer via
@@ -128,7 +158,7 @@ but are not scored by an evaluator.
 
 | Pipeline | Purpose |
 |---|---|
-| `offline-evaluation.yml` | PR gate; starts agent server.py, evaluates the curated `basic` sets via local /completion. |
+| `offline-evaluation.yml` | Nightly/manual (`pr: none`); starts agent server.py, evaluates the curated `basic` sets via local /completion, and publishes assessment reports. |
 | `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
 | `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
 
@@ -148,6 +178,7 @@ done
 
 ```bash
 python unit_tests/test_pure_logic.py     # offline: schema validation + output-items adapter
+python -m pytest unit_tests -q          # includes hermetic assessment reporting coverage
 ```
 
 ## Pre-commit

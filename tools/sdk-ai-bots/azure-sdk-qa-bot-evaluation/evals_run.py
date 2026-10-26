@@ -28,6 +28,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from _assessment_report import AssessmentReport
 from _evals_result import EvalsResult, VerificationResult
 from _evals_runner import (
     FoundryEvalsRunner,
@@ -116,8 +117,35 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--baseline_check", type=str, default="True")
     parser.add_argument("--is_ci", type=str, default="True")
     parser.add_argument("--cache_result", type=str, default="none", help="none | score | full")
+    parser.add_argument("--assessment_report", action="store_true", help="write local assessment Markdown/JSON (requires --cache_result full)")
     args = parser.parse_args(argv)
+    if args.assessment_report and args.cache_result.lower() != "full":
+        parser.error("--assessment_report requires --cache_result full")
 
+    report: AssessmentReport | None = None
+    exit_code = 1
+    try:
+        if args.assessment_report:
+            report = AssessmentReport(
+                Path(__file__).resolve().parent / "cache",
+                dataset=args.dataset,
+                run_context=args.run_context,
+            )
+        exit_code = _run_evaluation(args, report)
+    except Exception:
+        logging.exception("Evaluation initialization failed.")
+    finally:
+        if report is not None:
+            try:
+                report.finish(exit_code)
+                logging.info("Assessment artifacts: %s", report.directory)
+            except Exception:
+                logging.exception("Could not finalize assessment artifacts.")
+                exit_code = 1
+    return exit_code
+
+
+def _run_evaluation(args: argparse.Namespace, report: AssessmentReport | None) -> int:
     is_ci = args.is_ci.lower() in ("true", "1", "yes", "on")
     baseline_check = args.baseline_check.lower() in ("true", "1", "yes")
     evaluators = args.evaluators.split(",") if args.evaluators else list(ALL_EVALUATORS)
@@ -146,21 +174,27 @@ def main(argv: list[str] | None = None) -> int:
         max_concurrency=args.max_concurrency,
         completion_url=resolve_completion_url(),
         access_token=resolve_bot_token(),
+        assessment_report=report,
     )
 
     from azure.ai.projects import AIProjectClient
 
-    credential = credential_for(is_ci)
     all_results: dict[str, Any] = {}
 
     try:
+        if report is not None:
+            report.phase("resolving_dataset")
+        records, scenario = resolve_records(args.dataset, script_dir=script_dir)
+        logging.info("Resolved %d records for scenario=%s", len(records), scenario)
+        if report is not None:
+            report.bind_inputs(records, scenario)
+            report.phase("initializing_clients")
+        credential = credential_for(is_ci)
         with (
             AIProjectClient(endpoint=endpoint, credential=credential, allow_preview=True) as project_client,
             project_client.get_openai_client() as evals_client,
             project_client.get_openai_client(agent_name=agent_name) as response_client,
         ):
-            records, scenario = resolve_records(args.dataset, script_dir=script_dir)
-            logging.info("Resolved %d records for scenario=%s", len(records), scenario)
             # Stable evaluation name = dataset identity + run context (local / pipeline),
             # so the Foundry list is not flooded with date/build/random-suffixed entries.
             dataset_label = _dataset_label(args.dataset, scenario)
@@ -180,12 +214,18 @@ def main(argv: list[str] | None = None) -> int:
                 response_client=response_client,
             )
 
+        if report is not None:
+            report.phase("caching")
         _cache_results(args.cache_result, script_dir, all_results, metrics, suppression, evals_result)
 
+        if report is not None:
+            report.phase("verification")
         evals_result.show_results(all_results, baseline_check)
         if baseline_check:
             evals_result.establish_baseline(all_results, is_ci)
         verdict = evals_result.verify_results(all_results, baseline_check)
+        if report is not None:
+            report.verification(verdict.value)
         if verdict == VerificationResult.PASS_WITH_WARNING:
             print("##vso[task.logissue type=warning]Evaluation succeeded with warning. Some tests failed but suppressed.")
         elif verdict == VerificationResult.FAIL:

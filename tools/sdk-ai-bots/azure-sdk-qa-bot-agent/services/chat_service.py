@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 import json
 import logging
 import re
-from pathlib import Path
 from urllib.parse import urlparse
 
 from config.app_config import Settings, get as cfg
@@ -19,19 +18,21 @@ from config.tenant_config import (
 from models.chat import (
     AdditionalInfo,
     AdditionalInfoType,
-    AnswerConfidence,
-    AssessedAnswer,
     AgentReferenceType,
     ChatRequest,
     ChatResponse,
     ConversationItem,
     Role,
 )
-from models.bot_config import BotSettings
+from models.evidence_assessment import (
+    CURRENT_SCHEMA_VERSION,
+    EvidenceAssessment,
+    GeneratedAssessmentAnswer,
+)
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from services.conversation_service import ConversationService
-from services.bot_config_service import BotConfigService
+from services.evidence_assessment_service import provisional_band
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
     build_skill_content,
@@ -49,7 +50,6 @@ from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
-from azure.core.exceptions import AzureError
 from openai import (
     AsyncOpenAI,
     NotFoundError,
@@ -78,8 +78,6 @@ BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
-_CONFIDENCE_RANKS = {"low": 0, "medium": 1, "high": 2}
-
 
 class ChatService:
     """Coordinates conversation state, hosted-agent invocation, and response mapping."""
@@ -92,7 +90,6 @@ class ChatService:
         openai_client: AsyncOpenAI | None = None,
     ) -> None:
         self._conversation_service = ConversationService()
-        self._bot_config_service = BotConfigService()
         self._settings = settings or cfg
         self._project_client = project_client
         self._openai_client = openai_client
@@ -131,20 +128,25 @@ class ChatService:
         # threading and reuse a warm sandbox; threaded calls resolve history.
         stateless = not req.conversation_id
         if stateless:
-            confidence_enabled = False
             agent_conversation_id, is_new = None, True
             agent_session_id = self._get_stateless_session_id(agent_name)
             logger.info("Stateless request: reusing warm session=%s", agent_session_id)
         else:
-            agent_conversation_id, is_new, confidence_enabled = await self._resolve_conversation(
+            agent_conversation_id, is_new = await self._resolve_conversation(
                 openai_client, req
             )
             agent_session_id = None
+        tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
+        tenant_system_item = cast(
+            ResponseInputItemParam,
+            ConversationItem(
+                role=Role.System,
+                content=tenant_system_msg,
+            ).model_dump(mode="json", exclude_none=True),
+        )
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
-            conversation_items.append(
-                self._build_initial_system_item(req.tenant_id, confidence_enabled)
-            )
+            conversation_items.append(tenant_system_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -211,9 +213,8 @@ class ChatService:
                     openai_client,
                 )
             )
-            conversation_items.insert(
-                0, self._build_initial_system_item(req.tenant_id, confidence_enabled)
-            )
+            # The replacement conversation has no tenant context of its own.
+            conversation_items.insert(0, tenant_system_item)
             # Additional infos are not persisted in Cosmos; reuse the items already built.
             conversation_items.extend(additional_items)
             # Replace the poisoned mapping before the single recovery attempt.
@@ -221,7 +222,6 @@ class ChatService:
                 req.conversation_id,
                 req.conversation_type,
                 agent_conversation_id=agent_conversation_id,
-                confidence_enabled=confidence_enabled,
             )
             trace_id, response = await agent_client.invoke(
                 conversation_items=conversation_items,
@@ -263,31 +263,8 @@ class ChatService:
                 agent_conversation_id,
             )
 
-        chat_response = self._postprocess(
-            req, response, agent_conversation_id,
-            confidence_enabled=confidence_enabled,
-        )
+        chat_response = self._postprocess(req, response, agent_conversation_id)
         chat_response.trace_id = trace_id
-        if chat_response.confidence is not None:
-            current_settings = await self._bot_config_service.get_bot_settings(
-                req.conversation_id, req.channel_id
-            )
-            if (
-                req.conversation_id
-                and req.conversation_type
-                and self._should_notify_experts(chat_response.confidence, current_settings)
-            ):
-                try:
-                    chat_response.notify_experts = (
-                        await self._conversation_service.reserve_expert_notification(
-                            req.conversation_id, req.conversation_type, chat_response.id
-                        )
-                    )
-                except (AzureError, TimeoutError):
-                    logger.exception(
-                        "Expert notification reservation failed; returning answer without mentions: response_id=%s",
-                        chat_response.id,
-                    )
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(
                 self._save_bot_answer_to_conversation(
@@ -297,17 +274,6 @@ class ChatService:
         )
         return chat_response
 
-    @staticmethod
-    def _should_notify_experts(confidence: AnswerConfidence, settings: BotSettings) -> bool:
-        return (
-            settings.allow_notify_experts
-            and bool(settings.experts)
-            and (
-                _CONFIDENCE_RANKS[confidence.level] < _CONFIDENCE_RANKS[settings.expert_help_threshold]
-                or confidence.needs_expert_help
-            )
-        )
-
     async def _save_bot_answer_to_conversation(
         self,
         req: ChatRequest,
@@ -315,7 +281,7 @@ class ChatService:
         answer: str,
         trace_id: str | None = None,
     ) -> None:
-        """Persist the generated answer in conversation history."""
+        """Persist the final bot answer so intention uses the real reply, not placeholders."""
         if not req.conversation_id or not req.conversation_type:
             return
 
@@ -388,46 +354,36 @@ class ChatService:
 
     async def _resolve_conversation(
         self, openai_client: AsyncOpenAI, req: ChatRequest
-    ) -> tuple[str, bool, bool]:
-        """Resolve the conversation and its immutable confidence format."""
-        settings = BotSettings()
-        if req.conversation_type == ConversationType.teams_channel:
-            settings = await self._bot_config_service.get_bot_settings(
-                req.conversation_id, req.channel_id
+    ) -> tuple[str, bool]:
+        """Get an existing conversation id or create a new conversation."""
+        stored_conversation_id = (
+            await self._conversation_service.get_agent_conversation_id(
+                req.conversation_id,
+                req.conversation_type,
             )
-        mapping = await self._conversation_service.get_agent_conversation_mapping(
-            req.conversation_id, req.conversation_type
         )
-        confidence_enabled = mapping.confidence_enabled if mapping else settings.requires_confidence
-        if mapping:
+
+        if stored_conversation_id:
             try:
-                await openai_client.conversations.retrieve(mapping.agent_conversation_id)
-                return mapping.agent_conversation_id, False, confidence_enabled
+                await openai_client.conversations.retrieve(stored_conversation_id)
+                return stored_conversation_id, False
             except NotFoundError:
                 logger.info(
                     "Stored conversation %s no longer exists, creating new one",
-                    mapping.agent_conversation_id,
+                    stored_conversation_id,
                 )
 
         conversation = await openai_client.conversations.create()
         new_id = conversation.id
-        logger.info("Created new AI Foundry conversation: %s", new_id)
-        saved = await self._conversation_service.save_agent_conversation_mapping(
+
+        await self._conversation_service.save_agent_conversation_mapping(
             req.conversation_id,
             req.conversation_type,
             agent_conversation_id=new_id,
-            confidence_enabled=confidence_enabled,
-            create_only=mapping is None,
         )
-        if saved is None:
-            logger.warning(
-                "Conversation mapping was not saved; continuing with new AI Foundry conversation: "
-                "source_conversation_id=%s, agent_conversation_id=%s",
-                req.conversation_id, new_id,
-            )
-            return new_id, True, confidence_enabled
-        is_new = saved.agent_conversation_id == new_id
-        return saved.agent_conversation_id, is_new, saved.confidence_enabled
+
+        logger.info("Created new AI Foundry conversation: %s", new_id)
+        return new_id, True
 
     async def _rebuild_conversation_after_failure(
         self,
@@ -551,27 +507,6 @@ class ChatService:
                 )
         return items
 
-    def _build_initial_system_item(
-        self, tenant_id: TenantID, confidence_enabled: bool
-    ) -> ResponseInputItemParam:
-        """Build tenant instructions with the optional confidence output format.
-
-        Used on the first invocation of a new or replacement conversation.
-        """
-        content = self._build_tenant_system_message(tenant_id)
-        if confidence_enabled:
-            prompt_path = (
-                Path(__file__).resolve().parent.parent / "prompts" / "answer_confidence.md"
-            )
-            content += "\n\n" + prompt_path.read_text(encoding="utf-8")
-        return cast(
-            ResponseInputItemParam,
-            ConversationItem(
-                role=Role.System,
-                content=content,
-            ).model_dump(mode="json", exclude_none=True),
-        )
-
     def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
         """Inject tenant context + the default skill so the agent can route itself."""
         parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id.value}"]
@@ -612,7 +547,6 @@ class ChatService:
         req: ChatRequest,
         response: OpenAIResponse,
         agent_conversation_id: str | None,
-        confidence_enabled: bool = False,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
@@ -623,18 +557,30 @@ class ChatService:
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
-        confidence: AnswerConfidence | None = None
-        if confidence_enabled:
+        assessment = None
+        payload = None
+        try:
+            payload = json.loads(output_text)
+        except json.JSONDecodeError:
+            pass  # Plain output remains valid for older agent deployments.
+        if isinstance(payload, dict) and payload.get("schema_version") == CURRENT_SCHEMA_VERSION:
             try:
-                payload = json.loads(output_text)
-                if isinstance(payload, dict) and isinstance(payload.get("answer"), str):
-                    output_text = payload["answer"]
-                confidence = AssessedAnswer.model_validate(payload).confidence
-            except (json.JSONDecodeError, ValidationError):
-                logger.warning(
-                    "Missing or invalid confidence assessment; returning available answer without confidence: response_id=%s",
-                    response.id,
-                )
+                assessed = GeneratedAssessmentAnswer.model_validate(payload)
+            except ValidationError:
+                logger.error("Invalid evidence assessment: response_id=%s", response.id)
+                raise
+            output_text = assessed.answer
+            assessment = EvidenceAssessment(
+                schema_version=assessed.schema_version,
+                rubric_version=assessed.rubric_version,
+                status=assessed.status,
+                aspects=assessed.aspects,
+                provisional_band=provisional_band(assessed.aspects),
+            )
+            logger.info(
+                "Evidence assessment: response_id=%s, assessment=%s",
+                response.id, assessment.model_dump_json(),
+            )
 
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)
@@ -663,7 +609,7 @@ class ChatService:
             references=references if references else None,
             full_context=full_context,
             agent_conversation_id=agent_conversation_id,
-            confidence=confidence,
+            assessment=assessment,
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant

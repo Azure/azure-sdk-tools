@@ -55,63 +55,6 @@ union ConversationType {
   TeamsChannel: "teams_channel",
 }
 
-/** Confidence in addressing the whole current request, not a correctness grade. */
-union ConfidenceLevel {
-  /** Confident the guidance addresses the request. */
-  High: "high",
-  /** Useful guidance with unresolved needs. */
-  Medium: "medium",
-  /** Unsure how to address the main request. */
-  Low: "low",
-}
-
-/** A configured expert's Teams mention identity. */
-model ExpertIdentity {
-  /** Entra object ID or UPN accepted by Teams mentions. */
-  @minLength(1)
-  id: string;
-
-  /** Display name used in the mention. */
-  @minLength(1)
-  name: string;
-}
-
-/** Individual channel feature opt-ins; absent settings preserve existing behavior. */
-model BotSettings {
-  /** Opt in to displaying confidence labels. */
-  show_confidence_label?: boolean = false;
-
-  /** Opt in to answering independent questions after humans join. */
-  allow_replies_after_humans?: boolean = false;
-
-  /** Opt in to policy-approved expert notification attempts. */
-  allow_notify_experts?: boolean = false;
-
-  /** Notify below this confidence level or for explicit expert need; not an opt-in itself. */
-  expert_help_threshold?: ConfidenceLevel = "high";
-
-  /** Approved notification recipients; a roster alone does not enable notifications. */
-  experts?: ExpertIdentity[] = #[];
-}
-
-/** Channel routing and participation settings resolved by the backend. */
-model ChannelConfigResponse {
-  /** Teams channel identifier. */
-  channel_id: string;
-
-  /** Tenant to which the channel is routed, when configured. */
-  tenant_id?: string | null;
-
-  /** Defaults keep participation disabled for existing channels. */
-  bot_settings?: BotSettings = #{
-    show_confidence_label: false,
-    allow_replies_after_humans: false,
-    allow_notify_experts: false,
-    expert_help_threshold: "high",
-    experts: #[],
-  };
-}
-
 // ── Chat Models ──────────────────────────────────────────────
 
 @doc("A message in the conversation")
@@ -170,9 +113,6 @@ model ChatRequest {
   @doc("The conversation type")
   conversation_type?: ConversationType;
 
-  /** Teams channel used to resolve participation settings. */
-  channel_id?: string | null;
-
   @doc("The message to send to the agent")
   message: Message;
 
@@ -183,6 +123,67 @@ model ChatRequest {
   additional_infos?: AdditionalInfo[];
 }
 
+@doc("An evidence sufficiency rating, not a correctness probability")
+union AspectValue {
+  @doc("The evidence meets this aspect's requirement")
+  Pass: "pass",
+
+  @doc("A material, bounded limitation remains")
+  Limited: "limited",
+
+  @doc("An essential requirement remains unmet")
+  Fail: "fail",
+
+  @doc("The aspect is irrelevant to the request, not merely missing evidence")
+  NotApplicable: "not_applicable",
+}
+
+@doc("An aspect rating and its short explanation")
+model AspectResult {
+  @doc("The evidence sufficiency rating")
+  value: AspectValue;
+
+  @doc("One nonblank, single-line sentence identifying the decisive evidence or gap")
+  @minLength(1)
+  reason: string;
+}
+
+@doc("The answering model's five evidence aspects")
+model EvidenceAspects {
+  @doc("Whether the answer's claims are supported by the gathered evidence")
+  support: AspectResult;
+
+  @doc("Whether the guidance applies to the user's stated situation")
+  fit: AspectResult;
+
+  @doc("Whether the evidence has the required provenance and authority")
+  source_quality: AspectResult;
+
+  @doc("Whether relevant evidence disagreements remain unresolved")
+  consistency: AspectResult;
+
+  @doc("Whether the answer resolves the main concern and required outcomes")
+  coverage: AspectResult;
+}
+
+@doc("Assessment metadata returned alongside the processed answer")
+model EvidenceAssessment {
+  @doc("The generated assessment schema version")
+  schema_version: "confidence-runtime-v3";
+
+  @doc("The rubric used to rate the five evidence aspects")
+  rubric_version: "evidence-v3";
+
+  @doc("Valid means all five aspect results are present; abstained means assessment was unavailable")
+  status: "valid" | "abstained";
+
+  @doc("All five value/reason pairs for valid assessments, or null for abstention")
+  aspects: EvidenceAspects | null;
+
+  @doc("Application-derived provisional evidence band; null for abstention or all aspects not applicable")
+  provisional_band: "High" | "Medium" | "Low" | null;
+}
+
 @doc("Response from chat completion")
 model ChatResponse {
   @doc("The unique ID of the response")
@@ -190,6 +191,9 @@ model ChatResponse {
 
   @doc("The answer from the agent")
   answer: string;
+
+  @doc("The answering model's assessment and derived band; omitted for older agents without assessment output")
+  assessment?: EvidenceAssessment | null;
 
   @doc("The references to the documents used to generate the answer")
   references?: Reference[];
@@ -202,34 +206,6 @@ model ChatResponse {
 
   @doc("The tenant ID the question is routed to")
   route_tenant?: string;
-
-  /** Agent conversation identifier, when available. */
-  agent_conversation_id?: string | null;
-
-  /** Trace identifier for diagnostics, when available. */
-  trace_id?: string | null;
-
-  /** Assessment produced with the answer, never by a separate evaluator. */
-  confidence?: ConfidenceAssessment | null;
-
-  /** True only when this response reserves the post's single expert-notification attempt. */
-  notify_experts?: boolean = false;
-}
-
-/** The answering model's confidence in its guidance and independent need for expert help. */
-model ConfidenceAssessment {
-  /** Self-assessed confidence in the provided guidance, not verified correctness or complete resolution. */
-  level: ConfidenceLevel;
-
-  /** Brief explanation of the assessment and its limits. */
-  @minLength(1)
-  summary: string;
-
-  /** Needs the answer cannot resolve. */
-  unresolved_needs: string[];
-
-  /** Whether specialized human knowledge, investigation, or authorized action is needed, independently of confidence. */
-  needs_expert_help: boolean;
 }
 
 // ── Feedback Models ──────────────────────────────────────────

@@ -24,6 +24,7 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from _assessment_report import AssessmentReport
 from _evals_result import EvalsResult
 from eval.criteria import build_testing_criteria
 
@@ -76,7 +77,7 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
 
 def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
     """Project a collected record into the eval ``item`` payload (JSON-safe)."""
-    return {
+    item = {
         "testcase": it.get("testcase", "unknown"),
         "query": it.get("query", ""),
         "ground_truth": it.get("ground_truth", ""),
@@ -88,6 +89,9 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "references": it.get("references", []),
         "knowledges": it.get("knowledges", []),
     }
+    if "case_id" in it:
+        item["case_id"] = it["case_id"]
+    return item
 
 
 def extract_title_and_link_from_references(references: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -139,12 +143,14 @@ class CompletionCollector:
         max_concurrency: int = 8,
         timeout_seconds: int = 600,
         max_retries: int = 4,
+        assessment_report: AssessmentReport | None = None,
     ) -> None:
         self._api_url = api_url
         self._access_token = access_token
         self._max_concurrency = max(1, max_concurrency)
         self._timeout_seconds = timeout_seconds
         self._max_retries = max_retries
+        self._assessment_report = assessment_report
 
     def collect(self, records: list[dict[str, Any]], tenant_id: str | None) -> list[dict[str, Any]]:
         """Return enriched items (one per input record) in original order.
@@ -172,11 +178,13 @@ class CompletionCollector:
                     api_response = await self._call_bot_api(record["query"], tenant_id, session)
                 except Exception as exc:  # noqa: BLE001
                     logger.error("❌ collect failed for %s: %s", record.get("testcase", "?"), exc)
+                    if self._assessment_report is not None:
+                        self._assessment_report.collection_failed(index)
                     return
                 answer = api_response.get("answer", "")
                 full_context = api_response.get("full_context", "") or ""
                 references = api_response.get("references", []) or []
-                results[index] = {
+                item = {
                     "testcase": record.get("testcase", "unknown"),
                     "query": record["query"],
                     "ground_truth": record.get("ground_truth", ""),
@@ -190,6 +198,10 @@ class CompletionCollector:
                     "expected_knowledges": record.get("expected_knowledges", []),
                     "knowledges": extract_title_and_link_from_context(full_context),
                 }
+                results[index] = item
+                if self._assessment_report is not None:
+                    item["case_id"] = self._assessment_report.case_id(index)
+                    self._assessment_report.collected(index, api_response)
 
         timeout = aiohttp.ClientTimeout(total=self._timeout_seconds)
         async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -360,6 +372,7 @@ def output_items_to_rows(
     *,
     threshold: float = 3.0,
     tool_calls_by_response_id: dict[str, list[dict[str, Any]]] | None = None,
+    assessment_report: AssessmentReport | None = None,
 ) -> dict[str, Any]:
     """Adapt OpenAI-evals ``output_items`` into the legacy ``{"rows": [...]}`` shape.
 
@@ -417,6 +430,8 @@ def output_items_to_rows(
             )
             row["outputs.bot_evals.bot_evals_result"] = "pass" if composite >= threshold else "fail"
 
+        if assessment_report is not None:
+            assessment_report.attach_row(item.get("case_id", ""), row)
         rows.append(row)
 
     return {"rows": rows}
@@ -437,6 +452,7 @@ class FoundryEvalsRunner:
         max_concurrency: int = 8,
         completion_url: str | None = None,
         access_token: str | None = None,
+        assessment_report: AssessmentReport | None = None,
     ) -> None:
         self._evaluators = evaluators
         self._evals_result = evals_result
@@ -447,6 +463,7 @@ class FoundryEvalsRunner:
         self._max_concurrency = max_concurrency
         self._completion_url = completion_url
         self._access_token = access_token
+        self._assessment_report = assessment_report
 
     @property
     def evals_result(self) -> EvalsResult:
@@ -488,6 +505,7 @@ class FoundryEvalsRunner:
             self._evaluators,
             threshold=float(self._threshold),
             tool_calls_by_response_id=tool_calls_by_response_id,
+            assessment_report=self._assessment_report,
         )
         if extra_failed_rows:
             raw["rows"].extend(extra_failed_rows)
@@ -497,6 +515,7 @@ class FoundryEvalsRunner:
     def _retrieve_tool_calls(
         response_client: Any,
         items: list[dict[str, Any]],
+        assessment_report: AssessmentReport | None = None,
     ) -> dict[str, list[dict[str, Any]]]:
         """Retrieve and normalize tool calls from stored responses."""
         tool_calls_by_response_id: dict[str, list[dict[str, Any]]] = {}
@@ -504,19 +523,30 @@ class FoundryEvalsRunner:
             response_id = item.get("response_id", "") or ""
             testcase = item.get("testcase", "unknown")
             if not response_id:
+                if assessment_report is not None:
+                    assessment_report.retrieval(item["case_id"], "retrieval_failed")
                 raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
             if response_id == "content-filter":
                 tool_calls_by_response_id[response_id] = []
+                if assessment_report is not None:
+                    assessment_report.retrieval(item["case_id"], "not_applicable")
                 continue
-            response = response_client.responses.retrieve(
-                response_id,
-                include=["web_search_call.action.sources"],
-            )
-            output_items = [
-                _serialize_response_item(output_item)
-                for output_item in (_get(response, "output", []) or [])
-            ]
-            tool_calls_by_response_id[response_id] = _extract_tool_calls(output_items)
+            try:
+                response = response_client.responses.retrieve(
+                    response_id,
+                    include=["web_search_call.action.sources"],
+                )
+                output_items = [
+                    _serialize_response_item(output_item)
+                    for output_item in (_get(response, "output", []) or [])
+                ]
+                tool_calls_by_response_id[response_id] = _extract_tool_calls(output_items)
+            except Exception:
+                if assessment_report is not None:
+                    assessment_report.retrieval(item["case_id"], "retrieval_failed")
+                raise
+            if assessment_report is not None:
+                assessment_report.retrieval(item["case_id"], "retrieved")
         logger.info("Retrieved %d stored Agent responses.", len(tool_calls_by_response_id))
         return tool_calls_by_response_id
 
@@ -537,6 +567,8 @@ class FoundryEvalsRunner:
         for name in self._evaluators:
             row[f"outputs.{name}.{name}"] = 0.0
             row[f"outputs.{name}.{name}_result"] = "fail"
+        if self._assessment_report is not None:
+            self._assessment_report.attach_row(record["case_id"], row)
         return row
 
     def evaluate_run_completion(
@@ -562,7 +594,10 @@ class FoundryEvalsRunner:
             api_url=self._completion_url or resolve_completion_url(),
             access_token=self._access_token,
             max_concurrency=self._max_concurrency,
+            assessment_report=self._assessment_report,
         )
+        if self._assessment_report is not None:
+            self._assessment_report.phase("collecting")
         items = collector.collect(records, tenant_id)
 
         # Cases whose /completion call failed must still count as failures so the
@@ -578,6 +613,13 @@ class FoundryEvalsRunner:
                 seen[rkey] -= 1
             else:
                 dropped.append(record)
+        if self._assessment_report is not None:
+            collected_ids = {item["case_id"] for item in items}
+            dropped = [
+                {**record, "case_id": self._assessment_report.case_id(index)}
+                for index, record in enumerate(records)
+                if self._assessment_report.case_id(index) not in collected_ids
+            ]
         if dropped:
             logger.error(
                 "❌ %d/%d cases had no bot response (counted as failures): %s",
@@ -605,17 +647,30 @@ class FoundryEvalsRunner:
 
         # 3) Retrieve the exact stored Agent responses. Tool history remains local
         # and is joined back into cached results after Foundry grading.
-        tool_calls_by_response_id = self._retrieve_tool_calls(response_client, items)
+        if self._assessment_report is not None:
+            self._assessment_report.phase("retrieving_tools")
+        tool_calls_by_response_id = self._retrieve_tool_calls(response_client, items, self._assessment_report)
 
+        item_schema = COMPLETION_ITEM_SCHEMA
+        if self._assessment_report is not None:
+            item_schema = {
+                **COMPLETION_ITEM_SCHEMA,
+                "properties": {**COMPLETION_ITEM_SCHEMA["properties"], "case_id": {"type": "string"}},
+                "required": [*COMPLETION_ITEM_SCHEMA["required"], "case_id"],
+            }
         data_source_config = DataSourceConfigCustom(
-            type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False
+            type="custom", item_schema=item_schema, include_sample_schema=False
         )
+        if self._assessment_report is not None:
+            self._assessment_report.phase("creating_evaluation")
         name = evaluation_name or f"qa-bot-{scenario}"
         eval_object = openai_client.evals.create(
             name=name,
             data_source_config=data_source_config,
             testing_criteria=testing_criteria,  # type: ignore[arg-type]
         )
+        if self._assessment_report is not None:
+            self._assessment_report.evaluation(eval_object.id)
         logger.info("Evaluation created (id=%s, name=%s)", eval_object.id, name)
 
         # 4) Grade the pre-collected answers as inline data (no agent target).
@@ -624,10 +679,16 @@ class FoundryEvalsRunner:
         data_source = CreateEvalJSONLRunDataSourceParam(
             type="jsonl", source=SourceFileContent(type="file_content", content=content)
         )
+        if self._assessment_report is not None:
+            self._assessment_report.phase("creating_run")
         run = openai_client.evals.runs.create(
             eval_id=eval_object.id, name=run_name, data_source=data_source  # type: ignore[arg-type]
         )
+        if self._assessment_report is not None:
+            self._assessment_report.evaluation(eval_object.id, run.id)
         logger.info("Evaluation run created (id=%s)", run.id)
+        if self._assessment_report is not None:
+            self._assessment_report.phase("grading")
         return self._poll_and_adapt(
             openai_client,
             eval_object.id,

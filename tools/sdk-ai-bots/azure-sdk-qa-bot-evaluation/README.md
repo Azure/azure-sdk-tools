@@ -134,6 +134,17 @@ A compatible hosted generation schema and the intended project/agent configurati
 Stored-response permissions remain necessary for existing tool-call reporting, not for extracting assessment fields.
 This reporting change does not deploy an agent or run an evaluation.
 
+### Confidence inspection questions
+
+`evaluation_datasets/basic/apispec_confidence.jsonl` contains the 15 approved confidence-pilot questions and routes them to the API Spec Review tenant.
+To inspect only these cases, queue `offline-evaluation.yml` with `scenarios` set to `[apispec_confidence]`.
+Completion mode resolves the dataset from the checked-in JSONL, so this run does not require uploading a Foundry dataset asset.
+The default nightly scenario list is unchanged.
+
+Use the resulting `evaluation-results-apispec_confidence` artifact to inspect each chat answer and its assessment values, reasons and provisional band.
+Reference answers are adapted from earlier local model outputs and are provisional compatibility inputs for the normal evaluation format, not independently validated ground truth or expected confidence labels.
+Existing external evaluators and pipeline gates still run unchanged; their scores do not validate the confidence assessment.
+
 ### Evaluators
 
 All evaluators are builtin LLM evaluators that read the collected bot answer via

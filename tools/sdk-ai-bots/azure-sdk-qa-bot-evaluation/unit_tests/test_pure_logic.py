@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -33,6 +34,7 @@ from _evals_runner import (  # noqa: E402
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
+    resolve_records,
     resolve_tenant_for_scenario,
 )
 from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E402
@@ -378,14 +380,36 @@ def test_resolve_tenant_for_scenario():
     m = {
         "default": "tenant-default",
         "TypeSpec Discussion": "tenant-ts",
+        "API Spec Review": "tenant-apispec",
         "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
+    assert resolve_tenant_for_scenario("apispec", m) == "tenant-apispec"
+    assert resolve_tenant_for_scenario("apispec_confidence", m) == "tenant-apispec"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
+
+
+def test_confidence_inspection_dataset_resolves_for_the_offline_pipeline():
+    script_dir = Path(__file__).resolve().parents[1]
+    dataset = script_dir / "evaluation_datasets" / "basic" / "apispec_confidence.jsonl"
+    assert validate_file(dataset, require_reviewed=True) == 15
+    expected = None
+    for specification in (
+        str(dataset.relative_to(script_dir)),
+        "qa-bot-basic-apispec_confidence:latest",
+    ):
+        records, scenario = resolve_records(specification, script_dir=script_dir)
+        assert scenario == "apispec_confidence"
+        assert len(records) == 15
+        assert all(record["tenant"] == "api_spec_review_bot" for record in records)
+        if expected is None:
+            expected = records
+        else:
+            assert records == expected
 
 
 def test_output_items_to_rows_completion_item_response():

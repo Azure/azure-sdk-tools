@@ -931,6 +931,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return await _gitHubClient.PullRequest.Review.GetAll(repositoryId, pullRequestNumber);
         }
 
+        public virtual async Task<PullRequest> GetPullRequest(long repositoryId, int pullRequestNumber)
+        {
+            return await _gitHubClient.PullRequest.Get(repositoryId, pullRequestNumber);
+        }
+
         public void DismissReview(long repositoryId, int pullRequestNumber, long reviewId, string dismissalMessage)
         {
             GitHubReviewDismissal gitHubReviewDismissal = new GitHubReviewDismissal(repositoryId, 

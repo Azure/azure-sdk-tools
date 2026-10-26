@@ -59,8 +59,31 @@ def test_stewardship_tenant_uses_shared_agent_and_maintained_sources() -> None:
         SRC_AZURE_OPENAPI_DIFF_DOCS,
         SRC_AZURE_AVOCADO_DOCS,
     ]
-    assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
-        "search.ismatch('design* OR plan* OR support* OR faqs*', 'title', 'full', 'any')"
+    assert SRC_AZURE_SDK_DOCS_ENG not in config.source_filter
+
+
+@pytest.mark.parametrize("service_type", [None, "data-plane"])
+def test_stewardship_engineering_docs_keep_source_scope_without_title_restrictions(
+    service_type: str | None,
+) -> None:
+    from tools.knowledge_tools import _resolve_source_filters
+
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    filters = _resolve_source_filters(
+        [source.name for source in config.sources],
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT.value,
+        service_type,
+    )
+
+    expected = f"context_id eq '{SRC_AZURE_SDK_DOCS_ENG}'"
+    if service_type:
+        expected += f" and (service_type eq '{service_type}' or service_type eq null)"
+    assert filters[SRC_AZURE_SDK_DOCS_ENG] == expected
+    assert set(filters) == {source.name for source in config.sources}
+    assert get_knowledge_source(SRC_AZURE_SDK_DOCS_ENG).get_link(
+        "docs#develop#namespace-review.md"
+    ) == (
+        "https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review"
     )
 
 

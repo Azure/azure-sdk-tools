@@ -692,11 +692,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_AVOCADO_DOCS,
         ),
-        source_filter={
-            SRC_AZURE_SDK_DOCS_ENG: (
-                "search.ismatch('design* OR plan* OR support* OR faqs*', 'title', 'full', 'any')"
-            ),
-        },
         qa_guideline_files=["tenants/api_stewardship_board.md"],
         enable_routing=True,
         enable_wiki_cross_document_pages=False,

@@ -30,3 +30,4 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/github-event-processor
+    ForceCreate: true

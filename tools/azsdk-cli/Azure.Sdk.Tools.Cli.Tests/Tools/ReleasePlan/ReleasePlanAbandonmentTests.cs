@@ -121,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase("open", false)]
         [TestCase("open", true)]
         [TestCase("closed", false)]
-        public async Task AllUnmergedMixedLanguages_AllowsOpenDraftAndClosed(string state, bool draft)
+        public async Task Eligibility_AllUnmergedMixedLanguages_AllowsOpenDraftAndClosed(string state, bool draft)
         {
             SetSdks(Sdk("c#", "azure-sdk-for-net", 1), Sdk("typescript", "azure-sdk-for-js", 2),
                 Sdk("Python", "azure-sdk-for-python", 3), Sdk("Go", "azure-sdk-for-go", 4), Sdk("Java", "azure-sdk-for-java", 5));
@@ -131,9 +131,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Lookup(uri.Segments[2].Trim('/'), int.Parse(uri.Segments[4]), Pr(state, draft: draft));
                 sdk.PullRequestStatus = "Merged";
             }
-            var response = await _tool.AbandonReleasePlan(123);
-            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(await _tool.IsEligibleToAbandonAsync(_plan), Is.True);
             Assert.That(_github.Invocations.Count, Is.EqualTo(5));
+            Assert.That(_devOps.Invocations, Is.Empty);
             _github.Verify(g => g.IsPullRequestApprovedAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
@@ -193,7 +193,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task MixedOpenDraftClosed_DeduplicatesCanonicalLinksAndIgnoresCachedStatuses()
+        public async Task Eligibility_MixedOpenDraftClosed_DeduplicatesCanonicalLinksAndIgnoresCachedStatuses()
         {
             SetSdks(Sdk(".NET", "azure-sdk-for-net", 1), Sdk("Python", "azure-sdk-for-python", 2),
                 Sdk("JavaScript", "azure-sdk-for-js", 3), Sdk("Python", "azure-sdk-for-python", 2));
@@ -202,9 +202,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Lookup("azure-sdk-for-net", 1, Pr());
             Lookup("azure-sdk-for-python", 2, Pr(draft: true));
             Lookup("azure-sdk-for-js", 3, Pr("closed"));
-            var response = await _tool.AbandonReleasePlan(123);
-            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(await _tool.IsEligibleToAbandonAsync(_plan), Is.True);
             Assert.That(_github.Invocations.Count, Is.EqualTo(3));
+            Assert.That(_devOps.Invocations, Is.Empty);
         }
 
         [TestCase("New")]
@@ -356,7 +356,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             _plan.Revision = 0;
             var response = await _tool.AbandonReleasePlan(123);
             Assert.That(response.ResponseError, Is.Null);
-            Assert.That(response.Details.Single(), Is.EqualTo("Release plan 123 is already abandoned; no changes made."));
+            Assert.That(response.Details.Single(), Is.EqualTo("Release plan 123 is already abandoned; no state changes made."));
             Assert.That(_devOps.Invocations.Count, Is.EqualTo(1));
             Assert.That(_github.Invocations, Is.Empty);
         }

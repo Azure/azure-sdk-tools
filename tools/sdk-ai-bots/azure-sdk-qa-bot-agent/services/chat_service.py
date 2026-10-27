@@ -295,6 +295,7 @@ class ChatService:
             )
 
         chat_response = self._postprocess(req, response, agent_conversation_id)
+        chat_response.agent_name = agent.name
         chat_response.trace_id = trace_id
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(

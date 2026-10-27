@@ -21,6 +21,7 @@ import logging
 import os
 import subprocess
 import time
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Any, Optional
 
@@ -41,7 +42,7 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
     "onboarding": "Azure SDK Onboarding",
     "go": "Language - Go",
     "java": "Language - Java",
-    "net": "Language - DotNet",
+    "dotnet": "Language - DotNet",
     "javascript": "Language – JS ＆ TS 🥷",
     "general": "General",
     "releasesupport": "SDK release support",
@@ -185,6 +186,7 @@ class CompletionCollector:
                     "ground_truth": record.get("ground_truth", ""),
                     "response": answer,
                     "response_id": api_response.get("id", ""),
+                    "agent_name": api_response.get("agent_name"),
                     "context": full_context,
                     "latency": time.time() - start,
                     "response_length": len(answer),
@@ -500,28 +502,37 @@ class FoundryEvalsRunner:
 
     @staticmethod
     def _retrieve_tool_calls(
-        response_client: Any,
+        project_client: Any,
         items: list[dict[str, Any]],
     ) -> dict[str, list[dict[str, Any]]]:
         """Retrieve and normalize tool calls from stored responses."""
         tool_calls_by_response_id: dict[str, list[dict[str, Any]]] = {}
-        for item in items:
-            response_id = item.get("response_id", "") or ""
-            testcase = item.get("testcase", "unknown")
-            if not response_id:
-                raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
-            if response_id == "content-filter":
-                tool_calls_by_response_id[response_id] = []
-                continue
-            response = response_client.responses.retrieve(
-                response_id,
-                include=["web_search_call.action.sources"],
-            )
-            output_items = [
-                _serialize_response_item(output_item)
-                for output_item in (_get(response, "output", []) or [])
-            ]
-            tool_calls_by_response_id[response_id] = _extract_tool_calls(output_items)
+        with ExitStack() as stack:
+            response_clients: dict[str, Any] = {}
+            for item in items:
+                response_id = item.get("response_id", "") or ""
+                testcase = item.get("testcase", "unknown")
+                if not response_id:
+                    raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
+                if response_id == "content-filter":
+                    tool_calls_by_response_id[response_id] = []
+                    continue
+                agent_name = item.get("agent_name")
+                if not isinstance(agent_name, str) or not agent_name.strip():
+                    raise ValueError(f"Bot response for testcase {testcase!r} has no agent name")
+                if agent_name not in response_clients:
+                    response_clients[agent_name] = stack.enter_context(
+                        project_client.get_openai_client(agent_name=agent_name)
+                    )
+                response = response_clients[agent_name].responses.retrieve(
+                    response_id,
+                    include=["web_search_call.action.sources"],
+                )
+                output_items = [
+                    _serialize_response_item(output_item)
+                    for output_item in (_get(response, "output", []) or [])
+                ]
+                tool_calls_by_response_id[response_id] = _extract_tool_calls(output_items)
         logger.info("Retrieved %d stored Agent responses.", len(tool_calls_by_response_id))
         return tool_calls_by_response_id
 
@@ -550,7 +561,7 @@ class FoundryEvalsRunner:
         records: list[dict[str, Any]],
         scenario: str,
         *,
-        response_client: Any,
+        project_client: Any,
         tenant_id: str | None = None,
         evaluation_name: Optional[str] = None,
     ) -> dict[str, Any]:
@@ -610,7 +621,7 @@ class FoundryEvalsRunner:
 
         # 3) Retrieve the exact stored Agent responses. Tool history remains local
         # and is joined back into cached results after Foundry grading.
-        tool_calls_by_response_id = self._retrieve_tool_calls(response_client, items)
+        tool_calls_by_response_id = self._retrieve_tool_calls(project_client, items)
 
         data_source_config = DataSourceConfigCustom(
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False

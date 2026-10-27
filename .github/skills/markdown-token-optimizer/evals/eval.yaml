@@ -8,7 +8,7 @@ tags:
   area: markdown-token-optimizer
   type: ci-gate
 
-config:
+defaults:
   runs: 1
   timeout: "90s"
   model: gpt-6.1-sol
@@ -20,12 +20,16 @@ scoring:
 stimuli:
   - name: basic-trigger
     prompt: "My SKILL.md is too large and uses too many tokens. Can you help me optimize it for token efficiency?"
+    environment:
+      skills:
+        - ..
     graders:
       - type: output-not-contains
         config:
           substring: "cannot help"
-    constraints:
-      expect_skills: ["markdown-token-optimizer"]
+      - type: skill-invocation
+        config:
+          required: ["markdown-token-optimizer"]
 
   - name: anti-trigger
     prompt: "How do I deploy my Azure Function to production?"

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
@@ -192,6 +194,87 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             else
             {
                 Assert.That(totalUpdates, Is.EqualTo(0), $"{rule} is {ruleState} and should not have produced any updates.");
+            }
+        }
+
+        [Category("static")]
+        [TestCaseSource(nameof(StalePullRequestTitleCases))]
+        public async Task TestStalePullRequestTitleExclusion(string rule, string title, bool matchesPrefix, bool draft)
+        {
+            bool excluded = matchesPrefix && !draft;
+            var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
+            mockGitHubEventClient.RulesConfiguration.Rules[rule] = RuleState.On;
+            var rawJson = TestHelpers.GetTestEventPayload("Tests.JsonEventPayloads/ScheduledEvent_payload.json");
+            var scheduledEventPayload = SimpleJsonSerializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
+            bool closeStalePullRequests = rule == RulesConstants.CloseStalePullRequests;
+
+            Issue CreateIssue(int number, string issueTitle)
+            {
+                return SimpleJsonSerializer.Deserialize<Issue>(JsonSerializer.Serialize(new
+                {
+                    number,
+                    title = issueTitle,
+                    state = "open",
+                    draft,
+                    user = new { login = "FakeUser1" },
+                    labels = new[] { new { name = closeStalePullRequests ? TriageLabelConstants.NoRecentActivity : "test-label" } }
+                }));
+            }
+
+            var issue = CreateIssue(1, title);
+            var ordinaryIssue = CreateIssue(2, "Update SDK");
+            mockGitHubEventClient.PullRequests[issue.Number] =
+                SimpleJsonSerializer.Deserialize<PullRequest>(JsonSerializer.Serialize(new { draft }));
+            mockGitHubEventClient.SearchIssuesResultReturn = new SearchIssuesResult(2, false, new[] { issue, ordinaryIssue });
+
+            var scheduledEventProcessing = CreateScheduledEventProcessingInstance();
+            await scheduledEventProcessing.ProcessScheduledEvent(mockGitHubEventClient, scheduledEventPayload, rule);
+
+            int expectedPullRequests = excluded ? 1 : 2;
+            var updates = mockGitHubEventClient.GetGitHubIssuesToUpdate();
+            var comments = mockGitHubEventClient.GetComments();
+            Assert.That(await mockGitHubEventClient.ProcessPendingScheduledUpdates(), Is.EqualTo(expectedPullRequests * 2));
+            Assert.That(updates.Count, Is.EqualTo(expectedPullRequests));
+            Assert.That(comments.Count, Is.EqualTo(expectedPullRequests));
+            Assert.That(updates.Exists(update => update.IssueOrPRNumber == issue.Number), Is.EqualTo(!excluded));
+            Assert.That(comments.Exists(comment => comment.IssueOrPullRequestNumber == issue.Number), Is.EqualTo(!excluded));
+            Assert.That(updates.Exists(update => update.IssueOrPRNumber == ordinaryIssue.Number), Is.True);
+            Assert.That(comments.Exists(comment => comment.IssueOrPullRequestNumber == ordinaryIssue.Number), Is.True);
+            Assert.That(mockGitHubEventClient.RequestedPullRequests,
+                Is.EqualTo(matchesPrefix ? new[] { issue.Number } : new int[0]));
+            foreach (var update in updates)
+            {
+                if (closeStalePullRequests)
+                {
+                    Assert.That(update.IssueUpdate.State, Is.EqualTo(ItemState.Closed));
+                    Assert.That(update.IssueUpdate.StateReason, Is.EqualTo(ItemStateReason.NotPlanned));
+                }
+                else
+                {
+                    Assert.That(update.IssueUpdate.Labels, Does.Contain(TriageLabelConstants.NoRecentActivity));
+                    Assert.That(update.IssueUpdate.Labels, Does.Contain("test-label"));
+                }
+            }
+        }
+
+        private static IEnumerable<TestCaseData> StalePullRequestTitleCases()
+        {
+            foreach (string rule in new[] { RulesConstants.IdentifyStalePullRequests, RulesConstants.CloseStalePullRequests })
+            {
+                foreach (bool draft in new[] { false, true })
+                {
+                    yield return new TestCaseData(rule, "[AutoPR sdk] Update SDK", true, draft);
+                    yield return new TestCaseData(rule, "[AutoPR ", true, draft);
+                    yield return new TestCaseData(rule, "[AutoPR  Update SDK", true, draft);
+                    yield return new TestCaseData(rule, "[autopr sdk] Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "[AutoPr sdk] Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "[AutoPR] Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "[AutoPR\tUpdate SDK", false, draft);
+                    yield return new TestCaseData(rule, " [AutoPR sdk] Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "Update [AutoPR sdk]", false, draft);
+                    yield return new TestCaseData(rule, "Update SDK", false, draft);
+                    yield return new TestCaseData(rule, "", false, draft);
+                }
             }
         }
 

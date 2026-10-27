@@ -40,6 +40,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
 
         public List<PullRequestReview> PullRequestReviews { get; set; } = new List<PullRequestReview>();
         public List<PullRequestFile> PullRequestFiles { get; set; } = new List<PullRequestFile>();
+        public Dictionary<int, PullRequest> PullRequests { get; set; } = new Dictionary<int, PullRequest>();
+        public List<int> RequestedPullRequests { get; } = new List<int>();
+
+        public override Task<PullRequest> GetPullRequest(long repositoryId, int pullRequestNumber)
+        {
+            RequestedPullRequests.Add(pullRequestNumber);
+            return Task.FromResult(PullRequests[pullRequestNumber]);
+        }
 
         public List<string> AIServiceLabels { get; set; } = new List<string>();
         public string? AIServiceAnswer { get; set; } = null;

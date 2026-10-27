@@ -113,6 +113,14 @@ dotnet test
 This tool can be run in test mode when the `AZSDKTOOLS_AGENT_TESTING` environment variable is set to `true`.
 When testing is enabled, release plans will be automatically generated in the test environment.
 
+### Manual release-plan abandonment
+
+Use `azsdk release-plan abandon --release-plan-id <Release Plan ID>` or supply `releasePlanId` to `azsdk_abandon_release_plan`. Supply the user-facing Release Plan ID, not the Azure DevOps work item ID. Manual abandonment no longer accepts `--work-item-id` or `workItemId`; other commands retain their existing ID contracts.
+
+`azsdk release-plan abandon` and `azsdk_abandon_release_plan` refuse abandonment when the plan is finished, any SDK is recorded as Released, or any linked SDK PR has merged. Teams should request a language-exclusion exception for the unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release. There is no force or approval override input.
+
+Open PRs, drafts, and PRs closed without merging do not themselves block manual abandonment. Plans with no SDK links remain supported. The command reads the plan once (including Abandoned plans), validates SDK PR URLs against the public Azure SDK repository for each recorded language, reads current GitHub merge state rather than cached ADO PR statuses, and uses that snapshot's ADO revision precondition. Private SDK repositories are not supported. Unreadable PRs, malformed data, or revision conflicts fail without a state write or automatic retry; already abandoned plans are successful no-ops. The GitHub reads and ADO write are not a cross-service atomic transaction. Monthly overdue cleanup retains its separate existing eligibility policy.
+
 ### Test with GitHub Coding Agent
 
 This tool can be used as an MCP server in a github action invoked by the [GitHub Coding Agent](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent). The azure-sdk language repositories and azure-rest-api-specs repository already have this MCP server configured for the coding agent.
@@ -154,8 +162,7 @@ If you need to make updates to the config, either push them to main and file a n
       ```
 
 1. The coding agent MCP configuration needs to be updated
-      - Navigate to `https://github.com/YOUR_ORGANIZATION/YOUR_REPOSITORY/settings/copilot/coding_agent`, replacing the placeholders with your organization and repository names
-      - OR go the repository homepage, click `Settings`, under `Code and automation` expand `Copilot`, select `Coding agent`
+  - Go to the repository homepage, click `Settings`, under `Code and automation` expand `Copilot`, select `Coding agent`
       - Paste the below configuration into the text box under `MCP Configuration`, then click `Save MCP Configuration`
       - Update the tools list to include any MCP tools for testing, or change the value to `"tools": ["*"]` to include all
 

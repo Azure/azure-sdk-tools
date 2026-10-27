@@ -43,8 +43,22 @@ internal static class ReleasePlanMockResponses
 public class AbandonReleasePlanHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_abandon_release_plan";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) =>
-        ReleasePlanMockResponses.Workflow("Abandoned", "Release plan abandoned (mock)");
+    public CommandResponse Handle(Dictionary<string, object?>? arguments)
+    {
+        if (arguments?.ContainsKey("workItemId") == true)
+        {
+            return new ReleaseWorkflowResponse { ResponseError = "workItemId is not supported; supply releasePlanId." };
+        }
+        var value = arguments?.GetValueOrDefault("releasePlanId");
+        var releasePlanId = value is int id ? id
+            : value is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.Number
+                && element.TryGetInt32(out var wireId) ? wireId : 0;
+        if (releasePlanId <= 0)
+        {
+            return new ReleaseWorkflowResponse { ResponseError = "A positive Release Plan ID is required to abandon a release plan." };
+        }
+        return ReleasePlanMockResponses.Workflow("Success", $"Release plan {releasePlanId} abandoned (mock)");
+    }
 }
 
 /// <summary>Mock handler for azsdk_update_release_plan.</summary>

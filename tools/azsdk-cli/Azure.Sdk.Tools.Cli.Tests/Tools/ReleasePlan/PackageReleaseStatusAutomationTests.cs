@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 ]
             };
             _devOps = new Mock<IDevOpsService>();
-            _devOps.Setup(s => s.GetReleasePlanAsync(100, It.IsAny<CancellationToken>()))
+            _devOps.Setup(s => s.GetReleasePlanAsync(100, It.IsAny<CancellationToken>(), false))
                 .ReturnsAsync(ReadPlanSnapshot);
             _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(PythonSdkPr, "Python", _plan.IsTestReleasePlan, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => _plan.Status == "In Progress" ? new List<ReleasePlanWorkItem> { ReadPlanSnapshot() } : []);
@@ -213,7 +213,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(_writes.Select(w => w.Revision), Is.EqualTo(new[] { 7, 8 }));
             Assert.That(_writes[1].Fields, Is.EquivalentTo(new Dictionary<string, string> { ["System.State"] = "Finished" }));
             Assert.That(_plan.Status, Is.EqualTo("Finished"));
-            _devOps.Verify(s => s.GetReleasePlanAsync(100, It.IsAny<CancellationToken>()), Times.Once);
+            _devOps.Verify(s => s.GetReleasePlanAsync(100, It.IsAny<CancellationToken>(), false), Times.Once);
             _devOps.Verify(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>()), Times.Once);
         }
 

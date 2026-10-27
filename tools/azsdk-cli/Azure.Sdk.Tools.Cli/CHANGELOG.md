@@ -2,6 +2,16 @@
 
 ## 0.6.56 (Unreleased)
 
+### Breaking Changes
+
+- `release-plan abandon` now accepts only `--release-plan-id`; `azsdk_abandon_release_plan` accepts only `releasePlanId`. The work item ID input is no longer supported for manual abandonment.
+
+### Bugs Fixed
+
+- Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans are unchanged; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release.
+- Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.
+- Corrected development-guide links and Coding Agent settings instructions to use valid absolute, locale-neutral URLs instead of relative or placeholder links.
+
 ### Other Changes
 
 - Added release-plan lifecycle evals covering API review, SDK generation, pending SDK releases, and completed releases with consistent mock fixtures. Plan-status guidance keeps next-step questions read-only, and evals use the current serialized plan fields.

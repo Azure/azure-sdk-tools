@@ -163,6 +163,33 @@ def test_shared_skill_selection_follows_new_evidence_without_user_handoff() -> N
     assert "use ONLY the preloaded `typespec-authoring` skill" in skills
 
 
+def test_shared_answers_check_evidence_coverage() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
+
+    assert "Check evidence-to-answer coverage before sending (silently)" in answer_rules
+    assert "For each explicit sub-question" in answer_rules
+    assert "direct conclusion, reason, prerequisites" in answer_rules
+    assert "correctness-changing exceptions or supported alternative" in answer_rules
+    assert "all affected resources and operations" in answer_rules
+    assert "Remove generic troubleshooting that displaces an established resolution" in answer_rules
+    assert "Do not turn a preferred pattern into a prohibition" in answer_rules
+    assert "historical branch-specific workaround into general policy" in answer_rules
+
+
+def test_review_permission_help_targets_access_evidence_without_blanket_rerouting() -> None:
+    content = build_skill_content(TenantID.API_SPEC_REVIEW_BOT)
+
+    assert "retrieve **Request access to Azure API and SDK repositories** in the current tenant" in content
+    assert "rather than automatically switching to onboarding" in content
+    assert "organization-membership visibility and author/approver permissions" in content
+    assert "reviewer-assignment step applicable to the symptom" in content
+    assert "State the exact required setting when established" in content
+    assert "Do not lead with self-approval" in content
+
+
 def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
     config = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
     assert config is not None

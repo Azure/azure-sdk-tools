@@ -465,8 +465,10 @@ class SearchClient:
 
         return unique
 
-    async def expand_by_hierarchy(self, chunk: KnowledgeChunk) -> KnowledgeChunk:
-        """Fetch sibling chunks for a single ref and assemble content."""
+    async def expand_by_hierarchy(
+        self, chunk: KnowledgeChunk, *, source_filter: str | None = None
+    ) -> KnowledgeChunk:
+        """Expand a section, including the paired answer for a raw Q&A question."""
         hierarchy_filter = _build_hierarchy_filter(
             title=chunk.title,
             context_id=chunk.source,
@@ -475,23 +477,65 @@ class SearchClient:
             header3=chunk.header3,
         )
 
-        sibling_results = await self._search_client.search(
-            search_text="*",
-            filter=hierarchy_filter,
-            top=_HIERARCHY_EXPANSION_TOP,
-            order_by=["ordinal_position asc"],
-            select=[
-                "chunk_id",
-                "title",
-                "chunk",
-                "context_id",
-                "header_1",
-                "header_2",
-                "header_3",
-            ],
-        )
+        async def _fetch_section(section_filter: str) -> list[KnowledgeChunk]:
+            results = await self._search_client.search(
+                search_text="*",
+                filter=combine_source_filters(
+                    {"section": section_filter}, source_filter
+                ),
+                top=_HIERARCHY_EXPANSION_TOP,
+                order_by=["ordinal_position asc"],
+                select=[
+                    "chunk_id",
+                    "title",
+                    "chunk",
+                    "context_id",
+                    "header_1",
+                    "header_2",
+                    "header_3",
+                ],
+            )
+            return [KnowledgeChunk.model_validate(dict(doc)) async for doc in results]
 
+        section_filters = [hierarchy_filter]
+        if not chunk.page_type and chunk.header1 and chunk.header2.casefold() == "question":
+            answer_filter = _build_hierarchy_filter(
+                title=chunk.title,
+                context_id=chunk.source,
+                header1=chunk.header1,
+                header2="",
+                header3="",
+            )
+            section_filters.append(
+                f"({answer_filter}) and "
+                "search.in(header_2, 'answer,Answer,ANSWER') and "
+                f"{NON_WIKI_FILTER}"
+            )
+        sections = await asyncio.gather(
+            *[_fetch_section(section_filter) for section_filter in section_filters]
+        )
+        siblings = sections[0]
         content_parts: list[str] = [f"# {chunk.title}"]
+        if len(sections) > 1:
+            answer_parts: list[str] = []
+            answer_header = ""
+            for answer in sections[1]:
+                if answer.header3 != answer_header:
+                    answer_header = answer.header3
+                    if answer_header:
+                        answer_parts.append(f"### {answer_header}")
+                if answer.content:
+                    answer_parts.append(answer.content)
+            if answer_parts:
+                # Keep the resolution ahead of long diagnostic questions and truncation.
+                content_parts.extend(["", "## Paired answer", *answer_parts])
+            else:
+                logger.info(
+                    "No paired answer found: source=%s, title=%s, question=%s",
+                    chunk.source,
+                    chunk.title,
+                    chunk.header1,
+                )
         if chunk.content:
             content_parts.extend(["", "## Matched passage", chunk.content])
         section_parts: list[str] = []
@@ -499,8 +543,7 @@ class SearchClient:
         current_h2 = ""
         current_h3 = ""
 
-        async for s in sibling_results:
-            sibling = KnowledgeChunk.model_validate(dict(s))
+        for sibling in siblings:
             if sibling.chunk_id and sibling.chunk_id == chunk.chunk_id:
                 continue
 

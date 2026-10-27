@@ -5,10 +5,19 @@ from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
 from typing import Any, cast
+from unittest.mock import AsyncMock
 
+from azure.core.exceptions import HttpResponseError
+import pytest
+
+from config.tenant_config import TenantID
 from models.knowledge import KnowledgeChunk
-from tools.knowledge_tools import _deduplicate_wiki_pages, _refs_from_expanded
-from utils.azure_ai_search import SearchClient
+from tools.knowledge_tools import (
+    KnowledgeTools,
+    _deduplicate_wiki_pages,
+    _refs_from_expanded,
+)
+from utils.azure_ai_search import NON_WIKI_FILTER, SearchClient
 
 
 def test_wiki_page_deduplication_keeps_highest_scored_chunk():
@@ -87,6 +96,234 @@ def test_hierarchy_expansion_keeps_matched_passage_first():
         "Earlier section context"
     )
     assert expanded.content.count("Exact matched rule") == 1
+
+
+@pytest.mark.parametrize("header", ["question", "Question", "QUESTION"])
+@pytest.mark.parametrize("max_chars", [1100, 3000])
+def test_question_expansion_keeps_paired_answer_before_long_logs(header, max_chars):
+    question = KnowledgeChunk(
+        chunk_id="question",
+        source="static_typespec_qa",
+        title="typespec.md",
+        header1="SDK validation errors",
+        header2=header,
+        header3="Logs",
+        content="Long diagnostic log. " * 400,
+    )
+    answers = [
+        {
+            "chunk_id": "answer-1",
+            "header_3": "Private staging",
+            "chunk": "These failures can be ignored only on private repository main.",
+        },
+        {
+            "chunk_id": "answer-2",
+            "header_3": "Shipping",
+            "chunk": "For shipping branches, resolve the SDK tooling version mismatch.",
+        },
+    ]
+
+    async def search(**kwargs):
+        if "search.in(header_2" in kwargs["filter"]:
+            return _AsyncSearchResults(answers)
+        return _AsyncSearchResults([question.model_dump()])
+
+    client = object.__new__(SearchClient)
+    backend = SimpleNamespace(search=AsyncMock(side_effect=search))
+    client._search_client = backend
+
+    expanded = asyncio.run(client.expand_by_hierarchy(question))
+    ref = _refs_from_expanded(
+        [expanded], [question], max_content_chars=max_chars
+    )[0]
+
+    assert "## Paired answer" in ref.content
+    assert "only on private repository main" in ref.content
+    assert "For shipping branches" in ref.content
+    assert "### Private staging" in ref.content
+    assert "### Shipping" in ref.content
+    assert ref.content.index("## Paired answer") < ref.content.index("## Matched passage")
+    assert ref.content.count(answers[0]["chunk"]) == 1
+    assert ref.content.count(answers[1]["chunk"]) == 1
+    assert ref.content.endswith("... [truncated]")
+    assert len(ref.content) == max_chars + len("\n... [truncated]")
+    answer_call = next(
+        call for call in backend.search.call_args_list
+        if "search.in(header_2" in call.kwargs["filter"]
+    )
+    assert "header_3" not in answer_call.kwargs["filter"]
+    assert answer_call.kwargs["top"] == 20
+    assert answer_call.kwargs["order_by"] == ["ordinal_position asc"]
+
+
+def test_paired_answer_lookup_keeps_document_topic_and_source_filters():
+    question = KnowledgeChunk(
+        source="qa's",
+        title="file's.md",
+        header1="Resource's name",
+        header2="question",
+    )
+    backend = SimpleNamespace(
+        search=AsyncMock(side_effect=lambda **_: _AsyncSearchResults([]))
+    )
+    client = object.__new__(SearchClient)
+    client._search_client = backend
+    scope = (
+        "(service_type eq 'data-plane' or service_type eq null) "
+        "and search.ismatch('allowed*', 'title')"
+    )
+
+    asyncio.run(client.expand_by_hierarchy(question, source_filter=scope))
+
+    assert backend.search.await_count == 2
+    for call in backend.search.call_args_list:
+        assert "title eq 'file''s.md'" in call.kwargs["filter"]
+        assert "context_id eq 'qa''s'" in call.kwargs["filter"]
+        assert "header_1 eq 'Resource''s name'" in call.kwargs["filter"]
+        assert scope in call.kwargs["filter"]
+    answer_filter = backend.search.call_args_list[1].kwargs["filter"]
+    assert NON_WIKI_FILTER in answer_filter
+    assert "search.in(header_2, 'answer,Answer,ANSWER')" in answer_filter
+
+
+def test_question_without_paired_answer_preserves_question_and_reports_gap(caplog):
+    question = KnowledgeChunk(
+        chunk_id="q",
+        source="static_typespec_qa",
+        title="typespec.md",
+        header1="Unanswered question",
+        header2="question",
+        content="How do I validate this?",
+    )
+    client = object.__new__(SearchClient)
+    client._search_client = SimpleNamespace(
+        search=AsyncMock(side_effect=lambda **_: _AsyncSearchResults([]))
+    )
+
+    with caplog.at_level("INFO", logger="utils.azure_ai_search"):
+        expanded = asyncio.run(client.expand_by_hierarchy(question))
+
+    assert "How do I validate this?" in expanded.content
+    assert "Paired answer" not in expanded.content
+    assert "No paired answer found" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("page_type", "header1", "header2"),
+    [
+        ("summary", "Topic", "question"),
+        ("entity", "Topic", "question"),
+        ("", "Topic", "answer"),
+        ("", "Topic", "Overview"),
+        ("", "", "question"),
+    ],
+)
+def test_non_question_sections_do_not_trigger_paired_answer_lookup(
+    page_type, header1, header2
+):
+    hit = KnowledgeChunk(
+        source="typespec_docs",
+        title="docs.md",
+        header1=header1,
+        header2=header2,
+        page_type=page_type,
+        content="Matched evidence",
+    )
+    client = object.__new__(SearchClient)
+    backend = SimpleNamespace(
+        search=AsyncMock(side_effect=lambda **_: _AsyncSearchResults([]))
+    )
+    client._search_client = backend
+
+    expanded = asyncio.run(client.expand_by_hierarchy(hit))
+
+    backend.search.assert_awaited_once()
+    assert "search.in(header_2" not in backend.search.call_args.kwargs["filter"]
+    assert "Matched evidence" in expanded.content
+
+
+def test_paired_answer_lookup_surfaces_search_failures():
+    async def search(**kwargs):
+        if "search.in(header_2" in kwargs["filter"]:
+            raise HttpResponseError("answer lookup failed")
+        return _AsyncSearchResults([])
+
+    client = object.__new__(SearchClient)
+    client._search_client = SimpleNamespace(search=AsyncMock(side_effect=search))
+    question = KnowledgeChunk(
+        source="static_typespec_qa",
+        title="typespec.md",
+        header1="Question title",
+        header2="question",
+    )
+
+    with pytest.raises(HttpResponseError, match="answer lookup failed"):
+        asyncio.run(client.expand_by_hierarchy(question))
+
+
+@pytest.mark.parametrize("track", ["search_knowledge_base", "wiki_search"])
+def test_both_retrieval_tracks_expand_paired_answer_under_source_scope(track):
+    question = KnowledgeChunk(
+        chunk_id="q",
+        source="static_typespec_qa",
+        title="typespec.md",
+        header1="Versioned resource name",
+        header2="question",
+        content="How can I version this name?",
+    )
+    wiki_page = KnowledgeChunk(
+        chunk_id="wiki",
+        source="static_typespec_qa",
+        title="typespec.md",
+        header1="Versioned resource name",
+        page_type="summary",
+        content="Wiki overview",
+    )
+
+    async def search(**kwargs):
+        if "search.in(header_2" in kwargs["filter"]:
+            return _AsyncSearchResults([
+                {"chunk": "Version the resource and all of its operations."},
+            ])
+        return _AsyncSearchResults([])
+
+    client = object.__new__(SearchClient)
+    client._search_client = SimpleNamespace(search=AsyncMock(side_effect=search))
+    wrapper = SimpleNamespace(
+        fused_search=AsyncMock(
+            return_value=[wiki_page] if track == "wiki_search" else [question]
+        ),
+        deduplicate_chunks=SearchClient.deduplicate_chunks,
+        top_k=1,
+        backfill_wiki_sources=AsyncMock(return_value=[question]),
+        expand_by_hierarchy=AsyncMock(wraps=client.expand_by_hierarchy),
+    )
+    tools = KnowledgeTools(search_client=wrapper)
+
+    if track == "search_knowledge_base":
+        result = asyncio.run(tools.search_knowledge_base(
+            queries=["Versioned resource name"],
+            sources=["static_typespec_qa"],
+            tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT.value,
+            service_type="management-plane",
+        ))
+    else:
+        result = asyncio.run(tools.wiki_search(
+            queries=["Versioned resource name"],
+            sources=["static_typespec_qa"],
+            tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT.value,
+        ))
+
+    assert "Version the resource and all of its operations." in result.results[-1].content
+    expected_scope = "context_id eq 'static_typespec_qa'"
+    if track == "search_knowledge_base":
+        expected_scope += " and (service_type eq 'management-plane' or service_type eq null)"
+    assert all(
+        call.kwargs["source_filter"] == expected_scope
+        for call in wrapper.expand_by_hierarchy.call_args_list
+    )
+    if track == "wiki_search":
+        wrapper.backfill_wiki_sources.assert_awaited_once()
 
 
 def test_wiki_references_apply_the_requested_content_limit():

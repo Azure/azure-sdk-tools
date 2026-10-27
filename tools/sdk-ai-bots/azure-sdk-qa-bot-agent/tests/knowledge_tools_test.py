@@ -408,7 +408,7 @@ async def test_dotnet_search_returns_azure_and_upstream_docs(monkeypatch, servic
         fused_search=search,
         deduplicate_chunks=lambda results: results,
         top_k=10,
-        expand_by_hierarchy=AsyncMock(side_effect=lambda chunk: chunk),
+        expand_by_hierarchy=AsyncMock(side_effect=lambda chunk, **kwargs: chunk),
     )
     monkeypatch.setattr(knowledge_tools_module, "get_search_client", lambda: search_client)
 
@@ -431,6 +431,10 @@ async def test_dotnet_search_returns_azure_and_upstream_docs(monkeypatch, servic
     assert search.call_args.kwargs["extra_filter"] == (
         "(page_type eq null or page_type eq '')"
     )
+    assert [
+        call.kwargs["source_filter"]
+        for call in search_client.expand_by_hierarchy.call_args_list
+    ] == [filters[chunk.source] for chunk in chunks]
 
 
 @pytest.mark.asyncio

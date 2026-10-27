@@ -1,6 +1,6 @@
 # Release
 
-## Unreleased
+## 2026-10-26 - 0.9.9
 
 - Fixed YAML quoting and escaping of SDK breaking-change suppression suggestions, preserving exact message text when copied into `sdk-suppressions.yaml`.
 

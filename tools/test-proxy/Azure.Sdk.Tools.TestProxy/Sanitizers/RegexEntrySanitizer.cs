@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using System.Linq;
@@ -12,13 +15,13 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class RegexEntrySanitizer : RecordedTestSanitizer
     {
-        private Regex rx;
-        private string section;
-        private string[] validValues = new string[] { "uri", "header", "body" };
+        private readonly Regex _rx;
+        private readonly string _section;
+        private readonly string[] _validValues = ["uri", "header", "body"];
 
         public string ValidValues
         {
-            get { return string.Join(", ", validValues.Select(x => "\"" + x + "\"")); }
+            get { return string.Join(", ", _validValues.Select(x => "\"" + x + "\"")); }
         }
 
         /// <summary>
@@ -28,22 +31,22 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="regex">During sanitization, any entry where the 'target' is matched by the regex will be fully omitted. Request/Reponse both.</param>
         public RegexEntrySanitizer(string target, string regex)
         {
-            section = target.ToLowerInvariant();
+            _section = target.ToLowerInvariant();
 
-            if (!validValues.Contains(section))
+            if (!_validValues.Contains(_section))
             {
                 throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"When defining which section of a request the regex should target, only values [ {ValidValues} ] are valid.");
             }
 
-            rx = GetRegex(regex);
+            _rx = GetRegex(regex);
         }
 
         public bool CheckMatch(RecordEntry x)
         {
-            switch (section)
+            switch (_section)
             {
                 case "uri":
-                    return rx.IsMatch(x.RequestUri);
+                    return _rx.IsMatch(x.RequestUri);
                 case "header":
                     foreach (var headerKey in x.Request.Headers.Keys)
                     {
@@ -52,8 +55,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                         // Ex: "application/json;odata=minimalmetadata" with .NET default header parsing becomes "application/json; odata=minimalmetadata"
                         // Given this breaks signature verification, we have to avoid it.
                         var originalValue = x.Request.Headers[headerKey][0];
-                        
-                        if (rx.IsMatch(originalValue))
+
+                        if (_rx.IsMatch(originalValue))
                         {
                             return true;
                         }
@@ -62,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 case "body":
                     if (x.Request.TryGetBodyAsText(out string text))
                     {
-                        return rx.IsMatch(text);
+                        return _rx.IsMatch(text);
                     }
                     else
                     {
@@ -77,7 +80,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override void Sanitize(RecordSession session)
         {
-            session.Entries.RemoveAll(x => CheckMatch(x));
+            session.Entries.RemoveAll(CheckMatch);
         }
     }
 }

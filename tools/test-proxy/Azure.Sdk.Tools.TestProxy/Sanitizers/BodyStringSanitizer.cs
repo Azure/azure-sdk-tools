@@ -1,6 +1,7 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
-using System;
-using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -9,8 +10,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class BodyStringSanitizer : RecordedTestSanitizer
     {
-        private string _newValue;
-        private string _targetValue;
+        private readonly string _newValue;
+        private readonly string _targetValue;
 
         /// <summary>
         /// This sanitizer offers regex replace within a returned body. Specifically, this means regex applying to the raw JSON. If you are attempting to simply

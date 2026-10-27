@@ -25,7 +25,7 @@ environment: azsdk-mcp-mock
 defaults:
   runs: 1
   timeout: 10m
-  model: gpt-5.4
+  model: gpt-6.1-sol
   executor: copilot-sdk
 
 scoring:
@@ -79,7 +79,7 @@ stimuli:
       - &nextStepJudge
         type: prompt
         config:
-          model: gpt-5.4
+          model: gpt-6.1-sol
           scoring: binary
           threshold: 1.0
           prompt: |
@@ -99,7 +99,7 @@ stimuli:
       max_turns: 6
       max_tokens: 8000
     rubric:
-      - The response recognizes that IsSpecApproved is true and SDKInfo language entries have empty GenerationStatus, GenerationPipelineUrl, SdkPullRequestUrl and PullRequestStatus fields.
+      - The response recognizes that IsSpecApproved is true and SDKInfo language entries have empty GenerationStatus, GenerationPipelineUrl and SdkPullRequestUrl fields.
       - The immediate next step is SDK generation; the response does not claim spec review is still needed.
     graders:
       - type: skill-invocation
@@ -122,8 +122,8 @@ stimuli:
       max_turns: 6
       max_tokens: 8000
     rubric:
-      - The response recognizes that the four required data-plane SDKs (.NET, Java, Python and JavaScript) have GenerationStatus Completed, a SdkPullRequestUrl, PullRequestStatus Open and ReleaseStatus Unreleased; Go has an approved exclusion.
-      - The immediate next step is to review/merge the open SDK PRs before checking release readiness and releasing; it neither calls for SDK regeneration nor treats the open PRs as release-ready.
+      - The response recognizes that the four required data-plane SDKs (.NET, Java, Python and JavaScript) have GenerationStatus Completed, a SdkPullRequestUrl and ReleaseStatus Unreleased; Go has an approved exclusion.
+      - The immediate next step is to verify and complete SDK PR review/merge before checking release readiness and releasing; it neither calls for SDK regeneration nor assumes a linked PR is merged or release-ready. Cached PullRequestStatus is not serialized and need not be reported.
     graders:
       - type: skill-invocation
         config:
@@ -145,7 +145,7 @@ stimuli:
       max_turns: 6
       max_tokens: 8000
     rubric:
-      - The response recognizes that all four required data-plane languages (.NET, Java, Python and JavaScript) have ReleaseStatus Released and PullRequestStatus Merged; Go has an approved exclusion.
+      - The response recognizes that all four required data-plane languages (.NET, Java, Python and JavaScript) have ReleaseStatus Released; Go has an approved exclusion. Cached PullRequestStatus is not serialized and need not be reported.
       - The response confirms completion without recommending further SDK generation or release actions.
     graders:
       - type: skill-invocation

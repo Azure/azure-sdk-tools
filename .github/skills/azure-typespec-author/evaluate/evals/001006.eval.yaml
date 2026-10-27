@@ -5,7 +5,6 @@ type: capability # capability | regression
 area: "versioning"
 # Root-level environment
 environment: azsdk-mcp
-
 # Execution configuration
 defaults:
   runs: 1 # Trials per stimulus
@@ -27,12 +26,10 @@ stimuli:
           dest: employee.tsp
         - src: ../fixtures/001006-version-add-preview-after-stable/main.tsp
           dest: main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/001006-version-add-preview-after-stable/shared.tsp
           dest: shared.tsp
         - src: ../fixtures/001006-version-add-preview-after-stable/tspconfig.yaml
@@ -76,14 +73,15 @@ stimuli:
       commands:
         - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
-      - type: "tool-calls"
+      - &tool_calls
+        type: "tool-calls"
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
             - "web_fetch"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
           disallowed:
             - "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+            - azure-sdk-mcp-azsdk_typespec_retrieve_knowledge
       - type: "skill-invocation"
         config:
           required:
@@ -99,21 +97,14 @@ stimuli:
       @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
     environment: *shared_environment
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "web_fetch"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
-          disallowed:
-            - "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+      - *tool_calls
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:

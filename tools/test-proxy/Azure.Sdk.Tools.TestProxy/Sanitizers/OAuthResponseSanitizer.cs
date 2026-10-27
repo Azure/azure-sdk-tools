@@ -1,10 +1,7 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -15,8 +12,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class OAuthResponseSanitizer : RecordedTestSanitizer
     {
-        public static Regex rx = new Regex("/oauth2(?:/v2.0)?/token");
-
         /// <summary>
         /// There are no customizations available for this sanitizer.
         /// </summary>
@@ -24,7 +19,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override void Sanitize(RecordSession session)
         {
-            session.Entries.RemoveAll(x => rx.IsMatch(x.RequestUri));
+            session.Entries.RemoveAll(x => SharedRegexes.OAuth2Token().IsMatch(x.RequestUri));
         }
     }
 }

@@ -51,21 +51,42 @@ public class AbandonReleasePlanHandler : IMockToolHandler
 public class UpdateReleasePlanHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_update_release_plan";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new ReleasePlanResponse
+    public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
-        PackageType = SdkType.Dataplane,
-        Message = "Release plan updated successfully (mock)",
-        ReleasePlanDetails = ReleasePlanMockResponses.ContosoWorkItem()
-    };
+        var plan = ReleasePlanMockResponses.ContosoWorkItem();
+        plan.SpecCommitSHA = arguments?.GetValueOrDefault("specCommitSha")?.ToString() ?? "";
+        if (!int.TryParse(arguments?.GetValueOrDefault("workItemId")?.ToString(), out var workItemId) || workItemId <= 0)
+        {
+            return new ReleasePlanResponse { ResponseError = "A positive work item ID is required to update a release plan." };
+        }
+        if (workItemId != plan.WorkItemId)
+        {
+            return new ReleasePlanResponse { ResponseError = $"No release plan found for work item ID {workItemId}. No other plan was selected." };
+        }
+        return new ReleasePlanResponse
+        {
+            TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
+            PackageType = SdkType.Dataplane,
+            Message = "Release plan updated successfully (mock)",
+            ReleasePlanDetails = plan
+        };
+    }
 }
 
 /// <summary>Mock handler for azsdk_check_api_spec_ready_for_sdk.</summary>
 public class CheckApiSpecReadyForSdkHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_check_api_spec_ready_for_sdk";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) =>
-        ReleasePlanMockResponses.Workflow("Ready", "API spec is signed off and ready for SDK generation (mock)");
+    public CommandResponse Handle(Dictionary<string, object?>? arguments)
+    {
+        if (arguments?.GetValueOrDefault("workItemId")?.ToString() == "35010"
+            || arguments?.GetValueOrDefault("pullRequestNumber")?.ToString() == "50010")
+        {
+            return ReleasePlanMockResponses.Workflow("Awaiting API review", "API spec review and approval are required before SDK generation (mock)");
+        }
+
+        return ReleasePlanMockResponses.Workflow("Ready", "API spec is signed off and ready for SDK generation (mock)");
+    }
 }
 
 /// <summary>Mock handler for azsdk_get_kpi_attestation_status.</summary>

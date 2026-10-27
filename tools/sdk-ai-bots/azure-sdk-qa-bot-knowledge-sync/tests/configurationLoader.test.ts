@@ -72,6 +72,71 @@ describe('ConfigurationLoader', () => {
     ConfigurationLoader.setConfigPath(missing);
     expect(() => ConfigurationLoader.getDocumentationSources()).toThrow();
   });
+
+  it('syncs Azure MCP contribution and evaluator guides with repository-relative citation paths', () => {
+    const expectedPaths = [
+      '/CONTRIBUTING.md',
+      '/.github/skills/add-azure-mcp-tools/SKILL.md',
+      '/servers/Azure.Mcp.Server/docs/new-command.md',
+      '/eng/tools/ToolDescriptionEvaluator/Quickstart.md',
+      '/eng/tools/ToolDescriptionEvaluator/README.md'
+    ];
+    const config = ConfigurationLoader.loadConfig();
+    const mcpSource = config.sources.find(
+      source => source.repository.url === 'https://github.com/microsoft/mcp.git'
+    );
+
+    expect(mcpSource?.paths).toEqual(expect.arrayContaining(expectedPaths.map(path =>
+      expect.objectContaining({
+        path,
+        folder: 'azure_mcp_server_docs',
+        relativeByRepoPath: true
+      })
+    )));
+    const repository = ConfigurationLoader.getRepositoryConfigs().find(
+      repo => repo.url === 'https://github.com/microsoft/mcp.git'
+    );
+    expect(repository?.sparseCheckout).toEqual(expect.arrayContaining(expectedPaths));
+    const sources = ConfigurationLoader.getDocumentationSources().filter(
+      source => source.folder === 'azure_mcp_server_docs'
+    );
+    expect(sources.length).toBeGreaterThan(0);
+    expect(sources.every(source => source.path === 'docs/mcp')).toBe(true);
+  });
+
+  it('uses repository documentation and contributing guidance instead of the JS wiki', () => {
+    const config = ConfigurationLoader.loadConfig();
+    const jsSource = config.sources.find(
+      source => source.repository.url === 'https://github.com/Azure/azure-sdk-for-js.git'
+    );
+
+    expect(jsSource).toBeDefined();
+    expect(jsSource?.paths).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: '/documentation',
+        folder: 'azure_sdk_for_js_docs',
+        relativeByRepoPath: true
+      }),
+      expect.objectContaining({
+        path: '/CONTRIBUTING.md',
+        folder: 'azure_sdk_for_js_docs',
+        relativeByRepoPath: true,
+        metadata: { scope: 'branded' }
+      }),
+      expect.objectContaining({
+        path: '/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md',
+        folder: 'azure_sdk_for_js_docs',
+        relativeByRepoPath: true
+      })
+    ]));
+    expect(config.sources.some(
+      source => source.repository.url === 'https://github.com/Azure/azure-sdk-for-js.wiki.git'
+    )).toBe(false);
+    expect(config.sources.flatMap(source => source.paths).some(
+      docPath => docPath.folder === 'azure_sdk_for_js_wiki'
+    )).toBe(false);
+  });
+
   afterAll(() => {
     for (const dir of tempDirs) {
       try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }

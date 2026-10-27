@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
+using CheckApiSpecReadyForSdkHandler = MockServer::Azure.Sdk.Tools.Mock.Handlers.ReleasePlan.CheckApiSpecReadyForSdkHandler;
 using GetReleasePlanHandler = MockServer::Azure.Sdk.Tools.Mock.Handlers.ReleasePlan.GetReleasePlanHandler;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan;
@@ -122,6 +123,34 @@ internal class GetReleasePlanHandlerTests
                 ["apiReleaseType"] = "Public Preview"
             }), Is.TypeOf<DefaultCommandResponse>());
         });
+    }
+
+    [TestCase(35010, 50010, false)]
+    [TestCase(35011, 50011, true)]
+    [TestCase(35012, 50012, true)]
+    [TestCase(35013, 50014, true)]
+    public void ReadinessMatchesLifecycleSpecApproval(int workItemId, int specPullRequestNumber, bool isSpecApproved)
+    {
+        var handler = new CheckApiSpecReadyForSdkHandler();
+        foreach (var (key, value) in new[] { ("workItemId", workItemId), ("pullRequestNumber", specPullRequestNumber) })
+        {
+            var response = (ReleaseWorkflowResponse)handler.Handle(new() { [key] = JsonSerializer.SerializeToElement(value) });
+            Assert.That(response.Status, Is.EqualTo(isSpecApproved ? "Ready" : "Awaiting API review"));
+        }
+
+        Assert.That(GetPlan("workItemId", workItemId).ReleasePlanDetails!.IsSpecApproved, Is.EqualTo(isSpecApproved));
+    }
+
+    [TestCase(35012)]
+    [TestCase(35013)]
+    public void SerializedLifecyclePlansDoNotExposeCachedPullRequestStatus(int workItemId)
+    {
+        var sdks = JsonSerializer.SerializeToElement(GetPlan("workItemId", workItemId).ReleasePlanDetails!.SDKInfo);
+        Assert.That(sdks.GetArrayLength(), Is.EqualTo(5));
+        foreach (var sdk in sdks.EnumerateArray())
+        {
+            Assert.That(sdk.TryGetProperty(nameof(SDKInfo.PullRequestStatus), out _), Is.False);
+        }
     }
 
     private static bool IsReleasePlanComplete(ReleasePlanWorkItem plan)

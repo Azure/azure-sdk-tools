@@ -6,9 +6,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using LibGit2Sharp;
-using Markdig.Syntax;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace Azure.SDK.ChangelogGen.Utilities
 {
@@ -115,6 +112,36 @@ namespace Azure.SDK.ChangelogGen.Utilities
 
             return te.GetFileContent();
         }
+
+        public static bool TryGetFileContent(this Tree tree, string fileKey, out string content)
+        {
+            string[] segments = fileKey.Split('\\', '/');
+            Tree current = tree;
+            for (int i = 0; i < segments.Length - 1; i++)
+            {
+                TreeEntry? entry = current.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Name, segments[i], StringComparison.OrdinalIgnoreCase));
+                if (entry?.Target is not Tree childTree)
+                {
+                    content = "";
+                    return false;
+                }
+
+                current = childTree;
+            }
+
+            TreeEntry? file = current.FirstOrDefault(candidate =>
+                string.Equals(candidate.Name, segments[^1], StringComparison.OrdinalIgnoreCase));
+            if (file == null)
+            {
+                content = "";
+                return false;
+            }
+
+            content = file.GetFileContent();
+            return true;
+        }
+
         #endregion
 
         #region api
@@ -222,24 +249,5 @@ namespace Azure.SDK.ChangelogGen.Utilities
         }
         #endregion
 
-        #region markdown
-        public static Dictionary<string, object> LoadYaml(this MarkdownDocument md)
-        {
-            var lines = md.Where(b =>
-            {
-                FencedCodeBlock? fcb = b as FencedCodeBlock;
-                if (fcb == null)
-                    return false;
-                return (fcb.Info == "yaml" && string.IsNullOrEmpty(fcb.Arguments));
-            }).SelectMany(b => ((FencedCodeBlock)b).Lines.Lines).ToList();
-
-            // TODO: add support to include yaml from conditional block in markdown when needed
-            var allYaml = string.Join("\n", lines);
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(HyphenatedNamingConvention.Instance)
-                .Build();
-            return deserializer.Deserialize<Dictionary<string, object>>(allYaml);
-        }
-        #endregion
     }
 }

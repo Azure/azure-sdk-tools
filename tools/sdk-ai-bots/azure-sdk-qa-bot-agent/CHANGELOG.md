@@ -1,6 +1,12 @@
 # Release History
 
-## 0.1.0 (Unreleased)
+## 0.2.0 (2026-10-13)
+
+### Other Changes
+
+- Remove unused Node.js and npm from the backend server container to reduce vulnerable dependencies.
+
+## 0.1.0
 
 ### Features Added
 

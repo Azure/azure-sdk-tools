@@ -38,9 +38,6 @@
     "botIdentityResourceId": {
       "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azsdkqabot"
     },
-    "functionAppResourceId": {
-      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-function"
-    },
     "teamsConnectionResourceId": {
       "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/connections/teams"
     },

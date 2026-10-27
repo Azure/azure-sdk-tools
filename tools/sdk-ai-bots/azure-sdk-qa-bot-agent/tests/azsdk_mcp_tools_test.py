@@ -55,6 +55,26 @@ async def azsdk_mcp_tool():
 
 
 @pytest.mark.asyncio
+async def test_azsdk_mcp_exposes_allowed_tools() -> None:
+    await app_config.init()
+    tool = await create_azsdk_mcp_tool()
+    async with tool:
+        names = {f.name for f in tool.functions}
+    assert names == set(tool.allowed_tools)
+
+
+@pytest.mark.asyncio
+async def test_azsdk_get_release_plan_receives_work_item_id() -> None:
+    await app_config.init()
+    tool = await create_azsdk_mcp_tool()
+    async with tool:
+        # Work item 1 never exists, so the error proves the ID reached the server.
+        result = await tool.call_tool("azsdk_get_release_plan", workItemId=1)
+    text = result if isinstance(result, str) else " ".join(getattr(c, "text", None) or "" for c in result)
+    assert "Work item 1" in text, text
+
+
+@pytest.mark.asyncio
 async def test_azsdk_mcp_search(ai_client, azsdk_mcp_tool) -> None:
     """Run an agent with the AZSDK MCP tool and search for doc in the azure-sdk org."""
     async with Agent(

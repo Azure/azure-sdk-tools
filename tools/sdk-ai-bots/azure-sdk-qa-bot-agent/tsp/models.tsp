@@ -162,7 +162,7 @@ model EvidenceAspects {
   @doc("Whether relevant evidence disagreements remain unresolved")
   consistency: AspectResult;
 
-  @doc("Whether the answer resolves the main concern and required outcomes")
+  @doc("Whether the original requested outcomes are resolved, not merely whether the response is useful")
   coverage: AspectResult;
 }
 
@@ -172,7 +172,7 @@ model EvidenceAssessment {
   schema_version: "confidence-runtime-v3";
 
   @doc("The rubric used to rate the five evidence aspects")
-  rubric_version: "evidence-v3";
+  rubric_version: "evidence-v4";
 
   @doc("Valid means all five aspect results are present; abstained means assessment was unavailable")
   status: "valid" | "abstained";

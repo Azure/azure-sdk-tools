@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 AspectValue = Literal["pass", "limited", "fail", "not_applicable"]
-CURRENT_RUBRIC_VERSION: Literal["evidence-v3"] = "evidence-v3"
+CURRENT_RUBRIC_VERSION: Literal["evidence-v4"] = "evidence-v4"
 CURRENT_SCHEMA_VERSION: Literal["confidence-runtime-v3"] = "confidence-runtime-v3"
 
 
@@ -50,7 +50,7 @@ class EvidenceAspects(StrictAssessmentModel):
 
 class GeneratedAssessmentAnswer(StrictAssessmentModel):
     schema_version: Literal["confidence-runtime-v3"]
-    rubric_version: Literal["evidence-v3"]
+    rubric_version: Literal["evidence-v4"]
     answer: str = Field(min_length=1)
     status: Literal["valid", "abstained"]
     aspects: EvidenceAspects | None
@@ -68,7 +68,7 @@ class EvidenceAssessment(StrictAssessmentModel):
     """Assessment metadata returned alongside the processed chat answer."""
 
     schema_version: Literal["confidence-runtime-v3"]
-    rubric_version: Literal["evidence-v3"]
+    rubric_version: Literal["evidence-v4"]
     status: Literal["valid", "abstained"]
     aspects: EvidenceAspects | None
     provisional_band: Literal["High", "Medium", "Low"] | None

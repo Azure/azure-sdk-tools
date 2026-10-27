@@ -31,7 +31,7 @@ SECRET = "SECRET-SDK-ERROR-MUST-NOT-BE-PUBLISHED"
 def metadata(value="pass"):
     return {
         "schema_version": "confidence-runtime-v3",
-        "rubric_version": "evidence-v3",
+        "rubric_version": "evidence-v4",
         "status": "abstained" if value is None else "valid",
         "aspects": None if value is None else {
             name: {"value": value, "reason": "The inspected evidence explains this rating."}
@@ -71,6 +71,16 @@ def test_shared_schema_preserves_complete_metadata(value):
     assert state == ("abstained" if value is None else "valid")
     assert validated == raw["assessment"]
     assert diagnostic is None
+
+
+def test_previous_rubric_is_unsupported_not_reinterpreted():
+    raw = response()
+    raw["assessment"]["rubric_version"] = "evidence-v3"
+    state, validated, diagnostic = _assessment(raw)
+    assert state == "unsupported_version"
+    assert validated is None
+    assert diagnostic == "The assessment schema or rubric version is not supported."
+    assert raw["assessment"]["rubric_version"] == "evidence-v3"
 
 
 @pytest.mark.parametrize("change,state", [

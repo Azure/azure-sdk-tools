@@ -75,7 +75,7 @@ def test_static_instructions_use_one_versioned_rubric_and_request_brief_reasons(
     instructions = ASSESSMENT_PROMPT.read_text(encoding="utf-8").strip()
     criteria = _criteria(instructions)
     assert tuple(criteria) == ASPECTS
-    assert CURRENT_RUBRIC_VERSION == "evidence-v3"
+    assert CURRENT_RUBRIC_VERSION == "evidence-v4"
     assert instructions.count(f"Rubric version: {CURRENT_RUBRIC_VERSION}.") == 1
     assert instructions.count("## Assessment rules") == 1
     assert instructions.count("## Aspect criteria") == 1
@@ -87,17 +87,37 @@ def test_static_instructions_use_one_versioned_rubric_and_request_brief_reasons(
     assert "Teams" not in instructions
     assert all(set(definitions) == {"pass", "limited", "fail"} for definitions in criteria.values())
     assert "Fail before Limited before Pass" in instructions
-    assert "directly or by sound deduction with all premises supported" in criteria["support"]["pass"]
-    assert "at the level of specificity requested" in criteria["fit"]["pass"]
-    assert "Supplementary information is appropriately scoped." in criteria["fit"]["pass"]
-    assert "gap meaningfully limits" in criteria["fit"]["limited"]
-    assert "prevents determining whether the main recommendation is appropriate" in criteria["fit"]["fail"]
+    assert "all important claims, directly or by sound deduction with supported premises" in criteria["support"]["pass"]
+    assert "recent observations of the correct target" in criteria["support"]["pass"]
+    assert "all necessary premises are supported" in criteria["support"]["limited"]
+    assert "disclosed, evidence-bounded uncertainty is non-decisive" in criteria["support"]["limited"]
+    assert "unverified prerequisite that could change the main recommendation" in criteria["support"]["fail"]
+    assert "Caveats do not repair it." in criteria["support"]["fail"]
+    assert "Unverified claims of live state or completion Fail" in criteria["support"]["fail"]
+    assert "documentation alone cannot verify them" in criteria["support"]["fail"]
+    assert "at the requested specificity" in criteria["fit"]["pass"]
+    assert "supplementary guidance stays in scope" in criteria["fit"]["pass"]
+    assert "materially limits only a secondary part" in criteria["fit"]["limited"]
+    assert "main recommendation applies" in criteria["fit"]["limited"]
+    assert "named applicability condition" in criteria["fit"]["limited"]
+    assert "unknown condition prevents judging whether the main recommendation applies" in criteria["fit"]["fail"]
+    assert "name that condition, not merely an inaccessible source" in criteria["fit"]["fail"]
+    assert "attributable, trustworthy and authoritative for each important claim type" in criteria["source_quality"]["pass"]
+    assert "Missing factual support alone is not an authority failure." in criteria["source_quality"]["pass"]
+    assert "Minimum authority is met" in criteria["source_quality"]["limited"]
+    assert "non-decisive provenance or authority limitation" in criteria["source_quality"]["limited"]
     assert "secondary guidance cannot substitute" in criteria["source_quality"]["fail"]
-    assert "Coexisting requirement and approval labels" in criteria["consistency"]["pass"]
-    assert "A disclosed disagreement remains" in criteria["consistency"]["limited"]
-    assert "Missing optional details or additional relevant information do not reduce the rating." in criteria["coverage"]["pass"]
-    assert "material requested part remains unresolved and needs follow-up" in criteria["coverage"]["limited"]
-    assert "missing essential part prevents the answer from satisfying the request" in criteria["coverage"]["fail"]
+    assert "evidence-backed reconciliation of scope, time and authority" in criteria["consistency"]["pass"]
+    assert "Required/approved labels and different-commit reviews are not inherently conflicting" in criteria["consistency"]["pass"]
+    assert "disclosed, separable, non-decisive disagreement" in criteria["consistency"]["limited"]
+    assert "all supported interpretations preserve the main diagnosis, recommendation and next step" in criteria["consistency"]["limited"]
+    assert "choosing a source alone does not resolve it" in criteria["consistency"]["fail"]
+    assert "All main and explicitly required outcomes are resolved" in criteria["coverage"]["pass"]
+    assert "optional omissions or relevant extras do not lower the rating" in criteria["coverage"]["pass"]
+    assert "main outcome is resolved" in criteria["coverage"]["limited"]
+    assert "material secondary requested part remains unresolved and needs follow-up" in criteria["coverage"]["limited"]
+    assert "main requested outcome remains unresolved or an essential requested part is missing" in criteria["coverage"]["fail"]
+    assert "clarification alone does not resolve the original task" in criteria["coverage"]["fail"]
 
 
 def test_assessment_rules_preserve_normal_retrieval_and_aspect_specific_thresholds():
@@ -120,6 +140,10 @@ def test_design_label_definitions_match_the_runtime_rubric():
     section = design.read_text(encoding="utf-8").split("### 2.2 Evidence aspects\n", 1)[1]
     section = section.split("### 2.3 Evidence bands\n", 1)[0]
     assert _criteria(section) == _criteria(ASSESSMENT_PROMPT.read_text(encoding="utf-8"))
+    models = ASSESSMENT_PROMPT.parents[2] / "tsp" / "models.tsp"
+    definitions = models.read_text(encoding="utf-8")
+    assert f'schema_version: "{CURRENT_SCHEMA_VERSION}";' in definitions
+    assert f'rubric_version: "{CURRENT_RUBRIC_VERSION}";' in definitions
 
 
 def test_generation_schema_requires_all_five_value_reason_pairs():
@@ -194,6 +218,7 @@ def test_generated_answer_preserves_reasons_without_experimental_capture_fields(
     ("schema_version", "confidence-runtime-v2"),
     ("rubric_version", "replay-v1"),
     ("rubric_version", "evidence-v2"),
+    ("rubric_version", "evidence-v3"),
 ])
 def test_old_results_cannot_be_silently_reinterpreted_as_current_assessments(field, value):
     raw = _generated().model_dump()
@@ -428,8 +453,8 @@ async def test_chat_keeps_normal_conversation_and_persists_only_the_answer(monke
     assert saved.content == generated.answer
 
 
-@pytest.mark.parametrize("change", ["missing_reason", "multiline_reason", "missing_aspect", "invalid_status"])
-def test_malformed_current_assessment_fails_explicitly_in_backend(caplog, change):
+@pytest.mark.parametrize("change", ["missing_reason", "multiline_reason", "missing_aspect", "invalid_status", "old_rubric"])
+def test_invalid_current_schema_assessment_fails_explicitly_in_backend(caplog, change):
     raw = _generated().model_dump()
     if change == "missing_reason":
         del raw["aspects"]["support"]["reason"]
@@ -437,12 +462,16 @@ def test_malformed_current_assessment_fails_explicitly_in_backend(caplog, change
         raw["aspects"]["support"]["reason"] = "First line.\nSecond line."
     elif change == "missing_aspect":
         del raw["aspects"]["support"]
+    elif change == "old_rubric":
+        raw["rubric_version"] = "evidence-v3"
     else:
         raw["status"] = "unknown"
     response = SimpleNamespace(id="invalid-response", output=[], output_text=json.dumps(raw))
     request = ChatRequest(tenant_id="api_spec_review_bot", message={"role": "user", "content": "Question"})
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as error:
         ChatService()._postprocess(request, response, None)
+    if change == "old_rubric":
+        assert any(item["loc"] == ("rubric_version",) for item in error.value.errors())
     assert "Invalid evidence assessment: response_id=invalid-response" in caplog.text
 
 

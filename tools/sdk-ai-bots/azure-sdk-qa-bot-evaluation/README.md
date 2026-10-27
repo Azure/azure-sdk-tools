@@ -113,7 +113,8 @@ Download that artifact from the offline run to inspect the report.
 
 The report includes every input question, the complete processed backend answer, response ID, schema/rubric versions, the answering model's five aspect values and reasons, and its application-derived provisional band.
 Existing external evaluator scores and pass/fail results are shown separately and keep their existing gates, suppressions and baselines.
-The band measures provisional evidence sufficiency, not correctness probability.
+The band measures provisional evidence sufficiency and requested-outcome resolution, not correctness probability.
+Low can reflect an unresolved main request even when asking for clarification is the correct response.
 Questions and complete answers render as literal text, and table content is escaped rather than interpreted as active Markdown or HTML.
 
 Assessment metadata comes directly from the backend's optional `ChatResponse.assessment`, validated with the shared lightweight backend model.
@@ -130,7 +131,11 @@ The existing `always()` artifact publication is best effort and cannot recover u
 Confirm artifact access and retention are appropriate for the questions and answers before a live run.
 
 The offline job starts a local backend, but that backend still invokes a deployed hosted answering agent.
-A compatible hosted generation schema and the intended project/agent configuration are prerequisites for real assessment results; older deployments produce explicit legacy/unavailable rows.
+A compatible hosted generation schema and the intended project/agent configuration are prerequisites for real assessment results.
+Plain responses from older deployments produce explicit missing-assessment rows.
+The current contract uses schema `confidence-runtime-v3` with rubric `evidence-v4`; the backend and hosted agent must use a matching rubric.
+Older structured rubric output is rejected by the updated backend, while older metadata supplied directly to the reporter is classified as unsupported rather than reinterpreted.
+Saved `evidence-v3` reports remain historical artifacts and are not rewritten.
 Stored-response permissions remain necessary for existing tool-call reporting, not for extracting assessment fields.
 This reporting change does not deploy an agent or run an evaluation.
 

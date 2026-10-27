@@ -8,7 +8,7 @@ The current scope is backend evidence assessment only, not expert help, channel 
 
 ## 1. Goal
 
-Explain how well the chatbot's answer is supported by the evidence it actually used.
+Describe the evidence supporting the chatbot's answer and whether it resolves the user's requested outcomes.
 The answering agent supplies five aspect values and brief reasons alongside its answer in the same final generation.
 Application code derives a provisional confidence band from those values.
 This is not an independently verified correctness grade or a calibrated probability.
@@ -41,11 +41,11 @@ Within each aspect, apply Fail before Limited before Pass; do not average claims
 
 | Aspect | Pass | Limited | Fail |
 | --- | --- | --- | --- |
-| **Support** | Supplied evidence establishes the important claims, directly or by sound deduction with all premises supported; claimed current states or completed actions have sufficiently recent observations for the correct target. | Evidence establishes the main conclusion, but a disclosed, evidence-bounded estimate or extrapolation leaves uncertainty in a non-decisive detail; no important claim relies on an unsupported premise. | An important asserted claim lacks evidence, contradicts it, or depends on an unsupported premise; a claimed current state or completed action is unverified. Documentation alone cannot establish live state or completion. |
-| **Fit** | The main answer and recommendations apply to the user's stated situation at the level of specificity requested. Supplementary information is appropriately scoped. | The guidance is relevant and useful, but an identifiable applicability gap meaningfully limits how confidently the user can apply part of it. | The main guidance applies to the wrong situation, or a missing condition prevents determining whether the main recommendation is appropriate. |
-| **Source quality** | Supplied provenance establishes trustworthy sources with the authority required for each important claim; no relevant provenance or authority limitation remains. | An identified, attributable secondary source meets the minimum authority needed for the guidance, but lack of first-party confirmation leaves a disclosed, non-decisive authority limitation. | An important claim relies on an unreliable or unattributable source, or lacks required authority; secondary guidance cannot substitute for an authorized policy decision or approval. |
-| **Consistency** | No relevant disagreement remains after evidence-backed reconciliation of scope, time and authority. Coexisting requirement and approval labels, or reviews of different commits, are not conflicts by themselves. | A disclosed disagreement remains in a separable, non-decisive detail, but all supported interpretations yield the same main diagnosis, recommendation and required next step. | An unresolved disagreement could change an important claim, the main diagnosis, recommendation or required next step; choosing one source without an evidence-backed reason does not resolve the conflict. |
-| **Coverage** | The answer resolves the main concern and any explicitly required outcomes. Missing optional details or additional relevant information do not reduce the rating. | The main concern is substantially addressed, but a material requested part remains unresolved and needs follow-up. | The main concern remains unresolved, or a missing essential part prevents the answer from satisfying the request. |
+| **Support** | Evidence establishes all important claims, directly or by sound deduction with supported premises; live state or completed actions require recent observations of the correct target. | The main conclusion and all necessary premises are supported; disclosed, evidence-bounded uncertainty is non-decisive. | An important claim lacks support, contradicts evidence or assumes an unverified prerequisite that could change the main recommendation. Caveats do not repair it. Unverified claims of live state or completion Fail; documentation alone cannot verify them. |
+| **Fit** | The main answer and recommendations fit the user's situation at the requested specificity; supplementary guidance stays in scope. | The main recommendation applies; a named applicability condition materially limits only a secondary part. | The main guidance targets the wrong situation, or an unknown condition prevents judging whether the main recommendation applies; name that condition, not merely an inaccessible source. |
+| **Source quality** | Sources are attributable, trustworthy and authoritative for each important claim type. Missing factual support alone is not an authority failure. | Minimum authority is met, but a disclosed, non-decisive provenance or authority limitation remains. | An important claim relies on an unreliable or unattributable source, or lacks required authority; secondary guidance cannot substitute for an authorized policy decision or approval. |
+| **Consistency** | No relevant disagreement remains after evidence-backed reconciliation of scope, time and authority. Required/approved labels and different-commit reviews are not inherently conflicting. | A disclosed, separable, non-decisive disagreement remains; all supported interpretations preserve the main diagnosis, recommendation and next step. | Unresolved disagreement could change an important claim or the main diagnosis, recommendation or next step; choosing a source alone does not resolve it. |
+| **Coverage** | All main and explicitly required outcomes are resolved; optional omissions or relevant extras do not lower the rating. | The main outcome is resolved; a material secondary requested part remains unresolved and needs follow-up. | The main requested outcome remains unresolved or an essential requested part is missing; useful background or clarification alone does not resolve the original task. |
 
 #### Aspect boundaries
 
@@ -53,10 +53,15 @@ Within each aspect, apply Fail before Limited before Pass; do not average claims
 Correctly quoting an authoritative Java-only procedure can Pass Support and Source quality but Fail Fit for a Python request.
 Missing language, version or other context is not automatically Limited: Fit Fails when the missing condition prevents determining whether the main recommendation is appropriate.
 Sound deductions with supported premises can Pass; hedging does not repair an unsupported important claim.
+An outcome-changing prerequisite for the main recommendation is not a non-decisive detail, even when uncertainty is disclosed.
+Fit reasons identify the condition that affects applicability, such as the API version, resource type or configuration mode; inability to open a source is not by itself an applicability gap.
 
-**Source quality checks authority, not agreement.**
+**Source quality checks provenance and authority, not factual completeness.**
 An attributable secondary explanation can support non-authorizing guidance, but cannot grant an exception or substitute for a required approval.
 A first-party URL alone does not establish the author or their authority.
+An official schema can establish that a field exists without establishing its runtime behavior; missing behavioral proof is a Support gap, not automatically an authority limitation.
+A user-provided error can be attributable evidence of the reported failure without authorizing a platform-wide guarantee or exception.
+Source quality also Fails when the actual authority or provenance required for an important claim is missing.
 Evaluate live state under Support, temporal applicability under Fit, and provenance under Source quality.
 
 **Consistency checks residual disagreement, not merely different labels, dates or wording.**
@@ -66,9 +71,12 @@ Evidence-backed reconciliation can resolve an apparent conflict completely and t
 One inspected source can Pass Consistency when no disagreement is present; this does not establish Support or Source quality.
 
 **Coverage checks the main concern and required outcomes.**
+It measures resolution of the original requested outcome, not merely how appropriately or helpfully the bot responds.
 Relevant supplementary information or a missing optional example does not reduce the rating.
 Useful surrounding guidance does not resolve a missing essential answer.
 The same gap can affect multiple aspects: inventing a requested result can Fail both Support and Coverage, while acknowledging the missing result can preserve Support but still Fail Coverage.
+Correctly requesting logs after being asked for an exact diagnosis can Pass Support while Coverage Fails because the diagnosis is unresolved.
+If the user instead asks which logs to provide, explaining the needed logs can resolve that request and Pass Coverage.
 
 A failed tool call establishes neither the requested fact nor its negation.
 Assess whether other gathered evidence fills the gap; the failure alone does not force every aspect to Fail.
@@ -89,11 +97,13 @@ The current policy conservatively counts every applicable aspect; no separate ce
 | All aspects Not applicable, or assessment abstained | No band |
 
 Reasons explain the aspect values but do not alter this deterministic policy.
+Because Coverage is included, Low can reflect an unresolved main request even when the response is truthful and helpful; it does not necessarily mean the answer is false.
 A band does not select a response strategy, classify expert need or trigger a notification.
 
 ### 2.4 Structured generation
 
-The current schema is `confidence-runtime-v3` and the rubric is `evidence-v3`.
+The current schema is `confidence-runtime-v3` and the rubric is `evidence-v4`.
+The rubric revision sharpens the aspect boundaries without changing the response shape or band calculation.
 The required generated fields are `schema_version`, `rubric_version`, `answer`, `status` and `aspects`.
 The complete answer, normal formatting and References section remain inside `answer`.
 
@@ -102,7 +112,7 @@ A valid assessment contains all five aspect objects:
 ```json
 {
   "schema_version": "confidence-runtime-v3",
-  "rubric_version": "evidence-v3",
+  "rubric_version": "evidence-v4",
   "answer": "Complete answer with normal formatting and references",
   "status": "valid",
   "aspects": {
@@ -125,6 +135,8 @@ The schema forbids extra fields.
 Missing aspects, blank or multiline reasons and inconsistent status fail validation explicitly.
 There is no model-generated overall band, expert-help metadata or response-routing decision.
 Historical experiment results remain unchanged and are not reclassified or supplied with retrospective reasons.
+Saved `evidence-v3` results retain their original rubric identity and are not interpreted as `evidence-v4`.
+The backend and hosted answering agent must use a matching rubric; the updated backend rejects older structured rubric output rather than silently relabeling it.
 
 ### 2.5 Backend integration
 

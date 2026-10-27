@@ -6,6 +6,7 @@ import asyncio
 from datetime import datetime, timezone
 import json
 import logging
+import os
 import re
 from urllib.parse import urlparse
 
@@ -34,13 +35,14 @@ from skills.tenant_skills import (
     get_skill_to_tenant_map,
 )
 from utils.azure_ai_foundry import (
+    get_branch_agent_version,
     get_openai_client,
     get_project_client,
     get_stateless_session_id,
     set_stateless_session_id,
 )
 from utils.teams_image import get_image_data_uri
-from utils.text_util import preprocess_message
+from utils.text_util import BRANCH_PREFIX_RE, preprocess_message, preprocess_html_content
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
@@ -69,7 +71,19 @@ COMPACT_THRESHOLD = 100000
 BOT_SENDER_ID = "azure-sdk-qa-bot"
 BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
+AGENT_ROUTING_CONFIG_KEY = "ENABLE_AI_FOUNDRY_AGENT_ROUTING"
+AGENT_ROUTING_ENABLED = "true"
+AGENT_ROUTING_DISABLED = "false"
+
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+
+
+class AgentRoutingError(ValueError):
+    # Default to 422 for invalid routing input, consistent with FastAPI validation;
+    # disabled routing and missing deployments explicitly use 403 and 404.
+    def __init__(self, message: str, status_code: int = 422) -> None:
+        super().__init__(message)
+        self.status_code = status_code
 
 
 class ChatService:
@@ -86,35 +100,58 @@ class ChatService:
         self._settings = settings or cfg
         self._project_client = project_client
         self._openai_client = openai_client
-        self._stateless_session_ids: dict[str, str] = {}
+        self._stateless_session_ids: dict[tuple[str, str], str] = {}
 
     def _get_project_client(self) -> AIProjectClient:
         return self._project_client or get_project_client()
 
     def _get_openai_client(self, agent_name: str | None = None) -> AsyncOpenAI:
-        return self._openai_client or get_openai_client(agent_name)
+        if self._openai_client is not None:
+            return self._openai_client
+        if self._project_client is not None:
+            resolved = agent_name or self._settings(
+                "AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent"
+            )
+            return self._project_client.get_openai_client(agent_name=resolved)
+        return get_openai_client(agent_name)
 
-    def _get_stateless_session_id(self, agent_name: str) -> str | None:
+    def _get_stateless_session_id(
+        self, agent_name: str, agent_version: str
+    ) -> str | None:
         if self._project_client is None and self._openai_client is None:
-            return get_stateless_session_id(agent_name)
-        return self._stateless_session_ids.get(agent_name)
+            return get_stateless_session_id(agent_name, agent_version)
+        return self._stateless_session_ids.get((agent_name, agent_version))
 
     def _set_stateless_session_id(
-        self, agent_name: str, session_id: str | None
+        self, agent_name: str, agent_version: str, session_id: str | None
     ) -> None:
         if self._project_client is None and self._openai_client is None:
-            set_stateless_session_id(agent_name, session_id)
+            set_stateless_session_id(agent_name, agent_version, session_id)
         elif session_id is None:
-            self._stateless_session_ids.pop(agent_name, None)
+            self._stateless_session_ids.pop((agent_name, agent_version), None)
         else:
-            self._stateless_session_ids[agent_name] = session_id
+            self._stateless_session_ids[(agent_name, agent_version)] = session_id
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
         project_client = self._get_project_client()
         tenant_config = get_tenant_config(req.tenant_id)
-        agent_name, agent_version = self._resolve_agent_configuration(tenant_config)
+        agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
+        agent_version = configured_agent_version or None
+        request_agent_version = await self._resolve_request_version(
+            req.message.content, agent_name
+        )
+        if request_agent_version is not None:
+            agent_version = request_agent_version
         agent = await self._get_agent(project_client, agent_name, agent_version)
+        logger.info(
+            "Resolved agent=%s version=%s source=%s tenant=%s.",
+            agent.name, agent.version,
+            "branch" if request_agent_version is not None else (
+                "configured" if configured_agent_version else "latest"
+            ),
+            req.tenant_id,
+        )
         openai_client = self._get_openai_client(agent_name)
 
         # Stateless calls (no customer conversation_id) skip conversation
@@ -122,7 +159,7 @@ class ChatService:
         stateless = not req.conversation_id
         if stateless:
             agent_conversation_id, is_new = None, True
-            agent_session_id = self._get_stateless_session_id(agent_name)
+            agent_session_id = self._get_stateless_session_id(agent.name, agent.version)
             logger.info("Stateless request: reusing warm session=%s", agent_session_id)
         else:
             agent_conversation_id, is_new = await self._resolve_conversation(
@@ -222,11 +259,12 @@ class ChatService:
                 agent_ref=agent_ref,
             )
         # Cache the warm sandbox id so later stateless calls reuse it.
-        if stateless and not self._get_stateless_session_id(agent_name):
+        if stateless:
             extra = getattr(response, "model_extra", None) or {}
             captured = extra.get("agent_session_id")
-            self._set_stateless_session_id(agent_name, captured)
-            logger.info("Stateless request: captured warm session=%s", captured)
+            if isinstance(captured, str) and captured:
+                self._set_stateless_session_id(agent.name, agent.version, captured)
+                logger.info("Stateless request: captured warm session=%s", captured)
 
         logger.info(
             "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
@@ -257,6 +295,7 @@ class ChatService:
             )
 
         chat_response = self._postprocess(req, response, agent_conversation_id)
+        chat_response.agent_name = agent.name
         chat_response.trace_id = trace_id
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(
@@ -304,6 +343,36 @@ class ChatService:
                 exc_info=True,
             )
 
+    async def _resolve_request_version(
+        self, content: str, agent_name: str,
+    ) -> str | None:
+        text = preprocess_html_content(content)
+        prefix = BRANCH_PREFIX_RE.match(text)
+        reserved = re.match(r"^\s*(?:title:\s*)?\[branch:", text)
+        routing = os.environ.get(AGENT_ROUTING_CONFIG_KEY, AGENT_ROUTING_DISABLED)
+        if routing not in (AGENT_ROUTING_ENABLED, AGENT_ROUTING_DISABLED):
+            raise RuntimeError(
+                f"{AGENT_ROUTING_CONFIG_KEY} must be {AGENT_ROUTING_ENABLED} or {AGENT_ROUTING_DISABLED}."
+            )
+        if routing == AGENT_ROUTING_DISABLED:
+            if reserved:
+                raise AgentRoutingError("Branch routing is disabled.", 403)
+            return None
+        if reserved and not prefix:
+            raise AgentRoutingError("Use [branch:feature/name] followed by a question.")
+        if prefix:
+            target = prefix.group(2)
+            question = text[prefix.end():].lstrip()
+            if not question or re.match(r"^(?:title:\s*)?\[branch:", question):
+                raise AgentRoutingError("Supply one prefix followed by a question.")
+            version = await get_branch_agent_version(
+                self._get_project_client(), agent_name, target
+            )
+            if version is None:
+                raise AgentRoutingError(f"No active deployment of '{agent_name}' for '{target}'.", 404)
+            return version
+        return None
+
     def _resolve_agent_configuration(
         self,
         tenant_config: TenantConfig | None,
@@ -327,7 +396,7 @@ class ChatService:
         agent_version: str | None,
     ) -> AgentVersionDetails:
         """Load hosted-agent version definition from Foundry."""
-        if agent_version:
+        if agent_version is not None:
             agent = await project_client.agents.get_version(agent_name, agent_version)
         else:
             agent_details = await project_client.agents.get(agent_name)

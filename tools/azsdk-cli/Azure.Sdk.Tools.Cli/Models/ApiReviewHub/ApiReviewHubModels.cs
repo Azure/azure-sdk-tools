@@ -34,6 +34,18 @@ public class ReviewPullRequestCreationRequest
 
     [JsonPropertyName("targetBranch")]
     public required GitBranchReference TargetBranch { get; set; }
+
+    [JsonPropertyName("pipelineRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PipelineRef { get; set; }
+
+    [JsonPropertyName("toolsRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ToolsRef { get; set; }
+
+    [JsonPropertyName("languageToolsRef")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LanguageToolsRef { get; set; }
 }
 
 public class MarkPackageReleasedRequest
@@ -110,7 +122,7 @@ public class OperationStatus
     public string? FailureReason { get; set; }
 }
 
-public class ApiReviewHubApprovalRecord
+public class ApiReviewHubApiApprovalRecord
 {
     [JsonPropertyName("id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -149,7 +161,15 @@ public class ApiReviewHubReleaseGateResult
     public int? StatusCode { get; set; }
 
     [JsonPropertyName("isApproved")]
-    public bool IsApproved { get; set; }
+    public bool IsReleaseApproved { get; set; }
+
+    [JsonRequired]
+    [JsonPropertyName("isApiApproved")]
+    public bool IsApiApproved { get; set; }
+
+    [JsonRequired]
+    [JsonPropertyName("isPackageNameApproved")]
+    public bool IsPackageNameApproved { get; set; }
 
     [JsonPropertyName("reason")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -167,9 +187,9 @@ public class ApiReviewHubReleaseGateResult
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Error { get; set; }
 
-    [JsonPropertyName("approvals")]
+    [JsonPropertyName("apiApprovals")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IReadOnlyList<ApiReviewHubApprovalRecord>? Approvals { get; set; } = [];
+    public IReadOnlyList<ApiReviewHubApiApprovalRecord>? ApiApprovals { get; set; } = [];
 }
 
 public class ApiViewReleaseStatusResult

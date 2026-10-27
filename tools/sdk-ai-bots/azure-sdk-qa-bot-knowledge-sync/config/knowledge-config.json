@@ -20,6 +20,14 @@
           }
         },
         {
+          "description": "Upstream C# TypeSpec emitter usage and customization documentation",
+          "path": "/packages/http-client-csharp/.tspd/docs",
+          "folder": "typespec_csharp_emitter_docs",
+          "metadata": {
+            "scope": "unbranded"
+          }
+        },
+        {
           "description": "TypeSpec HTTP specification test cases",
           "path": "/packages/http-specs/specs",
           "folder": "typespec_http_specs",
@@ -326,6 +334,114 @@
         {
           "description": ".NET Azure Resource Manager SDK documentation",
           "path": "/sdk/resourcemanager/Azure.ResourceManager/docs",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET management-plane C# emitter documentation",
+          "path": "/eng/packages/http-client-csharp-mgmt/docs",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET management-plane C# emitter overview",
+          "path": "/eng/packages/http-client-csharp-mgmt/README.md",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET data-plane C# emitter documentation",
+          "path": "/eng/packages/http-client-csharp/.tspd/docs",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET data-plane C# emitter overview",
+          "path": "/eng/packages/http-client-csharp/README.md",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET provisioning C# emitter documentation",
+          "path": "/eng/packages/http-client-csharp-provisioning/docs",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET provisioning C# emitter overview",
+          "path": "/eng/packages/http-client-csharp-provisioning/README.md",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET management SDK breaking-change mitigation skill and references",
+          "path": "/.github/skills/mitigate-breaking-changes",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET management SDK review-comment resolution skill and references",
+          "path": "/.github/skills/mgmt-review-comment-resolution",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": ".NET Azure.Core test framework documentation",
+          "path": "/sdk/core/Azure.Core.TestFramework/README.md",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Test proxy onboarding documentation",
+          "path": "/eng/common/testproxy/onboarding",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "TypeSpec client tooling documentation",
+          "path": "/eng/common/tsp-client/README.md",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "TypeSpec client customization guidance",
+          "path": "/eng/common/knowledge/customizing-client-tsp.md",
           "folder": "azure_sdk_for_net_docs",
           "relativeByRepoPath": true,
           "metadata": {
@@ -679,31 +795,19 @@
           }
         },
         {
-          "description": "JavaScript SDK release tools documentation",
-          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
-          "folder": "azure_sdk_tools_docs",
+          "description": "Contributing guidelines for Azure SDK for JavaScript",
+          "path": "/CONTRIBUTING.md",
+          "folder": "azure_sdk_for_js_docs",
           "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"
           }
-        }
-      ]
-    },
-    {
-      "repository": {
-        "url": "https://github.com/Azure/azure-sdk-for-js.wiki.git",
-        "path": "azure-sdk-for-js.wiki",
-        "branch": "master",
-        "authType": "public",
-        "issueTracker": {
-          "provider": "github",
-          "repository": "Azure/azure-sdk-for-js"
-        }
-      },
-      "paths": [
+        },
         {
-          "description": "Wiki documentation for Azure SDK for JavaScript",
-          "folder": "azure_sdk_for_js_wiki",
+          "description": "JavaScript SDK release tools documentation",
+          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
+          "folder": "azure_sdk_for_js_docs",
+          "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"
           }
@@ -724,6 +828,15 @@
         {
           "description": "Azure REST API Breaking Change and Oad Rules Mapping",
           "path": "/documentation/BreakingChange-Oad-Rules-Mapping.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Azure REST API specs CI troubleshooting, SDK breaking-change review prerequisites, and reviewer contacts",
+          "path": "/documentation/ci-fix.md",
           "folder": "azure_rest_api_specs_docs",
           "relativeByRepoPath": true,
           "metadata": {
@@ -802,6 +915,18 @@
       },
       "paths": [
         {
+          "description": "Azure MCP contribution workflow, development setup, pull request requirements, and internal onboarding references",
+          "path": "/CONTRIBUTING.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure MCP tool contribution skill covering new and existing toolsets, implementation gates, testing, and pull request preparation",
+          "path": "/.github/skills/add-azure-mcp-tools/SKILL.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
           "description": "Azure MCP Server README",
           "path": "/servers/Azure.Mcp.Server/README.md",
           "folder": "azure_mcp_server_docs",
@@ -822,6 +947,24 @@
         {
           "description": "Azure MCP Server azmcp command reference",
           "path": "/servers/Azure.Mcp.Server/docs/azmcp-commands.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure MCP Server new-command implementation guide covering toolset onboarding, command architecture, options, registration, serialization, testing, AOT compatibility, and remote hosting requirements",
+          "path": "/servers/Azure.Mcp.Server/docs/new-command.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Tool description evaluator setup, Azure OpenAI access, scoped execution, and score and ranking checks",
+          "path": "/eng/tools/ToolDescriptionEvaluator/Quickstart.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Tool description evaluator usage, configuration, and prompt-to-tool matching",
+          "path": "/eng/tools/ToolDescriptionEvaluator/README.md",
           "folder": "azure_mcp_server_docs",
           "relativeByRepoPath": true
         },

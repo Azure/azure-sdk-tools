@@ -1,14 +1,40 @@
 # Release History
 
-## 0.6.54 (Unreleased)
+## 0.6.55 (2026-10-22)
 
 ### Features Added
 
+- Added optional `--release-plan-id` / `releasePlanId` to SDK package release. A supplied positive ID is forwarded as the `ReleasePlanId` release-pipeline parameter; omitted/zero IDs preserve the existing queue payload.
+- `package get-approval-status` and `azsdk_package_get_approval_status` now report API approval and package name approval separately alongside the overall release decision and diagnostics.
+
 ### Breaking Changes
+
+- Approval status JSON/MCP responses now expose `result.reviewHub.isApiApproved`, `isPackageNameApproved`, and `apiApprovals` (renamed from `approvals`).
 
 ### Bugs Fixed
 
+- Package-only release status updates reject multiple active release plans without changing any plan. Supply a release-plan ID or triggering SDK PR to select the intended plan; SDK release type and merged PR status no longer choose an arbitrary match.
+- Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
+- Release approval checks now include API Review Hub package name approval; optional API review or inherited API approval does not waive it. An approved API Review Hub result skips APIView; otherwise, complete APIView approval is also sufficient, including after an invalid API Review Hub response. Individual approvals are never combined across providers.
+
 ### Other Changes
+
+- Renamed the API Review Hub release gate model's C# property to `IsReleaseApproved`; JSON/MCP responses retain `isApproved`.
+
+## 0.6.54 (2026-10-15)
+
+### Features Added
+
+- `api-review create` supports API Review Hub pipeline ref overrides through `AZSDK_API_REVIEW_PIPELINE_REF`, `AZSDK_API_REVIEW_TOOLS_REF`, and `AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF`. These overrides are intentionally unavailable to the MCP tool.
+
+### Breaking Changes
+
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` no longer support Swift.
+- `--package-type` and the corresponding MCP parameter now normalize `client`, `spring`, and `functions` to API Review Hub's `data` package type.
+
+### Other Changes
+
+- Refactored the API Review Hub pipeline to build shared tooling once and dispatch isolated base and target artifact-generation jobs.
 
 ## 0.6.53 (2026-10-12)
 

@@ -13,8 +13,10 @@ import config.app_config as app_config
 from config.tenant_config import (
     SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_AZURE_REST_API_SPECS_WIKI,
+    SRC_AZURE_SDK_FOR_NET_DOCS,
     SRC_STATIC_ARM_DOCS,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
     TenantID,
 )
 import pytest
@@ -368,6 +370,50 @@ async def test_resolve_kb_source_returns_ownership_and_issue_target(
     assert result.source_url == "https://github.com/Azure/typespec-azure.git"
     assert result.model_dump(mode="json")["issue_target"] == (
         vars(issue_target) if issue_target is not None else None
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("service_type", [None, "management-plane", "data-plane"])
+async def test_dotnet_search_returns_azure_and_upstream_docs(monkeypatch, service_type):
+    chunks = []
+    for source_name, title in (
+        (SRC_AZURE_SDK_FOR_NET_DOCS, "eng#packages#http-client-csharp-mgmt#docs#emitter.md"),
+        (SRC_TYPESPEC_CSHARP_EMITTER_DOCS, "customization.md"),
+    ):
+        chunks.append(KnowledgeChunk(
+            source=source_name,
+            title=title,
+            content="C# emitter guidance",
+            link=f"https://example.com/{source_name}",
+        ))
+    search = AsyncMock(return_value=chunks)
+    search_client = SimpleNamespace(
+        fused_search=search,
+        deduplicate_chunks=lambda results: results,
+        top_k=10,
+        expand_by_hierarchy=AsyncMock(side_effect=lambda chunk: chunk),
+    )
+    monkeypatch.setattr(knowledge_tools_module, "get_search_client", lambda: search_client)
+
+    result = await KnowledgeTools().search_knowledge_base(
+        queries=["How do I customize a C# client?"],
+        tenant_id=TenantID.DOTNET_CHANNEL_QA_BOT.value,
+        service_type=service_type,
+    )
+
+    assert {reference.source for reference in result.results} == {
+        SRC_AZURE_SDK_FOR_NET_DOCS, SRC_TYPESPEC_CSHARP_EMITTER_DOCS
+    }
+    search.assert_awaited_once()
+    filters = search.call_args.args[1]
+    for source_name in (SRC_AZURE_SDK_FOR_NET_DOCS, SRC_TYPESPEC_CSHARP_EMITTER_DOCS):
+        expected = f"context_id eq '{source_name}'"
+        if service_type:
+            expected += f" and (service_type eq '{service_type}' or service_type eq null)"
+        assert filters[source_name] == expected
+    assert search.call_args.kwargs["extra_filter"] == (
+        "(page_type eq null or page_type eq '')"
     )
 
 

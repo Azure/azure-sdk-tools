@@ -242,7 +242,8 @@
         "issueTracker": {
           "provider": "azure-devops",
           "organization": "azure-sdk",
-          "project": "internal"
+          "project": "internal",
+          "areaPath": "internal\\qa-bot"
         }
       },
       "paths": [
@@ -265,7 +266,8 @@
         "issueTracker": {
           "provider": "azure-devops",
           "organization": "azure-sdk",
-          "project": "internal"
+          "project": "internal",
+          "areaPath": "internal\\qa-bot"
         }
       },
       "paths": [

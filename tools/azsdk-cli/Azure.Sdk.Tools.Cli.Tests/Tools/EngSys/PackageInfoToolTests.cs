@@ -167,14 +167,22 @@ public class PackageInfoToolTests
         Assert.That(response.ResponseError, Is.EqualTo("Package manifest cannot be read."));
     }
 
-    [Test]
-    public async Task SinglePackageExportRequiresPackageName()
+    [TestCase(null, false)]
+    [TestCase("", false)]
+    [TestCase(" ", false)]
+    [TestCase(null, true)]
+    [TestCase("", true)]
+    [TestCase(" ", true)]
+    public async Task SinglePackageRequiresPackageNameInBothOutputModes(string? packageName, bool export)
     {
-        _package.PackageName = null;
-        var response = await Invoke("--package-path", _directory.DirectoryPath, "--out-dir", "out");
+        _package.PackageName = packageName;
+        var response = await Invoke(export
+            ? ["--package-path", _directory.DirectoryPath, "--out-dir", "out"]
+            : ["--package-path", _directory.DirectoryPath]);
 
         Assert.That(response.ExitCode, Is.EqualTo(1));
         Assert.That(response.ResponseError, Does.Contain("package name could not be determined"));
+        Assert.That(((DefaultCommandResponse)response).Result, Is.Null);
         _helper.VerifyNoOtherCalls();
     }
 

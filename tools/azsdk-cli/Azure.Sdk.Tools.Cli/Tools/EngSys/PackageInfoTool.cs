@@ -127,6 +127,11 @@ public class PackageInfoTool(
         var languageService = await GetLanguageServiceAsync(fullPath, ct)
             ?? throw new InvalidOperationException("Unable to resolve language service for package. Ensure repository name matches azure-sdk-for-<lang>.");
         var packageInfo = await languageService.GetPackageInfo(fullPath, ct);
+        if (string.IsNullOrWhiteSpace(packageInfo.PackageName))
+        {
+            throw new InvalidOperationException("Cannot retrieve PackageInfo because the package name could not be determined.");
+        }
+
         if (options.AddDevVersion)
         {
             packageInfo.DevVersion = packageInfo.PackageVersion;
@@ -134,10 +139,6 @@ public class PackageInfoTool(
 
         if (!string.IsNullOrWhiteSpace(options.OutDir))
         {
-            if (string.IsNullOrWhiteSpace(packageInfo.PackageName))
-            {
-                throw new InvalidOperationException("Cannot export PackageInfo because the package name could not be determined.");
-            }
             return new DefaultCommandResponse
             {
                 Message = $"Files written to {options.OutDir}:",

@@ -71,6 +71,14 @@
     "uploaded_at": "2026-10-28T08:34:22.765779+00:00",
     "version": "onboarding-2026-10-28"
   },
+  "qa-bot-perf-python": {
+    "cases": 23,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-python/versions/python-2026-10-28",
+    "scenario": "python",
+    "target": "perf",
+    "uploaded_at": "2026-10-28T08:55:52.690464+00:00",
+    "version": "python-2026-10-28"
+  },
   "qa-bot-perf-typespec": {
     "cases": 123,
     "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-typespec/versions/typespec-2026-10-28",

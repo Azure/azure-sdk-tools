@@ -54,6 +54,7 @@ export interface AzureDevOpsIssueTracker {
     provider: 'azure-devops';
     organization: string;
     project: string;
+    areaPath: string;
 }
 
 export interface Source {

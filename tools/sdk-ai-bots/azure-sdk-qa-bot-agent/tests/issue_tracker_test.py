@@ -30,6 +30,7 @@ _ADO_SOURCE_TARGET = KbTarget(
         provider="azure-devops",
         organization="azure-sdk",
         project="internal",
+        area_path="internal\\qa-bot",
     ),
 )
 
@@ -107,6 +108,11 @@ async def test_create_ado_issue_uses_configured_project_and_issue_type() -> None
                 "op": "add",
                 "path": "/fields/System.Title",
                 "value": "Fix guidance",
+            },
+            {
+                "op": "add",
+                "path": "/fields/System.AreaPath",
+                "value": "internal\\qa-bot",
             },
             {
                 "op": "add",

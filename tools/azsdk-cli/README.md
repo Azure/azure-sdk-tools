@@ -140,6 +140,18 @@ dotnet test
 This tool can be run in test mode when the `AZSDKTOOLS_AGENT_TESTING` environment variable is set to `true`.
 When testing is enabled, release plans will be automatically generated in the test environment.
 
+### Manual release-plan abandonment
+
+Use `azsdk release-plan abandon --release-plan-id <Release Plan ID>` or supply `releasePlanId` to `azsdk_abandon_release_plan`. Supply the user-facing Release Plan ID, not the Azure DevOps work item ID. Manual abandonment no longer accepts `--work-item-id` or `workItemId`; other commands retain their existing ID contracts.
+
+`azsdk release-plan abandon` and `azsdk_abandon_release_plan` refuse abandonment when the plan is finished, any SDK is recorded as Released, or any linked SDK PR has merged. Teams should request a language-exclusion exception for the unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release. There is no force or approval override input.
+
+Open PRs, drafts, and PRs closed without merging do not themselves block abandonment. Plans with no SDK links remain supported. Linked PRs must belong to the public Azure SDK repository for their recorded language; private SDK repositories are not supported. Unverifiable or concurrently changed plans are not abandoned.
+
+After saving Abandoned, the command closes linked open unmerged SDK PRs and then adds an abandonment notice, preserving their titles and bodies. This includes drafts and human-authored or shared PRs: review shared work with its owners before abandoning. Already abandoned plans can finish cleanup of open PRs without changing the plan again. Closed and merged PRs are always left unchanged.
+
+Closing and commenting are separate actions. Cleanup failures leave the plan Abandoned and return warnings; a PR may be closed without its notice. Review linked PRs and add missing notices manually, since rerunning does not repair notices on closed PRs. Cancellation propagates with guidance when a write may have committed. Monthly cleanup and direct ADO edits do not perform this manual PR cleanup.
+
 ### Test with GitHub Coding Agent
 
 This tool can be used as an MCP server in a github action invoked by the [GitHub Coding Agent](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent). The azure-sdk language repositories and azure-rest-api-specs repository already have this MCP server configured for the coding agent.
@@ -181,8 +193,7 @@ If you need to make updates to the config, either push them to main and file a n
       ```
 
 1. The coding agent MCP configuration needs to be updated
-      - Navigate to `https://github.com/YOUR_ORGANIZATION/YOUR_REPOSITORY/settings/copilot/coding_agent`, replacing the placeholders with your organization and repository names
-      - OR go the repository homepage, click `Settings`, under `Code and automation` expand `Copilot`, select `Coding agent`
+  - Go to the repository homepage, click `Settings`, under `Code and automation` expand `Copilot`, select `Coding agent`
       - Paste the below configuration into the text box under `MCP Configuration`, then click `Save MCP Configuration`
       - Update the tools list to include any MCP tools for testing, or change the value to `"tools": ["*"]` to include all
 

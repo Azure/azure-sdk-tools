@@ -6,6 +6,17 @@
 
 - `eng package-info` supports `--package-path` to inspect one local SDK package and return its information directly, or export it with `--out-dir`. Existing bulk export remains supported.
 - Package discovery now populates `PackageInfo.ApiVersions` from generated metadata for Java, JavaScript, Python, Go, and .NET, including both Python API-version fields. Versions are trimmed, deduplicated, sorted, and included in PackageInfo JSON output. Missing metadata leaves the array empty; malformed or unreadable metadata logs a warning without failing package discovery.
+- After manual abandonment is saved, linked open unmerged SDK PRs are closed regardless of author, then receive a plan-specific notice. Already abandoned plans can finish cleanup of open PRs without rewriting ADO state. Cleanup failures return success with warnings and manual follow-up guidance. A failed notice may leave the PR closed; rerunning does not repair missing notices on closed PRs. Closed and merged PRs are never changed.
+
+### Breaking Changes
+
+- `release-plan abandon` now accepts only `--release-plan-id`; `azsdk_abandon_release_plan` accepts only `releasePlanId`. The work item ID input is no longer supported for manual abandonment.
+
+### Bugs Fixed
+
+- Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release.
+- Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.
+- Corrected development-guide links and Coding Agent settings instructions to use valid absolute, locale-neutral URLs instead of relative or placeholder links.
 
 ## 0.6.55 (2026-10-22)
 

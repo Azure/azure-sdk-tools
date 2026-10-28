@@ -80,6 +80,13 @@ public partial class GoLanguageService(
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
+        var model = await GetPackageInfoCoreAsync(packagePath, ct);
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(model, logger, ct);
+        return model;
+    }
+
+    private async Task<PackageInfo> GetPackageInfoCoreAsync(string packagePath, CancellationToken ct)
+    {
         var fullPath = RealPath.GetRealPath(packagePath);
         var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
         var sdkRoot = Path.Combine(repoRoot, "sdk");

@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- `eng package-info` supports `--package-path` to inspect one local SDK package and return its information directly, or export it with `--out-dir`. Existing bulk export remains supported.
+- Package discovery now populates `PackageInfo.ApiVersions` from generated metadata for Java, JavaScript, Python, Go, and .NET. Output entries preserve `Namespace` and `Version` from the `apiVersions` map, falling back to an unnamed `apiVersion` when the map is absent or empty. Namespace/version pairs are deduplicated and sorted, with version strings trimmed. Missing metadata leaves the array empty; malformed or unreadable metadata logs a warning without failing package discovery.
 - After manual abandonment is saved, linked open unmerged SDK PRs are closed regardless of author, then receive a plan-specific notice. Already abandoned plans can finish cleanup of open PRs without rewriting ADO state. Cleanup failures return success with warnings and manual follow-up guidance. A failed notice may leave the PR closed; rerunning does not repair missing notices on closed PRs. Closed and merged PRs are never changed.
 
 ### Breaking Changes

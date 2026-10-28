@@ -599,8 +599,109 @@ def _process_github_result(result: mcp_types.CallToolResult) -> str | None:
     return json.dumps(overflow)
 
 
+def _process_github_resources(result: mcp_types.CallToolResult) -> str:
+    """Keep embedded file text and identify unavailable or partial resources."""
+    blocks: list[dict[str, Any]] = []
+    texts: dict[int, str] = {}
+    for item in result.content:
+        if isinstance(item, mcp_types.TextContent):
+            block: dict[str, Any] = {"type": item.type}
+            text = item.text
+        elif isinstance(item, mcp_types.EmbeddedResource):
+            block = {
+                "type": item.type,
+                "uri": str(item.resource.uri),
+                "mime_type": item.resource.mimeType,
+            }
+            if not isinstance(item.resource, mcp_types.TextResourceContents):
+                blocks.append({
+                    **block,
+                    "complete": False,
+                    "error": "Binary resource content is not available as text.",
+                })
+                continue
+            text = item.resource.text
+        elif isinstance(item, mcp_types.ResourceLink):
+            blocks.append({
+                "type": item.type,
+                "uri": str(item.uri),
+                "mime_type": item.mimeType,
+                "complete": False,
+                "error": "Resource link only; file content has not been retrieved.",
+            })
+            continue
+        else:
+            blocks.append({
+                "type": item.type,
+                "complete": False,
+                "error": "Unsupported GitHub content block.",
+            })
+            continue
+
+        try:
+            value = json.loads(text)
+        except ValueError:
+            pass
+        else:
+            protected = _compact_copilot_reviews(_scrub_untrusted_authors(value))
+            if protected != value:
+                text = json.dumps(protected)
+        texts[len(blocks)] = text
+        blocks.append(block)
+
+    def render(limit: int) -> str:
+        content = []
+        for index, block in enumerate(blocks):
+            if index not in texts:
+                content.append(block)
+                continue
+            text = texts[index]
+            excerpt = text[:limit]
+            content.append({
+                **block,
+                "text": excerpt,
+                "complete": len(excerpt) == len(text),
+                "truncated": len(excerpt) < len(text),
+                "original_characters": len(text),
+                "returned_characters": len(excerpt),
+            })
+        return json.dumps({
+            "is_error": bool(result.isError),
+            "complete": not result.isError and all(block["complete"] for block in content),
+            "content": content,
+        })
+
+    upper = max((len(text) for text in texts.values()), default=0)
+    output = render(upper)
+    if len(output) <= _MCP_MAX_OUTPUT_CHARS:
+        return output
+    logger.info("GitHub resource response exceeds output budget (%d chars)", len(output))
+    lower = 0
+    if len(render(lower)) > _MCP_MAX_OUTPUT_CHARS:
+        return json.dumps({
+            "status": "overflow",
+            "is_error": bool(result.isError),
+            "complete": False,
+            "returned_objects": 0,
+            "source_content_blocks": len(blocks),
+            "error": "Resource metadata exceeds the output budget; narrow the request.",
+        })
+    while lower < upper:
+        midpoint = (lower + upper + 1) // 2
+        if len(render(midpoint)) <= _MCP_MAX_OUTPUT_CHARS:
+            lower = midpoint
+        else:
+            upper = midpoint - 1
+    return render(lower)
+
+
 def _github_mcp_parser(result: mcp_types.CallToolResult) -> str:
     """Redact GitHub results and mark oversized pages incomplete."""
+    if any(
+        isinstance(item, (mcp_types.EmbeddedResource, mcp_types.ResourceLink))
+        for item in result.content
+    ):
+        return _process_github_resources(result)
     processed = _process_github_result(result)
     if processed is not None:
         return processed

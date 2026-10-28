@@ -222,6 +222,7 @@ def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
             TenantID.PYTHON_CHANNEL_QA_BOT,
             [
                 tenant_config.SRC_AZURE_SDK_FOR_PYTHON_DOCS,
+                tenant_config.SRC_STATIC_PYTHON_QA,
             ],
             "python",
             "python",

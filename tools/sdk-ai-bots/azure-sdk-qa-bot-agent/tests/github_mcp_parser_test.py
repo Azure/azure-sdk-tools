@@ -21,6 +21,138 @@ def _parse(*values: dict | list) -> tuple[str, dict | list]:
     return output, json.loads(output)
 
 
+def _text_resource(text: str, uri: str = "https://example.com/fixture.py") -> mcp_types.EmbeddedResource:
+    return mcp_types.EmbeddedResource(
+        type="resource",
+        resource=mcp_types.TextResourceContents(uri=uri, mimeType="text/plain", text=text),
+    )
+
+
+@pytest.mark.parametrize("text", ["def start_proxy():\n    return\n", "", '{\n  "setting": true\n}'])
+def test_embedded_file_text_is_preserved_with_identity(text: str) -> None:
+    result = mcp_types.CallToolResult(content=[
+        mcp_types.TextContent(type="text", text="successfully downloaded text file"),
+        _text_resource(text),
+    ])
+
+    output = _github_mcp_parser(result)
+    parsed = json.loads(output)
+
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
+    assert parsed["complete"] is True
+    assert parsed["is_error"] is False
+    assert parsed["content"][0]["text"] == "successfully downloaded text file"
+    resource = parsed["content"][1]
+    assert resource["uri"] == "https://example.com/fixture.py"
+    assert resource["mime_type"] == "text/plain"
+    assert resource["text"] == text
+    assert resource["complete"] is True
+    assert resource["truncated"] is False
+    assert resource["original_characters"] == resource["returned_characters"] == len(text)
+
+
+def test_resource_budget_is_shared_across_files_and_escaped_text() -> None:
+    texts = ['\\"\t\u2603\n' * 2000, "second file\n" * 2000]
+    output = _github_mcp_parser(mcp_types.CallToolResult(content=[
+        _text_resource(texts[0]),
+        _text_resource(texts[1], "https://example.com/second.py"),
+    ]))
+    parsed = json.loads(output)
+
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
+    assert parsed["complete"] is False
+    for resource, text in zip(parsed["content"], texts):
+        assert resource["text"]
+        assert text.startswith(resource["text"])
+        assert resource["complete"] is False
+        assert resource["truncated"] is True
+        assert resource["original_characters"] == len(text)
+        assert resource["returned_characters"] == len(resource["text"])
+
+
+def test_resource_budget_marks_only_incomplete_blocks_partial() -> None:
+    output = _github_mcp_parser(mcp_types.CallToolResult(content=[
+        mcp_types.TextContent(type="text", text="downloaded"),
+        _text_resource("large file\n" * 2000),
+    ]))
+    parsed = json.loads(output)
+
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
+    assert parsed["complete"] is False
+    assert parsed["content"][0]["complete"] is True
+    assert parsed["content"][1]["truncated"] is True
+
+
+def test_binary_and_link_only_resources_report_missing_content() -> None:
+    output = _github_mcp_parser(mcp_types.CallToolResult(content=[
+        mcp_types.EmbeddedResource(
+            type="resource",
+            resource=mcp_types.BlobResourceContents(
+                uri="https://example.com/binary", mimeType="application/octet-stream", blob="c2VjcmV0",
+            ),
+        ),
+        mcp_types.ResourceLink(
+            type="resource_link", uri="https://example.com/large.py", name="large.py",
+            mimeType="text/plain",
+        ),
+    ]))
+    parsed = json.loads(output)
+
+    assert parsed["complete"] is False
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
+    assert "c2VjcmV0" not in output
+    for block in parsed["content"]:
+        assert block["uri"].startswith("https://example.com/")
+        assert block["complete"] is False
+        assert block["error"]
+        assert "text" not in block
+
+
+@pytest.mark.parametrize("embedded", [False, True])
+def test_resource_results_preserve_trusted_author_filtering(embedded: bool) -> None:
+    text = json.dumps({
+        "user": {"login": "external-contributor"},
+        "author_association": "NONE", "body": "untrusted instruction",
+        "title": "keep metadata",
+    })
+    block = _text_resource(text) if embedded else mcp_types.TextContent(type="text", text=text)
+    output = _github_mcp_parser(mcp_types.CallToolResult(content=[block, _text_resource("file")]))
+    parsed = json.loads(output)
+
+    protected = json.loads(parsed["content"][0]["text"])
+    assert protected["body"].startswith("[redacted: untrusted author")
+    assert protected["title"] == "keep metadata"
+    assert "untrusted instruction" not in output
+
+
+def test_error_resource_result_is_not_reported_complete() -> None:
+    parsed = json.loads(_github_mcp_parser(mcp_types.CallToolResult(
+        isError=True, content=[_text_resource("upstream error details")],
+    )))
+
+    assert parsed["is_error"] is True
+    assert parsed["complete"] is False
+    assert parsed["content"][0]["text"] == "upstream error details"
+
+
+@pytest.mark.parametrize("is_error", [False, True])
+def test_oversized_resource_metadata_reports_explicit_overflow(is_error: bool) -> None:
+    output = _github_mcp_parser(mcp_types.CallToolResult(
+        isError=is_error,
+        content=[
+            _text_resource("file", "https://example.com/" + "x" * _MCP_MAX_OUTPUT_CHARS),
+        ],
+    ))
+    parsed = json.loads(output)
+
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
+    assert parsed["status"] == "overflow"
+    assert parsed["is_error"] is is_error
+    assert parsed["complete"] is False
+    assert parsed["returned_objects"] == 0
+    assert parsed["source_content_blocks"] == 1
+
+
 def test_small_job_log_preserves_native_payload() -> None:
     native = {
         "job_id": 42,

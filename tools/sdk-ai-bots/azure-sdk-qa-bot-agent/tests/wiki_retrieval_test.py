@@ -100,10 +100,11 @@ def test_hierarchy_expansion_keeps_matched_passage_first():
 
 @pytest.mark.parametrize("header", ["question", "Question", "QUESTION"])
 @pytest.mark.parametrize("max_chars", [1100, 3000])
-def test_question_expansion_keeps_paired_answer_before_long_logs(header, max_chars):
+@pytest.mark.parametrize("source", ["static_typespec_qa", "static_python_qa"])
+def test_question_expansion_keeps_paired_answer_before_long_logs(header, max_chars, source):
     question = KnowledgeChunk(
         chunk_id="question",
-        source="static_typespec_qa",
+        source=source,
         title="typespec.md",
         header1="SDK validation errors",
         header2=header,

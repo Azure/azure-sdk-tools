@@ -90,11 +90,11 @@ def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
     assert "Follow relevant steps by priority, not as a checklist" in pr_review
     assert "continue only for unresolved needs and stop once answered" in pr_review
     assert "wait for all three before later calls" in pr_review
-    assert "ALL needed tools in a single parallel batch" in instruction
+    assert "all independent, ready tools in a single parallel batch" in instruction
     assert "at most 8 tool calls per turn total" in instruction
 
 
-def test_shared_retrieval_uses_original_batch_and_latency_constraints() -> None:
+def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
     instruction = (
         Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
@@ -112,16 +112,27 @@ def test_shared_retrieval_uses_original_batch_and_latency_constraints() -> None:
     assert "Follow evidence gaps" not in retrieval
     assert "Default retrieval is one parallel batch" in rules["2"]
     assert "Do not repeat a broad retrieval after the first batch" in rules["2"]
-    assert "ALL needed tools in a single parallel batch" in rules["5"]
+    assert "PR diagnostics may instead use the bounded, dependency-driven rounds" in retrieval
+    assert "bounded exception in Constraints 5–6" in rules["2"]
+    assert "all independent, ready tools in a single parallel batch" in rules["5"]
+    assert "PR diagnostic exception" in rules["5"]
+    assert "PR/status/check preflight → run/job lookup → failed-job logs → error-specific KB search" in rules["5"]
+    assert "Batch independent calls within each round" in rules["5"]
+    assert "do not guess identifiers or search for an error before retrieving it" in rules["5"]
     assert "call `load_skill` ALONE first" in rules["5"]
     assert "Latency budget" in rules["6"]
     assert "Match depth to the user's need and current evidence" in instruction
     assert "defer available diagnosis to a follow-up" in instruction
     assert "summarize first, then let the user choose what to explore" not in instruction
     assert "non-PR" not in instruction
-    assert "Batch independent calls; sequence dependent calls" not in constraints
-    assert "A third turn is allowed only" in rules["6"]
+    assert "at most 3 dependent follow-up rounds after the opening batch" in rules["6"]
+    assert "within the same 8-call cap" in rules["6"]
+    assert "Stop as soon as the request is answered" in rules["6"]
+    assert "state the specific retrieval limit and unresolved fact" in rules["6"]
     assert "at most 8 tool calls per turn total" in rules["1"]
+    assert "entire user request, including all diagnostic rounds and skill loads" in rules["1"]
+    assert "ALL needed tools in a single parallel batch" not in constraints
+    assert "A third turn is allowed only" not in constraints
     assert "wait for all three before later calls" in pr_review
     assert "only to resolve remaining review questions" in pr_review
 

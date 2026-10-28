@@ -89,7 +89,7 @@ def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
     assert positions == sorted(positions)
     assert "Follow relevant steps by priority, not as a checklist" in pr_review
     assert "continue only for unresolved needs and stop once answered" in pr_review
-    assert "wait for all three before later calls" in pr_review
+    assert "wait for these results before dependent calls" in pr_review
     assert "all independent, ready tools in a single parallel batch" in instruction
     assert "at most 8 tool calls per turn total" in instruction
 
@@ -133,7 +133,7 @@ def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
     assert "entire user request, including all diagnostic rounds and skill loads" in rules["1"]
     assert "ALL needed tools in a single parallel batch" not in constraints
     assert "A third turn is allowed only" not in constraints
-    assert "wait for all three before later calls" in pr_review
+    assert "wait for these results before dependent calls" in pr_review
     assert "only to resolve remaining review questions" in pr_review
     assert "latest relevant reviewer/workflow summary first" in pr_review
     assert "when it reports issues, is unclear, or the user requests details" in pr_review
@@ -447,8 +447,8 @@ def test_chat_agent_explains_workflow_action_required_evidence() -> None:
     ).read_text(encoding="utf-8")
 
     assert "**Checks stuck, untriggered, pending or awaiting approval:**" in instruction
-    assert "Read the PR, `get_status` and `get_check_runs` via `pull_request_read` in parallel" in instruction
-    assert "wait for all three before later calls" in instruction
+    assert "Fetch `get_status` and `get_check_runs` via `pull_request_read` in parallel" in instruction
+    assert "wait for these results before dependent calls" in instruction
     assert "Run details (`actions_get` for Actions) establish the workflow state" in instruction
     assert "For completed `action_required` runs or an unexplained approval report" in instruction
     assert "inspect the returned `html_url` with `web_fetch`" in instruction
@@ -577,8 +577,10 @@ def test_pr_preflight_uses_statuses_check_runs_and_labels_to_select_next_steps()
     assert "to choose relevant next steps and depth" in preflight
     assert "Interpret labels using repository guidance" in preflight
     assert "prioritize unresolved work while honoring the user's request" in preflight
-    assert "Read the PR, `get_status` and `get_check_runs` via `pull_request_read` in parallel" in preflight
-    assert "wait for all three before later calls" in preflight
+    assert "Fetch `get_status` and `get_check_runs` via `pull_request_read` in parallel" in preflight
+    assert "only for failure diagnosis or merge-readiness requests" in preflight
+    assert "wait for these results before dependent calls" in preflight
+    assert "wait for all three before later calls" not in preflight
     assert "Assess both commit statuses and check runs" in preflight
     assert "check-run `details_url` (or `html_url`)" in preflight
     assert "status-context `target_url` links" in preflight
@@ -627,7 +629,8 @@ def test_pr_review_assesses_purpose_and_changed_file_evidence() -> None:
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     normalized = " ".join(pr_review.split())
     assert "Read the description and relevant diffs" in normalized
-    assert "Start `get_files` at `perPage=1`; page only as needed" in normalized
+    assert "Size `get_files` pages to the requested scope; reduce `perPage` on overflow" in normalized
+    assert "perPage=1" not in pr_review
     assert "Assess changes alongside checks and feedback; state coverage gaps" in normalized
 
 

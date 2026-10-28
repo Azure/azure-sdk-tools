@@ -2,6 +2,7 @@ import axios from 'axios';
 import { logger } from '../logging/logger.js';
 import { ragApiPaths } from '../config/config.js';
 import { TokenCredential } from '@azure/identity';
+import type { TeamsMention } from '../common/mentions.js';
 
 export interface RAGOptions {
   endpoint: string;
@@ -79,6 +80,7 @@ export interface CompletionResponsePayload {
   ReasoningProgress?: string;
   route_tenant?: string;
   trace_id?: string;
+  mentions?: TeamsMention[] | null;
 }
 
 export function isCompletionResponsePayload(

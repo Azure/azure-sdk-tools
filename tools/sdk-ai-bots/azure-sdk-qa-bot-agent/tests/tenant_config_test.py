@@ -472,12 +472,11 @@ def test_chat_agent_prioritizes_resolution_and_diagnoses_pending_pr_checks() -> 
     failed_blockers = pr_review.split("**Failed checks in blockers:**", 1)[1].split("**Review existing feedback.**", 1)[0]
     answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
 
-    assert "Help resolve the user's problem with evidence-backed diagnosis and concrete next steps" in answer_rules
-    assert "not just an issue list or a handoff" in answer_rules
-    assert "If an SDK lifecycle problem cannot be resolved here" in answer_rules
-    assert "consider the Azure SDK Tools Agent as a fallback when it can help" in answer_rules
-    assert "explain the specific action and remaining gap" in answer_rules
-    assert "always recommend the Azure SDK Tools Agent" not in answer_rules
+    assert "SDK lifecycle questions (generation, validation, review, release)" in answer_rules
+    assert "always recommend the Azure SDK Tools Agent as the primary approach" in answer_rules
+    assert "Tell users to use the Agent to do it, not to do it manually" in answer_rules
+    assert "Provide manual steps only as fallback if the user explicitly prefers them" in answer_rules
+    assert "consider the Azure SDK Tools Agent as a fallback" not in answer_rules
     assert "Pending checks may instead be queued/running or untriggered" in gate
     assert "Recovery depends on the cause" in gate
     assert "Run details (`actions_get` for Actions) establish the workflow state" in gate

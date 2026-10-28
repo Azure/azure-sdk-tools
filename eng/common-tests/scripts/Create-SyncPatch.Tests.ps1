@@ -86,9 +86,9 @@ Describe 'Create directory sync mail patches' -Tag 'UnitTest' {
     }
 
     It 'wires the helper into the existing sparse checkout and patch artifact contract' {
-        Import-Module powershell-yaml
+        . (Join-Path $PSScriptRoot '../../common/scripts/Helpers/Package-Helpers.ps1')
         $root = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-        $template = ConvertFrom-Yaml (Get-Content -LiteralPath "$root/eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml" -Raw)
+        $template = CompatibleConvertFrom-Yaml -Content (Get-Content -LiteralPath "$root/eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml" -Raw)
         $steps = $template.stages[0].Values.jobs[0].steps
         $checkout = @($steps | Where-Object { $_ -is [Collections.IDictionary] -and $_.Contains('template') -and $_.template -like '*sparse-checkout.yml' })
         $checkout[0].parameters.Paths | Should -Contain 'eng/scripts'

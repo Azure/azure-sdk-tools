@@ -282,8 +282,8 @@ vally eval \
   --verbose
 ```
 
-Setup changes eval files to `environment: azsdk-mcp-local`. Do not commit that local override;
-restore `environment: azsdk-mcp` before committing.
+Setup changes eval files to `agent_environment: azsdk-mcp-local`. Do not commit that local override;
+restore `agent_environment: azsdk-mcp` before committing.
 
 Use `--mcp-kind mock` only for isolated mock-server development. The benchmark's forced and trigger
 tracks default to the live MCP so they exercise the production tool surface.

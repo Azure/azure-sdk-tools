@@ -2,9 +2,10 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "versioning"
+tags:
+  area: "versioning"
 # Root-level environment
-environment: azsdk-mcp
+agent_environment: azsdk-mcp
 # Execution configuration
 defaults:
   runs: 1 # Trials per stimulus
@@ -20,7 +21,7 @@ stimuli:
       mode: "trigger"
     prompt: |
       I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
-    environment: &shared_environment
+    agent_environment: &shared_environment
       files:
         - src: ../fixtures/001007-version-add-stable-after-preview/employee.tsp
           dest: employee.tsp
@@ -101,7 +102,7 @@ stimuli:
       mode: "forced"
     prompt: |
       @azure-typespec-author I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
-    environment: *shared_environment
+    agent_environment: *shared_environment
     graders:
       - *tool_calls
       - type: "run-command"
@@ -136,25 +137,21 @@ stimuli:
           path: "main.tsp"
       - &file_not_matches_removed_property
         type: "file-not-matches"
-        name: "file-not-matches-removed-property"
         config:
           pattern: 'workLocation\?: WorkLocation;'
           path: "employee.tsp"
       - &file_matches_renamed_property
         type: "file-matches"
-        name: "file-matches-renamed-property"
         config:
           pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01\)\s*@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01, "age"\)\s*oldAge\?: int32;'
           path: "employee.tsp"
       - &file_matches_added_property
         type: "file-matches"
-        name: "file-matches-added-property"
         config:
           pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01\)\s*age\?: int32 = 21;'
           path: "employee.tsp"
       - &file_not_matches_old_version
         type: "file-not-matches"
-        name: "file-not-matches-old-version"
         config:
           pattern: "v2024_10_01_preview"
           path: "employee.tsp"
@@ -166,7 +163,7 @@ stimuli:
       suite: "versioning"
       mode: "no-skill"
     prompt: "I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features."
-    environment: *shared_environment
+    agent_environment: *shared_environment
     graders:
       - type: "tool-calls"
         config:

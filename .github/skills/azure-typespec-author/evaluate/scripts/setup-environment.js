@@ -54,11 +54,14 @@ const evalEnvironment = mcpKind === 'live' ? 'azsdk-mcp-local' : 'azsdk-mcp-mock
 for (const fileName of fs.readdirSync(evalsDir).filter((name) => name.endsWith('.eval.yaml'))) {
   const filePath = path.join(evalsDir, fileName);
   const content = fs.readFileSync(filePath, 'utf8');
-  const environmentPattern = /^environment:[ \t]+\S+[ \t]*(?=\r?$)/m;
+  const environmentPattern = /^agent_environment:[ \t]+\S+[ \t]*(?=\r?$)/m;
   if (!environmentPattern.test(content)) {
     continue;
   }
-  const updatedContent = content.replace(environmentPattern, `environment: ${evalEnvironment}`);
+  const updatedContent = content.replace(
+    environmentPattern,
+    `agent_environment: ${evalEnvironment}`
+  );
   if (updatedContent !== content) {
     fs.writeFileSync(filePath, updatedContent);
   }

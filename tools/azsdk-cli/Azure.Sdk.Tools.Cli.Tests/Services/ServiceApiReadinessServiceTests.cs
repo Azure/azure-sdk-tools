@@ -108,6 +108,29 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.Projects.Single().Detail, Does.Contain("not a confirmed deployment failure"));
     }
 
+    [TestCase("js", "sdk/example/arm-example", "metadata.json")]
+    [TestCase("python", "sdk/example/azure-mgmt-example", "_metadata.json")]
+    public async Task SingularApiVersionUsesThePinnedProviderNamespace(string language, string package, string metadata)
+    {
+        _files.Clear();
+        _changedFiles.Clear();
+        _repository = $"helen229/azure-sdk-for-{language}";
+        AddPackage(package, metadata, Version);
+        SetFile(_repository, Head, $"{package}/{metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.Projects.Single().Source.ExpectedNamespace, Is.EqualTo("Microsoft.Example"));
+        Assert.That(response.Projects.Single().Source.ApiVersion, Is.EqualTo(Version));
+    }
+
+    [Test]
+    public async Task UnambiguousVersionArrayUsesSharedMetadataParser()
+    {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", "{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\"]}}");
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+    }
+
     [Test]
     public async Task MissingVersionMapDoesNotUseDescriptionNotes()
     {

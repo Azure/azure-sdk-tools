@@ -115,6 +115,29 @@ For example, map metadata produces `"ApiVersions": [{"Version": "2026-04-01", "N
 
 Missing metadata or metadata without API versions leaves `ApiVersions` empty. Malformed JSON, invalid field types, blank version strings, or unreadable files leave it empty and log a warning with the file path and failure reason. No partial versions are returned if a matching file is invalid. Metadata errors are logged only; they are not stored in `PackageInfo` and do not fail package discovery or hide the package from bulk export. Invalid command options, nonexistent package directories, or failed package lookups return exit code `1`.
 
+### Service API-version readiness
+
+```sh
+azsdk pkg check-api-version --owner Azure --repo azure-sdk-for-java --pr 123 \
+  --expected-head-sha <full-sdk-pr-head-sha> --output json
+```
+
+This read-only CLI/MCP check resolves exact generation metadata from the SDK
+files at the current PR head, reads the pinned specification, and compares the
+version with ARM provider metadata. It returns Passed, Not detected,
+Inconclusive, or Error with source and resource-type evidence. It does not edit
+GitHub, grant permissions, merge a PR, or release a package.
+
+GitHub authentication uses the existing token resolver: automation can supply
+its App installation token through `GITHUB_TOKEN`; local users can use
+`gh auth login`. ARM uses the existing Azure credential service, including
+developer credentials locally and managed identity on the hosted worker.
+Do not pass either token on the command line.
+
+See the [versioned input/result and worker contract](docs/specs/7-validating-service-api-readiness.spec.md).
+The command's zero exit code means an observation completed; read `status` to
+distinguish Passed from Not detected or Inconclusive. Error returns one.
+
 ### Package release approval
 
 ```sh

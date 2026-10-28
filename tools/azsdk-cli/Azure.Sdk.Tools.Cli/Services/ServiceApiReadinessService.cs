@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Azure.Core;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using YamlDotNet.RepresentationModel;
 
@@ -136,15 +138,45 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                         issues.Add($"{package}: SDK metadata conflicts with tsp-location.yaml.");
                         continue;
                     }
-                    if (metadata["apiVersions"] is not JsonObject versions || versions.Count == 0)
+                    var parserMetadata = metadata.DeepClone().AsObject();
+                    var ambiguous = false;
+                    if (parserMetadata["apiVersions"] is JsonObject versionMap)
                     {
-                        issues.Add($"{package}: missing or invalid apiVersions namespace map.");
+                        foreach (var entry in versionMap.ToArray())
+                        {
+                            if (entry.Value is not JsonArray array)
+                            {
+                                continue;
+                            }
+                            var distinct = array.Select(Text).Distinct(StringComparer.Ordinal).ToArray();
+                            if (distinct.Length != 1 || string.IsNullOrWhiteSpace(distinct[0]))
+                            {
+                                ambiguous = true;
+                                continue;
+                            }
+                            versionMap[entry.Key] = distinct[0];
+                        }
+                    }
+                    if (ambiguous)
+                    {
+                        issues.Add($"{package}: conflicting API versions; no latest-version selection.");
                         continue;
                     }
-                    foreach (var entry in versions)
+                    var versions = GeneratedSdkMetadataHelper.ReadApiVersions(JsonSerializer.SerializeToElement(parserMetadata));
+                    if (versions.Count == 0)
                     {
-                        var candidates = entry.Value is JsonArray array ? array.Select(Text).ToArray() : [Text(entry.Value)];
-                        if (!Regex.IsMatch(entry.Key, @"\A[\w-]+(?:\.[\w-]+)+\z") || candidates.Length == 0 ||
+                        issues.Add($"{package}: missing or invalid API-version metadata (apiVersions/apiVersion).");
+                        continue;
+                    }
+                    foreach (var entry in versions.GroupBy(version => version.Namespace ?? "", StringComparer.Ordinal))
+                    {
+                        var expectedNamespace = entry.Key;
+                        if (expectedNamespace.Length == 0)
+                        {
+                            expectedNamespace = ProviderNamespace(await ReadFileAsync(specRepository, commit, $"{directory}/main.tsp", token, ct) ?? "");
+                        }
+                        var candidates = entry.Select(version => version.Version).Distinct(StringComparer.Ordinal).ToArray();
+                        if (!Regex.IsMatch(expectedNamespace, @"\A[\w-]+(?:\.[\w-]+)+\z") || candidates.Length == 0 ||
                             candidates.Any(version => !Regex.IsMatch(version, @"\A\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?\z", RegexOptions.IgnoreCase)))
                         {
                             issues.Add($"{package}: invalid namespace/API-version entry.");
@@ -162,7 +194,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                             Configuration = $"{directory}/tspconfig.yaml",
                             CommitSha = commit,
                             SpecRepository = specRepository,
-                            ExpectedNamespace = entry.Key,
+                            ExpectedNamespace = expectedNamespace,
                             ApiVersion = candidates[0],
                             MetadataFiles = [locationPath, metadataPath]
                         });
@@ -331,12 +363,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         await Task.WhenAll(configTask, mainTask);
         var configText = await configTask;
         var main = await mainTask ?? "";
-        main = Regex.Replace(Regex.Replace(main, @"/\*[\s\S]*?\*/", ""), @"//[^\n]*", "");
-        var provider = Regex.Match(main, "@armProviderNamespace\\(\\s*\"([\\w.-]+)\"\\s*\\)").Groups[1].Value;
-        if (string.IsNullOrEmpty(provider))
-        {
-            provider = Regex.Match(main, @"@armProviderNamespace\b(?!\s*\()[\s\S]*?\bnamespace\s+([\w.]+)\s*[;{]").Groups[1].Value;
-        }
+        var provider = ProviderNamespace(main);
         var missing = new List<string>();
         var types = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (string.IsNullOrEmpty(provider))
@@ -548,6 +575,14 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
     private static string SafeError(Exception exception) => exception is OperationCanceledException ? "The readiness check was canceled or exceeded its time budget." :
         exception is HttpRequestException httpException && httpException.StatusCode.HasValue ? $"A platform or application failure prevented the check (HTTP {(int)httpException.StatusCode.Value})." :
         "A platform or application failure prevented the check. No deployment conclusion can be drawn.";
+
+    private static string ProviderNamespace(string main)
+    {
+        main = Regex.Replace(Regex.Replace(main, @"/\*[\s\S]*?\*/", ""), @"//[^\n]*", "");
+        var explicitNamespace = Regex.Match(main, "@armProviderNamespace\\(\\s*\"([\\w.-]+)\"\\s*\\)").Groups[1].Value;
+        return explicitNamespace.Length > 0 ? explicitNamespace :
+            Regex.Match(main, @"@armProviderNamespace\b(?!\s*\()[\s\S]*?\bnamespace\s+([\w.]+)\s*[;{]").Groups[1].Value;
+    }
 
     private async Task<string?> ReadFileAsync(string repository, string commit, string path, string token, CancellationToken ct)
     {

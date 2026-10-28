@@ -390,6 +390,53 @@ def _redact_untrusted_authors(text: str) -> str:
     return json.dumps(_scrub_untrusted_authors(data))
 
 
+def _compact_copilot_reviews(value: Any) -> Any:
+    """Keep the latest Copilot review in this response, never infer page coverage."""
+    if not isinstance(value, list) or not value:
+        return value
+    if not all(
+        isinstance(item, dict)
+        and {"id", "state", "html_url"} <= item.keys()
+        and item["state"] in {"APPROVED", "CHANGES_REQUESTED", "COMMENTED", "PENDING", "DISMISSED"}
+        for item in value
+    ):
+        return value
+    candidates: list[tuple[int, datetime]] = []
+    for index, item in enumerate(value):
+        if (item.get("user") or {}).get("login") != "copilot-pull-request-reviewer[bot]":
+            continue
+        if item.get("state") in {"PENDING", "DISMISSED"}:
+            continue
+        timestamp = item.get("submitted_at")
+        if not isinstance(timestamp, str):
+            continue
+        try:
+            submitted = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if submitted.tzinfo is not None:
+            candidates.append((index, submitted))
+    if not candidates:
+        return value
+    latest_index = max(candidates, key=lambda candidate: candidate[1])[0]
+    omitted = {index for index, _ in candidates if index != latest_index}
+    return {
+        "reviews": [item for index, item in enumerate(value) if index not in omitted],
+        "review_selection": {
+            "author": "copilot-pull-request-reviewer[bot]",
+            "scope": "current_response_only",
+            "omitted_older_copilot_reviews": len(omitted),
+            "latest_overall_verified": False,
+            "guidance": (
+                "Only the latest submitted Copilot review in this response is retained. "
+                "Other pages may contain newer reviews; verify pagination before claiming latest overall. "
+                "Read inline findings only when the summary reports issues, is unclear, "
+                "or the user requests details. A bot verdict is not formal approval or merge readiness."
+            ),
+        },
+    }
+
+
 def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
     """Attach bounded, verbatim diagnostic windows to job-log overflow metadata."""
     jobs: list[dict[str, Any]] = []
@@ -482,7 +529,7 @@ def _process_github_result(result: mcp_types.CallToolResult) -> str | None:
             value = json.loads(content.text)
         except ValueError:
             return None
-        values.append(_scrub_untrusted_authors(value))
+        values.append(_compact_copilot_reviews(_scrub_untrusted_authors(value)))
     output = json.dumps(values[0] if len(values) == 1 else values)
     if len(output) <= _MCP_MAX_OUTPUT_CHARS:
         return output

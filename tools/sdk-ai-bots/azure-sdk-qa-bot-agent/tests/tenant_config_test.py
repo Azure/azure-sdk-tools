@@ -135,6 +135,10 @@ def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
     assert "A third turn is allowed only" not in constraints
     assert "wait for all three before later calls" in pr_review
     assert "only to resolve remaining review questions" in pr_review
+    assert "latest relevant reviewer/workflow summary first" in pr_review
+    assert "when it reports issues, is unclear, or the user requests details" in pr_review
+    assert "only to the current response, not the entire PR" in pr_review
+    assert "not formal approval or proof of current-head merge readiness" in pr_review
 
 
 def test_shared_verdict_checks_take_precedence_over_answer_style() -> None:
@@ -599,7 +603,7 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
     assert "Draft state alone does not require a deep code review; still diagnose relevant check failures" not in pr_review
     assert "Explicit fresh code/design review proceeds even on draft/red-check PRs" in pr_review
     assert "when needed for the user's request and preflight findings" in pr_review
-    assert "Read relevant `get_reviews`, `get_review_comments` and `get_comments`" in pr_review
+    assert "Read relevant `get_reviews` and `get_comments`" in pr_review
     assert "follow the relevant **PR Review Workflow** steps; skip irrelevant steps" in instruction
     assert "read the PR, its failing check runs, and their logs before answering" not in instruction
 
@@ -646,8 +650,9 @@ def test_pr_review_reads_existing_reviews_and_compares_inline_feedback_with_curr
     pr_review = instruction.split("## PR Review Workflow\n", 1)[1].split("\n## ", 1)[0]
     feedback = pr_review.split("**Review existing feedback.**", 1)[1].split("**Understand the changes.**", 1)[0]
     normalized = " ".join(feedback.split())
-    assert "Read relevant `get_reviews`, `get_review_comments` and `get_comments`" in normalized
-    assert "compare replies/current diffs to identify unresolved findings" in normalized
+    assert "Read relevant `get_reviews` and `get_comments`" in normalized
+    assert "fetch `get_review_comments` when it reports issues, is unclear, or the user requests details" in normalized
+    assert "compare replies/current diffs when investigating findings" in normalized
     assert "select the latest overall review" in normalized
 
 

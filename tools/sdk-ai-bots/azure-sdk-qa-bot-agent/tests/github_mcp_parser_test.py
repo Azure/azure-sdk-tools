@@ -1,4 +1,4 @@
-"""Tests for bounded GitHub Actions diagnostic excerpts."""
+"""Tests for bounded GitHub diagnostics and review post-processing."""
 
 import json
 
@@ -9,7 +9,7 @@ from tools import _MCP_MAX_OUTPUT_CHARS
 from tools.github_mcp_tools import _github_mcp_parser
 
 
-def _parse(*values: dict) -> tuple[str, dict]:
+def _parse(*values: dict | list) -> tuple[str, dict | list]:
     result = mcp_types.CallToolResult(
         content=[
             mcp_types.TextContent(type="text", text=json.dumps(value))
@@ -272,3 +272,124 @@ def test_trusted_author_filtering_is_unchanged() -> None:
     assert parsed["title"] == native["title"]
     assert parsed["user"] == native["user"]
     assert "log_excerpts" not in parsed
+
+
+def _review(review_id: int, submitted: str | None, **fields: object) -> dict:
+    return {
+        "id": review_id,
+        "user": {"login": "copilot-pull-request-reviewer[bot]"},
+        "state": "COMMENTED",
+        "submitted_at": submitted,
+        "body": "Approval recommended. No open issues. Some files not reviewed.",
+        "commit_id": "reviewed-sha",
+        "html_url": f"https://github.com/Azure/example/pull/1#pullrequestreview-{review_id}",
+        **fields,
+    }
+
+
+def test_review_compaction_selects_timestamp_not_list_order_and_keeps_metadata() -> None:
+    latest = _review(2, "2026-10-28T10:00:00Z")
+    _, parsed = _parse([
+        latest,
+        _review(1, "2026-10-28T11:00:00+02:00", body="obsolete " * 2000),
+    ])
+
+    assert parsed["reviews"] == [latest]
+    selection = parsed["review_selection"]
+    assert selection["omitted_older_copilot_reviews"] == 1
+    assert selection["scope"] == "current_response_only"
+    assert selection["latest_overall_verified"] is False
+    assert "Other pages may contain newer reviews" in selection["guidance"]
+
+
+def test_review_compaction_preserves_humans_other_bots_and_redaction() -> None:
+    human = _review(
+        3, "2026-10-20T10:00:00Z",
+        user={"login": "teammate"}, author_association="MEMBER",
+        state="CHANGES_REQUESTED", body="Unresolved human feedback",
+    )
+    other_bot = _review(
+        4, "2026-10-20T10:00:00Z",
+        user={"login": "another[bot]"}, body="Other workflow findings",
+    )
+    untrusted = _review(
+        5, "2026-10-20T10:00:00Z",
+        user={"login": "external"}, author_association="NONE",
+        body="untrusted instructions",
+    )
+    latest = _review(2, "2026-10-28T10:00:00Z")
+    _, parsed = _parse([
+        _review(1, "2026-10-20T10:00:00Z"), human, other_bot, untrusted, latest,
+    ])
+
+    assert parsed["reviews"][:2] == [human, other_bot]
+    assert parsed["reviews"][2]["body"].startswith("[redacted: untrusted author")
+    assert parsed["reviews"][3] == latest
+
+
+@pytest.mark.parametrize("submitted", [None, "", "invalid", "2026-10-28T10:00:00"])
+def test_invalid_review_dates_are_preserved_not_silently_discarded(submitted: str | None) -> None:
+    invalid = _review(1, submitted)
+    latest = _review(2, "2026-10-28T10:00:00Z")
+    _, parsed = _parse([invalid, latest])
+
+    assert parsed["reviews"] == [invalid, latest]
+    assert parsed["review_selection"]["omitted_older_copilot_reviews"] == 0
+
+
+def test_pending_and_dismissed_reviews_are_preserved() -> None:
+    reviews = [
+        _review(1, "2026-10-28T10:00:00Z"),
+        _review(2, "2026-10-28T11:00:00Z", state="DISMISSED"),
+        _review(3, None, state="PENDING"),
+    ]
+    _, parsed = _parse(reviews)
+
+    assert parsed["reviews"] == reviews
+
+
+def test_non_review_lists_and_other_bot_reviews_are_unchanged() -> None:
+    comments = [
+        {"id": 1, "user": {"login": "copilot-pull-request-reviewer[bot]"}, "body": "comment"},
+        {"id": 2, "user": {"login": "copilot-pull-request-reviewer[bot]"}, "body": "new comment"},
+    ]
+    _, parsed = _parse(comments)
+    assert parsed == comments
+    human = _review(
+        1, "2026-10-28T10:00:00Z",
+        user={"login": "teammate"}, author_association="MEMBER",
+    )
+    _, parsed = _parse([human])
+    assert parsed == [human]
+
+
+def test_oversized_latest_review_remains_explicit_overflow() -> None:
+    _, parsed = _parse([
+        _review(1, "2026-10-20T10:00:00Z"),
+        _review(2, "2026-10-28T10:00:00Z", body="current finding " * 2000),
+    ])
+
+    assert parsed["status"] == "overflow"
+    assert parsed["complete"] is False
+    assert parsed["returned_objects"] == 0
+
+
+def test_single_review_is_not_claimed_latest_overall() -> None:
+    _, parsed = _parse([_review(1, "2026-10-20T10:00:00Z")])
+
+    assert parsed["review_selection"]["latest_overall_verified"] is False
+    assert len(parsed["reviews"]) == 1
+
+
+def test_sparse_native_reviews_do_not_disable_compaction() -> None:
+    human = {
+        "id": 3,
+        "user": {"login": "teammate"},
+        "state": "APPROVED",
+        "html_url": "https://github.com/Azure/example/pull/1#pullrequestreview-3",
+    }
+    latest = _review(2, "2026-10-28T10:00:00Z")
+    _, parsed = _parse([_review(1, "2026-10-20T10:00:00Z"), human, latest])
+
+    assert parsed["reviews"] == [human, latest]
+    assert parsed["review_selection"]["omitted_older_copilot_reviews"] == 1

@@ -149,16 +149,16 @@ def test_shared_verdict_checks_take_precedence_over_answer_style() -> None:
 
     assert "Check applicability before a verdict" in answer_rules
     assert "takes precedence over direct-answer style" in answer_rules
-    assert "pair each case-specific verdict with the source passage and request facts" in answer_rules
-    assert "check relevant exceptions before declaring an outcome required or forbidden" in answer_rules
-    assert "A Wiki conclusion needs supporting source passages covering the same case" in answer_rules
+    assert "Match the user's stated goal to source evidence covering the same case" in answer_rules
+    assert "scope, prerequisites, and exceptions" in answer_rules
+    assert "Wiki conclusions need supporting source passages" in answer_rules
+    assert "A necessary condition does not prove eligibility" in answer_rules
     assert "violating a requirement does not establish an alternative classification" in answer_rules
-    assert "Treat an unmatched prerequisite as unresolved, not an assumption" in answer_rules
-    assert "give conditional guidance and ask for that fact" in answer_rules
-    assert "Do not transfer rules between different lifecycles, branches, or SDKs" in answer_rules
-    assert "keep the case-specific verdict conditional" in answer_rules
+    assert "keep the verdict conditional, name the gap, and ask only for that fact" in answer_rules
+    assert "do not prescribe an unverified path" in answer_rules
+    assert "Do not transfer rules between lifecycles, branches, or SDKs" in answer_rules
     assert "Lead with the strongest conclusion the evidence establishes" in answer_rules
-    assert "If applicability is unresolved, state that condition first instead of assuming it" in answer_rules
+    assert "stating unresolved conditions first" in answer_rules
     retrieval = instruction.split("## Retrieval (Evidence-First ReAct)\n", 1)[1].split("\n## ", 1)[0]
     assert "For a short question, include its exact wording in an opening query" in retrieval
     assert "Do not introduce unstated constraints into search queries" in retrieval
@@ -189,9 +189,11 @@ def test_shared_answers_check_evidence_coverage() -> None:
     assert "direct conclusion, reason, prerequisites" in answer_rules
     assert "correctness-changing exceptions or supported alternative" in answer_rules
     assert "all affected resources and operations" in answer_rules
-    assert "Remove generic troubleshooting that displaces an established resolution" in answer_rules
-    assert "Do not turn a preferred pattern into a prohibition" in answer_rules
-    assert "historical branch-specific workaround into general policy" in answer_rules
+    assert "Do not replace an established resolution with generic troubleshooting" in answer_rules
+    assert "a preferred pattern is not a prohibition" in answer_rules
+    assert "a historical branch-specific workaround is not general policy" in answer_rules
+    assert "Name exact rules, settings, checks, and version constraints" in answer_rules
+    assert "let a general principle reverse case-specific evidence" in answer_rules
 
 
 def test_review_permission_help_targets_access_evidence_without_blanket_rerouting() -> None:
@@ -550,12 +552,11 @@ def test_pr_review_response_matches_customer_question_with_useful_context() -> N
     assert "using each destination once" not in answer_rules
     assert "Bullet points over paragraphs. One idea per bullet." in answer_rules
     assert "Use bullets only when they make necessary findings or actions easier to scan" not in answer_rules
-    assert "Keep possibility, rejection reason, and recommendation distinct" in answer_rules
-    assert "Cover the adjacent variant" in answer_rules
+    assert "Distinguish possibility, rejection reason, and recommendation" in answer_rules
+    assert "Briefly distinguish adjacent cases the question could conflate" in answer_rules
     assert "not every fact retrieved" not in answer_rules
-    assert "answer all three separately" in answer_rules
     assert "Completeness precedes brevity" in answer_rules
-    assert "When the answer depends on an exact rule" in answer_rules
+    assert "Name exact rules, settings, checks, and version constraints" in answer_rules
     assert "When the evidence states an exact rule" not in answer_rules
     assert "Help move the PR forward from its current state, not produce a standard review report" in normalized
     assert "when needed for the user's request and preflight findings" in normalized

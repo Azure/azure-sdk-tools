@@ -56,6 +56,16 @@ steps:
     workingDirectory: $(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval
 
   - script: |
+      node --experimental-strip-types .github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-prepare.ts \
+        --prepare \
+        --eval-root "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate" \
+        --mode "$BENCHMARK_MODE" \
+        --skill-root "$(Agent.TempDirectory)/typespec-benchmark-$(System.JobId)/skills"
+    displayName: "Prepare isolated benchmark skill inputs"
+    env:
+      BENCHMARK_MODE: $(TypeSpecAuthorEvalMode)
+
+  - script: |
       set -e
       echo "tsp version:"
       tsp --version

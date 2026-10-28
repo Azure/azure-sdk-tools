@@ -127,13 +127,39 @@ these inside each trial so reference reads use accessible workspace paths.
 Environment setup removes evaluator content from the mounted copies before the
 agent starts; only `SKILL.md` and references remain.
 
-The existing shard runner selects the mode without modifying the checked-in
-configuration. It clears explicit skill mounts for no-skill runs. When `SkillBranch`
-predates shared naming, the overlay removes candidate naming sources and the runner
-omits that absent dependency only if the selected authoring skill does not require it.
-A missing dependency declared by the selected skill remains an error.
-The runner materializes only definitions and references, avoiding copies of
-the authoring fixtures and their installed dependencies into every trial.
+CI uses the common shard runner and the pinned Vally version in
+`eng/common/scripts/eval/package.json`. Forced, trigger and no-skill selection
+is passed through a Vally argument array (`--tag mode=...`, `--runs N`).
+The local pre-eval hook prepares the disposable CI checkout's `.vally.yaml` before
+Vally reloads it from each selected eval's directory. It mounts absolute paths to
+staged definitions and references, without evaluator content or installed fixture
+dependencies, and clears explicit skill mounts for no-skill runs.
+This setup modifies the CI checkout; do not invoke `--prepare` on a developer's
+working configuration unless those generated changes are intended.
+When `SkillBranch` predates shared naming, setup omits the absent naming dependency
+only if the selected authoring skill does not require it. A missing required
+dependency remains an error.
+
+All three modes use common authentication, standard verdicts, unmodified JUnit,
+and result collection with latest-attempt/completeness checks. The local post-eval
+hook prints supplementary pass@k to the job log only when `Runs > 1` and the
+common standard verdict fails. `Runs` means repeated trials, not conversation
+turns. Standard passes and single-run evaluations produce no pass@k output.
+The pre-eval hook calls `pipeline/typespec-author-prepare.ts --prepare` for setup;
+the post-eval hook calls `pipeline/typespec-author-pass-at-k.ts --report` for diagnostics.
+The hook reuses common newest-invocation selection and completeness checks, then
+verifies all expected trial indices before reporting. Missing, interrupted or
+unverifiable results produce only an unavailable warning, never a pass@k success.
+It creates no Markdown/build summary, does not change the job exit code based on
+pass@k, rewrite thresholds or replace the common Summary.
+This intentionally replaces the previous pass@k gating contract: a stimulus with
+one passing trial can appear successful in the supplementary metric while the
+standard common verdict still fails.
+Pipeline globs select only files containing the requested mode. Vally retains
+zero-match explicit eval files in its summary, and the common verdict requires
+executed stimuli. A regression checks that each mode's globs cover exactly its
+matching files; update those local lists when adding cases. Trigger-only naming
+cases and turns-only cases are not included in forced/no-skill shards.
 
 Naming cases follow the existing flat, numbered `evals/NNNNNN.eval.yaml` layout.
 Cases `007001` through `007008` compare the same task and output/file assertions
@@ -265,17 +291,24 @@ tracks default to the live MCP so they exercise the production tool surface.
 ### 6. Run a no-skill baseline
 
 ```bash
-node --experimental-strip-types pipeline/typespec-author-invoke-shard.ts \
-  --eval-args "-e evals/*.eval.yaml" \
-  --shard-name local-no-skill \
-  --output-dir ./result-no-skill \
-  --extra-args "--tag mode=no-skill --workers 1"
+(
+  set -e
+  repo_root="$(git rev-parse --show-toplevel)"
+  backup="$(mktemp -d)"
+  cp .vally.yaml "$backup/.vally.yaml"
+  trap 'cp "$backup/.vally.yaml" .vally.yaml; rm "$backup/.vally.yaml"; rmdir "$backup"' EXIT
+  node --experimental-strip-types pipeline/typespec-author-prepare.ts \
+    --prepare --eval-root "$PWD" --mode no-skill --skill-root "$backup/skills"
+  node "$repo_root/eng/common/scripts/eval/node_modules/@microsoft/vally-cli/dist/index.js" eval \
+    --tag mode=no-skill --workers 1 --junit --threshold 0.8 --output-dir ./result-no-skill
+)
 ```
 
-Use the shard runner for baselines: Vally's explicit `environment.skills` takes
+Prepare the configuration for baselines: Vally's explicit `environment.skills` takes
 precedence over `--skill-dir`, so pointing `--skill-dir` at an empty directory alone
-does not remove configured skills. The runner uses the pinned Vally installation
-from `eng/common/scripts/eval`; run `npm ci` there first.
+does not remove configured skills. The subshell restores the original `.vally.yaml`
+on exit. This uses the pinned Vally installation from `eng/common/scripts/eval`;
+run `npm ci` there first.
 
 ## Manual Fixture Setup
 

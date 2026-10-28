@@ -4,8 +4,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 
-import { configureSkillEnvironments } from "./typespec-author-invoke-shard.ts";
+import { configureSkillEnvironments, prepareBenchmark } from "./typespec-author-prepare.ts";
 
 function fixture(t: { after: (fn: () => void) => void }, naming = true, required = true) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-skill-config-"));
@@ -73,6 +75,113 @@ test("missing non-naming inputs are not silently omitted", (t) => {
     () => configureSkillEnvironments(environments, evalRoot, false, stage),
     /Missing declared benchmark skill: .*missing-skill/,
   );
+});
+
+for (const mode of ["forced", "trigger", "no-skill"]) {
+  test(`${mode} uses the nearest Vally config, standard selection and isolated skill inputs`, async (t) => {
+    const { evalRoot, environments, stage } = fixture(t);
+    const evalDir = path.join(evalRoot, "evals");
+    fs.mkdirSync(evalDir);
+    fs.writeFileSync(path.join(evalRoot, ".vally.yaml"), JSON.stringify({ environments }));
+    const file = path.join(evalDir, "example.eval.yaml");
+    fs.writeFileSync(file, JSON.stringify({
+      name: "example", description: "Configuration regression", version: "1.0", type: "capability",
+      agent_environment: "sdk",
+      defaults: { executor: "copilot-sdk" },
+      stimuli: ["forced", "trigger", "no-skill"].map((item) => ({
+        name: item, tags: { mode: item }, prompt: "Configuration fixture only",
+        graders: [{ type: "file-exists", config: { path: "example.txt" } }],
+      })),
+    }));
+    await prepareBenchmark(evalRoot, mode, stage);
+    const requireEval = createRequire(new URL("../../../../../eng/common/scripts/eval/package.json", import.meta.url));
+    const { ProjectContext, discoverAndFilterEvals, parseSuiteFilter } =
+      await import(pathToFileURL(requireEval.resolve("@microsoft/vally")).href);
+    // Vally 0.19 reloads project context from explicit -e paths, not a temporary suite.
+    const context = await ProjectContext.load(path.dirname(file));
+    assert.equal(context.dir, evalRoot);
+    const selected = await discoverAndFilterEvals(context, {
+      suiteEvals: [file], filter: parseSuiteFilter([`mode=${mode}`]),
+    });
+    assert.deepEqual(selected.errors, []);
+    assert.equal(selected.matched.length, 1);
+    assert.deepEqual(selected.matched[0].stimuli.map((stimulus) => stimulus.name), [mode]);
+    const skills = context.config.environments.sdk.skills;
+    if (mode === "no-skill") {
+      assert.deepEqual(skills, []);
+      assert.equal(fs.existsSync(stage), false);
+    } else {
+      assert.equal(skills.length, 2);
+      for (const skill of skills) {
+        assert.ok(path.isAbsolute(skill));
+        assert.deepEqual(fs.readdirSync(skill).sort(), ["SKILL.md", "references"]);
+      }
+    }
+    assert.equal(context.config.environments.sdk.mcpServers.sdk.cwd, path.resolve(evalRoot, "../../.."));
+  });
+}
+
+test("all three repository configurations plan with Vally 0.19 without executing models or MCP", async (t) => {
+  const requireEval = createRequire(new URL("../../../../../eng/common/scripts/eval/package.json", import.meta.url));
+  const { ProjectContext, loadProjectConfig, discoverAndFilterEvals, parseSuiteFilter, planRun } =
+    await import(pathToFileURL(requireEval.resolve("@microsoft/vally")).href);
+  const { parse } = requireEval("yaml");
+  const benchmark = parse(fs.readFileSync(new URL("../../../../../eng/pipelines/azure-typespec-author-benchmark.yml",
+    import.meta.url), "utf8"));
+  const baseline = parse(fs.readFileSync(new URL("../../../../../eng/pipelines/azure-typespec-author-benchmark-no-skill.yml",
+    import.meta.url), "utf8"));
+  const source = path.resolve(import.meta.dirname, "..");
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-benchmark-configs-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.symlinkSync(path.resolve(source, "../../azsdk-common-typespec-naming"),
+    path.join(root, "azsdk-common-typespec-naming"), "junction");
+  const original = await loadProjectConfig(source);
+  for (const environment of Object.values(original.environments) as { skills?: string[] }[]) {
+    if (environment.skills) {
+      environment.skills = environment.skills.map((skill) => path.resolve(source, "evals", skill));
+    }
+  }
+  for (const mode of ["forced", "trigger", "no-skill"]) {
+    const author = path.join(root, mode);
+    const evalRoot = path.join(author, "evaluate");
+    fs.mkdirSync(evalRoot, { recursive: true });
+    fs.copyFileSync(path.join(source, "..", "SKILL.md"), path.join(author, "SKILL.md"));
+    fs.cpSync(path.join(source, "evals"), path.join(evalRoot, "evals"), { recursive: true });
+    for (const directory of ["fixtures", "scripts"]) {
+      fs.symlinkSync(path.join(source, directory), path.join(evalRoot, directory), "junction");
+    }
+    const { dir: _dir, ...config } = original;
+    fs.writeFileSync(path.join(evalRoot, ".vally.yaml"), JSON.stringify(config));
+    await prepareBenchmark(evalRoot, mode, path.join(author, "skills"));
+    const context = await ProjectContext.load(path.join(evalRoot, "evals"));
+    const filter = parseSuiteFilter([`mode=${mode}`]);
+    const allMatching = await discoverAndFilterEvals(context, {
+      suiteEvals: ["evals/*.eval.yaml"], filter,
+    });
+    const patterns = mode === "no-skill" ? baseline.extends.parameters.evalGlobs :
+      benchmark.extends.parameters.stages.find((stage) => stage.stage ===
+        (mode === "forced" ? "PrepareForced" : "PrepareTrigger")).jobs[0].parameters.evalGlobs;
+    // Mirror CLI --tag + explicit -e: load every matrix-selected file before filtering.
+    const discovery = await discoverAndFilterEvals(context, { suiteEvals: patterns });
+    assert.deepEqual(discovery.errors, [], `${mode}: eval loading failed`);
+    assert.ok(discovery.matched.length > 0, `${mode}: no selected evals`);
+    assert.deepEqual(discovery.matched.map((entry) => entry.filePath).sort(),
+      allMatching.matched.map((entry) => entry.filePath).sort(),
+      `${mode}: pipeline globs must cover exactly the files with matching stimuli`);
+    const plan = await planRun({
+      variants: [{ name: "default", specs: discovery.matched }],
+      projectCtx: context, models: [undefined], runs: 3, threshold: 0.8, tagFilter: filter,
+      getExecutor: () => ({ name: "copilot-sdk" }),
+    });
+    const failures = plan.evals.filter((entry) => entry.failure);
+    assert.deepEqual(failures, [], JSON.stringify(plan.diagnostics.filter((entry) => entry.severity === "error")));
+    assert.ok(plan.totalItems > 0);
+    assert.ok(plan.evals.every((entry) => entry.plannedStimulusCount > 0),
+      `${mode}: zero-match evals would fail the standard common verdict`);
+    assert.equal(plan.totalItems, allMatching.matched.reduce((sum, entry) => sum + entry.stimuli.length * 3, 0));
+    const prepared = context.config.environments["azsdk-mcp"];
+    assert.equal(prepared.skills.length, mode === "no-skill" ? 0 : original.environments["azsdk-mcp"].skills.length);
+  }
 });
 
 test("the actual SkillBranch overlay removes candidate naming from an older Git tree", (t) => {

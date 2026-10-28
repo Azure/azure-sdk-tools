@@ -1,0 +1,10 @@
+# Post-eval diagnostics only: common Summary retains the standard verdict and completeness gate.
+steps:
+  - script: |
+      set -e
+      node --experimental-strip-types .github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-pass-at-k.ts \
+        --report \
+        --results-root "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
+        --runs "$(TypeSpecAuthorEvalRuns)"
+    displayName: 'Log pass@k on repeated-trial failure for $(shardName)'
+    condition: always()

@@ -132,9 +132,14 @@
             "project": {
               "type": "string",
               "minLength": 1
+            },
+            "areaPath": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Azure Boards area path (e.g. Project\\Area) under which issues are created"
             }
           },
-          "required": ["provider", "organization", "project"],
+          "required": ["provider", "organization", "project", "areaPath"],
           "additionalProperties": false
         }
       ]

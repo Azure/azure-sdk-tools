@@ -5,6 +5,7 @@
 # deploy that agent through agent-cd.yml (agentName: teams_collection_agent)
 # before running this pipeline for it. It also reads the backend server's
 # identity from $(APP_NAME), because backfill runs there rather than in the agent.
+# Dev/test use the shared Azure SDK listener; production uses the selected team.
 
 name: Deploy Azure SDK QA Bot Logic App
 
@@ -20,7 +21,7 @@ parameters:
       - chat
       - teams-collection
   - name: team
-    displayName: 'Teams Team (chat workflow only)'
+    displayName: 'Production Teams Team (dev/test use azure_sdk)'
     type: string
     default: azure_sdk
     values:
@@ -48,6 +49,8 @@ variables:
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
   - name: PythonIndexUrl
     value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+  - name: listenerTeam
+    value: ${{ iif(eq(parameters.environment, 'prod'), parameters.team, 'azure_sdk') }}
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -56,7 +59,7 @@ extends:
     stages:
       - stage: DeployLogicApp
         ${{ if eq(parameters.workflow, 'chat') }}:
-          displayName: 'Deploy ${{ parameters.team }} Logic App (${{ parameters.environment }})'
+          displayName: 'Deploy ${{ variables.listenerTeam }} Logic App (${{ parameters.environment }})'
         ${{ else }}:
           displayName: 'Deploy Teams Collection Logic App (${{ parameters.environment }})'
         jobs:
@@ -82,8 +85,9 @@ extends:
                       set -euo pipefail
 
                       TEMPLATE_FILE="pipelines/logicapp/template.json"
-                      PARAMS_FILE="pipelines/logicapp/parameters.${{ parameters.team }}.${{ parameters.environment }}.json"
+                      PARAMS_FILE="pipelines/logicapp/parameters.${{ variables.listenerTeam }}.${{ parameters.environment }}.json"
 
+                      echo "Listener team: ${{ variables.listenerTeam }} (selected: ${{ parameters.team }})"
                       echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"
                       echo "Template: $TEMPLATE_FILE"
                       echo "Parameters: $PARAMS_FILE"
@@ -92,7 +96,7 @@ extends:
                         --resource-group "$(RESOURCE_GROUP)" \
                         --template-file "$TEMPLATE_FILE" \
                         --parameters "@$PARAMS_FILE" \
-                        --name "logicapp-${{ parameters.team }}-$(Build.BuildId)" \
+                        --name "logicapp-${{ variables.listenerTeam }}-$(Build.BuildId)" \
                         --verbose
 
                       echo "Logic App deployment completed successfully."

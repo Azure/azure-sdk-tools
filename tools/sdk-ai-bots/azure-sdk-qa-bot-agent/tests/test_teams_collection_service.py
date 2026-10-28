@@ -716,6 +716,14 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("- teams-collection", logicapp_pipeline)
         self.assertIn("python scripts/deploy_hosted_agent.py teams-collection deploy", logicapp_pipeline)
         self.assertIn(
+            "value: ${{ iif(eq(parameters.environment, 'prod'), parameters.team, 'azure_sdk') }}",
+            logicapp_pipeline,
+        )
+        self.assertIn(
+            "parameters.${{ variables.listenerTeam }}.${{ parameters.environment }}.json",
+            logicapp_pipeline,
+        )
+        self.assertIn(
             "--appconfig-endpoint \"$(AZURE_APPCONFIG_ENDPOINT)\"", logicapp_pipeline
         )
         # The chat template must stay behind its own branch of the selector.

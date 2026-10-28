@@ -393,3 +393,99 @@ def test_sparse_native_reviews_do_not_disable_compaction() -> None:
 
     assert parsed["reviews"] == [human, latest]
     assert parsed["review_selection"]["omitted_older_copilot_reviews"] == 1
+
+
+def test_copilot_overview_omits_all_expandable_bodies_but_keeps_summary_labels() -> None:
+    body = (
+        "<!-- ccr-overview-v2 -->\n### Approval recommended\nNo open issues.\n"
+        "<details><summary><strong>25 files not reviewed</strong></summary>"
+        "<ul><li>generated_file.go: Generated file</li></ul></details>\n"
+        "<details><summary>What changed in this PR</summary>"
+        "large walkthrough "
+    )
+    body += (
+        "<details><summary>Nested file list</summary>nested content</details>"
+        "</details>\n"
+        "<details open><summary>1 open issue</summary>"
+        "[Required fix](https://github.com/Azure/example/pull/1#discussion_r42)"
+        "</details>\nReview effort: Balanced"
+    )
+    _, parsed = _parse([_review(1, "2026-10-28T10:00:00Z", body=body)])
+
+    review = parsed["reviews"][0]
+    assert "Approval recommended" in review["body"]
+    assert "No open issues" in review["body"]
+    assert "25 files not reviewed" in review["body"]
+    assert "generated_file.go" not in review["body"]
+    assert "large walkthrough" not in review["body"]
+    assert "nested content" not in review["body"]
+    assert "1 open issue" in review["body"]
+    assert "Required fix" not in review["body"]
+    assert "Review effort: Balanced" in review["body"]
+    assert review["body_compaction"]["omitted_detail_sections"] == [
+        "25 files not reviewed", "What changed in this PR", "1 open issue",
+    ]
+    assert review["body_compaction"]["full_review_url"] == review["html_url"]
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "Ordinary review without expandable sections",
+        "<!-- ccr-overview-v2 --><details>unclosed details",
+        "<!-- ccr-overview-v2 --><details><summary>What changed in this PR</summary>unclosed",
+    ],
+)
+def test_unknown_or_malformed_review_bodies_are_preserved(body: str) -> None:
+    _, parsed = _parse([_review(1, "2026-10-28T10:00:00Z", body=body)])
+
+    assert parsed["reviews"][0]["body"] == body
+    assert "body_compaction" not in parsed["reviews"][0]
+
+
+def test_latest_large_overview_is_compacted_before_the_output_budget() -> None:
+    body = (
+        "<!-- ccr-overview-v2 -->\n### Changes recommended\n"
+        "<details open><summary>1 open issue</summary>Keep this finding</details>"
+        "<details><summary>What changed in this PR</summary>"
+        + "walkthrough " * 2000
+        + "</details>"
+    )
+    _, parsed = _parse([_review(1, "2026-10-28T10:00:00Z", body=body)])
+
+    assert "Changes recommended" in parsed["reviews"][0]["body"]
+    assert "1 open issue" in parsed["reviews"][0]["body"]
+    assert "Keep this finding" not in parsed["reviews"][0]["body"]
+    assert "walkthrough" not in parsed["reviews"][0]["body"]
+
+
+@pytest.mark.parametrize(
+    "section",
+    [
+        "<details><summary>Arbitrary title</summary>hidden text</details>",
+        "<DETAILS open><SUMMARY>Arbitrary title</SUMMARY>hidden text</DETAILS>",
+        "<details>hidden text without a summary</details>",
+    ],
+)
+def test_expandable_filter_does_not_depend_on_marker_or_section_title(section: str) -> None:
+    _, parsed = _parse([_review(1, "2026-10-28T10:00:00Z", body=f"Visible verdict\n{section}")])
+
+    review = parsed["reviews"][0]
+    assert "Visible verdict" in review["body"]
+    assert "hidden text" not in review["body"]
+    assert len(review["body_compaction"]["omitted_detail_sections"]) == 1
+
+
+def test_expandable_filter_does_not_change_human_or_other_bot_reviews() -> None:
+    body = "<details><summary>Findings</summary>Do not remove</details>"
+    human = _review(
+        2, "2026-10-28T10:00:00Z",
+        user={"login": "teammate"}, author_association="MEMBER", body=body,
+    )
+    other_bot = _review(
+        3, "2026-10-28T10:00:00Z",
+        user={"login": "another[bot]"}, body=body,
+    )
+    _, parsed = _parse([_review(1, "2026-10-28T10:00:00Z", body=body), human, other_bot])
+
+    assert parsed["reviews"][1:] == [human, other_bot]

@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
+import html
 import json
 import logging
 import os
@@ -390,6 +391,50 @@ def _redact_untrusted_authors(text: str) -> str:
     return json.dumps(_scrub_untrusted_authors(data))
 
 
+def _compact_copilot_review_body(review: dict[str, Any]) -> dict[str, Any]:
+    """Replace expandable bodies with their summary labels, regardless of content."""
+    body = review.get("body")
+    if not isinstance(body, str):
+        return review
+    stack: list[int] = []
+    replacements: list[tuple[int, int, str]] = []
+    omitted: list[str] = []
+    for tag in re.finditer(r"<details\b[^>]*>|</details\s*>", body, re.IGNORECASE):
+        if not tag.group().startswith("</"):
+            stack.append(tag.start())
+            continue
+        if not stack:
+            continue
+        start = stack.pop()
+        if stack:
+            continue
+        section = body[start:tag.end()]
+        summary = re.search(r"<summary\b[^>]*>(.*?)</summary\s*>", section, re.IGNORECASE | re.DOTALL)
+        label = (
+            " ".join(html.unescape(re.sub(r"<[^>]+>", "", summary[1])).split())
+            if summary is not None else ""
+        )
+        replacement = label
+        replacements.append((start, tag.end(), replacement))
+        omitted.append(label)
+    if not replacements:
+        return review
+    for start, end, replacement in reversed(replacements):
+        body = body[:start] + replacement + body[end:]
+    return {
+        **review,
+        "body": body.strip(),
+        "body_compaction": {
+            "omitted_detail_sections": omitted,
+            "full_review_url": review.get("html_url"),
+            "guidance": (
+                "All expandable bodies omitted; summary labels retained. "
+                "Retrieve review threads when findings are needed."
+            ),
+        },
+    }
+
+
 def _compact_copilot_reviews(value: Any) -> Any:
     """Keep the latest Copilot review in this response, never infer page coverage."""
     if not isinstance(value, list) or not value:
@@ -421,7 +466,10 @@ def _compact_copilot_reviews(value: Any) -> Any:
     latest_index = max(candidates, key=lambda candidate: candidate[1])[0]
     omitted = {index for index, _ in candidates if index != latest_index}
     return {
-        "reviews": [item for index, item in enumerate(value) if index not in omitted],
+        "reviews": [
+            _compact_copilot_review_body(item) if index == latest_index else item
+            for index, item in enumerate(value) if index not in omitted
+        ],
         "review_selection": {
             "author": "copilot-pull-request-reviewer[bot]",
             "scope": "current_response_only",

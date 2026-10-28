@@ -93,3 +93,4 @@ class ChatResponse(BaseModel):
     agent_conversation_id: str | None = None
     trace_id: str | None = None
     mentions: list[TeamsMention] | None = None
+    agent_name: str | None = None

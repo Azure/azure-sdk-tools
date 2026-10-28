@@ -128,6 +128,9 @@ model ChatResponse {
   @doc("The unique ID of the response")
   id: string;
 
+  @doc("The name of the hosted agent that generated the response")
+  agent_name?: string;
+
   @doc("The answer from the agent")
   answer: string;
 

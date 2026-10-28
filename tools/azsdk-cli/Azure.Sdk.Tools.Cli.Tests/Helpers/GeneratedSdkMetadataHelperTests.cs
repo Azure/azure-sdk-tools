@@ -40,36 +40,54 @@ public class GeneratedSdkMetadataHelperTests
         WriteMetadata("nested/metadata.json", """{"apiVersions":{"Decoy":"1999-01-01"}}""");
         var info = await Populate(language);
 
-        Assert.That(info.ApiVersions, Is.EqualTo(new[] { "2025-01-01", "2026-02-01-preview" }));
+        Assert.That(info.ApiVersions, Is.EqualTo(new[]
+        {
+            new PackageApiVersion("2025-01-01", "Duplicate"),
+            new PackageApiVersion("2025-01-01", "First"),
+            new PackageApiVersion("2026-02-01-preview", "Second")
+        }));
         _logger.VerifyNoOtherCalls();
         Assert.That(info.ApiVersion, Is.EqualTo("typespec-version"));
     }
 
-    [TestCase("""{"apiVersion":"2025-01-01"}""", new[] { "2025-01-01" })]
-    [TestCase("""{"apiVersions":{"Example":"2025-01-01"}}""", new[] { "2025-01-01" })]
-    [TestCase("""{"apiVersion":"2025-01-01","apiVersions":{"Example":"2025-01-01"}}""", new[] { "2025-01-01" })]
-    [TestCase("""{"apiVersion":"2025-01-01","apiVersions":{"Example":"2026-01-01"}}""", new[] { "2025-01-01", "2026-01-01" })]
-    [TestCase("""{"emitterVersion":"1.0.0"}""", new string[0])]
-    public async Task PythonSupportsEitherBothOrNeitherField(string json, string[] expected)
+    [TestCase(SdkLanguage.Java, "src/main/resources/META-INF/example_metadata.json")]
+    [TestCase(SdkLanguage.JavaScript, "metadata.json")]
+    [TestCase(SdkLanguage.Python, "_metadata.json")]
+    [TestCase(SdkLanguage.Go, "testdata/_metadata.json")]
+    [TestCase(SdkLanguage.DotNet, "metadata.json")]
+    public async Task EveryLanguageSupportsMapAndSingularFallback(SdkLanguage language, string relativePath)
     {
-        WriteMetadata("_metadata.json", json);
-        var info = await Populate(SdkLanguage.Python);
+        foreach (var mapPrefix in new[] { "", "\"apiVersions\":{}," })
+        {
+            WriteMetadata(relativePath, $"{{{mapPrefix}\"apiVersion\":\" 2025-01-01 \"}}");
+            var info = await Populate(language);
+            Assert.That(info.ApiVersions, Is.EqualTo(new[] { new PackageApiVersion("2025-01-01") }));
+            using var json = JsonDocument.Parse(JsonSerializer.Serialize(info));
+            Assert.That(json.RootElement.GetProperty("ApiVersions")[0].TryGetProperty("Namespace", out _), Is.False);
+        }
 
-        Assert.That(info.ApiVersions, Is.EqualTo(expected));
+        WriteMetadata(relativePath, """{"apiVersion":"2024-01-01","apiVersions":{"Example":"2025-01-01"}}""");
+        var mappedInfo = await Populate(language);
+        Assert.That(mappedInfo.ApiVersions, Is.EqualTo(new[] { new PackageApiVersion("2025-01-01", "Example") }));
         _logger.VerifyNoOtherCalls();
     }
 
     [Test]
     public async Task JavaCombinesMatchingFilesWithoutRecursing()
     {
-        WriteMetadata("src/main/resources/META-INF/z_metadata.json", """{"apiVersions":{"Second":"2026-01-01"}}""");
+        WriteMetadata("src/main/resources/META-INF/z_metadata.json",
+            """{"apiVersions":{"First":"2025-01-01","Second":"2026-01-01"}}""");
         WriteMetadata("src/main/resources/META-INF/a_metadata.json", """{"apiVersions":{"First":"2025-01-01"}}""");
         WriteMetadata("src/main/resources/META-INF/metadata.json", "not a matching file");
         WriteMetadata("src/main/resources/META-INF/nested/other_metadata.json", "not in scope");
 
         var info = await Populate(SdkLanguage.Java);
 
-        Assert.That(info.ApiVersions, Is.EqualTo(new[] { "2025-01-01", "2026-01-01" }));
+        Assert.That(info.ApiVersions, Is.EqualTo(new[]
+        {
+            new PackageApiVersion("2025-01-01", "First"),
+            new PackageApiVersion("2026-01-01", "Second")
+        }));
         _logger.VerifyNoOtherCalls();
     }
 
@@ -91,7 +109,6 @@ public class GeneratedSdkMetadataHelperTests
     [TestCase("{}")]
     [TestCase("""{"apiVersions":{}}""")]
     [TestCase("""{"ApiVersion":"2025-01-01","ApiVersions":{"Example":"2025-01-01"}}""")]
-    [TestCase("""{"apiVersion":"2025-01-01"}""")]
     public async Task AbsentVersionsAreNotAnError(string json)
     {
         WriteMetadata("metadata.json", json);
@@ -126,8 +143,8 @@ public class GeneratedSdkMetadataHelperTests
     [TestCase("""{"apiVersion":null}""")]
     [TestCase("""{"apiVersion":42}""")]
     [TestCase("""{"apiVersion":" "}""")]
-    [TestCase("""{"apiVersions":{"Valid":"2025-01-01"},"apiVersion":[]}""")]
-    public async Task PythonRejectsInvalidSingularField(string json)
+    [TestCase("""{"apiVersions":{},"apiVersion":[]}""")]
+    public async Task RejectsInvalidSingularFallback(string json)
     {
         WriteMetadata("_metadata.json", json);
         var info = await Populate(SdkLanguage.Python);
@@ -165,8 +182,46 @@ public class GeneratedSdkMetadataHelperTests
         var info = await Populate(SdkLanguage.DotNet);
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(info));
 
-        Assert.That(json.RootElement.GetProperty("ApiVersions")[0].GetString(), Is.EqualTo("2025-01-01"));
+        Assert.That(json.RootElement.GetProperty("ApiVersions")[0].GetProperty("Version").GetString(), Is.EqualTo("2025-01-01"));
+        Assert.That(json.RootElement.GetProperty("ApiVersions")[0].GetProperty("Namespace").GetString(), Is.EqualTo("Example"));
         Assert.That(json.RootElement.TryGetProperty("ApiVersion", out _), Is.False);
+    }
+
+    [Test]
+    public async Task SameNamespaceWithDifferentVersionsIsPreservedAcrossFiles()
+    {
+        WriteMetadata("src/main/resources/META-INF/a_metadata.json", """{"apiVersions":{"Example":"2026-01-01"}}""");
+        WriteMetadata("src/main/resources/META-INF/z_metadata.json", """{"apiVersions":{"Example":"2025-01-01"}}""");
+
+        var info = await Populate(SdkLanguage.Java);
+
+        Assert.That(info.ApiVersions, Is.EqualTo(new[]
+        {
+            new PackageApiVersion("2025-01-01", "Example"),
+            new PackageApiVersion("2026-01-01", "Example")
+        }));
+    }
+
+    [Test]
+    public async Task MalformedMapDoesNotSilentlyFallBackToSingularVersion()
+    {
+        WriteMetadata("metadata.json", """{"apiVersions":[],"apiVersion":"2025-01-01"}""");
+
+        var info = await Populate(SdkLanguage.JavaScript);
+
+        Assert.That(info.ApiVersions, Is.Empty);
+        AssertWarning("'apiVersions' must be a namespace-to-version object");
+    }
+
+    [Test]
+    public async Task PopulatedMapDoesNotReadUnusedSingularField()
+    {
+        WriteMetadata("metadata.json", """{"apiVersions":{"Example":"2025-01-01"},"apiVersion":[]}""");
+
+        var info = await Populate(SdkLanguage.JavaScript);
+
+        Assert.That(info.ApiVersions, Is.EqualTo(new[] { new PackageApiVersion("2025-01-01", "Example") }));
+        _logger.VerifyNoOtherCalls();
     }
 
     [Test]

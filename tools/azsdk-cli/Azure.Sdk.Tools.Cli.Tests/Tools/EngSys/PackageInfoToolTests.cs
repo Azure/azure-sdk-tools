@@ -36,7 +36,7 @@ public class PackageInfoToolTests
         {
             PackageName = "@azure/example",
             PackageVersion = "1.0.0",
-            ApiVersions = ["2025-01-01"],
+            ApiVersions = [new("2025-01-01", "Example")],
             Language = SdkLanguage.JavaScript,
             PackagePath = _directory.DirectoryPath
         };
@@ -59,7 +59,8 @@ public class PackageInfoToolTests
         Assert.That(response.ExitCode, Is.Zero);
         Assert.That(result.Result, Is.SameAs(_package));
         Assert.That(json.RootElement.GetProperty("result").GetProperty("Name").GetString(), Is.EqualTo("@azure/example"));
-        Assert.That(json.RootElement.GetProperty("result").GetProperty("ApiVersions")[0].GetString(), Is.EqualTo("2025-01-01"));
+        Assert.That(json.RootElement.GetProperty("result").GetProperty("ApiVersions")[0].GetProperty("Version").GetString(), Is.EqualTo("2025-01-01"));
+        Assert.That(json.RootElement.GetProperty("result").GetProperty("ApiVersions")[0].GetProperty("Namespace").GetString(), Is.EqualTo("Example"));
         Assert.That(response.ToString(), Does.Contain("\"ApiVersions\""));
         _languageService.Verify(service => service.GetPackageInfo(_directory.DirectoryPath, It.IsAny<CancellationToken>()), Times.Once);
         _languageService.Verify(service => service.DiscoverPackagesAsync(

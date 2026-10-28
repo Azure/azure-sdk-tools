@@ -34,7 +34,7 @@ public static class GeneratedSdkMetadataHelper
                 return;
             }
 
-            var versions = new SortedSet<string>(StringComparer.Ordinal);
+            var versions = new HashSet<PackageApiVersion>();
             foreach (var metadataFile in Directory.GetFiles(directory, pattern, SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal))
             {
                 ct.ThrowIfCancellationRequested();
@@ -42,7 +42,7 @@ public static class GeneratedSdkMetadataHelper
                 {
                     await using var stream = File.OpenRead(metadataFile);
                     using var document = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-                    versions.UnionWith(ReadApiVersions(document.RootElement, packageInfo.Language));
+                    versions.UnionWith(ReadApiVersions(document.RootElement));
                 }
                 catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
                 {
@@ -50,7 +50,9 @@ public static class GeneratedSdkMetadataHelper
                 }
             }
 
-            packageInfo.ApiVersions = [.. versions];
+            packageInfo.ApiVersions = [.. versions
+                .OrderBy(value => value.Namespace, StringComparer.Ordinal)
+                .ThenBy(value => value.Version, StringComparer.Ordinal)];
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -58,14 +60,14 @@ public static class GeneratedSdkMetadataHelper
         }
     }
 
-    private static SortedSet<string> ReadApiVersions(JsonElement root, SdkLanguage language)
+    private static HashSet<PackageApiVersion> ReadApiVersions(JsonElement root)
     {
         if (root.ValueKind != JsonValueKind.Object)
         {
             throw new JsonException("Metadata must be a JSON object.");
         }
 
-        var versions = new SortedSet<string>(StringComparer.Ordinal);
+        var versions = new HashSet<PackageApiVersion>();
         if (root.TryGetProperty("apiVersions", out var apiVersions))
         {
             if (apiVersions.ValueKind != JsonValueKind.Object)
@@ -75,26 +77,26 @@ public static class GeneratedSdkMetadataHelper
 
             foreach (var property in apiVersions.EnumerateObject())
             {
-                AddVersion(property.Value, $"apiVersions.{property.Name}");
+                AddVersion(property.Value, $"apiVersions.{property.Name}", property.Name);
             }
         }
 
-        // Python metadata can contain apiVersion, apiVersions, or both; combine and deduplicate their values.
-        if (language == SdkLanguage.Python && root.TryGetProperty("apiVersion", out var apiVersion))
+        // All supported languages can use the singular field; prefer the namespace map when it has entries.
+        if (versions.Count == 0 && root.TryGetProperty("apiVersion", out var apiVersion))
         {
             AddVersion(apiVersion, "apiVersion");
         }
 
         return versions;
 
-        void AddVersion(JsonElement value, string field)
+        void AddVersion(JsonElement value, string field, string? namespaceName = null)
         {
             if (value.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(value.GetString()))
             {
                 throw new JsonException($"'{field}' must be a non-empty API version string.");
             }
 
-            versions.Add(value.GetString()!.Trim());
+            versions.Add(new PackageApiVersion(value.GetString()!.Trim(), namespaceName));
         }
     }
 }

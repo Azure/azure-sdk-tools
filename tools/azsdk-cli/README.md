@@ -103,13 +103,15 @@ API versions are populated during SDK package discovery for these languages:
 
 | Language | Metadata path relative to the package root | API version fields |
 | --- | --- | --- |
-| Java | `src/main/resources/META-INF/*_metadata.json` | `apiVersions` namespace-to-version map |
-| JavaScript | `metadata.json` | `apiVersions` namespace-to-version map |
-| Python | `_metadata.json` | `apiVersions` namespace-to-version map and/or `apiVersion` string |
-| Go | `testdata/_metadata.json` | `apiVersions` namespace-to-version map |
-| .NET | `metadata.json` | `apiVersions` namespace-to-version map |
+| Java | `src/main/resources/META-INF/*_metadata.json` | `apiVersions` map, falling back to `apiVersion` string |
+| JavaScript | `metadata.json` | `apiVersions` map, falling back to `apiVersion` string |
+| Python | `_metadata.json` | `apiVersions` map, falling back to `apiVersion` string |
+| Go | `testdata/_metadata.json` | `apiVersions` map, falling back to `apiVersion` string |
+| .NET | `metadata.json` | `apiVersions` map, falling back to `apiVersion` string |
 
-Discovery reads only these metadata locations, not nested packages or SDK source code. `ApiVersions` contains trimmed, distinct version strings in ordinal order; it never chooses a latest or default version. Java combines all matching files. Python combines both fields when present. The existing internal `ApiVersion` property remains exclusive to the TypeSpec/release-plan flow.
+Discovery reads only these metadata locations, not nested packages or SDK source code. `ApiVersions` contains objects with `Namespace` and `Version`, preserving each namespace from the metadata map. When the map is absent or empty, discovery falls back to the singular `apiVersion` field and omits `Namespace` for that entry. A populated map takes precedence over the singular field in all languages. Version strings are trimmed, identical namespace/version pairs are deduplicated, and entries are sorted by namespace then version in ordinal order. Different namespaces sharing a version remain separate entries. Java combines all matching files. The existing internal `ApiVersion` property remains exclusive to the TypeSpec/release-plan flow.
+
+For example, map metadata produces `"ApiVersions": [{"Version": "2026-04-01", "Namespace": "Compute"}]`; singular metadata produces `"ApiVersions": [{"Version": "2023-01-01"}]`.
 
 Missing metadata or metadata without API versions leaves `ApiVersions` empty. Malformed JSON, invalid field types, blank version strings, or unreadable files leave it empty and log a warning with the file path and failure reason. No partial versions are returned if a matching file is invalid. Metadata errors are logged only; they are not stored in `PackageInfo` and do not fail package discovery or hide the package from bulk export. Invalid command options, nonexistent package directories, or failed package lookups return exit code `1`.
 

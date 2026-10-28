@@ -182,7 +182,11 @@ print(f'{{package_name}} {{version}} True {{sys.argv[-1]}} ')
         var service = languageServices.Single(service => service.Language == language);
         var info = await service.GetPackageInfo(packagePath);
 
-        Assert.That(info.ApiVersions, Is.EqualTo(new[] { "2025-01-01", "2026-01-01" }));
+        Assert.That(info.ApiVersions, Is.EqualTo(new[]
+        {
+            new PackageApiVersion("2025-01-01", "Example"),
+            new PackageApiVersion("2026-01-01", "Other")
+        }));
         Assert.That(info.ApiVersion, Is.Null);
     }
 
@@ -225,7 +229,7 @@ print(f'{{package_name}} {{version}} True {{sys.argv[-1]}} ')
 
         Assert.That(packages, Has.Count.EqualTo(2));
         Assert.That(packages.Single(package => package.PackageName == "@azure/valid").ApiVersions,
-            Is.EqualTo(new[] { "2025-01-01" }));
+            Is.EqualTo(new[] { new PackageApiVersion("2025-01-01", "Example") }));
         Assert.That(packages.Single(package => package.PackageName == "@azure/invalid").ApiVersions, Is.Empty);
     }
 

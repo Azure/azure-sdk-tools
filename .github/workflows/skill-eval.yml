@@ -7,11 +7,7 @@ on:
       - ".github/skills/**"
       - "eng/skill-eval/**"
       - "eng/common/scripts/skill-eval-coverage/**"
-      - "eng/common/scripts/eval/lib/glob.ts"
-      - "eng/common/pipelines/skill-eval.yml"
-      - "eng/pipelines/azure-typespec-author-benchmark.yml"
       - ".github/skill-eval-coverage.json"
-      - ".github/workflows/actions.lock"
       - ".github/workflows/skill-eval.yml"
       - ".github/workflows/skill-eval-coverage-comment.yml"
   # Run the read-only check on every PR update so reverting all skill changes
@@ -23,28 +19,6 @@ permissions:
   contents: read
 
 jobs:
-  check-skills:
-    name: Skill Compliance Check (Vally lint)
-    needs: skill-eval-coverage
-    # Missing/failed scope detection must not suppress the existing blocking lint.
-    if: ${{ always() && needs.skill-eval-coverage.outputs.run_lint != 'false' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7.0.1
-
-      - uses: actions/setup-node@v7.0.0
-        with:
-          node-version: "24"
-          cache: "npm"
-          cache-dependency-path: eng/skill-eval/package-lock.json
-
-      - name: Install Vally CLI (pinned via lockfile)
-        working-directory: eng/skill-eval
-        run: npm ci
-
-      - name: Lint skills
-        run: ./eng/skill-eval/node_modules/.bin/vally lint .
-
   skill-eval-coverage:
     name: Skill Eval coverage (warning only)
     runs-on: ubuntu-latest
@@ -55,27 +29,19 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v7.0.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
 
-      - name: Verify workflow dependency locks
-        run: |
-          gh extension install github/gh-actions-lock --pin v0.3.0
-          gh actions-lock --verify .github/workflows/skill-eval.yml .github/workflows/skill-eval-coverage-comment.yml
-        env:
-          GH_TOKEN: ${{ github.token }}
-
       # Only a YAML parser is installed. No Vally, Copilot, MCP, or model-backed Evals.
       - name: Install coverage checker dependency
-        run: npm ci --prefix eng/common/scripts/skill-eval-coverage --ignore-scripts --no-audit --no-fund
-
-      - name: Test coverage checker and comment contracts
-        run: npm test --prefix eng/common/scripts/skill-eval-coverage
+        run: |
+          npm install --prefix "$RUNNER_TEMP/skill-coverage-pnpm" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund pnpm@12.6.0
+          node "$RUNNER_TEMP/skill-coverage-pnpm/node_modules/pnpm/bin/pnpm.mjs" --dir eng/common/scripts/skill-eval-coverage --ignore-workspace install --pm-on-fail=ignore --frozen-lockfile --prod --ignore-scripts
 
       - name: Check changed skills
         id: coverage
@@ -87,3 +53,25 @@ jobs:
       - name: Inventory skill coverage
         if: github.event_name != 'pull_request'
         run: node eng/common/scripts/skill-eval-coverage/check.ts --all
+
+  check-skills:
+    name: Skill Compliance Check (Vally lint)
+    needs: skill-eval-coverage
+    # Missing/failed scope detection must not suppress the existing blocking lint.
+    if: ${{ always() && needs.skill-eval-coverage.outputs.run_lint != 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: eng/skill-eval/package-lock.json
+
+      - name: Install Vally CLI (pinned via lockfile)
+        working-directory: eng/skill-eval
+        run: npm ci
+
+      - name: Lint skills
+        run: ./eng/skill-eval/node_modules/.bin/vally lint .

@@ -483,8 +483,9 @@ tools/test-proxy/docker/docker_build
 # npm pack artifacts
 *.tgz
 
-# pnpm lockfiles (this repo does not use pnpm)
+# pnpm lockfiles outside explicitly managed projects
 pnpm-lock.yaml
+!eng/common/scripts/skill-eval-coverage/pnpm-lock.yaml
 
 # Visual Studio launch settings (frequently user-specific)
 launchSettings.json

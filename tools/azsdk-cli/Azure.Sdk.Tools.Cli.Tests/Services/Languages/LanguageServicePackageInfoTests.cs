@@ -160,7 +160,73 @@ print(f'{{package_name}} {{version}} True {{sys.argv[-1]}} ')
             Assert.That(info.ServiceName, Is.EqualTo(service));
             Assert.That(info.PackageName, Is.Null);
             Assert.That(info.Language, Is.EqualTo(language));
+            Assert.That(info.ApiVersions, Is.Empty);
         });
+    }
+
+    [TestCase(SdkLanguage.DotNet, "metadata.json")]
+    [TestCase(SdkLanguage.Java, "src/main/resources/META-INF/example_metadata.json")]
+    [TestCase(SdkLanguage.Python, "_metadata.json")]
+    [TestCase(SdkLanguage.JavaScript, "metadata.json")]
+    [TestCase(SdkLanguage.Go, "testdata/_metadata.json")]
+    public async Task GetPackageInfo_PopulatesGeneratedApiVersions(SdkLanguage language, string metadataPath)
+    {
+        var repoRoot = Path.Combine(tempRoot.DirectoryPath, SdkLanguageHelpers.GetRepoName(language)!);
+        Directory.CreateDirectory(repoRoot);
+        await GitTestHelper.GitInitAsync(repoRoot);
+        var packagePath = Path.Combine(repoRoot, "sdk", "test", "example");
+        Directory.CreateDirectory(packagePath);
+        CreateTestFile(packagePath, metadataPath.Replace('/', Path.DirectorySeparatorChar),
+            """{"apiVersions":{"Example":"2025-01-01","Other":"2026-01-01"}}""");
+
+        var service = languageServices.Single(service => service.Language == language);
+        var info = await service.GetPackageInfo(packagePath);
+
+        Assert.That(info.ApiVersions, Is.EqualTo(new[] { "2025-01-01", "2026-01-01" }));
+        Assert.That(info.ApiVersion, Is.Null);
+    }
+
+    [TestCase(SdkLanguage.DotNet, "metadata.json")]
+    [TestCase(SdkLanguage.Java, "src/main/resources/META-INF/example_metadata.json")]
+    [TestCase(SdkLanguage.Python, "_metadata.json")]
+    [TestCase(SdkLanguage.JavaScript, "metadata.json")]
+    [TestCase(SdkLanguage.Go, "testdata/_metadata.json")]
+    public async Task GetPackageInfo_PreservesPackageOnInvalidMetadata(SdkLanguage language, string metadataPath)
+    {
+        var repoRoot = Path.Combine(tempRoot.DirectoryPath, SdkLanguageHelpers.GetRepoName(language)!);
+        Directory.CreateDirectory(repoRoot);
+        await GitTestHelper.GitInitAsync(repoRoot);
+        var packagePath = Path.Combine(repoRoot, "sdk", "test", "example");
+        Directory.CreateDirectory(packagePath);
+        CreateTestFile(packagePath, metadataPath.Replace('/', Path.DirectorySeparatorChar), "{");
+
+        var service = languageServices.Single(service => service.Language == language);
+        var info = await service.GetPackageInfo(packagePath);
+
+        Assert.That(info.Language, Is.EqualTo(language));
+        Assert.That(info.ApiVersions, Is.Empty);
+    }
+
+    [Test]
+    public async Task DiscoverPackages_IncludesApiVersionsAndRetainsPackagesWithInvalidMetadata()
+    {
+        var repoRoot = Path.Combine(tempRoot.DirectoryPath, "azure-sdk-for-js");
+        Directory.CreateDirectory(repoRoot);
+        await GitTestHelper.GitInitAsync(repoRoot);
+        var validPackage = Path.Combine(repoRoot, "sdk", "test", "valid");
+        var invalidPackage = Path.Combine(repoRoot, "sdk", "test", "invalid");
+        SetupJavaScriptPackage(validPackage, "valid", "1.0.0", SdkType.Dataplane);
+        SetupJavaScriptPackage(invalidPackage, "invalid", "1.0.0", SdkType.Dataplane);
+        CreateTestFile(validPackage, "metadata.json", """{"apiVersions":{"Example":"2025-01-01"}}""");
+        CreateTestFile(invalidPackage, "metadata.json", "{");
+
+        var service = languageServices.Single(service => service.Language == SdkLanguage.JavaScript);
+        var packages = await service.DiscoverPackagesAsync(repoRoot, "test");
+
+        Assert.That(packages, Has.Count.EqualTo(2));
+        Assert.That(packages.Single(package => package.PackageName == "@azure/valid").ApiVersions,
+            Is.EqualTo(new[] { "2025-01-01" }));
+        Assert.That(packages.Single(package => package.PackageName == "@azure/invalid").ApiVersions, Is.Empty);
     }
 
     [Test]

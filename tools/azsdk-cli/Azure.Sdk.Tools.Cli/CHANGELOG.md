@@ -1,5 +1,12 @@
 # Release History
 
+## 0.6.56 (Unreleased)
+
+### Features Added
+
+- `eng package-info` supports `--package-path` to inspect one local SDK package and return its information directly, or export it with `--out-dir`. Existing bulk export remains supported.
+- Package discovery now populates `PackageInfo.ApiVersions` from generated metadata for Java, JavaScript, Python, Go, and .NET, including both Python API-version fields. Versions are trimmed, deduplicated, sorted, and included in PackageInfo JSON output. Missing metadata leaves the array empty; malformed or unreadable metadata logs a warning without failing package discovery.
+
 ## 0.6.55 (2026-10-22)
 
 ### Features Added

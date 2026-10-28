@@ -80,7 +80,8 @@ public class PackageInfoHelperTests
             PackageVersion = "1.2.3",
             DirectoryPath = "sdk/storage/storage-blob",
             ReadMePath = "sdk/storage/storage-blob/README.md",
-            ChangeLogPath = "sdk/storage/storage-blob/CHANGELOG.md"
+            ChangeLogPath = "sdk/storage/storage-blob/CHANGELOG.md",
+            ApiVersions = ["2025-01-01"]
         };
 
         var outputPath = Path.Combine(repoRoot, "out", "Azure.Storage.Blobs.json");
@@ -93,6 +94,7 @@ public class PackageInfoHelperTests
         Assert.That(output?["DirectoryPath"]?.ToString(), Is.EqualTo("sdk/storage/storage-blob"));
         Assert.That(output?["ReadMePath"]?.ToString(), Is.EqualTo("sdk/storage/storage-blob/README.md"));
         Assert.That(output?["ChangeLogPath"]?.ToString(), Is.EqualTo("sdk/storage/storage-blob/CHANGELOG.md"));
+        Assert.That(output?["ApiVersions"]?[0]?.ToString(), Is.EqualTo("2025-01-01"));
     }
 
     [Test]

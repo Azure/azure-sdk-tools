@@ -12,6 +12,7 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
       * [Setup](#setup)
       * [Build](#build)
       * [Run](#run)
+      * [Package information](#package-information)
       * [Package release approval](#package-release-approval)
       * [Test](#test)
       * [Test with GitHub Coding Agent](#test-with-github-coding-agent)
@@ -85,6 +86,32 @@ See the [development docs](https://github.com/Azure/azure-sdk-tools/blob/main/to
 On Windows, run `azsdk.bat <arguments>` from this directory. The launcher first stops this repository's running `azsdk.exe` MCP servers to release build-output DLL locks, including servers started with global `--debug` or `--output` (`-o`) options before `mcp` or `start`. Cleanup diagnostics go to stderr. It then forwards all arguments to `dotnet run --project Azure.Sdk.Tools.Cli --` and returns its exit code. This disconnects those MCP servers; unrelated processes and other repository copies are left running.
 
 Run the launcher regression tests on Windows with `powershell.exe -NoProfile -Command "Invoke-Pester .\tests\azsdk.Tests.ps1"`.
+
+### Package information
+
+Inspect a local SDK package, including the API versions recorded in generated metadata:
+
+```sh
+azsdk eng package-info --package-path <package-root> --output json
+```
+
+The language is inferred from the SDK repository. Single-package mode calls the language service's `GetPackageInfo` and returns the package in `result`, including `Name`, `Version`, and `ApiVersions`. Plain output also displays the package as JSON. It does not scan other packages or populate bulk CI enrichment fields.
+
+Add `--out-dir <directory>` to write the selected package's CI-format JSON file instead of returning the package directly. Without `--package-path`, the existing bulk-export mode still requires `--out-dir` and supports `--repo-root`, `--service-directory`, `--artifact`, and `--ci`. Those bulk-selection options cannot be combined with `--package-path`. `--add-dev-version` is supported in both modes.
+
+API versions are populated during SDK package discovery for these languages:
+
+| Language | Metadata path relative to the package root | API version fields |
+| --- | --- | --- |
+| Java | `src/main/resources/META-INF/*_metadata.json` | `apiVersions` namespace-to-version map |
+| JavaScript | `metadata.json` | `apiVersions` namespace-to-version map |
+| Python | `_metadata.json` | `apiVersions` namespace-to-version map and/or `apiVersion` string |
+| Go | `testdata/_metadata.json` | `apiVersions` namespace-to-version map |
+| .NET | `metadata.json` | `apiVersions` namespace-to-version map |
+
+Discovery reads only these metadata locations, not nested packages or SDK source code. `ApiVersions` contains trimmed, distinct version strings in ordinal order; it never chooses a latest or default version. Java combines all matching files. Python combines both fields when present. The existing internal `ApiVersion` property remains exclusive to the TypeSpec/release-plan flow.
+
+Missing metadata or metadata without API versions leaves `ApiVersions` empty. Malformed JSON, invalid field types, blank version strings, or unreadable files leave it empty and log a warning with the file path and failure reason. No partial versions are returned if a matching file is invalid. Metadata errors are logged only; they are not stored in `PackageInfo` and do not fail package discovery or hide the package from bulk export. Invalid command options, nonexistent package directories, or failed package lookups return exit code `1`.
 
 ### Package release approval
 

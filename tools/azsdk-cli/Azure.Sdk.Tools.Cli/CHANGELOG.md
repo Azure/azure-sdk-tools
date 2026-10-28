@@ -4,6 +4,7 @@
 
 ### Features Added
 
+- Added read-only `pkg check-api-version` and `azsdk_check_service_api_version` to resolve exact SDK PR generation evidence and report ARM provider metadata readiness as Passed, Not detected, Inconclusive, or Error.
 - After manual abandonment is saved, linked open unmerged SDK PRs are closed regardless of author, then receive a plan-specific notice. Already abandoned plans can finish cleanup of open PRs without rewriting ADO state. Cleanup failures return success with warnings and manual follow-up guidance. A failed notice may leave the PR closed; rerunning does not repair missing notices on closed PRs. Closed and merged PRs are never changed.
 
 ### Breaking Changes

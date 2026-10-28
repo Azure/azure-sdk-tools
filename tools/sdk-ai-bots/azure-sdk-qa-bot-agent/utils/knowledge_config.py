@@ -42,6 +42,7 @@ class KbIssueTarget:
     repo: str | None = None
     organization: str | None = None
     project: str | None = None
+    area_path: str | None = None
 
 
 @dataclass(frozen=True)
@@ -118,6 +119,7 @@ def _parse_issue_tracker(value: object) -> KbIssueTarget | None:
     if provider == "azure-devops":
         organization = value.get("organization")
         project = value.get("project")
+        area_path = value.get("areaPath")
         if not isinstance(organization, str) or not organization:
             raise ValueError(
                 "Azure DevOps issueTracker.organization must be a non-empty string"
@@ -126,10 +128,15 @@ def _parse_issue_tracker(value: object) -> KbIssueTarget | None:
             raise ValueError(
                 "Azure DevOps issueTracker.project must be a non-empty string"
             )
+        if not isinstance(area_path, str) or not area_path:
+            raise ValueError(
+                "Azure DevOps issueTracker.areaPath must be a non-empty string"
+            )
         return KbIssueTarget(
             provider="azure-devops",
             organization=organization,
             project=project,
+            area_path=area_path,
         )
     raise ValueError(f"Unsupported issueTracker provider: {provider!r}")
 

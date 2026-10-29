@@ -18,6 +18,10 @@
 - Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.
 - Corrected development-guide links and Coding Agent settings instructions to use valid absolute, locale-neutral URLs instead of relative or placeholder links.
 
+### Other Changes
+
+- Added release-plan lifecycle evals covering API review, SDK generation, pending SDK releases, and completed releases with consistent mock fixtures. Plan-status guidance keeps next-step questions read-only, and evals use the current serialized plan fields.
+
 ## 0.6.55 (2026-10-22)
 
 ### Features Added

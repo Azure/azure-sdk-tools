@@ -97,6 +97,74 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 _timeProvider);
         }
 
+        [TestCase("", "Offering", true, "Offering")]
+        [TestCase("", "Offering", false, "Offering")]
+        [TestCase(null, "Sku", true, "Sku")]
+        [TestCase("Feature", "Offering", false, "Feature")]
+        [TestCase("Feature", "Offering", true, "Offering")]
+        [TestCase(null, null, true, "")]
+        [TestCase(" ", "Unknown", false, "")]
+        public async Task CreateReleasePlan_ResolvesProductTypeBeforeSaving(
+            string? previousType, string? triageType, bool supplyIds, string expectedType)
+        {
+            const string productId = "22222222-2222-2222-2222-222222222222";
+            var service = new Mock<IDevOpsService>();
+            service.Setup(s => s.GetProductInfoByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(previousType == null ? null : new ProductInfo
+                {
+                    ProductServiceTreeId = productId,
+                    ServiceId = "11111111-1111-1111-1111-111111111111",
+                    ProductType = previousType
+                });
+            service.Setup(s => s.GetProductInfoFromTriageWorkItemAsync(productId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(triageType == null ? null : new ProductInfo { ProductType = triageType });
+            ReleasePlanWorkItem? savedPlan = null;
+            service.Setup(s => s.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), It.IsAny<CancellationToken>()))
+                .Callback<ReleasePlanWorkItem, CancellationToken>((plan, _) => savedPlan = plan)
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem
+                {
+                    Id = 42,
+                    Fields = new Dictionary<string, object>()
+                });
+            service.Setup(s => s.GetReleasePlanForWorkItemAsync(42, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => savedPlan!);
+            service.Setup(s => s.UpdateReleasePlanSDKDetailsAsync(42, It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+
+            var response = await tool.CreateReleasePlan(null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "GA",
+                serviceTreeId: supplyIds ? "11111111-1111-1111-1111-111111111111" : "",
+                productTreeId: supplyIds ? productId : "");
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(savedPlan, Is.Not.Null);
+            Assert.That(savedPlan!.ProductTreeId, Is.EqualTo(productId));
+            Assert.That(savedPlan.ProductType, Is.EqualTo(expectedType));
+            service.Verify(s => s.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(), It.IsAny<CancellationToken>()), Times.Once);
+            if (!string.IsNullOrEmpty(expectedType))
+            {
+                Assert.That(savedPlan.GetPatchDocument().Single(p => p.Path == "/fields/Custom.ProductType").Value, Is.EqualTo(expectedType));
+            }
+
+            var needsTriage = supplyIds || ProductTypeExtensions.FromAdoFieldValue(previousType) == ProductType.Unknown;
+            service.Verify(s => s.GetProductInfoFromTriageWorkItemAsync(productId, It.IsAny<CancellationToken>()),
+                needsTriage ? Times.Once() : Times.Never());
+        }
+
+        [Test]
+        public void CreateReleasePlan_DoesNotAcceptProductTypeParameter()
+        {
+            var command = releasePlanTool.GetCommandInstances().Single(command => command.Name == "create");
+            var parsed = command.Parse("--typespec-path TypeSpecTestData/specification/testcontoso/Contoso.Management --release-month \"July 2025\" --api-release-type GA --product-type Sku --test-release");
+
+            Assert.That(parsed.Errors, Has.Some.Property("Message").Contains("--product-type"));
+            Assert.That(typeof(ReleasePlanTool).GetMethod(nameof(ReleasePlanTool.CreateReleasePlan))!.GetParameters(),
+                Has.None.Property("Name").EqualTo("productType"));
+        }
+
         [TestCase("0123456789abcdef0123456789abcdef01234567")]
         [TestCase("")]
         public async Task CreateReleasePlan_SavesOnlySuppliedSpecCommit(string sha)
@@ -441,6 +509,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Create_releasePlan_with_valid_inputs(string typeSpecPath, string targetMonth, string prUrl, string apiType, string serviceId, string productId)
         {
+            ((MockDevOpsService)devOpsService).ConfiguredTriageProductInfo = new ProductInfo { ProductType = "Offering" };
             var result = await releasePlanTool.CreateReleasePlan(null, 
                 typeSpecPath, 
                 targetMonth,
@@ -655,6 +724,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Create_releasePlan_without_spec_pr_with_service_and_product_ids()
         {
+            ((MockDevOpsService)devOpsService).ConfiguredTriageProductInfo = new ProductInfo { ProductType = "Offering" };
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var releaseplan = await releasePlanTool.CreateReleasePlan(null, 
                 testCodeFilePath,
@@ -775,6 +845,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Create_releasePlan_without_spec_pr_sets_empty_spec_pull_requests()
         {
+            ((MockDevOpsService)devOpsService).ConfiguredTriageProductInfo = new ProductInfo { ProductType = "Offering" };
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             ((MockDevOpsService)devOpsService).ConfiguredActiveReleasePlansForTypeSpecPath =
             [
@@ -3946,6 +4017,73 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
+        }
+
+        [TestCase("", null, "Offering", ProductType.Unknown, false, false, "Offering")]
+        [TestCase("", "Feature", "Offering", ProductType.Unknown, false, false, "Feature")]
+        [TestCase("Feature", null, "Offering", ProductType.Unknown, true, false, "Feature")]
+        [TestCase("Feature", null, "Offering", ProductType.Sku, true, false, "Sku")]
+        [TestCase("", null, null, ProductType.Unknown, false, false, null)]
+        [TestCase("", null, " ", ProductType.Unknown, true, false, null)]
+        [TestCase("Feature", "Feature", "Sku", ProductType.Unknown, true, true, "Sku")]
+        [TestCase("Feature", "Feature", null, ProductType.Unknown, true, true, null)]
+        [TestCase("", null, null, ProductType.Sku, false, false, "Sku")]
+        public async Task UpdateReleasePlan_ResolvesProductTypeBeforeSaving(
+            string savedType, string? previousType, string? triageType, ProductType explicitType,
+            bool supplyProductId, bool changeProduct, string? expectedType)
+        {
+            const string productId = "22222222-2222-2222-2222-222222222222";
+            const string oldProductId = "33333333-3333-3333-3333-333333333333";
+            var service = new Mock<IDevOpsService>();
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 42,
+                ProductTreeId = changeProduct ? oldProductId : productId,
+                ProductType = savedType
+            };
+            service.Setup(s => s.GetReleasePlanForWorkItemAsync(42, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+            service.Setup(s => s.GetProductInfoByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(previousType == null ? null : new ProductInfo
+                {
+                    ProductServiceTreeId = changeProduct ? oldProductId : productId,
+                    ProductType = previousType
+                });
+            service.Setup(s => s.GetProductInfoFromTriageWorkItemAsync(productId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(triageType == null ? null : new ProductInfo { ProductType = triageType });
+            Dictionary<string, string>? writtenFields = null;
+            service.Setup(s => s.UpdateWorkItemAsync(42, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) => writtenFields = fields)
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 42 });
+            service.Setup(s => s.UpdateReleasePlanSDKDetailsAsync(42, It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+
+            var response = await tool.UpdateReleasePlan(
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", sdkReleaseType: "beta",
+                workItemId: 42, productTreeId: supplyProductId ? productId : "", productType: explicitType);
+
+            if (expectedType == null)
+            {
+                Assert.That(response.ResponseError, Does.Contain("Product type could not be determined"));
+                Assert.That(response.NextSteps, Has.Some.Contains("Ask the user"));
+                service.Verify(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+                service.Verify(s => s.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
+            }
+            else
+            {
+                Assert.That(response.ResponseError, Is.Null);
+                Assert.That(writtenFields, Is.Not.Null);
+                Assert.That(writtenFields!["Custom.ProductType"], Is.EqualTo(expectedType));
+                Assert.That(writtenFields.ContainsKey("Custom.ProductServiceTreeID"), Is.EqualTo(supplyProductId));
+            }
+
+            if (explicitType != ProductType.Unknown)
+            {
+                service.Verify(s => s.GetProductInfoByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                service.Verify(s => s.GetProductInfoFromTriageWorkItemAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            }
         }
 
         [Test]

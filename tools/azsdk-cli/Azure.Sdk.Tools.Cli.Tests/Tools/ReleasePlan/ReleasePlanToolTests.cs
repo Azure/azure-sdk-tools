@@ -931,7 +931,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
             var mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(777, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>(), false)).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, It.IsAny<bool>(), ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
@@ -982,7 +982,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
             var mockGitHub = new Mock<IGitHubService>(MockBehavior.Strict);
             var mockDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
-            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>(), false))
                 .ReturnsAsync(new ReleasePlanWorkItem { ReleasePlanId = 77, SDKInfo = [sdk] });
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, mockGitHub.Object, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
@@ -996,7 +996,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             using var document = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Mcp).Format(response));
             Assert.That(document.RootElement.GetProperty("release_plan_details").GetProperty("SDKInfo")[0].TryGetProperty("PullRequestStatus", out _), Is.False);
             mockGitHub.VerifyNoOtherCalls();
-            mockDevOps.Verify(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.GetReleasePlanAsync(77, It.IsAny<CancellationToken>(), false), Times.Once);
             mockDevOps.VerifyNoOtherCalls();
         }
 
@@ -1183,7 +1183,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 SDKReleaseMonth = "August 2026"
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
-            mockDevOps.Setup(x => x.GetReleasePlanAsync(releasePlan.ReleasePlanId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(releasePlan.ReleasePlanId, It.IsAny<CancellationToken>(), false)).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync([releasePlan]);
             var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, 24, 0, 0, 0, TimeSpan.Zero));
@@ -1784,7 +1784,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var service = new Mock<IDevOpsService>(MockBehavior.Strict);
             if (useReleasePlanId)
             {
-                service.Setup(s => s.GetReleasePlanAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(plan);
+                service.Setup(s => s.GetReleasePlanAsync(1, It.IsAny<CancellationToken>(), false)).ReturnsAsync(plan);
             }
             else
             {
@@ -3729,23 +3729,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Test_Abandon_ReleasePlan_With_WorkItemId_Success()
+        public void AbandonContract_OnlyAcceptsReleasePlanId()
         {
-            // Act
-            var result = await releasePlanTool.AbandonReleasePlan(workItemId: 100, releasePlanId: 0);
+            var command = releasePlanTool.GetCommandInstances().Single(c => c.Name == "abandon");
+            Assert.That(command.Parse("--release-plan-id 123").Errors, Is.Empty);
+            Assert.That(command.Parse("--work-item-id 100").Errors, Is.Not.Empty);
+            var parameters = typeof(ReleasePlanTool).GetMethod(nameof(ReleasePlanTool.AbandonReleasePlan))!.GetParameters();
+            Assert.That(parameters.Select(p => p.Name), Is.EqualTo(new[] { "releasePlanId", "ct" }));
+            var method = typeof(ReleasePlanTool).GetMethod(nameof(ReleasePlanTool.AbandonReleasePlan))!;
+            var schema = ModelContextProtocol.Server.McpServerTool.Create(method, _ => releasePlanTool).ProtocolTool.InputSchema;
+            Assert.That(schema.GetProperty("properties").EnumerateObject().Select(p => p.Name), Is.EqualTo(new[] { "releasePlanId" }));
+        }
 
-            // Assert
-            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
-            Assert.IsNotNull(result.Details);
-            Assert.That(result.Details.Count, Is.GreaterThan(0));
-            Assert.That(result.Details[0], Does.Contain("abandoned"));
+        [Test]
+        public async Task Test_Abandon_ReleasePlan_With_WorkItemNumber_DoesNotFallBack()
+        {
+            releasePlanTool = CreateManualAbandonmentTool();
+            var result = await releasePlanTool.AbandonReleasePlan(100);
+            Assert.That(result.ResponseError, Is.Not.Null);
         }
 
         [Test]
         public async Task Test_Abandon_ReleasePlan_With_ReleasePlanId_Success()
         {
+            releasePlanTool = CreateManualAbandonmentTool();
             // Act
-            var result = await releasePlanTool.AbandonReleasePlan(workItemId: 0, releasePlanId: 123);
+            var result = await releasePlanTool.AbandonReleasePlan(releasePlanId: 123);
 
             // Assert
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
@@ -3758,24 +3767,43 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Abandon_ReleasePlan_Without_Ids_ReturnsError()
         {
             // Act
-            var result = await releasePlanTool.AbandonReleasePlan(workItemId: 0, releasePlanId: 0);
+            var result = await releasePlanTool.AbandonReleasePlan();
 
             // Assert
             Assert.IsNotNull(result.ResponseError);
-            Assert.That(result.ResponseError, Does.Contain("Either work item ID or release plan ID must be provided"));
+            Assert.That(result.ResponseError, Does.Contain("positive Release Plan ID"));
         }
 
         [Test]
-        public async Task Test_Abandon_ReleasePlan_With_Both_Ids_Success()
+        public async Task Test_Abandon_ReleasePlan_WriterOwnsSavedStatus()
         {
-            // Act - when both are provided, workItemId takes precedence
-            var result = await releasePlanTool.AbandonReleasePlan(workItemId: 100, releasePlanId: 123);
+            releasePlanTool = CreateManualAbandonmentTool();
+            var result = await releasePlanTool.AbandonReleasePlan(123);
 
             // Assert
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.IsNotNull(result.Details);
             Assert.That(result.Details.Count, Is.GreaterThan(0));
             Assert.That(result.Details[0], Does.Contain("abandoned"));
+        }
+
+        private ReleasePlanTool CreateManualAbandonmentTool()
+        {
+            // Manual abandonment uses one snapshot and the revision-guarded writer.
+            // Keep these fixtures local rather than changing the shared mock's unrelated behavior.
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 100, ReleasePlanId = 123, Revision = 1, Status = "New", SDKInfo = []
+            };
+            service.Setup(s => s.GetReleasePlanAsync(123, It.IsAny<CancellationToken>(), true)).ReturnsAsync(plan);
+            service.Setup(s => s.UpdateWorkItemAsync(100, It.IsAny<Dictionary<string, string>>(), 1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem
+                {
+                });
+            return new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
         }
 
         // ======================== UpdateReleasePlan Tests ========================

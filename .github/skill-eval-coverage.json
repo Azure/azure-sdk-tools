@@ -1,6 +1,6 @@
 {
   "skillsRoot": ".github/skills",
   "workflow": ".github/workflows/skill-eval.yml",
-  "dashboardUrl": "https://azsdk-eval-bue6a7dwanatgpb3.westus3-01.azurewebsites.net/",
+  "dashboardUrl": "https://aka.ms/azsdk/eval-dashboard",
   "authoringGuideUrl": "https://github.com/Azure/azure-sdk-tools/blob/main/.github/skills/eval-authoring/README.md"
 }

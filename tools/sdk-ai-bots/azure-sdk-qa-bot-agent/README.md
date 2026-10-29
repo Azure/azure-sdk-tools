@@ -287,6 +287,9 @@ Converted Graph hosted-content images must belong to the source message identifi
 Uploaded files must have a PNG, JPEG, GIF, or WebP filename extension or an `image/*` attachment content type to be forwarded.
 PNG, JPEG, GIF, and WebP content types are supported, with a 5 MiB limit per image and a maximum of four image download attempts per request.
 The Teams bot accepts JSON request bodies up to 30 MiB to accommodate four base64-encoded images plus activity metadata.
+The Logic App sends the activity as a complete JSON POST with chunked-upload mode disabled.
+The Bot Framework endpoint does not implement [Logic Apps' chunked-upload protocol](https://learn.microsoft.com/azure/logic-apps/logic-apps-handle-large-messages#upload-content-in-chunks), which begins with an empty POST and then sends PATCH requests.
+The 30 MiB bot request limit is below Logic Apps' 100 MB non-chunked message limit.
 The backend enforces decoded image sizes and strict base64 validation as well as the per-image format checks.
 The backend checks MIME types and file signatures before sending image input; file responses served as `application/octet-stream` are identified by their image signature.
 It does not perform full image decoding.

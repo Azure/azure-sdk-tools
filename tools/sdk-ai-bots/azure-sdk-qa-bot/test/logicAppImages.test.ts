@@ -169,6 +169,14 @@ describe('Logic App connector image forwarding', () => {
     expect(invokeActions.Invoke_QA_Bot.inputs.retryPolicy.type).toBe('none');
   });
 
+  it('sends one complete JSON request instead of using the Logic Apps chunked-upload protocol', () => {
+    const invoke = replyActions.Invoke_bot.actions.Invoke_QA_Bot;
+    expect(invoke.inputs.method).toBe('POST');
+    expect(invoke.inputs.headers['Content-Type']).toBe('application/json');
+    expect(invoke.runtimeConfiguration).not.toHaveProperty('contentTransfer');
+    expect(invoke.runtimeConfiguration.secureData.properties).toEqual(['inputs']);
+  });
+
   it('groups parallel image preparation between conversion and bot invocation', () => {
     expect(Object.keys(replyActions).sort()).toEqual(['Invoke_bot', 'Resolve_image_bytes', 'convertActivity']);
     expect(replyActions.Resolve_image_bytes.type).toBe('Scope');

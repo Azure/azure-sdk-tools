@@ -835,9 +835,6 @@
                                       "properties": [
                                         "inputs"
                                       ]
-                                    },
-                                    "contentTransfer": {
-                                      "transferMode": "Chunked"
                                     }
                                   }
                                 }

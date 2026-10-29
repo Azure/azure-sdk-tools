@@ -315,7 +315,7 @@ _register(
     # -- Azure MCP Server --
     KnowledgeSource(
         name=SRC_AZURE_MCP_SERVER_DOCS,
-        description="Curated Azure MCP Server documentation and team Q&A covering setup, authentication, onboarding and merge practices, support history, troubleshooting, and release changes.",
+        description="Azure MCP Server documentation and team Q&A for using, developing, troubleshooting, and contributing to the server.",
         base_url="https://github.com/microsoft/mcp/blob/main/",
     ),
     KnowledgeSource(

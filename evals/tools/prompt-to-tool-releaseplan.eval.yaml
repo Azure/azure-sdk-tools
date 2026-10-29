@@ -24,35 +24,35 @@ scoring:
 stimuli:
   # ==== azsdk_abandon_release_plan triggers ====
   - name: invoke-azsdk-abandon-release-plan-1
-    prompt: "Abandon the release plan for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Abandon release plan ID 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-2
-    prompt: "Cancel and abandon my release plan for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Cancel and abandon my release plan with Release Plan ID 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-3
-    prompt: "Mark the release plan for work item 35000 as abandoned. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Mark Release Plan ID 12345 as abandoned. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-4
-    prompt: "Abandon my release plan for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Abandon my release plan with Release Plan ID 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-5
-    prompt: "Cancel the release plan for my service for work item 35000. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Cancel the release plan for my service with Release Plan ID 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:

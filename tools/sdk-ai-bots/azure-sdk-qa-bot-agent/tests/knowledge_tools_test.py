@@ -225,6 +225,7 @@ def test_build_targets_maps_ado_source_and_issue_project() -> None:
                             "provider": "azure-devops",
                             "organization": "azure-sdk",
                             "project": "internal",
+                            "areaPath": "internal\\qa-bot",
                         },
                     },
                     "paths": [{"folder": "internal_wiki"}],
@@ -241,7 +242,32 @@ def test_build_targets_maps_ado_source_and_issue_project() -> None:
         provider="azure-devops",
         organization="azure-sdk",
         project="internal",
+        area_path="internal\\qa-bot",
     )
+
+
+def test_build_targets_rejects_ado_issue_tracker_without_area_path() -> None:
+    with pytest.raises(ValueError, match="areaPath"):
+        _build_targets(
+            {
+                "sources": [
+                    {
+                        "repository": {
+                            "url": (
+                                "https://dev.azure.com/"
+                                "azure-sdk/internal/_git/internal.wiki"
+                            ),
+                            "issueTracker": {
+                                "provider": "azure-devops",
+                                "organization": "azure-sdk",
+                                "project": "internal",
+                            },
+                        },
+                        "paths": [{"folder": "internal_wiki"}],
+                    }
+                ]
+            }
+        )
 
 
 @pytest.mark.asyncio

@@ -8,12 +8,12 @@
     "version": "apispec-2026-06-22"
   },
   "qa-bot-basic-mcpserver": {
-    "cases": 35,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-mcpserver/versions/mcpserver-2026-09-02",
+    "cases": 18,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-mcpserver/versions/mcpserver-2026-10-23",
     "scenario": "mcpserver",
     "target": "basic",
-    "uploaded_at": "2026-09-02T06:10:16.267034+00:00",
-    "version": "mcpserver-2026-09-02"
+    "uploaded_at": "2026-10-23T02:32:22.800462+00:00",
+    "version": "mcpserver-2026-10-23"
   },
   "qa-bot-basic-onboarding": {
     "cases": 4,

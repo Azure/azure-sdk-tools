@@ -403,14 +403,33 @@ def test_azure_mcp_server_source_resolves_repository_paths() -> None:
     source = get_knowledge_source(SRC_AZURE_MCP_SERVER_DOCS)
 
     assert source is not None
-    assert "team Q&A" in source.description
-    assert "onboarding and merge practices" in source.description
     assert source.get_link("servers/Azure.Mcp.Server/README.md") == (
         "https://github.com/microsoft/mcp/blob/main/servers/Azure.Mcp.Server/README.md"
     )
     assert source.get_link("docs/Authentication.md") == (
         "https://github.com/microsoft/mcp/blob/main/docs/Authentication.md"
     )
+    title = "servers#Azure.Mcp.Server#docs#new-command.md"
+    assert source.get_link(title) == (
+        "https://github.com/microsoft/mcp/blob/main/"
+        "servers/Azure.Mcp.Server/docs/new-command.md"
+    )
+
+    sync_path = (
+        Path(__file__).parents[2] / "azure-sdk-qa-bot-knowledge-sync"
+        / "config" / "knowledge-config.json"
+    )
+    sync_config = json.loads(sync_path.read_text(encoding="utf-8"))
+    mcp_source = next(
+        entry for entry in sync_config["sources"]
+        if entry["repository"]["url"] == "https://github.com/microsoft/mcp.git"
+    )
+    guide = next(
+        entry for entry in mcp_source["paths"]
+        if entry["path"] == "/servers/Azure.Mcp.Server/docs/new-command.md"
+    )
+    assert guide["folder"] == source.name
+    assert guide["relativeByRepoPath"] is True
 
 
 def test_internal_mcp_docs_resolve_to_eng_ms_paths() -> None:

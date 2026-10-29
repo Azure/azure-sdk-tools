@@ -128,6 +128,9 @@ model ChatResponse {
   @doc("The unique ID of the response")
   id: string;
 
+  @doc("The name of the hosted agent that generated the response")
+  agent_name?: string;
+
   @doc("The answer from the agent")
   answer: string;
 
@@ -142,6 +145,27 @@ model ChatResponse {
 
   @doc("The tenant ID the question is routed to")
   route_tenant?: string;
+
+  @doc("Verified Teams mention metadata for AT markup already present in the answer")
+  mentions?: TeamsMention[];
+}
+
+@doc("Verified Teams mention metadata")
+model TeamsMention {
+  @doc("The exact AT markup included in the answer")
+  text: string;
+
+  @doc("The Teams account being mentioned")
+  mentioned: TeamsUser;
+}
+
+@doc("A Teams user account")
+model TeamsUser {
+  @doc("The Teams user identifier, such as a Microsoft Entra object ID")
+  id: string;
+
+  @doc("The account display name")
+  name: string;
 }
 
 // ── Feedback Models ──────────────────────────────────────────

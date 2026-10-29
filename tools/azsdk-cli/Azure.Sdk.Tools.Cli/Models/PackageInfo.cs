@@ -31,6 +31,13 @@ public class PackageInfo
     public string? PackageVersion { get; set; }
 
     /// <summary>
+    /// Distinct namespace/version pairs recorded in generated SDK metadata, sorted by namespace then version in ordinal order.
+    /// Empty when metadata is missing or contains no versions.
+    /// </summary>
+    [JsonPropertyName("ApiVersions")]
+    public PackageApiVersion[] ApiVersions { get; set; } = [];
+
+    /// <summary>
     /// Directory path relative to repo root (e.g., "sdk/storage/Azure.Storage.Blobs").
     /// </summary>
     [JsonPropertyName("DirectoryPath")]

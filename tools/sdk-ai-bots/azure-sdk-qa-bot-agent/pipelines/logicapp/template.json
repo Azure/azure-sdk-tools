@@ -474,16 +474,11 @@
                                 ]
                               }
                             },
-                            "Download_graph_images": {
-                              "type": "Foreach",
-                              "foreach": "@body('Filter_graph_hosted_images')",
-                              "runtimeConfiguration": {
-                                "concurrency": {
-                                  "repetitions": 1
-                                }
-                              },
+                            "Download_graph_image_slot_1": {
+                              "type": "If",
+                              "expression": "@greater(length(body('Filter_graph_hosted_images')), 0)",
                               "actions": {
-                                "Download_Graph_image": {
+                                "Download_Graph_image_1": {
                                   "type": "ApiConnection",
                                   "inputs": {
                                     "host": {
@@ -494,7 +489,7 @@
                                     "method": "post",
                                     "path": "/httprequest",
                                     "headers": {
-                                      "Uri": "@items('Download_graph_images')?['contentUrl']",
+                                      "Uri": "@body('Filter_graph_hosted_images')[0]['contentUrl']",
                                       "Method": "GET",
                                       "Content-Type": "application/json"
                                     },
@@ -510,14 +505,14 @@
                                     }
                                   }
                                 },
-                                "Capture_downloaded_image": {
+                                "Capture_downloaded_image_1": {
                                   "type": "Compose",
                                   "inputs": {
-                                    "url": "@items('Download_graph_images')?['contentUrl']",
-                                    "body": "@if(lessOrEquals(length(coalesce(body('Download_Graph_image')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image'), null)"
+                                    "url": "@body('Filter_graph_hosted_images')[0]['contentUrl']",
+                                    "body": "@if(lessOrEquals(length(coalesce(body('Download_Graph_image_1')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image_1'), null)"
                                   },
                                   "runAfter": {
-                                    "Download_Graph_image": [
+                                    "Download_Graph_image_1": [
                                       "Succeeded"
                                     ]
                                   },
@@ -536,14 +531,193 @@
                                 ]
                               }
                             },
-                            "Image_download_results": {
-                              "type": "Query",
-                              "inputs": {
-                                "from": "@result('Download_graph_images')",
-                                "where": "@equals(item()?['name'], 'Capture_downloaded_image')"
+                            "Download_graph_image_slot_2": {
+                              "type": "If",
+                              "expression": "@greater(length(body('Filter_graph_hosted_images')), 1)",
+                              "actions": {
+                                "Download_Graph_image_2": {
+                                  "type": "ApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "connection": {
+                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                      }
+                                    },
+                                    "method": "post",
+                                    "path": "/httprequest",
+                                    "headers": {
+                                      "Uri": "@body('Filter_graph_hosted_images')[1]['contentUrl']",
+                                      "Method": "GET",
+                                      "Content-Type": "application/json"
+                                    },
+                                    "retryPolicy": {
+                                      "type": "none"
+                                    }
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "outputs"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "Capture_downloaded_image_2": {
+                                  "type": "Compose",
+                                  "inputs": {
+                                    "url": "@body('Filter_graph_hosted_images')[1]['contentUrl']",
+                                    "body": "@if(lessOrEquals(length(coalesce(body('Download_Graph_image_2')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image_2'), null)"
+                                  },
+                                  "runAfter": {
+                                    "Download_Graph_image_2": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  }
+                                }
                               },
                               "runAfter": {
-                                "Download_graph_images": [
+                                "Download_graph_image_slot_1": [
+                                  "Succeeded",
+                                  "Failed",
+                                  "TimedOut"
+                                ]
+                              }
+                            },
+                            "Download_graph_image_slot_3": {
+                              "type": "If",
+                              "expression": "@greater(length(body('Filter_graph_hosted_images')), 2)",
+                              "actions": {
+                                "Download_Graph_image_3": {
+                                  "type": "ApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "connection": {
+                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                      }
+                                    },
+                                    "method": "post",
+                                    "path": "/httprequest",
+                                    "headers": {
+                                      "Uri": "@body('Filter_graph_hosted_images')[2]['contentUrl']",
+                                      "Method": "GET",
+                                      "Content-Type": "application/json"
+                                    },
+                                    "retryPolicy": {
+                                      "type": "none"
+                                    }
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "outputs"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "Capture_downloaded_image_3": {
+                                  "type": "Compose",
+                                  "inputs": {
+                                    "url": "@body('Filter_graph_hosted_images')[2]['contentUrl']",
+                                    "body": "@if(lessOrEquals(length(coalesce(body('Download_Graph_image_3')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image_3'), null)"
+                                  },
+                                  "runAfter": {
+                                    "Download_Graph_image_3": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "runAfter": {
+                                "Download_graph_image_slot_2": [
+                                  "Succeeded",
+                                  "Failed",
+                                  "TimedOut"
+                                ]
+                              }
+                            },
+                            "Download_graph_image_slot_4": {
+                              "type": "If",
+                              "expression": "@greater(length(body('Filter_graph_hosted_images')), 3)",
+                              "actions": {
+                                "Download_Graph_image_4": {
+                                  "type": "ApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "connection": {
+                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                      }
+                                    },
+                                    "method": "post",
+                                    "path": "/httprequest",
+                                    "headers": {
+                                      "Uri": "@body('Filter_graph_hosted_images')[3]['contentUrl']",
+                                      "Method": "GET",
+                                      "Content-Type": "application/json"
+                                    },
+                                    "retryPolicy": {
+                                      "type": "none"
+                                    }
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "outputs"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "Capture_downloaded_image_4": {
+                                  "type": "Compose",
+                                  "inputs": {
+                                    "url": "@body('Filter_graph_hosted_images')[3]['contentUrl']",
+                                    "body": "@if(lessOrEquals(length(coalesce(body('Download_Graph_image_4')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image_4'), null)"
+                                  },
+                                  "runAfter": {
+                                    "Download_Graph_image_4": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "runAfter": {
+                                "Download_graph_image_slot_3": [
+                                  "Succeeded",
+                                  "Failed",
+                                  "TimedOut"
+                                ]
+                              }
+                            },
+                            "Image_download_results": {
+                              "type": "Compose",
+                              "inputs": [
+                                "@outputs('Capture_downloaded_image_1')",
+                                "@outputs('Capture_downloaded_image_2')",
+                                "@outputs('Capture_downloaded_image_3')",
+                                "@outputs('Capture_downloaded_image_4')"
+                              ],
+                              "runAfter": {
+                                "Download_graph_image_slot_4": [
                                   "Succeeded",
                                   "Failed",
                                   "TimedOut"
@@ -552,8 +726,7 @@
                               "runtimeConfiguration": {
                                 "secureData": {
                                   "properties": [
-                                    "inputs",
-                                    "outputs"
+                                    "inputs"
                                   ]
                                 }
                               }
@@ -561,7 +734,7 @@
                             "Prepare_activity_images": {
                               "type": "JavaScriptCode",
                               "inputs": {
-                                "code": "var activity=workflowContext.actions.convertActivity.outputs.body;\nvar results=workflowContext.actions.Image_download_results.outputs.body.slice(),images={};\nfor(var i=0;i<results.length;i++){\n  var r=results[i];\n  if(Array.isArray(r.outputs)){results=results.concat(r.outputs);continue;}\n  if(r.name!=='Capture_downloaded_image'||r.status!=='Succeeded')continue;\n  var image=r.outputs,b=image&&image.body;\n  if(b===null)continue;\n  if(!image||!image.url||!b||typeof b['$content']!=='string'||typeof b['$content-type']!=='string')throw new Error('Invalid Teams image body');\n  images[image.url]='data:'+b['$content-type'].split(';')[0].trim().toLowerCase()+';base64,'+b['$content'];\n}\nactivity.attachments=(activity.attachments||[]).map(function(a){\n  return images[a.contentUrl]?Object.assign({},a,{contentUrl:images[a.contentUrl]}):a;\n});\nreturn activity;",
+                                "code": "var activity=workflowContext.actions.convertActivity.outputs.body;\nvar results=workflowContext.actions.Image_download_results.outputs,images={};\nfor(var i=0;i<results.length;i++){\n  var image=results[i];\n  if(!image||image.body===null)continue;\n  var b=image.body;\n  if(!image.url||!b||typeof b['$content']!=='string'||typeof b['$content-type']!=='string')throw new Error('Invalid Teams image body');\n  images[image.url]='data:'+b['$content-type'].split(';')[0].trim().toLowerCase()+';base64,'+b['$content'];\n}\nactivity.attachments=(activity.attachments||[]).map(function(a){\n  return images[a.contentUrl]?Object.assign({},a,{contentUrl:images[a.contentUrl]}):a;\n});\nreturn activity;",
                                 "explicitDependencies": {
                                   "actions": [
                                     "convertActivity",

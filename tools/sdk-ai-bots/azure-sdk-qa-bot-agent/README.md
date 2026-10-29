@@ -226,6 +226,8 @@ az account get-access-token --resource api://azure-sdk-qa-bot
 The answering agent can use inline screenshots, diagrams, and uploaded image files as additional context alongside the user's text and retrieved knowledge.
 The Graph-to-Activity converter preserves both HTML inline images and image-file entries in the message's `attachments` array, including SharePoint `reference` attachments represented by `<attachment id="...">` placeholders.
 For autoreplies, the Logic App downloads Graph-hosted inline images using its existing Teams connector and replaces their attachment URLs with base64 data URIs.
+Four guarded download slots pass captured bytes through direct action-output references instead of `result()` loop execution records, which can omit secured payloads.
+Image-bearing actions keep their inputs or outputs hidden in run history; "Content not shown due to security configuration" is expected and does not indicate a download failure.
 The TypeScript bot forwards those data URIs through the existing `additional_infos[].link` field, and the backend validates the image bytes before sending `input_image` content to the hosted agent.
 The backend does not need Graph permission when the Teams connector supplies the bytes.
 SharePoint files and URLs received without connector-provided bytes still use the backend downloader and its own permissions.

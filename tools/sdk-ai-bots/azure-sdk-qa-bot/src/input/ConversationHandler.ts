@@ -253,11 +253,21 @@ export class ConversationHandler {
    */
   private messageToEntity(message: ConversationMessage): MessageEntity {
     const timestamp = message.timestamp || new Date();
+    const storedImages = message.prompt?.images?.filter((image) => !image.startsWith('data:'));
+    const inlineImageCount = (message.prompt?.images?.length ?? 0) - (storedImages?.length ?? 0);
+    if (inlineImageCount > 0) {
+      logger.info('Inline images are used for the current turn only, not conversation storage', {
+        conversationId: message.conversationId,
+        activityId: message.activityId,
+        imageCount: inlineImageCount,
+      });
+    }
 
     // Serialize prompt, handling Date objects properly
     const promptToStore = message.prompt
       ? {
           ...message.prompt,
+          images: storedImages,
           timestamp: message.prompt.timestamp?.toISOString(),
         }
       : undefined;

@@ -221,6 +221,79 @@ az account get-access-token --resource api://azure-sdk-qa-bot-test
 az account get-access-token --resource api://azure-sdk-qa-bot
 ```
 
+## Trying Teams images
+
+The answering agent can use inline screenshots, diagrams, and uploaded image files as additional context alongside the user's text and retrieved knowledge.
+The Graph-to-Activity converter preserves both HTML inline images and image-file entries in the message's `attachments` array, including SharePoint `reference` attachments represented by `<attachment id="...">` placeholders.
+For autoreplies, the Logic App downloads Graph-hosted inline images using its existing Teams connector and replaces their attachment URLs with base64 data URIs.
+The TypeScript bot forwards those data URIs through the existing `additional_infos[].link` field, and the backend validates the image bytes before sending `input_image` content to the hosted agent.
+The backend does not need Graph permission when the Teams connector supplies the bytes.
+SharePoint files and URLs received without connector-provided bytes still use the backend downloader and its own permissions.
+
+Prerequisites:
+
+- The deployment selected by `AI_FOUNDRY_AGENT_COMPLETION_MODEL` must support image input through the hosted agent.
+- The Logic App's Teams connection must be authorized to read hosted content in the monitored channels; the connector performs a Graph `GET` on the image's `/$value` endpoint.
+- If sending Graph URLs directly to the backend instead, its identity needs channel-message read access: `ChannelMessage.Read.All` application permission with admin consent, or an appropriately configured Teams app identity with `ChannelMessage.Read.Group` resource-specific consent.
+- For local direct-URL downloads, the Azure CLI identity needs delegated `ChannelMessage.Read.All` access through the CLI application and access to the target team; ordinary Azure subscription access alone is insufficient.
+- SharePoint image files and Graph drive-item content additionally require file-read access: the Graph content API documents `Files.Read.All` application permission or delegated `Files.Read` with access to the file.
+- Channel-message read permission does not grant file access, and the backend does not inherit the Teams connector's permissions.
+- Native Bot Framework images continue to use `BOT_CLIENT_ID` and `BOT_TENANT_ID`; these credentials are separate from Graph authentication.
+
+See [Graph hosted-content retrieval and permissions](https://learn.microsoft.com/graph/api/chatmessagehostedcontent-get?view=graph-rest-1.0), [Graph file downloads and permissions](https://learn.microsoft.com/graph/api/driveitem-get-content?view=graph-rest-1.0), [sharing-URL encoding](https://learn.microsoft.com/graph/api/shares-get?view=graph-rest-1.0#encoding-sharing-urls), and [Responses API base64 image input](https://learn.microsoft.com/azure/foundry/openai/how-to/responses?tabs=python#base64-encoded-image).
+This patch does not grant permissions or change deployed resources.
+The connector flow requires the updated Logic App template, Teams bot, and backend to be deployed together; updating only the backend does not enable connector-based downloads.
+The connector's `/httprequest` action requires the target `Uri` and `Method` in its headers, not its request body or query parameters.
+Only Graph hosted-content images among the first four image attachments are downloaded by the Logic App, with no automatic download retries.
+Each message uses its own loop results rather than shared workflow variables.
+If a connector request fails or its encoded image exceeds the size limit, its original URL is retained for the existing backend download and failure-notice handling.
+Successful image payloads are hidden from workflow action history using secure inputs/outputs and omitted from Teams bot application logs.
+
+For a local trial of the payload handling without Graph permissions, run the backend using the setup above and send a base64 data URI through `/agent/chat`.
+To exercise the full autoreply flow, use the updated Logic App and point the Teams bot at the updated backend using its existing configuration.
+Send a question with a pasted PNG or JPEG screenshot, then repeat with an uploaded image file and an image in a thread reply.
+Confirm that the answer uses a detail visible only in the image, such as a distinctive error code.
+The `/agent/chat` endpoint also accepts an image directly through the existing `additional_infos` contract:
+
+```json
+{
+  "tenant_id": "azure_sdk_qa_bot",
+  "message": {
+    "role": "user",
+    "content": "What error code is visible in the attached screenshot?"
+  },
+  "additional_infos": [
+    {
+      "type": "image",
+      "content": "",
+      "link": "data:image/png;base64,<base64-encoded-image-bytes>"
+    }
+  ]
+}
+```
+
+For direct backend URL downloads, use `https://graph.microsoft.com/v1.0/teams/<team-id>/channels/<channel-id>/messages/<message-id>/hostedContents/<content-id>/$value`, with the corresponding `/messages/<root-id>/replies/<reply-id>/hostedContents/<content-id>/$value` path for an image in a reply.
+The `link` can also be the uploaded file's `https://<tenant>.sharepoint.com/.../image.png` URL or a Graph `/drives/<drive-id>/items/<item-id>/content` or `/shares/<sharing-token>/driveItem/content` URL.
+SharePoint URLs are encoded into Graph `/shares/<encoded-url>/driveItem/content` requests using the backend's Graph token; the backend does not send bearer tokens directly to SharePoint links.
+Graph file-content endpoints normally return a preauthenticated download URL; the backend follows a single `302` to an HTTPS tenant `*.sharepoint.com` or `*.files.1drv.com` host without forwarding the Graph token.
+Other redirects, arbitrary hosts, credentials in URLs, and non-HTTPS ports are rejected.
+Bot Framework and Graph hosted-content image downloads do not follow redirects.
+Converted Graph hosted-content images must belong to the source message identified by its team, channel, and message metadata; references to other messages are ignored.
+Uploaded files must have a PNG, JPEG, GIF, or WebP filename extension or an `image/*` attachment content type to be forwarded.
+PNG, JPEG, GIF, and WebP content types are supported, with a 5 MiB limit per image and a maximum of four image download attempts per request.
+The Teams bot accepts JSON request bodies up to 30 MiB to accommodate four base64-encoded images plus activity metadata.
+The backend enforces decoded image sizes and strict base64 validation as well as the per-image format checks.
+The backend checks MIME types and file signatures before sending image input; file responses served as `application/octet-stream` are identified by their image signature.
+It does not perform full image decoding.
+Download failures and excess images are logged and surfaced to the model with an instruction to disclose the limitation rather than guess.
+
+This trial adds image context to answer generation only.
+Autoreply intent classification remains text-only, so use a clear written question alongside the image.
+Non-image files, personal-chat file-consent attachments, consumer OneDrive links, sovereign-cloud SharePoint hosts, forwarded images hosted on another message, images embedded in knowledge-base documentation, and durable image replay after conversation recovery are not included.
+The existing bot may resend historical image URLs; expired or inaccessible images will produce an image-input notice.
+Inline data URIs are not persisted in the Teams bot's Azure Table conversation records because image bytes can exceed the string-property size limit.
+They are forwarded for the current turn, but are not available for frontend history replay.
+
 ## Deployment
 
 The project has three independently deployable components, each with its own CD pipeline. All pipelines are manually triggered and parameterized by environment.

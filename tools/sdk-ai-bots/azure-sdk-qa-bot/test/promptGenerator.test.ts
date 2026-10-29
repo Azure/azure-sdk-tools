@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PromptGenerator } from '../src/input/PromptGenerator.js';
 import { Prompt, ConversationMessage, RAGReply } from '../src/input/ConversationHandler.js';
+import { TurnContext } from 'botbuilder';
+import { logger } from '../src/logging/logger.js';
 
 // Mock logger
 vi.mock('../src/logging/logger.js', () => {
@@ -55,5 +57,25 @@ describe('PromptGenerator', () => {
     expect(result.conversationID).toBe('test-conversation');
     expect(result.additionalInfo.images).toBeDefined();
     expect(result.additionalInfo.images.length).toBe(1);
+  });
+
+  it('should forward connector image bytes without logging them', async () => {
+    const dataUri = 'data:image/png;base64,iVBORw0KGgo=';
+    const context = {
+      activity: {
+        type: 'message',
+        text: 'What error is visible?',
+        attachments: [{ contentType: 'image/*', contentUrl: dataUri }],
+        from: { name: 'testUser', id: 'user-123' },
+        recipient: { id: 'bot' },
+        conversation: { id: 'conversation' },
+      },
+    } as TurnContext;
+    const current = promptGenerator.generateCurrentPrompt(context, {});
+    const full = await promptGenerator.generateFullPrompt(current, [], {});
+
+    expect(current.images).toEqual([dataUri]);
+    expect(full.additionalInfo.images[0].url.toString()).toBe(dataUri);
+    expect(JSON.stringify(vi.mocked(logger.info).mock.calls)).not.toContain(dataUri);
   });
 });

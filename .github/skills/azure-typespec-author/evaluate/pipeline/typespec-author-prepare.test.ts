@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -9,8 +9,16 @@ import { pathToFileURL } from "node:url";
 
 import { configureSkillEnvironments, prepareBenchmark } from "./typespec-author-prepare.ts";
 
+function createMcpBinary(root: string, kind: "live" | "mock") {
+  const file = path.join(root, "artifacts", "mcp", kind === "live" ? "cli" : "mock",
+    kind === "live" ? "azsdk.dll" : "azsdk-mock.dll");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, "");
+  return file;
+}
+
 function fixture(t: { after: (fn: () => void) => void }, naming = true, required = true) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-skill-config-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-skill-config with spaces-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const author = path.join(root, "azure-typespec-author");
   const evalRoot = path.join(author, "evaluate");
@@ -29,7 +37,17 @@ function fixture(t: { after: (fn: () => void) => void }, naming = true, required
       skills: ["../..", "../../../azsdk-common-typespec-naming"],
       mcpServers: { sdk: { cwd: "../../.." } },
     },
+    "azsdk-mcp": {
+      mcpServers: {
+        "azure-sdk-mcp": {
+          type: "stdio", command: "node", args: ["local-launcher.cjs"], cwd: root,
+          timeout: "5m", env: { AZURE_SDK_KB_ENDPOINT: "https://example.test" },
+        },
+      },
+    },
   };
+  createMcpBinary(root, "live");
+  createMcpBinary(root, "mock");
   return { root, evalRoot, environments, stage: path.join(root, "runtime", "skills") };
 }
 
@@ -77,9 +95,10 @@ test("missing non-naming inputs are not silently omitted", (t) => {
   );
 });
 
-for (const mode of ["forced", "trigger", "no-skill"]) {
-  test(`${mode} uses the nearest Vally config, standard selection and isolated skill inputs`, async (t) => {
-    const { evalRoot, environments, stage } = fixture(t);
+for (const [mode, kind] of ["forced", "trigger", "no-skill"].flatMap((mode) =>
+  ["live", "mock"].map((kind) => [mode, kind]))) {
+  test(`${mode}/${kind} uses direct MCP startup, standard selection and isolated skill inputs`, async (t) => {
+    const { root, evalRoot, environments, stage } = fixture(t);
     const evalDir = path.join(evalRoot, "evals");
     fs.mkdirSync(evalDir);
     fs.writeFileSync(path.join(evalRoot, ".vally.yaml"), JSON.stringify({ environments }));
@@ -93,7 +112,7 @@ for (const mode of ["forced", "trigger", "no-skill"]) {
         graders: [{ type: "file-exists", config: { path: "example.txt" } }],
       })),
     }));
-    await prepareBenchmark(evalRoot, mode, stage);
+    await prepareBenchmark(evalRoot, mode, stage, kind);
     const requireEval = createRequire(new URL("../../../../../eng/common/scripts/eval/package.json", import.meta.url));
     const { ProjectContext, discoverAndFilterEvals, parseSuiteFilter } =
       await import(pathToFileURL(requireEval.resolve("@microsoft/vally")).href);
@@ -118,8 +137,75 @@ for (const mode of ["forced", "trigger", "no-skill"]) {
       }
     }
     assert.equal(context.config.environments.sdk.mcpServers.sdk.cwd, path.resolve(evalRoot, "../../.."));
+    const server = context.config.environments["azsdk-mcp"].mcpServers["azure-sdk-mcp"];
+    const expectedDll = path.join(root, "artifacts", "mcp", kind === "live" ? "cli" : "mock",
+      kind === "live" ? "azsdk.dll" : "azsdk-mock.dll");
+    assert.equal(server.command, "dotnet");
+    assert.deepEqual(server.args, kind === "live" ? [expectedDll, "mcp"] : [expectedDll]);
+    assert.equal(server.cwd, root);
+    assert.equal(server.timeout, environments["azsdk-mcp"].mcpServers["azure-sdk-mcp"].timeout);
+    assert.deepEqual(server.env, environments["azsdk-mcp"].mcpServers["azure-sdk-mcp"].env);
   });
 }
+
+test("invalid MCP kinds and missing binaries fail before writing prepared configuration", async (t) => {
+  const { root, evalRoot, environments, stage } = fixture(t);
+  const configPath = path.join(evalRoot, ".vally.yaml");
+  const original = JSON.stringify({ environments });
+  fs.writeFileSync(configPath, original);
+  for (const kind of ["", "LIVE", "unknown"]) {
+    await assert.rejects(prepareBenchmark(evalRoot, "forced", stage, kind), /AZSDK_EVAL_MCP_KIND must be live or mock/);
+  }
+  for (const kind of ["live", "mock"] as const) {
+    const file = createMcpBinary(root, kind);
+    fs.unlinkSync(file);
+    await assert.rejects(prepareBenchmark(evalRoot, "forced", stage, kind), /Prebuilt .* MCP binary does not exist/);
+    fs.mkdirSync(file);
+    await assert.rejects(prepareBenchmark(evalRoot, "forced", stage, kind), /Prebuilt .* MCP binary does not exist or is not a file/);
+  }
+  assert.equal(fs.readFileSync(configPath, "utf8"), original);
+  assert.equal(fs.existsSync(stage), false);
+});
+
+test("the prepare CLI reads the pipeline MCP kind and rejects a missing selection", (t) => {
+  const { evalRoot, environments, stage } = fixture(t);
+  const configPath = path.join(evalRoot, ".vally.yaml");
+  fs.writeFileSync(configPath, JSON.stringify({ environments }));
+  const args = ["--experimental-strip-types", path.join(import.meta.dirname, "typespec-author-prepare.ts"),
+    "--prepare", "--eval-root", evalRoot, "--mode", "no-skill", "--skill-root", stage];
+  const env = { ...process.env };
+  delete env.AZSDK_EVAL_MCP_KIND;
+  const missing = spawnSync(process.execPath, args, { env, encoding: "utf8" });
+  assert.ifError(missing.error);
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /AZSDK_EVAL_MCP_KIND must be live or mock/);
+  execFileSync(process.execPath, args, { env: { ...env, AZSDK_EVAL_MCP_KIND: "live" }, stdio: "pipe" });
+  const server = JSON.parse(fs.readFileSync(configPath, "utf8")).environments["azsdk-mcp"].mcpServers["azure-sdk-mcp"];
+  assert.equal(server.command, "dotnet");
+  assert.equal(server.args[1], "mcp");
+});
+
+test("benchmark entrypoints use persistent connection configuration without a run parameter", () => {
+  const requireEval = createRequire(new URL("../../../../../eng/common/scripts/eval/package.json", import.meta.url));
+  const { parse } = requireEval("yaml");
+  for (const file of ["azure-typespec-author-benchmark.yml", "azure-typespec-author-benchmark-no-skill.yml"]) {
+    const pipeline = parse(fs.readFileSync(new URL(`../../../../../eng/pipelines/${file}`, import.meta.url), "utf8"));
+    const connection = pipeline.parameters.find((parameter: { name: string }) => parameter.name === "azureSubscription");
+    assert.equal(connection, undefined, `${file}: connection must not require a run parameter`);
+    assert.equal(pipeline.variables.find((variable: { name?: string }) =>
+      variable.name === "TypeSpecAuthorEvalAzureSubscription"), undefined,
+      `${file}: connection must come from pipeline settings, not a YAML fallback`);
+    const invocations = file.endsWith("-no-skill.yml") ? [pipeline.extends.parameters] :
+      pipeline.extends.parameters.stages
+        .filter((stage: { stage: string }) => ["EvalForced", "EvalTrigger"].includes(stage.stage))
+        .map((stage: { jobs: { parameters: object }[] }) => stage.jobs[0].parameters);
+    assert.equal(invocations.length, file.endsWith("-no-skill.yml") ? 1 : 2);
+    for (const invocation of invocations) {
+      assert.equal(invocation.azureSubscription, "$(TypeSpecAuthorEvalAzureSubscription)");
+      assert.equal(invocation.UseAzSdkAuthentication, "${{ eq(parameters.McpKind, 'live') }}");
+    }
+  }
+});
 
 test("all three repository configurations plan with Vally 0.19 without executing models or MCP", async (t) => {
   const requireEval = createRequire(new URL("../../../../../eng/common/scripts/eval/package.json", import.meta.url));
@@ -133,6 +219,7 @@ test("all three repository configurations plan with Vally 0.19 without executing
   const source = path.resolve(import.meta.dirname, "..");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-benchmark-configs-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const mockDll = createMcpBinary(root, "mock");
   fs.symlinkSync(path.resolve(source, "../../azsdk-common-typespec-naming"),
     path.join(root, "azsdk-common-typespec-naming"), "junction");
   const original = await loadProjectConfig(source);
@@ -151,8 +238,9 @@ test("all three repository configurations plan with Vally 0.19 without executing
       fs.symlinkSync(path.join(source, directory), path.join(evalRoot, directory), "junction");
     }
     const { dir: _dir, ...config } = original;
+    config.environments["azsdk-mcp"].mcpServers["azure-sdk-mcp"].cwd = root;
     fs.writeFileSync(path.join(evalRoot, ".vally.yaml"), JSON.stringify(config));
-    await prepareBenchmark(evalRoot, mode, path.join(author, "skills"));
+    await prepareBenchmark(evalRoot, mode, path.join(author, "skills"), "mock");
     const context = await ProjectContext.load(path.join(evalRoot, "evals"));
     const filter = parseSuiteFilter([`mode=${mode}`]);
     const allMatching = await discoverAndFilterEvals(context, {
@@ -181,6 +269,12 @@ test("all three repository configurations plan with Vally 0.19 without executing
     assert.equal(plan.totalItems, allMatching.matched.reduce((sum, entry) => sum + entry.stimuli.length * 3, 0));
     const prepared = context.config.environments["azsdk-mcp"];
     assert.equal(prepared.skills.length, mode === "no-skill" ? 0 : original.environments["azsdk-mcp"].skills.length);
+    assert.equal(prepared.mcpServers["azure-sdk-mcp"].command, "dotnet");
+    assert.deepEqual(prepared.mcpServers["azure-sdk-mcp"].args, [mockDll]);
+    assert.deepEqual(prepared.mcpServers["azure-sdk-mcp"].env, original.environments["azsdk-mcp"].mcpServers["azure-sdk-mcp"].env);
+    for (const local of ["azsdk-mcp-local", "azsdk-mcp-mock-local"]) {
+      assert.deepEqual(context.config.environments[local].mcpServers, original.environments[local].mcpServers);
+    }
   }
 });
 

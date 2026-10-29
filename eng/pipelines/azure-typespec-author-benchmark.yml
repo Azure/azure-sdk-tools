@@ -91,7 +91,7 @@ extends:
               postEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-posteval.yml
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
-              azureSubscription: azuresdkqabot-dev
+              azureSubscription: $(TypeSpecAuthorEvalAzureSubscription)
               vallyArguments:
                 - --tag
                 - mode=forced
@@ -147,7 +147,7 @@ extends:
               postEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-posteval.yml
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
-              azureSubscription: azuresdkqabot-dev
+              azureSubscription: $(TypeSpecAuthorEvalAzureSubscription)
               vallyArguments:
                 - --tag
                 - mode=trigger

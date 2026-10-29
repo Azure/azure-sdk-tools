@@ -61,9 +61,10 @@ steps:
         --eval-root "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate" \
         --mode "$BENCHMARK_MODE" \
         --skill-root "$(Agent.TempDirectory)/typespec-benchmark-$(System.JobId)/skills"
-    displayName: "Prepare isolated benchmark skill inputs"
+    displayName: "Prepare benchmark skill inputs and direct MCP startup"
     env:
       BENCHMARK_MODE: $(TypeSpecAuthorEvalMode)
+      AZSDK_EVAL_MCP_KIND: $(AZSDK_EVAL_MCP_KIND)
 
   - script: |
       set -e

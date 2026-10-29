@@ -49,9 +49,17 @@ export function configureSkillEnvironments(
 }
 
 // Repository-local preparation. Common owns invocation, authentication and the verdict.
-export async function prepareBenchmark(evalRoot: string, mode: string, skillRoot: string) {
+export async function prepareBenchmark(
+  evalRoot: string,
+  mode: string,
+  skillRoot: string,
+  mcpKind = process.env.AZSDK_EVAL_MCP_KIND
+) {
   if (!["forced", "trigger", "no-skill"].includes(mode)) {
     throw new Error("Benchmark mode must be forced, trigger or no-skill.");
+  }
+  if (mcpKind !== "live" && mcpKind !== "mock") {
+    throw new Error("AZSDK_EVAL_MCP_KIND must be live or mock.");
   }
   evalRoot = path.resolve(evalRoot);
   const { loadProjectConfig } =
@@ -60,7 +68,19 @@ export async function prepareBenchmark(evalRoot: string, mode: string, skillRoot
   if (config.dir !== evalRoot) {
     throw new Error("Benchmark setup requires a .vally.yaml in the eval root.");
   }
+  const server = config.environments["azsdk-mcp"]?.mcpServers?.["azure-sdk-mcp"];
+  if (!server?.cwd) {
+    throw new Error("The pipeline azsdk-mcp environment must define azure-sdk-mcp with a repository cwd.");
+  }
+  const dllPath = path.resolve(evalRoot, server.cwd, mcpKind === "live"
+    ? "artifacts/mcp/cli/azsdk.dll"
+    : "artifacts/mcp/mock/azsdk-mock.dll");
+  if (!fs.statSync(dllPath, { throwIfNoEntry: false })?.isFile()) {
+    throw new Error(`Prebuilt ${mcpKind} MCP binary does not exist or is not a file: ${dllPath}`);
+  }
   configureSkillEnvironments(config.environments, evalRoot, mode === "no-skill", path.resolve(skillRoot));
+  server.command = "dotnet";
+  server.args = mcpKind === "live" ? [dllPath, "mcp"] : [dllPath];
   const { dir: _dir, ...preparedConfig } = config;
   // Explicit -e paths reload their nearest .vally.yaml. Prepare that CI checkout,
   // rather than hiding overrides in a temporary project that Vally would ignore.

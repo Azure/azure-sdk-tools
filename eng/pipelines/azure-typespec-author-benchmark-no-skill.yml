@@ -47,7 +47,7 @@ extends:
       - 'evals/007008.eval.yaml'
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: ${{ parameters.McpKind }}
-    azureSubscription: azuresdkqabot-dev
+    azureSubscription: $(TypeSpecAuthorEvalAzureSubscription)
     vallyArguments:
       - --tag
       - mode=no-skill

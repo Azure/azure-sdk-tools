@@ -134,7 +134,7 @@ its App installation token through `GITHUB_TOKEN`; local users can use
 developer credentials locally and managed identity on the hosted worker.
 Do not pass either token on the command line.
 
-See the [versioned input/result and worker contract](docs/specs/7-validating-service-api-readiness.spec.md).
+See the [versioned input/result and worker contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/7-validating-service-api-readiness.spec.md).
 The command's zero exit code means an observation completed; read `status` to
 distinguish Passed from Not detected or Inconclusive. Error returns one.
 

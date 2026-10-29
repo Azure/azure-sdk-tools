@@ -5,8 +5,9 @@ const template = JSON.parse(readFileSync(
   new URL('../../azure-sdk-qa-bot-agent/pipelines/logicapp/template.json', import.meta.url),
   'utf8',
 ));
-const actions = template.resources[0].properties.definition.actions.For_each.actions
+const replyActions = template.resources[0].properties.definition.actions.For_each.actions
   .Thread_Message_From_User.actions.Need_Reply.actions.Should_Reply.actions;
+const actions = replyActions.Resolve_image_bytes.actions;
 
 const graphImage = 'https://graph.microsoft.com/v1.0/teams/t/channels/c/messages/m/hostedContents/i/$value';
 const png = 'iVBORw0KGgo=';
@@ -43,7 +44,7 @@ function downloaded(
 describe('Logic App connector image forwarding', () => {
   it('uses the verified Teams HTTP action headers and existing connection', () => {
     for (let slot = 1; slot <= 4; slot++) {
-      const download = actions[`Download_graph_image_slot_${slot}`].actions[`Download_Graph_image_${slot}`];
+      const download = actions[`Download_image_${slot}_if_present`].actions[`Download_Graph_image_${slot}`];
       expect(download.type).toBe('ApiConnection');
       expect(download.inputs.path).toBe('/httprequest');
       expect(download.inputs.method).toBe('post');
@@ -61,12 +62,10 @@ describe('Logic App connector image forwarding', () => {
     expect(actions.Filter_graph_hosted_images.inputs.where).toContain('https://graph.microsoft.com/');
     expect(actions.Filter_graph_hosted_images.inputs.where).toContain('/hostedContents/');
     for (let slot = 1; slot <= 4; slot++) {
-      const condition = actions[`Download_graph_image_slot_${slot}`];
+      const condition = actions[`Download_image_${slot}_if_present`];
       expect(condition.type).toBe('If');
       expect(condition.expression).toBe(`@greater(length(body('Filter_graph_hosted_images')), ${slot - 1})`);
-      expect(condition.runAfter).toEqual(slot === 1
-        ? { Filter_graph_hosted_images: ['Succeeded'] }
-        : { [`Download_graph_image_slot_${slot - 1}`]: ['Succeeded', 'Failed', 'TimedOut'] });
+      expect(condition.runAfter).toEqual({ Filter_graph_hosted_images: ['Succeeded'] });
       const capture = condition.actions[`Capture_downloaded_image_${slot}`];
       expect(capture.runAfter).toEqual({ [`Download_Graph_image_${slot}`]: ['Succeeded'] });
       expect(capture.runtimeConfiguration.secureData.properties).toEqual(['inputs']);
@@ -75,7 +74,7 @@ describe('Logic App connector image forwarding', () => {
         `@if(lessOrEquals(length(coalesce(body('Download_Graph_image_${slot}')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image_${slot}'), null)`,
       );
     }
-    expect(actions.Download_graph_image_slot_5).toBeUndefined();
+    expect(actions.Download_image_5_if_present).toBeUndefined();
     expect(actions.Image_download_results.type).toBe('Compose');
     expect(actions.Image_download_results.inputs).toEqual([1, 2, 3, 4].map(
       (slot) => `@outputs('Capture_downloaded_image_${slot}')`,
@@ -85,11 +84,30 @@ describe('Logic App connector image forwarding', () => {
     expect(JSON.stringify(actions)).not.toMatch(/"(Foreach|AppendToArrayVariable|SetVariable)"/);
     expect(template.resources[0].properties.definition.parameters.maxImageBytes.defaultValue).toBe(5 * 1024 * 1024);
     expect(actions.Image_download_results.runAfter).toEqual({
-      Download_graph_image_slot_4: ['Succeeded', 'Failed', 'TimedOut'],
+      Download_image_1_if_present: ['Succeeded', 'Failed', 'TimedOut'],
+      Download_image_2_if_present: ['Succeeded', 'Failed', 'TimedOut'],
+      Download_image_3_if_present: ['Succeeded', 'Failed', 'TimedOut'],
+      Download_image_4_if_present: ['Succeeded', 'Failed', 'TimedOut'],
     });
-    expect(actions.Scope.actions.Invoke_QA_Bot.inputs.body).toBe("@outputs('Prepare_activity_images')");
-    expect(actions.Scope.runAfter).toEqual({ Prepare_activity_images: ['Succeeded'] });
-    expect(actions.Scope.actions.Invoke_QA_Bot.runtimeConfiguration.secureData.properties).toContain('inputs');
+    expect(replyActions.Invoke_bot.actions.Invoke_QA_Bot.inputs.body).toBe("@outputs('Prepare_activity_images')");
+    expect(replyActions.Invoke_bot.runAfter).toEqual({
+      Resolve_image_bytes: ['Succeeded', 'Failed', 'TimedOut'],
+    });
+    expect(replyActions.Invoke_bot.type).toBe('If');
+    expect(replyActions.Invoke_bot.expression).toBe("@equals(actions('Prepare_activity_images')?['status'], 'Succeeded')");
+    expect(replyActions.Invoke_bot.actions.Invoke_QA_Bot.runtimeConfiguration.secureData.properties).toContain('inputs');
+  });
+
+  it('groups parallel image preparation between conversion and bot invocation', () => {
+    expect(Object.keys(replyActions).sort()).toEqual(['Invoke_bot', 'Resolve_image_bytes', 'convertActivity']);
+    expect(replyActions.Resolve_image_bytes.type).toBe('Scope');
+    expect(replyActions.Resolve_image_bytes.runAfter).toEqual({ convertActivity: ['Succeeded'] });
+    expect(actions.Filter_image_attachments.runAfter).toEqual({});
+    expect(actions.Prepare_activity_images.runAfter).toEqual({ Image_download_results: ['Succeeded'] });
+    expect(actions.Prepare_activity_images.inputs.explicitDependencies.actions).toEqual([
+      'convertActivity', 'Image_download_results',
+    ]);
+    expect(actions.Prepare_activity_images.runtimeConfiguration.secureData.properties).toEqual(['outputs']);
   });
 
   it('replaces only matching image URLs with connector-supplied base64 bytes', () => {
@@ -145,6 +163,21 @@ describe('Logic App connector image forwarding', () => {
     expect(result.attachments.map((attachment: Attachment) => attachment.contentUrl)).toEqual([
       dataUri, dataUri, dataUri, dataUri,
     ]);
+  });
+
+  it('preserves attachment order when image results arrive in a different order', () => {
+    const urls = [1, 2, 3, 4].map((image) => graphImage.replace('/hostedContents/i/', `/hostedContents/${image}/`));
+    const images = urls.map((url, index) => downloaded(url, {
+      '$content-type': 'image/png',
+      '$content': Buffer.from(`image-${index}`).toString('base64'),
+    }));
+    const result = prepare(
+      urls.map((contentUrl) => ({ contentType: 'image/*', contentUrl })),
+      images.slice().reverse(),
+    );
+    expect(result.attachments.map((attachment: Attachment) => attachment.contentUrl)).toEqual(
+      images.map((image) => `data:image/png;base64,${image.body!['$content']}`),
+    );
   });
 
   it('keeps downloads from different messages separate', () => {

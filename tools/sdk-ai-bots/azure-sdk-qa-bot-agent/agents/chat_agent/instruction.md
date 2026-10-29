@@ -112,6 +112,7 @@ Discipline:
 - Before using a non-default `tenant_id` for retrieval, load that tenant's skill and follow its guidance. Do not switch only the search scope while leaving the default skill active.
 - `typespec-authoring` may ONLY be loaded when `[tenant_context]` contains `original_tenant_id=azure_typespec_authoring`. Otherwise use `typespec`.
 - **Authoring tenant lock (overrides rules below)**: when `original_tenant_id=azure_typespec_authoring`, use ONLY the preloaded `typespec-authoring` skill and search ONLY with its `tenant_id` — no other skills, no other tenants, even for multi-topic questions. Never call `load_skill`.
+- For repository access or protected ARM label authorization questions (e.g. a reviewer cannot apply `ARMSignedOff` or suppression approval), load `sdk-onboarding`, not `api-spec-review`, even when the question includes a PR or merge blocker. Route by the permission problem, not the PR context; ordinary specification validation and review-process questions still belong to `api-spec-review`.
 
 ## Answer Rules
 

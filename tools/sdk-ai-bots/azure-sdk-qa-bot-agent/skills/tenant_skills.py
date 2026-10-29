@@ -36,11 +36,13 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "breaking-change comparison is the primary issue. Use typespec instead "
         "when the primary task is a language-level model or code transformation, "
         "even if a PR check exposed it. Do not use this skill for "
-        "repository access or permission requests; use sdk-onboarding instead."
+        "repository access, permission requests, or protected ARM label authorization; "
+        "use sdk-onboarding instead, even when presented as a PR review blocker."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
         "repository access and permissions (including specification repositories), "
+        "protected ARM label authorization (ARMSignedOff and suppression approval), "
         "Azure SDK Tools Agent usage, and release plan creation, status, readiness, "
         "lifecycle, and troubleshooting. Use typespec instead for specification "
         "service-folder organization or RPaaS registration paths coupled to that "

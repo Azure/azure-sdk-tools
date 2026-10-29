@@ -132,8 +132,9 @@ but are not scored by an evaluator.
 | `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
 | `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
 
-Offline/perf start a local development backend and always use the running pipeline's
-branch name via `EVAL_AGENT_BRANCH`. No additional pipeline parameters are needed.
+Offline/perf start a local development backend and default to the running pipeline's
+branch name via `EVAL_AGENT_BRANCH`. Perf also accepts an optional `agentBranch`
+parameter to evaluate an existing branch deployment from a separate CI branch.
 Branch deployments must already exist: targeting a branch does not build/deploy it.
 Each request prepends `[branch:<running-branch>]` to the message, using the same
 routing as channel messages. The backend resolves the tenant's agent from configuration,
@@ -142,6 +143,16 @@ Failed, provisioning, or unknown-readiness versions are not selected; missing ac
 branch deployments fail instead of falling back. Each tagged request looks up Foundry directly.
 Dataset queries and grading inputs remain unchanged; only the outgoing message includes the prefix.
 Local runs without `EVAL_AGENT_BRANCH` and online production retain environment defaults.
+
+Perf runs scenarios as a matrix with `maxParallelScenarios` simultaneous jobs
+(default 2). Each job collects up to `maxConcurrency` answers concurrently
+(default 2), so the default maximum is four in-flight bot requests across the run.
+Tune both settings to the target model's token/request limits; a request-count cap
+does not guarantee staying within a token-rate limit. Multiple pipeline runs and
+other model consumers share the deployment's capacity.
+Each scenario retains its own job timeout and result artifact. The dataset, tenant
+routing, and grading inputs are unchanged. For model comparisons, use the same CI
+commit, scenarios, and concurrency settings with each model's deployed `agentBranch`.
 
 The online pipeline evaluates the **freshly collected weekly md** (not the static
 `basic` set): `dataset.online_snapshot` downloads recent md and converts it to

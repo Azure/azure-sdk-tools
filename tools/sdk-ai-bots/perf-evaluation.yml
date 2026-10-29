@@ -29,6 +29,26 @@ parameters:
       - releasesupport
       - authoring
       - mcpserver
+  - name: maxParallelScenarios
+    type: number
+    default: 2
+    values:
+      - 1
+      - 2
+      - 4
+      - 8
+      - 16
+  - name: maxConcurrency
+    type: number
+    default: 2
+    values:
+      - 1
+      - 2
+      - 4
+      - 8
+  - name: agentBranch
+    type: string
+    default: ''
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -44,9 +64,19 @@ extends:
               image: $(LINUXVMIMAGE)
               os: linux
         jobs:
-          - ${{ each scenario in parameters.scenarios }}:
-              - job: 'perf_${{ scenario }}'
-                displayName: 'perf evaluation (${{ scenario }})'
+              - job: perf
+                displayName: perf evaluation
+                strategy:
+                  maxParallel: ${{ parameters.maxParallelScenarios }}
+                  matrix:
+                    ${{ each scenario in parameters.scenarios }}:
+                      ${{ scenario }}:
+                        Scenario: ${{ scenario }}
+                variables:
+                  ${{ if ne(parameters.agentBranch, '') }}:
+                    EvalAgentBranch: ${{ parameters.agentBranch }}
+                  ${{ else }}:
+                    EvalAgentBranch: $(Build.SourceBranch)
                 steps:
                   - task: UsePythonVersion@0
                     displayName: "Use Python 3.12"
@@ -86,7 +116,7 @@ extends:
                     displayName: 'install requirements'
                     workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   - task: AzureCLI@2
-                    displayName: 'Run Perf Evals (${{ scenario }})'
+                    displayName: 'Run Perf Evals ($(Scenario))'
                     inputs:
                       azureSubscription: 'azuresdkqabot-dev'
                       scriptType: bash
@@ -94,9 +124,9 @@ extends:
                       workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                       inlineScript: |
                         python evals_run.py \
-                          --dataset "qa-bot-perf-${{ scenario }}:latest" \
+                          --dataset "qa-bot-perf-$(Scenario):latest" \
                           --run_context "perf-evaluation" \
-                          --max_concurrency 2 \
+                          --max_concurrency ${{ parameters.maxConcurrency }} \
                           --baseline_check False \
                           --cache_result full
                     env:
@@ -107,11 +137,11 @@ extends:
                       BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                       BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                       EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
-                      EVAL_AGENT_BRANCH: $(Build.SourceBranch)
+                      EVAL_AGENT_BRANCH: $(EvalAgentBranch)
                 templateContext:
                   outputs:
                     - output: pipelineArtifact
                       path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
-                      artifact: perf-evaluation-results-${{ scenario }}
-                      displayName: Publish Perf Results (${{ scenario }})
+                      artifact: perf-evaluation-results-$(Scenario)
+                      displayName: Publish Perf Results ($(Scenario))
                       condition: always()

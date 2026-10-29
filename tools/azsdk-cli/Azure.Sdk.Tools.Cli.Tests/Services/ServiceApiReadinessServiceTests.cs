@@ -421,19 +421,10 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.Projects.Count, Is.EqualTo(2));
     }
 
-    [Test]
-    public async Task UnresolvedLiteralChildCannotPassUsingItsParent()
-    {
-        SetSwagger(Version, "/providers/Microsoft.Example/widgets/{name}/config/web", true);
-        var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
-        Assert.That(response.Projects.Single().Detail, Does.Contain("resource-type mapping"));
-        Assert.That(ArmRequests(), Is.Empty);
-    }
-
+    [TestCase("config/web")]
     [TestCase("{childType}/{childName}")]
     [TestCase("{childType}")]
-    public async Task UnresolvedParameterizedChildCannotPassUsingItsParent(string child)
+    public async Task UnresolvedChildCannotPassUsingItsParent(string child)
     {
         SetSwagger(Version, $"/providers/Microsoft.Example/widgets/{{name}}/{child}", true);
         var response = await CheckAsync();

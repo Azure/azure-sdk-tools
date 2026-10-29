@@ -3,23 +3,18 @@
 Status: Draft implementation contract; review and a CLI release are required
 before the automation integration is enabled.
 
-## Background and Scope
+## Purpose and Ownership
 
-Approved SDK pull requests can wait for manual confirmation that their service
-API version is deployed. This read-only check reports whether public Azure ARM
-provider metadata advertises the exact version used to generate the SDK. It is
-not release approval, service-health validation, or proof that every operation
-is available in every region. Data-plane SDKs are not applicable.
+Approved SDK PRs can wait for confirmation that their API version is deployed.
+This read-only CLI/MCP check reports whether public Azure ARM metadata lists the
+exact version used to generate the SDK. It is not release approval, a health
+check, or proof that every operation works in every region. Data-plane SDKs are
+not applicable.
 
-## Ownership
-
-- Public `Azure/azure-sdk-tools`: the azsdk CLI/MCP command, authoritative SDK
-  metadata resolution, pinned-spec mapping, Azure identity, provider lookup,
-  evaluation, and structured evidence.
-- SDK automation worker: event handling, calling the command, rendering one
-  App-owned comment, label reconciliation, and stale-result invalidation.
-- Existing ingress, queue, worker topology, provisioning, and rollback stay
-  unchanged. Ingress does not execute this check.
+The public Tools CLI owns metadata resolution, pinned-spec mapping, Azure access,
+and the result. The automation worker owns events, comments, labels, and stale
+results. Ingress does not run the check; topology, provisioning, and rollback
+remain unchanged.
 
 ## Command and Inputs
 
@@ -28,56 +23,46 @@ azsdk pkg check-api-version --owner Azure --repo azure-sdk-for-java --pr 123 \
   --expected-head-sha <full-sdk-pr-head-sha> --output json
 ```
 
-The MCP entry point is `azsdk_check_service_api_version`. Inputs are repository
-owner, one of the five SDK repository names, positive SDK PR number, and an
-optional expected full head SHA. There is no API-version override, arbitrary
-service endpoint, or mutation option. A spec PR is not an SDK PR: source identity
-comes from the SDK files' recorded spec commit and TypeSpec project.
+MCP: `azsdk_check_service_api_version`. Inputs are owner, one of the five SDK
+repository names below, a positive SDK PR number, and an optional full expected
+head SHA. A spec PR is not an SDK PR: use the spec commit and project recorded in
+SDK files. There is no version override, arbitrary endpoint, or mutation option.
 
 ## Authentication
 
-GitHub access reuses the CLI token resolver. The worker supplies its short-lived
-GitHub App installation token through the child's `GITHUB_TOKEN` environment,
-never command arguments or logs. Local users can use the existing `gh auth`
-login. Tokens are sent only to the fixed GitHub API host; the tool never reads
-comments or PR descriptions as generation evidence.
+Reuse the CLI resolver in this order: `GITHUB_TOKEN`, legacy
+`GITHUB_PERSONAL_ACCESS_TOKEN`, then `gh auth token`. The worker passes its
+short-lived App installation token only through the child's `GITHUB_TOKEN`,
+never arguments or logs. A rejected supplied token does not trigger a fallback
+to another identity. Local users can use their existing `gh auth` login.
 
-Token precedence is `GITHUB_TOKEN`, the existing legacy
-`GITHUB_PERSONAL_ACCESS_TOKEN` fallback, then `gh auth token`. A supplied App
-token is used as-is; authentication rejection does not silently switch to a
-developer's token. The readiness command uses the cancellation-aware resolver,
-so its 40-second evidence deadline also covers local token discovery. An
-already-canceled call does not launch `gh`, process output logging is disabled,
-and failed token discovery does not include captured stdout/stderr in the result.
-
-ARM access uses the CLI's Azure credential service: developer credentials
-locally and the worker's configured managed identity in Azure. The GitHub token
-is never sent to ARM, and an Azure token is never passed through GitHub.
-Redirects are rejected. This feature creates no identity or role assignment.
+The 40-second evidence deadline includes token discovery. Cancellation prevents
+or stops `gh`; process output logging is off, and failures exclude stdout/stderr.
+ARM uses separate developer credentials or the worker's configured managed
+identity through the Azure credential service. Tokens stay on their fixed API
+hosts, redirects are rejected, and no identities or role assignments are created.
 
 ## Evaluation
 
-1. Read the current open SDK PR and discover affected packages from its changed
-   files. Read generation files from the actual head repository at that SHA.
-2. Resolve the recorded spec repository, full commit, project, provider, and
-   exact API version. Reject missing, malformed, conflicting, or ambiguous data.
+1. Read the open SDK PR, changed packages, and generation files from its actual
+  head repository and SHA. PR descriptions and comments are not evidence.
+2. Resolve the recorded spec repository, full commit, project, provider, and exact
+  API version. Reject missing, invalid, conflicting, or ambiguous evidence.
 3. Read the pinned TypeSpec configuration and checked-in Swagger. Do not compile
-   TypeSpec, scan the whole spec repository, or select the latest version.
-4. Map relevant resource types conservatively. An unresolved child route cannot
-   pass using a parent resource's advertised version.
-5. Make one read-only ARM lookup per provider namespace and reuse its result:
+  TypeSpec, scan the repository, or select the latest version.
+4. Map resource types conservatively. An unresolved child cannot pass using its
+  parent's advertised version.
+5. Reuse one read-only ARM lookup per provider namespace:
    `GET https://management.azure.com/providers/{namespace}?api-version=2021-04-01`.
-   This ARM metadata API version is distinct from the service API version.
-6. Require at least one exact-version match per affected management-plane
-   project, and require every affected project to pass for an overall Passed.
-7. Re-read PR head/state before returning. A changed or closed PR cannot receive
-   a passing conclusion for the earlier revision.
+  This metadata API version is not the service API version being checked.
+6. Require at least one exact-version match per affected management project.
+  Every affected project must pass for an overall Passed.
+7. Re-read the PR head and state. A changed or closed PR cannot pass.
 
 ### Expected Evidence by Language
 
-The readiness rule is the same for .NET, Java, JavaScript, Python, and Go; SDK
-package versions and language-specific preview suffixes are not service API
-versions. Discovery differs only in the package layout and generated evidence:
+The same rule applies to all five languages. SDK package versions and preview
+suffixes are not service API versions.
 
 | SDK repository | Package root | Checked-in API-version evidence relative to that root |
 | --- | --- | --- |
@@ -87,63 +72,43 @@ versions. Discovery differs only in the package layout and generated evidence:
 | `azure-sdk-for-python` | `sdk/<service>/<package>` | `_metadata.json`, including scalar `apiVersion` |
 | `azure-sdk-for-go` | `sdk/resourcemanager/<service>/<module>` | `testdata/_metadata.json` |
 
-All five also require `tsp-location.yaml` at the package root, with the recorded
-spec repository, full commit SHA, and TypeSpec project directory. This check is
-for TypeSpec-generated SDK packages; missing provenance is Inconclusive, not
-permission to guess from a package name or current `main`.
+All require package-root `tsp-location.yaml` with the spec repository, full commit
+SHA, and TypeSpec project directory. Missing provenance is Inconclusive; do not
+guess from a package name or current `main`.
 
-`apiVersions` maps provider namespaces to exact service versions. Scalar
-`apiVersion` binds to the provider declared by the pinned `main.tsp`; this is
-not inferred from a language namespace. Identical versions are deduplicated.
-Conflicting versions, conflicting optional spec provenance, or a malformed Java
-metadata file prevent an overall Passed result. Every matching Java file is
-validated, not just the file whose name matches the package basename.
+`apiVersions` maps providers to exact versions. Scalar `apiVersion` uses the
+provider in pinned `main.tsp`, not a language namespace. Deduplicate identical
+versions; reject conflicts, conflicting optional provenance, and malformed Java
+metadata. Validate every matching Java file, not just the package-named file.
 
-Changed files include deletion-only packages and the source of a cross-package
-rename. Such a package is excluded only when its directory is absent at the
-checked SDK head. Existing packages cannot be skipped merely because their
-changed files were deleted. A PR with no surviving affected package is
-Inconclusive. Recognized management paths include both `resource-manager`
-directories and `.Management` projects; labels are only a fallback when the
-recorded path cannot establish the plane.
+Include deletion-only packages and rename source packages unless their directory
+is absent at the checked head. No surviving affected package means Inconclusive.
+Recognize `resource-manager` and `.Management` paths before using labels as a
+fallback for the API plane.
 
 ### What Demonstrates API Readiness
 
-For example, the pinned Swagger may expose
-`/providers/Microsoft.Example/widgets/{name}` with `info.version` equal to the
-SDK's `2026-01-01`. The check resolves `widgets`, requests the
-`Microsoft.Example` provider metadata, and searches that resource type's
-`apiVersions` for the exact string `2026-01-01`. A hit is the project's Passed
-evidence. If applicable types are present but no exact string matches, the
-project is Not detected. A missing provider or unresolved type is Inconclusive;
-authentication or network failure is Error.
+For pinned Swagger `/providers/Microsoft.Example/widgets/{name}` with
+`info.version: 2026-01-01`, resolve `widgets` and look for the exact string
+`2026-01-01` in that resource type's ARM `apiVersions`. A hit is Passed evidence.
+Applicable types without a hit mean Not detected; missing provider/type evidence
+means Inconclusive. Authentication or network failure is Error.
 
-The check does not call service resource operations, require an operations-list
-endpoint, probe every region, create resources, or run SDK samples. It reads
-only explicit, bounded checked-in Swagger output mappings at the recorded spec
-commit. Files above the Contents API's base64 threshold use bounded raw content
-on `api.github.com` at that same revision, never an arbitrary `download_url`.
-Evidence responses are capped at 4 MiB and redirects are rejected.
-
-An unresolved child type/name cannot borrow the parent type's deployment signal.
-When several SDK packages or provider namespaces are affected, each resolved
-project must pass; one passing language package cannot hide another package's
-missing evidence or absent version. Matching resource types and their advertised
-locations are included for service-owner review. Even Passed remains only a
-provider-manifest deployment signal, not proof that all operations or all regions
-work. This expectation is deliberately identical across the five languages.
+Read only bounded, explicit checked-in Swagger mappings at the recorded commit.
+Large files use raw content on `api.github.com` at the same revision, never
+`download_url`. Responses are capped at 4 MiB. Do not call resource operations,
+require operations-list endpoints, probe regions, create resources, or run samples.
 
 ## Versioned Result Contract
 
-The root JSON object contains `contractVersion: 1`, `status`, `headSha`,
-`headRepository`, `plane`, `checkedAt`, `detail`, and `projects`. CLI-wide fields
-such as `operation_status` and `response_error` may also be present. The readiness
-decision is `status`, not the generic CLI execution status.
+The root contains `contractVersion: 1`, `status`, `headSha`, `headRepository`,
+`plane`, `checkedAt`, `detail`, and `projects`. Read `status` for the readiness
+decision, not the CLI-wide `operation_status`; `response_error` may also appear.
 
-Each project includes its `source` (SDK package, generation-file paths, pinned
-spec repository/commit/configuration, API version), `status`, `namespace`,
-`detail`, and `matches`. Each match contains `resourceType` and advertised
-`regions`. Advertised regions are evidence, not per-operation regional proof.
+Projects contain `source` (package, generation-file paths, pinned spec repository,
+commit, configuration, and API version), `status`, `namespace`, `detail`, and
+`matches`. Matches contain `resourceType` and advertised `regions`, not regional
+health guarantees.
 
 | Status | Meaning | Example |
 | --- | --- | --- |
@@ -152,9 +117,8 @@ spec repository/commit/configuration, API version), `status`, `namespace`,
 | Inconclusive | Evidence or mapping is missing, conflicting, or unavailable. | SDK API-version metadata is missing. |
 | Error | Authentication, transport, cancellation, or another application failure prevented the check. | ARM denied access or the command timed out. |
 
-Exit code is zero for a completed observation (Passed, Not detected, or
-Inconclusive), and one for Error. Consumers must read the readiness status even
-when the exit code is zero. An unusable or unknown contract is treated as Error.
+Exit zero means Passed, Not detected, or Inconclusive; exit one means Error.
+Always read `status`. Treat an unusable or unknown contract as Error.
 
 ## Worker and Comment Contract
 
@@ -174,22 +138,16 @@ when the exit code is zero. An unusable or unknown contract is treated as Error.
 - Concurrent or delayed deliveries must not publish an older passing result
   over a newer head or later non-passing result. Human comments are untouched.
 
-## Rollout and Testing
+## Testing and Rollout
 
-The public Tools PR and automation PR are independently reviewable. The worker
-requires a released CLI version containing this command or an explicitly
-provisioned, validated CLI artifact. Do not claim that a merged source change is
-already installed in the hosted worker.
+The CLI and automation PRs are independently reviewable. Unit tests cover the
+language layouts, statuses, credentials, limits, mapping, cancellation, stale
+heads, and safe errors. Automation tests cover the process contract, comments,
+labels, timeout, approval removal, and overlapping deliveries. Verify live CLI
+results and worker publication separately; mocks do not prove hosted identity,
+installation, or Azure access.
 
-Unit tests cover five metadata layouts, four statuses, identity separation,
-bounded discovery, mapping failures, cancellation, stale heads, and safe errors.
-The automation suite covers the process contract, comments, labels, timeout,
-approval removal, and overlapping deliveries. Live fork tests must demonstrate
-the CLI result and worker publication separately; mocked tests do not establish
-hosted identity, installation, or Azure access.
-
-Useful agent prompt: "Check the service API-version readiness for SDK PR
-<URL> and explain the evidence without changing the PR or releasing anything."
-
-No merge, package publication, infrastructure deployment, Azure permission
-change, or hosted allowlist change is part of these two implementation PRs.
+Install a CLI release containing the command or a validated trusted artifact
+before enabling the worker integration. Merged source is not an installed CLI.
+These PRs do not merge SDKs, publish packages, deploy infrastructure, or change
+Azure permissions or hosted allowlists.

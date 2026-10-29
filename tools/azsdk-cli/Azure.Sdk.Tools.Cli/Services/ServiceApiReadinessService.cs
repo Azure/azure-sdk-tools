@@ -240,7 +240,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                                 issues.Add($"{package}: invalid namespace/API-version entry.");
                                 continue;
                             }
-                            if (candidates.Distinct(StringComparer.Ordinal).Count() != 1 ||
+                            if (candidates.Length != 1 ||
                                 metadata["apiVersion"] is not null && Text(metadata["apiVersion"]) != candidates[0])
                             {
                                 issues.Add($"{package}: conflicting API versions; no latest-version selection.");
@@ -398,17 +398,17 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));
         request.Headers.UserAgent.ParseAdd("azsdk-service-api-readiness");
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+        return await ReadEvidenceAsync(request, ct);
+    }
+
+    private async Task<string?> ReadEvidenceAsync(HttpRequestMessage request, CancellationToken ct)
+    {
         using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
         response.EnsureSuccessStatusCode();
-        return await ReadEvidenceTextAsync(response, ct);
-    }
-
-    private static async Task<string> ReadEvidenceTextAsync(HttpResponseMessage response, CancellationToken ct)
-    {
         if (response.Content.Headers.ContentLength > MaxEvidenceBytes)
         {
             throw new InvalidOperationException("Response exceeded the evidence size limit.");
@@ -434,13 +434,8 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         using var request = new HttpRequestMessage(HttpMethod.Get,
             $"https://management.azure.com/providers/{Uri.EscapeDataString(providerNamespace)}?api-version={ArmMetadataApiVersion}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.Token);
-        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-        if (response.StatusCode == HttpStatusCode.NotFound)
-        {
-            return null;
-        }
-        response.EnsureSuccessStatusCode();
-        return JsonNode.Parse(await ReadEvidenceTextAsync(response, ct));
+        var text = await ReadEvidenceAsync(request, ct);
+        return text is null ? null : JsonNode.Parse(text);
     }
 
     private async Task<(string Namespace, HashSet<string> Types, List<string> Missing)> ReadSpecAsync(ServiceApiReadinessSource source, string token, CancellationToken ct)

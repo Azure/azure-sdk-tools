@@ -54,13 +54,13 @@ def create_openai_client(
     return project_client.get_openai_client(agent_name=agent_name)
 
 
-def get_agent_client() -> FoundryChatClient:
-    """Return the shared FoundryChatClient (created once on first call)."""
+def get_agent_client(*, model: str | None = None) -> FoundryChatClient:
+    """Return the shared client, applying an optional model override on first use."""
     global _agent_client
     if _agent_client is None:
         _agent_client = FoundryChatClient(
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
-            model=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
+            model=model if model is not None else cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
             credential=get_credential(),
             compaction_strategy=TruncationStrategy(
                 max_n=COMPACTION_TRIGGER_TOKENS,

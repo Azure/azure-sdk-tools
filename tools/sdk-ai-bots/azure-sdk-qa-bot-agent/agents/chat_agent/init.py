@@ -74,7 +74,7 @@ async def main() -> None:
     # auto-instruments the root logger.  Adding a second handler causes
     # every log to appear twice in Application Insights.
 
-    agent_client = get_agent_client()
+    agent_client = get_agent_client(model="gpt-6.1-sol")
     # Limit tool-call loop iterations to prevent infinite loops.
     agent_client.function_invocation_configuration["max_iterations"] = (
         MAX_TOOL_CALL_ITERATIONS

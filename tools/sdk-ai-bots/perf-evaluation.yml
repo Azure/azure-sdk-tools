@@ -40,7 +40,7 @@ parameters:
       - 16
   - name: maxConcurrency
     type: number
-    default: 2
+    default: 1
     values:
       - 1
       - 2
@@ -66,6 +66,7 @@ extends:
         jobs:
               - job: perf
                 displayName: perf evaluation
+                timeoutInMinutes: 120
                 strategy:
                   maxParallel: ${{ parameters.maxParallelScenarios }}
                   matrix:

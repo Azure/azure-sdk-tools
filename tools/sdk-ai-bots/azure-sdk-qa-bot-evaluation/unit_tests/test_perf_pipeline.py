@@ -12,13 +12,14 @@ def test_perf_pipeline_bounds_parallel_scenarios_and_collection():
     pipeline = _pipeline()
     parameters = {item["name"]: item for item in pipeline["parameters"]}
     assert parameters["maxParallelScenarios"]["default"] == 2
-    assert parameters["maxConcurrency"]["default"] == 2
+    assert parameters["maxConcurrency"]["default"] == 1
     for name in ("maxParallelScenarios", "maxConcurrency"):
         assert all(value > 0 for value in parameters[name]["values"])
 
     jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
     assert len(jobs) == 1
     job = jobs[0]
+    assert job["timeoutInMinutes"] == 120
     assert job["strategy"]["maxParallel"] == "${{ parameters.maxParallelScenarios }}"
     matrix = job["strategy"]["matrix"]
     assert matrix["${{ each scenario in parameters.scenarios }}"] == {

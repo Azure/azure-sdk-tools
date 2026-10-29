@@ -146,11 +146,13 @@ Local runs without `EVAL_AGENT_BRANCH` and online production retain environment 
 
 Perf runs scenarios as a matrix with `maxParallelScenarios` simultaneous jobs
 (default 2). Each job collects up to `maxConcurrency` answers concurrently
-(default 2), so the default maximum is four in-flight bot requests across the run.
+(default 1), so the default maximum is two in-flight bot requests across the run.
 Tune both settings to the target model's token/request limits; a request-count cap
 does not guarantee staying within a token-rate limit. Multiple pipeline runs and
 other model consumers share the deployment's capacity.
-Each scenario retains its own job timeout and result artifact. The dataset, tenant
+Each scenario has a 120-minute job timeout on the self-hosted evaluation pool and
+its own result artifact. The timeout allows larger scenarios to run at reduced
+concurrency; it does not prevent or resolve model throttling. The dataset, tenant
 routing, and grading inputs are unchanged. For model comparisons, use the same CI
 commit, scenarios, and concurrency settings with each model's deployed `agentBranch`.
 

@@ -13,6 +13,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public bool ThrowOnGetPullRequest { get; set; }
 
         public string GetAuthToken() => "mock-github-token";
+        public Task<string> GetAuthTokenAsync(CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.FromResult(GetAuthToken());
+        }
 
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main", CancellationToken ct = default)
         {

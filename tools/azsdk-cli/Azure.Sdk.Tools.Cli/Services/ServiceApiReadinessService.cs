@@ -20,6 +20,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
 {
     public const string HttpClientName = "ServiceApiReadiness";
     public const string ArmMetadataApiVersion = "2021-04-01";
+    private const int MaxEvidenceBytes = 4 * 1024 * 1024;
     private readonly HttpClient _http = clients.CreateClient(HttpClientName);
 
     public async Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, string? expectedHeadSha, CancellationToken ct)
@@ -36,7 +37,8 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             {
                 throw new ArgumentException("Provide an SDK repository, positive PR number, and valid expected head SHA.");
             }
-            var token = github.GetAuthToken();
+            ct.ThrowIfCancellationRequested();
+            var token = await github.GetAuthTokenAsync(ct);
             var prPath = $"repos/{owner}/{repository}/pulls/{pullRequest}";
             var pr = await ReadGitHubAsync(prPath, token, ct) ?? throw new InvalidOperationException("SDK PR is unavailable.");
             result.HeadSha = Text(pr["head"]?["sha"]);
@@ -63,20 +65,31 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             }
             result.Plane = managementLabel ? "management-plane" : dataLabel ? "data-plane" : "unknown";
             var packages = new HashSet<string>(StringComparer.Ordinal);
+            var knownAtHead = new HashSet<string>(StringComparer.Ordinal);
             for (var page = 1; page <= 30; page++)
             {
                 var files = await ReadGitHubAsync($"{prPath}/files?per_page=100&page={page}", token, ct) as JsonArray
                     ?? throw new InvalidOperationException("Changed SDK files are unavailable.");
                 foreach (var file in files)
                 {
-                    var parts = Text(file?["filename"]).Split('/');
-                    var length = repository.Equals("azure-sdk-for-go", StringComparison.OrdinalIgnoreCase) ? 4 : 3;
-                    if (Text(file?["status"]) == "removed" || parts.Length <= length || parts[0] != "sdk" || parts[1] == "test" ||
-                        parts.Any(part => part is "" or "." or ".." || part.Contains('\\')) || (length == 4 && parts[1] != "resourcemanager"))
+                    var filename = Text(file?["filename"]);
+                    var previous = Text(file?["status"]) == "renamed" ? Text(file?["previous_filename"]) : "";
+                    foreach (var path in new[] { filename, previous }.Distinct(StringComparer.Ordinal))
                     {
-                        continue;
+                        var parts = path.Split('/');
+                        var length = repository.Equals("azure-sdk-for-go", StringComparison.OrdinalIgnoreCase) ? 4 : 3;
+                        if (parts.Length <= length || parts[0] != "sdk" || parts[1] == "test" ||
+                            parts.Any(part => part is "" or "." or ".." || part.Contains('\\')) || (length == 4 && parts[1] != "resourcemanager"))
+                        {
+                            continue;
+                        }
+                        var package = string.Join('/', parts.Take(length));
+                        packages.Add(package);
+                        if (path == filename && Text(file?["status"]) != "removed")
+                        {
+                            knownAtHead.Add(package);
+                        }
                     }
-                    packages.Add(string.Join('/', parts.Take(length)));
                 }
                 if (files.Count < 100)
                 {
@@ -90,120 +103,173 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             }
             var sources = new List<ServiceApiReadinessSource>();
             var planes = new HashSet<string>();
+            var survivingPackages = 0;
             foreach (var package in packages.Order(StringComparer.Ordinal))
             {
-                var basename = package.Split('/')[^1];
+                if (!knownAtHead.Contains(package))
+                {
+                    var encodedPackage = string.Join('/', package.Split('/').Select(Uri.EscapeDataString));
+                    var listing = await ReadGitHubAsync($"repos/{result.HeadRepository}/contents/{encodedPackage}?ref={result.HeadSha}", token, ct);
+                    if (listing is null)
+                    {
+                        continue;
+                    }
+                    if (listing is not JsonArray)
+                    {
+                        issues.Add($"{package}: SDK package directory could not be established at the checked head.");
+                        continue;
+                    }
+                }
+                survivingPackages++;
                 var language = repository["azure-sdk-for-".Length..].ToLowerInvariant();
                 var metadataFile = language switch
                 {
                     "python" => "_metadata.json",
                     "go" => "testdata/_metadata.json",
-                    "java" => $"src/main/resources/META-INF/{basename}_metadata.json",
+                    "java" => "src/main/resources/META-INF/*_metadata.json",
                     _ => "metadata.json"
                 };
                 var locationPath = $"{package}/tsp-location.yaml";
-                var metadataPath = $"{package}/{metadataFile}";
-                var locationText = await ReadFileAsync(result.HeadRepository, result.HeadSha, locationPath, token, ct);
-                var metadataText = await ReadFileAsync(result.HeadRepository, result.HeadSha, metadataPath, token, ct);
-                if (locationText is null || metadataText is null)
+                var metadataPaths = new List<string> { $"{package}/{metadataFile}" };
+                if (language == "java")
                 {
-                    issues.Add($"{package}: missing SDK generation metadata ({(locationText is null ? locationPath : metadataPath)}).");
+                    var directoryPath = $"{package}/src/main/resources/META-INF";
+                    var encodedDirectory = string.Join('/', directoryPath.Split('/').Select(Uri.EscapeDataString));
+                    var listing = await ReadGitHubAsync($"repos/{result.HeadRepository}/contents/{encodedDirectory}?ref={result.HeadSha}", token, ct);
+                    if (listing is not null && (listing is not JsonArray || ((JsonArray)listing).Count >= 1000))
+                    {
+                        issues.Add($"{package}: Java metadata directory listing is invalid or incomplete.");
+                        continue;
+                    }
+                    metadataPaths = (listing as JsonArray ?? []).Where(entry => Text(entry?["type"]) == "file")
+                        .Select(entry => Text(entry?["name"]))
+                        .Where(name => name.EndsWith("_metadata.json", StringComparison.Ordinal) &&
+                            name.IndexOfAny(['/', '\\', '\0']) < 0)
+                        .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)
+                        .Select(name => $"{directoryPath}/{name}").ToList();
+                    if (metadataPaths.Count > 32)
+                    {
+                        issues.Add($"{package}: Java metadata exceeds the 32-file evidence limit.");
+                        continue;
+                    }
+                }
+                var locationText = await ReadFileAsync(result.HeadRepository, result.HeadSha, locationPath, token, ct);
+                if (locationText is null || metadataPaths.Count == 0)
+                {
+                    issues.Add($"{package}: missing SDK generation metadata ({(locationText is null ? locationPath : package + "/" + metadataFile)}).");
                     continue;
                 }
-                try
+                var packageSources = new List<ServiceApiReadinessSource>();
+                foreach (var metadataPath in metadataPaths)
                 {
-                    var location = ParseYaml(locationText);
-                    var directory = Scalar(location, "directory");
-                    var commit = Scalar(location, "commit");
-                    var specRepository = NormalizeSpecRepository(Scalar(location, "repo"));
-                    var plane = directory.Split('/').Contains("data-plane") ? "data-plane" :
-                        directory.Split('/').Contains("resource-manager") ? "management-plane" : result.Plane;
-                    planes.Add(plane);
-                    if (!Regex.IsMatch(directory, @"\Aspecification/[\w.-]+(?:/[\w.-]+)*\z") ||
-                        directory.Split('/').Any(part => part is "." or "..") || Regex.IsMatch(directory, @"\.(tsp|yaml|yml|json)\z") ||
-                        !IsSha(commit) || specRepository is null)
+                    var metadataText = await ReadFileAsync(result.HeadRepository, result.HeadSha, metadataPath, token, ct);
+                    if (metadataText is null)
                     {
-                        issues.Add($"{package}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository.");
+                        issues.Add($"{package}: missing SDK generation metadata ({metadataPath}).");
                         continue;
                     }
-                    if (JsonNode.Parse(metadataText) is not JsonObject metadata)
+                    try
                     {
-                        issues.Add($"{package}: invalid SDK API-version metadata.");
-                        continue;
-                    }
-                    if (metadata["commit"] is not null && Text(metadata["commit"]) != commit ||
-                        metadata["typespec_src"] is not null && Text(metadata["typespec_src"]) != directory ||
-                        metadata["repository_url"] is not null && NormalizeSpecRepository(Text(metadata["repository_url"])) != specRepository)
-                    {
-                        issues.Add($"{package}: SDK metadata conflicts with tsp-location.yaml.");
-                        continue;
-                    }
-                    var parserMetadata = metadata.DeepClone().AsObject();
-                    var ambiguous = false;
-                    if (parserMetadata["apiVersions"] is JsonObject versionMap)
-                    {
-                        foreach (var entry in versionMap.ToArray())
+                        var location = ParseYaml(locationText);
+                        var directory = Scalar(location, "directory");
+                        var commit = Scalar(location, "commit");
+                        var specRepository = NormalizeSpecRepository(Scalar(location, "repo"));
+                        var plane = directory.Split('/').Contains("data-plane") ? "data-plane" :
+                            directory.Split('/').Contains("resource-manager") || directory.Contains(".Management", StringComparison.OrdinalIgnoreCase) ? "management-plane" : result.Plane;
+                        planes.Add(plane);
+                        if (!Regex.IsMatch(directory, @"\Aspecification/[\w.-]+(?:/[\w.-]+)*\z") ||
+                            directory.Split('/').Any(part => part is "." or "..") || Regex.IsMatch(directory, @"\.(tsp|yaml|yml|json)\z") ||
+                            !IsSha(commit) || specRepository is null)
                         {
-                            if (entry.Value is not JsonArray array)
-                            {
-                                continue;
-                            }
-                            var distinct = array.Select(Text).Distinct(StringComparer.Ordinal).ToArray();
-                            if (distinct.Length != 1 || string.IsNullOrWhiteSpace(distinct[0]))
-                            {
-                                ambiguous = true;
-                                continue;
-                            }
-                            versionMap[entry.Key] = distinct[0];
-                        }
-                    }
-                    if (ambiguous)
-                    {
-                        issues.Add($"{package}: conflicting API versions; no latest-version selection.");
-                        continue;
-                    }
-                    var versions = GeneratedSdkMetadataHelper.ReadApiVersions(JsonSerializer.SerializeToElement(parserMetadata));
-                    if (versions.Count == 0)
-                    {
-                        issues.Add($"{package}: missing or invalid API-version metadata (apiVersions/apiVersion).");
-                        continue;
-                    }
-                    foreach (var entry in versions.GroupBy(version => version.Namespace ?? "", StringComparer.Ordinal))
-                    {
-                        var expectedNamespace = entry.Key;
-                        if (expectedNamespace.Length == 0)
-                        {
-                            expectedNamespace = ProviderNamespace(await ReadFileAsync(specRepository, commit, $"{directory}/main.tsp", token, ct) ?? "");
-                        }
-                        var candidates = entry.Select(version => version.Version).Distinct(StringComparer.Ordinal).ToArray();
-                        if (!Regex.IsMatch(expectedNamespace, @"\A[\w-]+(?:\.[\w-]+)+\z") || candidates.Length == 0 ||
-                            candidates.Any(version => !Regex.IsMatch(version, @"\A\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?\z", RegexOptions.IgnoreCase)))
-                        {
-                            issues.Add($"{package}: invalid namespace/API-version entry.");
+                            issues.Add($"{package}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository.");
                             continue;
                         }
-                        if (candidates.Distinct(StringComparer.Ordinal).Count() != 1 ||
-                            metadata["apiVersion"] is not null && Text(metadata["apiVersion"]) != candidates[0])
+                        if (JsonNode.Parse(metadataText) is not JsonObject metadata)
+                        {
+                            issues.Add($"{package}: invalid SDK API-version metadata.");
+                            continue;
+                        }
+                        if (metadata["commit"] is not null && Text(metadata["commit"]) != commit ||
+                            metadata["typespec_src"] is not null && Text(metadata["typespec_src"]) != directory ||
+                            metadata["repository_url"] is not null && NormalizeSpecRepository(Text(metadata["repository_url"])) != specRepository)
+                        {
+                            issues.Add($"{package}: SDK metadata conflicts with tsp-location.yaml.");
+                            continue;
+                        }
+                        var parserMetadata = metadata.DeepClone().AsObject();
+                        var ambiguous = false;
+                        if (parserMetadata["apiVersions"] is JsonObject versionMap)
+                        {
+                            foreach (var entry in versionMap.ToArray())
+                            {
+                                if (entry.Value is not JsonArray array)
+                                {
+                                    continue;
+                                }
+                                var distinct = array.Select(Text).Distinct(StringComparer.Ordinal).ToArray();
+                                if (distinct.Length != 1 || string.IsNullOrWhiteSpace(distinct[0]))
+                                {
+                                    ambiguous = true;
+                                    continue;
+                                }
+                                versionMap[entry.Key] = distinct[0];
+                            }
+                        }
+                        if (ambiguous)
                         {
                             issues.Add($"{package}: conflicting API versions; no latest-version selection.");
                             continue;
                         }
-                        sources.Add(new ServiceApiReadinessSource
+                        var versions = GeneratedSdkMetadataHelper.ReadApiVersions(JsonSerializer.SerializeToElement(parserMetadata));
+                        if (versions.Count == 0)
                         {
-                            PackagePath = package,
-                            Configuration = $"{directory}/tspconfig.yaml",
-                            CommitSha = commit,
-                            SpecRepository = specRepository,
-                            ExpectedNamespace = expectedNamespace,
-                            ApiVersion = candidates[0],
-                            MetadataFiles = [locationPath, metadataPath]
-                        });
+                            issues.Add($"{package}: missing or invalid API-version metadata (apiVersions/apiVersion).");
+                            continue;
+                        }
+                        foreach (var entry in versions.GroupBy(version => version.Namespace ?? "", StringComparer.Ordinal))
+                        {
+                            var expectedNamespace = entry.Key;
+                            if (expectedNamespace.Length == 0)
+                            {
+                                expectedNamespace = ProviderNamespace(await ReadFileAsync(specRepository, commit, $"{directory}/main.tsp", token, ct) ?? "");
+                            }
+                            var candidates = entry.Select(version => version.Version).Distinct(StringComparer.Ordinal).ToArray();
+                            if (!Regex.IsMatch(expectedNamespace, @"\A[\w-]+(?:\.[\w-]+)+\z") || candidates.Length == 0 ||
+                                candidates.Any(version => !Regex.IsMatch(version, @"\A\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?\z", RegexOptions.IgnoreCase)))
+                            {
+                                issues.Add($"{package}: invalid namespace/API-version entry.");
+                                continue;
+                            }
+                            if (candidates.Distinct(StringComparer.Ordinal).Count() != 1 ||
+                                metadata["apiVersion"] is not null && Text(metadata["apiVersion"]) != candidates[0])
+                            {
+                                issues.Add($"{package}: conflicting API versions; no latest-version selection.");
+                                continue;
+                            }
+                            packageSources.Add(new ServiceApiReadinessSource
+                            {
+                                PackagePath = package,
+                                Configuration = $"{directory}/tspconfig.yaml",
+                                CommitSha = commit,
+                                SpecRepository = specRepository,
+                                ExpectedNamespace = expectedNamespace,
+                                ApiVersion = candidates[0],
+                                MetadataFiles = [locationPath, .. metadataPaths]
+                            });
+                        }
+                    }
+                    catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or System.Text.Json.JsonException or FormatException or InvalidOperationException)
+                    {
+                        issues.Add($"{package}: invalid YAML or JSON generation metadata.");
                     }
                 }
-                catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or System.Text.Json.JsonException or FormatException or InvalidOperationException)
+                if (packageSources.GroupBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase)
+                    .Any(group => group.Select(source => source.ApiVersion).Distinct(StringComparer.Ordinal).Count() > 1))
                 {
-                    issues.Add($"{package}: invalid YAML or JSON generation metadata.");
+                    issues.Add($"{package}: conflicting API versions across SDK metadata files; no latest-version selection.");
+                    continue;
                 }
+                sources.AddRange(packageSources.DistinctBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase));
             }
             if (planes.Count == 1)
             {
@@ -219,9 +285,9 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 result.Detail = "Data-plane SDK; ARM provider metadata is not applicable.";
                 return result;
             }
-            if (packages.Count == 0)
+            if (survivingPackages == 0)
             {
-                issues.Add("No currently changed SDK packages were found.");
+                issues.Add("No currently changed SDK packages remain at the checked head.");
             }
             if (issues.Count > 0 || sources.Count == 0 || result.Plane == "unknown")
             {
@@ -321,23 +387,45 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
 
     private async Task<JsonNode?> ReadGitHubAsync(string path, string token, CancellationToken ct)
     {
+        var text = await ReadGitHubTextAsync(path, token, "application/vnd.github+json", ct);
+        return text is null ? null : JsonNode.Parse(text);
+    }
+
+    private async Task<string?> ReadGitHubTextAsync(string path, string token, string mediaType, CancellationToken ct)
+    {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/{path}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));
         request.Headers.UserAgent.ParseAdd("azsdk-service-api-readiness");
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
-        using var response = await _http.SendAsync(request, ct);
+        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
         response.EnsureSuccessStatusCode();
-        var text = await response.Content.ReadAsStringAsync(ct);
-        if (text.Length > 4 * 1024 * 1024)
+        return await ReadEvidenceTextAsync(response, ct);
+    }
+
+    private static async Task<string> ReadEvidenceTextAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        if (response.Content.Headers.ContentLength > MaxEvidenceBytes)
         {
-            throw new InvalidOperationException("GitHub response exceeded the evidence size limit.");
+            throw new InvalidOperationException("Response exceeded the evidence size limit.");
         }
-        return JsonNode.Parse(text);
+        await using var stream = await response.Content.ReadAsStreamAsync(ct);
+        using var content = new MemoryStream();
+        var buffer = new byte[16 * 1024];
+        int count;
+        while ((count = await stream.ReadAsync(buffer, ct)) > 0)
+        {
+            if (content.Length + count > MaxEvidenceBytes)
+            {
+                throw new InvalidOperationException("Response exceeded the evidence size limit.");
+            }
+            await content.WriteAsync(buffer.AsMemory(0, count), ct);
+        }
+        return Encoding.UTF8.GetString(content.ToArray());
     }
 
     private async Task<JsonNode?> ReadProviderAsync(string providerNamespace, TokenCredential credential, CancellationToken ct)
@@ -346,13 +434,13 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         using var request = new HttpRequestMessage(HttpMethod.Get,
             $"https://management.azure.com/providers/{Uri.EscapeDataString(providerNamespace)}?api-version={ArmMetadataApiVersion}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.Token);
-        using var response = await _http.SendAsync(request, ct);
+        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
         response.EnsureSuccessStatusCode();
-        return JsonNode.Parse(await response.Content.ReadAsStringAsync(ct));
+        return JsonNode.Parse(await ReadEvidenceTextAsync(response, ct));
     }
 
     private async Task<(string Namespace, HashSet<string> Types, List<string> Missing)> ReadSpecAsync(ServiceApiReadinessSource source, string token, CancellationToken ct)
@@ -550,6 +638,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 var type = segments[cursor];
                 if (!Regex.IsMatch(type, @"\A[\w.-]+\z") || type.Equals("operations", StringComparison.OrdinalIgnoreCase) || type.Equals("providers", StringComparison.OrdinalIgnoreCase))
                 {
+                    types.Clear();
                     break;
                 }
                 var name = cursor + 1 < segments.Length ? segments[cursor + 1] : null;
@@ -587,10 +676,26 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
     private async Task<string?> ReadFileAsync(string repository, string commit, string path, string token, CancellationToken ct)
     {
         var encoded = string.Join('/', path.Split('/').Select(Uri.EscapeDataString));
-        var file = await ReadGitHubAsync($"repos/{repository}/contents/{encoded}?ref={Uri.EscapeDataString(commit)}", token, ct);
-        return file is null ? null : file["type"]?.GetValue<string>() == "file" && Text(file["encoding"]) == "base64" ?
-            Encoding.UTF8.GetString(Convert.FromBase64String(Text(file["content"]))) :
+        var requestPath = $"repos/{repository}/contents/{encoded}?ref={Uri.EscapeDataString(commit)}";
+        var file = await ReadGitHubAsync(requestPath, token, ct);
+        if (file is null)
+        {
+            return null;
+        }
+        if (Text(file["type"]) != "file")
+        {
             throw new InvalidOperationException("Expected a checked-in metadata file.");
+        }
+        if (file["size"] is JsonValue size && size.TryGetValue<long>(out var bytes) && bytes > MaxEvidenceBytes)
+        {
+            throw new InvalidOperationException("File exceeded the evidence size limit.");
+        }
+        return Text(file["encoding"]) switch
+        {
+            "base64" => Encoding.UTF8.GetString(Convert.FromBase64String(Text(file["content"]))),
+            "none" => await ReadGitHubTextAsync(requestPath, token, "application/vnd.github.raw+json", ct),
+            _ => throw new InvalidOperationException("Expected checked-in file content.")
+        };
     }
 
     private static string Text(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";

@@ -475,6 +475,8 @@ def test_chat_agent_explains_workflow_action_required_evidence() -> None:
     assert "the API may omit the reason" in instruction
     assert "A failed status alone does not establish a code defect" in instruction
     gate = instruction.split("**Checks stuck, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
+    assert "Find current-head validation runs with `actions_list`" in gate
+    assert "successful status-setter workflows or unrelated jobs do not rule out an approval gate" in gate
     assert gate.index("For completed `action_required` runs") < gate.index("Recovery depends on the cause")
     assert "Recovery depends on the cause" in instruction
     assert "Use GitHub MCP for GitHub content" in instruction

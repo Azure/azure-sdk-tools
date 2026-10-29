@@ -15,6 +15,7 @@
 
 ### Bugs Fixed
 
+- Service API readiness now classifies all surviving packages before version discovery, preserves explicit Swagger folders and trimmed versions, reuses failed provider lookups, and enforces the 32-file Swagger limit.
 - Service API readiness now covers deletion-only surviving packages, all bounded Java metadata files, `.Management` projects, and large pinned Swagger files. Unresolved child resource types cannot pass using a parent, and local GitHub token discovery honors readiness cancellation without logging token output.
 - Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release.
 - Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.

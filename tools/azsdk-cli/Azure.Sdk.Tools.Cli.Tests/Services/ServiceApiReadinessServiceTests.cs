@@ -116,15 +116,17 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.Projects.Single().Detail, Does.Contain("not a confirmed deployment failure"));
     }
 
-    [TestCase("js", "sdk/example/arm-example", "metadata.json")]
-    [TestCase("python", "sdk/example/azure-mgmt-example", "_metadata.json")]
-    public async Task SingularApiVersionUsesThePinnedProviderNamespace(string language, string package, string metadata)
+    [TestCase("js", "sdk/example/arm-example", "metadata.json", Version)]
+    [TestCase("python", "sdk/example/azure-mgmt-example", "_metadata.json", Version)]
+    [TestCase("js", "sdk/example/arm-example", "metadata.json", " 2026-04-01 ")]
+    [TestCase("python", "sdk/example/azure-mgmt-example", "_metadata.json", " 2026-04-01 ")]
+    public async Task SingularApiVersionUsesThePinnedProviderNamespace(string language, string package, string metadata, string version)
     {
         _files.Clear();
         _changedFiles.Clear();
         _repository = $"helen229/azure-sdk-for-{language}";
         AddPackage(package, metadata, Version);
-        SetFile(_repository, Head, $"{package}/{metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
+        SetFile(_repository, Head, $"{package}/{metadata}", JsonSerializer.Serialize(new { apiVersion = version }));
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(response.Projects.Single().Source.ExpectedNamespace, Is.EqualTo("Microsoft.Example"));
@@ -256,6 +258,34 @@ public class ServiceApiReadinessServiceTests
     }
 
     [Test]
+    public async Task DataPlaneClassificationDoesNotRequireVersionMetadata()
+    {
+        _files.Remove(Key(_repository, Head, $"{Package}/{Metadata}"));
+        SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: specification/example/data-plane/Example\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        var response = await CheckAsync();
+        Assert.That(response.Plane, Is.EqualTo("data-plane"));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task MissingPackageEvidenceCannotMakeAMixedPrDataPlane(bool missingLocation)
+    {
+        const string dataPackage = "sdk/data/azure-resourcemanager-data";
+        AddPackage(dataPackage, "src/main/resources/META-INF/data_metadata.json", Version);
+        SetFile(_repository, Head, $"{dataPackage}/tsp-location.yaml", $"directory: specification/example/data-plane/Example\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        _files.Remove(Key(_repository, Head, $"{Package}/{Metadata}"));
+        if (missingLocation)
+        {
+            _files.Remove(Key(_repository, Head, $"{Package}/tsp-location.yaml"));
+        }
+        var response = await CheckAsync();
+        Assert.That(response.Plane, Is.EqualTo("unknown"));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
     public async Task DataPlaneLabelIsFallbackWhenMetadataIsMissing()
     {
         _labels.Add("data-plane");
@@ -376,6 +406,19 @@ public class ServiceApiReadinessServiceTests
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
     }
 
+    [TestCase(HttpStatusCode.Forbidden)]
+    [TestCase(HttpStatusCode.TooManyRequests)]
+    public async Task SharedNamespaceReusesFailedArmLookup(HttpStatusCode status)
+    {
+        AddPackage("sdk/second/azure-resourcemanager-second", "src/main/resources/META-INF/second_metadata.json", Version);
+        _armStatus = status;
+        var response = await CheckAsync();
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+        Assert.That(response.Projects, Has.Count.EqualTo(2));
+        Assert.That(response.Projects.All(project => project.ReadinessStatus == ServiceApiReadinessResponse.Error), Is.True);
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
+    }
+
     [Test]
     public async Task PackageWithOnlyDeletedFilesIsStillCheckedWhenItRemainsAtHead()
     {
@@ -478,6 +521,40 @@ public class ServiceApiReadinessServiceTests
         SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/Example/stable/{Version}/example.json", swagger);
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task ExplicitProviderFolderDoesNotReadSiblingSwagger(bool configuredOutputExists)
+    {
+        SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml",
+            Config("{azure-resource-provider-folder}/{version-status}/{version}/example.json") + "    azure-resource-provider-folder: resource-manager\n");
+        var swagger = _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")];
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/data-plane/stable/{Version}/example.json", swagger);
+        if (configuredOutputExists)
+        {
+            SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/resource-manager/stable/{Version}/example.json", swagger);
+        }
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(configuredOutputExists ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(_requests.Any(request => request.Uri.AbsolutePath.Contains("/data-plane/", StringComparison.Ordinal)), Is.False);
+    }
+
+    [TestCase(32)]
+    [TestCase(33)]
+    public async Task WildcardDiscoveryBoundsConcreteSwaggerSuffix(int count)
+    {
+        SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", Config("{service-name}/{version-status}/{version}/example.json"));
+        _directories[Key(SpecRepository, SpecCommit, SwaggerDirectory)] = JsonSerializer.SerializeToNode(
+            Enumerable.Range(0, count).Select(index => new { name = $"service{index}", type = "dir" }))!.AsArray();
+        var swagger = _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")];
+        for (var index = 0; index < count; index++)
+        {
+            SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/service{index}/stable/{Version}/example.json", swagger);
+        }
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(count == 32 ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.Error));
+        Assert.That(_requests.Count(request => request.Uri.AbsolutePath.EndsWith("/example.json", StringComparison.Ordinal)), Is.LessThanOrEqualTo(32));
     }
 
     [Test]

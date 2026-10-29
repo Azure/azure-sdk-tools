@@ -63,7 +63,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 result.Detail = "Conflicting resource-manager and data-plane labels.";
                 return result;
             }
-            result.Plane = managementLabel ? "management-plane" : dataLabel ? "data-plane" : "unknown";
+            var labelPlane = managementLabel ? "management-plane" : dataLabel ? "data-plane" : "unknown";
             var packages = new HashSet<string>(StringComparer.Ordinal);
             var knownAtHead = new HashSet<string>(StringComparer.Ordinal);
             for (var page = 1; page <= 30; page++)
@@ -116,11 +116,44 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                     }
                     if (listing is not JsonArray)
                     {
+                        planes.Add("unknown");
                         issues.Add($"{package}: SDK package directory could not be established at the checked head.");
                         continue;
                     }
                 }
                 survivingPackages++;
+                var locationPath = $"{package}/tsp-location.yaml";
+                var locationText = await ReadFileAsync(result.HeadRepository, result.HeadSha, locationPath, token, ct);
+                if (locationText is null)
+                {
+                    planes.Add(labelPlane);
+                    issues.Add($"{package}: missing SDK generation metadata ({locationPath}).");
+                    continue;
+                }
+                YamlMappingNode location;
+                try
+                {
+                    location = ParseYaml(locationText);
+                }
+                catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or FormatException)
+                {
+                    planes.Add("unknown");
+                    issues.Add($"{package}: invalid YAML generation metadata.");
+                    continue;
+                }
+                var directory = Scalar(location, "directory");
+                var commit = Scalar(location, "commit");
+                var specRepository = NormalizeSpecRepository(Scalar(location, "repo"));
+                var plane = directory.Split('/').Contains("data-plane") ? "data-plane" :
+                    directory.Split('/').Contains("resource-manager") || directory.Contains(".Management", StringComparison.OrdinalIgnoreCase) ? "management-plane" : labelPlane;
+                planes.Add(plane);
+                if (!Regex.IsMatch(directory, @"\Aspecification/[\w.-]+(?:/[\w.-]+)*\z") ||
+                    directory.Split('/').Any(part => part is "." or "..") || Regex.IsMatch(directory, @"\.(tsp|yaml|yml|json)\z") ||
+                    !IsSha(commit) || specRepository is null)
+                {
+                    issues.Add($"{package}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository.");
+                    continue;
+                }
                 var language = repository["azure-sdk-for-".Length..].ToLowerInvariant();
                 var metadataFile = language switch
                 {
@@ -129,7 +162,6 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                     "java" => "src/main/resources/META-INF/*_metadata.json",
                     _ => "metadata.json"
                 };
-                var locationPath = $"{package}/tsp-location.yaml";
                 var metadataPaths = new List<string> { $"{package}/{metadataFile}" };
                 if (language == "java")
                 {
@@ -153,10 +185,9 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                         continue;
                     }
                 }
-                var locationText = await ReadFileAsync(result.HeadRepository, result.HeadSha, locationPath, token, ct);
-                if (locationText is null || metadataPaths.Count == 0)
+                if (metadataPaths.Count == 0)
                 {
-                    issues.Add($"{package}: missing SDK generation metadata ({(locationText is null ? locationPath : package + "/" + metadataFile)}).");
+                    issues.Add($"{package}: missing SDK generation metadata ({package}/{metadataFile}).");
                     continue;
                 }
                 var packageSources = new List<ServiceApiReadinessSource>();
@@ -170,20 +201,6 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                     }
                     try
                     {
-                        var location = ParseYaml(locationText);
-                        var directory = Scalar(location, "directory");
-                        var commit = Scalar(location, "commit");
-                        var specRepository = NormalizeSpecRepository(Scalar(location, "repo"));
-                        var plane = directory.Split('/').Contains("data-plane") ? "data-plane" :
-                            directory.Split('/').Contains("resource-manager") || directory.Contains(".Management", StringComparison.OrdinalIgnoreCase) ? "management-plane" : result.Plane;
-                        planes.Add(plane);
-                        if (!Regex.IsMatch(directory, @"\Aspecification/[\w.-]+(?:/[\w.-]+)*\z") ||
-                            directory.Split('/').Any(part => part is "." or "..") || Regex.IsMatch(directory, @"\.(tsp|yaml|yml|json)\z") ||
-                            !IsSha(commit) || specRepository is null)
-                        {
-                            issues.Add($"{package}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository.");
-                            continue;
-                        }
                         if (JsonNode.Parse(metadataText) is not JsonObject metadata)
                         {
                             issues.Add($"{package}: invalid SDK API-version metadata.");
@@ -241,7 +258,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                                 continue;
                             }
                             if (candidates.Length != 1 ||
-                                metadata["apiVersion"] is not null && Text(metadata["apiVersion"]) != candidates[0])
+                                metadata["apiVersion"] is not null && Text(metadata["apiVersion"]).Trim() != candidates[0])
                             {
                                 issues.Add($"{package}: conflicting API versions; no latest-version selection.");
                                 continue;
@@ -258,9 +275,9 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                             });
                         }
                     }
-                    catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or System.Text.Json.JsonException or FormatException or InvalidOperationException)
+                    catch (Exception exception) when (exception is System.Text.Json.JsonException or FormatException or InvalidOperationException)
                     {
-                        issues.Add($"{package}: invalid YAML or JSON generation metadata.");
+                        issues.Add($"{package}: invalid JSON generation metadata.");
                     }
                 }
                 if (packageSources.GroupBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase)
@@ -294,7 +311,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 result.Detail = issues.Count > 0 ? string.Join(" ", issues) : "Authoritative SDK generation metadata or API plane is unavailable.";
                 return result;
             }
-            var providers = new Dictionary<string, JsonNode?>(StringComparer.OrdinalIgnoreCase);
+            var providers = new Dictionary<string, Task<JsonNode?>>(StringComparer.OrdinalIgnoreCase);
             TokenCredential? credential = null;
             foreach (var source in sources)
             {
@@ -315,12 +332,13 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                         project.Detail = "SDK metadata namespace conflicts with the pinned spec provider namespace.";
                         continue;
                     }
-                    if (!providers.TryGetValue(spec.Namespace, out var provider))
+                    if (!providers.TryGetValue(spec.Namespace, out var providerTask))
                     {
                         credential ??= azure.GetCredential();
-                        provider = await ReadProviderAsync(spec.Namespace, credential, ct);
-                        providers.Add(spec.Namespace, provider);
+                        providerTask = ReadProviderAsync(spec.Namespace, credential, ct);
+                        providers.Add(spec.Namespace, providerTask);
                     }
+                    var provider = await providerTask;
                     if (provider is null)
                     {
                         project.Detail = "The provider is unavailable in the validation tenant.";
@@ -472,7 +490,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         var visited = 0;
         async Task DiscoverAsync(int index, string directory)
         {
-            if (++visited > 64 || files.Count > 32)
+            if (++visited > 64 || files.Count >= 32)
             {
                 throw new InvalidOperationException("Swagger discovery exceeded the per-project evidence limit.");
             }
@@ -573,9 +591,16 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             var outputDirectory = config.Children.ContainsKey(new YamlScalarNode("output-dir")) ? Scalar(config, "output-dir") : "{project-root}/tsp-output";
             var emitterDirectory = Scalar(emitter, "emitter-output-dir");
             var outputFile = Scalar(emitter, "output-file");
+            var providerFolder = Scalar(emitter, "azure-resource-provider-folder");
             if (outputDirectory.Length == 0 || emitterDirectory.Length == 0 || outputFile.Length == 0)
             {
                 return null;
+            }
+            if (providerFolder.Length > 0)
+            {
+                outputDirectory = outputDirectory.Replace("{azure-resource-provider-folder}", providerFolder, StringComparison.Ordinal);
+                emitterDirectory = emitterDirectory.Replace("{azure-resource-provider-folder}", providerFolder, StringComparison.Ordinal);
+                outputFile = outputFile.Replace("{azure-resource-provider-folder}", providerFolder, StringComparison.Ordinal);
             }
             outputDirectory = outputDirectory.Replace("{project-root}", project, StringComparison.Ordinal);
             emitterDirectory = emitterDirectory.Replace("{project-root}", project, StringComparison.Ordinal).Replace("{output-dir}", outputDirectory, StringComparison.Ordinal);

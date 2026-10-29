@@ -249,7 +249,9 @@ The connector's `/httprequest` action requires the target `Uri` and `Method` in 
 Only Graph hosted-content images among the first four image attachments are downloaded by the Logic App, with no automatic download retries.
 Each message uses its own action outputs rather than shared workflow variables, and captured images are collected in attachment order regardless of download completion order.
 If a connector request fails or its encoded image exceeds the size limit, its original URL is retained for the existing backend download and failure-notice handling.
-The bot invocation checks whether activity preparation succeeded even when an image download caused the enclosing scope to fail, so partial download failures do not suppress an otherwise ready reply.
+The bot invocation validates the prepared activity's top-level `type` before sending its body, not the JavaScript action's output wrapper.
+It can proceed with a valid activity even when an individual image download caused the preparation scope to fail.
+Missing or malformed prepared activities fail validation without calling the bot, and bot HTTP failures remain failed workflow runs rather than being swallowed by a successful status-code capture.
 Successful image payloads are hidden from workflow action history using secure inputs/outputs and omitted from Teams bot application logs.
 
 For a local trial of the payload handling without Graph permissions, run the backend using the setup above and send a base64 data URI through `/agent/chat`.

@@ -771,8 +771,7 @@
                               }
                             },
                             "Invoke_bot": {
-                              "type": "If",
-                              "expression": "@equals(actions('Prepare_activity_images')?['status'], 'Succeeded')",
+                              "type": "Scope",
                               "runAfter": {
                                 "Resolve_image_bytes": [
                                   "Succeeded",
@@ -781,6 +780,33 @@
                                 ]
                               },
                               "actions": {
+                                "Validate_prepared_activity": {
+                                  "type": "ParseJson",
+                                  "inputs": {
+                                    "content": "@body('Prepare_activity_images')",
+                                    "schema": {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "message"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ]
+                                    }
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  }
+                                },
                                 "Invoke_QA_Bot": {
                                   "type": "Http",
                                   "inputs": {
@@ -789,7 +815,7 @@
                                       "identity": "[parameters('botIdentityResourceId')]",
                                       "type": "ManagedServiceIdentity"
                                     },
-                                    "body": "@outputs('Prepare_activity_images')",
+                                    "body": "@body('Validate_prepared_activity')",
                                     "headers": {
                                       "Content-Type": "application/json"
                                     },
@@ -798,6 +824,11 @@
                                       "type": "none"
                                     },
                                     "uri": "[concat(parameters('botBaseUrl'), '/api/messages')]"
+                                  },
+                                  "runAfter": {
+                                    "Validate_prepared_activity": [
+                                      "Succeeded"
+                                    ]
                                   },
                                   "runtimeConfiguration": {
                                     "secureData": {
@@ -808,17 +839,6 @@
                                     "contentTransfer": {
                                       "transferMode": "Chunked"
                                     }
-                                  }
-                                },
-                                "Compose": {
-                                  "type": "Compose",
-                                  "inputs": "@outputs('Invoke_QA_Bot')?['statusCode']",
-                                  "runAfter": {
-                                    "Invoke_QA_Bot": [
-                                      "Succeeded",
-                                      "TimedOut",
-                                      "Failed"
-                                    ]
                                   }
                                 }
                               }

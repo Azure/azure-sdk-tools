@@ -836,7 +836,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// </summary>
         [McpServerTool(Name = UpdateReleasePlanToolName), Description("Update an existing release plan. Updates spec PR URL, TypeSpec project path, SDK release type, and optionally service/product IDs. " +
             "Product type precedence is explicit productType, saved/previous release plan for the same product, then matching triage work item. This also applies when the product ID is already saved on the plan. " +
-            "Product metadata lookups run only when productType is Unknown. When a product ID is provided in that case, product name and product lifecycle are resolved from a matching triage work item in Azure DevOps. " +
+            "Product type lookups run only when productType is Unknown. When a product ID is provided, product name and product lifecycle are refreshed from a matching triage work item even if productType is explicit. Otherwise triage is queried only if the type is unresolved. " +
             "If the product type cannot be determined, ask the user for productType (allowed values: Offering, Feature, Sku) and retry; no changes are saved without it. " +
             "Runs TypeSpec metadata emitter to resolve package names and updates SDK details. Requires the exact Azure DevOps work item ID; never selects a plan by spec PR URL or TypeSpec project path. " +
             "Optionally saves a supplied spec commit SHA; omission preserves the saved SHA.")]
@@ -957,15 +957,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     // Get product type from previous release plans.
                     if (productType == ProductType.Unknown && ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
                     {
-                        var previousProductInfo = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specProject, ct);
-                        if (string.Equals(previousProductInfo?.ProductServiceTreeId, effectiveProductTreeId, StringComparison.OrdinalIgnoreCase))
-                        {
-                            previousProductType = previousProductInfo?.ProductType ?? string.Empty;
-                        }
+                        previousProductType = await devOpsService.GetProductTypeFromPreviousReleasePlansAsync(
+                            effectiveProductTreeId, releasePlan.WorkItemId, releasePlan.IsTestReleasePlan, ct);
                     }
 
                     ProductInfo? triageProductInfo = null;
-                    if (productType == ProductType.Unknown)
+                    if (!string.IsNullOrEmpty(productTreeId) ||
+                        (productType == ProductType.Unknown && ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown))
                     {
                         triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(effectiveProductTreeId, ct);
                     }
@@ -990,7 +988,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     fieldsToUpdate["Custom.ProductType"] = resolvedProductType;
                 }
 
-                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, releasePlan.Revision, ct);
                 logger.LogInformation("Updated release plan fields for work item {WorkItemId}", releasePlan.WorkItemId);
 
                 // Update spec PR on the API spec child work item only if provided and different from current
@@ -1445,6 +1443,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (!string.IsNullOrEmpty(productTreeId))
                 {
                     ProductInfo? triageProductInfo = null;
+                    if (ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
+                    {
+                        previousProductType = await devOpsService.GetProductTypeFromPreviousReleasePlansAsync(
+                            productTreeId, 0, isTestReleasePlan, ct);
+                    }
                     if (ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
                     {
                         triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(productTreeId, ct);

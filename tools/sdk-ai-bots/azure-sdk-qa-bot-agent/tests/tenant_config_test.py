@@ -182,6 +182,33 @@ def test_tenant_skills_are_partitioned_by_agent() -> None:
     assert mcp_skills[0].frontmatter.name == "azure-mcp-server"
 
 
+def test_protected_arm_label_authorization_routes_to_onboarding() -> None:
+    skills = {
+        skill.frontmatter.name: skill
+        for skill in create_tenant_skills("azure-sdk-chat-agent")
+    }
+    review = skills["api-spec-review"].frontmatter.description
+    onboarding = skills["sdk-onboarding"].frontmatter.description
+    assert "protected ARM label authorization" in review
+    assert "use sdk-onboarding instead" in review
+    assert "protected ARM label authorization" in onboarding
+    assert "ARMSignedOff" in onboarding
+    assert "suppression approval" in onboarding
+    assert "validation errors" in review
+    assert "breaking changes" in review
+
+
+def test_chat_instruction_routes_label_permissions_despite_pr_context() -> None:
+    instruction = (
+        Path(__file__).resolve().parents[1]
+        / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    assert "load `sdk-onboarding`, not `api-spec-review`" in instruction
+    assert "even when the question includes a PR or merge blocker" in instruction
+    assert "`ARMSignedOff` or suppression approval" in instruction
+    assert "**Authoring tenant lock (overrides rules below)**" in instruction
+
+
 def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     content = build_skill_content(TenantID.AZURE_MCP_SERVER)
 

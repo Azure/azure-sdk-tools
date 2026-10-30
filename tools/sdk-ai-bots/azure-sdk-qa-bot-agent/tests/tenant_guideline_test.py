@@ -11,6 +11,22 @@ from config.tenant_config import (
 )
 
 
+def test_onboarding_guideline_distinguishes_protected_label_authorization():
+    guideline = load_tenant_qa_guideline(TenantID.AZURE_SDK_ONBOARDING)
+    authorization = guideline.split(
+        "### Repository Permissions and Protected ARM Labels\n", 1
+    )[1].split("\n### ", 1)[0]
+    assert "`ARMSignedOff` or suppression approval" in authorization
+    assert "GitHub PR approval does not establish protected-label authorization" in authorization
+    assert "allowed approvers list" in authorization
+    assert "responsible ARM review team" in authorization
+    assert "verify or add the reviewer" in authorization
+    assert "reviewer/team membership" in authorization
+    assert "Do not name public Azure organization membership or visibility as the blocker" in authorization
+    assert "unless direct evidence shows it prevented authorization" in authorization
+    assert "If the allowed list or authorization result is unavailable" in authorization
+
+
 def test_dotnet_tenant_loads_shared_guideline_before_supplement():
     config = get_tenant_config(TenantID.DOTNET_CHANNEL_QA_BOT)
     assert config is not None

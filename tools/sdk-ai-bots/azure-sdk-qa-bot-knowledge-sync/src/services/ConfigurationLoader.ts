@@ -74,6 +74,7 @@ export interface KnowledgeConfig {
  */
 export interface DocumentationSource {
     path: string;
+    includePath?: string;
     folder: string;
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
@@ -139,6 +140,7 @@ export class ConfigurationLoader {
             for (const docPath of source.paths) {
                 sources.push({
                     path: (docPath.relativeByRepoPath || docPath.path === undefined) ? `docs/${repoPath}` : `docs/${repoPath}/${docPath.path}`,
+                    includePath: docPath.relativeByRepoPath ? docPath.path?.replace(/^[/\\]+/, '') : undefined,
                     folder: docPath.folder,
                     fileNameLowerCase: docPath.fileNameLowerCase,
                     ignoredPaths: docPath.ignoredPaths,

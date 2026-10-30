@@ -1461,6 +1461,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 List<string> warnings = [];
                 List<string> nextSteps = [];
+                if (!string.IsNullOrEmpty(productTreeId) && string.IsNullOrEmpty(resolvedProductType))
+                {
+                    warnings.Add($"Product type could not be determined for product ID '{productTreeId}'. The release plan was created without a product type.");
+                    nextSteps.Add("Provide the product type when updating the release plan (CLI: --product-type; allowed values: Offering, Feature, Sku).");
+                }
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 

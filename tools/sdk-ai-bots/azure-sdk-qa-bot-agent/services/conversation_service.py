@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 from collections import OrderedDict
 from datetime import datetime, timezone
 from html.parser import HTMLParser
@@ -1117,8 +1118,9 @@ class TeamsBackfillService:
         self, job: TeamsBackfillJob, config: dict, request: TeamsBackfillRequest
     ) -> None:
         try:
+            settings = await app_config.load(os.environ.get("AZURE_APPCONFIG_ENDPOINT", ""))
             job.summary = await self._runner(
-                config, app_config.get, request.channel_id, request.start_time
+                config, settings.get, request.channel_id, request.start_time
             )
             job.status = TeamsBackfillStatus.succeeded
         except asyncio.CancelledError:

@@ -302,7 +302,8 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         config_path = Path(__file__).resolve().parents[1] / "config/teams_collection_config.json"
         channel = json.loads(config_path.read_text())["channels"][0]["channelId"]
         service = TeamsBackfillService(config_path, runner)
-        with patch.object(server, "_teams_backfill_service", service):
+        with patch.object(server, "_teams_backfill_service", service), \
+            patch("services.conversation_service.app_config.load", new=AsyncMock()):
             transport = httpx.ASGITransport(app=server.app)
             async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
                 accepted = await client.post(
@@ -346,7 +347,8 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         service = TeamsBackfillService(
             config_path, AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
         )
-        with self.assertLogs("services.conversation_service", level="ERROR"):
+        with patch("services.conversation_service.app_config.load", new=AsyncMock()), \
+            self.assertLogs("services.conversation_service", level="ERROR"):
             accepted = await service.start(TeamsBackfillRequest())
             job = await self._settled_backfill(service, accepted.job_id)
             self.assertEqual(job.status.value, "failed")
@@ -357,6 +359,38 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(
                 (await self._settled_backfill(service, retried.job_id)).status.value, "failed"
             )
+
+    async def test_backfill_refreshes_configuration_without_changing_startup_snapshot(self):
+        from config import app_config
+        from models.conversation import TeamsBackfillRequest
+        from services.conversation_service import TeamsBackfillService
+
+        endpoint = "https://example.azconfig.io"
+        urls = [
+            "https://host.logic.azure.com/workflows/first/triggers/manual/paths/invoke?api-version=2016-10-01",
+            "https://host.logic.azure.com/workflows/second/triggers/manual/paths/invoke?api-version=2016-10-01",
+        ]
+        snapshots = [app_config.AppConfigSnapshot(endpoint, {"TEAMS_COLLECTION_LOGIC_APP_URL": url})
+                     for url in urls]
+        observed_urls = []
+
+        async def runner(config, settings, channel_id, start_time):
+            observed_urls.append(settings("TEAMS_COLLECTION_LOGIC_APP_URL", ""))
+            return {"messagesCreated": 1}
+
+        service = TeamsBackfillService(runner=runner)
+        with patch.dict("os.environ", {"AZURE_APPCONFIG_ENDPOINT": endpoint}), \
+                patch.object(app_config, "_settings", {}), \
+                patch.object(app_config, "load", new=AsyncMock(side_effect=snapshots)) as load:
+            self.assertEqual(app_config.get("TEAMS_COLLECTION_LOGIC_APP_URL", ""), "")
+            for expected_url in urls:
+                accepted = await service.start(TeamsBackfillRequest())
+                job = await self._settled_backfill(service, accepted.job_id)
+                self.assertEqual(job.status.value, "succeeded")
+                self.assertEqual(observed_urls[-1], expected_url)
+            self.assertEqual(load.await_count, 2)
+            load.assert_awaited_with(endpoint)
+            self.assertEqual(app_config.get("TEAMS_COLLECTION_LOGIC_APP_URL", ""), "")
 
     def test_normalization_matches_the_realtime_workflow(self):
         from services.conversation_service import normalized_content

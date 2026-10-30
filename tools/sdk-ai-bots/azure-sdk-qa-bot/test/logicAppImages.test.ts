@@ -64,11 +64,7 @@ function serializedBotRequest(activity: unknown) {
     const output = actionOutputs[match[2]];
     return match[1] === 'body' ? output.body : output;
   };
-  const invokeActions = replyActions.Invoke_bot.actions;
-  actionOutputs.Validate_prepared_activity = {
-    body: resolve(invokeActions.Validate_prepared_activity.inputs.content),
-  };
-  return JSON.parse(JSON.stringify(resolve(invokeActions.Invoke_QA_Bot.inputs.body)));
+  return JSON.parse(JSON.stringify(resolve(actions.Invoke_QA_Bot.inputs.body)));
 }
 
 describe('Logic App connector image forwarding', () => {
@@ -135,12 +131,8 @@ describe('Logic App connector image forwarding', () => {
     expect(actions.Image_download_results.runAfter).toEqual({
       Download_graph_images: ['Succeeded', 'Failed', 'TimedOut'],
     });
-    expect(replyActions.Invoke_bot.actions.Invoke_QA_Bot.inputs.body).toBe("@body('Validate_prepared_activity')");
-    expect(replyActions.Invoke_bot.runAfter).toEqual({
-      Resolve_image_bytes: ['Succeeded', 'Failed', 'TimedOut'],
-    });
-    expect(replyActions.Invoke_bot.type).toBe('Scope');
-    expect(replyActions.Invoke_bot.actions.Invoke_QA_Bot.runtimeConfiguration.secureData.properties).toContain('inputs');
+    expect(actions.Invoke_QA_Bot.inputs.body).toBe("@body('Prepare_activity_images')");
+    expect(actions.Invoke_QA_Bot.runtimeConfiguration.secureData.properties).toContain('inputs');
   });
 
   it('initializes per run and resets per message with no concurrent access to the array', () => {
@@ -163,29 +155,27 @@ describe('Logic App connector image forwarding', () => {
     expect(actions.Image_download_results.runtimeConfiguration.secureData.properties).toEqual(['inputs']);
   });
 
-  it('validates preparation before invoking the bot and does not mask failures', () => {
-    const invokeActions = replyActions.Invoke_bot.actions;
-    expect(Object.keys(invokeActions).sort()).toEqual(['Invoke_QA_Bot', 'Validate_prepared_activity']);
-    expect(invokeActions.Validate_prepared_activity.type).toBe('ParseJson');
-    expect(invokeActions.Validate_prepared_activity.inputs).toEqual({
-      content: "@body('Prepare_activity_images')",
-      schema: {
-        type: 'object',
-        properties: { type: { type: 'string', enum: ['message'] } },
-        required: ['type'],
-      },
+  it('invokes the bot only after successful preparation without an intermediate validator', () => {
+    expect(JSON.stringify(replyActions)).not.toContain('Validate_prepared_activity');
+    expect(actions.Invoke_QA_Bot.type).toBe('Http');
+    expect(actions.Invoke_QA_Bot.runAfter).toEqual({
+      Prepare_activity_images: ['Succeeded'],
     });
-    expect(invokeActions.Validate_prepared_activity.runtimeConfiguration.secureData.properties).toEqual([
-      'inputs',
+    expect(actions.Invoke_QA_Bot.inputs.body).toBe("@body('Prepare_activity_images')");
+    expect(actions.Invoke_QA_Bot.inputs.retryPolicy.type).toBe('none');
+    expect(Object.keys(actions)).toEqual([
+      'Reset_downloaded_images',
+      'Filter_image_attachments',
+      'Filter_graph_hosted_images',
+      'Download_graph_images',
+      'Image_download_results',
+      'Prepare_activity_images',
+      'Invoke_QA_Bot',
     ]);
-    expect(invokeActions.Invoke_QA_Bot.runAfter).toEqual({
-      Validate_prepared_activity: ['Succeeded'],
-    });
-    expect(invokeActions.Invoke_QA_Bot.inputs.retryPolicy.type).toBe('none');
   });
 
   it('sends one complete JSON request instead of using the Logic Apps chunked-upload protocol', () => {
-    const invoke = replyActions.Invoke_bot.actions.Invoke_QA_Bot;
+    const invoke = actions.Invoke_QA_Bot;
     expect(invoke.inputs.method).toBe('POST');
     expect(invoke.inputs.headers['Content-Type']).toBe('application/json');
     expect(invoke.runtimeConfiguration).not.toHaveProperty('contentTransfer');
@@ -193,7 +183,7 @@ describe('Logic App connector image forwarding', () => {
   });
 
   it('groups sequential image preparation between conversion and bot invocation', () => {
-    expect(Object.keys(replyActions).sort()).toEqual(['Invoke_bot', 'Resolve_image_bytes', 'convertActivity']);
+    expect(Object.keys(replyActions).sort()).toEqual(['Resolve_image_bytes', 'convertActivity']);
     expect(replyActions.Resolve_image_bytes.type).toBe('Scope');
     expect(replyActions.Resolve_image_bytes.runAfter).toEqual({ convertActivity: ['Succeeded'] });
     expect(actions.Prepare_activity_images.runAfter).toEqual({ Image_download_results: ['Succeeded'] });

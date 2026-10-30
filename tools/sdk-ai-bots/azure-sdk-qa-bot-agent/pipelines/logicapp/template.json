@@ -603,45 +603,6 @@
                                       ]
                                     }
                                   }
-                                }
-                              }
-                            },
-                            "Invoke_bot": {
-                              "type": "Scope",
-                              "runAfter": {
-                                "Resolve_image_bytes": [
-                                  "Succeeded",
-                                  "Failed",
-                                  "TimedOut"
-                                ]
-                              },
-                              "actions": {
-                                "Validate_prepared_activity": {
-                                  "type": "ParseJson",
-                                  "inputs": {
-                                    "content": "@body('Prepare_activity_images')",
-                                    "schema": {
-                                      "type": "object",
-                                      "properties": {
-                                        "type": {
-                                          "type": "string",
-                                          "enum": [
-                                            "message"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "type"
-                                      ]
-                                    }
-                                  },
-                                  "runtimeConfiguration": {
-                                    "secureData": {
-                                      "properties": [
-                                        "inputs"
-                                      ]
-                                    }
-                                  }
                                 },
                                 "Invoke_QA_Bot": {
                                   "type": "Http",
@@ -651,7 +612,7 @@
                                       "identity": "[parameters('botIdentityResourceId')]",
                                       "type": "ManagedServiceIdentity"
                                     },
-                                    "body": "@body('Validate_prepared_activity')",
+                                    "body": "@body('Prepare_activity_images')",
                                     "headers": {
                                       "Content-Type": "application/json"
                                     },
@@ -662,7 +623,7 @@
                                     "uri": "[concat(parameters('botBaseUrl'), '/api/messages')]"
                                   },
                                   "runAfter": {
-                                    "Validate_prepared_activity": [
+                                    "Prepare_activity_images": [
                                       "Succeeded"
                                     ]
                                   },

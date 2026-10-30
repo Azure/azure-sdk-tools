@@ -1,4 +1,4 @@
-"""Deploy hosted agents and manage the Teams collection workflow.
+"""Deploy hosted agents and the Teams backfill workflow.
 
 Builds the container image, pushes to ACR, and deploys as a hosted agent.
 All config (project endpoint, ACR login server, etc.) is loaded from
@@ -10,7 +10,6 @@ Usage:
     python scripts/deploy_hosted_agent.py chat_agent --tag v1.2.3
     python scripts/deploy_hosted_agent.py chat_agent --appconfig-endpoint https://...
     python scripts/deploy_hosted_agent.py teams-collection deploy --environment dev ...
-    python scripts/deploy_hosted_agent.py teams-collection routine-dispatch --project-endpoint https://...
 """
 
 import argparse
@@ -22,15 +21,13 @@ import shutil
 import subprocess
 import sys
 import time
-from collections.abc import Mapping
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 from uuid import UUID
 
 os.environ.setdefault("AZURE_CORE_WELCOME_MESSAGE", "false")
 
 from dotenv import load_dotenv
-import httpx
 
 _PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -48,21 +45,14 @@ from azure.ai.projects.models import (
     RaiConfig,
 )
 from azure.identity import AzureCliCredential
-from azure.identity.aio import AzureCliCredential as AsyncAzureCliCredential
 from azure.core.exceptions import ResourceNotFoundError
 
 import config.app_config as app_config
 from config.app_config import get as cfg
 from services.conversation_service import validate_channels
-from services.teams_operations import SUMMARIZE, operation_input
 from utils.azure_credential import close_credential
 
-AGENT_NAME = "azure-sdk-teams-collection-agent"
-APP_CONFIG_READER_ROLE = "App Configuration Data Reader"
 LOGIC_APP_URL_KEY = "TEAMS_COLLECTION_LOGIC_APP_URL"
-ROUTINES_API_VERSION = "v1"
-ROUTINES_FEATURE = "Routines=V2Preview"
-ROUTINE_DESCRIPTION = "Summarize stored Teams threads into reusable Q&A records."
 
 
 def _resolve_command(cmd: list[str]) -> list[str]:
@@ -306,9 +296,6 @@ def main() -> None:
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
         }
-        if args.agent_name == "teams_collection_agent":
-            env_vars["ENABLE_INSTRUMENTATION"] = "false"
-            env_vars["ENABLE_SENSITIVE_DATA"] = "false"
         if candidate_appconfig_endpoint:
             env_vars["CANDIDATE_APPCONFIG_ENDPOINT"] = candidate_appconfig_endpoint
 
@@ -378,33 +365,11 @@ def _run_az(arguments: list[str]) -> str:
     return result.stdout.strip()
 
 
-def _collector_principal_id(agent) -> str:
-    identity = getattr(agent, "instance_identity", None)
-    value = identity.get("principal_id") if isinstance(identity, Mapping) else getattr(identity, "principal_id", None)
-    try:
-        return str(UUID(value))
-    except (AttributeError, TypeError, ValueError):
-        raise RuntimeError(
-            f"Hosted agent {AGENT_NAME!r} does not expose a valid instance principal ID."
-        ) from None
-
-
 def _principal_id(value: str, option: str) -> str:
     try:
         return str(UUID(value))
     except (AttributeError, TypeError, ValueError):
         raise ValueError(f"{option} must be a managed identity object ID.") from None
-
-
-def _appconfig_name(endpoint: str) -> str:
-    address = urlsplit(endpoint)
-    suffix = ".azconfig.io"
-    if (address.scheme != "https" or not address.hostname
-            or not address.hostname.endswith(suffix)
-            or address.username or address.password or address.port not in (None, 443)
-            or address.path not in ("", "/") or address.query or address.fragment):
-        raise ValueError("Expected an Azure App Configuration HTTPS endpoint.")
-    return address.hostname.removesuffix(suffix)
 
 
 def _sas_free_callback_url(callback_url: str) -> str:
@@ -420,118 +385,10 @@ def _sas_free_callback_url(callback_url: str) -> str:
                        urlencode({"api-version": versions[0]}), ""))
 
 
-def _project_endpoint(appconfig_endpoint: str) -> str:
-    endpoint = _run_az([
-        "appconfig", "kv", "show", "--endpoint", appconfig_endpoint,
-        "--auth-mode", "login", "--key", "AI_FOUNDRY_PROJECT_ENDPOINT",
-        "--query", "value", "--output", "tsv",
-    ])
-    address = urlsplit(endpoint)
-    if (address.scheme != "https" or not address.hostname
-            or not address.hostname.endswith(".services.ai.azure.com")
-            or not address.path.startswith("/api/projects/")
-            or address.query or address.fragment):
-        raise ValueError("AI_FOUNDRY_PROJECT_ENDPOINT in App Configuration is invalid.")
-    return endpoint.rstrip("/")
-
-
-def _resolve_collector_principal(project_endpoint: str) -> str:
-    credential = AzureCliCredential()
-    project = AIProjectClient(endpoint=project_endpoint, credential=credential, allow_preview=True)
-    try:
-        return _collector_principal_id(project.agents.get(AGENT_NAME))
-    finally:
-        project.close()
-        credential.close()
-
-
-def routine_config(config: dict) -> dict:
-    routine = config.get("routine")
-    if not isinstance(routine, Mapping):
-        raise ValueError("No summarization routine is configured.")
-    return routine
-
-
-def routine_definition(config: dict) -> dict:
-    routine = routine_config(config)
-    if not re.fullmatch(r"teams-channel-[a-zA-Z0-9][-a-zA-Z0-9]*", routine["name"]):
-        raise ValueError("Routine name must start with teams-channel-.")
-    if len(routine["cron"].split()) != 5 or not routine["timeZone"]:
-        raise ValueError("Routine requires a five-field cron expression and timeZone; minimum interval is five minutes.")
-    return {
-        "description": ROUTINE_DESCRIPTION,
-        "enabled": False,
-        "authorization": {"identity": "agent"},
-        "triggers": {"schedule": {"type": "schedule", "cron_expression": routine["cron"],
-                                  "time_zone": routine["timeZone"]}},
-        "action": {"type": "invoke_agent_responses_api", "agent_name": AGENT_NAME,
-                   "input": operation_input({"operation": SUMMARIZE})},
-    }
-
-
-def _validate_project_endpoint(endpoint: str) -> str:
-    address = urlsplit(endpoint)
-    if (address.scheme != "https" or not address.hostname
-            or not address.hostname.endswith(".services.ai.azure.com")
-            or address.username or address.password or address.port not in (None, 443)
-            or not re.fullmatch(r"/api/projects/[^/]+/?", address.path)
-            or address.query or address.fragment):
-        raise ValueError("Expected a Foundry project endpoint in Azure public cloud.")
-    return endpoint.rstrip("/")
-
-
-async def routine_request(config, command, endpoint, credential, client) -> dict:
-    definition = routine_definition(config)
-    url = _validate_project_endpoint(endpoint) + "/routines/" + quote(routine_config(config)["name"], safe="")
-    token = await credential.get_token("https://ai.azure.com/.default")
-    headers = {"Authorization": f"Bearer {token.token}", "Foundry-Features": ROUTINES_FEATURE}
-    query = {"api-version": ROUTINES_API_VERSION}
-    existing = await client.get(url, params=query, headers=headers, follow_redirects=False)
-    if existing.status_code == 200:
-        if existing.json().get("action", {}).get("agent_name") != AGENT_NAME:
-            raise ValueError("Refusing to modify a Routine targeting a different agent.")
-    elif existing.status_code != 404 or command != "routine-create":
-        raise RuntimeError(f"Routine lookup returned HTTP {existing.status_code}.")
-    if command == "routine-create":
-        response = await client.put(url, params=query, headers=headers, json=definition,
-                                    follow_redirects=False)
-    else:
-        action = {"routine-enable": "enable", "routine-disable": "disable",
-                  "routine-dispatch": "dispatch_async"}[command]
-        response = await client.post(url + ":" + action, params=query, headers=headers,
-                                     json={}, follow_redirects=False)
-    if response.status_code not in (200, 201, 202):
-        raise RuntimeError(f"Routine operation returned HTTP {response.status_code}; no response content was logged.")
-    result = response.json()
-    return {key: result[key] for key in ("name", "enabled", "dispatch_id", "task_id") if key in result}
-
-
-async def _resolve_project_endpoint(arguments) -> str:
-    if arguments.project_endpoint:
-        return arguments.project_endpoint
-    if arguments.appconfig_endpoint:
-        return _project_endpoint(arguments.appconfig_endpoint)
-    await app_config.init()
-    return app_config.get("AI_FOUNDRY_PROJECT_ENDPOINT", "")
-
-
-async def execute_routine(arguments, config) -> dict:
-    from utils.azure_credential import close_credential as close_routine_credential, get_credential
-
-    load_dotenv(_PROJECT_DIR / ".env", override=False)
-    try:
-        endpoint = await _resolve_project_endpoint(arguments)
-        async with httpx.AsyncClient(timeout=60) as client:
-            return await routine_request(config, arguments.command, endpoint, get_credential(), client)
-    finally:
-        await close_routine_credential()
-
-
 def _deploy_infrastructure(
     environment: str,
     resource_group: str,
     appconfig_endpoint: str,
-    collector_principal_id: str,
     backfill_principal_id: str,
 ) -> str:
     parameters_file = (_PROJECT_DIR / "pipelines" / "teams-collection"
@@ -543,7 +400,6 @@ def _deploy_infrastructure(
         "--name", f"teams-collection-{environment}", "--mode", "Incremental",
         "--template-file", str(_PROJECT_DIR / "pipelines" / "teams-collection" / "template.json"),
         "--parameters", f"@{parameters_file}",
-        f"collectorPrincipalId={collector_principal_id}",
         f"backfillPrincipalId={backfill_principal_id}",
         "--query", "properties.outputs.workflowResourceId.value", "--output", "tsv",
     ])
@@ -557,18 +413,6 @@ def _deploy_infrastructure(
         "--query", "value", "--output", "tsv",
     ])
     logic_app_url = _sas_free_callback_url(callback_url)
-    appconfig_name = _appconfig_name(appconfig_endpoint)
-    appconfig_resource_id = _run_az([
-        "appconfig", "show", "--name", appconfig_name,
-        "--query", "id", "--output", "tsv",
-    ])
-    if not appconfig_resource_id.startswith("/subscriptions/"):
-        raise RuntimeError("App Configuration lookup returned no resource ID.")
-    _run_az([
-        "role", "assignment", "create", "--assignee-object-id", collector_principal_id,
-        "--assignee-principal-type", "ServicePrincipal", "--role", APP_CONFIG_READER_ROLE,
-        "--scope", appconfig_resource_id, "--output", "none",
-    ])
     _run_az([
         "appconfig", "kv", "set", "--endpoint", appconfig_endpoint,
         "--auth-mode", "login", "--key", LOGIC_APP_URL_KEY,
@@ -577,43 +421,28 @@ def _deploy_infrastructure(
     return workflow_resource_id
 
 
-async def deploy_collection(arguments) -> dict:
+def deploy_collection(arguments) -> dict:
     config = json.loads(arguments.config.read_text(encoding="utf-8"))
     validate_channels(config["channels"])
-    project_endpoint = _project_endpoint(arguments.appconfig_endpoint)
-    collector_principal_id = _resolve_collector_principal(project_endpoint)
     backfill_principal_id = _principal_id(arguments.backfill_principal_id, "--backfill-principal-id")
     workflow_resource_id = _deploy_infrastructure(
         arguments.environment, arguments.resource_group, arguments.appconfig_endpoint,
-        collector_principal_id, backfill_principal_id,
+        backfill_principal_id,
     )
-    credential = AsyncAzureCliCredential()
-    try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            routine = await routine_request(config, "routine-create", project_endpoint, credential, client)
-    finally:
-        await credential.close()
     return {
-        "agentName": AGENT_NAME,
-        "collectorPrincipalId": collector_principal_id,
         "backfillPrincipalId": backfill_principal_id,
         "workflowResourceId": workflow_resource_id,
         "appConfigurationEndpoint": arguments.appconfig_endpoint,
         "appConfigurationKey": LOGIC_APP_URL_KEY,
-        "routine": routine,
     }
 
 
 def collection_main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(description="Deploy and manage the Teams collection workflow.")
-    parser.add_argument("command", choices=(
-        "deploy", "routine-definition", "routine-create", "routine-enable",
-        "routine-disable", "routine-dispatch",
-    ))
+    parser = argparse.ArgumentParser(description="Deploy the Teams backfill workflow.")
+    parser.add_argument("command", choices=("deploy",))
     parser.add_argument("--environment", choices=("dev", "test", "prod"))
     parser.add_argument("--resource-group")
     parser.add_argument("--appconfig-endpoint")
-    parser.add_argument("--project-endpoint")
     parser.add_argument("--backfill-principal-id")
     parser.add_argument("--config", type=Path,
                         default=_PROJECT_DIR / "config" / "teams_collection_config.json")
@@ -621,18 +450,11 @@ def collection_main(argv: list[str]) -> int:
     try:
         config = json.loads(arguments.config.read_text(encoding="utf-8"))
         validate_channels(config["channels"])
-        if arguments.command != "deploy" and arguments.backfill_principal_id:
-            parser.error("--backfill-principal-id applies only to deploy.")
-        if arguments.command == "deploy":
-            for name in ("environment", "resource_group", "appconfig_endpoint",
-                         "backfill_principal_id"):
-                if not getattr(arguments, name):
-                    parser.error("--" + name.replace("_", "-") + " is required for deploy.")
-            result = asyncio.run(deploy_collection(arguments))
-        elif arguments.command == "routine-definition":
-            result = routine_definition(config)
-        else:
-            result = asyncio.run(execute_routine(arguments, config))
+        for name in ("environment", "resource_group", "appconfig_endpoint",
+                     "backfill_principal_id"):
+            if not getattr(arguments, name):
+                parser.error("--" + name.replace("_", "-") + " is required for deploy.")
+        result = deploy_collection(arguments)
         print(json.dumps(result, indent=2))
         return 0
     except Exception as error:

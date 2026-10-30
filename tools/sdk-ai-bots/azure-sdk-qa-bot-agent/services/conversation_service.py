@@ -486,9 +486,8 @@ class ConversationService:
 # dedicated collection Logic App; writes only add missing messages or refresh
 # edited content, attachments and images, never remove anything.
 #
-# This section also owns the shape a stored Teams body has, so
-# ``split_subject`` lives beside the ``title:`` line ``normalized_content``
-# writes even though only summarization reads it back.
+# This section also owns the shape a stored Teams body has, so backfill mirrors
+# the title and forwarded-content normalization used by the realtime workflow.
 # ---------------------------------------------------------------------------
 
 _TEAMS_CONVERSATION_TYPE = ConversationType.teams_channel.value
@@ -565,23 +564,6 @@ def teams_conversation_id(channel_id: str, root_id: str) -> str:
 
 def thread_partition(channel_id: str, root_id: str) -> str:
     return f"{_TEAMS_CONVERSATION_TYPE}:{teams_conversation_id(channel_id, root_id)}"
-
-
-def channel_partition_prefix(channel_id: str) -> str:
-    """Prefix shared by every thread partition of one channel.
-
-    Keeping ``;messageid=`` in the prefix stops a channel ID from matching
-    another channel whose ID merely starts with the same characters.
-    """
-    return f"{_TEAMS_CONVERSATION_TYPE}:{channel_id};messageid="
-
-
-def root_id_from_partition(partition: str) -> str | None:
-    marker = ";messageid="
-    index = partition.rfind(marker)
-    if index == -1:
-        return None
-    return partition[index + len(marker):] or None
 
 
 def continuation_token(link: str, channel: dict, message_id: str | None) -> str:
@@ -704,20 +686,6 @@ def normalized_content(message: dict) -> str:
     if isinstance(subject, str) and subject.strip():
         content = f"{_TITLE_PREFIX}{subject.strip()}\n\n{content}"
     return content
-
-
-def split_subject(content: str) -> tuple[str | None, str]:
-    """Split a stored body back into its subject and the remaining body.
-
-    The inverse of the ``title:`` line ``normalized_content`` writes, kept beside
-    it so the two cannot drift. Lets summarization keep seeing a post subject
-    without the ``title:`` line being duplicated inside the question text.
-    """
-    if not isinstance(content, str) or not content.startswith(_TITLE_PREFIX):
-        return None, content if isinstance(content, str) else ""
-    subject, _, body = content[len(_TITLE_PREFIX):].partition("\n\n")
-    subject = subject.strip()
-    return (subject, body) if subject else (None, content)
 
 
 class _ImageTags(HTMLParser):

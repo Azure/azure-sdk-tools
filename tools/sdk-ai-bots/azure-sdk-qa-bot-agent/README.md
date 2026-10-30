@@ -25,10 +25,9 @@ The project has the following components:
 |-----------|-------------|------------|------|
 | **Chat Agent** | AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 |
 | **Chatbot Evolution Agent** | KB-quality analyst that diagnoses negative-feedback turns and files KB-gap GitHub issues | `agents/chatbot_evolution_agent/init.py` | 8088 |
-| **Teams Collection Agent** | Scheduled Q&A summarization of archived channel threads, deployed with a Foundry Routine | `agents/teams_collection_agent/init.py` | 8088 |
 | **Server** | Backend API that the Teams App communicates with, and the writer of the channel-post archive (FastAPI) | `server.py` | 8089 |
 
-> Hosted agents bind port `8088`. Run only one chat or evolution agent at a time locally. Teams collection uses the deployed workflow described below; it has no standalone local collection command.
+> Hosted agents bind port `8088`. Run only one chat or evolution agent at a time locally. Teams backfill runs through the backend server and the dedicated Logic App described below.
 
 ## Getting Started
 
@@ -245,97 +244,15 @@ python scripts/deploy_hosted_agent.py chat_agent --tag <image-tag>
 python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 ```
 
-### Teams Collection Deployment
+### Teams Channel Backfill
 
-- **Pipelines**: [agent-cd.yml](pipelines/agent-cd.yml) with `agentName: teams_collection_agent`, then [logicapp-cd.yml](pipelines/logicapp-cd.yml) with `workflow: teams-collection`
-- **Parameters**: `environment` (dev/test/prod)
-- **Safety**: deploys the complete collection stack and leaves the summary Routine disabled
+Backfill imports configured Teams channel history into the existing `conversation-messages` container. It runs on the backend server, pages the dedicated Logic App through the existing Teams connector, and writes messages in the same shape as live traffic without invoking a model.
 
-The stack exposes two independent operations that run in different places:
-
-| Operation | Request | Writes | Trigger |
-|-----------|---------|--------|---------|
-| Backfill | `POST /teams/backfill` on the backend server | `conversation-messages`, one document per Teams message | Operator calls the endpoint |
-| `summarize` | `{"operation":"summarize"}` to the hosted agent | `teams-qa-summaries`, one document per thread | Weekly Routine |
-
-```text
-backfill   operator -> POST /teams/backfill ----> Backend Server (App Service)
-                                                     -> dedicated Logic App
-                                                     -> existing Teams connector
-                                                     -> conversation-messages
-summarize  Foundry Routine ---------------------> Teams Collection Hosted Agent
-                                                     -> conversation-messages
-                                                     -> completion model
-                                                     -> teams-qa-summaries
-```
-
-Backfill is not hosted on the agent. It never calls a model — it pages the Logic App and writes rows — and the backend server is already the writer of `conversation-messages`, so the import lives there as an ordinary endpoint under the server's own identity. The agent hosts only summarization, which is the part that needs a model and a schedule. There is no local collection command and no direct connector transport in either path.
-
-Backfill imports history in exactly the shape the bot writes in real time, so imported posts and live posts are indistinguishable downstream. `summarize` never calls the Teams Logic App; it reads the stored messages and produces the versioned Q&A result.
-
-#### Prerequisites and Identity
-
-- Use an existing Foundry project supporting hosted agents and Routines, ACR, App Configuration, and Cosmos account with database `azure-sdk-qa-bot`.
-- Configure `AI_FOUNDRY_AGENT_COMPLETION_MODEL` for Q&A processing. The summarizer uses read-only public Web Search and URL fetching when a thread depends on linked context.
-- Reuse a connected Teams API connection in the workflow's region. Its delegated Teams identity must be able to read every configured channel.
-- The deployment service connection needs workflow/container deployment permissions, Cosmos `sqlRoleDefinitions/write` and `sqlRoleAssignments/write`, App Configuration data write permission, `Microsoft.Authorization/roleAssignments/write` on the configuration store, and Routine management access to the Foundry project. Running a backfill is a separate, operator-run step that only needs an EasyAuth token for the backend server; it is not part of the pipeline.
-- Two runtime identities are involved, and they are not interchangeable:
-  - `collectorPrincipalId` is the object ID of the **hosted agent's instance identity**, which summarizes. It gets read access to `conversation-messages` and write access to `teams-qa-summaries`. Do not use the deployer's user ID, a client/application ID, or the Teams connector's delegated identity.
-  - `backfillPrincipalId` is the object ID of the **backend server's App Service identity**, which runs backfill. It is the only identity the Logic App trigger admits. The pipeline reads it from `$(APP_NAME)`, preferring the user-assigned identity selected by the server's `AZURE_CLIENT_ID` app setting. It needs no grant from this template because it already writes `conversation-messages` for live traffic.
-- The `teams-collection` workflow of the Logic App pipeline grants the agent identity **App Configuration Data Reader** on the selected configuration store. Retain the standard Foundry/ACR permissions required for hosted-agent deployment.
-
-The [collection template](pipelines/teams-collection/template.json) provisions:
-
-| Resource | Scope and behavior |
-|----------|--------------------|
-| Summary container | `azure-sdk-qa-bot/teams-qa-summaries`, partition key `/channel_id` |
-| Dedicated Logic App | OAuth-only HTTP trigger, exact backfill identity and channel allowlist; no recurrence trigger |
-| Metadata reader role and assignment | Only `Microsoft.DocumentDB/databaseAccounts/readMetadata` at Cosmos account scope, required for SDK initialization |
-| Agent data assignments | Cosmos DB Built-in Data Contributor on `teams-qa-summaries`, and Data **Reader** on the existing `conversation-messages` container, because the agent only reads what backfill imported |
-
-The `conversation-messages` container already exists and is owned by the bot; the template only grants access to it and never creates or reconfigures it. Role names/assignment IDs in the template are deterministic. Deploying it grants permissions to the supplied agent identity; it does not remove previous user grants or create/reauthorize the Teams connection. Metadata access does not grant access to other containers' documents. See [Cosmos metadata permissions](https://learn.microsoft.com/azure/cosmos-db/reference-data-plane-security#required-metadata).
-
-#### Deploy and Configure
-
-1. Review [config/teams_collection_config.json](config/teams_collection_config.json) for the target environment before building. It contains the Entra tenant, allowed team/channel IDs, per-channel `tenantKey` and `processingScope`, the processing rules version, an optional default `startTime`, and the summary Routine schedule. `startTime` must include a timezone; `null` backfills all available roots. `tenantKey` is the bot tenant the imported messages belong to and **must match the channel's entry in `bot-configs/channel.yaml`** (mirrored at [azure-sdk-qa-bot/config/channel.yaml](../azure-sdk-qa-bot/config/channel.yaml)) — a mismatch silently files history under the wrong tenant. Deployment fails fast if any channel omits it.
-2. Collection has no pipeline of its own; it reuses the two shared ones, and the order matters because step 3 reads the principal ID that step 2 creates. The backend server must already be deployed, because step 3 also reads its identity.
-
-   1. Run [pipelines/agent-cd.yml](pipelines/agent-cd.yml) with `agentName: teams_collection_agent` to build and deploy `azure-sdk-teams-collection-agent`.
-   2. Run [pipelines/logicapp-cd.yml](pipelines/logicapp-cd.yml) with `workflow: teams-collection`. It reads the hosted agent's instance principal ID and the backend server's App Service identity, then:
-      1. Deploys the dedicated Logic App, summary container, and Cosmos roles from [pipelines/teams-collection/template.json](pipelines/teams-collection/template.json).
-      2. Grants the agent App Configuration Data Reader.
-      3. Writes the SAS-free `TEAMS_COLLECTION_LOGIC_APP_URL` to the environment's `AZURE_APPCONFIG_ENDPOINT`.
-      4. Creates or updates the Foundry summary Routine in the disabled state.
-
-   Running step 2 before the agent exists fails fast rather than deploying a workflow no identity can call. The `team` parameter applies to the `chat` workflow only; `teams-collection` is defined for `azure_sdk` and rejects any other value. The Teams API connection is an existing delegated connection and is not created or reauthorized by these pipelines. The `teams-collection` workflow does not use or modify [pipelines/logicapp/template.json](pipelines/logicapp/template.json), which belongs to the message-mirroring Logic Apps deployed by the same pipeline's `chat` workflow.
-
-3. For a manual equivalent after deploying the hosted agent, run:
-
-    ```powershell
-   python scripts/deploy_hosted_agent.py teams-collection deploy `
-      --environment dev `
-      --resource-group azure-sdk-qa-bot-dev `
-      --appconfig-endpoint https://azuresdkqabot-dev-config.azconfig.io `
-      --backfill-principal-id $serverPrincipalId
-    ```
-
-    Read `$serverPrincipalId` from the backend App Service rather than typing it:
-
-    ```powershell
-    $clientId = az webapp config appsettings list --name azuresdkqabot-dev-server `
-      --resource-group azure-sdk-qa-bot-dev `
-      --query "[?name=='AZURE_CLIENT_ID'].value | [0]" -o tsv
-    $serverPrincipalId = az webapp identity show --name azuresdkqabot-dev-server `
-      --resource-group azure-sdk-qa-bot-dev `
-      --query "values(userAssignedIdentities)[?clientId=='$clientId'].principalId | [0]" -o tsv
-    ```
-
-4. Manually dispatch the disabled summary Routine for verification:
-
-    ```powershell
-   python scripts/deploy_hosted_agent.py teams-collection routine-dispatch `
-      --project-endpoint $projectEndpoint
-    ```
+- Deploy with [pipelines/logicapp-cd.yml](pipelines/logicapp-cd.yml), selecting `workflow: teams-collection` and the target environment. The backend server must already be deployed; the pipeline uses its App Service identity as the only caller admitted by the Logic App.
+- The pipeline writes the Logic App's SAS-free callback URL to `TEAMS_COLLECTION_LOGIC_APP_URL` in the environment's App Configuration store.
+- The Teams API connection is an existing delegated connection and is not created or reauthorized by this pipeline. Its identity must be able to read every configured channel.
+- Review [config/teams_collection_config.json](config/teams_collection_config.json) for the tenant, allowed team/channel IDs, per-channel `tenantKey`, optional `startTime`, and `maxPages`. `tenantKey` must match the channel's entry in `bot-configs/channel.yaml` (mirrored at [azure-sdk-qa-bot/config/channel.yaml](../azure-sdk-qa-bot/config/channel.yaml)); a mismatch files history under the wrong tenant. A configured `startTime` must include a timezone; `null` means all available roots.
+- The deployment service connection needs Logic App deployment permissions and App Configuration data write access. No Cosmos role assignment is needed here: the backend identity already writes live messages to `conversation-messages`.
 
 #### Backfill a Channel
 
@@ -364,9 +281,9 @@ Once `status` reaches `succeeded`, the same document carries the `summary` count
 
 Backfill is safe to repeat. For every Teams message it either creates the document, leaves it untouched when the content already matches, or updates only `content` when the message was edited in Teams. It never deletes, never rewrites bot replies, and never clears bot-owned fields such as `should_reply`. A message changed by another writer mid-run is skipped and picked up on the next run.
 
-#### Verify and Enable
+#### Verify Import
 
-Acceptance only means the background request was queued. The operations write no run records, so verify the data itself. The counters (`messagesCreated`/`messagesUpdated`/`messagesUnchanged`/`messagesSkipped` for backfill, `threadsSummarized`/`threadsUnchanged`/`threadsRefreshed`/`threadsExcluded`/`threadsSkipped` for summarize) are reported by the backfill job status for an import and by the Routine dispatch record for summarization, and `channelsCompleted` must match the number of channels targeted.
+Acceptance only means the background request was queued, so poll the backfill job until it reaches `succeeded`. Its `summary` contains the `messagesCreated`, `messagesUpdated`, `messagesUnchanged`, and `messagesSkipped` counters; `channelsCompleted` should match the number of configured channels targeted.
 
 In Cosmos Data Explorer, confirm backfilled messages landed in `azure-sdk-qa-bot/conversation-messages` alongside live traffic:
 
@@ -379,39 +296,7 @@ ORDER BY c.created_at DESC
 
 A thread is one partition: `teams_channel:<channelId>;messageid=<rootId>`, holding the root post and every reply as separate documents. Forwarded attachments are expanded and the post title is prefixed as `title: ...` exactly as the real-time workflow does, so re-running backfill on unchanged content reports `messagesUnchanged` rather than rewriting documents.
 
-Then check summaries in `azure-sdk-qa-bot/teams-qa-summaries`:
-
-```sql
-SELECT TOP 5 c.id, c.qa.title, c.message_count, c.processor_version
-FROM c WHERE c.channel_id = "<channelId>"
-```
-
-Expect far fewer summaries than threads. Only a thread that yields reusable Q&A is stored, so one rejected as out of scope, unresolved, or answered by nobody but the bot leaves no document behind, and a thread that later stops qualifying has its earlier answer removed. Every document here is an answer, which is why none of them carry a status field or a null `qa`. The tradeoff is that the freshness gate lives in the stored summary: a rejected thread has no record to compare against and is offered to the model again on every run.
-
-`/channel_id` is the partition key, so adding a date window to that filter stays a single-partition query. Use `thread_started_at` for when the question was asked and `last_message_at` for when the thread last moved:
-
-```sql
-SELECT c.id, c.qa.title, c.thread_started_at, c.last_message_at
-FROM c WHERE c.channel_id = "<channelId>"
-  AND c.thread_started_at >= "2026-09-01T00:00:00.000000Z"
-  AND c.thread_started_at <  "2026-10-01T00:00:00.000000Z"
-ORDER BY c.thread_started_at DESC
-```
-
-Cosmos compares these as strings, so every timestamp written to this container is normalized to `YYYY-MM-DDTHH:MM:SS.ffffffZ` and boundaries should be written the same way. That normalization matters because `conversation-messages` stores whatever the bot serialized, where a message landing exactly on a whole second has no fractional part at all; `Z` sorts after `.`, so inheriting that spelling would drop those threads out of a range filter. `last_write_ts` is an integer epoch and can be compared numerically instead.
-
-Each summary holds the inclusion decision, the Q&A result, any resource-enrichment status, and the gate fields (`message_count`, `last_write_ts`, `source_content_hash`) used to decide whether re-running the model is necessary. Summaries only rerun the model when a thread's content actually changed or the processor version moved; unrelated writes such as the bot backfilling `should_reply` refresh the gate without spending a model call. Linked public resources can be retrieved for self-contained answers; authentication-protected resources are recorded as unavailable rather than guessed. Threads with no root post are skipped.
-
-If no summaries are written at all, check Hosted Agent startup/initialization and its App Configuration/Cosmos permissions; initialization can fail before any work begins. For a failed backfill, check the backend server logs and the dedicated Logic App's run history — a `403 MisMatchingOAuthClaims` there means the deployed `backfillPrincipalId` is not the identity the server actually runs as. Request/response content is secured in the Logic App.
-
-Only after cloud verification succeeds, enable the weekly summary schedule:
-
-```powershell
-python scripts/deploy_hosted_agent.py teams-collection routine-enable `
-  --project-endpoint $projectEndpoint
-```
-
-The default schedule is weekly at 00:00 UTC on Sunday. Use `routine-disable` to pause future dispatches; it does not cancel an active run. Channel and processing configuration are baked into the image: changing them requires redeploying the Hosted Agent, while channel ID changes also require updating the Logic App allowlist. Keep the Routine disabled until both changes are ready. Both operations are safe to re-run after a failure: completed writes are recognized and skipped instead of duplicated.
+For a failed run, check the backend server logs and the dedicated Logic App's run history. A `403 MisMatchingOAuthClaims` means the deployed `backfillPrincipalId` is not the identity the server actually runs as. Logic App request/response content is secured.
 
 ### Server Deploy
 

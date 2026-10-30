@@ -1,10 +1,8 @@
 # Deployment pipeline for the Azure SDK QA Bot Logic Apps.
 # Deploys a Logic App ARM template with environment-specific parameters.
 #
-# The teams-collection workflow needs the collection agent's principal ID, so
-# deploy that agent through agent-cd.yml (agentName: teams_collection_agent)
-# before running this pipeline for it. It also reads the backend server's
-# identity from $(APP_NAME), because backfill runs there rather than in the agent.
+# The teams-collection workflow reads the backend server's identity from
+# $(APP_NAME), because backfill runs there rather than in a hosted agent.
 # Dev/test use the shared Azure SDK listener; production uses the selected team.
 
 name: Deploy Azure SDK QA Bot Logic App
@@ -152,8 +150,7 @@ extends:
                         exit 1
                       fi
 
-                      # Resolves the collection agent's principal ID, so that agent
-                      # must already be deployed through agent-cd.yml.
+                      # Deploys the backfill workflow for the backend server identity.
                       python scripts/deploy_hosted_agent.py teams-collection deploy \
                         --environment "${{ parameters.environment }}" \
                         --resource-group "$(RESOURCE_GROUP)" \

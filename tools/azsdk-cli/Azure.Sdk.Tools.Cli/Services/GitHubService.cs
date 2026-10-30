@@ -78,6 +78,35 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        protected async Task<string> GetGitHubAuthTokenAsync(CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+            if (!string.IsNullOrEmpty(token))
+            {
+                return token;
+            }
+            token = Environment.GetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN");
+            if (!string.IsNullOrEmpty(token))
+            {
+                ct.ThrowIfCancellationRequested();
+                Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
+                return token;
+            }
+
+            var options = new ProcessOptions("gh", ["auth", "token"],
+                timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream: false);
+            var result = await processHelper.Run(options, ct);
+            ct.ThrowIfCancellationRequested();
+            if (result.ExitCode != 0 || string.IsNullOrWhiteSpace(result.Stdout))
+            {
+                throw new InvalidOperationException("GitHub authentication is unavailable. Sign in with 'gh auth login' or supply GITHUB_TOKEN.");
+            }
+            token = result.Stdout.Trim();
+            Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
+            return token;
+        }
+
         protected string GetGitHubAuthToken()
         {
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
@@ -96,7 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             ProcessResult result;
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream:false);
+                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream: false);
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
             }
@@ -133,6 +162,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public interface IGitHubService
     {
         public string GetAuthToken();
+        public Task<string> GetAuthTokenAsync(CancellationToken ct);
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -187,8 +217,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             logger = _logger;
             this.httpClientFactory = httpClientFactory;
         }
-        
+
         public string GetAuthToken() => GetGitHubAuthToken();
+        public Task<string> GetAuthTokenAsync(CancellationToken ct) => GetGitHubAuthTokenAsync(ct);
 
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {
@@ -836,7 +867,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var response = await ReadWithAnonymousFallbackAsync(client => client.Actions.Workflows.Runs.List(owner, repo, request), ct);
             return response?.WorkflowRuns ?? [];
         }
-        
+
         public async Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
         {
             logger.LogInformation("Getting logs for workflow run {RunId} in {Owner}/{Repo}", runId, owner, repo);

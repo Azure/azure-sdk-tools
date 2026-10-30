@@ -43,6 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<IServiceApiReadinessService, ServiceApiReadinessService>();
             services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
             services.AddSingleton<IUpgradeService, UpgradeService>();
             services.AddSingleton<INotificationService, NotificationService>();
@@ -149,6 +150,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
 
             services.AddHttpClient();
+            services.AddHttpClient(ServiceApiReadinessService.HttpClientName)
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
             services.AddAzureClients(clientBuilder =>
             {
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection

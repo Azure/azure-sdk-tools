@@ -60,7 +60,7 @@ public static class GeneratedSdkMetadataHelper
         }
     }
 
-    private static HashSet<PackageApiVersion> ReadApiVersions(JsonElement root)
+    public static HashSet<PackageApiVersion> ReadApiVersions(JsonElement root)
     {
         if (root.ValueKind != JsonValueKind.Object)
         {

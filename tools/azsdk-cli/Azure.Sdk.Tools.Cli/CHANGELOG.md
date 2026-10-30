@@ -4,6 +4,7 @@
 
 ### Features Added
 
+- Added read-only `pkg check-api-version` and `azsdk_check_service_api_version` to check an SDK PR's exact API version against ARM metadata. Returns Passed, Not detected, Inconclusive, or Error, with shared bounded HTTP handling for GitHub and ARM evidence.
 - `eng package-info` supports `--package-path` to inspect one local SDK package and return its information directly, or export it with `--out-dir`. Existing bulk export remains supported.
 - Package discovery now populates `PackageInfo.ApiVersions` from generated metadata for Java, JavaScript, Python, Go, and .NET. Output entries preserve `Namespace` and `Version` from the `apiVersions` map, falling back to an unnamed `apiVersion` when the map is absent or empty. Namespace/version pairs are deduplicated and sorted, with version strings trimmed. Missing metadata leaves the array empty; malformed or unreadable metadata logs a warning without failing package discovery.
 - After manual abandonment is saved, linked open unmerged SDK PRs are closed regardless of author, then receive a plan-specific notice. Already abandoned plans can finish cleanup of open PRs without rewriting ADO state. Cleanup failures return success with warnings and manual follow-up guidance. A failed notice may leave the PR closed; rerunning does not repair missing notices on closed PRs. Closed and merged PRs are never changed.
@@ -14,6 +15,8 @@
 
 ### Bugs Fixed
 
+- Service API readiness now classifies all surviving packages before version discovery, preserves explicit Swagger folders and trimmed versions, reuses failed provider lookups, and enforces the 32-file Swagger limit.
+- Service API readiness now covers deletion-only surviving packages, all bounded Java metadata files, `.Management` projects, and large pinned Swagger files. Unresolved child resource types cannot pass using a parent, and local GitHub token discovery honors readiness cancellation without logging token output.
 - Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release.
 - Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.
 - Corrected development-guide links and Coding Agent settings instructions to use valid absolute, locale-neutral URLs instead of relative or placeholder links.

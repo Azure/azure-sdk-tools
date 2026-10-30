@@ -25,6 +25,10 @@
     { "toolName": "azsdk_package_get_approval_status", "prompt": "Is this package version approved for release?", "category": "all" },
     { "toolName": "azsdk_package_get_approval_status", "prompt": "Get release-gate status for this package", "category": "all" },
 
+    { "toolName": "azsdk_check_service_api_version", "prompt": "Check whether the API version used by this SDK pull request is advertised in Azure", "category": "all" },
+    { "toolName": "azsdk_check_service_api_version", "prompt": "Show service API-readiness evidence for this management-plane SDK PR without changing it", "category": "all" },
+    { "toolName": "azsdk_check_service_api_version", "prompt": "Is the exact generated API version for this SDK PR listed in ARM provider metadata?", "category": "all" },
+
     { "toolName": "azsdk_check_service_label", "prompt": "Check if a service label exists for my service", "category": "all" },
     { "toolName": "azsdk_check_service_label", "prompt": "Does the service label for Contoso already exist?", "category": "all" },
     { "toolName": "azsdk_create_service_label", "prompt": "Create a new service label for my service", "category": "all" },

@@ -2,9 +2,10 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "versioning"
+tags:
+  area: "versioning"
 # Root-level environment
-environment: azsdk-mcp
+agent_environment: azsdk-mcp
 # Execution configuration
 defaults:
   runs: 1 # Trials per stimulus
@@ -20,7 +21,7 @@ stimuli:
       mode: "trigger"
     prompt: |
       change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
-    environment: &shared_environment
+    agent_environment: &shared_environment
       files:
         - src: ../fixtures/001-share-version-new-feature/employee.tsp
           dest: employee.tsp
@@ -52,7 +53,7 @@ stimuli:
       mode: "forced"
     prompt: |
       @azure-typespec-author change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
-    environment: *shared_environment
+    agent_environment: *shared_environment
     graders:
       - type: "run-command"
         config:
@@ -73,7 +74,6 @@ stimuli:
           path: "employee.tsp"
       - &file_matches_api_version
         type: "file-matches"
-        name: "file-matches-api-version"
         config:
           pattern: "2025-05-04-preview"
           path: "main.tsp"
@@ -85,7 +85,7 @@ stimuli:
       suite: "versioning"
       mode: "no-skill"
     prompt: "change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only"
-    environment: *shared_environment
+    agent_environment: *shared_environment
     rubric:
       - EmployeeProperties.provisioningState has Lifecycle.Read and Lifecycle.Create visibility only in API version 2025-05-04-preview.
       - Earlier API versions retain the original Lifecycle.Read visibility.

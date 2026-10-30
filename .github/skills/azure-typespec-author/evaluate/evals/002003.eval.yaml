@@ -2,9 +2,10 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "armtemplate"
+tags:
+  area: "armtemplate"
 # Root-level environment
-environment: azsdk-mcp
+agent_environment: azsdk-mcp
 # Execution configuration
 defaults:
   runs: 1 # Trials per stimulus
@@ -20,7 +21,7 @@ stimuli:
       mode: "trigger"
     prompt: |
       Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
-    environment: &shared_environment
+    agent_environment: &shared_environment
       files:
         - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
           dest: employee.tsp
@@ -52,7 +53,7 @@ stimuli:
       mode: "forced"
     prompt: |
       @azure-typespec-author Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
-    environment: *shared_environment
+    agent_environment: *shared_environment
     graders:
       - type: "run-command"
         config:
@@ -85,7 +86,7 @@ stimuli:
       mode: "no-skill"
     prompt: |
       Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
-    environment: *shared_environment
+    agent_environment: *shared_environment
     graders:
       - type: "tool-calls"
         config:

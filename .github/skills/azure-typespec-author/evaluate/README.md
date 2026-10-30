@@ -127,13 +127,36 @@ these inside each trial so reference reads use accessible workspace paths.
 Environment setup removes evaluator content from the mounted copies before the
 agent starts; only `SKILL.md` and references remain.
 
-The existing shard runner selects the mode without modifying the checked-in
-configuration. It clears explicit skill mounts for no-skill runs. When `SkillBranch`
-predates shared naming, the overlay removes candidate naming sources and the runner
-omits that absent dependency only if the selected authoring skill does not require it.
-A missing dependency declared by the selected skill remains an error.
-The runner materializes only definitions and references, avoiding copies of
-the authoring fixtures and their installed dependencies into every trial.
+CI uses the common shard runner and the pinned Vally version in
+`eng/common/scripts/eval/package.json`. Forced, trigger and no-skill selection
+is passed through a Vally argument array (`--tag mode=...`, `--runs N`).
+The local pre-eval hook prepares the disposable CI checkout's `.vally.yaml` before
+Vally reloads it from each selected eval's directory. It mounts absolute paths to
+staged definitions and references, without evaluator content or installed fixture
+dependencies, and clears explicit skill mounts for no-skill runs.
+It also resolves `AZSDK_EVAL_MCP_KIND` to the selected prebuilt MCP DLL and writes
+an absolute `dotnet` command into the pipeline environment. Vally starts that
+binary directly, without the Node launcher used by local environments. An invalid
+MCP kind or missing binary fails preparation before Vally starts. The local
+environments and KB backend settings are unchanged.
+This setup modifies the CI checkout; do not invoke `--prepare` on a developer's
+working configuration unless those generated changes are intended.
+When `SkillBranch` predates shared naming, setup omits the absent naming dependency
+only if the selected authoring skill does not require it. A missing required
+dependency remains an error.
+
+All three modes use common authentication, standard verdicts, unmodified JUnit,
+and result collection with latest-attempt/completeness checks. `Runs` means repeated
+trials, not conversation turns. Common Summary already shows successful and total
+runs for failing scenarios, such as `1/2 runs passed`; at least one successful
+trial does not override the standard verdict. No supplementary report or local
+post-eval hook is needed.
+The pre-eval hook calls `pipeline/typespec-author-prepare.ts --prepare` for setup.
+Pipeline globs select only files containing the requested mode. Vally retains
+zero-match explicit eval files in its summary, and the common verdict requires
+executed stimuli. A regression checks that each mode's globs cover exactly its
+matching files; update those local lists when adding cases. Trigger-only naming
+cases and turns-only cases are not included in forced/no-skill shards.
 
 Naming cases follow the existing flat, numbered `evals/NNNNNN.eval.yaml` layout.
 Cases `007001` through `007008` compare the same task and output/file assertions
@@ -256,8 +279,8 @@ vally eval \
   --verbose
 ```
 
-Setup changes eval files to `environment: azsdk-mcp-local`. Do not commit that local override;
-restore `environment: azsdk-mcp` before committing.
+Setup changes eval files to `agent_environment: azsdk-mcp-local`. Do not commit that local override;
+restore `agent_environment: azsdk-mcp` before committing.
 
 Use `--mcp-kind mock` only for isolated mock-server development. The benchmark's forced and trigger
 tracks default to the live MCP so they exercise the production tool surface.
@@ -265,17 +288,24 @@ tracks default to the live MCP so they exercise the production tool surface.
 ### 6. Run a no-skill baseline
 
 ```bash
-node --experimental-strip-types pipeline/typespec-author-invoke-shard.ts \
-  --eval-args "-e evals/*.eval.yaml" \
-  --shard-name local-no-skill \
-  --output-dir ./result-no-skill \
-  --extra-args "--tag mode=no-skill --workers 1"
+(
+  set -e
+  repo_root="$(git rev-parse --show-toplevel)"
+  backup="$(mktemp -d)"
+  cp .vally.yaml "$backup/.vally.yaml"
+  trap 'cp "$backup/.vally.yaml" .vally.yaml; rm "$backup/.vally.yaml"; rmdir "$backup"' EXIT
+  node --experimental-strip-types pipeline/typespec-author-prepare.ts \
+    --prepare --eval-root "$PWD" --mode no-skill --skill-root "$backup/skills"
+  node "$repo_root/eng/common/scripts/eval/node_modules/@microsoft/vally-cli/dist/index.js" eval \
+    --tag mode=no-skill --workers 1 --junit --threshold 0.8 --output-dir ./result-no-skill
+)
 ```
 
-Use the shard runner for baselines: Vally's explicit `environment.skills` takes
+Prepare the configuration for baselines: Vally's explicit `environment.skills` takes
 precedence over `--skill-dir`, so pointing `--skill-dir` at an empty directory alone
-does not remove configured skills. The runner uses the pinned Vally installation
-from `eng/common/scripts/eval`; run `npm ci` there first.
+does not remove configured skills. The subshell restores the original `.vally.yaml`
+on exit. This uses the pinned Vally installation from `eng/common/scripts/eval`;
+run `npm ci` there first.
 
 ## Manual Fixture Setup
 
@@ -340,5 +370,16 @@ runs each area, publishes result/debug artifacts, and produces separate summarie
 | `SkillBranch` | Skill source branch to overlay |
 | `McpKind`     | `live` or `mock`               |
 | `Runs`        | Trials per stimulus            |
+
+Both this pipeline and `eng/pipelines/azure-typespec-author-benchmark-no-skill.yml`
+define `TypeSpecAuthorEvalAzureSubscription` in their YAML `variables` and forward
+its value at template expansion time as `azureSubscription` to the common eval
+templates. The current deployment uses `azuresdkqabot-dev`; other deployments
+update this caller-owned variable to an authorized service connection. No Azure
+DevOps UI variable or run parameter is required. Common templates retain no
+deployment-specific connection fallback. An invalid connection fails Azure task
+validation for live runs. Mock runs do not use a service connection.
+Authentication and Vally invocation remain in common; the KB backend configuration
+in `.vally.yaml` is unchanged.
 
 Pipeline eval files must use `environment: azsdk-mcp`.

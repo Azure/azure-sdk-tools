@@ -11,7 +11,7 @@
 # - PrepareShared builds the selected MCP binary once and publishes it as the mcp-servers artifact.
 # - PrepareForced / PrepareTrigger generate area-based shard matrices from eval file metadata.
 # - EvalForced / EvalTrigger run one matrix job per area.
-# - SummaryForced / SummaryTrigger roll up JUnit results.
+# - SummaryForced / SummaryTrigger verify complete latest attempts and roll up results.
 trigger: none
 pr: none
 
@@ -34,6 +34,8 @@ parameters:
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
+- name: TypeSpecAuthorEvalAzureSubscription
+  value: azuresdkqabot-dev
 - name: SkillBranch
   value: ${{ parameters.SkillBranch }}
 
@@ -59,21 +61,42 @@ extends:
             parameters:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               evalGlobs:
-                - 'evals/*.eval.yaml'
+                # Files without forced stimuli would produce zero-execution verdicts.
+                - 'evals/001*.eval.yaml'
+                - 'evals/002*.eval.yaml'
+                - 'evals/003*.eval.yaml'
+                - 'evals/004*.eval.yaml'
+                - 'evals/005*.eval.yaml'
+                - 'evals/006*.eval.yaml'
+                - 'evals/007001.eval.yaml'
+                - 'evals/007002.eval.yaml'
+                - 'evals/007003.eval.yaml'
+                - 'evals/007004.eval.yaml'
+                - 'evals/007005.eval.yaml'
+                - 'evals/007006.eval.yaml'
+                - 'evals/007007.eval.yaml'
+                - 'evals/007008.eval.yaml'
 
       - stage: EvalForced
         displayName: Eval forced track
         dependsOn: PrepareForced
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode=forced'
+          TypeSpecAuthorEvalMode: forced
+          AZSDK_EVAL_MCP_KIND: ${{ parameters.McpKind }}
         jobs:
-          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
+          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
             parameters:
               matrixStageName: PrepareForced
+              artifactPrefix: forced-
+              preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
               vallyRoot: .github/skills/azure-typespec-author/evaluate
-              mcpEnvironment: ${{ parameters.McpKind }}
-              azureSubscription: azuresdkqabot-dev
-              runs: ${{ parameters.Runs }}
+              UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
+              azureSubscription: ${{ variables.TypeSpecAuthorEvalAzureSubscription }}
+              vallyArguments:
+                - --tag
+                - mode=forced
+                - --runs
+                - ${{ format('{0}', parameters.Runs) }}
               # Keep each shard below the installation token's one-hour lifetime.
               ${{ if eq(parameters.Runs, 1) }}:
                 shardTimeoutInMinutes: 50
@@ -82,12 +105,14 @@ extends:
 
       - stage: SummaryForced
         displayName: Summary forced track
-        dependsOn: EvalForced
+        dependsOn: [PrepareForced, EvalForced]
         condition: always()
         jobs:
-          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-summary.yml
+          - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
             parameters:
-              resultArtifactPrefix: eval-result-PrepareForced-
+              matrixStageName: PrepareForced
+              evalStageName: EvalForced
+              artifactPrefix: forced-
               failOnFailedTests: false
 
       - stage: PrepareTrigger
@@ -98,21 +123,34 @@ extends:
             parameters:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               evalGlobs:
-                - 'evals/*.eval.yaml'
+                - 'evals/001*.eval.yaml'
+                - 'evals/002*.eval.yaml'
+                - 'evals/003*.eval.yaml'
+                - 'evals/004*.eval.yaml'
+                - 'evals/005*.eval.yaml'
+                - 'evals/006*.eval.yaml'
+                - 'evals/007*.eval.yaml'
 
       - stage: EvalTrigger
         displayName: Eval trigger track
         dependsOn: PrepareTrigger
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger'
+          TypeSpecAuthorEvalMode: trigger
+          AZSDK_EVAL_MCP_KIND: ${{ parameters.McpKind }}
         jobs:
-          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
+          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
             parameters:
               matrixStageName: PrepareTrigger
+              artifactPrefix: trigger-
+              preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
               vallyRoot: .github/skills/azure-typespec-author/evaluate
-              mcpEnvironment: ${{ parameters.McpKind }}
-              azureSubscription: azuresdkqabot-dev
-              runs: ${{ parameters.Runs }}
+              UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
+              azureSubscription: ${{ variables.TypeSpecAuthorEvalAzureSubscription }}
+              vallyArguments:
+                - --tag
+                - mode=trigger
+                - --runs
+                - ${{ format('{0}', parameters.Runs) }}
               # Keep each shard below the installation token's one-hour lifetime.
               ${{ if eq(parameters.Runs, 1) }}:
                 shardTimeoutInMinutes: 50
@@ -121,10 +159,12 @@ extends:
 
       - stage: SummaryTrigger
         displayName: Summary trigger track
-        dependsOn: EvalTrigger
+        dependsOn: [PrepareTrigger, EvalTrigger]
         condition: always()
         jobs:
-          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-summary.yml
+          - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
             parameters:
-              resultArtifactPrefix: eval-result-PrepareTrigger-
+              matrixStageName: PrepareTrigger
+              evalStageName: EvalTrigger
+              artifactPrefix: trigger-
               failOnFailedTests: false

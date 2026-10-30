@@ -2,9 +2,10 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "versioning"
+tags:
+  area: "versioning"
 # Root-level environment
-environment: azsdk-mcp
+agent_environment: azsdk-mcp
 # Execution configuration
 defaults:
   runs: 1 # Trials per stimulus
@@ -20,7 +21,7 @@ stimuli:
       mode: "trigger"
     prompt: |
       Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
-    environment: &shared_environment
+    agent_environment: &shared_environment
       files:
         - src: ../fixtures/001006-version-add-preview-after-stable/employee.tsp
           dest: employee.tsp
@@ -95,7 +96,7 @@ stimuli:
       mode: "forced"
     prompt: |
       @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
-    environment: *shared_environment
+    agent_environment: *shared_environment
     graders:
       - *tool_calls
       - type: "run-command"
@@ -116,7 +117,6 @@ stimuli:
           path: "examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json"
       - &file_exists_example
         type: "file-exists"
-        name: "file-exists-example"
         config:
           path: "examples/2024-10-01/Employees_Get_MaximumSet_Gen.json"
       - &file_matches
@@ -126,7 +126,6 @@ stimuli:
           path: "main.tsp"
       - &file_matches_api_version
         type: "file-matches"
-        name: "file-matches-api-version"
         config:
           pattern: "2024-10-01"
           path: "main.tsp"
@@ -138,7 +137,7 @@ stimuli:
       suite: "versioning"
       mode: "no-skill"
     prompt: "Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version"
-    environment: *shared_environment
+    agent_environment: *shared_environment
     rubric:
       - API version 2025-05-04-preview is added as a preview version after the latest stable version.
       - The new preview carries forward all features and examples from the latest stable version without removing existing versions.

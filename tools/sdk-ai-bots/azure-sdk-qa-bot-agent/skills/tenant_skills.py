@@ -29,13 +29,13 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     TenantID.API_SPEC_REVIEW_BOT: (
-        "Azure REST API specification authoring and PR review: requirements, "
+        "Azure REST API specification PR review process: requirements, "
         "validation errors, LintDiff, Avocado, breaking changes, review status, "
         "scheduling, blockers, and merge process in azure-rest-api-specs repos. "
-        "Prefer this skill whenever a specification PR, validation check, or "
-        "breaking-change comparison is the primary issue. Use typespec instead "
-        "when the primary task is a language-level model or code transformation, "
-        "even if a PR check exposed it. Do not use this skill for "
+        "Use typespec instead for TypeSpec validation, spec authoring, API design, "
+        "API-version lifecycle (including ARM perpetual-preview), and model or code "
+        "transformations, even when raised in a specification PR or failing check. "
+        "Do not use this skill for "
         "repository access or permission requests; use sdk-onboarding instead."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
@@ -61,7 +61,8 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: (
         "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
-        "migration from OpenAPI, validation, tspconfig, specification service-folder "
+        "migration from OpenAPI, validation, tspconfig, API-version lifecycle "
+        "(including ARM perpetual-preview across stable releases), specification service-folder "
         "organization, and RPaaS registration paths coupled to that layout. Do not "
         "replace a preloaded typespec-authoring skill for Authoring tenant requests."
     ),

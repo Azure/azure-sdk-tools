@@ -7,11 +7,18 @@ Establish the API version, released baseline, SDK/spec revision, and emitter ver
 
 ### .NET SDK PR / APIView Review and Release Requirements
 - Distinguish .NET SDK PR review and APIView approval from REST API spec review. For changes to shared engineering files such as `eng/`, route review requests to the relevant CODEOWNERS.
-- Identify pending .NET APIView/owner approvals; do not tell authors to approve their own APIView or bypass checks.
+- Check live API review status below to identify pending .NET APIView/owner approvals; do not tell authors to approve their own APIView or bypass checks.
 - For .NET release blockers, check APIView and changelog/version readiness alongside the release pipeline. Route publishing/feed/network incidents to Engineering System with the package, pipeline URL, and error.
 - For missing GA API approval, identify each impacted package as management-plane (ARM) or data-plane using the package name and repository/package metadata. `Azure.ResourceManager.*` indicates management-plane; do not assume every other package is data-plane. If the plane is unclear, verify the package metadata or ask the author before selecting a contact.
 - For management-plane GA API approval, contact **Arthur Ma (`arthurma`)**. For data-plane GA API approval, contact **Michael Nash (`micnash`)** or **Josh Love (`jolov`)**. When multiple packages are affected, route each to the contact for its plane.
 - Include the package/version, APIView revision link, and failed build link in the approval handoff. Explain that the author should request approval from the appropriate contact, then queue another build after approval. These contacts are for GA API approval, not unrelated publishing failures; do not claim approval was requested or granted without evidence.
+
+#### Live API Review Status
+- Establish language/package/version from the question or linked evidence; ask for missing values. For .NET, call `azsdk_package_get_approval_status` with `language="dotnet"`, `packageName`, and `packageVersion`. Find the review link using `azsdk_apiview_get_review_url` with `language="dotnet"`, `package`, and the same `version`; cite it with the package/version. Link lookup failure does not invalidate status.
+- Use `result.isApproved`, `finalSource`, `reason`, and source status fields, not the SPA, comments (including empty results), or old logs. APIView HTTP 200 means API and package-name approval; 201 means package-name only; 202 means neither. A meaningful `isApproved=false` result is not a lookup failure merely because `response_error` or `operation_status="Failed"` is present.
+- ARH is primary, with APIView fallback: `repositoryNotSupported` is not disapproval; honor the final source. Missing `apiHash` leaves the ARH artifact-hash gate unverified, but APIView fallback may still approve. Use only an authoritative artifact hash, never APIView's `activeApiRevisionId`. Package/version approval does not prove exact-revision approval without matching evidence.
+- Report query/access failures (`queryFailed`, `invalidResponse`, authentication/authorization errors), absent meaningful results, or unavailable tools as unknown, not unapproved. If another source succeeds, report its result and limits. A missing review is not explicit rejection.
+- Read-only: do not request reviews or mutate approvals. Use the contacts above for pending approvals; this API gate alone does not establish whole-release readiness.
 
 ### Management-Plane SDK PR Review
 For management-plane SDK PRs, including AutoPRs, apply the shared review workflow with these .NET-specific fixes and skills:

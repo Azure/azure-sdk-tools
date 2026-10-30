@@ -380,14 +380,13 @@ runs each area, publishes result/debug artifacts, and produces separate summarie
 | `Runs`        | Trials per stimulus            |
 
 Both this pipeline and `eng/pipelines/azure-typespec-author-benchmark-no-skill.yml`
-read the persistent pipeline variable `TypeSpecAuthorEvalAzureSubscription` and
-forward it as `azureSubscription` to the common eval templates. For live MCP,
-configure this non-secret variable once in each Azure DevOps pipeline's **Variables**
-settings with the name of an authorized service connection (`azuresdkqabot-dev`
-for the current deployment). It is not a run parameter and need not be entered
-for each run. Other deployments configure their own connection without changing
-YAML. There is no hardcoded connection fallback; a missing or invalid connection
-fails Azure task validation for live runs. Mock runs do not use a service connection.
+define `TypeSpecAuthorEvalAzureSubscription` in their YAML `variables` and forward
+its value at template expansion time as `azureSubscription` to the common eval
+templates. The current deployment uses `azuresdkqabot-dev`; other deployments
+update this caller-owned variable to an authorized service connection. No Azure
+DevOps UI variable or run parameter is required. Common templates retain no
+deployment-specific connection fallback. An invalid connection fails Azure task
+validation for live runs. Mock runs do not use a service connection.
 Authentication and Vally invocation remain in common; the KB backend configuration
 in `.vally.yaml` is unchanged.
 

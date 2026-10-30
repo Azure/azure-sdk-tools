@@ -34,6 +34,8 @@ parameters:
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
+- name: TypeSpecAuthorEvalAzureSubscription
+  value: azuresdkqabot-dev
 - name: SkillBranch
   value: ${{ parameters.SkillBranch }}
 
@@ -91,7 +93,7 @@ extends:
               postEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-posteval.yml
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
-              azureSubscription: $(TypeSpecAuthorEvalAzureSubscription)
+              azureSubscription: ${{ variables.TypeSpecAuthorEvalAzureSubscription }}
               vallyArguments:
                 - --tag
                 - mode=forced
@@ -147,7 +149,7 @@ extends:
               postEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-posteval.yml
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
-              azureSubscription: $(TypeSpecAuthorEvalAzureSubscription)
+              azureSubscription: ${{ variables.TypeSpecAuthorEvalAzureSubscription }}
               vallyArguments:
                 - --tag
                 - mode=trigger

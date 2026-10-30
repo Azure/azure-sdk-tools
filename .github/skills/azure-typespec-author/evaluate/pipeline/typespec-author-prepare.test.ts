@@ -185,23 +185,25 @@ test("the prepare CLI reads the pipeline MCP kind and rejects a missing selectio
   assert.equal(server.args[1], "mcp");
 });
 
-test("benchmark entrypoints use persistent connection configuration without a run parameter", () => {
+test("benchmark entrypoints configure their connection in YAML without a run parameter", () => {
   const requireEval = createRequire(new URL("../../../../../eng/common/scripts/eval/package.json", import.meta.url));
   const { parse } = requireEval("yaml");
   for (const file of ["azure-typespec-author-benchmark.yml", "azure-typespec-author-benchmark-no-skill.yml"]) {
     const pipeline = parse(fs.readFileSync(new URL(`../../../../../eng/pipelines/${file}`, import.meta.url), "utf8"));
     const connection = pipeline.parameters.find((parameter: { name: string }) => parameter.name === "azureSubscription");
     assert.equal(connection, undefined, `${file}: connection must not require a run parameter`);
-    assert.equal(pipeline.variables.find((variable: { name?: string }) =>
-      variable.name === "TypeSpecAuthorEvalAzureSubscription"), undefined,
-      `${file}: connection must come from pipeline settings, not a YAML fallback`);
+    const configuredConnection = pipeline.variables.find((variable: { name?: string }) =>
+      variable.name === "TypeSpecAuthorEvalAzureSubscription");
+    assert.ok(configuredConnection, `${file}: connection must be configured by the caller`);
+    assert.equal(typeof configuredConnection.value, "string");
+    assert.ok(configuredConnection.value.trim(), `${file}: connection must not be empty`);
     const invocations = file.endsWith("-no-skill.yml") ? [pipeline.extends.parameters] :
       pipeline.extends.parameters.stages
         .filter((stage: { stage: string }) => ["EvalForced", "EvalTrigger"].includes(stage.stage))
         .map((stage: { jobs: { parameters: object }[] }) => stage.jobs[0].parameters);
     assert.equal(invocations.length, file.endsWith("-no-skill.yml") ? 1 : 2);
     for (const invocation of invocations) {
-      assert.equal(invocation.azureSubscription, "$(TypeSpecAuthorEvalAzureSubscription)");
+      assert.equal(invocation.azureSubscription, "${{ variables.TypeSpecAuthorEvalAzureSubscription }}");
       assert.equal(invocation.UseAzSdkAuthentication, "${{ eq(parameters.McpKind, 'live') }}");
     }
   }

@@ -28,6 +28,9 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
+    TenantID.API_STEWARDSHIP_BOARD_QA_BOT: (
+        "Data-plane API design and API Stewardship Board review guidance."
+    ),
     TenantID.API_SPEC_REVIEW_BOT: (
         "Azure REST API specification authoring and PR review: requirements, "
         "validation errors, LintDiff, Avocado, breaking changes, review status, "

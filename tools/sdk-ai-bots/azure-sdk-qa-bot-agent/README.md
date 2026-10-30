@@ -226,7 +226,10 @@ az account get-access-token --resource api://azure-sdk-qa-bot
 The answering agent can use inline screenshots, diagrams, and uploaded image files as additional context alongside the user's text and retrieved knowledge.
 The Graph-to-Activity converter preserves both HTML inline images and image-file entries in the message's `attachments` array, including SharePoint `reference` attachments represented by `<attachment id="...">` placeholders.
 For autoreplies, the Logic App downloads Graph-hosted inline images using its existing Teams connector and replaces their attachment URLs with base64 data URIs.
-The `Resolve image bytes` scope contains four guarded parallel download branches and waits for all branches before collecting captured bytes through direct action-output references instead of `result()` loop execution records, which can omit secured payloads.
+The `Resolve image bytes` scope uses one sequential image loop to download images and append their URL and bounded body directly from secured connector outputs into an array.
+The array is initialized once per workflow run and reset before each message; the outer message loop also runs sequentially so batched notifications cannot mix image results.
+An explicitly secured Compose reads the collected array instead of using `result()` loop execution records, which can omit secured payloads.
+Append actions inherit input hiding from the secured download output, but protection does not automatically follow variable reads, so downstream consumers explicitly secure their image-bearing inputs or outputs.
 Image-bearing actions keep their inputs or outputs hidden in run history; "Content not shown due to security configuration" is expected and does not indicate a download failure.
 The TypeScript bot forwards those data URIs through the existing `additional_infos[].link` field, and the backend validates the image bytes before sending `input_image` content to the hosted agent.
 The backend does not need Graph permission when the Teams connector supplies the bytes.
@@ -247,7 +250,7 @@ This patch does not grant permissions or change deployed resources.
 The connector flow requires the updated Logic App template, Teams bot, and backend to be deployed together; updating only the backend does not enable connector-based downloads.
 The connector's `/httprequest` action requires the target `Uri` and `Method` in its headers, not its request body or query parameters.
 Only Graph hosted-content images among the first four image attachments are downloaded by the Logic App, with no automatic download retries.
-Each message uses its own action outputs rather than shared workflow variables, and captured images are collected in attachment order regardless of download completion order.
+Separate workflow runs have independent arrays, and sequential downloads preserve attachment order within each message.
 If a connector request fails or its encoded image exceeds the size limit, its original URL is retained for the existing backend download and failure-notice handling.
 The bot invocation validates the prepared activity's top-level `type` before sending its body, not the JavaScript action's output wrapper.
 It can proceed with a valid activity even when an individual image download caused the preparation scope to fail.

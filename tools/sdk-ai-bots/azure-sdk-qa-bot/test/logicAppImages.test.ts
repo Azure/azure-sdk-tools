@@ -75,7 +75,7 @@ describe('Logic App connector image forwarding', () => {
   it.each([false, true])('serializes a valid Bot Framework activity (with image: %s)', (withImage) => {
     const activity = prepare(
       withImage ? [{ contentType: 'image/*', contentUrl: graphImage }] : [],
-      withImage ? [downloaded()] : [null, null, null, null],
+      withImage ? [downloaded()] : [],
     );
     const payload = serializedBotRequest(activity);
     const validated = validateAndFixActivity(payload);
@@ -94,51 +94,46 @@ describe('Logic App connector image forwarding', () => {
   });
 
   it('uses the verified Teams HTTP action headers and existing connection', () => {
-    for (let slot = 1; slot <= 4; slot++) {
-      const download = actions[`Download_image_${slot}_if_present`].actions[`Download_Graph_image_${slot}`];
-      expect(download.type).toBe('ApiConnection');
-      expect(download.inputs.path).toBe('/httprequest');
-      expect(download.inputs.method).toBe('post');
-      expect(download.inputs.headers.Method).toBe('GET');
-      expect(download.inputs.headers.Uri).toBe(`@body('Filter_graph_hosted_images')[${slot - 1}]['contentUrl']`);
-      expect(download.inputs.host.connection.name).toBe("@parameters('$connections')['teams']['connectionId']");
-      expect(download.inputs.retryPolicy.type).toBe('none');
-      expect(download.runtimeConfiguration.secureData.properties).toEqual(['outputs']);
-    }
+    const download = actions.Download_graph_images.actions.Download_Graph_image;
+    expect(download.type).toBe('ApiConnection');
+    expect(download.inputs.path).toBe('/httprequest');
+    expect(download.inputs.method).toBe('post');
+    expect(download.inputs.headers.Method).toBe('GET');
+    expect(download.inputs.headers.Uri).toBe("@items('Download_graph_images')['contentUrl']");
+    expect(download.inputs.host.connection.name).toBe("@parameters('$connections')['teams']['connectionId']");
+    expect(download.inputs.retryPolicy.type).toBe('none');
+    expect(download.runtimeConfiguration.secureData.properties).toEqual(['outputs']);
     expect(actions.Prepare_activity_images.inputs.code.length).toBeLessThanOrEqual(1024);
   });
 
-  it('limits downloads to the first four image candidates without shared variables', () => {
+  it('collects the first four image candidates in one sequential loop', () => {
     expect(actions.Filter_graph_hosted_images.inputs.from).toBe("@take(body('Filter_image_attachments'), 4)");
     expect(actions.Filter_graph_hosted_images.inputs.where).toContain('https://graph.microsoft.com/');
     expect(actions.Filter_graph_hosted_images.inputs.where).toContain('/hostedContents/');
-    for (let slot = 1; slot <= 4; slot++) {
-      const condition = actions[`Download_image_${slot}_if_present`];
-      expect(condition.type).toBe('If');
-      expect(condition.expression).toBe(`@greater(length(body('Filter_graph_hosted_images')), ${slot - 1})`);
-      expect(condition.runAfter).toEqual({ Filter_graph_hosted_images: ['Succeeded'] });
-      const capture = condition.actions[`Capture_downloaded_image_${slot}`];
-      expect(capture.runAfter).toEqual({ [`Download_Graph_image_${slot}`]: ['Succeeded'] });
-      expect(capture.runtimeConfiguration.secureData.properties).toEqual(['inputs']);
-      expect(capture.inputs.url).toBe(`@body('Filter_graph_hosted_images')[${slot - 1}]['contentUrl']`);
-      expect(capture.inputs.body).toBe(
-        `@if(lessOrEquals(length(coalesce(body('Download_Graph_image_${slot}')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image_${slot}'), null)`,
-      );
-    }
-    expect(actions.Download_image_5_if_present).toBeUndefined();
+    const loop = actions.Download_graph_images;
+    expect(loop.type).toBe('Foreach');
+    expect(loop.foreach).toBe("@body('Filter_graph_hosted_images')");
+    expect(loop.operationOptions).toBe('Sequential');
+    expect(loop.runAfter).toEqual({ Filter_graph_hosted_images: ['Succeeded'] });
+    expect(Object.keys(loop.actions).sort()).toEqual(['Append_downloaded_image', 'Download_Graph_image']);
+    const append = loop.actions.Append_downloaded_image;
+    expect(append.type).toBe('AppendToArrayVariable');
+    expect(append.inputs.name).toBe('downloadedImages');
+    expect(append.inputs.value.url).toBe("@items('Download_graph_images')['contentUrl']");
+    expect(append.inputs.value.body).toBe(
+      "@if(lessOrEquals(length(coalesce(body('Download_Graph_image')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image'), null)",
+    );
+    expect(append.runAfter).toEqual({ Download_Graph_image: ['Succeeded'] });
+    // The append directly references secured output; variable actions cannot set secureData.
+    expect(append.runtimeConfiguration).toBeUndefined();
+    expect(JSON.stringify(actions)).not.toContain('Download_image_1_if_present');
     expect(actions.Image_download_results.type).toBe('Compose');
-    expect(actions.Image_download_results.inputs).toEqual([1, 2, 3, 4].map(
-      (slot) => `@outputs('Capture_downloaded_image_${slot}')`,
-    ));
+    expect(actions.Image_download_results.inputs).toBe("@variables('downloadedImages')");
     expect(actions.Image_download_results.runtimeConfiguration.secureData.properties).toEqual(['inputs']);
     expect(JSON.stringify(actions)).not.toContain("@result('Download_graph_images')");
-    expect(JSON.stringify(actions)).not.toMatch(/"(Foreach|AppendToArrayVariable|SetVariable)"/);
     expect(template.resources[0].properties.definition.parameters.maxImageBytes.defaultValue).toBe(5 * 1024 * 1024);
     expect(actions.Image_download_results.runAfter).toEqual({
-      Download_image_1_if_present: ['Succeeded', 'Failed', 'TimedOut'],
-      Download_image_2_if_present: ['Succeeded', 'Failed', 'TimedOut'],
-      Download_image_3_if_present: ['Succeeded', 'Failed', 'TimedOut'],
-      Download_image_4_if_present: ['Succeeded', 'Failed', 'TimedOut'],
+      Download_graph_images: ['Succeeded', 'Failed', 'TimedOut'],
     });
     expect(replyActions.Invoke_bot.actions.Invoke_QA_Bot.inputs.body).toBe("@body('Validate_prepared_activity')");
     expect(replyActions.Invoke_bot.runAfter).toEqual({
@@ -146,6 +141,26 @@ describe('Logic App connector image forwarding', () => {
     });
     expect(replyActions.Invoke_bot.type).toBe('Scope');
     expect(replyActions.Invoke_bot.actions.Invoke_QA_Bot.runtimeConfiguration.secureData.properties).toContain('inputs');
+  });
+
+  it('initializes per run and resets per message with no concurrent access to the array', () => {
+    const workflowActions = template.resources[0].properties.definition.actions;
+    expect(workflowActions.Initialize_downloaded_images).toEqual({
+      type: 'InitializeVariable',
+      inputs: { variables: [{ name: 'downloadedImages', type: 'array', value: [] }] },
+      runAfter: {},
+    });
+    expect(workflowActions.For_each.operationOptions).toBe('Sequential');
+    expect(workflowActions.For_each.runAfter).toEqual({ Initialize_downloaded_images: ['Succeeded'] });
+    expect(actions.Reset_downloaded_images).toEqual({
+      type: 'SetVariable',
+      inputs: { name: 'downloadedImages', value: [] },
+      runAfter: {},
+    });
+    expect(actions.Filter_image_attachments.runAfter).toEqual({ Reset_downloaded_images: ['Succeeded'] });
+    expect(JSON.stringify(workflowActions).match(/@variables\('downloadedImages'\)/g)).toHaveLength(1);
+    expect(actions.Image_download_results.inputs).toBe("@variables('downloadedImages')");
+    expect(actions.Image_download_results.runtimeConfiguration.secureData.properties).toEqual(['inputs']);
   });
 
   it('validates preparation before invoking the bot and does not mask failures', () => {
@@ -177,11 +192,10 @@ describe('Logic App connector image forwarding', () => {
     expect(invoke.runtimeConfiguration.secureData.properties).toEqual(['inputs']);
   });
 
-  it('groups parallel image preparation between conversion and bot invocation', () => {
+  it('groups sequential image preparation between conversion and bot invocation', () => {
     expect(Object.keys(replyActions).sort()).toEqual(['Invoke_bot', 'Resolve_image_bytes', 'convertActivity']);
     expect(replyActions.Resolve_image_bytes.type).toBe('Scope');
     expect(replyActions.Resolve_image_bytes.runAfter).toEqual({ convertActivity: ['Succeeded'] });
-    expect(actions.Filter_image_attachments.runAfter).toEqual({});
     expect(actions.Prepare_activity_images.runAfter).toEqual({ Image_download_results: ['Succeeded'] });
     expect(actions.Prepare_activity_images.inputs.explicitDependencies.actions).toEqual([
       'convertActivity', 'Image_download_results',
@@ -205,10 +219,9 @@ describe('Logic App connector image forwarding', () => {
     expect(attachments[1].contentUrl).toBe(graphImage);
   });
 
-  it('handles no images, failed requests, and unused slots without stopping the reply', () => {
+  it('handles no images and failed requests without stopping the reply', () => {
     const attachment = { contentType: 'image/*', contentUrl: graphImage };
     expect(prepare([attachment], []).attachments).toEqual([attachment]);
-    expect(prepare([attachment], [null, null, null, null]).attachments).toEqual([attachment]);
     expect(prepare([], []).attachments).toEqual([]);
   });
 
@@ -227,7 +240,7 @@ describe('Logic App connector image forwarding', () => {
         { contentType: 'image/*', contentUrl: graphImage },
         { contentType: 'image/*', contentUrl: second },
       ],
-      [null, downloaded(second), null, null],
+      [downloaded(second)],
     );
     expect(result.attachments[0].contentUrl).toBe(graphImage);
     expect(result.attachments[1].contentUrl).toBe(dataUri);
@@ -259,18 +272,38 @@ describe('Logic App connector image forwarding', () => {
     );
   });
 
-  it('keeps downloads from different messages separate', () => {
+  it('resets the shared array between batched image, failed-download, and text-only messages', () => {
+    const initialize = template.resources[0].properties.definition.actions.Initialize_downloaded_images.inputs.variables[0];
+    const reset = actions.Reset_downloaded_images.inputs;
+    const append = actions.Download_graph_images.actions.Append_downloaded_image.inputs;
+    const variables: Record<string, DownloadResult[]> = { [initialize.name]: structuredClone(initialize.value) };
     const second = graphImage.replace('/messages/m/', '/messages/other/');
-    const firstActivity = prepare(
-      [{ contentType: 'image/*', contentUrl: graphImage }],
-      [downloaded(graphImage)],
-    );
-    const secondActivity = prepare(
-      [{ contentType: 'image/*', contentUrl: second }],
-      [downloaded(second, { '$content-type': 'image/jpeg', '$content': '/9j/' })],
-    );
-    expect(firstActivity.attachments[0].contentUrl).toBe(dataUri);
-    expect(secondActivity.attachments[0].contentUrl).toBe('data:image/jpeg;base64,/9j/');
+    const batch: { attachments: Attachment[]; downloads: DownloadResult[]; expected: Attachment[] }[] = [
+      {
+        attachments: [{ contentType: 'image/*', contentUrl: graphImage }],
+        downloads: [downloaded()],
+        expected: [{ contentType: 'image/*', contentUrl: dataUri }],
+      },
+      {
+        attachments: [{ contentType: 'image/*', contentUrl: graphImage }],
+        downloads: [],
+        expected: [{ contentType: 'image/*', contentUrl: graphImage }],
+      },
+      { attachments: [], downloads: [], expected: [] },
+      {
+        attachments: [{ contentType: 'image/*', contentUrl: second }],
+        downloads: [downloaded(second, { '$content-type': 'image/jpeg', '$content': '/9j/' })],
+        expected: [{ contentType: 'image/*', contentUrl: 'data:image/jpeg;base64,/9j/' }],
+      },
+    ];
+    for (const message of batch) {
+      variables[reset.name] = structuredClone(reset.value);
+      for (const result of message.downloads) {
+        variables[append.name].push(result);
+      }
+      expect(prepare(message.attachments, variables[initialize.name]).attachments).toEqual(message.expected);
+      expect(variables[initialize.name]).toEqual(message.downloads);
+    }
   });
 
   it('forwards the maximum-size capture and preserves the URL for an oversized capture', () => {

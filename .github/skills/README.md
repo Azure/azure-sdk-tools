@@ -15,7 +15,7 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 ### Workflow & Utility Skills
 
-`azsdk-common-typespec-naming` owns the shared naming rules for TypeSpec authoring
+`azure-typespec-sdk-naming` owns the shared naming rules for TypeSpec authoring
 and standalone naming review. Install it alongside authoring; it is distributed
 by the existing shared-skill sync. Guidance/review are read-only; authorized
 name-only customizations directly edit language-scoped overrides in `client.tsp`,
@@ -31,7 +31,7 @@ customization remains owned by `azsdk-common-generate-sdk-locally` and its
 | [azsdk-common-pipeline-analysis](azsdk-common-pipeline-analysis/SKILL.md)                     | "pipeline failed", "build failure", "CI check failing"                        | Analyze SDK CI failures and prescribe fixes without editing   |
 | [azsdk-common-pipeline-fixer](azsdk-common-pipeline-fixer/SKILL.md)                           | "fix pipeline", "fix CI", "fix failing tests"                                 | Apply and verify fixes from pipeline analysis                 |
 | [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md)                                 | "release SDK", "trigger release pipeline"                                     | Check release readiness and trigger SDK releases              |
-| [azsdk-common-typespec-naming](azsdk-common-typespec-naming/SKILL.md)                         | "plan SDK names", "review SDK naming conventions", "fix naming in client.tsp" | Shared naming guidance and scoped TypeSpec customizations     |
+| [azure-typespec-sdk-naming](azure-typespec-sdk-naming/SKILL.md)                         | "plan SDK names", "review SDK naming conventions", "fix naming in client.tsp" | Shared naming guidance and scoped TypeSpec customizations     |
 | [azsdk-common-sdk-breaking-change](azsdk-common-sdk-breaking-change/SKILL.md)                 | "detect and mitigate SDK breaking changes"                                    | Detect SDK breaking changes and mitigate the breaking changes |
 
 ### Development & Meta Skills

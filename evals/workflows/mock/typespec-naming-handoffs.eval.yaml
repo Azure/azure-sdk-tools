@@ -5,9 +5,9 @@ environment:
   skills:
     - ../../../.github/skills/azure-typespec-author
     - ../../../.github/skills/azure-typespec-assessment
-    - ../../../.github/skills/azsdk-common-typespec-naming
+    - ../../../.github/skills/azure-typespec-sdk-naming
   files:
-    - src: ../../../.github/skills/azsdk-common-typespec-naming/evals/fixtures/customization-mcp.mjs
+    - src: ../../../.github/skills/azure-typespec-sdk-naming/evals/fixtures/customization-mcp.mjs
       dest: customization-mcp.mjs
   mcpServers:
     azure-sdk-mcp:
@@ -43,7 +43,7 @@ stimuli:
     graders:
       - type: skill-invocation
         config:
-          required: [azure-typespec-author, azsdk-common-typespec-naming]
+          required: [azure-typespec-author, azure-typespec-sdk-naming]
           disallowed: [azure-typespec-assessment]
       - &readOnly
         type: tool-calls
@@ -76,7 +76,7 @@ stimuli:
       - type: skill-invocation
         config:
           required: [azure-typespec-author]
-          disallowed: [azsdk-common-typespec-naming, azure-typespec-assessment]
+          disallowed: [azure-typespec-sdk-naming, azure-typespec-assessment]
       - *readOnly
       - type: output-matches
         config:
@@ -102,7 +102,7 @@ stimuli:
       - type: skill-invocation
         config:
           required: [azure-typespec-author]
-          disallowed: [azsdk-common-typespec-naming, azure-typespec-assessment]
+          disallowed: [azure-typespec-sdk-naming, azure-typespec-assessment]
       - type: tool-calls
         config:
           disallowed:

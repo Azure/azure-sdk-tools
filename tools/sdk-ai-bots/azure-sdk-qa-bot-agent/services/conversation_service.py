@@ -879,7 +879,9 @@ class TeamsCollectionService:
             if _stored_message_fields(existing) == fields:
                 summary["messagesUnchanged"] += 1
                 continue
-            updated = await self._store.update_message(message["id"], partition, fields)
+            updated = await self._store.update_message(
+                message["id"], partition, fields, existing["_etag"]
+            )
             summary["messagesUpdated" if updated else "messagesSkipped"] += 1
 
     async def backfill(self, channels: list[dict]) -> dict:
@@ -999,7 +1001,7 @@ class CosmosMessageStore:
 
     async def read_thread(self, partition):
         items = self._container.query_items(
-            query="SELECT c.id, c.content, c.extra_info FROM c WHERE c.document_type = @dtype",
+            query="SELECT c.id, c.content, c.extra_info, c._etag FROM c WHERE c.document_type = @dtype",
             parameters=[
                 {"name": "@dtype", "value": ConversationDocumentType.message.value},
             ],
@@ -1014,11 +1016,13 @@ class CosmosMessageStore:
             return False
         return True
 
-    async def update_message(self, document_id, partition, fields):
+    async def update_message(self, document_id, partition, fields, expected_etag):
         """Refresh content, attachments and images; leave every other field alone."""
         try:
             existing = await self._container.read_item(item=document_id, partition_key=partition)
         except exceptions.CosmosResourceNotFoundError:
+            return False
+        if existing["_etag"] != expected_etag:
             return False
         if _stored_message_fields(existing) == fields:
             return False
@@ -1030,7 +1034,7 @@ class CosmosMessageStore:
         existing["extra_info"] = extra_info
         try:
             await self._container.replace_item(
-                item=document_id, body=existing, etag=existing["_etag"],
+                item=document_id, body=existing, etag=expected_etag,
                 match_condition=MatchConditions.IfNotModified,
             )
         except exceptions.CosmosAccessConditionFailedError:

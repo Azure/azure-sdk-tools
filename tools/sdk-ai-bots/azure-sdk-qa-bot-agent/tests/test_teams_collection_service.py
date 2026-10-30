@@ -63,6 +63,7 @@ class MemoryStore:
 
     async def read_thread(self, partition):
         return {document_id: {"id": document_id, "content": document["content"],
+                              "_etag": document.get("_etag", "version1"),
                               "extra_info": copy.deepcopy(document.get("extra_info"))}
                 for (stored, document_id), document in self.items.items() if stored == partition}
 
@@ -74,11 +75,13 @@ class MemoryStore:
         self.creates += 1
         return True
 
-    async def update_message(self, document_id, partition, fields):
+    async def update_message(self, document_id, partition, fields, expected_etag):
         key = (partition, document_id)
         if document_id in self.races or key not in self.items:
             return False
         document = self.items[key]
+        if document.get("_etag", "version1") != expected_etag:
+            return False
         document["content"] = fields["content"]
         document["extra_info"] = {**(document.get("extra_info") or {}),
                                    "attachments": copy.deepcopy(fields["attachments"]),
@@ -511,7 +514,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                       "content": None, "name": "file.docx", "thumbnailUrl": None,
                       "teamsAppId": None}
         fields = {"content": "new", "attachments": [attachment], "images": []}
-        self.assertTrue(await store.update_message("message", "partition", fields))
+        self.assertTrue(await store.update_message("message", "partition", fields, "version1"))
         replaced = container.replace_item.call_args.kwargs
         self.assertEqual(replaced["body"]["content"], "new")
         self.assertEqual(replaced["body"]["extra_info"], {
@@ -523,25 +526,57 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         container.replace_item.reset_mock()
         container.read_item.return_value = {**container.read_item.return_value, "content": "new",
                                             "extra_info": {"attachments": [attachment]}}
-        self.assertFalse(await store.update_message("message", "partition", fields))
+        self.assertFalse(await store.update_message("message", "partition", fields, "version1"))
         container.replace_item.assert_not_awaited()
         container.replace_item.side_effect = CosmosAccessConditionFailedError(
             status_code=412, message="conflict")
         self.assertFalse(await store.update_message(
-            "message", "partition", {**fields, "content": "newer"}))
+            "message", "partition", {**fields, "content": "newer"}, "version1"))
         container.read_item.side_effect = CosmosResourceNotFoundError(status_code=404, message="gone")
         self.assertFalse(await store.update_message(
-            "message", "partition", {**fields, "content": "newer"}))
+            "message", "partition", {**fields, "content": "newer"}, "version1"))
 
         async def items():
-            yield {"id": "message", "content": "stored"}
+            yield {"id": "message", "content": "stored", "_etag": "version1"}
 
         container.query_items = Mock(return_value=items())
         self.assertEqual(await store.read_thread("partition"),
-                         {"message": {"id": "message", "content": "stored"}})
+                         {"message": {"id": "message", "content": "stored", "_etag": "version1"}})
         self.assertEqual(container.query_items.call_args.kwargs["partition_key"], "partition")
         self.assertIn("c.content", container.query_items.call_args.kwargs["query"])
         self.assertIn("c.extra_info", container.query_items.call_args.kwargs["query"])
+        self.assertIn("c._etag", container.query_items.call_args.kwargs["query"])
+
+    async def test_backfill_skips_live_edit_after_thread_snapshot(self):
+        from services.conversation_service import CosmosMessageStore
+
+        partition = thread_partition(CHANNEL["channelId"], "root")
+        snapshot = {"id": "root", "content": "original", "_etag": "version1"}
+        current = {
+            **snapshot, "content": "newer live edit", "_etag": "version2",
+            "conversation_partition": partition, "should_reply": True,
+            "trace_id": "live-trace",
+            "extra_info": {"channel_id": CHANNEL["channelId"], "message_link": "live-link"},
+        }
+        container = AsyncMock()
+
+        async def items():
+            yield copy.deepcopy(snapshot)
+
+        container.query_items = Mock(return_value=items())
+        container.read_item.return_value = current
+        fetch = AsyncMock(return_value={"value": [graph_message({
+            "id": "root", "body": {"content": "stale Teams payload"}, "replies": [],
+        })]})
+        before = copy.deepcopy(current)
+
+        result = await TeamsCollectionService(fetch, CosmosMessageStore(container)).backfill([CHANNEL])
+
+        self.assertEqual(result["messagesSkipped"], 1)
+        self.assertEqual(result["messagesUpdated"], 0)
+        container.read_item.assert_awaited_once_with(item="root", partition_key=partition)
+        container.replace_item.assert_not_awaited()
+        self.assertEqual(current, before)
 
     def test_images_are_lifted_from_the_body_and_emoji_are_skipped(self):
         from services.conversation_service import message_images

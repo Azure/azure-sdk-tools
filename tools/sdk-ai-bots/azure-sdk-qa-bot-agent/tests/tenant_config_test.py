@@ -390,7 +390,9 @@ def test_tenant_skills_are_partitioned_by_agent() -> None:
     assert mcp_skills[0].frontmatter.name == "azure-mcp-server"
 
 
-def test_chat_agent_pr_review_skill_is_discoverable_and_registered() -> None:
+def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     skills = asyncio.run(
         FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
     )
@@ -402,7 +404,16 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered() -> None:
         _AGENT_ROOT / "agents" / "chat_agent" / "init.py"
     ).read_text(encoding="utf-8")
     assert "FileSkillsSource(skills_dir).get_skills()" in init
-    assert 'Path(__file__).parents[2] / "skills" / "chat_agent"' in init
+    assert "skills_dir = _get_chat_skill_dir()" in init
+
+    from agents.chat_agent import init as chat_agent_init
+
+    monkeypatch.setattr(
+        chat_agent_init.tenant_skills,
+        "__file__",
+        str(Path("/app/skills/tenant_skills.py")),
+    )
+    assert chat_agent_init._get_chat_skill_dir() == Path("/app/skills/chat_agent")
 
 
 def test_pr_review_skill_does_not_change_tenant_routing() -> None:

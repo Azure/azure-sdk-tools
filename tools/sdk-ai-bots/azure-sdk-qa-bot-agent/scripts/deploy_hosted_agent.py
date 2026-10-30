@@ -1,4 +1,4 @@
-"""Deploy a hosted agent version to Azure AI Foundry.
+"""Deploy hosted agents and the Teams backfill workflow.
 
 Builds the container image, pushes to ACR, and deploys as a hosted agent.
 All config (project endpoint, ACR login server, etc.) is loaded from
@@ -9,16 +9,21 @@ Usage:
     python scripts/deploy_hosted_agent.py chat_agent
     python scripts/deploy_hosted_agent.py chat_agent --tag v1.2.3
     python scripts/deploy_hosted_agent.py chat_agent --appconfig-endpoint https://...
+    python scripts/deploy_hosted_agent.py teams-collection deploy --environment dev ...
 """
 
 import argparse
 import asyncio
+import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+from uuid import UUID
 
 os.environ.setdefault("AZURE_CORE_WELCOME_MESSAGE", "false")
 
@@ -44,17 +49,46 @@ from azure.core.exceptions import ResourceNotFoundError
 
 import config.app_config as app_config
 from config.app_config import get as cfg
+from services.conversation_service import validate_channels
 from utils.azure_credential import close_credential
+
+LOGIC_APP_URL_KEY = "TEAMS_COLLECTION_LOGIC_APP_URL"
+
+
+def _resolve_command(cmd: list[str]) -> list[str]:
+    if cmd and cmd[0] == "az":
+        executable = shutil.which("az") or shutil.which("az.cmd")
+        if executable is None:
+            raise RuntimeError("Azure CLI was not found on PATH.")
+        return [executable, *cmd[1:]]
+    return cmd
+
+
+def _utf8_environment(overrides: dict[str, str] | None = None) -> dict[str, str]:
+    environment = {**os.environ, **(overrides or {})}
+    environment.setdefault("PYTHONIOENCODING", "utf-8")
+    environment.setdefault("PYTHONUTF8", "1")
+    return environment
 
 
 def _run(cmd: list[str], **kwargs) -> None:
+    resolved = _resolve_command(cmd)
+    environment = _utf8_environment(kwargs.pop("env", None))
     print(f"  $ {' '.join(cmd)}")
-    subprocess.run(cmd, check=True, **kwargs)
+    subprocess.run(resolved, check=True, env=environment, **kwargs)
 
 
 def _run_quiet(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Run a command and return the result without raising on failure."""
-    return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+    environment = _utf8_environment(kwargs.pop("env", None))
+    return subprocess.run(
+        _resolve_command(cmd),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=environment,
+        **kwargs,
+    )
 
 
 def _git_short_sha() -> str:
@@ -114,6 +148,9 @@ def _wait_for_version_active(
 
 
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] == "teams-collection":
+        sys.exit(collection_main(sys.argv[2:]))
+
     parser = argparse.ArgumentParser(
         description="Build, push, and deploy a hosted agent."
     )
@@ -315,6 +352,115 @@ def main() -> None:
     finally:
         project.close()
         credential.close()
+
+
+def _run_az(arguments: list[str]) -> str:
+    result = _run_quiet(["az", *arguments])
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(
+            f"Azure CLI operation failed: az {' '.join(arguments[:3])}. "
+            f"{detail[-2000:] or 'No diagnostic output was returned.'}"
+        )
+    return result.stdout.strip()
+
+
+def _principal_id(value: str, option: str) -> str:
+    try:
+        return str(UUID(value))
+    except (AttributeError, TypeError, ValueError):
+        raise ValueError(f"{option} must be a managed identity object ID.") from None
+
+
+def _sas_free_callback_url(callback_url: str) -> str:
+    address = urlsplit(callback_url)
+    versions = parse_qs(address.query).get("api-version", [])
+    if (address.scheme != "https" or not address.hostname
+            or not address.hostname.endswith(".logic.azure.com")
+            or address.username or address.password or address.port not in (None, 443)
+            or address.fragment or not address.path.endswith("/triggers/manual/paths/invoke")
+            or len(versions) != 1 or not versions[0]):
+        raise ValueError("Logic App returned an unexpected manual trigger callback URL.")
+    return urlunsplit(("https", address.hostname, address.path,
+                       urlencode({"api-version": versions[0]}), ""))
+
+
+def _deploy_infrastructure(
+    environment: str,
+    resource_group: str,
+    appconfig_endpoint: str,
+    backfill_principal_id: str,
+) -> str:
+    parameters_file = (_PROJECT_DIR / "pipelines" / "teams-collection"
+                       / f"parameters.azure_sdk.{environment}.json")
+    if not parameters_file.is_file():
+        raise ValueError(f"No Teams collection parameters exist for {environment!r}.")
+    workflow_resource_id = _run_az([
+        "deployment", "group", "create", "--resource-group", resource_group,
+        "--name", f"teams-collection-{environment}", "--mode", "Incremental",
+        "--template-file", str(_PROJECT_DIR / "pipelines" / "teams-collection" / "template.json"),
+        "--parameters", f"@{parameters_file}",
+        f"backfillPrincipalId={backfill_principal_id}",
+        "--query", "properties.outputs.workflowResourceId.value", "--output", "tsv",
+    ])
+    if not workflow_resource_id.startswith("/subscriptions/"):
+        raise RuntimeError("Teams collection deployment returned no workflow resource ID.")
+
+    callback_url = _run_az([
+        "rest", "--method", "post", "--url",
+        f"https://management.azure.com{workflow_resource_id}"
+        "/triggers/manual/listCallbackUrl?api-version=2019-05-01",
+        "--query", "value", "--output", "tsv",
+    ])
+    logic_app_url = _sas_free_callback_url(callback_url)
+    _run_az([
+        "appconfig", "kv", "set", "--endpoint", appconfig_endpoint,
+        "--auth-mode", "login", "--key", LOGIC_APP_URL_KEY,
+        "--value", logic_app_url, "--yes", "--output", "none",
+    ])
+    return workflow_resource_id
+
+
+def deploy_collection(arguments) -> dict:
+    config = json.loads(arguments.config.read_text(encoding="utf-8"))
+    validate_channels(config["channels"])
+    backfill_principal_id = _principal_id(arguments.backfill_principal_id, "--backfill-principal-id")
+    workflow_resource_id = _deploy_infrastructure(
+        arguments.environment, arguments.resource_group, arguments.appconfig_endpoint,
+        backfill_principal_id,
+    )
+    return {
+        "backfillPrincipalId": backfill_principal_id,
+        "workflowResourceId": workflow_resource_id,
+        "appConfigurationEndpoint": arguments.appconfig_endpoint,
+        "appConfigurationKey": LOGIC_APP_URL_KEY,
+    }
+
+
+def collection_main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Deploy the Teams backfill workflow.")
+    parser.add_argument("command", choices=("deploy",))
+    parser.add_argument("--environment", choices=("dev", "test", "prod"))
+    parser.add_argument("--resource-group")
+    parser.add_argument("--appconfig-endpoint")
+    parser.add_argument("--backfill-principal-id")
+    parser.add_argument("--config", type=Path,
+                        default=_PROJECT_DIR / "config" / "teams_collection_config.json")
+    arguments = parser.parse_args(argv)
+    try:
+        config = json.loads(arguments.config.read_text(encoding="utf-8"))
+        validate_channels(config["channels"])
+        for name in ("environment", "resource_group", "appconfig_endpoint",
+                     "backfill_principal_id"):
+            if not getattr(arguments, name):
+                parser.error("--" + name.replace("_", "-") + " is required for deploy.")
+        result = deploy_collection(arguments)
+        print(json.dumps(result, indent=2))
+        return 0
+    except Exception as error:
+        print(f"Teams collection deployment failed ({type(error).__name__}); {error}",
+              file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

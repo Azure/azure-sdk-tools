@@ -8,7 +8,8 @@ const template = JSON.parse(readFileSync(
 ));
 const replyActions = template.resources[0].properties.definition.actions.For_each.actions
   .Thread_Message_From_User.actions.Need_Reply.actions.Should_Reply.actions;
-const actions = replyActions.Resolve_image_bytes.actions;
+const imageCondition = replyActions.Has_image_attachments;
+const actions = imageCondition.actions.Resolve_image_bytes.actions;
 
 const graphImage = 'https://graph.microsoft.com/v1.0/teams/t/channels/c/messages/m/hostedContents/i/$value';
 const png = 'iVBORw0KGgo=';
@@ -25,21 +26,25 @@ interface DownloadResult {
   body: Record<string, string> | null;
 }
 
+function convertedActivity(attachments: Attachment[] | null | undefined) {
+  return {
+    type: 'message',
+    id: 'test-message',
+    channelId: 'msteams',
+    serviceUrl: 'https://smba.trafficmanager.net/apac/test-tenant',
+    from: { id: 'test-user', name: 'Test User' },
+    recipient: { id: 'test-bot', name: 'Test Bot' },
+    conversation: { id: 'test-channel;messageid=test-message', conversationType: 'channel' },
+    text: 'Why did CI fail?',
+    attachments,
+  };
+}
+
 function prepare(attachments: Attachment[], results: (DownloadResult | null)[]) {
   const run = new Function('workflowContext', actions.Prepare_activity_images.inputs.code);
   return run({
     actions: {
-      convertActivity: { outputs: { body: {
-        type: 'message',
-        id: 'test-message',
-        channelId: 'msteams',
-        serviceUrl: 'https://smba.trafficmanager.net/apac/test-tenant',
-        from: { id: 'test-user', name: 'Test User' },
-        recipient: { id: 'test-bot', name: 'Test Bot' },
-        conversation: { id: 'test-channel;messageid=test-message', conversationType: 'channel' },
-        text: 'Why did CI fail?',
-        attachments,
-      } } },
+      convertActivity: { outputs: { body: convertedActivity(attachments) } },
       Image_download_results: { outputs: results },
     },
   });
@@ -52,9 +57,9 @@ function downloaded(
   return { url, body };
 }
 
-function serializedBotRequest(activity: unknown) {
+function serializedBotRequest(activity: unknown, withImages: boolean) {
   const actionOutputs: Record<string, { body: unknown }> = {
-    Prepare_activity_images: { body: activity },
+    [withImages ? 'Prepare_activity_images' : 'convertActivity']: { body: activity },
   };
   const resolve = (expression: string): unknown => {
     const match = /^@(body|outputs)\('([^']+)'\)$/.exec(expression);
@@ -64,16 +69,16 @@ function serializedBotRequest(activity: unknown) {
     const output = actionOutputs[match[2]];
     return match[1] === 'body' ? output.body : output;
   };
-  return JSON.parse(JSON.stringify(resolve(actions.Invoke_QA_Bot.inputs.body)));
+  const invoke = withImages ? actions.Invoke_QA_Bot : imageCondition.else.actions.Invoke_QA_Bot_without_images;
+  return JSON.parse(JSON.stringify(resolve(invoke.inputs.body)));
 }
 
 describe('Logic App connector image forwarding', () => {
   it.each([false, true])('serializes a valid Bot Framework activity (with image: %s)', (withImage) => {
-    const activity = prepare(
-      withImage ? [{ contentType: 'image/*', contentUrl: graphImage }] : [],
-      withImage ? [downloaded()] : [],
-    );
-    const payload = serializedBotRequest(activity);
+    const activity = withImage
+      ? prepare([{ contentType: 'image/*', contentUrl: graphImage }], [downloaded()])
+      : convertedActivity([]);
+    const payload = serializedBotRequest(activity, withImage);
     const validated = validateAndFixActivity(payload);
     expect(validated.type).toBe('message');
     expect(payload).not.toHaveProperty('body');
@@ -87,6 +92,40 @@ describe('Logic App connector image forwarding', () => {
     if (withImage) {
       expect(validated.attachments?.[0].contentUrl).toBe(dataUri);
     }
+  });
+
+  it('checks for images before entering the image scope and directly invokes the bot otherwise', () => {
+    expect(replyActions.Filter_image_attachments).toEqual({
+      type: 'Query',
+      inputs: {
+        from: "@coalesce(body('convertActivity')?['attachments'], json('[]'))",
+        where: "@startsWith(coalesce(item()?['contentType'], ''), 'image/')",
+      },
+      runAfter: { convertActivity: ['Succeeded'] },
+    });
+    expect(imageCondition.type).toBe('If');
+    expect(imageCondition.expression).toBe("@greater(length(body('Filter_image_attachments')), 0)");
+    expect(imageCondition.runAfter).toEqual({ Filter_image_attachments: ['Succeeded'] });
+    expect(Object.keys(imageCondition.actions)).toEqual(['Resolve_image_bytes']);
+    expect(Object.keys(imageCondition.else.actions)).toEqual(['Invoke_QA_Bot_without_images']);
+    expect(imageCondition.else.actions.Invoke_QA_Bot_without_images).toEqual({
+      ...actions.Invoke_QA_Bot,
+      inputs: { ...actions.Invoke_QA_Bot.inputs, body: "@body('convertActivity')" },
+      runAfter: {},
+    });
+  });
+
+  it.each([
+    { attachments: undefined },
+    { attachments: null },
+    { attachments: [] },
+    { attachments: [{ contentType: 'text/html', content: '<p>Why did CI fail?</p>' }] },
+    { attachments: [{ contentType: 'application/pdf', contentUrl: 'https://contoso.example/report.pdf' }] },
+  ])('forwards a non-image activity without image-preparation output (attachments: $attachments)', ({ attachments }) => {
+    const activity = convertedActivity(attachments);
+    const payload = serializedBotRequest(activity, false);
+    expect(payload).toEqual(JSON.parse(JSON.stringify(activity)));
+    expect(validateAndFixActivity(payload).type).toBe('message');
   });
 
   it('uses the verified Teams HTTP action headers and existing connection', () => {
@@ -149,7 +188,7 @@ describe('Logic App connector image forwarding', () => {
       inputs: { name: 'downloadedImages', value: [] },
       runAfter: {},
     });
-    expect(actions.Filter_image_attachments.runAfter).toEqual({ Reset_downloaded_images: ['Succeeded'] });
+    expect(actions.Filter_graph_hosted_images.runAfter).toEqual({ Reset_downloaded_images: ['Succeeded'] });
     expect(JSON.stringify(workflowActions).match(/@variables\('downloadedImages'\)/g)).toHaveLength(1);
     expect(actions.Image_download_results.inputs).toBe("@variables('downloadedImages')");
     expect(actions.Image_download_results.runtimeConfiguration.secureData.properties).toEqual(['inputs']);
@@ -165,7 +204,6 @@ describe('Logic App connector image forwarding', () => {
     expect(actions.Invoke_QA_Bot.inputs.retryPolicy.type).toBe('none');
     expect(Object.keys(actions)).toEqual([
       'Reset_downloaded_images',
-      'Filter_image_attachments',
       'Filter_graph_hosted_images',
       'Download_graph_images',
       'Image_download_results',
@@ -183,9 +221,11 @@ describe('Logic App connector image forwarding', () => {
   });
 
   it('groups sequential image preparation between conversion and bot invocation', () => {
-    expect(Object.keys(replyActions).sort()).toEqual(['Resolve_image_bytes', 'convertActivity']);
-    expect(replyActions.Resolve_image_bytes.type).toBe('Scope');
-    expect(replyActions.Resolve_image_bytes.runAfter).toEqual({ convertActivity: ['Succeeded'] });
+    expect(Object.keys(replyActions).sort()).toEqual([
+      'Filter_image_attachments', 'Has_image_attachments', 'convertActivity',
+    ]);
+    expect(imageCondition.actions.Resolve_image_bytes.type).toBe('Scope');
+    expect(imageCondition.actions.Resolve_image_bytes.runAfter).toEqual({});
     expect(actions.Prepare_activity_images.runAfter).toEqual({ Image_download_results: ['Succeeded'] });
     expect(actions.Prepare_activity_images.inputs.explicitDependencies.actions).toEqual([
       'convertActivity', 'Image_download_results',
@@ -274,12 +314,12 @@ describe('Logic App connector image forwarding', () => {
         downloads: [downloaded()],
         expected: [{ contentType: 'image/*', contentUrl: dataUri }],
       },
+      { attachments: [], downloads: [], expected: [] },
       {
         attachments: [{ contentType: 'image/*', contentUrl: graphImage }],
         downloads: [],
         expected: [{ contentType: 'image/*', contentUrl: graphImage }],
       },
-      { attachments: [], downloads: [], expected: [] },
       {
         attachments: [{ contentType: 'image/*', contentUrl: second }],
         downloads: [downloaded(second, { '$content-type': 'image/jpeg', '$content': '/9j/' })],
@@ -287,6 +327,12 @@ describe('Logic App connector image forwarding', () => {
       },
     ];
     for (const message of batch) {
+      if (message.attachments.length === 0) {
+        const previousImages = structuredClone(variables[initialize.name]);
+        expect(serializedBotRequest(convertedActivity(message.attachments), false).attachments).toEqual([]);
+        expect(variables[initialize.name]).toEqual(previousImages);
+        continue;
+      }
       variables[reset.name] = structuredClone(reset.value);
       for (const result of message.downloads) {
         variables[append.name].push(result);

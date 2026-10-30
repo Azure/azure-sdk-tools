@@ -226,8 +226,9 @@ az account get-access-token --resource api://azure-sdk-qa-bot
 The answering agent can use inline screenshots, diagrams, and uploaded image files as additional context alongside the user's text and retrieved knowledge.
 The Graph-to-Activity converter preserves both HTML inline images and image-file entries in the message's `attachments` array, including SharePoint `reference` attachments represented by `<attachment id="...">` placeholders.
 For autoreplies, the Logic App downloads Graph-hosted inline images using its existing Teams connector and replaces their attachment URLs with base64 data URIs.
+After conversion, the workflow checks for image attachments; messages without images go directly to the bot with the converted activity, skipping the entire image-resolution scope.
 The `Resolve image bytes` scope uses one sequential image loop to download images and append their URL and bounded body directly from secured connector outputs into an array.
-The array is initialized once per workflow run and reset before each message; the outer message loop also runs sequentially so batched notifications cannot mix image results.
+The array is initialized once per workflow run and reset before each image-bearing message; the outer message loop also runs sequentially so batched notifications cannot mix image results.
 An explicitly secured Compose reads the collected array instead of using `result()` loop execution records, which can omit secured payloads.
 Append actions inherit input hiding from the secured download output, but protection does not automatically follow variable reads, so downstream consumers explicitly secure their image-bearing inputs or outputs.
 Image-bearing actions keep their inputs or outputs hidden in run history; "Content not shown due to security configuration" is expected and does not indicate a download failure.
@@ -254,7 +255,7 @@ Separate workflow runs have independent arrays, and sequential downloads preserv
 If a connector request fails or its encoded image exceeds the size limit, its original URL is retained for the existing backend download and failure-notice handling.
 The bot HTTP action runs inside the same scope only after successful image preparation and sends the JavaScript action's body, not its output wrapper.
 Individual image download failures still allow preparation and bot invocation to proceed, but a preparation failure skips the HTTP action and remains visible as a workflow failure.
-Missing or malformed prepared activities fail validation without calling the bot, and bot HTTP failures remain failed workflow runs rather than being swallowed by a successful status-code capture.
+Bot HTTP failures in either branch remain failed workflow runs rather than being swallowed by a successful status-code capture.
 Successful image payloads are hidden from workflow action history using secure inputs/outputs and omitted from Teams bot application logs.
 
 For a local trial of the payload handling without Graph permissions, run the backend using the setup above and send a base64 data URI through `/agent/chat`.

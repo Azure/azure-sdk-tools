@@ -25,6 +25,7 @@ os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
 from agent_framework import Agent
 from agent_framework import CompactionProvider
+from agent_framework import FileSkillsSource
 from agent_framework import SkillsProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
@@ -149,6 +150,8 @@ async def main() -> None:
 
     # Init Skills
     skills = create_tenant_skills(agent_name)
+    skills_dir = Path(__file__).parents[2] / "skills" / "chat_agent"
+    skills.extend(await FileSkillsSource(skills_dir).get_skills())
     skills_provider = SkillsProvider(skills)
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")

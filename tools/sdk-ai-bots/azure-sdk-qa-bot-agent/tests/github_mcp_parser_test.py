@@ -218,6 +218,102 @@ def test_failed_run_logs_and_multiple_content_items_are_supported() -> None:
     assert {item["job_id"] for item in parsed["log_excerpts"]} == {41, 42, 43}
 
 
+def test_oversized_job_log_extracts_generic_structured_diagnostics() -> None:
+    diagnostics = [
+        {
+            "code": "RULE001",
+            "message": "A member present in the baseline is missing.",
+            "type": "Warning",
+            "old": {"path": "models.old.properties"},
+            "new": {"path": "models.new.properties"},
+        },
+        {
+            "code": "RULE002",
+            "message": "A response shape changed.",
+            "type": "Warning",
+            "location": "service.json:42:7",
+        },
+    ]
+    logs = "\n".join([
+        "setup " + "x" * _MCP_MAX_OUTPUT_CHARS,
+        "validator output: " + json.dumps(diagnostics),
+        "##[error]Process completed with exit code 1.",
+    ])
+
+    _, parsed = _parse({"job_id": 42, "logs_content": logs})
+
+    assert parsed["diagnostic_selection"] == {
+        "total": 2,
+        "returned": 2,
+        "truncated": False,
+        "counts_by_classifier": {
+            "code:RULE001": 1,
+            "code:RULE002": 1,
+        },
+    }
+    assert parsed["structured_diagnostics"] == [
+        {
+            "job_id": 42,
+            "source_line": 2,
+            "code": "RULE001",
+            "type": "Warning",
+            "message": "A member present in the baseline is missing.",
+            "old": {"path": "models.old.properties"},
+            "new": {"path": "models.new.properties"},
+        },
+        {
+            "job_id": 42,
+            "source_line": 2,
+            "code": "RULE002",
+            "type": "Warning",
+            "message": "A response shape changed.",
+            "location": "service.json:42:7",
+        },
+    ]
+    assert any(
+        "Process completed with exit code 1" in excerpt["content"]
+        for excerpt in parsed["log_excerpts"]
+    )
+
+
+def test_structured_diagnostics_are_selected_across_classifiers() -> None:
+    diagnostics = [
+        {
+            "code": "REPEATED",
+            "message": f"Repeated diagnostic {index}",
+            "path": f"model.{index}",
+        }
+        for index in range(100)
+    ]
+    diagnostics.append({
+        "code": "DISTINCT",
+        "message": "Distinct diagnostic remains visible.",
+        "path": "model.distinct",
+    })
+    logs = "validator output: " + json.dumps(diagnostics)
+
+    _, parsed = _parse({"job_id": 42, "logs_content": logs})
+
+    assert parsed["diagnostic_selection"]["total"] == 101
+    assert parsed["diagnostic_selection"]["truncated"] is True
+    assert any(
+        diagnostic["code"] == "DISTINCT"
+        for diagnostic in parsed["structured_diagnostics"]
+    )
+
+
+def test_arbitrary_embedded_json_is_not_treated_as_a_diagnostic() -> None:
+    logs = "\n".join([
+        "metadata: " + json.dumps({"name": "build", "duration": 42}),
+        "cleanup\n" * 2000,
+    ])
+
+    _, parsed = _parse({"job_id": 42, "logs_content": logs})
+
+    assert "structured_diagnostics" not in parsed
+    assert "diagnostic_selection" not in parsed
+
+
 @pytest.mark.parametrize("logs", [None, {}, "not-a-list"])
 def test_non_list_logs_preserves_single_job_fallback(logs: object) -> None:
     _, parsed = _parse({

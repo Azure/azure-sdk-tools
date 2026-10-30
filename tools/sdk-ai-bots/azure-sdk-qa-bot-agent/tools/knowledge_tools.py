@@ -292,9 +292,7 @@ class KnowledgeTools:
         )
 
         expand_tasks = [
-            search_client.expand_by_hierarchy(
-                chunk, source_filter=source_filters.get(chunk.source)
-            )
+            search_client.expand_by_hierarchy(chunk)
             for chunk in unique_chunks
         ]
         expanded = await asyncio.gather(*expand_tasks)
@@ -609,9 +607,7 @@ class KnowledgeTools:
         combined = wiki_pages + routed
         expanded = await asyncio.gather(
             *[
-                search_client.expand_by_hierarchy(
-                    c, source_filter=source_filters.get(c.source)
-                )
+                search_client.expand_by_hierarchy(c)
                 for c in combined
             ]
         )

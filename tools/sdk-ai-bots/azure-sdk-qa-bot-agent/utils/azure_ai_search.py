@@ -123,6 +123,18 @@ def _chunk_key(chunk: KnowledgeChunk) -> str:
     return f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}|{chunk.header3}"
 
 
+def _static_qa_key(chunk: KnowledgeChunk) -> tuple[str, str, str] | None:
+    if (
+        not chunk.page_type
+        and chunk.source.startswith("static_")
+        and chunk.source.endswith("_qa")
+        and chunk.title
+        and chunk.header1
+    ):
+        return chunk.source, chunk.title, chunk.header1
+    return None
+
+
 def fuse_with_rrf(
     ranked_lists: list[list[KnowledgeChunk]],
     k: int = _RRF_K,
@@ -416,6 +428,7 @@ class SearchClient:
         """Remove chunks whose header section is already covered by a broader expansion."""
         unique: list[KnowledgeChunk] = []
         seen_chunk_ids: set[str] = set()
+        expanded_qa: set[tuple[str, str, str]] = set()
         expanded_h1: set[str] = set()
         expanded_h2: set[str] = set()
         expanded_h3: set[str] = set()
@@ -424,6 +437,13 @@ class SearchClient:
             if chunk.chunk_id in seen_chunk_ids:
                 continue
             seen_chunk_ids.add(chunk.chunk_id)
+
+            qa_key = _static_qa_key(chunk)
+            if qa_key is not None:
+                if qa_key not in expanded_qa:
+                    expanded_qa.add(qa_key)
+                    unique.append(chunk)
+                continue
 
             hierarchy = _detect_hierarchy(chunk.header1, chunk.header2, chunk.header3)
 
@@ -465,61 +485,49 @@ class SearchClient:
 
         return unique
 
-    async def expand_by_hierarchy(
-        self, chunk: KnowledgeChunk, *, source_filter: str | None = None
-    ) -> KnowledgeChunk:
-        """Expand a section, including the paired answer for a raw Q&A question."""
+    async def expand_by_hierarchy(self, chunk: KnowledgeChunk) -> KnowledgeChunk:
+        """Expand a section, or the whole header-1 topic for raw static Q&A.
+
+        Static Q&A reads all result pages before the caller's content limit is
+        applied. Other documents retain their section scope and chunk limit.
+        """
+        is_static_qa = _static_qa_key(chunk) is not None
         hierarchy_filter = _build_hierarchy_filter(
             title=chunk.title,
             context_id=chunk.source,
             header1=chunk.header1,
-            header2=chunk.header2,
-            header3=chunk.header3,
+            header2="" if is_static_qa else chunk.header2,
+            header3="" if is_static_qa else chunk.header3,
         )
-
-        async def _fetch_section(section_filter: str) -> list[KnowledgeChunk]:
-            results = await self._search_client.search(
-                search_text="*",
-                filter=combine_source_filters(
-                    {"section": section_filter}, source_filter
-                ),
-                top=_HIERARCHY_EXPANSION_TOP,
-                order_by=["ordinal_position asc"],
-                select=[
-                    "chunk_id",
-                    "title",
-                    "chunk",
-                    "context_id",
-                    "header_1",
-                    "header_2",
-                    "header_3",
-                ],
-            )
-            return [KnowledgeChunk.model_validate(dict(doc)) async for doc in results]
-
-        section_filters = [hierarchy_filter]
-        if not chunk.page_type and chunk.header1 and chunk.header2.casefold() == "question":
-            answer_filter = _build_hierarchy_filter(
-                title=chunk.title,
-                context_id=chunk.source,
-                header1=chunk.header1,
-                header2="",
-                header3="",
-            )
-            section_filters.append(
-                f"({answer_filter}) and "
-                "search.in(header_2, 'answer,Answer,ANSWER') and "
-                f"{NON_WIKI_FILTER}"
-            )
-        sections = await asyncio.gather(
-            *[_fetch_section(section_filter) for section_filter in section_filters]
+        if is_static_qa:
+            hierarchy_filter = _and_extra(f"({hierarchy_filter})", NON_WIKI_FILTER)
+        results = await self._search_client.search(
+            search_text="*",
+            filter=hierarchy_filter,
+            top=None if is_static_qa else _HIERARCHY_EXPANSION_TOP,
+            order_by=["ordinal_position asc"],
+            select=[
+                "chunk_id",
+                "title",
+                "chunk",
+                "context_id",
+                "header_1",
+                "header_2",
+                "header_3",
+            ],
         )
-        siblings = sections[0]
+        siblings = [KnowledgeChunk.model_validate(dict(doc)) async for doc in results]
         content_parts: list[str] = [f"# {chunk.title}"]
-        if len(sections) > 1:
+        if is_static_qa:
+            if chunk.content and not any(
+                _chunk_key(sibling) == _chunk_key(chunk) for sibling in siblings
+            ):
+                siblings.append(chunk)
+            answers = [s for s in siblings if s.header2.casefold() == "answer"]
+            siblings = [s for s in siblings if s.header2.casefold() != "answer"]
             answer_parts: list[str] = []
             answer_header = ""
-            for answer in sections[1]:
+            for answer in answers:
                 if answer.header3 != answer_header:
                     answer_header = answer.header3
                     if answer_header:
@@ -536,7 +544,7 @@ class SearchClient:
                     chunk.title,
                     chunk.header1,
                 )
-        if chunk.content:
+        if not is_static_qa and chunk.content:
             content_parts.extend(["", "## Matched passage", chunk.content])
         section_parts: list[str] = []
         current_h1 = ""
@@ -544,7 +552,7 @@ class SearchClient:
         current_h3 = ""
 
         for sibling in siblings:
-            if sibling.chunk_id and sibling.chunk_id == chunk.chunk_id:
+            if not is_static_qa and sibling.chunk_id and sibling.chunk_id == chunk.chunk_id:
                 continue
 
             if sibling.header1 != current_h1:
@@ -575,8 +583,8 @@ class SearchClient:
             content="\n".join(content_parts),
             chunk_id=chunk.chunk_id,
             header1=chunk.header1,
-            header2=chunk.header2,
-            header3=chunk.header3,
+            header2="" if is_static_qa else chunk.header2,
+            header3="" if is_static_qa else chunk.header3,
         )
 
     async def backfill_wiki_sources(
@@ -630,14 +638,20 @@ class SearchClient:
 
         backfilled: list[KnowledgeChunk] = []
         per_doc_count: dict[tuple[str, str], int] = {}
+        expanded_qa: set[tuple[str, str, str]] = set()
         for chunk in ranked:
             if not chunk.chunk_id or chunk.chunk_id in seen_ids:
+                continue
+            qa_key = _static_qa_key(chunk)
+            if qa_key is not None and qa_key in expanded_qa:
                 continue
             key = (chunk.title, chunk.source)
             # Limit to 2 chunks per source doc.
             if per_doc_count.get(key, 0) >= 2:
                 continue
             seen_ids.add(chunk.chunk_id)
+            if qa_key is not None:
+                expanded_qa.add(qa_key)
             per_doc_count[key] = per_doc_count.get(key, 0) + 1
             backfilled.append(chunk)
             if len(backfilled) >= max_total:

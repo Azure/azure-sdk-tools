@@ -7,7 +7,6 @@ from pytest import MonkeyPatch
 from config.tenant_config import (
     SRC_AZURE_SDK_DOCS_ENG,
     SRC_AZURE_SDK_FOR_NET_DOCS,
-    SRC_STATIC_PYTHON_QA,
     SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
     SRC_TYPESPEC_DOCS,
     TenantConfig,
@@ -30,25 +29,6 @@ _WIKI_CONCEPT = "wiki_concept"
 def test_internal_wiki_contexts_are_not_registered_sources():
     assert get_knowledge_source(_WIKI_ENTITY) is None
     assert get_knowledge_source(_WIKI_CONCEPT) is None
-
-
-def test_python_historical_qa_is_registered_and_scoped():
-    tenant = TenantID.PYTHON_CHANNEL_QA_BOT.value
-    names = _source_names(tenant, None)
-    assert get_knowledge_source(SRC_STATIC_PYTHON_QA) is not None
-    assert SRC_STATIC_PYTHON_QA in names
-    for plane in (None, "data-plane", "management-plane"):
-        filters = _resolve_source_filters(names, tenant, plane)
-        expected = "context_id eq 'static_python_qa'"
-        if plane:
-            expected += f" and (service_type eq '{plane}' or service_type eq null)"
-        assert filters[SRC_STATIC_PYTHON_QA] == expected
-
-
-def test_python_historical_qa_is_not_added_to_other_tenant_source_lists():
-    for tenant in TenantID:
-        if tenant != TenantID.PYTHON_CHANNEL_QA_BOT:
-            assert SRC_STATIC_PYTHON_QA not in _source_names(tenant.value, None)
 
 
 def test_dotnet_sources_include_branded_and_upstream_unbranded_docs():

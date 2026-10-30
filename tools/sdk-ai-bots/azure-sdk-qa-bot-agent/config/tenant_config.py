@@ -70,7 +70,6 @@ SRC_STATIC_CPEX_DOCS = "static_cpex_docs"
 
 # -- SDK language docs --
 SRC_AZURE_SDK_FOR_PYTHON_DOCS = "azure_sdk_for_python_docs"
-SRC_STATIC_PYTHON_QA = "static_python_qa"
 SRC_AZURE_SDK_FOR_NET_DOCS = "azure_sdk_for_net_docs"
 SRC_TYPESPEC_CSHARP_EMITTER_DOCS = "typespec_csharp_emitter_docs"
 SRC_AZURE_SDK_FOR_GO_DOCS = "azure_sdk_for_go_docs"
@@ -224,10 +223,6 @@ _register(
         name=SRC_AZURE_SDK_FOR_PYTHON_DOCS,
         description="Azure SDK for Python documentation covering installation, usage patterns, and API reference.",
         base_url="https://github.com/Azure/azure-sdk-for-python/blob/main/doc/",
-    ),
-    KnowledgeSource(
-        name=SRC_STATIC_PYTHON_QA,
-        description="Historical Python SDK Q&A with expert resolutions for generation, testing, linting, and customization issues. Verify version-specific advice against current documentation.",
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_NET_DOCS,
@@ -451,7 +446,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Python SDK release processes and pipeline issues",
         ],
         sources=[
-            *_sources(SRC_AZURE_SDK_FOR_PYTHON_DOCS, SRC_STATIC_PYTHON_QA),
+            *_sources(SRC_AZURE_SDK_FOR_PYTHON_DOCS),
             *_SDK_SOURCES,
         ],
         source_filter={

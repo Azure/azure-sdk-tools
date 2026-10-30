@@ -86,6 +86,52 @@ _LOG_ERROR_RE = re.compile(
     r"|\berror\s+[A-Z]+\d+:|\[ERROR\]|\bnpm ERR!",
     re.IGNORECASE,
 )
+_JSON_START_RE = re.compile(r"[\[{]")
+_DIAGNOSTIC_MESSAGE_FIELDS = (
+    "message",
+    "error",
+    "detail",
+    "reason",
+    "description",
+)
+_DIAGNOSTIC_CLASSIFIER_FIELDS = (
+    "code",
+    "rule",
+    "ruleId",
+    "id",
+    "type",
+    "severity",
+    "level",
+    "status",
+    "category",
+)
+_DIAGNOSTIC_LOCATION_FIELDS = (
+    "file",
+    "path",
+    "location",
+    "line",
+    "column",
+    "url",
+    "ref",
+    "old",
+    "new",
+)
+_DIAGNOSTIC_OUTPUT_FIELDS = (
+    *_DIAGNOSTIC_CLASSIFIER_FIELDS,
+    *_DIAGNOSTIC_MESSAGE_FIELDS,
+    *_DIAGNOSTIC_LOCATION_FIELDS,
+    "docUrl",
+    "mode",
+)
+_DIAGNOSTIC_NESTED_LOCATOR_FIELDS = (
+    "path",
+    "file",
+    "location",
+    "ref",
+    "url",
+)
+_DIAGNOSTIC_NESTED_POSITION_FIELDS = ("line", "column")
+_MAX_DIAGNOSTIC_CLASSIFIERS = 20
 
 
 def _build_mcp_headers(readonly: bool) -> dict[str, str]:
@@ -499,6 +545,185 @@ def _compact_copilot_reviews(value: Any) -> Any:
     }
 
 
+def _iter_embedded_json(line: str) -> list[Any]:
+    """Return parseable JSON values embedded after arbitrary log prefixes."""
+    decoder = json.JSONDecoder()
+    values: list[Any] = []
+    for match in _JSON_START_RE.finditer(line):
+        try:
+            value, _ = decoder.raw_decode(line[match.start():])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, (dict, list)):
+            values.append(value)
+            break
+    return values
+
+
+def _iter_diagnostic_records(value: Any) -> list[dict[str, Any]]:
+    """Find diagnostic-shaped objects without depending on domain-specific codes."""
+    records: list[dict[str, Any]] = []
+    pending = [value]
+    while pending:
+        current = pending.pop()
+        if isinstance(current, list):
+            pending.extend(reversed(current))
+            continue
+        if not isinstance(current, dict):
+            continue
+        has_message = any(
+            isinstance(current.get(field), str) and current[field].strip()
+            for field in _DIAGNOSTIC_MESSAGE_FIELDS
+        )
+        has_context = any(
+            field in current
+            for field in (
+                *_DIAGNOSTIC_CLASSIFIER_FIELDS,
+                *_DIAGNOSTIC_LOCATION_FIELDS,
+            )
+        )
+        if has_message and has_context:
+            records.append(current)
+        pending.extend(reversed(list(current.values())))
+    return records
+
+
+def _compact_diagnostic_value(value: Any) -> Any:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, dict):
+        compact: dict[str, Any] = {}
+        for field in _DIAGNOSTIC_NESTED_LOCATOR_FIELDS:
+            nested = value.get(field)
+            if isinstance(nested, (str, int, float, bool)):
+                compact[field] = nested
+                break
+        for field in _DIAGNOSTIC_NESTED_POSITION_FIELDS:
+            nested = value.get(field)
+            if isinstance(nested, (str, int, float, bool)):
+                compact[field] = nested
+        return compact
+    return None
+
+
+def _compact_diagnostic(record: dict[str, Any], source_line: int) -> dict[str, Any]:
+    diagnostic: dict[str, Any] = {"source_line": source_line}
+    for field in _DIAGNOSTIC_OUTPUT_FIELDS:
+        if field not in record:
+            continue
+        value = _compact_diagnostic_value(record[field])
+        if value not in (None, {}, ""):
+            diagnostic[field] = value
+    return diagnostic
+
+
+def _diagnostic_classifier(diagnostic: dict[str, Any]) -> str:
+    for field in _DIAGNOSTIC_CLASSIFIER_FIELDS:
+        value = diagnostic.get(field)
+        if isinstance(value, (str, int, float, bool)):
+            return f"{field}:{value}"
+    return "unclassified"
+
+
+def _extract_structured_diagnostics(
+    jobs: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """Extract unique diagnostic-shaped JSON records in source order."""
+    diagnostics: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    counts: dict[str, int] = {}
+    for job in jobs:
+        for line_number, line in enumerate(
+            job["logs_content"].splitlines(),
+            start=1,
+        ):
+            for value in _iter_embedded_json(line):
+                for record in _iter_diagnostic_records(value):
+                    diagnostic = {
+                        "job_id": job["job_id"],
+                        **_compact_diagnostic(record, line_number),
+                    }
+                    signature = json.dumps(
+                        {
+                            key: value
+                            for key, value in diagnostic.items()
+                            if key not in {"job_id", "source_line"}
+                        },
+                        sort_keys=True,
+                    )
+                    if signature in seen:
+                        continue
+                    seen.add(signature)
+                    diagnostics.append(diagnostic)
+                    classifier = _diagnostic_classifier(diagnostic)
+                    counts[classifier] = counts.get(classifier, 0) + 1
+    return diagnostics, counts
+
+
+def _round_robin_diagnostics(
+    diagnostics: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Preserve source order while preventing one repeated classifier from dominating."""
+    groups: dict[str, list[dict[str, Any]]] = {}
+    classifier_order: list[str] = []
+    for diagnostic in diagnostics:
+        classifier = _diagnostic_classifier(diagnostic)
+        if classifier not in groups:
+            groups[classifier] = []
+            classifier_order.append(classifier)
+        groups[classifier].append(diagnostic)
+
+    selected: list[dict[str, Any]] = []
+    offset = 0
+    while True:
+        added = False
+        for classifier in classifier_order:
+            group = groups[classifier]
+            if offset < len(group):
+                selected.append(group[offset])
+                added = True
+        if not added:
+            return selected
+        offset += 1
+
+
+def _add_structured_diagnostics(
+    overflow: dict[str, Any],
+    jobs: list[dict[str, Any]],
+) -> None:
+    diagnostics, counts = _extract_structured_diagnostics(jobs)
+    if not diagnostics:
+        return
+
+    ranked_counts = sorted(
+        counts.items(),
+        key=lambda item: (-item[1], item[0]),
+    )
+    kept_counts = ranked_counts[:_MAX_DIAGNOSTIC_CLASSIFIERS]
+    overflow["diagnostic_selection"] = {
+        "total": len(diagnostics),
+        "returned": 0,
+        "truncated": True,
+        "counts_by_classifier": dict(kept_counts),
+    }
+    if len(ranked_counts) > len(kept_counts):
+        overflow["diagnostic_selection"]["omitted_classifier_count"] = (
+            len(ranked_counts) - len(kept_counts)
+        )
+    overflow["structured_diagnostics"] = []
+    for diagnostic in _round_robin_diagnostics(diagnostics):
+        overflow["structured_diagnostics"].append(diagnostic)
+        if len(json.dumps(overflow)) > _MCP_MAX_OUTPUT_CHARS:
+            overflow["structured_diagnostics"].pop()
+            break
+    returned = len(overflow["structured_diagnostics"])
+    overflow["diagnostic_selection"]["returned"] = returned
+    overflow["diagnostic_selection"]["truncated"] = returned < len(diagnostics)
+    if not returned:
+        del overflow["structured_diagnostics"]
+        del overflow["diagnostic_selection"]
+
+
 def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
     """Attach bounded, verbatim diagnostic windows to job-log overflow metadata."""
     jobs: list[dict[str, Any]] = []
@@ -521,6 +746,7 @@ def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
         "Job logs exceed the output budget; log_excerpts are partial, "
         "with line numbers relative to the returned log."
     )
+    _add_structured_diagnostics(overflow, jobs)
     excerpts: list[dict[str, Any]] = []
     overflow["log_excerpts"] = excerpts
     for job in jobs:

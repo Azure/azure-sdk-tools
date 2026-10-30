@@ -285,6 +285,66 @@ def test_build_testing_criteria_bot_evals_expands():
     assert names == {"builtin.similarity", "builtin.response_completeness"}
 
 
+def test_builtin_completeness_preserves_mapping_and_threshold():
+    criteria = build_testing_criteria(
+        ["response_completeness", "bot_evals"], model="model", threshold=4
+    )
+    by_name = {c["name"]: c for c in criteria}
+    assert len(criteria) == 2
+    assert by_name["response_completeness"] == {
+        "type": "azure_ai_evaluator",
+        "name": "response_completeness",
+        "evaluator_name": "builtin.response_completeness",
+        "initialization_parameters": {"model": "model", "threshold": 4},
+        "data_mapping": {
+            "response": "{{item.response}}",
+            "ground_truth": "{{item.ground_truth}}",
+        },
+    }
+
+
+def test_perf_lro_gold_focuses_on_response_headers():
+    records, _ = resolve_records(
+        "evaluation_datasets/perf/typespec.jsonl",
+        script_dir=Path(__file__).resolve().parents[1],
+    )
+    case = next(
+        row for row in records
+        if row["query"] == (
+            "title: LRO response header problem\n\n"
+            "question: how can I specify a header is just for final result or for polling step?"
+        )
+    )
+    gold = case["ground_truth"]
+    for required in ("@header", "@pollingLocation", "@finalLocation", "response model"):
+        assert required in gold
+    for optional in ("@pollingOperation", "@finalOperation", "ResourceLocation<"):
+        assert optional not in gold
+
+
+def test_perf_python_gold_focuses_on_reusable_error_format():
+    records, _ = resolve_records(
+        "evaluation_datasets/perf/python.jsonl",
+        script_dir=Path(__file__).resolve().parents[1],
+    )
+    matches = [
+        row for row in records
+        if "Is there a way that we could utilize the code generator" in row["query"]
+    ]
+    assert len(matches) == 1
+    gold = matches[0]["ground_truth"]
+    for required in (
+        "ODataV4Format",
+        "message.value",
+        "HttpResponseError(error_format=BatchErrorFormat)",
+        "rather than hand-editing every generated operation",
+        "Verify how that generator version",
+    ):
+        assert required in gold
+    for optional in ("except HttpResponseError", "self.next.send", "async operations"):
+        assert optional not in gold
+
+
 def test_criteria_read_from_item():
     crit = build_testing_criteria(["similarity", "groundedness"], model="m")
     by_name = {c["evaluator_name"]: c for c in crit}

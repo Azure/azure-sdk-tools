@@ -104,6 +104,10 @@
             "$connections": {
               "defaultValue": {},
               "type": "Object"
+            },
+            "maxImageBytes": {
+              "defaultValue": 5242880,
+              "type": "Int"
             }
           },
           "triggers": {
@@ -126,10 +130,28 @@
           },
           "outputs": {},
           "actions": {
+            "Initialize_downloaded_images": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "downloadedImages",
+                    "type": "array",
+                    "value": []
+                  }
+                ]
+              },
+              "runAfter": {}
+            },
             "For_each": {
               "type": "Foreach",
               "foreach": "@triggerBody()?['value']",
-              "runAfter": {},
+              "operationOptions": "Sequential",
+              "runAfter": {
+                "Initialize_downloaded_images": [
+                  "Succeeded"
+                ]
+              },
               "actions": {
                 "Get_and_resolve_message_details": {
                   "type": "Scope",
@@ -446,47 +468,209 @@
                                 "uri": "[concat(parameters('serverBaseUrl'), '/activity/convert')]"
                               }
                             },
-                            "Scope": {
-                              "type": "Scope",
+                            "Filter_image_attachments": {
+                              "type": "Query",
+                              "inputs": {
+                                "from": "@coalesce(body('convertActivity')?['attachments'], json('[]'))",
+                                "where": "@startsWith(coalesce(item()?['contentType'], ''), 'image/')"
+                              },
                               "runAfter": {
                                 "convertActivity": [
                                   "Succeeded"
                                 ]
+                              }
+                            },
+                            "Has_image_attachments": {
+                              "type": "If",
+                              "expression": "@greater(length(body('Filter_image_attachments')), 0)",
+                              "runAfter": {
+                                "Filter_image_attachments": [
+                                  "Succeeded"
+                                ]
                               },
                               "actions": {
-                                "Invoke_QA_Bot": {
-                                  "type": "Http",
-                                  "inputs": {
-                                    "authentication": {
-                                      "audience": "[parameters('botAudience')]",
-                                      "identity": "[parameters('botIdentityResourceId')]",
-                                      "type": "ManagedServiceIdentity"
+                                "Resolve_image_bytes": {
+                                  "type": "Scope",
+                                  "runAfter": {},
+                                  "actions": {
+                                    "Reset_downloaded_images": {
+                                      "type": "SetVariable",
+                                      "inputs": {
+                                        "name": "downloadedImages",
+                                        "value": []
+                                      },
+                                      "runAfter": {}
                                     },
-                                    "body": "@json(string(body('convertActivity')))",
-                                    "headers": {
-                                      "Content-Type": "application/json"
+                                    "Filter_graph_hosted_images": {
+                                      "type": "Query",
+                                      "inputs": {
+                                        "from": "@take(body('Filter_image_attachments'), 4)",
+                                        "where": "@and(startsWith(coalesce(item()?['contentUrl'], ''), 'https://graph.microsoft.com/'), contains(coalesce(item()?['contentUrl'], ''), '/hostedContents/'), endsWith(coalesce(item()?['contentUrl'], ''), '/$value'))"
+                                      },
+                                      "runAfter": {
+                                        "Reset_downloaded_images": [
+                                          "Succeeded"
+                                        ]
+                                      }
                                     },
-                                    "method": "POST",
-                                    "retryPolicy": {
-                                      "type": "none"
+                                    "Download_graph_images": {
+                                      "type": "Foreach",
+                                      "foreach": "@body('Filter_graph_hosted_images')",
+                                      "operationOptions": "Sequential",
+                                      "actions": {
+                                        "Download_Graph_image": {
+                                          "type": "ApiConnection",
+                                          "inputs": {
+                                            "host": {
+                                              "connection": {
+                                                "name": "@parameters('$connections')['teams']['connectionId']"
+                                              }
+                                            },
+                                            "method": "post",
+                                            "path": "/httprequest",
+                                            "headers": {
+                                              "Uri": "@items('Download_graph_images')['contentUrl']",
+                                              "Method": "GET",
+                                              "Content-Type": "application/json"
+                                            },
+                                            "retryPolicy": {
+                                              "type": "none"
+                                            }
+                                          },
+                                          "runtimeConfiguration": {
+                                            "secureData": {
+                                              "properties": [
+                                                "outputs"
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        "Append_downloaded_image": {
+                                          "type": "AppendToArrayVariable",
+                                          "inputs": {
+                                            "name": "downloadedImages",
+                                            "value": {
+                                              "url": "@items('Download_graph_images')['contentUrl']",
+                                              "body": "@if(lessOrEquals(length(coalesce(body('Download_Graph_image')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image'), null)"
+                                            }
+                                          },
+                                          "runAfter": {
+                                            "Download_Graph_image": [
+                                              "Succeeded"
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      "runAfter": {
+                                        "Filter_graph_hosted_images": [
+                                          "Succeeded"
+                                        ]
+                                      }
                                     },
-                                    "uri": "[concat(parameters('botBaseUrl'), '/api/messages')]"
-                                  },
-                                  "runtimeConfiguration": {
-                                    "contentTransfer": {
-                                      "transferMode": "Chunked"
+                                    "Image_download_results": {
+                                      "type": "Compose",
+                                      "inputs": "@variables('downloadedImages')",
+                                      "runAfter": {
+                                        "Download_graph_images": [
+                                          "Succeeded",
+                                          "Failed",
+                                          "TimedOut"
+                                        ]
+                                      },
+                                      "runtimeConfiguration": {
+                                        "secureData": {
+                                          "properties": [
+                                            "inputs"
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "Prepare_activity_images": {
+                                      "type": "JavaScriptCode",
+                                      "inputs": {
+                                        "code": "var activity=workflowContext.actions.convertActivity.outputs.body;\nvar results=workflowContext.actions.Image_download_results.outputs,images={};\nfor(var i=0;i<results.length;i++){\n  var image=results[i];\n  if(!image||image.body===null)continue;\n  var b=image.body;\n  if(!image.url||!b||typeof b['$content']!=='string'||typeof b['$content-type']!=='string')throw new Error('Invalid Teams image body');\n  images[image.url]='data:'+b['$content-type'].split(';')[0].trim().toLowerCase()+';base64,'+b['$content'];\n}\nactivity.attachments=(activity.attachments||[]).map(function(a){\n  return images[a.contentUrl]?Object.assign({},a,{contentUrl:images[a.contentUrl]}):a;\n});\nreturn activity;",
+                                        "explicitDependencies": {
+                                          "actions": [
+                                            "convertActivity",
+                                            "Image_download_results"
+                                          ]
+                                        }
+                                      },
+                                      "runAfter": {
+                                        "Image_download_results": [
+                                          "Succeeded"
+                                        ]
+                                      },
+                                      "runtimeConfiguration": {
+                                        "secureData": {
+                                          "properties": [
+                                            "outputs"
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "Invoke_QA_Bot": {
+                                      "type": "Http",
+                                      "inputs": {
+                                        "authentication": {
+                                          "audience": "[parameters('botAudience')]",
+                                          "identity": "[parameters('botIdentityResourceId')]",
+                                          "type": "ManagedServiceIdentity"
+                                        },
+                                        "body": "@body('Prepare_activity_images')",
+                                        "headers": {
+                                          "Content-Type": "application/json"
+                                        },
+                                        "method": "POST",
+                                        "retryPolicy": {
+                                          "type": "none"
+                                        },
+                                        "uri": "[concat(parameters('botBaseUrl'), '/api/messages')]"
+                                      },
+                                      "runAfter": {
+                                        "Prepare_activity_images": [
+                                          "Succeeded"
+                                        ]
+                                      },
+                                      "runtimeConfiguration": {
+                                        "secureData": {
+                                          "properties": [
+                                            "inputs"
+                                          ]
+                                        }
+                                      }
                                     }
                                   }
-                                },
-                                "Compose": {
-                                  "type": "Compose",
-                                  "inputs": "@outputs('Invoke_QA_Bot')?['statusCode']",
-                                  "runAfter": {
-                                    "Invoke_QA_Bot": [
-                                      "Succeeded",
-                                      "TimedOut",
-                                      "Failed"
-                                    ]
+                                }
+                              },
+                              "else": {
+                                "actions": {
+                                  "Invoke_QA_Bot_without_images": {
+                                    "type": "Http",
+                                    "inputs": {
+                                      "authentication": {
+                                        "audience": "[parameters('botAudience')]",
+                                        "identity": "[parameters('botIdentityResourceId')]",
+                                        "type": "ManagedServiceIdentity"
+                                      },
+                                      "body": "@body('convertActivity')",
+                                      "headers": {
+                                        "Content-Type": "application/json"
+                                      },
+                                      "method": "POST",
+                                      "retryPolicy": {
+                                        "type": "none"
+                                      },
+                                      "uri": "[concat(parameters('botBaseUrl'), '/api/messages')]"
+                                    },
+                                    "runAfter": {},
+                                    "runtimeConfiguration": {
+                                      "secureData": {
+                                        "properties": [
+                                          "inputs"
+                                        ]
+                                      }
+                                    }
                                   }
                                 }
                               }

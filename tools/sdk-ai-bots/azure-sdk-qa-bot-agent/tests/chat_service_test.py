@@ -12,8 +12,67 @@ import pytest
 from azure.ai.projects.models import AgentVersionDetails
 from azure.core.async_paging import AsyncItemPaged
 
-from models.chat import ChatRequest, Message as ChatMessage
+from models.chat import AdditionalInfo, ChatRequest, Message as ChatMessage
+from services import chat_service
 from services.chat_service import ChatService
+
+
+@pytest.mark.asyncio
+async def test_additional_info_passes_image_pixels_to_model(monkeypatch):
+    download = AsyncMock(return_value="data:image/png;base64,aW1hZ2U=")
+    monkeypatch.setattr(chat_service, "get_image_data_uri", download)
+    items = await ChatService()._build_additional_info_items([
+        AdditionalInfo(type="image", content="", link="https://example.test/image"),
+    ])
+    download.assert_awaited_once_with("https://example.test/image")
+    assert items[0]["role"] == "user"
+    assert items[0]["content"][1] == {
+        "type": "input_image",
+        "image_url": "data:image/png;base64,aW1hZ2U=",
+        "detail": "auto",
+    }
+    assert "untrusted content" in items[0]["content"][0]["text"]
+
+
+@pytest.mark.asyncio
+async def test_image_failures_preserve_other_context_and_are_disclosed(monkeypatch, caplog):
+    import httpx
+
+    request = httpx.Request("GET", "https://graph.microsoft.com/image")
+    response = httpx.Response(403, request=request)
+    download = AsyncMock(side_effect=[
+        httpx.HTTPStatusError("Forbidden", request=request, response=response),
+        "data:image/png;base64,aW1hZ2U=",
+    ])
+    monkeypatch.setattr(chat_service, "get_image_data_uri", download)
+    items = await ChatService()._build_additional_info_items([
+        AdditionalInfo(type="text", content="project context"),
+        AdditionalInfo(type="image", content="", link="https://example.test/first"),
+        AdditionalInfo(type="image", content="", link="https://example.test/second"),
+    ])
+    assert items[0]["content"] == "project context"
+    assert items[1]["content"][1]["type"] == "input_image"
+    assert items[2]["role"] == "system"
+    assert "could not be downloaded or read" in items[2]["content"]
+    assert "Explicitly disclose" in items[2]["content"]
+    assert "Failed to fetch Teams image 1" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_image_attempt_limit_keeps_failure_and_limit_notices(monkeypatch):
+    download = AsyncMock(side_effect=[
+        ValueError("invalid image"),
+        *["data:image/png;base64,aW1hZ2U="] * 3,
+    ])
+    monkeypatch.setattr(chat_service, "get_image_data_uri", download)
+    items = await ChatService()._build_additional_info_items([
+        AdditionalInfo(type="image", content="", link=f"https://example.test/{index}")
+        for index in range(6)
+    ])
+    assert download.await_count == 4
+    assert len(items) == 4
+    assert "could not be downloaded or read" in items[-1]["content"]
+    assert "additional images were not read" in items[-1]["content"]
 
 
 @pytest.mark.parametrize("conversation_type, include_tag, last_lookup_fails", [

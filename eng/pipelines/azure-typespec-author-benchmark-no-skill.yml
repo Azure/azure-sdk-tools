@@ -23,8 +23,6 @@ variables:
     value: azuresdkqabot-dev
   - name: TypeSpecAuthorEvalMode
     value: no-skill
-  - name: TypeSpecAuthorEvalRuns
-    value: ${{ parameters.Runs }}
   - name: AZSDK_EVAL_MCP_KIND
     value: ${{ parameters.McpKind }}
 
@@ -57,7 +55,6 @@ extends:
       - ${{ format('{0}', parameters.Runs) }}
     UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
-    postEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-posteval.yml
     failOnFailedTests: false
     # Keep each shard below the installation token's one-hour lifetime.
     ${{ if eq(parameters.Runs, 1) }}:

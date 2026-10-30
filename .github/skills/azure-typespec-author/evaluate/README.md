@@ -146,20 +146,12 @@ only if the selected authoring skill does not require it. A missing required
 dependency remains an error.
 
 All three modes use common authentication, standard verdicts, unmodified JUnit,
-and result collection with latest-attempt/completeness checks. The local post-eval
-hook prints supplementary pass@k to the job log only when `Runs > 1` and the
-common standard verdict fails. `Runs` means repeated trials, not conversation
-turns. Standard passes and single-run evaluations produce no pass@k output.
-The pre-eval hook calls `pipeline/typespec-author-prepare.ts --prepare` for setup;
-the post-eval hook calls `pipeline/typespec-author-pass-at-k.ts --report` for diagnostics.
-The hook reuses common newest-invocation selection and completeness checks, then
-verifies all expected trial indices before reporting. Missing, interrupted or
-unverifiable results produce only an unavailable warning, never a pass@k success.
-It creates no Markdown/build summary, does not change the job exit code based on
-pass@k, rewrite thresholds or replace the common Summary.
-This intentionally replaces the previous pass@k gating contract: a stimulus with
-one passing trial can appear successful in the supplementary metric while the
-standard common verdict still fails.
+and result collection with latest-attempt/completeness checks. `Runs` means repeated
+trials, not conversation turns. Common Summary already shows successful and total
+runs for failing scenarios, such as `1/2 runs passed`; at least one successful
+trial does not override the standard verdict. No supplementary report or local
+post-eval hook is needed.
+The pre-eval hook calls `pipeline/typespec-author-prepare.ts --prepare` for setup.
 Pipeline globs select only files containing the requested mode. Vally retains
 zero-match explicit eval files in its summary, and the common verdict requires
 executed stimuli. A regression checks that each mode's globs cover exactly its

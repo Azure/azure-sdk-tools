@@ -185,13 +185,15 @@ test("the prepare CLI reads the pipeline MCP kind and rejects a missing selectio
   assert.equal(server.args[1], "mcp");
 });
 
-test("benchmark entrypoints configure their connection in YAML without a run parameter", () => {
+test("benchmark entrypoints use caller-owned auth and common repeated-trial reporting", () => {
   const requireEval = createRequire(new URL("../../../../../eng/common/scripts/eval/package.json", import.meta.url));
   const { parse } = requireEval("yaml");
   for (const file of ["azure-typespec-author-benchmark.yml", "azure-typespec-author-benchmark-no-skill.yml"]) {
     const pipeline = parse(fs.readFileSync(new URL(`../../../../../eng/pipelines/${file}`, import.meta.url), "utf8"));
     const connection = pipeline.parameters.find((parameter: { name: string }) => parameter.name === "azureSubscription");
     assert.equal(connection, undefined, `${file}: connection must not require a run parameter`);
+    const runs = pipeline.parameters.find((parameter: { name: string }) => parameter.name === "Runs");
+    assert.equal(runs.type, "number");
     const configuredConnection = pipeline.variables.find((variable: { name?: string }) =>
       variable.name === "TypeSpecAuthorEvalAzureSubscription");
     assert.ok(configuredConnection, `${file}: connection must be configured by the caller`);
@@ -205,6 +207,8 @@ test("benchmark entrypoints configure their connection in YAML without a run par
     for (const invocation of invocations) {
       assert.equal(invocation.azureSubscription, "${{ variables.TypeSpecAuthorEvalAzureSubscription }}");
       assert.equal(invocation.UseAzSdkAuthentication, "${{ eq(parameters.McpKind, 'live') }}");
+      assert.equal(invocation.postEvalTemplate, undefined);
+      assert.deepEqual(invocation.vallyArguments.slice(-2), ["--runs", "${{ format('{0}', parameters.Runs) }}"]);
     }
   }
 });

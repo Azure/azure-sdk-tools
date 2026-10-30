@@ -55,15 +55,29 @@ def test_preserves_acknowledgement_and_embedded_file(parser):
         }
     )
 
-    assert parser(result) == f"{acknowledgement}\n{_RESOURCE_PREFIX}{body}\nTrailing text"
+    output = parser(result)
+    if parser is _github_mcp_parser:
+        parsed = json.loads(output)
+        assert parsed["complete"]
+        assert [block["text"] for block in parsed["content"]] == [
+            acknowledgement, body, "Trailing text"
+        ]
+        assert parsed["content"][1]["uri"] == _RESOURCE_URI
+    else:
+        assert output == f"{acknowledgement}\n{_RESOURCE_PREFIX}{body}\nTrailing text"
 
 
 def test_preserves_resource_only_result(parser):
     body = "# Guide\n\nThe full document body."
 
-    assert parser(mcp_types.CallToolResult(content=[_text_resource(body)])) == (
-        _RESOURCE_PREFIX + body
-    )
+    output = parser(mcp_types.CallToolResult(content=[_text_resource(body)]))
+    if parser is _github_mcp_parser:
+        parsed = json.loads(output)
+        assert parsed["complete"]
+        assert parsed["content"][0]["text"] == body
+        assert parsed["content"][0]["uri"] == _RESOURCE_URI
+    else:
+        assert output == _RESOURCE_PREFIX + body
 
 
 @pytest.mark.parametrize("embedded", [False, True], ids=["text", "resource"])
@@ -81,8 +95,19 @@ def test_truncation_boundary(parser, embedded, length, caplog):
     with caplog.at_level("INFO", logger="tools"):
         actual = parser(mcp_types.CallToolResult(content=[content]))
 
-    assert actual == expected
-    assert ("Truncating MCP text content" in caplog.text) == (length > _MCP_MAX_OUTPUT_CHARS)
+    if parser is _github_mcp_parser and embedded:
+        parsed = json.loads(actual)
+        block = parsed["content"][0]
+        assert len(actual) <= _MCP_MAX_OUTPUT_CHARS
+        assert block["uri"] == _RESOURCE_URI
+        assert block["original_characters"] == len(body)
+        assert body.startswith(block["text"])
+        assert block["returned_characters"] == len(block["text"])
+        assert block["truncated"]
+        assert not parsed["complete"]
+    else:
+        assert actual == expected
+        assert ("Truncating MCP text content" in caplog.text) == (length > _MCP_MAX_OUTPUT_CHARS)
 
 
 @pytest.mark.parametrize("include_text", [False, True])
@@ -101,9 +126,15 @@ def test_unsupported_content_preserves_existing_behavior(parser, include_text):
     if include_text:
         content.append(mcp_types.TextContent(type="text", text="Supported text"))
 
-    assert parser(mcp_types.CallToolResult(content=content)) == (
-        "Supported text" if include_text else "null"
-    )
+    output = parser(mcp_types.CallToolResult(content=content))
+    if parser is _github_mcp_parser:
+        parsed = json.loads(output)
+        assert not parsed["complete"]
+        assert all(block.get("error") for block in parsed["content"][:2])
+        if include_text:
+            assert parsed["content"][2]["text"] == "Supported text"
+    else:
+        assert output == ("Supported text" if include_text else "null")
 
 
 def test_empty_result_preserves_existing_behavior(parser):
@@ -127,7 +158,8 @@ def test_github_author_redaction_applies_to_both_content_types(embedded, associa
     output = _github_mcp_parser(mcp_types.CallToolResult(content=[content]))
 
     expected = {**payload, "body": payload["body"] if trusted else _BODY_REDACTION_NOTICE}
-    assert json.loads(output.removeprefix(_RESOURCE_PREFIX)) == expected
+    parsed = json.loads(output)
+    assert (json.loads(parsed["content"][0]["text"]) if embedded else parsed) == expected
 
 
 def test_github_redacts_embedded_content_before_truncation():
@@ -141,5 +173,7 @@ def test_github_redacts_embedded_content_before_truncation():
         mcp_types.CallToolResult(content=[_text_resource(json.dumps(payload))])
     )
 
-    assert json.loads(output.removeprefix(_RESOURCE_PREFIX))["body"] == _BODY_REDACTION_NOTICE
+    parsed = json.loads(output)
+    assert json.loads(parsed["content"][0]["text"])["body"] == _BODY_REDACTION_NOTICE
+    assert parsed["complete"]
     assert "[truncated]" not in output

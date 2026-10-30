@@ -14,6 +14,7 @@ from config.tenant_config import (
     SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_DOCS_ENG,
     SRC_AZURE_SDK_FOR_JS_DOCS,
+    SRC_STATIC_CPEX_DOCS,
     TenantID,
     get_knowledge_source,
     get_tenant_config,
@@ -22,7 +23,214 @@ from skills.tenant_skills import (
     build_skill_content,
     create_tenant_skills,
     get_skill_name_for_tenant,
+    get_skill_to_tenant_map,
 )
+
+_AGENT_ROOT = Path(__file__).parents[1]
+
+
+def _read_pr_review_skill() -> str:
+    return (
+        _AGENT_ROOT / "skills" / "chat_agent" / "pr-review" / "SKILL.md"
+    ).read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "tenant_id",
+    [TenantID.API_SPEC_REVIEW_BOT],
+)
+@pytest.mark.parametrize("service_type", [None, "data-plane"])
+def test_review_engineering_docs_keep_source_scope_without_title_restrictions(
+    tenant_id: TenantID,
+    service_type: str | None,
+) -> None:
+    from tools.knowledge_tools import _resolve_source_filters
+
+    config = get_tenant_config(tenant_id)
+    filters = _resolve_source_filters(
+        [source.name for source in config.sources],
+        tenant_id.value,
+        service_type,
+    )
+
+    expected = f"context_id eq '{SRC_AZURE_SDK_DOCS_ENG}'"
+    if service_type:
+        expected += f" and (service_type eq '{service_type}' or service_type eq null)"
+    assert filters[SRC_AZURE_SDK_DOCS_ENG] == expected
+    assert set(filters) == {source.name for source in config.sources}
+    assert get_knowledge_source(SRC_AZURE_SDK_DOCS_ENG).get_link(
+        "docs#develop#namespace-review.md"
+    ) == (
+        "https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review"
+    )
+
+
+def test_api_spec_review_preserves_other_source_filters() -> None:
+    config = get_tenant_config(TenantID.API_SPEC_REVIEW_BOT)
+
+    assert config.source_filter == {
+        SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
+    }
+
+
+def test_chat_agent_exposes_github_actions_log_retrieval() -> None:
+    from tools.github_mcp_tools import _GITHUB_READONLY_TOOLS
+
+    assert "get_job_logs" in _GITHUB_READONLY_TOOLS
+    assert "actions_get_job_logs" not in _GITHUB_READONLY_TOOLS
+
+
+def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    steps = (
+        "**Read the PR and statuses.**",
+        "**Checks stuck, untriggered, pending or awaiting approval:**",
+        "**Merge blockers:**",
+        "**Failed checks in blockers:**",
+        "**Review existing feedback.**",
+        "**Understand the changes.**",
+        "**Review approval:**",
+    )
+    positions = [pr_review.index(f"{index}. {step}") for index, step in enumerate(steps, start=1)]
+    assert positions == sorted(positions)
+    assert "Follow relevant steps by priority, not as a checklist" in pr_review
+    assert "continue only for unresolved needs and stop once answered" in pr_review
+    assert "wait for these results before dependent calls" in pr_review
+    assert "all independent, ready tools in a single parallel batch" in instruction
+    assert "at most 8 tool calls per turn total" in instruction
+
+
+def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    constraints = instruction.split("## Constraints\n", 1)[1].split("\n## ", 1)[0]
+    rules = {line.split(".", 1)[0]: line for line in constraints.splitlines() if line[:1].isdigit()}
+
+    retrieval = instruction.split("## Retrieval (Evidence-First ReAct)\n", 1)[1].split("\n## ", 1)[0]
+    assert "Open once, in parallel" in retrieval
+    assert "start with `search_knowledge_base` and `wiki_search` together" in retrieval
+    assert "current question or evidence gap, preserving the user's goal and constraints" in retrieval
+    assert "Let context drive retrieval" not in retrieval
+    assert "Retry only for an explicit gap" in retrieval
+    assert "one targeted follow-up for a named missing fact" in retrieval
+    assert "Follow evidence gaps" not in retrieval
+    assert "Default retrieval is one parallel batch" in rules["2"]
+    assert "Do not repeat a broad retrieval after the first batch" in rules["2"]
+    assert "PR diagnostics may instead use the bounded, dependency-driven rounds" in retrieval
+    assert "bounded exception in Constraints 5–6" in rules["2"]
+    assert "all independent, ready tools in a single parallel batch" in rules["5"]
+    assert "PR diagnostic exception" in rules["5"]
+    assert "PR/status/check preflight → run/job lookup → failed-job logs → error-specific KB search" in rules["5"]
+    assert "Batch independent calls within each round" in rules["5"]
+    assert "do not guess identifiers or search for an error before retrieving it" in rules["5"]
+    assert "call `load_skill` ALONE first" in rules["5"]
+    assert "Latency budget" in rules["6"]
+    assert "Match depth to the user's need and current evidence" in instruction
+    assert "defer available diagnosis to a follow-up" in instruction
+    assert "summarize first, then let the user choose what to explore" not in instruction
+    assert "non-PR" not in instruction
+    assert "at most 3 dependent follow-up rounds after the opening batch" in rules["6"]
+    assert "within the same 8-call cap" in rules["6"]
+    assert "Stop as soon as the request is answered" in rules["6"]
+    assert "state the specific retrieval limit and unresolved fact" in rules["6"]
+    assert "at most 8 tool calls per turn total" in rules["1"]
+    assert "entire user request, including all diagnostic rounds and skill loads" in rules["1"]
+    assert "ALL needed tools in a single parallel batch" not in constraints
+    assert "A third turn is allowed only" not in constraints
+    assert "wait for these results before dependent calls" in pr_review
+    assert "only to resolve remaining review questions" in pr_review
+    assert "latest relevant reviewer/workflow summary first" in pr_review
+    assert "when it reports issues, is unclear, or the user requests details" in pr_review
+    assert "only to the current response, not the entire PR" in pr_review
+    assert "not formal approval or proof of current-head merge readiness" in pr_review
+
+
+def test_shared_answers_lead_directly_without_a_verdict_checklist() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
+
+    assert "Lead with a direct answer (1–3 sentences)" in answer_rules
+    assert "Check applicability before a verdict" not in answer_rules
+    assert "takes precedence over direct-answer style" not in answer_rules
+    assert "Lead with the strongest conclusion the evidence establishes" not in answer_rules
+    assert "stating unresolved conditions first" not in answer_rules
+    retrieval = instruction.split("## Retrieval (Evidence-First ReAct)\n", 1)[1].split("\n## ", 1)[0]
+    assert "For a short question, include its exact wording in an opening query" in retrieval
+    assert "Do not introduce unstated constraints into search queries" in retrieval
+
+
+def test_shared_skill_selection_follows_new_evidence_without_user_handoff() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    skills = instruction.split("## Skills & Tenant Context\n", 1)[1].split("\n## ", 1)[0]
+
+    assert "Reassess the active skill when evidence changes the problem to solve" in skills
+    assert "load a better-matched skill and continue investigating" in skills
+    assert "rather than referring the user elsewhere" in skills
+    assert "load that tenant's skill and follow its guidance" in skills
+    assert "Authoring tenant lock" in skills
+    assert "use ONLY the preloaded `typespec-authoring` skill" in skills
+
+
+def test_shared_answers_check_evidence_coverage() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
+
+    assert "Check answer coverage silently" in answer_rules
+    assert "For each sub-question" in answer_rules
+    assert "most specific applicable evidence's conclusion, reason, prerequisites" in answer_rules
+    assert "exceptions, supported alternatives" in answer_rules
+    assert "full remedy scope across affected resources/operations" in answer_rules
+    assert "Do not substitute generic troubleshooting or broader principles for case-specific resolutions" in answer_rules
+    assert "preferences are not prohibitions" in answer_rules
+    assert "historical workarounds are not general policy" in answer_rules
+    assert "exact rules/settings/checks/version limits" in answer_rules
+    assert "~120 words for focused questions or ~180 for multi-part questions" in answer_rules
+    assert "expand when needed for correctness" in answer_rules
+
+
+def test_shared_permission_help_checks_permissions_and_membership() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    workflow = instruction.split("## Workflow\n", 1)[1].split("\n## ", 1)[0]
+    pr_review = _read_pr_review_skill()
+    approval_checks = pr_review.split(
+        "2. **Checks stuck, untriggered, pending or awaiting approval:**", 1
+    )[1].split("\n3. **Merge blockers:**", 1)[0]
+
+    assert "for permission/access symptoms, check both repository permissions" in approval_checks
+    assert "required organization/team membership" in approval_checks
+    assert "for access issues, check permissions and membership separately" not in workflow
+    assert "\n6. **Permission/access issues:**" not in workflow
+
+
+def test_review_permission_help_targets_access_evidence_without_blanket_rerouting() -> None:
+    content = build_skill_content(TenantID.API_SPEC_REVIEW_BOT)
+
+    assert "distinguish reviewer eligibility/assignment from workflow approval and merge/sign-off requirements" in content
+    assert "For a missing approval button, retrieve steps for that symptom" in content
+    assert "state exact documented actions and disclose unresolved gaps" in content
+    assert "Request access to Azure API and SDK repositories" not in content
+    assert "Do not assume a permission problem when the run reached a concrete validation error" not in content
+
+
+def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
+    config = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
+    assert config is not None
+    assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
+        "search.ismatch('design*', 'title')"
+    )
 
 
 @pytest.mark.parametrize(
@@ -182,6 +390,55 @@ def test_tenant_skills_are_partitioned_by_agent() -> None:
     assert mcp_skills[0].frontmatter.name == "azure-mcp-server"
 
 
+def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    skills = asyncio.run(
+        FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
+    )
+    assert [skill.frontmatter.name for skill in skills] == ["pr-review"]
+    assert "permission/access symptoms" in _read_pr_review_skill()
+    assert "pr-review" not in get_skill_to_tenant_map()
+
+    init = (
+        _AGENT_ROOT / "agents" / "chat_agent" / "init.py"
+    ).read_text(encoding="utf-8")
+    assert "FileSkillsSource(skills_dir).get_skills()" in init
+    assert "skills_dir = _get_chat_skill_dir()" in init
+
+    from agents.chat_agent import init as chat_agent_init
+
+    monkeypatch.setattr(
+        chat_agent_init.tenant_skills,
+        "__file__",
+        str(Path("/app/skills/tenant_skills.py")),
+    )
+    assert chat_agent_init._get_chat_skill_dir() == Path("/app/skills/chat_agent")
+
+
+def test_pr_review_skill_does_not_change_tenant_routing() -> None:
+    from openai.types.responses.response_function_tool_call import (
+        ResponseFunctionToolCall,
+    )
+
+    from services.chat_service import ChatService
+
+    def load_skill_call(skill_name: str) -> ResponseFunctionToolCall:
+        return ResponseFunctionToolCall(
+            id=f"fc_{skill_name}",
+            call_id=f"call_{skill_name}",
+            name="load_skill",
+            arguments=json.dumps({"skill_name": skill_name}),
+            type="function_call",
+            status="completed",
+        )
+
+    assert ChatService._extract_routed_tenant([load_skill_call("pr-review")]) is None
+    assert ChatService._extract_routed_tenant(
+        [load_skill_call("api-spec-review")]
+    ) == TenantID.API_SPEC_REVIEW_BOT
+
+
 def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     content = build_skill_content(TenantID.AZURE_MCP_SERVER)
 
@@ -251,6 +508,273 @@ def test_internal_mcp_docs_resolve_to_eng_ms_paths() -> None:
     assert source.get_link("docs#mcp#getting-started.md") == (
         "https://eng.ms/docs/products/azure-developer-experience/mcp/getting-started"
     )
+
+
+def test_merge_and_workflow_guidance_is_in_pr_review_workflow() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    other_tools = instruction.split("## Other Tools\n", 1)[1].split("\n## ", 1)[0]
+    for rule in ("**Merge blockers:**", "**Checks stuck, untriggered, pending or awaiting approval:**"):
+        assert pr_review.count(rule) == 1
+        assert rule not in other_tools
+        assert instruction.count(rule) == 0
+    assert "**Failed checks in blockers:**" in pr_review
+    assert "Assess state/draft, labels, checks and review/signoff evidence" in pr_review
+    assert "**Review approval:**" in pr_review
+    assert "required checks/reviews and other merge conditions hold" in pr_review
+    assert "verified requested reviewers/code owners from the PR or matching `CODEOWNERS` entries" in pr_review
+
+
+def test_chat_agent_explains_workflow_action_required_evidence() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    pr_review = _read_pr_review_skill()
+    assert "**Checks stuck, untriggered, pending or awaiting approval:**" in pr_review
+    assert "Fetch `get_status` and `get_check_runs` via `pull_request_read` in parallel" in pr_review
+    assert "wait for these results before dependent calls" in pr_review
+    assert "Run details (`actions_get` for Actions) establish the workflow state" in pr_review
+    assert "For completed `action_required` runs or an unexplained approval report" in pr_review
+    assert "inspect the returned `html_url` with `web_fetch`" in pr_review
+    assert "the API may omit the reason" in pr_review
+    assert "A failed status alone does not establish a code defect" in pr_review
+    gate = pr_review.split("**Checks stuck, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
+    assert "Find current-head validation runs with `actions_list`" in gate
+    assert "successful status-setter workflows or unrelated jobs do not rule out an approval gate" in gate
+    assert "For explicit approval or `action_required` questions" in gate
+    assert "call `actions_list` for the PR's current head before following status links" in gate
+    assert "do not infer approval from a fork or pending contexts alone" in gate
+    assert gate.index("For completed `action_required` runs") < gate.index("Recovery depends on the cause")
+    assert "Recovery depends on the cause" in pr_review
+    assert "Use GitHub MCP for GitHub content" in instruction
+    assert "**Only exception:** fetch a completed/action-required workflow run" in instruction
+    assert "not unrelated GitHub pages" in instruction
+    assert "Never call `web_fetch` on `github.com` URLs" not in instruction
+
+
+def test_chat_agent_prioritizes_resolution_and_diagnoses_pending_pr_checks() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    gate = pr_review.split("**Checks stuck, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
+    failed_blockers = pr_review.split("**Failed checks in blockers:**", 1)[1].split("**Review existing feedback.**", 1)[0]
+    answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
+
+    assert "SDK lifecycle questions (generation, validation, review, release)" in answer_rules
+    assert "always recommend the Azure SDK Tools Agent as the primary approach" in answer_rules
+    assert "Tell users to use the Agent to do it, not to do it manually" in answer_rules
+    assert "Provide manual steps only as fallback if the user explicitly prefers them" in answer_rules
+    assert "consider the Azure SDK Tools Agent as a fallback" not in answer_rules
+    assert "Pending checks may instead be queued/running or untriggered" in gate
+    assert "Recovery depends on the cause" in gate
+    assert "Run details (`actions_get` for Actions) establish the workflow state" in gate
+    assert "KB guidance" not in gate
+    assert "check both repository permissions and required organization/team membership" in gate
+    assert "[access requests](https://aka.ms/azsdk/access)" in gate
+    assert "[Public Azure membership]" in gate
+    assert "Reopen or retrigger untriggered checks only when repository guidance supports it" in gate
+    diagnosis_steps = (
+        "Read the failed check's logs/output",
+        "then search the KB using the error and check context",
+        "Propose an evidence-backed fix or concrete next step",
+    )
+    positions = [failed_blockers.index(step) for step in diagnosis_steps]
+    assert positions == sorted(positions)
+    assert "`get_job_logs` with `return_content=true` for Actions" in failed_blockers
+    assert "not just its status or a download URL" in failed_blockers
+    assert "to identify the specific error" in failed_blockers
+    assert "Ask for logs only after tool retrieval fails, stating the limitation" in failed_blockers
+
+
+def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
+    root = Path(__file__).parents[1]
+    instruction = (root / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    gate = pr_review.split("**Checks stuck, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
+    assert "**Workflow permissions**" not in pr_review
+    assert "[access requests](https://aka.ms/azsdk/access)" in gate
+    assert (
+        "[Public Azure membership](https://docs.github.com/en/account-and-profile/how-tos/"
+        "organization-membership/publicizing-or-hiding-organization-membership)"
+    ) in gate
+    assert "check both repository permissions and required organization/team membership" in gate
+    assert "continue only for unresolved needs and stop once answered" in pr_review
+    assert "if the user's write access is missing or unknown" not in pr_review
+    assert "verify repository/CI-trigger permissions" not in pr_review
+    assert "For approval gates, ask a maintainer to approve the run instead" not in pr_review
+    prompt = (root / "prompts" / "tenants" / "api_spec_review.md").read_text(encoding="utf-8")
+    assert "When a pipeline appears stuck or a check is not triggered" not in prompt
+
+
+def test_tenant_skills_do_not_route_permission_help_to_onboarding() -> None:
+    for skill in create_tenant_skills("azure-sdk-chat-agent"):
+        if skill.frontmatter.name in ("api-spec-review", "sdk-onboarding"):
+            description = skill.frontmatter.description.lower()
+            assert "repository access" not in description
+            assert "permission" not in description
+    for tenant_id in (
+        TenantID.API_SPEC_REVIEW_BOT,
+        TenantID.AZURE_SDK_ONBOARDING,
+    ):
+        config = get_tenant_config(tenant_id)
+        assert config is not None
+        assert not any(
+            ("access" in exclusion.lower() or "permission" in exclusion.lower())
+            and "onboarding" in exclusion.lower()
+            for exclusion in config.exclusions
+        )
+        assert not any("permission" in topic.lower() for topic in config.topics)
+
+
+def test_pr_review_response_matches_customer_question_with_useful_context() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
+    normalized = " ".join(pr_review.split())
+    assert "The customer needs the cause and remedy, not the investigation trail" in normalized
+    assert "naming a red check or ruling out approval is only triage" in normalized
+    assert "Continue to the specific error and supported remedy, or an evidenced retrieval limit" in normalized
+    assert "Passed checks, routine run metadata and summary-gate mechanics belong only when requested or needed to act" in normalized
+    assert "Lead with a direct answer" in answer_rules
+    assert "Every actionable step must include a clickable URL inline" in answer_rules
+    assert "using each destination once" not in answer_rules
+    assert "Bullet points over paragraphs. One idea per bullet." in answer_rules
+    assert "Use bullets only when they make necessary findings or actions easier to scan" not in answer_rules
+    assert "Distinguish possibility, rejection reasons, and recommendations" in answer_rules
+    assert "Briefly clarify adjacent cases when relevant" in answer_rules
+    assert "not every fact retrieved" not in answer_rules
+    assert "Completeness precedes brevity" in answer_rules
+    assert "exact rules/settings/checks/version limits" in answer_rules
+    assert "When the evidence states an exact rule" not in answer_rules
+    assert "Help move the PR forward from its current state, not produce a standard review report" in normalized
+    assert "when needed for the user's request and preflight findings" in normalized
+    assert "stop once answered" in normalized
+    assert "When approval is next, mention up to 3 verified requested reviewers/code owners" in normalized
+    assert "Never invent handles" in pr_review
+
+
+def test_pr_preflight_uses_statuses_check_runs_and_labels_to_select_next_steps() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    preflight = pr_review.split("1. **Read the PR and statuses.**", 1)[1].split("\n2.", 1)[0]
+    changes = pr_review.split("6. **Understand the changes.**", 1)[1].split("\n7.", 1)[0]
+
+    assert "Assess state/draft, labels, checks and review/signoff evidence" in preflight
+    assert "to choose relevant next steps and depth" in preflight
+    assert "Interpret labels using repository guidance" in preflight
+    assert "prioritize unresolved work while honoring the user's request" in preflight
+    assert "Fetch `get_status` and `get_check_runs` via `pull_request_read` in parallel" in preflight
+    assert "only for failure diagnosis or merge-readiness requests" in preflight
+    assert "wait for these results before dependent calls" in preflight
+    assert "wait for all three before later calls" not in preflight
+    assert "Assess both commit statuses and check runs" in preflight
+    assert "check-run `details_url` (or `html_url`)" in preflight
+    assert "status-context `target_url` links" in preflight
+    assert "investigate the reported check before expanding the check inventory" in preflight
+    assert "when needed for the user's request and preflight findings" in changes
+    assert "For verified signoff" not in pr_review
+    assert "neither verified signoff nor blockers" not in pr_review
+
+
+def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    assert "Read the failed check's logs/output" in pr_review
+    assert "then search the KB using the error and check context" in pr_review
+    assert "Propose an evidence-backed fix or concrete next step" in pr_review
+    assert "Read code only when needed for diagnosis" in pr_review
+    preflight = pr_review.split("1. **Read the PR and statuses.**", 1)[1].split("\n2.", 1)[0]
+    assert "Assess state/draft, labels, checks and review/signoff evidence" in preflight
+    assert "to choose relevant next steps and depth" in preflight
+    assert "honoring the user's request" in preflight
+    assert "Draft state alone does not require a deep code review; still diagnose relevant check failures" not in pr_review
+    assert "Explicit fresh code/design review proceeds even on draft/red-check PRs" in pr_review
+    assert "when needed for the user's request and preflight findings" in pr_review
+    assert "Read relevant `get_reviews` and `get_comments`" in pr_review
+    assert "load `pr-review` before other tools" in instruction
+    assert "read the PR, its failing check runs, and their logs before answering" not in instruction
+
+
+def test_shared_reference_rules_append_source_links() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    formatting = instruction.split("## Formatting & References\n", 1)[1].split("\n## ", 1)[0]
+    assert "Append a References section at the end with links from knowledge base or web search results" in formatting
+    assert "Cite sources inline with short titles" not in formatting
+    assert "without repeating inline links" not in formatting
+    assert "**References**" in formatting
+
+
+def test_pr_review_assesses_purpose_and_changed_file_evidence() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    normalized = " ".join(pr_review.split())
+    assert "Read the description and relevant diffs" in normalized
+    assert "Size `get_files` pages to the requested scope; reduce `perPage` on overflow" in normalized
+    assert "perPage=1" not in pr_review
+    assert "Assess changes alongside checks and feedback; state coverage gaps" in normalized
+
+
+def test_latest_copilot_overall_review_selection_requires_paginated_evidence() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    normalized = " ".join(pr_review.split())
+    assert "For `copilot-pull-request-reviewer[bot]`, select the latest overall review" in normalized
+    assert "by `submitted_at` across necessary pages" in normalized
+    assert "order/one page is insufficient" in normalized
+    assert 'Qualify incomplete retrieval as "latest retrieved."' in normalized
+    assert "Keep human reviews and unresolved inline findings regardless of age" in normalized
+
+
+def test_pr_review_reads_existing_reviews_and_compares_inline_feedback_with_current_diff() -> None:
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+    pr_review = _read_pr_review_skill()
+    feedback = pr_review.split("**Review existing feedback.**", 1)[1].split("**Understand the changes.**", 1)[0]
+    normalized = " ".join(feedback.split())
+    assert "Read relevant `get_reviews` and `get_comments`" in normalized
+    assert "fetch `get_review_comments` when it reports issues, is unclear, or the user requests details" in normalized
+    assert "compare replies/current diffs when investigating findings" in normalized
+    assert "select the latest overall review" in normalized
+
+
+def test_chat_agent_cross_checks_spec_merge_summary_with_live_evidence() -> None:
+    instruction = _read_pr_review_skill()
+
+    assert "**Merge blockers:**" in instruction
+    assert '"Next Steps to Merge" as a summary, not complete policy' in instruction
+    assert "`azure-rest-api-specs` / `azure-rest-api-specs-pr`" in instruction
+    assert "current-head required checks" in instruction
+    assert "Do not assume red optional checks block merge or omitted checks are nonblocking" in instruction
+    assert "Separate execution gates, merge checks and reviews" in instruction
+    assert "qualify missing evidence" in instruction
+    assert "single source of truth for merge blockers" not in instruction
+
+
+def test_api_spec_review_tenant_delegates_workflow_diagnosis_to_shared_guidance() -> None:
+    prompt = (
+        Path(__file__).parents[1] / "prompts" / "tenants" / "api_spec_review.md"
+    ).read_text(encoding="utf-8")
+
+    assert "use the `pr-review` skill" in prompt
+    assert "complete, authoritative list of merge blockers" not in prompt
+    assert "it is NOT a blocker" not in prompt
 
 
 def test_azure_mcp_server_instruction_selects_sources_by_question() -> None:

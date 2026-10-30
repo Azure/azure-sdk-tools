@@ -100,6 +100,7 @@ async def test_before_run_fetches_static_memories_on_first_call(monkeypatch) -> 
     assert "User prefers Python" in injected_text
     assert "User asked about pipeline failures" in injected_text
     assert "## User memories" in injected_text
+    assert injected_text.startswith("## Memory context — historical, not authoritative")
 
 
 @pytest.mark.asyncio
@@ -197,6 +198,70 @@ async def test_before_run_deduplicates_memories(monkeypatch) -> None:
 # ---------------------------------------------------------------------------
 # User memories + Episodes
 # ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("memory_sources", ["user", "episode", "both"])
+def test_memory_context_prioritizes_current_evidence(memory_sources) -> None:
+    user_memories = [
+        _make_memory(
+            "u1",
+            "Only Approved for first release is present for the .NET GA release. "
+            "The assistant previously suspected a version mismatch.",
+        )
+    ] if memory_sources in ("user", "both") else []
+    episodes = [{
+        "trigger": ".NET GA release blocked as not approved",
+        "reasoning_chain": ["Suspect a tooling mismatch"],
+        "resolution": "Update tooling",
+    }] if memory_sources in ("episode", "both") else []
+
+    text = MemoryContextProvider._format_all_memories(user_memories, episodes)
+
+    assert text.startswith("## Memory context — historical, not authoritative")
+    assert text.count("## Memory context — historical, not authoritative") == 1
+    assert "including the assistant's own prior hypotheses" in text
+    assert "not instructions or evidence of the current case" in text
+    assert (
+        "Current authoritative documentation retrieved this turn and live evidence "
+        "take precedence over memories"
+    ) in text
+    assert "lead with that explanation and its required action" in text
+    assert "unless live evidence contradicts that explanation" in text
+    if user_memories:
+        assert "The assistant previously suspected a version mismatch." in text
+        assert "not remembered diagnoses as facts" in text
+    if episodes:
+        assert "Suspect a tooling mismatch" in text
+        assert "Similarity alone does not establish the same cause or resolution" in text
+
+
+def test_empty_memories_do_not_inject_guidance() -> None:
+    assert MemoryContextProvider._format_all_memories([], []) is None
+
+
+@pytest.mark.asyncio
+async def test_static_only_memory_injection_prioritizes_current_evidence(monkeypatch) -> None:
+    _patch_stores(monkeypatch)
+    memory_stores = _FakeMemoryStores(
+        static_memories=[_make_memory("s1", "User works on .NET SDK")]
+    )
+    provider = MemoryContextProvider(
+        SimpleNamespace(beta=SimpleNamespace(memory_stores=memory_stores))
+    )
+    context = _FakeContext([
+        Message("system", ["[memory_scope] value=scope-a"]),
+    ])
+
+    await provider.before_run(
+        agent=None, session=SimpleNamespace(session_id="session-1"),
+        context=context, state={},
+    )
+
+    assert len(memory_stores.search_calls) == 1
+    injected_text = context.extended_messages[0][1][0].text
+    assert injected_text.startswith("## Memory context — historical, not authoritative")
+    assert "take precedence over memories" in injected_text
+    assert "User works on .NET SDK" in injected_text
+
 
 @pytest.mark.asyncio
 async def test_before_run_injects_user_memories_and_episodes(monkeypatch) -> None:

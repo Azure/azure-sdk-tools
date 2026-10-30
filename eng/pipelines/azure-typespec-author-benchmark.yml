@@ -87,7 +87,7 @@ extends:
           - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
             parameters:
               matrixStageName: PrepareForced
-              artifactNamespace: forced
+              artifactPrefix: forced-
               preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
@@ -112,7 +112,7 @@ extends:
             parameters:
               matrixStageName: PrepareForced
               evalStageName: EvalForced
-              artifactNamespace: forced
+              artifactPrefix: forced-
               failOnFailedTests: false
 
       - stage: PrepareTrigger
@@ -141,7 +141,7 @@ extends:
           - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
             parameters:
               matrixStageName: PrepareTrigger
-              artifactNamespace: trigger
+              artifactPrefix: trigger-
               preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
@@ -166,5 +166,5 @@ extends:
             parameters:
               matrixStageName: PrepareTrigger
               evalStageName: EvalTrigger
-              artifactNamespace: trigger
+              artifactPrefix: trigger-
               failOnFailedTests: false

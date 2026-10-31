@@ -70,15 +70,6 @@ infra:
     provider: bicep
     layers:
         - provider: bicep
-          path: deployment/infra/layers/resource-group
-          name: resource-group
-          hooks:
-            preprovision:
-                shell: sh
-                dir: ../../..
-                run: ./node_modules/.bin/tsx hooks/preprovision.ts
-                interactive: true
-        - provider: bicep
           path: deployment/infra/layers/shared-resources
           name: shared-resources
           hooks:
@@ -90,10 +81,8 @@ infra:
             preprovision:
                 shell: sh
                 dir: ../../..
-                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
+                run: ./node_modules/.bin/tsx hooks/preprovision.ts
                 interactive: true
-          dependsOn:
-            - resource-group
         - provider: bicep
           path: deployment/infra/layers/agent
           name: agent
@@ -109,7 +98,6 @@ infra:
                 run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
                 interactive: true
           dependsOn:
-            - resource-group
             - shared-resources
         - provider: bicep
           path: deployment/infra/layers/frontend
@@ -126,7 +114,6 @@ infra:
                 run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
                 interactive: true
           dependsOn:
-            - resource-group
             - shared-resources
         - provider: bicep
           path: deployment/infra/layers/agent-server

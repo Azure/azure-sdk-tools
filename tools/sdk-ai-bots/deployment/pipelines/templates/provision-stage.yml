@@ -13,7 +13,7 @@
 #       parameters:
 #         environment: preview
 #         layer: frontend
-#         dependencyLayers: resource-group,shared-resources
+#         dependencyLayers: shared-resources
 #         runValidateAndPreview: true
 #         runProvision: false
 

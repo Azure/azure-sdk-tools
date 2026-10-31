@@ -20,7 +20,6 @@ import {
 } from "./lib/cli.js";
 
 export const PROVISION_LAYERS = [
-  "resource-group",
   "shared-resources",
   "agent",
   "frontend",

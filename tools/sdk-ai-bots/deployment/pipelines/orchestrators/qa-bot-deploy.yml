@@ -47,8 +47,6 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
                     parameters:
                         layer: shared-resources
-                        dependencyLayers: resource-group
-                        provisionResourceGroup: true
                         environment: ${{ parameters.environment }}
                         operation: preview
                         stageName: PreflightLayer
@@ -58,12 +56,10 @@ extends:
                         stageName: ApproveLayer
                         dependsOn: PreflightLayer
                         preflightJobName: AzdProvisionLayer
-                        scope: resource-group and shared-resources layers
+                        scope: shared-resources layer
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
                     parameters:
                         layer: shared-resources
-                        dependencyLayers: resource-group
-                        provisionResourceGroup: true
                         environment: ${{ parameters.environment }}
                         operation: apply
                         stageName: ProvisionLayer
@@ -73,7 +69,7 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
                     parameters:
                         component: agent-server
-                        dependencyLayers: resource-group,shared-resources,agent,frontend
+                        dependencyLayers: shared-resources,agent,frontend
                         environment: ${{ parameters.environment }}
                         imageTag: ${{ parameters.imageTag }}
 
@@ -81,7 +77,7 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
                     parameters:
                         component: agent
-                        dependencyLayers: resource-group,shared-resources
+                        dependencyLayers: shared-resources
                         environment: ${{ parameters.environment }}
                         imageTag: ${{ parameters.imageTag }}
 
@@ -89,7 +85,7 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
                     parameters:
                         component: frontend
-                        dependencyLayers: resource-group,shared-resources
+                        dependencyLayers: shared-resources
                         environment: ${{ parameters.environment }}
                         imageTag: ${{ parameters.imageTag }}
 
@@ -97,7 +93,7 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
                     parameters:
                         layer: logic-app
-                        dependencyLayers: resource-group,shared-resources,frontend,agent-server
+                        dependencyLayers: shared-resources,frontend,agent-server
                         environment: ${{ parameters.environment }}
                         operation: preview
                         stageName: PreflightLayer
@@ -111,7 +107,7 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
                     parameters:
                         layer: logic-app
-                        dependencyLayers: resource-group,shared-resources,frontend,agent-server
+                        dependencyLayers: shared-resources,frontend,agent-server
                         environment: ${{ parameters.environment }}
                         operation: apply
                         stageName: ProvisionLayer

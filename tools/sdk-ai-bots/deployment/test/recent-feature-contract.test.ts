@@ -216,7 +216,7 @@ test("selects environment service connections at template expansion time", () =>
   ]);
 });
 
-test("permits qa-bot-dev for backend readiness while preserving existing callers", () => {
+test("configures qa-bot-dev backend authentication during pipeline provisioning", () => {
   const suite = parse(read("infra/environments/environment-suite.yaml"));
   const backend = read("infra/layers/agent-server/main.bicep");
   const adapter = read("infra/layers/agent-server/main.bicepparam");
@@ -228,6 +228,7 @@ test("permits qa-bot-dev for backend readiness while preserving existing callers
   assert.equal(suite.environments.preview.bicepOverrides.AGENT_SERVER_ALLOWED_CLIENT_IDS, undefined);
   assert.match(backend, /allowedApplications: union\(\[[\s\S]*?managedIdentityClientId[\s\S]*?frontendIdentityClientId[\s\S]*?azureCliClientId[\s\S]*?\], allowedCallerApplicationIds\)/);
   assert.match(adapter, /json\(readEnvironmentVariable\('AGENT_SERVER_ALLOWED_CLIENT_IDS', '\[\]'\)\)/);
+  assert.doesNotMatch(read("scripts/qa-bot-dev-bootstrap.sh"), /authsettingsV2|allowedApplications/);
 });
 
 test("reports the selected image version before each azd deployment", () => {
@@ -292,8 +293,30 @@ test("runs hooks with the package-local TypeScript runtime", () => {
   assert.doesNotMatch(project, /npx(?: --yes)? tsx/);
   assert.equal(
     (project.match(/\.\/node_modules\/\.bin\/tsx/g) ?? []).length,
-    14,
+    13,
   );
+});
+
+test("requires existing resource groups and deploys only resource-group-scoped layers", () => {
+  const project = parse(read("../azure.yaml"));
+  const names = ["shared-resources", "agent", "frontend", "agent-server", "logic-app"];
+  assert.deepEqual(project.infra.layers.map((layer: { name: string }) => layer.name), names);
+  assert.match(project.infra.layers[0].hooks.preprovision.run, /hooks\/preprovision\.ts/);
+  for (const layer of project.infra.layers) {
+    assert.ok((layer.dependsOn ?? []).every((name: string) => names.includes(name)));
+    assert.match(read(`infra/layers/${layer.name}/main.bicep`), /targetScope = 'resourceGroup'/);
+  }
+  assert.equal(existsSync(resolve(deploymentRoot, "infra/layers/resource-group/main.bicep")), false);
+  const pipeline = read("pipelines/templates/azd-provision.yml");
+  const orchestrator = read("pipelines/orchestrators/qa-bot-deploy.yml");
+  const singleLayer = read("pipelines/templates/layer-provision-stage.yml");
+  assert.doesNotMatch(`${pipeline}\n${orchestrator}\n${singleLayer}`, /resource-group|provisionResourceGroup/);
+  const guard = pipeline.indexOf("./node_modules/.bin/tsx hooks/layer-preprovision.ts");
+  assert.notEqual(guard, -1);
+  assert.ok(guard < pipeline.indexOf("azd env select"));
+  assert.ok(guard < pipeline.indexOf('azd provision "$TARGET_LAYER"'));
+  const bootstrap = read("scripts/qa-bot-dev-bootstrap.sh");
+  assert.doesNotMatch(bootstrap, /QA Bot Subscription Deployment|role definition|Microsoft\.Resources\/deployments\/\*|resourceGroups\/write/);
 });
 
 test("builds frontend TypeScript inside the native container context", () => {

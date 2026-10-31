@@ -47,6 +47,8 @@ other knowledge-sync schedule writes to the same environment concurrently.
 7. Before the first dev/prod WebJob deployment, disable and drain the prior
    Azure DevOps knowledge-sync schedule and confirm the deployment pipeline can
    use the `EMU-SSH-PRIVATE-KEY` secure file.
+8. Verify that the selected resource group already exists and is readable by
+   the deployment identity. The pipeline will not create it.
 
 ## 3. Preview, Approve, and Apply
 

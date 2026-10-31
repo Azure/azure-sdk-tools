@@ -31,6 +31,10 @@ Choose the subscription, tenant, resource-group name, and locations for each of
 `dev`, `preview`, and `prod`. Environments may share a subscription, but they
 must have isolated resource groups and globally unique resource names.
 
+The selected resource group must already exist and be readable by the
+deployment identity. Resource-group creation and management are outside this
+pipeline; all five infrastructure layers deploy into that existing group.
+
 Review the model names, versions, SKUs, and capacities in the agent Bicep layer
 and the selected environment's `bicepOverrides`. Use the environment-specific
 capacities, not only the layer defaults, when checking availability and quota
@@ -104,17 +108,15 @@ and runtime identities automatically, reusing existing grants.
 | --- | --- | --- |
 | Create/update infrastructure | Target resource group | Contributor |
 | Read/create role assignments and manage locks | Target resource group and any external grant scopes | User Access Administrator, or RBAC Administrator plus required lock-write permission |
-| Run subscription deployments and create a resource group when needed | Subscription | Approved narrowly scoped deployment/resource-group permissions |
 | Read usage and discover shared resources | Subscription | Reader or equivalent existing read access |
 
 No subscription-wide Owner grant is required. Contributor alone cannot create
 Azure role assignments. A reused backend/runtime identity should not be given
 broad authorization-management authority without an explicit security decision.
 
-For a new environment, resource-group creation requires subscription-scope
-permission during bootstrap. After the resource group exists, narrow the
-connection to the target scope where organizational policy permits. Role
-assignment creation requires `Microsoft.Authorization/roleAssignments/write`,
+Resource deployments and role grants target the existing resource group.
+Subscription-level deployment or resource-group creation permission is not
+required. Role assignment creation requires `Microsoft.Authorization/roleAssignments/write`,
 typically supplied by User Access Administrator or Role Based Access Control
 Administrator at the assignment scope.
 
@@ -137,15 +139,17 @@ bash scripts/qa-bot-dev-bootstrap.sh
 ```
 
 The script is specific to the dev subscription, resource group, principal, and
-pipeline 8265. It reuses existing role assignments and the named custom role,
-creates missing bootstrap grants, authorizes that pipeline, and updates the
-backend allowlist while preserving its existing callers. Review the existing
-custom role definition if it was created previously.
+pipeline 8265. It reuses existing role assignments, creates missing scoped
+RBAC/lock-management and subscription-read grants, and authorizes that pipeline.
+It does not create custom roles, grant subscription-level deployment permission,
+or read or update backend configuration.
 
-This script performs writes. Run it during an approved change window because
-backend authentication updates can restart the app. It does not deploy the
-chatbot or configure production, preview, external signing-key policies, Teams
-consent, feeds, or secure-file access.
+Backend authentication is configured during the pipeline's `agent-server`
+infrastructure provisioning, before backend readiness checks.
+
+This script performs permission writes and requires administrator approval. It
+does not deploy the chatbot or configure production, preview, external
+signing-key policies, Teams consent, feeds, or secure-file access.
 
 ## 6. Register the Pipeline Definitions
 
@@ -176,8 +180,9 @@ package-owned definitions listed in the [deploy runbook](https://github.com/Azur
 ## 7. Bootstrap Dev Layer State
 
 The normal full-stack preflight refreshes existing layer state. Bootstrap a new
-dev environment once from an authorized workstation. Before creating a preview
-or production environment, provide an approved first-state bootstrap pipeline;
+dev environment in an existing resource group once from an authorized
+workstation. Before initializing a preview or production environment, provide
+an approved first-state bootstrap pipeline;
 those environments disable local provision and deploy through
 `localDeployAllowed`.
 
@@ -195,7 +200,8 @@ npm run validate-env-suite -- --environment dev
 azd provision --environment dev --no-prompt
 ```
 
-Provisioning creates the six-layer resource graph. The final postprovision
+Provisioning creates the five-layer resource graph inside the existing group.
+The final postprovision
 hook also:
 
 - uploads source-controlled bot routing;

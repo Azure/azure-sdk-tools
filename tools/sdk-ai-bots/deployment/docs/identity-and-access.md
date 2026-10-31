@@ -61,8 +61,10 @@ identities have the provisioning and runtime-role assignment permissions below.
 
 Dev also declares the `qa-bot-dev` client application ID in
 `AGENT_SERVER_ALLOWED_CLIENT_IDS` so backend readiness requests are accepted by
-Easy Auth. This extends the backend caller allowlist without replacing the
-runtime, frontend, or Azure CLI callers. Preview and production do not add this
+Easy Auth. The `agent-server` Bicep layer applies this configuration during
+pipeline provisioning, before backend readiness checks, while retaining the
+runtime, frontend, and Azure CLI callers. The administrator bootstrap does not
+read or update backend authentication. Preview and production do not add this
 dev caller.
 
 [`azd-auth.yml`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml) authenticates `az` and

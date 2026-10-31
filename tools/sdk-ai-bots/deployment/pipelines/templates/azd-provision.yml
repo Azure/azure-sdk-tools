@@ -46,6 +46,7 @@ steps:
           inlineScript: |
               set -euo pipefail
               export npm_config_userconfig="$(resolvedNpmrcPath)"
+              ./node_modules/.bin/tsx hooks/layer-preprovision.ts
               if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
                 azd env new "$AZURE_ENV_NAME" \
                   --location "$AZURE_LOCATION" \
@@ -166,7 +167,7 @@ steps:
               fi
 
               export AZD_PROVISION_PREVIEW=true
-              LAYERS=(resource-group shared-resources agent frontend agent-server logic-app)
+              LAYERS=(shared-resources agent frontend agent-server logic-app)
               RISKY_OPERATIONS=""
               for LAYER in "${LAYERS[@]}"; do
                 echo "Previewing provisioning layer: $LAYER"

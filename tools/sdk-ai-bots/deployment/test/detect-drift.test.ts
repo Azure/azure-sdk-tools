@@ -5,6 +5,9 @@ import { PROVISION_LAYERS, detectDrift } from "../scripts/detect-drift.js";
 import type { CommandRunner } from "../scripts/lib/cli.js";
 
 test("previews every layer in dependency order", () => {
+  assert.deepEqual(PROVISION_LAYERS, [
+    "shared-resources", "agent", "frontend", "agent-server", "logic-app",
+  ]);
   const calls: Array<{ command: string; args: readonly string[]; previewMode?: string }> = [];
   const run: CommandRunner = (command, args, options) => {
     calls.push({

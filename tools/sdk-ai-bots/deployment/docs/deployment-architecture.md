@@ -36,7 +36,7 @@ Vault. The deployment references that vault but does not provision it.
 
 ```mermaid
 graph TD
-    RG[resource-group] --> SHARED[shared-resources]
+    RG[Existing resource group] --> SHARED[shared-resources]
     SHARED --> AGENT[agent platform]
     SHARED --> FRONTEND[frontend identity and App Service]
     SHARED --> SERVER[agent-server]
@@ -47,14 +47,15 @@ graph TD
     SERVER --> LOGIC
 ```
 
-The six Bicep layers are listed in `azure.yaml` in this order:
+The resource group is an external prerequisite, not a provisioning layer. All
+five Bicep entry points use resource-group scope and are listed in `azure.yaml`
+in this order:
 
-1. `resource-group`
-2. `shared-resources`
-3. `agent`
-4. `frontend`
-5. `agent-server`
-6. `logic-app`
+1. `shared-resources`
+2. `agent`
+3. `frontend`
+4. `agent-server`
+5. `logic-app`
 
 `dependsOn` is authoritative. `agent` and `frontend` can be provisioned after
 shared resources; `agent-server` waits for both; and `logic-app` is last because

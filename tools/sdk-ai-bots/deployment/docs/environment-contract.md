@@ -23,6 +23,10 @@ Azure DevOps requires service connections during template expansion, so
 connection's target subscription synchronized with the corresponding
 `subscriptionId` here.
 
+The configured `resourceGroupPrefix` identifies an existing resource group.
+Provisioning checks that group and deploys only resource-group-scoped
+templates; no subscription deployment or resource-group creation layer runs.
+
 ## Schema
 
 ```yaml

@@ -151,17 +151,17 @@ those hooks mutate Azure data-plane state.
 
 The registered provision hooks are:
 
-- **`resource-group` preprovision: `preprovision.ts`.** Checks required tools,
+- **Shared preprovision: `preprovision.ts`.** Checks required tools,
    validates the environment-suite name, detects local azd environment drift,
-   enforces `localDeployAllowed`, checks quota, and records the active deployment
+   enforces `localDeployAllowed`, verifies the resource group already exists,
+   checks quota, and records the active deployment
    principal. Bicep cannot inspect local tools, compare local azd
    state with repository configuration, query quota safely, or derive the
    caller identity from the current Azure CLI token.
-- **Shared, agent, frontend, and agent-server preprovision:
-   `layer-preprovision.ts`.** Enforces the selected environment's local
-   operation policy immediately before each layer apply. The repeated layer
-   registration also protects a targeted `azd provision <layer>` that does not
-   execute `resource-group`.
+- **Agent, frontend, and agent-server preprovision:
+   `layer-preprovision.ts`.** Enforces the local-operation policy and checks the
+   existing resource group before a targeted layer apply. The pipeline also
+   runs this guard before initializing its local azd environment.
 - **Shared postprovision: `shared-postprovision.ts`.** Reconciles the shared
    runtime, Search, deployment, and optional developer resource roles, including
    Cosmos data access. Existing grants are reused; missing roles are created.

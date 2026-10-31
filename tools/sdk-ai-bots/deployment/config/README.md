@@ -39,6 +39,7 @@ uploading an invalid configuration.
 ## Adding a new env
 
 1. Add the environment to `infra/environments/environment-suite.yaml`.
+    Its resource group must already exist; provisioning will not create it.
 2. Create `config/<env>/channel.yaml` and `tenant.yaml` from an existing
     environment.
 3. Keep `${SERVER_BASE_URL}` in `channel.yaml`; do not copy another

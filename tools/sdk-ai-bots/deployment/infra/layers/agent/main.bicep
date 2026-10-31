@@ -3,12 +3,6 @@ targetScope = 'resourceGroup'
 @description('Azure region for the Cognitive Services / Foundry account, its model deployments, and backing Application Insights. May differ from the primary `location` because model availability is region-specific (prod uses swedencentral).')
 param location string
 
-@description('Principal (object) ID of the qabot-identity managed identity to grant OpenAI access.')
-param managedIdentityPrincipalId string
-
-@description('Principal (object) ID of the Search service system-assigned identity.')
-param searchServicePrincipalId string
-
 @description('Name of the shared storage account connected to the Foundry project.')
 param storageAccountName string
 
@@ -32,24 +26,6 @@ param restoreAiResource bool = false
 
 @description('Name of the Foundry project inside the AIServices account.')
 param aiProjectNameOverride string = ''
-
-@description('Name of the shared container registry the hosted agent pulls its image from. The Foundry project managed identity is granted AcrPull on it.')
-param containerRegistryName string
-
-@description('Object ID of the developer principal (user, group, or SP) to grant OpenAI access. Empty = skip.')
-param developerGroupObjectId string = ''
-
-@description('Principal type for the developer role assignment: User, Group, or ServicePrincipal.')
-param developerPrincipalType string = 'User'
-
-@description('Object ID of the principal executing deployment and scheduled data pipelines.')
-param deploymentPrincipalObjectId string = ''
-
-@description('Principal type for deployment automation: User, Group, or ServicePrincipal.')
-param deploymentPrincipalType string = 'ServicePrincipal'
-
-@description('Whether this deployment manages Azure RBAC assignments. Disable only when an existing environment has equivalent assignments managed outside this deployment.')
-param manageAuthorizationResources bool = true
 
 @description('User-assigned identities attached to the AI Services account, keyed by full resource ID.')
 param aiResourceUserAssignedIdentities object = {}
@@ -327,132 +303,7 @@ resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/co
   }
 }
 
-// Cognitive Services OpenAI User grant for qabot-identity, scoped to the AI
-// account created above so the backend can call the model deployments via MSI.
-resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  scope: account
-  name: guid(account.id, managedIdentityPrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
-    principalId: managedIdentityPrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Search uses its system-assigned identity for integrated vectorization and
-// knowledge-base model calls.
-resource searchCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  scope: account
-  name: guid(account.id, searchServicePrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')
-    principalId: searchServicePrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Search also needs OpenAI data-plane access to call embedding deployments when
-// local authentication is disabled on the AI Services account.
-resource searchOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  scope: account
-  name: guid(account.id, searchServicePrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
-    principalId: searchServicePrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// NOTE: the "Azure AI User" (Foundry User, 53ca6127-db72-4b80-b1b0-d745d6d5456d)
-// grant for qabot-identity on this AI account is NOT declared here. It is created
-// idempotently (create-if-not-exists) by the agent layer's postprovision hook
-// (hooks/agent-postprovision.ts).
-// A native bicep roleAssignments resource uses a deterministic name and fails
-// the whole deployment with RoleAssignmentExists if the same (principal, role,
-// scope) already exists under a different name — e.g. one created out-of-band via
-// `az role assignment create` in the lock-protected dev RG, which cannot be
-// deleted. The hook tolerates that case and still creates the grant on fresh
-// environments. qabot-identity needs this role because the agent server
-// (server.py) reads the hosted Foundry agent via `project_client.agents.get(...)`,
-// which requires the data action
-// `Microsoft.CognitiveServices/accounts/AIServices/agents/read` that
-// "Cognitive Services OpenAI User" (assigned above) does not cover.
-
-// AzureSDKChatBot_Developer Entra group object ID.
-// Passed as a parameter; empty means no developer role assignment.
-// var developerGroupObjectId = '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'  ← moved to param above
-
-// Cognitive Services OpenAI User grant for the developer principal.
-resource developerOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
-  scope: account
-  name: guid(account.id, developerGroupObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
-    principalId: developerGroupObjectId
-    principalType: developerPrincipalType
-  }
-}
-
-// Foundry Project Manager grant for the developer principal on the AI account.
-// This is the role that authorizes hosted-agent management: it includes the
-// `Microsoft.CognitiveServices/*` action set (covering
-// `accounts/AIServices/agents/write`) that `azd deploy agent` — via the
-// azure.ai.agents extension — needs to create hosted agent versions through the
-// Foundry REST API. It supersedes both "Azure AI Developer" (which lacks the
-// AIServices/agents action) and "Cognitive Services Contributor" (whose
-// CognitiveServices/* wildcard this role already includes), so neither of those
-// is assigned here.
-resource developerFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
-  scope: account
-  name: guid(account.id, developerGroupObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e')
-    principalId: developerGroupObjectId
-    principalType: developerPrincipalType
-  }
-}
-
-var hasDistinctDeploymentPrincipal = !empty(deploymentPrincipalObjectId) && deploymentPrincipalObjectId != developerGroupObjectId
-
-resource deploymentOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
-  scope: account
-  name: guid(account.id, deploymentPrincipalObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
-    principalId: deploymentPrincipalObjectId
-    principalType: deploymentPrincipalType
-  }
-}
-
-resource deploymentFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
-  scope: account
-  name: guid(account.id, deploymentPrincipalObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e')
-    principalId: deploymentPrincipalObjectId
-    principalType: deploymentPrincipalType
-  }
-}
-
-// The hosted agent pulls its image from the shared container registry using the
-// Foundry project's system-assigned managed identity (confirmed as the image-
-// pull principal by the Foundry hosted-agent docs and the azd agent extension's
-// own bicep templates). Without AcrPull on the registry, `azd deploy agent`
-// fails with `[ImageError] Container registry rejected the image pull (HTTP 403
-// Forbidden)`.
-resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' existing = {
-  name: containerRegistryName
-}
-
-resource projectAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  scope: registry
-  name: guid(registry.id, project.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
-    principalId: project.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// Runtime and deployment roles are reconciled by the layer postprovision hook.
 
 // Output
 @description('Azure AI Services (Cognitive Services) account name.')
@@ -463,6 +314,9 @@ output AI_PROJECT_NAME string = project.name
 
 @description('Full ARM resource ID of the Azure AI Foundry project required by the azd agent extension.')
 output AZURE_AI_PROJECT_ID string = project.id
+
+@description('Principal ID of the Foundry project identity that pulls hosted-agent images.')
+output FOUNDRY_PROJECT_PRINCIPAL_ID string = project.identity.principalId
 
 @description('Azure AI Foundry project REST API endpoint.')
 output FOUNDRY_PROJECT_ENDPOINT string = 'https://${account.name}.services.ai.azure.com/api/projects/${project.name}'

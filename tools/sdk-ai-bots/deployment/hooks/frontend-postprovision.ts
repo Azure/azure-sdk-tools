@@ -1,5 +1,6 @@
 import { getEnvSuiteValue } from "./lib/env-suite.js";
 import { syncTeamsEnv } from "./lib/sync-teams-env.js";
+import { reconcileResourceRoles } from "./lib/resource-roles.js";
 
 const environmentName = process.env.AZURE_ENV_NAME ?? "";
 
@@ -8,6 +9,7 @@ function log(message: string): void {
 }
 
 try {
+  reconcileResourceRoles("frontend", process.env, undefined, log);
   syncTeamsEnv({
     azdEnvName: environmentName,
     env: process.env,

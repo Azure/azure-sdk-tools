@@ -96,13 +96,20 @@ for each environment. Define its name in
 `pipelines/templates/service-connection.yml` and ensure it targets the
 environment suite's `subscriptionId`.
 
-The provisioning identity must be able to:
+Bootstrap only the provisioning identity's authority to manage resources and
+assign access. The pipeline reconciles required resource data roles for itself
+and runtime identities automatically, reusing existing grants.
 
-- create the target resource group for a new environment;
-- create and update the resources declared by all six Bicep layers;
-- create role assignments for workload and deployment identities;
-- read/write the required App Configuration, Storage, Search, ACR,
-  Cosmos DB, and AI Services control/data planes.
+| Bootstrap requirement | Scope | Typical grant |
+| --- | --- | --- |
+| Create/update infrastructure | Target resource group | Contributor |
+| Read/create role assignments and manage locks | Target resource group and any external grant scopes | User Access Administrator, or RBAC Administrator plus required lock-write permission |
+| Run subscription deployments and create a resource group when needed | Subscription | Approved narrowly scoped deployment/resource-group permissions |
+| Read usage and discover shared resources | Subscription | Reader or equivalent existing read access |
+
+No subscription-wide Owner grant is required. Contributor alone cannot create
+Azure role assignments. A reused backend/runtime identity should not be given
+broad authorization-management authority without an explicit security decision.
 
 For a new environment, resource-group creation requires subscription-scope
 permission during bootstrap. After the resource group exists, narrow the
@@ -117,6 +124,28 @@ also include their own preview-to-apply manual gate.
 
 The production evolution and feedback workflows also need the configured
 candidate service connection.
+
+### Bootstrap the dev deployment identity
+
+For the existing `qa-bot-dev` connection, review
+[`qa-bot-dev-bootstrap.sh`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/scripts/qa-bot-dev-bootstrap.sh)
+and run it from an authorized administrator's Azure CLI session:
+
+```bash
+cd tools/sdk-ai-bots/deployment
+bash scripts/qa-bot-dev-bootstrap.sh
+```
+
+The script is specific to the dev subscription, resource group, principal, and
+pipeline 8265. It reuses existing role assignments and the named custom role,
+creates missing bootstrap grants, authorizes that pipeline, and updates the
+backend allowlist while preserving its existing callers. Review the existing
+custom role definition if it was created previously.
+
+This script performs writes. Run it during an approved change window because
+backend authentication updates can restart the app. It does not deploy the
+chatbot or configure production, preview, external signing-key policies, Teams
+consent, feeds, or secure-file access.
 
 ## 6. Register the Pipeline Definitions
 

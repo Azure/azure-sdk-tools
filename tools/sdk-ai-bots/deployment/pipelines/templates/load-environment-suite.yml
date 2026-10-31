@@ -21,7 +21,7 @@
 #   FRONTEND_HEALTH_PATH, AGENT_SERVER_HEALTH_PATH,
 #   *_IMAGE_REPOSITORY, TEAMS_GROUP_ID, TEAMS_CHANNEL_IDS,
 #   AZURE_MCP_TEAMS_GROUP_ID, AZURE_MCP_TEAMS_CHANNEL_IDS, bicepOverrides,
-#   CHATBOT_EVOLUTION_AGENT_ENABLED, MANAGE_AUTHORIZATION_RESOURCES
+#   CHATBOT_EVOLUTION_AGENT_ENABLED
 #
 # Existing non-empty Azure DevOps variables take precedence over values read
 # from the suite. This lets a pipeline definition or queue-time variable select
@@ -132,7 +132,6 @@ steps:
           export_var AZURE_AI_LOCATION              ".environments.${ENV}.aiLocation"
           export_var COSMOS_DB_LOCATION             ".environments.${ENV}.cosmosDbLocation"
           export_var CHATBOT_EVOLUTION_AGENT_ENABLED ".environments.${ENV}.chatbotEvolutionAgentEnabled"
-          export_var MANAGE_AUTHORIZATION_RESOURCES ".environments.${ENV}.manageAuthorizationResources"
           export_var CONTAINER_REGISTRY_NAME        ".environments.${ENV}.containerRegistryName" CONTAINER_REGISTRY_NAME_OVERRIDE
           export_var CONTAINER_REGISTRY_NAME_OVERRIDE ".environments.${ENV}.containerRegistryName" CONTAINER_REGISTRY_NAME
           export_var APP_CONFIG_NAME                ".environments.${ENV}.appConfigName" APP_CONFIG_NAME_OVERRIDE

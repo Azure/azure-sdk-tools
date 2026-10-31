@@ -39,9 +39,6 @@ param frontendHealthCheckAlertNameOverride string = ''
 @description('Name of the delete lock guarding the frontend resource group.')
 param frontendDeleteLockNameOverride string = ''
 
-@description('Whether this deployment manages Azure RBAC assignments and resource locks. Disable only when an existing environment has equivalent resources managed outside this deployment.')
-param manageAuthorizationResources bool = true
-
 @description('Azure Table Storage table name that stores per-conversation Bot Framework state. Read by the frontend at startup — MUST be non-empty or the container crashes on `ConversationHandler` initialization (Table Storage returns 400 InvalidInput for empty names).')
 param azureTableNameForConversation string
 
@@ -109,18 +106,6 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-var monitoringMetricsPublisherRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
-
-resource monitoringMetricsPublisherRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  scope: component
-  name: guid(component.id, userAssignedIdentity.id, monitoringMetricsPublisherRoleDefinitionId)
-  properties: {
-    roleDefinitionId: monitoringMetricsPublisherRoleDefinitionId
-    principalId: userAssignedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
   name: frontendEmailActionGroupName
   location: 'Global'
@@ -154,18 +139,6 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
 
 resource sharedRegistry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' existing = {
   name: containerRegistryName
-}
-
-var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
-
-resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
-  scope: sharedRegistry
-  name: guid(sharedRegistry.id, userAssignedIdentity.id, acrPullRoleDefinitionId)
-  properties: {
-    roleDefinitionId: acrPullRoleDefinitionId
-    principalId: userAssignedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
 }
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
@@ -452,7 +425,7 @@ resource metricAlert2 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
   }
 }
 
-resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (manageAuthorizationResources) {
+resource lock 'Microsoft.Authorization/locks@2020-05-01' = {
   name: frontendDeleteLockName
   properties: {
     level: 'CanNotDelete'
@@ -460,27 +433,10 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (manageAuthorizati
   }
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
-  name: storageAccountName
-}
-
-var storageRoleDefinitionIds = [
-  subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-  subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
-]
-
-resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for roleDefinitionId in storageRoleDefinitionIds: if (manageAuthorizationResources) {
-  scope: storageAccount
-  name: guid(storageAccount.id, userAssignedIdentity.id, roleDefinitionId)
-  properties: {
-    roleDefinitionId: roleDefinitionId
-    principalId: userAssignedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}]
-
 // Outputs
 output BOT_ID string = userAssignedIdentity.properties.clientId
+output FRONTEND_IDENTITY_PRINCIPAL_ID string = userAssignedIdentity.properties.principalId
+output FRONTEND_APPLICATIONINSIGHTS_RESOURCE_ID string = component.id
 // Consumed by hooks/lib/sync-teams-env.ts to populate the Teams Toolkit env
 // file (azure-sdk-qa-bot/env/.env.<env>) so `teamsapp` no longer needs its own
 // arm/deploy step — azd owns provisioning and feeds these values to Teams.

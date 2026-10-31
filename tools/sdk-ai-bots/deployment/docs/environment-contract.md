@@ -11,7 +11,6 @@ declared:
 - resource group prefix
 - deployment location
 - whether local provision and deploy operations are allowed
-- whether Bicep manages privileged authorization resources
 - whether the chatbot evolution workflow is enabled
 - candidate environment used by the production evolution workflow
 - Teams group ID and channel IDs
@@ -49,7 +48,6 @@ environments:
         teamsChannelIds: string[]
         azureMcpTeamsGroupId: string
         azureMcpTeamsChannelIds: string[]
-        manageAuthorizationResources: bool
         localDeployAllowed: bool
 
 components:
@@ -111,14 +109,15 @@ pipeline WIF grants separate from developer access. The developer principal is
 configuration-owned and must be set explicitly in `bicepOverrides`; the hook
 never substitutes the deployment identity when it is absent.
 
-`manageAuthorizationResources` defaults through the environment contract and
-controls Azure RBAC assignments and resource locks in Bicep. Keep it `true` for
-fresh and pipeline-managed environments. The existing dev environment sets it
-to `false` because its runtime assignments and delete lock are already present,
-while local developers have Contributor access without
-`Microsoft.Authorization/*/Write`. In that mode the final postprovision hook
-also leaves protected Storage, App Configuration, and Search data
-unchanged.
+Every provision reconciles the required resource roles through layer
+postprovision hooks. Existing direct or inherited grants are reused; missing
+grants are created before application deployment. Bicep manages resource shape
+and locks, while the final postprovision hook always uploads bot routing,
+reconciles Search, and seeds App Configuration.
+
+Operators bootstrap the deployment identity's resource-management and
+authorization-write permissions. They do not need to manually preassign each
+Storage, Search, App Configuration, Cosmos, or Foundry data role.
 
 Existing environments can also carry adopted live-state values in
 `bicepOverrides`. These include stable resource IDs and principal IDs, JSON
@@ -144,6 +143,40 @@ target the main site explicitly and leave the secondary slot untouched.
 
 Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
 needed by that layer. Pipeline preview and apply use the same layer adapters.
+
+## Preview resource ownership
+
+Preview targets subscription `a18897a6-7e44-457d-9260-f2854c0aca42` and resource
+group `azure-sdk-qa-bot-test`. Its name overrides reuse the existing test-group
+resources:
+
+| Component | Existing name |
+| --- | --- |
+| Frontend site, identity, App Service plan, workspace, and bot | `azsdkqabottest` |
+| Container registry | `azsdkqabottest` |
+| App Configuration | `azuresdkqabot-preview-config` |
+| Backend site and Application Insights | `azuresdkqabot-test-server` |
+| Frontend Application Insights | `azsdkqabottest-insights` |
+| Agent log workspace | `azuresdkqabot-test-log` |
+| Primary Logic App | `azuresdkqabot-test-logicapp` |
+
+The frontend diagnostic setting, alerts, and resource-group delete lock also
+retain their existing names. Backend Application Insights reuses the
+`azsdkqabottest` workspace.
+
+The deployment contract plans preview-owned Storage, Search, Cosmos DB,
+Foundry, a shared runtime identity, backend App Service plan, Teams connection,
+and integration account. These are not existing resources in the test group.
+The Azure MCP Server workflow is also a new preview resource.
+
+The existing backend and Logic App currently reference dev/prod hosting,
+identities, and connector resources. A future approved deployment of this
+contract will move those dependencies to preview-owned resources and use
+`TeamsChannelConversationsPreview` in preview Storage. It must include the
+application rollout, Search/routing setup, and new Teams connection consent;
+do not reuse production resource names to satisfy missing preview dependencies.
+The current Azure resources and stored App Configuration values are not changed
+by editing this contract.
 
 ## Environment variable ownership
 

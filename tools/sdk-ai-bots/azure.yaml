@@ -82,6 +82,11 @@ infra:
           path: deployment/infra/layers/shared-resources
           name: shared-resources
           hooks:
+            postprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/shared-postprovision.ts
+                interactive: true
             preprovision:
                 shell: sh
                 dir: ../../..

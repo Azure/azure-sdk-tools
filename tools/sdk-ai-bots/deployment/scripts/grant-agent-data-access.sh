@@ -18,7 +18,18 @@ app_config_scope="/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${AZURE
 grant_role() {
   local role_id="$1"
   local scope="$2"
+  local existing
   local output
+  existing=$(az role assignment list \
+    --assignee-object-id "$AGENT_PRINCIPAL_ID" \
+    --scope "$scope" \
+    --include-inherited \
+    --fill-principal-name false \
+    --query "[?ends_with(roleDefinitionId, '/${role_id}')].id | [0]" \
+    --output tsv)
+  if [[ -n "$existing" ]]; then
+    return
+  fi
   if output=$(az role assignment create \
     --assignee-object-id "$AGENT_PRINCIPAL_ID" \
     --assignee-principal-type ServicePrincipal \
@@ -114,7 +125,7 @@ if [[ "$access_profile" == "primary" ]]; then
   existing_assignment=$(az cosmosdb sql role assignment list \
     --account-name "$cosmos_account_name" \
     --resource-group "$AZURE_RESOURCE_GROUP" \
-    --query "[?principalId=='${AGENT_PRINCIPAL_ID}' && roleDefinitionId=='${cosmos_role_id}'].id | [0]" \
+    --query "[?principalId=='${AGENT_PRINCIPAL_ID}' && roleDefinitionId=='${cosmos_role_id}' && (scope=='/' || scope=='/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${AZURE_RESOURCE_GROUP}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmos_account_name}')].id | [0]" \
     --output tsv)
   if [[ -z "$existing_assignment" ]]; then
     az cosmosdb sql role assignment create \

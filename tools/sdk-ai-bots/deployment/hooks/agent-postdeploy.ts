@@ -23,6 +23,7 @@ import { execSync } from "child_process";
 
 import { ensureRoleAssignment } from "./lib/ensure-role-assignment.js";
 import { resolveAgentTargetImage } from "./lib/resolve-agent-image.js";
+import { ROLE_IDS } from "./lib/resource-roles.js";
 
 const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? "";
 
@@ -68,7 +69,7 @@ function loadAzdEnv(): void {
  * container runs as `instance_identity` (the auto-created "…-AgentIdentity"
  * ServiceIdentity), which is what needs the data-plane role grants.
  */
-async function getAgentIdentityPrincipalId(): Promise<string | undefined> {
+async function getAgentIdentityPrincipalId(): Promise<string> {
   let endpoint = process.env.AGENT_AGENT_ENDPOINT?.trim();
   if (!endpoint) {
     const projectEndpoint = process.env.FOUNDRY_PROJECT_ENDPOINT?.trim();
@@ -79,8 +80,7 @@ async function getAgentIdentityPrincipalId(): Promise<string | undefined> {
     }
   }
   if (!endpoint) {
-    log("AGENT_AGENT_ENDPOINT not set and cannot be derived — skipping agent identity RBAC.");
-    return undefined;
+    throw new Error("The deployed agent endpoint is required to reconcile its runtime roles.");
   }
 
   const token = execSync(
@@ -91,16 +91,14 @@ async function getAgentIdentityPrincipalId(): Promise<string | undefined> {
   const url = `${endpoint}${endpoint.includes("?") ? "&" : "?"}api-version=2025-05-15-preview`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) {
-    log(`Failed to read agent version (HTTP ${res.status}) — skipping agent identity RBAC.`);
-    return undefined;
+    throw new Error(`Cannot read the deployed agent identity (HTTP ${res.status}).`);
   }
   const body = (await res.json()) as {
     instance_identity?: { principal_id?: string };
   };
   const principalId = body.instance_identity?.principal_id?.trim();
   if (!principalId) {
-    log("Agent version has no instance_identity.principal_id — skipping agent identity RBAC.");
-    return undefined;
+    throw new Error("Deployed agent version has no instance_identity.principal_id.");
   }
   return principalId;
 }
@@ -110,11 +108,17 @@ async function getAgentIdentityPrincipalId(): Promise<string | undefined> {
  * Returns true on success (including when the assignment already exists).
  */
 function grantRole(principalId: string, role: string, scope: string): boolean {
+  const equivalentRoles: Record<string, readonly string[]> = {
+    "App Configuration Data Reader": [ROLE_IDS.configOwner],
+    "Cognitive Services OpenAI User": [ROLE_IDS.foundryUser, ROLE_IDS.foundryManager],
+    "Foundry User": [ROLE_IDS.foundryManager],
+  };
   return ensureRoleAssignment({
     principalId,
     roleDefinitionId: role,
     scope,
     principalType: "ServicePrincipal",
+    equivalentRoleDefinitionIds: equivalentRoles[role],
     log,
   });
 }
@@ -135,12 +139,10 @@ async function ensureAgentIdentityRbac(): Promise<void> {
   const sub = process.env.AZURE_SUBSCRIPTION_ID?.trim();
   const rg = process.env.AZURE_RESOURCE_GROUP?.trim();
   if (!sub || !rg) {
-    log("AZURE_SUBSCRIPTION_ID / AZURE_RESOURCE_GROUP not set — skipping agent identity RBAC.");
-    return;
+    throw new Error("Subscription and resource group are required to reconcile the hosted agent's roles.");
   }
 
   const principalId = await getAgentIdentityPrincipalId();
-  if (!principalId) return;
 
   const providers = `/subscriptions/${sub}/resourceGroups/${rg}/providers`;
   const scopeFor = (type: string, name: string | undefined) =>
@@ -151,34 +153,24 @@ async function ensureAgentIdentityRbac(): Promise<void> {
   const storageScope = scopeFor("Microsoft.Storage/storageAccounts", process.env.STORAGE_ACCOUNT_NAME?.trim());
   const searchScope = scopeFor("Microsoft.Search/searchServices", process.env.SEARCH_SERVICE_NAME?.trim());
 
-  // [role, scope, critical] — critical grants abort the hook on failure.
-  const grants: Array<[string, string | undefined, boolean]> = [
-    ["App Configuration Data Reader", appConfigScope, true],
-    ["Cognitive Services OpenAI User", aiScope, false],
-    ["Foundry User", aiScope, false],
-    ["Storage Blob Data Owner", storageScope, false],
-    ["Storage Table Data Contributor", storageScope, false],
-    ["Storage Queue Data Contributor", storageScope, false],
-    ["Search Index Data Contributor", searchScope, false],
+  const grants: Array<[string, string | undefined]> = [
+    ["App Configuration Data Reader", appConfigScope],
+    ["Foundry User", aiScope],
+    ["Cognitive Services OpenAI User", aiScope],
+    ["Storage Blob Data Owner", storageScope],
+    ["Storage Table Data Contributor", storageScope],
+    ["Storage Queue Data Contributor", storageScope],
+    ["Search Index Data Contributor", searchScope],
   ];
 
   log(`Granting data-plane roles to hosted agent identity ${principalId}`);
-  let criticalFailed = false;
-  for (const [role, scope, critical] of grants) {
+  for (const [role, scope] of grants) {
     if (!scope) {
-      log(`  – skipping "${role}" (target resource name not set)`);
-      if (critical) criticalFailed = true;
-      continue;
+      throw new Error(`Cannot reconcile "${role}": target resource name is missing.`);
     }
-    const ok = grantRole(principalId, role, scope);
-    if (!ok && critical) criticalFailed = true;
-  }
-
-  if (criticalFailed) {
-    throw new Error(
-      "Failed to grant the critical 'App Configuration Data Reader' role to the hosted " +
-        "agent identity; the agent container will crash on startup until this is resolved."
-    );
+    if (!grantRole(principalId, role, scope)) {
+      throw new Error(`Failed to reconcile required hosted-agent role "${role}" at ${scope}.`);
+    }
   }
   log("Agent identity RBAC complete.");
 }

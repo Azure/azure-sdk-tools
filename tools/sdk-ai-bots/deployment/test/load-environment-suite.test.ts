@@ -73,8 +73,23 @@ test("preserves every JSON-valued dev Bicep override through pipeline logging", 
 test("preserves scalar configuration in production", () => {
   const result = runLoader("prod");
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.equal(result.values.MANAGE_AUTHORIZATION_RESOURCES, "true");
+  assert.equal(result.values.MANAGE_AUTHORIZATION_RESOURCES, undefined);
   assert.equal(result.values.GPT_4_1_CAPACITY, "200");
+});
+
+test("loads preview's adopted resource names and backend registration into pipeline variables", () => {
+  const result = runLoader("preview");
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(result.values.AZURE_SUBSCRIPTION_ID, "a18897a6-7e44-457d-9260-f2854c0aca42");
+  assert.equal(result.values.AZURE_RESOURCE_GROUP, "azure-sdk-qa-bot-test");
+  assert.equal(result.values.SERVER_APPLICATION_CLIENT_ID, "674414e1-152b-41ac-b0d2-763535edea6c");
+  assert.equal(result.values.SERVER_APPLICATION_ID_URI, "api://azure-sdk-qa-bot-test");
+  assert.equal(result.values.CONTAINER_REGISTRY_NAME_OVERRIDE, "azsdkqabottest");
+  assert.equal(result.values.APP_CONFIG_NAME_OVERRIDE, "azuresdkqabot-preview-config");
+  assert.equal(result.values.AGENT_SERVER_SITE_NAME_OVERRIDE, "azuresdkqabot-test-server");
+  assert.equal(result.values.LOGIC_APP_WORKFLOW_NAME_OVERRIDE, "azuresdkqabot-test-logicapp");
+  assert.equal(result.values.TEAMS_CONNECTION_NAME_OVERRIDE, "teams-preview");
+  assert.equal(result.values.STORAGE_ACCOUNT_NAME_OVERRIDE, "azuresdkqabotteststorage");
 });
 
 test("preserves multiline JSON and literal logging escape sequences in pipeline overrides", () => {

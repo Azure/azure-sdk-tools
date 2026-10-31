@@ -166,25 +166,13 @@ test("keeps dev developer roles separate from the deployment principal", () => {
   const suite = read("infra/environments/environment-suite.yaml");
   const preprovision = read("hooks/preprovision.ts");
   const seedAppConfig = read("hooks/lib/seed-app-config.ts");
-  const shared = read("infra/layers/shared-resources/main.bicep");
-  const agent = read("infra/layers/agent/main.bicep");
   const dev = suite.match(/\n    dev:\n([\s\S]*?)\n    preview:/)?.[1] ?? "";
 
   assert.match(dev, /DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'/);
   assert.match(dev, /DEVELOPER_PRINCIPAL_TYPE: 'Group'/);
   assert.doesNotMatch(preprovision, /"env", "set", "DEVELOPER_PRINCIPAL_ID"/);
   assert.doesNotMatch(seedAppConfig, /DEPLOYMENT_PRINCIPAL_ID.*\|\|.*DEVELOPER_PRINCIPAL_ID/s);
-  for (const resourceName of [
-    "deploymentStorageBlobContributor",
-    "deploymentAppConfigDataReader",
-    "deploymentAcrContributor",
-    "deploymentSearchServiceContributor",
-    "deploymentCosmosDataContributor",
-  ]) {
-    assert.match(shared, new RegExp(`resource ${resourceName} `));
-  }
-  assert.match(agent, /resource deploymentOpenAiUserRoleAssignment /);
-  assert.match(agent, /resource deploymentFoundryProjectManagerRoleAssignment /);
+  assert.doesNotMatch(read("hooks/lib/resource-roles.ts"), /DEPLOYMENT_PRINCIPAL_ID[^\n]*\|\|[^\n]*DEVELOPER_PRINCIPAL_ID/);
 });
 
 test("targets the existing shared dev environment", () => {
@@ -205,8 +193,41 @@ test("targets the existing shared dev environment", () => {
   assert.equal(dev.bicepOverrides.AI_PROJECT_NAME, "azuresdkqabot-ai");
   assert.match(
     serviceConnections,
-    /eq\(parameters\.environment, 'dev'\)\s*\}\}:\s*\n\s*value: 'Azure SDK Engineering System'/,
+    /eq\(parameters\.environment, 'dev'\)\s*\}\}:\s*\n\s*value: qa-bot-dev/,
   );
+});
+
+test("selects environment service connections at template expansion time", () => {
+  const template = parse(read("pipelines/templates/service-connection.yml"));
+
+  assert.deepEqual(template.parameters[0].values, ["dev", "preview", "prod"]);
+  assert.deepEqual(template.variables, [
+    {
+      name: "AZURE_SERVICE_CONNECTION",
+      "${{ if eq(parameters.environment, 'dev') }}": { value: "qa-bot-dev" },
+      "${{ elseif eq(parameters.environment, 'prod') }}": { value: "azuresdkqabot" },
+      "${{ else }}": { value: "azuresdkqabot-preview" },
+    },
+    {
+      "${{ if eq(parameters.environment, 'prod') }}": [
+        { name: "CANDIDATE_AZURE_SERVICE_CONNECTION", value: "azuresdkqabot-dev" },
+      ],
+    },
+  ]);
+});
+
+test("permits qa-bot-dev for backend readiness while preserving existing callers", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  const backend = read("infra/layers/agent-server/main.bicep");
+  const adapter = read("infra/layers/agent-server/main.bicepparam");
+
+  assert.deepEqual(JSON.parse(suite.environments.dev.bicepOverrides.AGENT_SERVER_ALLOWED_CLIENT_IDS), [
+    "2a0eb32e-233f-4ccf-8977-0588c3d554b5",
+  ]);
+  assert.equal(suite.environments.prod.bicepOverrides.AGENT_SERVER_ALLOWED_CLIENT_IDS, undefined);
+  assert.equal(suite.environments.preview.bicepOverrides.AGENT_SERVER_ALLOWED_CLIENT_IDS, undefined);
+  assert.match(backend, /allowedApplications: union\(\[[\s\S]*?managedIdentityClientId[\s\S]*?frontendIdentityClientId[\s\S]*?azureCliClientId[\s\S]*?\], allowedCallerApplicationIds\)/);
+  assert.match(adapter, /json\(readEnvironmentVariable\('AGENT_SERVER_ALLOWED_CLIENT_IDS', '\[\]'\)\)/);
 });
 
 test("reports the selected image version before each azd deployment", () => {
@@ -271,7 +292,7 @@ test("runs hooks with the package-local TypeScript runtime", () => {
   assert.doesNotMatch(project, /npx(?: --yes)? tsx/);
   assert.equal(
     (project.match(/\.\/node_modules\/\.bin\/tsx/g) ?? []).length,
-    13,
+    14,
   );
 });
 
@@ -332,48 +353,43 @@ test("keeps rollout configuration limited to active behavior", () => {
   assert.match(smokeTest, /healthPath/);
 });
 
-test("declares principal-aware frontend role assignments in Bicep", () => {
+test("reconciles frontend roles before generating Teams environment values", () => {
   const bicep = read("infra/layers/frontend/main.bicep");
   const hook = read("hooks/frontend-postprovision.ts");
 
-  assert.equal((bicep.match(/Microsoft\.Authorization\/roleAssignments/g) ?? []).length, 3);
-  assert.match(
-    bicep,
-    /guid\(component\.id, userAssignedIdentity\.id, monitoringMetricsPublisherRoleDefinitionId\)/,
-  );
-  assert.match(
-    bicep,
-    /guid\(sharedRegistry\.id, userAssignedIdentity\.id, acrPullRoleDefinitionId\)/,
-  );
-  assert.match(
-    bicep,
-    /guid\(storageAccount\.id, userAssignedIdentity\.id, roleDefinitionId\)/,
-  );
+  assert.doesNotMatch(bicep, /Microsoft\.Authorization\/roleAssignments/);
+  assert.match(bicep, /output FRONTEND_IDENTITY_PRINCIPAL_ID string = userAssignedIdentity\.properties\.principalId/);
+  assert.match(bicep, /output FRONTEND_APPLICATIONINSIGHTS_RESOURCE_ID string = component\.id/);
   assert.doesNotMatch(bicep, /17d1049b-9a84-46fb-8f53-869881c3d3ab/);
   assert.match(bicep, /enabled: true\s+emailReceivers:/);
-  assert.doesNotMatch(hook, /ensureFrontendRoleAssignments/);
+  assert.ok(hook.indexOf('reconcileResourceRoles("frontend"') < hook.indexOf("syncTeamsEnv({"));
 });
 
-test("grants Search access to Foundry embedding deployments", () => {
+test("exposes the Foundry project identity for image-pull role reconciliation", () => {
   const bicep = read("infra/layers/agent/main.bicep");
 
   assert.match(
     bicep,
-    /resource searchOpenAiUserRoleAssignment[\s\S]*?roleDefinitionId: subscriptionResourceId\('Microsoft\.Authorization\/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'\)[\s\S]*?principalId: searchServicePrincipalId/,
+    /output FOUNDRY_PROJECT_PRINCIPAL_ID string = project\.identity\.principalId/,
   );
 });
 
-test("can reuse pre-authorized environments without privileged ARM writes", () => {
+test("always reconciles resource roles and configuration without an authorization flag", () => {
   const suite = read("infra/environments/environment-suite.yaml");
   const postprovision = read("hooks/postprovision.ts");
 
-  assert.match(suite, /dev:[\s\S]*manageAuthorizationResources: false[\s\S]*localDeployAllowed: true/);
+  assert.doesNotMatch(suite, /manageAuthorizationResources/);
   for (const layer of ["shared-resources", "agent", "frontend"]) {
     const bicep = read(`infra/layers/${layer}/main.bicep`);
-    assert.match(bicep, /param manageAuthorizationResources bool = true/);
-    assert.match(bicep, /if \(manageAuthorizationResources/);
+    assert.doesNotMatch(bicep, /manageAuthorizationResources|Microsoft\.Authorization\/roleAssignments/);
   }
-  assert.match(postprovision, /skipping privileged data-plane reconciliation/);
+  assert.doesNotMatch(postprovision, /MANAGE_AUTHORIZATION_RESOURCES|skipping privileged/);
+  assert.match(postprovision, /uploadPerEnvBotConfigs\(\);[\s\S]*await setupSearchResources\(\);[\s\S]*updateAppConfiguration\(\);/);
+  const project = parse(read("../azure.yaml"));
+  assert.match(
+    project.infra.layers.find((layer: { name: string }) => layer.name === "shared-resources").hooks.postprovision.run,
+    /shared-postprovision\.ts/,
+  );
 });
 
 test("uses BOT_ID as the single frontend identity client ID", () => {

@@ -17,6 +17,14 @@ test("validates the checked-in dev environment", () => {
     configRoot,
   });
 
+  test("validates preview's adopted environment and existing Teams routing", () => {
+    assert.deepEqual(collectEnvironmentSuiteErrors({
+      suite: loadEnvironmentSuite(),
+      environments: ["preview"],
+      configRoot,
+    }), []);
+  });
+
   assert.deepEqual(errors, []);
 });
 

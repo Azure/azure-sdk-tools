@@ -2,11 +2,6 @@ using './main.bicep'
 
 param location = readEnvironmentVariable('AZURE_LOCATION', 'westus2')
 param cosmosDbLocation = readEnvironmentVariable('COSMOS_DB_LOCATION', readEnvironmentVariable('AZURE_LOCATION', 'westus2'))
-param developerGroupObjectId = readEnvironmentVariable('DEVELOPER_PRINCIPAL_ID', '')
-param developerPrincipalType = readEnvironmentVariable('DEVELOPER_PRINCIPAL_TYPE', 'User')
-param deploymentPrincipalObjectId = readEnvironmentVariable('DEPLOYMENT_PRINCIPAL_ID', '')
-param deploymentPrincipalType = readEnvironmentVariable('DEPLOYMENT_PRINCIPAL_TYPE', 'ServicePrincipal')
-param manageAuthorizationResources = readEnvironmentVariable('MANAGE_AUTHORIZATION_RESOURCES', 'true') == 'true'
 param managedIdentityNameOverride = readEnvironmentVariable('MANAGED_IDENTITY_NAME_OVERRIDE', '')
 param actionGroupNameOverride = readEnvironmentVariable('ACTION_GROUP_NAME_OVERRIDE', '')
 param appConfigNameOverride = readEnvironmentVariable('APP_CONFIG_NAME_OVERRIDE', '')

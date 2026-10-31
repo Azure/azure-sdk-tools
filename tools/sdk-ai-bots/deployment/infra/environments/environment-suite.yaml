@@ -132,6 +132,7 @@ environments:
             AGENT_SERVER_APP_INSIGHTS_NAME: 'azuresdkqabot-dev-server'
             AGENT_SERVER_APP_INSIGHTS_FLOW_TYPE: 'Redfield'
             AGENT_SERVER_APP_INSIGHTS_REQUEST_SOURCE: 'IbizaAIExtensionEnablementBlade'
+            AGENT_SERVER_ALLOWED_CLIENT_IDS: '["2a0eb32e-233f-4ccf-8977-0588c3d554b5"]'
             AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-dev-alert'
             SERVER_BASE_URL: 'https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net'
             AZD_DEPLOY_AGENT_SERVER_SLOT_NAME: 'production'
@@ -142,23 +143,22 @@ environments:
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
             AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-dev-logicapp-alert'
             AI_RESOURCE_RESTORE: 'false'
-        # The shared environment already has runtime RBAC assignments and
-        # delete locks. Local provisioning must not attempt privileged writes.
-        manageAuthorizationResources: false
         localDeployAllowed: true
 
     preview:
-        subscriptionId: 'REPLACE_WITH_PREVIEW_SUBSCRIPTION_ID'
+        # Reuse resources in the existing test resource group. Missing shared
+        # services are preview-owned; do not adopt dev/prod dependencies.
+        subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
-        serverApplicationClientId: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_CLIENT_ID'
-        serverApplicationIdUri: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_ID_URI'
-        resourceGroupPrefix: 'rg-azuresdkqabot-preview'
-        appConfigName: 'azsdkqabot-config-preview'
-        containerRegistryName: 'azsdkqabotacrpreview'
-        frontendSiteName: 'azsdkqabot-preview'
-        agentServerSiteName: 'azuresdkqabot-server-preview'
+        serverApplicationClientId: '674414e1-152b-41ac-b0d2-763535edea6c'
+        serverApplicationIdUri: 'api://azure-sdk-qa-bot-test'
+        resourceGroupPrefix: 'azure-sdk-qa-bot-test'
+        appConfigName: 'azuresdkqabot-preview-config'
+        containerRegistryName: 'azsdkqabottest'
+        frontendSiteName: 'azsdkqabottest'
+        agentServerSiteName: 'azuresdkqabot-test-server'
         # See dev.teamsAppId for the contract.
-        teamsAppId: 'REPLACE_WITH_PREVIEW_TEAMS_APP_ID'
+        teamsAppId: '9ded3f10-3bcd-4d89-9f32-8ed170e003c2'
         teamsGroupId: '3e17dcb0-4257-4a30-b843-77f47f1d4121'
         teamsChannelIds:
             - '19:de3fce22c2994be18cac50502c55f717@thread.skype'
@@ -171,8 +171,47 @@ environments:
         cosmosDbLocation: 'westus2'
         chatbotEvolutionAgentEnabled: false
         bicepOverrides:
+            MANAGED_IDENTITY_NAME: 'azuresdkqabot-test-identity'
+            ACTION_GROUP_NAME: 'azuresdkqabot-test-alert'
+            SEARCH_SERVICE_NAME: 'azuresdkqabot-test-search'
+            STORAGE_ACCOUNT_NAME: 'azuresdkqabotteststorage'
+            COSMOS_DB_ACCOUNT_NAME: 'azuresdkqabot-test-db'
+            AI_RESOURCE_NAME: 'azuresdkqabot-test-ai-resource'
+            AI_PROJECT_NAME: 'azuresdkqabot-ai'
+            AGENT_LOG_WORKSPACE_NAME: 'azuresdkqabot-test-log'
+            AGENT_LOG_WORKSPACE_LOCATION: 'westus2'
+            AGENT_LOG_RETENTION_IN_DAYS: '30'
+            AGENT_APP_INSIGHTS_NAME: 'azuresdkqabot-test-agent'
+            BOT_SERVICE_NAME: 'azsdkqabottest'
+            BOT_ID: 'd05d0376-47f5-4326-b8ca-91deabbe3b5a'
+            BOT_AZURE_APP_SERVICE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azsdkqabottest'
+            BOT_DOMAIN: 'azsdkqabottest.azurewebsites.net'
+            FRONTEND_APP_INSIGHTS_NAME: 'azsdkqabottest-insights'
+            FRONTEND_EMAIL_ACTION_GROUP_NAME: 'azsdkqabottest-email-alerts'
+            FRONTEND_DIAGNOSTIC_SETTING_NAME: 'azsdkqabottest-diagnostic'
+            FRONTEND_HEALTH_TEST_NAME: 'azsdkqabottest-health-test'
+            FRONTEND_SERVER_ERRORS_ALERT_NAME: 'azsdkqabottest-server-errors'
+            FRONTEND_HEALTH_CHECK_ALERT_NAME: 'azsdkqabottest-health-check-failure'
+            FRONTEND_DELETE_LOCK_NAME: 'delete'
+            TEAMS_BOT_FULL_DISPLAY_NAME: 'Azure SDK Q&A Bot pre-prod'
+            AZURE_TABLE_NAME_FOR_CONVERSATION: 'TeamsChannelConversationsPreview'
+            CONTAINER_REGISTRY_IS_EXISTING: 'true'
+            ACR_NAME: 'azsdkqabottest'
+            AZURE_CONTAINER_REGISTRY_ENDPOINT: 'azsdkqabottest.azurecr.io'
+            AGENT_SERVER_SITE_NAME: 'azuresdkqabot-test-server'
+            AGENT_SERVER_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-test-appserviceplan'
+            AGENT_SERVER_LOG_WORKSPACE_RESOURCE_ID: '/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.OperationalInsights/workspaces/azsdkqabottest'
+            AGENT_SERVER_APP_INSIGHTS_NAME: 'azuresdkqabot-test-server'
+            AGENT_SERVER_APP_INSIGHTS_FLOW_TYPE: 'Redfield'
+            AGENT_SERVER_APP_INSIGHTS_REQUEST_SOURCE: 'IbizaWebAppExtensionCreate'
+            AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-test-alert'
+            SERVER_BASE_URL: 'https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net'
+            INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-test-ia'
+            TEAMS_CONNECTION_NAME: 'teams-preview'
+            LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-test-logicapp'
             AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-test-logicapp'
-        manageAuthorizationResources: true
+            LOGIC_APP_ALERT_NAME: 'azuresdkqabot-test-logicapp-alert'
+            AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-test-logicapp-alert'
         localDeployAllowed: false
 
     prod:
@@ -254,7 +293,6 @@ environments:
             AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
             AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-logicapp-alert'
-        manageAuthorizationResources: true
         localDeployAllowed: false
 
 # ─────────────────────────────────────────────────────────────────────────────

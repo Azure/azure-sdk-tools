@@ -21,6 +21,7 @@
  */
 
 import { execSync } from "child_process";
+import { ensureRoleAssignment, getCurrentPrincipal } from "./ensure-role-assignment.js";
 
 export interface SeedAppConfigurationOptions {
   /** App Configuration store name (APP_CONFIG_NAME output). */
@@ -62,37 +63,29 @@ function ensureDataOwnerRole(
   const subscriptionId = env.AZURE_SUBSCRIPTION_ID?.trim();
   const resourceGroup = env.AZURE_RESOURCE_GROUP?.trim();
   if (!subscriptionId || !resourceGroup) {
-    log("  AZURE_SUBSCRIPTION_ID / AZURE_RESOURCE_GROUP not set — cannot ensure RBAC; relying on existing access.");
-    return;
+    throw new Error("AZURE_SUBSCRIPTION_ID and AZURE_RESOURCE_GROUP are required to reconcile App Configuration access.");
   }
 
-  const principalId = env.DEPLOYMENT_PRINCIPAL_ID?.trim();
-  const principalType = env.DEPLOYMENT_PRINCIPAL_TYPE?.trim() || "User";
-  if (!principalId) {
-    log("  DEPLOYMENT_PRINCIPAL_ID is not set — relying on existing access.");
-    return;
-  }
+  const principal = env.DEPLOYMENT_PRINCIPAL_ID
+    ? { principalId: env.DEPLOYMENT_PRINCIPAL_ID.trim(), principalType: env.DEPLOYMENT_PRINCIPAL_TYPE }
+    : getCurrentPrincipal();
+  const { principalId, principalType } = principal;
 
   const scope =
     `/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}` +
     `/providers/Microsoft.AppConfiguration/configurationStores/${appConfigName}`;
 
-  try {
-    run(
-      `az role assignment create --assignee-object-id "${principalId}" ` +
-        `--assignee-principal-type "${principalType}" ` +
-        `--role "${APP_CONFIG_DATA_OWNER_ROLE_ID}" --scope "${scope}" --output none`,
-    );
-    log(`  ✓ granted App Configuration Data Owner to ${principalId} (${principalType})`);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (/RoleAssignmentExists|already exists/i.test(msg)) {
-      log(`  ✓ App Configuration Data Owner already assigned to ${principalId}`);
-      return;
-    }
-    // Don't hard-fail: the deployer may already have access via another
-    // assignment (e.g. group/subscription scope). Log and let the writes try.
-    log(`  ⚠ could not create role assignment (${msg.split("\n")[0]}); continuing.`);
+  if (principalType !== "User" && principalType !== "Group" && principalType !== "ServicePrincipal") {
+    throw new Error(`Invalid deployment principal type '${principalType}'.`);
+  }
+  if (!ensureRoleAssignment({
+    principalId,
+    principalType,
+    roleDefinitionId: APP_CONFIG_DATA_OWNER_ROLE_ID,
+    scope,
+    log,
+  })) {
+    throw new Error("Cannot reconcile App Configuration Data Owner for the deployment identity.");
   }
 }
 

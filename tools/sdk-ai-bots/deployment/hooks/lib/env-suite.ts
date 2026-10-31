@@ -39,7 +39,6 @@ export interface EnvironmentConfig {
   chatbotEvolutionAgentEnabled: boolean;
   candidateEnvironment?: string;
   bicepOverrides?: Record<string, string>;
-  manageAuthorizationResources: boolean;
   localDeployAllowed: boolean;
   [key: string]: unknown;
 }
@@ -210,7 +209,6 @@ export function buildAzdEnvironmentValues(
     AZURE_AI_LOCATION: environment.aiLocation,
     COSMOS_DB_LOCATION: environment.cosmosDbLocation,
     CHATBOT_EVOLUTION_AGENT_ENABLED: String(environment.chatbotEvolutionAgentEnabled),
-    MANAGE_AUTHORIZATION_RESOURCES: String(environment.manageAuthorizationResources),
     FRONTEND_SITE_NAME: environment.frontendSiteName,
     AGENT_SERVER_SITE_NAME: environment.agentServerSiteName,
     AGENT_SERVER_SITE_NAME_OVERRIDE: environment.agentServerSiteName,

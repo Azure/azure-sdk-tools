@@ -15,6 +15,9 @@ param frontendIdentityClientId string
 @description('Client ID of the Entra app registration that fronts the agent server, used by App Service authentication (Easy Auth).')
 param serverApplicationClientId string
 
+@description('Additional client application IDs permitted to call the backend, such as the environment deployment identity.')
+param allowedCallerApplicationIds array = []
+
 @description('Name of the shared user-assigned managed identity attached to the site.')
 param sharedIdentityName string
 
@@ -202,11 +205,11 @@ resource config 'Microsoft.Web/sites/config@2025-05-01' = {
         }
         validation: {
           defaultAuthorizationPolicy: {
-            allowedApplications: [
+            allowedApplications: union([
               managedIdentityClientId
               frontendIdentityClientId
               azureCliClientId
-            ]
+            ], allowedCallerApplicationIds)
           }
         }
         login: {

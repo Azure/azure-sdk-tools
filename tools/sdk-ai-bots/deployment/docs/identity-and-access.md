@@ -49,6 +49,22 @@ flowchart LR
 Azure DevOps selects an Azure Resource Manager service connection for each
 environment through `pipelines/templates/service-connection.yml`.
 
+| Environment | Deployment connection | Candidate-dev connection |
+| --- | --- | --- |
+| Dev | `qa-bot-dev` | Not used |
+| Preview | `azuresdkqabot-preview` | Not used |
+| Prod | `azuresdkqabot` | `azuresdkqabot-dev` |
+
+Connection selection occurs at template expansion time. Authorize each pipeline
+to use the selected connections in Azure DevOps, and verify their backing Azure
+identities have the provisioning and runtime-role assignment permissions below.
+
+Dev also declares the `qa-bot-dev` client application ID in
+`AGENT_SERVER_ALLOWED_CLIENT_IDS` so backend readiness requests are accepted by
+Easy Auth. This extends the backend caller allowlist without replacing the
+runtime, frontend, or Azure CLI callers. Preview and production do not add this
+dev caller.
+
 [`azd-auth.yml`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml) authenticates `az` and
 `azd` through workload identity federation. It reads the object ID from the ARM
 token and exports:
@@ -147,8 +163,8 @@ All listed scopes are resource scope unless noted otherwise.
 
 ### Shared runtime identity roles
 
-Declared in
-[`shared-resources/main.bicep`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/layers/shared-resources/main.bicep):
+Reconciled after the shared-resources layer by
+[`resource-roles.ts`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/resource-roles.ts):
 
 - **Storage Blob Data Owner**
   (`b7e6dc6d-f1e8-4753-8033-0f276bb0955b`) on Storage for Blob read, write, and
@@ -162,20 +178,21 @@ Declared in
   (`516239f1-63e1-4d78-a4de-a74fb236a071`) on App Configuration.
 - **Search Index Data Contributor**
   (`8ebe5a00-799e-43f5-93ac-243d3dce84a7`) on Search.
+- **Search Service Contributor** on Search so the knowledge-sync WebJob can
+  manage indexer operations.
 - **Contributor** (`b24988ac-6180-42a0-ab88-20f7382dd24c`) and **AcrPull**
   (`7f951dda-4ed3-4680-a7ca-43fe172d538d`) on ACR.
 - **Cosmos DB Built-in Data Contributor**
   (`00000000-0000-0000-0000-000000000002`) at the Cosmos account root. This is
   Cosmos SQL data-plane RBAC, not Azure RBAC.
 
-The agent layer also grants **Cognitive Services OpenAI User**
-(`5e0bd9bd-7b93-4f28-af87-19fc36ad61bd`) on the AI Services account. The agent
-postprovision hook reconciles **Foundry User**
+The agent postprovision hook reconciles **Cognitive Services OpenAI User**
+(`5e0bd9bd-7b93-4f28-af87-19fc36ad61bd`) and **Foundry User**
 (`53ca6127-db72-4b80-b1b0-d745d6d5456d`) for the shared identity.
 
 ### Frontend identity roles
 
-Declared in [`frontend/main.bicep`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/layers/frontend/main.bicep):
+Reconciled by the frontend layer postprovision hook:
 
 - **Monitoring Metrics Publisher**
   (`3913510d-42f4-4e42-8a64-420c390055eb`) on frontend Application Insights;
@@ -203,7 +220,7 @@ Storage role.
 
 ### Developer roles
 
-When `DEVELOPER_PRINCIPAL_ID` is non-empty, Bicep grants:
+When `DEVELOPER_PRINCIPAL_ID` is non-empty, the layer hooks reconcile:
 
 - Storage Blob Data Contributor;
 - App Configuration Data Reader;
@@ -220,20 +237,26 @@ Search administration, and hosted-agent management.
 
 ### Deployment roles
 
-When the deployment principal differs from the developer principal, Bicep
-grants it the roles required by unattended deployment:
+The layer hooks reconcile the deployment principal's required access:
 
 - Storage Blob Data Contributor for bot configuration upload;
-- App Configuration Data Reader for configuration access;
+- App Configuration Data Owner for configuration access and seeding;
 - Contributor on ACR for remote builds and registry management;
 - Search Service Contributor for Search control-plane operations;
 - Cosmos DB Built-in Data Contributor for deployment and scheduled jobs;
 - Cognitive Services OpenAI User;
-- Foundry Project Manager for `azd deploy agent`.
+- Foundry User for hosted-agent version creation and management.
 
-Postprovision seeding grants **App Configuration Data Owner**
-(`5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b`) to `DEPLOYMENT_PRINCIPAL_ID`
-idempotently. It never falls back to `DEVELOPER_PRINCIPAL_ID`.
+Role reconciliation uses `DEPLOYMENT_PRINCIPAL_ID`, or resolves the active
+Azure CLI caller when it is absent. It never substitutes
+`DEVELOPER_PRINCIPAL_ID`. It skips matching direct or inherited roles and known
+broader grants, and creates only missing assignments. Cosmos data grants are
+checked separately through Cosmos SQL RBAC. Reconciliation never revokes
+pre-existing roles.
+
+Standalone hosted-agent deployment also reconciles the caller's App
+Configuration and Foundry access before creating an agent version.
+
 App Configuration seeding, bot configuration upload, and Search reconciliation are
 explained in the [deployment process reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/maintainer-guide.md#azd-hook-workflow).
 
@@ -252,9 +275,8 @@ agent identity:
 - Storage Queue Data Contributor;
 - Search Index Data Contributor.
 
-Failure to grant App Configuration Data Reader fails the hook because the agent
-cannot initialize. Other grant failures are logged and should be investigated
-before considering the deployment healthy.
+Missing required resource names, identities, or failed runtime grants fail the
+hook rather than reporting a successful deployment with incomplete access.
 
 ### Azure MCP Server agent
 
@@ -345,9 +367,9 @@ set.
 
 | Grant class | Created by | Lifetime |
 | --- | --- | --- |
-| Runtime managed-identity roles | Bicep | Persistent |
-| Developer roles | Bicep | Persistent |
-| Deployment roles | Bicep and seeding hooks | Persistent |
+| Runtime managed-identity roles | Layer postprovision hooks | Persistent |
+| Developer roles | Layer postprovision hooks | Persistent |
+| Deployment roles | Layer and seeding hooks | Persistent |
 | Chat-agent runtime roles | Agent postdeploy hook | Agent identity lifetime |
 | Evolution-agent roles | Agent deployment pipeline | Agent identity lifetime |
 | Teams connector consent | Interactive operator | Until revoked or reset |

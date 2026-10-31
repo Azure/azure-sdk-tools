@@ -17,8 +17,6 @@ const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
 const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
 const STORAGE_ACCOUNT_NAME = process.env.STORAGE_ACCOUNT_NAME ?? "";
-const MANAGE_AUTHORIZATION_RESOURCES =
-  process.env.MANAGE_AUTHORIZATION_RESOURCES?.toLowerCase() !== "false";
 
 function log(msg: string): void {
   console.log(`[postprovision] ${msg}`);
@@ -69,13 +67,9 @@ function printSummary(): void {
 
 (async () => {
   log(`Starting postprovision for environment '${ENV_NAME}'`);
-  if (MANAGE_AUTHORIZATION_RESOURCES) {
-    uploadPerEnvBotConfigs();
-    await setupSearchResources();
-    updateAppConfiguration();
-  } else {
-    log("Reusing externally managed authorization; skipping privileged data-plane reconciliation.");
-  }
+  uploadPerEnvBotConfigs();
+  await setupSearchResources();
+  updateAppConfiguration();
   printSummary();
   log("Postprovision complete.");
 })().catch((err) => {

@@ -28,7 +28,6 @@ const REQUIRED_KEYS = [
   "containerRegistryName",
   "teamsGroupId",
   "azureMcpTeamsGroupId",
-  "manageAuthorizationResources",
   "localDeployAllowed",
   "chatbotEvolutionAgentEnabled",
 ] as const;
@@ -103,10 +102,6 @@ export function collectEnvironmentSuiteErrors(
     if (typeof environment.localDeployAllowed !== "boolean") {
       errors.push(`[${environmentName}] localDeployAllowed must be true or false`);
     }
-    if (typeof environment.manageAuthorizationResources !== "boolean") {
-      errors.push(`[${environmentName}] manageAuthorizationResources must be true or false`);
-    }
-
     const channelIds = environment.teamsChannelIds ?? [];
     if (
       channelIds.length === 0 ||

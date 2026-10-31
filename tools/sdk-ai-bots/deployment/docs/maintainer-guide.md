@@ -29,6 +29,7 @@ Use these files to identify the desired configuration and deployment steps:
 - **Mapping azd values into Bicep parameters:**
    `deployment/infra/layers/<layer>/main.bicepparam`
 - **Data-plane and post-deployment reconciliation:** `deployment/hooks/`
+- **Required role plans and existing-grant reuse:** `deployment/hooks/lib/resource-roles.ts`
 - **Preview, approval, apply, deployment order, and authentication:**
    `deployment/pipelines/`
 - **Local validation and operator utilities:** `deployment/scripts/`
@@ -161,9 +162,14 @@ The registered provision hooks are:
    operation policy immediately before each layer apply. The repeated layer
    registration also protects a targeted `azd provision <layer>` that does not
    execute `resource-group`.
-- **Agent postprovision: `agent-postprovision.ts`.** Creates or adopts the
-   Foundry User role assignment for the shared managed identity.
-- **Frontend postprovision: `frontend-postprovision.ts`.** Generates the Teams
+- **Shared postprovision: `shared-postprovision.ts`.** Reconciles the shared
+   runtime, Search, deployment, and optional developer resource roles, including
+   Cosmos data access. Existing grants are reused; missing roles are created.
+- **Agent postprovision: `agent-postprovision.ts`.** Reconciles AI Services
+   access for runtime, Search, deployment, and optional developer principals,
+   plus registry pull permission for the Foundry project identity.
+- **Frontend postprovision: `frontend-postprovision.ts`.** Reconciles frontend
+   image-pull, Storage, and telemetry permissions, then generates the Teams
    Toolkit `env/.env.azd` file from committed Teams settings and the newly
    captured Bicep outputs. Teams Toolkit configuration is not an ARM resource,
    and the required values do not all exist until this layer completes.

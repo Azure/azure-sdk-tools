@@ -123,6 +123,25 @@ model ChatRequest {
   additional_infos?: AdditionalInfo[];
 }
 
+@doc("A selected logical catalog contact and the support areas requiring their help")
+model NextStepTarget {
+  @doc("Logical catalog contact key, not a real Teams identity")
+  contact_id: string;
+
+  @doc("Support-area keys assigned to this contact")
+  @minItems(1)
+  support_areas: string[];
+}
+
+@doc("Model-proposed next step; preview metadata does not authorize or send notifications")
+model NextStep {
+  @doc("The immediate unresolved need")
+  category: "missing_information" | "human_action" | "human_help";
+
+  @doc("One target per contact; empty for missing information or unknown ownership")
+  targets: NextStepTarget[];
+}
+
 @doc("Response from chat completion")
 model ChatResponse {
   @doc("The unique ID of the response")
@@ -133,6 +152,9 @@ model ChatResponse {
 
   @doc("The answer from the agent")
   answer: string;
+
+  @doc("Non-notifying guided-next-step metadata; null when absent or no follow-up remains")
+  next_step?: NextStep | null;
 
   @doc("The references to the documents used to generate the answer")
   references?: Reference[];

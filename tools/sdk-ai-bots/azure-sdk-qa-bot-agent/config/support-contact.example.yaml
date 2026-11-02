@@ -1,0 +1,21 @@
+# Review template for the shared Blob support-contact.yaml.
+# Synthetic contact keys only; this preview never sends notifications.
+support_areas:
+  - key: sdk_python
+    description: Python SDK breaking-change review and approval.
+    contact_id: reviewer_a
+  - key: sdk_java
+    description: Java SDK breaking-change review and approval.
+    contact_id: reviewer_a
+  - key: sdk_dotnet
+    description: .NET SDK breaking-change review and approval.
+    contact_id: reviewer_b
+contacts:
+  reviewer_a:
+    teams_user_id: null
+    maintainer: null
+    notification_enabled: false
+  reviewer_b:
+    teams_user_id: null
+    maintainer: null
+    notification_enabled: false

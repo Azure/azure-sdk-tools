@@ -188,6 +188,74 @@ To exercise the loop locally:
    feedback lifecycle records. The dashboard supports tenant, status,
    updated-time, and conversation ID filters.
 
+## Guided next-step preview
+
+The chat agent can return one model-written answer with optional `next_step` metadata.
+It groups support areas by their configured logical contact, so one reviewer can receive a combined Python/Java request while another handles .NET.
+The backend validates the complete proposal; it never appends a second clarification or PR-link request.
+
+This is an independent, non-notifying feature.
+It does not depend on confidence assessments, generate evidence bands, hide follow-up replies, change participation rules or send catalog-based Teams mentions.
+Contact placeholders remain literal preview text.
+
+### Shared support catalog
+
+Maintain `support-contact.yaml` in Azure Blob Storage alongside channel configuration.
+The [sample catalog](config/support-contact.example.yaml) uses synthetic contact keys and null Teams IDs; review it before uploading.
+Each support area has one contact key, and multiple areas can share a contact.
+The `contacts` section stays backend-only; the model receives only area keys, descriptions and logical contact references.
+
+| App Configuration setting | Purpose |
+| --- | --- |
+| `SUPPORT_CONTACT_BLOB` | Set to `support-contact.yaml` to enable routing; unset disables it without a Blob request. |
+| `STORAGE_CONFIG_CONTAINER` | Configuration container, default `bot-configs`. |
+| `SUPPORT_CONTACT_CACHE_TTL_SECONDS` | Cache lifetime, default `300` seconds; must be finite and nonnegative. |
+
+Each turn, including existing and recovered conversations, receives a catalog snapshot.
+The returned area-to-contact mappings are validated against that same snapshot even if a refresh occurs during generation.
+Configured missing or malformed Blobs fail explicitly, as do unknown areas, incorrect ownership and mismatched or duplicate placeholders.
+An expired catalog is not silently reused after a failed refresh.
+
+### Response and compatibility
+
+Both `/completion` and `/agent/chat` expose the same optional metadata:
+
+```json
+{
+  "answer": "{{contact:reviewer_a}} Please review the Python and Java breaking changes.\n\n{{contact:reviewer_b}} Please review the .NET breaking change.",
+  "next_step": {
+    "category": "human_action",
+    "targets": [
+      {"contact_id": "reviewer_a", "support_areas": ["sdk_python", "sdk_java"]},
+      {"contact_id": "reviewer_b", "support_areas": ["sdk_dotnet"]}
+    ]
+  }
+}
+```
+
+Categories are `missing_information`, `human_action` and `human_help`.
+Missing information returns to the user with `targets: []`.
+An unknown route also uses an empty target list with an explanation.
+Return `next_step: null` when no follow-up remains.
+Every selected contact requires exactly one `{{contact:contact_id}}` placeholder.
+
+Updated hosted chat agents use the `guided-next-step-v1` generated envelope with required `schema_version`, `answer` and nullable `next_step`.
+The backend extracts the answer before normal citation/reference processing and exposes routing metadata separately.
+Older plain-text hosted agents remain supported; if a catalog is configured, a warning makes the missing guided output visible.
+With no catalog, updated agents return `next_step: null` and retain the existing answering/verified-identity workflow.
+With a catalog, structured previews reject active mention markup and never return mention entities, even if an identity tool ran.
+The catalog's notification flags are stored for a future delivery workflow; they do not activate anything in this preview.
+
+Update the backend before enabling the new hosted-agent version: older backends would display the generated JSON rather than extract its answer.
+Blob uploads, configuration changes and deployments require separate authorization and are not performed by this PR.
+Real identity resolution for catalog targets, consent/delivery handling and active notifications are deferred.
+
+Run the local unit/ASGI checks without Azure access:
+
+```powershell
+python -m pytest tests\guided_next_step_test.py tests\chat_service_test.py tests\bot_config_service_test.py tests\identity_tools_test.py -q
+```
+
 ## Testing Remote Endpoints
 
 The main endpoint for querying the bot is `/agent/chat`. See [tests/api_test.rest](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tests/api_test.rest) for example requests.

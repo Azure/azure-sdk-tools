@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from config.tenant_config import TenantID
 from models.conversation import ConversationType, Role
 from models.knowledge import Reference
+from models.guided_next_step import NextStep
 from models.identity import TeamsMention
 
 # ===== Enumerations =====
@@ -94,3 +95,4 @@ class ChatResponse(BaseModel):
     trace_id: str | None = None
     mentions: list[TeamsMention] | None = None
     agent_name: str | None = None
+    next_step: NextStep | None = None

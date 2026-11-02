@@ -1,8 +1,8 @@
 import express, { ErrorRequestHandler } from 'express';
 import { Activity, CloudAdapter } from 'botbuilder';
+import { readFileSync } from 'node:fs';
 import { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { messageBodyParser } from '../src/input/messageBodyParser.js';
 
 class TransportTestAdapter extends CloudAdapter {
   public readonly receivedActivity = vi.fn<(activity: Activity) => void>();
@@ -25,8 +25,13 @@ describe('Teams message HTTP transport', () => {
   });
 
   beforeAll(async () => {
+    const source = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8');
+    const parserRegistration = /expressApp\.use\(express\.json\(\{ limit: '([^']+)' \}\)\);/.exec(source);
+    if (!parserRegistration) {
+      throw new Error('Expected inline JSON parser registration in src/index.ts');
+    }
     const app = express();
-    app.use(messageBodyParser);
+    app.use(express.json({ limit: parserRegistration[1] }));
     app.post('/api/messages', async (req, res, next) => {
       try {
         await adapter.process(req, res, async () => {});

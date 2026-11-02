@@ -7,11 +7,11 @@ import adapter from './adapter.js';
 // This bot's main dialog.
 import app from './app/app.js';
 import { logger } from './logging/logger.js';
-import { messageBodyParser } from './input/messageBodyParser.js';
 
 // Create express application.
 const expressApp = express();
-expressApp.use(messageBodyParser);
+// Four 5 MiB images expand to about 27 MiB when base64-encoded.
+expressApp.use(express.json({ limit: '30mb' }));
 
 // Health check endpoint
 expressApp.get('/health', (req, res) => {

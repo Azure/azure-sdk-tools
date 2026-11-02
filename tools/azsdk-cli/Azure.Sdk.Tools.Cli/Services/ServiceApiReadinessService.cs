@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 public interface IServiceApiReadinessService
 {
-    Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, string? expectedHeadSha, CancellationToken ct);
+    Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct);
 }
 
 public class ServiceApiReadinessService(IGitHubService github, IAzureService azure, IHttpClientFactory clients) : IServiceApiReadinessService
@@ -23,9 +23,9 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
     private const int MaxEvidenceBytes = 4 * 1024 * 1024;
     private readonly HttpClient _http = clients.CreateClient(HttpClientName);
 
-    public async Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, string? expectedHeadSha, CancellationToken ct)
+    public async Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct)
     {
-        var result = new ServiceApiReadinessResponse { HeadSha = expectedHeadSha ?? "" };
+        var result = new ServiceApiReadinessResponse();
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(ct);
         budget.CancelAfter(TimeSpan.FromSeconds(40));
         ct = budget.Token;
@@ -33,9 +33,9 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         {
             if (!Regex.IsMatch(owner, @"\A[\w.-]+\z") ||
                 !Regex.IsMatch(repository, @"\Aazure-sdk-for-(net|java|js|python|go)\z", RegexOptions.IgnoreCase) ||
-                pullRequest <= 0 || (expectedHeadSha is not null && !IsSha(expectedHeadSha)))
+                pullRequest <= 0)
             {
-                throw new ArgumentException("Provide an SDK repository, positive PR number, and valid expected head SHA.");
+                throw new ArgumentException("Provide an SDK repository and positive PR number.");
             }
             ct.ThrowIfCancellationRequested();
             var token = await github.GetAuthTokenAsync(ct);
@@ -47,11 +47,6 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 !Regex.IsMatch(result.HeadRepository, @"\A[\w.-]+/[\w.-]+\z"))
             {
                 result.Detail = "An open SDK PR with a current head repository and full head SHA is required.";
-                return result;
-            }
-            if (expectedHeadSha is not null && !string.Equals(expectedHeadSha, result.HeadSha, StringComparison.OrdinalIgnoreCase))
-            {
-                result.Detail = "The SDK PR head changed before the check. Run it against the current head.";
                 return result;
             }
             var labels = (pr["labels"] as JsonArray ?? []).Select(label => Text(label?["name"])).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -397,7 +392,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             result.ReadinessStatus = ServiceApiReadinessResponse.Error;
-            result.Detail = exception is ArgumentException ? "Provide an SDK repository, positive PR number, and valid expected head SHA." : SafeError(exception);
+            result.Detail = exception is ArgumentException ? "Provide an SDK repository and positive PR number." : SafeError(exception);
             result.ResponseError = result.Detail;
         }
         return result;

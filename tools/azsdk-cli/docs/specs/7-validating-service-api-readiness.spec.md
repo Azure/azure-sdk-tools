@@ -6,7 +6,7 @@ before the automation integration is enabled.
 ## Purpose and Ownership
 
 Approved SDK PRs can wait for confirmation that their API version is deployed.
-This read-only CLI/MCP check reports whether public Azure ARM metadata lists the
+This read-only CLI command reports whether public Azure ARM metadata lists the
 exact version used to generate the SDK. It is not release approval, a health
 check, or proof that every operation works in every region. Data-plane SDKs are
 not applicable.
@@ -19,14 +19,16 @@ remain unchanged.
 ## Command and Inputs
 
 ```sh
-azsdk pkg check-api-version --owner Azure --repo azure-sdk-for-java --pr 123 \
-  --expected-head-sha <full-sdk-pr-head-sha> --output json
+azsdk pkg check-api-version --owner Azure --repo azure-sdk-for-java --pr 123 --output json
 ```
 
-MCP: `azsdk_check_service_api_version`. Inputs are owner, one of the five SDK
-repository names below, a positive SDK PR number, and an optional full expected
-head SHA. A spec PR is not an SDK PR: use the spec commit and project recorded in
-SDK files. There is no version override, arbitrary endpoint, or mutation option.
+Inputs are owner, one of the five SDK repository names below, and a positive SDK
+PR number. The command reads the head SHA from the PR and verifies it again before
+returning; callers do not supply a SHA. The worker compares the result's SHA with
+its current event/head state before publishing. There is no MCP entry point.
+A spec PR is not an SDK PR: use the spec commit and project recorded in SDK files.
+There is no version override, arbitrary endpoint, or mutation option. Local-path
+validation is deferred.
 
 ## Authentication
 

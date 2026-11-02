@@ -377,15 +377,6 @@ public class ServiceApiReadinessServiceTests
     }
 
     [Test]
-    public async Task ChangedExpectedHeadDoesNotReadSdkFilesOrArm()
-    {
-        var response = await _service.CheckAsync("helen229", "azure-sdk-for-java", 1, new string('c', 40), CancellationToken.None);
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
-        Assert.That(response.Detail, Does.Contain("head changed"));
-        Assert.That(_requests.Count, Is.EqualTo(1));
-    }
-
-    [Test]
     public async Task HeadMovementDuringCheckRejectsAnOtherwisePassingResult()
     {
         _changeHead = true;
@@ -613,7 +604,7 @@ public class ServiceApiReadinessServiceTests
     {
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
-        var response = await _service.CheckAsync("helen229", "azure-sdk-for-java", 1, Head, cancellation.Token);
+        var response = await _service.CheckAsync("helen229", "azure-sdk-for-java", 1, cancellation.Token);
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(response.Detail, Does.Contain("canceled"));
         _github.Verify(service => service.GetAuthTokenAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -633,7 +624,7 @@ public class ServiceApiReadinessServiceTests
                 started.TrySetResult(true);
                 return authentication.Task;
             });
-        var checking = _service.CheckAsync("helen229", "azure-sdk-for-java", 1, Head, cancellation.Token);
+        var checking = _service.CheckAsync("helen229", "azure-sdk-for-java", 1, cancellation.Token);
         await started.Task;
         cancellation.Cancel();
         var response = await checking;
@@ -642,7 +633,7 @@ public class ServiceApiReadinessServiceTests
         Assert.That(_requests, Is.Empty);
     }
 
-    private Task<ServiceApiReadinessResponse> CheckAsync() => _service.CheckAsync("helen229", _repository.Split('/')[1], 1, Head, CancellationToken.None);
+    private Task<ServiceApiReadinessResponse> CheckAsync() => _service.CheckAsync("helen229", _repository.Split('/')[1], 1, CancellationToken.None);
     private IEnumerable<(HttpMethod Method, Uri Uri, string? Token)> ArmRequests() => _requests.Where(request => request.Uri.Host == "management.azure.com");
     private static string Key(string repository, string commit, string path) => $"{repository}|{commit}|{path}";
     private void SetFile(string repository, string commit, string path, string content) => _files[Key(repository, commit, path)] = content;

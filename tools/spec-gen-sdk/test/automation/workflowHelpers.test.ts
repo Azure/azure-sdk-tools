@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fs from 'node:fs';
+import fsDefault from 'node:fs';
+import * as path from 'node:path';
 import * as runScript from '../../src/utils/runScript';
 import * as fsUtils from '../../src/utils/fsUtils';
 import { workflowCallGenerateScript, workflowDetectChangedPackages, workflowInitGetSdkSuppressionsYml } from '../../src/automation/workflowHelpers';
@@ -67,6 +69,50 @@ describe('workflowHelpers', () => {
   });
 
   describe('workflowCallGenerateScript', () => {
+    it.each([
+      { readmes: [], projects: ['project1'] },
+      { readmes: ['project1/readme.md'], projects: [] },
+    ])('preserves legacy JSON and script arguments for $readmes $projects', async ({ readmes, projects }) => {
+      const { writeTmpJsonFile } = await vi.importActual<typeof fsUtils>('../../src/utils/fsUtils');
+      const writeFile = vi.spyOn(fsDefault, 'writeFileSync').mockImplementation(() => {});
+      vi.mocked(fsUtils.writeTmpJsonFile).mockImplementationOnce(writeTmpJsonFile);
+      vi.mocked(fsUtils.readTmpJsonFile).mockReturnValue({ packages: [] });
+      vi.mocked(runScript.runSdkAutoCustomScript).mockResolvedValue('succeeded');
+      mockContext.tmpFolder = 'tmp';
+
+      try {
+        await workflowCallGenerateScript(mockContext, ['changed-file'], readmes, projects);
+
+        const legacyInput: GenerateInput = {
+          specFolder: path.relative(mockContext.config.localSdkRepoPath, mockContext.config.localSpecRepoPath),
+          headSha: mockContext.config.specCommitSha,
+          repoHttpsUrl: mockContext.config.specRepoHttpsUrl,
+          changedFiles: ['changed-file'],
+          runMode: mockContext.config.runMode,
+          sdkReleaseType: mockContext.config.sdkReleaseType,
+          installInstructionInput: {
+            isPublic: true,
+            downloadUrlPrefix: '',
+            downloadCommandTemplate: 'downloadCommand',
+          },
+          ...(projects.length > 0
+            ? { relatedTypeSpecProjectFolder: projects }
+            : { relatedReadmeMdFiles: readmes }),
+        };
+        expect(writeFile).toHaveBeenCalledWith(
+          path.join('tmp', 'generateInput.json'),
+          JSON.stringify(legacyInput, undefined, 2),
+        );
+        expect(runScript.runSdkAutoCustomScript).toHaveBeenCalledWith(mockContext, 'generate.js', {
+          cwd: mockContext.config.localSdkRepoPath,
+          argTmpFileList: ['generateInput.json', 'generateOutput.json'],
+          statusContext: { status: 'succeeded' },
+        });
+      } finally {
+        writeFile.mockRestore();
+      }
+    });
+
     it.each([
       '@azure-tools/typespec-ts-provisioning',
       '@azure-tools/typespec-csharp',

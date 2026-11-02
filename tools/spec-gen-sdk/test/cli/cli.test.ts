@@ -27,6 +27,22 @@ describe('typespec-emitter CLI option', () => {
     vi.restoreAllMocks();
   });
 
+  it.each(['local', 'spec-pull-request', 'release', 'batch'])('preserves existing OpenAPI CLI calls in %s mode', async (runMode) => {
+    cli.args.splice(-2);
+    cli.args.push('--readme-relative-path', 'project/readme.md', '--run-mode', runMode);
+
+    await import('../../src/cli/cli');
+
+    await vi.waitFor(() => expect(process.exit).toHaveBeenCalledWith(0));
+    expect(sdkAutoMain).toHaveBeenCalledWith(expect.objectContaining({
+      typespecEmitter: undefined,
+      tspConfigPath: undefined,
+      readmePath: 'project/readme.md',
+      runMode,
+      runEnv: runMode === 'local' ? 'local' : 'azureDevOps',
+    }));
+  });
+
   it.each([
     '@azure-tools/typespec-ts-provisioning',
     '@azure-tools/typespec-ts',

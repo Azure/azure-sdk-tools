@@ -1,6 +1,6 @@
 BeforeAll {
     Import-Module powershell-yaml -MinimumVersion 0.4.7 -ErrorAction Stop
-    $scriptPath = Join-Path $PSScriptRoot ".." "Verify-RestApiSpecLocation.ps1"
+    $scriptPath = Join-Path $PSScriptRoot ".." ".." "common" "scripts" "Verify-RestApiSpecLocation.ps1"
     $parseErrors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$parseErrors)
     if ($parseErrors.Count -gt 0) {
@@ -29,7 +29,7 @@ BeforeAll {
     }
 }
 
-Describe "Verify-TspLocation" {
+Describe "Verify-TspLocation" -Tag "UnitTest" {
     BeforeEach {
         Mock Search-GitHubCommit { return @{ total_count = 1 } }
         $rootPath = Join-Path $TestDrive "tsp-location.yaml"
@@ -155,14 +155,14 @@ Describe "Verify-TspLocation" {
     }
 }
 
-Describe "Verify-RestApiSpecLocation release workflow" {
+Describe "Verify-RestApiSpecLocation release workflow" -Tag "IntegrationTest" {
     BeforeAll {
         $fixtureScripts = Join-Path $TestDrive "scripts"
         $fixtureHelpers = Join-Path $fixtureScripts "Helpers"
         New-Item -Path $fixtureHelpers -ItemType Directory -Force | Out-Null
         $fixtureScript = Join-Path $fixtureScripts "Verify-RestApiSpecLocation.ps1"
         Copy-Item -LiteralPath $scriptPath -Destination $fixtureScript
-        Copy-Item -LiteralPath (Join-Path $PSScriptRoot ".." "SemVer.ps1") -Destination $fixtureScripts
+        Copy-Item -LiteralPath (Join-Path (Split-Path $scriptPath -Parent) "SemVer.ps1") -Destination $fixtureScripts
         $commonStub = {
             $RepoRoot = Split-Path $PSScriptRoot -Parent
             $Language = "go"

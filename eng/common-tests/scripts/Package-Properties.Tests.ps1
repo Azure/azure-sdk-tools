@@ -1,12 +1,12 @@
 BeforeAll {
     Import-Module powershell-yaml -MinimumVersion 0.4.7 -ErrorAction Stop
-    . (Join-Path $PSScriptRoot ".." "Package-Properties.ps1")
+    . (Join-Path $PSScriptRoot ".." ".." "common" "scripts" "Package-Properties.ps1")
 
     function Get-ChangeLogEntry {}
     function Get-AllPkgProperties {}
 }
 
-Describe "PackageProps TypeSpec location metadata" {
+Describe "PackageProps TypeSpec location metadata" -Tag "UnitTest" {
     BeforeEach {
         Set-StrictMode -Version 3
         $packageDirectory = Join-Path $TestDrive "package"

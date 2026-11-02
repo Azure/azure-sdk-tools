@@ -15,20 +15,7 @@ public class VerifySetupHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments) => new VerifySetupResponse
     {
-        Results =
-        [
-            new RequirementCheckResult
-            {
-                Requirement = "dotnet",
-                Instructions = ["dotnet SDK is installed."],
-                RequirementStatusDetails = "dotnet 8.0.100 detected"
-            },
-            new RequirementCheckResult
-            {
-                Requirement = "git",
-                Instructions = ["git is installed."],
-                RequirementStatusDetails = "git 2.45.0 detected"
-            }
-        ]
+        // Results contains requirement failures, not an inventory of installed tools.
+        Results = []
     };
 }

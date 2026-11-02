@@ -94,6 +94,14 @@ In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
 
+## Manual release-plan ID
+
+`azsdk package release` accepts optional `--release-plan-id`; `azsdk_release_sdk` accepts `releasePlanId`. The requester supplies the release-plan ID directly. Positive values are forwarded unchanged as the pipeline's `ReleasePlanId` template parameter. Omitted/zero values add no plan parameter; negative values are rejected before any service call. Existing readiness checks, approval flow, and Java package selection remain unchanged. `--check-ready` never queues a pipeline.
+
+This input does not look up a plan by package name, request an API version, update ADO status, or create another tracking system. Automatic release correlation uses the triggering SDK PR and existing ADO release-plan links in the separate status-update work.
+
+**Rollout:** merge and release this optional CLI input first, then wire `ReleasePlanId` through the receiving pipeline entry point and release templates on the branch being released. A queued run does not verify that the pipeline consumes the ID or updates the plan. Start with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130), validate its handoff, and expand to the remaining CI YAML files, including management-specific files. Confirm PR trigger controls before broad YAML changes. This CLI-only PR does not modify or preflight those templates.
+
 ## Release-plan status updates
 
 `azsdk release-plan update-release-status` uses existing Azure DevOps release-plan metadata, with no API-version input or mapping:

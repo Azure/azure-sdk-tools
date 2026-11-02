@@ -206,7 +206,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task UpdatePackageReleaseStatus_WithMultipleReleasePlans_SelectsMergedPullRequest()
+        public async Task UpdatePackageReleaseStatus_WithMultipleReleasePlans_MergedPR_DoesNotSelectAnyPlan()
         {
             // Arrange
             var releasePlanWithMergedPR = new ReleasePlanWorkItem
@@ -243,26 +243,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<ReleasePlanWorkItem> { releasePlanWithOpenPR, releasePlanWithMergedPR });
 
-            mockDevOpsService
-                .Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 11111 });
-
             // Act
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", "python", "Released", null, 0, null, null, null, CancellationToken.None);
 
             // Assert
-            Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
-
-            // Verify the one with merged PR was selected (work item 11111)
-            mockDevOpsService.Verify(
-                x => x.UpdateWorkItemAsync(11111, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("Custom.ReleaseStatusForPython")), It.IsAny<CancellationToken>()),
-                Times.Once);
+            Assert.That(result.ResponseError, Does.Contain("Multiple in-progress release plans").And.Contain("101").And.Contain("102"));
+            Assert.That(result.ReleaseStatus, Is.Empty);
+            Assert.That(mockDevOpsService.Invocations.Where(i => i.Method.Name == nameof(IDevOpsService.UpdateWorkItemAsync)), Is.Empty);
+            VerifyNoAutomation();
         }
 
         [Test]
-        public async Task UpdatePackageReleaseStatus_WithMultipleReleasePlans_NoMergedPR_SelectsFirst()
+        public async Task UpdatePackageReleaseStatus_WithMultipleReleasePlans_NoMergedPR_DoesNotSelectAnyPlan()
         {
             // Arrange
             var firstReleasePlan = new ReleasePlanWorkItem
@@ -299,21 +291,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<ReleasePlanWorkItem> { firstReleasePlan, secondReleasePlan });
 
-            mockDevOpsService
-                .Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 11111 });
-
             // Act
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", "python", "Released", null, 0, null, null, null, CancellationToken.None);
 
             // Assert
-            Assert.That(result.ResponseError, Is.Null);
-
-            // Verify the first one was selected (work item 11111)
-            mockDevOpsService.Verify(
-                x => x.UpdateWorkItemAsync(11111, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("Custom.ReleaseStatusForPython")), It.IsAny<CancellationToken>()),
-                Times.Once);
+            Assert.That(result.ResponseError, Does.Contain("Multiple in-progress release plans").And.Contain("101").And.Contain("102"));
+            Assert.That(result.ReleaseStatus, Is.Empty);
+            Assert.That(mockDevOpsService.Invocations.Where(i => i.Method.Name == nameof(IDevOpsService.UpdateWorkItemAsync)), Is.Empty);
+            VerifyNoAutomation();
         }
 
         [Test]

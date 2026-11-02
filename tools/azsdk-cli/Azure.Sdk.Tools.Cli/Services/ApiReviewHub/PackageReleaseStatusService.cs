@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using System.Net;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 
@@ -23,13 +24,25 @@ public class PackageReleaseStatusService(
             var reviewHubResult = await apiReviewHubService.GetReleaseGateStatusAsync(endpoint, language, packageName, packageVersion, apiHash, repoOwner, ct);
             reviewHubResult.StatusCode ??= (int)HttpStatusCode.OK;
             result.ReviewHub = reviewHubResult;
-            result.IsApproved = reviewHubResult.IsApproved;
+            result.IsApproved = reviewHubResult.IsReleaseApproved;
             result.FinalSource = "ApiReviewHub";
-            result.Reason = reviewHubResult.Reason ?? (reviewHubResult.IsApproved ? "approved" : "notApproved");
-            if (reviewHubResult.IsApproved)
+            result.Reason = reviewHubResult.Reason ?? (reviewHubResult.IsReleaseApproved ? "approved" : "notApproved");
+            if (reviewHubResult.IsReleaseApproved)
             {
                 return result;
             }
+        }
+        catch (JsonException ex)
+        {
+            logger.LogWarning(ex, "API Review Hub returned an invalid release approval response for {packageName} {packageVersion}", packageName, packageVersion);
+            result.ReviewHub = new ApiReviewHubReleaseGateResult
+            {
+                Reason = "invalidResponse",
+                Error = ex.Message
+            };
+            result.IsApproved = false;
+            result.FinalSource = "None";
+            result.Reason = "invalidResponse";
         }
         catch (Exception ex)
         {
@@ -103,6 +116,11 @@ public class PackageReleaseStatusService(
                 Reason = "queryFailed",
                 Error = ex.Message
             };
+            if (IsSuccessfulStatusCode(result.ReviewHub.StatusCode) && !IsReviewHubNotApplicable(result.ReviewHub))
+            {
+                return result;
+            }
+
             result.IsApproved = false;
             result.FinalSource = "None";
             result.Reason = "queryFailed";

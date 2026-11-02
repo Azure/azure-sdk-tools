@@ -78,6 +78,7 @@ def _channel(document: dict[str, Any], *, message: bool = False) -> str | None:
 
 async def aggregate_overview(
     *, qa_container: Any, message_container: Any, channel_names: dict[str, str],
+    enabled_channel_ids: list[str],
     start: datetime, end: datetime, channel_id: str | None,
 ) -> QAOverview:
     """Stream all pages, retaining counts and distinct issue identities, not transcripts."""
@@ -94,6 +95,8 @@ async def aggregate_overview(
     def row_for(document: dict[str, Any], *, message: bool = False) -> OverviewRow | None:
         channel = _channel(document, message=message)
         if channel in excluded or (channel_id and channel != channel_id):
+            return None
+        if channel not in enabled_channel_ids:
             return None
         if channel not in groups:
             groups[channel] = OverviewRow(

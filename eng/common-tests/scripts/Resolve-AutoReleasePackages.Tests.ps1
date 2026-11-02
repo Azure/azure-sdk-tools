@@ -93,10 +93,11 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
         Remove-Variable -Scope Global -ErrorAction SilentlyContinue -Name `
             AutoReleaseEmittedVars, AutoReleaseStubRelease, AutoReleaseStubFiles, AutoReleaseStubChangedPackages, `
             AutoReleaseGetPrPkgCalled, AutoReleaseResolveArgs, AutoReleaseThrowOnResolve, AutoReleaseThrowOnGetPrPkg, `
-            AutoReleaseAzsdkCalls
+            AutoReleaseAzsdkCalls, LanguageDisplayName
     }
 
     BeforeEach {
+        $global:LanguageDisplayName = '.NET'
         $global:AutoReleaseEmittedVars = @{}
         $global:AutoReleaseStubRelease = [pscustomobject]@{ PullRequestNumber = $null; IsEligible = $false; SkipReason = 'default'; PullRequest = $null }
         $global:AutoReleaseStubFiles = @()
@@ -116,6 +117,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
+            $vars['AutoReleaseSdkPullRequestUrl'] | Should -Be ''
             $vars['ReleaseArtifact_AzureStorageBlobs'] | Should -Be 'false'
             $global:AutoReleaseGetPrPkgCalled | Should -BeFalse
         }
@@ -247,8 +249,12 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $callArgs | Should -Contain 'Release In Progress'
             $callArgs | Should -Contain '--sdk-pull-request'
             $callArgs | Should -Contain 'https://github.com/Azure/azure-sdk-for-net/pull/123'
+            $languageIndex = [Array]::IndexOf($callArgs, '--language')
+            $callArgs[$languageIndex + 1] | Should -Be '.NET'
             $callArgs | Should -Contain '--release-pipeline'
             $callArgs | Should -Contain 'https://dev.azure.com/fabrikam/project/_build/results?buildId=12345'
+            $callArgs | Should -Not -Contain '--api-version'
+            $global:AutoReleaseEmittedVars['AutoReleaseSdkPullRequestUrl'] | Should -Be 'https://github.com/Azure/azure-sdk-for-net/pull/123'
         }
     }
 
@@ -301,6 +307,30 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $log | Should -Match 'https://github\.com/Azure/azure-sdk-for-net/pull/777'
             # The bare "PR #<number>" form should no longer appear in the log.
             $log | Should -Not -Match 'PR #777'
+        }
+
+        It 'reuses the same PR link in the status call and release-stage output' -TestCases @(
+            @{ HtmlUrl = 'https://github.com/Azure/azure-sdk-for-net/pull/777' },
+            @{ HtmlUrl = $null }
+        ) {
+            param($HtmlUrl)
+            $pr = [pscustomobject]@{ number = 777 }
+            if ($HtmlUrl) {
+                $pr | Add-Member -NotePropertyName html_url -NotePropertyValue $HtmlUrl
+            }
+            $global:AutoReleaseStubRelease = [pscustomobject]@{
+                PullRequestNumber = 777; IsEligible = $true; SkipReason = ''; PullRequest = $pr
+            }
+
+            $vars = Invoke-ResolveScript -Artifacts '[{"name":"Pkg","safeName":"Pkg"}]' -AzsdkExePath 'Invoke-AzsdkStub'
+
+            $vars['HasAutoReleaseArtifacts'] | Should -Be 'true'
+            $vars['AutoReleaseSdkPullRequestUrl'] | Should -Be 'https://github.com/Azure/azure-sdk-for-net/pull/777'
+            $global:AutoReleaseAzsdkCalls.Count | Should -Be 1
+            $call = $global:AutoReleaseAzsdkCalls[0]
+            $index = [Array]::IndexOf($call, '--sdk-pull-request')
+            $index | Should -BeGreaterThan -1
+            $call[$index + 1] | Should -Be $vars['AutoReleaseSdkPullRequestUrl']
         }
 
         It "constructs a pull request link from the repo id and number when html_url is absent" {
@@ -360,6 +390,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $vars = $global:AutoReleaseEmittedVars
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
+            $vars['AutoReleaseSdkPullRequestUrl'] | Should -Be ''
             $vars['ReleaseArtifact_pkg'] | Should -Be 'false'
         }
     }

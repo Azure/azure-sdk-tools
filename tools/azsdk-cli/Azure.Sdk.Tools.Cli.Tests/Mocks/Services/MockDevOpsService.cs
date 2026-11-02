@@ -129,8 +129,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(ConfiguredPipelineRun);
         }
 
-        Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
+        Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanAsync(int releasePlanId, CancellationToken ct, bool includeAbandoned)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
+            ct.ThrowIfCancellationRequested();
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 1,

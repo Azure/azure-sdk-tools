@@ -6,7 +6,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 
 | Name | Command | Description |
 |------|---------|-------------|
-| azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'. |
+| azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by Release Plan ID (not work item ID). Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support channel on Teams. After saving Abandoned, closes linked open unmerged SDK PRs regardless of author, then adds an abandonment notice. Already abandoned plans retry cleanup without ADO state updates. Closed and merged PRs remain unchanged, even when a notice is missing. Cleanup failures return success with warnings and manual follow-up guidance. |
 | azsdk_analyze_log_file | `azsdk ci log analyze` | Analyzes a log file for errors and issues |
 | azsdk_analyze_pipeline | `azsdk ci analyze` | Analyzes and returns structured failure data and logs from an Azure Pipeline build. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number. |
 | azsdk_apireviewhub_request_review_pr | `azsdk api-review create` | Request API Review Hub creation of a review pull request for a package API change. |
@@ -59,7 +59,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_package_update_changelog_content | `azsdk pkg update-changelog-content` | Updates the changelog content for a specified package. |
 | azsdk_package_update_metadata | `azsdk pkg update-metadata` | Updates the package metadata content for a specified package. |
 | azsdk_package_update_version | `azsdk pkg update-version` | Update or bump the version number for an SDK package. Sets the package version and release date in project files. |
-| azsdk_release_sdk | `azsdk pkg release` | Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead. |
+| azsdk_release_sdk | `azsdk pkg release` | Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. For a manual release associated with a plan, pass the requester's releasePlanId; the pipeline must forward ReleasePlanId for plan updates. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead. |
 | azsdk_run_generate_sdk | `azsdk spec-workflow generate-sdk` | Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). It generates one language per call, so to generate for all languages call this tool once per language. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK. Uses the plan's saved spec commit when present; plans without one retain existing branch/PR behavior. |
 | azsdk_run_typespec_validation | `azsdk tsp validate` | Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation. |
 | azsdk_typespec_check_project_in_public_repo | `azsdk tsp check-public-repo` | Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param. |
@@ -80,7 +80,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk release-plan list-overdue` |  |
 |  | `azsdk quokka` |  |
 |  | `azsdk pkg mark-released` | Mark a package as released in API Review Hub and APIView |
-|  | `azsdk pkg get-approval-status` | Check API review release approval status using APIView and API Review Hub |
+|  | `azsdk pkg get-approval-status` | Check release approval status, including API and package name approval, using APIView and API Review Hub |
 |  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
 |  | `azsdk pkg samples generate` | Generates sample files |
 |  | `azsdk pkg readme generate` | Generate README content for a package |
@@ -105,4 +105,3 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk list` |  |
-

@@ -499,7 +499,7 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 #### Open questions
 
 - [ ] What triggers auto-release after SDK PR merge?
-- [ ] For patch releases — what triggers the workflow differently?
+- [x] For patch releases — what triggers the workflow differently? **Resolved**: No difference when the patch release is initiated by service teams — it follows the same `auto-release` workflow. If initiated by SDK language teams instead, they follow a separate manual process. ([#15363](https://github.com/Azure/azure-sdk-tools/issues/15363#issuecomment-6155081371))
 
 </details>
 
@@ -595,7 +595,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 - [ ] **D5**: What triggers auto-release after SDK PR merge? (Last E2E automation piece)
 - [ ] **D6**: How should breaking change labels route to review team for data-plane? `BreakingChangeReviewRequired` applies but has no routing. `BreakingChange-{Language}-Sdk` does not apply to data-plane today.
 - [ ] **D7**: Should spec-gen-sdk failures be PR comments, structured JSON, or both?
-- [ ] **D8**: For patch releases — what triggers the workflow differently?
+- [x] **D8**: For patch releases — what triggers the workflow differently? **Resolved**: No difference if the service team initiates the patch release — it follows the existing `auto-release` workflow. SDK language team-initiated patches follow a separate manual process.
 
 ---
 

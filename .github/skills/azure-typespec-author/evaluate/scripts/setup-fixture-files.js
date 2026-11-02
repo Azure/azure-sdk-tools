@@ -35,6 +35,10 @@ const FIXTURE_DEPENDENCIES = [
     '@typespec/streams',
     '@typespec/versioning',
 ];
+const CATALOG_ALIASES = {
+    '@azure-tools/typespec-azure-rulesets':
+        '@azure-tools/typespec-azure-rulesets-original',
+};
 
 function run(command, args) {
     console.log(`> ${command} ${args.join(' ')}`);
@@ -90,7 +94,7 @@ for (const line of fs.readFileSync(workspaceFile, 'utf8').split(/\r?\n/)) {
 
 const devDependencies = {};
 for (const dependency of FIXTURE_DEPENDENCIES) {
-    const version = catalog.get(dependency);
+    const version = catalog.get(dependency) ?? catalog.get(CATALOG_ALIASES[dependency]);
     if (!version) {
         throw new Error(`Required dependency is missing from the pnpm catalog: ${dependency}`);
     }

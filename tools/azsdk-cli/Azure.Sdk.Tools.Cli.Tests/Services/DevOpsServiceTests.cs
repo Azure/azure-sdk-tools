@@ -1356,6 +1356,155 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(error!.Message, Does.Contain("Failed to find release plan"));
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GetReleasePlanAsync_IncludeAbandonedControlsQueryAndPreservesMapping(bool includeAbandoned)
+        {
+            _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(35000, 100, "Abandoned"));
+            var result = await _devOpsService.GetReleasePlanAsync(100, CancellationToken.None, includeAbandoned);
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.ReleasePlanID] = '100'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain(includeAbandoned
+                ? "[System.State] NOT IN ('Closed','Duplicate')"
+                : "[System.State] NOT IN ('Closed','Duplicate','Abandoned')"));
+            Assert.That(result.WorkItemId, Is.EqualTo(35000));
+            Assert.That(result.ReleasePlanId, Is.EqualTo(100));
+            Assert.That(result.Status, Is.EqualTo("Abandoned"));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
+        }
+
+        [Test]
+        public void GetReleasePlanAsync_IncludeAbandonedStillRejectsAmbiguousIdentity()
+        {
+            _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(35000, 100, "Abandoned"));
+            _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(35001, 100, "In Progress"));
+            Assert.ThrowsAsync<InvalidOperationException>(() => _devOpsService.GetReleasePlanAsync(100, CancellationToken.None, true));
+            Assert.That(_connection.CapturedPatches, Is.Empty);
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void GetReleasePlanAsync_IncludeAbandonedInvalidIdDoesNotQuery(int id)
+        {
+            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _devOpsService.GetReleasePlanAsync(id, CancellationToken.None, true));
+            Assert.That(_connection.LastCapturedQuery, Is.Null);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GetReleasePlanAsync_RealClientTransportHonorsAbandonedFilter(bool includeAbandoned)
+        {
+            using var handler = new AbandonmentTransport();
+            using var client = new WorkItemTrackingHttpClient(new Uri("https://dev.azure.com/offline"), handler, disposeHandler: false);
+            var connection = new Mock<IDevOpsConnection>(MockBehavior.Strict);
+            connection.Setup(c => c.GetWorkItemClient(It.IsAny<CancellationToken>())).Returns(client);
+            var service = new DevOpsService(_logger, connection.Object);
+            if (includeAbandoned)
+            {
+                var result = await service.GetReleasePlanAsync(100, CancellationToken.None, true);
+                Assert.That(result.Status, Is.EqualTo("Abandoned"));
+                Assert.That(result.WorkItemId, Is.EqualTo(35000));
+                Assert.That(result.ReleasePlanId, Is.EqualTo(100));
+            }
+            else
+            {
+                Assert.ThrowsAsync<Exception>(() => service.GetReleasePlanAsync(100, CancellationToken.None));
+            }
+            Assert.That(handler.Query, Does.Contain("[Custom.ReleasePlanID] = '100'"));
+            Assert.That(handler.Query, Does.Contain(includeAbandoned
+                ? "NOT IN ('Closed','Duplicate')" : "NOT IN ('Closed','Duplicate','Abandoned')"));
+            Assert.That(handler.QueryCount, Is.EqualTo(1));
+            Assert.That(handler.Writes, Is.Zero);
+        }
+
+        [Test]
+        public void UpdateWorkItemAsync_RealClientRevisionConflictDoesNotRetryOrPost()
+        {
+            using var handler = new AbandonmentTransport();
+            using var client = new WorkItemTrackingHttpClient(new Uri("https://dev.azure.com/offline"), handler, disposeHandler: false);
+            var connection = new Mock<IDevOpsConnection>(MockBehavior.Strict);
+            connection.Setup(c => c.GetWorkItemClient(It.IsAny<CancellationToken>())).Returns(client);
+            var service = new DevOpsService(_logger, connection.Object);
+            Assert.CatchAsync<Exception>(() => service.UpdateWorkItemAsync(35000,
+                new Dictionary<string, string> { ["System.State"] = "Abandoned" }, 7, CancellationToken.None));
+            Assert.That(handler.Writes, Is.EqualTo(1));
+            Assert.That(handler.QueryCount, Is.Zero);
+            Assert.That(handler.Methods, Does.Not.Contain(HttpMethod.Post));
+            using var patch = System.Text.Json.JsonDocument.Parse(handler.Patch!);
+            Assert.That(patch.RootElement.GetArrayLength(), Is.EqualTo(2));
+            Assert.That(patch.RootElement[0].GetProperty("op").GetString(), Is.EqualTo("test"));
+            Assert.That(patch.RootElement[0].GetProperty("path").GetString(), Is.EqualTo("/rev"));
+            Assert.That(patch.RootElement[0].GetProperty("value").GetInt32(), Is.EqualTo(7));
+            Assert.That(patch.RootElement[1].GetProperty("path").GetString(), Is.EqualTo("/fields/System.State"));
+            Assert.That(patch.RootElement[1].GetProperty("value").GetString(), Is.EqualTo("Abandoned"));
+        }
+
+        private sealed class AbandonmentTransport : HttpMessageHandler
+        {
+            public string? Query { get; private set; }
+            public string? Patch { get; private set; }
+            public int QueryCount { get; private set; }
+            public int Writes { get; private set; }
+            public List<HttpMethod> Methods { get; } = [];
+
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+            {
+                Methods.Add(request.Method);
+                string json;
+                if (request.Method == HttpMethod.Options)
+                {
+                    json = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        count = 2,
+                        value = new[]
+                        {
+                            new { id = "1a9c53f7-f243-4447-b110-35ef023636e4", area = "wit", resourceName = "wiql", routeTemplate = "{project}/_apis/wit/wiql/{id}", resourceVersion = 1, minVersion = "1.0", maxVersion = "7.1", releasedVersion = "7.0" },
+                            new { id = "72c7ddf8-2cdc-4f60-90cd-ab71c14a399b", area = "wit", resourceName = "workItems", routeTemplate = "{project}/_apis/wit/workitems/{id}", resourceVersion = 3, minVersion = "1.0", maxVersion = "7.1", releasedVersion = "7.0" }
+                        }
+                    });
+                }
+                else if (request.Method == HttpMethod.Post && request.RequestUri!.AbsolutePath.Contains("/wiql", StringComparison.Ordinal))
+                {
+                    QueryCount++;
+                    using var body = System.Text.Json.JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
+                    Query = body.RootElement.GetProperty("query").GetString();
+                    json = Query!.Contains("'Abandoned'", StringComparison.Ordinal)
+                        ? "{\"workItems\":[]}"
+                        : "{\"workItems\":[{\"id\":35000}]}";
+                }
+                else if (request.Method == HttpMethod.Patch && request.RequestUri!.AbsolutePath.Contains("/workitems", StringComparison.OrdinalIgnoreCase))
+                {
+                    Writes++;
+                    Patch = await request.Content!.ReadAsStringAsync(ct);
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.PreconditionFailed)
+                    {
+                        RequestMessage = request,
+                        Content = new StringContent("{\"message\":\"revision conflict\"}", System.Text.Encoding.UTF8, "application/json")
+                    };
+                }
+                else if (request.Method == HttpMethod.Get && request.RequestUri!.AbsolutePath.Contains("/workitems", StringComparison.OrdinalIgnoreCase))
+                {
+                    var fields = new Dictionary<string, object>
+                    {
+                        ["System.WorkItemType"] = "Release Plan",
+                        ["System.State"] = "Abandoned",
+                        ["System.Title"] = "Offline abandonment transport fixture",
+                        ["Custom.ReleasePlanID"] = "100"
+                    };
+                    json = System.Text.Json.JsonSerializer.Serialize(new { count = 1, value = new[] { new { id = 35000, rev = 7, fields } } });
+                }
+                else
+                {
+                    Writes++;
+                    throw new InvalidOperationException($"Unexpected offline transport request: {request.Method} {request.RequestUri}");
+                }
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    RequestMessage = request,
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                };
+            }
+        }
+
         [TestCase(0)]
         [TestCase(-1)]
         public void GetReleasePlanAsync_InvalidId_DoesNotQuery(int releasePlanId)

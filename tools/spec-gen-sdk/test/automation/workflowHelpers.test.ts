@@ -5,6 +5,7 @@ import * as fsUtils from '../../src/utils/fsUtils';
 import { workflowCallGenerateScript, workflowDetectChangedPackages, workflowInitGetSdkSuppressionsYml } from '../../src/automation/workflowHelpers';
 import { WorkflowContext } from '../../src/types/Workflow';
 import { SDKAutomationState } from '../../src/automation/sdkAutomationState';
+import { GenerateInput } from '../../src/types/GenerateInput';
 
 vi.mock(import('node:fs'), async (importOriginal) => {
   const actual = await importOriginal();
@@ -66,6 +67,29 @@ describe('workflowHelpers', () => {
   });
 
   describe('workflowCallGenerateScript', () => {
+    it.each([
+      '@azure-tools/typespec-ts-provisioning',
+      '@azure-tools/typespec-csharp',
+      undefined,
+    ])('should serialize the caller-provided typespecEmitter %s', async (typespecEmitter) => {
+      mockContext.config.typespecEmitter = typespecEmitter;
+      vi.mocked(fsUtils.readTmpJsonFile).mockReturnValue({ packages: [] });
+      vi.mocked(runScript.runSdkAutoCustomScript).mockResolvedValue('succeeded');
+
+      const result = await workflowCallGenerateScript(mockContext, ['file1.tsp'], [], ['project1']);
+
+      const writtenInput = vi.mocked(fsUtils.writeTmpJsonFile).mock.calls[0][2] as GenerateInput;
+      expect(writtenInput.typespecEmitter).toBe(typespecEmitter);
+      expect(result.generateInput.typespecEmitter).toBe(typespecEmitter);
+      const serializedInput = JSON.parse(JSON.stringify(writtenInput));
+      if (typespecEmitter === undefined) {
+        expect(serializedInput).not.toHaveProperty('typespecEmitter');
+      } else {
+        expect(serializedInput).toHaveProperty('typespecEmitter', typespecEmitter);
+      }
+      expect(writtenInput.relatedTypeSpecProjectFolder).toEqual(['project1']);
+    });
+
     it('should successfully generate SDK with TypeSpec project folder', async () => {
       const changedFiles = ['file1.tsp'];
       const relatedReadmeMdFiles: string[] = [];

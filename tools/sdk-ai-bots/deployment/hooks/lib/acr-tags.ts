@@ -1,7 +1,6 @@
 /**
- * Shared ACR tag helpers used by the per-service predeploy hooks
- * (agent / frontend) to list tags and compute the next
- * auto-incrementing version tag for an image.
+ * ACR tag helpers used by the pipeline to select the frontend's next
+ * auto-incrementing image tag.
  *
  * Versioning scheme: `${prefix}-<major>.<minor>.<patch>` where `prefix` is the
  * azd environment name (e.g. `dev`). A fresh repository yields `${prefix}-1.0.0`
@@ -27,21 +26,6 @@ export function listTags(registry: string, repository: string): string[] {
   } catch {
     return [];
   }
-}
-
-/**
- * Return the newest tag in `repository` whose name equals `prefix` or starts
- * with `${prefix}-`, or undefined if none match. Tags are ordered server-side
- * by push time (newest first), so the first match is the latest valid tag.
- */
-export function getLatestTagWithPrefix(
-  registry: string,
-  repository: string,
-  prefix: string
-): string | undefined {
-  return listTags(registry, repository).find(
-    (t) => t === prefix || t.startsWith(`${prefix}-`)
-  );
 }
 
 /** Escape a string for safe use inside a RegExp. */

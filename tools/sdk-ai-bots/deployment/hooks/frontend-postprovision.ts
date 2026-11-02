@@ -1,4 +1,4 @@
-import { getEnvSuiteValue } from "./lib/env-suite.js";
+import { getEnvironmentConfig, loadEnvironmentSuite } from "./lib/env-suite.js";
 import { syncTeamsEnv } from "./lib/sync-teams-env.js";
 import { reconcileResourceRoles } from "./lib/resource-roles.js";
 
@@ -9,12 +9,13 @@ function log(message: string): void {
 }
 
 try {
+  const environment = getEnvironmentConfig(loadEnvironmentSuite(), environmentName);
   reconcileResourceRoles("frontend", process.env, undefined, log);
   syncTeamsEnv({
     azdEnvName: environmentName,
     env: process.env,
-    teamsAppId: getEnvSuiteValue(environmentName, "teamsAppId"),
-    tenantId: getEnvSuiteValue(environmentName, "tenantId"),
+    teamsAppId: environment.teamsAppId,
+    tenantId: environment.tenantId,
     log,
   });
   log("Generated the azd-owned Teams environment file.");

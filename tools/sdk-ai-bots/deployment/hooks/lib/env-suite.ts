@@ -132,43 +132,6 @@ export function getComponentConfig(
   return component;
 }
 
-function scalarToString(value: unknown): string | undefined {
-  if (typeof value === "string") return value || undefined;
-  if (typeof value === "boolean" || typeof value === "number") return String(value);
-  return undefined;
-}
-
-/** Compatibility accessor retained for existing hooks. */
-export function getEnvSuiteValue(
-  environmentName: string,
-  key: string,
-  suitePath: string = DEFAULT_SUITE_PATH,
-): string | undefined {
-  try {
-    const environment = getEnvironmentConfig(loadEnvironmentSuite(suitePath), environmentName);
-    return scalarToString(environment[key]);
-  } catch {
-    return undefined;
-  }
-}
-
-/** Compatibility array accessor retained for existing hooks. */
-export function getEnvSuiteValues(
-  environmentName: string,
-  key: string,
-  suitePath: string = DEFAULT_SUITE_PATH,
-): string[] {
-  try {
-    const environment = getEnvironmentConfig(loadEnvironmentSuite(suitePath), environmentName);
-    const value = environment[key];
-    return Array.isArray(value)
-      ? value.map(scalarToString).filter((item): item is string => !!item)
-      : [];
-  } catch {
-    return [];
-  }
-}
-
 const OVERRIDE_ALIAS_KEYS = new Set([
   "MANAGED_IDENTITY_NAME",
   "ACTION_GROUP_NAME",

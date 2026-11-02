@@ -23,8 +23,7 @@
     "predown": "tsx hooks/predown.ts",
     "check-quotas": "tsx scripts/check-quotas.ts",
     "create-entra-app": "tsx scripts/create-entra-app.ts",
-    "setup-search": "tsx scripts/setup-search.ts",
-    "deploy:logic-app": "tsx scripts/deploy-logic-app.ts"
+    "setup-search": "tsx scripts/setup-search.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

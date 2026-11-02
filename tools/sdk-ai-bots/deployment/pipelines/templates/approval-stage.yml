@@ -11,9 +11,6 @@ parameters:
     - name: scope
       type: string
       default: complete environment
-    - name: preflightJobName
-      type: string
-      default: AzdProvision
     - name: approvers
       type: string
       default: ''
@@ -24,7 +21,7 @@ stages:
       dependsOn: ${{ parameters.dependsOn }}
       condition: succeeded()
       variables:
-          preflightResult: $[ stageDependencies.${{ parameters.dependsOn }}.${{ parameters.preflightJobName }}.outputs['PublishPreflightResult.previewResult'] ]
+          preflightResult: $[ stageDependencies.${{ parameters.dependsOn }}.AzdProvision.outputs['PublishPreflightResult.previewResult'] ]
       jobs:
           - job: WaitForApproval
             displayName: 'Approve or reject infrastructure apply'

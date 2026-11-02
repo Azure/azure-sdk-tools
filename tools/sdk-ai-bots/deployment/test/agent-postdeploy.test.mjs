@@ -14,6 +14,10 @@ const command = require("node:path").basename(process.argv[1]);
 fs.appendFileSync(process.env.AUDIT_CALLS, JSON.stringify([command, ...args]) + "\n");
 if (command === "azd" && args[0] === "env") {
   if (args[1] !== "get-values" && args[1] !== "set") throw new Error("Unexpected azd operation");
+  if (args[1] === "get-values" && process.env.AUDIT_MODE === "denied-env") {
+    console.error("Cannot read selected azd environment");
+    process.exit(1);
+  }
 } else if (command === "az" && args[0] === "account" && args[1] === "get-access-token") {
   console.log("fake-token");
 } else if (command === "az" && args[0] === "role" && args[1] === "assignment") {
@@ -87,7 +91,7 @@ function runHook(mode) {
     return {
       ...result,
       calls: readFileSync(calls, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)),
-      payload: mode === "matching" || mode === "denied-list" ? undefined : JSON.parse(readFileSync(payload, "utf8")),
+      payload: ["matching", "denied-list", "denied-env"].includes(mode) ? undefined : JSON.parse(readFileSync(payload, "utf8")),
     };
   } finally {
     rmSync(temporary, { recursive: true, force: true });
@@ -99,6 +103,7 @@ test("native postdeploy tags the selected version and reconciles its final runti
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.payload.metadata.branchname, "feature/new");
   assert.equal(result.payload.definition.container_configuration.image, "registry.azurecr.io/agent:reviewed");
+  assert.equal(result.calls.filter(call => call[0] === "azd" && call[2] === "get-values").length, 1);
   assert.ok(result.calls.some(call => call[0] === "azd" && call[2] === "set" &&
     call[3] === "AGENT_AGENT_VERSION" && call[4] === "2"));
   for (const principal of ["old-principal", "new-principal"]) {
@@ -124,4 +129,12 @@ test("native postdeploy fails when deployed versions cannot be inspected", () =>
   const result = runHook("denied-list");
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Failed to list hosted agent versions \(HTTP 403\)/);
+});
+
+test("native postdeploy stops before Azure calls when azd state cannot be read", () => {
+  const result = runHook("denied-env");
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Cannot read selected azd environment/);
+  assert.equal(result.calls.length, 1);
+  assert.equal(result.calls[0][0], "azd");
 });

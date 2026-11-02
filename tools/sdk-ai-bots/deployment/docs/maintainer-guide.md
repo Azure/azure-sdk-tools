@@ -219,7 +219,8 @@ The registered deploy hooks are:
    timeout are warnings unless strict Teams mode is enabled.
 - **Agent postdeploy: `agent-postdeploy.ts`.** Grants the newly created hosted
    agent identity its data-plane roles, ensures the latest Foundry agent version
-   contains `AZURE_APPCONFIG_ENDPOINT`, and probes `/ping`. The hosted identity
+   contains `AZURE_APPCONFIG_ENDPOINT` and source-branch metadata, and reconciles
+   the final version's identity. The hosted identity
    and version are created during deployment, so their principal ID and version
    definition are unavailable to Bicep beforehand.
 

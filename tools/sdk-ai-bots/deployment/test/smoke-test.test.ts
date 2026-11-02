@@ -11,7 +11,6 @@ test("resolves smoke targets from the environment suite", () => {
       appName: "azsdkqabotdev",
       resourceGroup: "azure-sdk-qa-bot-dev",
       healthPath: "/health",
-      slot: "default",
     },
   );
 });
@@ -24,13 +23,11 @@ test("explicit smoke target values override the suite", () => {
       appName: "custom-app",
       resourceGroup: "custom-rg",
       healthPath: "/ready",
-      slot: "staging",
     }),
     {
       appName: "custom-app",
       resourceGroup: "custom-rg",
       healthPath: "/ready",
-      slot: "staging",
     },
   );
 });
@@ -71,4 +68,5 @@ test("retries the endpoint with an Easy Auth token", async () => {
   assert.equal(requests.length, 2);
   assert.equal(requests[0].authorization, "Bearer token-value");
   assert.ok(commandCalls[0].includes("--resource-group"));
+  assert.equal(commandCalls[0].includes("--slot"), false);
 });

@@ -17,8 +17,8 @@ is `tools/sdk-ai-bots/azure.yaml`, the Bicep entry points under
 - **`agent`:** Microsoft Foundry hosted chat agent built remotely in ACR.
 - **Azure MCP Server agent:** Separate Foundry hosted agent for the Azure MCP
   Server tenant.
-- **`logic-app`:** Two Teams-group workflows share the agent-server, Teams
-  connection, and integration account. Bicep owns both complete workflow
+- **`logic-app`:** SDK and optional MCP Teams-group workflows share the
+  agent-server, Teams connection, and integration account. Bicep owns the complete workflow
   definitions.
 - **Evolution agent:** Production-only Foundry hosted agent with scoped access
   to production and candidate-dev resources.
@@ -131,7 +131,7 @@ lifecycle hooks:
   authorization, and tag dev hosted-agent versions with their source branch;
 - frontend postdeploy probes `/health` and, when interactive Teams provisioning
   is enabled, installs or updates the approved Teams app in each configured
-  groups;
+  group;
 - the knowledge-sync deployment stage packages and deploys the scheduled
   WebJob after agent-server readiness.
 

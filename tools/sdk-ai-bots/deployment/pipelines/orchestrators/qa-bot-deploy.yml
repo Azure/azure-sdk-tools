@@ -44,26 +44,11 @@ extends:
                         dependsOn: Provision
 
             - ${{ if eq(parameters.component, 'shared-resources') }}:
-                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-with-approval.yml
                     parameters:
                         layer: shared-resources
                         environment: ${{ parameters.environment }}
-                        operation: preview
-                        stageName: PreflightLayer
-                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/approval-stage.yml
-                    parameters:
-                        environment: ${{ parameters.environment }}
-                        stageName: ApproveLayer
-                        dependsOn: PreflightLayer
-                        preflightJobName: AzdProvisionLayer
                         scope: shared-resources layer
-                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
-                    parameters:
-                        layer: shared-resources
-                        environment: ${{ parameters.environment }}
-                        operation: apply
-                        stageName: ProvisionLayer
-                        dependsOn: ApproveLayer
 
             - ${{ if eq(parameters.component, 'agent-server') }}:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
@@ -90,25 +75,9 @@ extends:
                         imageTag: ${{ parameters.imageTag }}
 
             - ${{ if eq(parameters.component, 'logic-app') }}:
-                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-with-approval.yml
                     parameters:
                         layer: logic-app
                         dependencyLayers: shared-resources,frontend,agent-server
                         environment: ${{ parameters.environment }}
-                        operation: preview
-                        stageName: PreflightLayer
-                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/approval-stage.yml
-                    parameters:
-                        environment: ${{ parameters.environment }}
-                        stageName: ApproveLayer
-                        dependsOn: PreflightLayer
-                        preflightJobName: AzdProvisionLayer
                         scope: logic-app layer
-                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
-                    parameters:
-                        layer: logic-app
-                        dependencyLayers: shared-resources,frontend,agent-server
-                        environment: ${{ parameters.environment }}
-                        operation: apply
-                        stageName: ProvisionLayer
-                        dependsOn: ApproveLayer

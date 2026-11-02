@@ -127,31 +127,8 @@ also include their own preview-to-apply manual gate.
 The production evolution and feedback workflows also need the configured
 candidate service connection.
 
-### Optional bootstrap for the qa-bot-dev connection
-
-The dev pipeline uses `azuresdkqabot-dev`. The following script targets only the
-alternate `qa-bot-dev` identity, not the selected dev connection. If using
-`qa-bot-dev`, review
-[`qa-bot-dev-bootstrap.sh`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/scripts/qa-bot-dev-bootstrap.sh)
-and run it from an authorized administrator's Azure CLI session:
-
-```bash
-cd tools/sdk-ai-bots/deployment
-bash scripts/qa-bot-dev-bootstrap.sh
-```
-
-The script is specific to the dev subscription, resource group, principal, and
-pipeline 8265. It reuses existing role assignments, creates missing scoped
-RBAC/lock-management and subscription-read grants, and authorizes that pipeline.
-It does not create custom roles, grant subscription-level deployment permission,
-or read or update backend configuration.
-
 Backend authentication is configured during the pipeline's `agent-server`
 infrastructure provisioning, before backend readiness checks.
-
-This script performs permission writes and requires administrator approval. It
-does not deploy the chatbot or configure production, preview, external
-signing-key policies, Teams consent, feeds, or secure-file access.
 
 ## 6. Register the Pipeline Definitions
 
@@ -227,14 +204,15 @@ For local dev, authorize in the portal and reapply the workflow after
 provisioning if consent was completed separately:
 
 ```bash
-npm run deploy:logic-app -- --env dev
+cd ..
+azd provision logic-app --environment dev --no-prompt
 ```
 
 ### Teams app publication
 
 Bicep creates the Azure Bot and `MsTeamsChannel`. Verify both after the first
 apply. Publish the generated Teams package to the tenant catalog and install it
-in both configured Teams groups through an authorized Microsoft 365 session.
+in each configured Teams group through an authorized Microsoft 365 session.
 Pipeline deployments skip interactive Teams provisioning by default. When
 enabled in an authenticated session, the frontend postdeploy hook can install
 or upgrade an approved package.

@@ -133,7 +133,6 @@ environments:
             AGENT_SERVER_APP_INSIGHTS_NAME: 'azuresdkqabot-dev-server'
             AGENT_SERVER_APP_INSIGHTS_FLOW_TYPE: 'Redfield'
             AGENT_SERVER_APP_INSIGHTS_REQUEST_SOURCE: 'IbizaAIExtensionEnablementBlade'
-            AGENT_SERVER_ALLOWED_CLIENT_IDS: '["2a0eb32e-233f-4ccf-8977-0588c3d554b5"]'
             AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-dev-alert'
             SERVER_BASE_URL: 'https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net'
             AZD_DEPLOY_AGENT_SERVER_SLOT_NAME: 'production'

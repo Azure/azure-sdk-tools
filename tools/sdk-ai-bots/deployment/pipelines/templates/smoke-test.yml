@@ -5,9 +5,6 @@
 parameters:
     - name: appName
       type: string
-    - name: slot
-      type: string
-      default: 'default'
     - name: healthPath
       type: string
       default: '/health'
@@ -23,29 +20,28 @@ parameters:
 
 steps:
     - task: AzureCLI@2
-      displayName: 'Smoke test ${{ parameters.appName }}/${{ parameters.slot }}${{ parameters.healthPath }}'
+      displayName: 'Smoke test ${{ parameters.appName }}${{ parameters.healthPath }}'
       inputs:
           azureSubscription: $(AZURE_SERVICE_CONNECTION)
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |
               set -euo pipefail
-              SLOT_ARG=""
-              if [ "${{ parameters.slot }}" != "default" ]; then
-                SLOT_ARG="--slot ${{ parameters.slot }}"
-              fi
-              APP_HOST=$(az webapp show --name "${{ parameters.appName }}" --resource-group "$AZURE_RESOURCE_GROUP" $SLOT_ARG --query defaultHostName -o tsv)
+              APP_HOST=$(az webapp show --name "${{ parameters.appName }}" --resource-group "$AZURE_RESOURCE_GROUP" --query defaultHostName -o tsv)
               URL="https://${APP_HOST}${{ parameters.healthPath }}"
 
-              AUTH_HEADER=""
+              CURL_ARGS=(--silent --show-error --output /dev/null --write-out '%{http_code}')
               if [ -n "${{ parameters.easyAuthAudience }}" ]; then
                 TOKEN=$(az account get-access-token --resource "${{ parameters.easyAuthAudience }}" --query accessToken -o tsv)
-                AUTH_HEADER="-H \"Authorization: Bearer $TOKEN\""
+                CURL_ARGS+=(--header "Authorization: Bearer $TOKEN")
               fi
 
               echo "Probing $URL"
               for i in $(seq 1 ${{ parameters.maxAttempts }}); do
-                STATUS=$(eval curl -s -o /dev/null -w '%{http_code}' $AUTH_HEADER "$URL" || echo 000)
+                if ! STATUS=$(curl "${CURL_ARGS[@]}" "$URL"); then
+                  echo "##[warning]HTTP probe failed for $URL on attempt $i."
+                  STATUS=000
+                fi
                 if [ "$STATUS" = "200" ]; then
                   echo "  ✓ healthy (HTTP $STATUS) after attempt $i"
                   exit 0

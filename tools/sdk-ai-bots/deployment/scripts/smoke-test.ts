@@ -31,14 +31,12 @@ export interface SmokeTargetOptions {
   appName?: string;
   resourceGroup?: string;
   healthPath?: string;
-  slot?: string;
 }
 
 export interface SmokeTarget {
   appName: string;
   resourceGroup: string;
   healthPath: string;
-  slot: string;
 }
 
 export interface SmokeTestOptions extends SmokeTargetOptions {
@@ -71,7 +69,6 @@ export function resolveSmokeTarget(options: SmokeTargetOptions): SmokeTarget {
     appName: options.appName ?? String(environment[APP_NAME_KEYS[options.component]] ?? ""),
     resourceGroup: options.resourceGroup ?? environment.resourceGroupPrefix,
     healthPath: options.healthPath ?? component.healthPath ?? "",
-    slot: options.slot ?? "default",
   };
   if (!target.appName || !target.resourceGroup || !target.healthPath) {
     throw new Error(
@@ -99,7 +96,6 @@ export async function runSmokeTest(
     "--resource-group",
     target.resourceGroup,
   ];
-  if (target.slot !== "default") showArgs.push("--slot", target.slot);
   showArgs.push("--query", "defaultHostName", "--output", "tsv");
   const hostName = run("az", showArgs, { capture: true });
   if (!hostName) {
@@ -164,7 +160,6 @@ async function main(): Promise<void> {
       suite: { type: "string" },
       "app-name": { type: "string" },
       "resource-group": { type: "string" },
-      slot: { type: "string" },
       "health-path": { type: "string" },
       "easy-auth-audience": { type: "string" },
       "max-attempts": { type: "string" },
@@ -188,7 +183,6 @@ async function main(): Promise<void> {
     suitePath: values.suite,
     appName: values["app-name"],
     resourceGroup: values["resource-group"],
-    slot: values.slot,
     healthPath: values["health-path"],
     easyAuthAudience: values["easy-auth-audience"],
     maxAttempts: values["max-attempts"]

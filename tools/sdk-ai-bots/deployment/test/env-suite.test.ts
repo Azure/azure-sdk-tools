@@ -4,8 +4,7 @@ import test from "node:test";
 import {
   buildAzdEnvironmentValues,
   getComponentConfig,
-  getEnvSuiteValue,
-  getEnvSuiteValues,
+  getEnvironmentConfig,
   loadEnvironmentSuite,
   loadServiceImageRepositories,
 } from "../hooks/lib/env-suite.js";
@@ -20,8 +19,9 @@ test("loads typed environment and hyphenated component names", () => {
     "agent-server": "azure-sdk-qa-bot-agent-server",
     frontend: "azure-sdk-qa-bot",
   });
-  assert.equal(getEnvSuiteValue("dev", "chatbotEvolutionAgentEnabled"), "false");
-  const devChannelIds = getEnvSuiteValues("dev", "teamsChannelIds");
+  assert.equal(getEnvironmentConfig(suite, "dev").chatbotEvolutionAgentEnabled, false);
+  assert.throws(() => getEnvironmentConfig(suite, "unknown"), /not declared/);
+  const devChannelIds = getEnvironmentConfig(suite, "dev").teamsChannelIds;
   assert.equal(devChannelIds.length, 14);
   assert.ok(
     devChannelIds.includes(
@@ -83,9 +83,7 @@ test("builds the complete local azd environment mapping", () => {
     "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/DefaultResourceGroup-WUS2/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-a18897a6-7e44-457d-9260-f2854c0aca42-WUS2",
   );
   assert.equal(values.AI_RESOURCE_RESTORE, "false");
-  assert.deepEqual(JSON.parse(values.AGENT_SERVER_ALLOWED_CLIENT_IDS), [
-    "2a0eb32e-233f-4ccf-8977-0588c3d554b5",
-  ]);
+  assert.equal(values.AGENT_SERVER_ALLOWED_CLIENT_IDS, undefined);
   assert.equal(
     values.MANAGED_IDENTITY_RESOURCE_ID,
     "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity",

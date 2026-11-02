@@ -17,9 +17,6 @@ parameters:
     - name: dependencyLayers
       type: string
       default: ''
-    - name: failOnDeleteOrModify
-      type: boolean
-      default: false
     - name: workingDirectory
       type: string
       default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
@@ -153,10 +150,6 @@ steps:
                 if [ -n "$RISKY_OPERATIONS" ]; then
                   echo "##[warning]azd preview for '$TARGET_LAYER' reports Delete or Modify operations:"
                   echo "$RISKY_OPERATIONS"
-                  if [ "${{ parameters.failOnDeleteOrModify }}" = "True" ]; then
-                    echo "##[error]Strict preview mode rejects Delete or Modify operations."
-                    exit 1
-                  fi
                 fi
                 exit 0
               fi
@@ -203,8 +196,4 @@ steps:
               if [ -n "$RISKY_OPERATIONS" ]; then
                 echo "##[warning]azd preview reports Delete or Modify operations:"
                 printf '%b' "$RISKY_OPERATIONS"
-                if [ "${{ parameters.failOnDeleteOrModify }}" = "True" ]; then
-                  echo "##[error]Strict preview mode rejects Delete or Modify operations."
-                  exit 1
-                fi
               fi

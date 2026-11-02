@@ -1,22 +1,8 @@
 /**
- * agent — postdeploy hook
- *
- * 1. Grant the hosted Foundry agent's runtime managed identity (the auto-created
- *    "…-AgentIdentity") the data-plane roles it needs. In a hosted container the
- *    agent runs as this identity (not the shared qabot-identity), and its very
- *    first startup step — `await app_config.init()` — reads Azure App
- *    Configuration via that identity. Without at least "App Configuration Data
- *    Reader" the container crashes on boot, its /readiness never returns 200, and
- *    every session fails with 424 session_not_ready → /agent/chat returns 500.
- * 2. Inject the AZURE_APPCONFIG_ENDPOINT environment variable into the newly
- *    deployed agent version while retaining its image.
- *    app_config.init() reads this on startup and raises RuntimeError (→ container
- *    crash → 424 session_not_ready) if it is missing. azd neither embeds
- *    agent.yaml `environment_variables` into the version definition (its
- *    "Registering agent environment variables" step is a no-op). So we clone
- *    the deployed version with environment_variables embedded — the only
- *    mechanism the Foundry runtime honours. Idempotent.
- * 3. Sanity-check the hosted agent by pinging its /ping endpoint.
+ * Reconcile hosted-agent roles and runtime configuration after native azd deploy.
+ * The pinned extension does not embed AZURE_APPCONFIG_ENDPOINT in the version
+ * definition, so create a follow-up version when its image, environment, or
+ * source-branch metadata needs updating, then reconcile that version's identity.
  */
 
 import { execFileSync, execSync } from "child_process";
@@ -25,8 +11,6 @@ import { ensureRoleAssignment } from "./lib/ensure-role-assignment.js";
 import { resolveAgentTargetImage } from "./lib/resolve-agent-image.js";
 import { ROLE_IDS } from "./lib/resource-roles.js";
 import { agentVersionMetadata } from "./lib/agent-version-metadata.js";
-
-const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? "";
 
 // Foundry data-plane api-version that returns/accepts environment_variables in
 // the hosted agent version definition.
@@ -45,22 +29,18 @@ function log(msg: string): void {
 
 /** Load azd env values into process.env if not already present. */
 function loadAzdEnv(): void {
-  try {
-    const raw = execSync("azd env get-values", { encoding: "utf8" });
-    for (const line of raw.split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      const key = trimmed.slice(0, eq).trim();
-      let val = trimmed.slice(eq + 1).trim();
-      if (val.startsWith('"') && val.endsWith('"')) {
-        val = val.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\").replace(/\\n/g, "\n");
-      }
-      if (!process.env[key]) process.env[key] = val;
+  const raw = execSync("azd env get-values", { encoding: "utf8" });
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) {
+      val = val.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\").replace(/\\n/g, "\n");
     }
-  } catch {
-    // azd env get-values may fail if no environment is selected; ignore.
+    if (!process.env[key]) process.env[key] = val;
   }
 }
 
@@ -135,8 +115,6 @@ function grantRole(principalId: string, role: string, scope: string): boolean {
  * it the container crashes in app_config.init() before it can serve /readiness.
  */
 async function ensureAgentIdentityRbac(): Promise<void> {
-  loadAzdEnv();
-
   const sub = process.env.AZURE_SUBSCRIPTION_ID?.trim();
   const rg = process.env.AZURE_RESOURCE_GROUP?.trim();
   if (!sub || !rg) {
@@ -212,8 +190,6 @@ function getFoundryToken(): string {
  * without a fresh `azd deploy` is a no-op.
  */
 async function ensureAgentAppConfigEnv(): Promise<boolean> {
-  loadAzdEnv();
-
   const appConfigEndpoint = process.env.AZURE_APPCONFIG_ENDPOINT?.trim();
   if (!appConfigEndpoint) {
     throw new Error("AZURE_APPCONFIG_ENDPOINT is required to configure the hosted agent version.");
@@ -336,22 +312,13 @@ async function ensureAgentAppConfigEnv(): Promise<boolean> {
 }
 
 (async () => {
+  loadAzdEnv();
   await ensureAgentIdentityRbac();
 
   if (await ensureAgentAppConfigEnv()) {
     await ensureAgentIdentityRbac();
   }
 
-  loadAzdEnv();
-
-  if (!AGENT_BASE_URL) {
-    log("AGENT_BASE_URL not set — skipping ping.");
-    return;
-  }
-  log(`Pinging ${AGENT_BASE_URL}/ping`);
-  const res = await fetch(`${AGENT_BASE_URL}/ping`);
-  log(`  HTTP ${res.status}`);
-  if (!res.ok) throw new Error(`Agent ping failed: HTTP ${res.status}`);
 })().catch((err) => {
   console.error(`[agent:postdeploy] FAILED: ${err.message}`);
   process.exit(1);

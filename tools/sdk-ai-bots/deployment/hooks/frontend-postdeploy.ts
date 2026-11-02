@@ -24,7 +24,7 @@ import { existsSync, readFileSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
-import { getEnvSuiteValue } from "./lib/env-suite.js";
+import { getEnvironmentConfig, loadEnvironmentSuite } from "./lib/env-suite.js";
 import {
   getTeamsAppInstallationStatus,
   installTeamsAppInTeam,
@@ -163,17 +163,18 @@ function readGeneratedManifest(): {
 
 async function reconcileTeamsApp(envFile: string): Promise<void> {
   const environmentName = process.env.AZURE_ENV_NAME ?? "dev";
+  const environment = getEnvironmentConfig(loadEnvironmentSuite(), environmentName);
   const primaryTeamId =
     process.env.TEAMS_GROUP_ID?.trim() ||
-    getEnvSuiteValue(environmentName, "teamsGroupId");
+    environment.teamsGroupId;
   const azureMcpTeamId =
     process.env.AZURE_MCP_TEAMS_GROUP_ID?.trim() ||
-    getEnvSuiteValue(environmentName, "azureMcpTeamsGroupId");
+    environment.azureMcpTeamsGroupId;
   const teamIds = [...new Set([primaryTeamId, azureMcpTeamId].filter((id): id is string => !!id))];
   const tenantId =
     process.env.TEAMS_APP_TENANT_ID?.trim() ||
     readEnvValue(envFile, "TEAMS_APP_TENANT_ID") ||
-    getEnvSuiteValue(environmentName, "tenantId");
+    environment.tenantId;
   const manifest = readGeneratedManifest();
 
   if (teamIds.length === 0 || !tenantId) {

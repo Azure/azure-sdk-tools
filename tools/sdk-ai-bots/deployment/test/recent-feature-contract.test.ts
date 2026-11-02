@@ -80,7 +80,6 @@ test("adopts the existing dev infrastructure contract without losing live state"
 test("deploys the Azure MCP Server agent and its Teams-group workflow", () => {
   const suite = parse(read("infra/environments/environment-suite.yaml"));
   const logicApp = read("infra/layers/logic-app/main.bicep");
-  const patchWorkflow = read("hooks/lib/patch-workflow.ts");
   const frontendPostdeploy = read("hooks/frontend-postdeploy.ts");
   const grantAgentAccess = read("scripts/grant-agent-data-access.sh");
   const hostedAgent = read("pipelines/templates/hosted-agent-deploy-steps.yml");
@@ -109,8 +108,6 @@ test("deploys the Azure MCP Server agent and its Teams-group workflow", () => {
   assert.match(logicApp, /resource azureMcpWorkflow /);
   assert.match(logicApp, /resource azureMcpMetricAlert /);
   assert.match(logicApp, /azureMcpTeamsGroupId/);
-  assert.match(patchWorkflow, /AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME/);
-  assert.match(patchWorkflow, /AZURE_MCP_TEAMS_CHANNEL_IDS/);
   assert.match(frontendPostdeploy, /AZURE_MCP_TEAMS_GROUP_ID/);
   assert.match(grantAgentAccess, /properties\.enableRbacAuthorization/);
   assert.match(grantAgentAccess, /permissions\.keys\[\]/);
@@ -205,6 +202,35 @@ test("deploys application services according to runtime dependencies", () => {
   assert.doesNotMatch(`${orchestrator}\n${stages}`, /stabilizationSeconds|\bsleep\b/);
 });
 
+test("uses one approved provisioning sequence for full-stack and infrastructure-only runs", () => {
+  const orchestrator = parse(read("pipelines/orchestrators/qa-bot-deploy.yml"));
+  const branches = orchestrator.extends.parameters.stages;
+  for (const layer of ["shared-resources", "logic-app"]) {
+    const branch = branches.find((entry: Record<string, unknown>) =>
+      Object.hasOwn(entry, `\${{ if eq(parameters.component, '${layer}') }}`),
+    );
+    const invocations = branch[`\${{ if eq(parameters.component, '${layer}') }}`];
+    assert.equal(invocations.length, 1);
+    assert.match(invocations[0].template, /\/provision-with-approval\.yml$/);
+    assert.equal(invocations[0].parameters.layer, layer);
+    assert.equal(invocations[0].parameters.scope, `${layer} layer`);
+    if (layer === "logic-app") {
+      assert.equal(invocations[0].parameters.dependencyLayers, "shared-resources,frontend,agent-server");
+    }
+  }
+  const sequence = parse(read("pipelines/templates/provision-with-approval.yml")).stages;
+  assert.equal(sequence.length, 3);
+  assert.equal(sequence[0].parameters.runValidateAndPreview, true);
+  assert.equal(sequence[0].parameters.runProvision, false);
+  assert.equal(sequence[1].parameters.dependsOn, "Preflight");
+  assert.equal(sequence[2].parameters.dependsOn, "ApproveProvisioning");
+  assert.equal(sequence[2].parameters.runProvision, true);
+  const stage = read("pipelines/templates/provision-stage.yml");
+  assert.match(stage, /parameters\.runProvision, or\(eq\(parameters\.layer, ''\), eq\(parameters\.layer, 'logic-app'\)\)/);
+  assert.match(stage, /logic-app-consent-jobs\.yml/);
+  assert.match(read("pipelines/templates/approval-stage.yml"), /\.AzdProvision\.outputs\['PublishPreflightResult\.previewResult'\]/);
+});
+
 test("exports the deployment principal for targeted layer provisioning", () => {
   const auth = read("pipelines/templates/azd-auth.yml");
 
@@ -266,19 +292,17 @@ test("selects environment service connections at template expansion time", () =>
   ]);
 });
 
-test("configures qa-bot-dev backend authentication during pipeline provisioning", () => {
+test("keeps backend authentication pipeline-owned without the deselected qa-bot-dev identity", () => {
   const suite = parse(read("infra/environments/environment-suite.yaml"));
   const backend = read("infra/layers/agent-server/main.bicep");
   const adapter = read("infra/layers/agent-server/main.bicepparam");
 
-  assert.deepEqual(JSON.parse(suite.environments.dev.bicepOverrides.AGENT_SERVER_ALLOWED_CLIENT_IDS), [
-    "2a0eb32e-233f-4ccf-8977-0588c3d554b5",
-  ]);
+  assert.equal(suite.environments.dev.bicepOverrides.AGENT_SERVER_ALLOWED_CLIENT_IDS, undefined);
   assert.equal(suite.environments.prod.bicepOverrides.AGENT_SERVER_ALLOWED_CLIENT_IDS, undefined);
   assert.equal(suite.environments.preview.bicepOverrides.AGENT_SERVER_ALLOWED_CLIENT_IDS, undefined);
   assert.match(backend, /allowedApplications: union\(\[[\s\S]*?managedIdentityClientId[\s\S]*?frontendIdentityClientId[\s\S]*?azureCliClientId[\s\S]*?\], allowedCallerApplicationIds\)/);
   assert.match(adapter, /json\(readEnvironmentVariable\('AGENT_SERVER_ALLOWED_CLIENT_IDS', '\[\]'\)\)/);
-  assert.doesNotMatch(read("scripts/qa-bot-dev-bootstrap.sh"), /authsettingsV2|allowedApplications/);
+  assert.equal(existsSync(resolve(deploymentRoot, "scripts/qa-bot-dev-bootstrap.sh")), false);
 });
 
 test("reports the selected image version before each azd deployment", () => {
@@ -359,14 +383,12 @@ test("requires existing resource groups and deploys only resource-group-scoped l
   assert.equal(existsSync(resolve(deploymentRoot, "infra/layers/resource-group/main.bicep")), false);
   const pipeline = read("pipelines/templates/azd-provision.yml");
   const orchestrator = read("pipelines/orchestrators/qa-bot-deploy.yml");
-  const singleLayer = read("pipelines/templates/layer-provision-stage.yml");
-  assert.doesNotMatch(`${pipeline}\n${orchestrator}\n${singleLayer}`, /resource-group|provisionResourceGroup/);
+  assert.equal(existsSync(resolve(deploymentRoot, "pipelines/templates/layer-provision-stage.yml")), false);
+  assert.doesNotMatch(`${pipeline}\n${orchestrator}`, /resource-group|provisionResourceGroup/);
   const guard = pipeline.indexOf("./node_modules/.bin/tsx hooks/layer-preprovision.ts");
   assert.notEqual(guard, -1);
   assert.ok(guard < pipeline.indexOf("azd env select"));
   assert.ok(guard < pipeline.indexOf('azd provision "$TARGET_LAYER"'));
-  const bootstrap = read("scripts/qa-bot-dev-bootstrap.sh");
-  assert.doesNotMatch(bootstrap, /QA Bot Subscription Deployment|role definition|Microsoft\.Resources\/deployments\/\*|resourceGroups\/write/);
 });
 
 test("builds frontend TypeScript inside the native container context", () => {
@@ -418,6 +440,12 @@ test("keeps rollout configuration limited to active behavior", () => {
   const smokeTest = read("scripts/smoke-test.ts");
 
   assert.equal(existsSync(resolve(deploymentRoot, "pipelines/templates/swap-slot.yml")), false);
+  assert.equal(existsSync(resolve(deploymentRoot, "hooks/lib/patch-workflow.ts")), false);
+  assert.equal(existsSync(resolve(deploymentRoot, "scripts/deploy-logic-app.ts")), false);
+  assert.equal(JSON.parse(read("package.json")).scripts["deploy:logic-app"], undefined);
+  assert.doesNotMatch(read("pipelines/templates/smoke-test.yml"), /\bslot\b|\beval\b/);
+  assert.doesNotMatch(read("pipelines/templates/azd-provision.yml"), /failOnDeleteOrModify/);
+  assert.doesNotMatch(read("hooks/agent-postdeploy.ts"), /AGENT_BASE_URL/);
   assert.doesNotMatch(suite, /rolloutStrategy|slot-swap|slot: 'staging'/);
   assert.doesNotMatch(suite, /minSuccessRate|latencyP95Ms|stabilizationWindowMinutes/);
   assert.doesNotMatch(loader, /ROLLOUT_STRATEGY/);
@@ -519,7 +547,6 @@ test("loads Logic App channel configuration through the authenticated backend", 
   const workflow = JSON.parse(workflowText);
   const bicep = read("infra/layers/logic-app/main.bicep");
   const parameters = read("infra/layers/logic-app/main.bicepparam");
-  const patchWorkflow = read("hooks/lib/patch-workflow.ts");
   const server = read("../azure-sdk-qa-bot-agent/server.py");
   const threadActions =
     workflow.actions.For_each.actions.Thread_Message_From_User.actions;
@@ -544,10 +571,6 @@ test("loads Logic App channel configuration through the authenticated backend", 
     parameters,
     /AZURE_BLOB_CONNECTION_NAME|blobStorageAccountName|DOCUMENT_DB_CONNECTION_NAME/,
   );
-  assert.doesNotMatch(
-    patchWorkflow,
-    /AZURE_BLOB_CONNECTION_NAME|blobConn|DOCUMENT_DB_CONNECTION_NAME|documentdb/i,
-  );
   assert.match(server, /@app\.get\("\/config\/channel"/);
   assert.match(server, /_bot_config_service\.get_channel_config\(channel_id\)/);
   assert.equal(convertActivity.type, "Http");
@@ -561,7 +584,7 @@ test("loads Logic App channel configuration through the authenticated backend", 
     "@{parameters('serverBaseUrl')}/activity/convert",
   );
   assert.doesNotMatch(
-    `${workflowText}\n${bicep}\n${parameters}\n${patchWorkflow}`,
+    `${workflowText}\n${bicep}\n${parameters}`,
     /functionAppResourceId|FUNCTION_APP/,
   );
 });

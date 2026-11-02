@@ -209,7 +209,7 @@ def test_convert_to_activity_accepts_beta_image_url_for_source_message():
 
 @pytest.mark.parametrize("body_type", ["html", "text"])
 @pytest.mark.parametrize("name", ["image.png", "SCREENSHOT.JPG", "image.jpeg", "image.gif", "image.webp"])
-def test_convert_to_activity_preserves_uploaded_image_reference(body_type, name):
+def test_convert_to_activity_ignores_uploaded_image_reference(body_type, name):
     source = "https://contoso.sharepoint.com/teams/SDK/Shared Documents/image.png"
     content = '<p>Why did this fail?</p><attachment id="image-id"></attachment>'
     activity = ActivityConverterService().convert_to_activity({
@@ -221,17 +221,18 @@ def test_convert_to_activity_preserves_uploaded_image_reference(body_type, name)
         }],
     })
     assert activity["text"] == content
-    assert activity["attachments"][-1] == {"contentType": "image/*", "contentUrl": source}
-    assert len(activity["attachments"]) == (2 if body_type == "html" else 1)
+    assert activity["attachments"] == (
+        [{"contentType": "text/html", "content": content}] if body_type == "html" else []
+    )
 
 
-def test_convert_to_activity_deduplicates_inline_and_file_images():
-    source = "https://contoso.sharepoint.com/teams/SDK/image.png"
+def test_convert_to_activity_preserves_inline_image_without_adding_file_images():
+    source = "https://smba.trafficmanager.net/attachments/image"
     activity = ActivityConverterService().convert_to_activity({
         "body": {"contentType": "html", "content": f'<img src="{source}">'},
         "attachments": [
             {"contentType": "reference", "contentUrl": source, "name": "image.png"},
-            {"contentType": "image/png", "contentUrl": source},
+            {"contentType": "image/png", "contentUrl": "https://contoso.sharepoint.com/other.png"},
         ],
     })
     assert activity["attachments"] == [
@@ -244,13 +245,13 @@ def test_convert_to_activity_deduplicates_inline_and_file_images():
     "https://graph.microsoft.com/v1.0/drives/drive/items/image/content",
     "https://graph.microsoft.com/v1.0/shares/u!encoded/driveItem/content",
 ])
-def test_convert_to_activity_preserves_graph_file_reference_without_message_metadata(source):
+def test_convert_to_activity_ignores_graph_file_reference(source):
     activity = ActivityConverterService().convert_to_activity({
         "attachments": [{
             "contentType": "reference", "contentUrl": source, "name": "image.png",
         }],
     })
-    assert activity["attachments"] == [{"contentType": "image/*", "contentUrl": source}]
+    assert activity["attachments"] == []
 
 
 @pytest.mark.parametrize("attachment", [

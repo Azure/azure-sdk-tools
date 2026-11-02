@@ -1,8 +1,7 @@
-"""Fetch Teams inline images and uploaded image files as data-URI strings.
+"""Validate connector-supplied image bytes or download Bot Framework images.
 
-Bot Framework attachments use the bot identity; Graph hosted content uses
-the backend identity with channel-message read permissions. SharePoint files
-are downloaded through Graph with the backend identity's file-read permissions.
+Graph hosted content is downloaded by the Logic App's Teams connector, not
+the backend. Graph URLs are validated here only for activity conversion.
 """
 
 from __future__ import annotations
@@ -22,25 +21,16 @@ from azure.identity.aio import (
     ManagedIdentityCredential,
 )
 
-from utils.azure_credential import get_credential
-
 logger = logging.getLogger(__name__)
 
 _IMAGE_DOWNLOAD_TIMEOUT_SECS = 30.0
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 _BOTFRAMEWORK_SCOPE = "https://api.botframework.com/.default"
-_GRAPH_SCOPE = "https://graph.microsoft.com/.default"
 _GRAPH_IMAGE_PATH = re.compile(
     r"/(?:v1\.0|beta)/teams/[^/]+/channels/[^/]+/messages/[^/]+/"
     r"(?:replies/[^/]+/)?hostedContents/[^/]+/\$value"
 )
-_GRAPH_FILE_PATH = re.compile(
-    r"/(?:v1\.0|beta)/(?:drives/[^/]+/items/[^/]+|"
-    r"shares/[^/]+/driveItem)/content"
-)
-_SHAREPOINT_HOST = re.compile(r"[a-z0-9][a-z0-9-]*\.sharepoint\.com")
-_ONEDRIVE_DOWNLOAD_HOST = re.compile(r"[a-z0-9][a-z0-9-]*\.files\.1drv\.com")
 _IMAGE_TYPES = ("image/png", "image/jpeg", "image/gif", "image/webp")
 
 _bot_credential: AsyncTokenCredential | None = None
@@ -81,15 +71,12 @@ def _validate_https_url(url: str) -> None:
 
 
 def validate_teams_image_url(url: str) -> None:
-    """Allow Teams images, Graph file content, and SharePoint file references."""
+    """Allow Bot Framework images and Graph hosted content for conversion."""
     _validate_https_url(url)
     parsed = urlparse(url)
     if parsed.hostname == "graph.microsoft.com":
         if (
-            not (
-                _GRAPH_IMAGE_PATH.fullmatch(parsed.path)
-                or _GRAPH_FILE_PATH.fullmatch(parsed.path)
-            )
+            not _GRAPH_IMAGE_PATH.fullmatch(parsed.path)
             or parsed.query
             or any(
                 unquote(part) in (".", "..") or "/" in unquote(part)
@@ -97,27 +84,13 @@ def validate_teams_image_url(url: str) -> None:
                 for part in parsed.path.split("/")
             )
         ):
-            raise ValueError("Only Graph hosted-content or file-content URLs are allowed")
-    elif _SHAREPOINT_HOST.fullmatch(parsed.hostname or ""):
-        if not parsed.path.strip("/"):
-            raise ValueError("SharePoint image URLs must identify a file")
+            raise ValueError("Only Graph hosted-content URLs are allowed")
     elif parsed.hostname != "smba.trafficmanager.net":
-        raise ValueError("Only Bot Framework, Graph, and SharePoint image hosts are allowed")
-
-
-def _validate_download_url(url: str) -> None:
-    """Restrict Graph's preauthenticated redirect; never send it a bearer token."""
-    _validate_https_url(url)
-    hostname = urlparse(url).hostname or ""
-    if not (
-        _SHAREPOINT_HOST.fullmatch(hostname)
-        or _ONEDRIVE_DOWNLOAD_HOST.fullmatch(hostname)
-    ):
-        raise ValueError("Unsupported Graph file download host")
+        raise ValueError("Only Bot Framework and Graph hosted-content image hosts are allowed")
 
 
 async def get_image_data_uri(url: str) -> str:
-    """Validate connector-supplied bytes or download a bounded Teams image."""
+    """Validate connector-supplied bytes or download a bounded Bot Framework image."""
     if url.startswith("data:"):
         header, separator, encoded = url.partition(",")
         if not separator or not header.endswith(";base64"):
@@ -130,26 +103,13 @@ async def get_image_data_uri(url: str) -> str:
             raise ValueError("Teams image contains invalid base64") from exc
         return _image_data_uri(content, header[5:-7])
     validate_teams_image_url(url)
-    parsed = urlparse(url)
-    if _SHAREPOINT_HOST.fullmatch(parsed.hostname or ""):
-        sharing_url = str(httpx.URL(url))
-        sharing_token = "u!" + base64.urlsafe_b64encode(
-            sharing_url.encode("utf-8")
-        ).decode("ascii").rstrip("=")
-        url = f"https://graph.microsoft.com/v1.0/shares/{sharing_token}/driveItem/content"
-    parsed = urlparse(url)
-    is_graph_file = (
-        parsed.hostname == "graph.microsoft.com"
-        and bool(_GRAPH_FILE_PATH.fullmatch(parsed.path))
+    if urlparse(url).hostname != "smba.trafficmanager.net":
+        raise ValueError("Graph image bytes must be supplied by the Teams connector")
+    bot_tenant_id = os.environ.get("BOT_TENANT_ID", "")
+    token = await _get_bot_credential().get_token(
+        _BOTFRAMEWORK_SCOPE,
+        tenant_id=bot_tenant_id or None,
     )
-    if parsed.hostname == "graph.microsoft.com":
-        token = await get_credential().get_token(_GRAPH_SCOPE)
-    else:
-        bot_tenant_id = os.environ.get("BOT_TENANT_ID", "")
-        token = await _get_bot_credential().get_token(
-            _BOTFRAMEWORK_SCOPE,
-            tenant_id=bot_tenant_id or None,
-        )
 
     headers = {"Authorization": f"Bearer {token.token}"}
     content = bytearray()
@@ -157,24 +117,17 @@ async def get_image_data_uri(url: str) -> str:
     async with httpx.AsyncClient(
         timeout=_IMAGE_DOWNLOAD_TIMEOUT_SECS, follow_redirects=False
     ) as client:
-        for attempt in range(2):
-            async with client.stream("GET", url, headers=headers) as resp:
-                if attempt == 0 and is_graph_file and resp.status_code == 302:
-                    url = resp.headers.get("location", "")
-                    _validate_download_url(url)
-                    headers = {}
-                    continue
-                resp.raise_for_status()
-                content_type = resp.headers.get("content-type", "").split(";")[0].strip().lower()
-                if content_type not in (*_IMAGE_TYPES, "application/octet-stream"):
-                    raise ValueError("Unsupported Teams image content type")
-                if int(resp.headers.get("content-length", "0")) > MAX_IMAGE_BYTES:
+        async with client.stream("GET", url, headers=headers) as resp:
+            resp.raise_for_status()
+            content_type = resp.headers.get("content-type", "").split(";")[0].strip().lower()
+            if content_type not in (*_IMAGE_TYPES, "application/octet-stream"):
+                raise ValueError("Unsupported Teams image content type")
+            if int(resp.headers.get("content-length", "0")) > MAX_IMAGE_BYTES:
+                raise ValueError("Teams image exceeds the 5 MiB limit")
+            async for chunk in resp.aiter_bytes():
+                if len(content) + len(chunk) > MAX_IMAGE_BYTES:
                     raise ValueError("Teams image exceeds the 5 MiB limit")
-                async for chunk in resp.aiter_bytes():
-                    if len(content) + len(chunk) > MAX_IMAGE_BYTES:
-                        raise ValueError("Teams image exceeds the 5 MiB limit")
-                    content.extend(chunk)
-                break
+                content.extend(chunk)
     return _image_data_uri(content, content_type)
 
 

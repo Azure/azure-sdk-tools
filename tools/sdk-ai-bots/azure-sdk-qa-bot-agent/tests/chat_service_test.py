@@ -59,19 +59,22 @@ async def test_image_failures_preserve_other_context_and_are_disclosed(monkeypat
 
 
 @pytest.mark.asyncio
-async def test_image_attempt_limit_keeps_failure_and_limit_notices(monkeypatch):
+@pytest.mark.parametrize("image_limit", [2, 4])
+async def test_image_attempt_limit_keeps_failure_and_limit_notices(monkeypatch, image_limit):
+    monkeypatch.setattr(chat_service, "MAX_IMAGES_PER_REQUEST", image_limit)
     download = AsyncMock(side_effect=[
         ValueError("invalid image"),
-        *["data:image/png;base64,aW1hZ2U="] * 3,
+        *["data:image/png;base64,aW1hZ2U="] * (image_limit - 1),
     ])
     monkeypatch.setattr(chat_service, "get_image_data_uri", download)
     items = await ChatService()._build_additional_info_items([
         AdditionalInfo(type="image", content="", link=f"https://example.test/{index}")
         for index in range(6)
     ])
-    assert download.await_count == 4
-    assert len(items) == 4
+    assert download.await_count == image_limit
+    assert len(items) == image_limit
     assert "could not be downloaded or read" in items[-1]["content"]
+    assert f"Only the first {image_limit} attached images were considered" in items[-1]["content"]
     assert "additional images were not read" in items[-1]["content"]
 
 

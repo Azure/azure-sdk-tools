@@ -1,8 +1,7 @@
-"""Hermetic coverage for Teams image authentication and bounded downloads."""
+"""Hermetic coverage for connector bytes and bounded Bot Framework downloads."""
 
 from __future__ import annotations
 
-import base64
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
@@ -16,24 +15,16 @@ GRAPH_IMAGE = (
     "messages/message/hostedContents/image/$value"
 )
 BOT_IMAGE = "https://smba.trafficmanager.net/attachments/image"
-SHAREPOINT_IMAGE = (
-    "https://contoso.sharepoint.com/teams/SDK/Shared Documents/Channel/image.png"
-)
-GRAPH_FILE = "https://graph.microsoft.com/v1.0/drives/drive/items/image/content"
-DOWNLOAD_URL = "https://contoso.sharepoint.com/_layouts/15/download.aspx?token=secret"
 PNG_BYTES = b"\x89PNG\r\n\x1a\n"
 PNG_DATA_URI = "data:image/png;base64,iVBORw0KGgo="
 
 
 @pytest.fixture
 def credentials(monkeypatch):
-    graph = MagicMock()
-    graph.get_token = AsyncMock(return_value=SimpleNamespace(token="graph-test-token"))
     bot = MagicMock()
     bot.get_token = AsyncMock(return_value=SimpleNamespace(token="bot-test-token"))
-    monkeypatch.setattr(teams_image, "get_credential", lambda: graph)
     monkeypatch.setattr(teams_image, "_get_bot_credential", lambda: bot)
-    return graph, bot
+    return bot
 
 
 @pytest.fixture
@@ -65,11 +56,8 @@ async def test_connector_image_bytes_require_no_credentials_or_network(mime, cre
         pytest.fail("Connector-supplied image bytes must not be downloaded again")
 
     monkeypatch.setattr(teams_image.httpx, "AsyncClient", unexpected_client)
-    uri = f"data:{mime};base64,iVBORw0KGgo="
-    assert await teams_image.get_image_data_uri(uri) == PNG_DATA_URI
-    graph, bot = credentials
-    graph.get_token.assert_not_awaited()
-    bot.get_token.assert_not_awaited()
+    assert await teams_image.get_image_data_uri(f"data:{mime};base64,iVBORw0KGgo=") == PNG_DATA_URI
+    credentials.get_token.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -89,9 +77,7 @@ async def test_connector_image_bytes_require_no_credentials_or_network(mime, cre
 async def test_invalid_connector_image_data_is_rejected(uri, credentials):
     with pytest.raises(ValueError):
         await teams_image.get_image_data_uri(uri)
-    graph, bot = credentials
-    graph.get_token.assert_not_awaited()
-    bot.get_token.assert_not_awaited()
+    credentials.get_token.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -117,30 +103,35 @@ async def test_connector_image_reaches_model_without_graph_access(credentials):
         AdditionalInfo(type="image", content="", link=PNG_DATA_URI)
     ])
     assert items[0]["content"][1]["image_url"] == PNG_DATA_URI
-    graph, bot = credentials
-    graph.get_token.assert_not_awaited()
-    bot.get_token.assert_not_awaited()
+    credentials.get_token.assert_not_awaited()
+
+
+@pytest.mark.parametrize("url", [
+    GRAPH_IMAGE,
+    GRAPH_IMAGE.replace("/v1.0/", "/beta/"),
+    GRAPH_IMAGE.replace("/messages/message/", "/messages/root/replies/reply/"),
+])
+def test_graph_hosted_content_is_still_valid_for_activity_conversion(url):
+    teams_image.validate_teams_image_url(url)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("url", [
     GRAPH_IMAGE,
-    GRAPH_FILE,
+    "https://graph.microsoft.com/v1.0/drives/drive/items/image/content",
     "https://graph.microsoft.com/v1.0/shares/u!encoded/driveItem/content",
-    GRAPH_IMAGE.replace("/v1.0/", "/beta/"),
-    GRAPH_IMAGE.replace("/messages/message/", "/messages/root/replies/reply/"),
+    "https://contoso.sharepoint.com/teams/SDK/image.png",
 ])
-async def test_graph_image_uses_backend_graph_token(url, credentials, mock_download):
-    requests = mock_download(
-        lambda request: httpx.Response(
-            200, headers={"content-type": "image/png; charset=binary"}, content=PNG_BYTES
-        )
-    )
-    assert await teams_image.get_image_data_uri(url) == "data:image/png;base64,iVBORw0KGgo="
-    graph, bot = credentials
-    graph.get_token.assert_awaited_once_with("https://graph.microsoft.com/.default")
-    bot.get_token.assert_not_awaited()
-    assert requests[0].headers["authorization"] == "Bearer graph-test-token"
+async def test_backend_rejects_graph_and_sharepoint_without_credentials_or_network(
+    url, credentials, monkeypatch,
+):
+    def unexpected_client(**kwargs):
+        pytest.fail("Backend must not download Graph or SharePoint images")
+
+    monkeypatch.setattr(teams_image.httpx, "AsyncClient", unexpected_client)
+    with pytest.raises(ValueError):
+        await teams_image.get_image_data_uri(url)
+    credentials.get_token.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -148,13 +139,11 @@ async def test_native_image_keeps_bot_credentials(monkeypatch, credentials, mock
     monkeypatch.setenv("BOT_TENANT_ID", "bot-tenant")
     requests = mock_download(
         lambda request: httpx.Response(
-            200, headers={"content-type": "image/png"}, content=PNG_BYTES
+            200, headers={"content-type": "image/png; charset=binary"}, content=PNG_BYTES
         )
     )
-    await teams_image.get_image_data_uri(BOT_IMAGE)
-    graph, bot = credentials
-    graph.get_token.assert_not_awaited()
-    bot.get_token.assert_awaited_once_with(
+    assert await teams_image.get_image_data_uri(BOT_IMAGE) == PNG_DATA_URI
+    credentials.get_token.assert_awaited_once_with(
         "https://api.botframework.com/.default", tenant_id="bot-tenant"
     )
     assert requests[0].headers["authorization"] == "Bearer bot-test-token"
@@ -171,28 +160,22 @@ async def test_native_image_keeps_bot_credentials(monkeypatch, credentials, mock
     GRAPH_IMAGE + "?$expand=anything",
     GRAPH_IMAGE.replace("/hostedContents/image/$value", ""),
     GRAPH_IMAGE.replace("/messages/message/", "/messages/%2e%2e/"),
+    GRAPH_IMAGE.replace("/messages/message/", "/messages/a%2Fb/"),
+    GRAPH_IMAGE.replace("/messages/message/", "/messages/a%5Cb/"),
     "https://graph.microsoft.com/v1.0/me/photo/$value",
     "https://example.com/image.png",
-    "https://contoso.sharepoint.com.example.com/image.png",
-    "https://sharepoint.com/image.png",
-    "https://contoso.sharepoint.com/",
-    "https://contoso.sharepoint.com:8443/image.png",
-    "https://user@contoso.sharepoint.com/image.png",
-    "https://contoso.sharepoint.com/image.png#fragment",
-    "https://contoso.sharepoint.com\\@example.com/image.png",
-    "https://contoso.sharepoint.com/\nimage.png",
-    GRAPH_FILE.replace("/items/image/", "/items/%2e%2e/"),
-    GRAPH_FILE.replace("/items/image/", "/items/a%2Fb/"),
-    GRAPH_FILE.replace("/items/image/", "/items/a%5Cb/"),
-    GRAPH_FILE + "?query=value",
-    GRAPH_FILE.replace("/content", ""),
+    "https://contoso.sharepoint.com/image.png",
+    BOT_IMAGE.replace("https:", "http:"),
+    BOT_IMAGE.replace("smba.trafficmanager.net", "user@smba.trafficmanager.net"),
+    BOT_IMAGE.replace("smba.trafficmanager.net", "smba.trafficmanager.net:8443"),
+    BOT_IMAGE + "#fragment",
+    BOT_IMAGE + "\\image",
+    BOT_IMAGE + "\nimage",
 ])
 async def test_invalid_urls_are_rejected_before_credentials(url, credentials):
     with pytest.raises(ValueError):
         await teams_image.get_image_data_uri(url)
-    graph, bot = credentials
-    graph.get_token.assert_not_awaited()
-    bot.get_token.assert_not_awaited()
+    credentials.get_token.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -203,7 +186,7 @@ async def test_image_redirect_is_not_followed(credentials, mock_download):
         )
     )
     with pytest.raises(httpx.HTTPStatusError):
-        await teams_image.get_image_data_uri(GRAPH_IMAGE)
+        await teams_image.get_image_data_uri(BOT_IMAGE)
     assert len(requests) == 1
 
 
@@ -212,7 +195,7 @@ async def test_image_redirect_is_not_followed(credentials, mock_download):
 async def test_download_errors_are_not_hidden(status, credentials, mock_download):
     mock_download(lambda request: httpx.Response(status))
     with pytest.raises(httpx.HTTPStatusError):
-        await teams_image.get_image_data_uri(GRAPH_IMAGE)
+        await teams_image.get_image_data_uri(BOT_IMAGE)
 
 
 @pytest.mark.asyncio
@@ -220,6 +203,7 @@ async def test_download_errors_are_not_hidden(status, credentials, mock_download
     ("image/jpeg", b"\xff\xd8\xfftest"),
     ("image/gif", b"GIF89atest"),
     ("image/webp", b"RIFF\x00\x00\x00\x00WEBP"),
+    ("application/octet-stream", PNG_BYTES),
 ])
 async def test_supported_image_formats(content_type, content, credentials, mock_download):
     mock_download(
@@ -227,8 +211,9 @@ async def test_supported_image_formats(content_type, content, credentials, mock_
             200, headers={"content-type": content_type}, content=content
         )
     )
-    assert (await teams_image.get_image_data_uri(GRAPH_IMAGE)).startswith(
-        f"data:{content_type};base64,"
+    expected_type = "image/png" if content_type == "application/octet-stream" else content_type
+    assert (await teams_image.get_image_data_uri(BOT_IMAGE)).startswith(
+        f"data:{expected_type};base64,"
     )
 
 
@@ -239,11 +224,12 @@ async def test_supported_image_formats(content_type, content, credentials, mock_
     ({"content-type": "image/png"}, b""),
     ({}, PNG_BYTES),
     ({"content-type": "image/png", "content-length": "99999999"}, PNG_BYTES),
+    ({"content-type": "application/octet-stream"}, b"not an image"),
 ])
 async def test_invalid_image_response_is_rejected(headers, content, credentials, mock_download):
     mock_download(lambda request: httpx.Response(200, headers=headers, content=content))
     with pytest.raises(ValueError):
-        await teams_image.get_image_data_uri(GRAPH_IMAGE)
+        await teams_image.get_image_data_uri(BOT_IMAGE)
 
 
 @pytest.mark.asyncio
@@ -260,200 +246,19 @@ async def test_chunked_download_enforces_byte_limit(monkeypatch, credentials, mo
         )
     )
     with pytest.raises(ValueError, match="5 MiB limit"):
-        await teams_image.get_image_data_uri(GRAPH_IMAGE)
+        await teams_image.get_image_data_uri(BOT_IMAGE)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("source", [
-    SHAREPOINT_IMAGE,
-    SHAREPOINT_IMAGE.replace("contoso.", "contoso-my."),
-    SHAREPOINT_IMAGE.replace("Channel", "Channel – SDK") + "?web=1",
-])
-async def test_sharepoint_file_is_resolved_through_graph(source, credentials, mock_download):
-    requests = mock_download(
-        lambda request: httpx.Response(
-            302, headers={"location": DOWNLOAD_URL}
-        ) if request.url.host == "graph.microsoft.com" else httpx.Response(
-            200, headers={"content-type": "application/octet-stream"}, content=PNG_BYTES
-        )
-    )
-    assert await teams_image.get_image_data_uri(source) == "data:image/png;base64,iVBORw0KGgo="
-    token = "u!" + base64.urlsafe_b64encode(
-        str(httpx.URL(source)).encode("utf-8")
-    ).decode("ascii").rstrip("=")
-    assert str(requests[0].url) == (
-        f"https://graph.microsoft.com/v1.0/shares/{token}/driveItem/content"
-    )
-    assert requests[0].headers["authorization"] == "Bearer graph-test-token"
-    assert str(requests[1].url) == DOWNLOAD_URL
-    assert "authorization" not in requests[1].headers
-    graph, bot = credentials
-    graph.get_token.assert_awaited_once_with("https://graph.microsoft.com/.default")
-    bot.get_token.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("destination", [
-    DOWNLOAD_URL,
-    "https://b0mpua-by3301.files.1drv.com/image?token=secret",
-])
-async def test_graph_file_redirect_drops_graph_credentials(destination, credentials, mock_download):
-    def handle(request):
-        if request.url.host == "graph.microsoft.com":
-            return httpx.Response(302, headers={"location": destination})
-        return httpx.Response(200, headers={"content-type": "image/png"}, content=PNG_BYTES)
-
-    requests = mock_download(handle)
-    assert await teams_image.get_image_data_uri(GRAPH_FILE) == "data:image/png;base64,iVBORw0KGgo="
-    assert len(requests) == 2
-    assert "authorization" not in requests[1].headers
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("destination", [
-    "https://example.com/image.png",
-    "http://contoso.sharepoint.com/image.png",
-    "https://contoso.sharepoint.com.example.com/image.png",
-    "https://127.0.0.1/image.png",
-    "https://169.254.169.254/image.png",
-    "https://user:password@contoso.sharepoint.com/image.png",
-    "https://contoso.sharepoint.com:8443/image.png",
-    "/relative/download",
-    "",
-])
-async def test_graph_file_rejects_unsafe_redirects(destination, credentials, mock_download):
-    requests = mock_download(
-        lambda request: httpx.Response(302, headers={"location": destination})
-    )
-    with pytest.raises(ValueError):
-        await teams_image.get_image_data_uri(GRAPH_FILE)
-    assert len(requests) == 1
-
-
-@pytest.mark.asyncio
-async def test_graph_file_does_not_follow_redirect_chains(credentials, mock_download):
-    requests = mock_download(
-        lambda request: httpx.Response(302, headers={"location": DOWNLOAD_URL})
-    )
-    with pytest.raises(httpx.HTTPStatusError):
-        await teams_image.get_image_data_uri(GRAPH_FILE)
-    assert len(requests) == 2
-    assert "authorization" not in requests[1].headers
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("status", [403, 404])
-async def test_sharepoint_resolution_errors_are_not_hidden(status, credentials, mock_download):
-    requests = mock_download(lambda request: httpx.Response(status))
-    with pytest.raises(httpx.HTTPStatusError):
-        await teams_image.get_image_data_uri(SHAREPOINT_IMAGE)
-    assert len(requests) == 1
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("content", [b"<html>Sign in</html>", b"not an image"])
-async def test_binary_non_images_are_rejected(content, credentials, mock_download):
-    mock_download(lambda request: httpx.Response(
-        200, headers={"content-type": "application/octet-stream"}, content=content
-    ))
-    with pytest.raises(ValueError, match="do not match"):
-        await teams_image.get_image_data_uri(GRAPH_FILE)
-
-
-@pytest.mark.asyncio
-async def test_sharepoint_download_limit_is_enforced(monkeypatch, credentials, mock_download):
-    monkeypatch.setattr(teams_image, "MAX_IMAGE_BYTES", len(PNG_BYTES) - 1)
-    mock_download(
-        lambda request: httpx.Response(
-            302, headers={"location": DOWNLOAD_URL}
-        ) if request.url.host == "graph.microsoft.com" else httpx.Response(
-            200, headers={"content-type": "image/png"}, content=PNG_BYTES
-        )
-    )
-    with pytest.raises(ValueError, match="5 MiB limit"):
-        await teams_image.get_image_data_uri(SHAREPOINT_IMAGE)
-
-
-@pytest.mark.asyncio
-async def test_converted_inline_image_reaches_model_as_pixels(credentials, mock_download):
-    from models.chat import AdditionalInfo
-    from services.activity_converter_service import ActivityConverterService
-    from services.chat_service import ChatService
-
-    requests = mock_download(
-        lambda request: httpx.Response(
-            200, headers={"content-type": "image/png"}, content=PNG_BYTES
-        )
-    )
-    activity = ActivityConverterService().convert_to_activity({
-        "id": "message",
-        "channelIdentity": {"teamId": "team", "channelId": "channel"},
-        "body": {
-            "contentType": "html",
-            "content": '<p>What error is visible?</p><img src="hostedContents/image/$value">',
-        },
-    })
-    # Match the existing TypeScript bot's image attachment forwarding contract.
-    infos = [
-        AdditionalInfo(type="image", content="", link=attachment["contentUrl"])
-        for attachment in activity["attachments"]
-        if attachment["contentType"].startswith("image/")
-    ]
-    items = await ChatService()._build_additional_info_items(infos)
-
-    assert str(requests[0].url) == GRAPH_IMAGE
-    assert items[0]["content"][1]["image_url"] == "data:image/png;base64,iVBORw0KGgo="
-
-
-@pytest.mark.asyncio
-async def test_uploaded_image_reaches_model_as_pixels(credentials, mock_download):
-    from models.chat import AdditionalInfo
-    from services.activity_converter_service import ActivityConverterService
-    from services.chat_service import ChatService
-
-    mock_download(
-        lambda request: httpx.Response(
-            302, headers={"location": DOWNLOAD_URL}
-        ) if request.url.host == "graph.microsoft.com" else httpx.Response(
-            200, headers={"content-type": "image/png"}, content=PNG_BYTES
-        )
-    )
-    activity = ActivityConverterService().convert_to_activity({
-        "id": "message",
-        "body": {
-            "contentType": "html",
-            "content": '<p>Why did CI fail?</p><attachment id="image-id"></attachment>',
-        },
-        "attachments": [{
-            "id": "image-id", "contentType": "reference",
-            "contentUrl": SHAREPOINT_IMAGE, "name": "image.png", "content": None,
-        }],
-    })
-    infos = [
-        AdditionalInfo(type="image", content="", link=attachment["contentUrl"])
-        for attachment in activity["attachments"]
-        if attachment["contentType"].startswith("image/")
-    ]
-    items = await ChatService()._build_additional_info_items(infos)
-    assert len(items) == 1
-    assert items[0]["content"][1]["image_url"] == "data:image/png;base64,iVBORw0KGgo="
-
-
-@pytest.mark.asyncio
-async def test_download_failure_notice_does_not_log_signed_url(credentials, mock_download, caplog):
+async def test_unresolved_graph_image_produces_notice_without_logging_url(credentials, caplog):
     from models.chat import AdditionalInfo
     from services.chat_service import ChatService
 
-    mock_download(
-        lambda request: httpx.Response(
-            302, headers={"location": DOWNLOAD_URL}
-        ) if request.url.host == "graph.microsoft.com" else httpx.Response(403)
-    )
     items = await ChatService()._build_additional_info_items([
-        AdditionalInfo(type="image", content="", link=SHAREPOINT_IMAGE)
+        AdditionalInfo(type="image", content="", link=GRAPH_IMAGE)
     ])
     assert "could not be downloaded" in items[0]["content"]
     assert "Failed to fetch Teams image" in caplog.text
-    assert "HTTPStatusError" in caplog.text
-    assert DOWNLOAD_URL not in caplog.text
-    assert "secret" not in caplog.text
+    assert "ValueError" in caplog.text
+    assert GRAPH_IMAGE not in caplog.text
+    credentials.get_token.assert_not_awaited()

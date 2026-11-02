@@ -104,18 +104,23 @@ class ActivityConverterService:
         if body.get("contentType") == "html":
             attachments.append({"contentType": "text/html", "content": body.get("content")})
             parser.feed(body.get("content") or "")
-        sources = list(parser.sources)
-        for attachment in chat_message.get("attachments") or []:
-            content_type = attachment.get("contentType") or ""
-            name = attachment.get("name") or ""
-            if content_type.startswith("image/") or (
-                content_type == "reference"
-                and name.rsplit(".", 1)[-1].lower() in ("png", "jpg", "jpeg", "gif", "webp")
-            ):
-                if attachment.get("contentUrl"):
-                    sources.append(attachment["contentUrl"])
-                else:
-                    logger.warning("Ignoring image attachment without a content URL")
+        seen: set[str] = set()
+        for source in parser.sources:
+            try:
+                url = self._resolve_inline_image_url(source, chat_message)
+            except ValueError:
+                logger.warning(
+                    "Ignoring unsupported inline image in message %s",
+                    chat_message.get("id") or "",
+                )
+                continue
+            if url not in seen:
+                seen.add(url)
+                # The actual MIME type is checked when the image is downloaded.
+                attachments.append({"contentType": "image/*", "contentUrl": url})
+        return attachments
+
+    def _resolve_inline_image_url(self, source: str, chat_message: dict[str, Any]) -> str:
         channel = chat_message.get("channelIdentity") or {}
         message_id = chat_message.get("id") or ""
         root_id = chat_message.get("replyToId") or message_id
@@ -130,35 +135,22 @@ class ActivityConverterService:
             if root_id != message_id:
                 message_url += "/replies/" + quote(message_id, safe="")
             message_url += "/"
-        seen: set[str] = set()
-        for source in sources:
-            try:
-                url = urljoin(message_url, source)
-                validate_teams_image_url(url)
-                parsed = urlparse(url)
-                if (
-                    parsed.hostname == "graph.microsoft.com"
-                    and parsed.path.split("/", 3)[2] == "teams"
-                ):
-                    if not message_url:
-                        raise ValueError("Graph images require source message metadata")
-                    image_message_path = parsed.path.split("/", 2)[2].rsplit(
-                        "/hostedContents/", 1
-                    )[0]
-                    expected_path = urlparse(message_url).path.split("/", 2)[2].rstrip("/")
-                    if unquote(image_message_path) != unquote(expected_path):
-                        raise ValueError("Graph image must belong to the source message")
-            except ValueError:
-                logger.warning(
-                    "Ignoring unsupported inline image or file attachment in message %s",
-                    message_id,
-                )
-                continue
-            if url not in seen:
-                seen.add(url)
-                # The actual MIME type is checked when the image is downloaded.
-                attachments.append({"contentType": "image/*", "contentUrl": url})
-        return attachments
+        url = urljoin(message_url, source)
+        validate_teams_image_url(url)
+        parsed = urlparse(url)
+        if (
+            parsed.hostname == "graph.microsoft.com"
+            and parsed.path.split("/", 3)[2] == "teams"
+        ):
+            if not message_url:
+                raise ValueError("Graph images require source message metadata")
+            image_message_path = parsed.path.split("/", 2)[2].rsplit(
+                "/hostedContents/", 1
+            )[0]
+            expected_path = urlparse(message_url).path.split("/", 2)[2].rstrip("/")
+            if unquote(image_message_path) != unquote(expected_path):
+                raise ValueError("Graph image must belong to the source message")
+        return url
 
     def _convert_mentions(self, mentions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         converted_mentions: list[dict[str, Any]] = []

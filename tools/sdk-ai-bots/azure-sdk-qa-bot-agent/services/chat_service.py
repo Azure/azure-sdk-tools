@@ -557,7 +557,7 @@ class ChatService:
                 if image_count > MAX_IMAGES_PER_REQUEST:
                     logger.warning("Skipping Teams image beyond the per-request limit")
                     image_notices.add(
-                        "Only the first four attached images were considered; "
+                        f"Only the first {MAX_IMAGES_PER_REQUEST} attached images were considered; "
                         "additional images were not read."
                     )
                     continue

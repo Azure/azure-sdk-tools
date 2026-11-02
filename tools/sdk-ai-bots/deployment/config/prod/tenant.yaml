@@ -27,6 +27,14 @@ tenants:
     channel_name: AzSDK Tools Agent
     channel_link: https://teams.cloud.microsoft/l/channel/19%3A6d2c19322c254a80bcc521675134da03%40thread.skype/AzSDK%20Tools%20Agent?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False
 
+  - tenant: golang_channel_qa_bot
+    channel_name: Language - Go
+    channel_link: https://teams.microsoft.com/l/channel/19%3A104f00188bb64ef48d1b4d94ccb7a361%40thread.skype/Language%20-%20Go?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47
+
+  - tenant: javascript_channel_qa_bot
+    channel_name: Language - JS & TS
+    channel_link: https://teams.microsoft.com/l/channel/19%3A344f6b5b36ba414daa15473942c7477b%40thread.skype/Language%20-%20JS%20%26%20TS?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47
+
   - tenant: azure_mcp_server
     channel_name: Azure MCP Server General
     channel_link: https://teams.microsoft.com/l/channel/19%3AJwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1%40thread.tacv2/Azure%20MCP%20Server%20General?groupId=256e3336-e328-4683-a24a-7a36c8a123fc&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47

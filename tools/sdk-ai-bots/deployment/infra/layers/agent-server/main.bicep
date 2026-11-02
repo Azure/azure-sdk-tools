@@ -18,6 +18,9 @@ param serverApplicationClientId string
 @description('Additional client application IDs permitted to call the backend, such as the environment deployment identity.')
 param allowedCallerApplicationIds array = []
 
+@description('Allow dev requests to select a hosted agent by source branch.')
+param enableAgentRouting bool = false
+
 @description('Name of the shared user-assigned managed identity attached to the site.')
 param sharedIdentityName string
 
@@ -173,6 +176,10 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
           // Configuration at this endpoint.
           name: 'AZURE_APPCONFIG_ENDPOINT'
           value: 'https://${appConfigName}.azconfig.io'
+        }
+        {
+          name: 'ENABLE_AI_FOUNDRY_AGENT_ROUTING'
+          value: string(enableAgentRouting)
         }
       ]
     }

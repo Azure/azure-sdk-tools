@@ -115,13 +115,63 @@ test("deploys the Azure MCP Server agent and its Teams-group workflow", () => {
   assert.match(grantAgentAccess, /properties\.enableRbacAuthorization/);
   assert.match(grantAgentAccess, /permissions\.keys\[\]/);
   assert.equal(
-    suite.environments.dev.azureMcpTeamsGroupId,
-    "07bb6114-8ffb-4e79-b65a-67f19d23e5bc",
+    suite.environments.prod.azureMcpTeamsGroupId,
+    "256e3336-e328-4683-a24a-7a36c8a123fc",
   );
-  assert.deepEqual(suite.environments.dev.azureMcpTeamsChannelIds, [
-    "19:GZ1GJyuOy0b8PWe6XtNxFdiaiT2M-NdiOXDLR5ySXXc1@thread.tacv2",
+  assert.deepEqual(suite.environments.prod.azureMcpTeamsChannelIds, [
+    "19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2",
   ]);
   assert.match(devChannels, /tenant: azure_mcp_server/);
+});
+
+test("keeps all environment listener subscriptions aligned with the upstream Logic Apps", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  assert.match(read("infra/layers/logic-app/main.bicepparam"), /param azureMcpTeamsChannelIds = empty\(azureMcpChannelIds\) \? \[\] : split\(azureMcpChannelIds, ','\)/);
+  for (const [environment, upstream] of [["dev", "dev"], ["preview", "prod"], ["prod", "prod"]]) {
+    const parameters = JSON.parse(read(
+      `../azure-sdk-qa-bot-agent/pipelines/logicapp/parameters.azure_sdk.${upstream}.json`,
+    )).parameters;
+    assert.equal(suite.environments[environment].teamsGroupId, parameters.teamsGroupId.value);
+    assert.deepEqual(suite.environments[environment].teamsChannelIds, parameters.teamsChannelIds.value);
+    if (environment === "dev") {
+      assert.equal(suite.environments[environment].azureMcpTeamsGroupId, "");
+      assert.deepEqual(suite.environments[environment].azureMcpTeamsChannelIds, []);
+    } else {
+      const mcpParameters = JSON.parse(read(
+        "../azure-sdk-qa-bot-agent/pipelines/logicapp/parameters.azure_mcp_server.prod.json",
+      )).parameters;
+      assert.equal(suite.environments[environment].azureMcpTeamsGroupId, mcpParameters.teamsGroupId.value);
+      assert.deepEqual(suite.environments[environment].azureMcpTeamsChannelIds, mcpParameters.teamsChannelIds.value);
+    }
+  }
+});
+
+test("mirrors production Teams routing in preview without adopting production backend resources", () => {
+  assert.deepEqual(parse(read("config/preview/channel.yaml")), parse(read("config/prod/channel.yaml")));
+  assert.deepEqual(parse(read("config/preview/tenant.yaml")), parse(read("config/prod/tenant.yaml")));
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  const preview = suite.environments.preview;
+  assert.notEqual(preview.resourceGroupPrefix, suite.environments.prod.resourceGroupPrefix);
+  assert.notEqual(preview.bicepOverrides.SERVER_BASE_URL, suite.environments.prod.bicepOverrides.SERVER_BASE_URL);
+  assert.equal(preview.bicepOverrides.SERVER_BASE_URL, "https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net");
+  assert.equal(preview.bicepOverrides.TEAMS_CONNECTION_NAME, "teams-preview");
+});
+
+test("enables branch routing only for dev and tags native and standalone agent deployments", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  for (const environment of ["dev", "preview", "prod"]) {
+    assert.equal(
+      suite.environments[environment].bicepOverrides.ENABLE_AI_FOUNDRY_AGENT_ROUTING,
+      environment === "dev" ? "true" : "false",
+    );
+  }
+  assert.match(read("infra/layers/agent-server/main.bicep"), /name: 'ENABLE_AI_FOUNDRY_AGENT_ROUTING'\s+value: string\(enableAgentRouting\)/);
+  assert.match(read("infra/layers/agent-server/main.bicepparam"), /param enableAgentRouting = readEnvironmentVariable\('ENABLE_AI_FOUNDRY_AGENT_ROUTING', 'false'\) == 'true'/);
+  assert.match(read("pipelines/templates/hosted-agent-deploy-steps.yml"), /ENABLE_AI_FOUNDRY_AGENT_ROUTING: \$\(ENABLE_AI_FOUNDRY_AGENT_ROUTING\)/);
+  const nativeHook = read("hooks/agent-postdeploy.ts");
+  assert.match(nativeHook, /agentVersionMetadata\(process\.env, latest\.metadata\)/);
+  assert.match(nativeHook, /latest\.metadata\?\.branchname === metadata\.branchname/);
+  assert.match(nativeHook, /metadata: \{\s+\.\.\.metadata,/);
 });
 
 test("deploys application services according to runtime dependencies", () => {
@@ -571,6 +621,20 @@ test("resolves forwarded Teams messages before processing them", () => {
   const actions = workflow.actions.For_each.actions;
   const resolution = actions.Get_and_resolve_message_details;
   const threadActions = actions.Thread_Message_From_User.actions;
+  const upstream = JSON.parse(read(
+    "../azure-sdk-qa-bot-agent/pipelines/logicapp/template.json",
+  )).resources.find((resource: { type: string }) =>
+    resource.type === "Microsoft.Logic/workflows",
+  ).properties.definition.actions.For_each.actions;
+
+  assert.deepEqual(
+    actions.Thread_Message_From_User.expression,
+    upstream.Thread_Message_From_User.expression,
+  );
+  assert.deepEqual(
+    actions.Filter_messages_mentioned_bot.inputs,
+    upstream.Filter_messages_mentioned_bot.inputs,
+  );
 
   assert.equal(resolution.type, "Scope");
   assert.match(

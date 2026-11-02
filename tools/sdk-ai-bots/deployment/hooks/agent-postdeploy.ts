@@ -19,11 +19,12 @@
  * 3. Sanity-check the hosted agent by pinging its /ping endpoint.
  */
 
-import { execSync } from "child_process";
+import { execFileSync, execSync } from "child_process";
 
 import { ensureRoleAssignment } from "./lib/ensure-role-assignment.js";
 import { resolveAgentTargetImage } from "./lib/resolve-agent-image.js";
 import { ROLE_IDS } from "./lib/resource-roles.js";
+import { agentVersionMetadata } from "./lib/agent-version-metadata.js";
 
 const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? "";
 
@@ -210,19 +211,17 @@ function getFoundryToken(): string {
  * correct AZURE_APPCONFIG_ENDPOINT we do nothing, so re-running postdeploy
  * without a fresh `azd deploy` is a no-op.
  */
-async function ensureAgentAppConfigEnv(): Promise<void> {
+async function ensureAgentAppConfigEnv(): Promise<boolean> {
   loadAzdEnv();
 
   const appConfigEndpoint = process.env.AZURE_APPCONFIG_ENDPOINT?.trim();
   if (!appConfigEndpoint) {
-    log("AZURE_APPCONFIG_ENDPOINT not set — skipping hosted agent env injection.");
-    return;
+    throw new Error("AZURE_APPCONFIG_ENDPOINT is required to configure the hosted agent version.");
   }
   const projectEndpoint = getProjectEndpoint();
   const agentName = process.env.AGENT_AGENT_NAME?.trim();
   if (!projectEndpoint || !agentName) {
-    log("FOUNDRY_PROJECT_ENDPOINT / AGENT_AGENT_NAME not set — skipping hosted agent env injection.");
-    return;
+    throw new Error("FOUNDRY_PROJECT_ENDPOINT and AGENT_AGENT_NAME are required to configure the hosted agent version.");
   }
 
   const token = getFoundryToken();
@@ -232,29 +231,27 @@ async function ensureAgentAppConfigEnv(): Promise<void> {
   // Resolve the latest version (versions list is returned newest-first).
   const listRes = await fetch(versionsUrl, { headers: authHeader });
   if (!listRes.ok) {
-    log(`Failed to list agent versions (HTTP ${listRes.status}) — skipping env injection.`);
-    return;
+    throw new Error(`Failed to list hosted agent versions (HTTP ${listRes.status}).`);
   }
   const list = (await listRes.json()) as {
-    data?: Array<{ version?: string; definition?: AgentDefinition }>;
+    data?: Array<{ version?: string; definition?: AgentDefinition; metadata?: Record<string, string> }>;
   };
   const versions = (list.data ?? [])
-    .map((v) => ({ n: Number(v.version), def: v.definition }))
+    .map((v) => ({ n: Number(v.version), def: v.definition, metadata: v.metadata }))
     .filter((v) => Number.isFinite(v.n))
     .sort((a, b) => b.n - a.n);
   if (versions.length === 0) {
-    log("No agent versions found — skipping env injection.");
-    return;
+    throw new Error("No hosted agent versions found to configure.");
   }
   const latest = versions[0];
   const def = latest.def;
   const latestImage = def?.container_configuration?.image;
   if (!def || !latestImage) {
-    log(`Latest agent version ${latest.n} has no container image — skipping env injection.`);
-    return;
+    throw new Error(`Latest hosted agent version ${latest.n} has no container image.`);
   }
 
   const targetImage = resolveAgentTargetImage(process.env);
+  const metadata = agentVersionMetadata(process.env, latest.metadata);
   if (!targetImage) {
     throw new Error(
       "Cannot determine the deployment-selected agent image. Set " +
@@ -265,13 +262,14 @@ async function ensureAgentAppConfigEnv(): Promise<void> {
 
   if (
     latestImage === targetImage &&
-    def.environment_variables?.AZURE_APPCONFIG_ENDPOINT === appConfigEndpoint
+    def.environment_variables?.AZURE_APPCONFIG_ENDPOINT === appConfigEndpoint &&
+    latest.metadata?.branchname === metadata.branchname
   ) {
     log(
       `Latest agent version ${latest.n} already runs ${targetImage} with ` +
         `AZURE_APPCONFIG_ENDPOINT — no new version needed.`
     );
-    return;
+    return false;
   }
 
   log(
@@ -290,7 +288,7 @@ async function ensureAgentAppConfigEnv(): Promise<void> {
   const body = {
     definition: newDefinition,
     metadata: {
-      enableVnextExperience: "true",
+      ...metadata,
       appconfigEnvInjected: targetImage,
     },
   };
@@ -311,20 +309,38 @@ async function ensureAgentAppConfigEnv(): Promise<void> {
   const created = (await createRes.json()) as {
     version?: string;
     definition?: AgentDefinition;
+    metadata?: Record<string, string>;
   };
   const injected = created.definition?.environment_variables?.AZURE_APPCONFIG_ENDPOINT;
+  if (!created.version) {
+    throw new Error("Created hosted agent response has no version.");
+  }
   if (injected !== appConfigEndpoint) {
     throw new Error(
       `Created agent version ${created.version} but AZURE_APPCONFIG_ENDPOINT was not persisted.`
     );
   }
+  if (created.metadata?.branchname !== metadata.branchname) {
+    throw new Error(`Created agent version ${created.version} but its source branch metadata was not persisted.`);
+  }
+  const endpoint = `${projectEndpoint}/agents/${agentName}/versions/${created.version}`;
+  for (const [key, value] of [
+    ["AGENT_AGENT_VERSION", created.version],
+    ["AGENT_AGENT_ENDPOINT", endpoint],
+  ]) {
+    execFileSync("azd", ["env", "set", key, value], { stdio: "inherit" });
+    process.env[key] = value;
+  }
   log(`  ✓ created agent version ${created.version} (image ${targetImage}, AZURE_APPCONFIG_ENDPOINT set, @latest).`);
+  return true;
 }
 
 (async () => {
   await ensureAgentIdentityRbac();
 
-  await ensureAgentAppConfigEnv();
+  if (await ensureAgentAppConfigEnv()) {
+    await ensureAgentIdentityRbac();
+  }
 
   loadAzdEnv();
 

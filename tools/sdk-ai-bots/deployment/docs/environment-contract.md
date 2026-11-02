@@ -74,6 +74,9 @@ values and placeholders, the validator checks that `config/<env>/channel.yaml`
 exactly matches the union of `teamsChannelIds` and
 `azureMcpTeamsChannelIds`, every route tenant is defined, and tenant links
 target the corresponding primary or Azure MCP Server Teams group.
+The MCP group and channel list must either both be set or both be empty.
+Dev includes its MCP channel in the primary listener. Preview and production
+configure a second listener for the production MCP team.
 
 ## Local azd sync
 
@@ -171,7 +174,13 @@ retain their existing names. Backend Application Insights reuses the
 The deployment contract plans preview-owned Storage, Search, Cosmos DB,
 Foundry, a shared runtime identity, backend App Service plan, Teams connection,
 and integration account. These are not existing resources in the test group.
-The Azure MCP Server workflow is also a new preview resource.
+Preview intentionally monitors the same production Teams channels as
+production: 11 channels in the SDK team
+(`3e17dcb0-4257-4a30-b843-77f47f1d4121`) and one channel in the MCP team
+(`256e3336-e328-4683-a24a-7a36c8a123fc`). Channel routes and tenant links match
+production, but `${SERVER_BASE_URL}` resolves to preview's backend.
+The MCP listener is preview-owned, as are its connector and identities.
+Sharing Teams channels does not adopt production Azure resources.
 
 The existing backend and Logic App currently reference dev/prod hosting,
 identities, and connector resources. A future approved deployment of this
@@ -181,6 +190,16 @@ application rollout, Search/routing setup, and new Teams connection consent;
 do not reuse production resource names to satisfy missing preview dependencies.
 The current Azure resources and stored App Configuration values are not changed
 by editing this contract.
+
+## Branch-based agent routing
+
+`ENABLE_AI_FOUNDRY_AGENT_ROUTING` is set through `bicepOverrides`: `true` for
+dev and `false` for preview and production. The agent-server layer applies it as
+an App Service setting. Both hosted-agent deployment paths tag dev Foundry
+versions with `metadata.branchname`, using `BUILD_SOURCEBRANCH` in Azure
+DevOps or the checked-out Git branch for local native azd deployment.
+Requests prefixed with `[branch:feature/name]` can select an active dev
+version. Routing-disabled environments reject those requests.
 
 ## Environment variable ownership
 

@@ -23,6 +23,9 @@ test("syncs every derived value into an existing azd environment", () => {
   assert.ok(setCalls.some(({ args }) =>
     args[2] === "SERVER_APPLICATION_ID_URI" &&
     args[3] === values.SERVER_APPLICATION_ID_URI));
+  for (const key of ["AZURE_MCP_TEAMS_GROUP_ID", "AZURE_MCP_TEAMS_CHANNEL_IDS"]) {
+    assert.ok(setCalls.some(({ args }) => args[2] === key && args[3] === ""));
+  }
 });
 
 test("creates a missing azd environment before setting values", () => {

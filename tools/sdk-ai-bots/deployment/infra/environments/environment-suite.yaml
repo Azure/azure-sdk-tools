@@ -67,14 +67,15 @@ environments:
             - '19:453ec446a66446589d764132f5cebb00@thread.tacv2'
             - '19:037246b9968445edb3a23612ea44524d@thread.tacv2'
             - '19:de16cb01a8a140678f02c3c1c8999756@thread.tacv2'
-        azureMcpTeamsGroupId: '07bb6114-8ffb-4e79-b65a-67f19d23e5bc'
-        azureMcpTeamsChannelIds:
-            - '19:GZ1GJyuOy0b8PWe6XtNxFdiaiT2M-NdiOXDLR5ySXXc1@thread.tacv2'
+            - '19:a357180f469c484db6890d8e35fe6a76@thread.tacv2'
+        azureMcpTeamsGroupId: ''
+        azureMcpTeamsChannelIds: []
         location: 'westus2'
         aiLocation: 'swedencentral'
         cosmosDbLocation: 'westus2'
         chatbotEvolutionAgentEnabled: false
         bicepOverrides:
+            ENABLE_AI_FOUNDRY_AGENT_ROUTING: 'true'
             # Stable identifiers and live resource settings are explicit
             # because this environment predates azd layer state. Keep these in
             # sync with Azure before changing or reprovisioning shared resources.
@@ -159,18 +160,29 @@ environments:
         agentServerSiteName: 'azuresdkqabot-test-server'
         # See dev.teamsAppId for the contract.
         teamsAppId: '9ded3f10-3bcd-4d89-9f32-8ed170e003c2'
+        # Preview observes production channels using its own bot and backend.
         teamsGroupId: '3e17dcb0-4257-4a30-b843-77f47f1d4121'
         teamsChannelIds:
             - '19:de3fce22c2994be18cac50502c55f717@thread.skype'
             - '19:906c1efbbec54dc8949ac736633e6bdf@thread.skype'
-        azureMcpTeamsGroupId: 'aa6955c1-8ef2-4dea-ae63-b5ce6342630a'
+            - '19:b97d98e6d22c41e0970a1150b484d935@thread.skype'
+            - '19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype'
+            - '19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype'
+            - '19:084875bb626242ed95f3ac8dddfaa12a@thread.skype'
+            - '19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype'
+            - '19:6d2c19322c254a80bcc521675134da03@thread.skype'
+            - '19:104f00188bb64ef48d1b4d94ccb7a361@thread.skype'
+            - '19:344f6b5b36ba414daa15473942c7477b@thread.skype'
+            - '19:acbd512e57bd475198ea6bf4564599e3@thread.skype'
+        azureMcpTeamsGroupId: '256e3336-e328-4683-a24a-7a36c8a123fc'
         azureMcpTeamsChannelIds:
-            - '19:LrGMf-oSqw_bSeRtjMh0rGos3Je8-5fpMSdgVjVwX4k1@thread.tacv2'
+            - '19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2'
         location: 'westus2'
         aiLocation: 'westus2'
         cosmosDbLocation: 'westus2'
         chatbotEvolutionAgentEnabled: false
         bicepOverrides:
+            ENABLE_AI_FOUNDRY_AGENT_ROUTING: 'false'
             MANAGED_IDENTITY_NAME: 'azuresdkqabot-test-identity'
             ACTION_GROUP_NAME: 'azuresdkqabot-test-alert'
             SEARCH_SERVICE_NAME: 'azuresdkqabot-test-search'
@@ -242,6 +254,9 @@ environments:
             - '19:084875bb626242ed95f3ac8dddfaa12a@thread.skype'
             - '19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype'
             - '19:6d2c19322c254a80bcc521675134da03@thread.skype'
+            - '19:104f00188bb64ef48d1b4d94ccb7a361@thread.skype'
+            - '19:344f6b5b36ba414daa15473942c7477b@thread.skype'
+            - '19:acbd512e57bd475198ea6bf4564599e3@thread.skype'
         azureMcpTeamsGroupId: '256e3336-e328-4683-a24a-7a36c8a123fc'
         azureMcpTeamsChannelIds:
             - '19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2'
@@ -251,6 +266,7 @@ environments:
         chatbotEvolutionAgentEnabled: true
         candidateEnvironment: 'dev'
         bicepOverrides:
+            ENABLE_AI_FOUNDRY_AGENT_ROUTING: 'false'
             # Production values preserve the existing manually evolved
             # environment while retaining fresh-environment defaults elsewhere.
             DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'

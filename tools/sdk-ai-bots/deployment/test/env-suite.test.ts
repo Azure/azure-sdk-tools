@@ -22,7 +22,7 @@ test("loads typed environment and hyphenated component names", () => {
   });
   assert.equal(getEnvSuiteValue("dev", "chatbotEvolutionAgentEnabled"), "false");
   const devChannelIds = getEnvSuiteValues("dev", "teamsChannelIds");
-  assert.equal(devChannelIds.length, 13);
+  assert.equal(devChannelIds.length, 14);
   assert.ok(
     devChannelIds.includes(
       "19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2",

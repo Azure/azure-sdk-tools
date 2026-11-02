@@ -27,7 +27,6 @@ const REQUIRED_KEYS = [
   "appConfigName",
   "containerRegistryName",
   "teamsGroupId",
-  "azureMcpTeamsGroupId",
   "localDeployAllowed",
   "chatbotEvolutionAgentEnabled",
 ] as const;
@@ -113,11 +112,12 @@ export function collectEnvironmentSuiteErrors(
     }
     const azureMcpChannelIds = environment.azureMcpTeamsChannelIds ?? [];
     if (
-      azureMcpChannelIds.length === 0 ||
+      Boolean(environment.azureMcpTeamsGroupId) !== (azureMcpChannelIds.length > 0) ||
+      hasPlaceholder(environment.azureMcpTeamsGroupId) ||
       azureMcpChannelIds.some((id) => !id || hasPlaceholder(id))
     ) {
       errors.push(
-        `[${environmentName}] azureMcpTeamsChannelIds is empty or contains a placeholder`,
+        `[${environmentName}] azureMcpTeamsGroupId and azureMcpTeamsChannelIds must both be set or both empty, without placeholders`,
       );
     }
 

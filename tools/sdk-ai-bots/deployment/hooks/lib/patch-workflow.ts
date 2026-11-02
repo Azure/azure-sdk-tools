@@ -125,7 +125,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     },
   ];
   const azureMcpTargetValues = [
-    process.env.AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME?.trim(),
     process.env.AZURE_MCP_TEAMS_GROUP_ID?.trim(),
     process.env.AZURE_MCP_TEAMS_CHANNEL_IDS?.trim(),
   ];

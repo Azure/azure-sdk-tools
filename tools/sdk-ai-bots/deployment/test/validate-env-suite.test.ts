@@ -42,6 +42,19 @@ test("reports malformed identities, placeholders, and route drift", () => {
     configRoot,
   });
 
+  test("requires both MCP listener fields together and allows consolidated listeners", () => {
+    const suite = structuredClone(loadEnvironmentSuite());
+    assert.deepEqual(collectEnvironmentSuiteErrors({
+      suite, environments: ["dev", "preview"], configRoot,
+    }), []);
+    suite.environments.dev.azureMcpTeamsGroupId = "group-without-channels";
+    suite.environments.preview.azureMcpTeamsGroupId = "";
+    suite.environments.preview.azureMcpTeamsChannelIds = ["channel-without-group"];
+    const errors = collectEnvironmentSuiteErrors({
+      suite, environments: ["dev", "preview"], configRoot,
+    });
+    assert.equal(errors.filter(error => error.includes("must both be set or both empty")).length, 2);
+  });
   assert.ok(errors.some((error) => error.includes("subscriptionId 'not-a-guid'")));
   assert.ok(errors.some((error) => error.includes("REPLACE_WITH_CLIENT_ID")));
   assert.ok(errors.some((error) => error.includes("localDeployAllowed")));

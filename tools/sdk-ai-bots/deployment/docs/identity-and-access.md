@@ -150,6 +150,12 @@ ID from the deployed version and grants the runtime roles described below.
 A new hosted-agent version can have a different identity. Dynamic role grants
 must therefore run after each hosted-agent deployment.
 
+GitHub-to-Teams mention resolution also uses this identity to request a token
+for the Microsoft Open Source portal audience
+`api://2efaf292-00a0-426c-ba7d-f5d2b214b8fc/.default`. Portal authorization is
+external to Azure resource RBAC; the tool reports lookup errors if access is
+unavailable. The deployment does not invent or grant portal permissions.
+
 ### Teams consent identity
 
 The Teams Logic Apps connector uses delegated OAuth from the person or service

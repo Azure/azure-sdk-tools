@@ -90,6 +90,10 @@ test("loads preview's adopted resource names and backend registration into pipel
   assert.equal(result.values.LOGIC_APP_WORKFLOW_NAME_OVERRIDE, "azuresdkqabot-test-logicapp");
   assert.equal(result.values.TEAMS_CONNECTION_NAME_OVERRIDE, "teams-preview");
   assert.equal(result.values.STORAGE_ACCOUNT_NAME_OVERRIDE, "azuresdkqabotteststorage");
+  assert.equal(result.values.TEAMS_GROUP_ID, suite.environments.prod.teamsGroupId);
+  assert.equal(result.values.TEAMS_CHANNEL_IDS, suite.environments.prod.teamsChannelIds.join(","));
+  assert.equal(result.values.AZURE_MCP_TEAMS_GROUP_ID, suite.environments.prod.azureMcpTeamsGroupId);
+  assert.equal(result.values.AZURE_MCP_TEAMS_CHANNEL_IDS, suite.environments.prod.azureMcpTeamsChannelIds.join(","));
 });
 
 test("preserves multiline JSON and literal logging escape sequences in pipeline overrides", () => {

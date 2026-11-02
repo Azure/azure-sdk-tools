@@ -49,6 +49,10 @@ other knowledge-sync schedule writes to the same environment concurrently.
    use the `EMU-SSH-PRIVATE-KEY` secure file.
 8. Verify that the selected resource group already exists and is readable by
    the deployment identity. The pipeline will not create it.
+9. When migrating dev to the shared SDK/MCP listener, disable any
+   retired standalone MCP workflow through an approved operator action.
+   Incremental provisioning omits that workflow but does not delete or disable
+   an already deployed resource.
 
 ## 3. Preview, Approve, and Apply
 
@@ -113,9 +117,11 @@ and use the rollback runbook if verification fails.
    Application ID URI.
 4. In dev/prod, confirm the `knowledge-sync` WebJob has the expected schedule
    and its latest run completed successfully.
-5. Confirm both Logic Apps are enabled, their shared Teams connection is
-   `Connected`, and test activities from both Teams groups reach the
-   agent-server `/activity/convert` endpoint.
+5. Confirm the primary Logic App is enabled and its Teams connection is
+   `Connected`. Dev uses one listener including MCP; preview and production
+   each use a separate MCP listener. Preview observes the production channels
+   through its own bot and backend. Verify activities from every configured group
+   reach the agent-server `/activity/convert` endpoint.
 6. Send a test Teams message through each newly changed route.
 7. Confirm the hosted chat and Azure MCP Server agent versions are active. For
    production, also confirm the evolution-agent version and its
@@ -125,6 +131,10 @@ and use the rollback runbook if verification fails.
 9. In production, confirm the daily feedback pipeline runs with
    `CHATBOT_EVOLUTION_AGENT_ENABLED=true` and its latest scan completed.
 10. Record the source revision and resulting App Service or Foundry versions.
+
+For dev branch routing, confirm the deployed version has `metadata.branchname`
+matching the source branch, then send `[branch:<branch-name>] <question>`.
+Preview and production must keep `ENABLE_AI_FOUNDRY_AGENT_ROUTING=false`.
 
 For a knowledge or wiki run, also confirm the expected blobs were written and
 the corresponding Search indexer start request was accepted.

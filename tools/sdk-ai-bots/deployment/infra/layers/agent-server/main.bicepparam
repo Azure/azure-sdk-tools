@@ -10,6 +10,7 @@ param managedIdentityClientId = readEnvironmentVariable('MANAGED_IDENTITY_CLIENT
 param frontendIdentityClientId = readEnvironmentVariable('BOT_ID', '')
 param serverApplicationClientId = readEnvironmentVariable('SERVER_APPLICATION_CLIENT_ID', '')
 param allowedCallerApplicationIds = json(readEnvironmentVariable('AGENT_SERVER_ALLOWED_CLIENT_IDS', '[]'))
+param enableAgentRouting = readEnvironmentVariable('ENABLE_AI_FOUNDRY_AGENT_ROUTING', 'false') == 'true'
 param sharedIdentityName = readEnvironmentVariable('MANAGED_IDENTITY_NAME', '')
 param frontendIdentityName = readEnvironmentVariable('FRONTEND_SITE_NAME', '')
 param appConfigName = readEnvironmentVariable('APP_CONFIG_NAME', '')

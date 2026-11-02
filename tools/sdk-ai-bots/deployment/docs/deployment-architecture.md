@@ -108,7 +108,11 @@ knowledge-sync WebJob, while preview deploys only the server. Selecting
 an application deploy. Component CI remains separate from provisioning and
 deployment.
 
-Both Logic Apps call the authenticated agent-server `/config/channel` endpoint
+Dev uses one Azure SDK Logic App listener including its MCP channel. Preview
+and production each use a primary SDK listener and a separate MCP team listener,
+monitoring the same production channels with environment-owned bot/backend
+resources. Each Logic App calls
+the authenticated agent-server `/config/channel` endpoint
 to resolve each channel's tenant. The backend reads
 `bot-configs/channel.yaml` with the shared managed identity and caches the
 parsed configuration. The shared managed identity authenticates the Logic App's
@@ -124,9 +128,9 @@ lifecycle hooks:
 - postprovision uploads per-environment bot routing, reconciles Search objects,
   and seeds App Configuration;
 - agent hooks reconcile Foundry settings, hosted identity, RBAC, and Entra
-  authorization;
+  authorization, and tag dev hosted-agent versions with their source branch;
 - frontend postdeploy probes `/health` and, when interactive Teams provisioning
-  is enabled, installs or updates the approved Teams app in both configured
+  is enabled, installs or updates the approved Teams app in each configured
   groups;
 - the knowledge-sync deployment stage packages and deploys the scheduled
   WebJob after agent-server readiness.

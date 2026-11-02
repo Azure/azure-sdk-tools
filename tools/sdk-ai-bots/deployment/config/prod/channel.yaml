@@ -43,6 +43,21 @@ channels:
     endpoint: ${SERVER_BASE_URL}
     tenant: azsdk_tools_agent_qa_bot
 
+  - name: Language - Go
+    id: 19:104f00188bb64ef48d1b4d94ccb7a361@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: golang_channel_qa_bot
+
+  - name: Language - JS & TS
+    id: 19:344f6b5b36ba414daa15473942c7477b@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: javascript_channel_qa_bot
+
+  - name: Code Generation - .NET
+    id: 19:acbd512e57bd475198ea6bf4564599e3@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: general_qa_bot
+
   - name: Azure MCP Server General
     id: 19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2
     endpoint: ${SERVER_BASE_URL}

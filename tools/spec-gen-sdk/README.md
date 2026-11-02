@@ -8,7 +8,7 @@ repository's `swagger_to_sdk_config.json`.
 
 The configured `generateScript` receives paths to `generateInput.json` and
 `generateOutput.json`. The input contract is defined by
-[`GenerateInputSchema.json`](src/types/GenerateInputSchema.json).
+[`GenerateInputSchema.json`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/spec-gen-sdk/src/types/GenerateInputSchema.json).
 
 Callers can optionally pass `--typespec-emitter <package-name>` to spec-gen-sdk.
 The value is forwarded unchanged in `generateInput.json` as `typespecEmitter`:

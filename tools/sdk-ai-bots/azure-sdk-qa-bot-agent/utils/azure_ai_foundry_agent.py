@@ -167,6 +167,9 @@ class HostedAgentClient:
                 trace_id = self._extract_trace_id(stream)
                 await self.close_stream(stream)
                 return trace_id, response
+            except asyncio.CancelledError:
+                await self.close_stream(stream)
+                raise
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
                 await self.close_stream(stream)
@@ -183,7 +186,9 @@ class HostedAgentClient:
                     return None, _build_content_safety_response()
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
-                    set_stateless_session_id(agent_ref["name"], None)
+                    set_stateless_session_id(
+                        agent_ref["name"], agent_ref["version"], None
+                    )
                     agent_session_id = None
                     continue
                 logger.warning(

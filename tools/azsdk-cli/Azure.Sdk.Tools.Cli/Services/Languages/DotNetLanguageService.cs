@@ -170,6 +170,8 @@ public sealed partial class DotNetLanguageService: LanguageService
             SdkType = parsedSdkType
         };
 
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(model, logger, ct);
+
         logger.LogDebug("Resolved .NET package: {packageName} v{packageVersion} at {relativePath} (as {parsedSdkType})",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath, parsedSdkType.ToString() ?? "(unknown)");
 

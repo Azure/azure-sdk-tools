@@ -200,7 +200,7 @@
                   "type": "Query",
                   "inputs": {
                     "from": "@outputs('Resolved_message_details')?['mentions']",
-                    "where": "@not(equals(item()?['mentioned']?['application'], null))"
+                    "where": "@contains(coalesce(item()?['mentioned']?['application']?['displayName'], ''), 'Azure SDK Q&A Bot')"
                   },
                   "runAfter": {
                     "Get_and_resolve_message_details": [
@@ -236,6 +236,22 @@
                   "type": "If",
                   "expression": {
                     "and": [
+                      {
+                        "not": {
+                          "equals": [
+                            "@trim(coalesce(outputs('Resolved_message_details')?['body']?['content'], ''))",
+                            ""
+                          ]
+                        }
+                      },
+                      {
+                        "not": {
+                          "equals": [
+                            "@outputs('Resolved_message_details')?['from']?['user']?['displayName']",
+                            "@null"
+                          ]
+                        }
+                      },
                       {
                         "not": {
                           "startsWith": [

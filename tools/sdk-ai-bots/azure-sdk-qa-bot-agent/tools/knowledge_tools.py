@@ -24,7 +24,7 @@ from tools import tool
 from utils.azure_ai_search import SearchClient, get_search_client
 from utils.azure_storage import BlobContent, download_blob, upload_blob
 from utils.knowledge_config import (
-    KbTarget,
+    KbIssueTarget,
     get_kb_targets,
     select_kb_target,
 )
@@ -78,11 +78,16 @@ _SEARCH_MODE_DESC = (
 class KbSourceView(BaseModel):
     folder: str
     resolved: bool
+    source_url: str | None = None
     owner: str | None = None
     repo: str | None = None
+    organization: str | None = None
+    project: str | None = None
+    ado_repository: str | None = None
     branch: str | None = None
     path: str | None = None
     scope: str | None = None
+    issue_target: KbIssueTarget | None = None
     reason: str | None = None  # populated when resolved=False
 
 
@@ -484,28 +489,41 @@ class KnowledgeTools:
             "multiple repository paths use the same source folder.",
         ] = None,
     ) -> KbSourceView:
-        """Resolve a KB folder to its upstream ownership metadata.
+        """Resolve a KB folder to source ownership and issue routing metadata.
 
-        Returns the owner/repo/branch/path where the KB content lives, to
-        cite in a KB-gap issue. ``resolved=False`` when the folder is
-        unmapped or an ambiguous path cannot be selected.
+        Returns the configured GitHub or ADO source, document path, and
+        optional issue target. ``resolved=False`` when the folder is unmapped
+        or an ambiguous source cannot be selected.
         """
-        targets: tuple[KbTarget, ...] = ()
         try:
             targets = await get_kb_targets(folder)
         except Exception:
             logger.exception("knowledge_config lookup failed for %s", folder)
+            return KbSourceView(
+                folder=folder,
+                resolved=False,
+                reason="configuration_unavailable",
+            )
 
         target = select_kb_target(folder, blob_path, targets)
         if target is not None:
             return KbSourceView(
                 folder=folder,
                 resolved=True,
+                source_url=target.source_url,
                 owner=target.owner,
                 repo=target.repo,
+                organization=target.organization,
+                project=target.project,
+                ado_repository=target.ado_repository,
                 branch=target.branch,
-                path=target.path,
+                path=(
+                    target.path
+                    if blob_path is not None or len(targets) == 1
+                    else None
+                ),
                 scope=target.scope,
+                issue_target=target.issue_target,
             )
 
         if targets:
@@ -530,7 +548,7 @@ class KnowledgeTools:
         return KbSourceView(
             folder=folder,
             resolved=False,
-            reason="folder_unmapped_or_non_github",
+            reason="folder_unmapped",
         )
 
     @tool

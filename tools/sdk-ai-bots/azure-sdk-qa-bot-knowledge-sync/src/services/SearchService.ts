@@ -1,7 +1,7 @@
 import { InvocationContext } from '@azure/functions';
 import { SearchClient, SearchIndexerClient } from '@azure/search-documents';
 import { RestError } from '@azure/core-rest-pipeline';
-import { ChainedTokenCredential, AzureCliCredential, ManagedIdentityCredential, WorkloadIdentityCredential} from '@azure/identity';
+import { ChainedTokenCredential, AzureCliCredential, ManagedIdentityCredential } from '@azure/identity';
 import { StatusCodes } from 'http-status-codes';
 
 /**
@@ -33,9 +33,8 @@ export class SearchService {
 
         // Use managed identity authentication
         const credential = new ChainedTokenCredential(
-            new ManagedIdentityCredential(),
-            new AzureCliCredential(),
-            new WorkloadIdentityCredential()
+            new ManagedIdentityCredential({ clientId: process.env.AZURE_CLIENT_ID }),
+            new AzureCliCredential()
         );
 
         this.searchClient = new SearchClient(

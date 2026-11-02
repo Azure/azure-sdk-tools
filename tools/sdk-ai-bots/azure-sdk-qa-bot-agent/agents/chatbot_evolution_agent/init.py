@@ -37,6 +37,7 @@ import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.chatagent_tools import ChatAgentTools
 from tools.conversation_tools import ConversationTools
+from tools.ado_mcp_tools import create_ado_issue, create_evolution_ado_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
@@ -44,11 +45,9 @@ from tools.web_tools import WebTools
 from services.chat_service import ChatService
 from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
-    create_openai_client,
     create_project_client,
     get_agent_client,
     get_project_client,
-    get_openai_client,
 )
 from utils.azure_storage import create_blob_service_client
 from utils.tool_security import ToolOutputSecurityMiddleware
@@ -100,17 +99,13 @@ async def main() -> None:
     monitor_tools = MonitorTools()
     conversation_tools = ConversationTools()
     candidate_project_client = create_project_client(candidate_config.get)
-    candidate_openai_client = create_openai_client(
-        candidate_project_client, candidate_config.get
-    )
     candidate_chat_service = ChatService(
         settings=candidate_config.get,
         project_client=candidate_project_client,
-        openai_client=candidate_openai_client,
     )
+    prod_project_client = get_project_client()
     prod_chat_service = ChatService(
-        project_client=get_project_client(),
-        openai_client=get_openai_client(),
+        project_client=prod_project_client,
     )
     chatagent_tools = ChatAgentTools(
         candidate_chat_service=candidate_chat_service,
@@ -134,9 +129,10 @@ async def main() -> None:
         knowledge_tools.update_knowledge,
         chatagent_tools.chat,
         web_tools.web_fetch,
+        create_ado_issue,
     ]
 
-    # GitHub MCP tool with write access so the agent can file KB-gap issues.
+    # GitHub MCP tool with write access for remediation issues and comments.
     try:
         github_mcp_tool = await create_github_mcp_tool(
             readonly=False,
@@ -145,6 +141,15 @@ async def main() -> None:
         tools.append(github_mcp_tool)
     except Exception:
         logger.exception("create_github_mcp_tool failed to initialize, skipped")
+
+    # ADO work-item tools.
+    try:
+        ado_mcp_tool = await create_evolution_ado_mcp_tool()
+        tools.append(ado_mcp_tool)
+    except Exception:
+        logger.exception(
+            "create_evolution_ado_mcp_tool failed to initialize, skipped"
+        )
 
     # Compaction provider — compact history before and after each turn.
     compaction_provider = CompactionProvider(

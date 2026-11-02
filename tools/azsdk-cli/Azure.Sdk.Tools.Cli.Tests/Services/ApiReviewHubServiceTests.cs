@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 using System.Net;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services;
@@ -17,6 +19,7 @@ public class ApiReviewHubServiceTests
 {
     private Mock<IHttpClientFactory> httpClientFactoryMock = null!;
     private Mock<IAzureService> azureServiceMock = null!;
+    private Mock<TokenCredential> credentialMock = null!;
     private ApiReviewHubService service = null!;
 
     [SetUp]
@@ -25,7 +28,7 @@ public class ApiReviewHubServiceTests
         httpClientFactoryMock = new Mock<IHttpClientFactory>();
         azureServiceMock = new Mock<IAzureService>();
 
-        var credentialMock = new Mock<TokenCredential>();
+        credentialMock = new Mock<TokenCredential>();
         credentialMock
             .Setup(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AccessToken("mock-token", DateTimeOffset.UtcNow.AddHours(1)));
@@ -114,10 +117,12 @@ public class ApiReviewHubServiceTests
                 Content = new StringContent(
                     """
                     {
-                                            "isApproved": false,
+                      "isApproved": false,
+                      "isApiApproved": false,
+                      "isPackageNameApproved": true,
                       "reason": "rejected",
-                                            "details": ["At least one architect has requested changes for this API."],
-                      "approvals": []
+                      "details": ["At least one architect has requested changes for this API."],
+                      "apiApprovals": []
                     }
                     """,
                     Encoding.UTF8,
@@ -130,7 +135,7 @@ public class ApiReviewHubServiceTests
 
         var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", language, "pkg", packageVersion, "hash", "", CancellationToken.None);
 
-        Assert.That(result.IsApproved, Is.False);
+        Assert.That(result.IsReleaseApproved, Is.False);
         Assert.That(result.StatusCode, Is.EqualTo(200));
         Assert.That(result.Reason, Is.EqualTo("rejected"));
         Assert.That(result.Details, Is.EqualTo(new[] { "At least one architect has requested changes for this API." }));
@@ -155,12 +160,14 @@ public class ApiReviewHubServiceTests
                     """
                     {
                       "isApproved": true,
+                      "isApiApproved": true,
+                      "isPackageNameApproved": true,
                       "reason": "approved",
                       "appliedInheritanceRule": "prereleaseToStable",
                       "details": [],
-                      "approvals": [
+                      "apiApprovals": [
                         {
-                                                    "id": "approval-record-id",
+                          "id": "approval-record-id",
                           "apiHash": "hash-1",
                           "version": "4.12.0b3",
                           "status": "approved",
@@ -182,10 +189,17 @@ public class ApiReviewHubServiceTests
         var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "4.12.0b3", "hash", "", CancellationToken.None);
 
         Assert.That(result.AppliedInheritanceRule, Is.EqualTo("prereleaseToStable"));
-        Assert.That(result.Approvals, Is.Not.Null);
-        Assert.That(result.Approvals!.Count, Is.EqualTo(1));
-        Assert.That(result.Approvals[0].Id, Is.EqualTo("approval-record-id"));
-        Assert.That(result.Approvals[0].Version, Is.EqualTo("4.12.0b3"));
+        Assert.That(result.IsApiApproved, Is.True);
+        Assert.That(result.IsPackageNameApproved, Is.True);
+        Assert.That(result.ApiApprovals, Is.Not.Null);
+        Assert.That(result.ApiApprovals!.Count, Is.EqualTo(1));
+        Assert.That(result.ApiApprovals[0].Id, Is.EqualTo("approval-record-id"));
+        Assert.That(result.ApiApprovals[0].Version, Is.EqualTo("4.12.0b3"));
+        Assert.That(result.ApiApprovals[0].ApiHash, Is.EqualTo("hash-1"));
+        Assert.That(result.ApiApprovals[0].Status, Is.EqualTo("approved"));
+        Assert.That(result.ApiApprovals[0].PullRequestUrl, Is.EqualTo("https://github.com/Azure/azure-sdk-for-python/pull/1"));
+        Assert.That(result.ApiApprovals[0].LastUpdatedBy, Is.EqualTo("octocat"));
+        Assert.That(result.ApiApprovals[0].LastUpdatedOn, Is.EqualTo("2026-07-27T00:00:00Z"));
     }
 
     [Test]
@@ -204,9 +218,11 @@ public class ApiReviewHubServiceTests
                     """
                     {
                       "isApproved": false,
+                      "isApiApproved": false,
+                      "isPackageNameApproved": true,
                       "reason": "pending",
                       "details": ["Approval is still pending."],
-                      "approvals": []
+                      "apiApprovals": []
                     }
                     """,
                     Encoding.UTF8,
@@ -240,9 +256,11 @@ public class ApiReviewHubServiceTests
                     """
                     {
                       "isApproved": true,
+                      "isApiApproved": true,
+                      "isPackageNameApproved": true,
                       "reason": "approved",
                       "details": [],
-                      "approvals": []
+                      "apiApprovals": []
                     }
                     """,
                     Encoding.UTF8,
@@ -263,7 +281,7 @@ public class ApiReviewHubServiceTests
     }
 
     [Test]
-    public async Task GetReleaseGateStatusAsync_HandlesMissingApprovalsProperty()
+    public async Task GetReleaseGateStatusAsync_HandlesMissingApiApprovalsProperty()
     {
         var mockHandler = new Mock<HttpMessageHandler>();
         mockHandler
@@ -278,6 +296,8 @@ public class ApiReviewHubServiceTests
                     """
                     {
                       "isApproved": false,
+                      "isApiApproved": false,
+                      "isPackageNameApproved": false,
                       "reason": "repositoryNotSupported",
                       "details": ["Repository is not onboarded in API Review Hub."]
                     }
@@ -294,8 +314,76 @@ public class ApiReviewHubServiceTests
 
         Assert.That(result.StatusCode, Is.EqualTo(200));
         Assert.That(result.Reason, Is.EqualTo("repositoryNotSupported"));
-        Assert.That(result.Approvals, Is.Not.Null);
-        Assert.That(result.Approvals, Is.Empty);
+        Assert.That(result.ApiApprovals, Is.Not.Null);
+        Assert.That(result.ApiApprovals, Is.Empty);
+    }
+
+    [TestCase(true, true, true, "approved")]
+    [TestCase(true, true, true, "reviewNotRequired")]
+    [TestCase(false, true, false, "packageNameNotApproved")]
+    [TestCase(false, false, true, "missingApproval")]
+    [TestCase(false, false, true, "rejected")]
+    [TestCase(false, false, false, "packageNameNotApproved")]
+    [TestCase(false, false, false, "repositoryNotSupported")]
+    [TestCase(false, false, false, "unknownPackage")]
+    public async Task GetReleaseGateStatusAsync_DeserializesReleaseDecision(
+        bool isApproved, bool isApiApproved, bool isPackageNameApproved, string reason)
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(new
+                {
+                    isApproved,
+                    isApiApproved,
+                    isPackageNameApproved,
+                    reason,
+                    details = new[] { "Additional API failure context" },
+                    apiApprovals = Array.Empty<object>()
+                }), Encoding.UTF8, "application/json")
+            });
+        httpClientFactoryMock.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(new HttpClient(mockHandler.Object));
+
+        var result = await service.GetReleaseGateStatusAsync(
+            "https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsReleaseApproved, Is.EqualTo(isApproved));
+            Assert.That(result.IsApiApproved, Is.EqualTo(isApiApproved));
+            Assert.That(result.IsPackageNameApproved, Is.EqualTo(isPackageNameApproved));
+            Assert.That(result.Reason, Is.EqualTo(reason));
+            Assert.That(result.Details, Is.EqualTo(new[] { "Additional API failure context" }));
+        });
+    }
+
+    [TestCase("isApiApproved")]
+    [TestCase("isPackageNameApproved")]
+    public void GetReleaseGateStatusAsync_RejectsMissingApprovalFields(string missingField)
+    {
+        var payload = new JsonObject
+        {
+            ["isApproved"] = true,
+            ["isApiApproved"] = true,
+            ["isPackageNameApproved"] = true,
+            ["reason"] = "reviewNotRequired"
+        };
+        payload.Remove(missingField);
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json")
+            });
+        httpClientFactoryMock.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(new HttpClient(mockHandler.Object));
+
+        var exception = Assert.ThrowsAsync<JsonException>(() => service.GetReleaseGateStatusAsync(
+            "https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None));
+
+        Assert.That(exception!.Message, Does.Contain(missingField));
     }
 
     [Test]
@@ -381,6 +469,75 @@ public class ApiReviewHubServiceTests
 
         Assert.That(exception!.Message, Does.Contain("op-timeout"));
         Assert.That(exception.Message, Does.Contain("timed out"));
+    }
+
+    [Test]
+    public async Task RequestReviewPullRequestAsync_RefreshesAuthorizationNearExpiry()
+    {
+        credentialMock
+            .SetupSequence(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccessToken("request-token", DateTimeOffset.UtcNow.AddMinutes(1)))
+            .ReturnsAsync(new AccessToken("poll-token-1", DateTimeOffset.UtcNow.AddHours(1)))
+            .ReturnsAsync(new AccessToken("poll-token-2", DateTimeOffset.UtcNow.AddHours(1)));
+
+        var authorizationParameters = new List<string?>();
+        var pollCount = 0;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+                authorizationParameters.Add(request.Headers.Authorization?.Parameter))
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                if (request.Method == HttpMethod.Post)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.Accepted)
+                    {
+                        Content = new StringContent("""{"operationId":"op-refresh","status":"accepted"}""", Encoding.UTF8, "application/json")
+                    };
+                }
+
+                pollCount++;
+                var status = pollCount == 1 ? "running" : "succeeded";
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent($$"""{"operationId":"op-refresh","status":"{{status}}"}""", Encoding.UTF8, "application/json")
+                };
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            PackageType = "client",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        var result = await service.RequestReviewPullRequestAsync(
+            request,
+            "https://api-review-hub-test.azurewebsites.net",
+            waitForCompletion: true,
+            pollInterval: TimeSpan.Zero,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo("succeeded"));
+        Assert.That(authorizationParameters, Is.EqualTo(new[] { "request-token", "poll-token-1", "poll-token-1" }));
+        credentialMock.Verify(
+            x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
     }
 
     [Test]
@@ -578,9 +735,11 @@ public class ApiReviewHubServiceTests
                     """
                     {
                       "isApproved": true,
+                      "isApiApproved": true,
+                      "isPackageNameApproved": true,
                       "reason": "approved",
                       "details": [],
-                      "approvals": []
+                      "apiApprovals": []
                     }
                     """,
                     Encoding.UTF8,

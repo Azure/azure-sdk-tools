@@ -36,10 +36,10 @@ tags:
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 1
   timeout: 10m
-  model: gpt-5.4
+  model: gpt-6.1-sol
   executor: copilot-sdk
 
 stimuli:

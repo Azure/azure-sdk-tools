@@ -6,7 +6,8 @@ A ``QARecord`` is the durable status row for **one conversation thread**
 
 * **Layer 1 — QA lifecycle** (:class:`QAStatus`): ``ongoing`` while the
   thread is still open, ``finished`` once it concluded with a correct bot
-  answer, or ``failed`` once it concluded with an incorrect/unknown bot
+  answer or was marked correct by the inactivity policy, or ``failed``
+  once it concluded with an incorrect/unknown bot
   answer (i.e. a case worth a feedback analysis).
 * **Layer 2 — Evolution lifecycle** (:class:`FeedbackStatus`, embedded in
   :class:`FeedbackState`): tracks analysis, issue remediation, and validation.
@@ -38,7 +39,7 @@ class QAStatus(str, Enum):
     #: The thread is still open — either unanswered follow-ups remain or no
     #: human has confirmed/corrected the bot yet.
     ongoing = "ongoing"
-    #: The thread concluded and the bot answered correctly (archived).
+    #: The answer was judged correct or auto-marked correct after inactivity.
     finished = "finished"
     #: The thread concluded but the bot answer was wrong or unconfirmed;
     #: a feedback analysis is warranted.
@@ -125,6 +126,8 @@ class QARecord(BaseModel):
     first_seen_at: datetime
     #: When the thread was last evaluated by the LLM judge.
     evaluated_at: datetime | None = None
+    #: Inactivity-policy closure time; None for Agent-assessed conclusions.
+    auto_closed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

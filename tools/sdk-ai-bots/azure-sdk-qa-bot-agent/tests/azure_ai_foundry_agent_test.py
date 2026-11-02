@@ -107,6 +107,30 @@ async def test_invoke_returns_trace_id_and_closes_stream_on_success() -> None:
 
 
 @pytest.mark.asyncio
+async def test_invoke_closes_stream_on_cancellation_without_retry() -> None:
+    started = asyncio.Event()
+
+    async def _stalled_stream():
+        started.set()
+        await asyncio.Event().wait()
+        yield _FakeEvent("response.completed")
+
+    stream = _StreamWithHeaders(_FakeResponse(output_text="answer"))
+    client = _mock_client([stream])
+    with patch.object(stream, "_iter", _stalled_stream):
+        task = asyncio.create_task(
+            HostedAgentClient(client).invoke(conversation_items=[], agent_ref={})
+        )
+        await started.wait()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    assert stream.closed is True
+    assert client.responses.create.await_count == 1
+
+
+@pytest.mark.asyncio
 async def test_invoke_retries_on_empty_response_then_succeeds() -> None:
     """An empty ``output_text`` is retried and a later non-empty response wins."""
     empty = _FakeResponse(output_text="", status="completed", id="r1")
@@ -286,14 +310,14 @@ async def test_invoke_drops_rejected_session_and_retries_without_it(
     ) as mock_set:
         _, out = await HostedAgentClient(client, retry_delay=0).invoke(
             conversation_items=[],
-            agent_ref={"name": "azure-mcp-agent"},
+            agent_ref={"name": "azure-mcp-agent", "version": "42"},
             agent_session_id="stale-session",
         )
 
     assert out is good
     assert client.responses.create.await_count == 2
     # The rejected session is cleared so a fresh one is created next time.
-    mock_set.assert_called_once_with("azure-mcp-agent", None)
+    mock_set.assert_called_once_with("azure-mcp-agent", "42", None)
     # First attempt carried the stale session; the retry dropped it.
     assert captured_extra_bodies[0].get("agent_session_id") == "stale-session"
     assert "agent_session_id" not in captured_extra_bodies[1]

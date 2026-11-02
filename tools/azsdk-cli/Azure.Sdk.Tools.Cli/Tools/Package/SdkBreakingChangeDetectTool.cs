@@ -216,9 +216,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             await using var stream = File.OpenRead(sdkChangeFilePath);
             var change = await JsonSerializer.DeserializeAsync<SdkChange>(stream, cancellationToken: ct);
-            if (change == null || string.IsNullOrWhiteSpace(change.SdkChangeMD))
+            if (change == null || (change.HasBreakingChange && string.IsNullOrWhiteSpace(change.SdkChangeMD)))
             {
-                throw new JsonException($"SDK change file '{sdkChangeFilePath}' must contain nonempty changes (Markdown) and a Boolean hasBreakingChange.");
+                throw new JsonException($"SDK change file '{sdkChangeFilePath}' must contain changes (Markdown) and a Boolean hasBreakingChange. Changes must not be empty if hasBreakingChange is true.");
             }
             return change;
         }

@@ -84,7 +84,7 @@ The system consists of two deployable services and a set of offline pipelines:
 | --- | --- |
 | **Backend Server** (`azure-sdk-qa-bot-agent/server.py`) | A FastAPI service that the Teams App communicates with. Handles chat requests by calling the hosted Chat Agent via the Azure AI Foundry SDK, manages conversations, feedback, and memory episode extraction. |
 | **Chat Agent** (`azure-sdk-qa-bot-agent/agents/chat_agent/`) | A hosted container agent deployed to Microsoft Foundry. Binds a model, instructions, tools, skills, and memory context providers into a single `Agent` instance, exposed via the Responses protocol. |
-| **Knowledge Sync** (`azure-sdk-qa-bot-knowledge-sync/`) | An Azure Function that syncs documents from sources daily, detects changes, updates Azure Storage, and triggers Azure AI Search reindexing. |
+| **Knowledge Sync** (`azure-sdk-qa-bot-knowledge-sync/`) | A scheduled App Service WebJob that syncs documents from sources daily, detects changes, updates Azure Storage, and triggers Azure AI Search reindexing. |
 
 ### 2.2 Agent Design
 
@@ -137,7 +137,7 @@ Imported knowledge sources include:
 - RPC guidelines
 - ......
 
-An Azure Function syncs all documents from sources daily. The function detects changed and deleted files and updates them in Azure Storage. It then automatically triggers Azure AI Search to reindex the index for adopting the changed documents.
+The Knowledge Sync Service runs as a scheduled WebJob to sync documents from sources daily. It detects changed and deleted files and updates them in Azure Storage, then triggers Azure AI Search to reindex the changed documents.
 
 #### 2.3.2 Data Preprocessing & Indexing
 

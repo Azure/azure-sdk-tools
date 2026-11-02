@@ -4,7 +4,12 @@ from datetime import datetime, timedelta, timezone
 import re
 from typing import Any
 
-from models.feedback import RootCauseClassification
+from models.feedback import (
+    AzureDevOpsIssueReference,
+    GitHubIssueReference,
+    RootCauseClassification,
+    parse_issue_reference,
+)
 from models.qa_dashboard import OverviewCounts, OverviewRow, QAOverview
 from utils.channel_policy import is_testing_channel
 
@@ -21,23 +26,24 @@ _BOT_MENTION = re.compile(
     r"<at\b[^>]*>Azure SDK Q(?:&amp;|&)A Bot</at>", re.IGNORECASE
 )
 
-_ISSUE_URL = re.compile(
-    r"https://github\.com/([\w.-]+)/([\w.-]+)/issues/([0-9]+)/?(?:[?#].*)?",
-    re.IGNORECASE,
-)
-
-
 def _issue_key(value: Any) -> str | None:
-    """Canonical identity for deduplication, without contacting GitHub."""
+    """Canonical provider identity for issue deduplication."""
     if not isinstance(value, str):
         return None
-    match = _ISSUE_URL.fullmatch(value.strip())
-    if not match:
+    try:
+        reference = parse_issue_reference(value.strip(), canonical=False)
+    except ValueError:
         return None
-    owner, repo, number = match.groups()
-    if int(number) <= 0:
-        return None
-    return f"{owner.casefold()}/{repo.casefold()}/{int(number)}"
+    if isinstance(reference, GitHubIssueReference):
+        return (
+            f"github:{reference.owner.casefold()}/"
+            f"{reference.repository.casefold()}#{reference.number}"
+        )
+    assert isinstance(reference, AzureDevOpsIssueReference)
+    return (
+        f"azure-devops:{reference.organization.casefold()}/"
+        f"{reference.project.casefold()}#{reference.work_item_id}"
+    )
 
 
 def _is_question(document: dict[str, Any]) -> bool:
@@ -72,6 +78,7 @@ def _channel(document: dict[str, Any], *, message: bool = False) -> str | None:
 
 async def aggregate_overview(
     *, qa_container: Any, message_container: Any, channel_names: dict[str, str],
+    enabled_channel_ids: list[str],
     start: datetime, end: datetime, channel_id: str | None,
 ) -> QAOverview:
     """Stream all pages, retaining counts and distinct issue identities, not transcripts."""
@@ -88,6 +95,8 @@ async def aggregate_overview(
     def row_for(document: dict[str, Any], *, message: bool = False) -> OverviewRow | None:
         channel = _channel(document, message=message)
         if channel in excluded or (channel_id and channel != channel_id):
+            return None
+        if channel not in enabled_channel_ids:
             return None
         if channel not in groups:
             groups[channel] = OverviewRow(

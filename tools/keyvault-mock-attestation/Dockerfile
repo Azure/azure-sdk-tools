@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azurelinux/base/nodejs:20
+FROM mcr.microsoft.com/azurelinux/base/nodejs:24
 
 WORKDIR /usr/src/app
 
@@ -10,7 +10,7 @@ ENV HOST=0.0.0.0
 COPY package.json ./
 COPY package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 

@@ -1,21 +1,72 @@
 # Release History
 
-## 0.6.53 (Unreleased)
+## 0.6.56 (2026-10-28)
+
+### Features Added
+
+- `eng package-info` supports `--package-path` to inspect one local SDK package and return its information directly, or export it with `--out-dir`. Existing bulk export remains supported.
+- Package discovery now populates `PackageInfo.ApiVersions` from generated metadata for Java, JavaScript, Python, Go, and .NET. Output entries preserve `Namespace` and `Version` from the `apiVersions` map, falling back to an unnamed `apiVersion` when the map is absent or empty. Namespace/version pairs are deduplicated and sorted, with version strings trimmed. Missing metadata leaves the array empty; malformed or unreadable metadata logs a warning without failing package discovery.
+- After manual abandonment is saved, linked open unmerged SDK PRs are closed regardless of author, then receive a plan-specific notice. Already abandoned plans can finish cleanup of open PRs without rewriting ADO state. Cleanup failures return success with warnings and manual follow-up guidance. A failed notice may leave the PR closed; rerunning does not repair missing notices on closed PRs. Closed and merged PRs are never changed.
+
+### Breaking Changes
+
+- `release-plan abandon` now accepts only `--release-plan-id`; `azsdk_abandon_release_plan` accepts only `releasePlanId`. The work item ID input is no longer supported for manual abandonment.
+
+### Bugs Fixed
+
+- Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release.
+- Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.
+- Corrected development-guide links and Coding Agent settings instructions to use valid absolute, locale-neutral URLs instead of relative or placeholder links.
+
+## 0.6.55 (2026-10-22)
+
+### Features Added
+
+- Added optional `--release-plan-id` / `releasePlanId` to SDK package release. A supplied positive ID is forwarded as the `ReleasePlanId` release-pipeline parameter; omitted/zero IDs preserve the existing queue payload.
+- `package get-approval-status` and `azsdk_package_get_approval_status` now report API approval and package name approval separately alongside the overall release decision and diagnostics.
+
+### Breaking Changes
+
+- Approval status JSON/MCP responses now expose `result.reviewHub.isApiApproved`, `isPackageNameApproved`, and `apiApprovals` (renamed from `approvals`).
+
+### Bugs Fixed
+
+- Package-only release status updates reject multiple active release plans without changing any plan. Supply a release-plan ID or triggering SDK PR to select the intended plan; SDK release type and merged PR status no longer choose an arbitrary match.
+- Private Preview release plans now complete when an already-merged specification PR is linked after creation, using the existing merged-spec completion check. Private Preview linking guidance no longer requests SDK generation.
+- Release approval checks now include API Review Hub package name approval; optional API review or inherited API approval does not waive it. An approved API Review Hub result skips APIView; otherwise, complete APIView approval is also sufficient, including after an invalid API Review Hub response. Individual approvals are never combined across providers.
+
+### Other Changes
+
+- Renamed the API Review Hub release gate model's C# property to `IsReleaseApproved`; JSON/MCP responses retain `isApproved`.
+
+## 0.6.54 (2026-10-15)
+
+### Features Added
+
+- `api-review create` supports API Review Hub pipeline ref overrides through `AZSDK_API_REVIEW_PIPELINE_REF`, `AZSDK_API_REVIEW_TOOLS_REF`, and `AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF`. These overrides are intentionally unavailable to the MCP tool.
+
+### Breaking Changes
+
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` no longer support Swift.
+- `--package-type` and the corresponding MCP parameter now normalize `client`, `spring`, and `functions` to API Review Hub's `data` package type.
+
+### Other Changes
+
+- Refactored the API Review Hub pipeline to build shared tooling once and dispatch isolated base and target artifact-generation jobs.
+
+## 0.6.53 (2026-10-12)
 
 ### Features Added
 
 - `release-plan update-release-status` resolves the release plan from a supplied `--release-plan-id` first, then from a supplied `--sdk-pull-request` linked to exactly one in-progress plan, and validates the language/package entry inside that plan. Only when neither input is supplied does the original package-name lookup run as a transitional fallback and log `LEGACY_RELEASE_PLAN_LOOKUP`, so existing release pipelines keep working. No API version is required.
 - Added support for Attestation Status field updates in Product Onboarding.
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - Release status updates by plan ID or SDK PR reject duplicate IDs, ambiguous SDK PR links, and conflicting recorded releases, and guard writes against concurrent parent work-item changes. A supplied plan ID or SDK PR never falls back to the package lookup, including invalid or unlinked SDK PRs.
 - Matching release retries recheck completion for in-progress plans after a partial failure without rewriting recorded SDK release fields; finished plans remain no-ops.
 - Fixed serialization for ADO `Sku` product type in Product Onboarding.
-
-### Other Changes
+- Fixed `azsdk_package_detect_breaking_change` to avoid an unexpected exception when `hasBreakingChange` is false and `changes` is null or empty.
 
 ## 0.6.52 (2026-10-05)
 

@@ -19,6 +19,11 @@ parameters:
 - name: GenerateBaselines
   type: boolean
   default: false
+- name: AllowAzureStorage
+  # Explicit service-level egress opt-in. Applies to all processes in this pipeline,
+  # not just one storage account. Other consumers retain their existing policies.
+  type: boolean
+  default: false
 
 extends:
   ${{ if and(parameters.Use1ESOfficial, eq(variables['System.TeamProject'], 'internal')) }}:
@@ -28,7 +33,10 @@ extends:
   parameters:
     settings:
       skipBuildTagsForGitHubPullRequests: true
-      ${{ if eq(variables['Build.DefinitionName'], 'net - partner-release') }}:
+      ${{ if and(parameters.AllowAzureStorage, parameters.Use1ESOfficial, eq(variables['System.TeamProject'], 'internal'), ne(variables['Build.Reason'], 'PullRequest'), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/'))) }}:
+        # Documented shared allow policy; do not disable Default Deny or CFS.
+        networkIsolationPolicy: DefaultDeny, CFSClean, CFSClean2, CFSClean3, AzureStorage
+      ${{ elseif eq(variables['Build.DefinitionName'], 'net - partner-release') }}:
         networkIsolationPolicy: Permissive
       ${{ else }}:
         networkIsolationPolicy: Permissive, CFSClean

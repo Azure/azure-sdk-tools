@@ -16,6 +16,6 @@ export default defineConfig(
     },
   },
   {
-    ignores: ["node_modules/**"],
+    ignores: ["coverage/**", "node_modules/**"],
   },
 );

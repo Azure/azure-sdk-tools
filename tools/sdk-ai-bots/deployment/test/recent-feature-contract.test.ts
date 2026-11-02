@@ -193,7 +193,7 @@ test("targets the existing shared dev environment", () => {
   assert.equal(dev.bicepOverrides.AI_PROJECT_NAME, "azuresdkqabot-ai");
   assert.match(
     serviceConnections,
-    /eq\(parameters\.environment, 'dev'\)\s*\}\}:\s*\n\s*value: qa-bot-dev/,
+    /eq\(parameters\.environment, 'dev'\)\s*\}\}:\s*\n\s*value: azuresdkqabot-dev/,
   );
 });
 
@@ -204,7 +204,7 @@ test("selects environment service connections at template expansion time", () =>
   assert.deepEqual(template.variables, [
     {
       name: "AZURE_SERVICE_CONNECTION",
-      "${{ if eq(parameters.environment, 'dev') }}": { value: "qa-bot-dev" },
+      "${{ if eq(parameters.environment, 'dev') }}": { value: "azuresdkqabot-dev" },
       "${{ elseif eq(parameters.environment, 'prod') }}": { value: "azuresdkqabot" },
       "${{ else }}": { value: "azuresdkqabot-preview" },
     },
@@ -367,6 +367,7 @@ test("keeps rollout configuration limited to active behavior", () => {
   const loader = read("pipelines/templates/load-environment-suite.yml");
   const smokeTest = read("scripts/smoke-test.ts");
 
+  assert.equal(existsSync(resolve(deploymentRoot, "pipelines/templates/swap-slot.yml")), false);
   assert.doesNotMatch(suite, /rolloutStrategy|slot-swap|slot: 'staging'/);
   assert.doesNotMatch(suite, /minSuccessRate|latencyP95Ms|stabilizationWindowMinutes/);
   assert.doesNotMatch(loader, /ROLLOUT_STRATEGY/);

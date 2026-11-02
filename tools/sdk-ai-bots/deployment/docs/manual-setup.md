@@ -127,9 +127,11 @@ also include their own preview-to-apply manual gate.
 The production evolution and feedback workflows also need the configured
 candidate service connection.
 
-### Bootstrap the dev deployment identity
+### Optional bootstrap for the qa-bot-dev connection
 
-For the existing `qa-bot-dev` connection, review
+The dev pipeline uses `azuresdkqabot-dev`. The following script targets only the
+alternate `qa-bot-dev` identity, not the selected dev connection. If using
+`qa-bot-dev`, review
 [`qa-bot-dev-bootstrap.sh`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/scripts/qa-bot-dev-bootstrap.sh)
 and run it from an authorized administrator's Azure CLI session:
 

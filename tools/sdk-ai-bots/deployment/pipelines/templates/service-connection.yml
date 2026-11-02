@@ -9,7 +9,7 @@ parameters:
 variables:
     - name: AZURE_SERVICE_CONNECTION
       ${{ if eq(parameters.environment, 'dev') }}:
-          value: qa-bot-dev
+          value: azuresdkqabot-dev
       ${{ elseif eq(parameters.environment, 'prod') }}:
           value: azuresdkqabot
       ${{ else }}:

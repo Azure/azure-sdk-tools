@@ -51,7 +51,7 @@ environment through `pipelines/templates/service-connection.yml`.
 
 | Environment | Deployment connection | Candidate-dev connection |
 | --- | --- | --- |
-| Dev | `qa-bot-dev` | Not used |
+| Dev | `azuresdkqabot-dev` | Not used |
 | Preview | `azuresdkqabot-preview` | Not used |
 | Prod | `azuresdkqabot` | `azuresdkqabot-dev` |
 
@@ -59,10 +59,10 @@ Connection selection occurs at template expansion time. Authorize each pipeline
 to use the selected connections in Azure DevOps, and verify their backing Azure
 identities have the provisioning and runtime-role assignment permissions below.
 
-Dev also declares the `qa-bot-dev` client application ID in
-`AGENT_SERVER_ALLOWED_CLIENT_IDS` so backend readiness requests are accepted by
-Easy Auth. The `agent-server` Bicep layer applies this configuration during
-pipeline provisioning, before backend readiness checks, while retaining the
+Dev retains the `qa-bot-dev` client application ID in
+`AGENT_SERVER_ALLOWED_CLIENT_IDS` as an additional Easy Auth caller; it is not
+the selected dev pipeline connection. The `agent-server` Bicep layer applies
+this configuration during pipeline provisioning, before backend readiness checks, while retaining the
 runtime, frontend, and Azure CLI callers. The administrator bootstrap does not
 read or update backend authentication. Preview and production do not add this
 dev caller.

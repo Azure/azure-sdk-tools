@@ -132,6 +132,7 @@ _DIAGNOSTIC_NESTED_LOCATOR_FIELDS = (
 )
 _DIAGNOSTIC_NESTED_POSITION_FIELDS = ("line", "column")
 _MAX_DIAGNOSTIC_CLASSIFIERS = 20
+_LOG_EXCERPT_RESERVE_CHARS = 1000
 
 
 def _build_mcp_headers(readonly: bool) -> dict[str, str]:
@@ -711,11 +712,18 @@ def _add_structured_diagnostics(
             len(ranked_counts) - len(kept_counts)
         )
     overflow["structured_diagnostics"] = []
+    diagnostic_budget = _MCP_MAX_OUTPUT_CHARS - _LOG_EXCERPT_RESERVE_CHARS
     for diagnostic in _round_robin_diagnostics(diagnostics):
         overflow["structured_diagnostics"].append(diagnostic)
-        if len(json.dumps(overflow)) > _MCP_MAX_OUTPUT_CHARS:
+        returned = len(overflow["structured_diagnostics"])
+        overflow["diagnostic_selection"]["returned"] = returned
+        overflow["diagnostic_selection"]["truncated"] = returned < len(diagnostics)
+        if len(json.dumps(overflow)) > diagnostic_budget:
             overflow["structured_diagnostics"].pop()
-            break
+            returned = len(overflow["structured_diagnostics"])
+            overflow["diagnostic_selection"]["returned"] = returned
+            overflow["diagnostic_selection"]["truncated"] = True
+            continue
     returned = len(overflow["structured_diagnostics"])
     overflow["diagnostic_selection"]["returned"] = returned
     overflow["diagnostic_selection"]["truncated"] = returned < len(diagnostics)
@@ -746,9 +754,9 @@ def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
         "Job logs exceed the output budget; log_excerpts are partial, "
         "with line numbers relative to the returned log."
     )
-    _add_structured_diagnostics(overflow, jobs)
     excerpts: list[dict[str, Any]] = []
     overflow["log_excerpts"] = excerpts
+    _add_structured_diagnostics(overflow, jobs)
     for job in jobs:
         lines = job["logs_content"].splitlines()
         error_indices = [
@@ -805,6 +813,47 @@ def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
                     end -= 1
 
 
+def _serialize_job_log_overflow(overflow: dict[str, Any]) -> str:
+    """Serialize overflow metadata within the MCP response budget."""
+    output = json.dumps(overflow)
+    diagnostics = overflow.get("structured_diagnostics")
+    selection = overflow.get("diagnostic_selection")
+    while (
+        len(output) > _MCP_MAX_OUTPUT_CHARS
+        and isinstance(diagnostics, list)
+        and diagnostics
+    ):
+        diagnostics.pop()
+        if isinstance(selection, dict):
+            selection["returned"] = len(diagnostics)
+            selection["truncated"] = True
+        output = json.dumps(overflow)
+
+    excerpts = overflow.get("log_excerpts")
+    while (
+        len(output) > _MCP_MAX_OUTPUT_CHARS
+        and isinstance(excerpts, list)
+        and excerpts
+    ):
+        excerpts.pop()
+        output = json.dumps(overflow)
+
+    if len(output) <= _MCP_MAX_OUTPUT_CHARS:
+        return output
+
+    logger.warning("Job-log overflow metadata exceeded the output budget")
+    return json.dumps({
+        "status": "overflow",
+        "complete": False,
+        "current_page_complete": False,
+        "output_characters": overflow["output_characters"],
+        "budget_characters": _MCP_MAX_OUTPUT_CHARS,
+        "source_text_items": overflow["source_text_items"],
+        "returned_objects": 0,
+        "error": "Job logs exceed the output budget; retry with a smaller log window.",
+    })
+
+
 def _process_github_result(result: mcp_types.CallToolResult) -> str | None:
     """Return complete redacted JSON or explicit overflow/retry metadata."""
     if result.isError or not result.content:
@@ -836,7 +885,7 @@ def _process_github_result(result: mcp_types.CallToolResult) -> str | None:
         ),
     }
     _add_job_log_excerpts(overflow, values)
-    return json.dumps(overflow)
+    return _serialize_job_log_overflow(overflow)
 
 
 def _process_github_resources(result: mcp_types.CallToolResult) -> str:

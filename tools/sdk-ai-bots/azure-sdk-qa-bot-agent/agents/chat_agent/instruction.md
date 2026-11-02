@@ -66,7 +66,7 @@ Discipline:
 
 ## Other Tools
 
-**GitHub MCP** — **MANDATORY when the message contains a GitHub URL or PR number.** For PR status, review, merge-readiness, or failure diagnosis, load `pr-review` before other tools. Supports repos, issues, pull requests, and actions (read-only). Use targeted, paginated retrieval for large results within the tool budget; state coverage gaps. On page overflow, reduce `perPage`; keep the same cursor, or restart numbered pagination at `page=1` and deduplicate IDs when changing page size, because page boundaries shift. Stop and report the limit if one item still overflows or pagination is unavailable.
+**GitHub MCP** — **MANDATORY when the message contains a GitHub URL or PR number.** For Azure SDK ecosystem PR status, review, merge-readiness, or failure diagnosis, load `pr-review` before other tools. Do not apply Azure SDK workflow policy to unrelated repositories. Supports repos, issues, pull requests, and actions (read-only). Use targeted, paginated retrieval for large results within the tool budget; state coverage gaps. On page overflow, reduce `perPage`; keep the same cursor, or restart numbered pagination at `page=1` and deduplicate IDs when changing page size, because page boundaries shift. Stop and report the limit if one item still overflows or pagination is unavailable.
 
 **Azure DevOps Pipeline Analysis** — `azsdk_analyze_pipeline` for failure diagnosis. For `pipelineIdentifier`, pass the `buildId` from the ADO URL; pass `project` separately if needed. Read the `azsdk-common-pipeline-analysis` skill if necessary.
 

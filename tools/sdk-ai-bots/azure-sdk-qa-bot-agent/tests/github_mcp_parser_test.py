@@ -302,6 +302,56 @@ def test_structured_diagnostics_are_selected_across_classifiers() -> None:
     )
 
 
+def test_oversized_structured_diagnostic_does_not_hide_later_records() -> None:
+    diagnostics = [
+        {
+            "code": "OVERSIZED",
+            "message": "x" * _MCP_MAX_OUTPUT_CHARS,
+        },
+        {
+            "code": "ACTIONABLE",
+            "message": "Use the supported API version.",
+        },
+    ]
+    logs = "\n".join([
+        "validator output: " + json.dumps(diagnostics),
+        "##[error]Process completed with exit code 1.",
+    ])
+
+    _, parsed = _parse({"job_id": 42, "logs_content": logs})
+
+    assert parsed["diagnostic_selection"]["total"] == 2
+    assert parsed["diagnostic_selection"]["returned"] == 1
+    assert parsed["diagnostic_selection"]["truncated"] is True
+    assert [item["code"] for item in parsed["structured_diagnostics"]] == [
+        "ACTIONABLE"
+    ]
+
+
+def test_structured_diagnostics_reserve_room_for_failure_excerpt() -> None:
+    diagnostics = [
+        {
+            "code": f"RULE{index:03}",
+            "message": "diagnostic " + "x" * 300,
+        }
+        for index in range(40)
+    ]
+    logs = "\n".join([
+        "validator output: " + json.dumps(diagnostics),
+        "##[error]Process completed with exit code 1.",
+    ])
+
+    output, parsed = _parse({"job_id": 42, "logs_content": logs})
+
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
+    assert parsed["diagnostic_selection"]["truncated"] is True
+    assert parsed["structured_diagnostics"]
+    assert any(
+        "Process completed with exit code 1" in excerpt["content"]
+        for excerpt in parsed["log_excerpts"]
+    )
+
+
 def test_arbitrary_embedded_json_is_not_treated_as_a_diagnostic() -> None:
     logs = "\n".join([
         "metadata: " + json.dumps({"name": "build", "duration": 42}),

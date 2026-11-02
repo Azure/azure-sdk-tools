@@ -702,6 +702,8 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
     assert "when needed for the user's request and preflight findings" in pr_review
     assert "Read relevant `get_reviews` and `get_comments`" in pr_review
     assert "load `pr-review` before other tools" in instruction
+    assert "Azure SDK ecosystem GitHub PR" in pr_review
+    assert "Do not apply Azure SDK workflow policy to unrelated repositories" in instruction
     assert "read the PR, its failing check runs, and their logs before answering" not in instruction
 
 

@@ -75,8 +75,8 @@ steps:
   - script: |
       set -e
       export NPM_CONFIG_USERCONFIG="$(Build.SourcesDirectory)/.npmrc"
-      node .github/skills/azure-typespec-author/evaluate/scripts/setup-fixture-files.js
-      node .github/skills/azure-typespec-author/evaluate/scripts/install-pnpm.js
+      node .github/skills/azure-typespec-author/evaluate/scripts/setup-fixture-files.ts
+      node .github/skills/azure-typespec-author/evaluate/scripts/install-pnpm.ts
       FIXTURE_DIR="$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
       pnpm install --dir "$FIXTURE_DIR"
       echo "##vso[task.setvariable variable=FIXTURE_NODE_MODULES]$FIXTURE_DIR/node_modules"

@@ -6,7 +6,7 @@ import pytest
 from mcp import types as mcp_types
 
 from tools import _MCP_MAX_OUTPUT_CHARS
-from tools.github_mcp_tools import _github_mcp_parser
+from tools.github_mcp_tools import _BODY_REDACTION_NOTICE, _github_mcp_parser
 
 
 def _parse(*values: dict | list) -> tuple[str, dict | list]:
@@ -33,6 +33,7 @@ def test_embedded_file_text_is_preserved_with_identity(text: str) -> None:
     result = mcp_types.CallToolResult(content=[
         mcp_types.TextContent(type="text", text="successfully downloaded text file"),
         _text_resource(text),
+        mcp_types.TextContent(type="text", text="Trailing text"),
     ])
 
     output = _github_mcp_parser(result)
@@ -49,6 +50,123 @@ def test_embedded_file_text_is_preserved_with_identity(text: str) -> None:
     assert resource["complete"] is True
     assert resource["truncated"] is False
     assert resource["original_characters"] == resource["returned_characters"] == len(text)
+    assert parsed["content"][2]["text"] == "Trailing text"
+
+
+def test_resource_only_result_is_preserved() -> None:
+    text = "# Guide\n\nThe full document body."
+
+    output = _github_mcp_parser(mcp_types.CallToolResult(content=[_text_resource(text)]))
+    parsed = json.loads(output)
+
+    assert parsed["complete"] is True
+    assert parsed["content"][0]["text"] == text
+    assert parsed["content"][0]["uri"] == "https://example.com/fixture.py"
+
+
+@pytest.mark.parametrize(
+    "length", [_MCP_MAX_OUTPUT_CHARS - 1, _MCP_MAX_OUTPUT_CHARS, _MCP_MAX_OUTPUT_CHARS + 1]
+)
+def test_text_truncation_boundary(length: int) -> None:
+    text = "x" * length
+
+    output = _github_mcp_parser(mcp_types.CallToolResult(
+        content=[mcp_types.TextContent(type="text", text=text)]
+    ))
+
+    expected = text
+    if length > _MCP_MAX_OUTPUT_CHARS:
+        expected = text[:_MCP_MAX_OUTPUT_CHARS] + "\n... [truncated]"
+    assert output == expected
+
+
+@pytest.mark.parametrize(
+    "length", [_MCP_MAX_OUTPUT_CHARS - 1, _MCP_MAX_OUTPUT_CHARS, _MCP_MAX_OUTPUT_CHARS + 1]
+)
+def test_embedded_resource_truncation_boundary(length: int) -> None:
+    prefix = "Resource URI: https://example.com/fixture.py\n"
+    text = "x" * (length - len(prefix))
+
+    output = _github_mcp_parser(mcp_types.CallToolResult(content=[_text_resource(text)]))
+    parsed = json.loads(output)
+    resource = parsed["content"][0]
+
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
+    assert resource["uri"] == "https://example.com/fixture.py"
+    assert resource["original_characters"] == len(text)
+    assert text.startswith(resource["text"])
+    assert resource["returned_characters"] == len(resource["text"])
+    assert resource["truncated"] is True
+    assert parsed["complete"] is False
+
+
+@pytest.mark.parametrize("include_text", [False, True])
+def test_unsupported_content_preserves_supported_text(include_text: bool) -> None:
+    content: list[mcp_types.ContentBlock] = [
+        mcp_types.ImageContent(type="image", data="aW1hZ2U=", mimeType="image/png"),
+        mcp_types.EmbeddedResource(
+            type="resource",
+            resource=mcp_types.BlobResourceContents(
+                uri="https://example.com/file.bin",
+                mimeType="application/octet-stream",
+                blob="YmluYXJ5",
+            ),
+        ),
+    ]
+    if include_text:
+        content.append(mcp_types.TextContent(type="text", text="Supported text"))
+
+    output = _github_mcp_parser(mcp_types.CallToolResult(content=content))
+    parsed = json.loads(output)
+
+    assert parsed["complete"] is False
+    assert all(block.get("error") for block in parsed["content"][:2])
+    if include_text:
+        assert parsed["content"][2]["text"] == "Supported text"
+
+
+def test_empty_result_preserves_existing_behavior() -> None:
+    assert _github_mcp_parser(mcp_types.CallToolResult(content=[])) == "null"
+
+
+@pytest.mark.parametrize("embedded", [False, True], ids=["text", "resource"])
+@pytest.mark.parametrize(
+    "association,login,trusted",
+    [("NONE", "contributor", False), ("MEMBER", "member", True), ("NONE", "ci[bot]", True)],
+)
+def test_author_redaction_applies_to_both_content_types(
+    embedded: bool, association: str, login: str, trusted: bool
+) -> None:
+    payload = {
+        "user": {"login": login},
+        "author_association": association,
+        "body": "Authored content",
+    }
+    text = json.dumps(payload)
+    content = _text_resource(text) if embedded else mcp_types.TextContent(type="text", text=text)
+
+    output = _github_mcp_parser(mcp_types.CallToolResult(content=[content]))
+    parsed = json.loads(output)
+
+    expected = {**payload, "body": payload["body"] if trusted else _BODY_REDACTION_NOTICE}
+    assert (json.loads(parsed["content"][0]["text"]) if embedded else parsed) == expected
+
+
+def test_embedded_content_is_redacted_before_truncation() -> None:
+    payload = {
+        "user": {"login": "contributor"},
+        "author_association": "NONE",
+        "body": "x" * (_MCP_MAX_OUTPUT_CHARS + 1),
+    }
+
+    output = _github_mcp_parser(
+        mcp_types.CallToolResult(content=[_text_resource(json.dumps(payload))])
+    )
+    parsed = json.loads(output)
+
+    assert json.loads(parsed["content"][0]["text"])["body"] == _BODY_REDACTION_NOTICE
+    assert parsed["complete"] is True
+    assert "[truncated]" not in output
 
 
 def test_resource_budget_is_shared_across_files_and_escaped_text() -> None:

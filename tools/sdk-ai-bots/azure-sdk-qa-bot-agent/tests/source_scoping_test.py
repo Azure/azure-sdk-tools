@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
 from pytest import MonkeyPatch
 
 from config.tenant_config import (
     SRC_AZURE_SDK_DOCS_ENG,
     SRC_AZURE_SDK_FOR_NET_DOCS,
+    SRC_TYPESPEC_AZURE_DOCS,
     SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
     SRC_TYPESPEC_DOCS,
     TenantConfig,
@@ -14,7 +19,9 @@ from config.tenant_config import (
     get_knowledge_source,
     get_tenant_config,
 )
+from models.knowledge import KnowledgeChunk
 from tools.knowledge_tools import (
+    KnowledgeTools,
     _resolve_source_filters,
     _source_names,
     _wiki_page_filters,
@@ -24,6 +31,57 @@ from utils.azure_ai_search import NON_WIKI_FILTER, combine_source_filters
 _TENANT = TenantID.TYPESPEC_CHANNEL_QA_BOT.value
 _WIKI_ENTITY = "wiki_entity"
 _WIKI_CONCEPT = "wiki_concept"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("service_type", [None, "management-plane"])
+async def test_api_spec_review_search_includes_perpetual_preview_docs(service_type):
+    source = get_knowledge_source(SRC_TYPESPEC_AZURE_DOCS)
+    assert source is not None
+    title = "howtos#Versioning#uncommon-scenarios#02-perpetual-preview.md"
+    chunk = KnowledgeChunk(
+        source=source.name,
+        title=title,
+        link=source.get_link(title),
+        content="Model stable and subsequent preview together, then split into two PRs.",
+    )
+    expected_filter = f"context_id eq '{source.name}'"
+    if service_type:
+        expected_filter += (
+            f" and (service_type eq '{service_type}' or service_type eq null)"
+        )
+
+    async def search(queries, source_filters, **kwargs):
+        assert source_filters[source.name] == expected_filter
+        return [chunk]
+
+    client = SimpleNamespace(
+        fused_search=AsyncMock(side_effect=search),
+        deduplicate_chunks=lambda chunks: chunks,
+        top_k=10,
+        expand_by_hierarchy=AsyncMock(side_effect=lambda chunk: chunk),
+    )
+    result = await KnowledgeTools(search_client=client).search_knowledge_base(
+        queries=[
+            "Can ARM TypeSpec keep preview-only features when adding a stable version "
+            "without publishing a new preview in the same PR?"
+        ],
+        tenant_id=TenantID.API_SPEC_REVIEW_BOT.value,
+        service_type=service_type,
+    )
+
+    client.fused_search.assert_awaited_once()
+    assert len(result.results) == 1
+    assert result.results[0].source == source.name
+    assert result.results[0].link == source.get_link(title)
+    assert "two PRs" in result.results[0].content
+
+    names = _source_names(TenantID.API_SPEC_REVIEW_BOT.value, None)
+    wiki_filters = _wiki_page_filters(
+        TenantID.API_SPEC_REVIEW_BOT.value,
+        _resolve_source_filters(names, TenantID.API_SPEC_REVIEW_BOT.value, service_type),
+    )
+    assert wiki_filters[source.name] == expected_filter
 
 
 def test_internal_wiki_contexts_are_not_registered_sources():

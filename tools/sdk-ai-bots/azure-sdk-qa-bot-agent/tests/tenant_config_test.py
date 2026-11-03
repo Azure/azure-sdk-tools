@@ -145,6 +145,40 @@ def test_tenants_use_azure_sdk_agent_by_default() -> None:
     assert config.agent.name_config_key == "AI_FOUNDRY_AGENT_NAME"
 
 
+def test_api_spec_review_skill_routes_typespec_questions_to_specialist() -> None:
+    skills = {
+        skill.frontmatter.name: skill
+        for skill in create_tenant_skills("azure-sdk-chat-agent")
+    }
+    description = skills["api-spec-review"].frontmatter.description
+    assert "Use typespec instead for TypeSpec validation" in description
+    assert "API-version lifecycle" in description
+    assert "API-version lifecycle" in skills["typespec"].frontmatter.description
+
+    content = build_skill_content(TenantID.API_SPEC_REVIEW_BOT)
+    assert "- typespec_azure_docs:" in content
+    assert "load the `typespec` skill" in content
+    assert "`tenant_id=typespec_channel_qa_bot`" in content
+    assert "even when the question mentions a PR or failing check" in content
+
+
+@pytest.mark.parametrize(
+    "tenant_id",
+    [TenantID.API_SPEC_REVIEW_BOT, TenantID.TYPESPEC_CHANNEL_QA_BOT],
+)
+def test_versioning_guidance_preserves_arm_perpetual_preview_workflow(tenant_id) -> None:
+    """Guard supplied guidance; model adherence requires a deployed evaluation."""
+    content = build_skill_content(tenant_id)
+
+    assert "perpetual-preview" in content
+    assert "`typespec_azure_docs`" in content
+    assert "stable and subsequent preview together" in content
+    assert "two PRs" in content
+    assert "same PR" in content
+    assert "TypeSpec source" in content
+    assert "OpenAPI" in content
+
+
 def test_go_tenant_includes_sdk_breaking_change_guides() -> None:
     config = get_tenant_config(TenantID.GOLANG_CHANNEL_QA_BOT)
     assert config is not None

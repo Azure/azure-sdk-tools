@@ -640,6 +640,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         sources=_sources(
             SRC_STATIC_AZURE_DOCS,
             SRC_STATIC_API_SPEC_VIEW_QA,
+            SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
             SRC_AZURE_REST_API_SPECS_DOCS,
             SRC_AZURE_OPENAPI_DIFF_DOCS,

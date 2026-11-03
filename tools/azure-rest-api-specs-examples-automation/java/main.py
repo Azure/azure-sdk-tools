@@ -196,21 +196,19 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 )
 
                 example_filepath = java_example_method.example_relative_path
-                example_dir, example_filename = path.split(example_filepath)
-
                 try:
-                    example_dir = examples_dir.try_find_resource_manager_example(
-                        specs_path, sdk_package_path, example_dir, example_filename
+                    example_dir, example_filename = examples_dir.resolve_example_path(
+                        specs_path, sdk_package_path, example_filepath
                     )
                 except NameError:
-                    pass
+                    example_dir, example_filename = path.split(example_filepath)
 
                 # use Main as class name
                 old_class_name = class_name
                 new_class_name = "Main"
                 example_lines = format_java(example_lines, old_class_name, new_class_name)
 
-                filename = example_filename.split(".")[0]
+                filename = path.splitext(example_filename)[0]
                 # use the examples-java folder for Java example
                 md_dir = (
                     (example_dir + "-java")

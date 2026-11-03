@@ -87,7 +87,7 @@ def test_shared_retrieval_respects_pr_workflow_dependencies() -> None:
     pr_review = _read_pr_review_skill()
     steps = (
         "**Read the PR and statuses.**",
-        "**Checks stuck, untriggered, pending or awaiting approval:**",
+        "**Checks stuck, not run, untriggered, pending or awaiting approval:**",
         "**Merge blockers:**",
         "**Failed checks in blockers:**",
         "**Review existing feedback.**",
@@ -206,10 +206,10 @@ def test_shared_permission_help_checks_permissions_and_membership() -> None:
     workflow = instruction.split("## Workflow\n", 1)[1].split("\n## ", 1)[0]
     pr_review = _read_pr_review_skill()
     approval_checks = pr_review.split(
-        "2. **Checks stuck, untriggered, pending or awaiting approval:**", 1
+        "2. **Checks stuck, not run, untriggered, pending or awaiting approval:**", 1
     )[1].split("\n3. **Merge blockers:**", 1)[0]
 
-    assert "for permission/access symptoms, check both repository permissions" in approval_checks
+    assert "When the user reports this symptom, first ask them to check both repository permissions" in approval_checks
     assert "required organization/team membership" in approval_checks
     assert "for access issues, check permissions and membership separately" not in workflow
     assert "\n6. **Permission/access issues:**" not in workflow
@@ -397,7 +397,7 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
         FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
     )
     assert [skill.frontmatter.name for skill in skills] == ["pr-review"]
-    assert "permission/access symptoms" in _read_pr_review_skill()
+    assert "When the user reports this symptom, first ask them to check both repository permissions" in _read_pr_review_skill()
     assert "pr-review" not in get_skill_to_tenant_map()
 
     init = (
@@ -516,7 +516,7 @@ def test_merge_and_workflow_guidance_is_in_pr_review_workflow() -> None:
     ).read_text(encoding="utf-8")
     pr_review = _read_pr_review_skill()
     other_tools = instruction.split("## Other Tools\n", 1)[1].split("\n## ", 1)[0]
-    for rule in ("**Merge blockers:**", "**Checks stuck, untriggered, pending or awaiting approval:**"):
+    for rule in ("**Merge blockers:**", "**Checks stuck, not run, untriggered, pending or awaiting approval:**"):
         assert pr_review.count(rule) == 1
         assert rule not in other_tools
         assert instruction.count(rule) == 0
@@ -533,22 +533,13 @@ def test_chat_agent_explains_workflow_action_required_evidence() -> None:
     ).read_text(encoding="utf-8")
 
     pr_review = _read_pr_review_skill()
-    assert "**Checks stuck, untriggered, pending or awaiting approval:**" in pr_review
+    assert "**Checks stuck, not run, untriggered, pending or awaiting approval:**" in pr_review
     assert "Fetch `get_status` and `get_check_runs` via `pull_request_read` in parallel" in pr_review
     assert "wait for these results before dependent calls" in pr_review
-    assert "Run details (`actions_get` for Actions) establish the workflow state" in pr_review
-    assert "For completed `action_required` runs or an unexplained approval report" in pr_review
-    assert "inspect the returned `html_url` with `web_fetch`" in pr_review
-    assert "the API may omit the reason" in pr_review
-    assert "A failed status alone does not establish a code defect" in pr_review
-    gate = pr_review.split("**Checks stuck, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
-    assert "Find current-head validation runs with `actions_list`" in gate
-    assert "successful status-setter workflows or unrelated jobs do not rule out an approval gate" in gate
-    assert "For explicit approval or `action_required` questions" in gate
-    assert "call `actions_list` for the PR's current head before following status links" in gate
-    assert "do not infer approval from a fork or pending contexts alone" in gate
-    assert gate.index("For completed `action_required` runs") < gate.index("Recovery depends on the cause")
-    assert "Recovery depends on the cause" in pr_review
+    gate = pr_review.split("**Checks stuck, not run, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
+    assert "When the user reports this symptom, first ask them to check both repository permissions" in gate
+    assert "request missing access or workflow approval as needed" in gate
+    assert "without extra workflow investigation" not in gate
     assert "Use GitHub MCP for GitHub content" in instruction
     assert "**Only exception:** fetch a completed/action-required workflow run" in instruction
     assert "not unrelated GitHub pages" in instruction
@@ -560,7 +551,7 @@ def test_chat_agent_prioritizes_resolution_and_diagnoses_pending_pr_checks() -> 
         Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
     pr_review = _read_pr_review_skill()
-    gate = pr_review.split("**Checks stuck, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
+    gate = pr_review.split("**Checks stuck, not run, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
     failed_blockers = pr_review.split("**Failed checks in blockers:**", 1)[1].split("**Review existing feedback.**", 1)[0]
     answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
 
@@ -569,14 +560,11 @@ def test_chat_agent_prioritizes_resolution_and_diagnoses_pending_pr_checks() -> 
     assert "Tell users to use the Agent to do it, not to do it manually" in answer_rules
     assert "Provide manual steps only as fallback if the user explicitly prefers them" in answer_rules
     assert "consider the Azure SDK Tools Agent as a fallback" not in answer_rules
-    assert "Pending checks may instead be queued/running or untriggered" in gate
-    assert "Recovery depends on the cause" in gate
-    assert "Run details (`actions_get` for Actions) establish the workflow state" in gate
+    assert "When the user reports this symptom, first ask them to check both repository permissions" in gate
     assert "KB guidance" not in gate
     assert "check both repository permissions and required organization/team membership" in gate
     assert "[access requests](https://aka.ms/azsdk/access)" in gate
     assert "[Public Azure membership]" in gate
-    assert "Reopen or retrigger untriggered checks only when repository guidance supports it" in gate
     diagnosis_steps = (
         "Read the failed check's logs/output",
         "then search the KB using the error and check context",
@@ -594,7 +582,7 @@ def test_workflow_permission_guidance_is_shared_across_tenants() -> None:
     root = Path(__file__).parents[1]
     instruction = (root / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
     pr_review = _read_pr_review_skill()
-    gate = pr_review.split("**Checks stuck, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
+    gate = pr_review.split("**Checks stuck, not run, untriggered, pending or awaiting approval:**", 1)[1].split("**Merge blockers:**", 1)[0]
     assert "**Workflow permissions**" not in pr_review
     assert "[access requests](https://aka.ms/azsdk/access)" in gate
     assert (
@@ -637,10 +625,11 @@ def test_pr_review_response_matches_customer_question_with_useful_context() -> N
     pr_review = _read_pr_review_skill()
     answer_rules = instruction.split("## Answer Rules\n", 1)[1].split("\n## ", 1)[0]
     normalized = " ".join(pr_review.split())
-    assert "The customer needs the cause and remedy, not the investigation trail" in normalized
+    assert "Lead with the user's next steps and a brief status summary" in normalized
     assert "naming a red check or ruling out approval is only triage" in normalized
     assert "Continue to the specific error and supported remedy, or an evidenced retrieval limit" in normalized
-    assert "Passed checks, routine run metadata and summary-gate mechanics belong only when requested or needed to act" in normalized
+    assert "Do not enumerate check results unless the user explicitly requests them" in normalized
+    assert "mention a specific check only to explain the next action" in normalized
     assert "Lead with a direct answer" in answer_rules
     assert "Every actionable step must include a clickable URL inline" in answer_rules
     assert "using each destination once" not in answer_rules

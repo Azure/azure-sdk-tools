@@ -19,7 +19,7 @@ parameters:
 
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
-  - name: TypeSpecAuthorEvalAzureSubscription
+  - name: EvalAzureSubscription
     value: azuresdkqabot-dev
   - name: TypeSpecAuthorEvalMode
     value: no-skill
@@ -47,7 +47,6 @@ extends:
       - 'evals/007008.eval.yaml'
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: ${{ parameters.McpKind }}
-    azureSubscription: ${{ variables.TypeSpecAuthorEvalAzureSubscription }}
     vallyArguments:
       - --tag
       - mode=no-skill

@@ -5,9 +5,9 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the
 
 ## Supported Local Environment
 
-Use Vally 0.14.0.
+Use Vally 0.19.0.
 
-Vally 0.14.0 can run on native Windows when its native dependencies install successfully. The
+Vally 0.19.0 can run on native Windows when its native dependencies install successfully. The
 Windows run must use `--workers 1`, and eval fixtures must link `node_modules` through
 `FIXTURE_NODE_MODULES` instead of copying pnpm symlinks.
 
@@ -26,7 +26,7 @@ From PowerShell:
 ```powershell
 winget install --id Microsoft.DotNet.AspNetCore.8 --exact --source winget `
   --accept-package-agreements --accept-source-agreements
-npm install --global @microsoft/vally-cli@0.14.0
+npm install --global @microsoft/vally-cli@0.19.0
 ```
 
 Vally's `better-sqlite3` dependency may require the Visual Studio **Desktop development with C++**
@@ -63,7 +63,7 @@ nvm use 24.14.1
 Install Vally inside WSL:
 
 ```bash
-npm install --global @microsoft/vally-cli@0.14.0
+npm install --global @microsoft/vally-cli@0.19.0
 ```
 
 Vally contains native dependencies. `build-essential` and `python3` allow npm to build them when a
@@ -99,7 +99,7 @@ Run from the `evaluate` directory.
 #### Native Windows
 
 ```powershell
-node scripts\setup-environment.js --mcp-kind live | Invoke-Expression
+node scripts\setup-environment.ts --mcp-kind live | Invoke-Expression
 $env:EVALUATE_USE_HOST_COPILOT_HOME = "1"
 ```
 
@@ -108,18 +108,25 @@ $env:EVALUATE_USE_HOST_COPILOT_HOME = "1"
 Prepare the live MCP:
 
 ```bash
-eval "$(node scripts/setup-environment.js --mcp-kind live)"
+eval "$(node scripts/setup-environment.ts --mcp-kind live)"
 ```
 
 The setup command:
 
-1. Changes eval files to `environment: azsdk-mcp-local`.
-2. Builds live and mock MCP binaries under `artifacts/mcp`.
+1. Changes eval files to `agent_environment: azsdk-mcp-local`.
+2. Builds live and mock MCP binaries from this tools checkout under `artifacts/mcp`.
 3. Sparse-clones azure-rest-api-specs under `artifacts/azure-rest-api-specs`.
 4. Installs the pnpm version pinned by azure-rest-api-specs.
 5. Generates the untracked Microsoft.Widget fixture package and installs it with pnpm.
-6. Exports `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
-7. Prepends the fixture `node_modules/.bin` to PATH so graders use its TypeSpec compiler.
+6. Installs the repository-pinned Vally toolchain and exports `AZSDK_EVAL_REPO_ROOT`,
+   `AZSDK_EVAL_MCP_ROOT`, and `FIXTURE_NODE_MODULES`.
+7. Prepends the local Vally and fixture `node_modules/.bin` directories to PATH.
+
+Use `--mcp-root <path>` to reuse prebuilt MCP artifacts instead of building them.
+Use `--spec-root <path>` to generate fixtures from an existing specs checkout without
+cloning or updating it. Dependency versions and Copilot instructions come from that
+separate specs checkout; only the generated Widget package is installed, not the
+tools repository or the full specs workspace.
 
 `.vally.yaml` declares the authoring and shared naming skills, plus the
 assessment/generation competitors used by routing-boundary cases. Vally mounts
@@ -172,7 +179,7 @@ On a managed device that blocks `registry.npmjs.org`, set the approved feed befo
 
 ```bash
 export npm_config_registry="https://packagefeedproxy.microsoft.io/npm/"
-eval "$(node scripts/setup-environment.js --mcp-kind live)"
+eval "$(node scripts/setup-environment.ts --mcp-kind live)"
 ```
 
 Verify the prepared environment:
@@ -183,7 +190,7 @@ tsp --version
 dotnet "$AZSDK_EVAL_REPO_ROOT/artifacts/mcp/cli/azsdk.dll" --help
 
 pushd fixtures/Microsoft.Widget/Widget
-node ../../../scripts/check-node-dependencies.cjs packages
+node ../../../scripts/check-node-dependencies.ts packages
 popd
 ```
 
@@ -309,17 +316,21 @@ run `npm ci` there first.
 
 ## Manual Fixture Setup
 
-Normally `setup-environment.js` performs these steps. To debug pnpm separately:
+Normally `setup-environment.ts` performs these steps. To debug pnpm separately:
 
 ```bash
-node scripts/setup-fixture-files.js
-node scripts/install-pnpm.js
+node scripts/setup-fixture-files.ts
+node scripts/install-pnpm.ts
 pnpm --version
 pnpm install --dir fixtures/Microsoft.Widget/Widget
 
 export FIXTURE_NODE_MODULES="$PWD/fixtures/Microsoft.Widget/Widget/node_modules"
 export PATH="$FIXTURE_NODE_MODULES/.bin:$PATH"
 ```
+
+`pipeline/typespec-author-prepare.test.ts` generates fixture inputs in a temporary
+directory from a synthetic specs catalog. It needs the repository-pinned Vally
+dependencies, but no specs clone, fixture dependency installation, MCP build, or login.
 
 ## Results and Troubleshooting
 
@@ -343,7 +354,7 @@ naming cases do not require compilation.
 | Missing `Microsoft.AspNetCore.App 8.x`                   | Install `aspnetcore-runtime-8.0` inside WSL                                          |
 | `sessionFs.setProvider`                                  | Run with `--workers 1`                                                               |
 | `Session filesystem path escapes root` on native Windows | Use Linux or WSL2 for Vally execution; lint and fixture tests can still run natively |
-| `require is not defined in ES module scope`              | Ensure evals use `check-node-dependencies.cjs`                                       |
+| `require is not defined in ES module scope`              | Ensure evals use `check-node-dependencies.ts`                                        |
 | Compiler reports TypeSpec 1.8.0                          | Rerun setup through `eval`; verify fixture `.bin` is first on PATH                   |
 | pnpm symlink returns `EPERM`                             | Move the checkout from `/mnt/c` or `/mnt/d` to the WSL filesystem                    |
 | MCP initialize connection closes                         | Run the MCP DLL directly and inspect its missing Linux runtime message               |
@@ -356,7 +367,7 @@ naming cases do not require compilation.
 | `azsdk-mcp-local`      | Local live MCP under Linux/WSL                               |
 | `azsdk-mcp-mock-local` | Local mock MCP under Linux/WSL                               |
 
-Local setup rewrites only the root `environment:` entry in each eval file. Restore these entries to
+Local setup rewrites only the root `agent_environment:` entry in each eval file. Restore these entries to
 `azsdk-mcp` before committing.
 
 ## Pipeline
@@ -372,9 +383,9 @@ runs each area, publishes result/debug artifacts, and produces separate summarie
 | `Runs`        | Trials per stimulus            |
 
 Both this pipeline and `eng/pipelines/azure-typespec-author-benchmark-no-skill.yml`
-define `TypeSpecAuthorEvalAzureSubscription` in their YAML `variables` and forward
-its value at template expansion time as `azureSubscription` to the common eval
-templates. The current deployment uses `azuresdkqabot-dev`; other deployments
+define `EvalAzureSubscription` in their YAML `variables`. The common eval invoke
+step reads it directly, without passing a service-connection parameter through
+stage/job templates. The current deployment uses `azuresdkqabot-dev`; other deployments
 update this caller-owned variable to an authorized service connection. No Azure
 DevOps UI variable or run parameter is required. Common templates retain no
 deployment-specific connection fallback. An invalid connection fails Azure task

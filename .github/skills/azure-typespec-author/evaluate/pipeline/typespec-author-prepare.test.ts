@@ -8,6 +8,7 @@ import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
 import { configureSkillEnvironments, prepareBenchmark } from "./typespec-author-prepare.ts";
+import { fixtureDependencies, prepareFixtureFiles } from "../scripts/setup-fixture-files.ts";
 
 function createMcpBinary(root: string, kind: "live" | "mock") {
   const file = path.join(root, "artifacts", "mcp", kind === "live" ? "cli" : "mock",
@@ -195,7 +196,7 @@ test("benchmark entrypoints use caller-owned auth and common repeated-trial repo
     const runs = pipeline.parameters.find((parameter: { name: string }) => parameter.name === "Runs");
     assert.equal(runs.type, "number");
     const configuredConnection = pipeline.variables.find((variable: { name?: string }) =>
-      variable.name === "TypeSpecAuthorEvalAzureSubscription");
+      variable.name === "EvalAzureSubscription");
     assert.ok(configuredConnection, `${file}: connection must be configured by the caller`);
     assert.equal(typeof configuredConnection.value, "string");
     assert.ok(configuredConnection.value.trim(), `${file}: connection must not be empty`);
@@ -205,7 +206,7 @@ test("benchmark entrypoints use caller-owned auth and common repeated-trial repo
         .map((stage: { jobs: { parameters: object }[] }) => stage.jobs[0].parameters);
     assert.equal(invocations.length, file.endsWith("-no-skill.yml") ? 1 : 2);
     for (const invocation of invocations) {
-      assert.equal(invocation.azureSubscription, "${{ variables.TypeSpecAuthorEvalAzureSubscription }}");
+      assert.equal(invocation.azureSubscription, undefined, `${file}: shared templates read the pipeline variable directly`);
       assert.equal(invocation.UseAzSdkAuthentication, "${{ eq(parameters.McpKind, 'live') }}");
       assert.equal(invocation.postEvalTemplate, undefined);
       assert.deepEqual(invocation.vallyArguments.slice(-2), ["--runs", "${{ format('{0}', parameters.Runs) }}"]);
@@ -225,6 +226,16 @@ test("all three repository configurations plan with Vally 0.19 without executing
   const source = path.resolve(import.meta.dirname, "..");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-benchmark-configs-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const fixtures = path.join(root, "fixtures");
+  fs.cpSync(path.join(source, "fixtures"), fixtures, { recursive: true,
+    filter: (file) => !["node_modules", ".git", "package.json", "copilot-instructions.md"].includes(path.basename(file)),
+  });
+  const specRoot = path.join(root, "specs");
+  fs.mkdirSync(path.join(specRoot, ".github"), { recursive: true });
+  fs.writeFileSync(path.join(specRoot, ".github", "copilot-instructions.md"), "# Test instructions\n");
+  fs.writeFileSync(path.join(specRoot, "pnpm-workspace.yaml"),
+    `catalog:\n${fixtureDependencies.map((name) => `  "${name}": 1.0.0`).join("\n")}\n`);
+  prepareFixtureFiles(specRoot, fixtures);
   const mockDll = createMcpBinary(root, "mock");
   fs.symlinkSync(path.resolve(source, "../../azsdk-common-typespec-naming"),
     path.join(root, "azsdk-common-typespec-naming"), "junction");
@@ -240,9 +251,8 @@ test("all three repository configurations plan with Vally 0.19 without executing
     fs.mkdirSync(evalRoot, { recursive: true });
     fs.copyFileSync(path.join(source, "..", "SKILL.md"), path.join(author, "SKILL.md"));
     fs.cpSync(path.join(source, "evals"), path.join(evalRoot, "evals"), { recursive: true });
-    for (const directory of ["fixtures", "scripts"]) {
-      fs.symlinkSync(path.join(source, directory), path.join(evalRoot, directory), "junction");
-    }
+    fs.symlinkSync(fixtures, path.join(evalRoot, "fixtures"), "junction");
+    fs.symlinkSync(path.join(source, "scripts"), path.join(evalRoot, "scripts"), "junction");
     const { dir: _dir, ...config } = original;
     config.environments["azsdk-mcp"].mcpServers["azure-sdk-mcp"].cwd = root;
     fs.writeFileSync(path.join(evalRoot, ".vally.yaml"), JSON.stringify(config));

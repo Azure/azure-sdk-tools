@@ -76,6 +76,12 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
+      # The MCP metadata emitter needs the specs checkout's compiler and libraries.
+      commands:
+        - npm run install-pnpm
+        - pnpm install --frozen-lockfile
+        - pnpm build
+      commandTimeout: 10m
     turns:
       - |
         Create a release plan for the Contoso Widget Manager:

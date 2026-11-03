@@ -78,6 +78,7 @@ stimuli:
         ref: main
       # The MCP metadata emitter needs the specs checkout's compiler and libraries.
       commands:
+        - git sparse-checkout add .github eng libs
         - npm run install-pnpm
         - pnpm install --frozen-lockfile
         - pnpm build

@@ -9,6 +9,13 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
     /// </summary>
     public class ReleasePlanResponse : ReleasePlanBaseResponse
     {
+        public const string CreatedOutcome = "created";
+        public const string ExistingOutcome = "existing";
+        public const string NotFoundOutcome = "not_found";
+
+        [JsonPropertyName("outcome")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Outcome { get; set; }
         [JsonPropertyName("release_plan_details")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ReleasePlanWorkItem? ReleasePlanDetails { get; set; }

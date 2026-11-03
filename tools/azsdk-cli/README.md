@@ -142,6 +142,26 @@ dotnet test
 This tool can be run in test mode when the `AZSDKTOOLS_AGENT_TESTING` environment variable is set to `true`.
 When testing is enabled, release plans will be automatically generated in the test environment.
 
+### Version-safe release-plan lookup and creation
+
+`release-plan get --typespec-path <project> --api-version <version> --api-release-type <type>`
+searches for the same concrete API version and release type in `In Progress` or `Finished`
+status. JSON/MCP output reports `outcome: "existing"` when a plan is found and
+`outcome: "not_found"` when no plan matches. The existing no-match exit code of 1 is preserved.
+
+`release-plan create` derives its API version from TypeSpec metadata and reports
+`outcome: "created"` or `outcome: "existing"`. A plan linked to the same PR but targeting
+another concrete version does not prevent creation. The optional `--expected-api-version`
+(`expectedApiVersion` in MCP) checks the metadata before any plan is selected or written;
+it is an assertion, not a metadata override.
+
+Metadata containing `all`, `multiple-versions`, or differing versions requires manual
+version selection. The CLI does not create a blank-version plan for those values.
+Select the intended version and create or link a plan in
+[Release Planner](https://aka.ms/azsdk/releaseplan-dashboard).
+Existing manual URL-based and unversioned private-preview flows remain supported;
+automatic pipelines should use concrete metadata and the expected-version check.
+
 ### Manual release-plan abandonment
 
 Use `azsdk release-plan abandon --release-plan-id <Release Plan ID>` or supply `releasePlanId` to `azsdk_abandon_release_plan`. Supply the user-facing Release Plan ID, not the Azure DevOps work item ID. Manual abandonment no longer accepts `--work-item-id` or `workItemId`; other commands retain their existing ID contracts.

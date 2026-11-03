@@ -201,6 +201,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         private static readonly HttpClient _downloadClient = new();
 
         private static readonly string RELEASE_PLANNER_APP_TEST = "Release Planner App Test";
+        private const string ReleasePlanInProgressState = "In Progress";
+        private const string ReleasePlanFinishedState = "Finished";
         private static readonly string MISSING_EMITTER_CONFIG = "MissingEmitterConfig";
         private static readonly string NOT_APPLICABLE = "Not applicable";
 
@@ -2417,7 +2419,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += $" AND [Custom.ReleasePlanType] = '{apiReleaseType.ToAdoFieldValue()}'";
                 // Include both in-progress and finished states
-                query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+                query += $" AND [System.State] IN ('{ReleasePlanInProgressState}','{ReleasePlanFinishedState}')";
                 query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 query += " ORDER BY [System.Id] DESC";
 
@@ -2440,7 +2442,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                     // Verify mapped values as well as the WIQL filters before returning a match.
                     if (!string.IsNullOrEmpty(releasePlan.SpecAPIVersion)
                         && releasePlan.SpecAPIVersion.Equals(apiVersion, StringComparison.OrdinalIgnoreCase)
-                        && releasePlan.ApiReleaseType == apiReleaseType)
+                        && releasePlan.ApiReleaseType == apiReleaseType
+                        && (releasePlan.Status.Equals(ReleasePlanInProgressState, StringComparison.OrdinalIgnoreCase)
+                            || releasePlan.Status.Equals(ReleasePlanFinishedState, StringComparison.OrdinalIgnoreCase)))
                     {
                         logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) for TypeSpec project path: {typeSpecProjectPath}, API version: {apiVersion}, and API release type: {apiReleaseType}",
                             releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, apiVersion, apiReleaseType);

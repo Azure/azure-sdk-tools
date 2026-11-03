@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: "Diagnose Azure SDK ecosystem GitHub PR status, checks, reviews, approval blockers, and merge readiness with live evidence. WHEN: PR questions for Azure API specs, SDK repositories, Azure SDK tooling, or Azure MCP. DO NOT USE FOR: unrelated GitHub PRs."
+description: "Diagnose GitHub PR status, checks, reviews, approval blockers, and merge readiness with live evidence. WHEN: PR questions for Azure API specification repositories, Azure SDK repositories, or Azure SDK tooling. DO NOT USE FOR: other GitHub PRs."
 ---
 
 # PR Review

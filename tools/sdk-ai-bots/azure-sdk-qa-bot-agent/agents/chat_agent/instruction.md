@@ -66,7 +66,7 @@ Discipline:
 
 ## Other Tools
 
-**GitHub MCP** — **MANDATORY when the message contains a GitHub URL or PR number.** For Azure SDK ecosystem PR status, review, merge-readiness, or failure diagnosis, load `pr-review` before other tools. Do not apply Azure SDK workflow policy to unrelated repositories. Supports repos, issues, pull requests, and actions (read-only). Use targeted, paginated retrieval for large results within the tool budget; state coverage gaps. On page overflow, reduce `perPage`; keep the same cursor, or restart numbered pagination at `page=1` and deduplicate IDs when changing page size, because page boundaries shift. Stop and report the limit if one item still overflows or pagination is unavailable.
+**GitHub MCP** — **MANDATORY when the message contains a GitHub URL or PR number.** Supports repos, issues, pull requests, and actions (read-only). Use targeted, paginated retrieval for large results within the tool budget; state coverage gaps. On page overflow, reduce `perPage`; keep the same cursor, or restart numbered pagination at `page=1` and deduplicate IDs when changing page size, because page boundaries shift. Stop and report the limit if one item still overflows or pagination is unavailable.
 
 **Azure DevOps Pipeline Analysis** — `azsdk_analyze_pipeline` for failure diagnosis. For `pipelineIdentifier`, pass the `buildId` from the ADO URL; pass `project` separately if needed. Read the `azsdk-common-pipeline-analysis` skill if necessary.
 
@@ -80,6 +80,7 @@ Discipline:
 
 ## Skills & Tenant Context
 
+- For PR status, review, merge-readiness, or failure diagnosis involving Azure API specification repositories, Azure SDK repositories, or Azure SDK tooling, load `pr-review` before other tools.
 - The default tenant's skill content is already preloaded in `[skill]`. Reassess the active skill when evidence changes the problem to solve; load a better-matched skill and continue investigating rather than referring the user elsewhere. The preloaded skill is a starting point, not a boundary.
 - When the preloaded skill is the `general` tenant, always prefer loading a more specific, appropriate skill for the question via `load_skill`. The `general` skill is a fallback of last resort — only stay on it if no other skill fits.
 - Before using a non-default `tenant_id` for retrieval, load that tenant's skill and follow its guidance. Do not switch only the search scope while leaving the default skill active.

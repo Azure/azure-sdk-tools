@@ -701,9 +701,13 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
     assert "Explicit fresh code/design review proceeds even on draft/red-check PRs" in pr_review
     assert "when needed for the user's request and preflight findings" in pr_review
     assert "Read relevant `get_reviews` and `get_comments`" in pr_review
-    assert "load `pr-review` before other tools" in instruction
-    assert "Azure SDK ecosystem GitHub PR" in pr_review
-    assert "Do not apply Azure SDK workflow policy to unrelated repositories" in instruction
+    other_tools = instruction.split("## Other Tools\n", 1)[1].split("\n## ", 1)[0]
+    skills = instruction.split("## Skills & Tenant Context\n", 1)[1].split("\n## ", 1)[0]
+    assert "load `pr-review` before other tools" in skills
+    assert "load `pr-review` before other tools" not in other_tools
+    assert "Azure API specification repositories, Azure SDK repositories, or Azure SDK tooling" in pr_review
+    assert "Azure MCP" not in pr_review
+    assert "Do not apply Azure SDK workflow policy to unrelated repositories" not in instruction
     assert "for other repositories, follow their own requirements" in pr_review
     assert "read the PR, its failing check runs, and their logs before answering" not in instruction
 

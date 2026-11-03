@@ -13,7 +13,7 @@ This is likely due to either:
 On the same shell that the dev will `test-proxy push` from:
 
 ```bash
-git clone -c core.longpaths=true --no-checkout --filter=tree:0 https://github.com/Azure/azure-sdk-assets.git
+git clone -c core.longpaths=true --no-checkout --filter=blob:none --no-tags --single-branch https://github.com/Azure/azure-sdk-assets.git
 git checkout -b a-test-branch
 git push -u origin a-test-branch # users should clean up after pushing a test branch, but in the case they don't devs may need to select a different test branch name
 ```

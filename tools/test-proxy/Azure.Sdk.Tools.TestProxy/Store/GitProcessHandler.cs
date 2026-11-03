@@ -35,10 +35,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         class GitMinVersion
         {
-            // As per https://github.com/Azure/azure-sdk-tools/issues/4146, the min version of git
-            // that supports what we need is 2.25.0.
             public static int Major = 2;
-            public static int Minor = 25;
+            public static int Minor = 51;
             public static int Patch = 0;
             public static string minVersionString = $"{Major}.{Minor}.{Patch}";
         }
@@ -101,6 +99,27 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return Run(arguments, config.AssetsRepoLocation.ToString());
         }
 
+        public virtual CommandResult Run(IReadOnlyList<string> arguments, GitAssetsConfiguration config)
+        {
+            return Run(arguments, config.AssetsRepoLocation.ToString());
+        }
+
+        public virtual CommandResult Run(IReadOnlyList<string> arguments, string workingDirectory)
+        {
+            if (arguments.Count > 0 && arguments[0] == "git")
+            {
+                throw new Exception("GitProcessHandler commands should not start with 'git'");
+            }
+
+            var processStartInfo = CreateGitProcessInfo(workingDirectory);
+            foreach (var argument in arguments)
+            {
+                processStartInfo.ArgumentList.Add(argument);
+            }
+
+            return Run(processStartInfo, string.Join(" ", arguments), workingDirectory);
+        }
+
         /// <summary>
         /// Invokes a git command. If it fails in any way, throws GitProcessException. Otherwise returns the result of the git invocation.
         /// </summary>
@@ -119,6 +138,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(workingDirectory);
             processStartInfo.Arguments = arguments;
 
+            return Run(processStartInfo, arguments, workingDirectory);
+        }
+
+        private CommandResult Run(ProcessStartInfo processStartInfo, string arguments, string workingDirectory)
+        {
             CommandResult result = new CommandResult()
             {
                 Arguments = arguments
@@ -195,6 +219,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                                 Task.Delay(attempts * 2 * 1000).Wait();
                             }
                         }
+                    }
+
+                    if (result.ExitCode != 0)
+                    {
+                        throw new GitProcessException(result);
                     }
                 }
                 // exceptions caught here will be to do with inability to recover from a failed git process
@@ -387,8 +416,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// Verify that the version of git running on the machine is greater equal the git minimum version.
         /// This is more for the people running the CLI/TestProxy locally than for lab machines which seem
-        /// to be running on the latest, released versions. The reason is that any git version less than
-        /// 2.37.0 won't have the cone/no-cone options used by sparse-checkout.
+        /// to be running on the latest, released versions. Asset restoration requires the partial-clone
+        /// and sparse-index behavior supported by Git 2.51.0 or later.
         /// </summary>
         /// <exception cref="GitProcessException">Thrown by the internal call to Run.</exception>
         /// <exception cref="GitVersionException">Thrown if the version doesn't meet the min or if we can't determine it.</exception>

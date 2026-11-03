@@ -783,6 +783,12 @@ def test_api_spec_review_tenant_delegates_workflow_diagnosis_to_shared_guidance(
     ).read_text(encoding="utf-8")
 
     assert "use the `pr-review` skill" in prompt
+    assert "For specification PR review questions" in prompt
+    assert "For specification validation questions" in prompt
+    assert "For API breaking-change questions" in prompt
+    assert "`spec-pr-review`" not in prompt
+    assert "`spec-validation`" not in prompt
+    assert "`api-breaking-changes`" not in prompt
     assert "complete, authoritative list of merge blockers" not in prompt
     assert "it is NOT a blocker" not in prompt
 

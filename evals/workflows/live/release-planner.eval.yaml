@@ -79,9 +79,10 @@ stimuli:
       # The MCP metadata emitter needs the specs checkout's compiler and libraries.
       commands:
         - git sparse-checkout add .github eng libs
-        - npm run install-pnpm
-        - pnpm install --frozen-lockfile
-        - pnpm build
+        - >-
+          npm exec --yes --package="$(node -p 'require("./package.json").packageManager')" -- pnpm install --frozen-lockfile
+        - >-
+          npm exec --yes --package="$(node -p 'require("./package.json").packageManager')" -- pnpm build
       commandTimeout: 10m
     turns:
       - |

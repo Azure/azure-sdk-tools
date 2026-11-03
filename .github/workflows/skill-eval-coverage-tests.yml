@@ -4,14 +4,12 @@ on:
   pull_request:
     paths:
       - "eng/common/scripts/skill-eval-coverage/**"
-      - "eng/common-tests/skill-eval-coverage/**"
       - ".github/skill-eval-coverage.json"
       - ".github/workflows/skill-eval*.yml"
   push:
     branches: [main]
     paths:
       - "eng/common/scripts/skill-eval-coverage/**"
-      - "eng/common-tests/skill-eval-coverage/**"
       - ".github/skill-eval-coverage.json"
       - ".github/workflows/skill-eval*.yml"
   workflow_dispatch:
@@ -39,4 +37,4 @@ jobs:
           node "$RUNNER_TEMP/skill-coverage-pnpm/node_modules/pnpm/bin/pnpm.mjs" --dir eng/common/scripts/skill-eval-coverage --ignore-workspace install --pm-on-fail=ignore --frozen-lockfile --prod --ignore-scripts
 
       - name: Test scripts
-        run: node --test eng/common/scripts/skill-eval-coverage/test/*.test.ts eng/common-tests/skill-eval-coverage/*.test.ts
+        run: node --test eng/common/scripts/skill-eval-coverage/test/*.test.ts

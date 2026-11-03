@@ -1,5 +1,16 @@
 # Release History
 
+## Unreleased
+
+### Features Added
+
+- Release-plan get/create JSON and MCP responses report explicit `existing`, `created`, or `not_found` outcomes. Creation supports `--expected-api-version` / `expectedApiVersion` as a metadata assertion before selecting or writing a plan.
+
+### Bugs Fixed
+
+- Concrete-version creation no longer reuses a different version through a PR-only fallback. Version-specific lookups accept only `In Progress` or `Finished` plans.
+- Multi-version aliases and differing metadata versions require manual version selection instead of creating unmatchable blank-version plans.
+
 ## 0.6.56 (2026-10-28)
 
 ### Features Added

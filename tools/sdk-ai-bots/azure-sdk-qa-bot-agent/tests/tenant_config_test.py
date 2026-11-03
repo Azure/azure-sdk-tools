@@ -523,7 +523,7 @@ def test_merge_and_workflow_guidance_is_in_pr_review_workflow() -> None:
     assert "**Failed checks in blockers:**" in pr_review
     assert "Assess state/draft, labels, checks and review/signoff evidence" in pr_review
     assert "**Review approval:**" in pr_review
-    assert "Declare readiness only from verified requirements" in pr_review
+    assert "report verified blockers plus any evidence gaps" in pr_review
     assert "verified requested reviewers/code owners from the PR or matching `CODEOWNERS` entries" in pr_review
 
 
@@ -704,7 +704,7 @@ def test_pr_review_triages_failures_and_preserves_explicit_code_review() -> None
     assert "load `pr-review` before other tools" in instruction
     assert "Azure SDK ecosystem GitHub PR" in pr_review
     assert "Do not apply Azure SDK workflow policy to unrelated repositories" in instruction
-    assert "never apply spec-specific labels or guidance elsewhere" in pr_review
+    assert "for other repositories, follow their own requirements" in pr_review
     assert "read the PR, its failing check runs, and their logs before answering" not in instruction
 
 
@@ -761,12 +761,15 @@ def test_chat_agent_cross_checks_spec_merge_summary_with_live_evidence() -> None
     instruction = _read_pr_review_skill()
 
     assert "**Merge blockers:**" in instruction
-    assert '"Next Steps to Merge" as a summary, not complete policy' in instruction
+    assert 'start with "Next Steps to Merge" and verify each item against live evidence' in instruction
     assert "`azure-rest-api-specs` / `azure-rest-api-specs-pr`" in instruction
-    assert "current-head required checks" in instruction
-    assert "do not infer blockers from optional or omitted checks" in instruction
-    assert "Separate execution gates, merge checks and reviews" in instruction
-    assert "qualify missing evidence" in instruction
+    assert "Determine merge readiness from current-head evidence" in instruction
+    assert "failed or missing required checks are blockers" in instruction
+    assert "optional failures are informational" in instruction
+    assert "omitted checks with unknown requirement status remain evidence gaps" in instruction
+    assert "for other repositories, follow their own requirements" in instruction
+    assert "Classify blockers as execution gates, merge checks or reviews" in instruction
+    assert "report verified blockers plus any evidence gaps" in instruction
     assert "single source of truth for merge blockers" not in instruction
 
 

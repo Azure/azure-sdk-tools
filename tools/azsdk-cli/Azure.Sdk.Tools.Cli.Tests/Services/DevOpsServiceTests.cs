@@ -1381,6 +1381,31 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(error!.Message, Does.Contain("exactly one").And.Contain("11111").And.Contain("22222"));
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        [NonParallelizable]
+        public async Task GetReleasePlanAsync_TestModeScopesDisplayIdLookupToTestPlans(bool includeAbandoned)
+        {
+            var original = Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING");
+            try
+            {
+                Environment.SetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING", "true");
+                var plan = CreateReleasePlanWorkItemWithReleasePlanId(29262, 1538, "In Progress");
+                plan.Fields["System.Tags"] = "Release Planner App Test";
+                _connection.AddWorkItemToQuery(plan);
+
+                var result = await _devOpsService.GetReleasePlanAsync(1538, CancellationToken.None, includeAbandoned);
+
+                Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.ReleasePlanID] = '1538'"));
+                Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.Tags] CONTAINS 'Release Planner App Test'"));
+                Assert.That(result.WorkItemId, Is.EqualTo(29262));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING", original);
+            }
+        }
+
         [Test]
         public void GetReleasePlanAsync_MissingDisplayId_DoesNotFallBackToWorkItemId()
         {

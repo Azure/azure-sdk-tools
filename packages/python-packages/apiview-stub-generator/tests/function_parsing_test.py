@@ -4,6 +4,8 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from collections.abc import Callable
+
 from apistub.nodes import FunctionNode
 from apiview_stub_generator_test import (
     Python2TypeHintClient,
@@ -29,6 +31,18 @@ def _test_return(node, _type):
 
 class TestTypeHints:
     """Ensure simple typehints render correctly."""
+
+    def test_getsource_type_error_falls_back_to_annotations(self):
+        callable_alias = Callable[[str], int]
+        node = FunctionNode(
+            "test",
+            None,
+            apiview=MockApiView,
+            obj=callable_alias.__class_getitem__,
+        )
+
+        assert node.node is None
+        assert node.name == "_CallableGenericAlias"
 
     def test_simple_typehints(self):
         clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]

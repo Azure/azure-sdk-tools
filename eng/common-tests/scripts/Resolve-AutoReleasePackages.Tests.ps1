@@ -4,7 +4,12 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
     BeforeAll {
         $script:scriptPath = (Resolve-Path "$PSScriptRoot/../../common/scripts/Resolve-AutoReleasePackages.ps1").Path
 
-        # Stub every external dependency the script resolves via Get-Command so it never dot-sources
+        & {
+            . "$PSScriptRoot/../../common/scripts/AutoRelease-Operations.ps1"
+            Set-Item Function:global:New-GitHubPullRequestDiffObject -Value ${function:New-GitHubPullRequestDiffObject}
+        }
+
+        # Use the real diff helper, but stub external dependencies so the script never dot-sources
         # common.ps1 / AutoRelease-Operations.ps1 (which need a full language-repo environment). The stubs
         # live in the GLOBAL scope so the script under test - invoked via '&', which runs in a child scope -
         # can see them. They must reference $global:* (never $script:*) because inside a stub that runs while
@@ -28,10 +33,6 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
         function global:Get-GitHubPullRequestFiles {
             param($RepoId, $PullRequestNumber, $AuthToken)
             return $global:AutoReleaseStubFiles
-        }
-        function global:New-GitHubPullRequestDiffObject {
-            param($PullRequestNumber, $PullRequestFiles, $ExcludePaths)
-            return [pscustomobject]@{ ChangedFiles = @(); ChangedServices = @(); ExcludePaths = @(); DeletedFiles = @(); PRNumber = "$PullRequestNumber" }
         }
         function global:Get-PrPkgProperties {
             param([string]$InputDiffJson)
@@ -93,14 +94,17 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
         Remove-Variable -Scope Global -ErrorAction SilentlyContinue -Name `
             AutoReleaseEmittedVars, AutoReleaseStubRelease, AutoReleaseStubFiles, AutoReleaseStubChangedPackages, `
             AutoReleaseGetPrPkgCalled, AutoReleaseResolveArgs, AutoReleaseThrowOnResolve, AutoReleaseThrowOnGetPrPkg, `
-            AutoReleaseAzsdkCalls, LanguageDisplayName
+            AutoReleaseAzsdkCalls, LanguageDisplayName, RepoRoot
     }
 
     BeforeEach {
         $global:LanguageDisplayName = '.NET'
+        $global:RepoRoot = $TestDrive
         $global:AutoReleaseEmittedVars = @{}
         $global:AutoReleaseStubRelease = [pscustomobject]@{ PullRequestNumber = $null; IsEligible = $false; SkipReason = 'default'; PullRequest = $null }
-        $global:AutoReleaseStubFiles = @()
+        $global:AutoReleaseStubFiles = @(
+            [pscustomobject]@{ filename = 'sdk/test/package/src/client.cs'; status = 'modified' }
+        )
         $global:AutoReleaseStubChangedPackages = @()
         $global:AutoReleaseGetPrPkgCalled = $false
         $global:AutoReleaseResolveArgs = $null
@@ -157,7 +161,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
         It "marks the matching artifact releasable and emits it in the JSON payload" {
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; Group = $null; IncludedForValidation = $false }
+                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; DirectoryPath = 'sdk/test/package'; Group = $null; IncludedForValidation = $false }
             )
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"Azure.Storage.Blobs","safeName":"AzureStorageBlobs"}]'
@@ -174,7 +178,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
         It "does not mark an unrelated artifact releasable" {
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; Group = $null; IncludedForValidation = $false }
+                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; DirectoryPath = 'sdk/test/package'; Group = $null; IncludedForValidation = $false }
             )
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"Azure.Messaging.EventHubs","safeName":"AzureMessagingEventHubs"}]'
@@ -186,7 +190,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
         It "excludes packages that were only included for validation" {
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; Group = $null; IncludedForValidation = $true }
+                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; DirectoryPath = 'sdk/test/package'; Group = $null; IncludedForValidation = $true }
             )
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"Azure.Storage.Blobs","safeName":"AzureStorageBlobs"}]'
@@ -197,7 +201,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
         It "matches a package by its ArtifactName when it differs from the package name" {
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'internal-name'; ArtifactName = 'public-artifact'; Group = $null; IncludedForValidation = $false }
+                [pscustomobject]@{ Name = 'internal-name'; ArtifactName = 'public-artifact'; DirectoryPath = 'sdk/test/package'; Group = $null; IncludedForValidation = $false }
             )
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"public-artifact","safeName":"publicartifact"}]'
@@ -208,7 +212,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
         It "marks only the changed subset of multiple declared artifacts" {
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'Pkg.A'; ArtifactName = 'Pkg.A'; Group = $null; IncludedForValidation = $false }
+                [pscustomobject]@{ Name = 'Pkg.A'; ArtifactName = 'Pkg.A'; DirectoryPath = 'sdk/test/package'; Group = $null; IncludedForValidation = $false }
             )
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"Pkg.A","safeName":"PkgA"},{"name":"Pkg.B","safeName":"PkgB"}]'
@@ -230,7 +234,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
                 PullRequest = [pscustomobject]@{ number = 123; html_url = 'https://github.com/Azure/azure-sdk-for-net/pull/123' }
             }
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; Group = $null; IncludedForValidation = $false }
+                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; DirectoryPath = 'sdk/test/package'; Group = $null; IncludedForValidation = $false }
             )
 
             Invoke-ResolveScript `
@@ -258,6 +262,178 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
         }
     }
 
+    Context "requiring direct package changes independently of CI triggers" {
+        BeforeEach {
+            $global:AutoReleaseStubRelease = [pscustomobject]@{
+                IsEligible = $true; PullRequest = [pscustomobject]@{ number = 40306 }
+            }
+            $global:AutoReleaseStubChangedPackages = @(
+                [pscustomobject]@{
+                    Name = '@azure/abort-controller'; ArtifactName = 'azure-abort-controller'
+                    DirectoryPath = 'sdk/core/abort-controller'; IncludedForValidation = $false
+                }
+            )
+        }
+
+        It "excludes shared-trigger-only candidates with <Scenario>" -TestCases @(
+            @{ Scenario = 'only a lockfile'; Files = @('pnpm-lock.yaml') }
+            @{ Scenario = 'an unrelated package and shared files'; Files = @(
+                'sdk/privatetrafficmanager/arm-privatetrafficmanager/src/index.ts',
+                'pnpm-lock.yaml', 'eng/ignore-links.txt'
+            ) }
+            @{ Scenario = 'a directory prefix collision'; Files = @(
+                'sdk/core/abort-controller-extra/src/index.ts', 'pnpm-lock.yaml'
+            ) }
+            @{ Scenario = 'a path with different casing'; Files = @(
+                'sdk/core/Abort-Controller/src/index.ts', 'pnpm-lock.yaml'
+            ) }
+        ) {
+            param($Files)
+            $global:AutoReleaseStubFiles = @(
+                foreach ($file in $Files) {
+                    [pscustomobject]@{ filename = $file; status = 'modified' }
+                }
+            )
+
+            $log = & $script:scriptPath -CommitSha 'abc123' -RepoId 'Azure/azure-sdk-for-js' `
+                -Artifacts '[{"name":"azure-abort-controller","safeName":"azureabortcontroller"}]' `
+                -AuthToken 'fake-token' -AzsdkExePath 'Invoke-AzsdkStub' 6>&1 | Out-String
+
+            $global:AutoReleaseEmittedVars['HasAutoReleaseArtifacts'] | Should -Be 'false'
+            $global:AutoReleaseEmittedVars['AutoReleaseArtifactsJson'] | Should -Be '[]'
+            $global:AutoReleaseEmittedVars['AutoReleaseSdkPullRequestUrl'] | Should -Be ''
+            $global:AutoReleaseEmittedVars['ReleaseArtifact_azureabortcontroller'] | Should -Be 'false'
+            $global:AutoReleaseAzsdkCalls.Count | Should -Be 0
+            $global:AutoReleaseGetPrPkgCalled | Should -BeTrue
+            $log | Should -Match 'no changed or deleted files under'
+        }
+
+        It "excludes all 17 core artifacts when only an ARM package and shared files change" {
+            $global:AutoReleaseStubChangedPackages = @(
+                foreach ($index in 1..17) {
+                    [pscustomobject]@{
+                        Name = "@azure/core-test-$index"; ArtifactName = "azure-core-test-$index"
+                        DirectoryPath = "sdk/core/core-test-$index"; IncludedForValidation = $false
+                    }
+                }
+            )
+            $artifacts = @(
+                foreach ($index in 1..17) {
+                    @{ name = "azure-core-test-$index"; safeName = "core$index" }
+                }
+            ) | ConvertTo-Json -Compress
+            $global:AutoReleaseStubFiles = @(
+                [pscustomobject]@{ filename = 'pnpm-lock.yaml'; status = 'modified' }
+                [pscustomobject]@{ filename = 'eng/ignore-links.txt'; status = 'modified' }
+                [pscustomobject]@{ filename = 'sdk/privatetrafficmanager/arm-privatetrafficmanager/src/index.ts'; status = 'added' }
+            )
+
+            $vars = Invoke-ResolveScript -Artifacts $artifacts -AzsdkExePath 'Invoke-AzsdkStub'
+
+            $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
+            $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
+            $vars['AutoReleaseSdkPullRequestUrl'] | Should -Be ''
+            foreach ($index in 1..17) {
+                $vars["ReleaseArtifact_core$index"] | Should -Be 'false'
+            }
+            $global:AutoReleaseAzsdkCalls.Count | Should -Be 0
+        }
+
+        It "keeps direct package changes eligible with <Scenario>" -TestCases @(
+            @{ Scenario = 'a shared lockfile'; File = 'sdk/core/abort-controller/src/index.ts'; Status = 'modified'; Previous = $null }
+            @{ Scenario = 'a deleted file'; File = 'sdk/core/abort-controller/src/deleted.ts'; Status = 'removed'; Previous = $null }
+            @{ Scenario = 'a rename out of the package'; File = 'sdk/other/package/src/index.ts'; Status = 'renamed'; Previous = 'sdk/core/abort-controller/src/index.ts' }
+            @{ Scenario = 'a rename into the package'; File = 'sdk/core/abort-controller/src/index.ts'; Status = 'renamed'; Previous = 'sdk/other/package/src/index.ts' }
+        ) {
+            param($File, $Status, $Previous)
+            $global:AutoReleaseStubFiles = @(
+                [pscustomobject]@{ filename = 'pnpm-lock.yaml'; status = 'modified' }
+                [pscustomobject]@{ filename = $File; status = $Status; previous_filename = $Previous }
+            )
+
+            $vars = Invoke-ResolveScript -Artifacts '[{"name":"azure-abort-controller","safeName":"azureabortcontroller"}]' `
+                -AzsdkExePath 'Invoke-AzsdkStub'
+
+            $vars['HasAutoReleaseArtifacts'] | Should -Be 'true'
+            $vars['ReleaseArtifact_azureabortcontroller'] | Should -Be 'true'
+            $payload = @($vars['AutoReleaseArtifactsJson'] | ConvertFrom-Json)
+            $payload.Count | Should -Be 1
+            $payload[0].name | Should -Be 'azure-abort-controller'
+            $global:AutoReleaseAzsdkCalls.Count | Should -Be 1
+            $global:AutoReleaseAzsdkCalls[0] | Should -Contain '@azure/abort-controller'
+        }
+
+        It "normalizes <Scenario> without requiring files to exist" -TestCases @(
+            @{ Scenario = 'absolute package directories'; Directory = 'sdk/core/abort-controller'; Absolute = $true; File = 'sdk/core/abort-controller/src/index.ts' }
+            @{ Scenario = 'relative package directories with dot segments'; Directory = './sdk/core/../core/abort-controller/'; Absolute = $false; File = 'sdk/core/abort-controller/src/index.ts' }
+            @{ Scenario = 'Windows path separators'; Directory = 'sdk\core\abort-controller\'; Absolute = $false; File = 'sdk\core\abort-controller\src\index.ts' }
+            @{ Scenario = 'package names containing wildcard characters'; Directory = 'sdk/core/package[1]'; Absolute = $false; File = 'sdk/core/package[1]/src/index.ts' }
+            @{ Scenario = 'service-level package directories'; Directory = 'sdk/core'; Absolute = $false; File = 'sdk/core/client.go' }
+        ) {
+            param($Directory, $Absolute, $File)
+            $global:AutoReleaseStubChangedPackages[0].DirectoryPath = if ($Absolute) {
+                Join-Path $global:RepoRoot $Directory
+            } else { $Directory }
+            $global:AutoReleaseStubFiles = @(
+                [pscustomobject]@{ filename = $File; status = 'modified' }
+            )
+
+            $vars = Invoke-ResolveScript -Artifacts '[{"name":"azure-abort-controller","safeName":"azureabortcontroller"}]'
+
+            $vars['HasAutoReleaseArtifacts'] | Should -Be 'true'
+            $vars['ReleaseArtifact_azureabortcontroller'] | Should -Be 'true'
+        }
+
+        It "only releases the directly changed subset of CI candidates" {
+            $global:AutoReleaseStubChangedPackages += [pscustomobject]@{
+                Name = '@azure/arm-privatetrafficmanager'; ArtifactName = 'azure-arm-privatetrafficmanager'
+                DirectoryPath = 'sdk/privatetrafficmanager/arm-privatetrafficmanager'; IncludedForValidation = $false
+            }
+            $global:AutoReleaseStubFiles = @(
+                [pscustomobject]@{ filename = 'pnpm-lock.yaml'; status = 'modified' }
+                [pscustomobject]@{ filename = 'sdk/privatetrafficmanager/arm-privatetrafficmanager/src/index.ts'; status = 'added' }
+            )
+
+            $vars = Invoke-ResolveScript `
+                -Artifacts '[{"name":"azure-abort-controller","safeName":"core"},{"name":"azure-arm-privatetrafficmanager","safeName":"arm"}]' `
+                -AzsdkExePath 'Invoke-AzsdkStub'
+
+            $vars['HasAutoReleaseArtifacts'] | Should -Be 'true'
+            $vars['ReleaseArtifact_core'] | Should -Be 'false'
+            $vars['ReleaseArtifact_arm'] | Should -Be 'true'
+            $payload = @($vars['AutoReleaseArtifactsJson'] | ConvertFrom-Json)
+            $payload.Count | Should -Be 1
+            $payload[0].name | Should -Be 'azure-arm-privatetrafficmanager'
+            $global:AutoReleaseAzsdkCalls.Count | Should -Be 1
+            $global:AutoReleaseAzsdkCalls[0] | Should -Contain '@azure/arm-privatetrafficmanager'
+        }
+
+        It "still excludes validation-only packages even with direct changes" {
+            $global:AutoReleaseStubChangedPackages[0].IncludedForValidation = $true
+            $global:AutoReleaseStubFiles = @(
+                [pscustomobject]@{ filename = 'sdk/core/abort-controller/src/index.ts'; status = 'modified' }
+            )
+
+            $vars = Invoke-ResolveScript -Artifacts '[{"name":"azure-abort-controller","safeName":"core"}]' `
+                -AzsdkExePath 'Invoke-AzsdkStub'
+
+            $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
+            $vars['ReleaseArtifact_core'] | Should -Be 'false'
+            $global:AutoReleaseAzsdkCalls.Count | Should -Be 0
+        }
+
+        It "fails closed for a candidate without a package directory" {
+            $global:AutoReleaseStubChangedPackages[0].DirectoryPath = ''
+
+            $vars = Invoke-ResolveScript -Artifacts '[{"name":"azure-abort-controller","safeName":"core"}]' `
+                -AzsdkExePath 'Invoke-AzsdkStub'
+
+            $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
+            $vars['ReleaseArtifact_core'] | Should -Be 'false'
+            $global:AutoReleaseAzsdkCalls.Count | Should -Be 0
+        }
+    }
+
     Context "for group-scoped artifacts (e.g. Java)" {
         BeforeEach {
             $global:AutoReleaseStubRelease = [pscustomobject]@{ PullRequestNumber = 200; IsEligible = $true; SkipReason = ''; PullRequest = [pscustomobject]@{ number = 200 } }
@@ -265,7 +441,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
         It "matches when the package group and name match the artifact groupId and name" {
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'azure-storage-blob'; ArtifactName = 'azure-storage-blob'; Group = 'com.azure'; IncludedForValidation = $false }
+                [pscustomobject]@{ Name = 'azure-storage-blob'; ArtifactName = 'azure-storage-blob'; DirectoryPath = 'sdk/test/package'; Group = 'com.azure'; IncludedForValidation = $false }
             )
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"azure-storage-blob","safeName":"azurestorageblob","groupId":"com.azure"}]'
@@ -279,7 +455,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
         It "does not match when the package belongs to a different group" {
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'azure-storage-blob'; ArtifactName = 'azure-storage-blob'; Group = 'com.other'; IncludedForValidation = $false }
+                [pscustomobject]@{ Name = 'azure-storage-blob'; ArtifactName = 'azure-storage-blob'; DirectoryPath = 'sdk/test/package'; Group = 'com.other'; IncludedForValidation = $false }
             )
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"azure-storage-blob","safeName":"azurestorageblob","groupId":"com.azure"}]'
@@ -292,7 +468,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
     Context "pull request link logging" {
         BeforeEach {
             $global:AutoReleaseStubChangedPackages = @(
-                [pscustomobject]@{ Name = 'Pkg'; ArtifactName = 'Pkg'; Group = $null; IncludedForValidation = $false }
+                [pscustomobject]@{ Name = 'Pkg'; ArtifactName = 'Pkg'; DirectoryPath = 'sdk/test/package'; Group = $null; IncludedForValidation = $false }
             )
         }
 

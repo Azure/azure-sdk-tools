@@ -32,6 +32,13 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
         public string? Resolution { get; set; }
 
         /// <summary>
+        /// Verified TypeSpec source code responsible for the breaking change, if available.
+        /// This is causal evidence, not a proposed mitigation.
+        /// </summary>
+        [JsonPropertyName("typespecCode")]
+        public string? TypespecCode { get; set; }
+
+        /// <summary>
         /// The mitigation route (generator, client customization, or manual), not the fix instructions.
         /// Client customization includes TypeSpec client customization and handwritten SDK custom
         /// code, never generated code.

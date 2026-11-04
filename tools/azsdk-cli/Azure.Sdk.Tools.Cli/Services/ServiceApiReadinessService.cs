@@ -378,12 +378,6 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 result.Projects.Any(project => project.ReadinessStatus == ServiceApiReadinessResponse.Inconclusive) ? ServiceApiReadinessResponse.Inconclusive :
                 result.Projects.All(project => project.ReadinessStatus == ServiceApiReadinessResponse.Passed) ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected;
             result.Detail = "API versions were read from SDK metadata files at the checked PR head. Provider metadata is evidence, not release approval or proof of regional deployment.";
-            var current = await ReadGitHubAsync(prPath, token, ct);
-            if (Text(current?["head"]?["sha"]) != result.HeadSha || Text(current?["state"]) != "open")
-            {
-                result.ReadinessStatus = ServiceApiReadinessResponse.Inconclusive;
-                result.Detail = "The SDK PR changed during the check; run it against its current head.";
-            }
             if (result.ReadinessStatus == ServiceApiReadinessResponse.Error)
             {
                 result.ResponseError = "A platform or application failure prevented the readiness check.";

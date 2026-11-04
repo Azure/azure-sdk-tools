@@ -100,6 +100,7 @@ public class ServiceApiReadinessServiceTests
             Assert.That(response.Projects.Single().Source.ApiVersion, Is.EqualTo(Version));
             Assert.That(response.Projects.Single().Source.CommitSha, Is.EqualTo(SpecCommit));
             Assert.That(response.Projects.Single().Matches.Single().Regions, Is.EqualTo(new[] { "East US" }));
+            Assert.That(_pullRequestReads, Is.EqualTo(1));
             Assert.That(_requests.All(request => request.Method == HttpMethod.Get), Is.True);
             Assert.That(_requests.Where(request => request.Uri.Host == "api.github.com").All(request => request.Token == "github-test-token"), Is.True);
             Assert.That(_requests.Where(request => request.Uri.Host == "management.azure.com").All(request => request.Token == "azure-test-token"), Is.True);
@@ -377,12 +378,13 @@ public class ServiceApiReadinessServiceTests
     }
 
     [Test]
-    public async Task HeadMovementDuringCheckRejectsAnOtherwisePassingResult()
+    public async Task ReturnsCapturedHeadEvidenceWithoutRefetchingCurrentPr()
     {
         _changeHead = true;
         var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
-        Assert.That(response.Detail, Does.Contain("changed during"));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.HeadSha, Is.EqualTo(Head));
+        Assert.That(_pullRequestReads, Is.EqualTo(1));
         Assert.That(response.Projects.Single().ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
     }
 

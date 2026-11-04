@@ -1,7 +1,7 @@
 # Service API-Version Readiness
 
-Status: Draft implementation contract; review and a CLI release are required
-before the automation integration is enabled.
+Status: Draft CLI implementation contract; review and a CLI release are required
+before consumers use the command.
 
 ## Purpose and Ownership
 
@@ -11,10 +11,9 @@ exact version used to generate the SDK. It is not release approval, a health
 check, or proof that every operation works in every region. Data-plane SDKs are
 not applicable.
 
-The public Tools CLI owns metadata resolution, pinned-spec mapping, Azure access,
-and the result. The automation worker owns events, comments, labels, and stale
-results. Ingress does not run the check; topology, provisioning, and rollback
-remain unchanged.
+The CLI owns metadata resolution, pinned-spec mapping, Azure access, and the
+result for the captured SDK PR head. It does not publish comments, change labels,
+or approve a release.
 
 ## Command and Inputs
 
@@ -23,9 +22,10 @@ azsdk pkg check-api-version --owner Azure --repo azure-sdk-for-java --pr 123 --o
 ```
 
 Inputs are owner, one of the five SDK repository names below, and a positive SDK
-PR number. The command reads the head SHA from the PR and verifies it again before
-returning; callers do not supply a SHA. The worker compares the result's SHA with
-its current event/head state before publishing. There is no MCP entry point.
+PR number. The command reads the head SHA from the PR once and returns evidence
+for that SHA; callers do not supply a SHA. Callers that publish results must
+compare the returned SHA with the current PR head immediately before writing.
+There is no MCP entry point.
 A spec PR is not an SDK PR: use the spec commit and project recorded in SDK files.
 There is no version override, arbitrary endpoint, or mutation option. Local-path
 validation is deferred.
@@ -33,14 +33,13 @@ validation is deferred.
 ## Authentication
 
 Reuse the CLI resolver in this order: `GITHUB_TOKEN`, legacy
-`GITHUB_PERSONAL_ACCESS_TOKEN`, then `gh auth token`. The worker passes its
-short-lived App installation token only through the child's `GITHUB_TOKEN`,
-never arguments or logs. A rejected supplied token does not trigger a fallback
+`GITHUB_PERSONAL_ACCESS_TOKEN`, then `gh auth token`. Callers pass tokens only
+through the child's `GITHUB_TOKEN`, never arguments or logs. A rejected supplied token does not trigger a fallback
 to another identity. Local users can use their existing `gh auth` login.
 
 The 40-second evidence deadline includes token discovery. Cancellation prevents
 or stops `gh`; process output logging is off, and failures exclude stdout/stderr.
-ARM uses separate developer credentials or the worker's configured managed
+ARM uses separate developer credentials or a configured managed
 identity through the Azure credential service. Tokens stay on their fixed API
 hosts, redirects are rejected, and no identities or role assignments are created.
 
@@ -59,7 +58,6 @@ hosts, redirects are rejected, and no identities or role assignments are created
   This metadata API version is not the service API version being checked.
 6. Require at least one exact-version match per affected management project.
   Every affected project must pass for an overall Passed.
-7. Re-read the PR head and state. A changed or closed PR cannot pass.
 
 ### Expected Evidence by Language
 
@@ -122,34 +120,12 @@ health guarantees.
 Exit zero means Passed, Not detected, or Inconclusive; exit one means Error.
 Always read `status`. Treat an unusable or unknown contract as Error.
 
-## Worker and Comment Contract
+## Testing and Availability
 
-- Adding `review-approved` requests a check; data-plane results are skipped.
-- The worker action has a 60-second timeout override. Readiness work is bounded
-  to 45 seconds, leaving time to publish a safe result. The CLI bounds its own
-  data/ARM work to 40 seconds and honors cancellation.
-- Only a valid Passed result for the current open, approved head may add
-  `service-api-version-check-passed`. Other outcomes appear in the comment only;
-  no failure, unknown, or error label is added. An old passed label is removed.
-- A new commit or removal of `review-approved` clears stale passing state
-  without automatically re-running the check. Description edits cannot change
-  the authoritative checked version.
-- Update one comment belonging to the configured App. Show status, checked SDK
-  SHA, exact version, pinned spec commit, matched types/regions, and missing
-  evidence or a safe error summary. Do not expose credentials or raw failures.
-- Concurrent or delayed deliveries must not publish an older passing result
-  over a newer head or later non-passing result. Human comments are untouched.
+Unit tests cover language layouts, statuses, credentials, limits, mapping,
+cancellation, captured-head evidence, and safe errors. Verify live CLI results
+separately; mocks do not prove hosted identity, installation, or Azure access.
 
-## Testing and Rollout
-
-The CLI and automation PRs are independently reviewable. Unit tests cover the
-language layouts, statuses, credentials, limits, mapping, cancellation, stale
-heads, and safe errors. Automation tests cover the process contract, comments,
-labels, timeout, approval removal, and overlapping deliveries. Verify live CLI
-results and worker publication separately; mocks do not prove hosted identity,
-installation, or Azure access.
-
-Install a CLI release containing the command or a validated trusted artifact
-before enabling the worker integration. Merged source is not an installed CLI.
-These PRs do not merge SDKs, publish packages, deploy infrastructure, or change
-Azure permissions or hosted allowlists.
+Use a CLI release containing the command or a validated trusted artifact.
+Merged source is not an installed CLI. The command does not merge SDKs, publish
+packages, deploy infrastructure, or change Azure permissions or hosted allowlists.

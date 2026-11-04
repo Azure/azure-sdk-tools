@@ -1,5 +1,9 @@
 # Release
 
+## 2026-11-02 - 0.9.10
+
+- Added optional `typespecEmitter` to the `generateInput.json` contract, supplied through `--typespec-emitter` or programmatic workflow options. Existing behavior is preserved when omitted.
+
 ## 2026-10-26 - 0.9.9
 
 - Fixed YAML quoting and escaping of SDK breaking-change suppression suggestions, preserving exact message text when copied into `sdk-suppressions.yaml`.

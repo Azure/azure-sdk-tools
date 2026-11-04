@@ -213,7 +213,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<ProductType> productTypeOpt = new("--product-type")
         {
-            Description = "Product type. Allowed values: Offering, Feature, Sku. Used when the product type cannot be resolved from a triage work item.",
+            Description = "Product type. Allowed values: Offering, Feature, Sku. Overrides the type resolved from a previous release plan or triage work item.",
             Required = false,
             DefaultValueFactory = _ => ProductType.Unknown,
         };
@@ -799,13 +799,45 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return pullRequests;
         }
 
+        private string ResolveProductType(string productTreeId, ProductType productType, string previousProductType, ProductInfo? triageProductInfo)
+        {
+            var resolvedType = productType;
+            var source = "explicit productType parameter";
+            if (resolvedType == ProductType.Unknown)
+            {
+                resolvedType = ProductTypeExtensions.FromAdoFieldValue(previousProductType);
+                source = "saved or previous release plan";
+            }
+            if (resolvedType == ProductType.Unknown)
+            {
+                resolvedType = ProductTypeExtensions.FromAdoFieldValue(triageProductInfo?.ProductType);
+                source = "triage work item";
+            }
+            if (resolvedType != ProductType.Unknown)
+            {
+                logger.LogInformation("Resolved product type {ProductType} for product ID {ProductTreeId} from {Source}.", resolvedType, productTreeId, source);
+            }
+            return resolvedType.ToAdoFieldValue();
+        }
+
+        private ReleasePlanResponse MissingProductTypeResponse(string productTreeId)
+        {
+            logger.LogWarning("Product type could not be determined for product ID {ProductTreeId}. Requesting product type from user.", productTreeId);
+            return new ReleasePlanResponse
+            {
+                ResponseError = $"Product type could not be determined for product ID '{productTreeId}'. Please provide the product type before saving the release plan.",
+                NextSteps = ["Ask the user to provide the product type. Allowed values are: Offering, Feature, Sku. Then re-run the update release plan command/tool with productType (CLI: --product-type)."]
+            };
+        }
+
         /// <summary>
         /// Updates an existing release plan with new details using its exact Azure DevOps work item ID.
         /// Runs the @azure-tools/typespec-metadata emitter to resolve package names and updates SDK details.
         /// </summary>
         [McpServerTool(Name = UpdateReleasePlanToolName), Description("Update an existing release plan. Updates spec PR URL, TypeSpec project path, SDK release type, and optionally service/product IDs. " +
-            "When a product ID is provided, product name, product lifecycle and product type are resolved from a matching triage work item in Azure DevOps. " +
-            "If the product type cannot be determined, provide it via productType (allowed values: Offering, Feature, Sku). " +
+            "Product type precedence is explicit productType, saved/previous release plan for the same product, then matching triage work item. This also applies when the product ID is already saved on the plan. " +
+            "Product type lookups run only when productType is Unknown. When a product ID is provided, product name and product lifecycle are refreshed from a matching triage work item even if productType is explicit. Otherwise triage is queried only if the type is unresolved. " +
+            "If the product type cannot be determined, ask the user for productType (allowed values: Offering, Feature, Sku) and retry; no changes are saved without it. " +
             "Runs TypeSpec metadata emitter to resolve package names and updates SDK details. Requires the exact Azure DevOps work item ID; never selects a plan by spec PR URL or TypeSpec project path. " +
             "Optionally saves a supplied spec commit SHA; omission preserves the saved SHA.")]
         public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", [Description("Required exact Azure DevOps release-plan work item ID.")] int workItemId = 0, string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, CancellationToken ct = default, string specCommitSha = "")
@@ -915,30 +947,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (!string.IsNullOrEmpty(productTreeId))
                 {
                     fieldsToUpdate["Custom.ProductServiceTreeID"] = productTreeId;
+                }
 
-                    // Resolve product details (name, lifecycle, type) from a matching triage work item.
-                    var triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(productTreeId, ct);
-
-                    var resolvedProductType = triageProductInfo?.ProductType ?? string.Empty;
-
-                    // An explicitly provided product type always takes precedence.
-                    if (productType != ProductType.Unknown)
+                var effectiveProductTreeId = string.IsNullOrEmpty(productTreeId) ? releasePlan.ProductTreeId : productTreeId;
+                if (!string.IsNullOrEmpty(effectiveProductTreeId))
+                {
+                    var previousProductType = string.Equals(effectiveProductTreeId, releasePlan.ProductTreeId, StringComparison.OrdinalIgnoreCase)
+                        ? releasePlan.ProductType : string.Empty;
+                    // Get product type from previous release plans.
+                    if (productType == ProductType.Unknown && ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
                     {
-                        resolvedProductType = productType.ToAdoFieldValue();
+                        previousProductType = await devOpsService.GetProductTypeFromPreviousReleasePlansAsync(
+                            effectiveProductTreeId, releasePlan.WorkItemId, releasePlan.IsTestReleasePlan, ct);
                     }
 
-                    // If the product type is still unknown, ask the user to provide it before proceeding.
-                    if (ProductTypeExtensions.FromAdoFieldValue(resolvedProductType) == ProductType.Unknown)
+                    ProductInfo? triageProductInfo = null;
+                    if (!string.IsNullOrEmpty(productTreeId) ||
+                        (productType == ProductType.Unknown && ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown))
                     {
-                        logger.LogInformation("Product type could not be determined for product ID {productTreeId}. Requesting product type from user.", productTreeId);
-                        return new ReleasePlanResponse
-                        {
-                            ResponseError = $"Product type could not be determined for product ID '{productTreeId}'. Please provide the product type to update the release plan.",
-                            NextSteps = ["Ask the user to provide the product type. Allowed values are: Offering, Feature, Sku. Then re-run the update release plan command/tool with the provided product type."]
-                        };
+                        triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(effectiveProductTreeId, ct);
+                    }
+                    var resolvedProductType = ResolveProductType(effectiveProductTreeId, productType, previousProductType, triageProductInfo);
+                    if (string.IsNullOrEmpty(resolvedProductType))
+                    {
+                        return MissingProductTypeResponse(effectiveProductTreeId);
                     }
 
-                    if (triageProductInfo != null)
+                    if (!string.IsNullOrEmpty(productTreeId) && triageProductInfo != null)
                     {
                         if (!string.IsNullOrEmpty(triageProductInfo.ProductName))
                         {
@@ -953,7 +988,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     fieldsToUpdate["Custom.ProductType"] = resolvedProductType;
                 }
 
-                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, releasePlan.Revision, ct);
                 logger.LogInformation("Updated release plan fields for work item {WorkItemId}", releasePlan.WorkItemId);
 
                 // Update spec PR on the API spec child work item only if provided and different from current
@@ -1335,7 +1370,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 // Get service and product id from previous release plan
                 string productName = Path.GetFileName(specProject);
-                string productType = string.Empty;
+                string previousProductType = string.Empty;
                 string productLifecycle = string.Empty;
                 if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
                 {
@@ -1353,7 +1388,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         {
                             productName = productDetails.ProductName;
                         }
-                        productType = productDetails?.ProductType ?? string.Empty;
+                        if (string.Equals(productTreeId, productDetails?.ProductServiceTreeId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            previousProductType = productDetails?.ProductType ?? string.Empty;
+                        }
                         productLifecycle = productDetails?.ProductLifecycle ?? string.Empty;
                     }
 
@@ -1401,8 +1439,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                var resolvedProductType = string.Empty;
+                if (!string.IsNullOrEmpty(productTreeId))
+                {
+                    ProductInfo? triageProductInfo = null;
+                    if (ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
+                    {
+                        previousProductType = await devOpsService.GetProductTypeFromPreviousReleasePlansAsync(
+                            productTreeId, 0, isTestReleasePlan, ct);
+                    }
+                    if (ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
+                    {
+                        triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(productTreeId, ct);
+                    }
+                    resolvedProductType = ResolveProductType(productTreeId, ProductType.Unknown, previousProductType, triageProductInfo);
+                    if (string.IsNullOrEmpty(resolvedProductType))
+                    {
+                        logger.LogWarning("Product type could not be determined for product ID {ProductTreeId}. Creating release plan without product type.", productTreeId);
+                    }
+                }
+
                 List<string> warnings = [];
                 List<string> nextSteps = [];
+                if (!string.IsNullOrEmpty(productTreeId) && string.IsNullOrEmpty(resolvedProductType))
+                {
+                    warnings.Add($"Product type could not be determined for product ID '{productTreeId}'. The release plan was created without a product type.");
+                    nextSteps.Add("Provide the product type when updating the release plan (CLI: --product-type; allowed values: Offering, Feature, Sku).");
+                }
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 
@@ -1452,7 +1515,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ReleasePlanSubmittedByEmail = userEmail,
                     APISpecProjectPath = specProject,
                     ProductName = productDisplayName,
-                    ProductType = productType,
+                    ProductType = resolvedProductType,
                     ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType,
                     SpecAPIVersion = apiVersion,

@@ -72,7 +72,7 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
 
         **Your Tasks:**
         1. Analyze the customization request to understand what changes are needed
-        2. Read the existing client.tsp file and any relevant TypeSpec files (main.tsp, tspconfig.yaml) as needed
+        2. Read the complete existing client.tsp file before making any changes, and read relevant TypeSpec files (main.tsp, tspconfig.yaml) as needed
         3. Apply customizations incrementally to client.tsp only
         4. Compile after each change to verify it works
         5. If a change fails compilation, rollback and try an alternative approach if any. If no alternative approach is possible, explain why the requested change cannot be applied
@@ -85,6 +85,8 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
         return """
         **CRITICAL Requirements:**
         - Only write to the client.tsp file - do not modify main.tsp or other TypeSpec files
+        - Apply only the changes required by the customization request
+        - Preserve all other existing customization code and content unchanged; do not truncate client.tsp or omit unrelated content when using WriteFile
         - Read any files as needed to understand the existing structure
         - Apply changes incrementally, one logical change at a time
         - Compile after each change to verify correctness
@@ -103,7 +105,7 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
     {
         return """
         **Workflow:**
-        1. Read existing client.tsp and relevant files to understand current state
+        1. Read the complete existing client.tsp file before making any changes, and read relevant files to understand current state
         2. Plan the changes needed based on the customization request
         3. Apply each change incrementally:
            a. Modify client.tsp with the change

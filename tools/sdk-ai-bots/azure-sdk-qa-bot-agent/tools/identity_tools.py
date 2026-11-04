@@ -33,11 +33,17 @@ class IdentityTools:
         *,
         usernames: Annotated[
             list[str],
-            "One to ten GitHub usernames to map to Microsoft accounts for Teams "
-            "mentions. Batch all people in one call; do not pass organizations/teams.",
+            "One to ten evidence-backed GitHub usernames being directly asked to "
+            "provide help, judgment or take an action. Batch only intended "
+            "participants; do not pass organizations/teams.",
         ],
     ) -> ResolveGitHubUsersResult:
-        """Return verified Teams mention entities; copy their text directly into the answer."""
+        """Resolve people being directly asked to help or act in the reply.
+
+        Do not use for contact recommendations or future reference; keep those
+        names as plain text. For an actual request, use returned mention text
+        verbatim. Resolving an identity alone does not require mentioning it.
+        """
         if not 1 <= len(usernames) <= 10:
             raise ValueError("Provide between one and ten GitHub usernames.")
         logins = list(dict.fromkeys(normalize_github_username(name) for name in usernames))

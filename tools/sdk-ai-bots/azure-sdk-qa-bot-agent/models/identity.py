@@ -2,7 +2,22 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+import re
+from typing import Annotated
+
+from pydantic import AfterValidator, BaseModel, Field
+
+_LOGIN_RE = re.compile(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
+
+
+def normalize_github_username(value: str) -> str:
+    login = value.strip().removeprefix("@").lower()
+    if len(login) > 39 or not _LOGIN_RE.fullmatch(login):
+        raise ValueError("Each username must be a valid individual GitHub login.")
+    return login
+
+
+GitHubUsername = Annotated[str, AfterValidator(normalize_github_username)]
 
 
 class TeamsUser(BaseModel):

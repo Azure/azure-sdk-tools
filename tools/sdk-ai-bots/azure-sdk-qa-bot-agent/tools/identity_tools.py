@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import re
 from html import escape
 from typing import Annotated
 from uuid import UUID
@@ -16,6 +15,7 @@ from models.identity import (
     ResolveGitHubUsersResult,
     TeamsMention,
     TeamsUser,
+    normalize_github_username,
 )
 from tools import tool
 from utils.azure_credential import get_credential
@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 _PORTAL_SCOPE = "api://2efaf292-00a0-426c-ba7d-f5d2b214b8fc/.default"
 _LINKS_URL = "https://repos.opensource.microsoft.com/api/people/links/github"
-_LOGIN_RE = re.compile(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
 
 
 class IdentityTools:
@@ -41,11 +40,7 @@ class IdentityTools:
         """Return verified Teams mention entities; copy their text directly into the answer."""
         if not 1 <= len(usernames) <= 10:
             raise ValueError("Provide between one and ten GitHub usernames.")
-        logins = list(dict.fromkeys(
-            name.strip().removeprefix("@").lower() for name in usernames
-        ))
-        if any(len(name) > 39 or not _LOGIN_RE.fullmatch(name) for name in logins):
-            raise ValueError("Each username must be a valid individual GitHub login.")
+        logins = list(dict.fromkeys(normalize_github_username(name) for name in usernames))
 
         try:
             token = await get_credential().get_token(_PORTAL_SCOPE)

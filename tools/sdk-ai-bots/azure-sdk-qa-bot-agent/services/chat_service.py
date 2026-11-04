@@ -11,6 +11,7 @@ import re
 from urllib.parse import urlparse
 
 from config.app_config import Settings, get as cfg
+from config.support_contact import get_support_catalog
 from config.tenant_config import (
     TenantConfig,
     get_tenant_config,
@@ -28,14 +29,7 @@ from models.chat import (
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from models.identity import ResolveGitHubUsersResult
-from models.guided_next_step import (
-    GUIDED_SCHEMA_VERSION,
-    GeneratedGuidedAnswer,
-    SupportContactCatalog,
-    validate_guided_answer,
-)
 from services.conversation_service import ConversationService
-from services.support_contact_service import SupportContactService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
     build_skill_content,
@@ -106,7 +100,6 @@ class ChatService:
     ) -> None:
         self._conversation_service = ConversationService()
         self._settings = settings or cfg
-        self._support_contact_service = SupportContactService(settings=self._settings)
         self._project_client = project_client
         self._openai_client = openai_client
         self._stateless_session_ids: dict[tuple[str, str], str] = {}
@@ -143,7 +136,7 @@ class ChatService:
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
-        support_catalog = await self._support_contact_service.get_catalog()
+        support_catalog = get_support_catalog()
         project_client = self._get_project_client()
         tenant_config = get_tenant_config(req.tenant_id)
         agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
@@ -317,9 +310,7 @@ class ChatService:
                 agent_conversation_id,
             )
 
-        chat_response = self._postprocess(
-            req, response, agent_conversation_id, support_catalog
-        )
+        chat_response = self._postprocess(req, response, agent_conversation_id)
         chat_response.agent_name = agent.name
         chat_response.trace_id = trace_id
         BackgroundTaskTracker.instance().track(
@@ -634,7 +625,6 @@ class ChatService:
         req: ChatRequest,
         response: OpenAIResponse,
         agent_conversation_id: str | None,
-        support_catalog: SupportContactCatalog | None = None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
@@ -645,33 +635,6 @@ class ChatService:
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
-        guided = False
-        next_step = None
-        try:
-            payload = json.loads(output_text)
-        except json.JSONDecodeError:
-            payload = None
-            if re.search(r'"schema_version"\s*:\s*"guided-next-step-', output_text):
-                logger.error("Malformed guided answer: response_id=%s", response.id)
-                raise
-        if isinstance(payload, dict) and str(payload.get("schema_version", "")).startswith("guided-next-step-"):
-            try:
-                generated = GeneratedGuidedAnswer.model_validate(payload)
-                validate_guided_answer(generated, support_catalog)
-            except ValueError:
-                logger.error("Invalid guided answer: response_id=%s", response.id)
-                raise
-            guided = support_catalog is not None
-            output_text = generated.answer
-            next_step = generated.next_step
-            logger.info(
-                "Guided preview: response_id=%s schema=%s catalog_revision=%s next_step=%s",
-                response.id, GUIDED_SCHEMA_VERSION,
-                support_catalog.revision if support_catalog is not None else None,
-                next_step.model_dump_json() if next_step is not None else None,
-            )
-        elif support_catalog is not None:
-            logger.warning("Guided routing unavailable from older agent: response_id=%s", response.id)
 
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)
@@ -700,14 +663,12 @@ class ChatService:
             references=references if references else None,
             full_context=full_context,
             agent_conversation_id=agent_conversation_id,
-            next_step=next_step,
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
         identities = tool_results.get("resolve_github_users")
         if (
             req.conversation_type == ConversationType.teams_channel
-            and not guided
             and isinstance(identities, ResolveGitHubUsersResult)
         ):
             resp.mentions = [

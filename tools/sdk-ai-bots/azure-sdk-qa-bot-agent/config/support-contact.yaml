@@ -1,0 +1,20 @@
+# Add verified support-area owners here using individual GitHub usernames.
+# An empty list disables catalog referrals, not normal replies or clarification.
+support_areas:
+  - key: sdk_python
+    description: >-
+      Python mgmt. SDK breaking-change review and approval.
+      Python SDK pipeline error.
+    github_username: msyyc
+
+  - key: sdk_javascript
+    description: >-
+      JavaScript mgmt. SDK breaking-change review and approval.
+      JavaScript SDK pipeline error.
+    github_username: JialinHuang803
+
+  - key: sdk_go
+    description: >-
+      Go mgmt. SDK breaking-change review and approval.
+      Go SDK pipeline error.
+    github_username: JiaqiZhang-Dev

@@ -25,6 +25,39 @@ public class PackageInfoHelperTests
     [TearDown]
     public void TearDown() => tempDirectory?.Dispose();
 
+    [TestCase("{\"apiVersion\":\" 2026-04-01 \"}", "")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\"}}", "Microsoft.Example")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\"2026-04-01\"]}}", "Microsoft.Example")]
+    public void ReadApiVersionsByProviderReturnsUnambiguousValuesWithoutChangingMetadata(string json, string provider)
+    {
+        var metadata = JsonNode.Parse(json)!.AsObject();
+        var before = metadata.ToJsonString();
+        var versions = PackageInfoHelper.ReadApiVersionsByProvider(metadata);
+        Assert.That(versions, Has.Count.EqualTo(1));
+        Assert.That(versions[provider], Is.EqualTo("2026-04-01"));
+        Assert.That(metadata.ToJsonString(), Is.EqualTo(before));
+    }
+
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\"2026-03-01\"]}}")]
+    [TestCase("{\"apiVersion\":\"2026-03-01\",\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\"}}")]
+    [TestCase("{\"apiVersion\":[],\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\"}}")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[]}}")]
+    public void ReadApiVersionsByProviderRejectsConflictingEvidence(string json)
+    {
+        var metadata = JsonNode.Parse(json)!.AsObject();
+        Assert.Throws<InvalidOperationException>(() => PackageInfoHelper.ReadApiVersionsByProvider(metadata));
+    }
+
+    [Test]
+    public void ReadApiVersionsByProviderKeepsDifferentProvidersSeparate()
+    {
+        var metadata = JsonNode.Parse("{\"apiVersions\":{\"Microsoft.First\":\"2026-04-01\",\"Microsoft.Second\":\"2026-03-01\"}}")!.AsObject();
+        var versions = PackageInfoHelper.ReadApiVersionsByProvider(metadata);
+        Assert.That(versions, Has.Count.EqualTo(2));
+        Assert.That(versions["Microsoft.First"], Is.EqualTo("2026-04-01"));
+        Assert.That(versions["Microsoft.Second"], Is.EqualTo("2026-03-01"));
+    }
+
     [Test]
     public void FilterByArtifacts_ReturnsFilteredMatches()
     {

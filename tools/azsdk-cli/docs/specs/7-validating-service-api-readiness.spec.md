@@ -60,6 +60,24 @@ hosts, redirects are rejected, and no identities or role assignments are created
 6. Require at least one exact-version match per affected management project.
   Every affected project must pass for an overall Passed.
 
+### Implementation Structure
+
+`CheckAsync` orchestrates PR validation, captured-head package discovery,
+generation evidence, project evaluation, and result aggregation.
+
+- `GetChangedPackagesAsync` lists changed files. `GetPackagePath` applies the
+  supported SDK layouts below, ignoring files outside SDK package directories.
+- Generation loading has separate steps for package existence, the recorded
+  TypeSpec location, metadata file paths, and consistent package sources.
+- `SdkLanguageHelpers.GetLanguageForRepo` maps the repository to its language.
+  `GeneratedSdkMetadataHelper` owns the metadata file layouts, shared by local
+  discovery and remote reads. `PackageInfoHelper` parses API versions; readiness
+  uses `ReadApiVersionsByProvider` for one unambiguous version per provider,
+  without changing bulk discovery.
+- Spec reading separates bounded Swagger discovery from resource-type parsing.
+  Project evaluation reuses provider lookups, compares versions, and aggregates
+  the existing result contract.
+
 ### Expected Evidence by Language
 
 The same rule applies to all five languages. SDK package versions and preview
@@ -84,8 +102,18 @@ metadata. Validate every matching Java file, not just the package-named file.
 
 Include deletion-only packages and rename source packages unless their directory
 is absent at the checked head. No surviving affected package means Inconclusive.
-Recognize `resource-manager` and `.Management` paths before using labels as a
-fallback for the API plane.
+Validate the recorded repository, commit, and directory before classification.
+Invalid location metadata stays unknown. Classify the API plane from the
+recorded project directory: `resource-manager`
+and `.Management` identify management projects; `data-plane` identifies data
+projects. Missing or unknown project metadata is Inconclusive. GitHub labels do
+not affect classification and conflicting labels cannot override the metadata.
+Confirmed data-plane projects stop before API-version metadata or ARM reads.
+
+The recorded location is a directory, not a filename inferred from its suffix.
+Keep the path inside the specification tree and read its project files at the
+recorded commit; do not reject a valid directory just for ending in `.json` or
+another file-like suffix.
 
 ### What Demonstrates API Readiness
 

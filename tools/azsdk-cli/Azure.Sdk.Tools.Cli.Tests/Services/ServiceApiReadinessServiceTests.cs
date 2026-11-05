@@ -110,6 +110,29 @@ public class ServiceApiReadinessServiceTests
     }
 
     [Test]
+    public async Task PackageChangelogOnlyChangeStillIdentifiesItsPackage()
+    {
+        _changedFiles.Clear();
+        _changedFiles.Add($"{Package}/CHANGELOG.md");
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.Projects.Single().Source.PackagePath, Is.EqualTo(Package));
+    }
+
+    [TestCase("CHANGELOG.md")]
+    [TestCase("eng/scripts/check.ps1")]
+    [TestCase("sdk/test/example/source.cs")]
+    public async Task FilesOutsideSdkPackagesDoNotProduceReadinessEvidence(string path)
+    {
+        _changedFiles.Clear();
+        _changedFiles.Add(path);
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(response.Projects, Is.Empty);
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
     public async Task ReportsNotDetectedOnlyAfterMappingApplicableResourceTypes()
     {
         _advertisedVersions = ["2025-01-01"];
@@ -251,6 +274,18 @@ public class ServiceApiReadinessServiceTests
         Assert.That(_requests.All(request => request.Uri.Host == "api.github.com"), Is.True);
     }
 
+    [TestCase("invalid-commit", SpecRepository)]
+    [TestCase(SpecCommit, "https://untrusted.example/specs")]
+    public async Task InvalidRecordedLocationCannotClassifyThePrAsDataPlane(string commit, string repository)
+    {
+        SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: specification/example/data-plane/Example\ncommit: {commit}\nrepo: {repository}\n");
+        var response = await CheckAsync();
+        Assert.That(response.Plane, Is.EqualTo("unknown"));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(response.Projects, Is.Empty);
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
     [Test]
     public async Task DataPlaneLocationSkipsArm()
     {
@@ -258,6 +293,7 @@ public class ServiceApiReadinessServiceTests
         var response = await CheckAsync();
         Assert.That(response.Plane, Is.EqualTo("data-plane"));
         Assert.That(ArmRequests(), Is.Empty);
+        Assert.That(_requests.Where(request => request.Uri.AbsolutePath.Contains("/META-INF", StringComparison.Ordinal)), Is.Empty);
     }
 
     [Test]
@@ -289,12 +325,13 @@ public class ServiceApiReadinessServiceTests
     }
 
     [Test]
-    public async Task DataPlaneLabelIsFallbackWhenMetadataIsMissing()
+    public async Task DataPlaneLabelDoesNotReplaceMissingMetadata()
     {
         _labels.Add("data-plane");
         _files.Remove(Key(_repository, Head, $"{Package}/tsp-location.yaml"));
         var response = await CheckAsync();
-        Assert.That(response.Plane, Is.EqualTo("data-plane"));
+        Assert.That(response.Plane, Is.EqualTo("unknown"));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
         Assert.That(ArmRequests(), Is.Empty);
     }
 
@@ -327,12 +364,35 @@ public class ServiceApiReadinessServiceTests
     }
 
     [Test]
-    public async Task ConflictingPlaneLabelsAreInconclusive()
+    public async Task RecordedProjectDirectoryCannotEscapeTheSpecificationTree()
+    {
+        SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: specification/example/../resource-manager/Example\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(response.Projects, Is.Empty);
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
+    public async Task RecordedProjectDirectoryIsNotRejectedByItsFileLikeSuffix()
+    {
+        const string project = "specification/example/resource-manager/project.json";
+        SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: {project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        SetFile(SpecRepository, SpecCommit, $"{project}/main.tsp", "@armProviderNamespace\nnamespace Microsoft.Example;");
+        SetFile(SpecRepository, SpecCommit, $"{project}/tspconfig.yaml", "options:\n  \"@azure-tools/typespec-autorest\":\n    emitter-output-dir: \"{project-root}\"\n    output-file: \"example.json\"\n");
+        SetFile(SpecRepository, SpecCommit, $"{project}/example.json", _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")]);
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+    }
+
+    [Test]
+    public async Task ConflictingPlaneLabelsDoNotOverrideManagementMetadata()
     {
         _labels.AddRange(["data-plane", "resource-manager"]);
         var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
-        Assert.That(ArmRequests(), Is.Empty);
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.Plane, Is.EqualTo("management-plane"));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
     }
 
     [Test]

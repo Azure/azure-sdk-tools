@@ -26,6 +26,17 @@ public class GeneratedSdkMetadataHelperTests
     [TearDown]
     public void TearDown() => _directory.Dispose();
 
+    [TestCase(SdkLanguage.Java, "src/main/resources/META-INF", "*_metadata.json")]
+    [TestCase(SdkLanguage.JavaScript, "", "metadata.json")]
+    [TestCase(SdkLanguage.DotNet, "", "metadata.json")]
+    [TestCase(SdkLanguage.Python, "", "_metadata.json")]
+    [TestCase(SdkLanguage.Go, "testdata", "_metadata.json")]
+    [TestCase(SdkLanguage.Unknown, "", "")]
+    public void MetadataLocationsAreSharedByLocalAndRemoteReaders(SdkLanguage language, string directory, string pattern)
+    {
+        Assert.That(GeneratedSdkMetadataHelper.GetMetadataFileLocation(language), Is.EqualTo((directory, pattern)));
+    }
+
     [TestCase(SdkLanguage.Java, "src/main/resources/META-INF/example_metadata.json")]
     [TestCase(SdkLanguage.JavaScript, "metadata.json")]
     [TestCase(SdkLanguage.Python, "_metadata.json")]

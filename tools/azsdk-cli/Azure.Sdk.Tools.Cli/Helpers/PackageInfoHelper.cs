@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -21,6 +22,91 @@ public interface IPackageInfoHelper
 
 public class PackageInfoHelper(ILogger<PackageInfoHelper> logger, IGitHelper gitHelper) : IPackageInfoHelper
 {
+    private const string ConflictingApiVersions = "Conflicting API versions; no latest-version selection.";
+
+    public static Dictionary<string, string> ReadApiVersionsByProvider(JsonObject metadata)
+    {
+        var normalized = metadata.DeepClone().AsObject();
+        if (normalized["apiVersions"] is JsonObject versionMap)
+        {
+            foreach (var entry in versionMap.ToArray())
+            {
+                if (entry.Value is not JsonArray array)
+                {
+                    continue;
+                }
+                var candidates = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var value in array)
+                {
+                    if (value is not JsonValue scalar || !scalar.TryGetValue<string>(out var text) || string.IsNullOrWhiteSpace(text))
+                    {
+                        throw new InvalidOperationException(ConflictingApiVersions);
+                    }
+                    candidates.Add(text);
+                }
+                if (candidates.Count != 1)
+                {
+                    throw new InvalidOperationException(ConflictingApiVersions);
+                }
+                versionMap[entry.Key] = candidates.Single();
+            }
+        }
+
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var version in ReadApiVersions(JsonSerializer.SerializeToElement(normalized)))
+        {
+            var scalarVersion = metadata["apiVersion"];
+            if (scalarVersion is not null)
+            {
+                if (scalarVersion is not JsonValue scalar || !scalar.TryGetValue<string>(out var text))
+                {
+                    throw new InvalidOperationException(ConflictingApiVersions);
+                }
+                if (text.Trim() != version.Version)
+                {
+                    throw new InvalidOperationException(ConflictingApiVersions);
+                }
+            }
+            result.Add(version.Namespace ?? "", version.Version);
+        }
+        return result;
+    }
+
+    public static HashSet<PackageApiVersion> ReadApiVersions(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            throw new JsonException("Metadata must be a JSON object.");
+        }
+
+        var versions = new HashSet<PackageApiVersion>();
+        if (root.TryGetProperty("apiVersions", out var apiVersions))
+        {
+            if (apiVersions.ValueKind != JsonValueKind.Object)
+            {
+                throw new JsonException("'apiVersions' must be a namespace-to-version object.");
+            }
+            foreach (var property in apiVersions.EnumerateObject())
+            {
+                AddVersion(property.Value, $"apiVersions.{property.Name}", property.Name);
+            }
+        }
+        if (versions.Count == 0 && root.TryGetProperty("apiVersion", out var apiVersion))
+        {
+            AddVersion(apiVersion, "apiVersion");
+        }
+        return versions;
+
+        void AddVersion(JsonElement value, string field, string? namespaceName = null)
+        {
+            if (value.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(value.GetString()))
+            {
+                throw new JsonException($"'{field}' must be a non-empty API version string.");
+            }
+            versions.Add(new PackageApiVersion(value.GetString()!.Trim(), namespaceName));
+        }
+    }
+
     public List<PackageInfo> FilterPackagesByArtifact(List<PackageInfo> packages, string[] artifactList)
     {
         if (artifactList is null)

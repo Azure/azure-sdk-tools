@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import json
 from collections.abc import Awaitable, Callable
+from copy import copy
 
-from agent_framework import FunctionInvocationContext, FunctionMiddleware
+from agent_framework import Content, FunctionInvocationContext, FunctionMiddleware
 
 from tools import TOOL_REGISTRY
 
@@ -18,9 +19,7 @@ _SPOTLIGHT_OPEN = "<untrusted_tool_output>"
 _SPOTLIGHT_CLOSE = "</untrusted_tool_output>"
 _TRUSTED_HARNESS_TOOLS = {
     "file_memory_delete",
-    "file_memory_grep",
     "file_memory_ls",
-    "file_memory_read",
     "file_memory_replace",
     "file_memory_replace_lines",
     "file_memory_write",
@@ -59,3 +58,13 @@ class ToolOutputSecurityMiddleware(FunctionMiddleware):
         result = context.result
         if isinstance(result, str) and result:
             context.result = spotlight(result)
+        elif isinstance(result, list):
+            protected_result = []
+            for item in result:
+                if isinstance(item, Content) and item.type == "text" and item.text:
+                    protected_item = copy(item)
+                    protected_item.text = spotlight(item.text)
+                    protected_result.append(protected_item)
+                else:
+                    protected_result.append(item)
+            context.result = protected_result

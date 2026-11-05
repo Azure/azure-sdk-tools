@@ -25,12 +25,12 @@ from agent_framework import (
 )
 from agent_framework.foundry import FoundryChatClient
 from agent_framework.openai import OpenAIChatOptions
-from agent_framework_tools.shell import LocalShellTool  # pyright: ignore[reportMissingImports]
 from azure.ai.projects.aio import AIProjectClient
 from azure.core.exceptions import ResourceNotFoundError
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
 from config.app_config import Settings, get as cfg
+from middleware.tool_output_storage import ToolOutputStorageMiddleware
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
@@ -105,8 +105,7 @@ def create_hosted_chat_agent(
     before_compaction = ToolResultCompactionStrategy(keep_last_tool_call_groups=2)
     after_compaction = ToolResultCompactionStrategy(keep_last_tool_call_groups=1)
     resolved_options = cast(OpenAIChatOptions, dict(default_options))
-    workspace = Path.cwd() / "agent-file-access"
-    workspace.mkdir(exist_ok=True)
+    memory_store = FileSystemAgentFileStore(Path.cwd() / "agent-file-memory")
 
     return create_harness_agent(  # pyright: ignore[reportCallIssue]
         client,
@@ -118,19 +117,10 @@ def create_hosted_chat_agent(
         before_compaction_strategy=before_compaction,
         after_compaction_strategy=after_compaction,
         mode_provider=AgentModeProvider(default_mode="execute"),
-        file_access_store=FileSystemAgentFileStore(workspace),  # pyright: ignore[reportCallIssue]
-        file_access_disable_readonly_tool_approval=True,  # pyright: ignore[reportCallIssue]
-        file_access_disable_write_tool_approval=True,  # pyright: ignore[reportCallIssue]
-        shell_executor=LocalShellTool(  # pyright: ignore[reportCallIssue]
-            mode="stateless",
-            workdir=workspace,
-            confine_workdir=True,
-            approval_mode="never_require",
-            acknowledge_unsafe=True,
-        ),
+        file_memory_store=memory_store,
         skills_provider=skills_provider,
         context_providers=[memory_provider],
-        middleware=middleware,
+        middleware=[*middleware, ToolOutputStorageMiddleware(memory_store)],
         default_options=resolved_options,
     )
 

@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 import httpx
+import httpx2
 from pydantic import BaseModel
 from azure.keyvault.keys.crypto.aio import CryptographyClient
 from azure.keyvault.keys.crypto import SignatureAlgorithm
@@ -492,13 +493,13 @@ async def create_github_mcp_tool(
     # initial MCP handshake (``initialize``, ``tools/list``) does NOT go
     # through ``call_tool`` and would otherwise lack the Authorization
     # header, causing a 401.
-    async def _inject_auth(request: httpx.Request) -> None:  # noqa: RUF029
+    async def _inject_auth(request: httpx2.Request) -> None:  # noqa: RUF029
         for key, value in (await token_mgr.get_headers()).items():
             request.headers[key] = value
 
-    http_client = httpx.AsyncClient(
+    http_client = httpx2.AsyncClient(
         follow_redirects=True,
-        timeout=httpx.Timeout(
+        timeout=httpx2.Timeout(
             _MCP_REQUEST_TIMEOUT_SECS, read=_MCP_REQUEST_TIMEOUT_SECS
         ),
         event_hooks={"request": [_inject_auth]},

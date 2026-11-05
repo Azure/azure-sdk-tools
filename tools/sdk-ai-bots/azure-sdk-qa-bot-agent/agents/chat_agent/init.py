@@ -51,7 +51,6 @@ from utils.azure_memory_store import (
 )
 from utils.memory_context_provider import MemoryContextProvider
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
-from middleware.tool_output_storage import ToolOutputStorageMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +89,9 @@ async def main() -> None:
     )
     agent_dir = Path(__file__).parent
     harness_instructions = _load_instructions(
-        Path(_project_root) / "prompts" / "harness_instruction.md"
+        Path(app_config.__file__).resolve().parent.parent
+        / "prompts"
+        / "harness_instruction.md"
     )
     instructions = _load_instructions(agent_dir / "instruction.md")
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
@@ -176,7 +177,6 @@ async def main() -> None:
         memory_provider=memory_provider,
         middleware=[
             ToolOutputSecurityMiddleware(),
-            ToolOutputStorageMiddleware(),
         ],
         default_options={
             "reasoning": {"effort": reasoning_effort},

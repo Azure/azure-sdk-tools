@@ -6,6 +6,7 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from agent_framework import Content
 
 from tools import TOOL_REGISTRY
 from middleware.tool_output_security import (
@@ -71,7 +72,7 @@ async def test_native_tool_result_is_not_spotlighted():
 @pytest.mark.parametrize(
     "tool_name",
     [
-        "file_memory_read",
+        "file_memory_ls",
         "mode_get",
         "todos_get_all",
     ],
@@ -83,3 +84,31 @@ async def test_harness_tool_result_is_not_spotlighted(tool_name: str):
     await middleware.process(context, _noop_next)
 
     assert context.result == '{"value": "trusted"}'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tool_name", ["file_memory_read", "file_memory_grep"])
+async def test_file_memory_content_is_spotlighted(tool_name: str):
+    middleware = ToolOutputSecurityMiddleware()
+    context = _make_context(tool_name, "external data")
+
+    await middleware.process(context, _noop_next)
+
+    assert context.result.startswith(_SPOTLIGHT_OPEN)
+    assert context.result.endswith(_SPOTLIGHT_CLOSE)
+
+
+@pytest.mark.asyncio
+async def test_mixed_content_text_is_spotlighted():
+    middleware = ToolOutputSecurityMiddleware()
+    image = Content(type="uri", uri="https://example.test/image.png", media_type="image/png")
+    context = _make_context(
+        "github-issue_read",
+        [Content.from_text("external data"), image],
+    )
+
+    await middleware.process(context, _noop_next)
+
+    assert context.result[0].text.startswith(_SPOTLIGHT_OPEN)
+    assert context.result[0].text.endswith(_SPOTLIGHT_CLOSE)
+    assert context.result[1] is image

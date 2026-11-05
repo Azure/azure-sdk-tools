@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from agent_framework import AgentSession, Content
+from agent_framework import AgentSession, Content, InMemoryAgentFileStore
 
 from tools import TOOL_REGISTRY
 from middleware.tool_output_security import (
@@ -30,7 +29,7 @@ async def _noop_next() -> None:
 
 @pytest.mark.asyncio
 async def test_content_result_is_normalized_to_text():
-    middleware = ToolOutputStorageMiddleware()
+    middleware = ToolOutputStorageMiddleware(InMemoryAgentFileStore())
     context = _make_context("github-issue_read", [Content.from_text("result")])
 
     await middleware.process(context, _noop_next)
@@ -39,8 +38,9 @@ async def test_content_result_is_normalized_to_text():
 
 
 @pytest.mark.asyncio
-async def test_large_result_is_saved_and_replaced(tmp_path: Path):
-    middleware = ToolOutputStorageMiddleware(tmp_path / "tool-results")
+async def test_large_result_is_saved_and_replaced():
+    store = InMemoryAgentFileStore()
+    middleware = ToolOutputStorageMiddleware(store)
     content = "external data\n" * 2_000
     context = _make_context(
         "github-pull_request_read",
@@ -50,17 +50,17 @@ async def test_large_result_is_saved_and_replaced(tmp_path: Path):
 
     await middleware.process(context, _noop_next)
 
-    saved_files = list((tmp_path / "tool-results" / "test-session").glob("*.txt"))
+    saved_files = await store.list_children("test-session")
     assert len(saved_files) == 1
-    assert saved_files[0].read_text(encoding="utf-8") == content
-    assert "Large tool result stored at `tool-results/test-session/" in context.result
+    assert await store.read(f"test-session/{saved_files[0].name}") == content
+    assert "Large tool result stored in session memory as `tool-result-" in context.result
     assert f"({len(content):,} characters)" in context.result
     assert content not in context.result
 
 
 @pytest.mark.asyncio
 async def test_native_tool_result_is_unchanged():
-    middleware = ToolOutputStorageMiddleware()
+    middleware = ToolOutputStorageMiddleware(InMemoryAgentFileStore())
     tool_name = "_unit_test_native_tool"
     TOOL_REGISTRY[tool_name] = object
     try:
@@ -73,9 +73,9 @@ async def test_native_tool_result_is_unchanged():
 
 
 @pytest.mark.asyncio
-async def test_offloaded_result_is_spotlighted(tmp_path: Path):
+async def test_offloaded_result_is_spotlighted():
     security = ToolOutputSecurityMiddleware()
-    offload = ToolOutputStorageMiddleware(tmp_path / "tool-results")
+    offload = ToolOutputStorageMiddleware(InMemoryAgentFileStore())
     context = _make_context(
         "github-pull_request_read",
         [Content.from_text("external data\n" * 2_000)],
@@ -88,4 +88,28 @@ async def test_offloaded_result_is_spotlighted(tmp_path: Path):
     )
 
     assert context.result.startswith(_SPOTLIGHT_OPEN)
-    assert "Large tool result stored at" in context.result
+    assert "Large tool result stored in session memory" in context.result
+
+
+@pytest.mark.asyncio
+async def test_large_results_are_isolated_by_session():
+    store = InMemoryAgentFileStore()
+    middleware = ToolOutputStorageMiddleware(store)
+    content = "external data\n" * 2_000
+
+    first = _make_context(
+        "github-issue_read",
+        content,
+        AgentSession(session_id="first-session"),
+    )
+    second = _make_context(
+        "github-issue_read",
+        content,
+        AgentSession(session_id="second-session"),
+    )
+
+    await middleware.process(first, _noop_next)
+    await middleware.process(second, _noop_next)
+
+    assert len(await store.list_children("first-session")) == 1
+    assert len(await store.list_children("second-session")) == 1

@@ -39,7 +39,6 @@ from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import ensure_user_memory_store
 from utils.memory_context_provider import MemoryContextProvider
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
-from middleware.tool_output_storage import ToolOutputStorageMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +139,6 @@ async def main() -> None:
         ],
         middleware=[
             ToolOutputSecurityMiddleware(),
-            ToolOutputStorageMiddleware(),
         ],
         default_options=cast(
             OpenAIChatOptions,

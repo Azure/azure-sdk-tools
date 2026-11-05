@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import re
 from collections.abc import Awaitable, Callable
-from pathlib import Path
 from uuid import uuid4
 
-from agent_framework import Content, FunctionInvocationContext, FunctionMiddleware
+from agent_framework import (
+    AgentFileStore,
+    Content,
+    FunctionInvocationContext,
+    FunctionMiddleware,
+)
+from agent_framework._filesystem import _storage_key_segment  # pyright: ignore[reportPrivateUsage]
 
 from tools import TOOL_REGISTRY
 
@@ -15,6 +20,7 @@ _LARGE_RESULT_CHARS = 20_000
 _LARGE_RESULT_PREVIEW_CHARS = 2_000
 _SKIP_TOOL_PREFIXES = ("file_memory_", "mode_", "todos_")
 _SKIP_TOOLS = {"load_skill", "read_skill_resource", "run_skill_script"}
+_ENCODED_SCOPE_PREFIX = "~scope-"
 
 
 def _safe_name(value: str) -> str:
@@ -34,10 +40,8 @@ def _get_text(result: object) -> str | None:
 class ToolOutputStorageMiddleware(FunctionMiddleware):
     """Replace large opaque results with a searchable file reference."""
 
-    def __init__(self, tool_result_root: Path | None = None) -> None:
-        self.tool_result_root = tool_result_root or (
-            Path.cwd() / "agent-file-access" / "tool-results"
-        )
+    def __init__(self, memory_store: AgentFileStore) -> None:
+        self.memory_store = memory_store
 
     async def process(
         self,
@@ -62,16 +66,15 @@ class ToolOutputStorageMiddleware(FunctionMiddleware):
         if len(result) <= _LARGE_RESULT_CHARS or context.session is None:
             return
 
-        session_dir = self.tool_result_root / _safe_name(context.session.session_id)
-        session_dir.mkdir(parents=True, exist_ok=True)
-        result_path = session_dir / f"{_safe_name(name)}-{uuid4().hex}.txt"
-        result_path.write_text(result, encoding="utf-8")
-        relative_path = result_path.relative_to(
-            self.tool_result_root.parent
-        ).as_posix()
+        file_name = f"tool-result-{_safe_name(name)}-{uuid4().hex}.txt"
+        session_scope = _storage_key_segment(
+            context.session.session_id,
+            encoded_prefix=_ENCODED_SCOPE_PREFIX,
+        )
+        await self.memory_store.write(f"{session_scope}/{file_name}", result)
         context.result = (
-            f"Large tool result stored at `{relative_path}` "
-            f"({len(result):,} characters). Use `file_access_grep` and "
-            "`file_access_read_lines` to inspect relevant sections.\n\n"
+            f"Large tool result stored in session memory as `{file_name}` "
+            f"({len(result):,} characters). Use `file_memory_grep` to search it "
+            "and `file_memory_read` to read it.\n\n"
             f"Preview:\n{result[:_LARGE_RESULT_PREVIEW_CHARS]}"
         )

@@ -13,6 +13,7 @@ const packageFiles = new Map<string, string[]>([
 
 export async function generateSdk(
     sdkRepoName = "azure-sdk-for-js",
+    cloneRepo = true,
     commands = { execFile, execNpm },
 ): Promise<void> {
     const workspace = process.cwd();
@@ -35,14 +36,16 @@ export async function generateSdk(
     await access(azsdk);
 
     const options = { cwd: root, logger: { info: console.log, debug: console.log } };
-    await commands.execFile("git", [
-        "clone", "--depth", "1", "--filter=blob:none", "--sparse",
-        `https://github.com/Azure/${sdkRepoName}.git`, sdkRepo,
-    ], options);
-    await commands.execFile("git", [
-        "-C", sdkRepo, "sparse-checkout", "set",
-        sdkRepoName === "azure-sdk-for-js" ? "eng/common/tsp-client" : "eng",
-    ], options);
+    if (cloneRepo) {
+        await commands.execFile("git", [
+            "clone", "--depth", "1", "--filter=blob:none", "--sparse",
+            `https://github.com/Azure/${sdkRepoName}.git`, sdkRepo,
+        ], options);
+        await commands.execFile("git", [
+            "-C", sdkRepo, "sparse-checkout", "set",
+            sdkRepoName === "azure-sdk-for-js" ? "eng/common/tsp-client" : "eng",
+        ], options);
+    }
     await commands.execNpm(["ci"], {
         ...options,
         prefix: resolve(sdkRepo, "eng", "common", "tsp-client"),

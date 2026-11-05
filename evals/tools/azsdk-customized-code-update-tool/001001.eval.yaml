@@ -112,11 +112,11 @@ stimuli:
       editScope: CustomCode
     prompt: |
       First, use the shell to resolve
-      azure-sdk-for-js/sdk/widget/arm-widget against your current working
+      azure-sdk-for-java/sdk/widget/azure-resourcemanager-widget against your current working
       directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
       - customizationRequest: API review feedback requires renaming SDK model
-        'Employee' to 'Staff' for Javascript.
+        'Employee' to 'Staff' for Java.
       - packagePath: use the exact absolute path returned by the shell
       - editScope: "CustomCode"
 
@@ -144,7 +144,7 @@ stimuli:
       commands:
         - git init
         - git remote add origin https://github.com/Azure/azure-rest-api-specs.git
-        - node evals/scripts/sdk-environment-setup.ts "" Java
+        # - node evals/scripts/sdk-environment-setup.ts "" Java
         - node evals/scripts/generage-sdk.ts azure-sdk-for-java
     constraints:
       max_turns: 20
@@ -158,11 +158,11 @@ stimuli:
   - name: 001001-rename-model-ALL
     prompt: |
       First, use the shell to resolve
-      azure-sdk-for-js/sdk/widget/arm-widget against your current working
+      azure-sdk-for-java/sdk/widget/azure-resourcemanager-widget against your current working
       directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
       - customizationRequest: API review feedback requires renaming SDK model
-        'Employee' to 'Staff' for Javascript.
+        'Employee' to 'Staff' for Java.
       - packagePath: use the exact absolute path returned by the shell
       - editScope: "All"
 

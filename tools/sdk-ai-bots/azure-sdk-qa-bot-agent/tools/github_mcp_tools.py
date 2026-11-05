@@ -24,7 +24,9 @@ import logging
 import os
 import re
 import time as _time
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from itertools import zip_longest
 from typing import Any
 from urllib.parse import urlparse
 
@@ -467,41 +469,60 @@ def _redact_untrusted_authors(text: str) -> str:
     return json.dumps(_scrub_untrusted_authors(data))
 
 
-def _compact_copilot_review_body(review: dict[str, Any]) -> dict[str, Any]:
-    """Replace expandable bodies with their summary labels, regardless of content."""
-    body = review.get("body")
-    if not isinstance(body, str):
-        return review
-    stack: list[int] = []
-    replacements: list[tuple[int, int, str]] = []
+@dataclass(frozen=True)
+class _CompactedReviewBody:
+    body: str
+    omitted_detail_sections: list[str]
+
+
+def _compact_review_details(body: str) -> _CompactedReviewBody:
+    """Replace balanced outer details sections with their summary labels."""
+    depth = 0
+    section_start = 0
+    cursor = 0
+    parts: list[str] = []
     omitted: list[str] = []
     for tag in re.finditer(r"<details\b[^>]*>|</details\s*>", body, re.IGNORECASE):
         if not tag.group().startswith("</"):
-            stack.append(tag.start())
+            if depth == 0:
+                section_start = tag.start()
+            depth += 1
             continue
-        if not stack:
+        if depth == 0:
             continue
-        start = stack.pop()
-        if stack:
+        depth -= 1
+        if depth:
             continue
-        section = body[start:tag.end()]
+        section = body[section_start:tag.end()]
         summary = re.search(r"<summary\b[^>]*>(.*?)</summary\s*>", section, re.IGNORECASE | re.DOTALL)
         label = (
             " ".join(html.unescape(re.sub(r"<[^>]+>", "", summary[1])).split())
             if summary is not None else ""
         )
-        replacement = label
-        replacements.append((start, tag.end(), replacement))
+        parts.extend((body[cursor:section_start], label))
         omitted.append(label)
-    if not replacements:
+        cursor = tag.end()
+    # Keep unmatched tags and unclosed sections verbatim.
+    parts.append(body[cursor:])
+    return _CompactedReviewBody(
+        body="".join(parts).strip() if omitted else body,
+        omitted_detail_sections=omitted,
+    )
+
+
+def _compact_copilot_review_body(review: dict[str, Any]) -> dict[str, Any]:
+    """Keep native metadata alongside the compacted body."""
+    body = review.get("body")
+    if not isinstance(body, str):
         return review
-    for start, end, replacement in reversed(replacements):
-        body = body[:start] + replacement + body[end:]
+    compacted = _compact_review_details(body)
+    if not compacted.omitted_detail_sections:
+        return review
     return {
         **review,
-        "body": body.strip(),
+        "body": compacted.body,
         "body_compaction": {
-            "omitted_detail_sections": omitted,
+            "omitted_detail_sections": compacted.omitted_detail_sections,
             "full_review_url": review.get("html_url"),
             "guidance": (
                 "All expandable bodies omitted; summary labels retained. "
@@ -679,28 +700,17 @@ def _extract_structured_diagnostics(
 def _round_robin_diagnostics(
     diagnostics: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Preserve source order while preventing one repeated classifier from dominating."""
+    """Interleave diagnostic categories in first-seen order."""
     groups: dict[str, list[dict[str, Any]]] = {}
-    classifier_order: list[str] = []
     for diagnostic in diagnostics:
         classifier = _diagnostic_classifier(diagnostic)
-        if classifier not in groups:
-            groups[classifier] = []
-            classifier_order.append(classifier)
-        groups[classifier].append(diagnostic)
-
-    selected: list[dict[str, Any]] = []
-    offset = 0
-    while True:
-        added = False
-        for classifier in classifier_order:
-            group = groups[classifier]
-            if offset < len(group):
-                selected.append(group[offset])
-                added = True
-        if not added:
-            return selected
-        offset += 1
+        groups.setdefault(classifier, []).append(diagnostic)
+    return [
+        diagnostic
+        for batch in zip_longest(*groups.values())
+        for diagnostic in batch
+        if diagnostic is not None
+    ]
 
 
 def _add_structured_diagnostics(
@@ -829,29 +839,17 @@ def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
 
 
 def _serialize_job_log_overflow(overflow: dict[str, Any]) -> str:
-    """Serialize overflow metadata within the MCP response budget."""
+    """Trim diagnostics before excerpts to fit the MCP response budget."""
     output = json.dumps(overflow)
-    diagnostics = overflow.get("structured_diagnostics")
     selection = overflow.get("diagnostic_selection")
-    while (
-        len(output) > _MCP_MAX_OUTPUT_CHARS
-        and isinstance(diagnostics, list)
-        and diagnostics
-    ):
-        diagnostics.pop()
-        if isinstance(selection, dict):
-            selection["returned"] = len(diagnostics)
-            selection["truncated"] = True
-        output = json.dumps(overflow)
-
-    excerpts = overflow.get("log_excerpts")
-    while (
-        len(output) > _MCP_MAX_OUTPUT_CHARS
-        and isinstance(excerpts, list)
-        and excerpts
-    ):
-        excerpts.pop()
-        output = json.dumps(overflow)
+    for field in ("structured_diagnostics", "log_excerpts"):
+        items = overflow.get(field)
+        while len(output) > _MCP_MAX_OUTPUT_CHARS and isinstance(items, list) and items:
+            items.pop()
+            if field == "structured_diagnostics" and isinstance(selection, dict):
+                selection["returned"] = len(items)
+                selection["truncated"] = True
+            output = json.dumps(overflow)
 
     if len(output) <= _MCP_MAX_OUTPUT_CHARS:
         return output

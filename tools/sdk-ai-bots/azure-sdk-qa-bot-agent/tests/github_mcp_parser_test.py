@@ -839,7 +839,7 @@ def test_oversized_tail_line_is_explicitly_marked_as_a_fragment() -> None:
 
 
 def test_other_oversized_github_payloads_keep_pagination_handling() -> None:
-    _, parsed = _parse({
+    output, parsed = _parse({
         "id": 42,
         "logs_content": "Error: " + "x" * _MCP_MAX_OUTPUT_CHARS,
     })
@@ -849,6 +849,9 @@ def test_other_oversized_github_payloads_keep_pagination_handling() -> None:
     assert "\n" not in parsed["error"]
     assert len(parsed["error"]) <= 120
     assert parsed["returned_objects"] == 0
+    assert parsed["returned_characters"] > 0
+    assert '"id": 42' in parsed["content_excerpt"]
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
 
 
 def test_trusted_author_filtering_is_unchanged() -> None:
@@ -993,6 +996,8 @@ def test_oversized_latest_review_remains_explicit_overflow() -> None:
     assert parsed["status"] == "overflow"
     assert parsed["complete"] is False
     assert parsed["returned_objects"] == 0
+    assert parsed["returned_characters"] > 0
+    assert "current finding" in parsed["content_excerpt"]
 
 
 def test_single_review_is_not_claimed_latest_overall() -> None:

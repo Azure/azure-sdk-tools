@@ -941,7 +941,15 @@ def _process_github_result(result: mcp_types.CallToolResult) -> str | None:
             "otherwise report the limit."
         ),
     }
-    return _serialize_job_log_overflow(_build_job_log_overflow(overflow, values))
+    job_overflow = _build_job_log_overflow(overflow, values)
+    if job_overflow.get("structured_diagnostics") or job_overflow.get("log_excerpts"):
+        return _serialize_job_log_overflow(job_overflow)
+    excerpt = output[:_MCP_MAX_OUTPUT_CHARS // 3]
+    return json.dumps({
+        **overflow,
+        "returned_characters": len(excerpt),
+        "content_excerpt": excerpt,
+    })
 
 
 def _process_github_resources(result: mcp_types.CallToolResult) -> str:

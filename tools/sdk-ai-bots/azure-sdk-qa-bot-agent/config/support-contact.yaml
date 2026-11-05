@@ -1,0 +1,90 @@
+# Support-area contacts use verified individual GitHub usernames.
+# An empty list disables catalog referrals, not normal replies or clarification.
+support_areas:
+  - key: release_plan_operations
+    description: "SDK end-to-end onboarding and release automation, release-plan tooling and state management, SDK generation orchestration and KPI integration. Excludes release-policy exceptions."
+    github_username: praveenkuttappan
+
+  - key: sdk_release_policy
+    description: "Management-plane SDK release obligations, release-plan completion policy and stable or preview release sequencing."
+    github_username: josefree
+
+  - key: apiview_reviewhub_release_gates
+    description: "APIView and ReviewHub tooling, review-status interpretation and release-gate integration or troubleshooting. Actual API approval belongs to the relevant reviewer."
+    github_username: tjprescott
+
+  - key: typespec_arm_modeling
+    description: "ARM TypeSpec API and resource modeling, long-running operations, versioning, compatibility and suppression guidance. Excludes RPaaS implementation ownership and general ARM sign-off."
+    github_username: markcowl
+
+  - key: typespec_toolchain
+    description: "TypeSpec compiler and shared toolchain, dependencies, repository CI and TypeSpec implementation issues."
+    github_username: timotheeguerin
+
+  - key: typespec_migration_versioning
+    description: "TypeSpec authoring, Swagger migration, versioning and SDK customization or compatibility guidance."
+    github_username: catalinaperalta
+
+  - key: engsys_pipelines_access
+    description: "Azure SDK CI and release pipeline infrastructure, pipeline permissions, authentication failures and network-isolation coordination."
+    github_username: raych1
+
+  - key: python_management_sdk_review_release
+    description: "Python management SDK PR review, breaking-change approvals, release readiness and management-package release triage. Excludes data-plane and shared-core API approval."
+    github_username: msyyc
+
+  - key: python_typespec_emitter
+    description: "Python SDK code generation and TypeSpec emitter behavior, generated models and typing, and API-surface tooling."
+    github_username: l0lawrence
+
+  - key: python_dataplane_api_review
+    description: "Python data-plane or new SDK architectural review, API and package-name approval questions, and related merge or release-review coordination."
+    github_username: kashifkhan
+
+  - key: dotnet_management_api_review
+    description: ".NET management SDK PR and APIView review, including management-library release approval and related generated SDK review. Excludes general .NET core and data-plane issues."
+    github_username: arthurma1978
+
+  - key: dotnet_management_codegen
+    description: ".NET management SDK code generation, migration and compatibility issues, build failures and release troubleshooting."
+    github_username: live1206
+
+  - key: dotnet_management_pr_review
+    description: ".NET management SDK PR review, release preparation and generated or custom-code issues."
+    github_username: arcturuszhang
+
+  - key: dotnet_typespec_generator
+    description: ".NET SDK generation and customization, compatibility analysis and generated API issues."
+    github_username: jorgerangel-msft
+
+  - key: dotnet_sdk_design_and_generator
+    description: ".NET SDK API design and review, generator integration, compatibility and experimental API guidance."
+    github_username: m-nash
+
+  - key: go_management_sdk_review_release
+    description: "Go management SDK review and management-package release triage. Excludes data-plane and shared-core API approval."
+    github_username: jiaqizhang-dev
+
+  - key: go_management_sdk_approval
+    description: "Go management SDK API review, breaking-change assessment, suppression approvals and compatibility guidance."
+    github_username: tadelesh
+
+  - key: java_management_sdk
+    description: "Java management SDK review, code generation, configuration, compatibility and release support."
+    github_username: weidongxu-microsoft
+
+  - key: java_core_codegen_compatibility
+    description: "Java SDK core and client-library guidance, code generation, API compatibility and related build issues."
+    github_username: alzimmermsft
+
+  - key: java_emitter_and_docs_pipeline
+    description: "Java SDK code generation, TypeSpec emitter behavior and documentation tooling or publishing issues."
+    github_username: xiaofeicao
+
+  - key: javascript_management_sdk_review_release
+    description: "JavaScript management SDK review and release triage, breaking-change approvals, generation and validation, TypeSpec customization and compatibility guidance. Excludes data-plane and shared-core API approval."
+    github_username: jialinhuang803
+
+  - key: javascript_dataplane_sdk_review
+    description: "JavaScript and TypeScript data-plane SDK design and API review, SDK code generation, customization tooling and integration."
+    github_username: maorleger

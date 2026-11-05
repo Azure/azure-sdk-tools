@@ -27,7 +27,8 @@ from models.chat import (
 )
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
-from models.identity import ResolveGitHubUsersResult
+from models.identity import ResolveGitHubUsersResult, TeamsMention
+from models.support_contact import get_support_catalog
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
@@ -135,6 +136,7 @@ class ChatService:
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
+        support_catalog = get_support_catalog()
         project_client = self._get_project_client()
         tenant_config = get_tenant_config(req.tenant_id)
         agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
@@ -178,6 +180,18 @@ class ChatService:
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             conversation_items.append(tenant_system_item)
+
+        support_context_item = cast(
+            ResponseInputItemParam,
+            ConversationItem(
+                role=Role.System,
+                content=(
+                    support_catalog.model_context() if support_catalog is not None
+                    else '[support_catalog]\n{"revision":null,"support_areas":[]}'
+                ),
+            ).model_dump(mode="json", exclude_none=True),
+        )
+        conversation_items.append(support_context_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -246,6 +260,7 @@ class ChatService:
             )
             # The replacement conversation has no tenant context of its own.
             conversation_items.insert(0, tenant_system_item)
+            conversation_items.insert(1, support_context_item)
             # Additional infos are not persisted in Cosmos; reuse the items already built.
             conversation_items.extend(additional_items)
             # Replace the poisoned mapping before the single recovery attempt.
@@ -651,15 +666,17 @@ class ChatService:
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
-        identities = tool_results.get("resolve_github_users")
-        if (
-            req.conversation_type == ConversationType.teams_channel
-            and isinstance(identities, ResolveGitHubUsersResult)
-        ):
-            resp.mentions = [
-                mention for mention in identities.mentions.values()
-                if mention.text in answer
-            ] or None
+        teams_mentions_enabled = (
+            self._settings("ENABLE_TEAMS_MENTION", "true") or "true"
+        ).lower() == "true"
+        if teams_mentions_enabled and req.conversation_type == ConversationType.teams_channel:
+            identities = tool_results.get("resolve_github_users")
+            if isinstance(identities, ResolveGitHubUsersResult):
+                resp.mentions = [
+                    TeamsMention(text=user.text, mentioned=user.mentioned)
+                    for user in identities.users.values()
+                    if user.text in answer
+                ] or None
         return resp
 
     @staticmethod
@@ -806,11 +823,11 @@ class ChatService:
                     if isinstance(previous, ResolveGitHubUsersResult) and isinstance(
                         decoded, ResolveGitHubUsersResult
                     ):
-                        for login in decoded.mentions:
+                        for login in decoded.users:
                             previous.errors.pop(login, None)
                         for login in decoded.errors:
-                            previous.mentions.pop(login, None)
-                        decoded.mentions = previous.mentions | decoded.mentions
+                            previous.users.pop(login, None)
+                        decoded.users = previous.users | decoded.users
                         decoded.errors = previous.errors | decoded.errors
                     results[tool_name] = decoded
             except Exception as e:

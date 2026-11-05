@@ -1810,6 +1810,100 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task LinkSdkPullRequestToReleasePlan_AddsAutoReleaseLabelToEligibleManagementPr()
+        {
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequest = CreateSdkPullRequest();
+            var devOps = (MockDevOpsService)devOpsService;
+            devOps.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
+            {
+                WorkItemId = 1,
+                IsManagementPlane = true,
+                IsDataPlane = false
+            };
+
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(
+                "Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345", workItemId: 1);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(github.AddedPullRequestLabels, Is.EqualTo(new[]
+            {
+                ("Azure", "azure-sdk-for-python", 12345, "auto-release")
+            }));
+        }
+
+        [Test]
+        public async Task LinkSdkPullRequestToReleasePlan_DoesNotLabelDraftPr()
+        {
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequest = CreateSdkPullRequest(draft: true);
+
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(
+                "Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345", workItemId: 1);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(github.AddedPullRequestLabels, Is.Empty);
+        }
+
+        [Test]
+        public async Task LinkSdkPullRequestToReleasePlan_DoesNotLabelClosedPr()
+        {
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequest = CreateSdkPullRequest(state: "closed");
+
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(
+                "Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345", workItemId: 1);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(github.AddedPullRequestLabels, Is.Empty);
+        }
+
+        [Test]
+        public async Task LinkSdkPullRequestToReleasePlan_DoesNotLabelDataPlanePr()
+        {
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequest = CreateSdkPullRequest();
+            ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
+            {
+                WorkItemId = 1,
+                IsManagementPlane = false,
+                IsDataPlane = true
+            };
+
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(
+                "Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345", workItemId: 1);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(github.AddedPullRequestLabels, Is.Empty);
+        }
+
+        [Test]
+        public async Task LinkSdkPullRequestToReleasePlan_DoesNotDuplicateAutoReleaseLabel()
+        {
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequest = CreateSdkPullRequest(labels: ["auto-release"]);
+
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(
+                "Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345", workItemId: 1);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(github.AddedPullRequestLabels, Is.Empty);
+        }
+
+        [Test]
+        public async Task LinkSdkPullRequestToReleasePlan_ReturnsErrorWhenAutoReleaseLabelFails()
+        {
+            var github = (MockGitHubService)gitHubService;
+            github.ConfiguredPullRequest = CreateSdkPullRequest();
+            github.AddPullRequestLabelFailure = "Simulated label failure";
+
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(
+                "Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345", workItemId: 1);
+
+            Assert.That(response.ResponseError, Does.Contain("Failed to ensure 'auto-release' label"));
+        }
+
+        [Test]
         public async Task Test_link_sdk_pull_request_with_missing_work_item_and_release_plan()
         {
             var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan("Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345", 0, 0);
@@ -3354,6 +3448,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             return new Octokit.Internal.SimpleJsonSerializer().Deserialize<Octokit.PullRequest>(
             JsonSerializer.Serialize(new { number = 42, state, merged, draft, merged_at = merged ? "2026-09-01T00:00:00Z" : null }));
+        }
+
+        private static Octokit.PullRequest CreateSdkPullRequest(bool draft = false, string state = "open", string[]? labels = null)
+        {
+            return new Octokit.Internal.SimpleJsonSerializer().Deserialize<Octokit.PullRequest>(
+                JsonSerializer.Serialize(new
+                {
+                    number = 12345,
+                    state,
+                    draft,
+                    labels = (labels ?? []).Select(name => new { name })
+                }));
         }
 
         [TestCase(ApiReleaseType.PublicPreview, "none", true, true)]

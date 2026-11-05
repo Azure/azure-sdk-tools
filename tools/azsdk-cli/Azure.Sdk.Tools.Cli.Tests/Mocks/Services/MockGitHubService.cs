@@ -11,6 +11,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         // When set, GetPullRequestAsync throws to simulate a GitHub lookup failure.
         public bool ThrowOnGetPullRequest { get; set; }
+        public PullRequest? ConfiguredPullRequest { get; set; }
+        public string? AddPullRequestLabelFailure { get; set; }
+        public List<(string RepoOwner, string RepoName, int PullRequestNumber, string Label)> AddedPullRequestLabels { get; } = [];
 
         public string GetAuthToken() => "mock-github-token";
 
@@ -48,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             }
 
             // Create a minimal pull request mock
-            var pr = CreateMockPullRequest(repoOwner, repoName, pullRequestNumber);
+            var pr = ConfiguredPullRequest ?? CreateMockPullRequest(repoOwner, repoName, pullRequestNumber);
             return Task.FromResult(pr);
         }
 
@@ -109,6 +112,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state, CancellationToken ct)
         {
+            return Task.CompletedTask;
+        }
+
+        public Task AddLabelToPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string label, CancellationToken ct)
+        {
+            if (AddPullRequestLabelFailure != null)
+            {
+                throw new InvalidOperationException(AddPullRequestLabelFailure);
+            }
+
+            AddedPullRequestLabels.Add((repoOwner, repoName, pullRequestNumber, label));
             return Task.CompletedTask;
         }
 

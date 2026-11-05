@@ -45,6 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     {
         private const int ScheduleRiskWarningWindowDays = 7;
         private const string TargetReleaseMonthDescription = "SDK release target month in 'Month YYYY' format (full English month name and four-digit year). Must be the current month or later (UTC).";
+        private const string AutoReleaseLabel = "auto-release";
         private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -2148,8 +2149,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 var sdkInfoInRelease = devOpsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl, "Completed", ct: ct);
                 var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan, ct);
+                var autoReleaseLabel = releasePlan.IsManagementPlane && !releasePlan.IsDataPlane
+                    ? AddAutoReleaseLabelAsync(parsedLink, ct)
+                    : Task.CompletedTask;
 
-                await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
+                await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk, autoReleaseLabel);
                 if (releasePlan.IsManagementPlane)
                 {
                     response.PackageType = SdkType.Management;
@@ -2165,6 +2169,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Failed to link SDK pull request to release plan work item");
                 return new() { ResponseError = $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}" };
+            }
+        }
+
+        private async Task AddAutoReleaseLabelAsync(ParsedSdkPullRequest parsedUrl, CancellationToken ct)
+        {
+            if (!parsedUrl.RepoOwner.Equals("Azure", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            try
+            {
+                var pr = await githubService.GetPullRequestAsync(parsedUrl.RepoOwner, parsedUrl.RepoName, parsedUrl.PrNumber, ct);
+                if (pr.State != ItemState.Open || pr.Draft || pr.Labels?.Any(label =>
+                    label.Name.Equals(AutoReleaseLabel, StringComparison.OrdinalIgnoreCase)) == true)
+                {
+                    return;
+                }
+
+                await githubService.AddLabelToPullRequestAsync(parsedUrl.RepoOwner, parsedUrl.RepoName, parsedUrl.PrNumber, AutoReleaseLabel, ct);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to ensure '{AutoReleaseLabel}' label was applied to SDK pull request {parsedUrl.FullUrl}.", ex);
             }
         }
 

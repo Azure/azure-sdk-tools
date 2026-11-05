@@ -166,6 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
         public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<PullRequest> ClosePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct, string? comment = null);
+        public Task AddLabelToPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string label, CancellationToken ct);
         public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct);
         public Task<string> GetBranchHeadShaAsync(string repoOwner, string repoName, string branchName, CancellationToken ct);
@@ -263,6 +264,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 State = state
             };
             await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber, update);
+        }
+
+        public async Task AddLabelToPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string label, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, pullRequestNumber, [label]);
         }
 
         public async Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body, List<string>? assignees = null, CancellationToken ct = default)

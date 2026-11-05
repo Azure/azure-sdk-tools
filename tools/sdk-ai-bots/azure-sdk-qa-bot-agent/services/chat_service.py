@@ -11,7 +11,6 @@ import re
 from urllib.parse import urlparse
 
 from config.app_config import Settings, get as cfg
-from config.support_contact import get_support_catalog
 from config.tenant_config import (
     TenantConfig,
     get_tenant_config,
@@ -29,6 +28,7 @@ from models.chat import (
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from models.identity import ResolveGitHubUsersResult, TeamsMention
+from models.support_contact import get_support_catalog
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (

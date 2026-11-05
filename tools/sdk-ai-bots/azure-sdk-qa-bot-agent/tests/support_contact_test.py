@@ -17,10 +17,10 @@ from openai.types.responses import (
     ResponseOutputMessage,
 )
 
-from config import support_contact
-from config.support_contact import get_support_catalog, parse_support_catalog
+from models import support_contact
 from models.chat import ChatRequest, ChatResponse
 from models.identity import ResolvedGitHubUser, ResolveGitHubUsersResult, TeamsMention, TeamsUser
+from models.support_contact import get_support_catalog, parse_support_catalog
 from services.chat_service import ChatService
 from tools.identity_tools import IdentityTools
 from utils.azure_ai_foundry_agent import ConversationBrokenError
@@ -302,7 +302,7 @@ def test_normal_answer_keeps_reference_processing():
 
 
 def test_repository_config_loads_independently_of_working_directory(monkeypatch, tmp_path):
-    from config.support_contact import SUPPORT_CONTACT_PATH
+    from models.support_contact import SUPPORT_CONTACT_PATH
 
     assert SUPPORT_CONTACT_PATH == ROOT / "config" / "support-contact.yaml"
     catalog = parse_support_catalog(SUPPORT_CONTACT_PATH.read_bytes())

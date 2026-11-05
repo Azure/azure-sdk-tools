@@ -39,6 +39,7 @@ public class ServiceApiReadinessServiceTests
     private HttpStatusCode _rawStatus;
     private int _pullRequestReads;
     private bool _changeHead;
+    private bool _missingHeadRepository;
     private bool _truncatedFiles;
 
     [SetUp]
@@ -59,6 +60,7 @@ public class ServiceApiReadinessServiceTests
         _rawStatus = HttpStatusCode.OK;
         _pullRequestReads = 0;
         _changeHead = false;
+        _missingHeadRepository = false;
         _truncatedFiles = false;
         _github = new Mock<IGitHubService>();
         _github.Setup(service => service.GetAuthTokenAsync(It.IsAny<CancellationToken>())).ReturnsAsync("github-test-token");
@@ -364,6 +366,16 @@ public class ServiceApiReadinessServiceTests
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(response.Detail, Does.Contain("403"));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
+    public async Task MissingHeadRepositoryDoesNotReadSdkFilesOrArm()
+    {
+        _missingHeadRepository = true;
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(_requests, Has.Count.EqualTo(1));
         Assert.That(ArmRequests(), Is.Empty);
     }
 
@@ -685,7 +697,7 @@ public class ServiceApiReadinessServiceTests
             {
                 state = "open",
                 body = "Configurations: human notes; API version 2026-04-01. This is not evidence.",
-                head = new { sha = _changeHead && _pullRequestReads > 1 ? new string('c', 40) : Head, repo = new { full_name = _repository } },
+                head = new { sha = _changeHead && _pullRequestReads > 1 ? new string('c', 40) : Head, repo = _missingHeadRepository ? null : new { full_name = _repository } },
                 labels = _labels.Select(label => new { name = label }).ToArray()
             });
         }

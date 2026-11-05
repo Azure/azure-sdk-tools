@@ -96,11 +96,11 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             var options = new ProcessOptions("gh", ["auth", "token"],
                 timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream: false);
-            var result = await processHelper.Run(options, ct);
+            var result = await processHelper.Run(options, ct).ConfigureAwait(false);
             ct.ThrowIfCancellationRequested();
             if (result.ExitCode != 0 || string.IsNullOrWhiteSpace(result.Stdout))
             {
-                throw new InvalidOperationException("GitHub authentication is unavailable. Sign in with 'gh auth login' or supply GITHUB_TOKEN.");
+                throw new InvalidOperationException("Failed to get GitHub auth token. Sign in with 'gh auth login' or supply GITHUB_TOKEN.");
             }
             token = result.Stdout.Trim();
             Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
@@ -109,25 +109,10 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         protected string GetGitHubAuthToken()
         {
-            var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
-            if (!string.IsNullOrEmpty(token))
-            {
-                return token;
-            }
-
-            token = Environment.GetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN");
-            if (!string.IsNullOrEmpty(token))
-            {
-                Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
-                return token;
-            }
-
-            ProcessResult result;
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream: false);
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
-                result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
+                return GetGitHubAuthTokenAsync(timeoutCts.Token).GetAwaiter().GetResult();
             }
             catch (OperationCanceledException)
             {
@@ -136,26 +121,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                     "Please ensure GitHub CLI is installed, not awaiting interactive prompts, and authenticated via `gh auth login`."
                 );
             }
-
-            if (result.ExitCode != 0)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to get GitHub auth token. Error:{Environment.NewLine}{result.Output}{Environment.NewLine}{Environment.NewLine}" +
-                    "Please make sure GitHub CLI is installed and login using `gh auth login`."
-                );
-            }
-
-            var ghToken = result.Stdout.Trim();
-            if (string.IsNullOrWhiteSpace(ghToken))
-            {
-                throw new InvalidOperationException(
-                    "GitHub CLI returned an empty authentication token. " +
-                    "Please run `gh auth status` to verify your login or re-authenticate with `gh auth login`."
-                );
-            }
-
-            Environment.SetEnvironmentVariable("GITHUB_TOKEN", ghToken, EnvironmentVariableTarget.Process);
-            return ghToken;
         }
     }
 
@@ -238,6 +203,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<PullRequest> GetPullRequestAsync(string url, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
+            var (owner, repository, number) = ParsePullRequestUrl(url);
+            return GetPullRequestAsync(owner, repository, number, ct);
+        }
+
+        public static (string Owner, string Repository, int Number) ParsePullRequestUrl(string url)
+        {
             ArgumentNullException.ThrowIfNull(url);
             var match = Regex.Match(url,
                 @"\Ahttps://github\.com/(?<owner>(?=[A-Za-z0-9-]{1,39}/)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)/(?<repo>(?!\.{1,2}/)[A-Za-z0-9_.-]{1,100})/pull/(?<number>[0-9]+)/?\z",
@@ -247,8 +218,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new ArgumentException("Expected a GitHub pull request URL with a positive Int32 pull request number.", nameof(url));
             }
-            // Parse the web URL, but send requests only through the fixed Octokit API client.
-            return GetPullRequestAsync(match.Groups["owner"].Value, match.Groups["repo"].Value, number, ct);
+            return (match.Groups["owner"].Value, match.Groups["repo"].Value, number);
         }
 
         /// <summary>

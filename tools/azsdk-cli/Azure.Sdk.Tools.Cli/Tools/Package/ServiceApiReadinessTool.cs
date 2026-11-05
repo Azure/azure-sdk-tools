@@ -11,35 +11,36 @@ public class ServiceApiReadinessTool(IServiceApiReadinessService readiness, ILog
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
-    private readonly Option<string> _owner = new("--owner") { Required = true, Description = "SDK repository owner." };
-    private readonly Option<string> _repository = new("--repo") { Required = true, Description = "SDK repository name, such as azure-sdk-for-java." };
-    private readonly Option<int> _pullRequest = new("--pr") { Required = true, Description = "SDK pull request number." };
+    private readonly Option<string> _pullRequestUrl = new("--pull-request-url") { Required = true, Description = "GitHub SDK pull request URL." };
 
-    protected override Command GetCommand() => new("check-api-version", "Check the SDK PR's exact API version against ARM provider metadata without writing GitHub or Azure state.")
+    protected override Command GetCommand() => new("check-api-version", "Check whether Azure lists the API version used by an SDK pull request.")
     {
-        _owner, _repository, _pullRequest
+        _pullRequestUrl
     };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        return await CheckServiceApiVersion(parseResult.GetValue(_owner)!, parseResult.GetValue(_repository)!,
-            parseResult.GetValue(_pullRequest), ct);
+        return await CheckServiceApiVersion(parseResult.GetValue(_pullRequestUrl)!, ct);
     }
 
-    public async Task<ServiceApiReadinessResponse> CheckServiceApiVersion(string owner, string repository, int pullRequest, CancellationToken ct = default)
+    public async Task<ServiceApiReadinessResponse> CheckServiceApiVersion(string pullRequestUrl, CancellationToken ct = default)
     {
         try
         {
+            var (owner, repository, pullRequest) = GitHubService.ParsePullRequestUrl(pullRequestUrl);
             logger.LogInformation("Checking service API-version evidence for {Owner}/{Repository} PR {PullRequest}", owner, repository, pullRequest);
             return await readiness.CheckAsync(owner, repository, pullRequest, ct);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            var message = exception is ArgumentException
+                ? "Provide a GitHub SDK pull request URL, for example https://github.com/Azure/azure-sdk-for-java/pull/123."
+                : "The readiness command could not complete. Check authentication and network access.";
             return new ServiceApiReadinessResponse
             {
                 ReadinessStatus = ServiceApiReadinessResponse.Error,
-                Detail = "The readiness command could not complete. Check authentication and network access.",
-                ResponseError = "The readiness command could not complete. Check authentication and network access."
+                Detail = message,
+                ResponseError = message
             };
         }
     }

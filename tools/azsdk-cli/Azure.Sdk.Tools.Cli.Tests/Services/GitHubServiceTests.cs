@@ -22,6 +22,7 @@ public class GitHubServiceTests
             => ReadWithAnonymousFallbackAsync(operation, CancellationToken.None);
         public Task<string> GetAuthTokenForTestAsync(CancellationToken ct)
             => GetGitHubAuthTokenAsync(ct);
+        public string GetAuthTokenForTest() => GetGitHubAuthToken();
     }
 
     [SetUp]
@@ -96,6 +97,30 @@ public class GitHubServiceTests
                 }
                 return Task.FromResult(0);
             }));
+    }
+
+    [TestCase("GITHUB_TOKEN")]
+    [TestCase("GITHUB_PERSONAL_ACCESS_TOKEN")]
+    public void SynchronousTokenResolutionReusesEnvironmentWithoutLaunchingGh(string variable)
+    {
+        Environment.SetEnvironmentVariable(variable, "provided-test-token", EnvironmentVariableTarget.Process);
+        var process = new Mock<IProcessHelper>();
+        var connection = new TestableGitConnection(process.Object);
+        Assert.That(connection.GetAuthTokenForTest(), Is.EqualTo("provided-test-token"));
+        process.Verify(helper => helper.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public void SynchronousTokenResolutionDoesNotExposeFailedGhOutput()
+    {
+        var process = new Mock<IProcessHelper>();
+        var result = new ProcessResult { ExitCode = 1 };
+        result.AppendStdout("private-token-value");
+        result.AppendStderr("private-diagnostic-value");
+        process.Setup(helper => helper.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+        var connection = new TestableGitConnection(process.Object);
+        var error = Assert.Throws<InvalidOperationException>(() => connection.GetAuthTokenForTest());
+        Assert.That(error!.Message, Does.Not.Contain("private-token-value").And.Not.Contain("private-diagnostic-value"));
     }
 
     [TestCase("GITHUB_TOKEN")]

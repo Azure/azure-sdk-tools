@@ -18,11 +18,12 @@ or approve a release.
 ## Command and Inputs
 
 ```sh
-azsdk pkg check-api-version --owner Azure --repo azure-sdk-for-java --pr 123 --output json
+azsdk pkg check-api-version --pull-request-url https://github.com/Azure/azure-sdk-for-java/pull/123 --output json
 ```
 
-Inputs are owner, one of the five SDK repository names below, and a positive SDK
-PR number. The command reads the head SHA from the PR once and returns evidence
+The input is a GitHub SDK PR URL, including an allowlisted fork. The command
+derives the owner, repository, and PR number using the shared GitHub URL parser.
+It reads the head SHA from the PR once and returns evidence
 for that SHA; callers do not supply a SHA. Callers that publish results must
 compare the returned SHA with the current PR head immediately before writing.
 There is no MCP entry point.

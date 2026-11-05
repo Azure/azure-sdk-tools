@@ -20,6 +20,10 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
 {
     public const string HttpClientName = "ServiceApiReadiness";
     public const string ArmMetadataApiVersion = "2021-04-01";
+    private const string ResourceManager = "resource-manager";
+    private const string ManagementPlane = "management-plane";
+    private const string DataPlane = "data-plane";
+    private const string UnknownPlane = "unknown";
     private const int MaxEvidenceBytes = 4 * 1024 * 1024;
     private readonly HttpClient _http = clients.CreateClient(HttpClientName);
 
@@ -44,21 +48,21 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             result.HeadSha = Text(pr["head"]?["sha"]);
             result.HeadRepository = Text(pr["head"]?["repo"]?["full_name"]);
             if (Text(pr["state"]) != "open" || !IsSha(result.HeadSha) ||
-                !Regex.IsMatch(result.HeadRepository, @"\A[\w.-]+/[\w.-]+\z"))
+                string.IsNullOrEmpty(result.HeadRepository))
             {
                 result.Detail = "An open SDK PR with a current head repository and full head SHA is required.";
                 return result;
             }
             var labels = (pr["labels"] as JsonArray ?? []).Select(label => Text(label?["name"])).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var managementLabel = labels.Contains("resource-manager");
-            var dataLabel = labels.Contains("data-plane");
+            var managementLabel = labels.Contains(ResourceManager);
+            var dataLabel = labels.Contains(DataPlane);
             var issues = new List<string>();
             if (managementLabel && dataLabel)
             {
                 result.Detail = "Conflicting resource-manager and data-plane labels.";
                 return result;
             }
-            var labelPlane = managementLabel ? "management-plane" : dataLabel ? "data-plane" : "unknown";
+            var labelPlane = managementLabel ? ManagementPlane : dataLabel ? DataPlane : UnknownPlane;
             var packages = new HashSet<string>(StringComparer.Ordinal);
             var knownAtHead = new HashSet<string>(StringComparer.Ordinal);
             for (var page = 1; page <= 30; page++)
@@ -111,7 +115,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                     }
                     if (listing is not JsonArray)
                     {
-                        planes.Add("unknown");
+                        planes.Add(UnknownPlane);
                         issues.Add($"{package}: SDK package directory could not be established at the checked head.");
                         continue;
                     }
@@ -132,15 +136,15 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 }
                 catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or FormatException)
                 {
-                    planes.Add("unknown");
+                    planes.Add(UnknownPlane);
                     issues.Add($"{package}: invalid YAML generation metadata.");
                     continue;
                 }
                 var directory = Scalar(location, "directory");
                 var commit = Scalar(location, "commit");
                 var specRepository = NormalizeSpecRepository(Scalar(location, "repo"));
-                var plane = directory.Split('/').Contains("data-plane") ? "data-plane" :
-                    directory.Split('/').Contains("resource-manager") || directory.Contains(".Management", StringComparison.OrdinalIgnoreCase) ? "management-plane" : labelPlane;
+                var plane = directory.Split('/').Contains(DataPlane) ? DataPlane :
+                    directory.Split('/').Contains(ResourceManager) || directory.Contains(".Management", StringComparison.OrdinalIgnoreCase) ? ManagementPlane : labelPlane;
                 planes.Add(plane);
                 if (!Regex.IsMatch(directory, @"\Aspecification/[\w.-]+(?:/[\w.-]+)*\z") ||
                     directory.Split('/').Any(part => part is "." or "..") || Regex.IsMatch(directory, @"\.(tsp|yaml|yml|json)\z") ||
@@ -289,10 +293,10 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             }
             else if (planes.Count > 1)
             {
-                result.Plane = "unknown";
+                result.Plane = UnknownPlane;
                 issues.Add("Mixed SDK API planes require separate checks.");
             }
-            if (result.Plane == "data-plane")
+            if (result.Plane == DataPlane)
             {
                 result.Detail = "Data-plane SDK; ARM provider metadata is not applicable.";
                 return result;
@@ -301,7 +305,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             {
                 issues.Add("No currently changed SDK packages remain at the checked head.");
             }
-            if (issues.Count > 0 || sources.Count == 0 || result.Plane == "unknown")
+            if (issues.Count > 0 || sources.Count == 0 || result.Plane == UnknownPlane)
             {
                 result.Detail = issues.Count > 0 ? string.Join(" ", issues) : "Authoritative SDK generation metadata or API plane is unavailable.";
                 return result;

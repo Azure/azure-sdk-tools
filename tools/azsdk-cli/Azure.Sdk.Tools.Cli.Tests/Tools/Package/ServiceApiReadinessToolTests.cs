@@ -19,21 +19,24 @@ public class ServiceApiReadinessToolTests
         Assert.That(typeof(ServiceApiReadinessTool).GetMethods().Any(method => method.IsDefined(typeof(McpServerToolAttribute), false)), Is.False);
     }
 
-    [Test]
-    public async Task CliForwardsOnlyPrIdentityAndCancellation()
+    [TestCase("https://github.com/Azure/azure-sdk-for-java/pull/12", "Azure", "azure-sdk-for-java")]
+    [TestCase("https://github.com/helen229/azure-sdk-for-java/pull/12", "helen229", "azure-sdk-for-java")]
+    [TestCase("https://github.com/Azure/azure-sdk-for-js/pull/12/", "Azure", "azure-sdk-for-js")]
+    public async Task CliForwardsOnlyPrIdentityAndCancellation(string url, string owner, string repository)
     {
         using var cancellation = new CancellationTokenSource();
         var service = new Mock<IServiceApiReadinessService>();
-        service.Setup(value => value.CheckAsync("Azure", "azure-sdk-for-java", 12, cancellation.Token))
+        service.Setup(value => value.CheckAsync(owner, repository, 12, cancellation.Token))
             .ReturnsAsync(new ServiceApiReadinessResponse { ReadinessStatus = ServiceApiReadinessResponse.Passed });
         var tool = new ServiceApiReadinessTool(service.Object, NullLogger<ServiceApiReadinessTool>.Instance);
         var command = tool.GetCommandInstances().Single();
-        var parsed = command.Parse(["--owner", "Azure", "--repo", "azure-sdk-for-java", "--pr", "12"]);
+        var parsed = command.Parse(["--pull-request-url", url]);
         var response = await tool.HandleCommand(parsed, cancellation.Token);
         Assert.That(parsed.Errors, Is.Empty);
         Assert.That(((ServiceApiReadinessResponse)response).ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(tool.CommandHierarchy, Is.EqualTo(new[] { SharedCommandGroups.Package }));
         Assert.That(SharedOptions.ToolsList, Does.Contain(typeof(ServiceApiReadinessTool)));
+        Assert.That(command.Description, Does.Contain("API version used by an SDK pull request").And.Not.Contains("writing"));
         service.VerifyAll();
     }
 
@@ -42,8 +45,21 @@ public class ServiceApiReadinessToolTests
     {
         var tool = new ServiceApiReadinessTool(Mock.Of<IServiceApiReadinessService>(), NullLogger<ServiceApiReadinessTool>.Instance);
         var command = tool.GetCommandInstances().Single();
-        var parsed = command.Parse(["--owner", "Azure", "--repo", "azure-sdk-for-java", "--pr", "12", "--expected-head-sha", new string('a', 40)]);
+        var parsed = command.Parse(["--pull-request-url", "https://github.com/Azure/azure-sdk-for-java/pull/12", "--expected-head-sha", new string('a', 40)]);
         Assert.That(parsed.Errors, Is.Not.Empty);
+    }
+
+    [TestCase("https://example.org/Azure/azure-sdk-for-java/pull/12")]
+    [TestCase("https://github.com/Azure/azure-sdk-for-java/issues/12")]
+    [TestCase("https://github.com/Azure/azure-sdk-for-java/pull/0")]
+    public async Task InvalidPullRequestUrlReturnsGuidanceWithoutCallingTheService(string url)
+    {
+        var service = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
+        var tool = new ServiceApiReadinessTool(service.Object, NullLogger<ServiceApiReadinessTool>.Instance);
+        var response = await tool.CheckServiceApiVersion(url);
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
+        Assert.That(response.Detail, Does.Contain("Provide a GitHub SDK pull request URL"));
+        service.VerifyNoOtherCalls();
     }
 
     [TestCase(ServiceApiReadinessResponse.Passed)]
@@ -66,7 +82,7 @@ public class ServiceApiReadinessToolTests
         service.Setup(value => value.CheckAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("secret response"));
         var tool = new ServiceApiReadinessTool(service.Object, NullLogger<ServiceApiReadinessTool>.Instance);
-        var response = await tool.CheckServiceApiVersion("Azure", "azure-sdk-for-java", 12);
+        var response = await tool.CheckServiceApiVersion("https://github.com/Azure/azure-sdk-for-java/pull/12");
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(JsonSerializer.Serialize(response), Does.Not.Contain("secret response"));
     }

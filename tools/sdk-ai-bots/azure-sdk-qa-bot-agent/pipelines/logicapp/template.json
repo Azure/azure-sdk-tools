@@ -608,40 +608,40 @@
                                           ]
                                         }
                                       }
+                                    }
+                                  }
+                                },
+                                "Invoke_QA_Bot": {
+                                  "type": "Http",
+                                  "inputs": {
+                                    "authentication": {
+                                      "audience": "[parameters('botAudience')]",
+                                      "identity": "[parameters('botIdentityResourceId')]",
+                                      "type": "ManagedServiceIdentity"
                                     },
-                                    "Invoke_QA_Bot": {
-                                      "type": "Http",
-                                      "inputs": {
-                                        "authentication": {
-                                          "audience": "[parameters('botAudience')]",
-                                          "identity": "[parameters('botIdentityResourceId')]",
-                                          "type": "ManagedServiceIdentity"
-                                        },
-                                        "body": "@if(equals(actions('Prepare_activity_images')?['status'], 'Succeeded'), body('Prepare_activity_images'), body('convertActivity'))",
-                                        "headers": {
-                                          "Content-Type": "application/json"
-                                        },
-                                        "method": "POST",
-                                        "retryPolicy": {
-                                          "type": "none"
-                                        },
-                                        "uri": "[concat(parameters('botBaseUrl'), '/api/messages')]"
-                                      },
-                                      "runAfter": {
-                                        "Prepare_activity_images": [
-                                          "Succeeded",
-                                          "Failed",
-                                          "TimedOut",
-                                          "Skipped"
-                                        ]
-                                      },
-                                      "runtimeConfiguration": {
-                                        "secureData": {
-                                          "properties": [
-                                            "inputs"
-                                          ]
-                                        }
-                                      }
+                                    "body": "@if(equals(actions('Prepare_activity_images')?['status'], 'Succeeded'), body('Prepare_activity_images'), body('convertActivity'))",
+                                    "headers": {
+                                      "Content-Type": "application/json"
+                                    },
+                                    "method": "POST",
+                                    "retryPolicy": {
+                                      "type": "none"
+                                    },
+                                    "uri": "[concat(parameters('botBaseUrl'), '/api/messages')]"
+                                  },
+                                  "runAfter": {
+                                    "Resolve_image_bytes": [
+                                      "Succeeded",
+                                      "Failed",
+                                      "TimedOut",
+                                      "Skipped"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
                                     }
                                   }
                                 }

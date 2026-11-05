@@ -46,5 +46,45 @@
     "target": "basic",
     "uploaded_at": "2026-06-22T09:06:16.298721+00:00",
     "version": "typespec-2026-06-22"
+  },
+  "qa-bot-perf-apispec": {
+    "cases": 25,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-apispec/versions/apispec-2026-10-28",
+    "scenario": "apispec",
+    "target": "perf",
+    "uploaded_at": "2026-10-28T08:34:02.276987+00:00",
+    "version": "apispec-2026-10-28"
+  },
+  "qa-bot-perf-general": {
+    "cases": 19,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-general/versions/general-2026-10-28",
+    "scenario": "general",
+    "target": "perf",
+    "uploaded_at": "2026-10-28T08:34:12.334456+00:00",
+    "version": "general-2026-10-28"
+  },
+  "qa-bot-perf-onboarding": {
+    "cases": 3,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-onboarding/versions/onboarding-2026-10-28",
+    "scenario": "onboarding",
+    "target": "perf",
+    "uploaded_at": "2026-10-28T08:34:22.765779+00:00",
+    "version": "onboarding-2026-10-28"
+  },
+  "qa-bot-perf-python": {
+    "cases": 23,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-python/versions/python-2026-10-28",
+    "scenario": "python",
+    "target": "perf",
+    "uploaded_at": "2026-10-28T08:55:52.690464+00:00",
+    "version": "python-2026-10-28"
+  },
+  "qa-bot-perf-typespec": {
+    "cases": 123,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-typespec/versions/typespec-2026-10-28",
+    "scenario": "typespec",
+    "target": "perf",
+    "uploaded_at": "2026-10-28T08:34:33.751275+00:00",
+    "version": "typespec-2026-10-28"
   }
 }

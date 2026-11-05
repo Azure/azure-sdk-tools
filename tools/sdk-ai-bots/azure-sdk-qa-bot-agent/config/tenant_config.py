@@ -592,7 +592,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         scope="Azure API specification and SDK onboarding, release plan lifecycle, Azure MCP, and retirement processes.",
         topics=[
             "Prerequisites and setup for onboarding Azure API or SDK",
-            "Permission issues for specification repo or SDK repo access, workflow visibility",
             "Release plan creation, status, readiness, lifecycle, and troubleshooting",
             "SDK development, SDK generation (reproduce SDK validation locally), SDK release tooling and guidance",
             "Service, API and SDK deprecation guidance",
@@ -635,7 +634,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Language-specific SDK generation/validation errors — route to that language's SDK tenant",
             "TypeSpec validation errors — route to typespec_channel_qa_bot",
             "API design or spec authoring questions — route to typespec_channel_qa_bot",
-            "Permission or access issues for API spec repos — route to azure_sdk_onboarding",
         ],
         sources=_sources(
             SRC_STATIC_AZURE_DOCS,
@@ -649,7 +647,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_INTERNAL_WIKI,
         ),
         source_filter={
-            SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
             SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
         qa_guideline_files=["tenants/api_spec_review.md"],

@@ -17,7 +17,35 @@ from tools.knowledge_tools import (
     _deduplicate_wiki_pages,
     _refs_from_expanded,
 )
-from utils.azure_ai_search import NON_WIKI_FILTER, SearchClient
+from utils.azure_ai_search import (
+    NON_WIKI_FILTER,
+    SearchClient,
+    _format_document_context,
+    _format_qa_context,
+)
+
+
+@pytest.mark.parametrize("formatter", [_format_document_context, _format_qa_context])
+def test_context_formatting_preserves_input_chunks(formatter):
+    hit = KnowledgeChunk(
+        chunk_id="question", source="static_typespec_qa", title="history.md",
+        header1="Topic", header2="Question", content="Question evidence",
+    )
+    siblings = [
+        KnowledgeChunk(
+            chunk_id="answer", header1="Topic", header2="Answer",
+            header3="Resolution", content="Answer evidence",
+        ),
+    ]
+    original_hit = hit.model_dump()
+    original_siblings = [sibling.model_dump() for sibling in siblings]
+
+    content = formatter(hit, siblings)
+
+    assert content.count(hit.content) == 1
+    assert content.count(siblings[0].content) == 1
+    assert hit.model_dump() == original_hit
+    assert [sibling.model_dump() for sibling in siblings] == original_siblings
 
 
 def test_wiki_page_deduplication_keeps_highest_scored_chunk():

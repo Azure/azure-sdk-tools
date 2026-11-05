@@ -63,7 +63,7 @@ public class ServiceApiReadinessServiceTests
         _missingHeadRepository = false;
         _truncatedFiles = false;
         _github = new Mock<IGitHubService>();
-        _github.Setup(service => service.GetAuthTokenAsync(It.IsAny<CancellationToken>())).ReturnsAsync("github-test-token");
+        _github.Setup(service => service.GetAuthToken(It.IsAny<CancellationToken>())).Returns("github-test-token");
         var credential = new Mock<TokenCredential>();
         credential.Setup(value => value.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
             .Returns(new ValueTask<AccessToken>(new AccessToken("azure-test-token", DateTimeOffset.UtcNow.AddHours(1))));
@@ -382,7 +382,7 @@ public class ServiceApiReadinessServiceTests
     [Test]
     public async Task TokenResolutionFailureDoesNotExposeTheToken()
     {
-        _github.Setup(service => service.GetAuthTokenAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("private token value"));
+        _github.Setup(service => service.GetAuthToken(It.IsAny<CancellationToken>())).Throws(new InvalidOperationException("private token value"));
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(JsonSerializer.Serialize(response), Does.Not.Contain("private token value"));
@@ -621,7 +621,7 @@ public class ServiceApiReadinessServiceTests
         var response = await _service.CheckAsync("helen229", "azure-sdk-for-java", 1, cancellation.Token);
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(response.Detail, Does.Contain("canceled"));
-        _github.Verify(service => service.GetAuthTokenAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _github.Verify(service => service.GetAuthToken(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -630,18 +630,18 @@ public class ServiceApiReadinessServiceTests
         using var cancellation = new CancellationTokenSource();
         var started = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var authentication = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _github.Setup(service => service.GetAuthTokenAsync(It.IsAny<CancellationToken>()))
+        _github.Setup(service => service.GetAuthToken(It.IsAny<CancellationToken>()))
             .Returns<CancellationToken>(token =>
             {
                 Assert.That(token.CanBeCanceled, Is.True);
                 token.Register(() => authentication.TrySetCanceled(token));
                 started.TrySetResult(true);
-                return authentication.Task;
+                return authentication.Task.GetAwaiter().GetResult();
             });
-        var checking = _service.CheckAsync("helen229", "azure-sdk-for-java", 1, cancellation.Token);
-        await started.Task;
+        var checking = Task.Run(() => _service.CheckAsync("helen229", "azure-sdk-for-java", 1, cancellation.Token));
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
         cancellation.Cancel();
-        var response = await checking;
+        var response = await checking.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(response.Detail, Does.Contain("canceled"));
         Assert.That(_requests, Is.Empty);

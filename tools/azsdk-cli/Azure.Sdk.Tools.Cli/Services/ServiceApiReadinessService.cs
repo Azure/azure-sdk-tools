@@ -42,7 +42,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 throw new ArgumentException("Provide an SDK repository and positive PR number.");
             }
             ct.ThrowIfCancellationRequested();
-            var token = await github.GetAuthTokenAsync(ct);
+            var token = github.GetAuthToken(ct);
             var prPath = $"repos/{owner}/{repository}/pulls/{pullRequest}";
             var pr = await ReadGitHubAsync(prPath, token, ct) ?? throw new InvalidOperationException("SDK PR is unavailable.");
             result.HeadSha = Text(pr["head"]?["sha"]);

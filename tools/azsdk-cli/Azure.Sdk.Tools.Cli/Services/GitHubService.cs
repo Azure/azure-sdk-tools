@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        protected async Task<string> GetGitHubAuthTokenAsync(CancellationToken ct)
+        protected string GetGitHubAuthToken(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
@@ -96,7 +96,21 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             var options = new ProcessOptions("gh", ["auth", "token"],
                 timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream: false);
-            var result = await processHelper.Run(options, ct).ConfigureAwait(false);
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+            ProcessResult result;
+            try
+            {
+                result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
+                timeoutCts.Token.ThrowIfCancellationRequested();
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                throw new InvalidOperationException(
+                    $"Timed out after {GitHubCliAuthTokenTimeoutMs / 1000} seconds while running 'gh auth token'. " +
+                    "Please ensure GitHub CLI is installed, not awaiting interactive prompts, and authenticated via `gh auth login`."
+                );
+            }
             ct.ThrowIfCancellationRequested();
             if (result.ExitCode != 0 || string.IsNullOrWhiteSpace(result.Stdout))
             {
@@ -107,27 +121,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             return token;
         }
 
-        protected string GetGitHubAuthToken()
-        {
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
-            try
-            {
-                return GetGitHubAuthTokenAsync(timeoutCts.Token).GetAwaiter().GetResult();
-            }
-            catch (OperationCanceledException)
-            {
-                throw new InvalidOperationException(
-                    $"Timed out after {GitHubCliAuthTokenTimeoutMs / 1000} seconds while running 'gh auth token'. " +
-                    "Please ensure GitHub CLI is installed, not awaiting interactive prompts, and authenticated via `gh auth login`."
-                );
-            }
-        }
     }
 
     public interface IGitHubService
     {
-        public string GetAuthToken();
-        public Task<string> GetAuthTokenAsync(CancellationToken ct);
+        public string GetAuthToken(CancellationToken ct = default);
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -183,8 +181,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             this.httpClientFactory = httpClientFactory;
         }
 
-        public string GetAuthToken() => GetGitHubAuthToken();
-        public Task<string> GetAuthTokenAsync(CancellationToken ct) => GetGitHubAuthTokenAsync(ct);
+        public string GetAuthToken(CancellationToken ct = default) => GetGitHubAuthToken(ct);
 
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {
@@ -1285,7 +1282,7 @@ query($owner: String!, $repo: String!, $sha: GitObjectID!, $after: String) {
         private async Task<JsonDocument> PostGraphQLAsync(string query, object variables, CancellationToken ct)
         {
             var httpClient = httpClientFactory.CreateClient();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetGitHubAuthToken());
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetGitHubAuthToken(ct));
             httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("AzureSDKDevToolsMCP", "1.0"));
 
             var requestBody = JsonSerializer.Serialize(new { query, variables });

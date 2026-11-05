@@ -24,6 +24,7 @@ import logging
 import os
 import re
 import time as _time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from itertools import zip_longest
@@ -611,24 +612,21 @@ def _compact_copilot_reviews(value: Any) -> Any:
     }
 
 
-def _iter_embedded_json(line: str) -> list[Any]:
-    """Return parseable JSON values embedded after arbitrary log prefixes."""
+def _parse_embedded_json(line: str) -> dict[str, Any] | list[Any] | None:
+    """Parse the first JSON object or array after a log prefix."""
     decoder = json.JSONDecoder()
-    values: list[Any] = []
     for match in _JSON_START_RE.finditer(line):
         try:
             value, _ = decoder.raw_decode(line[match.start():])
         except json.JSONDecodeError:
             continue
         if isinstance(value, (dict, list)):
-            values.append(value)
-            break
-    return values
+            return value
+    return None
 
 
-def _iter_diagnostic_records(value: Any) -> list[dict[str, Any]]:
-    """Find diagnostic-shaped objects without depending on domain-specific codes."""
-    records: list[dict[str, Any]] = []
+def _iter_diagnostic_records(value: Any) -> Iterator[dict[str, Any]]:
+    """Yield diagnostic objects in source order."""
     pending = [value]
     while pending:
         current = pending.pop()
@@ -641,17 +639,10 @@ def _iter_diagnostic_records(value: Any) -> list[dict[str, Any]]:
             isinstance(current.get(field), str) and current[field].strip()
             for field in _DIAGNOSTIC_MESSAGE_FIELDS
         )
-        has_context = any(
-            field in current
-            for field in (
-                *_DIAGNOSTIC_CLASSIFIER_FIELDS,
-                *_DIAGNOSTIC_LOCATION_FIELDS,
-            )
-        )
+        has_context = not _DIAGNOSTIC_CONTEXT_FIELDS.isdisjoint(current)
         if has_message and has_context:
-            records.append(current)
-        pending.extend(reversed(list(current.values())))
-    return records
+            yield current
+        pending.extend(reversed(current.values()))
 
 
 def _compact_diagnostic_value(value: Any) -> Any:
@@ -672,8 +663,8 @@ def _compact_diagnostic_value(value: Any) -> Any:
     return None
 
 
-def _compact_diagnostic(record: dict[str, Any], source_line: int) -> dict[str, Any]:
-    diagnostic: dict[str, Any] = {"source_line": source_line}
+def _compact_diagnostic(record: dict[str, Any]) -> dict[str, Any]:
+    diagnostic: dict[str, Any] = {}
     for field in _DIAGNOSTIC_OUTPUT_FIELDS:
         if field not in record:
             continue
@@ -691,9 +682,15 @@ def _diagnostic_classifier(diagnostic: dict[str, Any]) -> str:
     return "unclassified"
 
 
-def _extract_structured_diagnostics(
-    jobs: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], dict[str, int]]:
+@dataclass(frozen=True)
+class _DiagnosticExtraction:
+    """Deduplicated records and category totals before budgeted selection."""
+
+    records: list[dict[str, Any]]
+    counts_by_classifier: dict[str, int]
+
+
+def _extract_structured_diagnostics(jobs: list[dict[str, Any]]) -> _DiagnosticExtraction:
     """Extract unique diagnostic-shaped JSON records in source order."""
     diagnostics: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -703,27 +700,24 @@ def _extract_structured_diagnostics(
             job["logs_content"].splitlines(),
             start=1,
         ):
-            for value in _iter_embedded_json(line):
-                for record in _iter_diagnostic_records(value):
-                    diagnostic = {
-                        "job_id": job["job_id"],
-                        **_compact_diagnostic(record, line_number),
-                    }
-                    signature = json.dumps(
-                        {
-                            key: value
-                            for key, value in diagnostic.items()
-                            if key not in {"job_id", "source_line"}
-                        },
-                        sort_keys=True,
-                    )
-                    if signature in seen:
-                        continue
-                    seen.add(signature)
-                    diagnostics.append(diagnostic)
-                    classifier = _diagnostic_classifier(diagnostic)
-                    counts[classifier] = counts.get(classifier, 0) + 1
-    return diagnostics, counts
+            value = _parse_embedded_json(line)
+            if value is None:
+                continue
+            for record in _iter_diagnostic_records(value):
+                diagnostic = _compact_diagnostic(record)
+                # Deduplicate across jobs, retaining the first source location.
+                signature = json.dumps(diagnostic, sort_keys=True)
+                if signature in seen:
+                    continue
+                seen.add(signature)
+                diagnostics.append({
+                    "job_id": job["job_id"],
+                    "source_line": line_number,
+                    **diagnostic,
+                })
+                classifier = _diagnostic_classifier(diagnostic)
+                counts[classifier] = counts.get(classifier, 0) + 1
+    return _DiagnosticExtraction(records=diagnostics, counts_by_classifier=counts)
 
 
 def _round_robin_diagnostics(
@@ -746,42 +740,39 @@ def _add_structured_diagnostics(
     overflow: dict[str, Any],
     jobs: list[dict[str, Any]],
 ) -> None:
-    diagnostics, counts = _extract_structured_diagnostics(jobs)
+    extraction = _extract_structured_diagnostics(jobs)
+    diagnostics = extraction.records
     if not diagnostics:
         return
 
     ranked_counts = sorted(
-        counts.items(),
+        extraction.counts_by_classifier.items(),
         key=lambda item: (-item[1], item[0]),
     )
     kept_counts = ranked_counts[:_MAX_DIAGNOSTIC_CLASSIFIERS]
-    overflow["diagnostic_selection"] = {
+    selection: dict[str, Any] = {
         "total": len(diagnostics),
         "returned": 0,
         "truncated": True,
         "counts_by_classifier": dict(kept_counts),
     }
     if len(ranked_counts) > len(kept_counts):
-        overflow["diagnostic_selection"]["omitted_classifier_count"] = (
+        selection["omitted_classifier_count"] = (
             len(ranked_counts) - len(kept_counts)
         )
-    overflow["structured_diagnostics"] = []
+    selected: list[dict[str, Any]] = []
+    overflow["diagnostic_selection"] = selection
+    overflow["structured_diagnostics"] = selected
     diagnostic_budget = _MCP_MAX_OUTPUT_CHARS - _LOG_EXCERPT_RESERVE_CHARS
     for diagnostic in _round_robin_diagnostics(diagnostics):
-        overflow["structured_diagnostics"].append(diagnostic)
-        returned = len(overflow["structured_diagnostics"])
-        overflow["diagnostic_selection"]["returned"] = returned
-        overflow["diagnostic_selection"]["truncated"] = returned < len(diagnostics)
+        selected.append(diagnostic)
+        selection["returned"] = len(selected)
+        selection["truncated"] = len(selected) < len(diagnostics)
         if len(json.dumps(overflow)) > diagnostic_budget:
-            overflow["structured_diagnostics"].pop()
-            returned = len(overflow["structured_diagnostics"])
-            overflow["diagnostic_selection"]["returned"] = returned
-            overflow["diagnostic_selection"]["truncated"] = True
-            continue
-    returned = len(overflow["structured_diagnostics"])
-    overflow["diagnostic_selection"]["returned"] = returned
-    overflow["diagnostic_selection"]["truncated"] = returned < len(diagnostics)
-    if not returned:
+            selected.pop()
+    selection["returned"] = len(selected)
+    selection["truncated"] = len(selected) < len(diagnostics)
+    if not selected:
         del overflow["structured_diagnostics"]
         del overflow["diagnostic_selection"]
 

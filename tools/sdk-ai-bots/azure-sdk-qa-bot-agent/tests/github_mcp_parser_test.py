@@ -6,7 +6,15 @@ import pytest
 from mcp import types as mcp_types
 
 from tools import _MCP_MAX_OUTPUT_CHARS
-from tools.github_mcp_tools import _BODY_REDACTION_NOTICE, _github_mcp_parser
+from tools.github_mcp_tools import (
+    _BODY_REDACTION_NOTICE,
+    _extract_structured_diagnostics,
+    _github_mcp_parser,
+    _iter_diagnostic_records,
+    _parse_embedded_json,
+    _round_robin_diagnostics,
+    _serialize_job_log_overflow,
+)
 
 
 def _parse(*values: dict | list) -> tuple[str, dict | list]:
@@ -26,6 +34,162 @@ def _text_resource(text: str, uri: str = "https://example.com/fixture.py") -> mc
         type="resource",
         resource=mcp_types.TextResourceContents(uri=uri, mimeType="text/plain", text=text),
     )
+
+
+@pytest.mark.parametrize(
+    "line,expected",
+    [
+        ("plain log text", None),
+        ("[error] malformed {JSON", None),
+        ("prefix {} suffix", {}),
+        ("prefix [] suffix", []),
+        ('[error] [{"code": "RULE001"}]', [{"code": "RULE001"}]),
+        ('prefix {"value": [1]} {"value": 2}', {"value": [1]}),
+    ],
+)
+def test_parse_embedded_json_returns_first_object_or_array(
+    line: str, expected: dict | list | None,
+) -> None:
+    assert _parse_embedded_json(line) == expected
+
+
+def test_diagnostic_records_yield_in_source_order_without_mutation() -> None:
+    first = {"code": "FIRST", "message": "First diagnostic"}
+    second = {"location": "service.json:42", "error": "Second diagnostic"}
+    parent = {
+        "code": "PARENT",
+        "message": "Parent diagnostic",
+        "children": [
+            first,
+            {"message": "No category or location"},
+            {"nested": [second, {"code": "EMPTY", "message": " "}]},
+        ],
+    }
+    original = json.dumps(parent)
+
+    records = _iter_diagnostic_records(parent)
+
+    assert iter(records) is records
+    assert list(records) == [parent, first, second]
+    assert json.dumps(parent) == original
+
+
+@pytest.mark.parametrize(
+    "context,is_diagnostic",
+    [
+        ({"line": 0}, True),
+        ({"path": None}, True),
+        ({"code": None}, True),
+        ({}, False),
+        ({"docUrl": "https://example.com/rule"}, False),
+    ],
+)
+def test_diagnostic_detection_requires_a_category_or_location_field(
+    context: dict, is_diagnostic: bool,
+) -> None:
+    record = {"message": "Diagnostic message", **context}
+
+    assert list(_iter_diagnostic_records(record)) == ([record] if is_diagnostic else [])
+
+
+def test_diagnostic_extraction_returns_named_records_and_classifier_counts() -> None:
+    first = {"code": "RULE001", "message": "First diagnostic"}
+    second = {"code": "RULE001", "message": "Second diagnostic"}
+    third = {"severity": "warning", "message": "Third diagnostic"}
+    jobs = [
+        {"job_id": 1, "logs_content": "setup\n" + json.dumps([first, second, first])},
+        {"job_id": 2, "logs_content": json.dumps([first, third])},
+    ]
+
+    extraction = _extract_structured_diagnostics(jobs)
+
+    assert extraction.records == [
+        {"job_id": 1, "source_line": 2, **first},
+        {"job_id": 1, "source_line": 2, **second},
+        {"job_id": 2, "source_line": 1, **third},
+    ]
+    assert extraction.counts_by_classifier == {"code:RULE001": 2, "severity:warning": 1}
+
+
+@pytest.mark.parametrize("jobs", [[], [{"job_id": 1, "logs_content": "ordinary log"}]])
+def test_empty_diagnostic_extraction_has_empty_records_and_counts(jobs: list[dict]) -> None:
+    extraction = _extract_structured_diagnostics(jobs)
+
+    assert extraction.records == []
+    assert extraction.counts_by_classifier == {}
+
+
+@pytest.mark.parametrize(
+    "diagnostics,expected_indices",
+    [
+        ([], []),
+        ([{}, {"message": "unclassified"}, {"code": "A"}], [0, 2, 1]),
+        (
+            [
+                {"code": "A", "message": "a1"},
+                {"code": "A", "message": "a2"},
+                {"severity": "warning", "message": "b1"},
+                {"code": "B", "message": "c1"},
+                {"severity": "warning", "message": "b2"},
+            ],
+            [0, 2, 3, 1, 4],
+        ),
+    ],
+)
+def test_diagnostic_interleaving_keeps_category_order_without_mutation(
+    diagnostics: list[dict], expected_indices: list[int],
+) -> None:
+    original = json.dumps(diagnostics)
+
+    assert _round_robin_diagnostics(diagnostics) == [
+        diagnostics[index] for index in expected_indices
+    ]
+    assert json.dumps(diagnostics) == original
+
+
+@pytest.mark.parametrize(
+    "message_length,excerpt_length,returned_diagnostics,returned_excerpts",
+    [(5000, 1000, 1, 1), (10, _MCP_MAX_OUTPUT_CHARS + 1, 0, 0)],
+)
+def test_overflow_trims_diagnostics_before_excerpts_and_updates_counts(
+    message_length: int, excerpt_length: int,
+    returned_diagnostics: int, returned_excerpts: int,
+) -> None:
+    overflow = {
+        "status": "overflow",
+        "output_characters": 20000,
+        "source_text_items": 1,
+        "structured_diagnostics": [{"message": "x" * message_length}] * 2,
+        "diagnostic_selection": {"total": 2, "returned": 2, "truncated": False},
+        "log_excerpts": [{"content": "y" * excerpt_length}],
+    }
+
+    output = _serialize_job_log_overflow(overflow)
+    parsed = json.loads(output)
+
+    assert len(output) <= _MCP_MAX_OUTPUT_CHARS
+    assert len(parsed["structured_diagnostics"]) == returned_diagnostics
+    assert len(parsed["log_excerpts"]) == returned_excerpts
+    assert parsed["diagnostic_selection"] == {
+        "total": 2, "returned": returned_diagnostics, "truncated": True,
+    }
+
+
+def test_diagnostic_budget_skips_large_records_without_skipping_later_small_records() -> None:
+    large = {"code": "LARGE", "message": "x" * _MCP_MAX_OUTPUT_CHARS}
+    small = {"code": "SMALL", "message": "Keep this diagnostic"}
+
+    _, parsed = _parse({
+        "job_id": 1,
+        "logs_content": json.dumps(large) + "\n" + json.dumps(small),
+    })
+
+    assert parsed["structured_diagnostics"] == [
+        {"job_id": 1, "source_line": 2, **small},
+    ]
+    assert parsed["diagnostic_selection"]["total"] == 2
+    assert parsed["diagnostic_selection"]["returned"] == 1
+    assert parsed["diagnostic_selection"]["truncated"] is True
 
 
 @pytest.mark.parametrize("text", ["def start_proxy():\n    return\n", "", '{\n  "setting": true\n}'])
@@ -698,6 +862,33 @@ def test_review_compaction_selects_timestamp_not_list_order_and_keeps_metadata()
     assert "Other pages may contain newer reviews" in selection["guidance"]
 
 
+def test_review_compaction_keeps_first_review_when_timestamps_tie() -> None:
+    first = _review(1, "2026-10-28T10:00:00Z")
+    second = _review(2, "2026-10-28T12:00:00+02:00")
+
+    _, parsed = _parse([first, second])
+
+    assert parsed["reviews"] == [first]
+    assert parsed["review_selection"]["omitted_older_copilot_reviews"] == 1
+
+
+@pytest.mark.parametrize("missing_field", ["id", "state", "html_url"])
+def test_mixed_review_response_is_preserved_when_any_record_is_unrecognized(
+    missing_field: str,
+) -> None:
+    incomplete = _review(3, "2026-10-28T11:00:00Z")
+    del incomplete[missing_field]
+    reviews = [
+        _review(1, "2026-10-20T10:00:00Z"),
+        _review(2, "2026-10-28T10:00:00Z"),
+        incomplete,
+    ]
+
+    _, parsed = _parse(reviews)
+
+    assert parsed == reviews
+
+
 def test_review_compaction_preserves_humans_other_bots_and_redaction() -> None:
     human = _review(
         3, "2026-10-20T10:00:00Z",
@@ -837,6 +1028,47 @@ def test_unknown_or_malformed_review_bodies_are_preserved(body: str) -> None:
 
     assert parsed["reviews"][0]["body"] == body
     assert "body_compaction" not in parsed["reviews"][0]
+
+
+def test_review_body_compaction_preserves_unmatched_tags_and_unclosed_tail() -> None:
+    tail = "<details><summary>Unclosed</summary>Keep this tail"
+    body = (
+        "  Prefix </details>\n"
+        "<details><summary>Visible label</summary>Hidden body</details>\n"
+        + tail
+    )
+
+    _, parsed = _parse([_review(1, "2026-10-28T10:00:00Z", body=body)])
+
+    review = parsed["reviews"][0]
+    assert review["body"] == "Prefix </details>\nVisible label\n" + tail
+    assert review["body_compaction"]["omitted_detail_sections"] == ["Visible label"]
+
+
+def test_review_body_compaction_decodes_labels_without_dropping_native_fields() -> None:
+    native = _review(
+        1,
+        "2026-10-28T10:00:00Z",
+        body=(
+            "Verdict\n"
+            "<details><summary> <b>Files &amp; findings</b>\n  overview </summary>"
+            "<details><summary>Nested label</summary>Hidden nested body</details>"
+            "</details>\n"
+            "<details>No summary or label</details>"
+        ),
+        extra_metadata={"retained": True},
+    )
+
+    _, parsed = _parse([native])
+
+    review = parsed["reviews"][0]
+    assert review["body"] == "Verdict\nFiles & findings overview"
+    assert review["body_compaction"]["omitted_detail_sections"] == [
+        "Files & findings overview", "",
+    ]
+    assert {key: review[key] for key in native if key != "body"} == {
+        key: value for key, value in native.items() if key != "body"
+    }
 
 
 def test_latest_large_overview_is_compacted_before_the_output_budget() -> None:

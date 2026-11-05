@@ -532,45 +532,74 @@ def _compact_copilot_review_body(review: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+@dataclass(frozen=True)
+class _PullRequestReview:
+    """Preserve native fields; parse a timestamp only for eligible Copilot reviews."""
+
+    data: dict[str, Any]
+    copilot_submitted_at: datetime | None = None
+
+    @classmethod
+    def from_response(cls, value: Any) -> _PullRequestReview | None:
+        if (
+            not isinstance(value, dict)
+            or not {"id", "state", "html_url"} <= value.keys()
+            or not isinstance(value["state"], str)
+            or value["state"] not in _PULL_REQUEST_REVIEW_STATES
+        ):
+            return None
+
+        user = value.get("user")
+        timestamp = value.get("submitted_at")
+        if not (
+            isinstance(user, dict)
+            and user.get("login") == _COPILOT_REVIEWER_LOGIN
+            and value["state"] not in {"PENDING", "DISMISSED"}
+            and isinstance(timestamp, str)
+        ):
+            return cls(data=value)
+        try:
+            submitted_at = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            return cls(data=value)
+        return cls(
+            data=value,
+            copilot_submitted_at=submitted_at if submitted_at.tzinfo is not None else None,
+        )
+
+
 def _compact_copilot_reviews(value: Any) -> Any:
     """Keep the latest Copilot review in this response, never infer page coverage."""
     if not isinstance(value, list) or not value:
         return value
-    if not all(
-        isinstance(item, dict)
-        and {"id", "state", "html_url"} <= item.keys()
-        and item["state"] in {"APPROVED", "CHANGES_REQUESTED", "COMMENTED", "PENDING", "DISMISSED"}
-        for item in value
-    ):
-        return value
-    candidates: list[tuple[int, datetime]] = []
+    reviews: list[_PullRequestReview] = []
+    latest_index: int | None = None
+    latest_submitted_at: datetime | None = None
+    candidate_count = 0
     for index, item in enumerate(value):
-        if (item.get("user") or {}).get("login") != "copilot-pull-request-reviewer[bot]":
+        review = _PullRequestReview.from_response(item)
+        if review is None:
+            return value
+        reviews.append(review)
+        submitted_at = review.copilot_submitted_at
+        if submitted_at is None:
             continue
-        if item.get("state") in {"PENDING", "DISMISSED"}:
-            continue
-        timestamp = item.get("submitted_at")
-        if not isinstance(timestamp, str):
-            continue
-        try:
-            submitted = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-        except ValueError:
-            continue
-        if submitted.tzinfo is not None:
-            candidates.append((index, submitted))
-    if not candidates:
+        candidate_count += 1
+        if latest_submitted_at is None or submitted_at > latest_submitted_at:
+            latest_index = index
+            latest_submitted_at = submitted_at
+    if latest_index is None:
         return value
-    latest_index = max(candidates, key=lambda candidate: candidate[1])[0]
-    omitted = {index for index, _ in candidates if index != latest_index}
     return {
         "reviews": [
-            _compact_copilot_review_body(item) if index == latest_index else item
-            for index, item in enumerate(value) if index not in omitted
+            _compact_copilot_review_body(review.data) if index == latest_index else review.data
+            for index, review in enumerate(reviews)
+            if review.copilot_submitted_at is None or index == latest_index
         ],
         "review_selection": {
-            "author": "copilot-pull-request-reviewer[bot]",
+            "author": _COPILOT_REVIEWER_LOGIN,
             "scope": "current_response_only",
-            "omitted_older_copilot_reviews": len(omitted),
+            "omitted_older_copilot_reviews": candidate_count - 1,
             "latest_overall_verified": False,
             "guidance": (
                 "Only the latest submitted Copilot review in this response is retained. "

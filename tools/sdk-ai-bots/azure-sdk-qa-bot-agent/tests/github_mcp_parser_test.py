@@ -8,11 +8,14 @@ from mcp import types as mcp_types
 from tools import _MCP_MAX_OUTPUT_CHARS
 from tools.github_mcp_tools import (
     _BODY_REDACTION_NOTICE,
+    _build_job_log_overflow,
     _extract_structured_diagnostics,
     _github_mcp_parser,
     _iter_diagnostic_records,
     _parse_embedded_json,
     _round_robin_diagnostics,
+    _select_job_log_excerpts,
+    _select_structured_diagnostics,
     _serialize_job_log_overflow,
 )
 
@@ -164,6 +167,7 @@ def test_overflow_trims_diagnostics_before_excerpts_and_updates_counts(
         "log_excerpts": [{"content": "y" * excerpt_length}],
     }
 
+    original = json.dumps(overflow)
     output = _serialize_job_log_overflow(overflow)
     parsed = json.loads(output)
 
@@ -173,6 +177,36 @@ def test_overflow_trims_diagnostics_before_excerpts_and_updates_counts(
     assert parsed["diagnostic_selection"] == {
         "total": 2, "returned": returned_diagnostics, "truncated": True,
     }
+    assert json.dumps(overflow) == original
+
+
+def test_log_selection_returns_results_without_mutating_inputs() -> None:
+    envelope = {
+        "status": "overflow",
+        "complete": False,
+        "output_characters": 20000,
+        "source_text_items": 1,
+        "error": "Original overflow",
+    }
+    jobs = [{
+        "job_id": 42,
+        "logs_content": json.dumps({"code": "RULE", "message": "Fix configuration"})
+        + "\nError: validation failed",
+    }]
+    original_envelope = json.dumps(envelope)
+    original_jobs = json.dumps(jobs)
+
+    diagnostics = _select_structured_diagnostics(jobs, envelope)
+    excerpts = _select_job_log_excerpts(jobs, envelope)
+    response = _build_job_log_overflow(envelope, jobs)
+
+    assert diagnostics["diagnostic_selection"]["returned"] == 1
+    assert diagnostics["structured_diagnostics"][0]["message"] == "Fix configuration"
+    assert "validation failed" in excerpts[0]["content"]
+    assert response["log_excerpts"] == excerpts
+    assert response["structured_diagnostics"] == diagnostics["structured_diagnostics"]
+    assert json.dumps(envelope) == original_envelope
+    assert json.dumps(jobs) == original_jobs
 
 
 def test_diagnostic_budget_skips_large_records_without_skipping_later_small_records() -> None:

@@ -736,14 +736,15 @@ def _round_robin_diagnostics(
     ]
 
 
-def _add_structured_diagnostics(
-    overflow: dict[str, Any],
+def _select_structured_diagnostics(
     jobs: list[dict[str, Any]],
-) -> None:
+    envelope: dict[str, Any],
+) -> dict[str, Any]:
+    """Select diagnostic records without changing the response envelope."""
     extraction = _extract_structured_diagnostics(jobs)
     diagnostics = extraction.records
     if not diagnostics:
-        return
+        return {}
 
     ranked_counts = sorted(
         extraction.counts_by_classifier.items(),
@@ -761,24 +762,27 @@ def _add_structured_diagnostics(
             len(ranked_counts) - len(kept_counts)
         )
     selected: list[dict[str, Any]] = []
-    overflow["diagnostic_selection"] = selection
-    overflow["structured_diagnostics"] = selected
+    fields = {
+        "diagnostic_selection": selection,
+        "structured_diagnostics": selected,
+    }
+    preview = {**envelope, **fields}
     diagnostic_budget = _MCP_MAX_OUTPUT_CHARS - _LOG_EXCERPT_RESERVE_CHARS
     for diagnostic in _round_robin_diagnostics(diagnostics):
         selected.append(diagnostic)
         selection["returned"] = len(selected)
         selection["truncated"] = len(selected) < len(diagnostics)
-        if len(json.dumps(overflow)) > diagnostic_budget:
+        if len(json.dumps(preview)) > diagnostic_budget:
             selected.pop()
     selection["returned"] = len(selected)
     selection["truncated"] = len(selected) < len(diagnostics)
-    if not selected:
-        del overflow["structured_diagnostics"]
-        del overflow["diagnostic_selection"]
+    return fields if selected else {}
 
 
-def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
-    """Attach bounded, verbatim diagnostic windows to job-log overflow metadata."""
+def _build_job_log_overflow(
+    envelope: dict[str, Any], values: list[Any],
+) -> dict[str, Any]:
+    """Assemble overflow metadata from independently selected diagnostics and excerpts."""
     jobs: list[dict[str, Any]] = []
     for value in values:
         if not isinstance(value, dict):
@@ -793,15 +797,27 @@ def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
             ):
                 jobs.append(candidate)
     if not jobs:
-        return
+        return dict(envelope)
 
-    overflow["error"] = (
-        "Job logs exceed the output budget; log_excerpts are partial, "
-        "with line numbers relative to the returned log."
-    )
+    response = {
+        **envelope,
+        "error": (
+            "Job logs exceed the output budget; log_excerpts are partial, "
+            "with line numbers relative to the returned log."
+        ),
+        "log_excerpts": [],
+    }
+    response.update(_select_structured_diagnostics(jobs, response))
+    response["log_excerpts"] = _select_job_log_excerpts(jobs, response)
+    return response
+
+
+def _select_job_log_excerpts(
+    jobs: list[dict[str, Any]], envelope: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Select bounded, verbatim log windows without changing the response envelope."""
     excerpts: list[dict[str, Any]] = []
-    overflow["log_excerpts"] = excerpts
-    _add_structured_diagnostics(overflow, jobs)
+    preview = {**envelope, "log_excerpts": excerpts}
     for job in jobs:
         lines = job["logs_content"].splitlines()
         error_indices = [
@@ -840,7 +856,7 @@ def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
                         excerpt["content"] = content[-fragment_length:]
                         excerpt["first_line_truncated"] = True
                 excerpts.append(excerpt)
-                if len(json.dumps(overflow)) <= _MCP_MAX_OUTPUT_CHARS:
+                if len(json.dumps(preview)) <= _MCP_MAX_OUTPUT_CHARS:
                     covered_end = end
                     break
                 excerpts.pop()
@@ -856,20 +872,28 @@ def _add_job_log_excerpts(overflow: dict[str, Any], values: list[Any]) -> None:
                     start += 1
                 else:
                     end -= 1
+    return excerpts
 
 
 def _serialize_job_log_overflow(overflow: dict[str, Any]) -> str:
-    """Trim diagnostics before excerpts to fit the MCP response budget."""
-    output = json.dumps(overflow)
-    selection = overflow.get("diagnostic_selection")
+    """Fit a copy to the response budget, trimming diagnostics before excerpts."""
+    response = dict(overflow)
+    selection = response.get("diagnostic_selection")
+    if isinstance(selection, dict):
+        selection = dict(selection)
+        response["diagnostic_selection"] = selection
+    output = json.dumps(response)
     for field in ("structured_diagnostics", "log_excerpts"):
-        items = overflow.get(field)
+        items = response.get(field)
+        if isinstance(items, list):
+            items = list(items)
+            response[field] = items
         while len(output) > _MCP_MAX_OUTPUT_CHARS and isinstance(items, list) and items:
             items.pop()
             if field == "structured_diagnostics" and isinstance(selection, dict):
                 selection["returned"] = len(items)
                 selection["truncated"] = True
-            output = json.dumps(overflow)
+            output = json.dumps(response)
 
     if len(output) <= _MCP_MAX_OUTPUT_CHARS:
         return output
@@ -917,8 +941,7 @@ def _process_github_result(result: mcp_types.CallToolResult) -> str | None:
             "otherwise report the limit."
         ),
     }
-    _add_job_log_excerpts(overflow, values)
-    return _serialize_job_log_overflow(overflow)
+    return _serialize_job_log_overflow(_build_job_log_overflow(overflow, values))
 
 
 def _process_github_resources(result: mcp_types.CallToolResult) -> str:

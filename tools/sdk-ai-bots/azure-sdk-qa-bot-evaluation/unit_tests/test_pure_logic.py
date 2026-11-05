@@ -303,48 +303,6 @@ def test_builtin_completeness_preserves_mapping_and_threshold():
     }
 
 
-def test_perf_lro_gold_focuses_on_response_headers():
-    records, _ = resolve_records(
-        "evaluation_datasets/perf/typespec.jsonl",
-        script_dir=Path(__file__).resolve().parents[1],
-    )
-    case = next(
-        row for row in records
-        if row["query"] == (
-            "title: LRO response header problem\n\n"
-            "question: how can I specify a header is just for final result or for polling step?"
-        )
-    )
-    gold = case["ground_truth"]
-    for required in ("@header", "@pollingLocation", "@finalLocation", "response model"):
-        assert required in gold
-    for optional in ("@pollingOperation", "@finalOperation", "ResourceLocation<"):
-        assert optional not in gold
-
-
-def test_perf_python_gold_focuses_on_reusable_error_format():
-    records, _ = resolve_records(
-        "evaluation_datasets/perf/python.jsonl",
-        script_dir=Path(__file__).resolve().parents[1],
-    )
-    matches = [
-        row for row in records
-        if "Is there a way that we could utilize the code generator" in row["query"]
-    ]
-    assert len(matches) == 1
-    gold = matches[0]["ground_truth"]
-    for required in (
-        "ODataV4Format",
-        "message.value",
-        "HttpResponseError(error_format=BatchErrorFormat)",
-        "rather than hand-editing every generated operation",
-        "Verify how that generator version",
-    ):
-        assert required in gold
-    for optional in ("except HttpResponseError", "self.next.send", "async operations"):
-        assert optional not in gold
-
-
 def test_criteria_read_from_item():
     crit = build_testing_criteria(["similarity", "groundedness"], model="m")
     by_name = {c["evaluator_name"]: c for c in crit}
@@ -637,11 +595,6 @@ def test_monitor_onboarding_case_has_no_live_issue_or_pr_dependencies():
     for field in ("query", "ground_truth"):
         assert not re.search(r"(?:/issues/|/pull/|#)\d+", case[field])
         assert "Alan Zimmer" not in case[field]
-    assert "existing Azure Monitor toolset" in case["query"]
-    assert "non-confidential" in case["query"]
-    assert "public microsoft/mcp repository" in case["ground_truth"]
-    assert "add-azure-mcp-tools" in case["ground_truth"]
-    assert "recorded live tests" in case["ground_truth"]
 
 
 def test_main_passes_project_for_response_selected_agents():

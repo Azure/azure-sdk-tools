@@ -348,3 +348,65 @@ async def test_run_validates_only_after_issue_closes(
     ) in caplog.text
     if skipped:
         assert "Validation skipped for teams_channel:conversation-1" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_run_validates_before_analysis() -> None:
+    events: list[str] = []
+    qa_service = MagicMock()
+    qa_service.get_messages_in_period = AsyncMock(return_value=[])
+    qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
+    qa_service.close_inactive_threads = AsyncMock(return_value=0)
+    qa_service.list_analyzable = AsyncMock(
+        return_value=[_record(qa_status=QAStatus.ongoing)]
+    )
+    qa_service.list_pending_validation = AsyncMock(
+        return_value=[
+            _record(
+                qa_status=QAStatus.failed,
+                feedback_status=FeedbackStatus.pending_validation,
+            )
+        ]
+    )
+    evolution = MagicMock()
+    evolution.recover_stale_jobs = AsyncMock(return_value=0)
+
+    async def run_job(*_args, mode: ChatbotEvolutionAgentMode, **_kwargs):
+        events.append(mode.value)
+        outcome = (
+            ChatbotEvolutionAgentOutcome.no_issue
+            if mode == ChatbotEvolutionAgentMode.analysis
+            else ChatbotEvolutionAgentOutcome.validation_passed
+        )
+        return _result(outcome)
+
+    evolution.run_job = AsyncMock(side_effect=run_job)
+
+    with (
+        patch.object(run_feedback_jobs, "QARecordService", return_value=qa_service),
+        patch.object(
+            run_feedback_jobs,
+            "ChatbotEvolutionAgentService",
+            return_value=evolution,
+        ),
+        patch.object(
+            run_feedback_jobs,
+            "_load_excluded_channels",
+            new=AsyncMock(return_value=set()),
+        ),
+        patch.object(
+            run_feedback_jobs,
+            "get_issue_state",
+            new=AsyncMock(return_value="closed"),
+        ),
+        patch.object(run_feedback_jobs.app_config, "get", return_value="true"),
+    ):
+        await run_feedback_jobs._run(_args())
+
+    evolution.recover_stale_jobs.assert_awaited_once_with(
+        tenant_id=None, excluded_channels=set()
+    )
+    qa_service.close_inactive_threads.assert_awaited_once_with(
+        tenant_id=None, excluded_channels=set()
+    )
+    assert events == ["validation", "analysis"]

@@ -1,0 +1,85 @@
+# Deploy the scheduled knowledge-sync WebJob to the agent-server App Service.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, prod]
+    - name: dependsOn
+      type: string
+
+stages:
+    - stage: DeployKnowledgeSync
+      displayName: 'Deploy scheduled knowledge sync (${{ parameters.environment }})'
+      dependsOn: ${{ parameters.dependsOn }}
+      jobs:
+          - job: Deploy
+            pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+            templateContext:
+                outputs:
+                    - output: pipelineArtifact
+                      path: $(Build.ArtifactStagingDirectory)/knowledge-sync
+                      artifact: knowledge-sync
+                      displayName: 'Publish scheduled knowledge-sync ZIP'
+                      condition: succeededOrFailed()
+            steps:
+                - checkout: self
+
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                  parameters:
+                      environment: '${{ parameters.environment }}'
+
+                - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                  parameters:
+                      npmrcPath: $(Agent.TempDirectory)/sdk-ai-bots-knowledge-sync.npmrc
+                      registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+
+                - task: NodeTool@0
+                  displayName: 'Use Node.js 24.x'
+                  inputs:
+                      versionSpec: '24.x'
+
+                - script: npm ci --userconfig "$(resolvedNpmrcPath)"
+                  displayName: 'Install knowledge-sync dependencies'
+                  workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+
+                - script: npm test -- --no-file-parallelism
+                  displayName: 'Test scheduled knowledge sync'
+                  workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+
+                - script: npm run build:webjob -- $(Build.ArtifactStagingDirectory)/knowledge-sync/knowledge-sync.zip
+                  displayName: 'Build scheduled knowledge-sync WebJob'
+                  workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+
+                - task: DownloadSecureFile@1
+                  name: sshPrivateKey
+                  displayName: 'Download knowledge-sync SSH key'
+                  inputs:
+                      secureFile: 'EMU-SSH-PRIVATE-KEY'
+
+                - task: AzureCLI@2
+                  displayName: 'Configure knowledge-sync SSH key'
+                  inputs:
+                      azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                      scriptType: bash
+                      scriptLocation: inlineScript
+                      inlineScript: node "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/configure-knowledge-sync-ssh.mjs"
+                  env:
+                      SSH_KEY_FILE: $(sshPrivateKey.secureFilePath)
+                      APP_NAME: $(AGENT_SERVER_SITE_NAME)
+                      RESOURCE_GROUP: $(AZURE_RESOURCE_GROUP)
+
+                - task: AzureCLI@2
+                  displayName: 'Deploy scheduled knowledge-sync WebJob'
+                  inputs:
+                      azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                      scriptType: bash
+                      scriptLocation: inlineScript
+                      inlineScript: node "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/scripts/deploy-webjob.mjs"
+                  env:
+                      WEBJOB_ZIP: $(Build.ArtifactStagingDirectory)/knowledge-sync/knowledge-sync.zip
+                      APP_NAME: $(AGENT_SERVER_SITE_NAME)
+                      RESOURCE_GROUP: $(AZURE_RESOURCE_GROUP)
+                      WEBJOB_NAME: knowledge-sync

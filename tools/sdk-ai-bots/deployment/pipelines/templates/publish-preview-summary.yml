@@ -1,0 +1,41 @@
+parameters:
+    - name: summaryFile
+      type: string
+      default: '$(Agent.TempDirectory)/sdk-ai-bots-preflight-summary.md'
+
+steps:
+    - bash: |
+          set -euo pipefail
+          summary_file='${{ parameters.summaryFile }}'
+          if [ ! -s "$summary_file" ]; then
+            echo "Preview summary was not generated." >&2
+            exit 1
+          fi
+
+          complete_summary=$(mktemp)
+          {
+            echo '# Infrastructure preflight'
+            echo
+            echo '- Result: Succeeded'
+            echo '- Bicep validation: Succeeded'
+            echo
+            cat "$summary_file"
+          } > "$complete_summary"
+          mv "$complete_summary" "$summary_file"
+
+          echo "##vso[task.uploadsummary]$summary_file"
+
+          preview_result=$(sed -n '1,80p' "$summary_file")
+          if [ "$(wc -l < "$summary_file")" -gt 80 ]; then
+            preview_result="$preview_result
+
+          Additional operations are available in the pipeline run summary."
+          fi
+          preview_result="${preview_result//'%'/'%AZP25'}"
+          preview_result="${preview_result//';'/'%3B'}"
+          preview_result="${preview_result//']'/'%5D'}"
+          preview_result="${preview_result//$'\n'/'%0A'}"
+          preview_result="${preview_result//$'\r'/'%0D'}"
+          echo "##vso[task.setvariable variable=previewResult;isOutput=true;isReadOnly=true]$preview_result"
+      name: PublishPreflightResult
+      displayName: 'Publish preflight result'

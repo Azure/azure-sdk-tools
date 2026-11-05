@@ -111,7 +111,7 @@ This reduces exposure to external contributors' free text. It is a heuristic, no
 
 ### C4 — External MCP spotlighting
 
-The [tool-output middleware](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/tool_security.py) wraps nonempty external MCP string results in a labelled, JSON-escaped block:
+The [tool-output middleware](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/middleware/tool_output_security.py) wraps nonempty external tool results in a labelled, JSON-escaped block:
 
 ```text
 <untrusted_tool_output>

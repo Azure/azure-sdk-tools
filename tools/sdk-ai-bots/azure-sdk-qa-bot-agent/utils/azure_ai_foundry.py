@@ -7,9 +7,25 @@ the process.
 import asyncio
 import logging
 import re
+from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
+from typing import Any, cast
 
-from agent_framework import TruncationStrategy
+from agent_framework import (
+    Agent,
+    AgentModeProvider,
+    ContextProvider,
+    FileSystemAgentFileStore,  # pyright: ignore[reportAttributeAccessIssue]
+    MiddlewareTypes,
+    SkillsProvider,
+    ToolResultCompactionStrategy,
+    ToolTypes,
+    TruncationStrategy,
+    create_harness_agent,
+)
 from agent_framework.foundry import FoundryChatClient
+from agent_framework.openai import OpenAIChatOptions
+from agent_framework_tools.shell import LocalShellTool  # pyright: ignore[reportMissingImports]
 from azure.ai.projects.aio import AIProjectClient
 from azure.core.exceptions import ResourceNotFoundError
 from openai import AsyncAzureOpenAI, AsyncOpenAI
@@ -68,6 +84,55 @@ def get_agent_client() -> FoundryChatClient:
             ),
         )
     return _agent_client
+
+
+def create_hosted_chat_agent(
+    client: FoundryChatClient,
+    *,
+    name: str,
+    agent_id: str,
+    harness_instructions: str,
+    instructions: str,
+    tools: ToolTypes
+    | Callable[..., Any]
+    | Sequence[ToolTypes | Callable[..., Any]],
+    skills_provider: SkillsProvider,
+    memory_provider: ContextProvider,
+    middleware: Sequence[MiddlewareTypes],
+    default_options: Mapping[str, Any],
+) -> Agent[OpenAIChatOptions]:
+    """Create the hosted chat agent with the Agent Framework harness."""
+    before_compaction = ToolResultCompactionStrategy(keep_last_tool_call_groups=2)
+    after_compaction = ToolResultCompactionStrategy(keep_last_tool_call_groups=1)
+    resolved_options = cast(OpenAIChatOptions, dict(default_options))
+    workspace = Path.cwd() / "agent-file-access"
+    workspace.mkdir(exist_ok=True)
+
+    return create_harness_agent(  # pyright: ignore[reportCallIssue]
+        client,
+        name=name,
+        id=agent_id,
+        harness_instructions=harness_instructions,
+        agent_instructions=instructions,
+        tools=tools,
+        before_compaction_strategy=before_compaction,
+        after_compaction_strategy=after_compaction,
+        mode_provider=AgentModeProvider(default_mode="execute"),
+        file_access_store=FileSystemAgentFileStore(workspace),  # pyright: ignore[reportCallIssue]
+        file_access_disable_readonly_tool_approval=True,  # pyright: ignore[reportCallIssue]
+        file_access_disable_write_tool_approval=True,  # pyright: ignore[reportCallIssue]
+        shell_executor=LocalShellTool(  # pyright: ignore[reportCallIssue]
+            mode="stateless",
+            workdir=workspace,
+            confine_workdir=True,
+            approval_mode="never_require",
+            acknowledge_unsafe=True,
+        ),
+        skills_provider=skills_provider,
+        context_providers=[memory_provider],
+        middleware=middleware,
+        default_options=resolved_options,
+    )
 
 
 def get_project_client() -> AIProjectClient:

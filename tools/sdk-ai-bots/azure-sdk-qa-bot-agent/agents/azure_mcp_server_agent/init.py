@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import cast
 
 import yaml
 from dotenv import load_dotenv
@@ -17,11 +18,14 @@ load_dotenv(override=False)
 os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
 from agent_framework import Agent
+from agent_framework import AggregatingSkillsSource
 from agent_framework import CompactionProvider
 from agent_framework import FileSkillsSource
+from agent_framework import InMemorySkillsSource
 from agent_framework import SkillsProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
+from agent_framework.openai import OpenAIChatOptions
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -34,7 +38,8 @@ from tools.web_tools import WebTools
 from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import ensure_user_memory_store
 from utils.memory_context_provider import MemoryContextProvider
-from utils.tool_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_storage import ToolOutputStorageMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +112,14 @@ async def main() -> None:
     if not skills:
         raise RuntimeError(f"No tenant skills configured for agent {agent_name!r}")
     skills_dir = Path(tenant_skills.__file__).parent / "azure_mcp_server"
-    skills.extend(await FileSkillsSource(skills_dir).get_skills())
+    skills_provider = SkillsProvider(
+        AggregatingSkillsSource(
+            [
+                InMemorySkillsSource(skills),
+                FileSkillsSource(skills_dir),
+            ]
+        )
+    )
 
     memory_provider = MemoryContextProvider(project_client)
     compaction_provider = CompactionProvider(
@@ -122,16 +134,24 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         context_providers=[
-            SkillsProvider(skills),
+            skills_provider,
             memory_provider,
             compaction_provider,
         ],
-        middleware=[ToolOutputSecurityMiddleware()],
-        default_options={
-            "reasoning": {"effort": cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")},
-            "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
-            "include": ["web_search_call.action.sources"],
-        },
+        middleware=[
+            ToolOutputSecurityMiddleware(),
+            ToolOutputStorageMiddleware(),
+        ],
+        default_options=cast(
+            OpenAIChatOptions,
+            {
+                "reasoning": {
+                    "effort": cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
+                },
+                "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
+                "include": ["web_search_call.action.sources"],
+            },
+        ),
     )
 
     server = ResponsesHostServer(agent)

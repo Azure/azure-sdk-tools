@@ -667,7 +667,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 message = "Out of scope:";
                 if (tspFixFailed > 0)
                 {
-                    message += $" Some TSP_APPLICABLE items failed to apply and cannot be fixed in the current scope. Typespec customizations failure details: {tspFixFailedReasons.ToString()}";
+                    var tspFixFailedReasonsString = tspFixFailedReasons.ToString();
+                    if (string.IsNullOrWhiteSpace(tspFixFailedReasonsString))
+                    {
+                        tspFixFailedReasonsString = "Unknown failure";
+                    }
+                    message += $" Some TSP_APPLICABLE items failed to apply and cannot be fixed in the current scope. Typespec customizations failure details: {tspFixFailedReasonsString}";
                 }
                 if (customCodeChangeRequired.Count > 0)
                 {

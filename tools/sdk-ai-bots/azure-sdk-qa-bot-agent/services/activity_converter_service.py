@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class _InlineImageParser(HTMLParser):
+    """Collect HTML image source URLs without downloading their content."""
+
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.sources: list[str] = []
@@ -29,6 +31,7 @@ class ActivityConverterService:
     """Convert a Graph chatMessage payload to a Bot Framework Activity payload."""
 
     def convert_to_activity(self, chat_message: dict[str, Any]) -> dict[str, Any]:
+        """Return a Bot Framework activity dictionary from a Graph chatMessage."""
         web_url = chat_message.get("webUrl") or ""
         tenant_id = self._extract_tenant_id(web_url)
         body = chat_message.get("body") or {}
@@ -98,6 +101,12 @@ class ActivityConverterService:
         return query.get("tenantId", [""])[0]
 
     def _convert_attachments(self, chat_message: dict[str, Any]) -> list[dict[str, Any]]:
+        """Return Bot Framework attachment dictionaries for HTML and inline images.
+
+        Each dictionary has a contentType and either content (original HTML) or
+        contentUrl (validated image URL). Image URLs are deduplicated; unsupported
+        sources are logged and skipped. Non-HTML messages return an empty list.
+        """
         body = chat_message.get("body") or {}
         attachments: list[dict[str, Any]] = []
         parser = _InlineImageParser()
@@ -121,6 +130,12 @@ class ActivityConverterService:
         return attachments
 
     def _resolve_inline_image_url(self, source: str, chat_message: dict[str, Any]) -> str:
+        """Return a validated absolute image URL, resolving relative HTML sources.
+
+        Graph hosted-content URLs must belong to this message or reply.
+        Raise ValueError for unsupported URLs or mismatched message ownership.
+        No image is downloaded here.
+        """
         channel = chat_message.get("channelIdentity") or {}
         message_id = chat_message.get("id") or ""
         root_id = chat_message.get("replyToId") or message_id
@@ -153,6 +168,7 @@ class ActivityConverterService:
         return url
 
     def _convert_mentions(self, mentions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Return Bot Framework mention entities with mentioned, text, and type fields."""
         converted_mentions: list[dict[str, Any]] = []
         for mention in mentions:
             application = ((mention.get("mentioned") or {}).get("application") or {})

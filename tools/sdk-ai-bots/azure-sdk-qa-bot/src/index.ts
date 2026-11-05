@@ -10,7 +10,7 @@ import { logger } from './logging/logger.js';
 
 // Create express application.
 const expressApp = express();
-// Four 5 MiB images expand to about 27 MiB when base64-encoded.
+// The app allows 4 images at 5 MiB each; base64 needs ~27 MiB, plus activity metadata.
 expressApp.use(express.json({ limit: '30mb' }));
 
 // Health check endpoint

@@ -617,7 +617,7 @@
                                           "identity": "[parameters('botIdentityResourceId')]",
                                           "type": "ManagedServiceIdentity"
                                         },
-                                        "body": "@body('Prepare_activity_images')",
+                                        "body": "@if(equals(actions('Prepare_activity_images')?['status'], 'Succeeded'), body('Prepare_activity_images'), body('convertActivity'))",
                                         "headers": {
                                           "Content-Type": "application/json"
                                         },
@@ -629,7 +629,10 @@
                                       },
                                       "runAfter": {
                                         "Prepare_activity_images": [
-                                          "Succeeded"
+                                          "Succeeded",
+                                          "Failed",
+                                          "TimedOut",
+                                          "Skipped"
                                         ]
                                       },
                                       "runtimeConfiguration": {

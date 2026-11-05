@@ -45,8 +45,8 @@ variables:
     - group: 'Azure SDK QA Bot Prod Variables'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
-  - name: PythonIndexUrl
-    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+  - name: teamsCollectionLogicAppUrlKey
+    value: 'TEAMS_COLLECTION_LOGIC_APP_URL'
   - name: listenerTeam
     value: ${{ iif(eq(parameters.environment, 'prod'), parameters.team, 'azure_sdk') }}
 
@@ -56,10 +56,7 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: DeployLogicApp
-        ${{ if eq(parameters.workflow, 'chat') }}:
-          displayName: 'Deploy ${{ variables.listenerTeam }} Logic App (${{ parameters.environment }})'
-        ${{ else }}:
-          displayName: 'Deploy Teams Collection Logic App (${{ parameters.environment }})'
+        displayName: 'Deploy ${{ parameters.workflow }} Logic App (${{ parameters.environment }})'
         jobs:
           - job: Deploy
             displayName: 'ARM Template Deployment'
@@ -100,11 +97,6 @@ extends:
                       echo "Logic App deployment completed successfully."
 
               - ${{ if eq(parameters.workflow, 'teams-collection') }}:
-                - task: PipAuthenticate@1
-                  displayName: 'Authenticate pip to Azure Artifacts'
-                  inputs:
-                    artifactFeeds: 'public/azure-sdk-for-python'
-
                 - task: AzureCLI@2
                   displayName: 'Deploy Teams Collection Logic App'
                   inputs:
@@ -125,11 +117,6 @@ extends:
                       az version > /dev/null 2>&1 || true
                       az config set core.welcome_message=false 2>/dev/null || true
 
-                      python -m pip install --upgrade pip
-                      python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
-                      python -m pip config set global.index-url "$PIP_INDEX_URL"
-                      pip install -r requirements.txt --retries 5 --timeout 60
-
                       # Backfill runs on the backend server, so the Logic App
                       # admits that App Service identity and nothing else.
                       CLIENT_ID=$(az webapp config appsettings list \
@@ -149,14 +136,67 @@ extends:
                         echo "Could not resolve the backend server identity for $(APP_NAME)."
                         exit 1
                       fi
+                      if [[ ! "$BACKFILL_PRINCIPAL_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+                        echo "Resolved backend identity is not a valid object ID."
+                        exit 1
+                      fi
 
-                      # Deploys the backfill workflow for the backend server identity.
-                      python scripts/deploy_hosted_agent.py teams-collection deploy \
-                        --environment "${{ parameters.environment }}" \
+                      TEMPLATE_FILE="pipelines/teams-collection/template.json"
+                      PARAMS_FILE="pipelines/teams-collection/parameters.azure_sdk.${{ parameters.environment }}.json"
+                      echo "Deploying Teams backfill Logic App to $(RESOURCE_GROUP) using $PARAMS_FILE"
+                      WORKFLOW_RESOURCE_ID=$(az deployment group create \
                         --resource-group "$(RESOURCE_GROUP)" \
-                        --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)" \
-                        --backfill-principal-id "$BACKFILL_PRINCIPAL_ID"
+                        --name "teams-collection-${{ parameters.environment }}-$(Build.BuildId)" \
+                        --mode Incremental \
+                        --template-file "$TEMPLATE_FILE" \
+                        --parameters "@$PARAMS_FILE" "backfillPrincipalId=$BACKFILL_PRINCIPAL_ID" \
+                        --query "properties.outputs.workflowResourceId.value" \
+                        --output tsv)
+                      if [[ ! "$WORKFLOW_RESOURCE_ID" =~ ^/subscriptions/[^/]+/resourceGroups/[^/]+/providers/Microsoft\.Logic/workflows/[^/]+$ ]]; then
+                        echo "Logic App deployment returned an invalid workflow resource ID."
+                        exit 1
+                      fi
+
+                      CALLBACK_URL=$(az rest \
+                        --method post \
+                        --url "https://management.azure.com${WORKFLOW_RESOURCE_ID}/triggers/manual/listCallbackUrl?api-version=2019-05-01" \
+                        --query value \
+                        --output tsv)
+                      if [[ ! "$CALLBACK_URL" =~ ^https://([^/?#]+)(/[^?#]*)\?([^#]+)$ ]]; then
+                        echo "Logic App returned an invalid callback URL."
+                        exit 1
+                      fi
+                      CALLBACK_HOST="${BASH_REMATCH[1]}"
+                      CALLBACK_PATH="${BASH_REMATCH[2]}"
+                      CALLBACK_QUERY="${BASH_REMATCH[3]}"
+                      if [[ "$CALLBACK_HOST" == *@* || "$CALLBACK_HOST" == *:* || \
+                            "$CALLBACK_HOST" != *.logic.azure.com || \
+                            "$CALLBACK_PATH" != */triggers/manual/paths/invoke ]]; then
+                        echo "Logic App returned an unexpected callback URL."
+                        exit 1
+                      fi
+                      IFS='&' read -r -a CALLBACK_PARAMETERS <<< "$CALLBACK_QUERY"
+                      API_VERSION=""
+                      API_VERSION_COUNT=0
+                      for CALLBACK_PARAMETER in "${CALLBACK_PARAMETERS[@]}"; do
+                        if [[ "$CALLBACK_PARAMETER" == api-version=* ]]; then
+                          API_VERSION="${CALLBACK_PARAMETER#api-version=}"
+                          ((API_VERSION_COUNT += 1))
+                        fi
+                      done
+                      if [[ "$API_VERSION_COUNT" -ne 1 || -z "$API_VERSION" ]]; then
+                        echo "Logic App callback URL must contain one api-version."
+                        exit 1
+                      fi
+                      SAS_FREE_URL="${CALLBACK_URL%%\?*}?api-version=$API_VERSION"
+                      az appconfig kv set \
+                        --endpoint "$(AZURE_APPCONFIG_ENDPOINT)" \
+                        --auth-mode login \
+                        --key "$(teamsCollectionLogicAppUrlKey)" \
+                        --value "$SAS_FREE_URL" \
+                        --yes \
+                        --output none
+                      echo "Teams backfill Logic App deployed and callback URL configured."
                   env:
                     AZURE_CORE_WELCOME_MESSAGE: 'false'
                     AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
-                    SYSTEM_ACCESSTOKEN: $(System.AccessToken)

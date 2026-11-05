@@ -101,7 +101,7 @@ def stored_message(partition, message_id, content, *, ts=1, role="user",
 
 
 class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
-    def test_cli_rejects_local_collection(self):
+    def test_hosted_agent_cli_no_longer_accepts_collection_deployment(self):
         from io import StringIO
         from scripts.deploy_hosted_agent import main
 
@@ -110,7 +110,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(SystemExit) as failure:
                 main()
         self.assertEqual(failure.exception.code, 2)
-        self.assertIn("invalid choice: 'run'", stderr.getvalue())
+        self.assertIn("unrecognized arguments: run", stderr.getvalue())
 
     def test_backfill_template_contains_only_the_oauth_logic_app(self):
         project = Path(__file__).resolve().parents[1]
@@ -162,44 +162,21 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn("collectorPrincipalId", parameters)
                 self.assertNotIn("cosmosAccountName", parameters)
 
-    def test_backfill_deployment_validates_identity_and_sanitizes_callback_url(self):
-        from scripts.deploy_hosted_agent import _principal_id, _sas_free_callback_url
-
-        self.assertEqual(
-            _principal_id("F8EC2208-D3C9-4271-B787-07C26651E1C6", "--backfill-principal-id"),
-            "f8ec2208-d3c9-4271-b787-07c26651e1c6",
-        )
-        for value in (None, "", "not-a-guid"):
-            with self.subTest(value=value), self.assertRaisesRegex(
-                ValueError, "--backfill-principal-id"
-            ):
-                _principal_id(value, "--backfill-principal-id")
-        self.assertEqual(
-            _sas_free_callback_url(
-                "https://prod-01.westus2.logic.azure.com/workflows/id/"
-                "triggers/manual/paths/invoke"
-                "?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=secret"
-            ),
-            "https://prod-01.westus2.logic.azure.com/workflows/id/"
-            "triggers/manual/paths/invoke?api-version=2016-10-01",
-        )
-        for value in (
-            "https://example.com/triggers/manual/paths/invoke?api-version=2016-10-01",
-            "https://prod-01.westus2.logic.azure.com/triggers/manual/paths/invoke?sig=secret",
-        ):
-            with self.subTest(value=value), self.assertRaises(ValueError):
-                _sas_free_callback_url(value)
-
     def test_backfill_pipeline_does_not_deploy_a_hosted_agent(self):
         project = Path(__file__).resolve().parents[1]
         agent_pipeline = (project / "pipelines/agent-cd.yml").read_text()
         logicapp_pipeline = (project / "pipelines/logicapp-cd.yml").read_text()
-        deploy_script = (project / "scripts/deploy_hosted_agent.py").read_text()
         self.assertNotIn("teams_collection_agent", agent_pipeline)
         self.assertIn("- teams-collection", logicapp_pipeline)
-        self.assertIn("python scripts/deploy_hosted_agent.py teams-collection deploy",
+        self.assertIn("az deployment group create", logicapp_pipeline)
+        self.assertIn("/triggers/manual/listCallbackUrl?api-version=2019-05-01",
                       logicapp_pipeline)
-        self.assertIn("TEAMS_COLLECTION_LOGIC_APP_URL", deploy_script)
+        self.assertIn("SAS_FREE_URL=", logicapp_pipeline)
+        self.assertIn("az appconfig kv set", logicapp_pipeline)
+        self.assertIn("TEAMS_COLLECTION_LOGIC_APP_URL", logicapp_pipeline)
+        self.assertNotIn("python scripts/deploy_hosted_agent.py teams-collection deploy",
+                         logicapp_pipeline)
+        self.assertNotIn("PipAuthenticate", logicapp_pipeline)
         self.assertNotIn("collectorPrincipalId", logicapp_pipeline)
 
     async def test_cosmos_initialization_failure_closes_client_and_allows_retry(self):

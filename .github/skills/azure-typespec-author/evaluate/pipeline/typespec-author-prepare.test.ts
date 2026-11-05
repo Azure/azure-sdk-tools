@@ -200,16 +200,19 @@ test("benchmark entrypoints use caller-owned auth and common repeated-trial repo
     assert.ok(configuredConnection, `${file}: connection must be configured by the caller`);
     assert.equal(typeof configuredConnection.value, "string");
     assert.ok(configuredConnection.value.trim(), `${file}: connection must not be empty`);
-    const invocations = file.endsWith("-no-skill.yml") ? [pipeline.extends.parameters] :
-      pipeline.extends.parameters.stages
-        .filter((stage: { stage: string }) => ["EvalForced", "EvalTrigger"].includes(stage.stage))
-        .map((stage: { jobs: { parameters: object }[] }) => stage.jobs[0].parameters);
-    assert.equal(invocations.length, file.endsWith("-no-skill.yml") ? 1 : 2);
-    for (const invocation of invocations) {
-      assert.equal(invocation.azureSubscription, undefined, `${file}: shared templates read the pipeline variable directly`);
-      assert.equal(invocation.UseAzSdkAuthentication, "${{ eq(parameters.McpKind, 'live') }}");
-      assert.equal(invocation.postEvalTemplate, undefined);
-      assert.deepEqual(invocation.vallyArguments.slice(-2), ["--runs", "${{ format('{0}', parameters.Runs) }}"]);
+    const invocation = pipeline.extends.parameters;
+    assert.equal(pipeline.extends.template, "/eng/common/pipelines/templates/stages/archetype-eval.yml");
+    assert.equal(invocation.azureSubscription, undefined, `${file}: shared templates read the pipeline variable directly`);
+    assert.equal(invocation.UseAzSdkAuthentication, "${{ eq(parameters.McpKind, 'live') }}");
+    assert.equal(invocation.postEvalTemplate, undefined);
+    assert.deepEqual(invocation.vallyArguments.slice(-2), ["--runs", "${{ format('{0}', parameters.Runs) }}"]);
+    assert.equal(invocation.vallyArguments[0], "--tag");
+    if (!file.endsWith("-no-skill.yml")) {
+      assert.equal(invocation.vallyArguments[1], "${{ format('mode={0}', parameters.Mode) }}");
+      assert.equal(pipeline.variables.find((variable: { name?: string }) =>
+        variable.name === "TypeSpecAuthorEvalMode").value, "${{ parameters.Mode }}");
+      assert.equal(invocation.createDashboardBundle, true);
+      assert.equal(invocation.publishDashboardResults, "${{ parameters.publishDashboardResults }}");
     }
   }
 });
@@ -223,6 +226,11 @@ test("all three repository configurations plan with Vally 0.19 without executing
     import.meta.url), "utf8"));
   const baseline = parse(fs.readFileSync(new URL("../../../../../eng/pipelines/azure-typespec-author-benchmark-no-skill.yml",
     import.meta.url), "utf8"));
+  const modes: string[] = benchmark.parameters.find((parameter: { name: string }) => parameter.name === "Mode").values;
+  assert.deepEqual(modes, ["forced", "trigger"]);
+  const baselineMode = baseline.variables.find((variable: { name?: string }) =>
+    variable.name === "TypeSpecAuthorEvalMode").value;
+  assert.equal(baselineMode, "no-skill");
   const source = path.resolve(import.meta.dirname, "..");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "typespec-benchmark-configs-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -245,7 +253,7 @@ test("all three repository configurations plan with Vally 0.19 without executing
       environment.skills = environment.skills.map((skill) => path.resolve(source, "evals", skill));
     }
   }
-  for (const mode of ["forced", "trigger", "no-skill"]) {
+  for (const mode of [...modes, baselineMode]) {
     const author = path.join(root, mode);
     const evalRoot = path.join(author, "evaluate");
     fs.mkdirSync(evalRoot, { recursive: true });
@@ -262,9 +270,9 @@ test("all three repository configurations plan with Vally 0.19 without executing
     const allMatching = await discoverAndFilterEvals(context, {
       suiteEvals: ["evals/*.eval.yaml"], filter,
     });
-    const patterns = mode === "no-skill" ? baseline.extends.parameters.evalGlobs :
-      benchmark.extends.parameters.stages.find((stage) => stage.stage ===
-        (mode === "forced" ? "PrepareForced" : "PrepareTrigger")).jobs[0].parameters.evalGlobs;
+    const patterns = mode === baselineMode ? baseline.extends.parameters.evalGlobs :
+      benchmark.extends.parameters[mode === "trigger"
+        ? "${{ if eq(parameters.Mode, 'trigger') }}" : "${{ else }}"].evalGlobs;
     // Mirror CLI --tag + explicit -e: load every matrix-selected file before filtering.
     const discovery = await discoverAndFilterEvals(context, { suiteEvals: patterns });
     assert.deepEqual(discovery.errors, [], `${mode}: eval loading failed`);

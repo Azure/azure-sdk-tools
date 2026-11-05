@@ -372,15 +372,30 @@ Local setup rewrites only the root `agent_environment:` entry in each eval file.
 
 ## Pipeline
 
-The manual benchmark pipeline is `eng/pipelines/azure-typespec-author-benchmark.yml`. It builds the
-selected MCP, stages authoring/naming skills and routing competitors, generates area-based forced and trigger shard matrices,
-runs each area, publishes result/debug artifacts, and produces separate summaries.
+The manual benchmark pipeline is `eng/pipelines/azure-typespec-author-benchmark.yml`.
+Each build selects forced or trigger mode and uses the common Prepare/Eval/Summary stage template.
+It builds the selected MCP, prepares skills and fixtures for that mode, generates an
+area-based matrix, and produces one summary and dashboard bundle. Run separate builds
+to compare modes; this pipeline no longer runs forced and trigger tracks together.
 
-| Parameter     | Purpose                        |
-| ------------- | ------------------------------ |
-| `SkillBranch` | Skill source branch to overlay |
-| `McpKind`     | `live` or `mock`               |
-| `Runs`        | Trials per stimulus            |
+| Parameter                 | Purpose                                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------------------ |
+| `Mode`                    | `forced` (default) or `trigger`                                                            |
+| `SkillBranch`             | Skill source branch to overlay                                                             |
+| `McpKind`                 | `live` or `mock`                                                                           |
+| `Runs`                    | Trials per stimulus                                                                        |
+| `publishDashboardResults` | Publish trusted main results; disabling it retains the bundle without added storage egress |
+
+Publication uses the existing common trust policy: only approved main-branch runs
+can upload, and the pipeline owner must configure `EvalStorageAccountName`,
+`EvalDashboardRefreshUrl` and `EvalDashboardResource`. Eval authentication and dashboard
+publication use separate service connections. Feature-branch runs retain the bundle
+as a pipeline artifact but do not upload. Dashboard grouping/comparison by mode still
+requires verification in the reader.
+
+The no-skill baseline runs separately through
+`eng/pipelines/azure-typespec-author-benchmark-no-skill.yml`; it is not a mode of the
+main benchmark pipeline.
 
 Both this pipeline and `eng/pipelines/azure-typespec-author-benchmark-no-skill.yml`
 define `EvalAzureSubscription` in their YAML `variables`. The common eval invoke

@@ -26,10 +26,6 @@ vi.mock('../src/config/config.js', () => ({
   contactCardVersion: '1.0',
 }));
 
-vi.mock('node:timers/promises', () => ({
-  setTimeout: vi.fn().mockResolvedValue(undefined),
-}));
-
 describe('ThinkingHandler', () => {
   let thinkingHandler: ThinkingHandler;
   let mockContext: Partial<TurnContext>;
@@ -37,6 +33,7 @@ describe('ThinkingHandler', () => {
   let mockTenantConfigManager: Partial<TenantConfigManager>;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     // Mock TurnContext
     mockContext = {
       activity: {
@@ -60,6 +57,46 @@ describe('ThinkingHandler', () => {
       mockConversationHandler as ConversationHandler,
       mockTenantConfigManager as TenantConfigManager
     );
+  });
+
+  describe('prepare', () => {
+    it('does not send a thinking placeholder or schedule updates', async () => {
+      vi.useFakeTimers();
+      try {
+        const timestamp = await thinkingHandler.prepare([{
+          conversationId: 'test-conversation',
+          activityId: 'existing-contact-card',
+          contactCard: { version: '1.0' },
+          timestamp: new Date(),
+        }]);
+
+        await vi.advanceTimersByTimeAsync(60_000);
+
+        expect(timestamp).toBeInstanceOf(Date);
+        expect(mockContext.sendActivity).not.toHaveBeenCalled();
+        expect(mockContext.updateActivity).not.toHaveBeenCalled();
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('preserves the one-time contact card without sending a placeholder', async () => {
+      await thinkingHandler.prepare([]);
+
+      expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
+      expect(mockContext.sendActivity).toHaveBeenCalledWith(
+        expect.objectContaining({ attachments: expect.any(Array) })
+      );
+      expect(mockContext.updateActivity).not.toHaveBeenCalled();
+      expect(mockConversationHandler.saveMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          activityId: 'test-resource',
+          contactCard: { version: '1.0' },
+        }),
+        expect.anything()
+      );
+    });
   });
 
   describe('generateAnswer', () => {
@@ -309,7 +346,7 @@ describe('ThinkingHandler', () => {
     });
   });
 
-  describe('Integration tests for error scenarios', () => {
+  describe('sendReply', () => {
     it('delivers verified mentions alongside the existing AI and trace entities', async () => {
       const reply: CompletionResponsePayload = {
         id: 'reply',
@@ -332,9 +369,12 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await thinkingHandler.stop(new Date(), reply, prompt);
+      await thinkingHandler.sendReply(new Date(), reply, prompt);
 
-      expect(mockContext.updateActivity).toHaveBeenCalledWith(expect.objectContaining({
+      expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
+      expect(mockContext.updateActivity).not.toHaveBeenCalled();
+      expect(vi.mocked(mockContext.sendActivity).mock.calls[0][0]).not.toHaveProperty('id');
+      expect(mockContext.sendActivity).toHaveBeenCalledWith(expect.objectContaining({
         text: reply.answer,
         entities: [
           expect.objectContaining({ additionalType: ['AIGeneratedContent'], usageInfo: expect.objectContaining({ description: 'Trace ID: trace-123' }) }),
@@ -347,7 +387,10 @@ describe('ThinkingHandler', () => {
       }));
       // Stored history preserves the agent-authored answer.
       expect(mockConversationHandler.saveMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ reply: expect.objectContaining({ answer: reply.answer }) }),
+        expect.objectContaining({
+          activityId: 'test-resource',
+          reply: expect.objectContaining({ answer: reply.answer }),
+        }),
         expect.anything()
       );
     });
@@ -367,13 +410,10 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      // Test the stop method with error
-      await thinkingHandler.stop(new Date(), ragError, mockPrompt);
+      await thinkingHandler.sendReply(new Date(), ragError, mockPrompt);
 
-      // Verify that updateActivity was called with error message
-      expect(mockContext.updateActivity).toHaveBeenCalledWith({
+      expect(mockContext.sendActivity).toHaveBeenCalledWith({
         type: 'message',
-        id: undefined, // resourceId is undefined in this test
         text: "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Message content cannot be empty.",
         entities: [
           {
@@ -403,13 +443,10 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      // Test the stop method with error
-      await thinkingHandler.stop(new Date(), ragError, mockPrompt);
+      await thinkingHandler.sendReply(new Date(), ragError, mockPrompt);
 
-      // Verify that updateActivity was called with service error message
-      expect(mockContext.updateActivity).toHaveBeenCalledWith({
+      expect(mockContext.sendActivity).toHaveBeenCalledWith({
         type: 'message',
-        id: undefined,
         text: "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM model is currently overloaded.",
         entities: [
           {
@@ -440,11 +477,12 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await thinkingHandler.stop(new Date(), successResponse, mockPrompt);
+      await thinkingHandler.sendReply(new Date(), successResponse, mockPrompt);
 
-      expect(mockContext.updateActivity).toHaveBeenCalledWith({
+      expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
+      expect(mockContext.updateActivity).not.toHaveBeenCalled();
+      expect(mockContext.sendActivity).toHaveBeenCalledWith({
         type: 'message',
-        id: undefined,
         text: 'This is a successful response',
         entities: [
           {
@@ -463,6 +501,27 @@ describe('ThinkingHandler', () => {
         ],
         conversation: mockContext.activity?.conversation,
       });
+    });
+
+    it('propagates send failures without saving an undelivered reply', async () => {
+      const error = new Error('Send failed');
+      vi.mocked(mockContext.sendActivity).mockRejectedValueOnce(error);
+      const prompt: Prompt = {
+        textWithoutMention: 'Test prompt',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      await expect(thinkingHandler.sendReply(new Date(), {
+        id: 'reply',
+        answer: 'Answer',
+        has_result: true,
+      }, prompt)).rejects.toBe(error);
+
+      expect(mockContext.updateActivity).not.toHaveBeenCalled();
+      expect(mockConversationHandler.saveMessage).not.toHaveBeenCalled();
     });
   });
 });

@@ -6,14 +6,11 @@ import { contactCardVersion } from '../config/config.js';
 import { TenantConfigManager, KnownTenants } from '../config/tenant.js';
 import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
-import { setTimeout } from 'node:timers/promises';
-import { sendActivityWithRetry, updateActivityWithRetry } from '../activityUtils.js';
+import { sendActivityWithRetry } from '../activityUtils.js';
 import type { AIEntity } from '@microsoft/teams-ai/lib/types/AIEntity.js';
 import { getTeamsMentionEntities } from '../common/mentions.js';
 
 export class ThinkingHandler {
-  private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
-  private readonly defaultThinkingMessage = '⏳Thinking';
   private readonly aiGeneratedEntity: AIEntity = {
     type: 'https://schema.org/Message',
     '@type': 'Message',
@@ -21,17 +18,9 @@ export class ThinkingHandler {
     '@id': '',
     additionalType: ['AIGeneratedContent'],
   };
-  private readonly maxRetryTimesForFinish = 5;
-  private readonly maxRetryTimesForThinking = 1800;
-  private readonly maxCancelTimeout = 1000; // unit in milliseconds
-  private readonly defaultThinkingInterval = 5000; // unit in milliseconds
   private readonly context: TurnContext;
   private readonly conversationHandler: ConversationHandler;
   private readonly tenantConfigManager: TenantConfigManager;
-  private thinkingMessage = this.defaultThinkingMessage;
-  private shouldStop = false;
-  private isRunning = false;
-  private resourceId: string | undefined = undefined;
   private meta: object;
 
   constructor(
@@ -45,31 +34,12 @@ export class ThinkingHandler {
     this.tenantConfigManager = tenantConfigManager;
   }
 
-  public async start(conversationMessages: ConversationMessage[]): Promise<Date> {
+  public async prepare(conversationMessages: ConversationMessage[]): Promise<Date> {
     await this.trySendContactCard(conversationMessages);
-    const resource = await sendActivityWithRetry(this.context, this.thinkingMessage);
-    const timestamp = new Date();
-    this.resourceId = resource.id;
-    this.startCore(resource.id);
-    return timestamp;
+    return new Date();
   }
 
-  // cancel timer as soon as possible when get reply
-  public async safeCancelTimer() {
-    this.shouldStop = true;
-    if (!this.isRunning) return;
-    let retryCount = 0;
-    for (; retryCount < this.maxRetryTimesForFinish; retryCount++) {
-      if (!this.isRunning) break;
-      await setTimeout(this.maxCancelTimeout);
-    }
-    if (retryCount === this.maxRetryTimesForFinish) {
-      throw new Error('Failed to stop thinking timer');
-    }
-  }
-
-  // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
+  public async sendReply(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
     const { answer, isError } = this.generateAnswer(reply);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
     const traceId = isCompletionResponsePayload(reply) ? reply.trace_id : undefined;
@@ -89,15 +59,14 @@ export class ThinkingHandler {
         description: `Trace ID: ${traceId}`,
       };
     }
-    const updated: Partial<Activity> = {
+    const activity: Partial<Activity> = {
       type: 'message',
-      id: this.resourceId,
       text: formattedAnswer,
       entities: [entity, ...mentions],
       conversation: this.context.activity.conversation,
     };
 
-    const response = await updateActivityWithRetry(this.context, updated);
+    const response = await sendActivityWithRetry(this.context, activity);
     if (response) {
       await this.saveCurrentConversationMessage(
         this.context.activity.conversation.id,
@@ -162,43 +131,6 @@ export class ThinkingHandler {
     }
 
     return `${answer}\n\n---\n\n${footerParts.join('\n\n')}`;
-  }
-
-  private async startCore(resourceId: string) {
-    let count = 0;
-    for (; count < this.maxRetryTimesForThinking; count++) {
-      if (this.shouldStop || this.isRunning) break;
-      const updated: Partial<TurnContext> = {
-        type: 'message',
-        id: resourceId,
-        text: this.updateThinkingMessage(),
-        conversation: this.context.activity.conversation,
-      } as any;
-      try {
-        this.isRunning = true;
-        await updateActivityWithRetry(this.context, updated);
-      } finally {
-        this.isRunning = false;
-      }
-      await setTimeout(this.defaultThinkingInterval);
-    }
-    if (count === this.maxRetryTimesForThinking) {
-      logger.warn('Thinking timer reached max retry times', { meta: this.meta });
-      await sendActivityWithRetry(this.context, 'Thinking is taking too long, please try again later.');
-    }
-  }
-
-  private updateThinkingMessage() {
-    const index = getRandomInt(0, this.thinkEmojis.length - 1);
-    const start = this.thinkingMessage.indexOf('Thi');
-    this.thinkingMessage = this.thinkEmojis[index] + this.thinkingMessage.substring(start) + '.';
-    return this.thinkingMessage;
-
-    function getRandomInt(min: number, max: number) {
-      min = Math.ceil(min);
-      max = Math.floor(max);
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
   }
 
   private addReferencesToReply(ragReply: CompletionResponsePayload): string {

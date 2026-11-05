@@ -483,7 +483,7 @@ def test_prompt_keeps_guidance_optional_without_a_new_output_format():
     assert "Add a next step only when needed to resolve the request; routine instructions do not require an extra request." in section
     assert "ask for missing user facts only when they determine the next action" in section
     assert "If no owner is established, explain the limitation and provide any known support route." in section
-    assert "Prefer a concise **Next steps** or **Actions needed** section for actions or human help." in section
+    assert "Prefer a concise **Help needed** section for human input or decisions, and **Actions needed** for concrete tasks." in section
     assert "do not force a separate handoff block or fixed heading" not in section
     assert "address the owner directly with the specific question or action, using supplied facts and links" in section
     assert "Combine requests for the same person; do not repeat them or offer to draft them." in section
@@ -498,7 +498,6 @@ def test_prompt_keeps_guidance_optional_without_a_new_output_format():
     assert "Follow Teams User Mentions below" not in section
     assert "Distinguish help resolving a blocker from final approval, and respect the prerequisites in authoritative guidance." in section
     assert "Bullet points over paragraphs. One idea per bullet." in text
-    assert "For intended `@github-handle` mentions" in text
     assert "**ALWAYS retrieve before composing your answer**" in text
     assert "next_step" not in text
 
@@ -519,20 +518,24 @@ def test_help_request_example_uses_placeholders_and_conditional_approval():
 def test_prompt_tenant_and_identity_tool_limit_mentions_to_participation():
     text = (ROOT / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
     mentions = text.split("## Teams User Mentions\n", 1)[1].split("\n## ", 1)[0]
-    assert "Tag a person only when directly asking them to provide help, judgment or take an action needed for the request." in mentions
-    assert 'answering "who should I contact?", or recommending a future contact does not request their participation' in mentions
-    assert "Use plain contact details for these" in mentions
-    assert "plain contact references" in mentions
-    assert "copy `users[login].plain_text` verbatim as `Display name (UPN)`, without `<at>` markup" in mentions
-    assert "For direct participation requests, copy `users[login].text` verbatim" in mentions
-    assert "not a separately verified mailbox" in mentions
-    assert "reviewer recommendations in PR, tenant and skill guidance" in mentions
-    assert "A verified identity or catalog entry alone is not a reason to tag someone." in mentions
+    assert sum(line.startswith("- ") for line in mentions.splitlines()) == 5
+    assert "Tag only direct requests for help, judgment or action" in mentions
+    assert "including in PR, tenant and skill guidance" in mentions
+    assert "keep contact recommendations and quoted/incidental usernames plain" in mentions
+    assert "Resolve evidence-backed GitHub usernames with `resolve_github_users`" in mentions
+    assert "batching up to ten per call within the tool-call budget" in mentions
+    assert "Copy `users[login].plain_text` for contacts and `users[login].text` for direct requests, both verbatim" in mentions
+    assert "never escape or code-format `<at>` markup" in mentions
+    assert "On lookup errors, keep the GitHub handle; never invent names, addresses or identities." in mentions
+    assert "Authentication/network failures do not mean the account is unlinked." in mentions
+    assert "Identity resolution does not imply approval or completed work." in mentions
+    assert "@github-handle" not in mentions
     tenant = (ROOT / "prompts" / "tenants" / "api_spec_review.md").read_text(encoding="utf-8")
     assert "Keep contact recommendations in plain text" in tenant
     assert "use verified Teams mentions only when directly requesting their participation" in tenant
     assert "(as `@github-handle` mentions)" not in tenant
     description = IdentityTools.resolve_github_users.__doc__ or ""
+    assert "not a separately verified mailbox" in description
     assert "directly asked to help or act" in description
     assert "For plain contact references, copy users[login].plain_text verbatim." in description
     assert "Copy users[login].text verbatim only for direct participation requests." in description

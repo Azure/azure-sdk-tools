@@ -12,8 +12,8 @@ import httpx
 from azure.core.exceptions import ClientAuthenticationError
 
 from models.identity import (
+    ResolvedGitHubUser,
     ResolveGitHubUsersResult,
-    TeamsMention,
     TeamsUser,
     normalize_github_username,
 )
@@ -33,16 +33,16 @@ class IdentityTools:
         *,
         usernames: Annotated[
             list[str],
-            "One to ten evidence-backed GitHub usernames being directly asked to "
-            "provide help, judgment or take an action. Batch only intended "
-            "participants; do not pass organizations/teams.",
+            "One to ten GitHub usernames to map to Microsoft accounts for Teams "
+            "mentions. Batch all people in one call; do not pass organizations/teams.",
         ],
     ) -> ResolveGitHubUsersResult:
-        """Resolve people being directly asked to help or act in the reply.
+        """Resolve verified contact details or people being directly asked to help or act.
 
-        Do not use for contact recommendations or future reference; keep those
-        names as plain text. For an actual request, use returned mention text
-        verbatim. Resolving an identity alone does not require mentioning it.
+        For plain contact references, copy users[login].plain_text verbatim.
+        The UPN is a sign-in address, not a separately verified mailbox.
+        Copy users[login].text verbatim only for direct participation requests.
+        Resolving an identity alone does not require mentioning it.
         """
         if not 1 <= len(usernames) <= 10:
             raise ValueError("Provide between one and ten GitHub usernames.")
@@ -71,14 +71,16 @@ class IdentityTools:
             ))
         resolved = ResolveGitHubUsersResult()
         for login, result in zip(logins, results):
-            if isinstance(result, TeamsMention):
-                resolved.mentions[login] = result
-            else:
+            if isinstance(result, str):
                 resolved.errors[login] = result
+            else:
+                resolved.users[login] = result
         return resolved
 
     @staticmethod
-    async def _lookup(client: httpx.AsyncClient, login: str) -> TeamsMention | str:
+    async def _lookup(
+        client: httpx.AsyncClient, login: str
+    ) -> ResolvedGitHubUser | str:
         try:
             response = await client.get(
                 f"{_LINKS_URL}/{login}", params={"showOrganizations": "false"}
@@ -108,9 +110,10 @@ class IdentityTools:
             upn = aad.get("userPrincipalName")
             if not isinstance(upn, str) or not upn.strip():
                 raise ValueError("No Microsoft user principal name.")
-            return TeamsMention(
+            return ResolvedGitHubUser(
                 text=f"<at>{escape(upn.strip(), quote=False)}</at>",
                 mentioned=user,
+                plain_text=f"{user.name} ({upn.strip()})",
             )
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code

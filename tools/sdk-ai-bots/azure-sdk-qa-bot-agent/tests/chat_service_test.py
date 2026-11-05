@@ -21,8 +21,9 @@ from services.chat_service import ChatService
     (None, True, False), ("teams_channel", True, True),
 ])
 @pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+@pytest.mark.parametrize("legacy_output", [False, True])
 def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
-    conversation_type, include_tag, last_lookup_fails, output_type
+    conversation_type, include_tag, last_lookup_fails, output_type, legacy_output, caplog
 ):
     import json
 
@@ -31,7 +32,7 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         ResponseOutputMessage, ResponseOutputText,
     )
 
-    from models.identity import ResolveGitHubUsersResult, TeamsMention, TeamsUser
+    from models.identity import ResolvedGitHubUser, ResolveGitHubUsersResult, TeamsMention, TeamsUser
 
     mention = TeamsMention(
         text="<at>linked.person@microsoft.com</at>",
@@ -43,7 +44,10 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
     output = []
     # Separate tool calls must not discard the previously resolved reviewer.
     lookups = [
-        ResolveGitHubUsersResult(mentions={"linked-user": mention}),
+        ResolveGitHubUsersResult(users={"linked-user": ResolvedGitHubUser(
+            text=mention.text, mentioned=mention.mentioned,
+            plain_text="Linked Person (linked.person@microsoft.com)",
+        )}),
         ResolveGitHubUsersResult(errors={"unlinked": "No linked Microsoft account was found."}),
         ResolveGitHubUsersResult(errors={"service": "Not a person."}),
     ]
@@ -51,24 +55,31 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         lookups.append(ResolveGitHubUsersResult(errors={"linked-user": "HTTP 403"}))
     for index, result in enumerate(lookups):
         call_id = f"lookup-{index}"
+        payload = result.model_dump(mode="json")
+        if legacy_output:
+            payload["mentions"] = {
+                login: {"text": user["text"], "mentioned": user["mentioned"]}
+                for login, user in payload.pop("users").items()
+            }
+        serialized = json.dumps(payload)
         tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
         if output_type == "function_call_output":
             tool_output = ResponseFunctionToolCallOutputItem.model_construct(
                 type=output_type, id=call_id, call_id=call_id,
-                output=result.model_dump_json(), status="completed",
+                output=serialized, status="completed",
             )
         else:
             tool_output = ResponseOutputMessage.model_construct(
                 type="message", id=call_id, role="assistant", status="completed", content=[],
                 call_id=call_id,
-                output=json.dumps([result.model_dump_json()]),
+                output=json.dumps([serialized]),
             )
         output.extend([
             ResponseFunctionToolCall.model_construct(
                 type="function_call",
                 name="resolve_github_users",
                 call_id=call_id,
-                arguments=json.dumps({"usernames": [*result.mentions, *result.errors]}),
+                arguments=json.dumps({"usernames": [*result.users, *result.errors]}),
             ),
             tool_output,
         ])
@@ -90,8 +101,10 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
 
     assert result.answer == answer
     assert result.mentions == (
-        [mention] if conversation_type and include_tag and not last_lookup_fails else None
+        [mention] if conversation_type and include_tag and not last_lookup_fails and not legacy_output else None
     )
+    if legacy_output:
+        assert "Failed to decode tool output for resolve_github_users" in caplog.text
     if result.mentions:
         assert result.model_dump(mode="json")["mentions"] == [{
             "text": mention.text,

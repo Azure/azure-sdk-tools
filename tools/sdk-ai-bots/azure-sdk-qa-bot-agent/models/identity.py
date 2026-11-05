@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 _LOGIN_RE = re.compile(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
 
@@ -30,6 +30,12 @@ class TeamsMention(BaseModel):
     mentioned: TeamsUser
 
 
+class ResolvedGitHubUser(TeamsMention):
+    plain_text: str
+
+
 class ResolveGitHubUsersResult(BaseModel):
-    mentions: dict[str, TeamsMention] = Field(default_factory=dict)
+    model_config = ConfigDict(extra="forbid")
+
+    users: dict[str, ResolvedGitHubUser] = Field(default_factory=dict)
     errors: dict[str, str] = Field(default_factory=dict)

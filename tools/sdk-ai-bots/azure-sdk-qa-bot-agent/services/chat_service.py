@@ -28,7 +28,7 @@ from models.chat import (
 )
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
-from models.identity import ResolveGitHubUsersResult
+from models.identity import ResolveGitHubUsersResult, TeamsMention
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
@@ -672,8 +672,9 @@ class ChatService:
             and isinstance(identities, ResolveGitHubUsersResult)
         ):
             resp.mentions = [
-                mention for mention in identities.mentions.values()
-                if mention.text in answer
+                TeamsMention(text=user.text, mentioned=user.mentioned)
+                for user in identities.users.values()
+                if user.text in answer
             ] or None
         return resp
 
@@ -821,11 +822,11 @@ class ChatService:
                     if isinstance(previous, ResolveGitHubUsersResult) and isinstance(
                         decoded, ResolveGitHubUsersResult
                     ):
-                        for login in decoded.mentions:
+                        for login in decoded.users:
                             previous.errors.pop(login, None)
                         for login in decoded.errors:
-                            previous.mentions.pop(login, None)
-                        decoded.mentions = previous.mentions | decoded.mentions
+                            previous.users.pop(login, None)
+                        decoded.users = previous.users | decoded.users
                         decoded.errors = previous.errors | decoded.errors
                     results[tool_name] = decoded
             except Exception as e:

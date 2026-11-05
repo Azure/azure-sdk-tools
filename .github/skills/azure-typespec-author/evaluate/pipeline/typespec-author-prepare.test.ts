@@ -24,18 +24,18 @@ function fixture(t: { after: (fn: () => void) => void }, naming = true, required
   const author = path.join(root, "azure-typespec-author");
   const evalRoot = path.join(author, "evaluate");
   fs.mkdirSync(evalRoot, { recursive: true });
-  for (const name of ["azure-typespec-author", ...(naming ? ["azsdk-common-typespec-naming"] : [])]) {
+  for (const name of ["azure-typespec-author", ...(naming ? ["azure-typespec-sdk-naming"] : [])]) {
     const dir = path.join(root, name);
     fs.mkdirSync(path.join(dir, "references"), { recursive: true });
     fs.mkdirSync(path.join(dir, "evals"), { recursive: true });
     fs.writeFileSync(path.join(dir, "SKILL.md"), name === "azure-typespec-author" && required
-      ? "Depends on azsdk-common-typespec-naming" : name);
+      ? "Depends on azure-typespec-sdk-naming" : name);
     fs.writeFileSync(path.join(dir, "references", "rules.md"), name);
     fs.writeFileSync(path.join(dir, "evals", "secret-grader.yaml"), "must not leak");
   }
   const environments = {
     sdk: {
-      skills: ["../..", "../../../azsdk-common-typespec-naming"],
+      skills: ["../..", "../../../azure-typespec-sdk-naming"],
       mcpServers: { sdk: { cwd: "../../.." } },
     },
     "azsdk-mcp": {
@@ -76,14 +76,14 @@ test("a branch predating naming mounts only its own authoring skill", (t) => {
   const { evalRoot, environments, stage } = fixture(t, false, false);
   configureSkillEnvironments(environments, evalRoot, false, stage);
   assert.deepEqual(environments.sdk.skills.map((entry) => path.basename(entry)), ["azure-typespec-author"]);
-  assert.equal(fs.existsSync(path.join(stage, "azsdk-common-typespec-naming")), false);
+  assert.equal(fs.existsSync(path.join(stage, "azure-typespec-sdk-naming")), false);
 });
 
 test("a missing required naming dependency remains an explicit error", (t) => {
   const { evalRoot, environments, stage } = fixture(t, false, true);
   assert.throws(
     () => configureSkillEnvironments(environments, evalRoot, false, stage),
-    /Missing declared benchmark skill: .*azsdk-common-typespec-naming/,
+    /Missing declared benchmark skill: .*azure-typespec-sdk-naming/,
   );
 });
 
@@ -237,8 +237,8 @@ test("all three repository configurations plan with Vally 0.19 without executing
     `catalog:\n${fixtureDependencies.map((name) => `  "${name}": 1.0.0`).join("\n")}\n`);
   prepareFixtureFiles(specRoot, fixtures);
   const mockDll = createMcpBinary(root, "mock");
-  fs.symlinkSync(path.resolve(source, "../../azsdk-common-typespec-naming"),
-    path.join(root, "azsdk-common-typespec-naming"), "junction");
+  fs.symlinkSync(path.resolve(source, "../../azure-typespec-sdk-naming"),
+    path.join(root, "azure-typespec-sdk-naming"), "junction");
   const original = await loadProjectConfig(source);
   for (const environment of Object.values(original.environments) as { skills?: string[] }[]) {
     if (environment.skills) {
@@ -313,8 +313,8 @@ test("the actual SkillBranch overlay removes candidate naming from an older Git 
   };
   commit();
   git("branch", "baseline");
-  fs.writeFileSync(path.join(author, "SKILL.md"), "Requires azsdk-common-typespec-naming");
-  const naming = path.join(source, ".github", "skills", "azsdk-common-typespec-naming");
+  fs.writeFileSync(path.join(author, "SKILL.md"), "Requires azure-typespec-sdk-naming");
+  const naming = path.join(source, ".github", "skills", "azure-typespec-sdk-naming");
   fs.mkdirSync(path.join(naming, "references"), { recursive: true });
   fs.writeFileSync(path.join(naming, "SKILL.md"), "Candidate naming rules");
   fs.writeFileSync(path.join(naming, "references", "rules.md"), "Candidate rules");
@@ -335,9 +335,9 @@ test("the actual SkillBranch overlay removes candidate naming from an older Git 
   const skills = path.join(checkout, ".github", "skills");
   assert.equal(fs.readFileSync(path.join(skills, "azure-typespec-author", "SKILL.md"), "utf8"),
     "Baseline authoring skill");
-  assert.equal(fs.existsSync(path.join(skills, "azsdk-common-typespec-naming", "SKILL.md")), false);
-  assert.equal(fs.existsSync(path.join(skills, "azsdk-common-typespec-naming", "references")), false);
-  const environment = { sdk: { skills: ["../..", "../../../azsdk-common-typespec-naming"] } };
+  assert.equal(fs.existsSync(path.join(skills, "azure-typespec-sdk-naming", "SKILL.md")), false);
+  assert.equal(fs.existsSync(path.join(skills, "azure-typespec-sdk-naming", "references")), false);
+  const environment = { sdk: { skills: ["../..", "../../../azure-typespec-sdk-naming"] } };
   configureSkillEnvironments(environment, path.join(skills, "azure-typespec-author", "evaluate"),
     false, path.join(root, "runtime"));
   assert.equal(environment.sdk.skills.length, 1);

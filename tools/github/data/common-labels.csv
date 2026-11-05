@@ -304,6 +304,11 @@ pillar-compatibility,"This issue is related to compatibility between versions, o
 pillar-performance,"The issue is related to performance, one of our core engineering pillars.",65a5c9
 pillar-reliability,"The issue is related to reliability, one of our core engineering pillars. (includes stress testing)",65a5c9
 question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
+sdk-api-review-needed,Waiting for an authorized architect decision.,1d76db
+sdk-api-review-approved,Current exact API hash is approved for the applicable policy.,3c9d32
+sdk-api-review-changes-requested,Waiting for service-team changes.,b60205
+sdk-api-review-out-of-date,The API changed and review artifacts are refreshing.,b60205
+sdk-api-review-ready,Transient working-PR trigger; ARH removes it after accepting the request.,fbca04
 test-enhancement,,7365c9
 test-manual-pass,,c0eaf9
 test-reliability,Issue that causes tests to be unreliable,e04545

@@ -666,16 +666,17 @@ class ChatService:
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
-        identities = tool_results.get("resolve_github_users")
-        if (
-            req.conversation_type == ConversationType.teams_channel
-            and isinstance(identities, ResolveGitHubUsersResult)
-        ):
-            resp.mentions = [
-                TeamsMention(text=user.text, mentioned=user.mentioned)
-                for user in identities.users.values()
-                if user.text in answer
-            ] or None
+        teams_mentions_enabled = (
+            self._settings("ENABLE_TEAMS_MENTION", "true") or "true"
+        ).lower() == "true"
+        if teams_mentions_enabled and req.conversation_type == ConversationType.teams_channel:
+            identities = tool_results.get("resolve_github_users")
+            if isinstance(identities, ResolveGitHubUsersResult):
+                resp.mentions = [
+                    TeamsMention(text=user.text, mentioned=user.mentioned)
+                    for user in identities.users.values()
+                    if user.text in answer
+                ] or None
         return resp
 
     @staticmethod

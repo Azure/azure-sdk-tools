@@ -461,10 +461,10 @@ describe('ThinkingHandler', () => {
       });
     });
 
-    it('should add AI-generated and trace labels to successful responses', async () => {
+    it('keeps AT text unchanged without mention entities when the backend omits mention metadata', async () => {
       const successResponse: CompletionResponsePayload = {
         id: 'test-id',
-        answer: 'This is a successful response',
+        answer: 'Please help <at>linked.person@microsoft.com</at>.',
         has_result: true,
         references: [],
         trace_id: 'test-trace-id',
@@ -483,7 +483,7 @@ describe('ThinkingHandler', () => {
       expect(mockContext.updateActivity).not.toHaveBeenCalled();
       expect(mockContext.sendActivity).toHaveBeenCalledWith({
         type: 'message',
-        text: 'This is a successful response',
+        text: 'Please help <at>linked.person@microsoft.com</at>.',
         entities: [
           {
             type: 'https://schema.org/Message',

@@ -23,7 +23,7 @@ export function configureSkillEnvironments(
   skillRoot: string
 ) {
   const author = path.resolve(evalRoot, "../SKILL.md");
-  const requiresNaming = fs.readFileSync(author, "utf8").includes("azsdk-common-typespec-naming");
+  const requiresNaming = fs.readFileSync(author, "utf8").includes("azure-typespec-sdk-naming");
   for (const environment of Object.values(environments)) {
     if (environment.skills !== undefined) {
       environment.skills = noSkill ? [] : environment.skills.flatMap((source) => {
@@ -38,7 +38,7 @@ export function configureSkillEnvironments(
           }
           return [staged];
         }
-        if (path.basename(directory) === "azsdk-common-typespec-naming" && !requiresNaming) {
+        if (path.basename(directory) === "azure-typespec-sdk-naming" && !requiresNaming) {
           console.log("Selected authoring skill predates naming; omitting the absent dependency.");
           return [];
         }

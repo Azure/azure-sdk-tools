@@ -115,11 +115,11 @@
 ###########
 # Azure SDK Q&A Bot
 ###########
-/tools/sdk-ai-bots/                                 @lirenhe @chunyu3 @JiaqiZhang-Dev
-/tools/sdk-ai-bots/azure-sdk-qa-bot-backend         @JiaqiZhang-Dev
-/tools/sdk-ai-bots/azure-sdk-qa-bot                 @chunyu3 @JiaqiZhang-Dev
-/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
-/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index      @lirenhe @chunyu3 @JiaqiZhang-Dev
+/tools/sdk-ai-bots/                                 @lirenhe @chunyu3 @JiaqiZhang-Dev @tadelesh @JialinHuang803
+/tools/sdk-ai-bots/azure-sdk-qa-bot-agent           @JiaqiZhang-Dev
+/tools/sdk-ai-bots/azure-sdk-qa-bot                 @chunyu3 @JiaqiZhang-Dev @JialinHuang803
+/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3 @tadelesh
+/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index      @lirenhe @chunyu3 @JiaqiZhang-Dev @tadelesh
 
 # Add owners for notifications for specific pipelines
 /eng/common/pipelines/codeowners-linter.yml        @danieljurek

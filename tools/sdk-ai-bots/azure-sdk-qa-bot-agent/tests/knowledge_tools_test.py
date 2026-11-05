@@ -225,6 +225,7 @@ def test_build_targets_maps_ado_source_and_issue_project() -> None:
                             "provider": "azure-devops",
                             "organization": "azure-sdk",
                             "project": "internal",
+                            "areaPath": "internal\\qa-bot",
                         },
                     },
                     "paths": [{"folder": "internal_wiki"}],
@@ -241,7 +242,32 @@ def test_build_targets_maps_ado_source_and_issue_project() -> None:
         provider="azure-devops",
         organization="azure-sdk",
         project="internal",
+        area_path="internal\\qa-bot",
     )
+
+
+def test_build_targets_rejects_ado_issue_tracker_without_area_path() -> None:
+    with pytest.raises(ValueError, match="areaPath"):
+        _build_targets(
+            {
+                "sources": [
+                    {
+                        "repository": {
+                            "url": (
+                                "https://dev.azure.com/"
+                                "azure-sdk/internal/_git/internal.wiki"
+                            ),
+                            "issueTracker": {
+                                "provider": "azure-devops",
+                                "organization": "azure-sdk",
+                                "project": "internal",
+                            },
+                        },
+                        "paths": [{"folder": "internal_wiki"}],
+                    }
+                ]
+            }
+        )
 
 
 @pytest.mark.asyncio
@@ -430,6 +456,13 @@ async def test_dotnet_search_returns_azure_and_upstream_docs(monkeypatch, servic
         assert filters[source_name] == expected
     assert search.call_args.kwargs["extra_filter"] == (
         "(page_type eq null or page_type eq '')"
+    )
+    assert [
+        call.args[0]
+        for call in search_client.expand_by_hierarchy.call_args_list
+    ] == chunks
+    assert all(
+        not call.kwargs for call in search_client.expand_by_hierarchy.call_args_list
     )
 
 

@@ -28,6 +28,7 @@ export const workflowCallGenerateScript = async (context: WorkflowContext, chang
     apiVersion: context.config.apiVersion,
     runMode: context.config.runMode,
     sdkReleaseType: context.config.sdkReleaseType,
+    typespecEmitter: context.config.typespecEmitter,
     installInstructionInput: {
       isPublic: !context.isPrivateSpecRepo,
       downloadUrlPrefix: '',

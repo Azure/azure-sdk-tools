@@ -1,0 +1,18 @@
+diff --git a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Package/PackageValidationTool.cs b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Package/PackageValidationTool.cs
+--- a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Package/PackageValidationTool.cs
++++ b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Package/PackageValidationTool.cs
+@@ -24,13 +24,13 @@ public sealed class PackageValidationTool
+     private static PackageValidationResponse CreateResponse(bool isValid)
+     {
+         if (!isValid)
+         {
+             return new PackageValidationResponse
+             {
+-                ResponseError = "Package validation failed."
++                Message = "Package validation failed."
+             };
+         }
+ 
+         return new PackageValidationResponse { Message = "Package is valid." };
+     }
+ }

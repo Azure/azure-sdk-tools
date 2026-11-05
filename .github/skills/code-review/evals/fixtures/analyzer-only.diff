@@ -1,0 +1,17 @@
+diff --git a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Package/PackageDescriptionTool.cs b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Package/PackageDescriptionTool.cs
+--- a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Package/PackageDescriptionTool.cs
++++ b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Package/PackageDescriptionTool.cs
+@@ -30,12 +30,5 @@ public sealed class PackageDescriptionTool : MCPTool
+     [McpServerTool, Description("Describe the package validation command.")]
+     public string DescribePackage()
+     {
+-        try
+-        {
+-            return "Validates an Azure SDK package.";
+-        }
+-        catch (Exception)
+-        {
+-            return "Unable to describe package validation.";
+-        }
++        return "Validates an Azure SDK package.";
+     }

@@ -15,6 +15,90 @@ from azure.core.async_paging import AsyncItemPaged
 from models.chat import ChatRequest, Message as ChatMessage
 from services.chat_service import ChatService
 
+
+@pytest.mark.parametrize("conversation_type, include_tag, last_lookup_fails", [
+    ("teams_channel", True, False), ("teams_channel", False, False),
+    (None, True, False), ("teams_channel", True, True),
+])
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
+    conversation_type, include_tag, last_lookup_fails, output_type
+):
+    import json
+
+    from openai.types.responses import (
+        Response, ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage, ResponseOutputText,
+    )
+
+    from models.identity import ResolveGitHubUsersResult, TeamsMention, TeamsUser
+
+    mention = TeamsMention(
+        text="<at>linked.person@microsoft.com</at>",
+        mentioned=TeamsUser(
+            name="Linked Person",
+            id="11111111-2222-3333-4444-555555555555",
+        ),
+    )
+    output = []
+    # Separate tool calls must not discard the previously resolved reviewer.
+    lookups = [
+        ResolveGitHubUsersResult(mentions={"linked-user": mention}),
+        ResolveGitHubUsersResult(errors={"unlinked": "No linked Microsoft account was found."}),
+        ResolveGitHubUsersResult(errors={"service": "Not a person."}),
+    ]
+    if last_lookup_fails:
+        lookups.append(ResolveGitHubUsersResult(errors={"linked-user": "HTTP 403"}))
+    for index, result in enumerate(lookups):
+        call_id = f"lookup-{index}"
+        tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
+        if output_type == "function_call_output":
+            tool_output = ResponseFunctionToolCallOutputItem.model_construct(
+                type=output_type, id=call_id, call_id=call_id,
+                output=result.model_dump_json(), status="completed",
+            )
+        else:
+            tool_output = ResponseOutputMessage.model_construct(
+                type="message", id=call_id, role="assistant", status="completed", content=[],
+                call_id=call_id,
+                output=json.dumps([result.model_dump_json()]),
+            )
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call",
+                name="resolve_github_users",
+                call_id=call_id,
+                arguments=json.dumps({"usernames": [*result.mentions, *result.errors]}),
+            ),
+            tool_output,
+        ])
+    answer = f"Ping {mention.text if include_tag else '@linked-user'} or <at>unverified@microsoft.com</at>."
+    output.append(ResponseOutputMessage.model_construct(
+        type="message", id="answer", role="assistant", status="completed",
+        content=[ResponseOutputText.model_construct(
+            type="output_text", text=answer, annotations=[],
+        )],
+    ))
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id="azure_sdk_qa_bot",
+        conversation_type=conversation_type,
+        message=ChatMessage(role="user", content="Who can review?"),
+    )
+
+    result = ChatService()._postprocess(request, response, None)
+
+    assert result.answer == answer
+    assert result.mentions == (
+        [mention] if conversation_type and include_tag and not last_lookup_fails else None
+    )
+    if result.mentions:
+        assert result.model_dump(mode="json")["mentions"] == [{
+            "text": mention.text,
+            "mentioned": {"id": mention.mentioned.id, "name": "Linked Person"},
+        }]
+
+
 # -- Memory scope handling ------------
 
 
@@ -470,7 +554,9 @@ async def test_routing_http_message_and_errors(monkeypatch):
     from models.chat import ChatResponse
     from services.chat_service import AgentRoutingError
 
-    chat = AsyncMock(return_value=ChatResponse(id="response", answer="ok", has_result=True))
+    chat = AsyncMock(return_value=ChatResponse(
+        id="response", answer="ok", has_result=True, agent_name="returned-agent",
+    ))
     monkeypatch.setattr(server._chat_service, "chat", chat)
     payload = {"tenant_id": "general_qa_bot", "message": {
         "role": "user", "content": "[branch:feature/foo] question",
@@ -479,6 +565,7 @@ async def test_routing_http_message_and_errors(monkeypatch):
         for path in ("/completion", "/agent/chat"):
             response = await client.post(path, json=payload, headers={"X-Agent-Version": "42"})
             assert response.status_code == 200
+            assert response.json()["agent_name"] == "returned-agent"
             assert chat.call_args.kwargs == {}
             assert chat.call_args.args[0].message.content == "[branch:feature/foo] question"
         for status in (403, 404):
@@ -504,6 +591,39 @@ async def test_version_values_reach_foundry_and_errors_propagate(monkeypatch, ve
     assert exc.value is failure
     project.agents.get_version.assert_awaited_once_with("agent", version)
     project.agents.get.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tenant_id", ["general_qa_bot", "azure_mcp_server"])
+async def test_chat_returns_the_invoked_agent_name(monkeypatch, tenant_id):
+    import services.chat_service as chat_service
+    from utils.background_tasks import BackgroundTaskTracker
+
+    project = MagicMock()
+    agent = SimpleNamespace(name="actual-deployment", version="42")
+    service = ChatService(
+        project_client=project, openai_client=MagicMock(),
+        settings=lambda key, default=None: default,
+    )
+    service._get_agent = AsyncMock(return_value=agent)
+    service._resolve_request_version = AsyncMock(return_value="42")
+    service._save_bot_answer_to_conversation = AsyncMock()
+    response = SimpleNamespace(
+        id="response-1", status="completed", output=[], output_text="answer",
+    )
+    hosted = MagicMock()
+    hosted.invoke = AsyncMock(return_value=("trace-1", response))
+    monkeypatch.setattr(chat_service, "HostedAgentClient", MagicMock(return_value=hosted))
+
+    result = await service.chat(ChatRequest(
+        tenant_id=tenant_id, message=ChatMessage(role="user", content="question"),
+    ))
+    await asyncio.sleep(0)
+    await BackgroundTaskTracker.instance().shutdown()
+
+    assert result.agent_name == "actual-deployment"
+    assert result.model_dump(mode="json")["agent_name"] == "actual-deployment"
+    assert hosted.invoke.call_args.kwargs["agent_ref"]["name"] == result.agent_name
 
 
 @pytest.mark.asyncio

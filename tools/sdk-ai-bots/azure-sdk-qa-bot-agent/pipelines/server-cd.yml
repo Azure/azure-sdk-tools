@@ -275,7 +275,7 @@ extends:
                   displayName: 'Build and Package Scheduled Knowledge Sync'
                   workingDirectory: $(syncWorkingDirectory)
 
-                - ${{ if eq(parameters.deploymentTarget, 'all') }}:
+                - ${{ if in(parameters.deploymentTarget, 'all', 'knowledge-sync') }}:
                   - task: DownloadSecureFile@1
                     name: sshPrivateKey
                     displayName: 'Download Knowledge Sync SSH Key'

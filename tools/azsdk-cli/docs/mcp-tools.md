@@ -1,12 +1,12 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.54.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.56.
 
 ## Tools list
 
 | Name | Command | Description |
 |------|---------|-------------|
-| azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'. |
+| azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by Release Plan ID (not work item ID). Blocks finished plans, recorded SDK releases, merged SDK PRs, and unverifiable or concurrently changed plans. For partially completed releases, request a language-exclusion exception for unreleased languages and contact SDK Release Support channel on Teams. After saving Abandoned, closes linked open unmerged SDK PRs regardless of author, then adds an abandonment notice. Already abandoned plans retry cleanup without ADO state updates. Closed and merged PRs remain unchanged, even when a notice is missing. Cleanup failures return success with warnings and manual follow-up guidance. |
 | azsdk_analyze_log_file | `azsdk ci log analyze` | Analyzes a log file for errors and issues |
 | azsdk_analyze_pipeline | `azsdk ci analyze` | Analyzes and returns structured failure data and logs from an Azure Pipeline build. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number. |
 | azsdk_apireviewhub_request_review_pr | `azsdk api-review create` | Request API Review Hub creation of a review pull request for a package API change. |
@@ -51,7 +51,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_package_detect_breaking_change | `azsdk pkg detect-breaking-change` | Detects breaking changes in the SDK. |
 | azsdk_package_generate_code | `azsdk pkg generate` | Generate SDK code locally or run code generation for a package from TypeSpec. Creates client library code for Azure services. Runs locally, not via pipeline. |
 | azsdk_package_generate_samples |  | Generates sample code for a specified package based on a prompt describing sample scenarios. |
-| azsdk_package_get_approval_status |  | Check API review release approval status using APIView and API Review Hub. Common language aliases are normalized; ask the user to select a language when the input is unsupported or ambiguous. |
+| azsdk_package_get_approval_status |  | Check release approval status, including API and package name approval, using APIView and API Review Hub. Common language aliases are normalized; ask the user to select a language when the input is unsupported or ambiguous. |
 | azsdk_package_pack | `azsdk pkg pack` | Create distributable artifacts for the specified SDK package. |
 | azsdk_package_run_check | `azsdk pkg validate` | Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. |
 | azsdk_package_run_tests | `azsdk pkg test run` | Run tests for the specified SDK package. Provide package path. |
@@ -99,9 +99,10 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
 |  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
-|  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
+|  | `azsdk eng package-info` | Inspect an SDK package or generate PackageInfo JSON files for CI pipelines |
 |  | `azsdk eng evaluate` | Evaluate whether Copilot's pipeline-failure fixes changed failing checks to passing over the last N days |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk list` |  |
+

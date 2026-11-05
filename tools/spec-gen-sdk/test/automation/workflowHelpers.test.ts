@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fs from 'node:fs';
+import fsDefault from 'node:fs';
+import * as path from 'node:path';
 import * as runScript from '../../src/utils/runScript';
 import * as fsUtils from '../../src/utils/fsUtils';
 import { workflowCallGenerateScript, workflowDetectChangedPackages, workflowInitGetSdkSuppressionsYml } from '../../src/automation/workflowHelpers';
 import { WorkflowContext } from '../../src/types/Workflow';
 import { SDKAutomationState } from '../../src/automation/sdkAutomationState';
+import { GenerateInput } from '../../src/types/GenerateInput';
 
 vi.mock(import('node:fs'), async (importOriginal) => {
   const actual = await importOriginal();
@@ -66,6 +69,73 @@ describe('workflowHelpers', () => {
   });
 
   describe('workflowCallGenerateScript', () => {
+    it.each([
+      { readmes: [], projects: ['project1'] },
+      { readmes: ['project1/readme.md'], projects: [] },
+    ])('preserves legacy JSON and script arguments for $readmes $projects', async ({ readmes, projects }) => {
+      const { writeTmpJsonFile } = await vi.importActual<typeof fsUtils>('../../src/utils/fsUtils');
+      const writeFile = vi.spyOn(fsDefault, 'writeFileSync').mockImplementation(() => {});
+      vi.mocked(fsUtils.writeTmpJsonFile).mockImplementationOnce(writeTmpJsonFile);
+      vi.mocked(fsUtils.readTmpJsonFile).mockReturnValue({ packages: [] });
+      vi.mocked(runScript.runSdkAutoCustomScript).mockResolvedValue('succeeded');
+      mockContext.tmpFolder = 'tmp';
+
+      try {
+        await workflowCallGenerateScript(mockContext, ['changed-file'], readmes, projects);
+
+        const legacyInput: GenerateInput = {
+          specFolder: path.relative(mockContext.config.localSdkRepoPath, mockContext.config.localSpecRepoPath),
+          headSha: mockContext.config.specCommitSha,
+          repoHttpsUrl: mockContext.config.specRepoHttpsUrl,
+          changedFiles: ['changed-file'],
+          runMode: mockContext.config.runMode,
+          sdkReleaseType: mockContext.config.sdkReleaseType,
+          installInstructionInput: {
+            isPublic: true,
+            downloadUrlPrefix: '',
+            downloadCommandTemplate: 'downloadCommand',
+          },
+          ...(projects.length > 0
+            ? { relatedTypeSpecProjectFolder: projects }
+            : { relatedReadmeMdFiles: readmes }),
+        };
+        expect(writeFile).toHaveBeenCalledWith(
+          path.join('tmp', 'generateInput.json'),
+          JSON.stringify(legacyInput, undefined, 2),
+        );
+        expect(runScript.runSdkAutoCustomScript).toHaveBeenCalledWith(mockContext, 'generate.js', {
+          cwd: mockContext.config.localSdkRepoPath,
+          argTmpFileList: ['generateInput.json', 'generateOutput.json'],
+          statusContext: { status: 'succeeded' },
+        });
+      } finally {
+        writeFile.mockRestore();
+      }
+    });
+
+    it.each([
+      '@azure-tools/typespec-ts-provisioning',
+      '@azure-tools/typespec-csharp',
+      undefined,
+    ])('should serialize the caller-provided typespecEmitter %s', async (typespecEmitter) => {
+      mockContext.config.typespecEmitter = typespecEmitter;
+      vi.mocked(fsUtils.readTmpJsonFile).mockReturnValue({ packages: [] });
+      vi.mocked(runScript.runSdkAutoCustomScript).mockResolvedValue('succeeded');
+
+      const result = await workflowCallGenerateScript(mockContext, ['file1.tsp'], [], ['project1']);
+
+      const writtenInput = vi.mocked(fsUtils.writeTmpJsonFile).mock.calls[0][2] as GenerateInput;
+      expect(writtenInput.typespecEmitter).toBe(typespecEmitter);
+      expect(result.generateInput.typespecEmitter).toBe(typespecEmitter);
+      const serializedInput = JSON.parse(JSON.stringify(writtenInput));
+      if (typespecEmitter === undefined) {
+        expect(serializedInput).not.toHaveProperty('typespecEmitter');
+      } else {
+        expect(serializedInput).toHaveProperty('typespecEmitter', typespecEmitter);
+      }
+      expect(writtenInput.relatedTypeSpecProjectFolder).toEqual(['project1']);
+    });
+
     it('should successfully generate SDK with TypeSpec project folder', async () => {
       const changedFiles = ['file1.tsp'];
       const relatedReadmeMdFiles: string[] = [];

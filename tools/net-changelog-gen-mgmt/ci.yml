@@ -17,3 +17,4 @@ extends:
   parameters:
     ToolDirectory: tools/net-changelog-gen-mgmt
     ShouldPublishSymbols: false
+    ForceCreate: true

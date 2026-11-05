@@ -292,7 +292,8 @@ class KnowledgeTools:
         )
 
         expand_tasks = [
-            search_client.expand_by_hierarchy(chunk) for chunk in unique_chunks
+            search_client.expand_by_hierarchy(chunk)
+            for chunk in unique_chunks
         ]
         expanded = await asyncio.gather(*expand_tasks)
 
@@ -575,7 +576,7 @@ class KnowledgeTools:
     ) -> SearchKnowledgeBaseResult:
         """Search wiki pages and their routed source chunks."""
         sources = _source_names(tenant_id, sources)
-        search_client = get_search_client()
+        search_client = self._get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
         wiki_page_filters = _wiki_page_filters(tenant_id, source_filters)
         capped_queries = queries[:3]
@@ -605,7 +606,10 @@ class KnowledgeTools:
         )
         combined = wiki_pages + routed
         expanded = await asyncio.gather(
-            *[search_client.expand_by_hierarchy(c) for c in combined]
+            *[
+                search_client.expand_by_hierarchy(c)
+                for c in combined
+            ]
         )
         page_count = len(wiki_pages)
         results = _refs_from_expanded(

@@ -251,7 +251,7 @@ async def handle_chat(req: ChatRequest):
         tenant,
         req.conversation_id,
         req.message.user_name or req.message.user_id,
-        req.message.content[:200],
+        req.message.content,
     )
     record_chat_request(tenant)
     start = time.perf_counter()
@@ -343,7 +343,7 @@ async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
     logger.info(
         "Retrieve knowledge request: tenant=%s, message=%s",
         req.tenant_id,
-        req.query[:200],
+        req.query,
     )
     try:
         resp = await _knowledge_service.retrieve(req)

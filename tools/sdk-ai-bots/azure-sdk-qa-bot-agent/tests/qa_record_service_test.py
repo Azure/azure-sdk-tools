@@ -8,7 +8,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
+from openai import AsyncOpenAI
 from pydantic import ValidationError
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
@@ -1199,10 +1201,12 @@ async def test_evolution_consumes_shared_response_stream(
 
     assert actual == result_text
     shared_client.assert_called_once_with(
-        client, max_retries=1, stream_timeout=600
+        client, max_retries=1, retry_delay=10.0, stream_timeout=600,
+        session_ready_max_attempts=3,
     )
     project.get_openai_client.assert_called_once_with(
-        agent_name="azure-sdk-chatbot-evolution-agent"
+        agent_name="azure-sdk-chatbot-evolution-agent",
+        max_retries=0,
     )
     client.responses.create.assert_awaited_once_with(
         input=[
@@ -1222,6 +1226,49 @@ async def test_evolution_consumes_shared_response_stream(
         client.responses.retrieve.assert_not_awaited()
     stream.close.assert_awaited_once()
     assert "trace_id=trace-evolution, response_id=resp-evolution" in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("status", "code", "expected_requests"),
+    [
+        (424, "dependency_failed", 1),
+        (503, "session_not_ready", 1),
+        (424, "session_not_ready", 3),
+    ],
+)
+async def test_evolution_retries_only_explicit_sdk_readiness_errors(
+    status: int, code: str, expected_requests: int,
+) -> None:
+    requests: list[httpx.Request] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            status,
+            json={"error": {"code": code, "message": "agent unavailable"}},
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as http_client:
+        project = MagicMock()
+        project.get_openai_client.side_effect = lambda *, agent_name, **kwargs: AsyncOpenAI(
+            api_key="test-key",
+            http_client=http_client,
+            **kwargs,
+        )
+        service = ChatbotEvolutionAgentService(project_client=project)
+        service._resolve_agent_reference = AsyncMock(
+            return_value=FoundryAgentReference(name="evolution", version="14")
+        )
+        payload = service._build_input(_record(), ChatbotEvolutionAgentMode.analysis)
+
+        with (
+            patch("utils.azure_ai_foundry_agent.asyncio.sleep", new=AsyncMock()),
+            pytest.raises(RuntimeError, match=str(status)),
+        ):
+            await service._invoke_agent(payload)
+
+    assert len(requests) == expected_requests
 
 
 @pytest.mark.asyncio

@@ -166,7 +166,14 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
     assert f"- {SRC_AZURE_AVOCADO_DOCS}:" in content
     assert "[skill_guideline]" in content
     assert skill.frontmatter.description == (
-        "Data-plane API design and API Stewardship Board review guidance."
+        "Data-plane spec-to-SDK lifecycle: API modeling and REST design "
+        "(endpoints, LROs, service access boundaries); specification validation "
+        "and API Stewardship Board review "
+        "(readiness, scheduling, async reviews, Office Hours, signoff); "
+        "SDK design, clients, library/package naming and approval, "
+        "documentation and SDK exposure; preview/GA versioning, compatibility, "
+        "breaking changes, "
+        "deprecation, retirement and customer notification."
     )
     assert "Give evidence-backed advice, not Board decisions" in content
     assert "Use `typespec` for detailed authoring" not in content

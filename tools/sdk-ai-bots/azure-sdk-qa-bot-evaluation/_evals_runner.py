@@ -94,7 +94,7 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
 def _upload_eval_items(openai_client: Any, items: list[dict[str, Any]], scenario: str) -> dict[str, Any]:
     """Upload eval inputs as JSONL and return a file-backed run data source."""
     content = "".join(
-        json.dumps({"item": _completion_item(item)}, ensure_ascii=False) + "\n"
+        json.dumps(_completion_item(item), ensure_ascii=False) + "\n"
         for item in items
     ).encode("utf-8")
     uploaded = openai_client.files.create(
@@ -396,6 +396,9 @@ def output_items_to_rows(
 
     for oi in output_items:
         item = _get(oi, "datasource_item", {}) or {}
+        nested_item = item.get("item")
+        if isinstance(nested_item, dict):
+            item = nested_item
         results = _get(oi, "results", []) or []
         context = item.get("context", "") or ""
         response_id = item.get("response_id", "") or ""
@@ -419,6 +422,11 @@ def output_items_to_rows(
         per_metric: dict[str, float] = {}
         for r in results:
             name = _get(r, "name", None)
+            if _get(r, "status", None) == "error":
+                sample = _get(r, "sample", {}) or {}
+                error = _get(sample, "error", {}) or {}
+                message = _get(error, "message", "Unknown grader error")
+                raise RuntimeError(f"Eval grader {name or 'unknown'} failed: {message}")
             if not name:
                 continue
             score = _coerce_score(_get(r, "score", 0.0))

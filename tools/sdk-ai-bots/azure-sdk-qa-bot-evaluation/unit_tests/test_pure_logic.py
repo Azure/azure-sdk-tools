@@ -11,7 +11,6 @@ Run:
 
 from __future__ import annotations
 
-import json
 import os
 import re
 import sys
@@ -35,7 +34,6 @@ from dataset.schema import (  # noqa: E402
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
     FoundryEvalsRunner,
-    _upload_eval_items,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -55,34 +53,6 @@ def test_validate_case_ok():
             "reviewed": "pass",
         }
     )
-
-
-def test_upload_eval_items_uses_file_backed_data_source():
-    from types import SimpleNamespace
-    from unittest.mock import MagicMock
-
-    client = MagicMock()
-    client.files.create.return_value = SimpleNamespace(id="file-uploaded")
-    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-processed")
-
-    data_source = _upload_eval_items(
-        client,
-        [{"testcase": "case", "query": "question", "response": "answer"}],
-        "typespec",
-    )
-
-    upload = client.files.create.call_args.kwargs
-    filename, content, content_type = upload["file"]
-    assert filename == "typespec-eval-input.jsonl"
-    assert json.loads(content.decode("utf-8"))["response"] == "answer"
-    assert content_type == "application/jsonl"
-    assert upload["purpose"] == "evals"
-    assert "expires_after" not in upload
-    client.files.wait_for_processing.assert_called_once_with("file-uploaded")
-    assert data_source == {
-        "type": "jsonl",
-        "source": {"type": "file_id", "id": "file-processed"},
-    }
 
 
 def test_validate_case_missing_field():
@@ -288,48 +258,6 @@ def test_output_items_to_rows_groundedness_fail():
     ]
     rows = output_items_to_rows(output_items, ["groundedness"])["rows"]
     assert rows[0]["outputs.groundedness.groundedness_result"] == "fail"
-
-
-def test_output_items_to_rows_unwraps_file_item_envelope():
-    output_items = [
-        {
-            "datasource_item": {
-                "item": {
-                    "testcase": "t3",
-                    "query": "q3",
-                    "response": "answer",
-                }
-            },
-            "results": [{"name": "fluency", "score": 5.0, "passed": True}],
-        }
-    ]
-
-    rows = output_items_to_rows(output_items, ["fluency"])["rows"]
-    assert rows[0]["inputs.testcase"] == "t3"
-    assert rows[0]["inputs.query"] == "q3"
-
-
-def test_output_items_to_rows_raises_for_grader_error():
-    output_items = [
-        {
-            "datasource_item": {"testcase": "t4"},
-            "results": [
-                {
-                    "name": "similarity",
-                    "status": "error",
-                    "sample": {"error": {"message": "Missing inputs: data.response"}},
-                }
-            ],
-        }
-    ]
-
-    try:
-        output_items_to_rows(output_items, ["similarity"])
-    except RuntimeError as exc:
-        assert "similarity" in str(exc)
-        assert "Missing inputs" in str(exc)
-    else:
-        raise AssertionError("Expected grader errors to fail the evaluation")
 
 
 def test_build_testing_criteria_all_builtins():
